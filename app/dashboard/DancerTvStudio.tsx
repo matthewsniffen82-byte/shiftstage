@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 
 const SESSION_KEY = "dancrAuthSessionV1";
@@ -16,31 +16,18 @@ type Workspace = {
   maxVideos: number;
   remainingVideoSlots: number;
   videos: ManagedVideo[];
-  shifts: Array<{
-    id: string;
-    venueId: string;
-    venueName: string;
-    startsAt: string;
-    endsAt: string;
-    venueTagConfirmed: boolean;
-  }>;
-  venues: Array<{ id: string; name: string; slug: string; city: string }>;
 };
 
 type ManagedVideo = {
   id: string;
   videoUrl: string;
   status: string;
-  venueTagStatus: string;
-  venueFeatured: boolean;
   reviewNotes?: string | null;
   moderationDecision?: "approved" | "review" | "rejected" | null;
   moderationFrameCount?: number;
   submittedAt?: string | null;
   publishedAt?: string | null;
   expiresAt?: string | null;
-  venue?: { id: string; name: string; slug: string } | null;
-  shift?: { id: string; startsAt: string; endsAt: string } | null;
   metrics?: Record<string, number>;
 };
 
@@ -48,8 +35,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [shiftId, setShiftId] = useState("");
-  const [venueId, setVenueId] = useState("");
   const [consentConfirmed, setConsentConfirmed] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [status, setStatus] = useState("");
@@ -57,10 +42,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingId, setRemovingId] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const selectedShift = useMemo(
-    () => workspace?.shifts.find((shift) => shift.id === shiftId) || null,
-    [shiftId, workspace?.shifts],
-  );
   const maxVideos = workspace?.maxVideos || 5;
   const currentVideoCount = workspace?.videos.length || 0;
   const atVideoLimit = currentVideoCount >= maxVideos;
@@ -126,8 +107,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           durationSeconds: metadata.duration,
           width: metadata.width,
           height: metadata.height,
-          shiftId: shiftId || null,
-          venueId: shiftId ? null : venueId || null,
           consentConfirmed,
           rightsConfirmed,
         }),
@@ -158,8 +137,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
       setStatus(submitted.message || "Your video completed automated safety review.");
       setFile(null);
-      setShiftId("");
-      setVenueId("");
       setConsentConfirmed(false);
       setRightsConfirmed(false);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -223,7 +200,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               Videos published here appear on your public {workspace.profile.stageName} profile.
             </p>
           ) : null}
-          <p>Post vertical videos tied to your real profile, venue, or shift. Automated safety review checks the complete video before it can go live.</p>
+          <p>Post vertical videos to your real profile. MyDancr TV automatically uses your verified current shift, or your next posted shift, whenever it shows venue context.</p>
         </div>
         <Link href="/tv">Watch MyDancr TV</Link>
       </div>
@@ -263,43 +240,10 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             <small>Vertical or square MP4/WebM · 1–30 seconds · 75 MB maximum</small>
           </label>
           {previewUrl ? <video className="tv-upload-preview" controls playsInline src={previewUrl} /> : null}
-          <label>
-            Connect a posted shift
-            <select value={shiftId} onChange={(event) => {
-              setShiftId(event.target.value);
-              if (event.target.value) setVenueId("");
-            }}>
-              <option value="">No shift attached</option>
-              {workspace.shifts.map((shift) => (
-                <option value={shift.id} key={shift.id}>
-                  {shift.venueName} · {formatDate(shift.startsAt)}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!selectedShift ? (
-            <label>
-              Connect a venue
-              <select value={venueId} onChange={(event) => setVenueId(event.target.value)}>
-                <option value="">No venue attached</option>
-                {workspace.venues.map((venue) => (
-                  <option value={venue.id} key={venue.id}>{venue.name}</option>
-                ))}
-              </select>
-              <small>A venue-only tag must be confirmed by that venue.</small>
-            </label>
-          ) : (
-            <div className="tv-shift-confirmation">
-              <strong>{selectedShift.venueName}</strong>
-              <span>
-                {formatDate(selectedShift.startsAt)}
-                {" · "}
-                {selectedShift.venueTagConfirmed
-                  ? "Venue verified through your location-confirmed check-in"
-                  : "Venue tag will be sent to the venue for confirmation"}
-              </span>
-            </div>
-          )}
+          <div className="tv-schedule-context-note">
+            <strong>Venue context is automatic</strong>
+            <span>Working Now takes priority. Otherwise, MyDancr TV shows your next posted shift. With no current or upcoming shift, no venue is shown.</span>
+          </div>
           <label className="tv-check">
             <input checked={consentConfirmed} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
             <span>I have permission from every identifiable person shown.</span>
@@ -327,7 +271,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               {video.videoUrl ? <video controls playsInline preload="metadata" src={video.videoUrl} /> : <div className="tv-video-unavailable">Video unavailable</div>}
               <div>
                 <span className={`tv-video-status status-${video.status}`}>{statusLabel(video.status)}</span>
-                {video.venue ? <small>{video.venue.name} · venue tag {video.venueTagStatus}</small> : null}
                 {video.moderationDecision ? (
                   <small className="tv-moderation-summary">
                     Automated review: {video.moderationDecision === "review" ? "sent to a person" : video.moderationDecision}
@@ -417,16 +360,6 @@ function statusLabel(status: string) {
   } as Record<string, string>)[status] || status;
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
 function DancerTvStudioStyles() {
   return (
     <style>{`
@@ -445,13 +378,13 @@ function DancerTvStudioStyles() {
       .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; border: 1px solid rgba(139,92,246,.3); border-radius: 12px; background: rgba(11,11,16,.84); }
       .tv-upload-form > label { display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
       .tv-file-picker, .tv-upload-preview, .tv-upload-form > button { grid-column: 1 / -1; }
-      .tv-upload-form input[type="file"], .tv-upload-form select { width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 10px 12px; font: inherit; }
+      .tv-upload-form input[type="file"] { width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 10px 12px; font: inherit; }
       .tv-upload-form small { color: #9f94b3; font-size: 11px; font-weight: 700; }
       .tv-upload-preview { width: min(360px, 100%); max-height: 560px; justify-self: center; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: #000; }
       .tv-check { grid-column: 1 / -1; grid-template-columns: 20px minmax(0, 1fr) !important; align-items: start; }
       .tv-check input { width: 18px; height: 18px; }
-      .tv-shift-confirmation { display: grid; gap: 4px; padding: 12px; border: 1px solid rgba(34,199,255,.22); border-radius: 8px; background: rgba(34,199,255,.07); }
-      .tv-shift-confirmation span { color: #a9dce8; font-size: 12px; }
+      .tv-schedule-context-note { grid-column: 1 / -1; display: grid; gap: 4px; padding: 12px; border: 1px solid rgba(34,199,255,.22); border-radius: 8px; background: rgba(34,199,255,.07); }
+      .tv-schedule-context-note span { color: #a9dce8; font-size: 12px; line-height: 1.45; }
       .tv-upload-form > button { min-height: 50px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
       .tv-upload-form > button:disabled { opacity: .65; cursor: wait; }
       .tv-studio-status, .tv-studio-lock, .tv-studio-incognito, .tv-studio-limit { margin-top: 12px; padding: 12px 14px; border: 1px solid rgba(34,199,255,.24); border-radius: 8px; background: rgba(34,199,255,.07); color: #b5f1ff; line-height: 1.5; }

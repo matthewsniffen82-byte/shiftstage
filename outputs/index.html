@@ -2440,6 +2440,7 @@
 
     .approved-profile-video-form > label:first-child,
     .approved-profile-video-form .approved-profile-video-check,
+    .approved-profile-video-schedule-note,
     .approved-profile-video-form > button,
     .approved-profile-video-preview { grid-column: 1 / -1; }
 
@@ -2459,6 +2460,8 @@
     .approved-profile-video-form small { color: #9e92b2; font-size: 10px; font-weight: 700; line-height: 1.4; }
     .approved-profile-video-preview { width: min(230px, 100%); max-height: 360px; justify-self: center; border-radius: 12px; background: #000; }
     .approved-profile-video-preview[hidden] { display: none; }
+    .approved-profile-video-schedule-note { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid rgba(53,216,255,.25); border-radius: 11px; color: #dffaff; background: rgba(53,216,255,.06); }
+    .approved-profile-video-schedule-note small { color: #a8dbe5; line-height: 1.45; }
     .approved-profile-video-check { grid-template-columns: 20px minmax(0, 1fr) !important; align-items: start; }
     .approved-profile-video-check input { width: 18px; height: 18px; margin-top: 1px; }
     .approved-profile-video-form > button {
@@ -44347,8 +44350,6 @@
         : [];
       const atLimit = videos.length >= MAX_DANCER_PROFILE_VIDEOS;
       const emptySlots = Math.max(0, MAX_DANCER_PROFILE_VIDEOS - videos.length);
-      const shifts = Array.isArray(workspace?.shifts) ? workspace.shifts : [];
-      const venues = Array.isArray(workspace?.venues) ? workspace.venues : [];
       const message = approvedProfileVideoStatus || (approvedProfileVideoLoading
         ? "Loading your profile videos..."
         : workspace?.profileEligible === false
@@ -44399,21 +44400,10 @@
                     <small>Vertical or square MP4/WebM · 1–30 seconds · 75 MB maximum</small>
                   </label>
                   <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline hidden></video>
-                  <label>
-                    Connect a posted shift
-                    <select id="approvedProfileVideoShift">
-                      <option value="">No shift attached</option>
-                      ${shifts.map((shift) => `<option value="${displayText(shift.id)}" data-venue-id="${displayText(shift.venueId || "")}">${displayText(shift.venueName || "Venue")} · ${displayText(new Date(shift.startsAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}</option>`).join("")}
-                    </select>
-                  </label>
-                  <label>
-                    Connect a venue
-                    <select id="approvedProfileVideoVenue">
-                      <option value="">No venue attached</option>
-                      ${venues.map((venue) => `<option value="${displayText(venue.id)}">${displayText(venue.name)}</option>`).join("")}
-                    </select>
-                    <small>A venue-only tag must be confirmed by that venue.</small>
-                  </label>
+                  <div class="approved-profile-video-schedule-note">
+                    <strong>Venue context is automatic</strong>
+                    <small>MyDancr TV uses your verified Working Now shift first, then your next posted shift. If neither exists, the video shows no venue.</small>
+                  </div>
                   <label class="approved-profile-video-check">
                     <input id="approvedProfileVideoConsent" type="checkbox" required>
                     <span>I have permission from every identifiable person shown.</span>
@@ -44518,8 +44508,6 @@
         throw new Error("Confirm consent and content rights before uploading.");
       }
       const metadata = await readApprovedProfileVideoMetadata(file);
-      const shiftId = form.querySelector("#approvedProfileVideoShift")?.value || null;
-      const venueId = shiftId ? null : form.querySelector("#approvedProfileVideoVenue")?.value || null;
       let preparedVideoId = "";
       let submissionStarted = false;
       try {
@@ -44532,8 +44520,6 @@
             durationSeconds: metadata.duration,
             width: metadata.width,
             height: metadata.height,
-            shiftId,
-            venueId,
             consentConfirmed,
             rightsConfirmed
           })
@@ -56618,14 +56604,6 @@
     });
 
     dancerDashboard.addEventListener("change", (event) => {
-      if (event.target?.id === "approvedProfileVideoShift") {
-        const venue = document.getElementById("approvedProfileVideoVenue");
-        if (venue) {
-          if (event.target.value) venue.value = "";
-          venue.disabled = Boolean(event.target.value);
-        }
-        return;
-      }
       if (event.target.closest("#shiftDate, #shiftStart, #shiftEnd")) {
         renderShiftDisplayPreview();
         return;

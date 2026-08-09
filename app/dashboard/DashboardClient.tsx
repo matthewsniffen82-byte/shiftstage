@@ -1711,7 +1711,7 @@ function VenuePanel({
       </VenueDashboardSection>
 
       <VenueDashboardSection
-        description="Confirm venue tags, feature approved videos on your venue page, and review TV engagement."
+        description="Review engagement for approved videos automatically connected by verified current shifts and posted upcoming shifts."
         eyebrow="Video"
         id="venue-tv"
         title="MyDancr TV"

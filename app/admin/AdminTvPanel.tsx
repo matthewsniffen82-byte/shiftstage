@@ -9,7 +9,6 @@ type AdminTvVideo = {
   id: string;
   videoUrl: string;
   status: string;
-  venueTagStatus: string;
   reviewNotes?: string | null;
   moderationDecision?: string | null;
   moderationReasonCodes?: string[];
@@ -23,8 +22,6 @@ type AdminTvVideo = {
   submittedAt?: string | null;
   publishedAt?: string | null;
   dancer?: { id: string; stageName: string; slug: string; city: string } | null;
-  venue?: { id: string; name: string; slug: string } | null;
-  shift?: { id: string; startsAt: string; endsAt: string } | null;
 };
 
 export default function AdminTvPanel() {
@@ -147,8 +144,7 @@ export default function AdminTvPanel() {
               <h3>{video.dancer?.stageName || "Dancer"}</h3>
               <small>
                 {video.dancer?.city || "City unavailable"}
-                {video.venue ? ` · ${video.venue.name}` : " · No venue attached"}
-                {video.shift ? ` · ${formatDate(video.shift.startsAt)}` : ""}
+                {" · Venue context is assigned from the live schedule"}
               </small>
               {video.moderationDecision ? (
                 <div className={`admin-tv-ai-decision decision-${video.moderationDecision}`}>
@@ -171,7 +167,6 @@ export default function AdminTvPanel() {
                 </div>
               ) : null}
               {video.dancer ? <Link href={`/dancers/${video.dancer.slug}`}>Open dancer profile</Link> : null}
-              {video.venue ? <Link href={`/venues/${video.venue.slug}`}>Open venue page</Link> : null}
               {video.status === "submitted" ? (
                 <>
                   <label>
@@ -225,15 +220,6 @@ function readToken() {
   } catch {
     return "";
   }
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
 }
 
 function readableReason(value: string) {

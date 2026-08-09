@@ -60,7 +60,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 
 const IDENTITY_PROFILE_FIELDS = ", venue_approved_at";
 const PUBLIC_TV_SELECT =
-  `id, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, distribution_scope, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at)`;
+  `id, storage_path, duration_seconds, width, height, published_at, expires_at, distribution_scope, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -85,7 +85,6 @@ export type MyDancrTvVideo = {
   height: number;
   publishedAt: string;
   expiresAt: string | null;
-  venueFeatured: boolean;
   distributionScope: "profile_and_feed" | "feed_only";
   dancer: {
     id: string;
@@ -203,6 +202,10 @@ export async function getPublicMyDancrTvFeed(
     !venueId && options.preferredVenueId && UUID_PATTERN.test(options.preferredVenueId)
       ? options.preferredVenueId
       : "";
+  const preferredVenueScope = preferredVenueId
+    ? await getPublicTvVenueScope(admin, preferredVenueId, now.getTime())
+    : null;
+  const preferredVenueDancerIds = preferredVenueScope?.dancerIds || [];
   const query = publicTvRowsQuery(admin, {
     nowIso,
     city,
@@ -210,12 +213,14 @@ export async function getPublicMyDancrTvFeed(
     dancerIds: options.dancerId ? undefined : venueDancerIds,
     limit: queryLimit,
   });
-  const preferredVenueQuery = preferredVenueId
+  const preferredVenueQuery = preferredVenueId &&
+    preferredVenueDancerIds.length &&
+    (!options.dancerId || preferredVenueDancerIds.includes(options.dancerId))
     ? publicTvRowsQuery(admin, {
         nowIso,
         city,
         dancerId: options.dancerId,
-        venueId: preferredVenueId,
+        dancerIds: options.dancerId ? undefined : preferredVenueDancerIds,
         limit: queryLimit,
       })
     : Promise.resolve({ data: [], error: null });
@@ -261,7 +266,6 @@ export async function getPublicMyDancrTvFeed(
   );
   let rows = normalizedRows
     .map((row) => applyPublicTvShiftContext(row, shiftContexts))
-    .map((row) => applyPublicTvVenueScope(row, venueScope))
     .filter((row) => !city || tvCitiesMatch(row.dancer.city, city))
     .filter((row) => {
       if (venueId && row.venue?.id !== venueId) return false;
@@ -278,14 +282,11 @@ export async function getPublicMyDancrTvFeed(
   const selectedRowWithShift = selectedRowCandidate
     ? applyPublicTvShiftContext(selectedRowCandidate, shiftContexts)
     : null;
-  const selectedRowWithVenue = selectedRowWithShift
-    ? applyPublicTvVenueScope(selectedRowWithShift, venueScope)
-    : null;
-  const selectedRow = selectedRowWithVenue &&
-    (!city || tvCitiesMatch(selectedRowWithVenue.dancer.city, city)) &&
-    (!venueId || venueDancerIds.includes(selectedRowWithVenue.dancer.id)) &&
-    (!venueId || selectedRowWithVenue.venue?.id === venueId)
-    ? selectedRowWithVenue
+  const selectedRow = selectedRowWithShift &&
+    (!city || tvCitiesMatch(selectedRowWithShift.dancer.city, city)) &&
+    (!venueId || venueDancerIds.includes(selectedRowWithShift.dancer.id)) &&
+    (!venueId || selectedRowWithShift.venue?.id === venueId)
+    ? selectedRowWithShift
     : null;
   if (selectedRow && !rows.some((row) => row.id === selectedRow.id)) {
     rows.unshift(selectedRow);
@@ -342,7 +343,6 @@ function publicTvRowsQuery(
     city: string;
     dancerId?: string;
     dancerIds?: string[];
-    venueId?: string;
     limit: number;
   },
 ) {
@@ -364,11 +364,6 @@ function publicTvRowsQuery(
   } else if (options.dancerIds?.length) {
     query = query.in("dancer_id", options.dancerIds);
   }
-  if (options.venueId) {
-    query = query
-      .eq("venue_id", options.venueId)
-      .eq("venue_tag_status", "confirmed");
-  }
   return query;
 }
 
@@ -385,25 +380,10 @@ type NormalizedFeedRow = Omit<MyDancrTvVideo, "videoUrl"> & {
   dancerPhotoPath: string | null;
 };
 
-function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
+function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
   if (!row) return null;
   const dancer = one(row.dancer_profiles);
-  const venue = one(row.venues);
-  const shift = one(row.shifts);
   if (!dancer || !isPublicDancerProfileEligible(dancer)) return null;
-
-  const start = shift?.starts_at ? new Date(shift.starts_at).getTime() : Number.NaN;
-  const end = shift?.ends_at ? new Date(shift.ends_at).getTime() : Number.NaN;
-  const venueConfirmed = row.venue_tag_status === "confirmed" && venue?.is_active !== false;
-  const shiftIsActive = isConfirmedActiveTvShift(shift, now);
-  const shiftIsUpcoming =
-    shift?.status === "posted" &&
-    !shift.checked_out_at &&
-    Number.isFinite(start) &&
-    Number.isFinite(end) &&
-    start > now &&
-    end >= now;
-  const hasPublicShift = venueConfirmed && shift && (shiftIsActive || shiftIsUpcoming);
 
   return {
     id: row.id,
@@ -413,7 +393,6 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
     height: Number(row.height || 0),
     publishedAt: row.published_at,
     expiresAt: row.expires_at || null,
-    venueFeatured: row.venue_featured === true,
     distributionScope: row.distribution_scope === "feed_only" ? "feed_only" : "profile_and_feed",
     dancerPhotoPath: null,
     dancer: {
@@ -428,25 +407,8 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
       avatarPhotoFocalX: 50,
       avatarPhotoFocalY: 50,
     },
-    venue: venueConfirmed && venue
-      ? {
-          id: venue.id,
-          slug: venue.slug,
-          name: venue.name,
-          city: venue.city,
-        }
-      : null,
-    shift: hasPublicShift
-      ? {
-          id: shift.id,
-          startsAt: shift.starts_at,
-          endsAt: shift.ends_at,
-          timezone: shift.timezone || "UTC",
-          status: shift.status,
-          isActive: shiftIsActive,
-          isStartingSoon: Number.isFinite(start) && start > now && start <= now + 2 * 60 * 60 * 1000,
-        }
-      : null,
+    venue: null,
+    shift: null,
     deal: null,
     deals: [],
     dealAttributionToken: null,
@@ -457,9 +419,7 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
 type PublicTvShiftContext = Pick<NormalizedFeedRow, "venue" | "shift">;
 
 type PublicTvVenueScope = {
-  venue: NonNullable<MyDancrTvVideo["venue"]> | null;
   dancerIds: string[];
-  affiliatedDancerIds: Set<string>;
 };
 
 async function getPublicTvVenueScope(
@@ -467,35 +427,20 @@ async function getPublicTvVenueScope(
   venueId: string,
   now: number,
 ): Promise<PublicTvVenueScope> {
-  const [venue, affiliationResult, shiftResult] = await Promise.all([
-    getPublicMyDancrTvVenue(admin, venueId),
-    admin
-      .from("venue_dancer_affiliations")
-      .select("dancer_id")
-      .eq("venue_id", venueId)
-      .eq("status", "active")
-      .limit(240),
-    admin
-      .from("shifts")
-      .select(
-        "dancer_id, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, is_active)",
-      )
-      .eq("venue_id", venueId)
-      .eq("status", "posted")
-      .eq("venues.is_active", true)
-      .is("checked_out_at", null)
-      .gte("ends_at", new Date(now).toISOString())
-      .order("starts_at", { ascending: true })
-      .limit(240),
-  ]);
+  const shiftResult = await admin
+    .from("shifts")
+    .select(
+      "dancer_id, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, is_active)",
+    )
+    .eq("venue_id", venueId)
+    .eq("status", "posted")
+    .eq("venues.is_active", true)
+    .is("checked_out_at", null)
+    .gte("ends_at", new Date(now).toISOString())
+    .order("starts_at", { ascending: true })
+    .limit(240);
 
-  if (affiliationResult.error) throw affiliationResult.error;
   if (shiftResult.error) throw shiftResult.error;
-  if (!venue) return { venue: null, dancerIds: [], affiliatedDancerIds: new Set() };
-
-  const affiliatedDancerIds = new Set(
-    (affiliationResult.data || []).map((row) => String(row.dancer_id || "")).filter(Boolean),
-  );
   const shiftDancerIds = (shiftResult.data || []).flatMap((shift) => {
     const start = new Date(shift.starts_at).getTime();
     const end = new Date(shift.ends_at).getTime();
@@ -503,11 +448,13 @@ async function getPublicTvVenueScope(
     const upcoming = Number.isFinite(start) && start > now && Number.isFinite(end) && end >= now;
     return active || upcoming ? [String(shift.dancer_id || "")] : [];
   }).filter(Boolean);
+  const candidateDancerIds = [...new Set(shiftDancerIds)];
+  const resolvedContexts = await getPublicTvShiftContexts(admin, candidateDancerIds, now);
 
   return {
-    venue,
-    dancerIds: [...new Set([...affiliatedDancerIds, ...shiftDancerIds])],
-    affiliatedDancerIds,
+    dancerIds: candidateDancerIds.filter(
+      (dancerId) => resolvedContexts.get(dancerId)?.venue?.id === venueId,
+    ),
   };
 }
 
@@ -578,20 +525,9 @@ function applyPublicTvShiftContext(
   contexts: Map<string, PublicTvShiftContext>,
 ): NormalizedFeedRow {
   const context = contexts.get(row.dancer.id);
-  return context ? { ...row, venue: context.venue, shift: context.shift } : row;
-}
-
-function applyPublicTvVenueScope(
-  row: NormalizedFeedRow,
-  scope: PublicTvVenueScope | null,
-): NormalizedFeedRow {
-  if (!scope?.venue || !scope.affiliatedDancerIds.has(row.dancer.id)) return row;
-  const hasScopedShift = row.venue?.id === scope.venue.id && Boolean(row.shift);
-  return {
-    ...row,
-    venue: scope.venue,
-    shift: hasScopedShift ? row.shift : null,
-  };
+  return context
+    ? { ...row, venue: context.venue, shift: context.shift }
+    : { ...row, venue: null, shift: null };
 }
 
 function isConfirmedActiveTvShift(shift: any, now: number) {
@@ -717,32 +653,14 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
   if (dancerError) throw dancerError;
   if (!dancer) throw new Error("Dancer profile required.");
 
-  const [{ data: videos, error: videoError }, { data: shifts, error: shiftError }, { data: venues, error: venueError }] =
-    await Promise.all([
-      admin
-        .from("mydancr_tv_videos")
-        .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, venue_tag_status, venue_featured, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
-        .eq("dancer_id", dancer.id)
-        .eq("distribution_scope", "profile_and_feed")
-        .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
-        .order("created_at", { ascending: false }),
-      admin
-        .from("shifts")
-        .select("id, venue_id, starts_at, ends_at, status, location_status, venues(id, name, slug)")
-        .eq("dancer_id", dancer.id)
-        .eq("status", "posted")
-        .gte("ends_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        .order("starts_at", { ascending: true }),
-      admin
-        .from("venues")
-        .select("id, name, slug, city")
-        .eq("is_active", true)
-        .ilike("city", dancer.city)
-        .order("name", { ascending: true }),
-    ]);
+  const { data: videos, error: videoError } = await admin
+    .from("mydancr_tv_videos")
+    .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at")
+    .eq("dancer_id", dancer.id)
+    .eq("distribution_scope", "profile_and_feed")
+    .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
+    .order("created_at", { ascending: false });
   if (videoError) throw videoError;
-  if (shiftError) throw shiftError;
-  if (venueError) throw venueError;
 
   const videoIds = (videos || []).map((video: any) => video.id);
   const metrics = await getVideoMetrics(admin, videoIds);
@@ -765,17 +683,6 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
     maxVideos: MYDANCR_TV_PROFILE_VIDEO_LIMIT,
     remainingVideoSlots: Math.max(0, MYDANCR_TV_PROFILE_VIDEO_LIMIT - signedVideos.length),
     videos: signedVideos,
-    shifts: (shifts || []).map((shift: any) => ({
-      id: shift.id,
-      venueId: shift.venue_id,
-      venueName: one(shift.venues)?.name || "Venue",
-      startsAt: shift.starts_at,
-      endsAt: shift.ends_at,
-      venueTagConfirmed:
-        shift.location_status === "location_confirmed" ||
-        shift.location_status === "club_confirmed",
-    })),
-    venues: venues || [],
   };
 }
 
@@ -788,8 +695,6 @@ export async function createMyDancrTvUpload(
     durationSeconds: number;
     width: number;
     height: number;
-    shiftId?: string | null;
-    venueId?: string | null;
     consentConfirmed: boolean;
     rightsConfirmed: boolean;
     distributionScope?: "profile_and_feed" | "feed_only";
@@ -848,8 +753,10 @@ export async function createMyDancrTvUpload(
       id: videoId,
       dancer_id: dancer.id,
       submitted_by: userId,
-      venue_id: input.venueId || null,
-      shift_id: input.shiftId || null,
+      venue_id: null,
+      shift_id: null,
+      venue_tag_status: "unlinked",
+      venue_featured: false,
       caption: videoId,
       storage_path: storagePath,
       storage_mime: input.mimeType,
@@ -889,7 +796,7 @@ export async function publishPlatformMyDancrTvUpload(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, shift_id, distribution_scope, review_notes, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
@@ -933,7 +840,7 @@ export async function publishPlatformMyDancrTvUpload(
   });
 
   const publishedAt = new Date().toISOString();
-  const expiresAt = myDancrTvExpiry(one(video.shifts)?.ends_at);
+  const expiresAt = myDancrTvExpiry();
   const { data: published, error: updateError } = await admin
     .from("mydancr_tv_videos")
     .update({
@@ -972,7 +879,7 @@ export async function publishPlatformMyDancrTvUpload(
 export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, shift_id, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -1019,7 +926,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
     })
     .eq("id", video.id)
     .eq("status", "uploading")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
   if (updateError) throw updateError;
   console.info(JSON.stringify({
@@ -1038,7 +945,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
 export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, moderation_attempt_count, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, moderation_attempt_count, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "moderating")
     .maybeSingle();
@@ -1054,7 +961,7 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
     })
     .eq("id", video.id)
     .eq("status", "moderating")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) return null;
@@ -1076,7 +983,7 @@ export async function autoApprovePendingMyDancrTvDemoVideo(
   if (!isVideoDemoAutoApproveMode()) return null;
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "submitted")
     .maybeSingle();
@@ -1093,7 +1000,7 @@ export async function autoApprovePendingMyDancrTvDemoVideo(
     })
     .eq("id", video.id)
     .eq("status", "submitted")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) return null;
@@ -1143,7 +1050,7 @@ async function autoApproveMyDancrTvDemoUpload(
     .update(demoVideoAutoApprovalValues({
       submittedAt,
       completedAt,
-      expiresAt: myDancrTvExpiry(one(video.shifts)?.ends_at),
+      expiresAt: myDancrTvExpiry(),
       watermarkApplied,
     }))
     .eq("id", video.id)
@@ -1219,7 +1126,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     }
   }
   const completedAt = new Date().toISOString();
-  const expiresAt = myDancrTvExpiry(one(video.shifts)?.ends_at);
+  const expiresAt = myDancrTvExpiry();
   const update = {
     moderation_decision: decision,
     moderation_reason_codes: reasonCodes,
@@ -1277,11 +1184,8 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   return data;
 }
 
-function myDancrTvExpiry(shiftEndsAt?: string | null) {
-  const shiftExpiry = shiftEndsAt ? new Date(shiftEndsAt).getTime() + 24 * 60 * 60 * 1000 : 0;
-  return shiftExpiry > Date.now()
-    ? new Date(shiftExpiry).toISOString()
-    : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+function myDancrTvExpiry() {
+  return new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
 }
 
 function videoModerationErrorCode(error: unknown) {
@@ -1324,7 +1228,7 @@ export async function getAdminMyDancrTvVideos(admin: AdminClient, status = "subm
   const normalized = allowedStatuses.has(status) ? status : "submitted";
   let query = admin
     .from("mydancr_tv_videos")
-    .select("id, caption, storage_path, duration_seconds, width, height, status, venue_tag_status, venue_featured, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_category_scores, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, dancer_profiles(id, stage_name, slug, city, status, is_public), venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
+    .select("id, caption, storage_path, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_category_scores, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, dancer_profiles(id, stage_name, slug, city, status, is_public)")
     .order("submitted_at", { ascending: true, nullsFirst: false })
     .limit(100);
   if (normalized !== "all") query = query.eq("status", normalized);
@@ -1350,7 +1254,7 @@ export async function reviewMyDancrTvVideo(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, status, shift_id, storage_path, storage_mime, duration_seconds, width, height, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, status, storage_path, storage_mime, duration_seconds, width, height, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
@@ -1377,8 +1281,7 @@ export async function reviewMyDancrTvVideo(
   }
 
   const reviewedAt = new Date().toISOString();
-  const shift = one(video.shifts);
-  const expiresAt = myDancrTvExpiry(shift?.ends_at);
+  const expiresAt = myDancrTvExpiry();
   const update = decision === "approved"
     ? {
         status: "approved",
@@ -1414,78 +1317,31 @@ export async function reviewMyDancrTvVideo(
 export async function getVenueMyDancrTvVideos(admin: AdminClient, ownerUserId: string) {
   const { data: venue, error: venueError } = await admin
     .from("venues")
-    .select("id, name, slug")
+    .select("id, name, slug, city")
     .eq("owner_user_id", ownerUserId)
     .maybeSingle();
   if (venueError) throw venueError;
   if (!venue) throw new Error("Venue profile required.");
 
-  const { data: videos, error } = await admin
-    .from("mydancr_tv_videos")
-    .select("id, caption, storage_path, status, venue_tag_status, venue_featured, published_at, created_at, dancer_profiles(id, stage_name, slug), shifts(id, starts_at, ends_at)")
-    .eq("venue_id", venue.id)
-    .not("status", "eq", "hidden")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  const ids = (videos || []).map((video: any) => video.id);
+  const videos = await getPublicMyDancrTvFeed(admin, {
+    city: venue.city,
+    venueId: venue.id,
+    limit: 24,
+  });
+  const ids = videos.map((video) => video.id);
   const metrics = await getVideoMetrics(admin, ids);
 
   return {
     venue,
-    videos: await Promise.all(
-      (videos || []).map(async (video: any) => {
-        const { data: signed } = await admin.storage
-          .from(MYDANCR_TV_BUCKET)
-          .createSignedUrl(video.storage_path, MYDANCR_TV_SIGNED_URL_SECONDS);
-        return mapManagedVideo(video, signed?.signedUrl || "", metrics[video.id] || emptyMetrics());
-      }),
-    ),
+    videos: videos.map((video) => ({
+      id: video.id,
+      videoUrl: video.videoUrl,
+      status: "approved",
+      dancer: video.dancer,
+      shift: video.shift,
+      metrics: metrics[video.id] || emptyMetrics(),
+    })),
   };
-}
-
-export async function updateVenueMyDancrTvVideo(
-  admin: AdminClient,
-  ownerUserId: string,
-  videoId: string,
-  input: { tagStatus?: "confirmed" | "rejected"; featured?: boolean },
-) {
-  const { data: venue, error: venueError } = await admin
-    .from("venues")
-    .select("id")
-    .eq("owner_user_id", ownerUserId)
-    .maybeSingle();
-  if (venueError) throw venueError;
-  if (!venue) throw new Error("Venue profile required.");
-
-  const { data: current, error } = await admin
-    .from("mydancr_tv_videos")
-    .select("id, venue_id, status, venue_tag_status")
-    .eq("id", videoId)
-    .eq("venue_id", venue.id)
-    .maybeSingle();
-  if (error) throw error;
-  if (!current) throw new Error("Tagged video not found.");
-
-  const update: Record<string, unknown> = {};
-  if (input.tagStatus) update.venue_tag_status = input.tagStatus;
-  if (typeof input.featured === "boolean") {
-    if (input.featured && (current.status !== "approved" || (input.tagStatus || current.venue_tag_status) !== "confirmed")) {
-      throw new Error("Only approved, confirmed venue videos can be featured.");
-    }
-    update.venue_featured = input.featured;
-  }
-  if (!Object.keys(update).length) throw new Error("Choose a venue video action.");
-
-  const { data, error: updateError } = await admin
-    .from("mydancr_tv_videos")
-    .update(update)
-    .eq("id", videoId)
-    .eq("venue_id", venue.id)
-    .select("id, status, venue_tag_status, venue_featured")
-    .single();
-  if (updateError) throw updateError;
-  console.info(JSON.stringify({ event: "mydancr_tv.venue_update", videoId, ownerUserId, ...update }));
-  return data;
 }
 
 export async function recordMyDancrTvEvent(
@@ -1558,8 +1414,6 @@ async function getVideoMetrics(admin: AdminClient, videoIds: string[]) {
 
 function mapManagedVideo(video: any, videoUrl: string, metrics: Record<string, number>) {
   const dancer = one(video.dancer_profiles);
-  const venue = one(video.venues);
-  const shift = one(video.shifts);
   return {
     id: video.id,
     caption: video.caption,
@@ -1568,8 +1422,6 @@ function mapManagedVideo(video: any, videoUrl: string, metrics: Record<string, n
     width: Number(video.width || 0),
     height: Number(video.height || 0),
     status: video.status,
-    venueTagStatus: video.venue_tag_status,
-    venueFeatured: video.venue_featured === true,
     distributionScope: video.distribution_scope === "feed_only" ? "feed_only" : "profile_and_feed",
     reviewNotes: video.review_notes || null,
     moderationDecision: video.moderation_decision || null,
@@ -1590,8 +1442,6 @@ function mapManagedVideo(video: any, videoUrl: string, metrics: Record<string, n
     dancer: dancer
       ? { id: dancer.id, stageName: dancer.stage_name, slug: dancer.slug, city: dancer.city }
       : null,
-    venue: venue ? { id: venue.id, name: venue.name, slug: venue.slug } : null,
-    shift: shift ? { id: shift.id, startsAt: shift.starts_at, endsAt: shift.ends_at, status: shift.status } : null,
     metrics,
   };
 }

@@ -9,10 +9,8 @@ type VenueTvVideo = {
   id: string;
   videoUrl: string;
   status: string;
-  venueTagStatus: string;
-  venueFeatured: boolean;
   dancer?: { id: string; stageName: string; slug: string } | null;
-  shift?: { id: string; startsAt: string; endsAt: string } | null;
+  shift?: { id: string; startsAt: string; endsAt: string; isActive: boolean } | null;
   metrics?: Record<string, number>;
 };
 
@@ -20,7 +18,6 @@ export default function VenueTvPanel() {
   const [videos, setVideos] = useState<VenueTvVideo[]>([]);
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [workingId, setWorkingId] = useState("");
 
   useEffect(() => {
     loadVideos();
@@ -48,88 +45,38 @@ export default function VenueTvPanel() {
     }
   }
 
-  async function updateVideo(
-    video: VenueTvVideo,
-    input: { tagStatus?: "confirmed" | "rejected"; featured?: boolean },
-  ) {
-    const action = input.tagStatus === "rejected"
-      ? "reject this venue tag"
-      : input.tagStatus === "confirmed"
-        ? "confirm this venue tag"
-        : input.featured
-          ? "feature this video on your venue page"
-          : "remove this video from the featured position";
-    if (!window.confirm(`Are you sure you want to ${action}?`)) return;
-    const token = readToken();
-    if (!token) return setStatus("Venue sign in required.");
-    setWorkingId(video.id);
-    setStatus("Saving venue video update…");
-    try {
-      const response = await fetch("/api/venue/tv/videos", {
-        method: "PATCH",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ videoId: video.id, ...input }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update venue video.");
-      setVideos((current) => current.map((item) => item.id === video.id
-        ? {
-            ...item,
-            venueTagStatus: data.video.venue_tag_status,
-            venueFeatured: data.video.venue_featured,
-          }
-        : item));
-      setStatus(data.message || "Venue video updated.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to update venue video.");
-    } finally {
-      setWorkingId("");
-    }
-  }
-
   return (
     <article className="info-panel venue-tv-panel">
       <VenueTvPanelStyles />
       <div className="venue-tv-title">
         <div>
           <h2>MyDancr TV</h2>
-          <p>Confirm venue tags, feature approved videos, and measure customer interest.</p>
+          <p>Approved videos appear automatically from verified current shifts and posted upcoming shifts.</p>
         </div>
         <Link href="/tv">Watch TV</Link>
       </div>
-      {isLoading ? <p>Loading tagged videos…</p> : null}
+      {isLoading ? <p>Loading schedule-connected videos…</p> : null}
       {status ? <div className="venue-tv-status" role="status">{status}</div> : null}
       <div className="venue-tv-list">
         {videos.map((video) => (
           <article className="venue-tv-video" key={video.id}>
             {video.videoUrl ? <video controls playsInline preload="metadata" src={video.videoUrl} /> : null}
             <div>
-              <span>{video.status} · venue tag {video.venueTagStatus}</span>
+              <span>{video.shift?.isActive ? "Working Now" : "Upcoming shift"}</span>
               <strong>{video.dancer?.stageName || "Dancer"}</strong>
-              {video.shift ? <small>Posted shift · {formatDate(video.shift.startsAt)}</small> : null}
+              {video.shift ? <small>{video.shift.isActive ? "Verified current shift" : `Posted shift · ${formatDate(video.shift.startsAt)}`}</small> : null}
               <dl>
                 <div><dt>Engaged views</dt><dd>{video.metrics?.engaged_view || 0}</dd></div>
                 <div><dt>Venue visits</dt><dd>{video.metrics?.venue_click || 0}</dd></div>
                 <div><dt>Going</dt><dd>{video.metrics?.going || 0}</dd></div>
               </dl>
               <div className="venue-tv-actions">
-                {video.venueTagStatus === "pending" ? (
-                  <>
-                    <button type="button" disabled={workingId === video.id} onClick={() => updateVideo(video, { tagStatus: "confirmed" })}>Confirm tag</button>
-                    <button className="reject" type="button" disabled={workingId === video.id} onClick={() => updateVideo(video, { tagStatus: "rejected" })}>Reject tag</button>
-                  </>
-                ) : null}
-                {video.status === "approved" && video.venueTagStatus === "confirmed" ? (
-                  <button type="button" disabled={workingId === video.id} onClick={() => updateVideo(video, { featured: !video.venueFeatured })}>
-                    {video.venueFeatured ? "Remove featured" : "Feature on venue page"}
-                  </button>
-                ) : null}
                 {video.status === "approved" ? <Link href={`/tv/${video.id}`}>Open live</Link> : null}
               </div>
             </div>
           </article>
         ))}
-        {!isLoading && !videos.length ? <p>No videos are currently connected to this venue.</p> : null}
+        {!isLoading && !videos.length ? <p>No approved videos currently match a verified current shift or posted upcoming shift at this venue.</p> : null}
       </div>
     </article>
   );
@@ -175,8 +122,6 @@ function VenueTvPanelStyles() {
       .venue-tv-video dt { color: #9f94b3; font-size: 10px; }
       .venue-tv-video dd { margin: 2px 0 0; font-weight: 950; }
       .venue-tv-actions { display: flex; flex-wrap: wrap; gap: 7px; }
-      .venue-tv-actions button { min-height: 38px; padding: 0 11px; border: 1px solid rgba(58,255,164,.3); border-radius: 8px; color: #85ffc1; background: rgba(58,255,164,.07); font-weight: 900; cursor: pointer; }
-      .venue-tv-actions button.reject { color: #ffb5c1; border-color: rgba(255,91,116,.3); background: rgba(255,91,116,.07); }
       @media (max-width: 620px) {
         .venue-tv-title { align-items: start; flex-direction: column; }
         .venue-tv-video { grid-template-columns: 96px minmax(0, 1fr); padding: 7px; }

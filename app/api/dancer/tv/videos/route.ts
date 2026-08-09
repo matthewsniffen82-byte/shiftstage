@@ -24,16 +24,12 @@ export async function POST(request: Request) {
   try {
     const { user } = await createRequestSupabaseContext(request);
     const body = await request.json();
-    const shiftId = cleanOptionalUuid(body?.shiftId, "shift");
-    const venueId = cleanOptionalUuid(body?.venueId, "venue");
     const upload = await createMyDancrTvUpload(createAdminSupabaseClient(), user.id, {
       mimeType: typeof body?.mimeType === "string" ? body.mimeType : "",
       fileSize: Number(body?.fileSize),
       durationSeconds: Number(body?.durationSeconds),
       width: Number(body?.width),
       height: Number(body?.height),
-      shiftId,
-      venueId,
       consentConfirmed: body?.consentConfirmed === true,
       rightsConfirmed: body?.rightsConfirmed === true,
     });
@@ -42,14 +38,3 @@ export async function POST(request: Request) {
     return apiError(error, "Unable to prepare your MyDancr TV upload.", 400);
   }
 }
-
-function cleanOptionalUuid(value: unknown, label: string) {
-  if (value === null || value === undefined || value === "") return null;
-  if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
-    throw new Error(`Invalid ${label} selection.`);
-  }
-  return value;
-}
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

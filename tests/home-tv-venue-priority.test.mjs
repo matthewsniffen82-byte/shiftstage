@@ -53,19 +53,16 @@ test("homepage and full-page TV carry the exact club filter through launch, coun
   assert.match(tvClientSource, /className="tv-venue-clear" href=\{allVenueTvHref\}>All venues/);
 });
 
-test("club TV scope includes active affiliations and confirmed or upcoming posted shifts", () => {
-  assert.match(
-    tvSource,
-    /function getPublicTvVenueScope[\s\S]*?from\("venue_dancer_affiliations"\)[\s\S]*?eq\("venue_id", venueId\)[\s\S]*?eq\("status", "active"\)/,
-  );
+test("club TV scope includes only confirmed current or posted upcoming shifts", () => {
+  assert.doesNotMatch(tvSource, /function getPublicTvVenueScope[\s\S]*?from\("venue_dancer_affiliations"\)/);
   assert.match(
     tvSource,
     /from\("shifts"\)[\s\S]*?eq\("venue_id", venueId\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?gte\("ends_at"/,
   );
   assert.match(tvSource, /const active = isConfirmedActiveTvShift\(shift, now\);[\s\S]*?const upcoming = [\s\S]*?active \|\| upcoming/);
-  assert.match(tvSource, /dancerIds: \[\.\.\.new Set\(\[\.\.\.affiliatedDancerIds, \.\.\.shiftDancerIds\]\)\]/);
-  assert.match(tvSource, /if \(!scope\?\.venue \|\| !scope\.affiliatedDancerIds\.has\(row\.dancer\.id\)\) return row;[\s\S]*?venue: scope\.venue[\s\S]*?shift: hasScopedShift \? row\.shift : null/);
-  assert.match(tvSource, /!venueId \|\| venueDancerIds\.includes\(selectedRowWithVenue\.dancer\.id\)/);
+  assert.match(tvSource, /const candidateDancerIds = \[\.\.\.new Set\(shiftDancerIds\)\][\s\S]*?getPublicTvShiftContexts\(admin, candidateDancerIds, now\)[\s\S]*?resolvedContexts\.get\(dancerId\)\?\.venue\?\.id === venueId/);
+  assert.match(tvSource, /function applyPublicTvShiftContext[\s\S]*?context[\s\S]*?venue: null, shift: null/);
+  assert.match(tvSource, /!venueId \|\| venueDancerIds\.includes\(selectedRowWithShift\.dancer\.id\)/);
 });
 
 test("the all-venues city feed stays unrestricted by club affiliation or schedule", () => {
@@ -92,7 +89,7 @@ test("selected-venue videos lead a bounded block before the rest of the city fee
   assert.match(tvFeedOrderSource, /MYDANCR_TV_PREFERRED_VENUE_LEAD_LIMIT = 6/);
   assert.match(
     tvSource,
-    /const preferredVenueQuery = preferredVenueId[\s\S]*?publicTvRowsQuery\(admin,[\s\S]*?venueId: preferredVenueId[\s\S]*?Promise\.resolve\(\{ data: \[\], error: null \}\)/,
+    /const preferredVenueScope = preferredVenueId[\s\S]*?getPublicTvVenueScope\(admin, preferredVenueId[\s\S]*?const preferredVenueDancerIds = preferredVenueScope\?\.dancerIds[\s\S]*?const preferredVenueQuery = preferredVenueId[\s\S]*?dancerIds: options\.dancerId \? undefined : preferredVenueDancerIds[\s\S]*?Promise\.resolve\(\{ data: \[\], error: null \}\)/,
   );
   assert.match(
     tvSource,

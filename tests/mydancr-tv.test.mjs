@@ -91,7 +91,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(publicRoute, /const requestedCity = \(url\.searchParams\.get\("city"\) \|\| ""\)\.trim\(\)\.slice\(0, 80\)/);
   assert.match(publicRoute, /const city = requestedCity \|\| "Las Vegas"/);
   assert.match(tvSource, /\.filter\(\(row\) => !city \|\| tvCitiesMatch\(row\.dancer\.city, city\)\)/);
-  assert.match(tvSource, /selectedRowWithVenue &&[\s\S]*?\(!city \|\| tvCitiesMatch\(selectedRowWithVenue\.dancer\.city, city\)\)/);
+  assert.match(tvSource, /selectedRowWithShift &&[\s\S]*?\(!city \|\| tvCitiesMatch\(selectedRowWithShift\.dancer\.city, city\)\)/);
   assert.match(feedClient, /For You/);
   assert.match(feedClient, /Following/);
   assert.match(feedClient, /Tonight/);
@@ -213,7 +213,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
     tvSource,
     /function shuffleVideos\(rows: NormalizedFeedRow\[\]\) \{[\s\S]*?for \(let index = shuffled\.length - 1; index > 0; index -= 1\)[\s\S]*?Math\.floor\(Math\.random\(\) \* \(index \+ 1\)\)[\s\S]*?return shuffled/,
   );
-  assert.match(tvSource, /shift\?\.status === "posted"[\s\S]*?!shift\.checked_out_at[\s\S]*?start > now/);
+  assert.match(tvSource, /from\("shifts"\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?is\("checked_out_at", null\)[\s\S]*?const isUpcoming = [\s\S]*?start > now/);
   assert.match(liveApp, /class="controls home-discovery-controls"[\s\S]*?class="field home-city-filter"[\s\S]*?id="homeFilterToggle"[\s\S]*?aria-controls="homeAdvancedFilters"/);
   assert.match(liveApp, /class="home-advanced-filters" id="homeAdvancedFilters"[\s\S]*?id="distanceSelect"[\s\S]*?id="venueSelect"[\s\S]*?id="locationBtn"/);
   assert.match(liveApp, /homeFilterToggle\?\.addEventListener\("click"[\s\S]*?aria-expanded[\s\S]*?classList\.toggle\("is-open"/);
@@ -260,7 +260,7 @@ test("long selected venue names cannot widen the mobile homepage", () => {
   assert.match(liveApp, /#discoveryTabs \{ width: 100%; min-width: 0; max-width: 100%/);
 });
 
-test("administrator and venue controls persist confirmed decisions", () => {
+test("administrator moderation persists decisions and venue TV is schedule-derived analytics", () => {
   assert.match(adminApi, /requireAdmin\(client, user\.id\)/);
   assert.match(adminApi, /reviewMyDancrTvVideo/);
   assert.match(migration, /record_mydancr_tv_review_decision/);
@@ -276,11 +276,23 @@ test("administrator and venue controls persist confirmed decisions", () => {
   assert.match(adminPanel, /pendingCount[\s\S]*?videos\.length[\s\S]*?total/);
   assert.match(adminPanel, /window\.confirm/);
   assert.match(venueApi, /requireActiveVenue/);
-  assert.match(venueApi, /updateVenueMyDancrTvVideo/);
-  assert.match(venuePanel, /Confirm tag/);
-  assert.match(venuePanel, /Feature on venue page/);
+  assert.match(venueApi, /getVenueMyDancrTvVideos/);
+  assert.doesNotMatch(venueApi, /PATCH|updateVenueMyDancrTvVideo/);
+  assert.doesNotMatch(venuePanel, /Confirm tag|Reject tag|Feature on venue page/);
+  assert.match(venuePanel, /verified current shifts and posted upcoming shifts/);
   assert.match(venuePanel, /Engaged views/);
   assert.match(venuePanel, /Venue visits/);
+  assert.match(venuePanel, /Open live/);
+});
+
+test("video publishing never asks for a venue tag and public venue context comes from schedules", () => {
+  assert.doesNotMatch(dancerApi, /shiftId|venueId/);
+  assert.doesNotMatch(dancerStudio, /Connect a posted shift|Connect a venue|shiftId|venueId/);
+  assert.match(dancerStudio, /Venue context is automatic/);
+  assert.match(tvSource, /venue_id: null,[\s\S]*?shift_id: null,[\s\S]*?venue_tag_status: "unlinked"/);
+  assert.doesNotMatch(tvSource, /eq\("venue_tag_status"/);
+  assert.match(tvSource, /const isActive = isConfirmedActiveTvShift\(row, now\);[\s\S]*?const isUpcoming = [\s\S]*?if \(!current \|\| \(!current\.shift\?\.isActive && candidate\.shift\?\.isActive\)\)/);
+  assert.match(tvSource, /context[\s\S]*?venue: null, shift: null/);
 });
 
 test("approved videos appear on full dancer and venue profiles", () => {

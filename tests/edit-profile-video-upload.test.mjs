@@ -25,6 +25,7 @@ test("Edit Profile owns dancer video uploads and the redundant TV dashboard card
 test("Edit Profile video slots use authenticated production storage and moderation APIs", () => {
   assert.match(liveApp, /fetch\("\/api\/dancer\/tv\/videos", \{ headers, cache: "no-store" \}\)/);
   assert.match(liveApp, /method: "POST"[\s\S]*?mimeType: file\.type[\s\S]*?durationSeconds: metadata\.duration/);
+  assert.doesNotMatch(liveApp, /approvedProfileVideoShift|approvedProfileVideoVenue|Connect a posted shift|Connect a venue/);
   assert.match(liveApp, /prepared\.upload\.uploadUrl/);
   assert.match(liveApp, /storageBody\.append\("cacheControl", "3600"\)/);
   assert.match(liveApp, /method: "PUT"[\s\S]*?"x-upsert": "false"/);
