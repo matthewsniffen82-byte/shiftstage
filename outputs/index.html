@@ -37359,6 +37359,7 @@
     let dancersExpanded = false;
     let selectedVenueName = null;
     let venueProfileSavedScrollY = 0;
+    let venueProfileReturnContext = null;
     let isCustomerLoggedIn = false;
     let isDancerLoggedIn = false;
     let isVenueLoggedIn = false;
@@ -37386,6 +37387,7 @@
     let activeSetupStep = "profile";
     let setupChecklistExpanded = false;
     let profileModalReturnTarget = "";
+    let profileModalReturnContext = null;
     let lastPostedShift = null;
     const localPostedShiftStore = new Map();
     let localPostedShiftList = [];
@@ -46751,12 +46753,76 @@
       });
     }
 
+    function profileReturnSurfaceElement(surface) {
+      if (surface === "customer-dashboard") return customerDashboard;
+      if (surface === "dancer-dashboard") return dancerDashboard;
+      if (surface === "venue-dashboard") return venueDashboard;
+      if (surface === "admin-dashboard") return adminDashboard;
+      return null;
+    }
+
+    function activeProfileReturnSurface(explicitSurface = "") {
+      if (profileReturnSurfaceElement(explicitSurface)) return explicitSurface;
+      if (customerDashboard.classList.contains("show")) return "customer-dashboard";
+      if (dancerDashboard.classList.contains("show")) return "dancer-dashboard";
+      if (venueDashboard.classList.contains("show")) return "venue-dashboard";
+      if (adminDashboard.classList.contains("show")) return "admin-dashboard";
+      return "";
+    }
+
+    function captureProfileReturnContext(explicitSurface = "") {
+      const surface = activeProfileReturnSurface(explicitSurface);
+      const panel = profileReturnSurfaceElement(surface);
+      if (!panel) return null;
+      return {
+        surface,
+        panelScrollTop: panel.scrollTop || 0,
+        windowScrollY: window.scrollY || 0,
+        location: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+        focusTarget: document.activeElement instanceof HTMLElement ? document.activeElement : null
+      };
+    }
+
+    function suspendProfileReturnSurface(context) {
+      const panel = profileReturnSurfaceElement(context?.surface);
+      if (!panel) return false;
+      panel.classList.remove("show");
+      panel.setAttribute("aria-hidden", "true");
+      syncOverlayScrollLock();
+      return true;
+    }
+
+    function restoreProfileReturnContext(context) {
+      const panel = profileReturnSurfaceElement(context?.surface);
+      if (!panel) return false;
+      if (context.location) {
+        window.history.replaceState({}, document.title, context.location);
+      }
+      if (context.surface === "customer-dashboard") activeDashboardType = "customer";
+      if (context.surface === "dancer-dashboard") activeDashboardType = "dancer";
+      if (context.surface === "venue-dashboard") activeDashboardType = "venue";
+      panel.classList.add("show");
+      panel.setAttribute("aria-hidden", "false");
+      if (context.surface === "dancer-dashboard") startDancerVenueApprovalPolling();
+      updateAccountHeader();
+      syncOverlayScrollLock();
+      requestAnimationFrame(() => {
+        panel.scrollTop = context.panelScrollTop || 0;
+        window.scrollTo({ top: context.windowScrollY || 0, left: 0, behavior: "auto" });
+        if (context.focusTarget?.isConnected) {
+          context.focusTarget.focus({ preventScroll: true });
+        }
+      });
+      return true;
+    }
+
     function openProfileModal(profileReference, options = {}) {
       const city = citySelect.value;
       const isPrivatePreview = Boolean(options.preview);
-      profileModalReturnTarget = options.returnTo || "";
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
+      profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
+      profileModalReturnTarget = profileModalReturnContext?.surface || "";
       const profileName = profile.name;
       const baseProfile = markets[city].dancers.find((item) => (
         !item.hidden && (
@@ -47273,24 +47339,17 @@
           console.warn("Profile overlay cleanup failed", error);
         }
       });
-      const returnTarget = profileModalReturnTarget;
+      const returnContext = profileModalReturnContext || captureProfileReturnContext(profileModalReturnTarget);
       profileModalReturnTarget = "";
+      profileModalReturnContext = null;
       profileBackdrop.classList.remove("show");
       profileBackdrop.setAttribute("aria-hidden", "true");
-      if (returnTarget === "dancer-dashboard") {
-        activeDashboardType = "dancer";
-        isCustomerLoggedIn = false;
-        isDancerLoggedIn = true;
-        isVenueLoggedIn = false;
-        updateAccountHeader();
-        renderDancerSetup();
-        renderAccountControls();
-        dancerDashboard.classList.add("show");
-        dancerDashboard.setAttribute("aria-hidden", "false");
-      }
-      syncOverlayScrollLock();
       clearProfileDeepLink();
-      if (returnTarget !== "dancer-dashboard") window.scrollTo(0, savedScrollY);
+      const restoredReturnContext = restoreProfileReturnContext(returnContext);
+      if (!restoredReturnContext) {
+        syncOverlayScrollLock();
+        window.scrollTo(0, savedScrollY);
+      }
     }
 
     function syncOverlayScrollLock() {
@@ -48045,10 +48104,10 @@
       const working = Array.isArray(liveVenueDashboard.workingNow) ? liveVenueDashboard.workingNow : [];
       document.getElementById("venueWorkingNowList").innerHTML = working.length
         ? working.map((dancer) => `
-            <a class="lock-row venue-admin-tool" href="/dancers/${encodeURIComponent(dancer.dancerSlug || "")}">
+            <button class="lock-row venue-admin-tool" type="button" data-venue-dashboard-dancer-profile="${escapeOptionValue(dancer.dancerSlug || dancer.stageName || "")}" data-venue-dashboard-dancer-city="${escapeOptionValue(profile.city || citySelect.value)}">
               <strong>${escapeHtml(dancer.stageName || "Dancer")}</strong>
               <span>${escapeHtml(String(dancer.locationStatus || "").replaceAll("_", " "))}</span>
-            </a>
+            </button>
           `).join("")
         : '<div class="rule-note">No verified dancer check-ins right now.</div>';
       renderVenueDancerAffiliations(liveVenueDashboard);
@@ -54009,7 +54068,11 @@
         showToast("Venue profile not found");
         return;
       }
-      if (!selectedVenueName) venueProfileSavedScrollY = window.scrollY || 0;
+      if (!selectedVenueName) {
+        venueProfileSavedScrollY = window.scrollY || 0;
+        venueProfileReturnContext = captureProfileReturnContext(options.returnTo || "");
+      }
+      if (venueProfileReturnContext) suspendProfileReturnSurface(venueProfileReturnContext);
       homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
       selectedVenueName = venue.name;
@@ -54032,6 +54095,7 @@
         `${url.pathname}?${url.searchParams.toString()}${url.hash}`
       );
       render();
+      syncOverlayScrollLock();
       focusVenueProfileStart(options);
     }
 
@@ -54055,6 +54119,8 @@
 
     function closeVenueProfile() {
       if (!selectedVenueName) return false;
+      const returnContext = venueProfileReturnContext;
+      venueProfileReturnContext = null;
       selectedVenueName = null;
       activeTab = "venues";
       homeDiscoveryFeedOpen = homeDiscoveryFeedUsesInlineLayout();
@@ -54067,10 +54133,14 @@
       homeBottomTv?.setAttribute("aria-current", "false");
       syncHomeDestinationLocation("venues");
       render();
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: venueProfileSavedScrollY, left: 0, behavior: "auto" });
-        document.querySelector('.tab[data-tab="venues"]')?.focus({ preventScroll: true });
-      });
+      const restoredReturnContext = restoreProfileReturnContext(returnContext);
+      if (!restoredReturnContext) {
+        syncOverlayScrollLock();
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: venueProfileSavedScrollY, left: 0, behavior: "auto" });
+          document.querySelector('.tab[data-tab="venues"]')?.focus({ preventScroll: true });
+        });
+      }
       return true;
     }
 
@@ -55267,13 +55337,29 @@
     document.getElementById("dashboardClose").addEventListener("click", closeDashboard);
     document.getElementById("dancerDashboardClose").addEventListener("click", closeDancerDashboard);
     document.getElementById("venueDashboardClose").addEventListener("click", closeVenueDashboard);
+    venueDashboard.addEventListener("click", (event) => {
+      const dancerProfileButton = event.target.closest("[data-venue-dashboard-dancer-profile]");
+      if (!dancerProfileButton) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const dancerCity = String(dancerProfileButton.dataset.venueDashboardDancerCity || "").trim();
+      if (dancerCity && markets[dancerCity]) citySelect.value = dancerCity;
+      openProfileModal(dancerProfileButton.dataset.venueDashboardDancerProfile, {
+        returnTo: "venue-dashboard"
+      });
+    });
     document.getElementById("venuePreviewPageBtn").addEventListener("click", () => {
       const profile = liveVenueDashboard?.profile;
       if (!profile?.slug) {
         showToast("Venue page is still loading");
         return;
       }
-      window.location.href = venueExperienceHref(profile, profile.city || citySelect.value);
+      const profileCity = String(profile.city || citySelect.value).trim();
+      if (profileCity && markets[profileCity]) citySelect.value = profileCity;
+      openVenueFromName(profile.slug || profile.name, {
+        returnTo: "venue-dashboard",
+        showFocusRing: true
+      });
     });
     document.getElementById("venueProfileForm").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -56027,8 +56113,10 @@
       if (cardVenueLink) {
         event.preventDefault();
         event.stopPropagation();
-        closeDashboard();
-        openVenueFromName(cardVenueLink.dataset.cardVenue, { showFocusRing: event.detail === 0 });
+        openVenueFromName(cardVenueLink.dataset.cardVenue, {
+          returnTo: "customer-dashboard",
+          showFocusRing: event.detail === 0
+        });
         return;
       }
       const card = event.target.closest(".dancer-card");
@@ -56837,8 +56925,10 @@
       if (cardVenueLink && (event.key === "Enter" || event.key === " ")) {
         event.preventDefault();
         event.stopPropagation();
-        if (customerDashboard.classList.contains("show")) closeDashboard();
-        openVenueFromName(cardVenueLink.dataset.cardVenue, { showFocusRing: true });
+        openVenueFromName(cardVenueLink.dataset.cardVenue, {
+          returnTo: customerDashboard.classList.contains("show") ? "customer-dashboard" : "",
+          showFocusRing: true
+        });
         return;
       }
       if (event.key === "Escape") {
