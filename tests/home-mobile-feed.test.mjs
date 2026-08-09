@@ -712,7 +712,11 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /Shared scrolling-card QR rail state[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,
+    /Shared scrolling-card QR rail shell[\s\S]*?\.home-venue-discovery-action-rail \.home-venue-discovery-rail-qr \{[\s\S]*?width: 48px !important;[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?opacity: 1 !important;[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-venue-discovery-rail-qr\.is-unavailable \{[\s\S]*?border-color: rgba\(248,250,252,\.2\) !important;[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255,255,255,\.06\),0 7px 18px rgba\(0,0,0,\.28\) !important;[\s\S]*?\.home-venue-discovery-rail-qr\.is-unavailable \.action-icon,[\s\S]*?\.home-venue-discovery-rail-qr\.is-unavailable > span:not\(\.action-icon\) \{[\s\S]*?opacity: \.62;/,
   );
   const dancerQrMarkup = homeSource.match(
     /function homeDancerGridQrMarkup\(profile\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryQrMarkup)/,

@@ -57,15 +57,19 @@ test("TV keeps the real live-deal QR inside the right-side icon rail only", () =
   assert.doesNotMatch(tvActions, /else\s*\{[\s\S]*?cardActionSlot = "qr"/);
 });
 
-test("QR placement styling preserves rail geometry, scrolling, and bottom navigation", () => {
+test("QR placement styling shares one fixed venue shape without moving the rail or navigation", () => {
   const qrStyle = homeSource.match(
-    /\/\* Shared scrolling-card QR rail state; rail geometry remains unchanged\. \*\/[\s\S]*?(?=\n        @media \(max-width: 679px\))/,
+    /\/\* Shared scrolling-card QR rail shell keeps every deal state the same shape\. \*\/[\s\S]*?(?=\n        @media \(max-width: 679px\))/,
   )?.[0] || "";
 
   assert.ok(qrStyle, "expected shared scrolling-card QR rail styling");
+  assert.match(
+    qrStyle,
+    /\.home-venue-discovery-action-rail \.home-venue-discovery-rail-qr \{[\s\S]*?width: 48px !important;[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?border-radius: 16px !important;/,
+  );
   assert.doesNotMatch(
     qrStyle,
-    /(?:^|\s)(?:width|height|min-height|max-height|padding|margin|position|display|grid|flex|top|right|bottom|left|overflow|scroll-snap):/,
+    /(?:^|\s)(?:margin|position|display|grid|flex|top|right|bottom|left|overflow|scroll-snap):/,
   );
   assert.doesNotMatch(qrStyle, /#discoveryTabs|home-bottom-tv|home-nav/);
 });
