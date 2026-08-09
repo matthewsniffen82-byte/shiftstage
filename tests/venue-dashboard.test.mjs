@@ -182,7 +182,7 @@ test("saved venue deals immediately synchronize dashboard cards, selection, and 
   assert.match(dashboardClient, /<VenueClubDealPanel[\s\S]*?onDealsChange=\{onDealsChange\}/);
   assert.match(
     clubDealPanel,
-    /const nextDeals = upsertVenueDeal\(deals, data\.deal\);\s*setDeals\(nextDeals\);\s*onDealsChange\(nextDeals\)/,
+    /const nextDeals = Array\.isArray\(data\.deals\)[\s\S]*?data\.deals[\s\S]*?upsertVenueDeal\(deals, data\.deal\);[\s\S]*?const savedDeal = nextDeals\.find[\s\S]*?setDeals\(nextDeals\);\s*onDealsChange\(nextDeals\)/,
   );
   const incomingDealsEffect = clubDealPanel.match(
     /useEffect\(\(\) => \{[\s\S]*?const nextDeals = initialDeals\.length[\s\S]*?\}, \[initialDeal, initialDeals\]\);/,
@@ -193,7 +193,8 @@ test("saved venue deals immediately synchronize dashboard cards, selection, and 
     clubDealPanel,
     /method: "DELETE"[\s\S]*?setDeals\(nextDeals\);\s*onDealsChange\(nextDeals\)/,
   );
-  assert.match(clubDealPanel, /editingIdRef\.current = String\(data\.deal\.id\)/);
+  assert.match(clubDealPanel, /editingIdRef\.current = String\(savedDeal\.id\)/);
+  assert.match(clubDealPanel, /setForm\(venueDealForm\(savedDeal\)\)/);
   assert.match(clubDealPanel, /const liveCount = deals\.filter\(\(deal\) => deal\.isActive === true\)\.length/);
   assert.match(clubDealPanel, /aria-pressed=\{String\(deal\.id\) === editingId\}[\s\S]*?className=\{String\(deal\.id\) === editingId \? "selected" : ""\}/);
   assert.match(clubDealPanel, /aria-pressed=\{!editingId\}[\s\S]*?className=\{`add\$\{!editingId \? " selected" : ""\}`\}/);

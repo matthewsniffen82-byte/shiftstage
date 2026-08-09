@@ -22,6 +22,9 @@ test("venues can publish a prioritized collection of typed Club Deals", () => {
   assert.match(deals, /\.order\("sort_order", \{ ascending: true \}\)/);
   assert.match(venueDealRoute, /offerType: typeof body\?\.offerType/);
   assert.match(venueDealRoute, /bookingUrl: typeof body\?\.bookingUrl/);
+  assert.match(venueDealRoute, /const \{ deal, deals \} = await updateVenueDealForAccount/);
+  assert.match(venueDealRoute, /ok: true,[\s\S]*?deal,[\s\S]*?deals,/);
+  assert.match(deals, /return \{ deal, deals \};/);
   assert.match(venueDealRoute, /export async function DELETE/);
 });
 

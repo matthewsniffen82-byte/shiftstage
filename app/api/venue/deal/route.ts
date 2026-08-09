@@ -29,7 +29,7 @@ export async function PATCH(request: Request) {
     await requireActiveVenue(client, user.id);
     const body = await request.json();
     const referralCommissionCents = Number(body?.referralCommissionCents);
-    const deal = await updateVenueDealForAccount(
+    const { deal, deals } = await updateVenueDealForAccount(
       createAdminSupabaseClient(),
       user.id,
       {
@@ -54,6 +54,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({
       ok: true,
       deal,
+      deals,
       message: deal.isActive
         ? "Tracked Club Deal published."
         : "Club Deal saved but not published.",

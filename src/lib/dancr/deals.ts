@@ -569,7 +569,11 @@ export async function updateVenueDealForAccount(
     .single();
   if (error) throw error;
 
-  return toClubDeal(data);
+  const deal = toClubDeal(data);
+  const deals = [deal, ...owned.deals.filter((candidate) => candidate.id !== deal.id)]
+    .sort((left, right) => left.sortOrder - right.sortOrder);
+
+  return { deal, deals };
 }
 
 export async function deleteVenueDealForAccount(

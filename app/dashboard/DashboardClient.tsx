@@ -1893,14 +1893,19 @@ function VenueClubDealPanel({
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to update the tracked Club Deal.");
       }
-      const nextDeals = upsertVenueDeal(deals, data.deal);
+      const nextDeals = Array.isArray(data.deals)
+        ? data.deals
+        : upsertVenueDeal(deals, data.deal);
+      const savedDeal = nextDeals.find(
+        (deal: Record<string, unknown>) => String(deal.id) === String(data.deal.id),
+      ) || data.deal;
       setDeals(nextDeals);
       onDealsChange(nextDeals);
-      editingIdRef.current = String(data.deal.id);
+      editingIdRef.current = String(savedDeal.id);
       setEditingId(editingIdRef.current);
-      setForm(venueDealForm(data.deal));
+      setForm(venueDealForm(savedDeal));
       setQrAsset(null);
-      setStatus(data.deal.isActive
+      setStatus(savedDeal.isActive
         ? "Saved changes. This deal and its QR are live on your venue page and eligible Working Now dancer profiles."
         : "Saved changes. This deal is a draft and is not visible on MyDancr.");
       setSaveConfirmed(true);
