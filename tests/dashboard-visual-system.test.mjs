@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [liveApp, routedDashboards] = await Promise.all([
+const [liveApp, routedDashboards, aesthetic] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
 test("all customer-facing dashboards use the same MyDancr visual tokens", () => {
@@ -86,6 +87,18 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   assert.match(routedDashboards, /\.venue-dashboard-shortcuts small \{[^}]*?font-size: 10px;/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \.metric strong \{ font-size: 22px; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
-  assert.match(routedDashboards, /\.dashboard-head-venue h1 \{ font-size: clamp\(18px, 4\.4vw, 22px\); \}/);
-  assert.match(routedDashboards, /@media \(max-width: 520px\)[\s\S]*?\.dashboard-head-venue h1 \{ font-size: clamp\(18px, 5vw, 21px\); \}/);
+  assert.match(routedDashboards, /<section className=\{`dashboard-head dashboard-head-\$\{role\}`\}[\s\S]*?<h1>\{dashboardHeading\}<\/h1>/);
+  assert.doesNotMatch(routedDashboards, /\.dashboard-head-venue h1/);
+  assert.match(
+    aesthetic,
+    /@media \(max-width: 720px\)[\s\S]*?\.dashboard-shell:not\(\.dashboard-shell-venue\) \.dashboard-head h1,[\s\S]*?font-size: clamp\(38px, 12vw, 54px\) !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.dashboard-shell-venue \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(32px, 9vw, 42px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 0\.98 !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.dashboard-shell-venue \{[\s\S]*?color-scheme: dark;[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;/,
+  );
 });
