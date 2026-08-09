@@ -1534,7 +1534,7 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   if (creating) {
     row.slug = row.slug || slugify(String(row.name));
     row.timezone = row.timezone || "America/Los_Angeles";
-    row.is_active = input.isActive !== false;
+    row.is_active = true;
   }
 
   return row;

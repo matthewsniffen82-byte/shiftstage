@@ -1547,7 +1547,7 @@ function VenueManager({
     const response = await fetch("/api/admin/venues", {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ name, city, state, address, timezone: "America/Los_Angeles", isActive: true }),
+      body: JSON.stringify({ name, city, state, address, timezone: "America/Los_Angeles" }),
     });
     const data = await response.json();
     setIsSaving(false);
@@ -1559,7 +1559,7 @@ function VenueManager({
     onVenuesChange([data.venue, ...venues]);
     setName("");
     setAddress("");
-    setStatus("Venue created.");
+    setStatus("Venue created and active.");
   }
 
   async function toggleVenue(venue: Record<string, unknown>) {

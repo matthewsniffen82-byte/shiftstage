@@ -37583,7 +37583,6 @@
         }
       });
       market.venues.forEach((venue, index) => {
-        venue.verified ??= index !== market.venues.length - 1;
         venue.featured ??= index === 0;
         venue.hidden ??= false;
       });
@@ -39657,7 +39656,6 @@
         distance: existing?.distance && existing.distance !== "Nearby" ? existing.distance : "",
         latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : existing?.latitude,
         longitude: Number.isFinite(Number(item.longitude)) ? Number(item.longitude) : existing?.longitude,
-        verified: item.is_active !== false,
         featured: Boolean(existing?.featured),
         hidden: item.is_active === false,
         isActive: item.is_active !== false,
@@ -51145,11 +51143,10 @@
             `;
           return `
             <details class="admin-item" data-admin-city="${city}" data-admin-venue="${venue.name}" ${index === 0 ? "open" : ""}>
-              <summary class="row"><div><h3>${venue.name}</h3><div class="meta">${city} · ${venue.shifts} posted shifts</div></div><span class="${venue.verified ? "badge" : "badge pending"}">${venue.verified ? "Verified" : "Pending"}</span></summary>
-              <div class="meta">Verification status: ${venue.verified ? "Approved" : "Needs review"} · Featured: ${venue.featured ? "Yes" : "No"}</div>
+              <summary class="row"><div><h3>${venue.name}</h3><div class="meta">${city} · ${venue.shifts} posted shifts</div></div><span class="badge">Active</span></summary>
+              <div class="meta">Directory status: Active · Featured: ${venue.featured ? "Yes" : "No"}</div>
               ${claimCodeMarkup}
               <div class="admin-actions">
-                <button class="action-btn" data-admin-action="verify-venue">Verify venue</button>
                 <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
                 <button class="action-btn danger" data-admin-action="remove-venue">Remove venue</button>
               </div>
@@ -51778,11 +51775,6 @@
       if (action === "feature-dancer" && profileMatch) {
         profileMatch.profile.featured = !profileMatch.profile.featured;
         refreshAfterAdminAction(profileMatch.profile.featured ? "Dancer featured" : "Dancer unfeatured");
-        return;
-      }
-      if (action === "verify-venue" && venueMatch) {
-        venueMatch.venue.verified = true;
-        refreshAfterAdminAction("Venue verified");
         return;
       }
       if (action === "feature-venue" && venueMatch) {
