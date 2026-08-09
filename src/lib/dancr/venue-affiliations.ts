@@ -32,9 +32,8 @@ export async function getDancerVenueVerificationState(
   const [{ data: venues, error: venuesError }, { data: affiliations, error: affiliationsError }] = await Promise.all([
     (client as any)
       .from("venues")
-      .select("id, slug, name, city, state")
+      .select("id, slug, name, city, state, owner_user_id")
       .eq("is_active", true)
-      .not("owner_user_id", "is", null)
       .eq("city", dancerCity)
       .order("name", { ascending: true }),
     (client as any)
@@ -46,13 +45,41 @@ export async function getDancerVenueVerificationState(
   if (venuesError) throw venuesError;
   if (affiliationsError) throw affiliationsError;
 
+  const venueRows = venues || [];
+  const ownerUserIds = Array.from(new Set(
+    venueRows.map((venue: any) => String(venue.owner_user_id || "")).filter(Boolean),
+  ));
+  const readyOwnerUserIds = new Set<string>();
+  if (ownerUserIds.length) {
+    const { data: readyManagers, error: readyManagersError } = await (client as any)
+      .from("app_users")
+      .select("id")
+      .in("id", ownerUserIds)
+      .eq("role", "venue")
+      .eq("account_state", "active");
+    if (readyManagersError) throw readyManagersError;
+    (readyManagers || []).forEach((manager: any) => readyOwnerUserIds.add(String(manager.id)));
+  }
+
+  const verificationVenues = venueRows.map((venue: any) => ({
+    ...mapVenue(venue),
+    managerReady: readyOwnerUserIds.has(String(venue.owner_user_id || "")),
+  }));
+
+  console.info("DANCER_VENUE_VERIFICATION_OPTIONS_LOADED", {
+    dancerId: dancer.id,
+    city: dancerCity,
+    venueCount: verificationVenues.length,
+    managerReadyCount: verificationVenues.filter((venue: any) => venue.managerReady).length,
+  });
+
   return {
     dancer: {
       id: dancer.id,
       stageName: dancer.stage_name,
       city: dancerCity,
     },
-    venues: (venues || []).map(mapVenue),
+    venues: verificationVenues,
     affiliations: (affiliations || []).map((row: any) => mapAffiliation(client, row)),
   };
 }
@@ -70,15 +97,28 @@ export async function issueDancerVenueVerification(
   const venueId = requiredUuid(input.venueId, "Choose a venue to verify.");
   const { data: venue, error: venueError } = await (client as any)
     .from("venues")
-    .select("id, slug, name, city, state")
+    .select("id, slug, name, city, state, owner_user_id")
     .eq("id", venueId)
     .eq("city", dancerCity)
     .eq("is_active", true)
-    .not("owner_user_id", "is", null)
     .maybeSingle();
   if (venueError) throw venueError;
   if (!venue) {
-    throw new VenueAffiliationUserError(`Choose an active managed venue in ${dancerCity}.`);
+    throw new VenueAffiliationUserError(`Choose an active venue in ${dancerCity}.`);
+  }
+  if (!venue.owner_user_id) {
+    throw new VenueAffiliationUserError(`${venue.name}'s venue manager account is not activated yet.`);
+  }
+  const { data: readyManager, error: readyManagerError } = await (client as any)
+    .from("app_users")
+    .select("id")
+    .eq("id", venue.owner_user_id)
+    .eq("role", "venue")
+    .eq("account_state", "active")
+    .maybeSingle();
+  if (readyManagerError) throw readyManagerError;
+  if (!readyManager) {
+    throw new VenueAffiliationUserError(`${venue.name}'s venue manager account is not activated yet.`);
   }
 
   const token = randomBytes(32).toString("base64url");

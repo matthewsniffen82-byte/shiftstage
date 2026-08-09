@@ -93,15 +93,28 @@ test("dancer and venue dashboards expose the complete one-tap verification flow"
   assert.match(venueRoute, /cache-control": "private, no-store/);
 });
 
-test("dancer verification venues are scoped to the dancer's saved signup city", () => {
+test("dancer verification lists every active signup-city venue and gates QR creation on manager readiness", () => {
+  const stateService = service.slice(
+    service.indexOf("export async function getDancerVenueVerificationState"),
+    service.indexOf("export async function issueDancerVenueVerification"),
+  );
+  const issueService = service.slice(
+    service.indexOf("export async function issueDancerVenueVerification"),
+    service.indexOf("export async function getVenueDancerVerificationState"),
+  );
   assert.match(service, /const dancerCity = String\(dancer\.city\)\.trim\(\)/);
-  assert.match(service, /from\("venues"\)[\s\S]*?eq\("is_active", true\)[\s\S]*?not\("owner_user_id", "is", null\)[\s\S]*?eq\("city", dancerCity\)[\s\S]*?order\("name", \{ ascending: true \}\)/);
-  assert.match(service, /eq\("id", venueId\)[\s\S]*?eq\("city", dancerCity\)[\s\S]*?eq\("is_active", true\)[\s\S]*?not\("owner_user_id", "is", null\)[\s\S]*?maybeSingle\(\)/);
-  assert.match(service, /Choose an active managed venue in \$\{dancerCity\}/);
-  assert.match(dashboard, /Choose a \$\{dancerCity\} club/);
-  assert.match(dashboard, /No managed venues are available in \$\{dancerCity\} yet/);
-  assert.match(liveApp, /Choose a \$\{dancerCity\} club/);
-  assert.match(liveApp, /No managed venues are available in \$\{dancerCity\} yet/);
+  assert.match(stateService, /select\("id, slug, name, city, state, owner_user_id"\)[\s\S]*?eq\("is_active", true\)[\s\S]*?eq\("city", dancerCity\)[\s\S]*?order\("name", \{ ascending: true \}\)/);
+  assert.doesNotMatch(stateService, /not\("owner_user_id", "is", null\)/);
+  assert.match(stateService, /from\("app_users"\)[\s\S]*?in\("id", ownerUserIds\)[\s\S]*?eq\("role", "venue"\)[\s\S]*?eq\("account_state", "active"\)/);
+  assert.match(stateService, /managerReady: readyOwnerUserIds\.has/);
+  assert.match(issueService, /eq\("id", venueId\)[\s\S]*?eq\("city", dancerCity\)[\s\S]*?eq\("is_active", true\)[\s\S]*?maybeSingle\(\)/);
+  assert.match(issueService, /venue manager account is not activated yet/);
+  assert.match(dashboard, /Manager ready/);
+  assert.match(dashboard, /Manager setup needed/);
+  assert.match(dashboard, /selectedVenueManagerReady/);
+  assert.match(liveApp, /Loading venues…/);
+  assert.match(liveApp, /Manager setup needed/);
+  assert.match(liveApp, /Venue verification took too long to load/);
 });
 
 test("revocation is audited and immediately ends matching live shifts", () => {

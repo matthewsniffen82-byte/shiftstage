@@ -36538,9 +36538,11 @@
           <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
               Venue
-              <select id="dancerVenueVerificationVenue" aria-label="Venue to verify"></select>
+              <select id="dancerVenueVerificationVenue" aria-label="Venue to verify" disabled>
+                <option value="">Loading venues…</option>
+              </select>
             </label>
-            <button class="action-btn" id="dancerVenueVerificationCreate" type="button">Show my verification QR</button>
+            <button class="action-btn" id="dancerVenueVerificationCreate" type="button" disabled>Show my verification QR</button>
           </div>
           <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Personal venue verification QR">
             <img id="dancerVenueVerificationQrImage" alt="Personal venue verification QR">
@@ -38797,7 +38799,7 @@
       return error;
     }
 
-    async function fetchWithTimeout(url, options, timeoutMs = 0) {
+    async function fetchWithTimeout(url, options, timeoutMs = 0, timeoutMessage = "The check-in request timed out. Check your connection and try again.") {
       if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return fetch(url, options);
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -38805,7 +38807,7 @@
         return await fetch(url, { ...options, signal: controller.signal });
       } catch (error) {
         if (error?.name === "AbortError") {
-          const timeoutError = new Error("The check-in request timed out. Check your connection and try again.");
+          const timeoutError = new Error(timeoutMessage);
           timeoutError.code = "request_timeout";
           throw timeoutError;
         }
@@ -38912,12 +38914,12 @@
     async function requestVenueAffiliationJson(url, { method = "GET", body } = {}) {
       const headers = authenticatedRequestHeaders(body === undefined ? undefined : "application/json");
       if (!headers) throw new Error("Sign in required");
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         method,
         headers,
         cache: "no-store",
         body: body === undefined ? undefined : JSON.stringify(body)
-      });
+      }, 15000, "Venue verification took too long to load. Check your connection and try again.");
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
       applyResponseSession(data);
@@ -47777,14 +47779,17 @@
       const state = liveDancerVenueVerification || {};
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
+      const managerReadyVenues = venues.filter((venue) => venue.managerReady === true);
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
       select.innerHTML = venues.length
-        ? venues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)} · ${escapeHtml(venue.city)}</option>`).join("")
-        : '<option value="">No managed venues available</option>';
-      if (previousVenueId && venues.some((venue) => venue.id === previousVenueId)) select.value = previousVenueId;
-      document.getElementById("dancerVenueVerificationCreate").disabled = !venues.length;
+        ? venues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)} · ${venue.managerReady === true ? "Manager ready" : "Manager setup needed"}</option>`).join("")
+        : `<option value="">No active venues available in ${escapeHtml(dancerCity)}</option>`;
+      select.disabled = !venues.length;
+      const preferredVenue = venues.find((venue) => venue.id === previousVenueId) || managerReadyVenues[0] || venues[0] || null;
+      select.value = preferredVenue?.id || "";
+      document.getElementById("dancerVenueVerificationCreate").disabled = preferredVenue?.managerReady !== true;
       const list = document.getElementById("dancerVenueAffiliationList");
       list.innerHTML = `<strong>Verified venues</strong>${affiliations.length
         ? affiliations.map((item) => `
@@ -47797,9 +47802,30 @@
       list.querySelectorAll("[data-dancer-affiliation-remove]").forEach((button) => {
         button.onclick = () => removeDancerVenueAffiliation(button.dataset.dancerAffiliationRemove);
       });
-      document.getElementById("dancerVenueVerificationStatus").textContent = venues.length
-        ? `Choose a ${dancerCity} club, then show the personal QR to its verified manager.`
-        : `No managed venues are available in ${dancerCity} yet. The venue owner must verify their MyDancr account first.`;
+      document.getElementById("dancerVenueVerificationStatus").textContent = managerReadyVenues.length
+        ? `Choose a ${dancerCity} club marked Manager ready, then show the personal QR to its verified manager.`
+        : venues.length
+          ? `${venues.length} active ${dancerCity} venues found, but none have activated a venue manager account yet.`
+          : `No active venues are available in ${dancerCity} yet.`;
+    }
+
+    function selectedDancerVenueVerificationVenue() {
+      const venueId = document.getElementById("dancerVenueVerificationVenue")?.value || "";
+      const venues = Array.isArray(liveDancerVenueVerification?.venues) ? liveDancerVenueVerification.venues : [];
+      return venues.find((venue) => venue.id === venueId) || null;
+    }
+
+    function updateDancerVenueVerificationSelectionStatus() {
+      const venue = selectedDancerVenueVerificationVenue();
+      const dancerCity = String(liveDancerVenueVerification?.dancer?.city || "your city");
+      const button = document.getElementById("dancerVenueVerificationCreate");
+      const status = document.getElementById("dancerVenueVerificationStatus");
+      button.disabled = venue?.managerReady !== true;
+      status.textContent = !venue
+        ? `Choose an active ${dancerCity} venue.`
+        : venue.managerReady === true
+          ? `Show your personal QR to ${venue.name}'s verified manager.`
+          : `${venue.name} is listed in ${dancerCity}, but its venue manager account must be activated before it can scan your QR.`;
     }
 
     async function loadDancerVenueVerification() {
@@ -47811,6 +47837,12 @@
         renderDancerVenueVerification();
         return liveDancerVenueVerification;
       } catch (error) {
+        const select = document.getElementById("dancerVenueVerificationVenue");
+        if (select) {
+          select.innerHTML = '<option value="">Unable to load venues</option>';
+          select.disabled = true;
+        }
+        document.getElementById("dancerVenueVerificationCreate").disabled = true;
         if (status) status.textContent = error.message || "Unable to load venue verification.";
         return null;
       }
@@ -47822,6 +47854,11 @@
       const venueId = document.getElementById("dancerVenueVerificationVenue").value;
       if (!venueId) {
         status.textContent = "Choose a venue first.";
+        return;
+      }
+      const selectedVenue = selectedDancerVenueVerificationVenue();
+      if (selectedVenue?.managerReady !== true) {
+        updateDancerVenueVerificationSelectionStatus();
         return;
       }
       button.disabled = true;
@@ -47839,7 +47876,7 @@
         document.getElementById("dancerVenueVerificationQr").hidden = true;
         status.textContent = error.message || "Unable to create verification QR.";
       } finally {
-        button.disabled = false;
+        button.disabled = selectedDancerVenueVerificationVenue()?.managerReady !== true;
       }
     }
 
@@ -55573,6 +55610,7 @@
     document.getElementById("dancerVenueVerificationVenue").addEventListener("change", () => {
       activeDancerVenueVerification = null;
       document.getElementById("dancerVenueVerificationQr").hidden = true;
+      updateDancerVenueVerificationSelectionStatus();
     });
     document.getElementById("venueDancerVerificationApprove").addEventListener("click", approveVenueDancerVerification);
 
