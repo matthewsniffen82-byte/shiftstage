@@ -41,10 +41,16 @@ test("venue signup redeems a private access code and routes successful authentic
   assert.match(authHelpers, /if \(role === "venue"\) return "\/dashboard\/venue"/);
   assert.match(liveApp, /document\.getElementById\("venueJoinNowBtn"\)\.addEventListener\("click", async/);
   assert.match(liveApp, /document\.getElementById\("venueLoginForm"\)\.addEventListener\("submit", async/);
+  assert.match(liveApp, /async function submitVenueSignup\(button/);
+  assert.match(liveApp, /document\.getElementById\("venueLoginPassword"\)\.addEventListener\("keydown", async \(event\) => \{\s*if \(event\.key !== "Enter" \|\| !document\.getElementById\("venueSignupCode"\)\.value\.trim\(\)\) return;\s*event\.preventDefault\(\);\s*await submitVenueSignup/);
+  assert.match(liveApp, /if \(document\.getElementById\("venueSignupCode"\)\.value\.trim\(\)\) \{\s*await submitVenueSignup/);
   assert.match(liveApp, /id="venueSignupCode"[^>]*autocomplete="one-time-code"/);
   assert.match(liveApp, /venueCode,/);
   assert.doesNotMatch(liveApp, /id="venueLoginName"|id="venueLoginCity"/);
-  assert.match(liveApp, /startVenueDashboardSession\("Venue dashboard opened"\)/);
+  assert.match(liveApp, /await startVenueDashboardSession\("Venue dashboard opened"\)/);
+  assert.match(liveApp, /!result\.session\?\.accessToken \|\| result\.account\?\.role !== "venue"/);
+  assert.match(liveApp, /async function loadAndRevealVenueDashboard\(\)[\s\S]*?if \(!isVenueSession\(\)\)[\s\S]*?await loadLiveVenueDashboard\(\)[\s\S]*?venueDashboard\.classList\.add\("show"\)/);
+  assert.match(liveApp, /const opened = await openVenueDashboard\(\);\s*if \(opened\) \{/);
   assert.doesNotMatch(liveApp, /venue@example\.com|venue123|demo venue/i);
 });
 

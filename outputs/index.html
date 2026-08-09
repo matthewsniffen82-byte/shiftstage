@@ -38391,7 +38391,7 @@
           email: normalizeAccountEmail(state.email) || sessionEmailForRole(dashboardRole) || authSession?.account?.email || null
         }
       });
-      return hydrateConfirmedSessionAccount(dashboardRole, state).finally(() => {
+      return hydrateConfirmedSessionAccount(dashboardRole, state).finally(async () => {
         resetAccountControl(dashboardRole);
         isCustomerLoggedIn = dashboardRole === "customer";
         isDancerLoggedIn = dashboardRole === "dancer";
@@ -38441,8 +38441,10 @@
         if (dashboardRole === "venue") {
           closeAuthPage();
           closeDashboard();
-          openVenueDashboard();
-          showToast(isPasswordReset ? "You're signed in. Venue account settings are ready." : "Email confirmed. Venue dashboard opened.");
+          const opened = await openVenueDashboard();
+          if (opened) {
+            showToast(isPasswordReset ? "You're signed in. Venue account settings are ready." : "Email confirmed. Venue dashboard opened.");
+          }
           return;
         }
         showToast(dashboardRole === "dancer" ? "Email confirmed. Complete your 3-step dancer profile setup." : "Email confirmed. Welcome back to Mydancr.");
@@ -48134,17 +48136,40 @@
       }
     }
 
-    function openVenueDashboard() {
-      if (!isVenueLoggedIn) {
-        openAuthRole("venue");
-        return;
+    async function loadAndRevealVenueDashboard() {
+      if (!isVenueSession()) {
+        throw new Error("A verified venue session is required. Sign in and try again.");
       }
+      const dashboard = await loadLiveVenueDashboard();
+      if (!dashboard?.profile && !dashboard?.claim) {
+        throw new Error("No venue is connected to this account.");
+      }
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = false;
+      isVenueLoggedIn = true;
+      activeDashboardType = "venue";
+      activeVenueName = dashboard?.profile?.name || authSession?.account?.displayName || activeVenueName;
       venueDashboard.classList.add("show");
       venueDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
-      loadLiveVenueDashboard()
-        .then(() => processPendingVenueDancerVerification())
-        .catch((error) => showToast(error.message || "Unable to load venue dashboard"));
+      await processPendingVenueDancerVerification();
+      return dashboard;
+    }
+
+    async function openVenueDashboard() {
+      if (!isVenueSession()) {
+        isVenueLoggedIn = false;
+        openAuthRole("venue");
+        return false;
+      }
+      try {
+        await loadAndRevealVenueDashboard();
+        return true;
+      } catch (error) {
+        closeVenueDashboard();
+        showToast(error.message || "Unable to load venue dashboard");
+        return false;
+      }
     }
 
     function closeVenueDashboard() {
@@ -55871,17 +55896,11 @@
       }
     });
 
-    function startVenueDashboardSession(message = "Venue dashboard opened") {
-      isCustomerLoggedIn = false;
-      isDancerLoggedIn = false;
-      isVenueLoggedIn = true;
-      activeDashboardType = "venue";
-      activeVenueName = authSession?.account?.displayName || activeVenueName;
+    async function startVenueDashboardSession(message = "Venue dashboard opened") {
+      await loadAndRevealVenueDashboard();
       closeAuthPage();
       updateAccountHeader();
-      renderVenueDashboard();
       showToast(message);
-      openVenueDashboard();
     }
 
     document.getElementById("dancerVenueVerificationCreate").addEventListener("click", createDancerVenueVerification);
@@ -55892,20 +55911,21 @@
     });
     document.getElementById("venueDancerVerificationApprove").addEventListener("click", approveVenueDancerVerification);
 
-    document.getElementById("venueJoinNowBtn").addEventListener("click", async (event) => {
-      const button = event.currentTarget;
+    async function submitVenueSignup(button = document.getElementById("venueJoinNowBtn")) {
       const status = document.getElementById("venueAuthStatus");
       const venueCodeInput = document.getElementById("venueSignupCode");
       const emailInput = document.getElementById("venueLoginEmail");
       const passwordInput = document.getElementById("venueLoginPassword");
+      const loginButton = document.getElementById("venueLoginSubmit");
       const venueCode = venueCodeInput.value.trim();
       if (!venueCode || !venueCodeInput.checkValidity()) {
         status.textContent = "Enter the private venue access code from MyDancr.";
         venueCodeInput.focus();
-        return;
+        return false;
       }
-      if (!emailInput.reportValidity() || !passwordInput.reportValidity()) return;
+      if (!emailInput.reportValidity() || !passwordInput.reportValidity()) return false;
       button.disabled = true;
+      loginButton.disabled = true;
       status.textContent = "Creating your venue account…";
       try {
         const result = await requestAuth({
@@ -55918,33 +55938,56 @@
         if (result.requiresEmailConfirmation) {
           status.textContent = "Venue account created. Check your email and tap the confirmation link, then sign in here.";
           showToast("Confirmation email sent. Open it on this device to return here.");
-          return;
+          return true;
         }
-        status.textContent = "Venue account created. Opening your live dashboard…";
-        startVenueDashboardSession("Venue account created");
+        if (!result.session?.accessToken || result.account?.role !== "venue" || !result.venue?.id) {
+          throw new Error("Venue account authorization could not be verified. Sign in and try again.");
+        }
+        status.textContent = "Venue account verified. Opening your live dashboard…";
+        await startVenueDashboardSession("Venue account created");
+        return true;
       } catch (error) {
         status.textContent = error.message || "Venue signup failed";
         showToast(error.message || "Venue signup failed");
+        return false;
       } finally {
         button.disabled = false;
+        loginButton.disabled = false;
       }
+    }
+
+    document.getElementById("venueJoinNowBtn").addEventListener("click", async (event) => {
+      await submitVenueSignup(event.currentTarget);
+    });
+
+    document.getElementById("venueLoginPassword").addEventListener("keydown", async (event) => {
+      if (event.key !== "Enter" || !document.getElementById("venueSignupCode").value.trim()) return;
+      event.preventDefault();
+      await submitVenueSignup(document.getElementById("venueJoinNowBtn"));
     });
 
     document.getElementById("venueLoginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (document.getElementById("venueSignupCode").value.trim()) {
+        await submitVenueSignup(document.getElementById("venueJoinNowBtn"));
+        return;
+      }
       const submit = document.getElementById("venueLoginSubmit");
       const status = document.getElementById("venueAuthStatus");
       submit.disabled = true;
       status.textContent = "Signing in…";
       try {
-        await requestAuth({
+        const result = await requestAuth({
           mode: "login",
           role: "venue",
           email: document.getElementById("venueLoginEmail").value,
           password: document.getElementById("venueLoginPassword").value
         });
+        if (!result.session?.accessToken || result.account?.role !== "venue") {
+          throw new Error("Venue account authorization could not be verified. Sign in and try again.");
+        }
         status.textContent = "Signed in. Opening your live venue dashboard…";
-        startVenueDashboardSession("Venue dashboard opened");
+        await startVenueDashboardSession("Venue dashboard opened");
       } catch (error) {
         status.textContent = error.message || "Venue login failed";
         showToast(error.message || "Venue login failed");
