@@ -68,6 +68,10 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   assert.ok(metricsIndex > shortcutsIndex);
   assert.ok(managementIndex > metricsIndex);
   assert.match(venuePanel, /className="primary-link" href="#venue-dancer-roster"[\s\S]*?Verify dancer/);
+  assert.match(
+    routedDashboards,
+    /\.venue-command-primary \.primary-link \{[^}]*?width: 100%; max-width: 100%;[^}]*?box-sizing: border-box;/,
+  );
   assert.match(venuePanel, /function openVenueSection[\s\S]*?section\.open = true[\s\S]*?scrollIntoView/);
   assert.doesNotMatch(venuePanel, /<VenueDashboardSection\s+defaultOpen[\s\S]*?id="venue-overview"/);
   assert.match(routedDashboards, /\.venue-dashboard-shortcuts \{ display: grid; grid-template-columns: repeat\(4/);
@@ -87,6 +91,11 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   assert.match(routedDashboards, /\.venue-dashboard-shortcuts small \{[^}]*?font-size: 10px;/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \.metric strong \{ font-size: 22px; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
+  assert.match(
+    routedDashboards,
+    /<ol className="venue-deal-builder-progress"[^>]*>\s*<li><strong>Offer<\/strong><\/li>\s*<li><strong>Rules<\/strong><\/li>\s*<li><strong>Cost<\/strong><\/li>\s*<li><strong>Review<\/strong><\/li>/,
+  );
+  assert.doesNotMatch(routedDashboards, /venue-deal-builder-progress[^>]*>[\s\S]{0,500}<li><span>[1-4]<\/span>/);
   assert.match(routedDashboards, /<section className=\{`dashboard-head dashboard-head-\$\{role\}`\}[\s\S]*?<h1>\{dashboardHeading\}<\/h1>/);
   assert.doesNotMatch(routedDashboards, /\.dashboard-head-venue h1/);
   assert.match(
@@ -95,7 +104,7 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   );
   assert.match(
     aesthetic,
-    /\.dashboard-shell-venue \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(32px, 9vw, 42px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 0\.98 !important;/,
+    /\.dashboard-shell-venue \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(24px, 6\.5vw, 32px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 0\.98 !important;/,
   );
   assert.match(
     aesthetic,

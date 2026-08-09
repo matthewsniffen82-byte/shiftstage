@@ -2243,10 +2243,10 @@ function VenueClubDealPanel({
         </button>
       </div>
       <ol className="venue-deal-builder-progress" aria-label="Deal publishing steps">
-        <li><span>1</span><strong>Offer</strong></li>
-        <li><span>2</span><strong>Rules</strong></li>
-        <li><span>3</span><strong>Cost</strong></li>
-        <li><span>4</span><strong>Review</strong></li>
+        <li><strong>Offer</strong></li>
+        <li><strong>Rules</strong></li>
+        <li><strong>Cost</strong></li>
+        <li><strong>Review</strong></li>
       </ol>
       <form onSubmit={saveDeal}>
         <fieldset className="venue-deal-builder-step">
@@ -5257,7 +5257,7 @@ function DashboardStyles() {
       .venue-live-pill { display: grid; place-items: center; padding: 7px 10px; border: 1px solid rgba(38,210,159,.65); border-radius: 999px; color: #76f0c8; background: rgba(10,74,57,.36); font-size: 11px; font-weight: 950; letter-spacing: .08em; }
       .venue-command-primary { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(255,255,255,.13); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel-raised); }
       .venue-command-primary > strong { color: #f8f7fb; font-size: clamp(21px, 4vw, 27px); line-height: 1.08; }
-      .venue-command-primary .primary-link { width: 100%; min-height: 52px; margin-top: 5px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); }
+      .venue-command-primary .primary-link { width: 100%; max-width: 100%; min-height: 52px; box-sizing: border-box; margin-top: 5px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); }
       .venue-dashboard-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
       .venue-dashboard-shortcuts > a { min-width: 0; min-height: 78px; display: flex; align-items: center; gap: 11px; padding: 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; color: #f8f7fb; background: var(--mydancr-dashboard-panel-raised); text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
       .venue-dashboard-shortcuts > a:hover { border-color: rgba(255,255,255,.2); background: #15151d; }
@@ -5518,8 +5518,8 @@ function DashboardStyles() {
       .venue-deal-counts span { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 1px solid rgba(255,255,255,.11); border-radius: 999px; color: #b9accd; background: rgba(255,255,255,.035); font-size: 12px; font-weight: 850; }
       .venue-deal-counts strong { color: #fff; font-size: 15px; }
       .venue-deal-builder-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 2px 0 0; padding: 0; list-style: none; }
-      .venue-deal-builder-progress li { min-height: 48px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid rgba(148,229,255,.16); border-radius: 9px; color: #d8cfeb; background: rgba(148,229,255,.035); }
-      .venue-deal-builder-progress span, .venue-deal-builder-step legend > span:first-child { width: 26px; height: 26px; flex: 0 0 26px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #94e5ff; font-size: 12px; font-weight: 950; }
+      .venue-deal-builder-progress li { min-height: 48px; display: flex; align-items: center; justify-content: center; padding: 8px 10px; border: 1px solid rgba(148,229,255,.16); border-radius: 9px; color: #d8cfeb; background: rgba(148,229,255,.035); text-align: center; }
+      .venue-deal-builder-step legend > span:first-child { width: 26px; height: 26px; flex: 0 0 26px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #94e5ff; font-size: 12px; font-weight: 950; }
       .venue-deal-builder-progress strong { font-size: 12px; }
       .venue-deal-panel form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       .venue-deal-builder-step { min-width: 0; grid-column: 1 / -1; display: grid; gap: 14px; margin: 0; padding: 15px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.025); }
