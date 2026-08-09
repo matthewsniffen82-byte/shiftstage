@@ -89,7 +89,7 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   assert.match(scriptSource, /bio: null/);
   assert.match(
     scriptSource,
-    /const WORKING_NOW_PROFILE_INDEXES = new Set\(\[5, 6, 7, 8, 9\]\)/,
+    /const WORKING_NOW_PROFILE_INDEXES = new Set\(\[4, 5, 6, 7, 8, 9\]\)/,
   );
   assert.match(
     scriptSource,
@@ -104,6 +104,19 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
     /checked_in_at: isWorkingNow[\s\S]*?checked_out_at: null,[\s\S]*?location_status: isWorkingNow \? "club_confirmed" : "self_reported"/,
   );
   assert.match(scriptSource, /workingNowShifts: workingNowCount/);
+  assert.match(
+    scriptSource,
+    /const PEPPERMINT_HIPPO_WORKING_NOW_COUNT = 2/,
+  );
+  assert.match(scriptSource, /const RANDOM_WORKING_NOW_VENUE_COUNT = 4/);
+  assert.match(
+    scriptSource,
+    /function selectWorkingNowVenues[\s\S]*?randomInt\(index \+ 1\)[\s\S]*?PEPPERMINT_HIPPO_WORKING_NOW_COUNT[\s\S]*?randomCandidates\.slice\(0, RANDOM_WORKING_NOW_VENUE_COUNT\)/,
+  );
+  assert.match(
+    scriptSource,
+    /function verifyWorkingNowDistribution[\s\S]*?peppermintAssignments\.length !== PEPPERMINT_HIPPO_WORKING_NOW_COUNT[\s\S]*?new Set\(randomAssignments\.map[\s\S]*?RANDOM_WORKING_NOW_VENUE_COUNT/,
+  );
 });
 
 test("layout-review approval supports the deployed auto-approval schema", () => {
@@ -176,7 +189,7 @@ test("layout-review schedules and rollback support the deployed production schem
   );
   assert.match(
     scriptSource,
-    /async function syncSchedulesOnly[\s\S]*?missingProfileSlugs[\s\S]*?assertMarkedDatasetAccount\(target\.profile\)[\s\S]*?prepareReviewQrVenues\(venues\)[\s\S]*?replaceProfileSchedule[\s\S]*?workingNowAssignments/,
+    /async function syncSchedulesOnly[\s\S]*?missingProfileSlugs[\s\S]*?assertMarkedDatasetAccount\(target\.profile\)[\s\S]*?prepareReviewQrVenues\(venues\)[\s\S]*?selectWorkingNowVenues\(venues\)[\s\S]*?replaceProfileSchedule[\s\S]*?verifyWorkingNowDistribution\(workingNowAssignments\)/,
   );
   assert.match(
     scriptSource,

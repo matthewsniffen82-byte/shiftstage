@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import {
   createProfilePhoto,
@@ -17,7 +17,10 @@ const MAX_COUNT = PROFILE_DEFINITIONS.length;
 const REVIEW_CITY = "Las Vegas";
 const REVIEW_PHOTO_COUNT = 5;
 const NO_SCHEDULE_PROFILE_INDEXES = new Set([0]);
-const WORKING_NOW_PROFILE_INDEXES = new Set([5, 6, 7, 8, 9]);
+const WORKING_NOW_PROFILE_INDEXES = new Set([4, 5, 6, 7, 8, 9]);
+const PEPPERMINT_HIPPO_VENUE_SLUG = "peppermint-hippo-las-vegas";
+const PEPPERMINT_HIPPO_WORKING_NOW_COUNT = 2;
+const RANDOM_WORKING_NOW_VENUE_COUNT = 4;
 const FEATURED_WORKING_NOW_VENUE_SLUGS = [
   "peppermint-hippo-las-vegas",
   "spearmint-rhino-las-vegas",
@@ -113,6 +116,7 @@ async function applyDataset() {
     throw new Error(`No active ${REVIEW_CITY} venues are available for layout-review schedules.`);
   }
   const reviewQrVenues = await prepareReviewQrVenues(venues);
+  const workingNowVenues = selectWorkingNowVenues(venues);
 
   const authUsers = await listAllAuthUsers();
   const authUsersByEmail = new Map(
@@ -166,7 +170,7 @@ async function applyDataset() {
       const profile = await approveSyntheticProfile(authUser.id, definition);
       await upsertProfilePhotos(profile, definition, authUser.id);
       await removeProfileSocialLinks(profile, definition);
-      await replaceProfileSchedule(profile, definition, venues, reviewQrVenues);
+      await replaceProfileSchedule(profile, definition, venues, workingNowVenues);
     }
   } catch (error) {
     await rollbackNewUsers(createdUserIds);
@@ -254,7 +258,8 @@ async function syncSchedulesOnly() {
     await assertMarkedDatasetAccount(target.profile);
   }
 
-  const selectedVenues = await prepareReviewQrVenues(venues);
+  await prepareReviewQrVenues(venues);
+  const workingNowVenues = selectWorkingNowVenues(venues);
   const workingNowAssignments = [];
 
   for (const { definition, profile } of scheduleTargets) {
@@ -262,7 +267,7 @@ async function syncSchedulesOnly() {
       profile,
       definition,
       venues,
-      selectedVenues,
+      workingNowVenues,
     );
     if (assignment.isWorkingNow) {
       workingNowAssignments.push({
@@ -273,6 +278,7 @@ async function syncSchedulesOnly() {
       });
     }
   }
+  verifyWorkingNowDistribution(workingNowAssignments);
 
   const profileIds = profiles.map((profile) => profile.id);
   const [scheduledShifts, workingNowShifts] = await Promise.all([
@@ -673,7 +679,7 @@ async function replaceProfileSchedule(
   profile,
   definition,
   venues,
-  reviewQrVenues,
+  workingNowVenues,
 ) {
   await clearProfileSchedule(profile, definition);
 
@@ -685,7 +691,7 @@ async function replaceProfileSchedule(
   const workingNowSlot = workingNowIndexes.indexOf(definition.index);
   const isWorkingNow = workingNowSlot >= 0;
   const venue = isWorkingNow
-    ? reviewQrVenues[workingNowSlot % reviewQrVenues.length]
+    ? workingNowVenues[workingNowSlot]
     : venues[definition.index % venues.length];
   const now = Date.now();
   const startsAt = new Date(
@@ -713,6 +719,66 @@ async function replaceProfileSchedule(
   });
   assertSuccess(error, `insert review schedule for ${definition.slug}`);
   return { hasSchedule: true, isWorkingNow, venue };
+}
+
+function selectWorkingNowVenues(venues) {
+  const peppermintHippo = venues.find(
+    (venue) => venue.slug === PEPPERMINT_HIPPO_VENUE_SLUG,
+  );
+  if (!peppermintHippo) {
+    throw new Error(`Missing required Working Now venue: ${PEPPERMINT_HIPPO_VENUE_SLUG}.`);
+  }
+
+  const uniqueNames = new Set();
+  const randomCandidates = venues.filter((venue) => {
+    if (venue.id === peppermintHippo.id) return false;
+    const name = String(venue.name || "").trim().toLowerCase();
+    if (!name || uniqueNames.has(name)) return false;
+    uniqueNames.add(name);
+    return true;
+  });
+  if (randomCandidates.length < RANDOM_WORKING_NOW_VENUE_COUNT) {
+    throw new Error(
+      `At least ${RANDOM_WORKING_NOW_VENUE_COUNT} other active ${REVIEW_CITY} venues are required for Working Now.`,
+    );
+  }
+
+  for (let index = randomCandidates.length - 1; index > 0; index -= 1) {
+    const swapIndex = randomInt(index + 1);
+    [randomCandidates[index], randomCandidates[swapIndex]] = [
+      randomCandidates[swapIndex],
+      randomCandidates[index],
+    ];
+  }
+
+  return [
+    ...Array.from({ length: PEPPERMINT_HIPPO_WORKING_NOW_COUNT }, () => peppermintHippo),
+    ...randomCandidates.slice(0, RANDOM_WORKING_NOW_VENUE_COUNT),
+  ];
+}
+
+function verifyWorkingNowDistribution(assignments) {
+  if (assignments.length !== WORKING_NOW_PROFILE_INDEXES.size) {
+    throw new Error(`Expected ${WORKING_NOW_PROFILE_INDEXES.size} Working Now assignments.`);
+  }
+  const peppermintAssignments = assignments.filter(
+    (assignment) => assignment.venueSlug === PEPPERMINT_HIPPO_VENUE_SLUG,
+  );
+  const randomAssignments = assignments.filter(
+    (assignment) => assignment.venueSlug !== PEPPERMINT_HIPPO_VENUE_SLUG,
+  );
+  if (peppermintAssignments.length !== PEPPERMINT_HIPPO_WORKING_NOW_COUNT) {
+    throw new Error(
+      `Expected ${PEPPERMINT_HIPPO_WORKING_NOW_COUNT} Peppermint Hippo assignments but found ${peppermintAssignments.length}.`,
+    );
+  }
+  if (
+    randomAssignments.length !== RANDOM_WORKING_NOW_VENUE_COUNT ||
+    new Set(randomAssignments.map((assignment) => assignment.venueSlug)).size !==
+      RANDOM_WORKING_NOW_VENUE_COUNT
+  ) {
+    throw new Error(`Expected ${RANDOM_WORKING_NOW_VENUE_COUNT} distinct random venue assignments.`);
+  }
 }
 
 async function clearProfileSchedule(profile, definition) {
