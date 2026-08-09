@@ -2211,8 +2211,8 @@ body.dancr-button-system .home-tv-feed-action:not(
   -webkit-filter: none !important;
 }
 
-/* The supplied hero file and approved user media must never be color-corrected
- * by device. Overlays used for text legibility remain in their shared rules. */
+/* Device rendering never color-corrects the supplied hero, video, or venue
+ * media. Approved dancer photography receives its shared low-light lift below. */
 body > .app main.stack > .hero.reference-hero,
 body > .app main.stack > .hero.reference-hero > .hero-art,
 :is(html, body):is(
@@ -2240,6 +2240,29 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
 ) {
   filter: none !important;
   -webkit-filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Keep approved dancer photography equally clear on iPhone, Android, and
+ * Samsung Browser. This restrained lift is limited to still dancer photos;
+ * video, venue imagery, and the supplied hero remain source-accurate. */
+:is(
+  #results .home-dancer-grid-photo.has-custom-photo,
+  #results .home-feed-card .portrait.has-custom-photo,
+  #results .home-discovery-feed-slide:not(.home-venue-discovery-slide) .home-discovery-feed-photo.has-custom-photo,
+  #results .dancer-card:not(.home-dancer-grid-card):not(.home-feed-card) .portrait.has-custom-photo,
+  #profileBackdrop .modal-image.has-custom-photo,
+  #profileBackdrop .profile-modal-avatar.has-photo,
+  #profileBackdrop .gallery .thumb .portrait.has-custom-photo,
+  .profile-photo-viewer-image,
+  .public-profile-shell .profile-titlebar-avatar img,
+  .public-profile-shell .profile-media-feature > img,
+  .public-profile-shell .profile-media-grid-item img,
+  .public-profile-shell .profile-media-viewer-stage > img
+) {
+  filter: brightness(1.14) contrast(1.03) !important;
+  -webkit-filter: brightness(1.14) contrast(1.03) !important;
   opacity: 1 !important;
   mix-blend-mode: normal !important;
 }

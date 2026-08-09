@@ -402,7 +402,11 @@ test("Android and Samsung Browser cannot reintroduce device-only glow or media f
   );
   assert.match(
     parityLayer,
-    /The supplied hero file and approved user media must never be color-corrected[\s\S]*?\.hero\.reference-hero,[\s\S]*?\.dancer-card \.portrait,[\s\S]*?\.home-tv-feed-video,[\s\S]*?\.profile-media-feature video,[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/,
+    /Device rendering never color-corrects the supplied hero, video, or venue[\s\S]*?\.hero\.reference-hero,[\s\S]*?\.home-tv-feed-video,[\s\S]*?\.profile-media-feature video,[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/,
+  );
+  assert.match(
+    parityLayer,
+    /Keep approved dancer photography equally clear on iPhone, Android, and[\s\S]*?#results \.home-dancer-grid-photo\.has-custom-photo,[\s\S]*?#results \.home-discovery-feed-slide:not\(\.home-venue-discovery-slide\) \.home-discovery-feed-photo\.has-custom-photo,[\s\S]*?\.public-profile-shell \.profile-media-feature > img,[\s\S]*?filter: brightness\(1\.14\) contrast\(1\.03\) !important;[\s\S]*?-webkit-filter: brightness\(1\.14\) contrast\(1\.03\) !important;/,
   );
 
   const neutralSurfaceRule = parityLayer.match(

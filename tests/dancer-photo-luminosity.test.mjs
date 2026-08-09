@@ -18,7 +18,7 @@ const tvSource = fs.readFileSync(
 test("current dancer cards brighten the approved photo without an image-wide dimming layer", () => {
   assert.match(
     homeSource,
-    /#results \.home-dancer-grid-photo\.has-custom-photo,[\s\S]*?#results \.home-feed-card \.portrait\.has-custom-photo \{[\s\S]*?background-image: var\(--custom-photo\) !important;[\s\S]*?filter: brightness\(1\.08\) contrast\(1\.02\) !important;[\s\S]*?opacity: 1 !important;/,
+    /#results \.home-dancer-grid-photo\.has-custom-photo,[\s\S]*?#results \.home-feed-card \.portrait\.has-custom-photo \{[\s\S]*?background-image: var\(--custom-photo\) !important;[\s\S]*?filter: brightness\(1\.14\) contrast\(1\.03\) !important;[\s\S]*?opacity: 1 !important;/,
   );
   assert.match(
     homeSource,
@@ -36,7 +36,7 @@ test("legacy cards retain only a localized bottom text gradient", () => {
 test("profile avatars, gallery thumbnails, and full-screen photos share the restrained brightness lift", () => {
   assert.match(
     homeSource,
-    /#profileBackdrop \.modal-image\.has-custom-photo,[\s\S]*?#profileBackdrop \.profile-modal-avatar\.has-photo,[\s\S]*?#profileBackdrop \.gallery \.thumb \.portrait\.has-custom-photo,[\s\S]*?\.profile-photo-viewer-image \{[\s\S]*?filter: brightness\(1\.08\) contrast\(1\.02\) !important;[\s\S]*?opacity: 1 !important;/,
+    /#profileBackdrop \.modal-image\.has-custom-photo,[\s\S]*?#profileBackdrop \.profile-modal-avatar\.has-photo,[\s\S]*?#profileBackdrop \.gallery \.thumb \.portrait\.has-custom-photo,[\s\S]*?\.profile-photo-viewer-image \{[\s\S]*?filter: brightness\(1\.14\) contrast\(1\.03\) !important;[\s\S]*?opacity: 1 !important;/,
   );
   assert.match(
     homeSource,
@@ -44,19 +44,19 @@ test("profile avatars, gallery thumbnails, and full-screen photos share the rest
   );
   assert.match(
     publicProfileSource,
-    /\.profile-titlebar-avatar img \{[^}]*filter: brightness\(1\.08\) contrast\(1\.02\);/,
+    /\.profile-titlebar-avatar img \{[^}]*filter: brightness\(1\.14\) contrast\(1\.03\);/,
   );
   assert.match(
     publicProfileSource,
-    /\.profile-media-feature > img \{ object-fit: contain; filter: brightness\(1\.08\) contrast\(1\.02\); opacity: 1; mix-blend-mode: normal; \}/,
+    /\.profile-media-feature > img \{ object-fit: contain; filter: brightness\(1\.14\) contrast\(1\.03\); opacity: 1; mix-blend-mode: normal; \}/,
   );
   assert.match(
     publicProfileSource,
-    /\.profile-media-grid-item img \{ filter: brightness\(1\.08\) contrast\(1\.02\); opacity: 1; mix-blend-mode: normal; \}/,
+    /\.profile-media-grid-item img \{ filter: brightness\(1\.14\) contrast\(1\.03\); opacity: 1; mix-blend-mode: normal; \}/,
   );
   assert.match(
     publicProfileSource,
-    /\.profile-media-viewer-stage > img \{ filter: brightness\(1\.08\) contrast\(1\.02\); opacity: 1; mix-blend-mode: normal; \}/,
+    /\.profile-media-viewer-stage > img \{ filter: brightness\(1\.14\) contrast\(1\.03\); opacity: 1; mix-blend-mode: normal; \}/,
   );
   assert.match(
     tvSource,
