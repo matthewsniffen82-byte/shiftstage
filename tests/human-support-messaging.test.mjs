@@ -2,28 +2,30 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [supportSource, routeSource, adminSource, liveAppSource, serviceWorkerSource, liveRouteSource] = await Promise.all([
+const [supportSource, routeSource, dashboardSource, adminSource, liveAppSource, serviceWorkerSource, liveRouteSource] = await Promise.all([
   readFile(new URL("../src/lib/dancr/support.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/support/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("support API is limited to authenticated customer and dancer accounts", () => {
+test("support API accepts authenticated customer, dancer, and venue accounts", () => {
   assert.match(routeSource, /createRequestSupabaseContext\(request\)/);
-  assert.match(routeSource, /account\.role !== "customer" && account\.role !== "dancer"/);
+  assert.match(routeSource, /isSupportUserRole\(account\.role\)/);
   assert.doesNotMatch(routeSource, /processAutomatedSupportMessage|OpenAI|ai-support/);
   assert.match(routeSource, /createOwnSupportMessage/);
   assert.match(routeSource, /createAdminSupabaseClient\(\)/);
 });
 
-test("customer and dancer messages persist and alert active admins", () => {
+test("customer, dancer, and venue messages persist and alert active admins", () => {
+  assert.match(supportSource, /SUPPORT_USER_ROLES[^\n]*\["customer", "dancer", "venue"\]/);
   assert.match(supportSource, /\.from\("support_threads"\)/);
   assert.match(supportSource, /\.from\("support_messages"\)/);
   assert.match(supportSource, /sender_kind: "human"/);
-  assert.match(supportSource, /\.in\("user_role", \["customer", "dancer"\]\)/);
+  assert.match(supportSource, /\.in\("user_role", SUPPORT_USER_ROLES\)/);
   assert.match(supportSource, /notifyActiveAdmins/);
   assert.match(supportSource, /\.eq\("role", "admin"\)/);
   assert.match(supportSource, /\.eq\("account_state", "active"\)/);
@@ -31,20 +33,21 @@ test("customer and dancer messages persist and alert active admins", () => {
   assert.doesNotMatch(supportSource, /support_ai_runs|addAutomatedSupportReply|recordSupportAiRun/);
 });
 
-test("admins can reply and customers or dancers receive notifications", () => {
+test("admins can reply and account owners receive notifications", () => {
   assert.match(supportSource, /replyToSupportThread/);
   assert.match(supportSource, /sender_role: "admin"/);
   assert.match(supportSource, /title: "Admin replied"/);
-  assert.match(adminSource, /Reply to customer or dancer/);
+  assert.match(adminSource, /Reply to account/);
   assert.doesNotMatch(adminSource, /Dancr Support AI|Awaiting human review|escalationReason/);
 });
 
-test("live support interfaces use the production API without AI or venue support", () => {
+test("live support interfaces use the production API and the venue dashboard exposes the inbox", () => {
   assert.match(liveAppSource, /Message admin/);
   assert.match(liveAppSource, /Admin Support/);
   assert.match(liveAppSource, /getAuthenticatedJson\("\/api\/support"\)/);
   assert.match(liveAppSource, /postAuthenticatedJson\("\/api\/support"/);
-  assert.doesNotMatch(liveAppSource, /Dancr Support AI|AI answers|AI replied|data-support-panel="venue"/);
+  assert.match(dashboardSource, /role === "venue"[\s\S]*?<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} \/>/);
+  assert.doesNotMatch(liveAppSource, /Dancr Support AI|AI answers|AI replied/);
   assert.doesNotMatch(liveAppSource, /supportStorageKey|readStoredSupportThreads|writeStoredSupportThreads|localSupportThread/);
 });
 

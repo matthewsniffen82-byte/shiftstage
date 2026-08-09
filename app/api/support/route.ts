@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import {
   createOwnSupportMessage,
+  isSupportUserRole,
   listOwnSupportThreads,
 } from "@/src/lib/dancr/support";
 import type { UserRole } from "@/src/lib/dancr/types";
@@ -15,8 +16,8 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     const account = await getOwnAccount(client, user.id);
-    if (account.role !== "customer" && account.role !== "dancer") {
-      return NextResponse.json({ ok: false, error: "Support messaging is available for customer and dancer accounts." }, { status: 403 });
+    if (!isSupportUserRole(account.role)) {
+      return NextResponse.json({ ok: false, error: "Support messaging is available for customer, dancer, and venue accounts." }, { status: 403 });
     }
     const threads = await listOwnSupportThreads(client, user.id);
     return NextResponse.json({ ok: true, threads });
@@ -29,8 +30,8 @@ export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     const account = await getOwnAccount(client, user.id);
-    if (account.role !== "customer" && account.role !== "dancer") {
-      return NextResponse.json({ ok: false, error: "Support messaging is available for customer and dancer accounts." }, { status: 403 });
+    if (!isSupportUserRole(account.role)) {
+      return NextResponse.json({ ok: false, error: "Support messaging is available for customer, dancer, and venue accounts." }, { status: 403 });
     }
 
     const body = await request.json();

@@ -4,6 +4,14 @@ import type { UserRole } from "./types";
 
 type DancrClient = SupabaseClient;
 
+export type SupportUserRole = Extract<UserRole, "customer" | "dancer" | "venue">;
+
+export const SUPPORT_USER_ROLES: SupportUserRole[] = ["customer", "dancer", "venue"];
+
+export function isSupportUserRole(role: UserRole): role is SupportUserRole {
+  return SUPPORT_USER_ROLES.includes(role as SupportUserRole);
+}
+
 type SupportThreadRow = {
   id: string;
   user_id: string;
@@ -61,7 +69,7 @@ export async function listOwnSupportThreads(client: DancrClient, userId: string)
     .from("support_threads")
     .select(USER_THREAD_SELECT)
     .eq("user_id", userId)
-    .in("user_role", ["customer", "dancer"])
+    .in("user_role", SUPPORT_USER_ROLES)
     .order("last_message_at", { ascending: false });
 
   if (error) throw error;
@@ -70,15 +78,11 @@ export async function listOwnSupportThreads(client: DancrClient, userId: string)
 
 export async function createOwnSupportMessage(client: DancrClient, input: {
   userId: string;
-  role: UserRole;
+  role: SupportUserRole;
   subject?: string | null;
   body: string;
   threadId?: string | null;
 }, adminClient: DancrClient) {
-  if (input.role !== "customer" && input.role !== "dancer") {
-    throw new Error("Support messaging is available for customer and dancer accounts.");
-  }
-
   const body = requiredMessage(input.body);
   await enforceSupportMessageRateLimit(client, input.userId);
   const now = new Date().toISOString();
@@ -90,7 +94,7 @@ export async function createOwnSupportMessage(client: DancrClient, input: {
       .select("id")
       .eq("id", threadId)
       .eq("user_id", input.userId)
-      .in("user_role", ["customer", "dancer"])
+      .in("user_role", SUPPORT_USER_ROLES)
       .maybeSingle();
 
     if (threadError) throw threadError;
@@ -155,7 +159,7 @@ export async function listAdminSupportThreads(client: DancrClient) {
   const { data, error } = await (client as any)
     .from("support_threads")
     .select(ADMIN_THREAD_SELECT)
-    .in("user_role", ["customer", "dancer"])
+    .in("user_role", SUPPORT_USER_ROLES)
     .order("last_message_at", { ascending: false })
     .limit(100);
 
@@ -174,7 +178,7 @@ export async function replyToSupportThread(client: DancrClient, input: {
     .from("support_threads")
     .select("id, user_id, user_role, subject")
     .eq("id", input.threadId)
-    .in("user_role", ["customer", "dancer"])
+    .in("user_role", SUPPORT_USER_ROLES)
     .maybeSingle();
 
   if (threadError) throw threadError;
@@ -224,7 +228,7 @@ async function getOwnSupportThread(client: DancrClient, userId: string, threadId
     .select(USER_THREAD_SELECT)
     .eq("id", threadId)
     .eq("user_id", userId)
-    .in("user_role", ["customer", "dancer"])
+    .in("user_role", SUPPORT_USER_ROLES)
     .maybeSingle();
 
   if (error) throw error;
@@ -237,7 +241,7 @@ async function getAdminSupportThread(client: DancrClient, threadId: string) {
     .from("support_threads")
     .select(ADMIN_THREAD_SELECT)
     .eq("id", threadId)
-    .in("user_role", ["customer", "dancer"])
+    .in("user_role", SUPPORT_USER_ROLES)
     .maybeSingle();
 
   if (error) throw error;
@@ -267,7 +271,7 @@ async function enforceSupportMessageRateLimit(client: DancrClient, userId: strin
 
 async function notifyActiveAdmins(client: DancrClient, input: {
   threadId: string;
-  userRole: UserRole;
+  userRole: SupportUserRole;
   subject: string;
   body: string;
 }) {

@@ -1449,10 +1449,10 @@ function AdminSupportInbox({
             <textarea
               value={replyByThread[threadId] || ""}
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
-              placeholder="Reply to this customer or dancer"
+              placeholder="Reply to this customer, dancer, or venue"
             />
             <button type="button" onClick={() => reply(threadId)}>
-              Reply to customer or dancer
+              Reply to account
             </button>
             {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
           </details>
