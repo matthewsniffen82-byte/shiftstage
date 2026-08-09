@@ -215,6 +215,11 @@ export default function DashboardClient({
     setState((current) => ({ ...current, profile }));
   }
 
+  function updateVenueDeals(venueDeals: Array<Record<string, unknown>>) {
+    const primaryDeal = venueDeals.find((deal) => deal.isActive === true) || venueDeals[0] || null;
+    setState((current) => ({ ...current, deal: primaryDeal, venueDeals }));
+  }
+
   function updateSaved(update: (saved: CustomerSavedState) => CustomerSavedState) {
     setState((current) => ({ ...current, saved: update(current.saved || {}) }));
   }
@@ -370,6 +375,7 @@ export default function DashboardClient({
                   profile={state.profile}
                   workingNow={state.workingNow || []}
                   initialAffiliations={state.affiliations || []}
+                  onDealsChange={updateVenueDeals}
                   onProfileChange={updateProfile}
                 />
               )}
@@ -1508,6 +1514,7 @@ function VenuePanel({
   profile,
   workingNow,
   initialAffiliations,
+  onDealsChange,
   onProfileChange,
 }: {
   analytics?: LoadState["analytics"];
@@ -1518,6 +1525,7 @@ function VenuePanel({
   profile?: LoadState["profile"];
   workingNow: Array<Record<string, unknown>>;
   initialAffiliations: Array<Record<string, unknown>>;
+  onDealsChange: (deals: Array<Record<string, unknown>>) => void;
   onProfileChange: (profile: Record<string, unknown>) => void;
 }) {
   const [form, setForm] = useState({
@@ -1724,6 +1732,7 @@ function VenuePanel({
           hasWorkingNowDancers={workingNow.length > 0}
           initialDeal={deal}
           initialDeals={venueDeals}
+          onDealsChange={onDealsChange}
           revenue={dealRevenue}
         />
       </VenueDashboardSection>
@@ -1880,17 +1889,20 @@ function VenueClubDealPanel({
   hasWorkingNowDancers,
   initialDeal,
   initialDeals,
+  onDealsChange,
   revenue,
 }: {
   finance?: LoadState["finance"];
   hasWorkingNowDancers: boolean;
   initialDeal?: LoadState["deal"];
   initialDeals: Array<Record<string, unknown>>;
+  onDealsChange: (deals: Array<Record<string, unknown>>) => void;
   revenue?: LoadState["dealRevenue"];
 }) {
   const seedDeals = initialDeals.length ? initialDeals : initialDeal ? [initialDeal] : [];
+  const editingIdRef = useRef(String(seedDeals[0]?.id || ""));
   const [deals, setDeals] = useState<Array<Record<string, unknown>>>(seedDeals);
-  const [editingId, setEditingId] = useState(String(seedDeals[0]?.id || ""));
+  const [editingId, setEditingId] = useState(editingIdRef.current);
   const [form, setForm] = useState(() => venueDealForm(seedDeals[0]));
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -1906,9 +1918,12 @@ function VenueClubDealPanel({
 
   useEffect(() => {
     const nextDeals = initialDeals.length ? initialDeals : initialDeal ? [initialDeal] : [];
+    const selectedDeal = nextDeals.find((deal) => String(deal.id) === editingIdRef.current) || nextDeals[0];
+    const nextEditingId = String(selectedDeal?.id || "");
     setDeals(nextDeals);
-    setEditingId(String(nextDeals[0]?.id || ""));
-    setForm(venueDealForm(nextDeals[0]));
+    editingIdRef.current = nextEditingId;
+    setEditingId(nextEditingId);
+    setForm(venueDealForm(selectedDeal));
     setSaveConfirmed(false);
     setShareOptionsOpen(false);
   }, [initialDeal, initialDeals]);
@@ -1921,7 +1936,9 @@ function VenueClubDealPanel({
   }
 
   function editDeal(deal: Record<string, unknown>) {
-    setEditingId(String(deal.id || ""));
+    const nextEditingId = String(deal.id || "");
+    editingIdRef.current = nextEditingId;
+    setEditingId(nextEditingId);
     setForm(venueDealForm(deal));
     setSaveConfirmed(false);
     setQrAsset(null);
@@ -1930,6 +1947,7 @@ function VenueClubDealPanel({
   }
 
   function addDeal() {
+    editingIdRef.current = "";
     setEditingId("");
     setForm(venueDealForm(null, deals.length));
     setSaveConfirmed(false);
@@ -1982,14 +2000,11 @@ function VenueClubDealPanel({
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to update the tracked Club Deal.");
       }
-      setDeals((current) => {
-        const exists = current.some((deal) => String(deal.id) === String(data.deal.id));
-        const next = exists
-          ? current.map((deal) => String(deal.id) === String(data.deal.id) ? data.deal : deal)
-          : [...current, data.deal];
-        return next.sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
-      });
-      setEditingId(String(data.deal.id));
+      const nextDeals = upsertVenueDeal(deals, data.deal);
+      setDeals(nextDeals);
+      onDealsChange(nextDeals);
+      editingIdRef.current = String(data.deal.id);
+      setEditingId(editingIdRef.current);
       setForm(venueDealForm(data.deal));
       setQrAsset(null);
       setStatus(data.deal.isActive
@@ -2017,8 +2032,11 @@ function VenueClubDealPanel({
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete this Club Deal.");
       const nextDeals = deals.filter((deal) => String(deal.id) !== editingId);
+      const nextEditingId = String(nextDeals[0]?.id || "");
       setDeals(nextDeals);
-      setEditingId(String(nextDeals[0]?.id || ""));
+      onDealsChange(nextDeals);
+      editingIdRef.current = nextEditingId;
+      setEditingId(nextEditingId);
       setForm(venueDealForm(nextDeals[0], nextDeals.length));
       setQrAsset(null);
       setShareOptionsOpen(false);
@@ -2333,6 +2351,17 @@ function VenueClubDealPanel({
       {status ? <p role="status">{status}</p> : null}
     </article>
   );
+}
+
+function upsertVenueDeal(
+  currentDeals: Array<Record<string, unknown>>,
+  savedDeal: Record<string, unknown>,
+) {
+  const exists = currentDeals.some((deal) => String(deal.id) === String(savedDeal.id));
+  const nextDeals = exists
+    ? currentDeals.map((deal) => String(deal.id) === String(savedDeal.id) ? savedDeal : deal)
+    : [...currentDeals, savedDeal];
+  return nextDeals.sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
 }
 
 function venueDealForm(deal?: Record<string, unknown> | null, fallbackOrder = 0) {

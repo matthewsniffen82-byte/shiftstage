@@ -144,6 +144,29 @@ test("venue offer button confirms only a successful database save", () => {
   assert.match(clubDealPanel, /aria-live="polite"[\s\S]*?disabled=\{isSaving\}[\s\S]*?name="dealAction"[\s\S]*?type="submit"/);
 });
 
+test("saved venue deals immediately synchronize dashboard cards, selection, and counts", () => {
+  const clubDealPanel = dashboardClient.match(
+    /function VenueClubDealPanel[\s\S]*?function venueDealForm/,
+  )?.[0] || "";
+
+  assert.match(
+    dashboardClient,
+    /function updateVenueDeals\(venueDeals[\s\S]*?primaryDeal[\s\S]*?setState\(\(current\) => \(\{ \.\.\.current, deal: primaryDeal, venueDeals \}\)\)/,
+  );
+  assert.match(dashboardClient, /<VenuePanel[\s\S]*?onDealsChange=\{updateVenueDeals\}/);
+  assert.match(dashboardClient, /<VenueClubDealPanel[\s\S]*?onDealsChange=\{onDealsChange\}/);
+  assert.match(
+    clubDealPanel,
+    /const nextDeals = upsertVenueDeal\(deals, data\.deal\);\s*setDeals\(nextDeals\);\s*onDealsChange\(nextDeals\)/,
+  );
+  assert.match(
+    clubDealPanel,
+    /method: "DELETE"[\s\S]*?setDeals\(nextDeals\);\s*onDealsChange\(nextDeals\)/,
+  );
+  assert.match(clubDealPanel, /editingIdRef\.current = String\(data\.deal\.id\)/);
+  assert.match(clubDealPanel, /const liveCount = deals\.filter\(\(deal\) => deal\.isActive === true\)\.length/);
+});
+
 test("venue deal publishing keeps the essential copy visible and collapses operational guidance", () => {
   assert.match(dashboardClient, /<h2>Post a Club Deal<\/h2>/);
   assert.match(dashboardClient, /Appears on your venue page and eligible working dancer profiles\./);
