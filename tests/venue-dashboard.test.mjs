@@ -71,8 +71,8 @@ test("venue management is consolidated into one descriptive collapsible workspac
   assert.match(dashboardClient, /id="venue-public-profile"[\s\S]*?title="Public venue profile"/);
   assert.match(dashboardClient, /id="venue-working-now"[\s\S]*?title="Working now"/);
   assert.match(dashboardClient, /id="venue-external-qr"[\s\S]*?title="External marketing QR"/);
-  assert.match(dashboardClient, /<VenueClubDealPanel initialDeal=\{deal\} initialDeals=\{venueDeals\}/);
-  assert.match(dashboardClient, /Generate tracked QR/);
+  assert.match(dashboardClient, /<VenueClubDealPanel[\s\S]*?hasWorkingNowDancers=\{workingNow\.length > 0\}[\s\S]*?initialDeal=\{deal\}[\s\S]*?initialDeals=\{venueDeals\}/);
+  assert.match(dashboardClient, /"Share QR"/);
   assert.match(dashboardClient, /<VenueTvPanel \/>/);
 });
 
@@ -88,10 +88,10 @@ test("venue offer button confirms only a successful database save", () => {
   );
   assert.match(
     clubDealPanel,
-    /isSaving \? "Saving\.\.\." : saveConfirmed \? "Saved" : form\.isActive \? "Publish Deal" : "Save Draft"/,
+    /isSaving \? "Saving\.\.\." : saveConfirmed \? "Saved" : form\.isActive \? "Save Changes" : "Publish Deal"/,
   );
   assert.match(clubDealPanel, /function updateDealForm[\s\S]*?setSaveConfirmed\(false\)/);
-  assert.match(clubDealPanel, /aria-live="polite" disabled=\{isSaving\} type="submit"/);
+  assert.match(clubDealPanel, /aria-live="polite"[\s\S]*?disabled=\{isSaving\}[\s\S]*?name="dealAction"[\s\S]*?type="submit"/);
 });
 
 test("venue deal publishing keeps the essential copy visible and collapses operational guidance", () => {
@@ -100,10 +100,39 @@ test("venue deal publishing keeps the essential copy visible and collapses opera
   assert.match(dashboardClient, />\s*Deal title\s*<input/);
   assert.match(dashboardClient, />\s*Offer details\s*<textarea/);
   assert.match(dashboardClient, />\s*Conditions \(optional\)\s*<textarea/);
-  assert.match(dashboardClient, /saveConfirmed \? "Saved" : form\.isActive \? "Publish Deal" : "Save Draft"/);
+  assert.match(dashboardClient, /saveConfirmed \? "Saved" : form\.isActive \? "Save Changes" : "Publish Deal"/);
   assert.match(dashboardClient, /<details className="venue-deal-how">[\s\S]*?<summary>How Club Deals work<\/summary>/);
   assert.match(dashboardClient, /<h3 id="venue-deal-qr-heading">Deal QR<\/h3>/);
   assert.doesNotMatch(dashboardClient, /Tracked venue QR generator/);
+});
+
+test("venue deal publishing clearly confirms live placement without showing a dancer count", () => {
+  const clubDealPanel = dashboardClient.match(
+    /function VenueClubDealPanel[\s\S]*?function venueDealForm/,
+  )?.[0] || "";
+
+  assert.match(clubDealPanel, /const submitter = \(event\.nativeEvent as SubmitEvent\)\.submitter/);
+  assert.match(clubDealPanel, /action === "publish" \? true : action === "draft" \|\| action === "unpublish" \? false : form\.isActive/);
+  assert.match(clubDealPanel, /isActive: nextIsActive/);
+  assert.match(clubDealPanel, /<strong>\{form\.isActive \? "Live on MyDancr" : "Draft — not live"\}<\/strong>/);
+  assert.match(clubDealPanel, />Live on venue page</);
+  assert.match(clubDealPanel, /Available on eligible Working Now dancer profiles/);
+  assert.match(clubDealPanel, /Will appear automatically when an affiliated dancer is Working Now/);
+  assert.match(clubDealPanel, />Venue QR active</);
+  assert.doesNotMatch(clubDealPanel, /\{workingNow\.length\}[\s\S]*?dancer profiles/);
+});
+
+test("venue QR uses one share action with clear device, image, and link options", () => {
+  const clubDealPanel = dashboardClient.match(
+    /function VenueClubDealPanel[\s\S]*?function venueDealForm/,
+  )?.[0] || "";
+
+  assert.match(clubDealPanel, /onClick=\{openVenueQrShareOptions\}[\s\S]*?>[\s\S]*?"Share QR"/);
+  assert.match(clubDealPanel, />Share from device<\/button>/);
+  assert.match(clubDealPanel, />Save QR image<\/button>/);
+  assert.match(clubDealPanel, />Copy deal link<\/button>/);
+  assert.match(clubDealPanel, /if \(navigator\.share\)/);
+  assert.doesNotMatch(clubDealPanel, />Generate tracked QR|>Download PNG|>Copy tracked link/);
 });
 
 test("venue dashboard APIs require an active venue account and scope writes by owner", () => {

@@ -1686,12 +1686,18 @@ function VenuePanel({
       <VenueDashboardSection
         badge={`${venueDeals.length || (deal ? 1 : 0)} ${venueDeals.length === 1 || (!venueDeals.length && deal) ? "deal" : "deals"}`}
         defaultOpen
-        description="Create commission-bearing offers, publish them, generate downloadable tracked QR codes, and reconcile scans, redemptions, payouts, and settlements."
+        description="Create and publish a Club Deal, confirm where it is live, and share its active QR from one place."
         eyebrow="Revenue"
         id="venue-club-deals"
         title="Club Deals & tracked QR"
       >
-        <VenueClubDealPanel initialDeal={deal} initialDeals={venueDeals} revenue={dealRevenue} finance={finance} />
+        <VenueClubDealPanel
+          finance={finance}
+          hasWorkingNowDancers={workingNow.length > 0}
+          initialDeal={deal}
+          initialDeals={venueDeals}
+          revenue={dealRevenue}
+        />
       </VenueDashboardSection>
 
       <VenueDashboardSection
@@ -1843,11 +1849,13 @@ function VenuePanel({
 
 function VenueClubDealPanel({
   finance,
+  hasWorkingNowDancers,
   initialDeal,
   initialDeals,
   revenue,
 }: {
   finance?: LoadState["finance"];
+  hasWorkingNowDancers: boolean;
   initialDeal?: LoadState["deal"];
   initialDeals: Array<Record<string, unknown>>;
   revenue?: LoadState["dealRevenue"];
@@ -1860,6 +1868,7 @@ function VenueClubDealPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [saveConfirmed, setSaveConfirmed] = useState(false);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const [shareOptionsOpen, setShareOptionsOpen] = useState(false);
   const [qrAsset, setQrAsset] = useState<{
     dealId: string;
     dealTitle: string;
@@ -1873,11 +1882,13 @@ function VenueClubDealPanel({
     setEditingId(String(nextDeals[0]?.id || ""));
     setForm(venueDealForm(nextDeals[0]));
     setSaveConfirmed(false);
+    setShareOptionsOpen(false);
   }, [initialDeal, initialDeals]);
 
   function updateDealForm<Key extends keyof typeof form>(key: Key, value: (typeof form)[Key]) {
     setSaveConfirmed(false);
     setStatus("");
+    setShareOptionsOpen(false);
     setForm((current) => ({ ...current, [key]: value }));
   }
 
@@ -1886,6 +1897,7 @@ function VenueClubDealPanel({
     setForm(venueDealForm(deal));
     setSaveConfirmed(false);
     setQrAsset(null);
+    setShareOptionsOpen(false);
     setStatus("");
   }
 
@@ -1894,12 +1906,17 @@ function VenueClubDealPanel({
     setForm(venueDealForm(null, deals.length));
     setSaveConfirmed(false);
     setQrAsset(null);
+    setShareOptionsOpen(false);
     setStatus("Create the offer, then publish it when every detail is ready.");
   }
 
   async function saveDeal(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaveConfirmed(false);
+    setShareOptionsOpen(false);
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const action = submitter?.value || "save";
+    const nextIsActive = action === "publish" ? true : action === "draft" || action === "unpublish" ? false : form.isActive;
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
@@ -1927,7 +1944,7 @@ function VenueClubDealPanel({
           dealDescription: form.dealDescription,
           dealTerms: form.dealTerms,
           referralCommissionCents,
-          isActive: form.isActive,
+          isActive: nextIsActive,
           offerType: form.offerType,
           bookingUrl: form.offerType === "bottle_service" ? form.bookingUrl : null,
           sortOrder: Number(form.sortOrder),
@@ -1947,7 +1964,9 @@ function VenueClubDealPanel({
       setEditingId(String(data.deal.id));
       setForm(venueDealForm(data.deal));
       setQrAsset(null);
-      setStatus(data.message || "Tracked Club Deal saved.");
+      setStatus(data.deal.isActive
+        ? "Deal published. Its QR is live on your venue page and eligible Working Now dancer profiles."
+        : "Draft saved. This deal is not visible on MyDancr.");
       setSaveConfirmed(true);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update the tracked Club Deal.");
@@ -1974,6 +1993,7 @@ function VenueClubDealPanel({
       setEditingId(String(nextDeals[0]?.id || ""));
       setForm(venueDealForm(nextDeals[0], nextDeals.length));
       setQrAsset(null);
+      setShareOptionsOpen(false);
       setStatus(data.message || "Club Deal deleted.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to delete this Club Deal.");
@@ -1982,12 +2002,16 @@ function VenueClubDealPanel({
     }
   }
 
-  async function generateVenueQr() {
-    if (!editingId || isGeneratingQr) return;
+  async function prepareVenueQr(): Promise<NonNullable<typeof qrAsset> | null> {
+    if (qrAsset?.dealId === editingId) return qrAsset;
+    if (!editingId || isGeneratingQr) return null;
     const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return null;
+    }
     setIsGeneratingQr(true);
-    setStatus("Generating the tracked venue QR…");
+    setStatus("Preparing QR share options…");
     try {
       const response = await fetch(`/api/venue/deal/qr?dealId=${encodeURIComponent(editingId)}`, {
         headers: { authorization: `Bearer ${session.accessToken}` },
@@ -1997,13 +2021,44 @@ function VenueClubDealPanel({
       if (!response.ok || !data.ok || !data.asset?.qrDataUrl) {
         throw new Error(data.error || "Unable to generate this tracked Club Deal QR.");
       }
-      setQrAsset(data.asset);
-      setStatus("Tracked venue QR ready to download or post.");
+      const asset = data.asset as NonNullable<typeof qrAsset>;
+      setQrAsset(asset);
+      return asset;
     } catch (error) {
       setQrAsset(null);
       setStatus(error instanceof Error ? error.message : "Unable to generate this tracked Club Deal QR.");
+      return null;
     } finally {
       setIsGeneratingQr(false);
+    }
+  }
+
+  async function openVenueQrShareOptions() {
+    setShareOptionsOpen(false);
+    const asset = await prepareVenueQr();
+    if (!asset) return;
+    setShareOptionsOpen(true);
+    setStatus("Choose how you want to share the active QR.");
+  }
+
+  async function shareVenueQrFromDevice() {
+    if (!qrAsset) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: qrAsset.dealTitle,
+          text: `Open the ${qrAsset.dealTitle} Club Deal on MyDancr.`,
+          url: qrAsset.claimUrl,
+        });
+        setStatus("QR deal link shared.");
+        setShareOptionsOpen(false);
+        return;
+      }
+      await navigator.clipboard.writeText(qrAsset.claimUrl);
+      setStatus("Sharing is unavailable on this browser, so the deal link was copied.");
+      setShareOptionsOpen(false);
+    } catch (error) {
+      if ((error as DOMException)?.name !== "AbortError") setStatus("Unable to open device sharing. Choose another share option.");
     }
   }
 
@@ -2015,7 +2070,8 @@ function VenueClubDealPanel({
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setStatus("Tracked venue QR downloaded.");
+    setStatus("QR image saved.");
+    setShareOptionsOpen(false);
   }
 
   async function copyVenueQrLink() {
@@ -2023,8 +2079,9 @@ function VenueClubDealPanel({
     try {
       await navigator.clipboard.writeText(qrAsset.claimUrl);
       setStatus("Tracked Club Deal link copied.");
+      setShareOptionsOpen(false);
     } catch {
-      setStatus("Unable to copy the link. Download the QR instead.");
+      setStatus("Unable to copy the link. Choose Save QR image instead.");
     }
   }
 
@@ -2100,7 +2157,7 @@ function VenueClubDealPanel({
               inputMode="url"
               maxLength={1000}
               placeholder="https://yourvenue.com/reservations"
-              required={form.isActive}
+              required
               type="url"
               value={form.bookingUrl}
               onChange={(event) => updateDealForm("bookingUrl", event.target.value)}
@@ -2140,39 +2197,71 @@ function VenueClubDealPanel({
             />
           </span>
         </label>
-        <label className="deal-active-toggle">
-          <input
-            checked={form.isActive}
-            type="checkbox"
-            onChange={(event) => updateDealForm("isActive", event.target.checked)}
-          />
-          Publish deal
-        </label>
         <div className="venue-deal-form-actions">
-          <button aria-live="polite" disabled={isSaving} type="submit">
-            {isSaving ? "Saving..." : saveConfirmed ? "Saved" : form.isActive ? "Publish Deal" : "Save Draft"}
+          <button
+            aria-live="polite"
+            disabled={isSaving}
+            name="dealAction"
+            type="submit"
+            value={form.isActive ? "save" : "publish"}
+          >
+            {isSaving ? "Saving..." : saveConfirmed ? "Saved" : form.isActive ? "Save Changes" : "Publish Deal"}
+          </button>
+          <button
+            className="secondary"
+            disabled={isSaving}
+            name="dealAction"
+            type="submit"
+            value={form.isActive ? "unpublish" : "draft"}
+          >
+            {form.isActive ? "Unpublish" : "Save Draft"}
           </button>
           {editingId ? <button className="danger" disabled={isSaving} type="button" onClick={deleteDeal}>Delete</button> : null}
         </div>
       </form>
+      {editingId ? (
+        <section className={form.isActive ? "venue-deal-publish-status live" : "venue-deal-publish-status"} aria-live="polite">
+          <div className="venue-deal-publish-status-heading">
+            <span aria-hidden="true">{form.isActive ? "✓" : "•"}</span>
+            <div>
+              <strong>{form.isActive ? "Live on MyDancr" : "Draft — not live"}</strong>
+              <small>{form.isActive ? "This deal and its QR are published." : "Publish this deal when it is ready for customers."}</small>
+            </div>
+          </div>
+          {form.isActive ? (
+            <ul>
+              <li>Live on venue page</li>
+              <li>{hasWorkingNowDancers ? "Available on eligible Working Now dancer profiles" : "Will appear automatically when an affiliated dancer is Working Now"}</li>
+              <li>Venue QR active</li>
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
       <section className="venue-deal-qr-generator" aria-labelledby="venue-deal-qr-heading">
         <div className="venue-deal-qr-copy">
           <span className="eyebrow">Share this deal</span>
           <h3 id="venue-deal-qr-heading">Deal QR</h3>
-          <p>Generate a QR for signs, tables, social posts, or venue marketing.</p>
+          <p>{form.isActive ? "This QR is already active on MyDancr. Share it from here when you need it elsewhere." : "Publish this deal to activate its QR on MyDancr."}</p>
           <div className="venue-deal-qr-actions">
             <button
+              aria-controls="venue-deal-share-options"
+              aria-expanded={shareOptionsOpen}
               disabled={!editingId || !form.isActive || isGeneratingQr}
               type="button"
-              onClick={generateVenueQr}
+              onClick={openVenueQrShareOptions}
             >
-              {isGeneratingQr ? "Generating…" : qrAsset ? "Refresh tracked QR" : "Generate tracked QR"}
+              {isGeneratingQr ? "Opening…" : "Share QR"}
             </button>
-            {qrAsset ? <button type="button" onClick={downloadVenueQr}>Download PNG</button> : null}
-            {qrAsset ? <button className="secondary" type="button" onClick={copyVenueQrLink}>Copy tracked link</button> : null}
           </div>
-          {!editingId ? <small>Create and publish an offer before generating its QR.</small> : null}
-          {editingId && !form.isActive ? <small>Publish this offer before generating its QR.</small> : null}
+          {shareOptionsOpen && qrAsset ? (
+            <div className="venue-deal-share-options" id="venue-deal-share-options" role="group" aria-label="QR sharing options">
+              <button type="button" onClick={shareVenueQrFromDevice}>Share from device</button>
+              <button type="button" onClick={downloadVenueQr}>Save QR image</button>
+              <button type="button" onClick={copyVenueQrLink}>Copy deal link</button>
+            </div>
+          ) : null}
+          {!editingId ? <small>Create and publish a deal before sharing its QR.</small> : null}
+          {editingId && !form.isActive ? <small>This QR stays unavailable until the deal is published.</small> : null}
         </div>
         {qrAsset ? (
           <div className="venue-deal-qr-preview">
@@ -2183,7 +2272,7 @@ function VenueClubDealPanel({
         ) : (
           <div className="venue-deal-qr-preview empty" aria-hidden="true">
             <span>QR</span>
-            <small>Select a published offer</small>
+            <small>{form.isActive ? "Choose Share QR to view" : "Active after publishing"}</small>
           </div>
         )}
       </section>
@@ -4922,8 +5011,20 @@ function DashboardStyles() {
       .venue-deal-panel button:disabled { opacity: .62; cursor: wait; }
       .deal-booking-url { grid-column: 1 / -1; }
       .deal-booking-url small { color: #94e5ff; font-weight: 650; line-height: 1.45; }
-      .venue-deal-form-actions { display: flex; align-items: center; gap: 10px; }
+      .venue-deal-form-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+      .venue-deal-form-actions .secondary { color: #f7f2ff; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16); }
       .venue-deal-form-actions .danger { color: #ffccd3; background: rgba(255,86,108,.12); border: 1px solid rgba(255,86,108,.3); }
+      .venue-deal-publish-status { display: grid; gap: 12px; padding: 15px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(255,255,255,.035); }
+      .venue-deal-publish-status.live { border-color: rgba(50,255,164,.38); background: rgba(50,255,164,.07); box-shadow: inset 3px 0 0 rgba(50,255,164,.7); }
+      .venue-deal-publish-status-heading { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: center; }
+      .venue-deal-publish-status-heading > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #d8cfeb; background: rgba(255,255,255,.08); font-weight: 950; }
+      .venue-deal-publish-status.live .venue-deal-publish-status-heading > span { color: #061015; background: #78ffc0; }
+      .venue-deal-publish-status-heading > div { display: grid; gap: 3px; }
+      .venue-deal-publish-status-heading strong { color: #fff; font-size: 17px; }
+      .venue-deal-publish-status-heading small { color: #b9accd; line-height: 1.4; }
+      .venue-deal-publish-status ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+      .venue-deal-publish-status li { position: relative; padding-left: 24px; color: #e8fff4; font-size: 14px; font-weight: 800; }
+      .venue-deal-publish-status li::before { content: "✓"; position: absolute; left: 2px; color: #78ffc0; font-weight: 950; }
       .venue-deal-qr-generator { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, 250px); gap: 18px; align-items: center; padding: 18px; border: 1px solid rgba(124,58,237,.46); border-radius: 14px; background: radial-gradient(circle at 100% 0%, rgba(124,58,237,.16), transparent 22rem), #0a0910; box-shadow: inset 0 1px 0 rgba(248,250,252,.04); }
       .venue-deal-qr-copy { display: grid; gap: 9px; }
       .venue-deal-qr-copy h3, .venue-deal-qr-copy p { margin: 0; }
@@ -4931,7 +5032,8 @@ function DashboardStyles() {
       .venue-deal-qr-copy small { color: #fbbf24; font-weight: 800; }
       .venue-deal-qr-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 5px; }
       .venue-deal-qr-actions button { min-height: 42px; background: #7c3aed; color: #f8fafc; border: 1px solid rgba(196,181,253,.44); box-shadow: 0 0 18px rgba(124,58,237,.18); }
-      .venue-deal-qr-actions button.secondary { background: #111118; border-color: #334155; box-shadow: none; }
+      .venue-deal-share-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 10px; border: 1px solid rgba(196,181,253,.24); border-radius: 10px; background: rgba(124,58,237,.08); }
+      .venue-deal-share-options button { min-height: 44px; padding: 8px 10px; color: #f8fafc; background: #111118; border: 1px solid #334155; font-size: 12px; }
       .venue-deal-qr-preview { min-height: 210px; display: grid; align-content: center; justify-items: center; gap: 8px; padding: 12px; box-sizing: border-box; border: 1px solid #334155; border-radius: 12px; background: #050507; text-align: center; }
       .venue-deal-qr-preview img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; }
       .venue-deal-qr-preview strong { color: #f8fafc; font-size: 13px; }
@@ -4949,8 +5051,6 @@ function DashboardStyles() {
       .currency-input { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; border: 1px solid rgba(50,255,164,.28); border-radius: 8px; background: rgba(50,255,164,.06); overflow: hidden; }
       .currency-input > span { padding-left: 12px; color: #78ffc0; font-weight: 950; }
       .currency-input input { border: 0; background: transparent; }
-      .deal-active-toggle { grid-template-columns: auto minmax(0, 1fr) !important; align-items: center !important; align-content: center !important; }
-      .deal-active-toggle input { width: 22px; min-height: 22px; accent-color: #32ffa4; }
       .commission-tier-table { display: grid; border: 1px solid rgba(50,255,164,.2); border-radius: 10px; overflow: hidden; }
       .commission-tier-table > strong { padding: 12px; color: #78ffc0; background: rgba(50,255,164,.08); }
       .commission-tier-table > div { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; padding: 11px 12px; border-top: 1px solid rgba(255,255,255,.08); }
@@ -4987,7 +5087,7 @@ function DashboardStyles() {
       .venue-verification-avatar { width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #171722; font-size: 24px; font-weight: 950; }
       .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-share-options { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .customer-top-nav { align-items: center; flex-direction: row; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-dashboard-head h1 { font-size: 34px; } .notification-title-row { align-items: flex-start; } }
     `}</style>
   );

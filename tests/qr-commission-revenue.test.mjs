@@ -127,7 +127,8 @@ test("venues configure a real referral amount before a tracked QR can be publish
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
   assert.match(venueDashboard, /Commission per redemption/);
-  assert.match(venueDashboard, /Publish deal/);
+  assert.match(venueDashboard, /name="dealAction"[\s\S]*?value=\{form\.isActive \? "save" : "publish"\}/);
+  assert.match(venueDashboard, /"Publish Deal"/);
   assert.match(venueDashboard, /Only that authenticated confirmation creates revenue and dancer commission/);
 });
 
