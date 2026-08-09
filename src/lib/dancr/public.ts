@@ -2,24 +2,18 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerCard, DancerProfile, ShiftSummary, VenueSummary } from "./types";
 import { getTonightWindow } from "./schedule";
 import { isPublicDancerProfileEligible } from "./profile-approval";
-import { isVerifyMyIdentityMode } from "./identity-mode";
 import { responsivePublicImage } from "./responsive-image";
 import { verifiedVenueLogoUrl } from "./venue-branding";
 import { isCurrentLocationVerification } from "./geofence";
 
 type DancrClient = SupabaseClient;
 
-const IDENTITY_SELECT = isVerifyMyIdentityMode() ? "\n        identity_provider,\n        identity_verified_at," : "";
-
 function applyPublicApprovalFilters(query: any) {
-  let filtered = query
+  return query
     .eq("status", "approved")
     .eq("verification_status", "approved")
-    .not("venue_approved_at", "is", null);
-  if (isVerifyMyIdentityMode()) {
-    filtered = filtered.eq("identity_provider", "verifymy_content").not("identity_verified_at", "is", null);
-  }
-  return filtered.is("disabled_at", null);
+    .not("venue_approved_at", "is", null)
+    .is("disabled_at", null);
 }
 
 function isMissingIsPublicColumnError(error: any) {
@@ -81,7 +75,6 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         disabled_at,
         verification_status,
         venue_approved_at,
-        ${IDENTITY_SELECT}
         photo_review_status,
         avatar_storage_path,
         is_public,
@@ -113,7 +106,6 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           disabled_at,
           verification_status,
           venue_approved_at,
-          ${IDENTITY_SELECT}
           photo_review_status,
           avatar_storage_path,
           trending_scores(rank),
@@ -159,7 +151,6 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         disabled_at,
         verification_status,
         venue_approved_at,
-        ${IDENTITY_SELECT}
         photo_review_status,
         avatar_storage_path,
         is_public,
@@ -195,7 +186,6 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
           disabled_at,
           verification_status,
           venue_approved_at,
-          ${IDENTITY_SELECT}
           photo_review_status,
           avatar_storage_path,
           trending_scores(rank),
@@ -237,7 +227,6 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         disabled_at,
         verification_status,
         venue_approved_at,
-        ${IDENTITY_SELECT}
         photo_review_status,
         avatar_storage_path,
         is_public,
@@ -269,7 +258,6 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
           disabled_at,
           verification_status,
           venue_approved_at,
-          ${IDENTITY_SELECT}
           photo_review_status,
           avatar_storage_path,
           trending_scores(rank),

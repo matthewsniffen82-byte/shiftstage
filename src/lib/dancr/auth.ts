@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, Json, UserRole } from "./types";
-import { isCoreVerificationApproved } from "./profile-approval";
-import { initialDancerApprovalValues, isVerifyMyIdentityMode } from "./identity-mode";
+import { initialDancerApprovalValues, isCoreVerificationApproved } from "./profile-approval";
 
 type DancrClient = SupabaseClient;
 
@@ -200,7 +199,7 @@ export async function setAccountState(client: DancrClient, userId: string, accou
 async function activeDancerProfileState(client: DancrClient, userId: string) {
   const { data, error }: any = await client
     .from("dancer_profiles")
-    .select(`status, verification_status, venue_approved_at${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}`)
+    .select("status, verification_status, venue_approved_at")
     .eq("user_id", userId)
     .maybeSingle();
 

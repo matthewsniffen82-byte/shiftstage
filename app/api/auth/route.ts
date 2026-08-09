@@ -7,7 +7,7 @@ import {
   redeemVenueSignupCode,
   resolveVenueSignupCode,
 } from "@/src/lib/dancr/venue-claims";
-import { initialDancerApprovalValues } from "@/src/lib/dancr/identity-mode";
+import { initialDancerApprovalValues } from "@/src/lib/dancr/profile-approval";
 import {
   AccountRecoveryRateLimitError,
   enforceAccountRecoveryRateLimit,

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
-import { isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import {
   PROFILE_AVATAR_CONTEXT,
   profilePhotoSlotFromUploadContext,
@@ -144,8 +143,7 @@ function isMissingIsPublicColumnError(error: any) {
 }
 
 async function loadProfileForSave(db: any, userId: string) {
-  const identityColumns = isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : "";
-  const columns = `id, real_name, stage_name, city, status, approved_at, disabled_at, verification_status, photo_review_status${identityColumns}`;
+  const columns = "id, real_name, stage_name, city, status, approved_at, disabled_at, verification_status, photo_review_status";
   const current = await db
     .from("dancer_profiles")
     .select(`${columns}, is_public`)

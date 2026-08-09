@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getIdentityVerificationMode } from "@/src/lib/dancr/identity-mode";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -25,16 +24,11 @@ export async function POST(request: Request) {
 }
 
 function disabledUploadResponse() {
-  const mode = getIdentityVerificationMode();
   return NextResponse.json(
     {
       ok: false,
-      mode,
-      error:
-        mode === "auto_approve"
-          ? "Identity-document uploads are disabled because dancer accounts are automatically approved."
-          : "Direct identity-document uploads are disabled. Use secure VerifyMy verification.",
-      replacement: "/api/dancer/identity-verification",
+      error: "Identity-document uploads are disabled. MyDancr does not collect identity documents.",
+      replacement: null,
     },
     {
       status: 410,

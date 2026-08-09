@@ -239,15 +239,6 @@ export type VerificationDocument = {
   updatedAt: string | null;
 };
 
-export type IdentityVerificationSummary = {
-  provider: "verifymy_content" | null;
-  status: "not_started" | "pending" | "started" | "expired" | "failed" | "approved";
-  lastErrorCode: string | null;
-  verifiedAt: string | null;
-  redactedAt: string | null;
-  updatedAt: string | null;
-};
-
 export type AdminDancerAccount = {
   id: string;
   displayName: string | null;
@@ -276,9 +267,6 @@ export type AdminApprovalDancer = {
   isPublic?: boolean;
   verificationStatus: ReviewStatus;
   venueApprovedAt?: string | null;
-  identityProvider?: "verifymy_content" | null;
-  identityVerifiedAt?: string | null;
-  identityMode?: "auto_approve" | "verifymy";
   photoReviewStatus: ReviewStatus;
   createdAt: string;
   updatedAt?: string | null;
@@ -288,7 +276,6 @@ export type AdminApprovalDancer = {
   subscription?: AdminDancerSubscription | null;
   socialLinks: SocialLink[];
   photos: DancerPhoto[];
-  identityVerification: IdentityVerificationSummary;
   verificationDocuments: VerificationDocument[];
   reviews: ApprovalReview[];
 };

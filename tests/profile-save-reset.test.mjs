@@ -35,28 +35,26 @@ test("Hard Reset is a read-only database reload", () => {
   const getHandler = profileRouteSource.match(/export async function GET[\s\S]*?\n}\n\nasync function loadPendingPhotoReviews/)?.[0] || "";
   assert.doesNotMatch(getHandler, /removeSupersededPendingPhotoRows|\.update\(|\.insert\(|\.upsert\(|\.delete\(/);
 
-  const approvedFromVerification = {
+  const approvedFromVenue = {
     status: "approved",
     verification_status: "approved",
-    identity_provider: "verifymy_content",
-    identity_verified_at: "2026-07-28T12:00:00.000Z",
+    venue_approved_at: "2026-08-08T12:00:00.000Z",
   };
   const effectiveStatus = (profile, accountState = "active") => {
     if (accountState !== "active") return accountState;
     if (profile.disabled_at) return "disabled";
     const status = String(profile.status || "").toLowerCase();
     const verificationStatus = String(profile.verification_status || profile.verificationStatus || "").toLowerCase();
-    const identityProvider = String(profile.identity_provider || profile.identityProvider || "").toLowerCase();
-    const identityVerifiedAt = profile.identity_verified_at || profile.identityVerifiedAt;
+    const venueApprovedAt = profile.venue_approved_at || profile.venueApprovedAt;
     if (status === "rejected" || status === "disabled") return status;
-    if (verificationStatus === "approved" && identityProvider === "verifymy_content" && identityVerifiedAt) return "approved";
+    if (verificationStatus === "approved" && venueApprovedAt) return "approved";
     if (verificationStatus === "rejected") return "rejected";
     if (verificationStatus && (status === "approved" || status === "verified")) return "pending_review";
     return status || "draft";
   };
-  assert.equal(effectiveStatus(approvedFromVerification), "approved");
-  assert.equal(effectiveStatus({ ...approvedFromVerification }), "approved");
-  assert.equal(effectiveStatus(approvedFromVerification, "deleted"), "deleted");
+  assert.equal(effectiveStatus(approvedFromVenue), "approved");
+  assert.equal(effectiveStatus({ ...approvedFromVenue }), "approved");
+  assert.equal(effectiveStatus(approvedFromVenue, "deleted"), "deleted");
   assert.equal(effectiveStatus({ status: "approved", verification_status: "approved" }), "pending_review");
   assert.equal(effectiveStatus({ status: "approved", verification_status: "rejected" }), "rejected");
 });
@@ -102,7 +100,7 @@ test("save refresh preserves previews only for photos confirmed by the server", 
 test("mobile profile save restores authenticated photos after public discovery refresh", () => {
   const saveHandler = mobileAppSource.match(/async function saveApprovedDancerProfile[\s\S]*?\r?\n    function handleShiftManagerAction/)?.[0] || "";
   const discoveryRefreshIndex = saveHandler.indexOf('await loadLiveDiscovery(newCity, { force: true });');
-  const authenticatedRestoreIndex = saveHandler.indexOf("applyDancerVerificationProfile(savedServerProfile);", discoveryRefreshIndex);
+  const authenticatedRestoreIndex = saveHandler.indexOf("applyDancerApprovalProfile(savedServerProfile);", discoveryRefreshIndex);
   const deletedStateClearIndex = saveHandler.indexOf("clearDeletedDancerPhotos(profile);", authenticatedRestoreIndex);
 
   assert.ok(discoveryRefreshIndex >= 0, "mobile save must refresh public discovery");
@@ -151,8 +149,8 @@ test("saved profiles keep every active photo moderation state in the editor", ()
 
 test("onboarding Step 2 stays locked until every photo is fully approved", () => {
   const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?\r?\n    }\r?\n\r?\n    async function uploadApprovedDancerPhoto/)?.[0] || "";
-  const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?\r?\n    }\r?\n\r?\n    async function submitSetupVerification/)?.[0] || "";
-  const profileHydration = mobileAppSource.match(/function applyDancerVerificationProfile[\s\S]*?\r?\n    }\r?\n\r?\n    function setDancerSetupField/)?.[0] || "";
+  const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?\r?\n    }\r?\n\r?\n    async function submitDancerProfileForReview/)?.[0] || "";
+  const profileHydration = mobileAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\r?\n    }\r?\n\r?\n    function setDancerSetupField/)?.[0] || "";
 
   assert.match(uploadHelper, /normalizedReviewStatus\(data\?\.decision\) === "rejected"/);
   assert.match(uploadHelper, /return data/);
@@ -273,14 +271,14 @@ test("the live entry point and visibility query support the production schema", 
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(publicSource, /isPublicDancerProfileEligible\(dancer\)/);
-  assert.match(approvalSource, /identityProvider === "verifymy_content"/);
-  assert.match(approvalSource, /Boolean\(identityVerifiedAt\)/);
+  assert.match(approvalSource, /venue_approved_at \|\| profile\.venueApprovedAt/);
+  assert.doesNotMatch(approvalSource, /identityProvider|identityVerifiedAt/);
   assert.match(approvalSource, /normalizedAccountState !== "active"/);
   assert.match(approvalSource, /profile\.is_public !== false && profile\.isPublic !== false/);
   assert.match(publicSource, /\.eq\("status", "approved"\)/);
   assert.match(publicSource, /\.eq\("verification_status", "approved"\)/);
-  assert.match(publicSource, /\.eq\("identity_provider", "verifymy_content"\)/);
-  assert.match(publicSource, /\.not\("identity_verified_at", "is", null\)/);
+  assert.match(publicSource, /\.not\("venue_approved_at", "is", null\)/);
+  assert.doesNotMatch(publicSource, /identity_provider|identity_verified_at/);
   assert.match(publicSource, /\.eq\("is_public", true\)/);
   assert.match(publicSource, /\.is\("disabled_at", null\)/);
   assert.doesNotMatch(publicSource, /previouslyApproved|fullyReviewed/);
@@ -294,7 +292,7 @@ test("profile approval stays synchronized with account and core verification sta
   assert.match(accountAuthSource, /isCoreVerificationApproved\(data\)[\s\S]*?"approved"/);
   assert.match(accountAuthSource, /status,[\s\S]*?disabled_at: null,[\s\S]*?status === "approved" \? \{ is_public: true \}/);
   assert.match(accountAuthSource, /status: "disabled" as const,[\s\S]*?disabled_at: new Date/);
-  assert.match(adminSource, /Identity approval is controlled by VerifyMy and cannot be granted manually/);
+  assert.doesNotMatch(adminSource, /VerifyMy|identity_provider|identity_verified_at/);
   assert.doesNotMatch(adminSource, /const statusUpdate = approved[\s\S]*?status: "approved"/);
   assert.match(adminSource, /status: "rejected"/);
   assert.match(visibilityRouteSource, /isCoreVerificationApproved\(currentProfile\)/);

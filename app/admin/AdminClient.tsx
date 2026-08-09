@@ -1835,10 +1835,6 @@ function SubmissionDetails({
 }) {
   const photos = labelSubmittedPhotos(asRecordArray(item.photos));
   const socials = normalizeSubmissionSocials(item);
-  const identity =
-    item.identityVerification && typeof item.identityVerification === "object"
-      ? item.identityVerification as Record<string, unknown>
-      : {};
   const reviews = asRecordArray(item.reviews);
   const dancerId = asText(item.id);
   const submittedBy = asText(item.stageName || item.stage_name) || "this dancer";
@@ -2006,19 +2002,8 @@ function SubmissionDetails({
       </section>
 
       <section className="submission-section">
-        <h3>{item.identityMode === "auto_approve" ? "Automatic account approval" : "Tokenized identity verification"}</h3>
-        {item.identityMode === "auto_approve" ? (
-          <p className="submission-empty">This dancer account was approved automatically. No ID, selfie, dance proof, or personal identity report is required or stored.</p>
-        ) : (
-          <>
-            <div className="submission-grid">
-              <SubmissionValue label="Provider" value={identity.provider || item.identityProvider || item.identity_provider || "VerifyMy"} />
-              <SubmissionValue label="Status" value={identity.status || item.verificationStatus || item.verification_status || "not started"} />
-              <SubmissionValue label="Verified" value={formatDate(identity.verifiedAt || identity.verified_at)} />
-            </div>
-            <p className="submission-empty">MyDancr stores only an opaque provider reference, status, and timestamps. Identity documents, selfies, personal details, and reports are never available to admins.</p>
-          </>
-        )}
+        <h3>Account approval</h3>
+        <p className="submission-empty">Approval is based on the dancer&apos;s venue affiliation and profile review. MyDancr does not collect or store identity documents, selfies, or identity-verification reports.</p>
       </section>
 
       <section className="submission-section">
@@ -2155,8 +2140,8 @@ function adminPhotoLabel(photos: Array<Record<string, unknown>>, photo: Record<s
 }
 
 function pendingSubmittedContent(item: Record<string, unknown>) {
-  const identity = asRecordObject(item.identityVerification || item.identity_verification);
-  return asText(identity.status) === "approved" ? [] : ["VerifyMy identity verification"];
+  void item;
+  return [];
 }
 
 function SubmittedSocialIcon({ platform }: { platform: string }) {
@@ -2454,7 +2439,6 @@ function AdminDancerFullProfile({
   const subscription = asRecordObject(profile.subscription);
   const photos = labelSubmittedPhotos(asRecordArray(profile.photos));
   const socials = asRecordArray(profile.socialLinks || profile.social_links);
-  const identity = asRecordObject(profile.identityVerification || profile.identity_verification);
   const reviews = asRecordArray(profile.reviews);
 
   return (
@@ -2469,7 +2453,7 @@ function AdminDancerFullProfile({
           <SubmissionValue label="User ID" value={profile.userId || profile.user_id} />
           <SubmissionValue label="Profile status" value={profile.status} />
           <SubmissionValue label="Public visibility" value={profile.isPublic === false || profile.is_public === false ? "Hidden" : "Visible"} />
-          <SubmissionValue label="Identity review" value={profile.verificationStatus || profile.verification_status} />
+          <SubmissionValue label="Approval review" value={profile.verificationStatus || profile.verification_status} />
           <SubmissionValue label="Photo review" value={profile.photoReviewStatus || profile.photo_review_status} />
           <SubmissionValue label="Created" value={formatDate(profile.createdAt || profile.created_at)} />
           <SubmissionValue label="Last updated" value={formatDate(profile.updatedAt || profile.updated_at)} />
@@ -2520,19 +2504,8 @@ function AdminDancerFullProfile({
       </section>
 
       <section className="submission-section">
-        <h3>{profile.identityMode === "auto_approve" ? "Automatic account approval" : "Tokenized identity verification"}</h3>
-        {profile.identityMode === "auto_approve" ? (
-          <p className="submission-empty">This dancer account was approved automatically. No identity files are required or stored.</p>
-        ) : (
-          <>
-            <div className="submission-grid">
-              <SubmissionValue label="Provider" value={identity.provider || profile.identityProvider || profile.identity_provider || "VerifyMy"} />
-              <SubmissionValue label="Status" value={identity.status || profile.verificationStatus || profile.verification_status || "not started"} />
-              <SubmissionValue label="Verified" value={formatDate(identity.verifiedAt || identity.verified_at)} />
-            </div>
-            <p className="submission-empty">No identity documents, selfies, personal identity details, or verification reports are stored by MyDancr.</p>
-          </>
-        )}
+        <h3>Account approval</h3>
+        <p className="submission-empty">Approval is based on venue affiliation and profile review. No identity documents, selfies, personal identity details, or identity-verification reports are stored by MyDancr.</p>
       </section>
 
       <section className="submission-section">

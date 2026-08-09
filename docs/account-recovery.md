@@ -20,7 +20,7 @@ MyDancr account recovery must restore access without exposing whether an account
 
 ## Ownership checks
 
-- **Dancer:** match the stage profile and city, then use the existing VerifyMyContent verification relationship. Direct identity documents must not be collected or stored by MyDancr.
+- **Dancer:** match the stage profile, city, account email, and approved venue affiliation. Identity documents must not be collected or stored by MyDancr.
 - **Venue:** match the venue record and approved ownership/claim history. Confirm through the established business contact or venue access process.
 - **Customer:** do not disclose account data when no independent recovery factor exists. Help the customer try password recovery for addresses they control, or create a new private account.
 - **Admin:** internal administrators use the separate admin recovery process; public email-lookup requests never accept the admin role.

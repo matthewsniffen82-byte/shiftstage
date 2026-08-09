@@ -10,7 +10,7 @@ test("profile setup completion comes from the persisted dancer profile", () => {
   const completionResolver =
     liveAppSource.match(/function hasCompletedDancerProfileSetup[\s\S]*?\n    }/)?.[0] || "";
   const profileHydrator =
-    liveAppSource.match(/function applyDancerVerificationProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
+    liveAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
 
   assert.doesNotMatch(completionResolver, /real_name|realName|legalName/);
   assert.match(completionResolver, /profile\.stage_name \|\| profile\.stageName/);
@@ -124,20 +124,18 @@ test("real setup steps advance only after their production save succeeds", () =>
   const profileSubmitEnd = liveAppSource.indexOf('document.addEventListener("click"', profileSubmitStart);
   const profileSubmit = liveAppSource.slice(profileSubmitStart, profileSubmitEnd);
   const photoSubmit =
-    liveAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    async function submitSetupVerification/)?.[0] || "";
-  const verificationSubmit =
-    liveAppSource.match(/async function submitSetupVerification[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
+    liveAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
 
   assert.ok(profileSubmitStart >= 0, "profile save handler must exist");
   assert.ok(profileSubmit.indexOf('await patchAuthenticatedJson("/api/dancer/profile"') < profileSubmit.indexOf('completeSetupStep("profile")'));
   assert.ok(photoSubmit.indexOf("await Promise.allSettled") < photoSubmit.indexOf("dancerSetup.photos = dancerProfileMediaModerationComplete"));
-  assert.ok(verificationSubmit.indexOf('await postAuthenticatedJson("/api/dancer/identity-verification"') < verificationSubmit.indexOf("dancerSetup.verification ="));
-  assert.ok(verificationSubmit.indexOf('await postAuthenticatedJson("/api/dancer/identity-verification"') < verificationSubmit.indexOf("window.location.assign(data.redirectUrl)"));
+  assert.match(liveAppSource, /return \["profile", "review", "approval"\]/);
+  assert.doesNotMatch(liveAppSource, /\/api\/dancer\/identity-verification/);
 });
 
 test("only fully moderated photos complete profile media", () => {
   const profileHydrator =
-    liveAppSource.match(/function applyDancerVerificationProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
+    liveAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
   const photoEligibility =
     liveAppSource.match(/function dancerSetupPhotoModerationCategory[\s\S]*?\n    function dancerSubmittedPhotosFromProfile/)?.[0] || "";
 
@@ -178,5 +176,5 @@ test("normal dancer login reloads database progress instead of a fresh-confirmat
     liveAppSource.match(/async function startRealDancerSession[\s\S]*?\n    document\.getElementById\("dancerLoginBtn"\)/)?.[0] || "";
 
   assert.match(loginHandler, /freshDancerVerificationLockedToProfile = false/);
-  assert.match(loginHandler, /await hydrateDancerVerificationProgress\(\)/);
+  assert.match(loginHandler, /await hydrateDancerApprovalProgress\(\)/);
 });

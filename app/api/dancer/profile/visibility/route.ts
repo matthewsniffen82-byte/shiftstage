@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { isCoreVerificationApproved } from "@/src/lib/dancr/profile-approval";
-import { isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +29,7 @@ async function verifyPublicVisibility(
 ) {
   const { data: profile, error }: any = await db
     .from("dancer_profiles")
-    .select(`id, status, verification_status, venue_approved_at${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}, disabled_at, is_public`)
+    .select("id, status, verification_status, venue_approved_at, disabled_at, is_public")
     .eq("id", dancerId)
     .maybeSingle();
 
@@ -68,7 +67,7 @@ export async function PATCH(request: Request) {
     const db = createAdminSupabaseClient() as any;
     const { data: currentProfile, error: currentProfileError } = await db
       .from("dancer_profiles")
-      .select(`id, status, verification_status, venue_approved_at${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}, disabled_at, is_public`)
+      .select("id, status, verification_status, venue_approved_at, disabled_at, is_public")
       .eq("user_id", user.id)
       .maybeSingle();
 

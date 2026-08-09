@@ -37406,10 +37406,7 @@
       approval: false,
       shift: false
     };
-    let liveIdentityVerificationMode = "auto_approve";
-    let liveIdentityVerification = { provider: null, status: "approved", verifiedAt: null, lastErrorCode: null };
     let liveVerificationDocuments = [];
-    let liveVerificationDocumentsAuthoritative = false;
     let verificationSubmitNotice = "";
     let verificationSubmitNoticeTone = "";
     let freshDancerVerificationLockedToProfile = false;
@@ -38202,15 +38199,7 @@
         approval: false,
         shift: false
       });
-      liveIdentityVerificationMode = "auto_approve";
-      liveIdentityVerification = {
-        provider: null,
-        status: "approved",
-        verifiedAt: null,
-        lastErrorCode: null
-      };
       liveVerificationDocuments = [];
-      liveVerificationDocumentsAuthoritative = false;
       ["dancerLegalName", "dancerStageName", "dancerCity", "setupStageName", "setupCity"].forEach((id) => {
         const field = document.getElementById(id);
         if (field) field.value = "";
@@ -39582,11 +39571,7 @@
     function dancerCoreApprovalUnlocked(profile) {
       const verificationApproved = normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved";
       const venueApprovedAt = profile?.venue_approved_at || profile?.venueApprovedAt;
-      if (!venueApprovedAt) return false;
-      const provider = normalizedReviewStatus(profile?.identity_provider || profile?.identityProvider);
-      const verifiedAt = profile?.identity_verified_at || profile?.identityVerifiedAt;
-      if (!provider && !verifiedAt) return Boolean(isApprovedDancerStatus(profile?.status) || verificationApproved);
-      return Boolean(verificationApproved && provider === "verifymy_content" && verifiedAt);
+      return Boolean(venueApprovedAt && (isApprovedDancerStatus(profile?.status) || verificationApproved));
     }
 
     function applyLiveApprovalQueue(queue) {
@@ -44199,7 +44184,7 @@
       }
 
       clearDeletedDancerPhotos(profile);
-      applyDancerVerificationProfile(data.profile);
+      applyDancerApprovalProfile(data.profile);
       const refreshedProfile = activeDancerProfile(data.profile.city || data.profile.cityName || activeDancerCity()) || profile;
       clearDeletedDancerPhotos(refreshedProfile);
       return refreshedProfile;
@@ -45430,13 +45415,13 @@
         document.getElementById("dancerStageName").value = stageName;
         updateDancerDashboardName(stageName);
         if (savedServerProfile) {
-          applyDancerVerificationProfile(savedServerProfile);
+          applyDancerApprovalProfile(savedServerProfile);
         }
         if (isDancerSession()) {
           liveMarketState[newCity] = null;
           await loadLiveDiscovery(newCity, { force: true });
           if (savedServerProfile) {
-            applyDancerVerificationProfile(savedServerProfile);
+            applyDancerApprovalProfile(savedServerProfile);
             profile = activeDancerProfile(newCity) || profile;
             console.log("EDIT_PROFILE_PHOTOS_RESTORED_AFTER_DISCOVERY", {
               profileId: savedServerProfile.id || profile.id || null,
@@ -47617,15 +47602,7 @@
       liveDancerBilling = null;
       liveDancerRankingEvents = [];
       liveDancerReviews = [];
-      liveIdentityVerificationMode = "auto_approve";
-      liveIdentityVerification = {
-        provider: null,
-        status: "approved",
-        verifiedAt: null,
-        lastErrorCode: null
-      };
       liveVerificationDocuments = [];
-      liveVerificationDocumentsAuthoritative = false;
       liveCustomerProfile = null;
       liveVenueDashboard = null;
       liveAdminVenueClaims = [];
@@ -47793,8 +47770,7 @@
       dancerDashboard.classList.add("show");
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
-      hydrateDancerVerificationProgress();
-      loadLiveIdentityVerification();
+      hydrateDancerApprovalProgress();
       loadLiveAccountState();
       loadLiveDancerAnalytics();
       loadLiveDancerDeals();
@@ -47830,7 +47806,7 @@
           return;
         }
         const wasApproved = dancerSetup.approval;
-        await hydrateDancerVerificationProgress();
+        await hydrateDancerApprovalProgress();
         if (dancerSetup.review && !dancerSetup.approval) await loadDancerVenueVerification();
         if (!wasApproved && dancerSetup.approval) {
           stopDancerVenueApprovalPolling();
@@ -48571,8 +48547,7 @@
     }
 
     function hasSubmittedVerificationDocuments() {
-      if (liveIdentityVerificationMode === "auto_approve") return true;
-      return ["pending", "started", "approved"].includes(normalizedReviewStatus(liveIdentityVerification?.status));
+      return true;
     }
 
     function syncVerificationStepFromDocuments() {
@@ -48602,40 +48577,7 @@
     }
 
     function verificationSubmissionMarkup() {
-      if (liveIdentityVerificationMode === "auto_approve") {
-        return `<div class="info-tile verification-submission-list" role="status" aria-live="polite"><div class="verification-submission-status"><strong>Automatically approved</strong><span>No identity check or identity-file upload is required right now.</span></div><div class="meta">Profile photos and MyDancr TV videos continue through separate safety moderation. No ID, selfie, legal identity details, or report is available to admins.</div></div>`;
-      }
-      if (liveIdentityVerificationMode === "verifymy") {
-        const status = normalizedReviewStatus(liveIdentityVerification?.status || "not_started");
-        const statusLabel = status === "approved" ? "Verified" : status === "started" || status === "pending" ? "Verification in progress" : "Not started";
-        return `<div class="info-tile verification-submission-list" role="status" aria-live="polite"><div class="verification-submission-status"><strong>VerifyMy: ${escapeHtml(statusLabel)}</strong><span>${status === "approved" ? "Your profile is live." : "Complete the secure hosted check to continue."}</span></div><div class="meta">MyDancr stores only an opaque VerifyMy reference, status, and timestamps - not your government ID, selfie, legal identity details, or verification report.</div></div>`;
-      }
-      const documents = submittedVerificationDocuments();
-      if (!documents.length) return "";
-      const attachedDocuments = documents.slice(0, verificationDocumentLabels.length);
-      const rows = attachedDocuments.map((document, index) => {
-        const label = verificationDocumentLabels.find((item) => item.documentType === document.documentType)
-          || verificationDocumentLabels[index]
-          || {};
-        const fileName = document?.name || label.displayName || `Document ${index + 1}`;
-        const status = normalizedReviewStatus(document?.status);
-        const statusLabel = status === "approved" ? "✓ Approved by admin" : status === "rejected" ? "Needs replacement" : "Pending admin approval";
-        return `<li><strong>${escapeHtml(label.displayName || document.displayName)}</strong><span class="meta">Attached securely · ${escapeHtml(fileName)} · ${escapeHtml(statusLabel)}</span></li>`;
-      }).join("");
-      const attachmentCount = Math.min(attachedDocuments.length, verificationDocumentLabels.length);
-      const allFilesSaved = attachmentCount >= verificationDocumentLabels.length;
-      const approvedCount = attachedDocuments.filter((document) => normalizedReviewStatus(document?.status) === "approved").length;
-      const allFilesApproved = allFilesSaved && approvedCount === verificationDocumentLabels.length;
-      return `
-        <div class="info-tile verification-submission-list" role="status" aria-live="polite">
-          <div class="verification-submission-status">
-            <strong>${attachmentCount} of ${verificationDocumentLabels.length} verification files saved</strong>
-            <span>${allFilesApproved ? "All verification files approved" : allFilesSaved ? `${approvedCount} of ${verificationDocumentLabels.length} approved · Pending admin approval` : "Upload the remaining files"}</span>
-          </div>
-          <div class="meta">These files are saved to your account and remain attached after submission. The file pickers below look blank because browsers do not repopulate secure file fields.</div>
-          <ul>${rows}</ul>
-        </div>
-      `;
+      return `<div class="info-tile verification-submission-list" role="status" aria-live="polite"><div class="verification-submission-status"><strong>No identity verification required</strong><span>Approval is based on venue affiliation and profile review.</span></div><div class="meta">MyDancr does not collect identity documents, selfies, or identity-verification reports. Profile photos and MyDancr TV videos continue through separate safety moderation.</div></div>`;
     }
 
     function verificationReviewNoticeMarkup(reviewSubmitted = false) {
@@ -48651,20 +48593,6 @@
           <span>${escapeHtml(message)}</span>
         </div>
       `;
-    }
-
-    async function loadLiveIdentityVerification() {
-      if (!isDancerSession()) return;
-      try {
-        const data = await getAuthenticatedJson("/api/dancer/identity-verification");
-        liveIdentityVerificationMode = data?.mode || liveIdentityVerificationMode;
-        liveIdentityVerification = data?.verification || liveIdentityVerification;
-        liveVerificationDocumentsAuthoritative = true;
-        dancerSetup.verification = hasSubmittedVerificationDocuments();
-        renderDancerSetup();
-      } catch (error) {
-        console.warn("Unable to load identity verification status.");
-      }
     }
 
     async function uploadSetupPhotoFile(file, isPrimary, sortOrder, options = {}) {
@@ -48872,7 +48800,7 @@
       if (!data?.profile || !confirmedPhoto) {
         throw new Error("The photo was saved but could not be loaded into your profile. Please refresh and try again.");
       }
-      applyDancerVerificationProfile(data.profile);
+      applyDancerApprovalProfile(data.profile);
       const localProfile = activeDancerProfile(data.profile.city || data.profile.cityName || activeDancerCity());
       const visiblePhoto = confirmedApprovedDancerPhoto(localProfile, uploadResult);
       if (!localProfile || !visiblePhoto) {
@@ -48960,7 +48888,7 @@
       return locallyRemoved || removed;
     }
 
-    async function hydrateDancerVerificationProgress() {
+    async function hydrateDancerApprovalProgress() {
       if (!isDancerSession()) return null;
       if (freshDancerVerificationLockedToProfile) {
         Object.assign(dancerSetup, {
@@ -48978,7 +48906,7 @@
       try {
         const data = await getAuthenticatedJson("/api/dancer/profile");
         if (!data?.profile) return null;
-        applyDancerVerificationProfile(data.profile);
+        applyDancerApprovalProfile(data.profile);
         syncVerificationStepFromDocuments();
         renderDancerSetup();
         return data.profile;
@@ -48987,14 +48915,7 @@
       }
     }
 
-    function applyDancerVerificationProfile(profile) {
-      if (normalizedReviewStatus(profile?.identity_provider || profile?.identityProvider) === "verifymy_content") {
-        liveIdentityVerificationMode = "verifymy";
-        liveIdentityVerification = { provider: "verifymy_content", status: profile?.identity_verified_at || profile?.identityVerifiedAt ? "approved" : "pending", verifiedAt: profile?.identity_verified_at || profile?.identityVerifiedAt || null, lastErrorCode: null };
-      } else if (normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved") {
-        liveIdentityVerificationMode = "auto_approve";
-        liveIdentityVerification = { provider: null, status: "approved", verifiedAt: null, lastErrorCode: null };
-      }
+    function applyDancerApprovalProfile(profile) {
       const approved = dancerCoreApprovalUnlocked(profile);
       const rejected = isRejectedDancerStatus(profile.status);
       const submittedForReview = normalizedReviewStatus(profile.status) === "pending_review";
@@ -49386,7 +49307,7 @@
         dancerSetup.photos = dancerProfileMediaModerationComplete(profile)
           || (approvedUploads.length > 0 && reviewUploads.length === 0 && rejectedUploads.length === 0 && unresolvedUploads.length === 0);
         activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "review") : "profile";
-        await hydrateDancerVerificationProgress();
+        await hydrateDancerApprovalProgress();
         activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "review") : "profile";
         const message = setupPhotoModerationResultMessage({
           approvedCount: approvedUploads.length,
@@ -49413,46 +49334,6 @@
         showToast(message);
       } finally {
         window.clearInterval(setupProgressTimer);
-        submit.disabled = false;
-      }
-    }
-
-    async function uploadVerificationFile(file, documentType, displayName) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("documentType", documentType);
-      formData.append("displayName", displayName);
-      return postAuthenticatedFormData("/api/dancer/verification-documents", formData);
-    }
-
-    async function submitSetupVerification(form) {
-      if (!canOpenStep("verification")) return;
-      if (!isDancerSession()) {
-        showToast("Sign in as a dancer to continue.");
-        return;
-      }
-      const submit = form.querySelector('button[type="submit"]');
-      const result = document.getElementById("verificationUploadResult");
-      submit.disabled = true;
-      if (result) result.textContent = liveIdentityVerificationMode === "verifymy" ? "Opening VerifyMy secure identity check..." : "Confirming automatic approval...";
-      try {
-        const data = await postAuthenticatedJson("/api/dancer/identity-verification", {});
-        liveIdentityVerificationMode = data?.mode || liveIdentityVerificationMode;
-        liveIdentityVerification = data?.verification || liveIdentityVerification;
-        liveVerificationDocumentsAuthoritative = true;
-        dancerSetup.verification = hasSubmittedVerificationDocuments();
-        if (data?.redirectUrl) {
-          window.location.assign(data.redirectUrl);
-          return;
-        }
-        activeSetupStep = "verification";
-        if (result) result.textContent = "Account approved. No identity files are required.";
-        renderDancerSetup();
-        showToast("Dancer account approved");
-      } catch (error) {
-        if (result) result.textContent = error.message || "Could not confirm approval";
-        showToast(error.message || "Could not confirm approval");
-      } finally {
         submit.disabled = false;
       }
     }
@@ -49666,7 +49547,7 @@
       if (!uploadedPath || confirmedPath !== uploadedPath || !data.profile.avatarPhotoUrl) {
         throw new Error("The avatar was saved but could not be verified on your live profile. Please try again.");
       }
-      applyDancerVerificationProfile(data.profile);
+      applyDancerApprovalProfile(data.profile);
       await loadLiveDiscovery(data.profile.city || activeDancerCity(), { force: true });
       return data.profile;
     }
@@ -49676,7 +49557,7 @@
       if (!data?.ok) throw new Error(data?.error || "Avatar could not be removed.");
       const refreshed = await getAuthenticatedJson("/api/dancer/profile");
       if (!refreshed?.profile) throw new Error("Avatar was removed but the profile could not be refreshed.");
-      applyDancerVerificationProfile(refreshed.profile);
+      applyDancerApprovalProfile(refreshed.profile);
       await loadLiveDiscovery(refreshed.profile.city || activeDancerCity(), { force: true });
       return refreshed.profile;
     }
@@ -49711,8 +49592,7 @@
     }
 
     function isVerificationAdminApproved() {
-      if (liveIdentityVerificationMode === "auto_approve") return true;
-      return normalizedReviewStatus(liveIdentityVerification?.status) === "approved";
+      return true;
     }
 
     function setupStepMarkup(step, title, body) {
@@ -49730,12 +49610,12 @@
       const bodyId = `setup-step-${step}-body`;
       const statusText = markerComplete
         ? (step === "verification"
-          ? (liveIdentityVerificationMode === "auto_approve" ? "Automatically approved" : "Approved")
+          ? "Not required"
           : (step === "approval" ? "Approved" : "Saved"))
         : (submittedForReview ? "Files saved" : "");
       const statusLabel = markerComplete
         ? (step === "verification"
-          ? (liveIdentityVerificationMode === "auto_approve" ? "Automatically approved" : "Verified securely by VerifyMy")
+          ? "Identity verification is not required"
           : statusText)
         : (submittedForReview ? "Files saved and pending admin approval" : "Not saved");
       return `
@@ -55854,7 +55734,7 @@
       closeAuthPage();
       updateAccountHeader();
       showToast(message);
-      await hydrateDancerVerificationProgress();
+      await hydrateDancerApprovalProgress();
       openDancerDashboard();
       window.setTimeout(consumePendingDancerDashboardLink, 220);
     }
@@ -56879,13 +56759,6 @@
         return;
       }
 
-      const verificationForm = event.target.closest("[data-setup-form='verification']");
-      if (verificationForm) {
-        event.preventDefault();
-        submitSetupVerification(verificationForm);
-        return;
-      }
-
       const form = event.target.closest("[data-setup-form='profile']");
       if (!form) return;
       event.preventDefault();
@@ -56936,7 +56809,7 @@
             socials: socialPayloadFromMap(normalizedSocials)
           });
           if (!data) throw new Error("Sign in required");
-          if (data.profile) applyDancerVerificationProfile(data.profile);
+          if (data.profile) applyDancerApprovalProfile(data.profile);
           markDancerProfileSetupSaved(true);
           showToast("Profile saved");
         } else {

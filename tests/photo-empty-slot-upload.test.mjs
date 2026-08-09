@@ -48,7 +48,7 @@ test("deleted live photo slots are persisted before a replacement upload", () =>
   assert.match(persistHelper, /patchAuthenticatedJson\("\/api\/dancer\/profile", deletedPayload\)/);
   assert.match(persistHelper, /deletedPhotosStillInServerProfile\(data\.profile, deletedPayload\)/);
   assert.match(persistHelper, /unconfirmedPhotoIds\.length/);
-  assert.match(persistHelper, /applyDancerVerificationProfile\(data\.profile\)/);
+  assert.match(persistHelper, /applyDancerApprovalProfile\(data\.profile\)/);
   assert.match(persistHelper, /clearDeletedDancerPhotos\(refreshedProfile\)/);
   assert.match(uploadHandler, /profile = await persistQueuedApprovedPhotoDeletionsBeforeUpload\(profile\)/);
   assert.ok(
@@ -137,7 +137,7 @@ test("approved uploads reload the authoritative profile before reporting success
   assert.match(uploadFunction, /const uploadDecision = normalizedReviewStatus\(data\?\.decision\)/);
   assert.match(uploadFunction, /could not confirm the photo upload status/);
   assert.match(confirmationFunction, /getAuthenticatedJson\("\/api\/dancer\/profile"\)/);
-  assert.match(confirmationFunction, /applyDancerVerificationProfile\(data\.profile\)/);
+  assert.match(confirmationFunction, /applyDancerApprovalProfile\(data\.profile\)/);
   assert.match(confirmationFunction, /confirmedApprovedDancerPhoto\(localProfile, uploadResult\)/);
   assert.match(changeHandler, /uploadResult = await hydrateConfirmedApprovedDancerPhoto\(uploadResult\)/);
   assert.doesNotMatch(changeHandler, /renderAdminDashboard\(\)/);

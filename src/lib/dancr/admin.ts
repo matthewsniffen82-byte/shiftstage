@@ -6,22 +6,12 @@ import {
 import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
 import { deliverNotificationRows } from "./notification-delivery";
 import { getStripe } from "../stripe";
-import {
-  getIdentityVerificationMode,
-  isVerifyMyIdentityMode,
-} from "./identity-mode";
 
 type DancrClient = SupabaseClient;
 
 const REVIEWABLE_STATUSES = new Set<DancerStatus>(["draft", "pending_review", "rejected"]);
 const ADMIN_DIRECTORY_STATUSES = new Set<DancerStatus>(["draft", "pending_review", "approved", "rejected", "disabled"]);
 const REVIEW_STATUSES = new Set<ReviewStatus>(["approved", "rejected"]);
-const APPROVAL_IDENTITY_SELECT = isVerifyMyIdentityMode()
-  ? `
-  identity_provider,
-  identity_verified_at,
-  dancer_identity_verifications(provider, status, last_error_code, verified_at, redacted_at, updated_at),`
-  : "";
 const APPROVAL_QUEUE_SELECT = `
   id,
   user_id,
@@ -33,7 +23,6 @@ const APPROVAL_QUEUE_SELECT = `
   is_public,
   verification_status,
   venue_approved_at,
-  ${APPROVAL_IDENTITY_SELECT}
   photo_review_status,
   approved_at,
   disabled_at,
@@ -531,9 +520,6 @@ function isMissingVisibilityColumnError(error: any) {
 
 async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<AdminApprovalDancer> {
   const reviews = row.approval_reviews || [];
-  const identity = Array.isArray(row.dancer_identity_verifications)
-    ? row.dancer_identity_verifications[0]
-    : row.dancer_identity_verifications;
   return {
     id: row.id,
     userId: row.user_id,
@@ -545,9 +531,6 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
     isPublic: row.is_public !== false,
     verificationStatus: row.verification_status,
     venueApprovedAt: row.venue_approved_at || null,
-    identityMode: getIdentityVerificationMode(),
-    identityProvider: row.identity_provider || null,
-    identityVerifiedAt: row.identity_verified_at || null,
     photoReviewStatus: row.photo_review_status,
     createdAt: row.created_at,
     updatedAt: row.updated_at || null,
@@ -583,14 +566,6 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
         };
       })
       .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
-    identityVerification: {
-      provider: isVerifyMyIdentityMode() ? "verifymy_content" : null,
-      status: isVerifyMyIdentityMode() ? identity?.status || "not_started" : "approved",
-      lastErrorCode: identity?.last_error_code || null,
-      verifiedAt: identity?.verified_at || row.identity_verified_at || null,
-      redactedAt: identity?.redacted_at || null,
-      updatedAt: identity?.updated_at || null,
-    },
     verificationDocuments: [],
     reviews: reviews.map((review: any) => ({
       id: review.id,
@@ -850,7 +825,6 @@ export async function getAdminMonitoringStatus(client: DancrClient): Promise<Adm
     integrations: [
       integrationStatus("Supabase", ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"]),
       integrationStatus("Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]),
-      integrationStatus("VerifyMyContent", ["VMC_API_KEY", "VMC_API_SECRET"]),
       integrationStatus("OneSignal", ["NEXT_PUBLIC_ONESIGNAL_APP_ID", "ONESIGNAL_REST_API_KEY"]),
       integrationStatus("Resend", ["RESEND_API_KEY", "EMAIL_FROM"]),
       integrationStatus("Google Maps", ["NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"]),
@@ -978,9 +952,6 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   }
 
   const approved = input.status === "approved";
-  if (approved && isVerifyMyIdentityMode()) {
-    throw new Error("Identity approval is controlled by VerifyMy and cannot be granted manually.");
-  }
   const reviewedAt = new Date().toISOString();
   const db = client as any;
 
@@ -1097,11 +1068,7 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     if (!photo) throw new Error("Submitted photo not found.");
     await updatePhotoReviewSummary(client, input.dancerId);
   } else if (input.targetType === "verification_document") {
-    throw new Error(
-      isVerifyMyIdentityMode()
-        ? "Identity verification is controlled by VerifyMy and cannot be reviewed manually."
-        : "Identity documents are not collected while automatic dancer approval is active.",
-    );
+    throw new Error("Identity documents are not collected by MyDancr.");
   } else {
     const { data: social, error: socialError } = await db
       .from("social_links")

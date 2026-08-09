@@ -29,8 +29,9 @@ test("admin full profile detail includes the private account and subscription st
   assert.match(detailFunction, /stripe_customer_id, stripe_subscription_id/);
   assert.match(adminDashboardSource, /function AdminDancerFullProfile/);
   assert.match(adminDashboardSource, /Login account/);
-  assert.match(adminDashboardSource, /Tokenized identity verification/);
-  assert.match(adminDashboardSource, /No identity documents, selfies, personal identity details, or verification reports are stored by MyDancr/);
+  assert.match(adminDashboardSource, /Account approval/);
+  assert.match(adminDashboardSource, /No identity documents, selfies, personal identity details, or identity-verification reports are stored by MyDancr/);
+  assert.doesNotMatch(adminDashboardSource, /Tokenized identity verification|VerifyMy/);
   assert.match(adminDashboardSource, /Review history/);
   assert.match(liveAppSource, /function adminFullProfileMarkup/);
   assert.match(liveAppSource, /View full profile/);

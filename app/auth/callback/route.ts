@@ -1,5 +1,5 @@
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { initialDancerApprovalValues } from "@/src/lib/dancr/identity-mode";
+import { initialDancerApprovalValues } from "@/src/lib/dancr/profile-approval";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 

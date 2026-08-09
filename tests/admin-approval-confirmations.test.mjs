@@ -41,10 +41,10 @@ test("content decisions stay visible without collapsing the dancer approval", ()
   assert.match(adminSource, /role=\{feedback\.tone === "error" \? "alert" : "status"\}/);
 });
 
-test("identity verification is tokenized and cannot be manually approved", () => {
-  assert.match(adminSource, /Tokenized identity verification/);
-  assert.match(adminSource, /opaque provider reference, status, and timestamps/);
-  assert.match(adminSource, /Identity documents, selfies, personal details, and reports are never available to admins/);
+test("account approval does not expose identity files or provider controls", () => {
+  assert.match(adminSource, /Account approval/);
+  assert.match(adminSource, /does not collect or store identity documents, selfies, or identity-verification reports/);
+  assert.doesNotMatch(adminSource, /Tokenized identity verification|VerifyMy|opaque provider reference/);
   assert.doesNotMatch(adminSource, /reviewContent\(event, "verification_document"/);
   assert.doesNotMatch(adminSource, /Approve file/);
   assert.doesNotMatch(adminSource, /Dancer profile approved successfully/);

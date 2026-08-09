@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createDancerDealAttributionToken } from "./deal-attribution";
 import { getActiveClubDealListsForVenues } from "./deals";
 import { isPublicDancerProfileEligible } from "./profile-approval";
-import { isVerifyMyIdentityMode } from "./identity-mode";
 import { responsivePublicImage } from "./responsive-image";
 import type { ClubDeal } from "./types";
 import { prioritizeMyDancrTvVenue } from "./tv-feed-order";
@@ -58,9 +57,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
   "shared_link",
 ]);
 
-const IDENTITY_PROFILE_FIELDS = isVerifyMyIdentityMode()
-  ? ", venue_approved_at, identity_provider, identity_verified_at"
-  : ", venue_approved_at";
+const IDENTITY_PROFILE_FIELDS = ", venue_approved_at";
 const PUBLIC_TV_SELECT =
   `id, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, distribution_scope, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at)`;
 const UUID_PATTERN =
