@@ -126,8 +126,8 @@ test("venues configure a real referral amount before a tracked QR can be publish
   assert.match(deals, /between \$1\.00 and \$1,000\.00 per successful redemption/);
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
-  assert.match(venueDashboard, /Referral commission per successful redemption/);
-  assert.match(venueDashboard, /Publish this offer in the Club Deals hub/);
+  assert.match(venueDashboard, /Commission per redemption/);
+  assert.match(venueDashboard, /Publish deal/);
   assert.match(venueDashboard, /Only that authenticated confirmation creates revenue and dancer commission/);
 });
 

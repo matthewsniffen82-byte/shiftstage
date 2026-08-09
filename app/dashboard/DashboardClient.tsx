@@ -2034,16 +2034,14 @@ function VenueClubDealPanel({
     <article className="info-panel venue-deal-panel">
       <div className="venue-deal-heading">
         <div>
-          <span className="eyebrow">Revenue QR</span>
-          <h2>Club Deals hub</h2>
+          <span className="eyebrow">Club Deal</span>
+          <h2>Post a Club Deal</h2>
         </div>
         <strong className={liveCount ? "deal-state active" : "deal-state"}>
           {liveCount} live
         </strong>
       </div>
-      <p>
-        Publish admission, drink, bottle-service, or other offers behind one Club Deals button. MyDancr issues the selected tracked QR; bottle service continues to your real HTTPS reservation flow after the pass is created.
-      </p>
+      <p className="venue-deal-placement-note">Appears on your venue page and eligible working dancer profiles.</p>
       <div className="venue-deal-list" aria-label="Venue Club Deals">
         {deals.map((deal) => (
           <button
@@ -2111,7 +2109,7 @@ function VenueClubDealPanel({
           </label>
         ) : null}
         <label>
-          Customer offer
+          Offer details
           <textarea
             maxLength={500}
             required
@@ -2121,7 +2119,7 @@ function VenueClubDealPanel({
           />
         </label>
         <label>
-          Terms
+          Conditions (optional)
           <textarea
             maxLength={1200}
             rows={3}
@@ -2130,7 +2128,7 @@ function VenueClubDealPanel({
           />
         </label>
         <label>
-          Referral commission per successful redemption
+          Commission per redemption
           <span className="currency-input">
             <span>$</span>
             <input
@@ -2148,25 +2146,20 @@ function VenueClubDealPanel({
             type="checkbox"
             onChange={(event) => updateDealForm("isActive", event.target.checked)}
           />
-          Publish this offer in the Club Deals hub
+          Publish deal
         </label>
         <div className="venue-deal-form-actions">
           <button aria-live="polite" disabled={isSaving} type="submit">
-            {isSaving ? "Saving..." : saveConfirmed ? "Saved" : editingId ? "Save offer" : "Create offer"}
+            {isSaving ? "Saving..." : saveConfirmed ? "Saved" : form.isActive ? "Publish Deal" : "Save Draft"}
           </button>
           {editingId ? <button className="danger" disabled={isSaving} type="button" onClick={deleteDeal}>Delete</button> : null}
         </div>
       </form>
       <section className="venue-deal-qr-generator" aria-labelledby="venue-deal-qr-heading">
         <div className="venue-deal-qr-copy">
-          <span className="eyebrow">Post this deal</span>
-          <h3 id="venue-deal-qr-heading">Tracked venue QR generator</h3>
-          <p>
-            Download a durable QR for this published offer and place it on signs, tables, social posts, or venue marketing. Every scan creates a unique customer pass and is recorded as direct venue attribution.
-          </p>
-          <p>
-            The same offer automatically appears on affiliated dancers&apos; profiles while they are verified Working Now. Those profile passes use locked dancer attribution so the correct commission split enters the payout ledger.
-          </p>
+          <span className="eyebrow">Share this deal</span>
+          <h3 id="venue-deal-qr-heading">Deal QR</h3>
+          <p>Generate a QR for signs, tables, social posts, or venue marketing.</p>
           <div className="venue-deal-qr-actions">
             <button
               disabled={!editingId || !form.isActive || isGeneratingQr}
@@ -2194,12 +2187,27 @@ function VenueClubDealPanel({
           </div>
         )}
       </section>
-      <div className="commission-tier-table" aria-label="Dancer monthly QR commission tiers">
-        <strong>Monthly successful dancer QR redemptions</strong>
-        <div><span>1–24</span><b>Dancer 30%</b><b>MyDancr 70%</b></div>
-        <div><span>25–74</span><b>Dancer 40%</b><b>MyDancr 60%</b></div>
-        <div><span>75+</span><b>Dancer 50%</b><b>MyDancr 50%</b></div>
-      </div>
+      <details className="venue-deal-how">
+        <summary>How Club Deals work</summary>
+        <div>
+          <p>
+            Published deals appear on your venue page and on affiliated dancer profiles while those dancers are verified Working Now.
+          </p>
+          <p>
+            Each generated QR creates a tracked customer pass. Direct venue scans stay attributed to the venue, while dancer-profile passes preserve dancer attribution for the correct commission split.
+          </p>
+          <div className="commission-tier-table" aria-label="Dancer monthly QR commission tiers">
+            <strong>Monthly successful dancer QR redemptions</strong>
+            <div><span>1–24</span><b>Dancer 30%</b><b>MyDancr 70%</b></div>
+            <div><span>25–74</span><b>Dancer 40%</b><b>MyDancr 60%</b></div>
+            <div><span>75+</span><b>Dancer 50%</b><b>MyDancr 50%</b></div>
+          </div>
+          <aside className="venue-redemption-instructions">
+            <strong>Venue staff redemption</strong>
+            <p>Staff scan the customer&apos;s QR, sign in to this venue account, review the offer, and select Redeem Deal. Only that authenticated confirmation creates revenue and dancer commission.</p>
+          </aside>
+        </div>
+      </details>
       <div className="deal-metrics venue-deal-metrics">
         <Metric label="Successful this month" value={String(revenue?.successfulRedemptionsThisMonth || 0)} />
         <Metric label="Dancer attributed" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
@@ -2212,10 +2220,6 @@ function VenueClubDealPanel({
         <Metric label="Customer passes issued" value={String(revenue?.passesIssuedThisMonth || 0)} />
         <Metric label="Saves / scanner opens" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
       </div>
-      <aside className="venue-redemption-instructions">
-        <strong>Venue staff redemption</strong>
-        <p>Staff scan the customer&apos;s QR with their phone, sign in to this venue account, review the offer, and press Redeem Deal. Only that authenticated confirmation creates revenue and dancer commission.</p>
-      </aside>
       <VenueFinanceSummary finance={finance} />
       {status ? <p role="status">{status}</p> : null}
     </article>
@@ -4849,6 +4853,7 @@ function DashboardStyles() {
       .deal-state { width: fit-content; padding: 7px 10px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #b9accd; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
       .deal-state.active { border-color: rgba(50,255,164,.42); color: #78ffc0; background: rgba(50,255,164,.1); }
       .venue-deal-panel > p, .venue-redemption-instructions p { color: #cfc5de; line-height: 1.5; }
+      .venue-deal-placement-note { margin: 0; color: #94e5ff !important; font-size: 14px; font-weight: 800; }
       .venue-deal-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
       .venue-deal-list > button { min-height: 92px; display: grid; align-content: center; justify-items: start; gap: 4px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #fff; background: rgba(255,255,255,.04); text-align: left; }
       .venue-deal-list > button.active { border-color: rgba(50,255,164,.55); background: rgba(50,255,164,.1); box-shadow: 0 0 24px rgba(50,255,164,.08); }
@@ -4881,6 +4886,14 @@ function DashboardStyles() {
       .venue-deal-qr-preview small { color: #10b981; font-size: 11px; font-weight: 850; }
       .venue-deal-qr-preview.empty span { width: 88px; height: 88px; display: grid; place-items: center; border: 1px dashed #475569; border-radius: 12px; color: #94a3b8; font-size: 24px; font-weight: 950; letter-spacing: .08em; }
       .venue-deal-qr-preview.empty small { color: #94a3b8; }
+      .venue-deal-how { overflow: hidden; border: 1px solid rgba(148,229,255,.2); border-radius: 10px; background: rgba(148,229,255,.035); }
+      .venue-deal-how > summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 14px; color: #f7f2ff; font-weight: 950; cursor: pointer; list-style: none; }
+      .venue-deal-how > summary::-webkit-details-marker { display: none; }
+      .venue-deal-how > summary:focus-visible { outline: 2px solid #94e5ff; outline-offset: -3px; }
+      .venue-deal-how > summary::after { content: "+"; color: #94e5ff; font-size: 22px; line-height: 1; }
+      .venue-deal-how[open] > summary::after { content: "−"; }
+      .venue-deal-how > div { display: grid; gap: 14px; padding: 0 14px 14px; }
+      .venue-deal-how > div > p { margin: 0; color: #cfc5de; line-height: 1.5; }
       .currency-input { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; border: 1px solid rgba(50,255,164,.28); border-radius: 8px; background: rgba(50,255,164,.06); overflow: hidden; }
       .currency-input > span { padding-left: 12px; color: #78ffc0; font-weight: 950; }
       .currency-input input { border: 0; background: transparent; }

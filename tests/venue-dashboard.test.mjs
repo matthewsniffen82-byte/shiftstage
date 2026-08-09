@@ -88,10 +88,22 @@ test("venue offer button confirms only a successful database save", () => {
   );
   assert.match(
     clubDealPanel,
-    /isSaving \? "Saving\.\.\." : saveConfirmed \? "Saved" : editingId \? "Save offer" : "Create offer"/,
+    /isSaving \? "Saving\.\.\." : saveConfirmed \? "Saved" : form\.isActive \? "Publish Deal" : "Save Draft"/,
   );
   assert.match(clubDealPanel, /function updateDealForm[\s\S]*?setSaveConfirmed\(false\)/);
   assert.match(clubDealPanel, /aria-live="polite" disabled=\{isSaving\} type="submit"/);
+});
+
+test("venue deal publishing keeps the essential copy visible and collapses operational guidance", () => {
+  assert.match(dashboardClient, /<h2>Post a Club Deal<\/h2>/);
+  assert.match(dashboardClient, /Appears on your venue page and eligible working dancer profiles\./);
+  assert.match(dashboardClient, />\s*Deal title\s*<input/);
+  assert.match(dashboardClient, />\s*Offer details\s*<textarea/);
+  assert.match(dashboardClient, />\s*Conditions \(optional\)\s*<textarea/);
+  assert.match(dashboardClient, /saveConfirmed \? "Saved" : form\.isActive \? "Publish Deal" : "Save Draft"/);
+  assert.match(dashboardClient, /<details className="venue-deal-how">[\s\S]*?<summary>How Club Deals work<\/summary>/);
+  assert.match(dashboardClient, /<h3 id="venue-deal-qr-heading">Deal QR<\/h3>/);
+  assert.doesNotMatch(dashboardClient, /Tracked venue QR generator/);
 });
 
 test("venue dashboard APIs require an active venue account and scope writes by owner", () => {
