@@ -76,6 +76,24 @@ test("venue management is consolidated into one descriptive collapsible workspac
   assert.match(dashboardClient, /<VenueTvPanel \/>/);
 });
 
+test("venue offer button confirms only a successful database save", () => {
+  const clubDealPanel = dashboardClient.match(
+    /function VenueClubDealPanel[\s\S]*?function venueDealForm/,
+  )?.[0] || "";
+
+  assert.match(clubDealPanel, /const \[saveConfirmed, setSaveConfirmed\] = useState\(false\)/);
+  assert.match(
+    clubDealPanel,
+    /if \(!response\.ok \|\| !data\.ok\)[\s\S]*?throw new Error[\s\S]*?setSaveConfirmed\(true\)/,
+  );
+  assert.match(
+    clubDealPanel,
+    /isSaving \? "Saving\.\.\." : saveConfirmed \? "Saved" : editingId \? "Save offer" : "Create offer"/,
+  );
+  assert.match(clubDealPanel, /function updateDealForm[\s\S]*?setSaveConfirmed\(false\)/);
+  assert.match(clubDealPanel, /aria-live="polite" disabled=\{isSaving\} type="submit"/);
+});
+
 test("venue dashboard APIs require an active venue account and scope writes by owner", () => {
   for (const source of [profileRoute, dashboardRoute, qrRoute]) {
     assert.match(source, /account\.role !== "venue"|account\.role === "venue"|account\.role !== "venue"/);

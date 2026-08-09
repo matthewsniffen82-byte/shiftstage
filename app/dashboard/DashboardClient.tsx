@@ -1858,6 +1858,7 @@ function VenueClubDealPanel({
   const [form, setForm] = useState(() => venueDealForm(seedDeals[0]));
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveConfirmed, setSaveConfirmed] = useState(false);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const [qrAsset, setQrAsset] = useState<{
     dealId: string;
@@ -1871,11 +1872,19 @@ function VenueClubDealPanel({
     setDeals(nextDeals);
     setEditingId(String(nextDeals[0]?.id || ""));
     setForm(venueDealForm(nextDeals[0]));
+    setSaveConfirmed(false);
   }, [initialDeal, initialDeals]);
+
+  function updateDealForm<Key extends keyof typeof form>(key: Key, value: (typeof form)[Key]) {
+    setSaveConfirmed(false);
+    setStatus("");
+    setForm((current) => ({ ...current, [key]: value }));
+  }
 
   function editDeal(deal: Record<string, unknown>) {
     setEditingId(String(deal.id || ""));
     setForm(venueDealForm(deal));
+    setSaveConfirmed(false);
     setQrAsset(null);
     setStatus("");
   }
@@ -1883,12 +1892,14 @@ function VenueClubDealPanel({
   function addDeal() {
     setEditingId("");
     setForm(venueDealForm(null, deals.length));
+    setSaveConfirmed(false);
     setQrAsset(null);
     setStatus("Create the offer, then publish it when every detail is ready.");
   }
 
   async function saveDeal(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSaveConfirmed(false);
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
@@ -1937,6 +1948,7 @@ function VenueClubDealPanel({
       setForm(venueDealForm(data.deal));
       setQrAsset(null);
       setStatus(data.message || "Tracked Club Deal saved.");
+      setSaveConfirmed(true);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update the tracked Club Deal.");
     } finally {
@@ -2056,7 +2068,7 @@ function VenueClubDealPanel({
           Offer type
           <select
             value={form.offerType}
-            onChange={(event) => setForm((current) => ({ ...current, offerType: event.target.value }))}
+            onChange={(event) => updateDealForm("offerType", event.target.value)}
           >
             <option value="admission">Admission</option>
             <option value="drink">Drink</option>
@@ -2071,7 +2083,7 @@ function VenueClubDealPanel({
             max="1000"
             type="number"
             value={form.sortOrder}
-            onChange={(event) => setForm((current) => ({ ...current, sortOrder: event.target.value }))}
+            onChange={(event) => updateDealForm("sortOrder", event.target.value)}
           />
         </label>
         <label>
@@ -2080,7 +2092,7 @@ function VenueClubDealPanel({
             maxLength={100}
             required
             value={form.dealTitle}
-            onChange={(event) => setForm((current) => ({ ...current, dealTitle: event.target.value }))}
+            onChange={(event) => updateDealForm("dealTitle", event.target.value)}
           />
         </label>
         {form.offerType === "bottle_service" ? (
@@ -2093,7 +2105,7 @@ function VenueClubDealPanel({
               required={form.isActive}
               type="url"
               value={form.bookingUrl}
-              onChange={(event) => setForm((current) => ({ ...current, bookingUrl: event.target.value }))}
+              onChange={(event) => updateDealForm("bookingUrl", event.target.value)}
             />
             <small>Customers create the tracked MyDancr pass first, then continue here to request the actual reservation.</small>
           </label>
@@ -2105,7 +2117,7 @@ function VenueClubDealPanel({
             required
             rows={3}
             value={form.dealDescription}
-            onChange={(event) => setForm((current) => ({ ...current, dealDescription: event.target.value }))}
+            onChange={(event) => updateDealForm("dealDescription", event.target.value)}
           />
         </label>
         <label>
@@ -2114,7 +2126,7 @@ function VenueClubDealPanel({
             maxLength={1200}
             rows={3}
             value={form.dealTerms}
-            onChange={(event) => setForm((current) => ({ ...current, dealTerms: event.target.value }))}
+            onChange={(event) => updateDealForm("dealTerms", event.target.value)}
           />
         </label>
         <label>
@@ -2126,7 +2138,7 @@ function VenueClubDealPanel({
               placeholder="20.00"
               required
               value={form.referralCommission}
-              onChange={(event) => setForm((current) => ({ ...current, referralCommission: event.target.value }))}
+              onChange={(event) => updateDealForm("referralCommission", event.target.value)}
             />
           </span>
         </label>
@@ -2134,13 +2146,13 @@ function VenueClubDealPanel({
           <input
             checked={form.isActive}
             type="checkbox"
-            onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
+            onChange={(event) => updateDealForm("isActive", event.target.checked)}
           />
           Publish this offer in the Club Deals hub
         </label>
         <div className="venue-deal-form-actions">
-          <button disabled={isSaving} type="submit">
-            {isSaving ? "Saving..." : editingId ? "Save offer" : "Create offer"}
+          <button aria-live="polite" disabled={isSaving} type="submit">
+            {isSaving ? "Saving..." : saveConfirmed ? "Saved" : editingId ? "Save offer" : "Create offer"}
           </button>
           {editingId ? <button className="danger" disabled={isSaving} type="button" onClick={deleteDeal}>Delete</button> : null}
         </div>
