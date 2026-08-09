@@ -3577,28 +3577,85 @@
     }
 
     .auth-help-row {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 10px;
     }
 
     .auth-help-row .forgot-password-link {
-      justify-self: auto;
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: 44px !important;
+      justify-self: stretch;
+      padding: 0 9px !important;
+      border: 1px solid rgba(248, 250, 252, 0.12) !important;
+      border-radius: 12px !important;
+      color: rgba(255, 255, 255, 0.88) !important;
+      background: rgba(24, 24, 29, 0.94) !important;
+      box-shadow: none !important;
+      font-size: clamp(0.72rem, 3.2vw, 0.8rem) !important;
+      line-height: 1.15 !important;
+      text-align: center;
+      white-space: nowrap;
     }
 
-    .login-recovery-card {
+    .auth-help-row .forgot-password-link:hover,
+    .auth-help-row .forgot-password-link:focus-visible {
+      border-color: var(--dancr-color-brand-primary-medium) !important;
+      color: #fff !important;
+      outline: 0 !important;
+      box-shadow: var(--dancr-focus-ring) !important;
+    }
+
+    @media (max-width: 340px) {
+      .auth-help-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .recovery-popover {
+      position: fixed;
+      inset: 0;
+      z-index: 1400;
+      display: grid;
+      place-items: center;
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      background: rgba(2,2,5,.74);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .recovery-popover[hidden] { display: none !important; }
+
+    .recovery-popover-surface {
+      width: min(100%, 480px);
+      max-height: min(82dvh, 680px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
       display: grid;
       gap: 14px;
-      padding: 15px;
-      border: 1px solid rgba(148,229,255,.24);
-      border-radius: 12px;
-      background: rgba(4,12,20,.78);
-      box-shadow: inset 0 0 24px rgba(53,216,255,.035);
+      box-sizing: border-box;
+      padding: 18px;
+      border: 1px solid rgba(248,250,252,.16);
+      border-radius: 18px;
+      background: rgba(10,10,15,.98);
+      box-shadow: 0 24px 70px rgba(0,0,0,.58), 0 0 0 1px rgba(255,255,255,.025) inset;
+      animation: recovery-popover-in 220ms cubic-bezier(.2,.82,.26,1) both;
     }
 
-    .login-recovery-card[hidden] { display: none !important; }
+    @keyframes recovery-popover-in {
+      from {
+        opacity: .22;
+        transform: translate(var(--recovery-shift-x, 0), var(--recovery-shift-y, 34px)) scale(.2);
+      }
+      to { opacity: 1; transform: translate(0, 0) scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .recovery-popover-surface { animation-duration: 1ms; }
+    }
 
     .login-recovery-head {
       display: flex;
@@ -3636,8 +3693,12 @@
       gap: 10px;
     }
 
-    .login-recovery-card textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+    .recovery-popover textarea { width: 100%; box-sizing: border-box; resize: vertical; }
     .login-recovery-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .password-recovery-form { display: grid; gap: 14px; }
+    .password-recovery-form .action-btn,
+    .password-recovery-form .ghost { width: 100%; }
 
     @media (max-width: 520px) {
       .login-recovery-grid { grid-template-columns: 1fr; }
@@ -35791,8 +35852,8 @@
               </div>
             </div>
             <div class="auth-help-row">
-              <button class="forgot-password-link" id="customerForgotPasswordBtn" type="button">Forgot password?</button>
-              <button class="forgot-password-link" id="customerForgotLoginBtn" type="button">Forgot email/login?</button>
+              <button class="forgot-password-link" id="customerForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
+              <button class="forgot-password-link" id="customerForgotLoginBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot email?</button>
             </div>
             <div class="field" id="customerConfirmPasswordField" hidden>
               <label for="customerConfirmPassword">Confirm password</label>
@@ -35822,8 +35883,8 @@
               </div>
             </div>
             <div class="auth-help-row">
-              <button class="forgot-password-link" id="dancerForgotPasswordBtn" type="button">Forgot password?</button>
-              <button class="forgot-password-link" id="dancerForgotLoginBtn" type="button">Forgot email/login?</button>
+              <button class="forgot-password-link" id="dancerForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
+              <button class="forgot-password-link" id="dancerForgotLoginBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot email?</button>
             </div>
             <button class="action-btn" id="dancerLoginSubmit" type="submit">Dancer login</button>
             <button class="ghost auth-join-now dancer-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
@@ -35853,46 +35914,67 @@
               </div>
             </div>
             <div class="auth-help-row">
-              <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button">Forgot password?</button>
-              <button class="forgot-password-link" id="venueForgotLoginBtn" type="button">Forgot email/login?</button>
+              <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
+              <button class="forgot-password-link" id="venueForgotLoginBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot email?</button>
             </div>
             <button class="action-btn" id="venueLoginSubmit" type="submit">Venue login</button>
             <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="button">Create venue account</button>
             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite">Existing managers can sign in. New managers need a private venue access code.</div>
           </form>
-          <section class="login-recovery-card" id="loginRecoveryCard" aria-labelledby="loginRecoveryTitle" hidden>
-            <div class="login-recovery-head">
-              <div><span class="eyebrow">Account recovery</span><h3 id="loginRecoveryTitle">Find your sign-in email</h3></div>
-              <button class="login-recovery-close" id="loginRecoveryClose" type="button" aria-label="Close account recovery">×</button>
+          <section class="recovery-popover" id="passwordRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle" hidden>
+            <div class="recovery-popover-surface" id="passwordRecoverySurface">
+              <div class="login-recovery-head">
+                <div><span class="eyebrow">Password recovery</span><h3 id="passwordRecoveryTitle">Reset your password</h3></div>
+                <button class="login-recovery-close" id="passwordRecoveryClose" type="button" aria-label="Close password recovery">×</button>
+              </div>
+              <p class="login-recovery-copy">Enter the email used for this account. MyDancr will send a secure reset link if the email matches an account.</p>
+              <form class="password-recovery-form" id="passwordRecoveryForm">
+                <input id="passwordRecoveryRole" type="hidden" value="customer">
+                <div class="field">
+                  <label for="passwordRecoveryEmail">Account email</label>
+                  <input id="passwordRecoveryEmail" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required>
+                </div>
+                <button class="action-btn" id="passwordRecoverySubmit" type="submit">Send reset link</button>
+                <button class="ghost" id="passwordRecoveryBack" type="button">Back to sign in</button>
+                <div class="rule-note auth-status" id="passwordRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+              </form>
             </div>
-            <p class="login-recovery-copy">MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
-            <form class="auth-form" id="loginRecoveryForm">
-              <input id="loginRecoveryRole" type="hidden" value="customer">
-              <div class="login-recovery-grid">
-                <div class="field">
-                  <label for="loginRecoveryAccountName" id="loginRecoveryAccountNameLabel">Name used on the account</label>
-                  <input id="loginRecoveryAccountName" type="text" minlength="2" maxlength="80" autocomplete="name" required>
+          </section>
+          <section class="recovery-popover" id="loginRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="loginRecoveryTitle" hidden>
+            <div class="recovery-popover-surface" id="loginRecoverySurface">
+              <div class="login-recovery-head">
+                <div><span class="eyebrow">Email recovery</span><h3 id="loginRecoveryTitle">Find your sign-in email</h3></div>
+                <button class="login-recovery-close" id="loginRecoveryClose" type="button" aria-label="Close email recovery">×</button>
+              </div>
+              <p class="login-recovery-copy">MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
+              <form class="auth-form" id="loginRecoveryForm">
+                <input id="loginRecoveryRole" type="hidden" value="customer">
+                <div class="login-recovery-grid">
+                  <div class="field">
+                    <label for="loginRecoveryAccountName" id="loginRecoveryAccountNameLabel">Name used on the account</label>
+                    <input id="loginRecoveryAccountName" type="text" minlength="2" maxlength="80" autocomplete="name" required>
+                  </div>
+                  <div class="field">
+                    <label for="loginRecoveryCity">Account city</label>
+                    <input id="loginRecoveryCity" type="text" minlength="2" maxlength="80" placeholder="Las Vegas" required>
+                  </div>
                 </div>
                 <div class="field">
-                  <label for="loginRecoveryCity">Account city</label>
-                  <input id="loginRecoveryCity" type="text" minlength="2" maxlength="80" placeholder="Las Vegas" required>
+                  <label for="loginRecoveryContactEmail">Email where support can reach you</label>
+                  <input id="loginRecoveryContactEmail" type="email" maxlength="254" autocomplete="email" required>
                 </div>
-              </div>
-              <div class="field">
-                <label for="loginRecoveryContactEmail">Email where support can reach you</label>
-                <input id="loginRecoveryContactEmail" type="email" maxlength="254" autocomplete="email" required>
-              </div>
-              <div class="field">
-                <label for="loginRecoveryDetails">Other details that can help verify the account</label>
-                <textarea id="loginRecoveryDetails" rows="4" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
-              </div>
-              <p class="login-recovery-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
-              <div class="login-recovery-actions">
-                <button class="action-btn" id="loginRecoverySubmit" type="submit">Send recovery request</button>
-                <button class="ghost" id="loginRecoveryBack" type="button">Back to sign in</button>
-              </div>
-              <div class="rule-note auth-status" id="loginRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-            </form>
+                <div class="field">
+                  <label for="loginRecoveryDetails">Other details that can help verify the account</label>
+                  <textarea id="loginRecoveryDetails" rows="4" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
+                </div>
+                <p class="login-recovery-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
+                <div class="login-recovery-actions">
+                  <button class="action-btn" id="loginRecoverySubmit" type="submit">Send recovery request</button>
+                  <button class="ghost" id="loginRecoveryBack" type="button">Back to sign in</button>
+                </div>
+                <div class="rule-note auth-status" id="loginRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+              </form>
+            </div>
           </section>
         </div>
       </div>
@@ -37147,11 +37229,19 @@
     };
     let userLocation = null;
     const authPage = document.getElementById("authPage");
+    const passwordRecoveryCard = document.getElementById("passwordRecoveryCard");
+    const passwordRecoveryForm = document.getElementById("passwordRecoveryForm");
+    const passwordRecoveryClose = document.getElementById("passwordRecoveryClose");
+    const passwordRecoveryBack = document.getElementById("passwordRecoveryBack");
+    const passwordRecoveryStatus = document.getElementById("passwordRecoveryStatus");
     const loginRecoveryCard = document.getElementById("loginRecoveryCard");
     const loginRecoveryForm = document.getElementById("loginRecoveryForm");
     const loginRecoveryClose = document.getElementById("loginRecoveryClose");
     const loginRecoveryBack = document.getElementById("loginRecoveryBack");
     const loginRecoveryStatus = document.getElementById("loginRecoveryStatus");
+    [passwordRecoveryCard, loginRecoveryCard].forEach((popover) => {
+      if (popover && popover.parentElement !== document.body) document.body.appendChild(popover);
+    });
     const dancerSignupPage = document.getElementById("dancerSignupPage");
     const stripeCheckoutPage = document.getElementById("stripeCheckoutPage");
     const dancerDashboard = document.getElementById("dancerDashboard");
@@ -38477,7 +38567,7 @@
       const previousText = button?.textContent || "Forgot password?";
 
       if (!email) {
-        const message = "Enter your email first, then tap Forgot password.";
+        const message = "Enter the email used for your account.";
         if (status) {
           status.textContent = message;
           status.hidden = false;
@@ -38524,8 +38614,62 @@
       }
     }
 
-    function sendLoginRecoveryHelp({ role, emailInputId }) {
+    function setRecoveryPopoverOrigin(popover, sourceButton) {
+      const surface = popover?.querySelector(".recovery-popover-surface");
+      if (!surface || !sourceButton) return;
+      const rect = sourceButton.getBoundingClientRect();
+      surface.style.setProperty("--recovery-shift-x", `${rect.left + rect.width / 2 - window.innerWidth / 2}px`);
+      surface.style.setProperty("--recovery-shift-y", `${rect.top + rect.height / 2 - window.innerHeight / 2}px`);
+    }
+
+    function closeRecoveryPopover(popover, restoreFocus = true) {
+      if (!popover || popover.hidden) return;
+      const trigger = document.getElementById(popover.dataset.triggerId || "");
+      popover.hidden = true;
+      popover.dataset.triggerId = "";
+      if (trigger) trigger.setAttribute("aria-expanded", "false");
+      if (restoreFocus) trigger?.focus({ preventScroll: true });
+    }
+
+    function openRecoveryPopover(popover, sourceButton, focusTargetId) {
+      if (!popover || !sourceButton) return;
+      [passwordRecoveryCard, loginRecoveryCard].forEach((item) => {
+        if (item && item !== popover) closeRecoveryPopover(item, false);
+      });
+      setRecoveryPopoverOrigin(popover, sourceButton);
+      popover.dataset.triggerId = sourceButton.id;
+      sourceButton.setAttribute("aria-expanded", "true");
+      popover.hidden = false;
+      window.setTimeout(() => document.getElementById(focusTargetId)?.focus({ preventScroll: true }), 220);
+    }
+
+    function openPasswordRecovery({ role, emailInputId, buttonId }) {
+      const sourceButton = document.getElementById(buttonId);
       const accountEmail = document.getElementById(emailInputId)?.value?.trim() || "";
+      const emailInput = document.getElementById("passwordRecoveryEmail");
+      const roleInput = document.getElementById("passwordRecoveryRole");
+      if (roleInput) roleInput.value = role;
+      if (emailInput) emailInput.value = accountEmail;
+      if (passwordRecoveryStatus) {
+        passwordRecoveryStatus.textContent = "";
+        passwordRecoveryStatus.hidden = true;
+      }
+      openRecoveryPopover(passwordRecoveryCard, sourceButton, "passwordRecoveryEmail");
+    }
+
+    async function submitPasswordRecoveryForm(event) {
+      event.preventDefault();
+      await sendPasswordReset({
+        role: document.getElementById("passwordRecoveryRole")?.value || "customer",
+        emailInputId: "passwordRecoveryEmail",
+        buttonId: "passwordRecoverySubmit",
+        statusId: "passwordRecoveryStatus"
+      });
+    }
+
+    function sendLoginRecoveryHelp({ role, emailInputId, buttonId }) {
+      const accountEmail = document.getElementById(emailInputId)?.value?.trim() || "";
+      const sourceButton = document.getElementById(buttonId);
       const contactInput = document.getElementById("loginRecoveryContactEmail");
       const roleInput = document.getElementById("loginRecoveryRole");
       const cityInput = document.getElementById("loginRecoveryCity");
@@ -38541,17 +38685,11 @@
         loginRecoveryStatus.textContent = "";
         loginRecoveryStatus.hidden = true;
       }
-      document.getElementById("authForm").hidden = true;
-      document.getElementById("dancerLoginForm").hidden = true;
-      document.getElementById("venueLoginForm").hidden = true;
-      loginRecoveryCard.hidden = false;
-      setTimeout(() => document.getElementById("loginRecoveryAccountName")?.focus(), 0);
+      openRecoveryPopover(loginRecoveryCard, sourceButton, "loginRecoveryAccountName");
     }
 
     function closeLoginRecovery() {
-      const role = document.getElementById("loginRecoveryRole")?.value || "customer";
-      loginRecoveryCard.hidden = true;
-      openAuthRole(role);
+      closeRecoveryPopover(loginRecoveryCard);
     }
 
     async function submitLoginRecoveryForm(event) {
@@ -47193,7 +47331,8 @@
     function openAuthRole(role) {
       const isDancer = role === "dancer";
       const isVenue = role === "venue";
-      if (loginRecoveryCard) loginRecoveryCard.hidden = true;
+      closeRecoveryPopover(passwordRecoveryCard, false);
+      closeRecoveryPopover(loginRecoveryCard, false);
       clearAuthFields(role);
       document.getElementById("authRoleTitle").textContent = isVenue ? "Venue login or sign up" : isDancer ? "Dancer login" : "Customer login";
       document.getElementById("authRoleSubtitle").textContent = isVenue
@@ -47213,7 +47352,8 @@
 
     function closeAuthPage() {
       clearAuthFields("all");
-      if (loginRecoveryCard) loginRecoveryCard.hidden = true;
+      closeRecoveryPopover(passwordRecoveryCard, false);
+      closeRecoveryPopover(loginRecoveryCard, false);
       authPage.classList.remove("show");
       authPage.setAttribute("aria-hidden", "true");
       syncOverlayScrollLock();
@@ -55293,11 +55433,10 @@
     });
 
     document.getElementById("customerForgotPasswordBtn").addEventListener("click", () => {
-      sendPasswordReset({
+      openPasswordRecovery({
         role: "customer",
         emailInputId: "customerEmail",
-        buttonId: "customerForgotPasswordBtn",
-        statusId: "customerAuthStatus"
+        buttonId: "customerForgotPasswordBtn"
       });
     });
 
@@ -55305,13 +55444,12 @@
       sendLoginRecoveryHelp({
         role: "customer",
         emailInputId: "customerEmail",
-        buttonId: "customerForgotLoginBtn",
-        statusId: "customerAuthStatus"
+        buttonId: "customerForgotLoginBtn"
       });
     });
 
     document.getElementById("dancerForgotPasswordBtn").addEventListener("click", () => {
-      sendPasswordReset({
+      openPasswordRecovery({
         role: "dancer",
         emailInputId: "dancerLoginEmail",
         buttonId: "dancerForgotPasswordBtn"
@@ -55327,7 +55465,7 @@
     });
 
     document.getElementById("venueForgotPasswordBtn").addEventListener("click", () => {
-      sendPasswordReset({
+      openPasswordRecovery({
         role: "venue",
         emailInputId: "venueLoginEmail",
         buttonId: "venueForgotPasswordBtn"
@@ -55335,12 +55473,41 @@
     });
 
     document.getElementById("venueForgotLoginBtn").addEventListener("click", () => {
-      sendLoginRecoveryHelp({ role: "venue", emailInputId: "venueLoginEmail" });
+      sendLoginRecoveryHelp({ role: "venue", emailInputId: "venueLoginEmail", buttonId: "venueForgotLoginBtn" });
     });
 
+    passwordRecoveryForm?.addEventListener("submit", submitPasswordRecoveryForm);
+    passwordRecoveryClose?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
+    passwordRecoveryBack?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     loginRecoveryForm?.addEventListener("submit", submitLoginRecoveryForm);
     loginRecoveryClose?.addEventListener("click", closeLoginRecovery);
     loginRecoveryBack?.addEventListener("click", closeLoginRecovery);
+    [passwordRecoveryCard, loginRecoveryCard].forEach((popover) => {
+      popover?.addEventListener("click", (event) => {
+        if (event.target === popover) closeRecoveryPopover(popover);
+      });
+    });
+    document.addEventListener("keydown", (event) => {
+      const activePopover = [passwordRecoveryCard, loginRecoveryCard].find((popover) => popover && !popover.hidden);
+      if (!activePopover) return;
+      if (event.key === "Escape") {
+        closeRecoveryPopover(activePopover);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = [...activePopover.querySelectorAll("button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href]")]
+        .filter((element) => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
 
     document.getElementById("adminForgotPasswordBtn").addEventListener("click", () => {
       sendPasswordReset({

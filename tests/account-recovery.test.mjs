@@ -65,6 +65,35 @@ test("every public account type has an in-app forgotten-email form", () => {
   assert.doesNotMatch(liveApp, /Mydancr .* login help[\s\S]{0,300}mailto:support@mydancr\.com/);
 });
 
+test("password and email recovery actions remain readable on narrow screens", () => {
+  assert.match(liveApp, /id="dancerForgotPasswordBtn"[^>]*>Forgot password\?<\/button>/);
+  assert.match(liveApp, /id="dancerForgotLoginBtn"[^>]*>Forgot email\?<\/button>/);
+  assert.doesNotMatch(liveApp, />Forgot email\/login\?<\/button>/);
+  assert.match(
+    liveApp,
+    /\.auth-help-row \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?\.auth-help-row \.forgot-password-link \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?min-height: 44px !important;[\s\S]*?white-space: nowrap;/,
+  );
+  assert.match(liveApp, /@media \(max-width: 340px\) \{[\s\S]*?\.auth-help-row \{[\s\S]*?grid-template-columns: 1fr;/);
+  assert.match(accountPage, /Forgot email\?/);
+  assert.match(accountPage, /\.auth-help-row \{ width: 100%; display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(accountPage, /@media \(max-width: 340px\) \{ \.auth-help-row \{ grid-template-columns: 1fr; \} \}/);
+});
+
+test("each recovery button opens its own next-step dialog from the pressed control", () => {
+  assert.match(liveApp, /id="passwordRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle"/);
+  assert.match(liveApp, /id="loginRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="loginRecoveryTitle"/);
+  assert.match(liveApp, /function openPasswordRecovery\(\{ role, emailInputId, buttonId \}\)[\s\S]*?openRecoveryPopover\(passwordRecoveryCard, sourceButton, "passwordRecoveryEmail"\)/);
+  assert.match(liveApp, /function sendLoginRecoveryHelp\(\{ role, emailInputId, buttonId \}\)[\s\S]*?openRecoveryPopover\(loginRecoveryCard, sourceButton, "loginRecoveryAccountName"\)/);
+  assert.match(liveApp, /@keyframes recovery-popover-in[\s\S]*?--recovery-shift-x[\s\S]*?--recovery-shift-y/);
+  assert.match(liveApp, /setProperty\("--recovery-shift-x"[\s\S]*?setProperty\("--recovery-shift-y"/);
+  assert.match(liveApp, /passwordRecoveryForm\?\.addEventListener\("submit", submitPasswordRecoveryForm\)/);
+  assert.match(accountPage, /type RecoveryView = "password" \| "email" \| null/);
+  assert.match(accountPage, /openRecovery\("password", event\)/);
+  assert.match(accountPage, /openRecovery\("email", event\)/);
+  assert.match(accountPage, /role="dialog" aria-modal="true" aria-labelledby="password-recovery-title"/);
+  assert.match(accountPage, /role="dialog" aria-modal="true" aria-labelledby="login-recovery-title"/);
+});
+
 test("a successful password change revokes other sessions and sends a security alert", () => {
   assert.match(accountRoute, /client\.auth\.updateUser\(\{ password \}\)/);
   assert.match(accountRoute, /client\.auth\.signOut\(\{ scope: "others" \}\)/);
