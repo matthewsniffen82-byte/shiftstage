@@ -141,7 +141,7 @@ test("venue offer button confirms only a successful database save", () => {
   );
   assert.match(
     clubDealPanel,
-    /isSaving \? "Saving\.\.\." : saveConfirmed \? "Saved" : form\.isActive \? "Save Changes" : "Publish Deal"/,
+    /isSaving \? "Saving\.\.\." : saveConfirmed \? "Saved Changes" : form\.isActive \? "Save Changes" : "Publish Deal"/,
   );
   assert.match(clubDealPanel, /function updateDealForm[\s\S]*?setSaveConfirmed\(false\)/);
   assert.match(clubDealPanel, /aria-live="polite"[\s\S]*?disabled=\{isSaving\}[\s\S]*?name="dealAction"[\s\S]*?type="submit"/);
@@ -162,12 +162,20 @@ test("saved venue deals immediately synchronize dashboard cards, selection, and 
     clubDealPanel,
     /const nextDeals = upsertVenueDeal\(deals, data\.deal\);\s*setDeals\(nextDeals\);\s*onDealsChange\(nextDeals\)/,
   );
+  const incomingDealsEffect = clubDealPanel.match(
+    /useEffect\(\(\) => \{[\s\S]*?const nextDeals = initialDeals\.length[\s\S]*?\}, \[initialDeal, initialDeals\]\);/,
+  )?.[0] || "";
+  assert.doesNotMatch(incomingDealsEffect, /setSaveConfirmed\(false\)/);
+  assert.match(clubDealPanel, /Saved changes\. This deal and its QR are live on your venue page/);
   assert.match(
     clubDealPanel,
     /method: "DELETE"[\s\S]*?setDeals\(nextDeals\);\s*onDealsChange\(nextDeals\)/,
   );
   assert.match(clubDealPanel, /editingIdRef\.current = String\(data\.deal\.id\)/);
   assert.match(clubDealPanel, /const liveCount = deals\.filter\(\(deal\) => deal\.isActive === true\)\.length/);
+  assert.match(clubDealPanel, /aria-pressed=\{String\(deal\.id\) === editingId\}[\s\S]*?className=\{String\(deal\.id\) === editingId \? "selected" : ""\}/);
+  assert.match(clubDealPanel, /aria-pressed=\{!editingId\}[\s\S]*?className=\{`add\$\{!editingId \? " selected" : ""\}`\}/);
+  assert.match(dashboardClient, /\.venue-deal-list > button\.selected \{[\s\S]*?var\(--dancr-color-beam-violet\)[\s\S]*?var\(--dancr-color-beam-violet-soft\)/);
 });
 
 test("venue deal publishing keeps the essential copy visible and collapses operational guidance", () => {
@@ -176,7 +184,7 @@ test("venue deal publishing keeps the essential copy visible and collapses opera
   assert.match(dashboardClient, />\s*Deal title\s*<input/);
   assert.match(dashboardClient, />\s*Offer details\s*<textarea/);
   assert.match(dashboardClient, />\s*Conditions \(optional\)\s*<textarea/);
-  assert.match(dashboardClient, /saveConfirmed \? "Saved" : form\.isActive \? "Save Changes" : "Publish Deal"/);
+  assert.match(dashboardClient, /saveConfirmed \? "Saved Changes" : form\.isActive \? "Save Changes" : "Publish Deal"/);
   assert.match(dashboardClient, /<details className="venue-deal-how">[\s\S]*?<summary>How Club Deals work<\/summary>/);
   assert.match(dashboardClient, /<h3 id="venue-deal-qr-heading">Deal QR<\/h3>/);
   assert.doesNotMatch(dashboardClient, /Tracked venue QR generator/);

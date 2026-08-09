@@ -1814,7 +1814,6 @@ function VenueClubDealPanel({
     editingIdRef.current = nextEditingId;
     setEditingId(nextEditingId);
     setForm(venueDealForm(selectedDeal));
-    setSaveConfirmed(false);
     setShareOptionsOpen(false);
   }, [initialDeal, initialDeals]);
 
@@ -1898,8 +1897,8 @@ function VenueClubDealPanel({
       setForm(venueDealForm(data.deal));
       setQrAsset(null);
       setStatus(data.deal.isActive
-        ? "Deal published. Its QR is live on your venue page and eligible Working Now dancer profiles."
-        : "Draft saved. This deal is not visible on MyDancr.");
+        ? "Saved changes. This deal and its QR are live on your venue page and eligible Working Now dancer profiles."
+        : "Saved changes. This deal is a draft and is not visible on MyDancr.");
       setSaveConfirmed(true);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update the tracked Club Deal.");
@@ -2038,7 +2037,8 @@ function VenueClubDealPanel({
       <div className="venue-deal-list" aria-label="Venue Club Deals">
         {deals.map((deal) => (
           <button
-            className={String(deal.id) === editingId ? "active" : ""}
+            aria-pressed={String(deal.id) === editingId}
+            className={String(deal.id) === editingId ? "selected" : ""}
             key={String(deal.id)}
             type="button"
             onClick={() => editDeal(deal)}
@@ -2048,7 +2048,7 @@ function VenueClubDealPanel({
             <small>{deal.isActive ? "Published" : "Draft"}</small>
           </button>
         ))}
-        <button className="add" type="button" onClick={addDeal}>
+        <button aria-pressed={!editingId} className={`add${!editingId ? " selected" : ""}`} type="button" onClick={addDeal}>
           <span>New offer</span>
           <strong>+ Add Club Deal</strong>
           <small>Draft first</small>
@@ -2141,7 +2141,7 @@ function VenueClubDealPanel({
             type="submit"
             value={form.isActive ? "save" : "publish"}
           >
-            {isSaving ? "Saving..." : saveConfirmed ? "Saved" : form.isActive ? "Save Changes" : "Publish Deal"}
+            {isSaving ? "Saving..." : saveConfirmed ? "Saved Changes" : form.isActive ? "Save Changes" : "Publish Deal"}
           </button>
           <button
             className="secondary"
@@ -5192,7 +5192,7 @@ function DashboardStyles() {
       .venue-deal-placement-note { margin: 0; color: #94e5ff !important; font-size: 14px; font-weight: 800; }
       .venue-deal-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
       .venue-deal-list > button { min-height: 92px; display: grid; align-content: center; justify-items: start; gap: 4px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #fff; background: rgba(255,255,255,.04); text-align: left; }
-      .venue-deal-list > button.active { border-color: rgba(50,255,164,.55); background: rgba(50,255,164,.1); box-shadow: 0 0 24px rgba(50,255,164,.08); }
+      .venue-deal-list > button.selected { border: 2px solid var(--dancr-color-beam-violet) !important; background: var(--dancr-color-beam-violet-soft) !important; box-shadow: inset 4px 0 0 var(--dancr-color-beam-violet) !important; }
       .venue-deal-list > button.add { border-style: dashed; color: #78ffc0; }
       .venue-deal-list span { color: #78ffc0; font-size: 10px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
       .venue-deal-list strong { font-size: 14px; }
