@@ -240,7 +240,7 @@ export default function DashboardClient({
   const dashboardDescription = state.error || "";
 
   return (
-    <main className="dashboard-shell">
+    <main className={`dashboard-shell dashboard-shell-${role}`}>
       <DashboardStyles />
       <section className={`dashboard-head dashboard-head-${role}`}>
         <div className="dashboard-head-row">
@@ -273,7 +273,7 @@ export default function DashboardClient({
       </section>
 
       {!isLoading && !state.error ? (
-        <section className={role === "customer" ? "dashboard-grid customer-dashboard-grid" : "dashboard-grid"}>
+        <section className={`dashboard-grid ${role}-dashboard-grid`}>
           {role === "customer" ? (
             <>
               <CustomerDashboardTabs />
@@ -322,23 +322,6 @@ export default function DashboardClient({
           ) : null}
           {role === "venue" ? (
             <>
-              <VenueDashboardSection
-                description="Review account access, notifications, support messages, and account controls without leaving the venue workspace."
-                eyebrow="Venue workspace"
-                id="venue-account"
-                title="Account & support"
-              >
-                <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
-                  <InfoPanel title="Account">
-                    <Metric label="Status" value={String(state.account?.accountState || "active")} />
-                    <Metric label="Email" value={String(state.account?.email || "Private")} />
-                    <Metric label="Role" value={String(state.account?.role || role)} />
-                  </InfoPanel>
-                  <NotificationPanel />
-                  <SupportInboxPanel initialThreads={state.supportThreads || []} />
-                  <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
-                </div>
-              </VenueDashboardSection>
               {state.claim && !state.profile ? (
                 <VenueDashboardSection
                   defaultOpen
@@ -363,6 +346,23 @@ export default function DashboardClient({
                   onProfileChange={updateProfile}
                 />
               )}
+              <VenueDashboardSection
+                description="Notifications, support messages, and account controls."
+                eyebrow="Venue workspace"
+                id="venue-account"
+                title="Account & support"
+              >
+                <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
+                  <InfoPanel title="Account">
+                    <Metric label="Status" value={String(state.account?.accountState || "active")} />
+                    <Metric label="Email" value={String(state.account?.email || "Private")} />
+                    <Metric label="Role" value={String(state.account?.role || role)} />
+                  </InfoPanel>
+                  <NotificationPanel />
+                  <SupportInboxPanel initialThreads={state.supportThreads || []} />
+                  <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
+                </div>
+              </VenueDashboardSection>
             </>
           ) : null}
         </section>
@@ -1489,6 +1489,37 @@ function VenueDashboardSection({
   );
 }
 
+function VenueDashboardActionIcon({ name }: { name: "deal" | "edit" | "profile" | "verify" }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      {name === "edit" ? (
+        <>
+          <path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+          <path d="m13.5 6.5 4 4" />
+        </>
+      ) : name === "profile" ? (
+        <>
+          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+          <circle cx="12" cy="12" r="2.5" />
+        </>
+      ) : name === "verify" ? (
+        <>
+          <rect x="4" y="4" width="6" height="6" rx="1" />
+          <rect x="14" y="4" width="6" height="6" rx="1" />
+          <rect x="4" y="14" width="6" height="6" rx="1" />
+          <path d="M14 15h2v2h-2zM18 14h2v3h-2zM14 19h3v1h-3zM19 19h1v1h-1z" />
+        </>
+      ) : (
+        <>
+          <path d="M5 7.5h14v11H5z" />
+          <path d="M8 7.5V5h8v2.5M5 11h14" />
+          <path d="M9 15h6" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 function VenuePanel({
   analytics,
   deal,
@@ -1616,14 +1647,80 @@ function VenuePanel({
     }
   }
 
+  function openVenueSection(event: React.MouseEvent<HTMLAnchorElement>, sectionId: string) {
+    const section = document.getElementById(sectionId) as HTMLDetailsElement | null;
+    if (!section) return;
+    event.preventDefault();
+    section.open = true;
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => section.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true }), 350);
+  }
+
+  const venueName = String(profile?.name || "Your venue");
+  const venueCity = String(profile?.city || "your city");
+  const venueSlug = String(profile?.slug || "");
+  const activeDeal =
+    venueDeals.find((venueDeal) => venueDeal.isActive === true) ||
+    (deal?.isActive === true ? deal : null);
+  const activeDealTitle = String(activeDeal?.dealTitle || activeDeal?.title || "Club Deal");
+
   return (
     <>
+      <section className="venue-command-panel" aria-labelledby="venue-command-heading">
+        <div className="venue-command-status">
+          <span className="venue-live-pill">LIVE</span>
+          <div>
+            <h2 id="venue-command-heading">{venueName} is live in {venueCity}</h2>
+            <p>Keep your venue page and Club Deal current so customers know what is available tonight.</p>
+          </div>
+        </div>
+        <div className="venue-command-primary">
+          <span className="eyebrow">Club Deal</span>
+          <strong>{activeDeal ? activeDealTitle : "No Club Deal posted"}</strong>
+          <p>{activeDeal ? "Your offer and tracked QR are live on MyDancr." : "Post an offer customers can open from your venue page."}</p>
+          <a className="primary-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
+            {activeDeal ? "Manage Club Deal" : "Post Club Deal"}
+          </a>
+        </div>
+      </section>
+
+      <nav className="venue-dashboard-shortcuts" aria-label="Venue dashboard shortcuts">
+        <a href="#venue-public-profile" onClick={(event) => openVenueSection(event, "venue-public-profile")}>
+          <VenueDashboardActionIcon name="edit" />
+          <span><strong>Edit venue</strong><small>Details and cover</small></span>
+        </a>
+        {venueSlug ? (
+          <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>
+            <VenueDashboardActionIcon name="profile" />
+            <span><strong>View venue</strong><small>Customer view</small></span>
+          </Link>
+        ) : (
+          <a href="#venue-public-profile" onClick={(event) => openVenueSection(event, "venue-public-profile")}>
+            <VenueDashboardActionIcon name="profile" />
+            <span><strong>Complete venue</strong><small>Customer view</small></span>
+          </a>
+        )}
+        <a href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
+          <VenueDashboardActionIcon name="deal" />
+          <span><strong>Club Deals</strong><small>Offer and QR</small></span>
+        </a>
+        <a href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
+          <VenueDashboardActionIcon name="verify" />
+          <span><strong>Verify dancer</strong><small>Venue roster</small></span>
+        </a>
+      </nav>
+
+      <section className="venue-dashboard-metrics" aria-label="Venue performance summary">
+        <Metric label="Views today" value={String(analytics?.pageViewsToday || 0)} />
+        <Metric label="Followers" value={String(analytics?.totalFollowers || 0)} />
+        <Metric label="Directions" value={String(analytics?.directions30Days || 0)} />
+      </section>
+
       <VenueDashboardSection
-        defaultOpen
-        description="See customer reach, customer intent, live dancer activity, and QR visibility at a glance."
+        description="Customer reach, intent, live activity, and QR visibility."
         eyebrow="Live performance"
         id="venue-overview"
-        title="Overview"
+        title="Analytics & performance"
       >
         <div className="venue-dashboard-inner-grid venue-dashboard-overview-grid">
           <InfoPanel title="Audience">
@@ -1646,8 +1743,7 @@ function VenuePanel({
 
       <VenueDashboardSection
         badge={`${venueDeals.length || (deal ? 1 : 0)} ${venueDeals.length === 1 || (!venueDeals.length && deal) ? "deal" : "deals"}`}
-        defaultOpen
-        description="Create and publish Club Deals, share tracked QR codes, and reconcile verified MyDancr referral fees and venue invoices."
+        description="Create offers, publish tracked QR codes, and review venue invoices."
         eyebrow="Revenue"
         id="venue-club-deals"
         title="Club Deals & tracked QR"
@@ -4974,15 +5070,40 @@ function DashboardStyles() {
       h2 { margin: 0; font-size: 22px; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mydancr-dashboard-gap); }
-      .venue-dashboard-section { grid-column: 1 / -1; overflow: clip; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: none; }
-      .venue-dashboard-section > summary { min-height: 104px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; padding: 18px; color: #f8fafc; cursor: pointer; list-style: none; }
+      .dashboard-head-venue h1 { display: -webkit-box; overflow: hidden; font-size: clamp(20px, 4.6vw, 25px); line-height: 1.06; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+      .venue-dashboard-grid { grid-template-columns: 1fr; }
+      .venue-command-panel, .venue-dashboard-shortcuts, .venue-dashboard-metrics { grid-column: 1 / -1; }
+      .venue-command-panel { display: grid; gap: 16px; padding: 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
+      .venue-command-status { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; }
+      .venue-command-status h2 { color: #f8f7fb; font-size: clamp(22px, 4vw, 30px); line-height: 1.08; }
+      .venue-command-status p, .venue-command-primary p { color: var(--mydancr-dashboard-muted); font-size: 15px; line-height: 1.45; }
+      .venue-live-pill { min-width: 58px; min-height: 42px; display: grid; place-items: center; padding: 0 12px; border: 1px solid rgba(38,210,159,.65); border-radius: 999px; color: #76f0c8; background: rgba(10,74,57,.36); font-size: 13px; font-weight: 950; letter-spacing: .08em; }
+      .venue-command-primary { display: grid; gap: 8px; padding: 18px; border: 1px solid rgba(255,255,255,.13); border-radius: 14px; background: var(--mydancr-dashboard-panel-raised); }
+      .venue-command-primary > strong { color: #f8f7fb; font-size: clamp(21px, 4vw, 28px); line-height: 1.1; }
+      .venue-command-primary .primary-link { width: 100%; min-height: 50px; margin-top: 5px; border: 1px solid rgba(196,122,255,.72); border-radius: 13px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); }
+      .venue-dashboard-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+      .venue-dashboard-shortcuts > a { min-width: 0; min-height: 78px; display: flex; align-items: center; gap: 11px; padding: 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; color: #f8f7fb; background: var(--mydancr-dashboard-panel-raised); text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
+      .venue-dashboard-shortcuts > a:hover { border-color: rgba(255,255,255,.2); background: #15151d; }
+      .venue-dashboard-shortcuts > a:active { transform: scale(.985); }
+      .venue-dashboard-shortcuts > a:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
+      .venue-dashboard-shortcuts svg { flex: 0 0 28px; width: 28px; height: 28px; fill: none; stroke: #d9d4e3; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .venue-dashboard-shortcuts span { min-width: 0; display: grid; gap: 3px; }
+      .venue-dashboard-shortcuts strong { overflow: hidden; font-size: 15px; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-dashboard-shortcuts small { color: var(--mydancr-dashboard-muted); font-size: 12px; line-height: 1.15; }
+      .venue-dashboard-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; background: var(--mydancr-dashboard-panel); }
+      .venue-dashboard-metrics .metric { min-width: 0; padding: 14px 16px; border-left: 1px solid var(--mydancr-dashboard-border); background: transparent; }
+      .venue-dashboard-metrics .metric:first-child { border-left: 0; }
+      .venue-dashboard-metrics .metric strong { font-size: clamp(22px, 4vw, 30px); }
+      .venue-dashboard-section { grid-column: 1 / -1; overflow: clip; scroll-margin-top: 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: none; }
+      .venue-dashboard-section > summary { min-height: 88px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 16px 18px; color: #f8fafc; cursor: pointer; list-style: none; }
       .venue-dashboard-section > summary::-webkit-details-marker { display: none; }
       .venue-dashboard-section > summary:focus-visible { outline: 2px solid #7c3aed; outline-offset: -4px; }
-      .venue-dashboard-section[open] > summary { border-bottom: 1px solid var(--mydancr-dashboard-border); background: rgba(139,92,246,.055); }
+      .venue-dashboard-section > summary:hover { background: rgba(255,255,255,.025); }
+      .venue-dashboard-section[open] > summary { border-bottom: 1px solid var(--mydancr-dashboard-border); background: rgba(139,92,246,.035); }
       .venue-dashboard-section-copy { min-width: 0; display: grid; gap: 5px; }
-      .venue-dashboard-section-copy > strong { color: #f8fafc; font-size: clamp(20px, 3vw, 27px); line-height: 1.05; }
+      .venue-dashboard-section-copy > strong { color: #f8fafc; font-size: clamp(19px, 3vw, 23px); line-height: 1.05; }
       .venue-dashboard-section-copy > span:last-child { max-width: 72ch; color: #cbd5e1; font-size: 14px; line-height: 1.45; }
-      .venue-dashboard-section-badge { width: fit-content; padding: 7px 10px; border: 1px solid #334155; border-radius: 999px; color: #cbd5e1; background: #111118; font-size: 11px; font-weight: 900; white-space: nowrap; }
+      .venue-dashboard-section-badge { width: fit-content; padding: 7px 10px; border: 1px solid rgba(139,92,246,.34); border-radius: 999px; color: #e6ddf7; background: rgba(109,40,217,.13); font-size: 11px; font-weight: 900; white-space: nowrap; }
       .venue-dashboard-section-toggle { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(124,58,237,.44); border-radius: 50%; color: #f8fafc; background: rgba(124,58,237,.15); font-size: 24px; line-height: 1; transition: transform .18s ease, background .18s ease; }
       .venue-dashboard-section[open] .venue-dashboard-section-toggle { transform: rotate(45deg); background: rgba(124,58,237,.28); }
       .venue-dashboard-section-body { display: grid; gap: var(--mydancr-dashboard-gap); padding: 16px; }
@@ -5321,6 +5442,23 @@ function DashboardStyles() {
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
+      @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (max-width: 620px) {
+        .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }
+        .dashboard-head-venue h1 { font-size: clamp(20px, 5.7vw, 24px); }
+        .venue-command-panel { gap: 13px; padding: 14px; }
+        .venue-command-status { align-items: start; gap: 11px; }
+        .venue-live-pill { min-width: 54px; min-height: 38px; padding: 0 10px; font-size: 12px; }
+        .venue-command-status h2 { font-size: clamp(21px, 6vw, 27px); }
+        .venue-command-status p, .venue-command-primary p { font-size: 14px; }
+        .venue-command-primary { padding: 15px; }
+        .venue-dashboard-shortcuts { gap: 9px; }
+        .venue-dashboard-shortcuts > a { min-height: 82px; padding: 12px; }
+        .venue-dashboard-shortcuts svg { flex-basis: 26px; width: 26px; height: 26px; }
+        .venue-dashboard-metrics .metric { padding: 13px 9px; text-align: center; }
+        .venue-dashboard-metrics .metric span { font-size: 11px; }
+        .venue-dashboard-section > summary { min-height: 88px; }
+      }
     `}</style>
   );
 }

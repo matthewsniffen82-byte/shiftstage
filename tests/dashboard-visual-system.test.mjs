@@ -54,3 +54,23 @@ test("customer and venue dashboards avoid double-bordered nested panels", () => 
     /\.deal-metrics \{[\s\S]*?gap: 0 !important;[\s\S]*?border: 1px solid var\(--mydancr-dashboard-border\);/,
   );
 });
+
+test("venue dashboard uses the dancer command, shortcuts, metrics, and compact-management hierarchy", () => {
+  const venuePanel = routedDashboards.match(/function VenuePanel[\s\S]*?function VenueClubDealPanel/)?.[0] || "";
+  const commandIndex = venuePanel.indexOf('className="venue-command-panel"');
+  const shortcutsIndex = venuePanel.indexOf('className="venue-dashboard-shortcuts"');
+  const metricsIndex = venuePanel.indexOf('className="venue-dashboard-metrics"');
+  const managementIndex = venuePanel.indexOf("<VenueDashboardSection");
+
+  assert.ok(commandIndex >= 0);
+  assert.ok(shortcutsIndex > commandIndex);
+  assert.ok(metricsIndex > shortcutsIndex);
+  assert.ok(managementIndex > metricsIndex);
+  assert.match(venuePanel, /className="primary-link"[\s\S]*?Manage Club Deal/);
+  assert.match(venuePanel, /function openVenueSection[\s\S]*?section\.open = true[\s\S]*?scrollIntoView/);
+  assert.doesNotMatch(venuePanel, /<VenueDashboardSection\s+defaultOpen[\s\S]*?id="venue-overview"/);
+  assert.match(routedDashboards, /\.venue-dashboard-shortcuts \{ display: grid; grid-template-columns: repeat\(4/);
+  assert.match(routedDashboards, /@media \(max-width: 860px\) \{ \.venue-dashboard-shortcuts \{ grid-template-columns: repeat\(2/);
+  assert.match(routedDashboards, /\.venue-dashboard-metrics \{ display: grid; grid-template-columns: repeat\(3/);
+  assert.match(routedDashboards, /\.dashboard-head-venue h1 \{[\s\S]*?white-space: normal;[\s\S]*?-webkit-line-clamp: 2;/);
+});

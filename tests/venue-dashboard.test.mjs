@@ -139,7 +139,7 @@ test("venue management is consolidated into one descriptive collapsible workspac
   assert.match(dashboardClient, /function VenueDashboardSection\(/);
   assert.match(dashboardClient, /<details className="venue-dashboard-section"/);
   assert.match(dashboardClient, /id="venue-account"[\s\S]*?title="Account & support"/);
-  assert.match(dashboardClient, /id="venue-overview"[\s\S]*?title="Overview"/);
+  assert.match(dashboardClient, /id="venue-overview"[\s\S]*?title="Analytics & performance"/);
   assert.match(dashboardClient, /id="venue-club-deals"[\s\S]*?title="Club Deals & tracked QR"/);
   assert.match(dashboardClient, /id="venue-dancer-roster"[\s\S]*?title="Dancer roster"/);
   assert.match(dashboardClient, /id="venue-tv"[\s\S]*?title="MyDancr TV"/);
