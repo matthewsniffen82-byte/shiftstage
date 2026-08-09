@@ -49611,7 +49611,9 @@
           ? "Your profile is live"
         : reviewSubmitted
           ? "Submitted for Dancr review"
-          : "Finish verification to go live";
+          : liveIdentityVerificationMode === "auto_approve"
+            ? "Finish profile setup to go live"
+            : "Finish verification to go live";
       document.getElementById("dancerApprovalCopy").textContent = rejected
           ? "Your profile was rejected, but anything already approved stays approved. Fix or resend the red items below, then resubmit for review."
         : optionalProfileFixes
@@ -49619,8 +49621,12 @@
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the customers Dancr sends you."
         : reviewSubmitted
-          ? "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email and in your site notifications when review is complete."
-          : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
+          ? liveIdentityVerificationMode === "auto_approve"
+            ? "Dancr is reviewing your profile and submitted media. Dancer approval is automatic; photos and videos keep their separate moderation status."
+            : "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email and in your site notifications when review is complete."
+          : liveIdentityVerificationMode === "auto_approve"
+            ? "Complete each step in order. Dancer approval is automatic; finish your profile and submit photos for their separate review."
+            : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
           ? "Fix red items"

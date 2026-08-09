@@ -4,6 +4,7 @@ import test from "node:test";
 
 const liveAppSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 const profileRouteSource = await readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8");
+const aestheticSource = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
 
 test("profile setup completion comes from the persisted dancer profile", () => {
   const completionResolver =
@@ -96,6 +97,39 @@ test("Step 3 is complete in auto-approval mode and still honors authoritative Ve
   assert.match(identityLoader, /getAuthenticatedJson\("\/api\/dancer\/identity-verification"\)/);
   assert.match(identityLoader, /liveIdentityVerificationMode = data\?\.mode/);
   assert.match(identityLoader, /liveIdentityVerification = data\?\.verification/);
+});
+
+test("profile setup rows stay readable and use restrained state cues", () => {
+  assert.match(
+    aestheticSource,
+    /#setupChecklist \.setup-step\.locked,[\s\S]*?opacity: 1 !important;/
+  );
+  assert.match(
+    aestheticSource,
+    /#setupChecklist \.setup-step\.open:not\(\.complete\):not\(\.submitted\) \.step-head \{[\s\S]*?border-color: var\(--dancr-color-brand-primary-medium\)[\s\S]*?box-shadow: inset 3px 0 0 var\(--dancr-color-brand-primary\)/
+  );
+  assert.match(
+    aestheticSource,
+    /#setupChecklist \.setup-step\.complete \.step-head,[\s\S]*?border-color: var\(--dancr-color-success-medium\)[\s\S]*?box-shadow: inset 3px 0 0 var\(--dancr-color-success\)/
+  );
+  assert.match(
+    aestheticSource,
+    /#dancerApprovalCommand #setupChecklistWrap \{[\s\S]*?border-top: 1px solid var\(--dancr-color-border-subtle\)[\s\S]*?background: transparent/
+  );
+});
+
+test("automatic approval copy never asks dancers for manual identity files", () => {
+  const approvalCopy =
+    liveAppSource.match(
+      /document\.getElementById\("dancerApprovalTitle"\)[\s\S]*?document\.getElementById\("dancerApprovalProgress"\)/
+    )?.[0] || "";
+
+  assert.match(approvalCopy, /Finish profile setup to go live/);
+  assert.match(
+    approvalCopy,
+    /Dancer approval is automatic; finish your profile and submit photos for their separate review/
+  );
+  assert.match(approvalCopy, /liveIdentityVerificationMode === "auto_approve"/);
 });
 
 test("Step 3 explains automatic approval and preserves the hosted VerifyMy pathway", () => {
