@@ -59,6 +59,30 @@ test("Edit Profile owns the real avatar upload, pending state, and removal workf
   assert.match(profileRoute, /avatarPhotoUrl: avatar\?\.imageUrl \|\| ""/);
 });
 
+test("dancer dashboard avatar setup uses the same mobile-safe face-centering workflow", () => {
+  assert.match(liveShell, /function dancerSetupAvatarEditorMarkup\(profile\)/);
+  assert.match(liveShell, /data-dashboard-avatar-editor/);
+  assert.match(liveShell, /id="setupAvatarUploadStatus"/);
+  assert.match(liveShell, /MyDancr checks it and automatically centers the best square crop/);
+  assert.match(liveShell, /pendingAvatarUrl \? "" : publicAvatarPhotoSrcSet\(profile\)/);
+  assert.match(liveShell, /\["approvedAvatarUploadStatus", "setupAvatarUploadStatus"\]/);
+  assert.match(liveShell, /renderDancerSetup\(\);[\s\S]*?renderApprovedVisualProfileEditor\(\)/);
+
+  const dashboardInputIndex = liveShell.indexOf('id="approvedAvatarUploadInput"');
+  const approvedPanelIndex = liveShell.indexOf('id="approvedDancerPanel"');
+  assert.ok(dashboardInputIndex > 0, "dashboard avatar input should exist");
+  assert.ok(approvedPanelIndex > 0, "approved dancer panel should exist");
+  assert.ok(
+    dashboardInputIndex < approvedPanelIndex,
+    "dashboard avatar input must stay outside the conditionally hidden approved panel",
+  );
+  assert.equal(
+    liveShell.match(/id="approvedAvatarUploadInput"/g)?.length,
+    1,
+    "dashboard should expose exactly one shared avatar input",
+  );
+});
+
 test("all circular public identity surfaces prefer the approved avatar with main-photo fallback", () => {
   assert.match(publicService, /const avatarPhoto = dedicatedAvatar \|\| primaryPhoto/);
   assert.match(publicService, /avatarPhotoUrl: avatarPhoto\?\.imageUrl \|\| null/);

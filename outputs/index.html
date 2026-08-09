@@ -2755,10 +2755,86 @@
       background: rgba(67,20,42,.5);
     }
 
+    .setup-avatar-editor {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .setup-avatar-preview {
+      width: 76px;
+      height: 76px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 2px solid rgba(126,234,255,.66);
+      border-radius: 50%;
+      color: #fff;
+      background-color: #16111f;
+      background-position: var(--custom-photo-position, center);
+      background-repeat: no-repeat;
+      background-size: cover;
+      box-shadow: 0 0 0 3px rgba(139,92,246,.12), 0 10px 24px rgba(0,0,0,.32);
+      font-size: 20px;
+      font-weight: 950;
+    }
+
+    .setup-avatar-preview.has-custom-photo {
+      background-image: var(--custom-photo);
+    }
+
+    .setup-avatar-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .setup-avatar-copy strong {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .setup-avatar-copy p,
+    .setup-avatar-status {
+      margin: 0;
+      color: #aaa2b8;
+      font-size: 11px;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    .setup-avatar-status.is-live { color: #8ff7c7; }
+    .setup-avatar-status.is-pending { color: #9fefff; }
+    .setup-avatar-status.is-error { color: #ff9caf; }
+
+    .setup-avatar-actions {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .setup-avatar-actions > :only-child {
+      grid-column: 1 / -1;
+    }
+
+    .setup-avatar-actions button[aria-busy="true"] {
+      cursor: wait;
+      opacity: .62;
+    }
+
     @media (max-width: 380px) {
       .approved-profile-identity-editor { margin-inline: 10px; padding: 12px; }
       .approved-profile-identity-row { grid-template-columns: 68px minmax(0, 1fr); gap: 11px; }
       .approved-avatar-preview { width: 68px; height: 68px; }
+      .setup-avatar-editor { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 10px; }
+      .setup-avatar-preview { width: 64px; height: 64px; }
     }
 
     .approved-visual-profile .profile-modal {
@@ -36536,6 +36612,7 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
+        <input id="approvedAvatarUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
         <div class="approval-command" id="dancerApprovalCommand">
           <div>
             <div class="approval-command-summary" data-setup-checklist-toggle role="button" tabindex="0" aria-controls="setupChecklist" aria-expanded="false">
@@ -36793,7 +36870,6 @@
                     <button type="button" data-dancer-control-action="main-photo">Main photo</button>
                     <button type="button" data-dancer-control-action="gallery-photo">Gallery photos</button>
                     <input id="approvedPhotoUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
-                    <input id="approvedAvatarUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
                   </div>
                 </section>
 
@@ -50170,13 +50246,19 @@
     }
 
     function setApprovedAvatarUploadStatus(message, state = "") {
-      const status = document.getElementById("approvedAvatarUploadStatus");
-      if (status) {
+      ["approvedAvatarUploadStatus", "setupAvatarUploadStatus"].forEach((statusId) => {
+        const status = document.getElementById(statusId);
+        if (!status) return;
         status.textContent = message;
         status.classList.toggle("is-live", state === "success");
         status.classList.toggle("is-pending", state === "pending" || state === "moderating");
+        status.classList.toggle("is-error", state === "error");
         status.setAttribute("aria-busy", state === "moderating" ? "true" : "false");
-      }
+      });
+      document.querySelectorAll("[data-approved-avatar-upload]").forEach((button) => {
+        button.disabled = state === "moderating";
+        button.setAttribute("aria-busy", state === "moderating" ? "true" : "false");
+      });
       const result = document.getElementById("dancerControlResult");
       if (result) result.textContent = message;
     }
@@ -50448,6 +50530,46 @@
         if (action) action.dataset.dashboardShiftAction = "post-schedule";
         if (actionLabel) actionLabel.textContent = "Post schedule";
       }
+    }
+
+    function dancerSetupAvatarEditorMarkup(profile) {
+      const pendingAvatarReview = profile?.pendingAvatarReview || profile?.pending_avatar_review || null;
+      const dedicatedAvatarPath = String(profile?.avatarStoragePath || profile?.avatar_storage_path || "").trim();
+      const pendingAvatarUrl = String(pendingAvatarReview?.previewUrl || pendingAvatarReview?.preview_url || "").trim();
+      const avatarPreviewUrl = pendingAvatarUrl || publicAvatarPhotoUrl(profile);
+      const avatarPreviewAttrs = customAvatarPhotoAttrs(
+        avatarPreviewUrl,
+        pendingAvatarUrl ? "" : publicAvatarPhotoSrcSet(profile),
+        profile?.avatarPhotoFocalX ?? profile?.avatar_photo_focal_x ?? profile?.mainPhotoFocalX ?? 50,
+        profile?.avatarPhotoFocalY ?? profile?.avatar_photo_focal_y ?? profile?.mainPhotoFocalY ?? 50
+      );
+      const avatarInitials = String(profile?.name || activeDancerName() || "D")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join("")
+        .toUpperCase();
+      const avatarStatus = pendingAvatarReview
+        ? "Replacement awaiting review. Your current live avatar stays visible until approval."
+        : dedicatedAvatarPath
+          ? "Live in dancer avatar circles across MyDancr."
+          : "Upload a clear face photo to create your centered avatar.";
+      const avatarStatusClass = pendingAvatarReview ? "is-pending" : dedicatedAvatarPath ? "is-live" : "";
+      return `
+        <div class="setup-avatar-editor" data-dashboard-avatar-editor>
+          <span class="setup-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} role="img" aria-label="Avatar preview">${avatarPreviewUrl ? "" : displayText(avatarInitials)}</span>
+          <div class="setup-avatar-copy">
+            <strong>Face avatar</strong>
+            <p>Choose a clear face photo. MyDancr checks it and automatically centers the best square crop for every avatar circle.</p>
+            <span class="setup-avatar-status ${avatarStatusClass}" id="setupAvatarUploadStatus" aria-live="polite">${displayText(avatarStatus)}</span>
+          </div>
+          <div class="setup-avatar-actions">
+            <button class="action-btn secondary" type="button" data-approved-avatar-upload>${dedicatedAvatarPath || pendingAvatarReview ? "Replace avatar" : "Upload clear face photo"}</button>
+            ${dedicatedAvatarPath || pendingAvatarReview ? '<button class="action-btn secondary" type="button" data-approved-avatar-remove>Remove avatar</button>' : ""}
+          </div>
+        </div>
+      `;
     }
 
     function renderDancerSetup() {
@@ -50909,8 +51031,8 @@
           <div class="rule-note">Enter a handle or full profile URL. Dancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
           <div class="field">
             <label>Profile avatar</label>
-            <button class="action-btn secondary" type="button" data-approved-avatar-upload>Upload clear face photo</button>
-            <div class="field-note">Required. MyDancr automatically checks the image and applies a face-aware crop for avatar circles.</div>
+            ${dancerSetupAvatarEditorMarkup(activeProfile)}
+            <div class="field-note">Required. The same production face-centering and moderation used in Edit Profile is applied here.</div>
           </div>
           <button class="action-btn" type="submit">Save profile</button>
         </form>
@@ -56933,7 +57055,6 @@
           const decision = normalizedReviewStatus(uploadResult?.decision);
           if (decision === "approved") {
             await hydrateApprovedDancerAvatar(uploadResult);
-            renderDancerSetup();
             if (pendingAvatarObjectUrl) URL.revokeObjectURL(pendingAvatarObjectUrl);
             pendingAvatarObjectUrl = "";
           } else if (["review", "moderation_retry", "moderation_error"].includes(decision)) {
@@ -56948,6 +57069,7 @@
               };
             }
           }
+          renderDancerSetup();
           renderApprovedVisualProfileEditor();
           renderDancerManagement();
           if (decision === "approved") {
@@ -57034,6 +57156,7 @@
           await removeApprovedDancerAvatar();
           if (pendingAvatarObjectUrl) URL.revokeObjectURL(pendingAvatarObjectUrl);
           pendingAvatarObjectUrl = "";
+          renderDancerSetup();
           renderApprovedVisualProfileEditor();
           renderDancerManagement();
           setApprovedAvatarUploadStatus("Avatar removed. Your main photo is now used in avatar circles.");
