@@ -1,6 +1,5 @@
 import { createHmac } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
-import { getServerEnv } from "../env";
 
 export const MUSIC_FINGERPRINT_PROVIDER_MODEL = "acrcloud-identification-v1";
 export const MUSIC_FINGERPRINT_SAMPLE_SECONDS = 10;
@@ -109,9 +108,9 @@ export async function fingerprintMusicSamples(
   }
 
   const credentials = normalizeCredentials(options.credentials || {
-    host: getServerEnv("ACRCLOUD_HOST"),
-    accessKey: getServerEnv("ACRCLOUD_ACCESS_KEY"),
-    accessSecret: getServerEnv("ACRCLOUD_ACCESS_SECRET"),
+    host: requiredEnvironmentValue("ACRCLOUD_HOST"),
+    accessKey: requiredEnvironmentValue("ACRCLOUD_ACCESS_KEY"),
+    accessSecret: requiredEnvironmentValue("ACRCLOUD_ACCESS_SECRET"),
   });
   const fetchImpl = options.fetchImpl || fetch;
   const now = options.now || Date.now;
@@ -314,6 +313,12 @@ function normalizeCredentials(credentials: AcrCloudCredentials) {
     throw new Error("ACRCloud music fingerprint credentials are incomplete.");
   }
   return { host: url.hostname.toLowerCase(), accessKey, accessSecret };
+}
+
+function requiredEnvironmentValue(name: string) {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing server environment variable: ${name}`);
+  return value;
 }
 
 function clampReviewThreshold(value: number) {
