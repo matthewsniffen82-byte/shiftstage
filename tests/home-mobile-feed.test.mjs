@@ -213,7 +213,7 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   );
   assert.match(
     homeSource,
-    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*activeTab === "venues" &&\s*homeDiscoveryFeedUsesInlineLayout\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
+    /const usesDiscoveryFeed =\s*activeTab === "venues" &&\s*!selectedVenue &&\s*homeDiscoveryFeedUsesInlineLayout\(\);[\s\S]*?homeDiscoveryFeedOpen = usesDiscoveryFeed;\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
   );
   assert.match(
     homeSource,
@@ -222,6 +222,26 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   assert.match(
     homeSource,
     /function dancerDirectorySections\(profiles, city\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Trending"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Shift Posted"/,
+  );
+});
+
+test("mobile venue filters cannot flash the retired venue grid before the inline feed settles", () => {
+  const renderSource = homeSource.match(
+    /function render\(\) \{[\s\S]*?(?=\n    async function renderHomeTvLaunch)/,
+  )?.[0] || "";
+
+  assert.match(
+    renderSource,
+    /const usesDiscoveryFeed =\s*activeTab === "venues" &&\s*!selectedVenue &&\s*homeDiscoveryFeedUsesInlineLayout\(\);/,
+  );
+  assert.match(
+    renderSource,
+    /homeDiscoveryFeedOpen = usesDiscoveryFeed;\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed\(city, allItems/,
+  );
+  assert.ok(
+    renderSource.indexOf("homeDiscoveryFeedOpen = usesDiscoveryFeed;") <
+      renderSource.indexOf('results.classList.toggle("venue-card-grid"'),
+    "mobile venue rendering must select the inline feed before the legacy grid branch",
   );
 });
 

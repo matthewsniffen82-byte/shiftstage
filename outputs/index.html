@@ -52698,9 +52698,13 @@
         ? city
         : resultCountLabel);
       const usesDiscoveryFeed =
-        homeDiscoveryFeedOpen &&
         activeTab === "venues" &&
+        !selectedVenue &&
         homeDiscoveryFeedUsesInlineLayout();
+      // Derive the mobile venue renderer during every render. Filter and data
+      // refresh handlers may clear transient feed state, but they must never
+      // expose the retired venue grid for a frame before viewport events settle.
+      homeDiscoveryFeedOpen = usesDiscoveryFeed;
       if (usesDiscoveryFeed) {
         renderHomeDiscoveryFeed(city, allItems, { loading: loadingLiveProfiles });
         return;
