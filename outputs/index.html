@@ -30227,7 +30227,7 @@
       <a
         class="home-tv-launch"
         id="homeTvLaunch"
-        href="/tv?city=Las%20Vegas"
+        href="/?city=Las%20Vegas&amp;view=tv"
         aria-label="Open MyDancr TV Las Vegas vertical video feed"
         aria-busy="true"
       >
@@ -37535,6 +37535,7 @@
     let homeTvFeedRequest = 0;
     let homeTvFeedCity = "";
     let homeTvFeedVenueId = "";
+    let homeTvFeedSelectedVideoId = "";
     let homeTvFeedStatus = "idle";
     let homeTvFeedVideos = [];
     let homeTvFeedObserver = null;
@@ -42209,10 +42210,24 @@
     }
 
     function selectedHomeTvVenueFilter(city = selectedCity()) {
+      const requestedVenueId = new URLSearchParams(window.location.search).get("tv_venue")?.trim() || "";
+      if (requestedVenueId) {
+        const requestedVenue = markets[city]?.venues?.find((venue) => String(venue.id || "") === requestedVenueId);
+        if (requestedVenue?.id) {
+          return { id: String(requestedVenue.id), name: String(requestedVenue.name || "Venue") };
+        }
+      }
       const venueName = selectedVenueFilter();
       if (venueName === "all") return null;
       const venue = resolveVenueByName(venueName, city);
       return venue?.id ? { id: String(venue.id), name: String(venue.name || venueName) } : null;
+    }
+
+    function selectedHomeTvVideoId() {
+      const videoId = new URLSearchParams(window.location.search).get("tv_video")?.trim() || "";
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(videoId)
+        ? videoId
+        : "";
     }
 
     function profileMatchesVenueFilter(profile) {
@@ -53047,11 +53062,11 @@
       const venueId = String(venueFilter?.id || "");
       const venueName = String(venueFilter?.name || "");
       const scopeLabel = venueName ? `at ${venueName}` : tvCityLabel;
-      const launchParams = new URLSearchParams({ city: tvCityLabel });
+      const launchParams = new URLSearchParams({ city: tvCityLabel, view: "tv" });
       if (venueId) {
-        launchParams.set("venue", venueId);
+        launchParams.set("tv_venue", venueId);
       }
-      launch.href = `/tv?${launchParams.toString()}`;
+      launch.href = `/?${launchParams.toString()}`;
       launch.setAttribute("aria-label", `Open MyDancr TV ${scopeLabel} vertical video feed`);
       if (bottomTv) {
         bottomTv.setAttribute("aria-label", `Show MyDancr TV ${scopeLabel} videos in the Home feed`);
@@ -54135,7 +54150,7 @@
       retry.addEventListener("click", () => {
         homeTvFeedStatus = "loading";
         renderHomeTvFeed(retryCity);
-        void loadHomeTvFeed(retryCity, homeTvFeedVenueId);
+        void loadHomeTvFeed(retryCity, homeTvFeedVenueId, homeTvFeedSelectedVideoId);
       });
       results.appendChild(retry);
     }
@@ -54161,13 +54176,19 @@
 
       const venueFilter = selectedHomeTvVenueFilter(city);
       const venueId = venueFilter?.id || "";
+      const selectedVideoId = selectedHomeTvVideoId();
       tabTitle.textContent = venueFilter ? `MyDancr TV at ${venueFilter.name}` : `MyDancr TV in ${city}`;
-      if (homeTvFeedCity !== city || homeTvFeedVenueId !== venueId) {
+      if (
+        homeTvFeedCity !== city ||
+        homeTvFeedVenueId !== venueId ||
+        homeTvFeedSelectedVideoId !== selectedVideoId
+      ) {
         homeTvFeedCity = city;
         homeTvFeedVenueId = venueId;
+        homeTvFeedSelectedVideoId = selectedVideoId;
         homeTvFeedStatus = "loading";
         homeTvFeedVideos = [];
-        void loadHomeTvFeed(city, venueId);
+        void loadHomeTvFeed(city, venueId, selectedVideoId);
       }
       if (homeTvFeedStatus === "loading") {
         setHomeTvFeedCount("Loading videos…", venueFilter);
@@ -54219,18 +54240,20 @@
       settleHomeTvFeedLanding({ complete: true });
     }
 
-    async function loadHomeTvFeed(city, venueId = "") {
+    async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId()) {
       const requestId = ++homeTvFeedRequest;
       try {
         const params = new URLSearchParams({ city, limit: "24" });
         if (venueId) params.set("venue", venueId);
+        if (selectedVideoId) params.set("video", selectedVideoId);
         const response = await fetch(`/api/public/tv?${params.toString()}`, { cache: "no-store" });
         const payload = await response.json();
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (
           requestId !== homeTvFeedRequest ||
           homeTvFeedCity !== city ||
-          homeTvFeedVenueId !== venueId
+          homeTvFeedVenueId !== venueId ||
+          homeTvFeedSelectedVideoId !== selectedVideoId
         ) return;
         homeTvFeedVideos = Array.isArray(payload.videos)
           ? payload.videos.filter((item) => (
@@ -54245,7 +54268,8 @@
         if (
           requestId !== homeTvFeedRequest ||
           homeTvFeedCity !== city ||
-          homeTvFeedVenueId !== venueId
+          homeTvFeedVenueId !== venueId ||
+          homeTvFeedSelectedVideoId !== selectedVideoId
         ) return;
         homeTvFeedVideos = [];
         homeTvFeedStatus = "error";
@@ -57243,6 +57267,10 @@
       }
       url.searchParams.delete("profile");
       url.searchParams.delete("venue");
+      if (nextTab !== "tv") {
+        url.searchParams.delete("tv_video");
+        url.searchParams.delete("tv_venue");
+      }
       const search = url.searchParams.toString();
       window.history.replaceState(
         {},
@@ -57257,6 +57285,8 @@
       url.searchParams.delete("dancer_filter");
       url.searchParams.delete("profile");
       url.searchParams.delete("venue");
+      url.searchParams.delete("tv_video");
+      url.searchParams.delete("tv_venue");
       const search = url.searchParams.toString();
       window.history.replaceState(
         {},
@@ -57506,7 +57536,17 @@
     });
 
     function clearHomeTvVenueFilter() {
-      if (activeTab !== "tv" || selectedVenueFilter() === "all" || !venueSelect) return;
+      if (activeTab !== "tv" || !venueSelect) return;
+      const url = new URL(window.location.href);
+      const hasUrlVenueFilter = url.searchParams.has("tv_venue");
+      if (selectedVenueFilter() === "all" && !hasUrlVenueFilter) return;
+      url.searchParams.delete("tv_venue");
+      window.history.replaceState({}, document.title, `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
+      if (selectedVenueFilter() === "all") {
+        homeTvFeedCity = "";
+        render();
+        return;
+      }
       venueSelect.value = "all";
       syncVenuePickerSelection("all");
       venueSelect.dispatchEvent(new Event("change", { bubbles: true }));

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 const SESSION_KEY = "dancrAuthSessionV1";
 
@@ -53,7 +54,7 @@ export default function VenueTvPanel() {
           <h2>MyDancr TV</h2>
           <p>Approved videos appear automatically from verified current shifts and posted upcoming shifts.</p>
         </div>
-        <Link href="/tv">Watch TV</Link>
+        <Link href={homeDiscoveryHref("tv")}>Watch TV</Link>
       </div>
       {isLoading ? <p>Loading schedule-connected videos…</p> : null}
       {status ? <div className="venue-tv-status" role="status">{status}</div> : null}

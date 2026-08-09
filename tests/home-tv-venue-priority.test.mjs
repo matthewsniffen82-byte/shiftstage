@@ -28,14 +28,14 @@ test("the homepage TV tab applies and clears an exact selected-club filter", () 
   );
   assert.match(
     homeSource,
-    /const venueFilter = selectedHomeTvVenueFilter\(city\);[\s\S]*?homeTvFeedCity !== city \|\| homeTvFeedVenueId !== venueId[\s\S]*?loadHomeTvFeed\(city, venueId\)/,
+    /const venueFilter = selectedHomeTvVenueFilter\(city\);[\s\S]*?homeTvFeedCity !== city[\s\S]*?homeTvFeedVenueId !== venueId[\s\S]*?loadHomeTvFeed\(city, venueId, selectedVideoId\)/,
   );
   assert.match(
     homeSource,
-    /async function loadHomeTvFeed\(city, venueId = ""\) \{[\s\S]*?const params = new URLSearchParams\(\{ city, limit: "24" \}\);[\s\S]*?if \(venueId\) params\.set\("venue", venueId\);[\s\S]*?item\?\.venue\?\.id === venueId/,
+    /async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\)\) \{[\s\S]*?const params = new URLSearchParams\(\{ city, limit: "24" \}\);[\s\S]*?if \(venueId\) params\.set\("venue", venueId\);[\s\S]*?item\?\.venue\?\.id === venueId/,
   );
   assert.doesNotMatch(
-    homeSource.match(/async function loadHomeTvFeed\(city, venueId = ""\) \{[\s\S]*?\n    \}/)?.[0] || "",
+    homeSource.match(/async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\)\) \{[\s\S]*?\n    \}/)?.[0] || "",
     /preferredVenue/,
   );
   assert.match(homeSource, /function clearHomeTvVenueFilter\(\)[\s\S]*?venueSelect\.value = "all"[\s\S]*?dispatchEvent\(new Event\("change"/);
@@ -43,11 +43,11 @@ test("the homepage TV tab applies and clears an exact selected-club filter", () 
   assert.match(homeSource, /venueFilter \? `\$\{homeTvFeedVideos\.length\} videos` : `\$\{homeTvFeedVideos\.length\} citywide`/);
 });
 
-test("homepage and full-page TV carry the exact club filter through launch, count, and refresh", () => {
-  assert.match(homeSource, /launchParams\.set\("venue", venueId\)[\s\S]*?launch\.href = `\/tv\?\$\{launchParams\.toString\(\)\}`/);
+test("homepage and legacy TV links carry the exact club filter into the canonical TV tab", () => {
+  assert.match(homeSource, /launchParams\.set\("tv_venue", venueId\)[\s\S]*?launch\.href = `\/\?\$\{launchParams\.toString\(\)\}`/);
   assert.match(homeSource, /countParams\.set\("venue", venueId\)[\s\S]*?fetch\(`\/api\/public\/tv\/count\?/);
   assert.match(publicTvCountRoute, /cleanUuid\(url\.searchParams\.get\("venue"\)\)[\s\S]*?\{ city, venueId \}/);
-  assert.match(tvPageSource, /const venueId = cleanUuid\(params\.venue\);[\s\S]*?getPublicMyDancrTvVenue\(admin, venueId\)[\s\S]*?initialVenueName=\{selectedVenue\?\.name \|\| ""\}/);
+  assert.match(tvPageSource, /permanentRedirect\(homeTvHref\(city, \{[\s\S]*?venueId: cleanUuid\(params\.venue\)/);
   assert.match(tvClientSource, /if \(initialVenueId\) params\.set\("venue", initialVenueId\)/);
   assert.match(tvClientSource, /initialVenueName \? `MyDancr TV at \$\{initialVenueName\}`/);
   assert.match(tvClientSource, /className="tv-venue-clear" href=\{allVenueTvHref\}>All venues/);

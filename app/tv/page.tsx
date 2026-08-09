@@ -1,25 +1,13 @@
-import type { Metadata } from "next";
-import {
-  getPublicMyDancrTvFeed,
-  getPublicMyDancrTvVenue,
-} from "@/src/lib/dancr/tv";
+import { permanentRedirect } from "next/navigation";
 import { resolveMyDancrCity } from "@/src/lib/dancr/markets";
-import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import TvFeedClient from "./TvFeedClient";
+import { homeTvHref } from "@/src/lib/dancr/navigation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "MyDancr TV | mydancr",
-  description: "Watch approved dancer videos and connect them to real shifts and venues.",
-};
-
 type PageProps = {
   searchParams: Promise<{
     city?: string;
-    dancer?: string;
-    filter?: string;
     video?: string;
     venue?: string;
   }>;
@@ -28,38 +16,10 @@ type PageProps = {
 export default async function MyDancrTvPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const city = resolveMyDancrCity(params.city);
-  const dancerId = cleanUuid(params.dancer);
-  const venueId = cleanUuid(params.venue);
-  const filter = params.filter === "following" || params.filter === "tonight"
-    ? params.filter
-    : "for-you";
-  const admin = createAdminSupabaseClient();
-  const [initialVideos, selectedVenue] = await Promise.all([
-    filter === "following"
-      ? Promise.resolve([])
-      : getPublicMyDancrTvFeed(admin, {
-          city,
-          dancerId,
-          venueId,
-          filter,
-          selectedVideoId: params.video,
-          limit: 12,
-        }),
-    getPublicMyDancrTvVenue(admin, venueId),
-  ]);
-
-  return (
-    <TvFeedClient
-      initialCity={city}
-      initialDancerId={dancerId || ""}
-      initialVenueId={venueId || ""}
-      initialVenueName={selectedVenue?.name || ""}
-      initialFilter={filter}
-      initialSelectedVideoId={params.video || ""}
-      initialVideos={initialVideos}
-      source="tv_feed"
-    />
-  );
+  permanentRedirect(homeTvHref(city, {
+    videoId: cleanUuid(params.video),
+    venueId: cleanUuid(params.venue),
+  }));
 }
 
 function cleanUuid(value: string | undefined) {

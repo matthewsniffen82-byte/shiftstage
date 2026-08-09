@@ -1,5 +1,6 @@
 import Link from "next/link";
 import DancerTvStudio from "../../DancerTvStudio";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ export default function DancerMyDancrTvStudioPage() {
         <Link href="/">mydancr</Link>
         <div>
           <Link href="/?dancr_dashboard=dancer">Dancer dashboard</Link>
-          <Link href="/tv">MyDancr TV</Link>
+          <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
         </div>
       </nav>
       <DancerTvStudio />

@@ -102,7 +102,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /className=\{initialVenueId \? "tv-header has-venue-filter" : "tv-header"\}[\s\S]*?<h1>\{initialVenueName \? `MyDancr TV at \$\{initialVenueName\}` : `MyDancr TV \$\{myDancrTvCityLabel\(city\)\}`\}<\/h1>[\s\S]*?className="tv-close"[\s\S]*?href=\{homepageHref\}[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(feedClient, /\.tv-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(globalNavigation, /view: "dancers"/);
-  assert.match(globalNavigation, /path: "\/tv"/);
+  assert.match(globalNavigation, /view: "tv"/);
   assert.match(globalNavigation, /view: "venues"/);
   assert.doesNotMatch(globalNavigation, /view: "(?:tonight|trending)"/);
   assert.match(feedClient, /className="tv-global-header"/);
@@ -134,12 +134,15 @@ test("public feed is real, navigable, measurable, and preserves existing discove
     liveApp,
     /id="locationBtn"[\s\S]*?<\/section>\s*<div class="home-live-summary"[\s\S]*?<\/div>\s*<a[\s\S]*?class="home-tv-launch"[\s\S]*?<nav class="tabs"/,
   );
-  assert.match(liveApp, /id="homeTvLaunch"[\s\S]*?href="\/tv\?city=Las%20Vegas"[\s\S]*?id="homeTvLaunchTitle"[\s\S]*?id="homeTvLaunchCount"/);
+  assert.match(liveApp, /id="homeTvLaunch"[\s\S]*?href="\/\?city=Las%20Vegas&amp;view=tv"[\s\S]*?id="homeTvLaunchTitle"[\s\S]*?id="homeTvLaunchCount"/);
   assert.match(liveApp, /renderHomeTvLaunch\(city, tvVenueFilter\)/);
   assert.match(liveApp, /title\.textContent = venueName \? `MyDancr TV at \$\{venueName\}` : `MyDancr TV \$\{tvCityLabel\}`/);
   assert.match(liveApp, /const tvCityLabel = String\(city\)\.trim\(\) \|\| "Las Vegas"/);
   assert.doesNotMatch(liveApp, /toLowerCase\(\) === "las vegas" \? "Vegas"/);
-  assert.match(liveApp, /const launchParams = new URLSearchParams\(\{ city: tvCityLabel \}\)[\s\S]*?launchParams\.set\("venue", venueId\)[\s\S]*?launch\.href = `\/tv\?\$\{launchParams\.toString\(\)\}`/);
+  assert.match(liveApp, /const launchParams = new URLSearchParams\(\{ city: tvCityLabel, view: "tv" \}\)[\s\S]*?launchParams\.set\("tv_venue", venueId\)[\s\S]*?launch\.href = `\/\?\$\{launchParams\.toString\(\)\}`/);
+  assert.match(liveApp, /function selectedHomeTvVideoId\(\)[\s\S]*?get\("tv_video"\)[\s\S]*?UUID_PATTERN|function selectedHomeTvVideoId\(\)[\s\S]*?get\("tv_video"\)[\s\S]*?\[0-9a-f\]/i);
+  assert.match(liveApp, /async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\)\)[\s\S]*?params\.set\("video", selectedVideoId\)/);
+  assert.match(liveApp, /homeTvFeedSelectedVideoId !== selectedVideoId[\s\S]*?homeTvFeedSelectedVideoId = selectedVideoId/);
   assert.match(liveApp, /const countParams = new URLSearchParams\(\{ city: tvCityLabel \}\)[\s\S]*?fetch\(`\/api\/public\/tv\/count\?\$\{countParams\.toString\(\)\}`[\s\S]*?cache: "no-store"/);
   assert.match(liveApp, /Number\(payload\.approvedVideoCount\)[\s\S]*?Number\.isSafeInteger\(approvedVideoCount\)[\s\S]*?`\$\{approvedVideoCount\} video\$\{approvedVideoCount === 1 \? "" : "s"\}`/);
   assert.match(liveApp, /\.home-tv-launch \{[^}]*width: 100%[^}]*grid-template-columns: auto minmax\(0, 1fr\) auto auto[^}]*background: #2d106f/);
@@ -348,8 +351,10 @@ test("approved videos appear on full dancer and venue profiles", () => {
   );
   assert.doesNotMatch(liveApp, /Upcoming interest/);
   assert.doesNotMatch(liveApp, /caption\.textContent = item\.caption \|\| "Watch video"/);
-  assert.match(tvPage, /const dancerId = cleanUuid\(params\.dancer\)/);
-  assert.match(tvPage, /dancerId,[\s\S]*?initialDancerId=\{dancerId \|\| ""\}/);
+  assert.match(tvPage, /const city = resolveMyDancrCity\(params\.city\)[\s\S]*?permanentRedirect\(homeTvHref\(city, \{/);
+  assert.match(tvPage, /videoId: cleanUuid\(params\.video\)/);
+  assert.match(tvPage, /venueId: cleanUuid\(params\.venue\)/);
+  assert.doesNotMatch(tvPage, /TvFeedClient|getPublicMyDancrTvFeed|getPublicMyDancrTvVenue/);
   assert.match(feedClient, /if \(initialDancerId\) params\.set\("dancer", initialDancerId\)/);
   assert.match(feedClient, /if \(initialDancerId\) url\.searchParams\.set\("dancer", initialDancerId\)/);
   assert.match(liveApp, /function venueDetailPage\(venue\)/);

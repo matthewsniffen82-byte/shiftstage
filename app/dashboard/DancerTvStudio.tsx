@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 
 const SESSION_KEY = "dancrAuthSessionV1";
@@ -202,7 +203,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           ) : null}
           <p>Post vertical videos to your real profile. MyDancr TV automatically uses your verified current shift, or your next posted shift, whenever it shows venue context.</p>
         </div>
-        <Link href="/tv">Watch MyDancr TV</Link>
+        <Link href={homeDiscoveryHref("tv")}>Watch MyDancr TV</Link>
       </div>
 
       {isLoading ? <p className="tv-studio-status">Loading your real videos…</p> : null}

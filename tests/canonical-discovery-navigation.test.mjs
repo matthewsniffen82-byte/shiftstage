@@ -19,6 +19,8 @@ const [
   accountSource,
   dancerProfileSource,
   dealPassSource,
+  tvPageRoute,
+  tvSharedRoute,
   ...legacyRouteSources
 ] = await Promise.all([
   readFile(new URL("../src/lib/dancr/navigation.ts", import.meta.url), "utf8"),
@@ -45,6 +47,8 @@ const [
     new URL("../app/deals/pass/[token]/page.tsx", import.meta.url),
     "utf8",
   ),
+  readFile(new URL("../app/tv/page.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/tv/[id]/page.tsx", import.meta.url), "utf8"),
   ...Object.values(legacyRouteFiles).map((file) =>
     readFile(new URL(file, import.meta.url), "utf8"),
   ),
@@ -62,7 +66,7 @@ test("legacy discovery routes can only redirect into canonical homepage views", 
 test("all shared navigation targets canonical homepage views directly", () => {
   assert.match(
     navigationHelper,
-    /"tonight"[\s\S]*?"dancers"[\s\S]*?"venues"[\s\S]*?"trending"/,
+    /"tonight"[\s\S]*?"dancers"[\s\S]*?"tv"[\s\S]*?"venues"[\s\S]*?"trending"/,
   );
   assert.match(
     navigationHelper,
@@ -70,12 +74,12 @@ test("all shared navigation targets canonical homepage views directly", () => {
   );
   assert.match(
     globalNavigation,
-    /view: "dancers"[\s\S]*?path: "\/tv"[\s\S]*?view: "venues"/,
+    /view: "dancers"[\s\S]*?view: "tv"[\s\S]*?view: "venues"/,
   );
   assert.doesNotMatch(globalNavigation, /view: "(?:tonight|trending)"/);
   assert.match(
     globalNavigation,
-    /"view" in destination[\s\S]*?homeDiscoveryHref\(destination\.view, city\)/,
+    /const href = homeDiscoveryHref\(destination\.view, city\)/,
   );
 
   const linkedSources = [
@@ -92,6 +96,18 @@ test("all shared navigation targets canonical homepage views directly", () => {
     linkedSources,
     /href="\/(?:tonight|dancers|venues|trending)"|href=\{`\/(?:tonight|dancers|venues|trending)\?|window\.location\.assign\(`\/(?:tonight|dancers|venues|trending)\?/,
   );
+});
+
+test("standalone TV routes redirect into the canonical homepage TV destination", () => {
+  assert.match(tvPageRoute, /import \{ permanentRedirect \} from "next\/navigation"/);
+  assert.match(tvPageRoute, /const city = resolveMyDancrCity\(params\.city\)[\s\S]*?permanentRedirect\(homeTvHref\(city, \{/);
+  assert.match(tvPageRoute, /videoId: cleanUuid\(params\.video\)/);
+  assert.match(tvPageRoute, /venueId: cleanUuid\(params\.venue\)/);
+  assert.doesNotMatch(tvPageRoute, /TvFeedClient|<main|<nav|<header|<section/);
+
+  assert.match(tvSharedRoute, /permanentRedirect\(homeTvHref\(selected\.dancer\.city, \{ videoId: id \}\)\)/);
+  assert.doesNotMatch(tvSharedRoute, /TvFeedClient|<main|<nav|<header|<section/);
+  assert.match(navigationHelper, /function homeTvHref\([\s\S]*?homeDiscoveryHref\("tv", city\)[\s\S]*?tv_video[\s\S]*?tv_venue/);
 });
 
 test("canonical homepage deep links select and retain the requested destination", () => {

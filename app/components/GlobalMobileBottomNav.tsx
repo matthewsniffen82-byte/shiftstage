@@ -46,7 +46,7 @@ const destinations = [
   {
     id: "tv",
     label: "TV",
-    path: "/tv",
+    view: "tv",
     icon: (
       <svg className="mydancr-tv-mark" viewBox="0 0 24 24" aria-hidden="true">
         <path className="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z" />
@@ -269,10 +269,7 @@ export function GlobalMobileBottomNav() {
       >
         {destinations.map((destination) => {
           const active = isActiveDestination(pathname, destination.id);
-          const href =
-            "view" in destination
-              ? homeDiscoveryHref(destination.view, city)
-              : `${destination.path}?city=${encodeURIComponent(city)}`;
+          const href = homeDiscoveryHref(destination.view, city);
           return (
             <Link
               aria-current={active ? "page" : undefined}
@@ -661,9 +658,7 @@ function destinationHref(
   destination: (typeof destinations)[number],
   city: string,
 ) {
-  return "view" in destination
-    ? homeDiscoveryHref(destination.view, city)
-    : `${destination.path}?city=${encodeURIComponent(city)}`;
+  return homeDiscoveryHref(destination.view, city);
 }
 
 function mobileNavigationSwipeBlocked(target: EventTarget | null) {

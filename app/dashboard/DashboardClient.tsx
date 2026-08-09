@@ -261,7 +261,7 @@ export default function DashboardClient({
             <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
             <Link href={homeDiscoveryHref("venues")}>Venues</Link>
             <Link href={homeDiscoveryHref("trending")}>Trending</Link>
-            <Link href="/tv">MyDancr TV</Link>
+            <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
             <Link href="/account">Account</Link>
           </div>
         )}

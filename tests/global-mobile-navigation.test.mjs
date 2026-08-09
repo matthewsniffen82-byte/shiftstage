@@ -21,7 +21,7 @@ test("every Next page receives the shared consolidated mobile navigation", () =>
   );
   assert.match(
     navigationSource,
-    /view: "dancers"[\s\S]*?path: "\/tv"[\s\S]*?view: "venues"/,
+    /view: "dancers"[\s\S]*?view: "tv"[\s\S]*?view: "venues"/,
   );
   assert.match(
     navigationSource,

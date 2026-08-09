@@ -292,7 +292,7 @@ export default function AdminClient() {
           <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
           <Link href={homeDiscoveryHref("venues")}>Venues</Link>
           <Link href={homeDiscoveryHref("trending")}>Trending</Link>
-          <Link href="/tv">MyDancr TV</Link>
+          <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
         </div>
         {!isLoading && !needsSignIn ? (
           <button className="admin-logout" type="button" onClick={signOut} disabled={isSigningOut}>

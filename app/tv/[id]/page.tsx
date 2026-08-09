@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { homeTvHref } from "@/src/lib/dancr/navigation";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import TvFeedClient from "../TvFeedClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,13 +34,5 @@ export default async function SharedMyDancrTvPage({ params }: PageProps) {
   const selected = initialVideos.find((video) => video.id === id);
   if (!selected) notFound();
 
-  return (
-    <TvFeedClient
-      initialCity={selected.dancer.city}
-      initialFilter="for-you"
-      initialSelectedVideoId={id}
-      initialVideos={[selected, ...initialVideos.filter((video) => video.id !== id)]}
-      source="shared_link"
-    />
-  );
+  permanentRedirect(homeTvHref(selected.dancer.city, { videoId: id }));
 }
