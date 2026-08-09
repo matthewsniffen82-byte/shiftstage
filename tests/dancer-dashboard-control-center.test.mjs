@@ -29,7 +29,7 @@ test("schedule editing expands inside the dashboard schedule card", () => {
   assert.match(scheduleCard, /id="approvedScheduleFormMount"/);
   assert.match(
     page,
-    /\.dancer-next-shift > #approvedScheduleDropdown \{[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?border-top: 1px solid rgba\(195,169,255,\.22\) !important;[\s\S]*?background: transparent;/,
+    /\.dancer-next-shift > #approvedScheduleDropdown \{[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?border-top: 1px solid var\(--mydancr-dashboard-border\) !important;[\s\S]*?background: transparent;/,
   );
   assert.match(
     page,
@@ -42,12 +42,12 @@ test("schedule editing expands inside the dashboard schedule card", () => {
   const collapseButtonRule = page.match(
     /\.approved-tool-dropdown-actions button\[data-dancer-control-action="collapse-approved-tool"\] \{[^}]*\}/,
   )?.[0] || "";
-  assert.match(collapseButtonRule, /border: 1px solid rgba\(195,169,255,\.48\) !important;/);
-  assert.match(collapseButtonRule, /var\(--dancr-color-brand-primary\) 12%/);
+  assert.match(collapseButtonRule, /border: 1px solid rgba\(255,255,255,\.14\) !important;/);
+  assert.match(collapseButtonRule, /rgba\(17,17,24,\.98\) !important;/);
   assert.match(collapseButtonRule, /0 8px 18px rgba\(0,0,0,\.26\)/);
   assert.match(
     page,
-    /button\[data-dancer-control-action="collapse-approved-tool"\]::before \{[\s\S]*?color: #e1d7ff;[\s\S]*?background: rgba\(139,92,246,\.18\);/,
+    /button\[data-dancer-control-action="collapse-approved-tool"\]::before \{[\s\S]*?color: #fff;[\s\S]*?background: rgba\(255,255,255,\.06\);/,
   );
   assert.doesNotMatch(
     collapseButtonRule,

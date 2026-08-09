@@ -4507,26 +4507,27 @@
       width: 100%;
       min-height: 52px;
       justify-content: center;
-      border: 1px solid rgba(195,169,255,.48) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
       color: #fff !important;
       background:
         linear-gradient(180deg, rgba(255,255,255,.055), transparent 46%),
-        color-mix(in srgb, var(--dancr-color-brand-primary) 12%, var(--dancr-color-surface-raised)) !important;
+        rgba(17,17,24,.98) !important;
       box-shadow:
         0 8px 18px rgba(0,0,0,.26),
-        inset 0 1px 0 rgba(255,255,255,.08),
-        0 0 0 1px rgba(139,92,246,.06) !important;
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
       font-size: 15px;
       letter-spacing: 0;
     }
 
     .approved-tool-dropdown-actions button[data-dancer-control-action="collapse-approved-tool"]:hover,
     .approved-tool-dropdown-actions button[data-dancer-control-action="collapse-approved-tool"]:focus-visible {
-      border-color: rgba(216,201,255,.68) !important;
+      border-color: rgba(255,255,255,.3) !important;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.075), transparent 46%),
+        rgba(21,21,29,.98) !important;
       box-shadow:
         0 9px 20px rgba(0,0,0,.3),
-        inset 0 1px 0 rgba(255,255,255,.1),
-        0 0 0 3px rgba(139,92,246,.12) !important;
+        inset 0 1px 0 rgba(255,255,255,.1) !important;
     }
 
     .approved-tool-dropdown-actions button[data-dancer-control-action="collapse-approved-tool"]::before {
@@ -4537,9 +4538,9 @@
       height: 24px;
       margin-right: 8px;
       border-radius: 999px;
-      border: 1px solid rgba(216,201,255,.38);
-      color: #e1d7ff;
-      background: rgba(139,92,246,.18);
+      border: 1px solid rgba(255,255,255,.18);
+      color: #fff;
+      background: rgba(255,255,255,.06);
       font-size: 20px;
       line-height: 1;
     }
@@ -28288,10 +28289,10 @@
       height: auto !important;
       margin-bottom: 0 !important;
       padding: 10px 12px 14px !important;
-      border: 1px solid rgba(139, 92, 246, 0.16) !important;
+      border: 1px solid var(--mydancr-dashboard-border) !important;
       border-radius: 16px !important;
-      background: rgba(5, 5, 8, 0.98) !important;
-      box-shadow: 0 14px 34px rgba(0,0,0,.38) !important;
+      background: var(--mydancr-dashboard-panel) !important;
+      box-shadow: none !important;
       overflow: hidden !important;
     }
 
@@ -28807,8 +28808,8 @@
     #dancerDashboard .dancer-quick-actions button:focus-visible,
     #dancerDashboard .dancer-quick-actions a:hover,
     #dancerDashboard .dancer-quick-actions a:focus-visible {
-      border-color: rgba(139,92,246,.46);
-      background: #15131d;
+      border-color: rgba(255,255,255,.24);
+      background: #16161e;
       box-shadow: none;
     }
 
@@ -28850,6 +28851,11 @@
       box-shadow: none !important;
     }
 
+    #dancerDashboard .section-title-row::before {
+      background: rgba(255,255,255,.22) !important;
+      box-shadow: none !important;
+    }
+
     @media (max-width: 520px) {
       #dancerDashboard .dancer-glance-metrics > div {
         min-height: 62px;
@@ -28874,7 +28880,7 @@
 
     #approvedScheduleDropdown {
       gap: 14px !important;
-      border-color: rgba(139,92,246,.28) !important;
+      border-color: var(--mydancr-dashboard-border) !important;
       box-shadow: none !important;
     }
 
@@ -28886,7 +28892,7 @@
       margin: 2px 0 0;
       padding: 16px 0 0;
       border: 0 !important;
-      border-top: 1px solid rgba(195,169,255,.22) !important;
+      border-top: 1px solid var(--mydancr-dashboard-border) !important;
       border-radius: 0;
       background: transparent;
       box-shadow: none !important;
@@ -28956,9 +28962,9 @@
 
     #approvedScheduleDropdown .shift-verification-panel,
     #approvedScheduleDropdown .shift-manager-row {
-      border-color: rgba(139,92,246,.18) !important;
+      border-color: var(--mydancr-dashboard-border) !important;
       border-radius: 14px !important;
-      background: rgba(5,5,8,.42) !important;
+      background: var(--mydancr-dashboard-panel) !important;
       box-shadow: none !important;
     }
 
@@ -28977,11 +28983,9 @@
       overflow: visible !important;
       touch-action: auto !important;
       overscroll-behavior: auto !important;
-      border: 1px solid rgba(139,92,246,.28) !important;
+      border: 1px solid var(--mydancr-dashboard-border) !important;
       border-radius: 14px !important;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
-        rgba(6,6,10,.92) !important;
+      background: var(--mydancr-dashboard-panel) !important;
       box-shadow: none !important;
       isolation: auto !important;
     }

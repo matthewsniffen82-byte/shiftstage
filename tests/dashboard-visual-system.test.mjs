@@ -21,6 +21,10 @@ test("all customer-facing dashboards use the same MyDancr visual tokens", () => 
 test("dancer dashboard has one primary action and neutral secondary cards", () => {
   assert.match(
     liveApp,
+    /#dancerDashboard \.page-head \{[\s\S]*?border: 1px solid var\(--mydancr-dashboard-border\) !important;[\s\S]*?background: var\(--mydancr-dashboard-panel\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    liveApp,
     /#dancerDashboard\.is-approved #dancerApprovalCommand,[\s\S]*?background: var\(--mydancr-dashboard-panel\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
@@ -34,6 +38,14 @@ test("dancer dashboard has one primary action and neutral secondary cards", () =
   assert.match(
     liveApp,
     /#dancerDashboard \.dancer-glance-metrics \{[\s\S]*?gap: 0;[\s\S]*?border: 1px solid var\(--mydancr-dashboard-border\);/,
+  );
+  assert.match(
+    liveApp,
+    /#approvedScheduleDropdown \{[\s\S]*?border-color: var\(--mydancr-dashboard-border\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#dancerDashboard \.section-title-row::before \{[\s\S]*?background: rgba\(255,255,255,\.22\) !important;[\s\S]*?box-shadow: none !important;/,
   );
 });
 
