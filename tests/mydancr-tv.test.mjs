@@ -171,8 +171,9 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /className="tv-card-stage-name"[\s\S]*?video\.dancer\.stageName/);
   assert.match(
     feedClient,
-    /className="tv-sound"[\s\S]*?aria-label=\{muted \? "Turn sound on" : "Mute video"\}[\s\S]*?title=\{muted \? "Turn sound on" : "Mute video"\}[\s\S]*?<SoundIcon muted=\{muted\} \/>/,
+    /className="tv-sound"[\s\S]*?aria-label=\{muted \? "Turn sound on" : "Mute video"\}[\s\S]*?<SoundIcon muted=\{muted\} \/>/,
   );
+  assert.doesNotMatch(feedClient, /className="tv-sound"[\s\S]*?title=\{muted/);
   assert.match(feedClient, /function SoundIcon\(\{ muted \}: \{ muted: boolean \}\)[\s\S]*?aria-hidden="true"/);
   assert.doesNotMatch(feedClient, /\{muted \? "Sound off" : "Sound on"\}/);
   assert.match(feedClient, /className="tv-verified-mark" aria-label="Verified">✓/);

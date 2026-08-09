@@ -20,8 +20,10 @@ test("profile videos have only thumbnail and fixed full-screen viewer sizes", ()
   assert.match(profileTvStrip, /\.tv-video-viewer-stage \{[^}]*touch-action: none;/);
   assert.match(profileTvStrip, /controlsList="nofullscreen noremoteplayback nodownload"/);
   assert.match(profileTvStrip, /disablePictureInPicture/);
-  assert.match(profileTvStrip, /\{viewerPaused \? "Play" : "Pause"\}/);
-  assert.match(profileTvStrip, /\{viewerMuted \? "Sound on" : "Sound off"\}/);
+  assert.match(profileTvStrip, /<PlaybackStateIcon paused=\{viewerPaused\} \/>/);
+  assert.match(profileTvStrip, /<SoundStateIcon muted=\{viewerMuted\} \/>/);
+  assert.doesNotMatch(profileTvStrip, /\{viewerPaused \? "Play" : "Pause"\}/);
+  assert.doesNotMatch(profileTvStrip, /\{viewerMuted \? "Sound on" : "Sound off"\}/);
   assert.doesNotMatch(profileTvStrip, /requestFullscreen|:fullscreen|enterDeviceFullscreen/);
 });
 
@@ -35,8 +37,8 @@ test("live profile viewer blocks gesture enlargement but keeps horizontal video 
     /\.profile-tv-viewer-shell \{[^}]*width: 100%;[^}]*max-width: none;[^}]*height: 100%;[^}]*touch-action: none;/,
   );
   assert.match(liveApp, /id="profileTvViewerVideo" controlslist="nofullscreen noremoteplayback nodownload" disablepictureinpicture/);
-  assert.match(liveApp, /data-toggle-profile-tv-playback>Pause/);
-  assert.match(liveApp, /data-toggle-profile-tv-sound>Sound off/);
+  assert.match(liveApp, /data-toggle-profile-tv-playback aria-label="Pause TV video">\$\{modalVideoPlaybackIcon\(false\)\}/);
+  assert.match(liveApp, /data-toggle-profile-tv-sound aria-label="Turn TV video sound off">\$\{modalVideoSoundIcon\(false\)\}/);
   assert.match(liveApp, /Math\.abs\(distance\) < 50\) return;[\s\S]*?showRelativeProfileTvVideo/);
   assert.match(
     liveApp,
@@ -58,7 +60,7 @@ test("live profile sound and navigation controls are wired as top-level viewer a
 
   assert.match(
     soundControls,
-    /function syncProfileTvSoundControl\(\) \{[\s\S]*?if \(button\) button\.textContent = video\?\.muted \? "Sound on" : "Sound off";[\s\S]*?\n    \}/,
+    /function syncProfileTvSoundControl\(\) \{[\s\S]*?button\.innerHTML = modalVideoSoundIcon\(muted\);[\s\S]*?button\.setAttribute\("aria-label", muted \? "Turn TV video sound on" : "Turn TV video sound off"\);[\s\S]*?\n    \}/,
   );
   assert.match(
     soundControls,

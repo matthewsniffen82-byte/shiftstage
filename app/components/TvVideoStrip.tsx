@@ -314,11 +314,21 @@ export function TvVideoStrip({
                 <span>{tvProfileShiftLabel(activeVideo).label} · Video {activeIndex + 1} of {videos.length}</span>
               </div>
               <div className="tv-video-viewer-actions">
-                <button type="button" onClick={toggleViewerPlayback}>
-                  {viewerPaused ? "Play" : "Pause"}
+                <button
+                  aria-label={viewerPaused ? "Play video" : "Pause video"}
+                  className="tv-video-viewer-state-control"
+                  type="button"
+                  onClick={toggleViewerPlayback}
+                >
+                  <PlaybackStateIcon paused={viewerPaused} />
                 </button>
-                <button type="button" onClick={toggleViewerSound}>
-                  {viewerMuted ? "Sound on" : "Sound off"}
+                <button
+                  aria-label={viewerMuted ? "Turn sound on" : "Mute video"}
+                  className="tv-video-viewer-state-control"
+                  type="button"
+                  onClick={toggleViewerSound}
+                >
+                  <SoundStateIcon muted={viewerMuted} />
                 </button>
                 <button type="button" onClick={() => shareVideo(activeVideo)}>Share</button>
               </div>
@@ -422,6 +432,37 @@ function formatVideoDate(publishedAt: string) {
   }).format(date);
 }
 
+function PlaybackStateIcon({ paused }: { paused: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      {paused ? (
+        <path className="is-fill" d="m9 7 8 5-8 5Z" />
+      ) : (
+        <path className="is-fill" d="M7 6h3v12H7zM14 6h3v12h-3z" />
+      )}
+    </svg>
+  );
+}
+
+function SoundStateIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M4 10v4h4l5 4V6L8 10H4Z" />
+      {muted ? (
+        <>
+          <path d="m17 9 4 6" />
+          <path d="m21 9-4 6" />
+        </>
+      ) : (
+        <>
+          <path d="M16 9.5a4 4 0 0 1 0 5" />
+          <path d="M18.5 7a7.5 7.5 0 0 1 0 10" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 function TvVideoStripStyles() {
   return (
     <style>{`
@@ -457,6 +498,9 @@ function TvVideoStripStyles() {
       .tv-video-viewer-footer span { color: #9fefff; font-size: 11px; font-weight: 850; }
       .tv-video-viewer-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
       .tv-video-viewer-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(126,234,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.12); font-weight: 900; cursor: pointer; }
+      .tv-video-viewer-actions .tv-video-viewer-state-control { width: 42px; min-width: 42px; max-width: 42px; padding: 0; justify-self: center; }
+      .tv-video-viewer-state-control svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-video-viewer-state-control svg .is-fill { fill: currentColor; stroke: none; }
       .tv-video-viewer-footer p { min-height: 16px; grid-column: 1 / -1; margin: 0; color: #a7f3d0; font-size: 11px; font-weight: 800; }
       .tv-video-viewer-gallery { grid-column: 1 / -1; display: grid; grid-auto-flow: column; grid-auto-columns: 72px; gap: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; }
       .tv-video-viewer-gallery button { position: relative; width: 72px; height: 78px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 9px; background: #000; scroll-snap-align: center; cursor: pointer; }

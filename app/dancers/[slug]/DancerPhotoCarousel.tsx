@@ -561,14 +561,15 @@ export function DancerPhotoCarousel({
                 onClick={toggleInlinePlayback}
                 type="button"
               >
-                {inlinePlaying ? "Pause" : "Play"}
+                <PlaybackStateIcon paused={!inlinePlaying} />
               </button>
               <button
                 aria-label={inlineMuted ? "Turn TV video sound on" : "Turn TV video sound off"}
+                className="profile-media-sound-control"
                 onClick={toggleInlineSound}
                 type="button"
               >
-                {inlineMuted ? "Sound on" : "Sound off"}
+                <SoundStateIcon muted={inlineMuted} />
               </button>
               <input
                 aria-label="TV video progress"
@@ -758,6 +759,37 @@ function ShareIcon() {
       <circle cx="6" cy="12" r="3" />
       <circle cx="18" cy="19" r="3" />
       <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
+    </svg>
+  );
+}
+
+function PlaybackStateIcon({ paused }: { paused: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      {paused ? (
+        <path className="is-fill" d="m9 7 8 5-8 5Z" />
+      ) : (
+        <path className="is-fill" d="M7 6h3v12H7zM14 6h3v12h-3z" />
+      )}
+    </svg>
+  );
+}
+
+function SoundStateIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M4 10v4h4l5 4V6L8 10H4Z" />
+      {muted ? (
+        <>
+          <path d="m17 9 4 6" />
+          <path d="m21 9-4 6" />
+        </>
+      ) : (
+        <>
+          <path d="M16 9.5a4 4 0 0 1 0 5" />
+          <path d="M18.5 7a7.5 7.5 0 0 1 0 10" />
+        </>
+      )}
     </svg>
   );
 }

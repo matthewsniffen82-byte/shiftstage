@@ -184,8 +184,10 @@ test("inline profile TV has complete play, sound, progress, and duration control
   assert.match(profileCarousel, /function seekInlineVideo\(value: number\)/);
   assert.match(profileCarousel, /aria-label="TV video progress"/);
   assert.match(profileCarousel, /type="range"/);
-  assert.match(profileCarousel, /\{inlinePlaying \? "Pause" : "Play"\}/);
-  assert.match(profileCarousel, /\{inlineMuted \? "Sound on" : "Sound off"\}/);
+  assert.match(profileCarousel, /<PlaybackStateIcon paused=\{!inlinePlaying\} \/>/);
+  assert.match(profileCarousel, /<SoundStateIcon muted=\{inlineMuted\} \/>/);
+  assert.doesNotMatch(profileCarousel, /\{inlinePlaying \? "Pause" : "Play"\}/);
+  assert.doesNotMatch(profileCarousel, /\{inlineMuted \? "Sound on" : "Sound off"\}/);
   assert.match(profileCarousel, /formatDuration\(inlineCurrentTime\)/);
   assert.match(profilePage, /\.profile-media-video-controls \{ position: absolute;/);
 });

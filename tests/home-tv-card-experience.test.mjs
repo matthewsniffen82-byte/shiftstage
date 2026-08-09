@@ -363,8 +363,13 @@ test("TV sound and lower-right fullscreen controls stay compact and icon-only", 
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)/,
+    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("aria-pressed", String\(!homeTvFeedMuted\)\)/,
   );
+  const soundSync = homeSource.match(
+    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?(?=\n    function homeTvFeedFullscreenElement)/,
+  )?.[0] || "";
+  assert.doesNotMatch(soundSync, /setAttribute\("title"/);
+  assert.doesNotMatch(soundFactory, /showHomeTvFeedFeedback[\s\S]*?Sound off|showHomeTvFeedFeedback[\s\S]*?Sound on/);
   assert.match(
     homeSource,
     /function syncHomeTvFeedFullscreenButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)/,

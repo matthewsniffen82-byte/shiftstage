@@ -24,7 +24,11 @@ test("MyDancr TV declares and retries muted autoplay for the active snap-scroll 
     feedClient,
     /document\.addEventListener\("visibilitychange", resumeActiveVideo\)[\s\S]*?window\.addEventListener\("pageshow", resumeActiveVideo\)/,
   );
-  assert.match(feedClient, /className="tv-playback-retry"[\s\S]*?Tap to play/);
+  assert.match(
+    feedClient,
+    /className="tv-playback-retry"[\s\S]*?aria-label="Play video"[\s\S]*?<PlayIcon \/>/,
+  );
+  assert.doesNotMatch(feedClient, /className="tv-playback-retry"[\s\S]*?Tap to play/);
 });
 
 test("MyDancr TV preloads the active card and its immediate scroll neighbors", () => {
@@ -80,6 +84,10 @@ test("the homepage TV feed only shows its play overlay for an active manual paus
     /video\.play\(\)\.then\(\(\) => \{[\s\S]*?slide\.classList\.remove\("is-paused", "is-autoplay-blocked"\)[\s\S]*?\.catch\(\(error\) => \{[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?slide\.classList\.add\("is-paused", "is-autoplay-blocked"\)/,
   );
   assert.doesNotMatch(homeSource, /\.home-tv-feed-slide\.is-paused \.home-tv-feed-playback/);
+  const playbackToggle = homeSource.match(
+    /function toggleHomeTvFeedPlayback\(video\) \{[\s\S]*?(?=\n    function homeTvFeedUsesSnapViewport)/,
+  )?.[0] || "";
+  assert.doesNotMatch(playbackToggle, /showHomeTvFeedFeedback[\s\S]*?Playing|showHomeTvFeedFeedback[\s\S]*?Paused/);
 });
 
 test("the immersive TV feed reapplies iPhone inline autoplay requirements before playback", () => {

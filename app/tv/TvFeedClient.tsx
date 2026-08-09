@@ -610,13 +610,14 @@ export default function TvFeedClient({
                   <button
                     className="tv-playback-retry"
                     type="button"
+                    aria-label="Play video"
                     onClick={() => {
                       manuallyPausedVideoId.current = "";
                       const element = videoElements.current[video.id];
                       if (element) void attemptVideoPlayback(video.id, element);
                     }}
                   >
-                    Tap to play
+                    <PlayIcon />
                   </button>
                 ) : null}
                 <div className="tv-player-shade" />
@@ -718,7 +719,6 @@ export default function TvFeedClient({
                 className="tv-sound"
                 type="button"
                 aria-label={muted ? "Turn sound on" : "Mute video"}
-                title={muted ? "Turn sound on" : "Mute video"}
                 onClick={() => setMuted((value) => !value)}
               >
                 <SoundIcon muted={muted} />
@@ -798,6 +798,14 @@ function SoundIcon({ muted }: { muted: boolean }) {
       ) : (
         <path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12" />
       )}
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m9 7 8 5-8 5Z" />
     </svg>
   );
 }
@@ -926,7 +934,8 @@ function TvStyles() {
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
       .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
-      .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; min-height: 46px; padding: 0 18px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f5f4f7; background: rgba(25,25,30,.9); box-shadow: 0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07); font-weight: 950; transform: translate(-50%, -50%); cursor: pointer; }
+      .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; width: 58px; min-width: 58px; max-width: 58px; height: 58px; min-height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f5f4f7; background: rgba(25,25,30,.9); box-shadow: 0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07); transform: translate(-50%, -50%); cursor: pointer; }
+      .tv-playback-retry svg { width: 27px; height: 27px; fill: currentColor; stroke: none; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
       .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; width: 44px; min-width: 44px; max-width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); cursor: pointer; }
       .tv-sound svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
