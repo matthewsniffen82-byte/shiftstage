@@ -19,6 +19,11 @@ type AuthSession = {
 };
 type SessionRole = NonNullable<AuthSession["account"]>["role"];
 
+type DancerSignupCity = {
+  value: string;
+  label: string;
+};
+
 const SESSION_KEY = "dancrAuthSessionV1";
 
 export default function AccountClient() {
@@ -31,7 +36,9 @@ export default function AccountClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [city, setCity] = useState("Las Vegas");
+  const [city, setCity] = useState(initialRole === "dancer" ? "" : "Las Vegas");
+  const [dancerSignupCities, setDancerSignupCities] = useState<DancerSignupCity[]>([]);
+  const [dancerSignupCitiesStatus, setDancerSignupCitiesStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -93,11 +100,49 @@ export default function AccountClient() {
     };
   }, [isCustomerSignup, scrollCustomerBenefitsToTop]);
 
-  function clearFields() {
+  useEffect(() => {
+    if (!isDancerSignup || dancerSignupCitiesStatus !== "idle") return;
+
+    let cancelled = false;
+    setDancerSignupCitiesStatus("loading");
+
+    async function loadDancerSignupCities() {
+      try {
+        const response = await fetch("/api/public/cities", {
+          headers: { accept: "application/json" },
+          cache: "no-store",
+        });
+        const data = await response.json() as { ok?: boolean; cities?: DancerSignupCity[]; error?: string };
+        if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load available cities.");
+
+        const cities = Array.isArray(data.cities)
+          ? data.cities.filter((option) => Boolean(option?.value && option?.label))
+          : [];
+        if (!cities.length) throw new Error("No cities are currently available for dancer signup.");
+        if (cancelled) return;
+
+        setDancerSignupCities(cities);
+        setCity((current) => cities.find((option) => option.value.toLocaleLowerCase("en-US") === current.toLocaleLowerCase("en-US"))?.value || "");
+        setDancerSignupCitiesStatus("ready");
+      } catch {
+        if (cancelled) return;
+        setDancerSignupCities([]);
+        setCity("");
+        setDancerSignupCitiesStatus("error");
+      }
+    }
+
+    void loadDancerSignupCities();
+    return () => {
+      cancelled = true;
+    };
+  }, [dancerSignupCitiesStatus, isDancerSignup]);
+
+  function clearFields(nextRole: AuthRole = role) {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-    setCity("Las Vegas");
+    setCity(nextRole === "dancer" ? "" : "Las Vegas");
     setStatus("");
     setShowPassword(false);
     setShowConfirmPassword(false);
@@ -111,7 +156,7 @@ export default function AccountClient() {
 
   function chooseRole(nextRole: AuthRole) {
     setRole(nextRole);
-    clearFields();
+    clearFields(nextRole);
   }
 
   function chooseMode(nextMode: AuthMode) {
@@ -346,7 +391,7 @@ export default function AccountClient() {
               <section className="dancer-signup-note" aria-label="Dancer verification next steps">
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
-                <p>Confirm your email, then finish your stage name and city to publish your profile. Dancer accounts are approved automatically right now, with no ID, selfie, or dance-proof upload required. Photos and MyDancr TV videos continue through separate safety moderation.</p>
+                <p>Choose an available city, confirm your email, then finish your stage name to publish your profile. Dancer accounts are approved automatically right now, with no ID, selfie, or dance-proof upload required. Photos and MyDancr TV videos continue through separate safety moderation.</p>
               </section>
             </>
           ) : null}
@@ -458,9 +503,42 @@ export default function AccountClient() {
               <input value={city} onChange={(event) => setCity(event.target.value)} required />
             </label>
           ) : null}
+          {isDancerSignup ? (
+            <div className="dancer-city-field">
+              <label>
+                City
+                <select
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  required
+                  disabled={dancerSignupCitiesStatus !== "ready"}
+                  aria-describedby="dancer-signup-city-note"
+                >
+                  <option value="" disabled>
+                    {dancerSignupCitiesStatus === "loading"
+                      ? "Loading available cities..."
+                      : dancerSignupCitiesStatus === "error"
+                        ? "Cities temporarily unavailable"
+                        : "Select a city"}
+                  </option>
+                  {dancerSignupCities.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+                <small id="dancer-signup-city-note" className={dancerSignupCitiesStatus === "error" ? "field-error" : "field-note"}>
+                  {dancerSignupCitiesStatus === "error"
+                    ? "Dancer signup is temporarily unavailable because the live city list could not be loaded."
+                    : "Cities are loaded from active MyDancr venue markets."}
+                </small>
+              </label>
+              {dancerSignupCitiesStatus === "error" ? (
+                <button className="city-retry" type="button" onClick={() => setDancerSignupCitiesStatus("idle")}>Retry city list</button>
+              ) : null}
+            </div>
+          ) : null}
 
           {!showLoginRecovery ? (
-            <button className="submit" type="submit" disabled={isSubmitting}>
+            <button className="submit" type="submit" disabled={isSubmitting || (isDancerSignup && dancerSignupCitiesStatus !== "ready")}>
               {isSubmitting ? (mode === "login" ? "Signing in..." : "Creating account...") : mode === "login" ? "Sign in" : "Create account"}
             </button>
           ) : null}
@@ -502,7 +580,13 @@ function AccountStyles() {
       .segmented button { background: transparent; }
       .segmented button.active { background: linear-gradient(135deg, rgba(139,92,246,.62), rgba(34,199,255,.22)); }
       label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
-      input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
+      input, select { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
+      select option { color: #fff; background: #111118; }
+      .field-note, .field-error { font-size: 12px; line-height: 1.4; font-weight: 700; }
+      .field-note { color: #94a3b8; }
+      .field-error { color: #ef4444; }
+      .dancer-city-field { display: grid; gap: 8px; }
+      .city-retry { justify-self: start; min-height: 36px; padding: 0 12px; border: 1px solid rgba(124,58,237,.48); border-radius: 8px; color: #fff; background: rgba(124,58,237,.16); font-weight: 850; cursor: pointer; }
       input[type="file"] { min-height: auto; padding: 10px 12px; color: #cfc5de; }
       .password-control { position: relative; display: flex; align-items: center; }
       .password-control input { width: 100%; padding-right: 46px; }

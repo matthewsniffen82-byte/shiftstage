@@ -17,6 +17,7 @@ import {
   responsivePublicImage,
 } from "@/src/lib/dancr/responsive-image";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
+import { DancerSignupCityInputError, requireDancerSignupCity } from "@/src/lib/dancr/signup-cities";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -403,7 +404,14 @@ export async function PATCH(request: Request) {
     if (Object.prototype.hasOwnProperty.call(body, "stageName")) {
       update.stage_name = normalizeDancerStageName(body.stageName);
     }
-    if (typeof body.city === "string") update.city = body.city.trim();
+    if (typeof body.city === "string") {
+      try {
+        update.city = await requireDancerSignupCity(createAdminSupabaseClient(), body.city);
+      } catch (error) {
+        if (error instanceof DancerSignupCityInputError) throw new ProfileInputError(error.message);
+        throw error;
+      }
+    }
     if (typeof body.bio === "string") update.bio = body.bio.trim();
     if (typeof body.isPublic === "boolean") {
       if (!supportsIsPublic) {

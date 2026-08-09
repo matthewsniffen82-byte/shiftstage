@@ -12,6 +12,7 @@ import {
   AccountRecoveryRateLimitError,
   enforceAccountRecoveryRateLimit,
 } from "@/src/lib/dancr/account-recovery";
+import { requireDancerSignupCity } from "@/src/lib/dancr/signup-cities";
 import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
@@ -107,7 +108,9 @@ export async function POST(request: Request) {
       }));
     }
 
-    const city = readOptional(body.city) || "Las Vegas";
+    const city = role === "dancer"
+      ? await requireDancerSignupCity(createAdminSupabaseClient(), body.city)
+      : readOptional(body.city) || "Las Vegas";
     const displayName =
       role === "customer"
         ? customerDisplayName(email)

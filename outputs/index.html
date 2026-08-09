@@ -35913,7 +35913,13 @@
           <form class="auth-form" id="dancerSignupForm">
             <input id="dancerStageName" type="hidden" value="">
             <input id="dancerLegalName" type="hidden" value="">
-            <input id="dancerCity" type="hidden" value="">
+            <div class="field">
+              <label for="dancerCity">City</label>
+              <select id="dancerCity" required disabled>
+                <option value="" selected>Loading available cities…</option>
+              </select>
+              <div class="field-note" id="dancerCityNote">Cities are loaded from active MyDancr venue markets.</div>
+            </div>
             <div class="field">
               <label for="dancerEmail">Email</label>
               <input id="dancerEmail" type="email" value="" required>
@@ -35928,7 +35934,7 @@
               </div>
             </div>
             <div class="rule-note">Dancer accounts are free while launch access is open. Public profile access still waits for verification and approval.</div>
-            <button class="action-btn" type="submit">Create dancer account</button>
+            <button class="action-btn" type="submit" disabled>Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>
         </div>
@@ -37246,6 +37252,10 @@
     const adminClosedDancerApprovalCards = loadClosedAdminApprovalCards();
     let authSession = loadAuthSession();
     let dancerSignupStarted = false;
+    let dancerSignupCities = [];
+    let dancerSignupCitiesState = "idle";
+    let dancerSignupCitiesRequest = null;
+    let pendingDancerSignupCity = "";
     let stripeConfirmed = false;
     let activeDashboardType = "customer";
     let activeVenueName = "Spearmint Rhino Las Vegas";
@@ -38098,11 +38108,9 @@
       const dancerCity = document.getElementById("dancerCity");
       if (dancerEmail && state.email) dancerEmail.value = state.email;
       if (dancerLoginEmail && state.email) dancerLoginEmail.value = state.email;
-      if (dancerCity && freshVerification) {
-        dancerCity.value = "";
-      } else if (dancerCity && !dancerCity.value.trim()) {
-        dancerCity.value = state.dancerCity || state.city || citySelect.value || "Las Vegas";
-      }
+      const confirmedCity = state.dancerCity || state.city || "";
+      if (confirmedCity) pendingDancerSignupCity = confirmedCity;
+      if (dancerCity && !dancerCity.value.trim()) syncDancerSignupCitySelect(confirmedCity);
       if (freshVerification) {
         activeSetupStep = "profile";
       }
@@ -40649,6 +40657,83 @@
       const response = await fetch(url, { headers: { Accept: "application/json" } });
       if (!response.ok) throw new Error(`Request failed: ${response.status}`);
       return response.json();
+    }
+
+    function dancerSignupCityOptionsMarkup(selectedCity = "") {
+      const selectedKey = String(selectedCity || "").trim().toLocaleLowerCase("en-US");
+      const placeholder = dancerSignupCitiesState === "error" ? "Cities temporarily unavailable" : "Select a city";
+      return [
+        `<option value="" disabled${selectedKey ? "" : " selected"}>${placeholder}</option>`,
+        ...dancerSignupCities.map((city) => {
+          const selected = city.value.toLocaleLowerCase("en-US") === selectedKey ? " selected" : "";
+          return `<option value="${escapeHtml(city.value)}"${selected}>${escapeHtml(city.label)}</option>`;
+        })
+      ].join("");
+    }
+
+    function syncDancerSignupCitySelect(preferredCity = "") {
+      const select = document.getElementById("dancerCity");
+      if (!select) return;
+      const requestedCity = String(preferredCity || select.value || pendingDancerSignupCity || "").trim();
+      const matchingCity = dancerSignupCities.find((city) => city.value.toLocaleLowerCase("en-US") === requestedCity.toLocaleLowerCase("en-US"));
+      select.innerHTML = dancerSignupCityOptionsMarkup(matchingCity?.value || "");
+      select.disabled = dancerSignupCitiesState !== "ready";
+      if (matchingCity) {
+        select.value = matchingCity.value;
+        pendingDancerSignupCity = matchingCity.value;
+      }
+
+      const note = document.getElementById("dancerCityNote");
+      if (note) {
+        note.textContent = dancerSignupCitiesState === "error"
+          ? "Dancer signup is temporarily unavailable because the live city list could not be loaded. Please try again."
+          : "Cities are loaded from active MyDancr venue markets.";
+      }
+      const submit = document.querySelector('#dancerSignupForm button[type="submit"]');
+      if (submit && submit.textContent !== "Check email or spam folder") submit.disabled = dancerSignupCitiesState !== "ready";
+    }
+
+    async function loadDancerSignupCities(options = {}) {
+      if (dancerSignupCitiesState === "ready" && !options.force) {
+        syncDancerSignupCitySelect();
+        return dancerSignupCities;
+      }
+      if (dancerSignupCitiesRequest && !options.force) return dancerSignupCitiesRequest;
+
+      dancerSignupCitiesState = "loading";
+      syncDancerSignupCitySelect();
+      dancerSignupCitiesRequest = fetchJson("/api/public/cities")
+        .then((data) => {
+          const cities = Array.isArray(data?.cities)
+            ? data.cities.filter((city) => city && typeof city.value === "string" && typeof city.label === "string" && city.value.trim() && city.label.trim())
+            : [];
+          if (!cities.length) throw new Error("No dancer signup cities are available.");
+          dancerSignupCities = cities;
+          dancerSignupCities.forEach((city) => {
+            if (!markets[city.value]) {
+              markets[city.value] = {
+                stats: { dancers: 0, shifts: 0, venues: 0 },
+                dancers: [],
+                venues: []
+              };
+            }
+          });
+          dancerSignupCitiesState = "ready";
+          syncDancerSignupCitySelect(pendingDancerSignupCity);
+          if (dancerDashboard.classList.contains("show") && !dancerSetup.approval) renderDancerSetup();
+          return dancerSignupCities;
+        })
+        .catch((error) => {
+          dancerSignupCities = [];
+          dancerSignupCitiesState = "error";
+          syncDancerSignupCitySelect();
+          console.error("Unable to load dancer signup cities", error);
+          return [];
+        })
+        .finally(() => {
+          dancerSignupCitiesRequest = null;
+        });
+      return dancerSignupCitiesRequest;
     }
 
     function liveDiscoveryIsLoading(city = selectedCity()) {
@@ -47101,6 +47186,7 @@
       });
       const dancerCity = document.getElementById("dancerCity");
       if (dancerCity) dancerCity.value = "";
+      pendingDancerSignupCity = "";
       setDancerSignupStatus("");
     }
 
@@ -47170,6 +47256,7 @@
     function openDancerSignupPage() {
       closeAuthPage();
       clearDancerSignupFields();
+      void loadDancerSignupCities();
       dancerSignupPage.classList.add("show");
       dancerSignupPage.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
@@ -49916,7 +50003,13 @@
             <input id="setupStageName" data-setup-profile-field="stageName" type="text" value="${escapeHtml(document.getElementById("dancerStageName").value || "")}" minlength="2" maxlength="40" autocomplete="nickname">
             <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
           </div>
-          <div class="field"><label for="setupCity">City</label><input id="setupCity" data-setup-profile-field="city" type="text" value="${escapeHtml(document.getElementById("dancerCity")?.value || "")}"></div>
+          <div class="field">
+            <label for="setupCity">City</label>
+            <select id="setupCity" data-setup-profile-field="city" required ${dancerSignupCitiesState === "ready" ? "" : "disabled"}>
+              ${dancerSignupCityOptionsMarkup(document.getElementById("dancerCity")?.value || pendingDancerSignupCity)}
+            </select>
+            <div class="field-note">Choose from active MyDancr venue markets.</div>
+          </div>
           <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" data-setup-social="instagram" type="text" value="${escapeHtml(dancerSignupSocials.instagram)}" placeholder="Username or profile URL"></div>
           <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" data-setup-social="tiktok" type="text" value="${escapeHtml(dancerSignupSocials.tiktok)}" placeholder="Username or profile URL"></div>
           <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" data-setup-social="snapchat" type="text" value="${escapeHtml(dancerSignupSocials.snapchat)}" placeholder="username or snapchat.com/add/username"></div>
@@ -55505,13 +55598,18 @@
       submit.textContent = "Sending confirmation...";
       setDancerSignupStatus("");
       try {
+        const cityField = document.getElementById("dancerCity");
+        if (dancerSignupCitiesState !== "ready" || !cityField.value.trim()) {
+          throw new Error("Select an available city before creating your dancer account.");
+        }
+        const signupCity = cityField.value.trim();
         const email = document.getElementById("dancerEmail").value.trim();
         const result = await requestAuth({
           mode: "signup",
           role: "dancer",
           email,
           password: document.getElementById("dancerPassword").value,
-          city: document.getElementById("dancerCity").value.trim(),
+          city: signupCity,
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
@@ -55540,6 +55638,8 @@
           updateAccountHeader();
           maybeShowAccountTooltip("dancer");
           closeDancerSignupPage();
+          pendingDancerSignupCity = signupCity;
+          syncDancerSignupCitySelect(signupCity);
           openDancerDashboard();
         }
       } catch (error) {
@@ -56400,6 +56500,7 @@
       }
       document.getElementById("dancerStageName").value = stageName;
       document.getElementById("dancerCity").value = city;
+      pendingDancerSignupCity = city;
       updateDancerDashboardName(stageName);
       assignSocialMap(dancerSignupSocials, normalizedSocials);
       saveDancerProfileDraft({ stageName, city, socials: normalizedSocials });
@@ -57091,6 +57192,7 @@
     }
 
     installReferenceHomeShell();
+    void loadDancerSignupCities();
     restoreLoggedInSessionState();
     updateAccountHeader();
     const initialProfileParams = new URLSearchParams(window.location.search);

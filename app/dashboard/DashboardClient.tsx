@@ -2505,6 +2505,8 @@ function DancerSetupPanel({
 }) {
   const [stageName, setStageName] = useState("");
   const [city, setCity] = useState("");
+  const [cityOptions, setCityOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [cityOptionsStatus, setCityOptionsStatus] = useState<"loading" | "ready" | "error">("loading");
   const [bio, setBio] = useState("");
   const [status, setStatus] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -2519,9 +2521,44 @@ function DancerSetupPanel({
 
   useEffect(() => {
     setStageName(String(profile?.stage_name || profile?.stageName || ""));
-    setCity(String(profile?.city || "Las Vegas"));
+    const profileCity = String(profile?.city || "").trim();
+    const matchingCity = cityOptions.find((option) => option.value.toLocaleLowerCase("en-US") === profileCity.toLocaleLowerCase("en-US"));
+    setCity(cityOptionsStatus === "ready" ? matchingCity?.value || "" : profileCity);
     setBio(String(profile?.bio || ""));
-  }, [profile]);
+  }, [cityOptions, cityOptionsStatus, profile]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCityOptions() {
+      try {
+        const response = await fetch("/api/public/cities", {
+          headers: { accept: "application/json" },
+          cache: "no-store",
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load available cities.");
+        const options = Array.isArray(data.cities)
+          ? data.cities.filter((option: any) => Boolean(option?.value && option?.label))
+          : [];
+        if (!options.length) throw new Error("No dancer signup cities are available.");
+        if (!cancelled) {
+          setCityOptions(options);
+          setCityOptionsStatus("ready");
+        }
+      } catch {
+        if (!cancelled) {
+          setCityOptions([]);
+          setCityOptionsStatus("error");
+        }
+      }
+    }
+
+    void loadCityOptions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     deletedPhotoIdsRef.current = [...deletedPhotoIds];
@@ -2671,10 +2708,16 @@ function DancerSetupPanel({
         </label>
         <label>
           City
-          <input value={city} onChange={(event) => {
+          <select value={city} disabled={cityOptionsStatus !== "ready"} onChange={(event) => {
             setCity(event.target.value);
             setSaveStatus("idle");
-          }} required />
+          }} required>
+            <option value="" disabled>
+              {cityOptionsStatus === "loading" ? "Loading available cities..." : cityOptionsStatus === "error" ? "Cities temporarily unavailable" : "Select a city"}
+            </option>
+            {cityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          <small>{cityOptionsStatus === "error" ? "The live city list could not be loaded. Try again before saving." : "Choose from active MyDancr venue markets."}</small>
         </label>
         <label>
           Bio
@@ -2683,7 +2726,7 @@ function DancerSetupPanel({
             setSaveStatus("idle");
           }} rows={4} />
         </label>
-        <button type="submit" disabled={saveStatus === "saving"}>
+        <button type="submit" disabled={saveStatus === "saving" || cityOptionsStatus !== "ready"}>
           {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved Profile" : "Save Profile"}
         </button>
         <button type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
