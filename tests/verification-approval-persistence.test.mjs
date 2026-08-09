@@ -40,16 +40,18 @@ const [
   readFile(new URL("../src/lib/dancr/dancer.ts", import.meta.url), "utf8"),
 ]);
 
-test("automatic dancer approval is active without identity-file requirements", () => {
+test("automatic dancer approval occurs only after the dancer completes onboarding", () => {
   assert.match(identityMode, /\["auto_approve", "verifymy"\]/);
   assert.match(identityMode, /if \(!configured\) return "auto_approve"/);
   assert.match(identityMode, /status: "approved"/);
   assert.match(identityMode, /verification_status: "approved"/);
   assert.match(identityMode, /is_public: true/);
-  assert.match(signupRoute, /automaticDancerApprovalValues\(\)/);
-  assert.match(callbackRoute, /automaticDancerApprovalValues\(\)/);
+  assert.match(signupRoute, /status: "draft"[\s\S]*?verification_status: "pending"[\s\S]*?is_public: false/);
+  assert.match(callbackRoute, /status: "draft"[\s\S]*?verification_status: "pending"[\s\S]*?is_public: false/);
+  assert.doesNotMatch(signupRoute, /automaticDancerApprovalValues/);
+  assert.doesNotMatch(callbackRoute, /automaticDancerApprovalValues/);
   assert.match(profileRoute, /getIdentityVerificationMode\(\) === "auto_approve"/);
-  assert.match(profileRoute, /ensureAutomaticDancerApproval/);
+  assert.doesNotMatch(profileRoute, /ensureAutomaticDancerApproval/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
   assert.match(accountUi, /Dancer accounts are approved automatically right now/);
   assert.match(accountUi, /no ID, selfie, or dance-proof upload required/);

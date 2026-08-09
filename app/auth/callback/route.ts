@@ -1,5 +1,4 @@
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -22,8 +21,10 @@ type CallbackSession = {
 export async function GET(request: Request) {
   const callbackSession = await readCallbackSession(request);
   const redirectPath = callbackRedirectPath(request, callbackSession);
+  const role = callbackRole(request, callbackSession);
+  const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback(request);
 
-  return new Response(callbackHtml(callbackSession, redirectPath), {
+  return new Response(callbackHtml(callbackSession, redirectPath, showDancerConfirmation), {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
@@ -35,11 +36,7 @@ function callbackRedirectPath(request: Request, callbackSession: Awaited<ReturnT
   const url = new URL(request.url);
   const explicitReturnTo = safeReturnPath(url.searchParams.get("return_to"));
   const accountRole = callbackSession?.account?.role;
-  const role =
-    readCallbackRole(accountRole) ||
-    readCallbackRole(url.searchParams.get("role")) ||
-    readCallbackRole(url.searchParams.get("dancr_role")) ||
-    readCallbackRoleFromReturnTo(explicitReturnTo);
+  const role = callbackRole(request, callbackSession);
 
   if (role && isLiveAppDestination(explicitReturnTo)) {
     return liveAppCallbackPath(url, role);
@@ -48,6 +45,26 @@ function callbackRedirectPath(request: Request, callbackSession: Awaited<ReturnT
   if (accountRole === "admin") return "/admin";
   if (role) return liveAppCallbackPath(url, role);
   return "/account";
+}
+
+function callbackRole(request: Request, callbackSession: Awaited<ReturnType<typeof readCallbackSession>>) {
+  const url = new URL(request.url);
+  const explicitReturnTo = safeReturnPath(url.searchParams.get("return_to"));
+  return (
+    readCallbackRole(callbackSession?.account?.role) ||
+    readCallbackRole(url.searchParams.get("role")) ||
+    readCallbackRole(url.searchParams.get("dancr_role")) ||
+    readCallbackRoleFromReturnTo(explicitReturnTo)
+  );
+}
+
+function isPasswordResetCallback(request: Request) {
+  const url = new URL(request.url);
+  return (
+    url.searchParams.get("dancr_reset") === "1" ||
+    url.searchParams.get("reset_target") === "account_password" ||
+    url.searchParams.get("type") === "recovery"
+  );
 }
 
 function safeReturnPath(value: string | null) {
@@ -90,18 +107,59 @@ function liveAppCallbackPath(url: URL, role: CallbackRole) {
   return `/?${params.toString()}`;
 }
 
-function callbackHtml(callbackSession: Awaited<ReturnType<typeof readCallbackSession>>, redirectPath: string) {
+function callbackHtml(
+  callbackSession: Awaited<ReturnType<typeof readCallbackSession>>,
+  redirectPath: string,
+  showDancerConfirmation: boolean,
+) {
   const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
   const redirectJson = JSON.stringify(redirectPath);
+  const dancerConfirmationJson = JSON.stringify(showDancerConfirmation);
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Opening Dancr</title>
+    <meta name="referrer" content="no-referrer">
+    <title>${showDancerConfirmation ? "Email confirmed | MyDancr" : "Opening Dancr"}</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100svh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 15%, rgba(105, 42, 255, .2), transparent 34%), #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { width: min(100%, 460px); padding: 36px 28px; display: grid; gap: 16px; text-align: center; border: 1px solid rgba(148, 117, 255, .28); border-radius: 28px; background: rgba(10, 8, 17, .96); box-shadow: 0 24px 80px rgba(0, 0, 0, .48), 0 0 42px rgba(107, 51, 255, .12); }
+      .eyebrow { margin: 0; color: #9be7f5; font-size: 12px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(32px, 9vw, 46px); line-height: 1; letter-spacing: -.04em; }
+      p { margin: 0; color: #c5bfd3; font-size: 16px; line-height: 1.55; }
+      a { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; margin-top: 8px; padding: 13px 20px; border: 1px solid rgba(180, 151, 255, .72); border-radius: 16px; background: linear-gradient(135deg, #7c35ff, #5720d5); color: #fff; font-size: 16px; font-weight: 900; text-decoration: none; box-shadow: 0 12px 30px rgba(103, 42, 231, .34); }
+      a:hover { filter: brightness(1.08); }
+      a:active { transform: translateY(1px); }
+      a:focus-visible { outline: 3px solid #91e7f5; outline-offset: 3px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main id="dancerConfirmation" hidden>
+      <p class="eyebrow">Dancer account</p>
+      <h1>Email confirmed</h1>
+      <p>Your email is verified. Complete the required dancer profile steps before your profile can go live.</p>
+      <a id="dancerConfirmationContinue" href="${escapeHtml(redirectPath)}">Click here to complete dancer profile</a>
+    </main>
+    <main id="confirmationError" hidden>
+      <p class="eyebrow">Dancer account</p>
+      <h1>Confirmation link unavailable</h1>
+      <p>This link is invalid or has expired. Sign in to continue your dancer profile or request a new confirmation email.</p>
+      <a href="/account?role=dancer">Continue to dancer sign in</a>
+    </main>
+    <main id="openingDancr">
+      <p class="eyebrow">MyDancr</p>
+      <h1>Opening Dancr</h1>
+      <p>Your live account is being connected.</p>
+      <a href="${escapeHtml(redirectPath)}">Continue</a>
+    </main>
     <script>
       const serverSession = ${sessionJson};
       const redirectTo = ${redirectJson};
+      const showDancerConfirmation = ${dancerConfirmationJson};
       const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
       const fragmentAccessToken = fragmentParams.get("access_token") || "";
       const fragmentRefreshToken = fragmentParams.get("refresh_token") || undefined;
@@ -153,21 +211,20 @@ function callbackHtml(callbackSession: Awaited<ReturnType<typeof readCallbackSes
         } catch (error) {}
       }
       const fragment = fragmentAccessToken ? window.location.hash : "";
-      window.location.replace(redirectUrl.pathname + redirectUrl.search + fragment);
+      const destination = redirectUrl.pathname + redirectUrl.search + fragment;
+      if (showDancerConfirmation) {
+        document.getElementById("openingDancr").hidden = true;
+        if (session && session.accessToken) {
+          const continueLink = document.getElementById("dancerConfirmationContinue");
+          continueLink.href = destination;
+          document.getElementById("dancerConfirmation").hidden = false;
+        } else {
+          document.getElementById("confirmationError").hidden = false;
+        }
+      } else {
+        window.location.replace(destination);
+      }
     </script>
-    <style>
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      main { max-width: 440px; padding: 24px; display: grid; gap: 12px; text-align: center; }
-      strong { font-size: 28px; }
-      a { color: #94e5ff; font-weight: 900; }
-    </style>
-  </head>
-  <body>
-    <main>
-      <strong>Opening Dancr</strong>
-      <span>Your live account is being connected.</span>
-      <a href="${escapeHtml(redirectPath)}">Continue</a>
-    </main>
   </body>
 </html>`;
 }
@@ -304,9 +361,9 @@ async function ensureCallbackDancerProfile(
     stage_name: stageName,
     slug,
     city,
-    ...(isVerifyMyIdentityMode()
-      ? { status: "draft", verification_status: "pending", is_public: false }
-      : automaticDancerApprovalValues()),
+    status: "draft",
+    verification_status: "pending",
+    is_public: false,
   });
   if (error) throw error;
 }

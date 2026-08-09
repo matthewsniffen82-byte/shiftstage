@@ -202,7 +202,7 @@ export default function AccountClient() {
         setStatus(
           role === "customer"
             ? `Confirmation email sent to ${email}. After confirmation, Mydancr will open the homepage signed in.`
-            : `Confirmation email sent to ${email}. Check your email or spam folder, then tap Confirm email to open your four-step dancer verification setup.`,
+            : `Confirmation email sent to ${email}. Check your email or spam folder, confirm your email, then use the button on the confirmation page to complete your dancer profile.`,
         );
         window.localStorage.removeItem(SESSION_KEY);
         return;

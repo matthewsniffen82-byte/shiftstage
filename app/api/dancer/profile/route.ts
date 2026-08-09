@@ -210,7 +210,6 @@ export async function GET(request: Request) {
 
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    await ensureAutomaticDancerApproval(createAdminSupabaseClient(), user.id);
     const { data, error } = await loadDancerProfile(client, user.id);
 
     if (error) throw error;
@@ -855,29 +854,6 @@ async function submitProfileForReview(
     })
     .eq("id", dancerId);
 
-  if (error) throw error;
-}
-
-async function ensureAutomaticDancerApproval(db: any, userId: string) {
-  if (getIdentityVerificationMode() !== "auto_approve") return;
-
-  const { data: profile, error: profileError } = await db
-    .from("dancer_profiles")
-    .select("id, status, disabled_at")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (profileError) throw profileError;
-  if (!profile || profile.disabled_at) return;
-
-  const status = String(profile.status || "").toLowerCase();
-  if (status === "approved" || status === "rejected" || status === "disabled") return;
-
-  const { error } = await db
-    .from("dancer_profiles")
-    .update(automaticDancerApprovalValues())
-    .eq("id", profile.id)
-    .neq("status", "rejected")
-    .is("disabled_at", null);
   if (error) throw error;
 }
 

@@ -55619,7 +55619,7 @@
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
-          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Check your email or spam folder, then tap Confirm email in that email to open your 4-step dancer verification setup in this browser.`);
+          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Check your email or spam folder, confirm your email, then use the button on the confirmation page to complete your dancer profile.`);
           submit.textContent = "Check email or spam folder";
           showToast("Confirmation email sent. Check your email or spam folder to continue.");
           return;

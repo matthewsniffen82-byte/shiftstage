@@ -7,7 +7,6 @@ import {
   redeemVenueSignupCode,
   resolveVenueSignupCode,
 } from "@/src/lib/dancr/venue-claims";
-import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import {
   AccountRecoveryRateLimitError,
   enforceAccountRecoveryRateLimit,
@@ -339,9 +338,9 @@ async function upsertAccount(
       stage_name: stageName,
       slug,
       city,
-      ...(isVerifyMyIdentityMode()
-        ? { status: "draft", verification_status: "pending", is_public: false }
-        : automaticDancerApprovalValues()),
+      status: "draft",
+      verification_status: "pending",
+      is_public: false,
     });
   if (error) throw error;
 }

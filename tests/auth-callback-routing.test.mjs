@@ -2,17 +2,21 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [callbackSource, liveAppSource, dancerDashboardSource] = await Promise.all([
+const [callbackSource, liveAppSource, dancerDashboardSource, signupRouteSource, profileRouteSource] = await Promise.all([
   readFile(new URL("../app/auth/callback/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/dancer/page.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("confirmed dancer accounts return to the canonical live app dashboard", () => {
+test("confirmed dancer accounts pause on a dedicated confirmation page before profile setup", () => {
   const redirectResolver =
-    callbackSource.match(/function callbackRedirectPath[\s\S]*?function safeReturnPath/)?.[0] || "";
+    callbackSource.match(/function callbackRedirectPath[\s\S]*?function callbackRole/)?.[0] || "";
   const liveAppPath =
     callbackSource.match(/function liveAppCallbackPath[\s\S]*?function callbackHtml/)?.[0] || "";
+  const callbackPage =
+    callbackSource.match(/function callbackHtml[\s\S]*?function escapeHtml/)?.[0] || "";
 
   assert.match(redirectResolver, /return liveAppCallbackPath\(url, role\)/);
   assert.doesNotMatch(redirectResolver, /return "\/dashboard\/dancer"/);
@@ -20,6 +24,11 @@ test("confirmed dancer accounts return to the canonical live app dashboard", () 
   assert.match(liveAppPath, /params\.set\("role", role\)/);
   assert.match(liveAppPath, /for \(const key of \["resume", "reset_target"\]\)/);
   assert.match(liveAppPath, /return `\/\?\$\{params\.toString\(\)\}`/);
+  assert.match(callbackSource, /const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback\(request\)/);
+  assert.match(callbackPage, /<h1>Email confirmed<\/h1>/);
+  assert.match(callbackPage, />Click here to complete dancer profile<\/a>/);
+  assert.match(callbackPage, /if \(showDancerConfirmation\)[\s\S]*?continueLink\.href = destination/);
+  assert.match(callbackPage, /else \{\s*window\.location\.replace\(destination\)/);
 
   assert.match(dancerDashboardSource, /redirect\("\/\?dancr_dashboard=dancer"\)/);
   assert.doesNotMatch(dancerDashboardSource, /<DashboardClient/);
@@ -56,13 +65,36 @@ test("implicit Supabase email-confirmation tokens are transferred into the live 
   assert.match(callbackPage, /fragmentParams\.get\("access_token"\)/);
   assert.match(callbackPage, /const fragmentSession = fragmentAccessToken/);
   assert.match(callbackPage, /try \{\s*localStorage\.setItem\("dancrAuthSessionV1", JSON\.stringify\(session\)\)/);
-  assert.match(callbackPage, /window\.location\.replace\(redirectUrl\.pathname \+ redirectUrl\.search \+ fragment\)/);
+  assert.match(callbackPage, /const destination = redirectUrl\.pathname \+ redirectUrl\.search \+ fragment/);
+  assert.match(callbackPage, /continueLink\.href = destination/);
+  assert.match(callbackPage, /window\.location\.replace\(destination\)/);
   assert.match(callbackPage, /tokenRole && redirectUrl\.pathname === "\/account"/);
   assert.match(callbackPage, /redirectUrl\.searchParams\.set\("dancr_confirm", "1"\)/);
 
   assert.match(confirmationSessionReader, /function confirmationAccountFromAccessToken/);
   assert.match(confirmationSessionReader, /metadata\.role \|\| appMetadata\.role/);
   assert.match(confirmationSessionReader, /account: confirmationAccountFromAccessToken\(accessToken\)/);
+});
+
+test("unfinished dancer accounts stay draft and loading a profile cannot approve them", () => {
+  const signupProfileInsert =
+    signupRouteSource.match(/\.from\("dancer_profiles"\)[\s\S]*?\.insert\(\{[\s\S]*?\n    \}\);/)?.[0] || "";
+  const callbackProfileInsert =
+    callbackSource.match(/admin\.from\("dancer_profiles"\)\.insert\(\{[\s\S]*?\n  \}\);/)?.[0] || "";
+  const profileGet =
+    profileRouteSource.match(/export async function GET[\s\S]*?async function loadPendingPhotoReviews/)?.[0] || "";
+  const explicitSubmission =
+    profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
+
+  for (const profileInsert of [signupProfileInsert, callbackProfileInsert]) {
+    assert.match(profileInsert, /status: "draft"/);
+    assert.match(profileInsert, /verification_status: "pending"/);
+    assert.match(profileInsert, /is_public: false/);
+    assert.doesNotMatch(profileInsert, /automaticDancerApprovalValues/);
+  }
+  assert.doesNotMatch(profileGet, /automaticDancerApprovalValues|ensureAutomaticDancerApproval/);
+  assert.match(explicitSubmission, /getIdentityVerificationMode\(\) === "auto_approve"/);
+  assert.match(explicitSubmission, /automaticDancerApprovalValues\(\)/);
 });
 
 test("email callbacks preserve existing dancer approval and account state", () => {
