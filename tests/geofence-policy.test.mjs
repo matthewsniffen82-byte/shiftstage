@@ -155,15 +155,17 @@ test("an out-of-range check-in stays rejected and shows an accessible on-screen 
   assert.match(liveShell, /shiftCheckInTone === "error" \? "alert" : "status"/);
 });
 
-test("the live dashboard keeps a rejected geofence result beside the check-in button", () => {
+test("the live dashboard separates a rejected geofence alert from a clear retry button", () => {
   assert.match(liveShell, /function apiRequestError[\s\S]*?error\.code = typeof data\?\.code === "string" \? data\.code : "request_failed"/);
   assert.match(liveShell, /throw apiRequestError\(data\)/);
-  assert.match(liveShell, /shiftCheckInCode === "outside_geofence"/);
-  assert.match(liveShell, /Outside club range — try again/);
+  assert.match(liveShell, /class="mini-action \$\{checkInRejected \? "check-in-retry" : "primary"\}"[\s\S]*?\$\{checkInRejected \? "Try check-in again" : "Check in now"\}/);
+  assert.match(liveShell, /\.shift-action-grid \.mini-action\.check-in-retry::before[\s\S]*?content: "↻"/);
+  assert.doesNotMatch(liveShell, /Outside club range — try again/);
+  assert.doesNotMatch(liveShell, /mini-action\.check-in-rejected/);
   assert.match(liveShell, /const triggerLabel = trigger\?\.querySelector\("span"\) \|\| trigger/);
   assert.match(liveShell, /if \(triggerLabel\) triggerLabel\.textContent = action === "end" \? "Ending shift\.\.\." : action === "refresh" \? "Verifying location\.\.\." : "Checking location\.\.\."/);
   assert.doesNotMatch(liveShell, /trigger\.textContent = action === "end"/);
-  assert.match(liveShell, /action\.classList\.toggle\("is-rejected", checkInRejected\)/);
+  assert.match(liveShell, /action\.classList\.toggle\("is-retry", checkInRejected\)/);
   assert.match(liveShell, /if \(detail\) detail\.textContent = checkInRejected[\s\S]*?shiftCheckInMessage/);
   assert.match(liveShell, /<div class="shift-action-grid">[\s\S]*?<div class="shift-verification-copy shift-checkin-feedback/);
   assert.match(liveShell, /if \(actionSucceeded\)[\s\S]*?else \{[\s\S]*?renderShiftVerificationPanel\(\)/);

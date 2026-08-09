@@ -2213,11 +2213,25 @@
       opacity: 1 !important;
     }
 
-    .shift-action-grid .mini-action.check-in-rejected {
-      border-color: var(--dancr-color-danger-medium) !important;
-      color: #fecaca !important;
-      background: var(--dancr-color-danger-soft) !important;
-      box-shadow: inset 0 0 0 1px var(--dancr-color-danger-soft) !important;
+    .shift-action-grid .mini-action.check-in-retry {
+      min-height: 44px;
+      border-color: rgba(195,169,255,.68) !important;
+      color: #fff !important;
+      background: linear-gradient(135deg, #5223d6, #7c3aed 58%, #4a19c8) !important;
+      box-shadow: 0 10px 24px rgba(82,35,214,.26), inset 0 1px 0 rgba(255,255,255,.12) !important;
+    }
+
+    .shift-action-grid .mini-action.check-in-retry::before {
+      content: "↻";
+      margin-right: 7px;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .shift-action-grid .mini-action.check-in-retry:hover,
+    .shift-action-grid .mini-action.check-in-retry:focus-visible {
+      border-color: rgba(255,255,255,.82) !important;
+      box-shadow: 0 12px 28px rgba(82,35,214,.34), inset 0 1px 0 rgba(255,255,255,.14) !important;
     }
 
     .shift-bottom-sheet {
@@ -28475,10 +28489,10 @@
       opacity: .68;
     }
 
-    .dancer-shift-primary.is-rejected {
-      border-color: rgba(255, 113, 133, .9);
-      background: linear-gradient(135deg, #6d1828, #9f2540 58%, #621323);
-      box-shadow: 0 0 24px rgba(255, 70, 104, .28), inset 0 0 14px rgba(255,255,255,.1);
+    .dancer-shift-primary.is-retry {
+      border-color: rgba(216,201,255,.82);
+      background: linear-gradient(135deg, #5223d6, #7c3aed 58%, #4a19c8);
+      box-shadow: 0 12px 28px rgba(82,35,214,.34), inset 0 1px 0 rgba(255,255,255,.14);
     }
 
     .dancer-shift-primary svg,
@@ -44311,7 +44325,6 @@
       const canAttemptCheckIn = !checkedIn && !ended;
       const canCheckInNow = canAttemptCheckIn && checkInWindowOpen(profile);
       const checkInRejected = canAttemptCheckIn && shiftCheckInTone === "error";
-      const outsideGeofenceRejected = checkInRejected && shiftCheckInCode === "outside_geofence";
       const summary = profile.shiftSummary || (ended ? shiftSummaryForProfile(profile, profile.endedReason || "completed") : null);
       const statusCopy = ended
         ? "This shift has ended. QR commission tracking is stopped."
@@ -44331,7 +44344,7 @@
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
         <div class="shift-action-grid">
-          ${canAttemptCheckIn ? `<button class="mini-action ${checkInRejected ? "check-in-rejected" : "primary"}" type="button" data-shift-verify-action="check-in" aria-describedby="shiftCheckInStatus">${outsideGeofenceRejected ? "Outside club range — try again" : checkInRejected ? "Check-in failed — try again" : "Check in now"}</button>` : ""}
+          ${canAttemptCheckIn ? `<button class="mini-action ${checkInRejected ? "check-in-retry" : "primary"}" type="button" data-shift-verify-action="check-in" aria-describedby="shiftCheckInStatus">${checkInRejected ? "Try check-in again" : "Check in now"}</button>` : ""}
           ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Check-in confirmed" aria-live="polite">✓ Checked in</button>' : ""}
           ${checkedIn && !locationVerified && !ended ? '<button class="mini-action primary" type="button" data-shift-verify-action="refresh">Re-verify location</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>' : ""}
@@ -50495,9 +50508,8 @@
       const checkedIn = Boolean(profile && isCheckedInShift(profile) && profile.workingStatus !== "ended" && !profile.endedAt);
       const canCheckIn = Boolean(profile?.scheduled && !checkedIn && profile.workingStatus !== "ended" && !profile.endedAt && checkInWindowOpen(profile));
       const checkInRejected = canCheckIn && shiftCheckInTone === "error";
-      const outsideGeofenceRejected = checkInRejected && shiftCheckInCode === "outside_geofence";
       const nextShift = dancerDashboardPostedShifts(profile, city)[0] || null;
-      if (action) action.classList.toggle("is-rejected", checkInRejected);
+      if (action) action.classList.toggle("is-retry", checkInRejected);
 
       if (checkedIn) {
         if (kicker) kicker.textContent = "Working now";
@@ -50512,11 +50524,7 @@
           ? shiftCheckInMessage
           : `${postedShiftDateTimeLabel(profile, city)} · Verify your location to appear in Working Now.`;
         if (action) action.dataset.dashboardShiftAction = "check-in";
-        if (actionLabel) actionLabel.textContent = outsideGeofenceRejected
-          ? "Outside club range — try again"
-          : checkInRejected
-            ? "Check-in failed — try again"
-            : "Check in now";
+        if (actionLabel) actionLabel.textContent = checkInRejected ? "Try check-in again" : "Check in now";
       } else if (nextShift) {
         if (kicker) kicker.textContent = "Next shift";
         if (title) title.textContent = nextShift.venue || "Posted shift";
