@@ -16,6 +16,10 @@ const [
   migration,
   liveApp,
   dashboardClient,
+  venuePreviewRoute,
+  recoveryHelpers,
+  accountClient,
+  redeemClient,
 ] = await Promise.all([
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/auth.ts", import.meta.url), "utf8"),
@@ -30,6 +34,10 @@ const [
   readFile(new URL("../supabase/migrations/202607260002_venue_accounts_qr_analytics.sql", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/venue/access-code/preview/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/account-recovery.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/deals/redeem/[token]/RedeemDealClient.tsx", import.meta.url), "utf8"),
 ]);
 
 test("venue signup redeems a private access code and routes successful authentication to its dashboard", () => {
@@ -41,24 +49,41 @@ test("venue signup redeems a private access code and routes successful authentic
   assert.match(authRoute, /admin\.auth\.admin\.deleteUser\(createdUserId\)/);
   assert.match(authRoute, /expectedRole === "venue" && account\?\.role === "venue"/);
   assert.match(authHelpers, /if \(role === "venue"\) return "\/dashboard\/venue"/);
-  assert.match(liveApp, /document\.getElementById\("venueJoinNowBtn"\)\.addEventListener\("click", async/);
+  assert.match(liveApp, /id="venueLoginModeBtn"[^>]*>Sign in<\/button>/);
+  assert.match(liveApp, /id="venueSignupModeBtn"[^>]*>Create account<\/button>/);
+  assert.match(liveApp, /document\.getElementById\("venueCodeVerifyBtn"\)\.addEventListener\("click"/);
   assert.match(liveApp, /document\.getElementById\("venueLoginForm"\)\.addEventListener\("submit", async/);
   assert.match(liveApp, /async function submitVenueSignup\(button/);
-  assert.match(liveApp, /document\.getElementById\("venueLoginPassword"\)\.addEventListener\("keydown", async \(event\) => \{\s*if \(event\.key !== "Enter" \|\| !document\.getElementById\("venueSignupCode"\)\.value\.trim\(\)\) return;\s*event\.preventDefault\(\);\s*await submitVenueSignup/);
-  assert.match(liveApp, /if \(document\.getElementById\("venueSignupCode"\)\.value\.trim\(\)\) \{\s*await submitVenueSignup/);
+  assert.match(liveApp, /if \(venueAuthMode === "signup"\) \{\s*await submitVenueSignup/);
   assert.match(liveApp, /id="venueSignupCode"[^>]*autocomplete="one-time-code"/);
-  assert.match(liveApp, /venueCode,/);
+  assert.match(liveApp, /venueCode: verifiedVenueSignupCode/);
   assert.doesNotMatch(liveApp, /id="venueLoginName"|id="venueLoginCity"/);
   assert.match(liveApp, /await startVenueDashboardSession\("Venue dashboard opened"\)/);
   assert.match(liveApp, /!result\.session\?\.accessToken \|\| result\.account\?\.role !== "venue"/);
   assert.match(liveApp, /async function openVenueDashboard\(\)[\s\S]*?if \(!isVenueSession\(\)\)[\s\S]*?window\.location\.href = "\/dashboard\/venue"/);
-  assert.match(liveApp, /async function startVenueDashboardSession\(message[\s\S]*?window\.location\.href = "\/dashboard\/venue"/);
+  assert.match(liveApp, /async function startVenueDashboardSession\(message[\s\S]*?const destination = pendingVenueAuthReturnTo \|\| "\/dashboard\/venue"[\s\S]*?window\.location\.href = destination/);
   assert.match(liveApp, /function handleVenueDashboardDeepLink\(\)[\s\S]*?params\.get\("dancr_dashboard"\) !== "venue"[\s\S]*?forceFreshSignIn[\s\S]*?saveAuthSession\(null\)[\s\S]*?openAuthRole\("venue"\)[\s\S]*?void openVenueDashboard\(\)/);
   assert.match(dashboardClient, /<VenueDashboardSignInRecovery onSignedIn=\{retryDashboard\} \/>/);
   assert.doesNotMatch(dashboardClient, /dancr_force_sign_in/);
   assert.doesNotMatch(liveApp, />Manage MyDancr TV</);
   assert.match(liveApp, /const opened = await openVenueDashboard\(\);\s*if \(opened\) \{/);
   assert.doesNotMatch(liveApp, /venue@example\.com|venue123|demo venue/i);
+});
+
+test("venue access verifies the assigned venue before account creation and preserves secure return routes", () => {
+  assert.match(venuePreviewRoute, /eventType: "venue_access_preview"/);
+  assert.match(venuePreviewRoute, /await resolveVenueSignupCode\(admin, code\)/);
+  assert.match(venuePreviewRoute, /venue: \{[\s\S]*?id: access\.venue\.id[\s\S]*?name: access\.venue\.name/);
+  assert.doesNotMatch(venuePreviewRoute, /code_digest|serviceRoleKey/);
+  assert.match(recoveryHelpers, /input\.eventType === "venue_access_preview"[\s\S]*?ipLimit: 20, subjectLimit: 6/);
+  assert.match(recoveryHelpers, /if \(input\.eventType === "venue_access_preview"\) \{[\s\S]*?await enforceCompatibilityRateLimit/);
+  assert.match(liveApp, /fetch\("\/api\/venue\/access-code\/preview"/);
+  assert.match(liveApp, /verifiedVenueSignupCode = code/);
+  assert.match(liveApp, /function handleVenueAccessDeepLink\(\)/);
+  assert.match(liveApp, /requestedReturnTo\.startsWith\("\/"\) && !requestedReturnTo\.startsWith\("\/\/"\)/);
+  assert.match(accountClient, /requestedRole === "venue"/);
+  assert.match(accountClient, /destination\.searchParams\.set\("venueAccess", "1"\)/);
+  assert.match(redeemClient, /venueAccess=1&venueMode=login&return_to=/);
 });
 
 test("venue dashboard refreshes a saved session and recovers sign-in without leaving the page", () => {

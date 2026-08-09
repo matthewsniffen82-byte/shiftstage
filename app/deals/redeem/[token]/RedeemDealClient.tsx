@@ -95,7 +95,10 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
         {isRedeemed ? "Already Redeemed" : isRedeeming ? "Redeeming..." : "Redeem Deal"}
       </button>
       {!venueAccessToken ? (
-        <Link className="venue-sign-in" href="/account?role=venue">
+        <Link
+          className="venue-sign-in"
+          href={`/?venueAccess=1&venueMode=login&return_to=${encodeURIComponent(`/deals/redeem/${token}`)}`}
+        >
           Venue staff sign in to confirm
         </Link>
       ) : null}

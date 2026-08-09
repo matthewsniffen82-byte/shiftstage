@@ -105,8 +105,8 @@ test("venue access stays in signup and never appears as a claim action on public
   assert.doesNotMatch(publicVenueSource, /isClaimable/);
   assert.doesNotMatch(liveApp, /Have a venue code|Claim this venue|venue-card-claim|venue-detail-claim/);
   assert.match(liveApp, /id="venueSignupCode"/);
-  assert.match(liveApp, /The one-time code connects your account to the correct existing venue page/);
-  assert.match(liveApp, /handleVenueSignupDeepLink/);
+  assert.match(liveApp, /It can connect only the venue assigned to that code/);
+  assert.match(liveApp, /handleVenueAccessDeepLink/);
   assert.match(liveApp, /reviewLiveAdminVenueClaim/);
   assert.match(liveApp, /issueLiveAdminVenueClaimCode/);
   assert.match(liveApp, /revokeLiveAdminVenueClaimCode/);

@@ -3500,6 +3500,174 @@
       gap: 10px;
     }
 
+    .venue-auth-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 5px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .venue-auth-tab {
+      min-height: 46px;
+      border: 0;
+      border-radius: 12px;
+      color: #aaa2b9;
+      background: transparent;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .venue-auth-tab.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(98,45,220,.96), rgba(36,157,204,.78));
+      box-shadow: 0 0 20px rgba(124,58,237,.24), inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    .venue-auth-mode-copy {
+      display: grid;
+      gap: 4px;
+      padding: 4px 2px 2px;
+    }
+
+    .venue-auth-mode-copy strong {
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .venue-auth-mode-copy span {
+      color: #aaa2b9;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.4;
+    }
+
+    .venue-signup-step {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(53,216,255,.25);
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(10,28,35,.9), rgba(17,13,28,.9));
+      box-shadow: inset 0 0 20px rgba(53,216,255,.035);
+    }
+
+    .venue-signup-step[hidden],
+    .venue-account-fields[hidden],
+    .venue-access-preview[hidden] {
+      display: none !important;
+    }
+
+    .venue-signup-step-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .venue-signup-step-head span {
+      color: #7eeaff;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .venue-signup-step-head strong {
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .venue-code-input {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: clamp(12px, 3.4vw, 15px);
+      letter-spacing: .025em;
+      text-transform: uppercase;
+    }
+
+    .venue-code-verify {
+      min-height: 46px;
+      border: 1px solid rgba(53,216,255,.46);
+      border-radius: 13px;
+      color: #dffcff;
+      background: rgba(8,53,67,.78);
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .venue-code-verify:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .venue-access-preview {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      padding: 11px;
+      border: 1px solid rgba(35,222,140,.34);
+      border-radius: 14px;
+      background: rgba(5,62,43,.34);
+    }
+
+    .venue-access-preview-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #07130e;
+      background: #38e39d;
+      font-size: 22px;
+      font-weight: 1000;
+      box-shadow: 0 0 18px rgba(56,227,157,.28);
+    }
+
+    .venue-access-preview-copy {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .venue-access-preview-copy span {
+      color: #9debc9;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .venue-access-preview-copy strong {
+      overflow: hidden;
+      color: #fff;
+      font-size: 14px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .venue-access-preview-copy small {
+      color: #b9b0c7;
+      font-weight: 750;
+    }
+
+    .venue-account-fields {
+      display: grid;
+      gap: 10px;
+    }
+
+    @media (max-width: 380px) {
+      .venue-auth-tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .venue-code-input {
+        font-size: 11px;
+      }
+    }
+
     .field-note,
     .stage-name-note {
       margin-top: 2px;
@@ -35803,7 +35971,7 @@
         <div class="page-head">
           <div>
             <span class="eyebrow">Login / Join</span>
-            <h2>Sign in to Mydancr</h2>
+            <h2 id="authPageTitle">Sign in to Mydancr</h2>
           </div>
           <button class="close-btn" id="authClose" aria-label="Close auth">
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
@@ -35930,35 +36098,61 @@
             <div class="rule-note auth-status" id="dancerAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
           <form class="auth-form" id="venueLoginForm" data-auth-view="venue" hidden>
-            <div class="auth-form-head">
-              <strong>Venue account</strong>
-              <span>Sign in to manage your venue. New venue owners enter the private access code from MyDancr and choose Create venue account.</span>
+            <div class="venue-auth-tabs" role="tablist" aria-label="Venue account access">
+              <button class="venue-auth-tab active" id="venueLoginModeBtn" type="button" role="tab" aria-selected="true">Sign in</button>
+              <button class="venue-auth-tab" id="venueSignupModeBtn" type="button" role="tab" aria-selected="false">Create account</button>
             </div>
-            <div class="field">
-              <label for="venueSignupCode">Venue access code <small>(sign up only)</small></label>
-              <input id="venueSignupCode" type="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" minlength="25" maxlength="32" placeholder="DANCR-XXXX-XXXX-XXXX-XXXX-XXXX">
-              <div class="rule-note">The one-time code connects your account to the correct existing venue page. MyDancr administrators provide access codes privately.</div>
+            <div class="venue-auth-mode-copy">
+              <strong id="venueAuthModeTitle">Open your venue dashboard</strong>
+              <span id="venueAuthModeDescription">Use the verified manager account already connected to your venue.</span>
             </div>
-            <div class="field">
-              <label for="venueLoginEmail">Email</label>
-              <input id="venueLoginEmail" type="email" autocomplete="email" required>
-            </div>
-            <div class="field">
-              <label for="venueLoginPassword">Password</label>
-              <div class="password-wrap">
-                <input id="venueLoginPassword" type="password" autocomplete="current-password" minlength="8" required>
-                <button class="password-toggle" type="button" data-password-toggle="venueLoginPassword" aria-label="Show password" aria-pressed="false">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                </button>
+            <section class="venue-signup-step" id="venueSignupCodeStep" aria-labelledby="venueSignupCodeHeading" hidden>
+              <div class="venue-signup-step-head">
+                <span>Step 1 of 2</span>
+                <strong id="venueSignupCodeHeading">Connect your venue</strong>
+              </div>
+              <div class="field">
+                <label for="venueSignupCode">Private venue access code</label>
+                <input class="venue-code-input" id="venueSignupCode" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" minlength="30" maxlength="30" placeholder="DANCR-XXXX-XXXX-XXXX-XXXX-XXXX" required>
+                <div class="rule-note">Paste the one-time code MyDancr sent privately. It can connect only the venue assigned to that code.</div>
+              </div>
+              <button class="venue-code-verify" id="venueCodeVerifyBtn" type="button">Verify access code</button>
+              <div class="venue-access-preview" id="venueAccessPreview" role="status" aria-live="polite" hidden>
+                <span class="venue-access-preview-mark" aria-hidden="true">✓</span>
+                <span class="venue-access-preview-copy">
+                  <span>Secure connection confirmed</span>
+                  <strong id="venueAccessPreviewName"></strong>
+                  <small id="venueAccessPreviewLocation"></small>
+                </span>
+              </div>
+              <div class="rule-note auth-status" id="venueCodeStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+            </section>
+            <div class="venue-account-fields" id="venueAccountFields">
+              <div class="venue-signup-step-head" id="venueAccountStepHeading" hidden>
+                <span>Step 2 of 2</span>
+                <strong>Create the manager login</strong>
+              </div>
+              <div class="field">
+                <label for="venueLoginEmail">Email</label>
+                <input id="venueLoginEmail" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="venueLoginPassword">Password</label>
+                <div class="password-wrap">
+                  <input id="venueLoginPassword" type="password" autocomplete="current-password" minlength="8" required>
+                  <button class="password-toggle" type="button" data-password-toggle="venueLoginPassword" aria-label="Show password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="auth-help-row">
+            <div class="auth-help-row" id="venueAuthHelpRow">
               <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
               <button class="forgot-password-link" id="venueForgotLoginBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot email?</button>
             </div>
-            <button class="action-btn" id="venueLoginSubmit" type="submit">Venue login</button>
-            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="button">Create venue account</button>
-            <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite">Existing managers can sign in. New managers need a private venue access code.</div>
+            <button class="action-btn" id="venueLoginSubmit" type="submit">Open venue dashboard</button>
+            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
+            <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
           <section class="recovery-popover" id="passwordRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle" hidden>
             <div class="recovery-popover-surface" id="passwordRecoverySurface">
@@ -37380,6 +37574,10 @@
     let isDancerLoggedIn = false;
     let isVenueLoggedIn = false;
     let authMode = "login";
+    let venueAuthMode = "login";
+    let verifiedVenueSignupCode = "";
+    let verifiedVenueSignupPreview = null;
+    let pendingVenueAuthReturnTo = "";
     let adminAuthMode = "login";
     let adminApprovedDancerSearch = "";
     let adminDisapprovedDancerSearch = "";
@@ -47409,6 +47607,18 @@
         clearValue("venueSignupCode");
         clearValue("venueLoginEmail");
         clearValue("venueLoginPassword");
+        verifiedVenueSignupCode = "";
+        verifiedVenueSignupPreview = null;
+        const preview = document.getElementById("venueAccessPreview");
+        const codeStatus = document.getElementById("venueCodeStatus");
+        if (preview) preview.hidden = true;
+        if (codeStatus) {
+          codeStatus.hidden = true;
+          codeStatus.textContent = "";
+        }
+        const signupSubmit = document.getElementById("venueJoinNowBtn");
+        if (signupSubmit) signupSubmit.textContent = "Create venue account";
+        setVenueAuthStatus("");
       }
 
       document.querySelectorAll("[data-password-toggle]").forEach((button) => {
@@ -47418,6 +47628,127 @@
         button.setAttribute("aria-pressed", "false");
         button.setAttribute("aria-label", "Show password");
       });
+    }
+
+    function setVenueAuthStatus(message = "") {
+      const status = document.getElementById("venueAuthStatus");
+      if (!status) return;
+      status.textContent = message;
+      status.hidden = !message;
+    }
+
+    function setVenueCodeStatus(message = "") {
+      const status = document.getElementById("venueCodeStatus");
+      if (!status) return;
+      status.textContent = message;
+      status.hidden = !message;
+    }
+
+    function setVenueAuthMode(mode, options = {}) {
+      venueAuthMode = mode === "signup" ? "signup" : "login";
+      const isSignup = venueAuthMode === "signup";
+      const loginTab = document.getElementById("venueLoginModeBtn");
+      const signupTab = document.getElementById("venueSignupModeBtn");
+      const signupStep = document.getElementById("venueSignupCodeStep");
+      const accountFields = document.getElementById("venueAccountFields");
+      const accountStepHeading = document.getElementById("venueAccountStepHeading");
+      const recoveryActions = document.getElementById("venueAuthHelpRow");
+      const loginSubmit = document.getElementById("venueLoginSubmit");
+      const signupSubmit = document.getElementById("venueJoinNowBtn");
+      const passwordInput = document.getElementById("venueLoginPassword");
+      const title = document.getElementById("venueAuthModeTitle");
+      const description = document.getElementById("venueAuthModeDescription");
+      const signupReady = Boolean(verifiedVenueSignupCode && verifiedVenueSignupPreview);
+
+      loginTab?.classList.toggle("active", !isSignup);
+      signupTab?.classList.toggle("active", isSignup);
+      loginTab?.setAttribute("aria-selected", String(!isSignup));
+      signupTab?.setAttribute("aria-selected", String(isSignup));
+      if (signupStep) signupStep.hidden = !isSignup;
+      if (accountFields) accountFields.hidden = isSignup && !signupReady;
+      if (accountStepHeading) accountStepHeading.hidden = !isSignup || !signupReady;
+      if (recoveryActions) recoveryActions.hidden = isSignup;
+      if (loginSubmit) loginSubmit.hidden = isSignup;
+      if (signupSubmit) signupSubmit.hidden = !isSignup || !signupReady;
+      if (passwordInput) passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
+      if (title) title.textContent = isSignup ? "Create a verified venue account" : "Open your venue dashboard";
+      if (description) {
+        description.textContent = isSignup
+          ? "First confirm the private code assigned to your venue, then create its manager login."
+          : "Use the verified manager account already connected to your venue.";
+      }
+      setVenueAuthStatus("");
+
+      if (options.focus !== false) {
+        setTimeout(() => {
+          const target = isSignup
+            ? document.getElementById(signupReady ? "venueLoginEmail" : "venueSignupCode")
+            : document.getElementById("venueLoginEmail");
+          target?.focus({ preventScroll: true });
+        }, 60);
+      }
+    }
+
+    function formatVenueAccessCode(value) {
+      const normalized = String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (!normalized) return "";
+      if (normalized.length < 5 && "DANCR".startsWith(normalized)) return normalized;
+      const entropy = (normalized.startsWith("DANCR") ? normalized.slice(5) : normalized).slice(0, 20);
+      const groups = entropy.match(/.{1,4}/g) || [];
+      return ["DANCR", ...groups].join("-");
+    }
+
+    function invalidateVenueAccessPreview() {
+      verifiedVenueSignupCode = "";
+      verifiedVenueSignupPreview = null;
+      const preview = document.getElementById("venueAccessPreview");
+      if (preview) preview.hidden = true;
+      setVenueCodeStatus("");
+      if (venueAuthMode === "signup") setVenueAuthMode("signup", { focus: false });
+    }
+
+    async function verifyVenueAccessCode() {
+      const input = document.getElementById("venueSignupCode");
+      const button = document.getElementById("venueCodeVerifyBtn");
+      const code = formatVenueAccessCode(input?.value || "");
+      if (input) input.value = code;
+      if (!input?.reportValidity()) {
+        setVenueCodeStatus("Enter the complete private access code from MyDancr.");
+        return false;
+      }
+
+      button.disabled = true;
+      button.textContent = "Verifying securely…";
+      setVenueCodeStatus("Checking the venue assigned to this code…");
+      try {
+        const response = await fetch("/api/venue/access-code/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ code })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok || !data.venue?.id) {
+          throw new Error(data.error || "This venue access code could not be verified.");
+        }
+
+        verifiedVenueSignupCode = code;
+        verifiedVenueSignupPreview = data.venue;
+        document.getElementById("venueAccessPreviewName").textContent = data.venue.name;
+        document.getElementById("venueAccessPreviewLocation").textContent = [data.venue.city, data.venue.state].filter(Boolean).join(", ");
+        document.getElementById("venueAccessPreview").hidden = false;
+        document.getElementById("venueJoinNowBtn").textContent = `Create account for ${data.venue.name}`;
+        setVenueCodeStatus("Access code verified. Create the manager login below.");
+        setVenueAuthMode("signup", { focus: false });
+        setTimeout(() => document.getElementById("venueLoginEmail")?.focus({ preventScroll: true }), 80);
+        return true;
+      } catch (error) {
+        invalidateVenueAccessPreview();
+        setVenueCodeStatus(error.message || "This venue access code could not be verified.");
+        return false;
+      } finally {
+        button.disabled = false;
+        button.textContent = "Verify access code";
+      }
     }
 
     function clearDancerSignupFields() {
@@ -47437,7 +47768,9 @@
       closeRecoveryPopover(passwordRecoveryCard, false);
       closeRecoveryPopover(loginRecoveryCard, false);
       clearAuthFields(role);
-      document.getElementById("authRoleTitle").textContent = isVenue ? "Venue login or sign up" : isDancer ? "Dancer login" : "Customer login";
+      if (isVenue) pendingVenueAuthReturnTo = "";
+      document.getElementById("authPageTitle").textContent = isVenue ? "Venue access" : "Sign in to Mydancr";
+      document.getElementById("authRoleTitle").textContent = isVenue ? "Venue access" : isDancer ? "Dancer login" : "Customer login";
       document.getElementById("authRoleSubtitle").textContent = isVenue
         ? "Manage your venue page, published QR code, verified working-now dancers, and live analytics."
         : isDancer
@@ -47446,7 +47779,10 @@
       document.getElementById("authForm").hidden = isDancer || isVenue;
       document.getElementById("dancerLoginForm").hidden = !isDancer;
       document.getElementById("venueLoginForm").hidden = !isVenue;
+      const selectedRoleHead = document.querySelector(".auth-selected-role");
+      if (selectedRoleHead) selectedRoleHead.hidden = isVenue;
       if (!isDancer && !isVenue) setCustomerAuthMode("login");
+      if (isVenue) setVenueAuthMode("login", { focus: false });
       if (isDancer && isAdminSession()) {
         setDancerLoginStatus("An admin session is active in this browser. Signing in here will safely switch it to your dancer account.");
       }
@@ -47454,6 +47790,7 @@
     }
 
     function closeAuthPage() {
+      pendingVenueAuthReturnTo = "";
       clearAuthFields("all");
       closeRecoveryPopover(passwordRecoveryCard, false);
       closeRecoveryPopover(loginRecoveryCard, false);
@@ -55734,10 +56071,12 @@
       if (!isVenueSession()) {
         throw new Error("A verified venue session is required. Sign in and try again.");
       }
+      const destination = pendingVenueAuthReturnTo || "/dashboard/venue";
+      pendingVenueAuthReturnTo = "";
       closeAuthPage();
       updateAccountHeader();
       showToast(message);
-      window.location.href = "/dashboard/venue";
+      window.location.href = destination;
     }
 
     document.getElementById("dancerVenueVerificationCreate").addEventListener("click", () => createDancerVenueVerification());
@@ -55751,42 +56090,41 @@
     document.getElementById("venueDancerVerificationApprove").addEventListener("click", approveVenueDancerVerification);
 
     async function submitVenueSignup(button = document.getElementById("venueJoinNowBtn")) {
-      const status = document.getElementById("venueAuthStatus");
       const venueCodeInput = document.getElementById("venueSignupCode");
       const emailInput = document.getElementById("venueLoginEmail");
       const passwordInput = document.getElementById("venueLoginPassword");
       const loginButton = document.getElementById("venueLoginSubmit");
-      const venueCode = venueCodeInput.value.trim();
-      if (!venueCode || !venueCodeInput.checkValidity()) {
-        status.textContent = "Enter the private venue access code from MyDancr.";
-        venueCodeInput.focus();
+      const submittedCode = formatVenueAccessCode(venueCodeInput.value);
+      if (!verifiedVenueSignupCode || submittedCode !== verifiedVenueSignupCode || !verifiedVenueSignupPreview) {
+        const verified = await verifyVenueAccessCode();
+        if (!verified) venueCodeInput.focus();
         return false;
       }
       if (!emailInput.reportValidity() || !passwordInput.reportValidity()) return false;
       button.disabled = true;
       loginButton.disabled = true;
-      status.textContent = "Creating your venue account…";
+      setVenueAuthStatus(`Creating the manager account for ${verifiedVenueSignupPreview.name}…`);
       try {
         const result = await requestAuth({
           mode: "signup",
           role: "venue",
-          venueCode,
+          venueCode: verifiedVenueSignupCode,
           email: document.getElementById("venueLoginEmail").value,
           password: document.getElementById("venueLoginPassword").value
         });
         if (result.requiresEmailConfirmation) {
-          status.textContent = "Venue account created. Check your email and tap the confirmation link, then sign in here.";
+          setVenueAuthStatus("Venue account created. Check your email and tap the confirmation link, then sign in here.");
           showToast("Confirmation email sent. Open it on this device to return here.");
           return true;
         }
         if (!result.session?.accessToken || result.account?.role !== "venue" || !result.venue?.id) {
           throw new Error("Venue account authorization could not be verified. Sign in and try again.");
         }
-        status.textContent = "Venue account verified. Opening your live dashboard…";
+        setVenueAuthStatus("Venue account verified. Opening your live dashboard…");
         await startVenueDashboardSession("Venue account created");
         return true;
       } catch (error) {
-        status.textContent = error.message || "Venue signup failed";
+        setVenueAuthStatus(error.message || "Venue signup failed");
         showToast(error.message || "Venue signup failed");
         return false;
       } finally {
@@ -55795,26 +56133,37 @@
       }
     }
 
-    document.getElementById("venueJoinNowBtn").addEventListener("click", async (event) => {
-      await submitVenueSignup(event.currentTarget);
+    document.getElementById("venueLoginModeBtn").addEventListener("click", () => {
+      setVenueAuthMode("login");
     });
 
-    document.getElementById("venueLoginPassword").addEventListener("keydown", async (event) => {
-      if (event.key !== "Enter" || !document.getElementById("venueSignupCode").value.trim()) return;
-      event.preventDefault();
-      await submitVenueSignup(document.getElementById("venueJoinNowBtn"));
+    document.getElementById("venueSignupModeBtn").addEventListener("click", () => {
+      setVenueAuthMode("signup");
+    });
+
+    document.getElementById("venueCodeVerifyBtn").addEventListener("click", () => {
+      void verifyVenueAccessCode();
+    });
+
+    document.getElementById("venueSignupCode").addEventListener("input", (event) => {
+      const input = event.currentTarget;
+      const previousCode = input.value;
+      const formattedCode = formatVenueAccessCode(previousCode);
+      if (formattedCode !== previousCode) input.value = formattedCode;
+      if (verifiedVenueSignupCode && formattedCode !== verifiedVenueSignupCode) {
+        invalidateVenueAccessPreview();
+      }
     });
 
     document.getElementById("venueLoginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (document.getElementById("venueSignupCode").value.trim()) {
+      if (venueAuthMode === "signup") {
         await submitVenueSignup(document.getElementById("venueJoinNowBtn"));
         return;
       }
       const submit = document.getElementById("venueLoginSubmit");
-      const status = document.getElementById("venueAuthStatus");
       submit.disabled = true;
-      status.textContent = "Signing in…";
+      setVenueAuthStatus("Signing in…");
       try {
         const result = await requestAuth({
           mode: "login",
@@ -55825,10 +56174,10 @@
         if (!result.session?.accessToken || result.account?.role !== "venue") {
           throw new Error("Venue account authorization could not be verified. Sign in and try again.");
         }
-        status.textContent = "Signed in. Opening your live venue dashboard…";
+        setVenueAuthStatus("Signed in. Opening your live venue dashboard…");
         await startVenueDashboardSession("Venue dashboard opened");
       } catch (error) {
-        status.textContent = error.message || "Venue login failed";
+        setVenueAuthStatus(error.message || "Venue login failed");
         showToast(error.message || "Venue login failed");
       } finally {
         submit.disabled = false;
@@ -57425,13 +57774,32 @@
       return true;
     }
 
-    function handleVenueSignupDeepLink() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("venueSignup") !== "1") return false;
-      window.history.replaceState({}, document.title, "/");
+    function handleVenueAccessDeepLink() {
+      const url = new URL(window.location.href);
+      const legacySignup = url.searchParams.get("venueSignup") === "1";
+      const venueAccessRequested = url.searchParams.get("venueAccess") === "1";
+      if (!legacySignup && !venueAccessRequested) return false;
+
+      const mode = legacySignup || url.searchParams.get("venueMode") === "signup" ? "signup" : "login";
+      const requestedReturnTo = String(url.searchParams.get("return_to") || "");
+      const safeReturnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
+        ? requestedReturnTo
+        : "";
+      url.searchParams.delete("venueSignup");
+      url.searchParams.delete("venueAccess");
+      url.searchParams.delete("venueMode");
+      url.searchParams.delete("return_to");
+      window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+
       openAuthRole("venue");
-      showToast("Enter the private access code from MyDancr to create your venue account.");
-      setTimeout(() => document.getElementById("venueSignupCode")?.focus(), 120);
+      pendingVenueAuthReturnTo = safeReturnTo;
+      setVenueAuthMode(mode, { focus: false });
+      if (mode === "signup") {
+        showToast("Enter the private access code from MyDancr to create your venue account.");
+        setTimeout(() => document.getElementById("venueSignupCode")?.focus(), 120);
+      } else {
+        setTimeout(() => document.getElementById("venueLoginEmail")?.focus(), 120);
+      }
       return true;
     }
 
@@ -57515,7 +57883,7 @@
     if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueSignupDeepLink()) {
+    if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink()) {
       void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl());
     }
   </script>

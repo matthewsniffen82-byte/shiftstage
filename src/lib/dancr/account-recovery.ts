@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AccountRecoveryRole = "customer" | "dancer" | "venue" | "admin";
-export type AccountRecoveryEventType = "password_reset" | "email_lookup";
+export type AccountRecoveryEventType = "password_reset" | "email_lookup" | "venue_access_preview";
 
 export class AccountRecoveryRateLimitError extends Error {
   retryAfterSeconds: number;
@@ -32,9 +32,20 @@ export async function enforceAccountRecoveryRateLimit(client: SupabaseClient, in
 }) {
   const limits = input.eventType === "password_reset"
     ? { windowSeconds: 15 * 60, ipLimit: 8, subjectLimit: 3 }
-    : { windowSeconds: 60 * 60, ipLimit: 4, subjectLimit: 2 };
+    : input.eventType === "venue_access_preview"
+      ? { windowSeconds: 10 * 60, ipLimit: 20, subjectLimit: 6 }
+      : { windowSeconds: 60 * 60, ipLimit: 4, subjectLimit: 2 };
   const requestIpHash = recoveryHash(`ip:${accountRecoveryRequestIp(input.request)}`);
   const subjectHash = recoveryHash(`subject:${input.eventType}:${input.subject.trim().toLowerCase()}`);
+  if (input.eventType === "venue_access_preview") {
+    await enforceCompatibilityRateLimit(client, {
+      ...input,
+      ...limits,
+      requestIpHash,
+      subjectHash,
+    });
+    return;
+  }
   const { data, error } = await client.rpc("record_account_recovery_event", {
     p_event_type: input.eventType,
     p_role: input.role,

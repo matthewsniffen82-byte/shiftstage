@@ -30,6 +30,8 @@ const SESSION_KEY = "dancrAuthSessionV1";
 export default function AccountClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const requestedRole = searchParams.get("role");
+  const isVenueAccessRedirect = requestedRole === "venue";
   const initialRole = searchParams.get("role") === "dancer" ? "dancer" : "customer";
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const [role, setRole] = useState<AuthRole>(initialRole);
@@ -59,6 +61,18 @@ export default function AccountClient() {
   const passwordRecoveryEmailRef = useRef<HTMLInputElement | null>(null);
   const recoveryAccountNameRef = useRef<HTMLInputElement | null>(null);
   const recoveryTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!isVenueAccessRedirect) return;
+    const destination = new URL("/", window.location.origin);
+    destination.searchParams.set("venueAccess", "1");
+    destination.searchParams.set("venueMode", searchParams.get("mode") === "signup" ? "signup" : "login");
+    const returnTo = searchParams.get("return_to") || "";
+    if (returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+      destination.searchParams.set("return_to", returnTo);
+    }
+    window.location.replace(destination.toString());
+  }, [isVenueAccessRedirect, searchParams]);
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
   const isCustomerSignup = role === "customer" && mode === "signup";
@@ -339,6 +353,15 @@ export default function AccountClient() {
     } finally {
       setIsSendingLoginHelp(false);
     }
+  }
+
+  if (isVenueAccessRedirect) {
+    return (
+      <main className="account-shell">
+        <AccountStyles />
+        <p className="status" role="status">Opening secure venue access…</p>
+      </main>
+    );
   }
 
   return (
