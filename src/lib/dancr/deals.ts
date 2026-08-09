@@ -17,6 +17,7 @@ export type DealRedemptionInput = {
   shiftId?: string | null;
   customerId?: string | null;
   sessionId?: string | null;
+  campaignSource?: "venue_qr" | null;
   request: Request;
 };
 
@@ -72,6 +73,23 @@ export async function getActiveClubDealByIdForVenue(
     .select(CLUB_DEAL_COLUMNS)
     .eq("id", dealId)
     .eq("venue_id", venueId)
+    .eq("is_active", true)
+    .eq("payout_type", "flat")
+    .gt("payout_amount_cents", 0)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? toClubDeal(data) : null;
+}
+
+export async function getActiveClubDealById(
+  client: DancrClient,
+  dealId: string,
+): Promise<ClubDeal | null> {
+  const { data, error } = await (client as any)
+    .from("club_deals")
+    .select(CLUB_DEAL_COLUMNS)
+    .eq("id", dealId)
     .eq("is_active", true)
     .eq("payout_type", "flat")
     .gt("payout_amount_cents", 0)
@@ -178,7 +196,10 @@ export async function createDealRedemption(client: DancrClient, input: DealRedem
       ip_address: audit.ipAddress,
       user_agent: audit.userAgent,
       device_fingerprint: audit.deviceFingerprint,
-      audit,
+      audit: {
+        ...audit,
+        campaign_source: input.campaignSource || null,
+      },
     })
     .select("id, redemption_token, expires_at")
     .single();
@@ -191,6 +212,29 @@ export async function createDealRedemption(client: DancrClient, input: DealRedem
     redemptionUrl,
     expiresAt: data.expires_at,
   };
+}
+
+export async function enforceDealGenerationRateLimit(
+  client: DancrClient,
+  request: Request,
+  clubDealId: string,
+) {
+  const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("x-real-ip");
+  if (!ipAddress) return;
+
+  const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { count, error } = await (client as any)
+    .from("qr_redemptions")
+    .select("*", { count: "exact", head: true })
+    .eq("club_deal_id", clubDealId)
+    .eq("ip_address", ipAddress)
+    .gte("generated_at", since);
+
+  if (error) throw error;
+  if ((count || 0) >= 20) {
+    throw new Error("Too many QR requests. Try again in a few minutes.");
+  }
 }
 
 export async function getRedemptionForScanner(client: DancrClient, token: string) {
@@ -555,6 +599,7 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
   const [
     { data: revenue, error: revenueError },
     { data: lifecycle, error: lifecycleError },
+    { data: issuedPasses, error: issuedPassesError },
   ] = await Promise.all([
     db
       .from("deal_revenue_events")
@@ -571,9 +616,16 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
       .eq("qr_redemptions.venue_id", venueId)
       .gte("occurred_at", monthStart.toISOString())
       .limit(1000),
+    db
+      .from("qr_redemptions")
+      .select("id, source_type, audit")
+      .eq("venue_id", venueId)
+      .gte("generated_at", monthStart.toISOString())
+      .limit(1000),
   ]);
   if (revenueError) throw revenueError;
   if (lifecycleError) throw lifecycleError;
+  if (issuedPassesError) throw issuedPassesError;
 
   const rows = revenue || [];
   const activeRows = rows.filter((item: any) => !["refunded", "voided"].includes(item.status));
@@ -593,6 +645,10 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
       "gross_commission_cents",
       rows.filter((item: any) => item.status === "pending_venue_payment"),
     ),
+    postedVenueQrScansThisMonth: (issuedPasses || []).filter(
+      (item: any) => item.source_type === "club_page" && item.audit?.campaign_source === "venue_qr",
+    ).length,
+    passesIssuedThisMonth: (issuedPasses || []).length,
     savesThisMonth: countLifecycle("saved"),
     sharesThisMonth: countLifecycle("shared"),
     scannerOpensThisMonth: countLifecycle("scanner_opened"),

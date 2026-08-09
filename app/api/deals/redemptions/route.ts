@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { apiError } from "@/src/lib/api";
 import { verifyDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
+import { verifyVenueDealCampaignToken } from "@/src/lib/dancr/deal-campaign";
 import {
   createDealRedemption,
+  enforceDealGenerationRateLimit,
   getVerifiedActiveCheckInAtVenue,
   getActiveClubDealByIdForVenue,
 } from "@/src/lib/dancr/deals";
@@ -28,6 +30,9 @@ export async function POST(request: Request) {
     const attributionToken = typeof body?.attributionToken === "string"
       ? body.attributionToken.trim()
       : "";
+    const campaignToken = typeof body?.campaignToken === "string"
+      ? body.campaignToken.trim()
+      : "";
     const sessionId = typeof body?.sessionId === "string" && UUID_PATTERN.test(body.sessionId.trim())
       ? body.sessionId.trim()
       : null;
@@ -37,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminSupabaseClient();
-    await enforceGenerationRateLimit(admin, request, clubDealId);
+    await enforceDealGenerationRateLimit(admin, request, clubDealId);
 
     const deal = await getActiveClubDealByIdForVenue(admin, venueId, clubDealId);
     if (!deal) {
@@ -45,6 +50,7 @@ export async function POST(request: Request) {
     }
 
     let shiftId: string | null = null;
+    let campaignSource: "venue_qr" | null = null;
     if (sourceType === "dancer_profile") {
       if (!dancerId || !attributionToken) {
         return NextResponse.json({ ok: false, error: "Missing dancer attribution." }, { status: 400 });
@@ -75,6 +81,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "The verified dancer check-in changed. Refresh the profile." }, { status: 409 });
       }
       shiftId = verifiedCheckIn.shiftId;
+    } else if (campaignToken) {
+      const campaign = verifyVenueDealCampaignToken(campaignToken);
+      if (!campaign || campaign.dealId !== clubDealId || campaign.venueId !== venueId) {
+        return NextResponse.json({ ok: false, error: "Invalid tracked venue QR." }, { status: 400 });
+      }
+      campaignSource = "venue_qr";
     }
 
     const customerId = await optionalCustomerId(request, admin);
@@ -86,6 +98,7 @@ export async function POST(request: Request) {
       shiftId,
       customerId,
       sessionId,
+      campaignSource,
       request,
     });
     const qrDataUrl = await QRCode.toDataURL(redemption.redemptionUrl, {
@@ -119,23 +132,5 @@ async function optionalCustomerId(
     return data?.role === "customer" && data?.account_state === "active" ? user.id : null;
   } catch {
     return null;
-  }
-}
-
-async function enforceGenerationRateLimit(admin: any, request: Request, clubDealId: string) {
-  const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip");
-  if (!ipAddress) return;
-
-  const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const { count, error } = await admin
-    .from("qr_redemptions")
-    .select("*", { count: "exact", head: true })
-    .eq("club_deal_id", clubDealId)
-    .eq("ip_address", ipAddress)
-    .gte("generated_at", since);
-
-  if (error) throw error;
-  if ((count || 0) >= 20) {
-    throw new Error("Too many QR requests. Try again in a few minutes.");
   }
 }

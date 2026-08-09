@@ -17,6 +17,9 @@ const [
   customerDashboard,
   venueQrComponent,
   liveApp,
+  venueDealQrRoute,
+  claimPage,
+  claimClient,
 ] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redemptions/route.ts", import.meta.url), "utf8"),
@@ -32,6 +35,9 @@ const [
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/components/VenueQrCode.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/venue/deal/qr/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/deals/claim/[dealId]/page.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/deals/claim/[dealId]/DealClaimClient.tsx", import.meta.url), "utf8"),
 ]);
 
 test("dancer-attributed Club Deals require a verified check-in at issue and preserve the locked attribution", () => {
@@ -120,6 +126,45 @@ test("deal generation produces a durable pass with save and share actions", () =
   assert.match(dealCard, /\.club-deal-dialog-backdrop \{ position: fixed; z-index: 1700;/);
   assert.match(dealCard, /recordLifecycleEvent\(redemptionToken, "saved"\)/);
   assert.match(dealCard, /recordLifecycleEvent\(redemptionToken, "shared"\)/);
+});
+
+test("venues can generate a durable tracked QR for each published deal", () => {
+  assert.match(venueDealQrRoute, /getAccountByUserId\(client, user\.id\)/);
+  assert.match(venueDealQrRoute, /account\.role !== "venue" \|\| account\.accountState !== "active"/);
+  assert.match(venueDealQrRoute, /getVenueDealsForAccount\(createAdminSupabaseClient\(\), user\.id\)/);
+  assert.match(venueDealQrRoute, /owned\?\.deals\.find\(\(candidate\) => candidate\.id === dealId\)/);
+  assert.match(venueDealQrRoute, /!deal\.isActive \|\| deal\.payoutType !== "flat" \|\| deal\.payoutAmountCents <= 0/);
+  assert.match(venueDealQrRoute, /createVenueDealCampaignToken\(\{ dealId: deal\.id, venueId: deal\.venueId \}\)/);
+  assert.match(venueDealQrRoute, /\/deals\/claim\/\$\{encodeURIComponent\(deal\.id\)\}\?campaign=\$\{encodeURIComponent\(campaignToken\)\}/);
+  assert.match(venueDealQrRoute, /QRCode\.toDataURL\(claimUrl/);
+  assert.match(customerDashboard, /Tracked venue QR generator/);
+  assert.match(customerDashboard, /fetch\(`\/api\/venue\/deal\/qr\?dealId=/);
+  assert.match(customerDashboard, />Download PNG</);
+  assert.match(customerDashboard, />Copy tracked link</);
+  assert.match(customerDashboard, /same offer automatically appears on affiliated dancers&apos; profiles while they are verified Working Now/);
+  assert.match(customerDashboard, /Direct venue attribution · MyDancr tracked/);
+});
+
+test("posted venue QR scans issue unique direct-attribution customer passes", () => {
+  assert.match(claimPage, /getActiveClubDealById\(createAdminSupabaseClient\(\), dealId\)/);
+  assert.match(claimPage, /verifyVenueDealCampaignToken\(campaignToken\)/);
+  assert.match(claimPage, /campaign\.dealId !== dealId/);
+  assert.match(claimPage, /deal\.venueId !== campaign\.venueId/);
+  assert.match(claimPage, /<DealClaimClient campaignToken=\{campaignToken\} deal=\{deal\}/);
+  assert.match(claimClient, /fetch\("\/api\/deals\/redemptions"/);
+  assert.match(claimClient, /clubDealId: deal\.id/);
+  assert.match(claimClient, /venueId: deal\.venueId/);
+  assert.match(claimClient, /sourceType: "club_page"/);
+  assert.match(claimClient, /campaignToken/);
+  assert.match(claimClient, /sessionId: readOrCreateDealSessionId\(\)/);
+  assert.match(claimClient, /window\.location\.replace\(`\/deals\/pass\/\$\{encodeURIComponent\(data\.redemption\.redemptionToken\)\}`\)/);
+  assert.doesNotMatch(claimClient, /dancerId|attributionToken/);
+  assert.match(redemptionRoute, /verifyVenueDealCampaignToken\(campaignToken\)/);
+  assert.match(redemptionRoute, /campaign\.dealId !== clubDealId \|\| campaign\.venueId !== venueId/);
+  assert.match(redemptionRoute, /campaignSource = "venue_qr"/);
+  assert.match(deals, /campaign_source: input\.campaignSource \|\| null/);
+  assert.match(deals, /postedVenueQrScansThisMonth/);
+  assert.match(customerDashboard, /label="Posted QR scans"/);
 });
 
 test("live venue QR sheet uses concise MyDancr labeling and mobile-safe actions", () => {
