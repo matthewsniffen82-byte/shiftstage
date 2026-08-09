@@ -81,8 +81,10 @@ test("video moderation checks server-decoded frames, caption, and spoken audio",
   assert.match(videoModeration, /sexual_services_or_solicitation/);
   assert.match(videoModeration, /drug_use_or_sales/);
   assert.match(videoModeration, /nonconsensual_or_coercive_content/);
-  assert.match(videoModeration, /policyDecision\.confidence >= 0\.9 \? "rejected" : "review"/);
-  assert.match(videoModeration, /policyDecision\.confidence >= 0\.86 \? "approved" : "review"/);
+  assert.match(videoModeration, /const VIDEO_POLICY_APPROVE_CONFIDENCE = 0\.75/);
+  assert.match(videoModeration, /const VIDEO_POLICY_REJECT_CONFIDENCE = 0\.95/);
+  assert.match(videoModeration, /policyDecision\.confidence >= VIDEO_POLICY_REJECT_CONFIDENCE \? "rejected" : "review"/);
+  assert.match(videoModeration, /policyDecision\.confidence >= VIDEO_POLICY_APPROVE_CONFIDENCE \? "approved" : "review"/);
   assert.match(videoModeration, /await rm\(workspace, \{ recursive: true, force: true \}\)/);
 });
 
