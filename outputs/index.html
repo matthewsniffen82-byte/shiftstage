@@ -5077,6 +5077,16 @@
       color: #ffe29a;
     }
 
+    .submitted-photo-slot.is-selected {
+      border-color: rgba(53,216,255,.72);
+      background: rgba(7,58,70,.28);
+      box-shadow: 0 0 0 1px rgba(53,216,255,.08), inset 0 0 18px rgba(53,216,255,.05);
+    }
+
+    .submitted-photo-slot.is-selected small {
+      color: #9fefff;
+    }
+
     .submitted-photo-placeholder {
       width: 100%;
       min-height: 72px;
@@ -38036,6 +38046,12 @@
     let approvedProfileVideoRemovingId = "";
     let approvedProfileVideoStatus = "";
     let approvedProfileVideoStatusTone = "";
+    let pendingSetupPhotoFiles = [];
+    let pendingSetupPhotoPreviewUrls = [];
+    let pendingApprovedProfileVideoFile = null;
+    let pendingApprovedProfileVideoPreviewUrl = "";
+    let pendingApprovedProfileVideoConsent = false;
+    let pendingApprovedProfileVideoRights = false;
     let shiftCheckInMessage = "";
     let shiftCheckInTone = "";
     let shiftCheckInCode = "";
@@ -44985,6 +45001,25 @@
       })[status] || status || "Saved";
     }
 
+    function clearPendingApprovedProfileVideoSelection() {
+      if (pendingApprovedProfileVideoPreviewUrl) {
+        URL.revokeObjectURL(pendingApprovedProfileVideoPreviewUrl);
+      }
+      pendingApprovedProfileVideoFile = null;
+      pendingApprovedProfileVideoPreviewUrl = "";
+      pendingApprovedProfileVideoConsent = false;
+      pendingApprovedProfileVideoRights = false;
+    }
+
+    function rememberPendingApprovedProfileVideo(file) {
+      if (pendingApprovedProfileVideoPreviewUrl) {
+        URL.revokeObjectURL(pendingApprovedProfileVideoPreviewUrl);
+      }
+      pendingApprovedProfileVideoFile = file || null;
+      pendingApprovedProfileVideoPreviewUrl = file ? URL.createObjectURL(file) : "";
+      return pendingApprovedProfileVideoPreviewUrl;
+    }
+
     function dancerProfileVideoModerationComplete() {
       if (!isDancerSession()) return true;
       if (!approvedProfileVideoWorkspace) return false;
@@ -45004,6 +45039,7 @@
         : workspace?.profileEligible === false
           ? "Videos that pass safety moderation stay private until your dancer profile is approved."
           : "Approved videos automatically appear with the pictures on your public profile and in MyDancr TV.");
+      const selectedVideoUrl = pendingApprovedProfileVideoPreviewUrl;
       return `
         <section class="approved-profile-video-manager" id="approvedProfileVideoManager" aria-labelledby="approvedProfileVideoTitle">
           <div class="approved-profile-video-head">
@@ -45045,20 +45081,20 @@
                 <form class="approved-profile-video-form" id="approvedProfileVideoUploadForm">
                   <label>
                     Video file
-                    <input id="approvedProfileVideoInput" type="file" accept="video/mp4,video/webm" required>
+                    <input id="approvedProfileVideoInput" type="file" accept="video/mp4,video/webm" ${pendingApprovedProfileVideoFile ? "" : "required"}>
                     <small>Vertical or square MP4/WebM · 1–30 seconds · 75 MB maximum</small>
                   </label>
-                  <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline hidden></video>
+                  <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline ${selectedVideoUrl ? `src="${escapeHtml(selectedVideoUrl)}"` : "hidden"}></video>
                   <div class="approved-profile-video-schedule-note">
                     <strong>Venue context is automatic</strong>
                     <small>MyDancr TV uses your verified Working Now shift first, then your next posted shift. If neither exists, the video shows no venue.</small>
                   </div>
                   <label class="approved-profile-video-check">
-                    <input id="approvedProfileVideoConsent" type="checkbox" required>
+                    <input id="approvedProfileVideoConsent" type="checkbox" required ${pendingApprovedProfileVideoConsent ? "checked" : ""}>
                     <span>I have permission from every identifiable person shown.</span>
                   </label>
                   <label class="approved-profile-video-check">
-                    <input id="approvedProfileVideoRights" type="checkbox" required>
+                    <input id="approvedProfileVideoRights" type="checkbox" required ${pendingApprovedProfileVideoRights ? "checked" : ""}>
                     <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
                   </label>
                   <button type="submit" ${approvedProfileVideoSubmitting ? "disabled" : ""}>
@@ -45146,13 +45182,13 @@
       const headers = authenticatedRequestHeaders("application/json");
       if (!headers) throw new Error("Sign in as a dancer to upload profile videos.");
       const fileInput = form.querySelector("#approvedProfileVideoInput");
-      const file = fileInput?.files?.[0];
+      const file = fileInput?.files?.[0] || pendingApprovedProfileVideoFile;
       if (!file) throw new Error("Choose an MP4 or WebM video first.");
       if ((approvedProfileVideoWorkspace?.videos?.length || 0) >= MAX_DANCER_PROFILE_VIDEOS) {
         throw new Error("You can upload up to 5 profile videos. Remove one before adding another.");
       }
-      const consentConfirmed = form.querySelector("#approvedProfileVideoConsent")?.checked === true;
-      const rightsConfirmed = form.querySelector("#approvedProfileVideoRights")?.checked === true;
+      const consentConfirmed = form.querySelector("#approvedProfileVideoConsent")?.checked === true || pendingApprovedProfileVideoConsent;
+      const rightsConfirmed = form.querySelector("#approvedProfileVideoRights")?.checked === true || pendingApprovedProfileVideoRights;
       if (!consentConfirmed || !rightsConfirmed) {
         throw new Error("Confirm consent and content rights before uploading.");
       }
@@ -45210,15 +45246,9 @@
         applyResponseSession(submitted);
         const completionMessage = submitted.message || "Your video completed automated safety review.";
         const completionTone = submitted.video?.status === "rejected" ? "error" : "success";
-        fileInput.value = "";
+        if (fileInput) fileInput.value = "";
         form.reset();
-        const preview = document.getElementById("approvedProfileVideoPreview");
-        if (preview?.src) URL.revokeObjectURL(preview.src);
-        if (preview) {
-          preview.removeAttribute("src");
-          preview.load();
-          preview.hidden = true;
-        }
+        clearPendingApprovedProfileVideoSelection();
         await loadApprovedProfileVideos({ force: true });
         approvedProfileVideoStatus = completionMessage;
         approvedProfileVideoStatusTone = completionTone;
@@ -48345,6 +48375,10 @@
       liveAdminVenueClaimCodes = [];
       liveAdminRevealedVenueCodes = {};
       liveNotifications = [];
+      releaseSetupPhotoPreviews();
+      pendingSetupPhotoFiles = [];
+      pendingSetupPhotoPreviewUrls = [];
+      clearPendingApprovedProfileVideoSelection();
       saveAuthSession(null);
       clearCustomerSavedCollections();
       closeDashboard();
@@ -49922,6 +49956,31 @@
         });
     }
 
+    function releaseSetupPhotoPreviews(urls = pendingSetupPhotoPreviewUrls) {
+      urls.filter(Boolean).forEach((url) => URL.revokeObjectURL(url));
+    }
+
+    function rememberSetupPhotoFiles(files = []) {
+      releaseSetupPhotoPreviews();
+      pendingSetupPhotoFiles = Array.from(files);
+      pendingSetupPhotoPreviewUrls = pendingSetupPhotoFiles.map((file) => URL.createObjectURL(file));
+    }
+
+    function nextSetupPhotoUploadTarget(profile) {
+      const hasPrimary = editableDancerPhotoRows(profile)
+        .some((photo) => Boolean(photo.is_primary || photo.isPrimary));
+      if (!hasPrimary) return "main";
+      return `gallery-add:${nextAvailableApprovedGallerySortOrder(profile)}`;
+    }
+
+    function setupPhotoSelectionItems() {
+      return pendingSetupPhotoFiles.map((file, index) => ({
+        id: `selected-${index}-${file.name || "photo"}`,
+        imageUrl: pendingSetupPhotoPreviewUrls[index] || "",
+        category: "selected"
+      }));
+    }
+
     function dancerSetupPhotoPreviewMarkup() {
       const profile = activeDancerProfile() || null;
       const galleryUrls = Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
@@ -49939,7 +49998,7 @@
           category: "review"
         }));
       const seen = new Set();
-      const items = [...approvedItems, ...pendingItems]
+      const items = [...approvedItems, ...pendingItems, ...setupPhotoSelectionItems()]
         .filter((photo) => {
           const key = photo.imageUrl || photo.id;
           if (!key || seen.has(key)) return false;
@@ -49955,11 +50014,11 @@
       return `
         <div class="photo-upload-grid" aria-label="Uploaded profile photos">
           ${items.map((photo, index) => `
-            <div class="upload-slot submitted-photo-slot ${photo.category === "review" ? "is-pending" : "is-approved"}">
+            <div class="upload-slot submitted-photo-slot ${photo.category === "review" ? "is-pending" : photo.category === "selected" ? "is-selected" : "is-approved"}">
               ${photo.imageUrl
                 ? `<img src="${escapeHtml(photo.imageUrl)}" alt="Uploaded profile photo ${index + 1}" loading="lazy" decoding="async">`
                 : '<div class="submitted-photo-placeholder" aria-label="Private pending photo preview">Pending review</div>'}
-              <span>${photoDisplayLabel(index)}<small>${photo.category === "review" ? "Pending human review" : "Approved automatically"}</small></span>
+              <span>${photoDisplayLabel(index)}<small>${photo.category === "review" ? "Pending human review" : photo.category === "selected" ? "Ready to upload" : "Approved automatically"}</small></span>
             </div>
           `).join("")}
         </div>
@@ -49999,22 +50058,24 @@
       }
       const submit = form.querySelector('button[type="submit"]');
       const result = document.getElementById("photoUploadResult");
-      const inputFiles = Array.from(document.getElementById("setupProfilePhotos")?.files || []);
-      const photoFiles = inputFiles.slice(0, MAX_DANCER_PROFILE_PHOTOS);
+      const inputFiles = pendingSetupPhotoFiles.length
+        ? [...pendingSetupPhotoFiles]
+        : Array.from(document.getElementById("setupProfilePhotos")?.files || []);
+      const photoFiles = [...inputFiles];
       if (!photoFiles.length) {
         showToast("Choose at least one photo");
+        return;
+      }
+      if (inputFiles.length > MAX_DANCER_PROFILE_PHOTOS) {
+        const message = `Choose up to ${MAX_DANCER_PROFILE_PHOTOS} photos for review.`;
+        showToast(message);
+        if (result) result.textContent = message;
         return;
       }
       try {
         assertDancerProfilePhotoLimit(activeDancerProfile(), { adding: inputFiles.length });
       } catch (error) {
         const message = error.message || `Choose up to ${MAX_DANCER_PROFILE_PHOTOS} photos`;
-        showToast(message);
-        if (result) result.textContent = message;
-        return;
-      }
-      if (inputFiles.length > MAX_DANCER_PROFILE_PHOTOS) {
-        const message = `Choose up to ${MAX_DANCER_PROFILE_PHOTOS} photos for review.`;
         showToast(message);
         if (result) result.textContent = message;
         return;
@@ -50043,9 +50104,16 @@
         setSetupPhotoStatus(setupProgressSteps[setupProgressIndex], "moderating");
       }, 1400);
       try {
-        const uploadAttempts = await Promise.allSettled(
-          photoFiles.map((file, index) => uploadSetupPhotoFile(file, index === 0, index))
-        );
+        const uploadAttempts = [];
+        for (const file of photoFiles) {
+          try {
+            const profile = activeDancerProfile() || ensureActiveDancerProfile("Pending");
+            const upload = await uploadApprovedDancerPhoto(file, nextSetupPhotoUploadTarget(profile));
+            uploadAttempts.push({ status: "fulfilled", value: upload });
+          } catch (reason) {
+            uploadAttempts.push({ status: "rejected", reason });
+          }
+        }
         const uploaded = uploadAttempts
           .filter((attempt) => attempt.status === "fulfilled")
           .map((attempt) => attempt.value);
@@ -50055,65 +50123,27 @@
         const reviewUploads = uploaded.filter((item) => dancerSetupPhotoModerationCategory(item) === "review");
         const rejectedUploads = uploaded.filter((item) => dancerSetupPhotoModerationCategory(item) === "rejected");
         const unresolvedUploads = uploaded.filter((item) => !dancerSetupPhotoModerationCategory(item));
-        const urls = approvedUploads.map((item) => item.photo?.imageUrl).filter(Boolean);
-        if (profile && urls.length) {
-          profile.mainPhotoUrl = profile.mainPhotoUrl || urls[0];
-          profile.galleryPhotoUrls = [...(profile.galleryPhotoUrls || []), ...urls].slice(0, MAX_DANCER_PROFILE_PHOTOS);
-          approvedUploads.forEach((item, index) => {
-            const uploadedPhoto = item.photo || item || {};
-            const imageUrl = uploadedPhoto.imageUrl || uploadedPhoto.image_url || uploadedPhoto.url || urls[index] || "";
-            if (!imageUrl) return;
-            profile.dancer_photos = [...(profile.dancer_photos || []), {
-              ...uploadedPhoto,
-              id: uploadedPhoto.id || `${profile.id || profile.name}-setup-photo-${Date.now()}-${index}`,
-              imageUrl,
-              image_url: imageUrl,
-              isPrimary: Boolean(uploadedPhoto.isPrimary ?? uploadedPhoto.is_primary ?? index === 0),
-              is_primary: Boolean(uploadedPhoto.isPrimary ?? uploadedPhoto.is_primary ?? index === 0),
-              sortOrder: Number(uploadedPhoto.sortOrder ?? uploadedPhoto.sort_order ?? index),
-              sort_order: Number(uploadedPhoto.sortOrder ?? uploadedPhoto.sort_order ?? index),
-              reviewStatus: "approved",
-              review_status: "approved"
-            }];
-          });
-        }
-        if (profile && reviewUploads.length) {
-          const submittedPhotos = [...(profile.submittedPhotos || [])];
-          reviewUploads.forEach((item, index) => {
-            const uploadedPhoto = item.photo || item || {};
-            const sortOrder = Number(uploadedPhoto.sortOrder ?? uploadedPhoto.sort_order ?? index);
-            const isPrimary = Boolean(uploadedPhoto.isPrimary ?? uploadedPhoto.is_primary ?? sortOrder === 0);
-            const pendingPhoto = {
-              ...uploadedPhoto,
-              id: uploadedPhoto.id || item.moderationRecordId || `${profile.id || profile.name}-pending-photo-${Date.now()}-${index}`,
-              imageUrl: uploadedPhoto.imageUrl || uploadedPhoto.image_url || "",
-              image_url: uploadedPhoto.imageUrl || uploadedPhoto.image_url || "",
-              isPrimary,
-              is_primary: isPrimary,
-              sortOrder,
-              sort_order: sortOrder,
-              decision: "review",
-              reviewStatus: "pending",
-              review_status: "pending",
-              reviewNotes: "Pending review. This slot stays occupied until approval or rejection.",
-              review_notes: "Pending review. This slot stays occupied until approval or rejection."
-            };
-            const slotKey = dancerPhotoSlotKey(pendingPhoto);
-            const existingIndex = submittedPhotos.findIndex((photo) => dancerPhotoSlotKey(photo) === slotKey);
-            if (existingIndex >= 0) submittedPhotos[existingIndex] = pendingPhoto;
-            else submittedPhotos.push(pendingPhoto);
-          });
-          profile.submittedPhotos = submittedPhotos.slice(0, MAX_DANCER_PROFILE_PHOTOS);
-        }
         if (profile) {
           normalizeLocalDancerPhotos(profile);
           profile.photoStatus = reviewUploads.length ? "Pending" : approvedUploads.length ? "Approved" : profile.photoStatus;
         }
+        const failedFiles = [];
+        const failedPreviewUrls = [];
+        uploadAttempts.forEach((attempt, index) => {
+          const previewUrl = pendingSetupPhotoPreviewUrls[index] || "";
+          if (attempt.status === "rejected") {
+            failedFiles.push(photoFiles[index]);
+            failedPreviewUrls.push(previewUrl);
+          } else if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+          }
+        });
+        pendingSetupPhotoFiles = failedFiles;
+        pendingSetupPhotoPreviewUrls = failedPreviewUrls;
         dancerSetup.photos = dancerProfileMediaModerationComplete(profile)
           || (approvedUploads.length > 0 && reviewUploads.length === 0 && rejectedUploads.length === 0 && unresolvedUploads.length === 0);
         activeSetupStep = "profile";
-        await hydrateDancerApprovalProgress();
-        activeSetupStep = "profile";
+        setupChecklistExpanded = true;
         const message = setupPhotoModerationResultMessage({
           approvedCount: approvedUploads.length,
           reviewCount: reviewUploads.length,
@@ -51101,12 +51131,12 @@
         <form class="auth-form" data-setup-form="photos">
           ${dancerSetupPhotoPreviewMarkup()}
           <div class="field">
-            <label for="setupProfilePhotos">Gallery photos</label>
+            <label for="setupProfilePhotos">Profile pictures</label>
             <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple>
             <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> For the sharpest result, choose original camera images—not screenshots or social-media copies—with at least 2,000 pixels on the longest edge. MyDancr keeps the high-resolution master, serves responsive sizes, and never enlarges a small upload. The first photo becomes your main profile photo. Each photo uses the live Dancr auto-moderation rules: it is approved automatically, sent for human review, or fully rejected.</div>
           </div>
           <div class="rule-note" id="photoUploadResult">Every image is checked automatically. A pending or rejected image keeps profile submission locked until it passes or is removed.</div>
-          <button class="action-btn" type="submit">Submit photos</button>
+          <button class="action-btn" type="submit">Upload pictures</button>
         </form>
         ${approvedProfileVideoManagerMarkup()}
       `;
@@ -57101,22 +57131,59 @@
     }
 
     dancerDashboard.addEventListener("change", async (event) => {
+      if (event.target?.id === "setupProfilePhotos") {
+        const input = event.target;
+        const files = Array.from(input.files || []);
+        if (!files.length) return;
+        try {
+          if (files.length > MAX_DANCER_PROFILE_PHOTOS) {
+            throw new Error(`Choose up to ${MAX_DANCER_PROFILE_PHOTOS} photos for review.`);
+          }
+          assertDancerProfilePhotoLimit(activeDancerProfile(), { adding: files.length });
+        } catch (error) {
+          const message = error?.message || "Those photos could not be selected.";
+          input.value = "";
+          const result = document.getElementById("photoUploadResult");
+          if (result) result.textContent = message;
+          showToast(message);
+          return;
+        }
+        rememberSetupPhotoFiles(files);
+        activeSetupStep = "profile";
+        setupChecklistExpanded = true;
+        renderDancerSetup();
+        const message = `${files.length} picture${files.length === 1 ? "" : "s"} selected. Tap Upload pictures to run the same safety check used in Edit Profile.`;
+        const result = document.getElementById("photoUploadResult");
+        if (result) {
+          result.textContent = message;
+          result.classList.add("is-review");
+        }
+        showToast(`${files.length} picture${files.length === 1 ? "" : "s"} ready to upload`);
+        return;
+      }
       if (event.target?.id === "approvedProfileVideoInput") {
         const input = event.target;
         const preview = document.getElementById("approvedProfileVideoPreview");
-        if (preview?.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
         const file = input.files?.[0];
         if (preview && file) {
-          const objectUrl = URL.createObjectURL(file);
-          preview.dataset.objectUrl = objectUrl;
+          const objectUrl = rememberPendingApprovedProfileVideo(file);
           preview.src = objectUrl;
           preview.hidden = false;
         } else if (preview) {
+          clearPendingApprovedProfileVideoSelection();
           preview.removeAttribute("src");
           preview.hidden = true;
         }
         const status = document.getElementById("approvedProfileVideoStatus");
         if (status) status.textContent = file ? "Confirm both permissions, then upload." : "Choose a video file.";
+        return;
+      }
+      if (event.target?.id === "approvedProfileVideoConsent") {
+        pendingApprovedProfileVideoConsent = event.target.checked === true;
+        return;
+      }
+      if (event.target?.id === "approvedProfileVideoRights") {
+        pendingApprovedProfileVideoRights = event.target.checked === true;
         return;
       }
       if (event.target?.id === "approvedAvatarUploadInput") {

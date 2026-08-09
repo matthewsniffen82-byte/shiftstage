@@ -125,7 +125,7 @@ test("real setup steps advance only after their production save succeeds", () =>
 
   assert.ok(profileSubmitStart >= 0, "profile save handler must exist");
   assert.ok(profileSubmit.indexOf('await patchAuthenticatedJson("/api/dancer/profile"') < profileSubmit.indexOf('completeSetupStep("profile"'));
-  assert.ok(photoSubmit.indexOf("await Promise.allSettled") < photoSubmit.indexOf("dancerSetup.photos = dancerProfileMediaModerationComplete"));
+  assert.ok(photoSubmit.indexOf("await uploadApprovedDancerPhoto") < photoSubmit.indexOf("dancerSetup.photos = dancerProfileMediaModerationComplete"));
   assert.match(liveAppSource, /return \["profile", "review", "approval"\]/);
   assert.doesNotMatch(liveAppSource, /\/api\/dancer\/identity-verification/);
 });
@@ -148,7 +148,27 @@ test("Step 1 remains open after every profile and media action", () => {
   assert.match(completion, /options\.keepOpen \? step : \(nextIncompleteStep\(\) \|\| step\)/);
   assert.match(profileSubmit, /completeSetupStep\("profile", \{ keepOpen: true \}\)/);
   assert.doesNotMatch(photoSubmit, /activeSetupStep = dancerSetup\.photos \?/);
-  assert.match(photoSubmit, /activeSetupStep = "profile";[\s\S]*?await hydrateDancerApprovalProgress\(\);[\s\S]*?activeSetupStep = "profile";/);
+  assert.match(photoSubmit, /activeSetupStep = "profile";[\s\S]*?setupChecklistExpanded = true;/);
+});
+
+test("Step 1 media reuses Edit Profile uploads and keeps selected previews through rerenders", () => {
+  const setupSubmit =
+    liveAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
+  const videoSubmit =
+    liveAppSource.match(/async function submitApprovedProfileVideo[\s\S]*?\n    async function removeApprovedProfileVideo/)?.[0] || "";
+
+  assert.match(liveAppSource, /function rememberSetupPhotoFiles\(files = \[\]\)/);
+  assert.match(liveAppSource, /pendingSetupPhotoFiles = Array\.from\(files\)/);
+  assert.match(liveAppSource, /category: "selected"/);
+  assert.match(liveAppSource, /Ready to upload/);
+  assert.match(setupSubmit, /pendingSetupPhotoFiles\.length/);
+  assert.match(setupSubmit, /await uploadApprovedDancerPhoto\(file, nextSetupPhotoUploadTarget\(profile\)\)/);
+  assert.doesNotMatch(setupSubmit, /uploadSetupPhotoFile\(file, index === 0/);
+  assert.match(liveAppSource, /let pendingApprovedProfileVideoFile = null/);
+  assert.match(liveAppSource, /rememberPendingApprovedProfileVideo\(file\)/);
+  assert.match(videoSubmit, /fileInput\?\.files\?\.\[0\] \|\| pendingApprovedProfileVideoFile/);
+  assert.equal(liveAppSource.match(/\$\{approvedProfileVideoManagerMarkup\(\)\}/g)?.length, 2);
+  assert.match(liveAppSource, /same safety check used in Edit Profile/i);
 });
 
 test("background dashboard refreshes do not replace Step 1 while the dancer is typing", () => {

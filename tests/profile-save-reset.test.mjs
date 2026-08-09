@@ -154,13 +154,14 @@ test("onboarding Step 2 stays locked until every photo is fully approved", () =>
 
   assert.match(uploadHelper, /normalizedReviewStatus\(data\?\.decision\) === "rejected"/);
   assert.match(uploadHelper, /return data/);
-  assert.match(setupSubmit, /Promise\.allSettled/);
+  assert.match(setupSubmit, /for \(const file of photoFiles\)/);
+  assert.match(setupSubmit, /await uploadApprovedDancerPhoto\(file, nextSetupPhotoUploadTarget\(profile\)\)/);
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "approved"/);
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "review"/);
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "rejected"/);
   assert.match(setupSubmit, /dancerProfileMediaModerationComplete\(profile\)/);
   assert.match(setupSubmit, /approvedUploads\.length > 0 && reviewUploads\.length === 0/);
-  assert.match(setupSubmit, /activeSetupStep = "profile";[\s\S]*?await hydrateDancerApprovalProgress\(\);[\s\S]*?activeSetupStep = "profile";/);
+  assert.match(setupSubmit, /activeSetupStep = "profile";[\s\S]*?setupChecklistExpanded = true;/);
   assert.match(profileHydration, /photos: dancerProfileMediaModerationComplete\(profile\)/);
   assert.doesNotMatch(profileHydration, /photos: statusApproved \|\| photos\.length > 0 \|\| submittedPhotos\.length > 0/);
   assert.match(mobileAppSource, /Pending human review/);
