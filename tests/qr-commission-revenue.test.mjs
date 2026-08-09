@@ -203,6 +203,5 @@ test("legacy uploaded QR images cannot masquerade as commission-bearing MyDancr 
     /externalQrUrl|data-external-venue-qr|data-venue-profile-qr|data-deal-pass/,
   );
   assert.match(liveApp, /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?profile\.activeDeal\?\.id[\s\S]*?return null;/);
-  assert.match(venueDashboard, /External marketing QR/);
-  assert.match(venueDashboard, /never used for tracked Club Deals, dancer attribution, or commissions/);
+  assert.doesNotMatch(venueDashboard, /External marketing QR|Untracked external QR|Upload marketing QR/);
 });

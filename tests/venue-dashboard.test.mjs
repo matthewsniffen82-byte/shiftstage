@@ -120,7 +120,7 @@ test("venue management is consolidated into one descriptive collapsible workspac
   assert.match(dashboardClient, /id="venue-tv"[\s\S]*?title="MyDancr TV"/);
   assert.match(dashboardClient, /id="venue-public-profile"[\s\S]*?title="Public venue profile"/);
   assert.match(dashboardClient, /id="venue-working-now"[\s\S]*?title="Working now"/);
-  assert.match(dashboardClient, /id="venue-external-qr"[\s\S]*?title="External marketing QR"/);
+  assert.doesNotMatch(dashboardClient, /venue-external-qr|External marketing QR|Untracked external QR/);
   assert.match(dashboardClient, /<VenueClubDealPanel[\s\S]*?hasWorkingNowDancers=\{workingNow\.length > 0\}[\s\S]*?initialDeal=\{deal\}[\s\S]*?initialDeals=\{venueDeals\}/);
   assert.match(dashboardClient, /"Share QR"/);
   assert.match(dashboardClient, /<VenueTvPanel \/>/);
