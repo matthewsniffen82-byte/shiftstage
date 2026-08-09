@@ -72,5 +72,9 @@ test("venue dashboard uses the dancer command, shortcuts, metrics, and compact-m
   assert.match(routedDashboards, /\.venue-dashboard-shortcuts \{ display: grid; grid-template-columns: repeat\(4/);
   assert.match(routedDashboards, /@media \(max-width: 860px\) \{ \.venue-dashboard-shortcuts \{ grid-template-columns: repeat\(2/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \{ display: grid; grid-template-columns: repeat\(3/);
-  assert.match(routedDashboards, /\.dashboard-head-venue h1 \{[\s\S]*?white-space: normal;[\s\S]*?-webkit-line-clamp: 2;/);
+  assert.match(
+    routedDashboards,
+    /\.dashboard-head h1 \{[\s\S]*?font-size: clamp\(21px, 5vw, 26px\);[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/,
+  );
+  assert.doesNotMatch(routedDashboards, /\.dashboard-head-venue h1/);
 });

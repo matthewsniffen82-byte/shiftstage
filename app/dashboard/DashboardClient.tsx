@@ -5164,7 +5164,6 @@ function DashboardStyles() {
       h2 { margin: 0; font-size: 22px; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mydancr-dashboard-gap); }
-      .dashboard-head-venue h1 { display: -webkit-box; overflow: hidden; font-size: clamp(20px, 4.6vw, 25px); line-height: 1.06; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
       .venue-dashboard-grid { grid-template-columns: 1fr; }
       .venue-command-panel, .venue-dashboard-shortcuts, .venue-dashboard-metrics { grid-column: 1 / -1; }
       .venue-command-panel { display: grid; gap: 16px; padding: 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
@@ -5562,7 +5561,6 @@ function DashboardStyles() {
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }
-        .dashboard-head-venue h1 { font-size: clamp(20px, 5.7vw, 24px); }
         .venue-command-panel { gap: 13px; padding: 14px; }
         .venue-command-status { align-items: start; gap: 11px; }
         .venue-live-pill { min-width: 54px; min-height: 38px; padding: 0 10px; font-size: 12px; }
