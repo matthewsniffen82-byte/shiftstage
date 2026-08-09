@@ -2233,7 +2233,7 @@ function VenueClubDealPanel({
           >
             <span>{dealTypeLabel(String(deal.offerType || "admission"))}</span>
             <strong>{String(deal.dealTitle || "Untitled offer")}</strong>
-            <small>{deal.isActive ? "Live · QR active" : "Draft · Not public"}</small>
+            <small className={deal.isActive ? "is-live" : undefined}>{deal.isActive ? "Live · QR active" : "Draft · Not public"}</small>
           </button>
         ))}
         <button aria-pressed={!editingId} className={`add${!editingId ? " selected" : ""}`} type="button" onClick={addDeal}>
@@ -2358,6 +2358,7 @@ function VenueClubDealPanel({
           ) : null}
           <div className="venue-deal-form-actions">
             <button
+              className="primary"
               aria-live="polite"
               disabled={isSaving}
               name="dealAction"
@@ -5637,6 +5638,54 @@ function DashboardStyles() {
       .venue-verification-preview { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 16px; border: 1px solid rgba(50,255,164,.3); border-radius: 12px; background: rgba(50,255,164,.055); }
       .venue-verification-avatar { width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #171722; font-size: 24px; font-weight: 950; }
       .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
+      .dashboard-shell-venue { --mydancr-dashboard-panel: #09090d; --mydancr-dashboard-panel-raised: #111116; --mydancr-dashboard-border: rgba(255,255,255,.105); --mydancr-dashboard-muted: rgba(218,218,226,.68); color-scheme: dark; background: #050507; }
+      .dashboard-shell-venue .dashboard-head { border-color: var(--mydancr-dashboard-border); background: #07070a; }
+      .dashboard-shell-venue .venue-command-primary,
+      .dashboard-shell-venue .venue-dashboard-shortcuts > a,
+      .dashboard-shell-venue .venue-dashboard-section,
+      .dashboard-shell-venue .venue-dashboard-metrics { border-color: var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel); }
+      .dashboard-shell-venue .venue-command-primary,
+      .dashboard-shell-venue .venue-dashboard-shortcuts > a { background: var(--mydancr-dashboard-panel-raised); }
+      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary { border-color: rgba(139,92,246,.48); background: rgba(139,92,246,.11); box-shadow: inset 3px 0 0 #8b5cf6, 0 10px 24px rgba(0,0,0,.2); }
+      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary svg { stroke: #c4b5fd; }
+      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary small { color: #ddd6fe; }
+      .dashboard-shell-venue .venue-dashboard-section[open] > summary { background: rgba(255,255,255,.022); }
+      .dashboard-shell-venue .venue-dashboard-section-badge { border-color: rgba(255,255,255,.13); color: #d7d5dd; background: rgba(255,255,255,.045); }
+      .dashboard-shell-venue .venue-dashboard-section-body > .info-panel,
+      .dashboard-shell-venue .venue-dashboard-inner-grid > .info-panel { border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
+      .dashboard-shell-venue .venue-working-list span { color: #76f0c8; }
+      .dashboard-shell-venue .venue-deal-panel,
+      .dashboard-shell-venue .venue-verification-panel { border-color: var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel-raised); }
+      .dashboard-shell-venue .venue-deal-placement-note { color: var(--mydancr-dashboard-muted) !important; }
+      .dashboard-shell-venue .venue-deal-list > button { border-color: var(--mydancr-dashboard-border); color: #f8f7fb; background: #141419; }
+      .dashboard-shell-venue .venue-deal-list > button.add { border-style: dashed; color: #d7d5dd; }
+      .dashboard-shell-venue .venue-deal-list span { color: #aaa6b2; }
+      .dashboard-shell-venue .venue-deal-list small { color: #aaa6b2; }
+      .dashboard-shell-venue .venue-deal-list small.is-live { color: #78ffc0; }
+      .dashboard-shell-venue .venue-deal-builder-step,
+      .dashboard-shell-venue .venue-deal-review,
+      .dashboard-shell-venue .venue-deal-qr-generator,
+      .dashboard-shell-venue .venue-deal-how,
+      .dashboard-shell-venue .venue-redemption-instructions,
+      .dashboard-shell-venue .commission-tier-table { border-color: var(--mydancr-dashboard-border); background: #0d0d12; box-shadow: none; }
+      .dashboard-shell-venue .venue-deal-builder-step legend > span:first-child { color: #f8f7fb; background: rgba(255,255,255,.11); }
+      .dashboard-shell-venue .venue-deal-rule-note,
+      .dashboard-shell-venue .venue-redemption-instructions { border-color: rgba(255,255,255,.18); color: #c9c7d0; background: rgba(255,255,255,.035); }
+      .dashboard-shell-venue .venue-deal-panel label { color: #d7d5dd; }
+      .dashboard-shell-venue .venue-deal-panel input,
+      .dashboard-shell-venue .venue-deal-panel textarea,
+      .dashboard-shell-venue .venue-deal-panel select { border-color: rgba(255,255,255,.14); color: #f8f7fb; background: #16161b; }
+      .dashboard-shell-venue .venue-deal-panel button { border: 1px solid rgba(255,255,255,.14); color: #f8f7fb; background: #17171d; box-shadow: none; }
+      .dashboard-shell-venue .venue-deal-form-actions .primary { border-color: rgba(196,122,255,.72); color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); }
+      .dashboard-shell-venue .venue-deal-form-actions .secondary { color: #f8f7fb; background: #17171d; }
+      .dashboard-shell-venue .venue-deal-form-actions .danger { border-color: rgba(255,86,108,.3); color: #ffccd3; background: rgba(255,86,108,.12); }
+      .dashboard-shell-venue .venue-deal-share-options { border-color: var(--mydancr-dashboard-border); background: rgba(255,255,255,.025); }
+      .dashboard-shell-venue .venue-deal-share-options button { border-color: rgba(255,255,255,.14); color: #f8f7fb; background: #17171d; }
+      .dashboard-shell-venue .venue-deal-how > summary::after { color: #c4b5fd; }
+      .dashboard-shell-venue .currency-input { border-color: rgba(255,255,255,.14); background: #16161b; }
+      .dashboard-shell-venue .currency-input > span,
+      .dashboard-shell-venue .commission-tier-table > strong { color: #d7d5dd; }
+      .dashboard-shell-venue .commission-tier-table > strong { background: rgba(255,255,255,.04); }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }

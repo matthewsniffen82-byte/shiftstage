@@ -731,8 +731,7 @@ body.dancr-button-system .page-panel :is(
   background: var(--dancr-color-surface-translucent) !important;
 }
 
-.dashboard-shell .deal-panel,
-.dashboard-shell .venue-deal-panel {
+.dashboard-shell .deal-panel {
   border-color: var(--dancr-color-success-medium) !important;
 }
 

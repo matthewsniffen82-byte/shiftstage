@@ -106,4 +106,21 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
     aesthetic,
     /\.dashboard-shell-venue \{[\s\S]*?color-scheme: dark;[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;/,
   );
+  assert.match(
+    routedDashboards,
+    /\.dashboard-shell-venue \{ --mydancr-dashboard-panel: #09090d;[\s\S]*?--mydancr-dashboard-panel-raised: #111116;[\s\S]*?color-scheme: dark; background: #050507;/,
+  );
+  assert.match(
+    routedDashboards,
+    /\.dashboard-shell-venue \.venue-deal-panel,[\s\S]*?\.dashboard-shell-venue \.venue-verification-panel \{ border-color: var\(--mydancr-dashboard-border\); background: var\(--mydancr-dashboard-panel-raised\); \}/,
+  );
+  assert.match(
+    routedDashboards,
+    /\.dashboard-shell-venue \.venue-dashboard-shortcuts > a\.is-primary \{[^}]*?rgba\(139,92,246,\.48\)[^}]*?#8b5cf6/,
+  );
+  assert.match(
+    routedDashboards,
+    /\.dashboard-shell-venue \.venue-deal-form-actions \.primary \{[^}]*?linear-gradient\(135deg, #8b20ef, #6d19d6\)/,
+  );
+  assert.doesNotMatch(aesthetic, /\.dashboard-shell \.venue-deal-panel \{[\s\S]*?success-medium/);
 });
