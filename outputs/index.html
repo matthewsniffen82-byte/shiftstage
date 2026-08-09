@@ -57240,7 +57240,17 @@
     function handleVenueDashboardDeepLink() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("dancr_dashboard") !== "venue") return false;
+      const forceFreshSignIn = params.get("dancr_force_sign_in") === "1";
       window.history.replaceState({}, document.title, "/");
+      if (forceFreshSignIn) {
+        saveAuthSession(null);
+        isVenueLoggedIn = false;
+        activeDashboardType = "venue";
+        openAuthRole("venue");
+        const status = document.getElementById("venueAuthStatus");
+        if (status) status.textContent = "Sign in as the verified venue manager to open the venue workspace.";
+        return true;
+      }
       void openVenueDashboard();
       if (!isVenueSession()) {
         const status = document.getElementById("venueAuthStatus");

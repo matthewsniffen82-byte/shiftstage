@@ -248,7 +248,7 @@ export default function DashboardClient({
         {state.error ? (
           <Link
             className="primary-link"
-            href={role === "venue" ? "/?dancr_dashboard=venue" : `/account?role=${role}`}
+            href={role === "venue" ? "/?dancr_dashboard=venue&dancr_force_sign_in=1" : `/account?role=${role}`}
           >
             Sign in
           </Link>
