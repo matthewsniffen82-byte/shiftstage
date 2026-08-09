@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deliverNotificationRows } from "./notification-delivery";
 
@@ -296,21 +296,23 @@ export async function approveDancerVenueVerification(
 
   const profileActivated = data.profileActivated === true;
   const notification = {
+    id: venueAffiliationApprovalNotificationId(String(data.id), String(data.approvedAt)),
     recipient_id: String(data.dancerUserId),
     notification_type: "venue_affiliation_status" as const,
-    title: profileActivated
-      ? `${String(data.venueName)} approved your profile`
-      : `${String(data.venueName)} verified you`,
+    channel: "in_app" as const,
+    title: "Venue affiliation approved",
     body: profileActivated
-      ? `Your first venue verification is complete. Your profile is live and your affiliation with ${String(data.venueName)} is active.`
-      : `Your venue affiliation is active. You can now check in at ${String(data.venueName)} for Working Now and eligible Club Deal commissions.`,
+      ? `${String(data.venueName)} approved your venue affiliation. Your profile is now live and you can check in there for Working Now.`
+      : `${String(data.venueName)} approved your venue affiliation. You can now check in there for Working Now and eligible Club Deal commissions.`,
     payload: {
       affiliationId: data.id,
       venueId: data.venueId,
       venueSlug: data.venueSlug,
       status: "active",
     },
+    sent_at: new Date().toISOString(),
   };
+  await persistVenueAffiliationApprovalNotification(client, notification);
   await deliverNotificationRows(client, [notification]).catch((notificationError) => {
     console.warn("DANCER_VENUE_APPROVAL_NOTIFICATION_FAILED", {
       affiliationId: data.id,
@@ -325,6 +327,46 @@ export async function approveDancerVenueVerification(
     managerUserId: input.managerUserId,
   });
   return data;
+}
+
+async function persistVenueAffiliationApprovalNotification(
+  client: DancrClient,
+  notification: {
+    id: string;
+    recipient_id: string;
+    notification_type: "venue_affiliation_status";
+    channel: "in_app";
+    title: string;
+    body: string;
+    payload: Record<string, unknown>;
+    sent_at: string;
+  },
+) {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const { error } = await (client as any)
+      .from("notifications")
+      .upsert(notification, { onConflict: "id", ignoreDuplicates: true });
+    if (!error) return;
+    lastError = error;
+  }
+
+  console.error("DANCER_VENUE_APPROVAL_IN_APP_NOTIFICATION_FAILED", {
+    affiliationId: notification.payload.affiliationId,
+    notificationId: notification.id,
+    message: lastError instanceof Error ? lastError.message : String(lastError),
+  });
+  throw new Error("Venue affiliation was approved, but the dancer notification could not be saved.");
+}
+
+function venueAffiliationApprovalNotificationId(affiliationId: string, approvedAt: string) {
+  const digest = createHash("sha256")
+    .update(`mydancr:venue-affiliation-approved:${affiliationId}:${approvedAt}`)
+    .digest();
+  digest[6] = (digest[6] & 0x0f) | 0x50;
+  digest[8] = (digest[8] & 0x3f) | 0x80;
+  const hex = digest.subarray(0, 16).toString("hex");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export async function revokeDancerVenueAffiliation(

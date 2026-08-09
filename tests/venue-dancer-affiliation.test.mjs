@@ -81,6 +81,22 @@ test("only the exact verified venue owner can approve or revoke an affiliation",
   assert.match(approvalMigration, /not exists \(\s*select 1 from public\.dancer_photos/);
 });
 
+test("successful venue approval durably creates one dancer in-app affiliation notification", () => {
+  const approvalService = service.match(
+    /export async function approveDancerVenueVerification[\s\S]*?export async function revokeDancerVenueAffiliation/,
+  )?.[0] || "";
+  assert.match(approvalService, /persistVenueAffiliationApprovalNotification\(client, notification\)/);
+  assert.match(approvalService, /\.from\("notifications"\)[\s\S]*?\.upsert\(notification, \{ onConflict: "id", ignoreDuplicates: true \}\)/);
+  assert.match(approvalService, /for \(let attempt = 1; attempt <= 3; attempt \+= 1\)/);
+  assert.match(approvalService, /venueAffiliationApprovalNotificationId\(String\(data\.id\), String\(data\.approvedAt\)\)/);
+  assert.match(approvalService, /notification_type: "venue_affiliation_status"/);
+  assert.match(approvalService, /channel: "in_app"/);
+  assert.match(service, /title: "Venue affiliation approved"/);
+  assert.match(service, /approved your venue affiliation/);
+  assert.match(service, /createHash\("sha256"\)/);
+  assert.match(service, /mydancr:venue-affiliation-approved:\$\{affiliationId\}:\$\{approvedAt\}/);
+});
+
 test("check-ins and dancer-attributed commission require an active venue affiliation", () => {
   assert.match(migration, /enforce_verified_venue_affiliation_for_checkin/);
   assert.match(migration, /old\.checked_in_at is null or old\.checked_out_at is not null/);
