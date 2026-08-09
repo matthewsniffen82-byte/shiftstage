@@ -44,12 +44,16 @@ const [
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("the supplied monthly commission tiers are the single production policy", () => {
+test("the monthly commission tiers remain private to MyDancr and dancers", () => {
   assert.match(policy, /minimumSuccessfulRedemptions: 1[\s\S]*?maximumSuccessfulRedemptions: 24[\s\S]*?dancerShareBps: 3000[\s\S]*?platformShareBps: 7000/);
   assert.match(policy, /minimumSuccessfulRedemptions: 25[\s\S]*?maximumSuccessfulRedemptions: 74[\s\S]*?dancerShareBps: 4000[\s\S]*?platformShareBps: 6000/);
   assert.match(policy, /minimumSuccessfulRedemptions: 75[\s\S]*?maximumSuccessfulRedemptions: null[\s\S]*?dancerShareBps: 5000[\s\S]*?platformShareBps: 5000/);
   assert.match(migration, /when v_success_number >= 75 then 5000[\s\S]*?when v_success_number >= 25 then 4000[\s\S]*?else 3000/);
   assert.match(migration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
+  const venuePanel = venueDashboard.match(/function VenueClubDealPanel[\s\S]*?(?=function venueDealForm)/)?.[0] || "";
+  assert.notEqual(venuePanel, "");
+  assert.doesNotMatch(venuePanel, /Dancer 30%|MyDancr 70%|Dancer 40%|MyDancr 60%|Dancer 50%|MyDancr 50%/);
+  assert.doesNotMatch(venuePanel, /Dancer share|MyDancr share|correct commission split/);
   assert.match(venueDashboard, /1–24 monthly[\s\S]*?30% dancer[\s\S]*?70% MyDancr/);
   assert.match(venueDashboard, /25–74 monthly[\s\S]*?40% dancer[\s\S]*?60% MyDancr/);
   assert.match(venueDashboard, /75\+ monthly[\s\S]*?50% dancer[\s\S]*?50% MyDancr/);
