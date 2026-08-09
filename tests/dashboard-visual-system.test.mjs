@@ -91,11 +91,7 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   assert.match(routedDashboards, /\.venue-dashboard-shortcuts small \{[^}]*?font-size: 10px;/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \.metric strong \{ font-size: 22px; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
-  assert.match(
-    routedDashboards,
-    /<ol className="venue-deal-builder-progress"[^>]*>\s*<li><strong>Offer<\/strong><\/li>\s*<li><strong>Rules<\/strong><\/li>\s*<li><strong>Cost<\/strong><\/li>\s*<li><strong>Review<\/strong><\/li>/,
-  );
-  assert.doesNotMatch(routedDashboards, /venue-deal-builder-progress[^>]*>[\s\S]{0,500}<li><span>[1-4]<\/span>/);
+  assert.doesNotMatch(routedDashboards, /venue-deal-builder-progress/);
   assert.match(routedDashboards, /<section className=\{`dashboard-head dashboard-head-\$\{role\}`\}[\s\S]*?<h1>\{dashboardHeading\}<\/h1>/);
   assert.doesNotMatch(routedDashboards, /\.dashboard-head-venue h1/);
   assert.match(

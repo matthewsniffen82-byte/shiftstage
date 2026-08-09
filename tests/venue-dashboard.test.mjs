@@ -269,14 +269,14 @@ test("saved venue deals immediately synchronize dashboard cards, selection, and 
   assert.match(dashboardClient, /\.venue-deal-list > button\.selected \{[\s\S]*?var\(--dancr-color-beam-violet\)[\s\S]*?var\(--dancr-color-beam-violet-soft\)/);
 });
 
-test("venue deal publishing uses a guided builder and keeps operational guidance available", () => {
+test("venue deal publishing uses a structured form without a redundant progress grid", () => {
   assert.match(dashboardClient, /<h2>Manage Club Deals<\/h2>/);
   assert.match(dashboardClient, /Publish multiple deals at the same time\./);
-  assert.match(dashboardClient, /aria-label="Deal publishing steps"/);
+  assert.doesNotMatch(dashboardClient, /venue-deal-builder-progress|aria-label="Deal publishing steps"/);
   assert.match(dashboardClient, />Offer<\/strong>/);
   assert.match(dashboardClient, />Rules<\/strong>/);
-  assert.match(dashboardClient, />Cost<\/strong>/);
-  assert.match(dashboardClient, />Review<\/strong>/);
+  assert.match(dashboardClient, />Cost & order<\/strong>/);
+  assert.match(dashboardClient, />Review & publish<\/strong>/);
   assert.match(dashboardClient, />\s*Deal title\s*<input/);
   assert.match(dashboardClient, />\s*Offer details\s*<textarea/);
   assert.match(dashboardClient, />\s*Conditions \(optional\)\s*<textarea/);
