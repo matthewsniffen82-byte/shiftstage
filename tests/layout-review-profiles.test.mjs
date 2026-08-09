@@ -66,11 +66,15 @@ test("production builds populate profiles only behind one explicit environment g
   );
   assert.match(
     postbuildSource,
-    /if \(!populationFlag && !dealSyncFlag\) \{[\s\S]*?LAYOUT_REVIEW_POPULATION_SKIPPED[\s\S]*?process\.exit\(0\)/,
+    /const scheduleSyncFlag = String\([\s\S]*?process\.env\.LAYOUT_REVIEW_SYNC_SCHEDULES \|\| ""[\s\S]*?\.trim\(\)/,
   );
   assert.match(
     postbuildSource,
-    /const enabledFlag = populationFlag \|\| dealSyncFlag[\s\S]*?if \(enabledFlag !== DATASET_MARKER\)[\s\S]*?must exactly equal/,
+    /if \(!populationFlag && !dealSyncFlag && !scheduleSyncFlag\) \{[\s\S]*?LAYOUT_REVIEW_POPULATION_SKIPPED[\s\S]*?process\.exit\(0\)/,
+  );
+  assert.match(
+    postbuildSource,
+    /const enabledFlags = \[populationFlag, dealSyncFlag, scheduleSyncFlag\]\.filter\(Boolean\)[\s\S]*?enabledFlags\.length !== 1[\s\S]*?const \[enabledFlag\] = enabledFlags[\s\S]*?if \(enabledFlag !== DATASET_MARKER\)/,
   );
   assert.match(
     postbuildSource,
@@ -78,7 +82,7 @@ test("production builds populate profiles only behind one explicit environment g
   );
   assert.match(
     postbuildSource,
-    /dealSyncFlag \? "--sync-deals" : "--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=10"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
+    /dealSyncFlag[\s\S]*?\? "--sync-deals"[\s\S]*?scheduleSyncFlag[\s\S]*?\? "--sync-schedules"[\s\S]*?: "--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=10"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
   );
 });
 
@@ -297,7 +301,7 @@ test("selected review dancers and venues receive reversible tracked Club QR stat
     scriptSource,
     /const ACTIVE_REVIEW_VENUE_COUNT = FEATURED_WORKING_NOW_VENUE_SLUGS\.length/,
   );
-  assert.match(scriptSource, /const WORKING_NOW_REMAINING_HOURS = 10/);
+  assert.match(scriptSource, /const WORKING_NOW_REMAINING_HOURS = 5/);
   assert.match(
     scriptSource,
     /now \+ WORKING_NOW_REMAINING_HOURS \* 60 \* 60 \* 1000/,

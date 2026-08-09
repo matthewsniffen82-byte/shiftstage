@@ -4,19 +4,23 @@ import { fileURLToPath } from "node:url";
 const DATASET_MARKER = "mydancr-layout-review-v1";
 const populationFlag = String(process.env.LAYOUT_REVIEW_POPULATE || "").trim();
 const dealSyncFlag = String(process.env.LAYOUT_REVIEW_SYNC_DEALS || "").trim();
+const scheduleSyncFlag = String(
+  process.env.LAYOUT_REVIEW_SYNC_SCHEDULES || "",
+).trim();
 
-if (!populationFlag && !dealSyncFlag) {
+if (!populationFlag && !dealSyncFlag && !scheduleSyncFlag) {
   console.log("LAYOUT_REVIEW_POPULATION_SKIPPED");
   process.exit(0);
 }
 
-if (populationFlag && dealSyncFlag) {
+const enabledFlags = [populationFlag, dealSyncFlag, scheduleSyncFlag].filter(Boolean);
+if (enabledFlags.length !== 1) {
   throw new Error(
-    "Choose either LAYOUT_REVIEW_POPULATE or LAYOUT_REVIEW_SYNC_DEALS, not both.",
+    "Choose exactly one layout-review population, deal-sync, or schedule-sync operation.",
   );
 }
 
-const enabledFlag = populationFlag || dealSyncFlag;
+const [enabledFlag] = enabledFlags;
 if (enabledFlag !== DATASET_MARKER) {
   throw new Error(
     `The enabled layout-review operation must exactly equal ${DATASET_MARKER}.`,
@@ -34,7 +38,11 @@ const result = spawnSync(
   process.execPath,
   [
     managerPath,
-    dealSyncFlag ? "--sync-deals" : "--apply",
+    dealSyncFlag
+      ? "--sync-deals"
+      : scheduleSyncFlag
+        ? "--sync-schedules"
+        : "--apply",
     "--target=production",
     "--count=10",
     `--confirm=${DATASET_MARKER}`,
