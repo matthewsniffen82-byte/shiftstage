@@ -2993,12 +2993,16 @@ function DancerVenueVerificationPanel() {
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load venue verification.");
-    setVenues(data.venues || []);
+    const availableVenues = Array.isArray(data.venues) ? data.venues : [];
+    const dancerCity = String(data.dancer?.city || "your city");
+    setVenues(availableVenues);
     setAffiliations(data.affiliations || []);
-    setVenueId((current) => current || String(data.venues?.[0]?.id || ""));
-    setStatus(data.venues?.length
-      ? "Choose your club, then show the personal QR to its verified manager."
-      : "No managed venues are available yet. The venue owner must verify their MyDancr account first.");
+    setVenueId((current) => availableVenues.some((venue: Record<string, unknown>) => String(venue.id) === current)
+      ? current
+      : String(availableVenues[0]?.id || ""));
+    setStatus(availableVenues.length
+      ? `Choose a ${dancerCity} club, then show the personal QR to its verified manager.`
+      : `No managed venues are available in ${dancerCity} yet. The venue owner must verify their MyDancr account first.`);
   }, []);
 
   useEffect(() => {

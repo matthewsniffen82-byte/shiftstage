@@ -28,13 +28,14 @@ export async function getDancerVenueVerificationState(
   userId: string,
 ) {
   const dancer = await requireVenueApprovalCandidate(client, userId);
+  const dancerCity = String(dancer.city).trim();
   const [{ data: venues, error: venuesError }, { data: affiliations, error: affiliationsError }] = await Promise.all([
     (client as any)
       .from("venues")
       .select("id, slug, name, city, state")
       .eq("is_active", true)
       .not("owner_user_id", "is", null)
-      .order("city", { ascending: true })
+      .eq("city", dancerCity)
       .order("name", { ascending: true }),
     (client as any)
       .from("venue_dancer_affiliations")
@@ -49,7 +50,7 @@ export async function getDancerVenueVerificationState(
     dancer: {
       id: dancer.id,
       stageName: dancer.stage_name,
-      city: dancer.city,
+      city: dancerCity,
     },
     venues: (venues || []).map(mapVenue),
     affiliations: (affiliations || []).map((row: any) => mapAffiliation(client, row)),
@@ -65,7 +66,21 @@ export async function issueDancerVenueVerification(
   },
 ) {
   const dancer = await requireVenueApprovalCandidate(client, input.userId);
+  const dancerCity = String(dancer.city).trim();
   const venueId = requiredUuid(input.venueId, "Choose a venue to verify.");
+  const { data: venue, error: venueError } = await (client as any)
+    .from("venues")
+    .select("id, slug, name, city, state")
+    .eq("id", venueId)
+    .eq("city", dancerCity)
+    .eq("is_active", true)
+    .not("owner_user_id", "is", null)
+    .maybeSingle();
+  if (venueError) throw venueError;
+  if (!venue) {
+    throw new VenueAffiliationUserError(`Choose an active managed venue in ${dancerCity}.`);
+  }
+
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
   const { data, error } = await (client as any).rpc("issue_dancer_venue_verification_token", {
@@ -77,13 +92,6 @@ export async function issueDancerVenueVerification(
     p_expires_at: expiresAt,
   });
   if (error) throw toVenueAffiliationError(error);
-
-  const { data: venue, error: venueError } = await (client as any)
-    .from("venues")
-    .select("id, slug, name, city, state")
-    .eq("id", venueId)
-    .single();
-  if (venueError) throw venueError;
 
   console.info("DANCER_VENUE_VERIFICATION_ISSUED", {
     tokenId: data?.id || null,

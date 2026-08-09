@@ -93,6 +93,17 @@ test("dancer and venue dashboards expose the complete one-tap verification flow"
   assert.match(venueRoute, /cache-control": "private, no-store/);
 });
 
+test("dancer verification venues are scoped to the dancer's saved signup city", () => {
+  assert.match(service, /const dancerCity = String\(dancer\.city\)\.trim\(\)/);
+  assert.match(service, /from\("venues"\)[\s\S]*?eq\("is_active", true\)[\s\S]*?not\("owner_user_id", "is", null\)[\s\S]*?eq\("city", dancerCity\)[\s\S]*?order\("name", \{ ascending: true \}\)/);
+  assert.match(service, /eq\("id", venueId\)[\s\S]*?eq\("city", dancerCity\)[\s\S]*?eq\("is_active", true\)[\s\S]*?not\("owner_user_id", "is", null\)[\s\S]*?maybeSingle\(\)/);
+  assert.match(service, /Choose an active managed venue in \$\{dancerCity\}/);
+  assert.match(dashboard, /Choose a \$\{dancerCity\} club/);
+  assert.match(dashboard, /No managed venues are available in \$\{dancerCity\} yet/);
+  assert.match(liveApp, /Choose a \$\{dancerCity\} club/);
+  assert.match(liveApp, /No managed venues are available in \$\{dancerCity\} yet/);
+});
+
 test("revocation is audited and immediately ends matching live shifts", () => {
   assert.match(migration, /create table if not exists public\.venue_dancer_affiliation_events/);
   assert.match(migration, /event_type in \('token_issued', 'affiliation_approved', 'affiliation_revoked'\)/);

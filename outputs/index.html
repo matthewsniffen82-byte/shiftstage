@@ -47776,6 +47776,7 @@
       if (!section) return;
       const state = liveDancerVenueVerification || {};
       const venues = Array.isArray(state.venues) ? state.venues : [];
+      const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
@@ -47797,8 +47798,8 @@
         button.onclick = () => removeDancerVenueAffiliation(button.dataset.dancerAffiliationRemove);
       });
       document.getElementById("dancerVenueVerificationStatus").textContent = venues.length
-        ? "Choose your club, then show the personal QR to its verified manager."
-        : "No managed venues are available yet. The venue owner must verify their MyDancr account first.";
+        ? `Choose a ${dancerCity} club, then show the personal QR to its verified manager.`
+        : `No managed venues are available in ${dancerCity} yet. The venue owner must verify their MyDancr account first.`;
     }
 
     async function loadDancerVenueVerification() {
