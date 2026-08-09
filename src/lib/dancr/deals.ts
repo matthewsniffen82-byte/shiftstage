@@ -12,6 +12,11 @@ const CLUB_DEAL_COLUMNS =
 export type DealRedemptionInput = {
   clubDealId: string;
   venueId: string;
+  dealTitle: string;
+  dealDescription: string;
+  dealTerms?: string | null;
+  dealOfferType: ClubDealOfferType;
+  dealBookingUrl?: string | null;
   sourceType: DealSourceType;
   dancerId?: string | null;
   shiftId?: string | null;
@@ -199,6 +204,7 @@ export async function createDealRedemption(client: DancrClient, input: DealRedem
       audit: {
         ...audit,
         campaign_source: input.campaignSource || null,
+        deal_snapshot: issuedDealSnapshot(input),
       },
     })
     .select("id, redemption_token, expires_at")
@@ -257,8 +263,9 @@ export async function getRedemptionForScanner(client: DancrClient, token: string
       first_scanned_at,
       confirmed_at,
       redeemed_by_club_user,
+      audit,
       venues(name, city, state),
-      club_deals(id, deal_title, deal_description, deal_terms, is_active, payout_type, payout_amount_cents, currency)
+      club_deals(id, deal_title, deal_description, deal_terms, is_active, payout_type, payout_amount_cents, currency, offer_type, booking_url)
     `,
     )
     .eq("redemption_token", token)
@@ -448,7 +455,7 @@ export async function getCustomerDealRedemptions(client: DancrClient, customerId
   const { data, error } = await (client as any)
     .from("qr_redemptions")
     .select(
-      "id, redemption_token, source_type, status, generated_at, expires_at, redeemed_at, venues(name, slug), club_deals(deal_title, deal_terms)",
+      "id, redemption_token, source_type, status, generated_at, expires_at, redeemed_at, audit, venues(name, slug), club_deals(deal_title, deal_terms)",
     )
     .eq("customer_id", customerId)
     .order("generated_at", { ascending: false })
@@ -459,6 +466,7 @@ export async function getCustomerDealRedemptions(client: DancrClient, customerId
   return (data || []).map((row: any) => {
     const venue = readJoinedFirst(row.venues);
     const deal = readJoinedFirst(row.club_deals);
+    const dealSnapshot = readIssuedDealSnapshot(row.audit);
     return {
       id: row.id,
       redemptionToken: row.redemption_token,
@@ -471,7 +479,12 @@ export async function getCustomerDealRedemptions(client: DancrClient, customerId
         ? { name: String(venue.name || "Venue"), slug: String(venue.slug || "") }
         : null,
       deal: deal
-        ? { title: String(deal.deal_title || "Club Deal"), terms: deal.deal_terms ? String(deal.deal_terms) : null }
+        ? {
+            title: String(dealSnapshot ? dealSnapshot.dealTitle : deal.deal_title || "Club Deal"),
+            terms: dealSnapshot
+              ? dealSnapshot.dealTerms
+              : deal.deal_terms ? String(deal.deal_terms) : null,
+          }
         : null,
     };
   }).filter((item: any) => item.venue && item.deal);
@@ -561,6 +574,7 @@ export async function updateVenueDealForAccount(
     ? owned.deals.find((deal) => deal.id === input.dealId)
     : null;
   if (input.dealId && !existingDeal) throw new Error("Club Deal not found for this venue.");
+  if (existingDeal) await snapshotIssuedDealPassesBeforeUpdate(db, existingDeal);
   const query = existingDeal
     ? db.from("club_deals").update(row).eq("id", existingDeal.id).eq("venue_id", owned.venueId)
     : db.from("club_deals").insert(row);
@@ -799,6 +813,7 @@ function optionalDealText(value: string | null | undefined, label: string, maxim
 function normalizeScannerRedemption(row: any) {
   const venue = Array.isArray(row.venues) ? row.venues[0] : row.venues;
   const deal = Array.isArray(row.club_deals) ? row.club_deals[0] : row.club_deals;
+  const dealSnapshot = readIssuedDealSnapshot(row.audit);
 
   return {
     id: row.id,
@@ -820,9 +835,11 @@ function normalizeScannerRedemption(row: any) {
     deal: deal
       ? {
           id: deal.id,
-          dealTitle: deal.deal_title,
-          dealDescription: deal.deal_description,
-          dealTerms: deal.deal_terms,
+          dealTitle: dealSnapshot ? dealSnapshot.dealTitle : deal.deal_title,
+          dealDescription: dealSnapshot ? dealSnapshot.dealDescription : deal.deal_description,
+          dealTerms: dealSnapshot ? dealSnapshot.dealTerms : deal.deal_terms,
+          offerType: dealSnapshot ? dealSnapshot.offerType : deal.offer_type || "admission",
+          bookingUrl: dealSnapshot ? dealSnapshot.bookingUrl : deal.booking_url ?? null,
           isActive: deal.is_active,
           referralCommissionCents: Number(deal.payout_amount_cents || 0),
           currency: String(deal.currency || "usd"),
@@ -830,6 +847,70 @@ function normalizeScannerRedemption(row: any) {
       : null,
     audit: row.audit || {},
   };
+}
+
+function issuedDealSnapshot(input: Pick<DealRedemptionInput, "dealTitle" | "dealDescription" | "dealTerms" | "dealOfferType" | "dealBookingUrl">) {
+  return {
+    dealTitle: input.dealTitle,
+    dealDescription: input.dealDescription,
+    dealTerms: input.dealTerms || null,
+    offerType: input.dealOfferType,
+    bookingUrl: input.dealBookingUrl || null,
+  };
+}
+
+function readIssuedDealSnapshot(audit: unknown) {
+  if (!audit || typeof audit !== "object" || Array.isArray(audit)) return null;
+  const snapshot = (audit as Record<string, unknown>).deal_snapshot;
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) return null;
+  const value = snapshot as Record<string, unknown>;
+  if (typeof value.dealTitle !== "string" || typeof value.dealDescription !== "string") return null;
+  return {
+    dealTitle: value.dealTitle,
+    dealDescription: value.dealDescription,
+    dealTerms: typeof value.dealTerms === "string" ? value.dealTerms : null,
+    offerType: normalizeOfferType(String(value.offerType || "admission")),
+    bookingUrl: typeof value.bookingUrl === "string" ? value.bookingUrl : null,
+  };
+}
+
+async function snapshotIssuedDealPassesBeforeUpdate(db: any, deal: ClubDeal) {
+  const pageSize = 500;
+  let offset = 0;
+  while (true) {
+    const { data, error } = await db
+      .from("qr_redemptions")
+      .select("id, audit")
+      .eq("club_deal_id", deal.id)
+      .eq("status", "generated")
+      .gt("expires_at", new Date().toISOString())
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+
+    const rows = data || [];
+    const unsnapshotted = rows.filter((row: any) => !readIssuedDealSnapshot(row.audit));
+    const snapshot = {
+      dealTitle: deal.dealTitle,
+      dealDescription: deal.dealDescription,
+      dealTerms: deal.dealTerms,
+      offerType: deal.offerType,
+      bookingUrl: deal.bookingUrl,
+    };
+    for (let index = 0; index < unsnapshotted.length; index += 25) {
+      const batch = unsnapshotted.slice(index, index + 25);
+      const results = await Promise.all(batch.map((row: any) => db
+        .from("qr_redemptions")
+        .update({ audit: { ...(row.audit || {}), deal_snapshot: snapshot } })
+        .eq("id", row.id)
+        .eq("status", "generated")));
+      const failed = results.find((result: any) => result.error);
+      if (failed?.error) throw failed.error;
+    }
+
+    if (rows.length < pageSize) break;
+    offset += rows.length;
+  }
 }
 
 function readJoinedFirst(value: unknown): Record<string, unknown> | null {

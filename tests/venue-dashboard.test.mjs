@@ -213,7 +213,7 @@ test("saved venue deals immediately synchronize dashboard cards, selection, and 
     /useEffect\(\(\) => \{[\s\S]*?const nextDeals = initialDeals\.length[\s\S]*?\}, \[initialDeal, initialDeals\]\);/,
   )?.[0] || "";
   assert.doesNotMatch(incomingDealsEffect, /setSaveConfirmed\(false\)/);
-  assert.match(clubDealPanel, /Saved changes\. This deal and its QR are live on your venue page/);
+  assert.match(clubDealPanel, /Changes saved\. The live deal and QR are updated\./);
   assert.match(
     clubDealPanel,
     /method: "DELETE"[\s\S]*?setDeals\(nextDeals\);\s*onDealsChange\(nextDeals\)/,
@@ -256,6 +256,9 @@ test("venue deal publishing clearly confirms live placement without showing a da
   assert.match(clubDealPanel, /Available on eligible Working Now dancer profiles/);
   assert.match(clubDealPanel, /Will appear automatically when an affiliated dancer is Working Now/);
   assert.match(clubDealPanel, />Venue QR active</);
+  assert.match(clubDealPanel, /Edit and save this live offer without unpublishing\. Its QR stays active\./);
+  assert.match(clubDealPanel, /Unpublish only when you want to take this deal and its QR offline\./);
+  assert.match(clubDealPanel, /title=\{form\.isActive \? "Takes this deal and its QR offline until you publish it again" : undefined\}/);
   assert.doesNotMatch(clubDealPanel, /\{workingNow\.length\}[\s\S]*?dancer profiles/);
 });
 

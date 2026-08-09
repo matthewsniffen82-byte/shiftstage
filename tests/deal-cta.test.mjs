@@ -57,6 +57,20 @@ test("dancer-attributed Club Deals require a verified check-in at issue and pres
   assert.match(passPage, /const qrDataUrl = isAvailable/);
 });
 
+test("issued deal passes preserve their original customer-facing terms after a live offer is edited", () => {
+  assert.match(redemptionRoute, /dealTitle: deal\.dealTitle/);
+  assert.match(redemptionRoute, /dealDescription: deal\.dealDescription/);
+  assert.match(redemptionRoute, /dealTerms: deal\.dealTerms/);
+  assert.match(deals, /deal_snapshot: issuedDealSnapshot\(input\)/);
+  assert.match(deals, /function readIssuedDealSnapshot\(audit: unknown\)/);
+  assert.match(deals, /if \(existingDeal\) await snapshotIssuedDealPassesBeforeUpdate\(db, existingDeal\)/);
+  assert.match(deals, /\.from\("qr_redemptions"\)[\s\S]*?\.select\("id, audit"\)[\s\S]*?\.eq\("status", "generated"\)[\s\S]*?\.gt\("expires_at", new Date\(\)\.toISOString\(\)\)/);
+  assert.match(deals, /update\(\{ audit: \{ \.\.\.\(row\.audit \|\| \{\}\), deal_snapshot: snapshot \} \}\)/);
+  assert.match(deals, /const dealSnapshot = readIssuedDealSnapshot\(row\.audit\)/);
+  assert.match(deals, /dealTitle: dealSnapshot \? dealSnapshot\.dealTitle : deal\.deal_title/);
+  assert.match(deals, /dealTerms: dealSnapshot \? dealSnapshot\.dealTerms : deal\.deal_terms/);
+});
+
 test("venue pages and directory cards promote real active deals", () => {
   assert.match(venuePage, /permanentRedirect/);
   assert.doesNotMatch(venuePage, /ClubDealCard|stickyCta/);

@@ -2046,7 +2046,7 @@ function VenueClubDealPanel({
         }
       }
       setStatus(savedDeal.isActive
-        ? "Saved changes. This deal and its QR are live on your venue page and eligible Working Now dancer profiles."
+        ? "Changes saved. The live deal and QR are updated."
         : "Saved changes. This deal is a draft and is not visible on MyDancr.");
       setSaveConfirmed(true);
     } catch (error) {
@@ -2319,11 +2319,17 @@ function VenueClubDealPanel({
             <div><dt>Referral fee</dt><dd>{dollarsToCents(form.referralCommission) === null ? "Enter a valid fee above" : `$${form.referralCommission} per redemption`}</dd></div>
             <div><dt>Status</dt><dd>{form.isActive ? "Live" : "Draft"}</dd></div>
           </dl>
+          {form.isActive ? (
+            <p className="venue-deal-live-edit-note">
+              Edit and save this live offer without unpublishing. Its QR stays active.
+            </p>
+          ) : null}
           <div className="venue-deal-form-actions">
             <button
               aria-live="polite"
               disabled={isSaving}
               name="dealAction"
+              title={form.isActive ? "Takes this deal and its QR offline until you publish it again" : undefined}
               type="submit"
               value={form.isActive ? "save" : "publish"}
             >
@@ -2340,6 +2346,11 @@ function VenueClubDealPanel({
             </button>
             {editingId ? <button className="danger" disabled={isSaving} type="button" onClick={deleteDeal}>Delete This Deal</button> : null}
           </div>
+          {form.isActive ? (
+            <small className="venue-deal-unpublish-note">
+              Unpublish only when you want to take this deal and its QR offline.
+            </small>
+          ) : null}
         </fieldset>
         {status ? (
           <p className="venue-deal-feedback" role="status" aria-live="polite">
@@ -5457,6 +5468,8 @@ function DashboardStyles() {
       .venue-deal-builder-step label > small { color: #a99fba; font-weight: 650; line-height: 1.4; }
       .deal-booking-url small { color: #94e5ff; font-weight: 650; line-height: 1.45; }
       .venue-deal-form-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+      .venue-deal-live-edit-note { grid-column: 1 / -1; margin: 0; padding: 11px 12px; border-left: 3px solid #78ffc0; color: #dfffee; background: rgba(50,255,164,.055); font-size: 12px; font-weight: 800; line-height: 1.45; }
+      .venue-deal-unpublish-note { grid-column: 1 / -1; color: #a99fba; font-size: 11px; font-weight: 700; line-height: 1.4; }
       .venue-deal-form-actions .secondary { color: #f7f2ff; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16); }
       .venue-deal-form-actions .danger { color: #ffccd3; background: rgba(255,86,108,.12); border: 1px solid rgba(255,86,108,.3); }
       .venue-deal-feedback { grid-column: 1 / -1; margin: 0; padding: 11px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 8px; color: #f8fafc !important; background: rgba(255,255,255,.06); font-size: 13px; font-weight: 850; line-height: 1.45; }

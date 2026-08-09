@@ -93,6 +93,11 @@ export async function POST(request: Request) {
     const redemption = await createDealRedemption(admin, {
       clubDealId,
       venueId,
+      dealTitle: deal.dealTitle,
+      dealDescription: deal.dealDescription,
+      dealTerms: deal.dealTerms,
+      dealOfferType: deal.offerType,
+      dealBookingUrl: deal.bookingUrl,
       sourceType: sourceType as DealSourceType,
       dancerId,
       shiftId,
