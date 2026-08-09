@@ -1958,6 +1958,18 @@ function VenueClubDealPanel({
       return;
     }
 
+    const dealTitle = form.dealTitle.trim();
+    if (dealTitle.length < 3) {
+      setStatus("Deal title must be at least 3 characters.");
+      return;
+    }
+
+    const dealDescription = form.dealDescription.trim();
+    if (dealDescription.length < 8) {
+      setStatus("Offer details must be at least 8 characters.");
+      return;
+    }
+
     const referralCommissionCents = dollarsToCents(form.referralCommission);
     if (referralCommissionCents === null) {
       setStatus("Enter a referral commission between $1.00 and $1,000.00.");
@@ -1975,8 +1987,8 @@ function VenueClubDealPanel({
         },
         body: JSON.stringify({
           dealId: editingId || null,
-          dealTitle: form.dealTitle,
-          dealDescription: form.dealDescription,
+          dealTitle,
+          dealDescription,
           dealTerms: form.dealTerms,
           referralCommissionCents,
           isActive: nextIsActive,
@@ -2186,6 +2198,7 @@ function VenueClubDealPanel({
           Deal title
           <input
             maxLength={100}
+            minLength={3}
             required
             value={form.dealTitle}
             onChange={(event) => updateDealForm("dealTitle", event.target.value)}
@@ -2210,6 +2223,7 @@ function VenueClubDealPanel({
           Offer details
           <textarea
             maxLength={500}
+            minLength={8}
             required
             rows={3}
             value={form.dealDescription}
@@ -2259,6 +2273,11 @@ function VenueClubDealPanel({
           </button>
           {editingId ? <button className="danger" disabled={isSaving} type="button" onClick={deleteDeal}>Delete</button> : null}
         </div>
+        {status ? (
+          <p className="venue-deal-feedback" role="status" aria-live="polite">
+            {status}
+          </p>
+        ) : null}
       </form>
       {editingId ? (
         <section className={form.isActive ? "venue-deal-publish-status live" : "venue-deal-publish-status"} aria-live="polite">
@@ -2343,7 +2362,6 @@ function VenueClubDealPanel({
         <Metric label="Saves / scanner opens" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
       </div>
       <VenueFinanceSummary finance={finance} />
-      {status ? <p role="status">{status}</p> : null}
     </article>
   );
 }
@@ -5344,6 +5362,7 @@ function DashboardStyles() {
       .venue-deal-form-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
       .venue-deal-form-actions .secondary { color: #f7f2ff; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16); }
       .venue-deal-form-actions .danger { color: #ffccd3; background: rgba(255,86,108,.12); border: 1px solid rgba(255,86,108,.3); }
+      .venue-deal-feedback { grid-column: 1 / -1; margin: 0; padding: 11px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 8px; color: #f8fafc !important; background: rgba(255,255,255,.06); font-size: 13px; font-weight: 850; line-height: 1.45; }
       .venue-deal-publish-status { display: grid; gap: 12px; padding: 15px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(255,255,255,.035); }
       .venue-deal-publish-status.live { border-color: rgba(50,255,164,.38); background: rgba(50,255,164,.07); box-shadow: inset 3px 0 0 rgba(50,255,164,.7); }
       .venue-deal-publish-status-heading { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: center; }

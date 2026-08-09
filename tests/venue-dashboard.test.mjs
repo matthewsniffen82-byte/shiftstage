@@ -169,6 +169,31 @@ test("venue offer button confirms only a successful database save", () => {
   assert.match(clubDealPanel, /aria-live="polite"[\s\S]*?disabled=\{isSaving\}[\s\S]*?name="dealAction"[\s\S]*?type="submit"/);
 });
 
+test("venue offer validation and save feedback remain visible beside the form controls", () => {
+  const clubDealPanel = dashboardClient.match(
+    /function VenueClubDealPanel[\s\S]*?function venueDealForm/,
+  )?.[0] || "";
+
+  assert.match(
+    clubDealPanel,
+    /const dealTitle = form\.dealTitle\.trim\(\);[\s\S]*?Deal title must be at least 3 characters\./,
+  );
+  assert.match(
+    clubDealPanel,
+    /const dealDescription = form\.dealDescription\.trim\(\);[\s\S]*?Offer details must be at least 8 characters\./,
+  );
+  assert.match(clubDealPanel, /Deal title[\s\S]*?maxLength=\{100\}[\s\S]*?minLength=\{3\}/);
+  assert.match(clubDealPanel, /Offer details[\s\S]*?maxLength=\{500\}[\s\S]*?minLength=\{8\}/);
+  assert.match(
+    clubDealPanel,
+    /className="venue-deal-form-actions"[\s\S]*?className="venue-deal-feedback" role="status" aria-live="polite"[\s\S]*?<\/form>/,
+  );
+  assert.match(
+    dashboardClient,
+    /\.venue-deal-feedback \{ grid-column: 1 \/ -1;[\s\S]*?color: #f8fafc !important;/,
+  );
+});
+
 test("saved venue deals immediately synchronize dashboard cards, selection, and counts", () => {
   const clubDealPanel = dashboardClient.match(
     /function VenueClubDealPanel[\s\S]*?function venueDealForm/,
