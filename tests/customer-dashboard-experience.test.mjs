@@ -20,7 +20,7 @@ test("customer dashboard leads with tonight, saved, deals, and alerts before acc
     /href="#customer-tonight">Tonight[\s\S]*?href="#customer-saved">Saved[\s\S]*?href="#customer-offers">Deals[\s\S]*?href="#customer-alerts">Alerts[\s\S]*?href="#customer-settings">Settings/,
   );
   assert.match(dashboard, /Your plans, saved profiles, Club Deals, and alerts in one place/);
-  assert.match(dashboard, /className="dashboard-close"[\s\S]*?Close customer dashboard and return to MyDancr/);
+  assert.match(dashboard, /className="dashboard-close"[\s\S]*?aria-label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
   assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" \/>/);
 });
 
@@ -79,6 +79,6 @@ test("customer action endpoints reject malformed identifiers and oversized attri
 test("customer dashboard remains touch-friendly and responsive without owning the global bottom navigation", () => {
   assert.match(dashboard, /@media \(max-width: 620px\)[\s\S]*?\.customer-dashboard-tabs[\s\S]*?overflow-x: auto/);
   assert.match(dashboard, /\.customer-card-actions a, \.customer-card-actions button, \.customer-empty-state a \{ min-height: 42px;/);
-  assert.match(dashboard, /@media \(max-width: 520px\)[\s\S]*?\.customer-top-nav \{ align-items: center; flex-direction: row;/);
+  assert.match(dashboard, /@media \(max-width: 520px\)[\s\S]*?\.dashboard-head-row \{ gap: 10px; \}/);
   assert.doesNotMatch(dashboard, /GlobalMobileBottomNav|home-mobile-bottom-nav/);
 });

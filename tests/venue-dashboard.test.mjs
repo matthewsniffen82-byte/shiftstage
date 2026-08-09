@@ -99,15 +99,18 @@ test("venue dashboard refreshes a saved session and recovers sign-in without lea
   assert.doesNotMatch(dashboardClient, /href=.*dancr_dashboard=venue/);
 });
 
-test("venue dashboard uses the compact MyDancr header with an X back to venue discovery", () => {
+test("all routed dashboards use one compact profile-style header and close control", () => {
   assert.match(
     dashboardClient,
-    /role === "venue"\s*\? "top-nav customer-top-nav venue-top-nav"/,
+    /const dashboardCloseHref = homeDiscoveryHref\([\s\S]*?role === "venue" \? "venues" : role === "dancer" \? "dancers" : "tonight"/,
   );
   assert.match(
     dashboardClient,
-    /role === "customer" \|\| role === "venue" \? \([\s\S]*?className="dashboard-close"[\s\S]*?homeDiscoveryHref\(role === "venue" \? "venues" : "tonight"\)[\s\S]*?Close venue dashboard and return to MyDancr[\s\S]*?\) : \(\s*<div className="nav-links">/,
+    /className=\{`dashboard-head dashboard-head-\$\{role\}`\}[\s\S]*?className="dashboard-head-row"[\s\S]*?className="dashboard-close"[\s\S]*?aria-label=\{`Close \$\{role\} dashboard and return to MyDancr`\}[\s\S]*?<svg/,
   );
+  assert.doesNotMatch(dashboardClient, /<Link className="brand" href="\/">/);
+  assert.doesNotMatch(dashboardClient, /className="nav-links"/);
+  assert.match(dashboardClient, /\.dashboard-close \{ flex: 0 0 42px; width: 42px; height: 42px;/);
 });
 
 test("venue management is consolidated into one descriptive collapsible workspace", () => {
