@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 
 const SESSION_KEY = "dancrAuthSessionV1";
@@ -46,6 +46,12 @@ export function ClubDealCard({
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const dialogReturnContext = useRef<{
+    windowScrollY: number;
+    scrollContainer: HTMLElement | null;
+    scrollTop: number;
+    focusTarget: HTMLElement | null;
+  } | null>(null);
   const offerDeals = deals?.length ? deals : [deal];
   const [selectedDealId, setSelectedDealId] = useState(deal.id);
   const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;
@@ -66,10 +72,48 @@ export function ClubDealCard({
     };
   }, [dialogOpen]);
 
-  async function generateDealQr(openDialog = presentation === "launcher") {
+  useEffect(() => {
+    if (dialogOpen || !dialogReturnContext.current) return;
+    const returnContext = dialogReturnContext.current;
+    dialogReturnContext.current = null;
+    let secondFrame = 0;
+    const restorePosition = () => {
+      if (returnContext.scrollContainer?.isConnected) {
+        returnContext.scrollContainer.scrollTop = returnContext.scrollTop;
+      }
+      window.scrollTo({ top: returnContext.windowScrollY, left: 0, behavior: "auto" });
+    };
+    const firstFrame = window.requestAnimationFrame(() => {
+      restorePosition();
+      secondFrame = window.requestAnimationFrame(() => {
+        restorePosition();
+        if (returnContext.focusTarget?.isConnected) {
+          returnContext.focusTarget.focus({ preventScroll: true });
+        }
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [dialogOpen]);
+
+  function openDealDialog(triggerButton: HTMLElement | null) {
+    if (!dialogOpen && !dialogReturnContext.current) {
+      const scrollContainer = triggerButton?.closest<HTMLElement>("#results.venue-profile-overlay") || null;
+      dialogReturnContext.current = {
+        windowScrollY: window.scrollY,
+        scrollContainer,
+        scrollTop: scrollContainer?.scrollTop || 0,
+        focusTarget: triggerButton,
+      };
+    }
+    setDialogOpen(true);
+  }
+
+  async function generateDealQr() {
     setStatus("");
     setIsLoading(true);
-    if (openDialog) setDialogOpen(true);
 
     try {
       const session = readCustomerSession();
@@ -167,7 +211,7 @@ export function ClubDealCard({
             <span>{expiresAt ? `Expires ${formatExpiry(expiresAt)}` : "Ready for club scan"}</span>
           </div>
         ) : null}
-        <button type="button" onClick={() => generateDealQr(false)} disabled={isLoading}>
+        <button type="button" onClick={() => generateDealQr()} disabled={isLoading}>
           {isLoading ? "Creating your QR…" : qrDataUrl ? "Refresh QR" : actionLabel}
         </button>
         {qrDataUrl ? (
@@ -193,9 +237,9 @@ export function ClubDealCard({
         <button
           className="club-deal-launcher"
           type="button"
-          onClick={() => {
-            setDialogOpen(true);
-            if (offerDeals.length === 1) void generateDealQr(true);
+          onClick={(event) => {
+            openDealDialog(event.currentTarget);
+            if (offerDeals.length === 1) void generateDealQr();
           }}
           disabled={isLoading}
         >
@@ -215,9 +259,9 @@ export function ClubDealCard({
         <button
           className="club-deal-sticky"
           type="button"
-          onClick={() => {
-            setDialogOpen(true);
-            if (offerDeals.length === 1) void generateDealQr(true);
+          onClick={(event) => {
+            openDealDialog(event.currentTarget);
+            if (offerDeals.length === 1) void generateDealQr();
           }}
           disabled={isLoading}
         >

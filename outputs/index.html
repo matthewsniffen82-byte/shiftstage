@@ -37375,6 +37375,7 @@
     let selectedVenueName = null;
     let venueProfileSavedScrollY = 0;
     let venueProfileReturnContext = null;
+    let clubDealOverlayReturnContext = null;
     let isCustomerLoggedIn = false;
     let isDancerLoggedIn = false;
     let isVenueLoggedIn = false;
@@ -42953,6 +42954,37 @@
       }
     }
 
+    function captureClubDealOverlayReturnContext(triggerButton = null) {
+      clubDealOverlayReturnContext = {
+        windowScrollY: window.scrollY || 0,
+        resultsScrollTop: results?.scrollTop || 0,
+        focusTarget: triggerButton instanceof HTMLElement
+          ? triggerButton
+          : document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null
+      };
+    }
+
+    function restoreClubDealOverlayReturnContext() {
+      const returnContext = clubDealOverlayReturnContext;
+      clubDealOverlayReturnContext = null;
+      if (!returnContext) return;
+      const restorePosition = () => {
+        if (results) results.scrollTop = returnContext.resultsScrollTop || 0;
+        window.scrollTo({ top: returnContext.windowScrollY || 0, left: 0, behavior: "auto" });
+      };
+      requestAnimationFrame(() => {
+        restorePosition();
+        requestAnimationFrame(() => {
+          restorePosition();
+          if (returnContext.focusTarget?.isConnected) {
+            returnContext.focusTarget.focus({ preventScroll: true });
+          }
+        });
+      });
+    }
+
     function dealPassOverlay() {
       let overlay = document.getElementById("dealPassOverlay");
       if (overlay) return overlay;
@@ -43033,7 +43065,10 @@
       };
     }
 
-    function openDealPassOverlay(pass) {
+    function openDealPassOverlay(pass, triggerButton = null) {
+      if (triggerButton || !clubDealOverlayReturnContext) {
+        captureClubDealOverlayReturnContext(triggerButton);
+      }
       const overlay = dealPassOverlay();
       const presentation = dealPassPresentation(pass);
       overlay.hidden = false;
@@ -43054,9 +43089,9 @@
       overlay.querySelector("[data-close-deal-pass]")?.focus({ preventScroll: true });
     }
 
-    function closeDealPassOverlay() {
+    function closeDealPassOverlay(restorePosition = true) {
       const overlay = document.getElementById("dealPassOverlay");
-      if (!overlay) return;
+      if (!overlay?.classList.contains("show")) return;
       if (overlay.contains(document.activeElement)) {
         document.activeElement.blur();
       }
@@ -43065,6 +43100,7 @@
       overlay.hidden = true;
       delete overlay.dataset.dealPass;
       syncOverlayScrollLock();
+      if (restorePosition) restoreClubDealOverlayReturnContext();
     }
 
     function clubDealOffers(config) {
@@ -43090,13 +43126,14 @@
       };
     }
 
-    function closeClubDealHub() {
+    function closeClubDealHub(restorePosition = true) {
       const overlay = document.getElementById("clubDealHubOverlay");
-      if (!overlay) return;
+      if (!overlay?.classList.contains("show")) return;
       overlay.classList.remove("show");
       overlay.setAttribute("aria-hidden", "true");
       overlay.hidden = true;
       syncOverlayScrollLock();
+      if (restorePosition) restoreClubDealOverlayReturnContext();
     }
 
     function clubDealHubOverlay() {
@@ -43128,7 +43165,7 @@
         try {
           const pass = await createRevenueDealPass(selection);
           saveCustomerDealPass(pass, "Club Deal QR saved");
-          closeClubDealHub();
+          closeClubDealHub(false);
           openDealPassOverlay(pass);
         } catch (error) {
           showToast(error.message || "Unable to create the Club Deal QR");
@@ -43139,12 +43176,13 @@
       return overlay;
     }
 
-    function openClubDealHub(config) {
+    function openClubDealHub(config, triggerButton = null) {
       const offers = clubDealOffers(config);
       if (!offers.length) {
         showToast("Club Deals unavailable");
         return;
       }
+      captureClubDealOverlayReturnContext(triggerButton);
       const overlay = clubDealHubOverlay();
       const venueName = String(config?.venueName || "this venue").trim() || "this venue";
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
@@ -43173,7 +43211,7 @@
         }
         const offers = clubDealOffers(config);
         if (offers.length > 1) {
-          openClubDealHub(config);
+          openClubDealHub(config, revenueTrigger);
           return true;
         }
         if (offers.length === 1) config.deal = offers[0];
@@ -43182,7 +43220,7 @@
         try {
           const pass = await createRevenueDealPass(config);
           saveCustomerDealPass(pass, "Club Deal QR saved");
-          openDealPassOverlay(pass);
+          openDealPassOverlay(pass, revenueTrigger);
           if (
             revenueTrigger.hasAttribute("data-feed-live-qr") ||
             revenueTrigger.hasAttribute("data-feed-venue-qr")
@@ -43218,7 +43256,7 @@
       if (trigger.hasAttribute("data-save-deal-pass-on-open")) {
         saveCustomerDealPass(pass, "Club QR saved to Offers");
       }
-      openDealPassOverlay(pass);
+      openDealPassOverlay(pass, trigger);
       if (
         trigger.hasAttribute("data-feed-live-qr") ||
         trigger.hasAttribute("data-feed-venue-qr")
@@ -47268,7 +47306,7 @@
       [
         closeProfileTvViewer,
         closeProfilePhotoViewer,
-        closeDealPassOverlay,
+        () => closeDealPassOverlay(false),
         closeProfileShareChoice,
         closeQrPopovers
       ].forEach((closeOverlay) => {

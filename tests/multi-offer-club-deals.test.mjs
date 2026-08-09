@@ -41,7 +41,7 @@ test("each selected offer keeps its exact deal and dancer attribution token", ()
   assert.match(tvSource, /Object\.fromEntries\(venueDeals\.map\(\(offer\) => \[offer\.id/);
   assert.match(liveApp, /function clubDealSelectionConfig\(config, deal\)/);
   assert.match(liveApp, /config\?\.dealAttributionTokens\?\.\[deal\.id\]/);
-  assert.match(liveApp, /function openClubDealHub\(config\)/);
+  assert.match(liveApp, /function openClubDealHub\(config, triggerButton = null\)/);
   assert.match(liveApp, /Choose one before MyDancr creates the tracked pass/);
 });
 
