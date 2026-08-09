@@ -72,7 +72,7 @@ test("the hosted identity provider integration is removed from runtime code and 
   }
 
   const activeRuntime = [profileApproval, profileRoute, publicProfiles, adminBackend, adminUi, liveApp, environmentExample].join("\n");
-  assert.doesNotMatch(activeRuntime, /verifymy|VMC_API|DANCR_IDENTITY_VERIFICATION_MODE/i);
+  assert.doesNotMatch(activeRuntime, /verifymy|VMC_|DANCR_IDENTITY_VERIFICATION_MODE/i);
   assert.doesNotMatch(activeRuntime, /identity_provider|identity_verified_at|dancer_identity_verifications/);
 });
 
@@ -115,5 +115,5 @@ test("automated media moderation remains the approval gate while venue affiliati
 test("legal identity data is absent from dancer profiles and admin screens", () => {
   assert.doesNotMatch(adminUi, /label="Legal name"|label="Verification name"/);
   assert.doesNotMatch(liveApp, /data-setup-profile-field="legalName"/);
-  assert.match(liveApp, /does not collect identity documents, selfies, or identity-verification reports/);
+  assert.doesNotMatch(liveApp, /Identity verification|Government ID|Selfie verification|Proof that you dance/);
 });

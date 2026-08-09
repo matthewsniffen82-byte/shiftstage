@@ -1852,7 +1852,7 @@ function SubmissionDetails({
 
   async function reviewContent(
     event: MouseEvent<HTMLButtonElement>,
-    targetType: "photo" | "verification_document" | "social_link",
+    targetType: "photo" | "social_link",
     targetId: string,
     status: "approved" | "rejected",
     label: string,
@@ -2003,7 +2003,7 @@ function SubmissionDetails({
 
       <section className="submission-section">
         <h3>Account approval</h3>
-        <p className="submission-empty">Approval is based on the dancer&apos;s venue affiliation and profile review. MyDancr does not collect or store identity documents, selfies, or identity-verification reports.</p>
+        <p className="submission-empty">Approval is based on the dancer&apos;s venue affiliation and profile and media review.</p>
       </section>
 
       <section className="submission-section">
@@ -2505,7 +2505,7 @@ function AdminDancerFullProfile({
 
       <section className="submission-section">
         <h3>Account approval</h3>
-        <p className="submission-empty">Approval is based on venue affiliation and profile review. No identity documents, selfies, personal identity details, or identity-verification reports are stored by MyDancr.</p>
+        <p className="submission-empty">Approval is based on venue affiliation and profile and media review.</p>
       </section>
 
       <section className="submission-section">

@@ -55,7 +55,7 @@ export type DeleteAdminDancerContentInput = {
 export type ReviewSubmissionContentInput = {
   dancerId: string;
   reviewerId: string;
-  targetType: "photo" | "verification_document" | "social_link";
+  targetType: "photo" | "social_link";
   targetId: string;
   status: ReviewStatus;
   notes?: string | null;
@@ -566,7 +566,6 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
         };
       })
       .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
-    verificationDocuments: [],
     reviews: reviews.map((review: any) => ({
       id: review.id,
       reviewType: review.review_type,
@@ -589,7 +588,7 @@ async function pendingContentReviewDancerIds(db: any): Promise<string[]> {
   return [
     ...new Set<string>(
       (data || [])
-        .filter((review: any) => /^(photo|social_link|verification_document):/.test(String(review.review_type || "")))
+        .filter((review: any) => /^(photo|social_link):/.test(String(review.review_type || "")))
         .map((review: any) => review.dancer_id)
         .filter(Boolean),
     ),
@@ -1067,8 +1066,6 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     if (photoError) throw photoError;
     if (!photo) throw new Error("Submitted photo not found.");
     await updatePhotoReviewSummary(client, input.dancerId);
-  } else if (input.targetType === "verification_document") {
-    throw new Error("Identity documents are not collected by MyDancr.");
   } else {
     const { data: social, error: socialError } = await db
       .from("social_links")
@@ -1200,7 +1197,12 @@ async function profileApprovalIssueSummary(client: DancrClient, dancerId: string
   }
 
   return Array.from(latestByType.entries())
-    .filter(([reviewType, review]) => review.status === "rejected" && reviewType !== "profile" && reviewType !== "identity")
+    .filter(([reviewType, review]) =>
+      review.status === "rejected"
+      && reviewType !== "profile"
+      && reviewType !== "identity"
+      && !reviewType.startsWith("verification_document:")
+    )
     .map(([reviewType, review]) => {
       const label = approvalIssueLabel(reviewType);
       return review.notes ? `${label} - ${review.notes}` : label;
@@ -1210,14 +1212,6 @@ async function profileApprovalIssueSummary(client: DancrClient, dancerId: string
 function approvalIssueLabel(reviewType: string) {
   if (reviewType.startsWith("photo:")) return "Profile photo";
   if (reviewType.startsWith("social_link:")) return "Social link";
-  if (reviewType.startsWith("verification_document:")) {
-    const normalized = reviewType.toLowerCase();
-    if (normalized.includes("selfie")) return "Selfie verification";
-    if (normalized.includes("proof") || normalized.includes("dance")) return "Proof that they dance";
-    if (normalized.includes("id") || normalized.includes("license") || normalized.includes("passport")) return "Government ID";
-    return "Verification file";
-  }
-  if (reviewType === "identity") return "Identity review";
   return "Profile review";
 }
 
@@ -1242,13 +1236,11 @@ function submittedContentApprovedNotificationCopy(targetType: ReviewSubmissionCo
 
 function rejectedContentLabel(targetType: ReviewSubmissionContentInput["targetType"]) {
   if (targetType === "photo") return "Profile photo";
-  if (targetType === "verification_document") return "Verification file";
   return "Social link";
 }
 
 function setupStepForRejectedContent(targetType: ReviewSubmissionContentInput["targetType"]) {
   if (targetType === "photo") return "photos";
-  if (targetType === "verification_document") return "verification";
   return "profile";
 }
 

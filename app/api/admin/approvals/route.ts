@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
     if (body?.action === "review_content") {
       const targetType =
-        body?.targetType === "photo" || body?.targetType === "verification_document" || body?.targetType === "social_link"
+        body?.targetType === "photo" || body?.targetType === "social_link"
           ? body.targetType
           : "";
       const targetId = typeof body?.targetId === "string" ? body.targetId.trim() : "";

@@ -43,8 +43,9 @@ test("content decisions stay visible without collapsing the dancer approval", ()
 
 test("account approval does not expose identity files or provider controls", () => {
   assert.match(adminSource, /Account approval/);
-  assert.match(adminSource, /does not collect or store identity documents, selfies, or identity-verification reports/);
+  assert.match(adminSource, /Approval is based on the dancer&apos;s venue affiliation and profile and media review/);
   assert.doesNotMatch(adminSource, /Tokenized identity verification|VerifyMy|opaque provider reference/);
+  assert.doesNotMatch(adminSource, /"verification_document"/);
   assert.doesNotMatch(adminSource, /reviewContent\(event, "verification_document"/);
   assert.doesNotMatch(adminSource, /Approve file/);
   assert.doesNotMatch(adminSource, /Dancer profile approved successfully/);

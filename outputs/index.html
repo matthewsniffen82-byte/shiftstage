@@ -37402,19 +37402,12 @@
       profile: false,
       photos: false,
       review: false,
-      verification: false,
       approval: false,
       shift: false
     };
-    let liveVerificationDocuments = [];
-    let verificationSubmitNotice = "";
-    let verificationSubmitNoticeTone = "";
+    let profileSubmitNotice = "";
+    let profileSubmitNoticeTone = "";
     let freshDancerVerificationLockedToProfile = false;
-    const verificationDocumentLabels = [
-      { documentType: "government_id", displayName: "Government ID" },
-      { documentType: "selfie", displayName: "Selfie verification" },
-      { documentType: "dance_proof", displayName: "Proof that you dance" }
-    ];
     const accountControlState = {
       customer: {
         disabled: false,
@@ -37570,8 +37563,6 @@
     Object.values(markets).forEach((market) => {
       market.dancers.forEach((profile, index) => {
         profile.photoStatus ??= profile.status === "Verified" ? "Approved" : "Pending";
-        profile.idStatus ??= profile.status === "Verified" ? "Passed" : "Needs review";
-        profile.selfieStatus ??= profile.status === "Verified" ? "Matched" : "Needs review";
         profile.featured ??= index === 0 && profile.status === "Verified";
         profile.hidden ??= false;
         profile.contentFlagged ??= profile.status === "Pending" && index % 2 === 1;
@@ -38195,11 +38186,9 @@
         profile: false,
         photos: false,
         review: false,
-        verification: false,
         approval: false,
         shift: false
       });
-      liveVerificationDocuments = [];
       ["dancerLegalName", "dancerStageName", "dancerCity", "setupStageName", "setupCity"].forEach((id) => {
         const field = document.getElementById(id);
         if (field) field.value = "";
@@ -38287,7 +38276,6 @@
     function stepForDancerDashboardLink(linkState = {}) {
       if (linkState.setupStep && linkState.setupStep !== "approved") return linkState.setupStep;
       if (linkState.targetType === "photo") return "photos";
-      if (linkState.targetType === "verification_document") return "verification";
       if (linkState.targetType === "social_link") return "profile";
       return linkState.status === "approved" ? "approved" : "approval";
     }
@@ -38308,9 +38296,6 @@
         const label = String(linkState.label || "").toLowerCase();
         const input =
           linkState.targetType === "photo" ? document.getElementById("setupProfilePhotos") :
-          linkState.targetType === "verification_document" && label.includes("selfie") ? document.getElementById("setupSelfieDocument") :
-          linkState.targetType === "verification_document" && (label.includes("proof") || label.includes("dance")) ? document.getElementById("setupDanceProofDocument") :
-          linkState.targetType === "verification_document" ? document.getElementById("setupIdDocument") :
           null;
         const reviewNote = document.querySelector(".review-feedback-item.is-rejected");
         const stepCard = document.querySelector(`#setupChecklist [data-step="${step}"]`);
@@ -39557,17 +39542,6 @@
       return normalized === "rejected" || normalized === "disapproved";
     }
 
-    function approvedRequiredVerificationDocuments(profile) {
-      const documents = profile?.verificationDocuments || profile?.verification_documents || [];
-      if (!documents.length) return false;
-      return requiredVerificationDocumentDefinitions().every((required, fallbackIndex) =>
-        documents.some((document, documentIndex) =>
-          matchesRequiredVerificationDocument(document, required.key, required.terms, documentIndex, fallbackIndex) &&
-          normalizedReviewStatus(document.status || document.reviewStatus || document.review_status) === "approved"
-        )
-      );
-    }
-
     function dancerCoreApprovalUnlocked(profile) {
       const verificationApproved = normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved";
       return Boolean(isApprovedDancerStatus(profile?.status) || verificationApproved);
@@ -39580,12 +39554,10 @@
         if (!market) return;
         const photos = Array.isArray(item.photos) ? item.photos : [];
         const socialLinks = normalizeSubmittedSocials(item);
-        const verificationDocuments = Array.isArray(item.verificationDocuments) ? item.verificationDocuments : [];
         const reviews = Array.isArray(item.reviews) ? item.reviews : [];
         const hasPendingContent =
           photos.some((photo) => !isFinalAdminReviewStatus(normalizedReviewStatus(photo.reviewStatus || photo.review_status))) ||
-          socialLinks.some((social) => !isFinalAdminReviewStatus(normalizedReviewStatus(social.reviewStatus))) ||
-          verificationDocuments.some((document) => !isFinalAdminReviewStatus(normalizedReviewStatus(document.status || document.reviewStatus || document.review_status)));
+          socialLinks.some((social) => !isFinalAdminReviewStatus(normalizedReviewStatus(social.reviewStatus)));
         const primaryPhoto = photos.find((photo) => photo.isPrimary)?.imageUrl || photos[0]?.imageUrl || "";
         const profileData = {
           id: item.id,
@@ -39613,12 +39585,9 @@
           approvedAt: item.approvedAt || item.approved_at || "",
           disabledAt: item.disabledAt || item.disabled_at || "",
           contentFlagged: false,
-          idStatus: reviewStatusLabel(item.verificationStatus, "Passed", "Needs review"),
-          selfieStatus: reviewStatusLabel(item.verificationStatus, "Matched", "Needs review"),
           photoStatus: reviewStatusLabel(item.photoReviewStatus, "Approved", "Pending"),
           socials: Object.fromEntries(socialLinks.map((social) => [social.platform, social.url || social.handle || ""]).filter(([, value]) => Boolean(value))),
           socialLinks,
-          verificationDocuments,
           reviews,
           submittedPhotos: photos,
           mainPhotoUrl: primaryPhoto,
@@ -39935,18 +39904,12 @@
     function setupStepForNotificationPayload(payload = {}) {
       if (payload.setupStep) return payload.setupStep;
       if (payload.targetType === "photo") return "photos";
-      if (payload.targetType === "verification_document") return "verification";
       return "profile";
     }
 
     function inputSelectorForReviewPayload(payload = {}) {
       const label = String(payload.label || "").toLowerCase();
       if (payload.targetType === "photo") return "#setupProfilePhotos";
-      if (payload.targetType === "verification_document") {
-        if (label.includes("selfie")) return "#setupSelfieDocument";
-        if (label.includes("proof") || label.includes("dance")) return "#setupDanceProofDocument";
-        return "#setupIdDocument";
-      }
       if (payload.targetType === "social_link") {
         if (label.includes("instagram")) return "#setupInstagram";
         if (label.includes("tiktok")) return "#setupTiktok";
@@ -39960,14 +39923,12 @@
 
     function setupStepForRejectedTarget(targetType) {
       if (targetType === "photo") return "photos";
-      if (targetType === "verification_document") return "verification";
       return "profile";
     }
 
     function rejectedTargetTitle(targetType, label) {
       if (label) return `${label} needs changes`;
       if (targetType === "photo") return "Profile photo needs changes";
-      if (targetType === "verification_document") return "Verification file needs changes";
       return "Social link needs changes";
     }
 
@@ -41241,6 +41202,7 @@
       const latest = new Map();
       liveDancerReviews.forEach((review) => {
         const type = review.reviewType || review.review_type || "review";
+        if (type === "identity" || type.startsWith("verification_document:")) return;
         const previous = latest.get(type);
         const currentTime = Date.parse(review.reviewedAt || review.reviewed_at || review.createdAt || review.created_at || "") || 0;
         const previousTime = previous ? Date.parse(previous.reviewedAt || previous.reviewed_at || previous.createdAt || previous.created_at || "") || 0 : -1;
@@ -41258,13 +41220,11 @@
 
     function reviewSetupStep(reviewType = "") {
       if (reviewType.startsWith("photo:") || reviewType === "photos") return "photos";
-      if (reviewType.startsWith("verification_document:") || reviewType === "identity") return "verification";
       if (reviewType.startsWith("social_link:") || reviewType === "profile") return "profile";
       return "approval";
     }
 
     function reviewDisplayLabel(reviewType = "") {
-      if (reviewType === "identity") return "Legacy identity review";
       if (reviewType === "photos") return "Photo set";
       if (reviewType === "profile") return "Profile details";
       if (reviewType.startsWith("photo:")) {
@@ -41277,7 +41237,6 @@
         );
         return photoIndex >= 0 ? `Photo ${photoIndex + 1}` : "Submitted photo";
       }
-      if (reviewType.startsWith("verification_document:")) return "Verification file";
       if (reviewType.startsWith("social_link:")) {
         const targetId = reviewType.split(":").slice(1).join(":");
         const profile = activeDancerProfile() || null;
@@ -41302,26 +41261,15 @@
     function reviewStepLabel(step) {
       if (step === "profile") return "Step 1 profile";
       if (step === "photos") return "Step 2 photos";
-      if (step === "verification") return "Step 3 verification";
-      return "Step 4 approval";
+      return "Step 3 approval";
     }
 
     function hasRejectedDancerReviews() {
       return latestDancerReviews().some((review) => review.status === "rejected");
     }
 
-    function isCoreVerificationReviewType(type = "") {
-      return type === "identity" || type.startsWith("verification_document:");
-    }
-
     function isOptionalProfileFixReviewType(type = "") {
       return type === "photos" || type.startsWith("photo:") || type.startsWith("social_link:");
-    }
-
-    function hasRejectedCoreVerificationReviews() {
-      return latestDancerReviews().some((review) =>
-        review.status === "rejected" && isCoreVerificationReviewType(String(review.reviewType || review.review_type || ""))
-      );
     }
 
     function hasOptionalProfileFixReviews() {
@@ -41753,8 +41701,6 @@
         trend: profile?.trend || 10,
         distance: profile?.distance || "0.0 mi",
         photoStatus: status === "Verified" ? "Approved" : "Pending",
-        idStatus: dancerSetup.verification || status === "Verified" ? "Passed" : "Needs review",
-        selfieStatus: dancerSetup.verification || status === "Verified" ? "Matched" : "Needs review",
         socials: { ...(profile?.socials || {}), ...socials }
       };
       if (profile) {
@@ -47601,7 +47547,6 @@
       liveDancerBilling = null;
       liveDancerRankingEvents = [];
       liveDancerReviews = [];
-      liveVerificationDocuments = [];
       liveCustomerProfile = null;
       liveVenueDashboard = null;
       liveAdminVenueClaims = [];
@@ -48247,7 +48192,6 @@
         profile: true,
         photos: true,
         review: true,
-        verification: true,
         approval: true,
         shift: true
       });
@@ -48277,7 +48221,6 @@
         profile: true,
         photos: true,
         review: true,
-        verification: true,
         approval: false,
         shift: false
       });
@@ -48413,11 +48356,6 @@
       renderDancerSetup();
     }
 
-    function verificationStorageKey() {
-      const userKey = authSession?.user?.id || authSession?.email || document.getElementById("dancerEmail")?.value || "dancer";
-      return `mydancr:verification-documents:${userKey}`;
-    }
-
     function dancerProfileSetupStorageKey() {
       const userKey =
         authSession?.user?.id ||
@@ -48505,80 +48443,12 @@
         .replace(/'/g, "&#39;");
     }
 
-    function normalizeVerificationDocument(document = {}, index = 0) {
-      const fallback = verificationDocumentLabels[index] || {};
-      return {
-        storagePath: document.storagePath || document.storage_path || "",
-        name: document.name || document.fileName || fallback.displayName || `Document ${index + 1}`,
-        documentType: document.documentType || document.document_type || fallback.documentType || "verification",
-        displayName: document.displayName || document.display_name || fallback.displayName || `Document ${index + 1}`,
-        status: document.status || "pending_review",
-        createdAt: document.createdAt || document.created_at || null,
-        updatedAt: document.updatedAt || document.updated_at || null
-      };
-    }
-
-    function readStoredVerificationDocuments() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(verificationStorageKey()) || "[]");
-        return Array.isArray(parsed) ? parsed.map(normalizeVerificationDocument) : [];
-      } catch (error) {
-        return [];
-      }
-    }
-
-    function writeStoredVerificationDocuments(documents) {
-      try {
-        localStorage.setItem(verificationStorageKey(), JSON.stringify(documents));
-      } catch (error) {
-        // Storage is a convenience cache only; Supabase storage remains the source of truth.
-      }
-    }
-
-    function submittedVerificationDocuments() {
-      return liveVerificationDocuments.length ? liveVerificationDocuments : readStoredVerificationDocuments();
-    }
-
-    function hasSubmittedVerificationDocuments() {
-      return true;
-    }
-
-    function syncVerificationStepFromDocuments() {
-      if (hasSubmittedVerificationDocuments()) {
-        dancerSetup.verification = true;
-      }
-    }
-
-    function mergeVerificationDocuments(storedDocuments, liveDocuments) {
-      if (!storedDocuments.length) return liveDocuments;
-      return liveDocuments.map((document, index) => {
-        const storedDocument = storedDocuments.find((item) => item.documentType === document.documentType)
-          || storedDocuments[index];
-        return {
-          ...document,
-          name: storedDocument?.name || document.name,
-          documentType: storedDocument?.documentType || document.documentType,
-          displayName: storedDocument?.displayName || document.displayName,
-        };
-      });
-    }
-
-    function setVerificationDocuments(documents, persist = true) {
-      liveVerificationDocuments = (documents || []).map(normalizeVerificationDocument);
-      if (persist) writeStoredVerificationDocuments(liveVerificationDocuments);
-      syncVerificationStepFromDocuments();
-    }
-
-    function verificationSubmissionMarkup() {
-      return `<div class="info-tile verification-submission-list" role="status" aria-live="polite"><div class="verification-submission-status"><strong>No identity verification required</strong><span>Approval is based on venue affiliation and profile review.</span></div><div class="meta">MyDancr does not collect identity documents, selfies, or identity-verification reports. Profile photos and MyDancr TV videos continue through separate safety moderation.</div></div>`;
-    }
-
-    function verificationReviewNoticeMarkup(reviewSubmitted = false) {
-      const message = verificationSubmitNotice || (reviewSubmitted
-        ? "Your profile, photos, and verification files were submitted successfully. Dancr will notify you by email and in your site notifications when the review is complete."
+    function profileReviewNoticeMarkup(reviewSubmitted = false) {
+      const message = profileSubmitNotice || (reviewSubmitted
+        ? "Your profile and media were submitted successfully. MyDancr will notify you by email and in your site notifications when the review is complete."
         : "");
       if (!message) return "";
-      const tone = verificationSubmitNotice ? (verificationSubmitNoticeTone || "success") : "success";
+      const tone = profileSubmitNotice ? (profileSubmitNoticeTone || "success") : "success";
       const heading = tone === "error" ? "Submission not completed" : "Submitted for review";
       return `
         <div class="rule-note verification-review-notice is-${tone}" role="${tone === "error" ? "alert" : "status"}" aria-live="polite">
@@ -48888,7 +48758,6 @@
           profile: false,
           photos: false,
           review: false,
-          verification: false,
           approval: false,
           shift: dancerSetup.shift
         });
@@ -48900,7 +48769,6 @@
         const data = await getAuthenticatedJson("/api/dancer/profile");
         if (!data?.profile) return null;
         applyDancerApprovalProfile(data.profile);
-        syncVerificationStepFromDocuments();
         renderDancerSetup();
         return data.profile;
       } catch (error) {
@@ -48950,7 +48818,6 @@
         profile: savedProfileSetup,
         photos: dancerProfileMediaModerationComplete(profile),
         review: approved || Boolean(profile.reviewSubmitted || normalizedReviewStatus(profile.status) === "pending_review"),
-        verification: approved || hasSubmittedVerificationDocuments(),
         approval: approved,
         shift: dancerSetup.shift
       });
@@ -48979,9 +48846,6 @@
           galleryPhotoUrls: photos.slice(1),
           status: approved ? "Verified" : rejected ? "Rejected" : "Pending",
           photoStatus: reviewStatusLabel(profile.photo_review_status || profile.photoReviewStatus, "Approved", dancerSetup.photos ? "Pending" : localProfile.photoStatus),
-          idStatus: approved ? "Passed" : (dancerSetup.verification ? "Needs review" : localProfile.idStatus),
-          selfieStatus: approved ? "Matched" : (dancerSetup.verification ? "Needs review" : localProfile.selfieStatus),
-          danceProofStatus: approved ? "Approved" : (dancerSetup.verification ? "Needs review" : localProfile.danceProofStatus),
           reviewSubmitted: approved || rejected ? false : (submittedForReview || localProfile.reviewSubmitted),
           hidden: approved ? (profile.is_public === false || profile.isPublic === false) : localProfile.hidden,
           isPublic: profile.is_public !== false && profile.isPublic !== false,
@@ -49336,8 +49200,8 @@
       const avatarSaved = Boolean(setupProfile?.avatarStoragePath || setupProfile?.avatar_storage_path);
       if (!dancerSetup.profile || !dancerSetup.photos || !avatarSaved || !dancerProfileVideoModerationComplete()) {
         activeSetupStep = "profile";
-        verificationSubmitNotice = "Complete your profile and wait for every uploaded picture and video to pass moderation before submitting.";
-        verificationSubmitNoticeTone = "error";
+        profileSubmitNotice = "Complete your profile and wait for every uploaded picture and video to pass moderation before submitting.";
+        profileSubmitNoticeTone = "error";
         renderDancerSetup();
         showToast("Complete your profile and media first");
         return;
@@ -49375,16 +49239,16 @@
             : review
         ));
         activeSetupStep = "approval";
-        verificationSubmitNotice = "Profile submitted. Choose your affiliated venue and show the personal QR to its verified manager.";
-        verificationSubmitNoticeTone = "success";
+        profileSubmitNotice = "Profile submitted. Choose your affiliated venue and show the personal QR to its verified manager.";
+        profileSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Profile saved. Venue affiliation is the final step.");
         void loadDancerVenueVerification();
       } catch (error) {
         const message = error.message || "Could not submit for review";
         activeSetupStep = "approval";
-        verificationSubmitNotice = message;
-        verificationSubmitNoticeTone = "error";
+        profileSubmitNotice = message;
+        profileSubmitNoticeTone = "error";
         renderDancerSetup();
         showToast(message);
       } finally {
@@ -49602,14 +49466,10 @@
         : "";
       const bodyId = `setup-step-${step}-body`;
       const statusText = markerComplete
-        ? (step === "verification"
-          ? "Not required"
-          : (step === "approval" ? "Approved" : "Saved"))
+        ? (step === "approval" ? "Approved" : "Saved")
         : (submittedForReview ? "Files saved" : "");
       const statusLabel = markerComplete
-        ? (step === "verification"
-          ? "Identity verification is not required"
-          : statusText)
+        ? statusText
         : (submittedForReview ? "Files saved and pending admin approval" : "Not saved");
       return `
         <article class="setup-step ${markerComplete ? "complete" : ""} ${submittedForReview ? "submitted" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
@@ -49769,7 +49629,6 @@
     }
 
     function renderDancerSetup() {
-      syncVerificationStepFromDocuments();
       const steps = setupOrder();
       const completedSteps = steps.filter((step) => dancerSetup[step]).length;
       const nextStep = nextIncompleteStep();
@@ -49783,7 +49642,7 @@
       const activeProfile = activeDancerProfile(city);
       const approved = dancerSetup.approval || dancerCoreApprovalUnlocked(activeProfile) || normalizedReviewStatus(liveDancerBilling?.dancerStatus) === "approved";
       const optionalProfileFixes = approved && hasOptionalProfileFixReviews();
-      const rejected = !approved && (isRejectedDancerStatus(activeProfile?.status) || hasRejectedDancerReviews() || hasRejectedCoreVerificationReviews());
+      const rejected = !approved && (isRejectedDancerStatus(activeProfile?.status) || hasRejectedDancerReviews());
       const readyForReview = isSavedSetupStepComplete("profile");
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
       const approvalStateLabel = rejected ? "Rejected" : optionalProfileFixes ? "Approved with fixes needed" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
@@ -50248,7 +50107,7 @@
         ${approvedProfileVideoManagerMarkup()}
       `;
       const reviewBody = `
-        ${verificationReviewNoticeMarkup(reviewSubmitted)}
+        ${profileReviewNoticeMarkup(reviewSubmitted)}
         <button class="action-btn secondary" type="button" data-preview-profile>
           Preview public profile
         </button>
@@ -50293,7 +50152,6 @@
         profile?.reviewSubmitted ||
         profile?.approvalChangesPending ||
         (Array.isArray(profile?.submittedPhotos) && profile.submittedPhotos.length) ||
-        (Array.isArray(profile?.verificationDocuments) && profile.verificationDocuments.length) ||
         (Array.isArray(profile?.reviews) && profile.reviews.length) ||
         (Array.isArray(profile?.socialLinks) && profile.socialLinks.length)
       );
@@ -50418,10 +50276,6 @@
           </div>
         `;
       }).join("")}</div>`;
-    }
-
-    function adminSubmittedDocumentsMarkup(profile) {
-      return '<div class="locked">No identity documents, selfies, legal identity details, or verification reports are stored by MyDancr.</div>';
     }
 
     function adminSubmittedPhotosMarkup(profile) {
@@ -50551,10 +50405,6 @@
             <div class="admin-full-photos">${photoMarkup}</div>
           </section>
           <section class="admin-full-section">
-            <strong>Tokenized identity verification</strong>
-            <div class="locked">No identity documents, selfies, legal identity details, or verification reports are stored by MyDancr.</div>
-          </section>
-          <section class="admin-full-section">
             <strong>Social links (${socials.length})</strong>
             <div class="admin-full-list">${socialMarkup}</div>
           </section>
@@ -50615,7 +50465,7 @@
         return;
       }
       const stageName = profile.stageName || profile.stage_name || profile.name || "this dancer";
-      const confirmed = confirm(`Permanently delete ${stageName}'s dancer profile and all profile photos, verification files, schedules, and profile activity? Their login account will remain. This cannot be undone.`);
+      const confirmed = confirm(`Permanently delete ${stageName}'s dancer profile and all profile photos, schedules, and profile activity? Their login account will remain. This cannot be undone.`);
       if (!confirmed) return;
 
       const originalText = button?.textContent || "Delete profile";
@@ -50693,59 +50543,17 @@
       const hasPendingPhoto = (profile.submittedPhotos || []).some((photo) =>
         !isFinalAdminReviewStatus(normalizedReviewStatus(photo.reviewStatus || photo.review_status))
       );
-      const hasPendingDocument = (profile.verificationDocuments || []).some((document) =>
-        !isFinalAdminReviewStatus(normalizedReviewStatus(document.status || document.reviewStatus || document.review_status))
-      );
-      return hasPendingSocial || hasPendingPhoto || hasPendingDocument;
-    }
-
-    function matchesRequiredVerificationDocument(document, key, terms, documentIndex, fallbackIndex) {
-      const text = [
-        document.documentType,
-        document.document_type,
-        document.displayName,
-        document.display_name,
-        document.name
-      ].map((value) => String(value || "")).join(" ").toLowerCase();
-      if (text.includes(key)) return true;
-      if (terms.every((term) => text.includes(term))) return true;
-      return !text.trim() && documentIndex === fallbackIndex;
-    }
-
-    function requiredVerificationDocumentDefinitions() {
-      return [
-        { key: "government_id", label: "Government ID", terms: ["government", "id"] },
-        { key: "selfie", label: "Selfie verification", terms: ["selfie"] },
-        { key: "dance_proof", label: "Proof that they dance", terms: ["proof", "dance"] }
-      ];
-    }
-
-    function requiredSubmittedVerificationDocuments(profile) {
-      const documents = profile.verificationDocuments || [];
-      const used = new Set();
-      return requiredVerificationDocumentDefinitions()
-        .map((required, fallbackIndex) => {
-          const foundIndex = documents.findIndex((item, documentIndex) =>
-            !used.has(documentIndex) && matchesRequiredVerificationDocument(item, required.key, required.terms, documentIndex, fallbackIndex)
-          );
-          if (foundIndex < 0) return null;
-          used.add(foundIndex);
-          return documents[foundIndex];
-        })
-        .filter(Boolean);
+      return hasPendingSocial || hasPendingPhoto;
     }
 
     function pendingAdminSubmissionItems(profile) {
-      const documents = profile.verificationDocuments || [];
-      const requiredDocuments = requiredVerificationDocumentDefinitions();
       const pending = [];
-      requiredDocuments.forEach((required, index) => {
-        const document = documents.find((item, documentIndex) =>
-          matchesRequiredVerificationDocument(item, required.key, required.terms, documentIndex, index)
-        );
-        const status = normalizedReviewStatus(document?.status || document?.reviewStatus || document?.review_status);
-        if (!document || status !== "approved") pending.push(required.label);
-      });
+      if ((profile.submittedPhotos || []).some((photo) => !isFinalAdminReviewStatus(normalizedReviewStatus(photo.reviewStatus || photo.review_status)))) {
+        pending.push("photos");
+      }
+      if (normalizeSubmittedSocials(profile).some((social) => !isFinalAdminReviewStatus(normalizedReviewStatus(social.reviewStatus)))) {
+        pending.push("social links");
+      }
       return pending;
     }
 
@@ -50821,10 +50629,6 @@
           <div class="info-tile">
             <strong>Submitted photos</strong>
             <div class="photo-upload-grid">${adminSubmittedPhotosMarkup(profile)}</div>
-          </div>
-          <div class="info-tile">
-            <strong>Identity verification</strong>
-            <div class="locked">No identity documents, selfies, legal identity details, or verification reports are stored by MyDancr.</div>
           </div>
           <div class="info-tile">
             <strong>Review history</strong>
@@ -51326,12 +51130,6 @@
       ));
     }
 
-    function findReviewDocument(profile, targetId) {
-      return (profile.verificationDocuments || []).find((item) =>
-        [item.storagePath, item.storage_path, item.name, item.fileUrl, item.file_url].map((value) => String(value || "")).includes(targetId)
-      );
-    }
-
     function findReviewSocial(profile, targetId) {
       const rows = profile.socialLinks || profile.social_links || [];
       return rows.find((item, index) => String(item.id || `${profile.id || profile.name}-social-${index}`) === targetId);
@@ -51401,14 +51199,6 @@
           photo.reviewStatus = status;
           photo.reviewNotes = notes;
           photo.reviewedAt = reviewedAt;
-        }
-      }
-      if (targetType === "verification_document") {
-        const document = findReviewDocument(profile, targetId);
-        if (document) {
-          document.status = status;
-          document.reviewNotes = notes;
-          document.reviewedAt = reviewedAt;
         }
       }
       if (targetType === "social_link") {
@@ -51689,7 +51479,7 @@
         markAdminReviewButton(button, "approved");
         markDancerProfileContentApproved(profileMatch.profile);
         if (activeDancerProfile(profileMatch.city)?.id === profileMatch.profile.id || activeDancerProfile(profileMatch.city)?.name === profileMatch.profile.name) {
-          Object.assign(dancerSetup, { profile: true, photos: true, review: true, verification: false, approval: false });
+          Object.assign(dancerSetup, { profile: true, photos: true, review: true, approval: false });
           setupChecklistExpanded = true;
           activeSetupStep = "approval";
         }
@@ -51709,12 +51499,6 @@
         profileMatch.profile.hidden = true;
         profileMatch.profile.contentFlagged = false;
         refreshAfterAdminAction(action === "remove-profile" ? "Fake profile removed" : "Inappropriate content removed");
-        return;
-      }
-      if (action === "approve-id" && profileMatch) {
-        profileMatch.profile.idStatus = "Passed";
-        profileMatch.profile.selfieStatus = "Matched";
-        refreshAfterAdminAction("ID and selfie approved");
         return;
       }
       if (action === "approve-photos" && profileMatch) {
@@ -55686,7 +55470,6 @@
         profile: false,
         photos: false,
         review: false,
-        verification: false,
         approval: false,
         shift: false
       });
@@ -55911,7 +55694,6 @@
           profile: false,
           photos: false,
           review: false,
-          verification: false,
           approval: false,
           shift: false
         });

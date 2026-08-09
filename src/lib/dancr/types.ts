@@ -226,19 +226,6 @@ export type ApprovalReview = {
   reviewedAt: string | null;
 };
 
-export type VerificationDocument = {
-  name: string;
-  documentType?: string;
-  displayName?: string;
-  storagePath: string;
-  fileUrl: string;
-  status: ReviewStatus | "pending_review";
-  reviewNotes?: string | null;
-  reviewedAt?: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-};
-
 export type AdminDancerAccount = {
   id: string;
   displayName: string | null;
@@ -276,7 +263,6 @@ export type AdminApprovalDancer = {
   subscription?: AdminDancerSubscription | null;
   socialLinks: SocialLink[];
   photos: DancerPhoto[];
-  verificationDocuments: VerificationDocument[];
   reviews: ApprovalReview[];
 };
 
