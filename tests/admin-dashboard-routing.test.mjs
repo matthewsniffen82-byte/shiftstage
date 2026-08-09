@@ -17,7 +17,7 @@ test("/admin opens the production app's real platform admin dashboard", () => {
   assert.match(liveApp, /openAdminDashboard\(\)/);
   assert.match(
     liveApp,
-    /!handleAdminDashboardDeepLink\(\) && !handleDancerDashboardDeepLink\(\)/,
+    /!handleAdminDashboardDeepLink\(\) && !handleVenueDashboardDeepLink\(\) && !handleDancerDashboardDeepLink\(\)/,
   );
 });
 

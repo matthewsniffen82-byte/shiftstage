@@ -245,7 +245,14 @@ export default function DashboardClient({
         <span className="eyebrow">{role === "customer" ? "Your MyDancr" : "Live account"}</span>
         <h1>{role === "customer" ? (isLoading ? "Your night" : `Welcome back, ${displayName}`) : title}</h1>
         <p>{isLoading ? "Loading your live account..." : state.error ? state.error : role === "customer" ? "Your plans, saved profiles, Club Deals, and alerts in one place." : `Welcome back, ${displayName}.`}</p>
-        {state.error ? <Link className="primary-link" href={`/account?role=${role}`}>Sign in</Link> : null}
+        {state.error ? (
+          <Link
+            className="primary-link"
+            href={role === "venue" ? "/?dancr_dashboard=venue" : `/account?role=${role}`}
+          >
+            Sign in
+          </Link>
+        ) : null}
       </section>
 
       {!state.error ? (

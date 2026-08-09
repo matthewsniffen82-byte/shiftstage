@@ -53,6 +53,8 @@ test("venue signup redeems a private access code and routes successful authentic
   assert.match(liveApp, /!result\.session\?\.accessToken \|\| result\.account\?\.role !== "venue"/);
   assert.match(liveApp, /async function openVenueDashboard\(\)[\s\S]*?if \(!isVenueSession\(\)\)[\s\S]*?window\.location\.href = "\/dashboard\/venue"/);
   assert.match(liveApp, /async function startVenueDashboardSession\(message[\s\S]*?window\.location\.href = "\/dashboard\/venue"/);
+  assert.match(liveApp, /function handleVenueDashboardDeepLink\(\)[\s\S]*?params\.get\("dancr_dashboard"\) !== "venue"[\s\S]*?void openVenueDashboard\(\)/);
+  assert.match(dashboardClient, /href=\{role === "venue" \? "\/\?dancr_dashboard=venue" : `\/account\?role=\$\{role\}`\}/);
   assert.doesNotMatch(liveApp, />Manage MyDancr TV</);
   assert.match(liveApp, /const opened = await openVenueDashboard\(\);\s*if \(opened\) \{/);
   assert.doesNotMatch(liveApp, /venue@example\.com|venue123|demo venue/i);

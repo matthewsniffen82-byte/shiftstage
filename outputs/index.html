@@ -57236,6 +57236,18 @@
       return true;
     }
 
+    function handleVenueDashboardDeepLink() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("dancr_dashboard") !== "venue") return false;
+      window.history.replaceState({}, document.title, "/");
+      void openVenueDashboard();
+      if (!isVenueSession()) {
+        const status = document.getElementById("venueAuthStatus");
+        if (status) status.textContent = "Sign in as the verified venue manager to open the venue workspace.";
+      }
+      return true;
+    }
+
     function handleVenueSignupDeepLink() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("venueSignup") !== "1") return false;
@@ -57326,7 +57338,7 @@
     if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueSignupDeepLink()) {
+    if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueSignupDeepLink()) {
       void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl());
     }
   </script>
