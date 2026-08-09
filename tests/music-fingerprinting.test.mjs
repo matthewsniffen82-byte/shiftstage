@@ -13,7 +13,7 @@ import {
 
 test("music fingerprint sampling covers short and full-length TV uploads", () => {
   assert.deepEqual(getMusicFingerprintSampleOffsets(7), [0]);
-  assert.deepEqual(getMusicFingerprintSampleOffsets(20), [0, 5, 10]);
+  assert.deepEqual(getMusicFingerprintSampleOffsets(20), [0, 10]);
   assert.deepEqual(getMusicFingerprintSampleOffsets(30), [0, 10, 20]);
   assert.throws(() => getMusicFingerprintSampleOffsets(0), /duration could not be determined/);
 });
