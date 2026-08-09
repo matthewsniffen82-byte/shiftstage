@@ -38016,6 +38016,7 @@
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
     let pendingAvatarObjectUrl = "";
+    let pendingAvatarSetupStep = "";
     let activeApprovedVisualPhotoTarget = "";
     let pendingApprovedPhotoAutoSubmit = false;
     let approvedPhotoEditMode = false;
@@ -50269,9 +50270,17 @@
       input.click();
     }
 
-    function openApprovedAvatarUploadPicker() {
+    function keepAvatarOriginSetupStepOpen() {
+      if (pendingAvatarSetupStep !== "profile") return;
+      setupChecklistExpanded = true;
+      activeSetupStep = "profile";
+    }
+
+    function openApprovedAvatarUploadPicker(options = {}) {
       const input = document.getElementById("approvedAvatarUploadInput");
       const message = "Choose a clear face photo for your avatar.";
+      pendingAvatarSetupStep = options.preserveSetupStep === true ? "profile" : "";
+      keepAvatarOriginSetupStepOpen();
       setApprovedAvatarUploadStatus(message);
       showToast(message);
       if (!input) {
@@ -50279,6 +50288,11 @@
         return;
       }
       input.value = "";
+      window.addEventListener("focus", () => {
+        window.setTimeout(() => {
+          if (!input.files?.length) pendingAvatarSetupStep = "";
+        }, 0);
+      }, { once: true });
       input.click();
     }
 
@@ -50605,6 +50619,7 @@
     }
 
     function renderDancerSetup() {
+      keepAvatarOriginSetupStepOpen();
       dancerSetupRefreshPending = false;
       const steps = setupOrder();
       const completedSteps = steps.filter((step) => dancerSetup[step]).length;
@@ -57080,6 +57095,7 @@
         const input = event.target;
         const file = input.files?.[0];
         if (!file) return;
+        keepAvatarOriginSetupStepOpen();
         const progressTimer = startApprovedAvatarModerationProgress(file.name || "avatar");
         showToast("Checking your avatar...");
         input.disabled = true;
@@ -57102,6 +57118,7 @@
               };
             }
           }
+          keepAvatarOriginSetupStepOpen();
           renderDancerSetup();
           renderApprovedVisualProfileEditor();
           renderDancerManagement();
@@ -57118,6 +57135,8 @@
             throw new Error("Dancr could not confirm the avatar upload status. Please try again.");
           }
         } catch (error) {
+          keepAvatarOriginSetupStepOpen();
+          renderDancerSetup();
           const message = normalizeRequestError(error, "Could not upload avatar");
           setApprovedAvatarUploadStatus(message, "error");
           showToast(message);
@@ -57125,6 +57144,7 @@
           window.clearInterval(progressTimer);
           input.value = "";
           input.disabled = false;
+          pendingAvatarSetupStep = "";
         }
         return;
       }
@@ -57176,7 +57196,9 @@
       const avatarUpload = event.target.closest("[data-approved-avatar-upload]");
       if (avatarUpload) {
         event.preventDefault();
-        openApprovedAvatarUploadPicker();
+        openApprovedAvatarUploadPicker({
+          preserveSetupStep: Boolean(avatarUpload.closest('#setupChecklist [data-step="profile"]'))
+        });
         return;
       }
       const avatarRemove = event.target.closest("[data-approved-avatar-remove]");

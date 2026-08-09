@@ -83,6 +83,33 @@ test("dancer dashboard avatar setup uses the same mobile-safe face-centering wor
   );
 });
 
+test("Step 1 stays expanded for the complete avatar upload started from profile setup", () => {
+  const originGuard =
+    liveShell.match(/function keepAvatarOriginSetupStepOpen\(\)[\s\S]*?\n    function openApprovedAvatarUploadPicker/)?.[0] || "";
+  const avatarChange =
+    liveShell.match(/if \(event\.target\?\.id === "approvedAvatarUploadInput"\)[\s\S]*?\n        return;/)?.[0] || "";
+
+  assert.match(originGuard, /pendingAvatarSetupStep !== "profile"/);
+  assert.match(originGuard, /setupChecklistExpanded = true/);
+  assert.match(originGuard, /activeSetupStep = "profile"/);
+  assert.match(
+    liveShell,
+    /function renderDancerSetup\(\) \{\s*keepAvatarOriginSetupStepOpen\(\);/,
+    "background renders must not collapse the avatar's originating setup step",
+  );
+  assert.match(
+    liveShell,
+    /preserveSetupStep: Boolean\(avatarUpload\.closest\('#setupChecklist \[data-step="profile"\]'\)\)/,
+  );
+  assert.match(
+    liveShell,
+    /window\.addEventListener\("focus"[\s\S]*?if \(!input\.files\?\.length\) pendingAvatarSetupStep = ""/,
+    "canceling the file picker must release the temporary Step 1 pin",
+  );
+  assert.match(avatarChange, /keepAvatarOriginSetupStepOpen\(\);[\s\S]*?renderDancerSetup\(\);/);
+  assert.match(avatarChange, /finally \{[\s\S]*?pendingAvatarSetupStep = ""/);
+});
+
 test("all circular public identity surfaces prefer the approved avatar with main-photo fallback", () => {
   assert.match(publicService, /const avatarPhoto = dedicatedAvatar \|\| primaryPhoto/);
   assert.match(publicService, /avatarPhotoUrl: avatarPhoto\?\.imageUrl \|\| null/);
