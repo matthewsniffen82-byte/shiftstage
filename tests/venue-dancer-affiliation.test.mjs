@@ -149,6 +149,18 @@ test("dancer verification lists every active signup-city venue and gates QR crea
   assert.doesNotMatch(approvalPolling, /loadDancerVenueVerification/);
 });
 
+test("restored dancer dashboards load affiliations after approval state hydration", () => {
+  const openDashboard = liveApp.match(/function openDancerDashboard\(\)[\s\S]*?function closeDancerDashboard/)?.[0] || "";
+  const affiliationLoader = liveApp.match(/function loadDancerVenueVerification[\s\S]*?function stopDancerVenueVerificationLifecycle/)?.[0] || "";
+
+  assert.match(openDashboard, /const dancerApprovalProgressRequest = hydrateDancerApprovalProgress\(\)/);
+  assert.match(openDashboard, /dancerApprovalProgressRequest\.then\(\(\) => \{/);
+  assert.match(openDashboard, /venueVerificationSection && !venueVerificationSection\.hidden/);
+  assert.match(openDashboard, /return loadDancerVenueVerification\(\)/);
+  assert.match(affiliationLoader, /Sign in to load venues/);
+  assert.match(affiliationLoader, /Sign in to your dancer account to load venue affiliations\./);
+});
+
 test("revocation is audited and immediately ends matching live shifts", () => {
   assert.match(migration, /create table if not exists public\.venue_dancer_affiliation_events/);
   assert.match(migration, /event_type in \('token_issued', 'affiliation_approved', 'affiliation_revoked'\)/);

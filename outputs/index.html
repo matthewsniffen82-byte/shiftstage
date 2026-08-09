@@ -48216,7 +48216,7 @@
       dancerDashboard.classList.add("show");
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
-      hydrateDancerApprovalProgress();
+      const dancerApprovalProgressRequest = hydrateDancerApprovalProgress();
       loadLiveAccountState();
       loadLiveDancerAnalytics();
       loadLiveDancerDeals();
@@ -48227,6 +48227,13 @@
       loadLiveNotifications();
       loadLiveSupportThreads();
       if (dancerSetup.review || dancerSetup.approval) loadDancerVenueVerification();
+      void dancerApprovalProgressRequest.then(() => {
+        const venueVerificationSection = document.getElementById("dancerVenueVerificationSection");
+        if (venueVerificationSection && !venueVerificationSection.hidden) {
+          return loadDancerVenueVerification();
+        }
+        return null;
+      });
       startDancerVenueApprovalPolling();
       renderSupportInbox("dancer");
     }
@@ -48334,9 +48341,20 @@
     }
 
     function loadDancerVenueVerification({ quiet = false } = {}) {
-      if (!isDancerSession()) return Promise.resolve(null);
-      if (dancerVenueVerificationRequest) return dancerVenueVerificationRequest;
       const status = document.getElementById("dancerVenueVerificationStatus");
+      if (!isDancerSession()) {
+        if (!quiet) {
+          const select = document.getElementById("dancerVenueVerificationVenue");
+          if (select) {
+            select.innerHTML = '<option value="">Sign in to load venues</option>';
+            select.disabled = true;
+          }
+          document.getElementById("dancerVenueVerificationCreate").disabled = true;
+          if (status) status.textContent = "Sign in to your dancer account to load venue affiliations.";
+        }
+        return Promise.resolve(null);
+      }
+      if (dancerVenueVerificationRequest) return dancerVenueVerificationRequest;
       if (status && !quiet) status.textContent = "Loading venue verification…";
       dancerVenueVerificationRequest = (async () => {
         try {
