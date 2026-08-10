@@ -65,7 +65,8 @@ export async function POST(request: Request) {
       if (error) throw error;
       if (!data.user) throw new Error("Sign in required.");
 
-      return NextResponse.json(await authResponse(data.user.id, role, data.session, false));
+      const expectedRole = role === "admin" ? "admin" : null;
+      return NextResponse.json(await authResponse(data.user.id, expectedRole, data.session, false));
     }
 
     if (password.length < 8) {
@@ -162,16 +163,19 @@ export async function POST(request: Request) {
 
 async function authResponse(
   userId: string,
-  expectedRole: AuthRole,
+  expectedRole: AuthRole | null,
   session: { access_token?: string; refresh_token?: string; expires_at?: number } | null,
   requiresEmailConfirmation: boolean,
 ) {
   const admin = createAdminSupabaseClient();
   const account = await getAccountByUserId(admin, userId);
-  if (account?.role && account.role !== expectedRole) {
+  if (!account?.role) {
+    throw new Error("This account is not ready for sign in. Contact support for help.");
+  }
+  if (expectedRole && account.role !== expectedRole) {
     throw new Error("Account role does not match this login.");
   }
-  if (expectedRole === "venue" && account?.role === "venue") {
+  if (account.role === "venue") {
     const [venue, hasLegacyClaim] = await Promise.all([
       getVenueForAccount(admin, userId),
       hasVenueOwnershipClaim(admin, userId),

@@ -44,7 +44,7 @@ test("every account dashboard fully isolates the public shell and keeps its X as
   );
   assert.match(
     homeSource,
-    /const dancerAuthOverlayOpen =\s*authPage\.classList\.contains\("show"\) &&\s*!document\.getElementById\("dancerLoginForm"\)\.hidden;[\s\S]*?document\.body\.classList\.toggle\("dancer-auth-overlay-open", dancerAuthOverlayOpen\);/,
+    /document\.body\.classList\.toggle\("dancer-auth-overlay-open", false\);/,
   );
   assert.match(
     homeSource,
@@ -78,8 +78,8 @@ test("customer, dancer, venue, and admin access screens cannot expose public dis
     /const accountSurfaceOpen =\s*dashboardOverlayOpen \|\|\s*accountCreationOverlayOpen \|\|\s*authPage\.classList\.contains\("show"\);/,
   );
   assert.match(homeSource, /<section class="page-panel" id="authPage"/);
-  assert.match(homeSource, /<form class="auth-form" id="authForm" data-auth-view="customer">/);
-  assert.match(homeSource, /<form class="auth-form" id="dancerLoginForm"/);
+  assert.match(homeSource, /<form class="auth-form" id="authForm" data-auth-view="unified">/);
+  assert.doesNotMatch(homeSource, /<form class="auth-form" id="dancerLoginForm"/);
   assert.match(homeSource, /<form class="auth-form" id="venueLoginForm"/);
   assert.match(homeSource, /<section class="page-panel" id="dancerSignupPage"/);
   assert.match(homeSource, /<section class="page-panel" id="adminDashboard"/);

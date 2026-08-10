@@ -48,15 +48,14 @@ test("recovery telemetry stores hashes only and is inaccessible to public roles"
   assert.match(recoveryMigration, /grant execute on function public\.record_account_recovery_event[\s\S]*?to service_role/);
 });
 
-test("every public account type has an in-app forgotten-email form", () => {
+test("the unified public sign-in has an account-aware forgotten-email form", () => {
   assert.match(accountPage, /Find your sign-in email/);
   assert.match(accountPage, /fetch\("\/api\/account-recovery"/);
   assert.match(accountPage, /Stage name/);
   assert.match(accountPage, /Email where support can reach you/);
   assert.match(accountPage, /Never send a password, reset code, government ID, or payment information/);
   assert.match(liveApp, /id="customerForgotLoginBtn"/);
-  assert.match(liveApp, /id="dancerForgotLoginBtn"/);
-  assert.match(liveApp, /id="venueForgotLoginBtn"/);
+  assert.match(liveApp, /id="loginRecoveryRole"[\s\S]*?<option value="customer">Customer<\/option>[\s\S]*?<option value="dancer">Dancer<\/option>[\s\S]*?<option value="venue">Venue<\/option>/);
   assert.match(liveApp, /id="loginRecoveryForm"/);
   assert.match(liveApp, /fetch\("\/api\/account-recovery"/);
   assert.match(liveApp, /body\.customer-auth-overlay-open \.discovery-sticky-head/);
@@ -66,8 +65,8 @@ test("every public account type has an in-app forgotten-email form", () => {
 });
 
 test("password and email recovery actions remain readable on narrow screens", () => {
-  assert.match(liveApp, /id="dancerForgotPasswordBtn"[^>]*>Forgot password\?<\/button>/);
-  assert.match(liveApp, /id="dancerForgotLoginBtn"[^>]*>Forgot email\?<\/button>/);
+  assert.match(liveApp, /id="customerForgotPasswordBtn"[^>]*>Forgot password\?<\/button>/);
+  assert.match(liveApp, /id="customerForgotLoginBtn"[^>]*>Forgot email\?<\/button>/);
   assert.doesNotMatch(liveApp, />Forgot email\/login\?<\/button>/);
   assert.match(
     liveApp,

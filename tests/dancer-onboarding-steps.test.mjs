@@ -238,7 +238,7 @@ test("all three production steps render inside the Profile Setup box", () => {
 
 test("normal dancer login reloads database progress instead of a fresh-confirmation lock", () => {
   const loginHandler =
-    liveAppSource.match(/async function startRealDancerSession[\s\S]*?\n    document\.getElementById\("dancerLoginBtn"\)/)?.[0] || "";
+    liveAppSource.match(/async function startRealDancerSession[\s\S]*?\n    async function startVenueDashboardSession/)?.[0] || "";
 
   assert.match(loginHandler, /freshDancerVerificationLockedToProfile = false/);
   assert.match(loginHandler, /await hydrateDancerApprovalProgress\(\)/);

@@ -26107,7 +26107,6 @@
         0 0 18px rgba(30, 207, 255, 0.18) !important;
     }
 
-    #customerLoginBtn,
     #authForm #authSubmit {
       border-color: rgba(53, 216, 255, .62) !important;
       background:
@@ -30550,9 +30549,6 @@
           <div class="utility-menu">
             <button class="menu-btn dashboard-menu" id="accountBtn" type="button" aria-haspopup="true" aria-expanded="false">Login / Join</button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
-              <button class="utility-menu-item" id="loginCustomerOption" type="button">Customer</button>
-              <button class="utility-menu-item" id="loginDancerOption" type="button">Dancer</button>
-              <button class="utility-menu-item" id="loginVenueOption" type="button">Venue</button>
               <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
               <nav class="utility-menu-legal" aria-label="Legal and support">
                 <span class="utility-menu-section-label">Legal &amp; support</span>
@@ -36292,6 +36288,209 @@
           }
         }
 
+        /* Unified public authentication: one sign-in, then a short role-specific signup. */
+        #authPage .auth-choice-card {
+          width: min(100%, 640px);
+          margin-inline: auto;
+          display: grid;
+          gap: 18px;
+          overflow: hidden;
+          border-radius: 28px;
+          background: linear-gradient(145deg, rgba(20, 20, 29, .93), rgba(4, 4, 9, .96));
+          backdrop-filter: blur(22px) saturate(135%);
+          -webkit-backdrop-filter: blur(22px) saturate(135%);
+        }
+
+        .auth-entry-tabs {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 6px;
+          padding: 5px;
+          border: 1px solid rgba(161, 161, 185, .22);
+          border-radius: 18px;
+          background: rgba(5, 5, 10, .7);
+        }
+
+        .auth-entry-tab {
+          min-height: 48px;
+          border: 0;
+          border-radius: 14px;
+          color: rgba(244, 244, 248, .66);
+          background: transparent;
+          font: inherit;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .auth-entry-tab.active {
+          color: #fff;
+          background: linear-gradient(135deg, rgba(88, 30, 214, .96), rgba(64, 19, 165, .92));
+          box-shadow: 0 0 20px rgba(105, 42, 255, .32), inset 0 1px 0 rgba(255, 255, 255, .18);
+        }
+
+        #authPage .auth-selected-role,
+        #authPage .customer-form-head,
+        #authPage .venue-auth-mode-copy {
+          display: grid;
+          gap: 5px;
+        }
+
+        #authPage .auth-selected-role strong,
+        #authPage .customer-form-head strong,
+        #authPage .venue-auth-mode-copy strong {
+          color: #fff;
+          font-size: clamp(20px, 5vw, 27px);
+          line-height: 1.08;
+        }
+
+        #authPage .auth-selected-role span,
+        #authPage .customer-form-head span,
+        #authPage .venue-auth-mode-copy span {
+          color: rgba(225, 225, 236, .7);
+          line-height: 1.45;
+        }
+
+        #authPage .auth-role-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        #authPage .auth-role-grid[hidden] {
+          display: none !important;
+        }
+
+        #authPage .auth-account-choice {
+          width: 100%;
+          min-height: 86px;
+          display: grid;
+          grid-template-columns: 42px minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 13px;
+          padding: 15px;
+          text-align: left;
+          color: #fff;
+          border: 1px solid rgba(162, 162, 186, .22);
+          border-radius: 18px;
+          background: rgba(33, 33, 43, .76);
+          cursor: pointer;
+        }
+
+        #authPage .auth-account-choice:hover,
+        #authPage .auth-account-choice:focus-visible {
+          border-color: rgba(120, 66, 255, .8);
+          background: rgba(43, 34, 68, .88);
+          outline: none;
+        }
+
+        .auth-account-choice-number {
+          width: 42px;
+          aspect-ratio: 1;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          color: #fff;
+          background: rgba(91, 33, 218, .85);
+          font-weight: 950;
+        }
+
+        .auth-account-choice > span:nth-child(2) {
+          display: grid;
+          gap: 4px;
+        }
+
+        .auth-account-choice strong {
+          font-size: 18px;
+        }
+
+        .auth-account-choice small {
+          color: rgba(226, 226, 237, .68);
+          font-size: 13px;
+          line-height: 1.4;
+        }
+
+        .auth-account-choice-arrow {
+          color: #b79aff;
+          font-size: 30px;
+          line-height: 1;
+        }
+
+        #authPage .auth-form {
+          gap: 14px;
+        }
+
+        .auth-signup-note {
+          border-color: rgba(91, 214, 238, .34) !important;
+          background: rgba(6, 54, 65, .24) !important;
+        }
+
+        .auth-back-to-types {
+          width: 100%;
+          min-height: 44px;
+          border: 0;
+          color: rgba(225, 225, 236, .76);
+          background: transparent;
+          font: inherit;
+          font-weight: 850;
+          cursor: pointer;
+        }
+
+        .dancer-signup-progress {
+          list-style: none;
+          margin: 0 0 20px;
+          padding: 0;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .dancer-signup-progress li {
+          min-width: 0;
+          display: grid;
+          align-content: start;
+          gap: 8px;
+          color: rgba(224, 224, 235, .58);
+          font-size: 11px;
+          line-height: 1.25;
+        }
+
+        .dancer-signup-progress li span {
+          width: 28px;
+          aspect-ratio: 1;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          border: 1px solid rgba(165, 165, 187, .28);
+          background: rgba(35, 35, 47, .8);
+          font-weight: 950;
+        }
+
+        .dancer-signup-progress li.active {
+          color: #fff;
+        }
+
+        .dancer-signup-progress li.active span {
+          border-color: rgba(132, 78, 255, .9);
+          background: #531ed1;
+          box-shadow: 0 0 17px rgba(96, 35, 241, .38);
+        }
+
+        @media (max-width: 480px) {
+          #authPage .page-inner,
+          #dancerSignupPage .page-inner {
+            padding-inline: 14px;
+          }
+
+          #authPage .auth-choice-card {
+            padding: 16px;
+            border-radius: 22px;
+          }
+
+          .dancer-signup-progress li strong {
+            overflow-wrap: anywhere;
+          }
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .uber-ride-link {
             transition: none;
@@ -36461,72 +36660,35 @@
           </button>
         </div>
         <div class="auth-card auth-choice-card">
+          <div class="auth-entry-tabs" role="tablist" aria-label="Account access">
+            <button class="auth-entry-tab active" id="authSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
+            <button class="auth-entry-tab" id="authCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
+          </div>
           <div class="auth-form-head auth-selected-role">
-            <strong id="authRoleTitle">Customer login</strong>
-            <span id="authRoleSubtitle">Free account. No public profile, follows, or going list.</span>
+            <strong id="authRoleTitle">One sign-in for every account</strong>
+            <span id="authRoleSubtitle">Use the email and password for your customer, dancer, or venue account.</span>
           </div>
           <div class="role-options auth-role-grid" id="authOverview" aria-label="Choose account type" hidden>
-            <article class="role-option account-option">
-              <span class="eyebrow">Customer</span>
-              <h3>Plan your night</h3>
-              <p>Free customer account. See verified schedules in your city, follow dancers and venues, and get alerts without a public customer profile.</p>
-              <ul class="benefit-list">
-                <li>Free to join</li>
-                <li>Find who’s working now</li>
-                <li>Follow dancers and venues</li>
-                <li>Get alerts and directions</li>
-              </ul>
-              <div class="rule-note">Customer accounts are private. No public profile, no public follows, no public going list.</div>
-              <div class="role-actions">
-                <button class="ghost" id="customerLoginBtn" type="button">Customer login</button>
-                <button class="ghost" id="customerSignupBtn" type="button">Join now</button>
-              </div>
-            </article>
-            <article class="role-option account-option">
-              <span class="eyebrow">Dancer</span>
-              <h3>Grow your nights</h3>
-              <p>Create a reviewed profile, post verified shifts after approval, add your social links including OnlyFans, and see how Dancr sends customers to your schedule and club.</p>
-              <ul class="benefit-list">
-                <li>Verified shift posting</li>
-                <li>Follower alerts sent automatically</li>
-                <li>Instagram, TikTok, Snapchat, OnlyFans, and X links</li>
-                <li>Profile, social, share, and direction analytics</li>
-                <li>Free profile access after approval</li>
-              </ul>
-              <div class="role-actions">
-                <button class="ghost" id="dancerLoginBtn" type="button">Continue setup</button>
-                <button class="ghost" id="openDancerSignup" type="button">Dancer sign up</button>
-              </div>
-            </article>
+            <button class="role-option account-option auth-account-choice" id="customerSignupBtn" type="button">
+              <span class="auth-account-choice-number" aria-hidden="true">1</span>
+              <span><strong>Customer</strong><small>Save dancers, venues, Club Deals, and alerts privately.</small></span>
+              <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="role-option account-option auth-account-choice" id="openDancerSignup" type="button">
+              <span class="auth-account-choice-number" aria-hidden="true">2</span>
+              <span><strong>Dancer</strong><small>Create a reviewed profile and post shifts after venue approval.</small></span>
+              <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="role-option account-option auth-account-choice" id="venueSignupBtn" type="button">
+              <span class="auth-account-choice-number" aria-hidden="true">3</span>
+              <span><strong>Venue</strong><small>Manage an existing venue with its private access code.</small></span>
+              <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
+            </button>
           </div>
-          <form class="auth-form" id="authForm" data-auth-view="customer">
+          <form class="auth-form" id="authForm" data-auth-view="unified">
             <div class="auth-form-head customer-form-head">
-              <strong id="customerAuthModeLabel">Customer login</strong>
-              <span>Free account. No public profile, follows, or going list.</span>
-            </div>
-            <div class="customer-signup-benefits" id="customerSignupBenefits" hidden>
-              <span class="eyebrow">Why join</span>
-              <h3>Create your private Mydancr dashboard</h3>
-              <a class="continue-signup" id="continueCustomerSignupBtn" href="#customerEmail" role="button">Continue to create account <span aria-hidden="true">↓</span></a>
-              <div class="customer-benefit-grid">
-                <div class="customer-benefit-tile">
-                  <strong>Saved Club Deals</strong>
-                  <span>Keep the deals you want to use later in one place.</span>
-                </div>
-                <div class="customer-benefit-tile">
-                  <strong>Private follows</strong>
-                  <span>Follow dancers and venues without a public customer profile.</span>
-                </div>
-                <div class="customer-benefit-tile">
-                  <strong>Working now alerts</strong>
-                  <span>See when dancers you follow are checked in or posting shifts.</span>
-                </div>
-                <div class="customer-benefit-tile">
-                  <strong>Your night dashboard</strong>
-                  <span>Manage saved profiles, venues, Club Deals, and alerts quickly.</span>
-                </div>
-              </div>
-              <div class="rule-note">Your follows and saved Club Deals are private. After you create the account, Mydancr sends a confirmation email. Tap the email link and you’ll return to the homepage signed in.</div>
+              <strong id="customerAuthModeLabel">Sign in</strong>
+              <span id="customerAuthModeDescription">MyDancr opens the right dashboard automatically.</span>
             </div>
             <div class="field">
               <label for="customerEmail">Email</label>
@@ -36535,7 +36697,7 @@
             <div class="field">
               <label for="customerPassword">Password</label>
               <div class="password-wrap">
-                <input id="customerPassword" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
+                <input id="customerPassword" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
                 <button class="password-toggle" type="button" data-password-toggle="customerPassword" aria-label="Show password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
@@ -36548,48 +36710,24 @@
             <div class="field" id="customerConfirmPasswordField" hidden>
               <label for="customerConfirmPassword">Confirm password</label>
               <div class="password-wrap">
-                <input id="customerConfirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Re-enter password">
+                <input id="customerConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter password">
                 <button class="password-toggle" type="button" data-password-toggle="customerConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
             </div>
-            <button class="action-btn" id="authSubmit" type="submit">Customer login</button>
-            <button class="ghost auth-join-now customer-join-now" id="customerJoinNowBtn" type="button">Join now</button>
+            <div class="rule-note auth-signup-note" id="customerSignupNote" hidden>Your customer account is private. We’ll email you a confirmation link after you create it.</div>
+            <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
+            <button class="ghost auth-join-now customer-join-now" id="customerJoinNowBtn" type="button">Create an account</button>
+            <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
           </form>
-          <form class="auth-form" id="dancerLoginForm" data-auth-view="dancer" hidden>
-            <div class="field">
-              <label for="dancerLoginEmail">Email</label>
-              <input id="dancerLoginEmail" type="email" value="" autocomplete="email" required>
-            </div>
-            <div class="field">
-              <label for="dancerLoginPassword">Password</label>
-              <div class="password-wrap">
-                <input id="dancerLoginPassword" type="password" value="" autocomplete="current-password" minlength="6" required>
-                <button class="password-toggle" type="button" data-password-toggle="dancerLoginPassword" aria-label="Show password" aria-pressed="false">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                </button>
-              </div>
-            </div>
-            <div class="auth-help-row">
-              <button class="forgot-password-link" id="dancerForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
-              <button class="forgot-password-link" id="dancerForgotLoginBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot email?</button>
-            </div>
-            <button class="action-btn" id="dancerLoginSubmit" type="submit">Dancer login</button>
-            <button class="ghost auth-join-now dancer-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
-            <div class="rule-note auth-status" id="dancerAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-          </form>
           <form class="auth-form" id="venueLoginForm" data-auth-view="venue" novalidate hidden>
-            <div class="venue-auth-tabs" role="tablist" aria-label="Venue account access">
-              <button class="venue-auth-tab active" id="venueLoginModeBtn" type="button" role="tab" aria-selected="true">Sign in</button>
-              <button class="venue-auth-tab" id="venueSignupModeBtn" type="button" role="tab" aria-selected="false">Create account</button>
-            </div>
             <div class="venue-auth-mode-copy">
-              <strong id="venueAuthModeTitle">Open your venue dashboard</strong>
-              <span id="venueAuthModeDescription">Use the verified manager account already connected to your venue.</span>
+              <strong id="venueAuthModeTitle">Create a verified venue account</strong>
+              <span id="venueAuthModeDescription">Confirm the private code assigned to your venue, then create its manager login.</span>
             </div>
-            <section class="venue-signup-step" id="venueSignupCodeStep" aria-labelledby="venueSignupCodeHeading" hidden>
+            <section class="venue-signup-step" id="venueSignupCodeStep" aria-labelledby="venueSignupCodeHeading">
               <div class="venue-signup-step-head">
                 <span>Step 1 of 2</span>
                 <strong id="venueSignupCodeHeading">Connect your venue</strong>
@@ -36629,12 +36767,8 @@
                 </div>
               </div>
             </div>
-            <div class="auth-help-row" id="venueAuthHelpRow">
-              <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
-              <button class="forgot-password-link" id="venueForgotLoginBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot email?</button>
-            </div>
-            <button class="action-btn" id="venueLoginSubmit" type="submit">Open venue dashboard</button>
             <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
+            <button class="auth-back-to-types" id="venueBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
           <section class="recovery-popover" id="passwordRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle" hidden>
@@ -36664,7 +36798,14 @@
               </div>
               <p class="login-recovery-copy">MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
               <form class="auth-form" id="loginRecoveryForm">
-                <input id="loginRecoveryRole" type="hidden" value="customer">
+                <div class="field">
+                  <label for="loginRecoveryRole">Account type</label>
+                  <select id="loginRecoveryRole" required>
+                    <option value="customer">Customer</option>
+                    <option value="dancer">Dancer</option>
+                    <option value="venue">Venue</option>
+                  </select>
+                </div>
                 <div class="login-recovery-grid">
                   <div class="field">
                     <label for="loginRecoveryAccountName" id="loginRecoveryAccountNameLabel">Name used on the account</label>
@@ -36701,13 +36842,18 @@
         <div class="page-head">
           <div>
             <span class="eyebrow">Dancer signup</span>
-            <h2>Start verified profile</h2>
+            <h2>Create dancer account</h2>
           </div>
           <button class="close-btn" id="dancerSignupClose" aria-label="Close dancer signup">
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
         <div class="auth-card">
+          <ol class="dancer-signup-progress" aria-label="Dancer approval steps">
+            <li class="active"><span>1</span><strong>Create account</strong></li>
+            <li><span>2</span><strong>Confirm email</strong></li>
+            <li><span>3</span><strong>Complete profile and venue approval</strong></li>
+          </ol>
           <form class="auth-form" id="dancerSignupForm">
             <input id="dancerStageName" type="hidden" value="">
             <input id="dancerLegalName" type="hidden" value="">
@@ -36720,18 +36866,19 @@
             </div>
             <div class="field">
               <label for="dancerEmail">Email</label>
-              <input id="dancerEmail" type="email" value="" required>
+              <input id="dancerEmail" type="email" value="" autocomplete="email" required>
             </div>
             <div class="field">
               <label for="dancerPassword">Password</label>
               <div class="password-wrap">
-                <input id="dancerPassword" type="password" value="" required>
+                <input id="dancerPassword" type="password" value="" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
                 <button class="password-toggle" type="button" data-password-toggle="dancerPassword" aria-label="Show password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
+              <div class="field-note">Use 8 or more characters.</div>
             </div>
-            <div class="rule-note">Dancer accounts are free while launch access is open. Your profile stays private until media moderation passes and a verified venue manager confirms your affiliation.</div>
+            <div class="rule-note">Your account is free. Your public profile goes live only after your email is confirmed, profile setup is complete, media checks pass, and a verified venue approves your first affiliation.</div>
             <button class="action-btn" type="submit" disabled>Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>
@@ -38065,7 +38212,10 @@
     let isDancerLoggedIn = false;
     let isVenueLoggedIn = false;
     let authMode = "login";
-    let venueAuthMode = "login";
+    let authEntryMode = "signin";
+    let authRoleHint = "customer";
+    let venueAuthMode = "signup";
+    const confirmationResendTimers = new Map();
     let verifiedVenueSignupCode = "";
     let verifiedVenueSignupPreview = null;
     let pendingVenueAuthReturnTo = "";
@@ -38921,10 +39071,8 @@
       const requestedStep = state.resumeTarget === "dancer_verification" ? "profile" : state.setupStep;
       activeSetupStep = requestedStep || nextIncompleteStep() || "profile";
       const dancerEmail = document.getElementById("dancerEmail");
-      const dancerLoginEmail = document.getElementById("dancerLoginEmail");
       const dancerCity = document.getElementById("dancerCity");
       if (dancerEmail && state.email) dancerEmail.value = state.email;
-      if (dancerLoginEmail && state.email) dancerLoginEmail.value = state.email;
       const confirmedCity = state.dancerCity || state.city || "";
       if (confirmedCity) pendingDancerSignupCity = confirmedCity;
       if (dancerCity && !dancerCity.value.trim()) syncDancerSignupCitySelect(confirmedCity);
@@ -39164,8 +39312,9 @@
           saveAuthSession(null);
           window.history.replaceState({}, document.title, "/");
           openAuthRole("dancer");
+          document.getElementById("customerEmail").value = pendingConfirmation?.email || "";
           showToast("Email confirmed. Sign in to open your dancer verification setup.");
-          setTimeout(() => document.getElementById("dancerLoginEmail")?.focus(), 80);
+          setTimeout(() => document.getElementById(pendingConfirmation?.email ? "customerPassword" : "customerEmail")?.focus(), 80);
           return true;
         }
         return false;
@@ -39238,14 +39387,14 @@
           return true;
         }
         openAuthRole("dancer");
-        document.getElementById("dancerLoginEmail").value = state.email || "";
+        document.getElementById("customerEmail").value = state.email || "";
         showToast("Email confirmed. Sign in to open your dancer verification setup.");
-        setTimeout(() => document.getElementById("dancerLoginPassword")?.focus(), 80);
+        setTimeout(() => document.getElementById("customerPassword")?.focus(), 80);
       } else if (state.role === "venue") {
         openAuthRole("venue");
-        document.getElementById("venueLoginEmail").value = state.email || "";
+        document.getElementById("customerEmail").value = state.email || "";
         showToast("Email confirmed. Sign in to open your venue dashboard.");
-        setTimeout(() => document.getElementById("venueLoginPassword")?.focus(), 80);
+        setTimeout(() => document.getElementById("customerPassword")?.focus(), 80);
       } else {
         if (confirmedSession?.accessToken) {
           saveAuthSession(confirmedSession);
@@ -39254,7 +39403,7 @@
           return true;
         }
         openAuthRole("customer");
-        setCustomerAuthMode(state.mode || "signup");
+        setCustomerAuthMode("login");
         document.getElementById("customerEmail").value = state.email || "";
         showToast("Email confirmed. Sign in to continue where you left off.");
         setTimeout(() => document.getElementById("customerPassword")?.focus(), 80);
@@ -39275,11 +39424,12 @@
         throw new Error(friendlyAuthErrorMessage(data.error || (response.status === 429 ? "Email rate limit exceeded" : ""), "Authentication failed"));
       }
       const email = normalizeAccountEmail(payload.email);
-      if (payload.role && email) persistAccountEmail(payload.role, email);
+      const resolvedRole = data.account?.role || payload.role || null;
+      if (resolvedRole && email) persistAccountEmail(resolvedRole, email);
       if (data.session && (payload.mode !== "signup" || payload.role === "admin" || payload.role === "venue")) {
         const account = data.account
           ? { ...data.account, email: normalizeAccountEmail(data.account.email) || email || null }
-          : { role: payload.role || null, email: email || null, accountState: "active" };
+          : { role: resolvedRole, email: email || null, accountState: "active" };
         saveAuthSession({ ...data.session, email: email || data.session.email || null, account });
       }
       return data;
@@ -41549,7 +41699,7 @@
           : "Cities are loaded from active MyDancr venue markets.";
       }
       const submit = document.querySelector('#dancerSignupForm button[type="submit"]');
-      if (submit && submit.textContent !== "Check email or spam folder") submit.disabled = dancerSignupCitiesState !== "ready";
+      if (submit && !confirmationResendTimers.has(submit)) submit.disabled = dancerSignupCitiesState !== "ready";
     }
 
     async function loadDancerSignupCities(options = {}) {
@@ -48144,9 +48294,6 @@
       const customerAuthOverlayOpen =
         authPage.classList.contains("show") &&
         !authForm.hidden;
-      const dancerAuthOverlayOpen =
-        authPage.classList.contains("show") &&
-        !document.getElementById("dancerLoginForm").hidden;
       const venueAuthOverlayOpen =
         authPage.classList.contains("show") &&
         !document.getElementById("venueLoginForm").hidden;
@@ -48158,7 +48305,7 @@
       document.body.classList.toggle("dashboard-overlay-open", dashboardOverlayOpen);
       document.body.classList.toggle("account-creation-overlay-open", accountCreationOverlayOpen);
       document.body.classList.toggle("customer-auth-overlay-open", customerAuthOverlayOpen);
-      document.body.classList.toggle("dancer-auth-overlay-open", dancerAuthOverlayOpen);
+      document.body.classList.toggle("dancer-auth-overlay-open", false);
       document.body.classList.toggle("venue-auth-overlay-open", venueAuthOverlayOpen);
       document.body.classList.toggle("account-surface-open", accountSurfaceOpen);
       document.body.classList.toggle("profile-full-view-open", profileFullViewOpen);
@@ -48199,13 +48346,8 @@
         clearValue("customerEmail");
         clearValue("customerPassword");
         clearValue("customerConfirmPassword");
+        stopConfirmationResendCooldown(document.getElementById("authSubmit"), authMode === "signup" ? "Create customer account" : "Sign in");
         setCustomerAuthStatus("");
-      }
-
-      if (scope === "all" || scope === "dancer") {
-        clearValue("dancerLoginEmail");
-        clearValue("dancerLoginPassword");
-        setDancerLoginStatus("");
       }
 
       if (scope === "all" || scope === "venue") {
@@ -48250,45 +48392,24 @@
     }
 
     function setVenueAuthMode(mode, options = {}) {
-      venueAuthMode = mode === "signup" ? "signup" : "login";
-      const isSignup = venueAuthMode === "signup";
-      const loginTab = document.getElementById("venueLoginModeBtn");
-      const signupTab = document.getElementById("venueSignupModeBtn");
+      venueAuthMode = "signup";
       const signupStep = document.getElementById("venueSignupCodeStep");
       const accountFields = document.getElementById("venueAccountFields");
       const accountStepHeading = document.getElementById("venueAccountStepHeading");
-      const recoveryActions = document.getElementById("venueAuthHelpRow");
-      const loginSubmit = document.getElementById("venueLoginSubmit");
       const signupSubmit = document.getElementById("venueJoinNowBtn");
       const passwordInput = document.getElementById("venueLoginPassword");
-      const title = document.getElementById("venueAuthModeTitle");
-      const description = document.getElementById("venueAuthModeDescription");
       const signupReady = Boolean(verifiedVenueSignupCode && verifiedVenueSignupPreview);
 
-      loginTab?.classList.toggle("active", !isSignup);
-      signupTab?.classList.toggle("active", isSignup);
-      loginTab?.setAttribute("aria-selected", String(!isSignup));
-      signupTab?.setAttribute("aria-selected", String(isSignup));
-      if (signupStep) signupStep.hidden = !isSignup;
-      if (accountFields) accountFields.hidden = isSignup && !signupReady;
-      if (accountStepHeading) accountStepHeading.hidden = !isSignup || !signupReady;
-      if (recoveryActions) recoveryActions.hidden = isSignup;
-      if (loginSubmit) loginSubmit.hidden = isSignup;
-      if (signupSubmit) signupSubmit.hidden = !isSignup || !signupReady;
-      if (passwordInput) passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
-      if (title) title.textContent = isSignup ? "Create a verified venue account" : "Open your venue dashboard";
-      if (description) {
-        description.textContent = isSignup
-          ? "First confirm the private code assigned to your venue, then create its manager login."
-          : "Use the verified manager account already connected to your venue.";
-      }
+      if (signupStep) signupStep.hidden = false;
+      if (accountFields) accountFields.hidden = !signupReady;
+      if (accountStepHeading) accountStepHeading.hidden = !signupReady;
+      if (signupSubmit) signupSubmit.hidden = !signupReady;
+      if (passwordInput) passwordInput.autocomplete = "new-password";
       setVenueAuthStatus("");
 
       if (options.focus !== false) {
         setTimeout(() => {
-          const target = isSignup
-            ? document.getElementById(signupReady ? "venueLoginEmail" : "venueSignupCode")
-            : document.getElementById("venueLoginEmail");
+          const target = document.getElementById(signupReady ? "venueLoginEmail" : "venueSignupCode");
           target?.focus({ preventScroll: true });
         }, 60);
       }
@@ -48365,33 +48486,82 @@
       if (dancerCity) dancerCity.value = "";
       pendingDancerSignupCity = "";
       setDancerSignupStatus("");
+      const submit = document.querySelector('#dancerSignupForm button[type="submit"]');
+      stopConfirmationResendCooldown(submit, "Create dancer account", false);
+      if (submit) submit.disabled = dancerSignupCitiesState !== "ready";
     }
 
-    function openAuthRole(role) {
-      const isDancer = role === "dancer";
-      const isVenue = role === "venue";
+    function setAuthEntryMode(mode) {
+      authEntryMode = mode === "create" ? "create" : "signin";
+      const isCreate = authEntryMode === "create";
+      const signInTab = document.getElementById("authSignInTab");
+      const createTab = document.getElementById("authCreateTab");
+      signInTab.classList.toggle("active", !isCreate);
+      createTab.classList.toggle("active", isCreate);
+      signInTab.setAttribute("aria-selected", String(!isCreate));
+      createTab.setAttribute("aria-selected", String(isCreate));
+      document.getElementById("authPageTitle").textContent = isCreate ? "Choose your account" : "Sign in to MyDancr";
+      document.getElementById("authRoleTitle").textContent = isCreate ? "What are you joining as?" : "One sign-in for every account";
+      document.getElementById("authRoleSubtitle").textContent = isCreate
+        ? "Pick the account that matches how you use MyDancr."
+        : "Use the email and password for your customer, dancer, or venue account.";
+      document.querySelector(".auth-selected-role").hidden = false;
+      document.getElementById("authOverview").hidden = !isCreate;
+      document.getElementById("authForm").hidden = isCreate;
+      document.getElementById("venueLoginForm").hidden = true;
+      if (!isCreate) {
+        setCustomerAuthMode("login");
+        setCustomerAuthStatus("");
+      }
+      syncOverlayScrollLock();
+    }
+
+    function openCustomerSignup() {
+      authEntryMode = "create";
+      document.getElementById("authSignInTab").classList.remove("active");
+      document.getElementById("authCreateTab").classList.add("active");
+      document.getElementById("authSignInTab").setAttribute("aria-selected", "false");
+      document.getElementById("authCreateTab").setAttribute("aria-selected", "true");
+      document.getElementById("authPageTitle").textContent = "Create customer account";
+      document.querySelector(".auth-selected-role").hidden = true;
+      document.getElementById("authOverview").hidden = true;
+      document.getElementById("authForm").hidden = false;
+      document.getElementById("venueLoginForm").hidden = true;
+      setCustomerAuthMode("signup");
+      setCustomerAuthStatus("");
+      syncOverlayScrollLock();
+      setTimeout(() => document.getElementById("customerEmail")?.focus({ preventScroll: true }), 60);
+    }
+
+    function openVenueSignup() {
+      authEntryMode = "create";
       closeRecoveryPopover(passwordRecoveryCard, false);
       closeRecoveryPopover(loginRecoveryCard, false);
-      clearAuthFields(role);
-      if (isVenue) pendingVenueAuthReturnTo = "";
-      document.getElementById("authPageTitle").textContent = isVenue ? "Venue access" : "Sign in to Mydancr";
-      document.getElementById("authRoleTitle").textContent = isVenue ? "Venue access" : isDancer ? "Dancer login" : "Customer login";
-      document.getElementById("authRoleSubtitle").textContent = isVenue
-        ? "Manage your venue page, NFC stickers, verified working-now dancers, and live analytics."
-        : isDancer
-        ? "Manage profile setup, approval, shifts, photos, and billing."
-        : "Free account. Save profiles, follow clubs, and get alerts.";
-      document.getElementById("authForm").hidden = isDancer || isVenue;
-      document.getElementById("dancerLoginForm").hidden = !isDancer;
-      document.getElementById("venueLoginForm").hidden = !isVenue;
-      const selectedRoleHead = document.querySelector(".auth-selected-role");
-      if (selectedRoleHead) selectedRoleHead.hidden = isVenue;
-      if (!isDancer && !isVenue) setCustomerAuthMode("login");
-      if (isVenue) setVenueAuthMode("login", { focus: false });
-      if (isDancer && isAdminSession()) {
-        setDancerLoginStatus("An admin session is active in this browser. Signing in here will safely switch it to your dancer account.");
-      }
+      clearAuthFields("venue");
+      document.getElementById("authSignInTab").classList.remove("active");
+      document.getElementById("authCreateTab").classList.add("active");
+      document.getElementById("authSignInTab").setAttribute("aria-selected", "false");
+      document.getElementById("authCreateTab").setAttribute("aria-selected", "true");
+      document.getElementById("authPageTitle").textContent = "Create venue account";
+      document.querySelector(".auth-selected-role").hidden = true;
+      document.getElementById("authOverview").hidden = true;
+      document.getElementById("authForm").hidden = true;
+      document.getElementById("venueLoginForm").hidden = false;
+      setVenueAuthMode("signup");
+      syncOverlayScrollLock();
+    }
+
+    function openAuthRole(role = "customer") {
+      authRoleHint = role === "dancer" || role === "venue" ? role : "customer";
+      closeRecoveryPopover(passwordRecoveryCard, false);
+      closeRecoveryPopover(loginRecoveryCard, false);
+      clearAuthFields("customer");
       openAuthPage();
+      setAuthEntryMode("signin");
+      if (isAdminSession()) {
+        setCustomerAuthStatus("An admin session is active. Signing in here will safely switch to your public account.");
+      }
+      setTimeout(() => document.getElementById("customerEmail")?.focus({ preventScroll: true }), 60);
     }
 
     function closeAuthPage() {
@@ -48475,9 +48645,6 @@
       sessionMenuEnd.hidden = !loggedIn;
       deleteAccountBtn.hidden = !loggedIn || !["customer", "dancer", "venue"].includes(sessionRole);
       deleteAccountBtn.dataset.accountRole = sessionRole || "";
-      document.getElementById("loginCustomerOption").hidden = loggedIn;
-      document.getElementById("loginDancerOption").hidden = loggedIn;
-      document.getElementById("loginVenueOption").hidden = loggedIn;
       accountBtn.hidden = false;
       accountBtn.classList.toggle("account-icon-btn", loggedIn);
       accountBtn.innerHTML = loggedIn ? accountIconMarkup() : "Login / Join";
@@ -48547,48 +48714,42 @@
     }
 
     function setCustomerAuthMode(mode) {
-      authMode = mode;
-      document.getElementById("authSubmit").textContent = mode === "signup" ? "Create customer account" : "Customer login";
+      authMode = mode === "signup" ? "signup" : "login";
       const isSignup = mode === "signup";
       const selectedRoleHead = document.querySelector(".auth-selected-role");
-      if (selectedRoleHead) selectedRoleHead.hidden = true;
+      if (selectedRoleHead) selectedRoleHead.hidden = isSignup;
       const customerFormHead = document.querySelector(".customer-form-head");
-      if (customerFormHead) customerFormHead.hidden = true;
+      if (customerFormHead) customerFormHead.hidden = !isSignup;
       const label = document.getElementById("customerAuthModeLabel");
-      if (label) label.textContent = mode === "signup" ? "Customer sign up" : "Customer login";
-      const formHead = document.querySelector(".customer-form-head span");
-      if (formHead) {
-        formHead.textContent = isSignup
-          ? "Create a free private customer account. Confirm your email, then return to the homepage signed in."
-          : "Free account. No public profile, follows, or going list.";
-      }
+      if (label) label.textContent = isSignup ? "Create your private customer account" : "Sign in";
+      const formHead = document.getElementById("customerAuthModeDescription");
+      if (formHead) formHead.textContent = isSignup
+        ? "Enter your email and a secure password. We’ll send one confirmation link."
+        : "MyDancr opens the right dashboard automatically.";
       const passwordInput = document.getElementById("customerPassword");
       if (passwordInput) passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
       const confirmField = document.getElementById("customerConfirmPasswordField");
       const confirmInput = document.getElementById("customerConfirmPassword");
       if (confirmField) confirmField.hidden = !isSignup;
       if (confirmInput) confirmInput.required = isSignup;
-      const benefits = document.getElementById("customerSignupBenefits");
-      if (benefits) benefits.hidden = !isSignup;
+      document.getElementById("customerSignupNote").hidden = !isSignup;
       const joinButton = document.getElementById("customerJoinNowBtn");
       if (joinButton) joinButton.hidden = isSignup;
+      document.getElementById("customerBackToTypes").hidden = !isSignup;
       const forgotButton = document.getElementById("customerForgotPasswordBtn");
       if (forgotButton) forgotButton.hidden = mode !== "login";
       const forgotLoginButton = document.getElementById("customerForgotLoginBtn");
       if (forgotLoginButton) forgotLoginButton.hidden = mode !== "login";
-      setCustomerAuthStatus("");
-      document.querySelectorAll(".auth-tab").forEach((item) => item.classList.toggle("active", item.dataset.authMode === mode));
+      const submit = document.getElementById("authSubmit");
+      if (!confirmationResendTimers.has(submit)) {
+        submit.textContent = isSignup ? "Create customer account" : "Sign in";
+        submit.disabled = false;
+      }
+      if (!isSignup) stopConfirmationResendCooldown(submit, "Sign in");
     }
 
     function setCustomerAuthStatus(message) {
       const status = document.getElementById("customerAuthStatus");
-      if (!status) return;
-      status.textContent = message || "";
-      status.hidden = !message;
-    }
-
-    function setDancerLoginStatus(message) {
-      const status = document.getElementById("dancerAuthStatus");
       if (!status) return;
       status.textContent = message || "";
       status.hidden = !message;
@@ -48601,31 +48762,32 @@
       status.hidden = !message;
     }
 
-    function scrollCustomerSignupBenefitsToTop(behavior = "smooth") {
-      const benefits = document.getElementById("customerSignupBenefits");
-      if (!benefits || benefits.hidden) return;
-      const scroller = authPage?.classList.contains("show") ? authPage : window;
-      const top = scroller === window
-        ? benefits.getBoundingClientRect().top + window.scrollY - 12
-        : benefits.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 12;
-      scroller.scrollTo({ top: Math.max(0, top), behavior });
+    function stopConfirmationResendCooldown(button, defaultText = "", enable = true) {
+      const timer = confirmationResendTimers.get(button);
+      if (timer) window.clearInterval(timer);
+      confirmationResendTimers.delete(button);
+      if (!button) return;
+      if (defaultText) button.textContent = defaultText;
+      if (enable) button.disabled = false;
     }
 
-    function scrollCustomerSignupFieldsToTop() {
-      const emailInput = document.getElementById("customerEmail");
-      if (!emailInput) return;
-      const scroller = authPage?.classList.contains("show") ? authPage : window;
-      const top = scroller === window
-        ? emailInput.getBoundingClientRect().top + window.scrollY - 18
-        : emailInput.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 18;
-      scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-      setTimeout(() => {
-        try {
-          emailInput.focus({ preventScroll: true });
-        } catch {
-          emailInput.focus();
+    function startConfirmationResendCooldown(button, readyText = "Resend confirmation email", seconds = 60) {
+      stopConfirmationResendCooldown(button, "", false);
+      let remaining = seconds;
+      const render = () => {
+        button.disabled = true;
+        button.textContent = `Resend confirmation in ${remaining}s`;
+      };
+      render();
+      const timer = window.setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          stopConfirmationResendCooldown(button, readyText);
+          return;
         }
-      }, 260);
+        render();
+      }, 1000);
+      confirmationResendTimers.set(button, timer);
     }
 
     function openFreshCustomerSignup() {
@@ -48639,14 +48801,9 @@
       closeVenueDashboard();
       updateAccountHeader();
       openAuthRole("customer");
-      setCustomerAuthMode("signup");
+      openCustomerSignup();
       document.getElementById("customerPassword").value = "";
       document.getElementById("customerConfirmPassword").value = "";
-      setTimeout(() => {
-        scrollCustomerSignupBenefitsToTop();
-        setTimeout(() => scrollCustomerSignupBenefitsToTop(), 180);
-        setTimeout(() => scrollCustomerSignupBenefitsToTop(), 360);
-      }, 80);
     }
 
     function openDashboard() {
@@ -49412,11 +49569,10 @@
       isDancerLoggedIn = false;
       isVenueLoggedIn = false;
       activeDashboardType = "customer";
-      setCustomerAuthMode("signup");
       document.getElementById("customerEmail").value = "";
       updateAccountHeader();
       openAuthPage();
-      setTimeout(() => scrollCustomerSignupBenefitsToTop(), 80);
+      openCustomerSignup();
       showToast("Customer sign up");
     }
 
@@ -56246,7 +56402,13 @@
     });
 
     accountBtn.addEventListener("click", () => {
-      if (accountBtn.classList.contains("account-icon-btn")) dismissAccountTooltip();
+      const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
+      if (!loggedIn) {
+        closeUtilityMenu();
+        openAuthRole("customer");
+        return;
+      }
+      dismissAccountTooltip();
       toggleUtilityMenu();
     });
 
@@ -56316,19 +56478,6 @@
       if (!confirmed) return;
       await deleteLiveAccount(role, deleteAccountBtn);
     });
-    document.getElementById("loginCustomerOption").addEventListener("click", () => {
-      closeUtilityMenu();
-      openAuthRole("customer");
-    });
-    document.getElementById("loginDancerOption").addEventListener("click", () => {
-      closeUtilityMenu();
-      openAuthRole("dancer");
-    });
-    document.getElementById("loginVenueOption").addEventListener("click", () => {
-      closeUtilityMenu();
-      openAuthRole("venue");
-    });
-
     document.getElementById("authClose").addEventListener("click", closeAuthPage);
     document.getElementById("dancerSignupClose").addEventListener("click", closeDancerSignupPage);
     document.getElementById("stripeClose").addEventListener("click", closeStripeCheckoutPage);
@@ -56609,33 +56758,23 @@
       });
     });
 
-    document.querySelectorAll(".auth-tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        setCustomerAuthMode(tab.dataset.authMode);
-      });
-    });
-
-    document.getElementById("customerLoginBtn").addEventListener("click", () => {
-      setCustomerAuthMode("login");
-      openAuthRole("customer");
-    });
-
+    document.getElementById("authSignInTab").addEventListener("click", () => setAuthEntryMode("signin"));
+    document.getElementById("authCreateTab").addEventListener("click", () => setAuthEntryMode("create"));
     document.getElementById("customerSignupBtn").addEventListener("click", () => {
-      openFreshCustomerSignup();
+      openCustomerSignup();
     });
 
     document.getElementById("customerJoinNowBtn").addEventListener("click", () => {
-      openFreshCustomerSignup();
+      setAuthEntryMode("create");
     });
 
-    document.getElementById("continueCustomerSignupBtn").addEventListener("click", (event) => {
-      event.preventDefault();
-      scrollCustomerSignupFieldsToTop();
-    });
+    document.getElementById("customerBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
+    document.getElementById("venueBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
+    document.getElementById("venueSignupBtn").addEventListener("click", openVenueSignup);
 
     document.getElementById("customerForgotPasswordBtn").addEventListener("click", () => {
       openPasswordRecovery({
-        role: "customer",
+        role: authRoleHint,
         emailInputId: "customerEmail",
         buttonId: "customerForgotPasswordBtn"
       });
@@ -56643,38 +56782,10 @@
 
     document.getElementById("customerForgotLoginBtn").addEventListener("click", () => {
       sendLoginRecoveryHelp({
-        role: "customer",
+        role: authRoleHint,
         emailInputId: "customerEmail",
         buttonId: "customerForgotLoginBtn"
       });
-    });
-
-    document.getElementById("dancerForgotPasswordBtn").addEventListener("click", () => {
-      openPasswordRecovery({
-        role: "dancer",
-        emailInputId: "dancerLoginEmail",
-        buttonId: "dancerForgotPasswordBtn"
-      });
-    });
-
-    document.getElementById("dancerForgotLoginBtn").addEventListener("click", () => {
-      sendLoginRecoveryHelp({
-        role: "dancer",
-        emailInputId: "dancerLoginEmail",
-        buttonId: "dancerForgotLoginBtn"
-      });
-    });
-
-    document.getElementById("venueForgotPasswordBtn").addEventListener("click", () => {
-      openPasswordRecovery({
-        role: "venue",
-        emailInputId: "venueLoginEmail",
-        buttonId: "venueForgotPasswordBtn"
-      });
-    });
-
-    document.getElementById("venueForgotLoginBtn").addEventListener("click", () => {
-      sendLoginRecoveryHelp({ role: "venue", emailInputId: "venueLoginEmail", buttonId: "venueForgotLoginBtn" });
     });
 
     passwordRecoveryForm?.addEventListener("submit", submitPasswordRecoveryForm);
@@ -56683,6 +56794,11 @@
     loginRecoveryForm?.addEventListener("submit", submitLoginRecoveryForm);
     loginRecoveryClose?.addEventListener("click", closeLoginRecovery);
     loginRecoveryBack?.addEventListener("click", closeLoginRecovery);
+    document.getElementById("loginRecoveryRole")?.addEventListener("change", (event) => {
+      const role = event.currentTarget.value;
+      document.getElementById("loginRecoveryAccountNameLabel").textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the account";
+      document.getElementById("loginRecoveryTitle").textContent = role === "venue" ? "Find your venue sign-in email" : "Find your sign-in email";
+    });
     [passwordRecoveryCard, loginRecoveryCard].forEach((popover) => {
       popover?.addEventListener("click", (event) => {
         if (event.target === popover) closeRecoveryPopover(popover);
@@ -56734,8 +56850,12 @@
     document.getElementById("authForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const submit = document.getElementById("authSubmit");
+      const previousText = submit.textContent;
+      let confirmationSent = false;
       submit.disabled = true;
-      setCustomerAuthStatus(authMode === "signup" ? "Creating your account..." : "Signing in...");
+      submit.setAttribute("aria-busy", "true");
+      submit.textContent = authMode === "signup" ? "Creating account…" : "Signing in…";
+      setCustomerAuthStatus(authMode === "signup" ? "Creating your private customer account…" : "Signing in securely…");
       try {
         if (authMode === "signup") {
           const password = document.getElementById("customerPassword").value;
@@ -56757,11 +56877,26 @@
           saveAuthSession(null);
           isCustomerLoggedIn = false;
           updateAccountHeader();
-          setCustomerAuthMode("signup");
-          const confirmationMessage = "Confirmation email sent. Open your email, tap the Mydancr confirmation link, and you’ll come back to the homepage signed in.";
+          confirmationSent = true;
+          const confirmationMessage = "Confirmation email sent. Open the newest MyDancr email and tap the confirmation link. You’ll return signed in.";
           setCustomerAuthStatus(confirmationMessage);
           showToast(confirmationMessage);
           return;
+        }
+        if (!result.session?.accessToken) throw new Error("Sign in did not start a session. Confirm your email, then try again.");
+        const signedInRole = result.account?.role;
+        if (signedInRole === "dancer") {
+          setCustomerAuthStatus("Signed in. Opening your dancer dashboard…");
+          await startRealDancerSession("Dancer dashboard opened", payload.email);
+          return;
+        }
+        if (signedInRole === "venue") {
+          setCustomerAuthStatus("Signed in. Opening your venue dashboard…");
+          await startVenueDashboardSession("Venue dashboard opened");
+          return;
+        }
+        if (signedInRole !== "customer") {
+          throw new Error("This account cannot use the public sign-in. Contact support for help.");
         }
         resetAccountControl("customer");
         prepareRealCustomerDashboardState();
@@ -56772,59 +56907,29 @@
         updateAccountHeader();
         maybeShowAccountTooltip("customer");
         closeAuthPage();
-        showToast(authMode === "signup" ? "Customer account created" : "Logged in");
+        showToast("Customer dashboard opened");
         openDashboard();
       } catch (error) {
-        const message = friendlyAuthErrorMessage(error.message, "Customer login failed");
+        const message = friendlyAuthErrorMessage(error.message, authMode === "signup" ? "Customer signup failed" : "Sign in failed");
         setCustomerAuthStatus(message);
         showToast(message);
       } finally {
-        submit.disabled = false;
+        submit.removeAttribute("aria-busy");
+        if (confirmationSent) {
+          startConfirmationResendCooldown(submit);
+        } else {
+          submit.disabled = false;
+          submit.textContent = previousText;
+        }
       }
     });
 
-    function startDemoDancerSetup(message = "Start with profile setup.") {
-      resetAccountControl("dancer");
-      dancerSignupStarted = true;
-      stripeConfirmed = true;
-      document.getElementById("dancerLegalName").value = "";
-      document.getElementById("dancerStageName").value = "";
-      document.getElementById("dancerEmail").value = "";
-      document.getElementById("dancerCity").value = "Las Vegas";
-      Object.assign(dancerSetup, {
-        profile: false,
-        photos: false,
-        review: false,
-        approval: false,
-        shift: false
-      });
-      Object.assign(dancerSignupSocials, {
-        instagram: "",
-        tiktok: "",
-        snapchat: "",
-        onlyfans: "",
-        x: ""
-      });
-      setupChecklistExpanded = true;
-      activeSetupStep = "profile";
-      lastPostedShift = null;
-      isCustomerLoggedIn = false;
-      isDancerLoggedIn = true;
-      isVenueLoggedIn = false;
-      activeDashboardType = "dancer";
-      closeAuthPage();
-      updateAccountHeader();
-      maybeShowAccountTooltip("dancer");
-      showToast(message);
-      openDancerDashboard();
-    }
-
-    async function startRealDancerSession(message = "Dancer dashboard opened. Start with profile setup.") {
+    async function startRealDancerSession(message = "Dancer dashboard opened. Start with profile setup.", signedInEmail = "") {
       resetAccountControl("dancer");
       freshDancerVerificationLockedToProfile = false;
       dancerSignupStarted = true;
       stripeConfirmed = true;
-      const loginEmail = document.getElementById("dancerLoginEmail").value.trim();
+      const loginEmail = String(signedInEmail || authSession?.email || "").trim();
       if (loginEmail) document.getElementById("dancerEmail").value = loginEmail;
       setupChecklistExpanded = true;
       activeSetupStep = "profile";
@@ -56839,43 +56944,6 @@
       openDancerDashboard();
       window.setTimeout(consumePendingDancerDashboardLink, 220);
     }
-
-    document.getElementById("dancerLoginBtn").addEventListener("click", startDemoDancerSetup);
-
-    document.getElementById("dancerJoinNowBtn").addEventListener("click", () => {
-      closeAuthPage();
-      openDancerSignupPage();
-    });
-
-    document.getElementById("dancerLoginForm").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const submit = document.getElementById("dancerLoginSubmit");
-      const previousText = submit.textContent;
-      submit.disabled = true;
-      submit.setAttribute("aria-busy", "true");
-      submit.textContent = "Signing in…";
-      setDancerLoginStatus("Signing in to your dancer account…");
-      try {
-        const result = await requestAuth({
-          mode: "login",
-          role: "dancer",
-          email: document.getElementById("dancerLoginEmail").value,
-          password: document.getElementById("dancerLoginPassword").value,
-          city: citySelect.value
-        });
-        if (!result.session?.accessToken) throw new Error("Dancer sign in did not start a session. Confirm your email, then try again.");
-        setDancerLoginStatus("Signed in. Opening your dancer dashboard…");
-        await startRealDancerSession("Dancer dashboard opened");
-      } catch (error) {
-        const message = error.message || "Dancer login failed";
-        setDancerLoginStatus(message);
-        showToast(message);
-      } finally {
-        submit.disabled = false;
-        submit.removeAttribute("aria-busy");
-        submit.textContent = previousText;
-      }
-    });
 
     async function startVenueDashboardSession(message = "Venue dashboard opened") {
       if (!isVenueSession()) {
@@ -56908,7 +56976,6 @@
       const venueCodeInput = document.getElementById("venueSignupCode");
       const emailInput = document.getElementById("venueLoginEmail");
       const passwordInput = document.getElementById("venueLoginPassword");
-      const loginButton = document.getElementById("venueLoginSubmit");
       const submittedCode = formatVenueAccessCode(venueCodeInput.value);
       if (!verifiedVenueSignupCode || submittedCode !== verifiedVenueSignupCode || !verifiedVenueSignupPreview) {
         const verified = await verifyVenueAccessCode();
@@ -56917,7 +56984,6 @@
       }
       if (!emailInput.reportValidity() || !passwordInput.reportValidity()) return false;
       button.disabled = true;
-      loginButton.disabled = true;
       setVenueAuthStatus(`Creating the manager account for ${verifiedVenueSignupPreview.name}…`);
       try {
         const result = await requestAuth({
@@ -56944,17 +57010,8 @@
         return false;
       } finally {
         button.disabled = false;
-        loginButton.disabled = false;
       }
     }
-
-    document.getElementById("venueLoginModeBtn").addEventListener("click", () => {
-      setVenueAuthMode("login");
-    });
-
-    document.getElementById("venueSignupModeBtn").addEventListener("click", () => {
-      setVenueAuthMode("signup");
-    });
 
     document.getElementById("venueCodeVerifyBtn").addEventListener("click", () => {
       void verifyVenueAccessCode();
@@ -56972,76 +57029,7 @@
 
     document.getElementById("venueLoginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (venueAuthMode === "signup") {
-        await submitVenueSignup(document.getElementById("venueJoinNowBtn"));
-        return;
-      }
-      const submit = document.getElementById("venueLoginSubmit");
-      const emailInput = document.getElementById("venueLoginEmail");
-      const passwordInput = document.getElementById("venueLoginPassword");
-      const previousText = submit.textContent;
-
-      if (isVenueSession()) {
-        submit.disabled = true;
-        submit.setAttribute("aria-busy", "true");
-        submit.textContent = "Opening dashboard…";
-        try {
-          await startVenueDashboardSession("Venue dashboard opened");
-        } finally {
-          submit.disabled = false;
-          submit.removeAttribute("aria-busy");
-          submit.textContent = previousText;
-        }
-        return;
-      }
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      if (!email) {
-        setVenueAuthStatus("Enter the email for your verified venue manager account.");
-        emailInput.focus();
-        return;
-      }
-      if (!emailInput.validity.valid) {
-        setVenueAuthStatus("Enter a valid venue manager email address.");
-        emailInput.focus();
-        return;
-      }
-      if (!password) {
-        setVenueAuthStatus("Enter your venue account password.");
-        passwordInput.focus();
-        return;
-      }
-      if (!passwordInput.validity.valid) {
-        setVenueAuthStatus("Your password must be at least 8 characters.");
-        passwordInput.focus();
-        return;
-      }
-
-      submit.disabled = true;
-      submit.setAttribute("aria-busy", "true");
-      submit.textContent = "Signing in…";
-      setVenueAuthStatus("Signing in…");
-      try {
-        const result = await requestAuth({
-          mode: "login",
-          role: "venue",
-          email,
-          password
-        });
-        if (!result.session?.accessToken || result.account?.role !== "venue") {
-          throw new Error("Venue account authorization could not be verified. Sign in and try again.");
-        }
-        setVenueAuthStatus("Signed in. Opening your live venue dashboard…");
-        await startVenueDashboardSession("Venue dashboard opened");
-      } catch (error) {
-        setVenueAuthStatus(error.message || "Venue login failed");
-        showToast(error.message || "Venue login failed");
-      } finally {
-        submit.disabled = false;
-        submit.removeAttribute("aria-busy");
-        submit.textContent = previousText;
-      }
+      await submitVenueSignup(document.getElementById("venueJoinNowBtn"));
     });
 
     document.getElementById("openDancerSignup").addEventListener("click", () => {
@@ -57053,8 +57041,10 @@
       event.preventDefault();
       const submit = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
       const originalText = submit.textContent;
+      let confirmationSent = false;
       submit.disabled = true;
-      submit.textContent = "Sending confirmation...";
+      submit.setAttribute("aria-busy", "true");
+      submit.textContent = "Creating account…";
       setDancerSignupStatus("");
       try {
         const cityField = document.getElementById("dancerCity");
@@ -57072,9 +57062,9 @@
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
-          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Check your email or spam folder, then tap Confirm email to open your 3-step profile setup in this browser.`);
-          submit.textContent = "Check email or spam folder";
-          showToast("Confirmation email sent. Check your email or spam folder to continue.");
+          confirmationSent = true;
+          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Open the newest MyDancr email and tap Confirm email. Then finish your profile and first venue approval.`);
+          showToast("Confirmation email sent. Open the newest email to continue.");
           return;
         }
         dancerSignupStarted = true;
@@ -57106,8 +57096,13 @@
         setDancerSignupStatus(message);
         showToast(message);
       } finally {
-        submit.disabled = false;
-        if (submit.textContent !== "Check email or spam folder") submit.textContent = originalText;
+        submit.removeAttribute("aria-busy");
+        if (confirmationSent) {
+          startConfirmationResendCooldown(submit);
+        } else {
+          submit.disabled = dancerSignupCitiesState !== "ready";
+          submit.textContent = originalText;
+        }
       }
     });
 
@@ -58714,7 +58709,7 @@
         storePendingDancerDashboardLink(linkState);
         openAuthRole("dancer");
         showToast("Sign in to open your dancer dashboard and review changes.");
-        setTimeout(() => document.getElementById("dancerLoginEmail")?.focus(), 120);
+        setTimeout(() => document.getElementById("customerEmail")?.focus(), 120);
       }
       return true;
     }
@@ -58737,14 +58732,12 @@
         isVenueLoggedIn = false;
         activeDashboardType = "venue";
         openAuthRole("venue");
-        const status = document.getElementById("venueAuthStatus");
-        if (status) status.textContent = "Sign in as the verified venue manager to open the venue workspace.";
+        setCustomerAuthStatus("Sign in as the verified venue manager to open the venue workspace.");
         return true;
       }
       void openVenueDashboard();
       if (!isVenueSession()) {
-        const status = document.getElementById("venueAuthStatus");
-        if (status) status.textContent = "Sign in as the verified venue manager to open the venue workspace.";
+        setCustomerAuthStatus("Sign in as the verified venue manager to open the venue workspace.");
       }
       return true;
     }
@@ -58766,14 +58759,15 @@
       url.searchParams.delete("return_to");
       window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
 
-      openAuthRole("venue");
       pendingVenueAuthReturnTo = safeReturnTo;
-      setVenueAuthMode(mode, { focus: false });
       if (mode === "signup") {
+        openAuthPage();
+        openVenueSignup();
         showToast("Enter the private access code from MyDancr to create your venue account.");
         setTimeout(() => document.getElementById("venueSignupCode")?.focus(), 120);
       } else {
-        setTimeout(() => document.getElementById("venueLoginEmail")?.focus(), 120);
+        openAuthRole("venue");
+        setTimeout(() => document.getElementById("customerEmail")?.focus(), 120);
       }
       return true;
     }
@@ -58796,8 +58790,7 @@
         openVenueDashboard();
       } else {
         openAuthRole("venue");
-        const status = document.getElementById("venueAuthStatus");
-        if (status) status.textContent = "Sign in as this club's verified manager to confirm the dancer.";
+        setCustomerAuthStatus("Sign in as this club's verified manager to confirm the dancer.");
         showToast("Venue manager sign-in required to verify this dancer.");
       }
       return true;

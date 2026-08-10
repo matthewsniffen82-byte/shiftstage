@@ -8,27 +8,28 @@ const [liveShell, accountClient, adminClient] = await Promise.all([
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
 ]);
 
-test("dancer login exposes persistent progress, success, and error feedback", () => {
-  assert.match(liveShell, /id="dancerLoginEmail"[^>]*autocomplete="email"[^>]*required/);
-  assert.match(liveShell, /id="dancerLoginPassword"[^>]*autocomplete="current-password"[^>]*required/);
-  assert.match(liveShell, /id="dancerAuthStatus"[^>]*role="status"[^>]*aria-live="polite"/);
+test("the unified login exposes persistent progress, role routing, and error feedback", () => {
+  assert.match(liveShell, /id="customerEmail"[^>]*autocomplete="email"[^>]*required/);
+  assert.match(liveShell, /id="customerPassword"[^>]*autocomplete="current-password"[^>]*required/);
+  assert.match(liveShell, /id="customerAuthStatus"[^>]*role="status"[^>]*aria-live="polite"/);
 
   const handler = liveShell.match(
-    /document\.getElementById\("dancerLoginForm"\)\.addEventListener\("submit"[\s\S]*?\n    \}\);/,
+    /document\.getElementById\("authForm"\)\.addEventListener\("submit"[\s\S]*?\n    \}\);/,
   )?.[0] || "";
-  assert.match(handler, /submit\.textContent = "Signing in…"/);
+  assert.match(handler, /submit\.textContent = authMode === "signup" \? "Creating account…" : "Signing in…"/);
   assert.match(handler, /submit\.setAttribute\("aria-busy", "true"\)/);
-  assert.match(handler, /setDancerLoginStatus\("Signing in to your dancer account…"\)/);
   assert.match(handler, /if \(!result\.session\?\.accessToken\) throw new Error/);
-  assert.match(handler, /setDancerLoginStatus\("Signed in\. Opening your dancer dashboard…"\)/);
-  assert.match(handler, /setDancerLoginStatus\(message\)/);
-  assert.match(handler, /await startRealDancerSession\("Dancer dashboard opened"\)/);
+  assert.match(handler, /signedInRole === "dancer"/);
+  assert.match(handler, /setCustomerAuthStatus\("Signed in\. Opening your dancer dashboard…"\)/);
+  assert.match(handler, /await startRealDancerSession\("Dancer dashboard opened", payload\.email\)/);
+  assert.match(handler, /signedInRole === "venue"/);
+  assert.match(handler, /await startVenueDashboardSession\("Venue dashboard opened"\)/);
 });
 
 test("an active admin session is explained and safely replaced by dancer login", () => {
   assert.match(
     liveShell,
-    /if \(isDancer && isAdminSession\(\)\) \{[\s\S]*?Signing in here will safely switch it to your dancer account/,
+    /if \(isAdminSession\(\)\) \{[\s\S]*?Signing in here will safely switch to your public account/,
   );
   assert.match(accountClient, /existingSessionRole === "admin"/);
   assert.match(accountClient, /Signing in here will safely switch it to your dancer account/);
