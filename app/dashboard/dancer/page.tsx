@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation";
+import DashboardClient from "../DashboardClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export default function DancerDashboardPage() {
-  redirect("/?dancr_dashboard=dancer");
+  return <DashboardClient role="dancer" />;
 }

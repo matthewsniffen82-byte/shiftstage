@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
@@ -256,10 +256,16 @@ export default function DashboardClient({
   }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error]);
 
   useEffect(() => {
-    if (role !== "customer" || !initialSection || isLoading || state.error) return;
-    const sectionId = initialSection === "offers" ? "customer-offers" : "customer-saved";
+    if (isLoading || state.error) return;
+    const initialSectionId = role === "customer" && initialSection
+      ? initialSection === "offers" ? "customer-offers" : "customer-saved"
+      : "";
+    const hashSectionId = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+    const sectionId = initialSectionId || hashSectionId;
+    if (!sectionId) return;
     const frame = window.requestAnimationFrame(() => {
       const section = document.getElementById(sectionId);
+      if (section instanceof HTMLDetailsElement) section.open = true;
       section?.scrollIntoView({ behavior: "smooth", block: "start" });
       section?.focus({ preventScroll: true });
     });
@@ -292,15 +298,9 @@ export default function DashboardClient({
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
   const dashboardEyebrow =
-    role === "customer" ? "Customer dashboard" : role === "venue" ? "Live account" : "Dancer dashboard";
-  const dashboardHeading = role === "venue" ? title : isLoading ? title : displayName;
-  const dashboardDescription =
-    state.error ||
-    (role === "venue"
-      ? isLoading
-        ? "Loading your venue workspace..."
-        : `Welcome back, ${displayName}.`
-      : "");
+    role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
+  const dashboardHeading = isLoading ? resolvedDisplayName || title : displayName;
+  const dashboardDescription = state.error || "";
 
   return (
     <main className={`dashboard-shell dashboard-shell-${role}`}>
@@ -335,21 +335,29 @@ export default function DashboardClient({
         ) : null}
       </section>
 
-      {isLoading && role === "venue" && !state.error ? (
-        <VenueDashboardLoadingState />
+      {isLoading && !state.error ? (
+        <DashboardLoadingState role={role} />
       ) : !isLoading && !state.error ? (
         <section className={`dashboard-grid ${role}-dashboard-grid`}>
           {role === "customer" ? (
             <>
               <CustomerDashboardTabs />
               <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={isLoading} />
-              <NotificationPanel saved={state.saved} customerMode />
-              <section className="customer-settings-section" id="customer-settings" tabIndex={-1}>
-                <div className="customer-section-heading">
-                  <span>Account and preferences</span>
-                  <h2>Settings</h2>
-                </div>
-                <div className="customer-settings-grid">
+              <DashboardSection
+                description="Schedule changes, saved-profile updates, Club Deal activity, and support replies."
+                eyebrow="Customer workspace"
+                id="customer-alerts"
+                title="Alerts"
+              >
+                <NotificationPanel saved={state.saved} customerMode panelId="customer-alerts-panel" />
+              </DashboardSection>
+              <DashboardSection
+                description="Preferences, support messages, password controls, and account status."
+                eyebrow="Customer workspace"
+                id="customer-settings"
+                title="Account & settings"
+              >
+                <div className="venue-dashboard-inner-grid customer-settings-grid">
                   <InfoPanel title="Account">
                     <Metric label="Email" value={String(state.account?.email || "Private")} />
                     <Metric label="Status" value={String(state.account?.accountState || "active")} />
@@ -358,39 +366,47 @@ export default function DashboardClient({
                   <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" />
                   <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
                 </div>
-              </section>
-            </>
-          ) : role === "dancer" ? (
-            <>
-              <InfoPanel title="Account">
-                <Metric label="Status" value={String(state.account?.accountState || "active")} />
-                <Metric label="Email" value={String(state.account?.email || "Private")} />
-                <Metric label="Role" value={String(state.account?.role || role)} />
-              </InfoPanel>
-              <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
-              <NotificationPanel />
-              <SupportInboxPanel initialThreads={state.supportThreads || []} />
+              </DashboardSection>
             </>
           ) : null}
           {role === "dancer" ? (
-            <DancerPanel
-              accountState={state.account?.accountState}
-              analytics={state.analytics}
-              deals={state.deals}
-              finance={state.finance}
-              affiliations={state.affiliations || []}
-              nfc={state.nfc}
-              profile={state.profile}
-              onProfileChange={updateProfile}
-              rankingEvents={state.rankingEvents}
-              reviews={state.reviews}
-              weeklyReport={state.weeklyReport}
-            />
+            <>
+              <DancerPanel
+                accountState={state.account?.accountState}
+                analytics={state.analytics}
+                deals={state.deals}
+                finance={state.finance}
+                affiliations={state.affiliations || []}
+                nfc={state.nfc}
+                profile={state.profile}
+                onProfileChange={updateProfile}
+                rankingEvents={state.rankingEvents}
+                reviews={state.reviews}
+                weeklyReport={state.weeklyReport}
+              />
+              <DashboardSection
+                description="Notifications, admin support, sign-in security, and account controls."
+                eyebrow="Dancer workspace"
+                id="dancer-account"
+                title="Account & support"
+              >
+                <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
+                  <InfoPanel title="Account">
+                    <Metric label="Status" value={String(state.account?.accountState || "active")} />
+                    <Metric label="Email" value={String(state.account?.email || "Private")} />
+                    <Metric label="Role" value={String(state.account?.role || role)} />
+                  </InfoPanel>
+                  <NotificationPanel />
+                  <SupportInboxPanel initialThreads={state.supportThreads || []} />
+                  <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
+                </div>
+              </DashboardSection>
+            </>
           ) : null}
           {role === "venue" ? (
             <>
               {state.claim && !state.profile ? (
-                <VenueDashboardSection
+                <DashboardSection
                   defaultOpen
                   description="Track the ownership review that must finish before venue management tools unlock."
                   eyebrow="Venue ownership"
@@ -398,7 +414,7 @@ export default function DashboardClient({
                   title="Claim status"
                 >
                   <VenueClaimStatePanel claim={state.claim} />
-                </VenueDashboardSection>
+                </DashboardSection>
               ) : (
                 <VenuePanel
                   analytics={state.analytics}
@@ -420,7 +436,7 @@ export default function DashboardClient({
                   onProfileChange={updateProfile}
                 />
               )}
-              <VenueDashboardSection
+              <DashboardSection
                 description="Notifications, support messages, and account controls."
                 eyebrow="Venue workspace"
                 id="venue-account"
@@ -436,7 +452,7 @@ export default function DashboardClient({
                   <SupportInboxPanel initialThreads={state.supportThreads || []} />
                   <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
                 </div>
-              </VenueDashboardSection>
+              </DashboardSection>
             </>
           ) : null}
         </section>
@@ -475,21 +491,32 @@ function VenueClaimStatePanel({ claim }: { claim: Record<string, unknown> }) {
 function CustomerDashboardTabs() {
   return (
     <nav className="customer-dashboard-tabs" aria-label="Customer dashboard sections">
-      <a href="#customer-tonight">Tonight</a>
-      <a href="#customer-saved">Saved</a>
-      <a href="#customer-offers">Deals</a>
-      <a href="#customer-alerts">Alerts</a>
-      <a href="#customer-settings">Settings</a>
+      <a href="#customer-tonight" onClick={(event) => openDashboardSection(event, "customer-tonight")}>Tonight</a>
+      <a href="#customer-saved" onClick={(event) => openDashboardSection(event, "customer-saved")}>Saved</a>
+      <a href="#customer-offers" onClick={(event) => openDashboardSection(event, "customer-offers")}>Deals</a>
+      <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}>Alerts</a>
+      <a href="#customer-settings" onClick={(event) => openDashboardSection(event, "customer-settings")}>Settings</a>
     </nav>
   );
+}
+
+function openDashboardSection(event: MouseEvent<HTMLAnchorElement>, id: string) {
+  event.preventDefault();
+  const section = document.getElementById(id);
+  if (section instanceof HTMLDetailsElement) section.open = true;
+  window.history.replaceState(null, "", `#${id}`);
+  section?.scrollIntoView({ behavior: "smooth", block: "start" });
+  section?.focus({ preventScroll: true });
 }
 
 function NotificationPanel({
   saved,
   customerMode = false,
+  panelId,
 }: {
   saved?: LoadState["saved"];
   customerMode?: boolean;
+  panelId?: string;
 } = {}) {
   const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
   const [status, setStatus] = useState("");
@@ -568,7 +595,7 @@ function NotificationPanel({
   const unreadCount = notifications.filter((item) => !item.readAt).length;
 
   return (
-    <article className="info-panel notification-panel" id={customerMode ? "customer-alerts" : undefined} tabIndex={customerMode ? -1 : undefined}>
+    <article className="info-panel notification-panel" id={panelId ?? (customerMode ? "customer-alerts" : undefined)} tabIndex={customerMode ? -1 : undefined}>
       <div className="notification-title-row">
         <div>
           {customerMode ? <span>Updates that matter</span> : null}
@@ -1002,27 +1029,49 @@ function CustomerPanel({
   return (
     <>
       {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
-      <CustomerNightPanel
-        isLoading={isLoading}
-        onCancelGoing={cancelGoing}
-        onDirections={openDirections}
-        pendingAction={pendingAction}
-        signals={saved?.goingSignals || []}
-      />
-      <CustomerSavedPanel
-        isLoading={isLoading}
-        isLocating={isLocating}
-        location={location}
-        locationStatus={locationStatus}
-        onDancerFollowChange={updateDancerFollow}
-        onDirections={openDirections}
-        onFavoriteRemove={removeFavorite}
-        onRequestLocation={requestLocation}
-        onVenueFollowChange={updateVenueFollow}
-        pendingAction={pendingAction}
-        saved={saved}
-      />
-      <CustomerDealPassPanel deals={saved?.dealRedemptions || []} />
+      <DashboardSection
+        defaultOpen
+        description="The shifts you marked Going, with the dancer, venue, and directions together."
+        eyebrow="Customer workspace"
+        id="customer-tonight"
+        title="Your Night"
+      >
+        <CustomerNightPanel
+          isLoading={isLoading}
+          onCancelGoing={cancelGoing}
+          onDirections={openDirections}
+          pendingAction={pendingAction}
+          signals={saved?.goingSignals || []}
+        />
+      </DashboardSection>
+      <DashboardSection
+        description="Followed dancers, favorites, and clubs with live distance and alert controls."
+        eyebrow="Customer workspace"
+        id="customer-saved"
+        title="Saved"
+      >
+        <CustomerSavedPanel
+          isLoading={isLoading}
+          isLocating={isLocating}
+          location={location}
+          locationStatus={locationStatus}
+          onDancerFollowChange={updateDancerFollow}
+          onDirections={openDirections}
+          onFavoriteRemove={removeFavorite}
+          onRequestLocation={requestLocation}
+          onVenueFollowChange={updateVenueFollow}
+          pendingAction={pendingAction}
+          saved={saved}
+        />
+      </DashboardSection>
+      <DashboardSection
+        description="Active cashier passes and the complete history of your Club Deal activity."
+        eyebrow="Customer workspace"
+        id="customer-offers"
+        title="Club Deals"
+      >
+        <CustomerDealPassPanel deals={saved?.dealRedemptions || []} />
+      </DashboardSection>
     </>
   );
 }
@@ -1046,7 +1095,7 @@ function CustomerNightPanel({
     .sort((left, right) => new Date(left.shift?.startsAt || 0).getTime() - new Date(right.shift?.startsAt || 0).getTime());
 
   return (
-    <article className="info-panel customer-night-panel" id="customer-tonight" tabIndex={-1}>
+    <article className="info-panel customer-night-panel" tabIndex={-1}>
       <div className="customer-section-heading split">
         <div>
           <span>Plans you confirmed</span>
@@ -1125,7 +1174,6 @@ function CustomerSavedPanel({
   return (
     <article
       className="info-panel customer-saved-panel"
-      id="customer-saved"
       tabIndex={-1}
     >
       <div className="customer-saved-head">
@@ -1337,7 +1385,7 @@ function CustomerDealPassPanel({
     .sort((left, right) => new Date(right.generatedAt).getTime() - new Date(left.generatedAt).getTime());
 
   return (
-    <article className="info-panel saved-deal-panel" id="customer-offers" tabIndex={-1}>
+    <article className="info-panel saved-deal-panel" tabIndex={-1}>
       <div className="saved-deal-head">
         <div>
           <span>Club Deal history</span>
@@ -1538,7 +1586,7 @@ function formatNotificationTimestamp(value: unknown) {
   }).format(date);
 }
 
-function VenueDashboardSection({
+function DashboardSection({
   badge,
   children,
   defaultOpen = false,
@@ -1556,7 +1604,7 @@ function VenueDashboardSection({
   title: string;
 }) {
   return (
-    <details className="venue-dashboard-section" id={id} open={defaultOpen}>
+    <details className="dashboard-section venue-dashboard-section" id={id} open={defaultOpen} tabIndex={-1}>
       <summary>
         <span className="venue-dashboard-section-copy">
           <span className="eyebrow">{eyebrow}</span>
@@ -1602,10 +1650,10 @@ function VenueDashboardActionIcon({ name }: { name: "deal" | "edit" | "profile" 
   );
 }
 
-function VenueDashboardLoadingState() {
+function DashboardLoadingState({ role }: { role: DashboardRole }) {
   return (
-    <section className="venue-dashboard-loading" aria-busy="true" aria-label="Loading venue dashboard">
-      <span className="dashboard-sr-only">Loading venue dashboard</span>
+    <section className="venue-dashboard-loading" aria-busy="true" aria-label={`Loading ${role} dashboard`}>
+      <span className="dashboard-sr-only">Loading {role} dashboard</span>
       <div className="venue-dashboard-loading-command">
         <span className="venue-dashboard-loading-pill" />
         <div className="venue-dashboard-loading-copy">
@@ -1854,7 +1902,7 @@ function VenuePanel({
         <Metric label="NFC-authorized" value={String(nfcAuthorizedDancerCount)} />
       </section>
 
-      <VenueDashboardSection
+      <DashboardSection
         description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue, plus the roster authorized automatically by dancer taps. Venue staff never create tags, scan dancers, or approve profiles."
         eyebrow="Primary floor action"
         id="venue-dancer-roster"
@@ -1866,9 +1914,9 @@ function VenuePanel({
           canManageRoster={canManageRoster}
           canRequestSupport={canRequestNfcSupport}
         />
-      </VenueDashboardSection>
+      </DashboardSection>
 
-      <VenueDashboardSection
+      <DashboardSection
         badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
         description="Create offers, manage cashier NFC redemption, and review venue invoices."
         eyebrow="Revenue"
@@ -1887,9 +1935,9 @@ function VenuePanel({
         ) : (
           <VenueDealReadOnlyPanel deals={dashboardDeals} />
         )}
-      </VenueDashboardSection>
+      </DashboardSection>
 
-      <VenueDashboardSection
+      <DashboardSection
         badge={`${workingNow.length} active`}
         description="Review NFC-authorized dancers currently checked in at this venue and open their live profiles."
         eyebrow="Floor status"
@@ -1911,9 +1959,9 @@ function VenuePanel({
             {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
           </div>
         </article>
-      </VenueDashboardSection>
+      </DashboardSection>
 
-      <VenueDashboardSection
+      <DashboardSection
         description="Customer reach, intent, live activity, and NFC Deal visibility."
         eyebrow="Live performance"
         id="venue-overview"
@@ -1946,9 +1994,9 @@ function VenuePanel({
             <Metric label="Tap → redemption" value={formatPercent(analytics?.redemptionConversionPercent)} />
           </InfoPanel>
         </div>
-      </VenueDashboardSection>
+      </DashboardSection>
 
-      <VenueDashboardSection
+      <DashboardSection
         description="Update the real customer-facing venue details and discovery image used across MyDancr."
         eyebrow="Customer experience"
         id="venue-public-profile"
@@ -2019,26 +2067,26 @@ function VenuePanel({
             {coverStatus ? <p role="status">{coverStatus}</p> : null}
           </article>
         </div>
-      </VenueDashboardSection>
+      </DashboardSection>
 
-      <VenueDashboardSection
+      <DashboardSection
         description="Review engagement for approved videos automatically connected by verified current shifts and posted upcoming shifts."
         eyebrow="Video"
         id="venue-tv"
         title="MyDancr TV"
       >
         <VenueTvPanel />
-      </VenueDashboardSection>
+      </DashboardSection>
 
       {canViewTeam ? (
-        <VenueDashboardSection
+        <DashboardSection
           description="Invite managers and staff with the minimum access they need, then review an auditable history of venue changes."
           eyebrow="Security"
           id="venue-team"
           title="Team & activity"
         >
           <VenueTeamPanel initialAccess={venueAccess as { role: "owner" | "manager" | "staff"; permissions: string[] } | null} />
-        </VenueDashboardSection>
+        </DashboardSection>
       ) : null}
 
     </>
@@ -2689,37 +2737,72 @@ function DancerPanel({
 
   return (
     <>
-      <InfoPanel title="Profile">
-        <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
-        <Metric label="Status" value={effectiveStatus} />
-        <Metric label="NFC approval" value={isNfcAuthorized ? "approved" : "tap required"} />
-        <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
-      </InfoPanel>
-      <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc} />
-      {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
-      <DancerSetupPanel
-        deletedPhotoIds={deletedPhotoIds}
-        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-        onDeletedPhotoIdsSaved={() => {
-          setDeletedPhotoIds([]);
-          setDeletedPhotoStoragePaths([]);
-        }}
-        profile={profile}
-        onProfileChange={onProfileChange}
-      />
-      <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
-      <DancerPhotoPanel
-        deletedPhotoIds={deletedPhotoIds}
-        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-        onDeletedPhotoIdsChange={setDeletedPhotoIds}
-        onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
-        profile={profile}
-        onProfileChange={onProfileChange}
-      />
-      <DancerTvStudio embedded />
-      {isApproved ? <DancerShiftPanel /> : null}
+      <DashboardSection
+        defaultOpen
+        description="Approval, venue authorization, public visibility, and the current state of your profile."
+        eyebrow="Dancer workspace"
+        id="dancer-overview"
+        title="Profile status"
+      >
+        <div className="venue-dashboard-inner-grid">
+          <InfoPanel title="Profile">
+            <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
+            <Metric label="Status" value={effectiveStatus} />
+            <Metric label="NFC approval" value={isNfcAuthorized ? "approved" : "tap required"} />
+            <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
+          </InfoPanel>
+          <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc} />
+          {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
+        </div>
+      </DashboardSection>
+      <DashboardSection
+        description="Edit your stage name, city, bio, social links, photos, and MyDancr TV videos."
+        eyebrow="Dancer workspace"
+        id="dancer-profile-media"
+        title="Profile & media"
+      >
+        <div className="venue-dashboard-inner-grid">
+          <DancerSetupPanel
+            deletedPhotoIds={deletedPhotoIds}
+            deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+            onDeletedPhotoIdsSaved={() => {
+              setDeletedPhotoIds([]);
+              setDeletedPhotoStoragePaths([]);
+            }}
+            profile={profile}
+            onProfileChange={onProfileChange}
+          />
+          <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
+          <DancerPhotoPanel
+            deletedPhotoIds={deletedPhotoIds}
+            deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+            onDeletedPhotoIdsChange={setDeletedPhotoIds}
+            onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
+            profile={profile}
+            onProfileChange={onProfileChange}
+          />
+          <DancerTvStudio embedded />
+        </div>
+      </DashboardSection>
       {isApproved ? (
-        <>
+        <DashboardSection
+          description="Post, edit, or remove the real shifts shown on your public profile and venue pages."
+          eyebrow="Dancer workspace"
+          id="dancer-schedule"
+          title="Schedule"
+        >
+          <DancerShiftPanel />
+        </DashboardSection>
+      ) : null}
+      <DashboardSection
+        description="Profile reach, Club Deal rewards, payouts, ranking impact, and weekly performance."
+        eyebrow="Dancer workspace"
+        id="dancer-performance"
+        title="Performance & rewards"
+      >
+        <div className="venue-dashboard-inner-grid">
+          {isApproved ? (
+            <>
           <InfoPanel title="Last 30 days">
             <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
             <Metric label="Profile views" value={String(analytics?.profileViews30Days || 0)} />
@@ -2728,12 +2811,25 @@ function DancerPanel({
           <DancerDealPanel deals={deals} />
           <DancerPayoutPanel finance={finance} />
           <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
-        </>
-      ) : (
-        <DancerLockedAnalyticsPanel />
-      )}
-      {isApproved ? <DancerSharePanel profile={profile} /> : null}
-      {isApproved ? <DancerBillingPanel /> : null}
+            </>
+          ) : (
+            <DancerLockedAnalyticsPanel />
+          )}
+        </div>
+      </DashboardSection>
+      {isApproved ? (
+        <DashboardSection
+          description="Share your approved public profile and manage dancer billing."
+          eyebrow="Dancer workspace"
+          id="dancer-sharing-billing"
+          title="Sharing & billing"
+        >
+          <div className="venue-dashboard-inner-grid">
+            <DancerSharePanel profile={profile} />
+            <DancerBillingPanel />
+          </div>
+        </DashboardSection>
+      ) : null}
     </>
   );
 }
@@ -5705,20 +5801,20 @@ function DashboardStyles() {
       .venue-verification-avatar { width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #171722; font-size: 24px; font-weight: 950; }
       .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
       .dashboard-shell-venue { --mydancr-dashboard-panel: #09090d; --mydancr-dashboard-panel-raised: #111116; --mydancr-dashboard-border: rgba(255,255,255,.105); --mydancr-dashboard-muted: rgba(218,218,226,.68); color-scheme: dark; background: #050507; }
-      .dashboard-shell-venue .dashboard-head { border-color: var(--mydancr-dashboard-border); background: #07070a; }
+      .dashboard-shell .dashboard-head { border-color: var(--mydancr-dashboard-border); background: #07070a; }
       .dashboard-shell-venue .venue-command-primary,
       .dashboard-shell-venue .venue-dashboard-shortcuts > a,
-      .dashboard-shell-venue .venue-dashboard-section,
+      .dashboard-shell .venue-dashboard-section,
       .dashboard-shell-venue .venue-dashboard-metrics { border-color: var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel); }
       .dashboard-shell-venue .venue-command-primary,
       .dashboard-shell-venue .venue-dashboard-shortcuts > a { background: var(--mydancr-dashboard-panel-raised); }
       .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary { border-color: rgba(139,92,246,.48); background: rgba(139,92,246,.11); box-shadow: inset 3px 0 0 #8b5cf6, 0 10px 24px rgba(0,0,0,.2); }
       .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary svg { stroke: #c4b5fd; }
       .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary small { color: #ddd6fe; }
-      .dashboard-shell-venue .venue-dashboard-section[open] > summary { background: rgba(255,255,255,.022); }
-      .dashboard-shell-venue .venue-dashboard-section-badge { border-color: rgba(255,255,255,.13); color: #d7d5dd; background: rgba(255,255,255,.045); }
-      .dashboard-shell-venue .venue-dashboard-section-body > .info-panel,
-      .dashboard-shell-venue .venue-dashboard-inner-grid > .info-panel { border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
+      .dashboard-shell .venue-dashboard-section[open] > summary { background: rgba(255,255,255,.022); }
+      .dashboard-shell .venue-dashboard-section-badge { border-color: rgba(255,255,255,.13); color: #d7d5dd; background: rgba(255,255,255,.045); }
+      .dashboard-shell .venue-dashboard-section-body > .info-panel,
+      .dashboard-shell .venue-dashboard-inner-grid > .info-panel { border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
       .dashboard-shell-venue .venue-working-list span { color: #76f0c8; }
       .dashboard-shell-venue .venue-deal-panel,
       .dashboard-shell-venue .venue-verification-panel { border-color: var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel-raised); }

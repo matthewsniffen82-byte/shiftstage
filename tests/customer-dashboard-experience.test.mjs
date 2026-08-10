@@ -13,15 +13,15 @@ const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directions
 test("customer dashboard leads with tonight, saved, deals, and alerts before account settings", () => {
   assert.match(
     dashboard,
-    /<CustomerDashboardTabs \/>[\s\S]*?<CustomerPanel[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode \/>[\s\S]*?id="customer-settings"/,
+    /<CustomerDashboardTabs \/>[\s\S]*?<CustomerPanel[\s\S]*?id="customer-alerts"[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode panelId="customer-alerts-panel" \/>[\s\S]*?id="customer-settings"/,
   );
   assert.match(
     dashboard,
-    /href="#customer-tonight">Tonight[\s\S]*?href="#customer-saved">Saved[\s\S]*?href="#customer-offers">Deals[\s\S]*?href="#customer-alerts">Alerts[\s\S]*?href="#customer-settings">Settings/,
+    /href="#customer-tonight"[\s\S]*?>Tonight[\s\S]*?href="#customer-saved"[\s\S]*?>Saved[\s\S]*?href="#customer-offers"[\s\S]*?>Deals[\s\S]*?href="#customer-alerts"[\s\S]*?>Alerts[\s\S]*?href="#customer-settings"[\s\S]*?>Settings/,
   );
   assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
-  assert.match(dashboard, /const dashboardHeading = role === "venue" \? title : isLoading \? title : displayName/);
-  assert.match(dashboard, /role === "venue"[\s\S]*?Welcome back, \$\{displayName\}/);
+  assert.match(dashboard, /const dashboardHeading = isLoading \? resolvedDisplayName \|\| title : displayName/);
+  assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
   assert.match(dashboard, /className="dashboard-close"[\s\S]*?aria-label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
   assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" \/>/);
 });

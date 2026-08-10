@@ -39240,9 +39240,8 @@
         if (dashboardRole === "customer") {
           if (isPasswordReset) {
             closeAuthPage();
-            openDashboard();
+            openUnifiedDashboard("customer", "customer-settings");
             showToast("Enter a new password to finish reset.");
-            setTimeout(() => scrollAccountPasswordIntoView("customer"), 220);
             return;
           }
           closeDashboard();
@@ -39256,30 +39255,28 @@
             closeAuthPage();
             closeDashboard();
             closeVenueDashboard();
-            openDancerDashboard();
+            openUnifiedDashboard("dancer", "dancer-account");
             showToast("Enter a new password to finish reset.");
-            setTimeout(() => scrollAccountPasswordIntoView("dancer"), 220);
             return;
           }
           closeAuthPage();
           closeDashboard();
           closeVenueDashboard();
           showToast("Email confirmed. Complete your 3-step dancer profile setup.");
-          openDancerDashboard();
-          setTimeout(() => scrollDancerDashboardToTop("auto"), 180);
+          openUnifiedDashboard("dancer", "dancer-profile-media");
           return;
         }
         if (dashboardRole === "venue") {
           closeAuthPage();
           closeDashboard();
-          const opened = await openVenueDashboard();
+          const opened = openUnifiedDashboard("venue", isPasswordReset ? "venue-account" : "");
           if (opened) {
             showToast(isPasswordReset ? "You're signed in. Venue account settings are ready." : "Email confirmed. Venue dashboard opened.");
           }
           return;
         }
         showToast(dashboardRole === "dancer" ? "Email confirmed. Complete your 3-step dancer profile setup." : "Email confirmed. Welcome back to Mydancr.");
-        openDashboard();
+        openUnifiedDashboard("customer");
       });
     }
 
@@ -48805,6 +48802,17 @@
       document.getElementById("customerConfirmPassword").value = "";
     }
 
+    function openUnifiedDashboard(role = activeDashboardType, section = "") {
+      const dashboardRole = role === "dancer" || role === "venue" ? role : "customer";
+      if (!authSession?.accessToken) {
+        openAuthRole(dashboardRole);
+        return false;
+      }
+      const sectionHash = section ? `#${encodeURIComponent(section)}` : "";
+      window.location.assign(`/dashboard/${dashboardRole}${sectionHash}`);
+      return true;
+    }
+
     function openDashboard() {
       if (activeDashboardType === "dancer") {
         openDancerDashboard();
@@ -49567,7 +49575,7 @@
       updateAccountHeader();
       closeAuthPage();
       showToast(message);
-      openDashboard();
+      openUnifiedDashboard("customer");
     }
 
     function setupOrder() {
@@ -56437,9 +56445,7 @@
     });
     dashboardBtn.addEventListener("click", () => {
       closeUtilityMenu();
-      if (activeDashboardType === "venue") openVenueDashboard();
-      else if (activeDashboardType === "dancer") openDancerDashboard();
-      else openDashboard();
+      openUnifiedDashboard(activeDashboardType);
     });
     logoutBtn.addEventListener("click", () => {
       closeUtilityMenu();
@@ -56886,8 +56892,8 @@
         updateAccountHeader();
         maybeShowAccountTooltip("customer");
         closeAuthPage();
-        showToast("Customer dashboard opened");
-        openDashboard();
+        showToast(authMode === "signup" ? "Customer account created" : "Logged in");
+        openUnifiedDashboard("customer");
       } catch (error) {
         const message = friendlyAuthErrorMessage(error.message, authMode === "signup" ? "Customer signup failed" : "Sign in failed");
         setCustomerAuthStatus(message);
@@ -56920,8 +56926,7 @@
       updateAccountHeader();
       showToast(message);
       await hydrateDancerApprovalProgress();
-      openDancerDashboard();
-      window.setTimeout(consumePendingDancerDashboardLink, 220);
+      openUnifiedDashboard("dancer");
     }
 
     async function startVenueDashboardSession(message = "Venue dashboard opened") {
@@ -56932,9 +56937,13 @@
       pendingVenueAuthReturnTo = "";
       closeAuthPage();
       updateAccountHeader();
-      showToast(message);
-      window.location.href = destination;
-      return true;
+      if (destination !== "/dashboard/venue") {
+        window.location.href = destination;
+        return true;
+      }
+      const opened = openUnifiedDashboard("venue");
+      if (opened) showToast(message);
+      return opened;
     }
 
     document.getElementById("dancerVenueVerificationCreate").addEventListener("click", () => createDancerVenueVerification());
@@ -57064,7 +57073,7 @@
           closeDancerSignupPage();
           pendingDancerSignupCity = signupCity;
           syncDancerSignupCitySelect(signupCity);
-          openDancerDashboard();
+          openUnifiedDashboard("dancer", "dancer-profile-media");
         }
       } catch (error) {
         const message = error.message || "Dancer signup failed";

@@ -1630,30 +1630,27 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   }
 
   .account-shell .account-copy h1,
-  .dashboard-shell:not(.dashboard-shell-venue) .dashboard-head h1,
   .admin-shell .admin-head h1,
   .dmca-shell .dmca-hero h1 {
     font-size: clamp(38px, 12vw, 54px) !important;
   }
 
-  /* Venue dashboard mobile identity. This replaces the shared compact dashboard
-   * title rule so the full venue workspace presentation remains authoritative
-   * across iPhone, Android, and Samsung Browser. */
-  .dashboard-shell-venue {
+  /* Shared dashboard mobile identity for customer, dancer, and venue routes. */
+  .dashboard-shell {
     color-scheme: dark;
     background-color: var(--dancr-color-background) !important;
     background-image: none !important;
   }
 
-  .dashboard-shell-venue .dashboard-head {
+  .dashboard-shell .dashboard-head {
     background-color: var(--dancr-color-background) !important;
     background-image: none !important;
   }
 
-  .dashboard-shell-venue .dashboard-head h1 {
-    font-size: clamp(32px, 5vw, 48px) !important;
+  .dashboard-shell .dashboard-head h1 {
+    font-size: clamp(20px, 5.5vw, 26px) !important;
     font-weight: 850 !important;
-    line-height: 1 !important;
+    line-height: 0.98 !important;
   }
 
   body > .app main.stack > .hero.reference-hero,

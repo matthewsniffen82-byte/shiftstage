@@ -73,7 +73,7 @@ test("venue dashboard uses a tonight-first command inside its standalone workspa
   const commandIndex = venuePanel.indexOf('className="venue-command-panel"');
   const shortcutsIndex = venuePanel.indexOf('className="venue-dashboard-shortcuts"');
   const metricsIndex = venuePanel.indexOf('className="venue-dashboard-metrics venue-tonight-metrics"');
-  const managementIndex = venuePanel.indexOf("<VenueDashboardSection");
+  const managementIndex = venuePanel.indexOf("<DashboardSection");
 
   assert.ok(commandIndex >= 0);
   assert.ok(shortcutsIndex > commandIndex);
@@ -85,7 +85,7 @@ test("venue dashboard uses a tonight-first command inside its standalone workspa
     /\.venue-command-primary \.primary-link \{[^}]*?width: 100%; max-width: 100%;[^}]*?box-sizing: border-box;/,
   );
   assert.match(venuePanel, /function openVenueSection[\s\S]*?section\.open = true[\s\S]*?scrollIntoView/);
-  assert.doesNotMatch(venuePanel, /<VenueDashboardSection\s+defaultOpen[\s\S]*?id="venue-overview"/);
+  assert.doesNotMatch(venuePanel, /<DashboardSection\s+defaultOpen[\s\S]*?id="venue-overview"/);
   assert.match(routedDashboards, /\.venue-dashboard-shortcuts \{ display: grid; grid-template-columns: repeat\(4/);
   assert.match(routedDashboards, /@media \(max-width: 860px\) \{ \.venue-dashboard-shortcuts \{ grid-template-columns: repeat\(2/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \{ display: grid; grid-template-columns: repeat\(3/);
@@ -111,15 +111,15 @@ test("venue dashboard uses a tonight-first command inside its standalone workspa
   );
   assert.match(
     aesthetic,
-    /@media \(max-width: 720px\)[\s\S]*?\.dashboard-shell:not\(\.dashboard-shell-venue\) \.dashboard-head h1,[\s\S]*?font-size: clamp\(38px, 12vw, 54px\) !important;/,
+    /@media \(max-width: 720px\)[\s\S]*?\.account-shell \.account-copy h1,[\s\S]*?font-size: clamp\(38px, 12vw, 54px\) !important;/,
   );
   assert.match(
     aesthetic,
-    /\.dashboard-shell-venue \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(32px, 5vw, 48px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 1 !important;/,
+    /\.dashboard-shell \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(20px, 5\.5vw, 26px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 0\.98 !important;/,
   );
   assert.match(
     aesthetic,
-    /\.dashboard-shell-venue \{[\s\S]*?color-scheme: dark;[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;/,
+    /\.dashboard-shell \{[\s\S]*?color-scheme: dark;[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;/,
   );
   assert.match(
     routedDashboards,

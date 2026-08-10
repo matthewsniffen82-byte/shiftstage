@@ -45,21 +45,20 @@ test("the routed venue dashboard is isolated, closable, and restores the origina
   assert.match(dashboard, /dashboard-close/);
   assert.match(dashboard, /aria-label={`Close \$\{role\} dashboard and return to MyDancr`}/);
   assert.match(dashboard, /Venue dashboard/);
-  assert.match(dashboard, /role === "venue" \? "Live account"/);
-  assert.match(dashboard, /Loading your venue workspace/);
-  assert.match(dashboard, /\.dashboard-shell-venue \.dashboard-head h1 \{[^}]*?font-size: clamp\(32px,5vw,48px\)/);
+  assert.match(dashboard, /role === "venue" \? "Venue dashboard"/);
+  assert.match(dashboard, /Loading \{role\} dashboard/);
+  assert.match(dashboard, /\.dashboard-head h1 \{[^}]*?font-size: clamp\(21px, 5vw, 26px\)/);
   assert.doesNotMatch(dashboardPage, /Now[\s\S]*Dancers[\s\S]*Trending/);
 });
 
-test("the primary venue dashboard opens as its original routed full workspace", () => {
-  const openVenueDashboard =
-    liveApp.match(/async function openVenueDashboard\(\) \{[\s\S]*?^    \}/m)?.[0] || "";
+test("the primary venue dashboard opens the shared routed workspace immediately", () => {
+  const openUnifiedDashboard =
+    liveApp.match(/function openUnifiedDashboard\([\s\S]*?^    \}/m)?.[0] || "";
   const startVenueSession =
     liveApp.match(/async function startVenueDashboardSession[\s\S]*?^    \}/m)?.[0] || "";
 
-  assert.match(openVenueDashboard, /window\.location\.href = "\/dashboard\/venue"/);
-  assert.doesNotMatch(openVenueDashboard, /loadAndRevealVenueDashboard/);
-  assert.match(startVenueSession, /window\.location\.href = destination/);
+  assert.match(openUnifiedDashboard, /window\.location\.assign\(`\/dashboard\/\$\{dashboardRole\}\$\{sectionHash\}`\)/);
+  assert.match(startVenueSession, /const opened = openUnifiedDashboard\("venue"\)/);
   assert.doesNotMatch(startVenueSession, /openVenueDashboard\(\)/);
 });
 

@@ -30,8 +30,8 @@ test("confirmed dancer accounts pause on a dedicated confirmation page before pr
   assert.match(callbackPage, /if \(showDancerConfirmation\)[\s\S]*?continueLink\.href = destination/);
   assert.match(callbackPage, /else \{\s*window\.location\.replace\(destination\)/);
 
-  assert.match(dancerDashboardSource, /redirect\("\/\?dancr_dashboard=dancer"\)/);
-  assert.doesNotMatch(dancerDashboardSource, /<DashboardClient/);
+  assert.match(dancerDashboardSource, /<DashboardClient role="dancer" \/>/);
+  assert.doesNotMatch(dancerDashboardSource, /redirect\(/);
 });
 
 test("the live app consumes the session saved by the server callback", () => {
