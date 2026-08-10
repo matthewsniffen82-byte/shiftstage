@@ -28948,6 +28948,112 @@
       font-size: 15px;
     }
 
+    #dancerDashboard .dancer-dashboard-avatar-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 15px;
+      border: 1px solid var(--mydancr-dashboard-border);
+      border-radius: var(--mydancr-dashboard-radius);
+      background: var(--mydancr-dashboard-panel-raised);
+      box-shadow: none;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-main {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-preview {
+      width: 72px;
+      height: 72px;
+      flex: 0 0 72px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 50%;
+      color: #fff;
+      background-color: #16111f;
+      background-position: var(--custom-photo-position, center);
+      background-repeat: no-repeat;
+      background-size: cover;
+      font-size: 20px;
+      font-weight: 950;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-preview.has-custom-photo {
+      background-image: var(--custom-photo);
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-copy .eyebrow {
+      color: rgba(204,197,218,.7);
+      font-size: 10px;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-copy strong {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-copy p,
+    #dancerDashboard .dancer-dashboard-avatar-status {
+      margin: 0;
+      color: var(--mydancr-dashboard-muted);
+      font-size: 11px;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-status.is-live { color: #8effc6; }
+    #dancerDashboard .dancer-dashboard-avatar-status.is-pending { color: #9fefff; }
+    #dancerDashboard .dancer-dashboard-avatar-status.is-error { color: #ff9caf; }
+
+    #dancerDashboard .dancer-dashboard-avatar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-actions button {
+      min-height: 44px;
+      padding: 10px 14px;
+      border: 1px solid var(--mydancr-dashboard-border);
+      border-radius: 12px;
+      color: #fff;
+      background: #16161e;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-actions button:hover,
+    #dancerDashboard .dancer-dashboard-avatar-actions button:focus-visible {
+      border-color: rgba(255,255,255,.28);
+      background: #1c1c25;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-actions button[aria-busy="true"],
+    #dancerDashboard .dancer-dashboard-avatar-actions button:disabled {
+      cursor: wait;
+      opacity: .62;
+    }
+
+    #dancerDashboard .dancer-dashboard-avatar-actions .approved-avatar-remove {
+      color: #ffc4cf;
+    }
+
     #dancerDashboard .dancer-glance-metrics {
       gap: 0;
       overflow: hidden;
@@ -28988,6 +29094,19 @@
     }
 
     @media (max-width: 520px) {
+      #dancerDashboard .dancer-dashboard-avatar-card {
+        grid-template-columns: 1fr;
+      }
+
+      #dancerDashboard .dancer-dashboard-avatar-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #dancerDashboard .dancer-dashboard-avatar-actions > :only-child {
+        grid-column: 1 / -1;
+      }
+
       #dancerDashboard .dancer-glance-metrics > div {
         min-height: 62px;
         padding-inline: 10px;
@@ -36977,13 +37096,14 @@
                 </button>
                 <button type="button" data-dancer-control-action="preview-profile">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
-                  <span><strong>View profile</strong><small>Customer view</small></span>
+                  <span><strong>Preview profile</strong><small>Customer view</small></span>
                 </button>
                 <button type="button" data-dancer-control-action="share-profile">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"></circle><circle cx="6" cy="12" r="2"></circle><circle cx="18" cy="19" r="2"></circle><path d="m8 11 8-5M8 13l8 5"></path></svg>
                   <span><strong>Share profile</strong><small>Link and QR</small></span>
                 </button>
               </div>
+              <section class="dancer-dashboard-avatar-card" id="dancerDashboardAvatarEditor" aria-label="Profile avatar editor"></section>
               <div class="dancer-glance-metrics" aria-label="Last 30 days at a glance">
                 <div><strong id="dancerDashboardProfileViews">0</strong><span>Profile views</span></div>
                 <div><strong id="dancerDashboardFollowers">0</strong><span>Followers</span></div>
@@ -50679,7 +50799,7 @@
     }
 
     function setApprovedAvatarUploadStatus(message, state = "") {
-      ["approvedAvatarUploadStatus", "setupAvatarUploadStatus"].forEach((statusId) => {
+      ["approvedAvatarUploadStatus", "setupAvatarUploadStatus", "dancerDashboardAvatarStatus"].forEach((statusId) => {
         const status = document.getElementById(statusId);
         if (!status) return;
         status.textContent = message;
@@ -50876,11 +50996,62 @@
       });
     }
 
+    function dancerDashboardAvatarEditorMarkup(profile) {
+      const pendingAvatarReview = profile?.pendingAvatarReview || profile?.pending_avatar_review || null;
+      const dedicatedAvatarPath = String(profile?.avatarStoragePath || profile?.avatar_storage_path || "").trim();
+      const pendingAvatarUrl = String(pendingAvatarReview?.previewUrl || pendingAvatarReview?.preview_url || "").trim();
+      const avatarPreviewUrl = pendingAvatarUrl || publicAvatarPhotoUrl(profile);
+      const avatarPreviewAttrs = customAvatarPhotoAttrs(
+        avatarPreviewUrl,
+        pendingAvatarUrl ? "" : publicAvatarPhotoSrcSet(profile),
+        profile?.avatarPhotoFocalX ?? profile?.avatar_photo_focal_x ?? profile?.mainPhotoFocalX ?? 50,
+        profile?.avatarPhotoFocalY ?? profile?.avatar_photo_focal_y ?? profile?.mainPhotoFocalY ?? 50
+      );
+      const avatarInitials = String(profile?.name || activeDancerName() || "D")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join("")
+        .toUpperCase();
+      const avatarStatus = pendingAvatarReview
+        ? "Replacement awaiting review. Your current live avatar stays visible until approval."
+        : dedicatedAvatarPath
+          ? "Live in dancer avatar circles across MyDancr."
+          : "Your main photo is currently used in avatar circles.";
+      const avatarStatusClass = pendingAvatarReview ? "is-pending" : dedicatedAvatarPath ? "is-live" : "";
+      return `
+        <div class="dancer-dashboard-avatar-main">
+          <div class="dancer-dashboard-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar role="img" aria-label="Profile avatar preview">
+            <span data-dancer-avatar-border aria-hidden="true">${avatarPreviewUrl ? "" : displayText(avatarInitials)}</span>
+          </div>
+          <div class="dancer-dashboard-avatar-copy">
+            <span class="eyebrow">Profile avatar</span>
+            <strong>Your circular profile photo</strong>
+            <p>Upload a clear face photo. MyDancr automatically centers it for avatar circles across the site.</p>
+            <span class="dancer-dashboard-avatar-status ${avatarStatusClass}" id="dancerDashboardAvatarStatus" aria-live="polite">${displayText(avatarStatus)}</span>
+          </div>
+        </div>
+        <div class="dancer-dashboard-avatar-actions">
+          <button type="button" data-approved-avatar-upload>${dedicatedAvatarPath || pendingAvatarReview ? "Replace avatar" : "Upload avatar"}</button>
+          ${dedicatedAvatarPath || pendingAvatarReview ? '<button class="approved-avatar-remove" type="button" data-approved-avatar-remove>Remove avatar</button>' : ""}
+        </div>
+      `;
+    }
+
+    function renderDancerDashboardAvatarEditor(profile, approved) {
+      const mount = document.getElementById("dancerDashboardAvatarEditor");
+      if (!mount) return;
+      mount.hidden = !approved;
+      mount.innerHTML = approved ? dancerDashboardAvatarEditorMarkup(profile) : "";
+    }
+
     function renderDancerDailyOverview(profile, approved, dashboardMetrics, optionalProfileFixes = false) {
       const overview = document.getElementById("dancerApprovedTopTools");
       if (!overview) return;
       overview.hidden = !approved;
       overview.classList.toggle("show", approved);
+      renderDancerDashboardAvatarEditor(profile, approved);
       if (!approved) return;
 
       const city = activeDancerCity();

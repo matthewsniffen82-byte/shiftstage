@@ -9,6 +9,7 @@ test("approved dancer dashboard leads with a real daily control center", () => {
   assert.match(page, /id="dancerDashboardShiftAction"[^>]*data-dancer-control-action="dashboard-primary"/);
   assert.match(page, /data-dancer-control-action="edit-profile"/);
   assert.match(page, /data-dancer-control-action="preview-profile"/);
+  assert.match(page, /<strong>Preview profile<\/strong><small>Customer view<\/small>/);
   assert.match(page, /data-dancer-control-action="share-profile"/);
   const shortcuts = page.match(
     /<div class="dancer-quick-actions" aria-label="Profile shortcuts">[\s\S]*?<\/div>/,

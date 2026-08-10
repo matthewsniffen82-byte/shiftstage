@@ -65,7 +65,7 @@ test("dancer dashboard avatar setup uses the same mobile-safe face-centering wor
   assert.match(liveShell, /id="setupAvatarUploadStatus"/);
   assert.match(liveShell, /MyDancr checks it and automatically centers the best square crop/);
   assert.match(liveShell, /pendingAvatarUrl \? "" : publicAvatarPhotoSrcSet\(profile\)/);
-  assert.match(liveShell, /\["approvedAvatarUploadStatus", "setupAvatarUploadStatus"\]/);
+  assert.match(liveShell, /\["approvedAvatarUploadStatus", "setupAvatarUploadStatus", "dancerDashboardAvatarStatus"\]/);
   assert.match(liveShell, /renderDancerSetup\(\);[\s\S]*?renderApprovedVisualProfileEditor\(\)/);
 
   const dashboardInputIndex = liveShell.indexOf('id="approvedAvatarUploadInput"');
@@ -80,6 +80,25 @@ test("dancer dashboard avatar setup uses the same mobile-safe face-centering wor
     liveShell.match(/id="approvedAvatarUploadInput"/g)?.length,
     1,
     "dashboard should expose exactly one shared avatar input",
+  );
+});
+
+test("approved dancer dashboard exposes a dedicated live avatar editor", () => {
+  const approvedDashboard = liveShell.match(
+    /<div class="dancer-daily-center" id="dancerApprovedTopTools"[\s\S]*?<div class="dancer-glance-metrics"/,
+  )?.[0] || "";
+
+  assert.match(
+    approvedDashboard,
+    /id="dancerDashboardAvatarEditor"[^>]*aria-label="Profile avatar editor"/,
+  );
+  assert.match(liveShell, /function dancerDashboardAvatarEditorMarkup\(profile\)/);
+  assert.match(liveShell, /id="dancerDashboardAvatarStatus"[^>]*aria-live="polite"/);
+  assert.match(liveShell, /MyDancr automatically centers it for avatar circles across the site/);
+  assert.match(liveShell, /renderDancerDashboardAvatarEditor\(profile, approved\)/);
+  assert.match(
+    liveShell,
+    /\.dancer-dashboard-avatar-actions button \{[\s\S]*?min-height: 44px;/,
   );
 });
 
