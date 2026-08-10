@@ -22,6 +22,7 @@ test("the public auth surface has one sign-in and three concise signup paths", (
   assert.match(liveApp, /id="authForm" data-auth-view="unified"/);
   assert.doesNotMatch(liveApp, /id="dancerLoginForm"|id="venueLoginSubmit"/);
   assert.match(liveApp, /id="customerSignupBtn"[\s\S]*?<strong>Customer<\/strong>/);
+  assert.match(liveApp, /Save dancers, clubs, Club Deals, and alerts privately\./);
   assert.match(liveApp, /id="openDancerSignup"[\s\S]*?<strong>Dancer<\/strong>/);
   assert.match(liveApp, /id="venueSignupBtn"[\s\S]*?<strong>Venue<\/strong>/);
   assert.match(liveApp, /function setAuthEntryMode\(mode\)/);
