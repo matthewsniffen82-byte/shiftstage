@@ -20,10 +20,17 @@ test("customer dashboard leads with tonight, saved, deals, and alerts before acc
     /href="#customer-tonight"[\s\S]*?>Tonight[\s\S]*?href="#customer-saved"[\s\S]*?>Saved[\s\S]*?href="#customer-offers"[\s\S]*?>Deals[\s\S]*?href="#customer-alerts"[\s\S]*?>Alerts[\s\S]*?href="#customer-settings"[\s\S]*?>Settings/,
   );
   assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
-  assert.match(dashboard, /const dashboardHeading = isLoading \? resolvedDisplayName \|\| title : displayName/);
+  assert.match(dashboard, /const dashboardHeading = isLoading[\s\S]*?role === "dancer" \? profileDisplayName \|\| title : resolvedDisplayName \|\| title[\s\S]*?: displayName/);
   assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
   assert.match(dashboard, /className="dashboard-close"[\s\S]*?aria-label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
   assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" \/>/);
+});
+
+test("dancer dashboard header prefers the saved stage name and never the email-derived account name", () => {
+  assert.match(dashboard, /const profileDisplayName = String\(dashboardName\(state\.profile, role\) \|\| ""\)\.trim\(\)/);
+  assert.match(dashboard, /const resolvedDisplayName = role === "dancer"[\s\S]*?\? profileDisplayName[\s\S]*?: accountDisplayName \|\| profileDisplayName/);
+  assert.match(dashboard, /if \(role === "dancer"\) return profile\.stage_name \|\| profile\.stageName \|\| ""/);
+  assert.doesNotMatch(dashboard, /role === "dancer"[\s\S]{0,120}\? accountDisplayName/);
 });
 
 test("Your Night and Saved cards use live customer records and production actions", () => {

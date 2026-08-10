@@ -292,14 +292,20 @@ export default function DashboardClient({
     return "Customer dashboard";
   }, [role]);
 
-  const resolvedDisplayName = String(state.account?.displayName || dashboardName(state.profile, role) || "").trim();
-  const displayName = resolvedDisplayName || "Dancr";
+  const accountDisplayName = String(state.account?.displayName || "").trim();
+  const profileDisplayName = String(dashboardName(state.profile, role) || "").trim();
+  const resolvedDisplayName = role === "dancer"
+    ? profileDisplayName
+    : accountDisplayName || profileDisplayName;
+  const displayName = resolvedDisplayName || (role === "dancer" ? "Dancer dashboard" : "Dancr");
   const dashboardCloseHref = homeDiscoveryHref(
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
   const dashboardEyebrow =
     role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
-  const dashboardHeading = isLoading ? resolvedDisplayName || title : displayName;
+  const dashboardHeading = isLoading
+    ? (role === "dancer" ? profileDisplayName || title : resolvedDisplayName || title)
+    : displayName;
   const dashboardDescription = state.error || "";
 
   return (
