@@ -1976,7 +1976,6 @@ function SubmissionDetails({
           <SubmissionValue label="Photo review" value={item.photoReviewStatus || item.photo_review_status} />
           <SubmissionValue label="Submitted" value={formatDate(item.createdAt || item.created_at)} />
         </div>
-        <SubmissionValue label="Bio" value={item.bio} wide />
       </section>
 
       <section className="submission-section">
@@ -2492,7 +2491,6 @@ function AdminDancerFullProfile({
           <SubmissionValue label="Approved" value={formatDate(profile.approvedAt || profile.approved_at)} />
           <SubmissionValue label="Disabled" value={formatDate(profile.disabledAt || profile.disabled_at)} />
         </div>
-        <SubmissionValue label="Bio" value={profile.bio} wide />
       </section>
 
       <section className="submission-section">

@@ -227,7 +227,7 @@ test("confirmed profile saves stay visible on the save button until another edit
   assert.match(dashboardSource, /setSaveStatus\("saved"\)/);
   assert.match(dashboardSource, /setStageName\(event\.target\.value\);\s*setSaveStatus\("idle"\)/);
   assert.match(dashboardSource, /setCity\(event\.target\.value\);\s*setSaveStatus\("idle"\)/);
-  assert.match(dashboardSource, /setBio\(event\.target\.value\);\s*setSaveStatus\("idle"\)/);
+  assert.doesNotMatch(dashboardSource, /setBio\(|\[bio, setBio\]/);
   assert.doesNotMatch(dashboardSource, /savedResetTimerRef/);
 });
 

@@ -212,7 +212,7 @@ export async function GET(request: Request) {
       return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
     }
 
-    const profileWithPhotos = withPhotoUrls(client, data);
+    const profileWithPhotos = withoutDancerBio(withPhotoUrls(client, data));
     const [pendingPhotoReviews, pendingAvatarReview] = await Promise.all([
       loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos),
       loadPendingAvatarReview(user.id),
@@ -406,7 +406,6 @@ export async function PATCH(request: Request) {
         throw error;
       }
     }
-    if (typeof body.bio === "string") update.bio = body.bio.trim();
     if (typeof body.isPublic === "boolean") {
       if (!supportsIsPublic) {
         setSaveStage("update_profile_fields");
@@ -490,7 +489,6 @@ export async function PATCH(request: Request) {
       fields: {
         stageName: typeof body.stageName === "string",
         city: typeof body.city === "string",
-        bio: typeof body.bio === "string",
         socials: Array.isArray(body.socials),
       },
     });
@@ -644,7 +642,9 @@ export async function PATCH(request: Request) {
     const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(client, user.id);
     if (refreshedProfileError) throw refreshedProfileError;
 
-    const refreshedProfileWithPhotos = refreshedProfile ? withPhotoUrls(client, refreshedProfile) : null;
+    const refreshedProfileWithPhotos = refreshedProfile
+      ? withoutDancerBio(withPhotoUrls(client, refreshedProfile))
+      : null;
     const refreshedPendingPhotoReviews = await loadPendingPhotoReviews(
       user.id,
       refreshedProfileWithPhotos?.dancer_photos || [],
@@ -709,6 +709,12 @@ function loadDancerProfile(client: any, userId: string) {
     .select("*, social_links(*), dancer_photos(*)")
     .eq("user_id", userId)
     .maybeSingle();
+}
+
+function withoutDancerBio<T extends Record<string, any>>(profile: T): Omit<T, "bio"> {
+  const profileWithoutBio: Record<string, any> = { ...profile };
+  delete profileWithoutBio.bio;
+  return profileWithoutBio as Omit<T, "bio">;
 }
 
 async function submitChangedSocialLinksForReview(db: any, dancerId: string, platforms: SocialPlatform[]) {

@@ -2742,7 +2742,7 @@ function DancerPanel({
         </div>
       </DashboardSection>
       <DashboardSection
-        description="Edit your stage name, city, bio, social links, photos, and MyDancr TV videos."
+        description="Edit your stage name, city, social links, photos, and MyDancr TV videos."
         eyebrow="Dancer workspace"
         id="dancer-profile-media"
         title="Profile & media"
@@ -3047,7 +3047,6 @@ function DancerSetupPanel({
   const [city, setCity] = useState("");
   const [cityOptions, setCityOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [cityOptionsStatus, setCityOptionsStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [bio, setBio] = useState("");
   const [status, setStatus] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isResetting, setIsResetting] = useState(false);
@@ -3064,7 +3063,6 @@ function DancerSetupPanel({
     const profileCity = String(profile?.city || "").trim();
     const matchingCity = cityOptions.find((option) => option.value.toLocaleLowerCase("en-US") === profileCity.toLocaleLowerCase("en-US"));
     setCity(cityOptionsStatus === "ready" ? matchingCity?.value || "" : profileCity);
-    setBio(String(profile?.bio || ""));
   }, [cityOptions, cityOptionsStatus, profile]);
 
   useEffect(() => {
@@ -3178,7 +3176,6 @@ function DancerSetupPanel({
       const payload = {
         stageName,
         city,
-        bio,
         deletedPhotoIds: idsToDelete,
         deletedPhotoStoragePaths: storagePathsToDelete,
       };
@@ -3189,7 +3186,6 @@ function DancerSetupPanel({
       console.log("EDIT_PROFILE_SAVE_PAYLOAD", {
         stageName: Boolean(stageName),
         city,
-        bio: Boolean(bio),
         deletedPhotoIds: idsToDelete,
         deletedPhotoStoragePathCount: storagePathsToDelete.length,
       });
@@ -3258,13 +3254,6 @@ function DancerSetupPanel({
             {cityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
           <small>{cityOptionsStatus === "error" ? "The live city list could not be loaded. Try again before saving." : "Choose from active MyDancr venue markets."}</small>
-        </label>
-        <label>
-          Bio
-          <textarea value={bio} onChange={(event) => {
-            setBio(event.target.value);
-            setSaveStatus("idle");
-          }} rows={4} />
         </label>
         <button type="submit" disabled={saveStatus === "saving" || cityOptionsStatus !== "ready"}>
           {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved Profile" : "Save Profile"}

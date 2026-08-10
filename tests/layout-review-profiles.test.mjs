@@ -90,7 +90,6 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   assert.match(scriptSource, /const EMAIL_DOMAIN = "synthetic\.mydancr\.invalid"/);
   assert.match(scriptSource, /const AUTH_BAN_DURATION = "876000h"/);
   assert.match(scriptSource, /ban_duration: AUTH_BAN_DURATION/);
-  assert.match(scriptSource, /bio: null/);
   assert.match(
     scriptSource,
     /const WORKING_NOW_PROFILE_INDEXES = new Set\(\[4, 5, 6, 7, 8, 9\]\)/,

@@ -12,7 +12,6 @@ export type DancerProfileInput = {
   dancerId: string;
   stageName: string;
   city: string;
-  bio?: string;
 };
 
 export type ShiftInput = {
@@ -39,7 +38,6 @@ export async function updateDancerProfile(client: DancrClient, input: DancerProf
     .update({
       stage_name: input.stageName,
       city: input.city,
-      bio: input.bio,
     })
     .eq("id", input.dancerId);
 

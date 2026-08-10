@@ -40543,7 +40543,6 @@
           name: item.stageName,
           legalName: item.realName || item.real_name || "",
           city,
-          bio: item.bio || "",
           status: approvalStatusLabel(item.status),
           reviewSubmitted: item.status === "pending_review",
           approvalChangesPending: item.status === "approved" && hasPendingContent,
@@ -51748,7 +51747,6 @@
           </div>
           <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
-          ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
           </div>
@@ -51763,8 +51761,7 @@
         profile.venue,
         city,
         profile.status,
-        profile.photoStatus,
-        profile.bio
+        profile.photoStatus
       ].map((value) => String(value || "")).join(" ").toLowerCase();
     }
 
@@ -51781,7 +51778,6 @@
             <span class="${badgeClass}">${displayText(statusLabel)}</span>
           </div>
           <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
-          ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
             <button class="action-btn danger" data-admin-action="delete-dancer-profile">Delete profile</button>
@@ -51960,7 +51956,6 @@
               ${adminFullProfileValue("Approved", formatBillingDate(profile.approvedAt || profile.approved_at))}
               ${adminFullProfileValue("Disabled", formatBillingDate(profile.disabledAt || profile.disabled_at))}
             </div>
-            ${adminFullProfileValue("Bio", profile.bio)}
           </section>
           <section class="admin-full-section">
             <strong>Login account</strong>
@@ -52191,7 +52186,6 @@
           <div class="meta">Stage: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
           <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
-          ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <button class="admin-profile-open-link" type="button" data-admin-action="view-dancer-profile">Open ${displayText(profile.name || "dancer")}'s full profile</button>
           <div class="info-tile">
             <strong>Submitted socials</strong>

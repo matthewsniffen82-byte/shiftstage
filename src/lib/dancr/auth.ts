@@ -264,7 +264,7 @@ export async function updateCustomerProfile(
 export async function getDancerAccountProfile(client: DancrClient, userId: string): Promise<DancerAccountProfile | null> {
   const { data, error } = await client
     .from("dancer_profiles")
-    .select("id, user_id, real_name, stage_name, slug, city, bio, status, verification_status, photo_review_status, avatar_storage_path, avatar_updated_at, is_public, venue_approved_at")
+    .select("id, user_id, real_name, stage_name, slug, city, status, verification_status, photo_review_status, avatar_storage_path, avatar_updated_at, is_public, venue_approved_at")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -278,7 +278,6 @@ export async function getDancerAccountProfile(client: DancrClient, userId: strin
     stageName: data.stage_name,
     slug: data.slug,
     city: data.city,
-    bio: data.bio,
     status: data.status,
     verificationStatus: data.verification_status,
     photoReviewStatus: data.photo_review_status,

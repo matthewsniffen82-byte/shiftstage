@@ -224,7 +224,6 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         slug,
         stage_name,
         city,
-        bio,
         status,
         approved_at,
         disabled_at,
@@ -255,7 +254,6 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
           slug,
           stage_name,
           city,
-          bio,
           status,
           approved_at,
           disabled_at,
@@ -286,7 +284,6 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
 
   return {
     ...card,
-    bio: row.bio || null,
     followerCount: card.followerCount || 0,
     goingCount,
     photos: approvedPhotos.map((photo: any) => {

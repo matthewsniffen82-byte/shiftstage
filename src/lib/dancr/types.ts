@@ -69,7 +69,6 @@ export type DancerAccountProfile = {
   stageName: string;
   slug: string;
   city: string;
-  bio: string | null;
   status: DancerStatus;
   verificationStatus: string;
   photoReviewStatus: string;
@@ -212,7 +211,6 @@ export type DancerCard = {
 };
 
 export type DancerProfile = DancerCard & {
-  bio: string | null;
   followerCount: number;
   goingCount: number;
   socialLinks: SocialLink[];
@@ -268,7 +266,6 @@ export type AdminApprovalDancer = {
   stageName: string;
   slug: string;
   city: string;
-  bio: string | null;
   status: DancerStatus;
   isPublic?: boolean;
   verificationStatus: ReviewStatus;

@@ -568,7 +568,6 @@ async function approveSyntheticProfile(userId, definition) {
     .from("dancer_profiles")
     .update({
       approved_at: approvedAt,
-      bio: null,
       city: REVIEW_CITY,
       disabled_at: null,
       is_public: true,
@@ -934,7 +933,7 @@ function isMarkedReviewDeal(deal) {
 async function listDatasetProfiles() {
   const { data, error } = await admin
     .from("dancer_profiles")
-    .select("id, user_id, slug, stage_name, city, bio")
+    .select("id, user_id, slug, stage_name, city")
     .like("slug", `${PROFILE_PREFIX}%`)
     .order("slug", { ascending: true });
   assertSuccess(error, "list layout-review profiles");
