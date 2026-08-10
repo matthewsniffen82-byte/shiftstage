@@ -1307,8 +1307,8 @@ function CustomerDealPassPanel({
         {!activeDeals.length ? (
           <div className="customer-empty-state">
             <strong>No active Club Deals</strong>
-            <p>Choose a Club Deal first, then tap the venue&apos;s official cashier NFC sticker. There is no QR code to scan.</p>
-            <Link href={homeDiscoveryHref("venues")}>Browse venues</Link>
+            <p>Choose a Club Deal first, then tap the club&apos;s official cashier NFC sticker. There is no QR code to scan.</p>
+            <Link href={homeDiscoveryHref("venues")}>Browse clubs</Link>
           </div>
         ) : null}
         {pastDeals.length ? (
@@ -2519,7 +2519,7 @@ function CustomerPreferencesPanel({
 
 const CUSTOMER_NOTIFICATION_OPTIONS = [
   { key: "followedDancersOnly", label: "Followed dancers only" },
-  { key: "followedVenuesOnly", label: "Followed venues only" },
+  { key: "followedVenuesOnly", label: "Followed clubs only" },
   { key: "anyDancerInCity", label: "Any dancer in city" },
   { key: "workingTonight", label: "Working now" },
   { key: "newShifts", label: "New shifts" },

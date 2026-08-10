@@ -68,13 +68,13 @@ test("multiple live offers stay selectable and bottle service keeps its real boo
   assert.match(dealCard, /selectedDealId/);
   assert.match(dealCard, /activeDeal\.offerType === "bottle_service"/);
   assert.match(dealCard, /activeDeal\.bookingUrl/);
-  assert.match(dealCard, /Continue to venue booking/);
+  assert.match(dealCard, /Continue to club booking/);
 });
 
 test("the canonical live shell uses cashier NFC instead of generating customer QR images", () => {
   assert.match(liveApp, /mydancrPendingNfcDealV1/);
   assert.match(liveApp, /Cashier NFC redemption/);
-  assert.match(liveApp, /tap the cashier NFC sticker at the venue/i);
+  assert.match(liveApp, /tap the cashier NFC sticker at the club/i);
   assert.doesNotMatch(liveApp, /fetch\("\/api\/deals\/redemptions",\s*\{\s*method:\s*"POST"/);
   assert.doesNotMatch(liveApp, /<img src="\$\{pass\.qrImageUrl\}"/);
 });
@@ -83,7 +83,7 @@ test("signed-in customer dashboards retain saved Club Deal state without owning 
   assert.match(customerDashboard, /CustomerDealPassPanel/);
   assert.match(customerDashboard, /dealRedemptions/);
   assert.match(liveApp, /Saved Club Deals/);
-  assert.match(liveApp, /Redeem by tapping the venue cashier NFC sticker/);
+  assert.match(liveApp, /Redeem by tapping the club cashier NFC sticker/);
 });
 
 test("legacy QR issuance endpoints are explicitly retired instead of silently accepting writes", () => {

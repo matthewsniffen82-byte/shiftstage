@@ -30452,7 +30452,7 @@
             </div>
             <div class="customer-quick-panel" id="customerDealsQuickPanel" hidden>
               <h3>Saved club deals</h3>
-              <p>Tap a QR to enlarge it and show it at the venue.</p>
+              <p>Tap a QR to enlarge it and show it at the club.</p>
               <div class="customer-quick-list" id="customerDealsQuickList"></div>
             </div>
           </div>
@@ -30547,12 +30547,12 @@
             </select>
           </div>
           <div class="field venue-picker-field" id="venuePickerField">
-            <label id="venueSelectLabel" for="venueSelect">Venue</label>
+            <label id="venueSelectLabel" for="venueSelect">Club</label>
             <select id="venueSelect">
-              <option value="all">All venues</option>
+              <option value="all">All clubs</option>
             </select>
             <button class="venue-picker-trigger" id="venueSelectButton" type="button" aria-haspopup="dialog" aria-controls="venueSelectDialog" aria-expanded="false" aria-labelledby="venueSelectLabel venueSelectButtonText" hidden>
-              <span class="venue-picker-trigger-value" id="venueSelectButtonText">All venues</span>
+              <span class="venue-picker-trigger-value" id="venueSelectButtonText">All clubs</span>
               <span class="venue-picker-trigger-live" id="venueSelectButtonLive" hidden>NOW</span>
               <svg class="venue-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
             </button>
@@ -30565,8 +30565,8 @@
         <dialog class="venue-picker-dialog" id="venueSelectDialog" aria-labelledby="venueSelectDialogTitle">
           <div class="venue-picker-panel">
             <div class="venue-picker-header">
-              <div><span>Venue search</span><strong id="venueSelectDialogTitle">Choose a venue</strong></div>
-              <button class="venue-picker-close" id="venueSelectClose" type="button" aria-label="Close venue search">&times;</button>
+              <div><span>Club search</span><strong id="venueSelectDialogTitle">Choose a club</strong></div>
+              <button class="venue-picker-close" id="venueSelectClose" type="button" aria-label="Close club search">&times;</button>
             </div>
             <div class="venue-picker-options" id="venueSelectOptions" role="listbox" aria-labelledby="venueSelectDialogTitle"></div>
             <button class="venue-picker-done" id="venueSelectDone" type="button">Done</button>
@@ -30575,7 +30575,7 @@
       </section>
 
       <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
-        <span id="homeLiveRadius">25 mi radius · All venues</span>
+        <span id="homeLiveRadius">25 mi radius · All clubs</span>
         <span class="home-live-summary-divider" aria-hidden="true">·</span>
         <strong id="homeLiveWorking">0 working now</strong>
       </div>
@@ -30608,7 +30608,7 @@
           </span>
           <span>TV</span>
         </button>
-        <button class="tab" data-tab="venues" data-tab-label="Venues" aria-current="false">Venues</button>
+        <button class="tab" data-tab="venues" data-tab-label="Clubs" aria-current="false">Clubs</button>
       </nav>
 
       <style>
@@ -36843,7 +36843,7 @@
         <details class="auth-card dashboard-collapse approved-analytics" id="dancerCommissionSection">
           <summary><span class="dashboard-collapse-title"><strong>NFC commissions</strong><span>Expand to see commissions earned from cashier NFC redemptions attributed to your profile.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
           <div class="dashboard-collapse-body">
-            <p class="value-message" id="dancerCommissionSummary">NFC commissions appear after customers choose your attributed deal and tap the venue cashier sticker.</p>
+            <p class="value-message" id="dancerCommissionSummary">NFC commissions appear after customers choose your attributed deal and tap the club cashier sticker.</p>
             <div class="metric-grid" id="dancerCommissionMetrics" aria-label="NFC commission metrics"></div>
             <div class="rank-notification-list" id="dancerCommissionActivity">Commission activity will appear here.</div>
           </div>
@@ -37518,7 +37518,7 @@
           <div>
             <span class="eyebrow">Dashboard</span>
             <h3 id="customerSummaryTitle">Now in Las Vegas</h3>
-            <p id="customerSummaryCopy">Follow dancers to see your private working-now list, saved schedules, venue alerts, and directions.</p>
+            <p id="customerSummaryCopy">Follow dancers to see your private working-now list, saved schedules, club alerts, and directions.</p>
           </div>
           <div class="customer-summary-actions">
             <button class="ghost" id="customerBrowseTonight" type="button">Browse now</button>
@@ -37536,7 +37536,7 @@
           </button>
           <button class="stat" type="button" data-dashboard-jump="venues">
             <strong id="dashVenueCount">0</strong>
-            <span>Followed venues</span>
+            <span>Followed clubs</span>
           </button>
           <button class="stat" type="button" data-dashboard-jump="notifications">
             <strong id="dashNotificationsCount">0</strong>
@@ -37556,11 +37556,11 @@
         <div class="list card-grid" id="dashFollowedList"></div>
         <button class="view-all" id="dashFollowedViewAll" hidden>View All Followed</button>
         <div class="section-title-row" data-dashboard-section="venues">
-          <h3 class="section-title" id="dashVenuesTitle">Followed venues</h3>
+          <h3 class="section-title" id="dashVenuesTitle">Followed clubs</h3>
           <span class="section-context" id="dashVenuesContext">Las Vegas</span>
         </div>
         <div class="customer-venue-list" id="dashVenueList"></div>
-        <button class="view-all" id="dashVenueViewAll" hidden>View All Venues</button>
+        <button class="view-all" id="dashVenueViewAll" hidden>View All Clubs</button>
         <div class="section-title-row" data-dashboard-section="deals">
           <h3 class="section-title">Saved Club Deals</h3>
           <span class="section-context" id="dashSavedDealsContext">0 saved</span>
@@ -37568,7 +37568,7 @@
         <div class="saved-deal-list" id="dashSavedDealsList"></div>
         <div class="auth-card customer-notification-card" data-dashboard-section="notifications">
           <h3 class="section-title">Notification settings</h3>
-          <p class="customer-card-copy">Choose which dancer and venue alerts Dancr sends you. Your customer activity stays private.</p>
+          <p class="customer-card-copy">Choose which dancer and club alerts Dancr sends you. Your customer activity stays private.</p>
           <div class="toggle-list" id="notificationSettings"></div>
           <div class="section-title-row">
             <h3 class="section-title">Notification center</h3>
@@ -37595,7 +37595,7 @@
             </div>
             <span class="account-control-status" data-account-status>Active</span>
           </div>
-          <p class="account-control-copy" data-account-note>Your private follows, venue alerts, and going signals stay active.</p>
+          <p class="account-control-copy" data-account-note>Your private follows, club alerts, and going signals stay active.</p>
           <div class="account-center">
             <div class="account-center-head">
               <strong>Account center</strong>
@@ -38031,7 +38031,7 @@
     };
     const accountControlCopy = {
       customer: {
-        active: "Your private follows, venue alerts, and going signals stay active.",
+        active: "Your private follows, club alerts, and going signals stay active.",
         disabled: "Your customer account is paused. Alerts are off, but follows and notification settings are saved.",
         deleted: "This customer account was permanently deleted."
       },
@@ -38167,11 +38167,11 @@
 
     const notificationOptions = [
       "Followed dancers only",
-      "Followed venues only",
+      "Followed clubs only",
       "Any dancer in city",
       "Working now alerts",
       "New shift alerts",
-      "Venue schedule alerts",
+      "Club schedule alerts",
       "Club change alerts",
       "Canceled shift alerts"
     ];
@@ -38339,7 +38339,7 @@
     function profileActionAccountMessage(actionButton) {
       const actionId = actionButton?.id || "";
       if (actionButton?.dataset?.accountAction === "venue-follow") {
-        return "Create a free customer account to follow this venue and receive venue alerts.";
+        return "Create a free customer account to follow this club and receive club alerts.";
       }
       if (actionId === "followBtn") return "Create a free customer account to follow this dancer and save the profile.";
       if (actionId === "notifyBtn") return "Create a free customer account to turn on dancer notifications.";
@@ -40653,7 +40653,7 @@
         })),
         ...venues.slice(0, 2).map((venue) => ({
           title: `${venue.name} is saved`,
-          detail: "Venue alerts and saved deals will appear here."
+          detail: "Club alerts and saved deals will appear here."
         }))
       ];
     }
@@ -40691,7 +40691,7 @@
               ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
             </button>
           `).join("")
-        : `<div class="customer-quick-empty">Saved Club Deals will appear here after you choose an offer. Redeem by tapping the venue cashier NFC sticker.</div>`;
+        : `<div class="customer-quick-empty">Saved Club Deals will appear here after you choose an offer. Redeem by tapping the club cashier NFC sticker.</div>`;
     }
 
     function renderCustomerQuickActions() {
@@ -42669,9 +42669,9 @@
       const city = selectedCity();
       const venue = value === "all" ? null : resolveVenueByName(value, city);
       const workingNowCount = venueWorkingNowCount(venue, city);
-      if (venueSelectButtonText) venueSelectButtonText.textContent = venue?.name || "All venues";
+      if (venueSelectButtonText) venueSelectButtonText.textContent = venue?.name || "All clubs";
       if (venueSelectButtonLive) venueSelectButtonLive.hidden = !workingNowCount;
-      if (venueSelectButton) venueSelectButton.setAttribute("aria-label", venue ? `${venue.name}${workingNowCount ? `, ${workingNowCount} ${workingNowCount === 1 ? "dancer" : "dancers"} working now` : ""}` : "All venues");
+      if (venueSelectButton) venueSelectButton.setAttribute("aria-label", venue ? `${venue.name}${workingNowCount ? `, ${workingNowCount} ${workingNowCount === 1 ? "dancer" : "dancers"} working now` : ""}` : "All clubs");
     }
 
     function populateVenueSelect(city = selectedCity()) {
@@ -42682,13 +42682,13 @@
         .sort((a, b) => compareVenueDistance(a, b, city));
       const venueOptions = venues.map((venue) => ({ venue, workingNowCount: venueWorkingNowCount(venue, city) }));
       venueSelect.innerHTML = [
-        `<option value="all">All venues</option>`,
+        `<option value="all">All clubs</option>`,
         ...venueOptions.map(({ venue, workingNowCount }) => `<option value="${escapeOptionValue(venue.name)}" data-working-now="${Boolean(workingNowCount)}">${escapeOptionValue(venue.name)}${workingNowCount ? " · NOW" : ""}</option>`)
       ].join("");
       venueSelect.value = venues.some((venue) => venue.name === previous) ? previous : "all";
       if (venueSelectOptions) {
         venueSelectOptions.innerHTML = [
-          venuePickerOptionMarkup("all", "All venues", 0, venueSelect.value === "all"),
+          venuePickerOptionMarkup("all", "All clubs", 0, venueSelect.value === "all"),
           ...venueOptions.map(({ venue, workingNowCount }) => venuePickerOptionMarkup(venue.name, venue.name, workingNowCount, venueSelect.value === venue.name))
         ].join("");
       }
@@ -43418,7 +43418,7 @@
       const offers = clubDealOffers(config);
       if (offers.length > 1) {
         qrButton.dataset.clubDealCta = encodedConfig;
-        qrButton.setAttribute("aria-label", `Open ${offers.length} Club Deals at ${config.venueName || "this venue"}`);
+        qrButton.setAttribute("aria-label", `Open ${offers.length} Club Deals at ${config.venueName || "this club"}`);
         qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-hub-symbol")}<span class="profile-club-deal-count">${offers.length}</span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready", "has-multiple-offers");
@@ -43499,7 +43499,7 @@
     function savedDealPassMarkup(pass) {
       const sourceLabel = pass.sourceType === "dancer_profile" && pass.dancerName
         ? `From ${pass.dancerName}'s working-now profile`
-        : "Venue page";
+        : "Club page";
       return `
         <button class="saved-deal-pass" type="button" data-deal-pass="${encodeDealPass(pass)}">
           <span>
@@ -43544,7 +43544,7 @@
       if (!pass?.url) return;
       const shareData = {
         title: `${pass.venueName} Club Deal`,
-        text: `${pass.title} from ${pass.venueName}. Select it in MyDancr, then tap the cashier NFC sticker at the venue.`,
+        text: `${pass.title} from ${pass.venueName}. Select it in MyDancr, then tap the cashier NFC sticker at the club.`,
         url: pass.url
       };
       try {
@@ -43602,7 +43602,7 @@
             <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close Club Deal">${actionIconMarkup("close")}</button>
             <p class="deal-pass-kicker" id="dealPassKicker">Cashier NFC Club Deal</p>
             <h3 class="deal-pass-title" id="dealPassTitle">Club Deal</h3>
-            <p class="deal-pass-copy" id="dealPassCopy">Tap the cashier NFC sticker at the venue.</p>
+            <p class="deal-pass-copy" id="dealPassCopy">Tap the cashier NFC sticker at the club.</p>
             <div class="deal-pass-frame">
               <div id="dealPassImage" class="deal-pass-nfc-symbol" role="img" aria-label="NFC tap">${clubDealQrSymbolMarkup("deal-pass-nfc-icon")}</div>
             </div>
@@ -43612,7 +43612,7 @@
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share deal</button>
               <button class="deal-pass-action tertiary" type="button" data-copy-deal-pass>Copy link</button>
             </div>
-            <a class="deal-pass-booking" id="dealPassBooking" href="#" target="_blank" rel="noreferrer" hidden>Continue to venue booking</a>
+            <a class="deal-pass-booking" id="dealPassBooking" href="#" target="_blank" rel="noreferrer" hidden>Continue to club booking</a>
           </div>
         </div>
       `);
@@ -43676,7 +43676,7 @@
     }
 
     function dealPassPresentation(pass) {
-      const venueName = String(pass?.venueName || "Venue").trim() || "Venue";
+      const venueName = String(pass?.venueName || "Club").trim() || "Club";
       const dancerName = String(pass?.dancerName || "").trim();
       const dancerAttributed = pass?.sourceType === "dancer_profile" && dancerName;
       if (pass?.serverGenerated) {
@@ -43694,7 +43694,7 @@
         kicker: "Cashier NFC Club Deal",
         copy: dancerAttributed
           ? `${venueName} · Available while ${dancerName} is working now`
-          : `${venueName} · Venue offer`,
+          : `${venueName} · Club offer`,
         status: `Choose the deal here, then tap the cashier NFC sticker at ${venueName}`
       };
     }
@@ -43751,7 +43751,7 @@
     function clubDealOfferTypeLabel(type) {
       if (type === "drink") return "Drink offer";
       if (type === "bottle_service") return "Bottle service";
-      if (type === "other") return "Venue offer";
+      if (type === "other") return "Club offer";
       return "Admission offer";
     }
 
@@ -43783,9 +43783,9 @@
         <div class="deal-pass-overlay club-deal-hub-overlay" id="clubDealHubOverlay" aria-hidden="true" hidden>
           <section class="deal-pass-sheet club-deal-hub-sheet" role="dialog" aria-modal="true" aria-labelledby="clubDealHubTitle" aria-describedby="clubDealHubCopy" tabindex="-1">
             <button class="deal-pass-close" type="button" data-close-club-deal-hub aria-label="Close Club Deals">${actionIconMarkup("close")}</button>
-            <p class="deal-pass-kicker">Live venue offers</p>
+            <p class="deal-pass-kicker">Live club offers</p>
             <h3 class="deal-pass-title" id="clubDealHubTitle">Club Deals</h3>
-            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer now, then tap the cashier NFC sticker at the venue.</p>
+            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer now, then tap the cashier NFC sticker at the club.</p>
             <p class="club-deal-hub-status" id="clubDealHubStatus" role="status" aria-live="polite" hidden></p>
             <div class="club-deal-hub-list" id="clubDealHubList"></div>
           </section>
@@ -43844,17 +43844,17 @@
       }
       captureClubDealOverlayReturnContext(triggerButton);
       const overlay = clubDealHubOverlay();
-      const venueName = String(config?.venueName || "this venue").trim() || "this venue";
+      const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one now, then tap the cashier NFC sticker at the venue.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one now, then tap the cashier NFC sticker at the club.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");
       document.getElementById("clubDealHubList").innerHTML = offers.map((deal) => {
         const selection = clubDealSelectionConfig(config, deal);
-        const booking = deal.offerType === "bottle_service" ? "Cashier NFC redemption · Venue booking available" : "Cashier NFC tap required at redemption";
-        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(deal.dealDescription || "View and redeem this venue offer.")}</small><em>${booking}</em></button>`;
+        const booking = deal.offerType === "bottle_service" ? "Cashier NFC redemption · Club booking available" : "Cashier NFC tap required at redemption";
+        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(deal.dealDescription || "View and redeem this club offer.")}</small><em>${booking}</em></button>`;
       }).join("");
       overlay.hidden = false;
       overlay.classList.add("show");
@@ -43951,7 +43951,7 @@
               <div>
                 <span class="eyebrow">Club Deals</span>
                 <h3>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
-                <p>${venue.activeDeals?.length > 1 ? "Choose admission, drinks, bottle service, or another venue offer, then tap the cashier NFC sticker at the venue." : escapeHtml(venue.activeDeal.dealDescription || "Choose this offer, then tap the cashier NFC sticker at the venue.")}</p>
+                <p>${venue.activeDeals?.length > 1 ? "Choose admission, drinks, bottle service, or another club offer, then tap the cashier NFC sticker at the club." : escapeHtml(venue.activeDeal.dealDescription || "Choose this offer, then tap the cashier NFC sticker at the club.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Click for Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">
@@ -44001,14 +44001,14 @@
         return {
           key: "no-active-offer",
           label: "No Club Deal available",
-          detail: "This venue does not have an active tracked offer right now."
+          detail: "This club does not have an active tracked offer right now."
         };
       }
       if (profile?.scheduled) {
         return {
           key: "available-when-working",
           label: "Available when working",
-          detail: "A tracked Club Deal can unlock after a verified check-in when the venue has an active offer."
+          detail: "A tracked Club Deal can unlock after a verified check-in when the club has an active offer."
         };
       }
       return {
@@ -44070,7 +44070,7 @@
     async function runVenueShareAction(venueName, city = selectedCity()) {
       const venue = resolveVenueByName(venueName, city);
       if (!venue) {
-        showToast("Venue profile unavailable");
+        showToast("Club profile unavailable");
         return;
       }
       const url = venueShareUrl(venue, city);
@@ -44087,7 +44087,7 @@
           return;
         }
       }
-      await copyText(url, "Venue link copied");
+      await copyText(url, "Club link copied");
     }
 
     function socialShareUrl(platformKey, profileName, city = selectedCity()) {
@@ -46403,7 +46403,7 @@
             ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-time">${displayPublicShiftTime(profile.time, profile)}</span></span></div>`
             : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No schedule posted</span></div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span>${distanceLabel ? `<span class="card-distance">• ${distanceLabel}</span>` : ""}</div>`
+        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} club page">${profile.venue}</span>${distanceLabel ? `<span class="card-distance">• ${distanceLabel}</span>` : ""}</div>`
         : "";
       const portraitPhotoUrl = isPending ? customPhotoUrl(profile, 0) : publicProfilePhotoUrl(profile);
       const portraitPhotoAttrs = customPhotoAttrs(
@@ -46577,10 +46577,10 @@
         className: "venue-card-uber feed-uber-ride"
       });
       return `
-        <article class="card venue venue-card" aria-label="${safeName} venue details" style="--venue-accent:${venueAccent(venue.name)}">
-          <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">
+        <article class="card venue venue-card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
+          <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
             <div class="venue-art${visual.attrs.className}"${visual.attrs.style}>
-              <span class="venue-card-kicker">Mydancr venue</span>
+              <span class="venue-card-kicker">MyDancr club</span>
               ${logoMarkup || `<span class="venue-card-mark">${escapeHtml(initials)}</span>`}
             </div>
             <div class="profile-body">
@@ -46673,7 +46673,7 @@
           <span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span>
           <span>
             <strong>No affiliated dancers yet</strong>
-            <small>No approved dancer profiles are currently affiliated with ${escapeHtml(details.name)}. Follow this venue for updates.</small>
+            <small>No approved dancer profiles are currently affiliated with ${escapeHtml(details.name)}. Follow this club for updates.</small>
           </span>
         </section>
       `;
@@ -46682,7 +46682,7 @@
       return `
         <div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
           <div class="venue-detail-modal-top">
-            <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${details.name} venue profile">
+            <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${details.name} club profile">
               <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
             </button>
           </div>
@@ -46707,7 +46707,7 @@
                   </div>
                 </div>
               </div>
-              <div class="venue-status-grid" aria-label="Venue status">
+              <div class="venue-status-grid" aria-label="Club status">
                 <span class="venue-operating-summary">
                   <span class="venue-status-kicker">Hours</span>
                   <strong class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</strong>
@@ -46733,7 +46733,7 @@
                 ${details.website ? `<div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace(/^https?:\/\//, "")}</div></div>` : ""}
               </div>
               <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
-                ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
+                ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following club" : "Follow club")}
               </button>
             </div>
           </article>
@@ -47256,7 +47256,7 @@
             <div class="profile-schedule-primary modal-schedule-text tonight">Working Now</div>
             <div class="meta profile-working-stack">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">View venue</button>
+              <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">Club &amp; directions</button>
               ${rideMarkup}
             </div>
           </div>
@@ -48288,7 +48288,7 @@
         ? "Manage your venue page, NFC stickers, verified working-now dancers, and live analytics."
         : isDancer
         ? "Manage profile setup, approval, shifts, photos, and billing."
-        : "Free account. Save profiles, follow venues, and get alerts.";
+        : "Free account. Save profiles, follow clubs, and get alerts.";
       document.getElementById("authForm").hidden = isDancer || isVenue;
       document.getElementById("dancerLoginForm").hidden = !isDancer;
       document.getElementById("venueLoginForm").hidden = !isVenue;
@@ -48811,7 +48811,7 @@
       const currentVerification = rotate ? activeDancerVenueVerification : null;
       const venueId = currentVerification?.venue?.id || document.getElementById("dancerVenueVerificationVenue").value;
       if (!venueId) {
-        status.textContent = "Choose a venue first.";
+        status.textContent = "Choose a club first.";
         return;
       }
       const selectedVenue = selectedDancerVenueVerificationVenue();
@@ -52125,15 +52125,15 @@
       document.getElementById("customerSummaryCopy").textContent = workingTonight.length
         ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working now. Your follows, alerts, and directions stay private.`
         : followed.length || venues.length
-          ? `No followed dancers are working now. Your saved dancers and venues are ready for the next schedule update.`
-          : `Follow dancers and venues in ${city} to build your private dashboard, schedule alerts, and directions list.`;
+          ? `No followed dancers are working now. Your saved dancers and clubs are ready for the next schedule update.`
+          : `Follow dancers and clubs in ${city} to build your private dashboard, schedule alerts, and directions list.`;
       document.getElementById("dashTonightCount").textContent = workingTonight.length;
       document.getElementById("dashFollowedCount").textContent = followed.length;
       document.getElementById("dashVenueCount").textContent = venues.length;
       document.getElementById("dashNotificationsCount").textContent = notificationsOn + venues.length;
       document.getElementById("dashTonightTitle").textContent = `Followed dancers working now`;
       document.getElementById("dashFollowedTitle").textContent = `All followed dancers in ${city}`;
-      document.getElementById("dashVenuesTitle").textContent = `Followed venues in ${city}`;
+      document.getElementById("dashVenuesTitle").textContent = `Followed clubs in ${city}`;
       document.getElementById("dashTonightContext").textContent = `${city} · ${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
       document.getElementById("dashFollowedContext").textContent = `${city} · ${followed.length} saved`;
       document.getElementById("dashVenuesContext").textContent = `${venues.length} saved`;
@@ -52150,10 +52150,10 @@
         : `<div class="locked">No followed dancers in ${city} yet.</div>`;
       dashVenueList.innerHTML = visibleVenues.length
         ? visibleVenues.map((venue) => venueCard(venue)).join("")
-        : `<div class="locked">No followed venues in ${city} yet.</div>`;
+        : `<div class="locked">No followed clubs in ${city} yet.</div>`;
       dashSavedDealsList.innerHTML = savedDealPasses.length
         ? savedDealPasses.map((pass) => savedDealPassMarkup(pass)).join("")
-        : `<div class="locked">Saved Club Deals will appear here after you choose an offer on a venue or dancer profile. Redeem at the venue by tapping its cashier NFC sticker.</div>`;
+        : `<div class="locked">Saved Club Deals will appear here after you choose an offer on a club or dancer profile. Redeem at the club by tapping its cashier NFC sticker.</div>`;
       dashTonightViewAll.hidden = workingTonight.length <= 5 || dashboardTonightExpanded;
       dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
       dashVenueViewAll.hidden = venues.length <= 5 || dashboardVenuesExpanded;
@@ -52737,7 +52737,7 @@
       const venueName = selectedVenueFilter();
       const workingNowCount = getItems(city, "tonight").length;
       const radiusLabel = distanceSelect?.value || "25 mi";
-      const venueLabel = venueName === "all" ? "All venues" : venueName;
+      const venueLabel = venueName === "all" ? "All clubs" : venueName;
       const loading = liveDiscoveryIsLoading(city);
       const workingSummary = document.getElementById("homeLiveWorking");
       document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
@@ -52985,7 +52985,7 @@
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       if (presentation === "prompt") {
-        const safeVenueName = escapeHtml(qr.venueName || "this venue");
+        const safeVenueName = escapeHtml(qr.venueName || "this club");
         return `
           <button class="home-discovery-feed-qr-prompt" type="button" ${qr.triggerAttribute} data-feed-live-qr data-feed-qr-prompt${saveOnOpen} aria-hidden="true" aria-label="Get the Club Deal for ${safeVenueName}">
             ${actionIconMarkup("qr")}
@@ -53008,12 +53008,12 @@
         return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deal NFC: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "NFC")}</button>`;
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
-      const venueName = escapeHtml(qr.venueName || "this venue");
+      const venueName = escapeHtml(qr.venueName || "this club");
       return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Open Club Deals for ${venueName}">${actionButtonLabel("qr", qr.offerCount > 1 ? `${qr.offerCount} Deals` : "Deal")}</button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue) {
-      const venueName = escapeHtml(venue?.name || "this venue");
+      const venueName = escapeHtml(venue?.name || "this club");
       if (venue?.id && venue.activeDeal?.id) {
         const config = {
           deal: venue.activeDeal,
@@ -53026,7 +53026,7 @@
         const offerCount = venue.activeDeals?.length || 1;
         return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", offerCount > 1 ? `${offerCount} Deals` : "Get Deal")}</button>`;
       }
-      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This venue has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deal NFC status at ${venueName}">${actionButtonLabel("qr", "NFC Deal")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deal NFC status at ${venueName}">${actionButtonLabel("qr", "NFC Deal")}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
@@ -53078,9 +53078,9 @@
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
-            <button class="feed-card-action home-venue-discovery-profile-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("profile", "Profile")}</button>
+            <button class="feed-card-action home-venue-discovery-profile-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">${actionButtonLabel("profile", "View Club")}</button>
             ${railQrMarkup}
-            <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s venue profile">${actionButtonLabel("share", "Share")}</button>
+            <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s club profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
           </div>
           <div class="home-venue-discovery-context-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} primary actions">
@@ -53106,7 +53106,7 @@
       const venue = resolveVenueByName(venueName, city);
       const profileActionVisual = actionIconMarkup("profile");
       const venueActionMarkup = venue
-        ? `<button class="feed-card-action home-dancer-grid-venue-action" type="button" data-card-venue="${venueValue}" aria-label="Open ${escapeHtml(venueName)} venue profile">${actionButtonLabel("venue", "Venue")}</button>`
+        ? `<button class="feed-card-action home-dancer-grid-venue-action" type="button" data-card-venue="${venueValue}" aria-label="Open ${escapeHtml(venueName)} club profile">${actionButtonLabel("venue", "Club")}</button>`
         : "";
       const directionsMarkup = venue?.address
         ? `<a class="feed-card-action home-dancer-grid-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(venue.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${escapeHtml(venueName)}">${actionButtonLabel("pin", "Directions")}</a>`
@@ -53336,7 +53336,7 @@
       const liveQrMarkup = homeDiscoveryFeedLiveQrMarkup(profile);
       const liveQrPromptMarkup = homeDiscoveryFeedLiveQrMarkup(profile, "prompt");
       const venueMarkup = venueName
-        ? `<button class="home-discovery-feed-venue" type="button" data-card-venue="${venueValue}" aria-label="Open ${safeVenueName} venue page">${venueIconMarkup()}<span class="home-discovery-feed-venue-label">${safeVenueName}${distanceLabel ? ` · ${escapeHtml(distanceLabel)}` : ""}</span></button>`
+        ? `<button class="home-discovery-feed-venue" type="button" data-card-venue="${venueValue}" aria-label="Open ${safeVenueName} club page">${venueIconMarkup()}<span class="home-discovery-feed-venue-label">${safeVenueName}${distanceLabel ? ` · ${escapeHtml(distanceLabel)}` : ""}</span></button>`
         : "";
       const goingCountMarkup = isLive
         ? `<span class="home-discovery-feed-going-count">${tonightInterestCount(profile).toLocaleString()} going</span>`
@@ -53397,7 +53397,7 @@
       const discoveryLabel = activeTab === "tonight"
         ? "dancers working now"
         : isVenueFeed
-          ? "venue profiles"
+          ? "club profiles"
           : "dancer profiles";
       results.setAttribute("aria-label", `Scroll through ${discoveryLabel} in ${city}`);
       viewAllBtn.hidden = true;
@@ -53411,7 +53411,7 @@
           activeTab === "tonight"
             ? `No dancers are working now in ${city}.`
             : activeTab === "venues"
-              ? `No venues match your current filters in ${city}.`
+              ? `No clubs match your current filters in ${city}.`
               : `No approved dancer profiles are available in ${city} yet.`
         );
         return;
@@ -53560,7 +53560,7 @@
       const venueFilter = selectedVenueFilter();
       const titles = {
         dancers: venueFilter === "all" ? `Dancers in ${city}` : `Dancers at ${venueFilter}`,
-        venues: `Venues in ${city}`
+        venues: `Clubs in ${city}`
       };
       const selectedVenue = activeTab === "venues" && selectedVenueName
         ? resolveVenueByName(selectedVenueName, city)
@@ -53590,7 +53590,7 @@
         tabTitle.textContent = selectedVenue ? `${selectedVenue.name}` : titles[activeTab];
       }
       const resultCountLabel = activeTab === "venues"
-        ? `${allItems.length} venue${allItems.length === 1 ? "" : "s"}`
+        ? `${allItems.length} club${allItems.length === 1 ? "" : "s"}`
         : `${allItems.length} total`;
       setHomeTvFeedCount(loadingLiveProfiles
         ? "Loading live profiles..."
@@ -53614,7 +53614,7 @@
       const showsVenueDirectoryLink = activeTab === "venues" && !selectedVenue;
       viewAllBtn.hidden = !showsVenueDirectoryLink || !allItems.length;
       viewAllBtn.textContent = showsVenueDirectoryLink
-        ? "View All Venues"
+        ? "View All Clubs"
         : activeTab === "dancers"
           ? "View All Dancers"
           : "View All";
@@ -53644,8 +53644,8 @@
       if (activeTab === "venues" && !items.length) {
         results.innerHTML = `
           <section class="home-discovery-empty" aria-labelledby="homeVenuesEmptyTitle">
-            <strong id="homeVenuesEmptyTitle">No venues match your current filters in ${escapeHtml(city)}.</strong>
-            <p>Increase the distance or choose All venues to see active venue profiles.</p>
+            <strong id="homeVenuesEmptyTitle">No clubs match your current filters in ${escapeHtml(city)}.</strong>
+            <p>Increase the distance or choose All clubs to see active club profiles.</p>
           </section>
         `;
         return;
@@ -54459,7 +54459,7 @@
               { slug: venueSlug, name: venueName },
               item?.dancer?.city || citySelect.value
             );
-            venue.setAttribute("aria-label", `Open ${venueName} venue profile`);
+            venue.setAttribute("aria-label", `Open ${venueName} club profile`);
             venue.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "venue_click"));
           }
           venue.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>';
@@ -54542,7 +54542,7 @@
       let deal = null;
       if (hasLiveDeal) {
         const dealTitle = String(item.deal.dealTitle || "Club Deal").trim() || "Club Deal";
-        const venueName = String(item.venue.name || "this venue").trim() || "this venue";
+        const venueName = String(item.venue.name || "this club").trim() || "this club";
         deal = createHomeTvFeedActionButton(
           "home-tv-feed-deal-action home-card-qr-rail-action",
           "Club Deal NFC",
@@ -54908,7 +54908,7 @@
       if (!venueName) return;
       const venue = resolveVenueByName(venueName);
       if (!venue) {
-        showToast("Venue profile not found");
+        showToast("Club profile not found");
         return;
       }
       if (!selectedVenueName) {
@@ -55128,7 +55128,7 @@
         const venueName = followVenueButton.dataset.venueFollow;
         const venueRecord = markets[city].venues.find((venue) => venue.name === venueName);
         if (!venueRecord?.id) {
-          showToast("This venue follow is unavailable.");
+          showToast("This club follow is unavailable.");
           return;
         }
         const savedVenues = followedVenuesByCity[city] || (followedVenuesByCity[city] = []);
@@ -55143,10 +55143,10 @@
           });
           if (index >= 0) {
             savedVenues.splice(index, 1);
-            showToast("Unfollowed venue");
+            showToast("Unfollowed club");
           } else {
             savedVenues.push(venueName);
-            showToast(`${venueName} saved. Venue alerts on.`);
+            showToast(`${venueName} saved. Club alerts on.`);
           }
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -55233,7 +55233,7 @@
         }
         if (event.target.closest("[data-copy-qr-profile]")) {
           const url = overlay.dataset.qrUrl;
-          if (url) copyText(url, overlay.dataset.qrKind === "venue" ? "Venue link copied" : "Profile link copied");
+          if (url) copyText(url, overlay.dataset.qrKind === "venue" ? "Club link copied" : "Profile link copied");
         }
       });
       return overlay;
@@ -55285,7 +55285,7 @@
       overlay.profileShareTrigger = triggerButton || null;
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
       document.getElementById("profileShareChoiceSubtitle").textContent =
-        "Send this public profile directly or copy its link. Club Deals redeem only through a venue cashier NFC tap.";
+        "Send this public profile directly or copy its link. Club Deals redeem only through a club cashier NFC tap.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
@@ -55383,16 +55383,16 @@
     function openVenueQrOverlay(venueName, city, triggerButton) {
       const venue = resolveVenueByName(venueName, city);
       if (!venue) {
-        showToast("Venue QR unavailable");
+        showToast("Club QR unavailable");
         return;
       }
       openShareQrOverlay({
         url: venueShareUrl(venue, city),
-        kicker: "Venue QR",
+        kicker: "Club QR",
         title: venue.name,
-        subtitle: `No account needed. Scan to open ${venue.name}'s verified MyDancr venue page.`,
-        imageAlt: `QR code for ${venue.name} venue page`,
-        openLabel: "Open venue",
+        subtitle: `No account needed. Scan to open ${venue.name}'s verified MyDancr club page.`,
+        imageAlt: `QR code for ${venue.name} club page`,
+        openLabel: "Open club",
         kind: "venue",
         triggerButton
       });
@@ -58332,7 +58332,7 @@
       selectedVenueName = null;
       render();
       const venueName = selectedVenueFilter();
-      showToast(venueName === "all" ? "Showing all venues" : `Showing ${venueName}`);
+      showToast(venueName === "all" ? "Showing all clubs" : `Showing ${venueName}`);
     });
 
     if (venuePickerField && venueSelectButton && venueSelectDialog && typeof venueSelectDialog.showModal === "function") {

@@ -168,7 +168,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(liveApp, /verifiedCheckMarkup/);
   assert.match(liveApp, /const initialProfileCity = initialProfileParams\.get\("city"\);[\s\S]*?if \(initialProfileCity && markets\[initialProfileCity\]\)[\s\S]*?citySelect\.value = initialProfileCity/);
   assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);
-  assert.match(globalNavigation, /label: "Dancers"[\s\S]*?label: "TV"[\s\S]*?label: "Venues"/);
+  assert.match(globalNavigation, /label: "Dancers"[\s\S]*?label: "TV"[\s\S]*?label: "Clubs"/);
   assert.match(globalNavigation, /\.global-mobile-bottom-nav \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(feedClient, /className="tv-card-venue-line"[\s\S]*?className="tv-card-venue-name"[\s\S]*?video\.venue\.name/);
   assert.match(feedClient, /className="tv-card-stage-name"[\s\S]*?video\.dancer\.stageName/);

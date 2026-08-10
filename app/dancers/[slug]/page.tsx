@@ -177,7 +177,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 </p>
               </div>
               <Link href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}>
-                View venue
+                Club &amp; directions
               </Link>
             </div>
             {activeVenue ? (
@@ -214,7 +214,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                   <span className="shift-time">
                     {formatShiftTime(shift.startsAt, shift.timezone)} · Posted shift
                   </span>
-                  <em>Venue</em>
+                  <em>Club</em>
                 </Link>
               ))}
             </div>

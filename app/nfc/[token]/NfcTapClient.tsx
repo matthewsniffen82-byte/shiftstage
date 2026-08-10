@@ -27,7 +27,7 @@ type PendingDealIntent = {
 export function NfcTapClient({ token }: { token: string }) {
   const [state, setState] = useState<TagState | null>(null);
   const [error, setError] = useState("");
-  const [status, setStatus] = useState("Reading venue tag…");
+  const [status, setStatus] = useState("Reading club tag…");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState("");
@@ -49,10 +49,10 @@ export function NfcTapClient({ token }: { token: string }) {
           : data.deals?.[0]?.id || "";
         setSelectedDealId(preferred || "");
         setStatus(data.tag.type === "dressing_room"
-          ? "Create a dancer account or sign in to attach this venue tap."
+          ? "Create a dancer account or sign in to attach this club tap."
           : data.deals?.length
             ? "Choose the offer being used at this register."
-            : "This venue has no active Club Deals right now.");
+            : "This club has no active Club Deals right now.");
       })
       .catch((reason) => {
         if (!cancelled) {
@@ -109,14 +109,14 @@ export function NfcTapClient({ token }: { token: string }) {
     <main className="nfc-page">
       <section className={`nfc-card${complete ? " complete" : ""}`}>
         <div className="nfc-symbol"><NfcIcon /></div>
-        <span className="eyebrow">Verified venue NFC</span>
+        <span className="eyebrow">Verified club NFC</span>
         <h1>{state?.venue.name || "MyDancr NFC"}</h1>
         {state ? <p>{state.venue.city}, {state.venue.state} · {state.tag.label}</p> : null}
 
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
-            <strong>Dancer venue activation</strong>
-            <p>New here? This tap carries the venue&apos;s authorization into dancer account creation. Already have a reviewed profile? Sign in and the same tap adds this club immediately.</p>
+            <strong>Dancer club activation</strong>
+            <p>New here? This tap carries the club&apos;s authorization into dancer account creation. Already have a reviewed profile? Sign in and the same tap adds this club immediately.</p>
           </div>
         ) : null}
 
@@ -155,14 +155,14 @@ export function NfcTapClient({ token }: { token: string }) {
               {isSubmitting
                 ? "Confirming…"
                 : state.tag.type === "dressing_room"
-                  ? "Confirm venue tap"
+                  ? "Confirm club tap"
                   : "Redeem this Club Deal"}
             </button>
           )
         ) : null}
         {complete ? <Link className="nfc-secondary" href={state?.tag.type === "dressing_room" ? "/dashboard" : "/"}>Done</Link> : null}
       </section>
-      <p className="nfc-security">Only use MyDancr NFC stickers physically posted by venue staff. A disabled or replaced sticker cannot authorize an action.</p>
+      <p className="nfc-security">Only use MyDancr NFC stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
       <style>{`
         .nfc-page{min-height:100dvh;display:grid;place-content:center;gap:18px;padding:28px 16px 120px;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(112,42,255,.22),transparent 32%),#050507;font-family:var(--font-body,Arial,sans-serif)}
         .nfc-card{width:min(460px,calc(100vw - 32px));display:grid;justify-items:center;gap:14px;padding:30px 22px;border:1px solid rgba(150,112,255,.38);border-radius:28px;background:rgba(12,10,18,.94);box-shadow:0 28px 90px rgba(0,0,0,.62)}
@@ -231,6 +231,6 @@ function persistRefreshedSession(session: unknown) {
 function dealTypeLabel(value: ClubDeal["offerType"]) {
   if (value === "drink") return "Drink offer";
   if (value === "bottle_service") return "Bottle service";
-  if (value === "other") return "Venue offer";
+  if (value === "other") return "Club offer";
   return "Admission offer";
 }

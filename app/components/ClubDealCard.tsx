@@ -119,7 +119,7 @@ export function ClubDealCard({
         savedAt: Date.now(),
       }));
       setIntentSaved(true);
-      setStatus(`Ready. At ${venueName || "the venue"}, tap the MyDancr NFC sticker at the cashier to redeem.`);
+      setStatus(`Ready. At ${venueName || "the club"}, tap the MyDancr NFC sticker at the cashier to redeem.`);
     } catch (error) {
       setIntentSaved(false);
       setStatus(error instanceof Error ? error.message : "Unable to save this Club Deal on this device.");
@@ -135,7 +135,7 @@ export function ClubDealCard({
         {activeDeal.dealTerms && !compact ? <small>{activeDeal.dealTerms}</small> : null}
         {!compact ? <small>Tap the MyDancr NFC sticker at the cashier to redeem. No sign-in is required.</small> : null}
         {dancerNote ? (
-          <small>Dancer credit is carried securely to the cashier NFC tap while this dancer remains verified at the venue.</small>
+          <small>Dancer credit is carried securely to the cashier NFC tap while this dancer remains verified at the club.</small>
         ) : null}
       </div>
       <div className="club-deal-action">
@@ -143,7 +143,7 @@ export function ClubDealCard({
           <div className="deal-nfc-ready">
             <span aria-hidden="true">)))</span>
             <strong>Ready for cashier tap</strong>
-            <small>Open this site by tapping the venue&apos;s MyDancr NFC sticker.</small>
+            <small>Open this site by tapping the club&apos;s MyDancr NFC sticker.</small>
           </div>
         ) : null}
         <button type="button" onClick={saveForNfcTap}>
@@ -152,7 +152,7 @@ export function ClubDealCard({
         {status ? <em role="status">{status}</em> : null}
         {intentSaved && activeDeal.offerType === "bottle_service" && activeDeal.bookingUrl ? (
           <a className="club-deal-booking-link" href={activeDeal.bookingUrl} target="_blank" rel="noreferrer">
-            Continue to venue booking
+            Continue to club booking
           </a>
         ) : null}
       </div>
@@ -207,7 +207,7 @@ export function ClubDealCard({
             className="club-deal-dialog"
             role="dialog"
             aria-modal="true"
-            aria-label={`${venueName || "Venue"} Club Deals`}
+            aria-label={`${venueName || "Club"} Club Deals`}
           >
             <button
               className="club-deal-dialog-close"
@@ -255,7 +255,7 @@ export function ClubDealCard({
 function dealTypeLabel(value: ClubDeal["offerType"]) {
   if (value === "drink") return "Drink offer";
   if (value === "bottle_service") return "Bottle service";
-  if (value === "other") return "Venue offer";
+  if (value === "other") return "Club offer";
   return "Admission offer";
 }
 

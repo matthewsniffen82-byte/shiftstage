@@ -49,7 +49,7 @@ export function VenueProfileActions({
             setFollowing(false);
             setNotificationsEnabled(false);
           }
-          throw new Error(data.error || "Unable to load your saved venues.");
+          throw new Error(data.error || "Unable to load your saved clubs.");
         }
         const follow = (data.saved?.venueFollows || []).find(
           (item: SavedVenueFollow) => item.venueId === venueId,
@@ -62,7 +62,7 @@ export function VenueProfileActions({
         setStatus(
           error instanceof Error
             ? error.message
-            : "Unable to load your saved venues.",
+            : "Unable to load your saved clubs.",
         );
       });
 
@@ -79,14 +79,14 @@ export function VenueProfileActions({
           text: `See who's working at ${venueName} on mydancr.`,
           url,
         });
-        setStatus("Venue shared.");
+        setStatus("Club shared.");
         return;
       }
       await navigator.clipboard.writeText(url);
-      setStatus("Venue link copied.");
+      setStatus("Club link copied.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      setStatus("Unable to share this venue.");
+      setStatus("Unable to share this club.");
     }
   }
 
@@ -100,7 +100,7 @@ export function VenueProfileActions({
     if (!saved) return;
     setFollowing(nextFollowing);
     setNotificationsEnabled(nextFollowing ? notificationsEnabled : false);
-    setStatus(nextFollowing ? "Venue followed." : "Venue unfollowed.");
+    setStatus(nextFollowing ? "Club followed." : "Club unfollowed.");
   }
 
   async function updateNotifications() {
@@ -110,7 +110,7 @@ export function VenueProfileActions({
     if (!saved) return;
     setFollowing(true);
     setNotificationsEnabled(nextNotificationsEnabled);
-    setStatus(nextNotificationsEnabled ? "Venue alerts turned on." : "Venue alerts turned off.");
+    setStatus(nextNotificationsEnabled ? "Club alerts turned on." : "Club alerts turned off.");
   }
 
   function requireCustomer() {
@@ -146,21 +146,21 @@ export function VenueProfileActions({
           setNotificationsEnabled(false);
           setAccountGateOpen(true);
         }
-        throw new Error(data.error || "Unable to update this venue.");
+        throw new Error(data.error || "Unable to update this club.");
       }
       if (
         data.following !== nextFollowing ||
         data.notificationsEnabled !==
           (nextFollowing && nextNotificationsEnabled)
       ) {
-        throw new Error("The venue update could not be confirmed.");
+        throw new Error("The club update could not be confirmed.");
       }
       return true;
     } catch (error) {
       setStatus(
         error instanceof Error
           ? error.message
-          : "Unable to update this venue. Please try again.",
+          : "Unable to update this club. Please try again.",
       );
       return false;
     } finally {
@@ -181,7 +181,7 @@ export function VenueProfileActions({
           onClick={updateFollow}
           type="button"
         >
-          {isSaving ? "Saving…" : following ? "Following" : "Follow venue"}
+          {isSaving ? "Saving…" : following ? "Following" : "Follow club"}
         </button>
         <button
           aria-pressed={notificationsEnabled}
@@ -189,7 +189,7 @@ export function VenueProfileActions({
           onClick={updateNotifications}
           type="button"
         >
-          {notificationsEnabled ? "Alerts on" : "Venue alerts"}
+          {notificationsEnabled ? "Alerts on" : "Club alerts"}
         </button>
         <button onClick={shareVenue} type="button">
           Share
@@ -220,8 +220,8 @@ export function VenueProfileActions({
               ×
             </button>
             <span>Free customer account</span>
-            <h2 id="venue-account-gate-title">Save this venue</h2>
-            <p>Use a customer account to follow venues and receive schedule alerts.</p>
+            <h2 id="venue-account-gate-title">Save this club</h2>
+            <p>Use a customer account to follow clubs and receive schedule alerts.</p>
             <div>
               <Link href="/account?role=customer&mode=signup">Create a free account</Link>
               <Link className="secondary" href="/account?role=customer">

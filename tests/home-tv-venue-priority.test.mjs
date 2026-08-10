@@ -50,7 +50,7 @@ test("homepage and legacy TV links carry the exact club filter into the canonica
   assert.match(tvPageSource, /permanentRedirect\(homeTvHref\(city, \{[\s\S]*?venueId: cleanUuid\(params\.venue\)/);
   assert.match(tvClientSource, /if \(initialVenueId\) params\.set\("venue", initialVenueId\)/);
   assert.match(tvClientSource, /initialVenueName \? `MyDancr TV at \$\{initialVenueName\}`/);
-  assert.match(tvClientSource, /className="tv-venue-clear" href=\{allVenueTvHref\}>All venues/);
+  assert.match(tvClientSource, /className="tv-venue-clear" href=\{allVenueTvHref\}>All clubs/);
 });
 
 test("club TV scope includes confirmed current or unexpired posted shifts", () => {

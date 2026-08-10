@@ -42,7 +42,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /Working now at \$\{escapeHtml\(details\.name\)\}/);
   assert.match(venueDetail, /data-venue-jump="venue-upcoming-shifts"[\s\S]*?<span>upcoming shifts<\/span>/);
   assert.match(venueDetail, /id="venue-upcoming-shifts"[\s\S]*?<span>Upcoming at \$\{escapeHtml\(details\.name\)\}<\/span><span class="venue-activity-count" aria-hidden="true">\$\{upcoming\.length\}<\/span>/);
-  assert.match(venueDetail, /class="venue-status-grid" aria-label="Venue status"[\s\S]*?venue-operating-summary[\s\S]*?venue-status-kicker">Hours[\s\S]*?\$\{quickStats\}/);
+  assert.match(venueDetail, /class="venue-status-grid" aria-label="Club status"[\s\S]*?venue-operating-summary[\s\S]*?venue-status-kicker">Hours[\s\S]*?\$\{quickStats\}/);
   assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions"[\s\S]*?venue-address-directions[\s\S]*?\$\{rideMarkup\}/);
   assert.equal((venueDetail.match(/\$\{rideMarkup\}/g) || []).length, 1);
   assert.match(venueDetail, /id="venue-no-shift-posted"[\s\S]*?<span>No Shift Posted<\/span>/);
@@ -160,7 +160,7 @@ test("venue profiles replace repeated zero sections with one truthful empty expl
   assert.match(venueDetail, /const quickStats = \[[\s\S]*?tonight\.length[\s\S]*?upcoming\.length[\s\S]*?filter\(Boolean\)\.join\(""\)/);
   assert.match(venueDetail, /venue-quick-stat is-working[\s\S]*?venue-quick-stat is-upcoming/);
   assert.match(venueDetail, /const activitySections = \[[\s\S]*?venue-activity-section is-working[\s\S]*?venue-activity-section is-upcoming[\s\S]*?venue-activity-section is-open/);
-  assert.match(venueDetail, /const activityMarkup = activitySections \|\|[\s\S]*?No affiliated dancers yet[\s\S]*?No approved dancer profiles are currently affiliated with \$\{escapeHtml\(details\.name\)\}\. Follow this venue for updates\./);
+  assert.match(venueDetail, /const activityMarkup = activitySections \|\|[\s\S]*?No affiliated dancers yet[\s\S]*?No approved dancer profiles are currently affiliated with \$\{escapeHtml\(details\.name\)\}\. Follow this club for updates\./);
   assert.doesNotMatch(venueDetail, /No active shifts now|No upcoming shifts posted|No trending profiles here yet/);
 });
 
@@ -171,7 +171,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     liveApp,
-    /class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} venue profile"/,
+    /class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} club profile"/,
   );
   assert.match(
     liveApp,
@@ -230,7 +230,7 @@ test("venue entry points use the canonical in-app venue profile", () => {
   );
   assert.match(
     liveApp,
-    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?aria-label="Open \$\{safeName\}'s full venue profile"/,
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?aria-label="Open \$\{safeName\}'s full club profile"/,
   );
   assert.match(
     liveApp,

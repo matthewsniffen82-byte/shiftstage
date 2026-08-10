@@ -27,7 +27,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
       <DealPassStyles />
       <nav>
         <Link href="/">Mydancr</Link>
-        <Link href={homeDiscoveryHref("venues")}>Venues</Link>
+        <Link href={homeDiscoveryHref("venues")}>Clubs</Link>
       </nav>
       <section className={isAvailable ? "deal-pass-card" : "deal-pass-card unavailable"}>
         <span className="eyebrow">Legacy Club Deal pass</span>
@@ -36,7 +36,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
         <>
           <div className="nfc-retired" aria-hidden="true">)))</div>
           <strong>{legacyPassMessage(redemption.status, isExpired)}</strong>
-          <small>MyDancr Club Deals now redeem through the venue&apos;s physical cashier NFC sticker. Choose a current offer in MyDancr before tapping.</small>
+          <small>MyDancr Club Deals now redeem through the club&apos;s physical cashier NFC sticker. Choose a current offer in MyDancr before tapping.</small>
           {redemption.deal.dealTerms ? <small>{redemption.deal.dealTerms}</small> : null}
           <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find a current NFC Club Deal</Link>
         </>

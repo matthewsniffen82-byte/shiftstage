@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { NfcTapClient } from "./NfcTapClient";
 
 export const metadata: Metadata = {
-  title: "Venue NFC tap | MyDancr",
-  description: "Complete a venue-verified MyDancr NFC action.",
+  title: "Club NFC tap | MyDancr",
+  description: "Complete a club-verified MyDancr NFC action.",
   robots: { index: false, follow: false, nocache: true },
 };
 

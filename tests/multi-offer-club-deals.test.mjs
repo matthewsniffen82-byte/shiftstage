@@ -47,9 +47,9 @@ test("bottle service requires a real HTTPS handoff and appears only after pass c
   assert.match(deals, /offerType === "bottle_service" && input\.isActive && !bookingUrl/);
   assert.match(deals, /Booking URL must use HTTPS/);
   assert.match(dealCard, /intentSaved && activeDeal\.offerType === "bottle_service" && activeDeal\.bookingUrl/);
-  assert.match(dealCard, /Continue to venue booking/);
+  assert.match(dealCard, /Continue to club booking/);
   assert.match(liveApp, /const hasBooking = pass\.offerType === "bottle_service" && \/\^https/);
-  assert.match(liveApp, /Cashier NFC redemption · Venue booking available/);
+  assert.match(liveApp, /Cashier NFC redemption · Club booking available/);
 });
 
 test("each selected offer keeps its exact deal and dancer attribution token", () => {
@@ -60,7 +60,7 @@ test("each selected offer keeps its exact deal and dancer attribution token", ()
   assert.match(liveApp, /function clubDealSelectionConfig\(config, deal\)/);
   assert.match(liveApp, /config\?\.dealAttributionTokens\?\.\[deal\.id\]/);
   assert.match(liveApp, /function openClubDealHub\(config, triggerButton = null\)/);
-  assert.match(liveApp, /Choose one now, then tap the cashier NFC sticker at the venue/);
+  assert.match(liveApp, /Choose one now, then tap the cashier NFC sticker at the club/);
 });
 
 test("all public surfaces expose the full offer list while preserving first-deal compatibility", () => {

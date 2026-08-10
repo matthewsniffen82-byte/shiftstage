@@ -529,7 +529,7 @@ export default function TvFeedClient({
 
       <nav className={initialVenueId ? "tv-filters has-venue-filter" : "tv-filters"} aria-label="MyDancr TV feeds">
         {initialVenueId ? (
-          <Link className="tv-venue-clear" href={allVenueTvHref}>All venues</Link>
+          <Link className="tv-venue-clear" href={allVenueTvHref}>All clubs</Link>
         ) : null}
         {FILTERS.map((item) => (
           <button
@@ -693,7 +693,7 @@ export default function TvFeedClient({
                         <Link
                           className="tv-card-venue-line"
                           href={venueLiveProfileHref(video)}
-                          aria-label={`Open ${video.venue.name} venue profile`}
+                          aria-label={`Open ${video.venue.name} club profile`}
                           onClick={() => trackEvent(video.id, "venue_click")}
                         >
                           <svg viewBox="0 0 24 24" aria-hidden="true">

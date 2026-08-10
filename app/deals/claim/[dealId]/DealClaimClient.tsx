@@ -20,9 +20,9 @@ export default function DealClaimClient({ deal }: { campaignToken: string; deal:
         attributionToken: null,
         savedAt: Date.now(),
       }));
-      setStatus("Offer ready. At the venue, tap the physical MyDancr cashier NFC sticker to redeem it.");
+      setStatus("Offer ready. At the club, tap the physical MyDancr cashier NFC sticker to redeem it.");
     } catch {
-      setStatus("Open this offer again at the venue, then tap the cashier NFC sticker.");
+      setStatus("Open this offer again at the club, then tap the cashier NFC sticker.");
     }
   }, [deal.id, deal.venueId]);
 

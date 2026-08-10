@@ -51,7 +51,7 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to redeem this Club Deal.");
 
       setRedemption(data.redemption);
-      setStatus("Redeemed. This verified visit was recorded for MyDancr venue billing.");
+      setStatus("Redeemed. This verified visit was recorded for MyDancr club billing.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to redeem this Club Deal.");
     } finally {
@@ -71,8 +71,8 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
       {deal?.dealTerms ? <small>{deal.dealTerms}</small> : null}
       <dl>
         <div>
-          <dt>Venue</dt>
-          <dd>{venue?.name || "Venue"}</dd>
+          <dt>Club</dt>
+          <dd>{venue?.name || "Club"}</dd>
         </div>
         <div>
           <dt>Expires</dt>
@@ -99,11 +99,11 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
           className="venue-sign-in"
           href={`/?venueAccess=1&venueMode=login&return_to=${encodeURIComponent(`/deals/redeem/${token}`)}`}
         >
-          Venue staff sign in to confirm
+          Club staff sign in to confirm
         </Link>
       ) : null}
       <small>
-        Only the authenticated account that owns {venue?.name || "this venue"} can create a successful redemption.
+        Only the authenticated account that owns {venue?.name || "this club"} can create a successful redemption.
       </small>
       {status ? <em>{status}</em> : null}
     </article>

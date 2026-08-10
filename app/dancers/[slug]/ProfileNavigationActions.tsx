@@ -149,7 +149,7 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
             <h2 id="profile-share-dialog-title">{stageName} on MyDancr</h2>
             <p>
               Send the public profile directly or copy its secure link. Club
-              Deal redemption happens only through a venue cashier NFC tap.
+              Deal redemption happens only through a club cashier NFC tap.
             </p>
 
             <div className="profile-share-dialog-actions">

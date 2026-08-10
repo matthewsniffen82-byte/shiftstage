@@ -64,11 +64,11 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share Profile"\)/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
   assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
-  assert.match(liveApp, /Club Deals redeem only through a venue cashier NFC tap/);
+  assert.match(liveApp, /Club Deals redeem only through a club cashier NFC tap/);
   assert.doesNotMatch(profileNavigationActions, /import QRCode from "qrcode"/);
   assert.match(
     profileNavigationActions,
-    /Club\s+Deal redemption happens only through a venue cashier NFC tap/,
+    /Club\s+Deal redemption happens only through a club cashier NFC tap/,
   );
   assert.match(
     profileNavigationActions,
@@ -86,7 +86,7 @@ test("Working Now profiles promote the checked-in venue, directions, and cashier
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /<span className="profile-live-state">Schedule<\/span>[\s\S]*?<h2 id="profile-working-title">Working Now<\/h2>/);
   assert.match(profilePage, /Verified check-in · until/);
-  assert.match(profilePage, /View venue/);
+  assert.match(profilePage, /Club &amp; directions/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
   assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `Club Deals · \$\{activeDeals\.length\}` : "Use Club Deal with NFC"\}/);
@@ -102,7 +102,7 @@ test("Working Now profiles promote the checked-in venue, directions, and cashier
   assert.match(liveScheduleBranch, /<strong>Schedule<\/strong>/);
   assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working Now<\/div>/);
   assert.match(liveScheduleBranch, /class="meta profile-working-stack"/);
-  assert.match(liveScheduleBranch, />View venue<\/button>/);
+  assert.match(liveScheduleBranch, />Club &amp; directions<\/button>/);
   assert.match(liveScheduleBranch, /profile-working-directions[\s\S]*?\$\{rideMarkup\}/);
   assert.doesNotMatch(liveScheduleBranch, /Checked in for current shift|activeShiftStartedMarkup/);
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
@@ -216,6 +216,6 @@ test("the in-profile TV tab is dancer-only, opens full screen, and does not alte
 
   assert.match(bottomNavigation, /Dancers/);
   assert.match(bottomNavigation, /TV/);
-  assert.match(bottomNavigation, /Venues/);
+  assert.match(bottomNavigation, /Clubs/);
   assert.doesNotMatch(bottomNavigation, /label: "(?:Now|Trending)"/);
 });

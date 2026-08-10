@@ -338,11 +338,11 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   );
   assert.match(
     homeSource,
-    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"venue profiles"[\s\S]*?`Scroll through \$\{discoveryLabel\} in \$\{city\}`/,
+    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"club profiles"[\s\S]*?`Scroll through \$\{discoveryLabel\} in \$\{city\}`/,
   );
   assert.match(
     homeSource,
-    /if \(!items\.length\)[\s\S]*?No dancers are working now[\s\S]*?No venues match your current filters[\s\S]*?No approved dancer profiles are available/,
+    /if \(!items\.length\)[\s\S]*?No dancers are working now[\s\S]*?No clubs match your current filters[\s\S]*?No approved dancer profiles are available/,
   );
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
@@ -520,7 +520,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "Profile"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "View Club"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
   );
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
   assert.match(
@@ -543,7 +543,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function runVenueShareAction\(venueName, city = selectedCity\(\)\)[\s\S]*?venueShareUrl\(venue, city\)[\s\S]*?navigator\.share\(shareData\)[\s\S]*?copyText\(url, "Venue link copied"\)/,
+    /function runVenueShareAction\(venueName, city = selectedCity\(\)\)[\s\S]*?venueShareUrl\(venue, city\)[\s\S]*?navigator\.share\(shareData\)[\s\S]*?copyText\(url, "Club link copied"\)/,
   );
   assert.match(
     homeSource,
@@ -788,7 +788,7 @@ test("dancer grid hierarchy stays readable without changing the production card 
   assert.doesNotMatch(homeSource, /home-dancer-grid-venue\$\{venueStateClass\}/);
   assert.match(
     homeSource,
-    /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} venue\$\{allItems\.length === 1 \? "" : "s"\}`[\s\S]*?: `\$\{allItems\.length\} total`/,
+    /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} club\$\{allItems\.length === 1 \? "" : "s"\}`[\s\S]*?: `\$\{allItems\.length\} total`/,
   );
   assert.match(homeSource, /#homeLiveWorking\.is-empty \{[\s\S]*?rgba\(248, 250, 252, 0\.58\)/);
   assert.match(homeSource, /\.home-dancer-grid-venue span \{[\s\S]*?-webkit-line-clamp: 2;/);
@@ -967,7 +967,7 @@ test("the consolidated discovery titles use one typography system and consistent
   );
   assert.match(
     homeSource,
-    /dancers: venueFilter === "all" \? `Dancers in \$\{city\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Venues in \$\{city\}`/,
+    /dancers: venueFilter === "all" \? `Dancers in \$\{city\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Clubs in \$\{city\}`/,
   );
   assert.match(
     homeSource,
