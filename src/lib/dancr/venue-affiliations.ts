@@ -1,5 +1,6 @@
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireVenueAccess } from "./venue-access";
 import { deliverNotificationRows } from "./notification-delivery";
 
 type DancrClient = SupabaseClient;
@@ -373,6 +374,7 @@ export async function revokeDancerVenueAffiliation(
   client: DancrClient,
   input: { actorUserId: string; affiliationId: string; reason?: string | null },
 ) {
+  const actorAccess = await requireVenueAccess(client, input.actorUserId, "manage_roster").catch(() => null);
   const affiliationId = requiredUuid(input.affiliationId, "Venue affiliation is required.");
   const reason = typeof input.reason === "string" ? input.reason.trim().slice(0, 500) : "";
   const { data, error } = await (client as any).rpc("revoke_dancer_venue_affiliation", {
@@ -381,6 +383,9 @@ export async function revokeDancerVenueAffiliation(
     p_reason: reason || null,
   });
   if (error) throw toVenueAffiliationError(error);
+  if (actorAccess && String(data.venueId) !== actorAccess.venueId) {
+    throw new VenueAffiliationUserError("This dancer is not affiliated with your venue.");
+  }
 
   if (String(data.dancerUserId) !== input.actorUserId) {
     await deliverNotificationRows(client, [{
@@ -554,10 +559,11 @@ async function requireVenueApprovalCandidate(client: DancrClient, userId: string
 }
 
 async function requireManagedVenue(client: DancrClient, managerUserId: string) {
+  const access = await requireVenueAccess(client, managerUserId, "view_roster");
   const { data, error } = await (client as any)
     .from("venues")
     .select("id, slug, name, city, state, owner_user_id, is_active")
-    .eq("owner_user_id", managerUserId)
+    .eq("id", access.venueId)
     .maybeSingle();
   if (error) throw error;
   if (!data || data.is_active === false) {

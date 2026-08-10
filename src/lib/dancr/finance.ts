@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "../stripe";
+import { requireVenueAccess } from "./venue-access";
 
 type DancrClient = SupabaseClient;
 type FinanceRunResult = {
@@ -491,8 +492,9 @@ export async function getAdminFinanceOverview(client: DancrClient) {
 }
 
 export async function getVenueFinance(client: DancrClient, userId: string) {
+  const access = await requireVenueAccess(client, userId, "view_finance");
   const { data: venue, error: venueError } = await (client as any)
-    .from("venues").select("id, name").eq("owner_user_id", userId).maybeSingle();
+    .from("venues").select("id, name").eq("id", access.venueId).maybeSingle();
   if (venueError) throw venueError;
   if (!venue) throw new Error("Venue profile not found.");
   const [{ data: account, error: accountError }, { data: invoices, error: invoiceError }] = await Promise.all([
@@ -526,7 +528,8 @@ export async function getDancerFinance(client: DancrClient, userId: string) {
 }
 
 export async function getVenueStatementRows(client: DancrClient, userId: string, month: string) {
-  const { data: venue, error: venueError } = await (client as any).from("venues").select("id, name").eq("owner_user_id", userId).maybeSingle();
+  const access = await requireVenueAccess(client, userId, "view_finance");
+  const { data: venue, error: venueError } = await (client as any).from("venues").select("id, name").eq("id", access.venueId).maybeSingle();
   if (venueError) throw venueError;
   if (!venue) throw new Error("Venue profile not found.");
   const { data, error } = await (client as any).from("deal_revenue_events")

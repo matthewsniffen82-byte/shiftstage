@@ -125,6 +125,10 @@ export type VenueOwnerProfile = {
 };
 
 export type VenueDashboardAnalytics = {
+  period: "tonight" | "7d" | "30d";
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
   totalFollowers: number;
   followersGained30Days: number;
   directions30Days: number;
@@ -135,6 +139,18 @@ export type VenueDashboardAnalytics = {
   upcomingShiftCount: number;
   activeDancersNow: number;
   goingSignals30Days: number;
+  pageViews: number;
+  directions: number;
+  followersGained: number;
+  goingSignals: number;
+  dressingRoomNfcTaps: number;
+  cashierNfcAttempts: number;
+  cashierNfcRedemptions: number;
+  pageViewsChangePercent: number | null;
+  directionsChangePercent: number | null;
+  redemptionsChangePercent: number | null;
+  directionConversionPercent: number | null;
+  redemptionConversionPercent: number | null;
 };
 
 export type VenueDashboardDancer = {
@@ -145,7 +161,10 @@ export type VenueDashboardDancer = {
   startsAt: string;
   endsAt: string;
   checkedInAt: string | null;
+  lastLocationVerifiedAt: string | null;
   locationStatus: string;
+  avatarUrl: string | null;
+  avatarSrcSet: string | null;
 };
 
 export type DancerCard = {

@@ -68,7 +68,7 @@ test("customer and venue dashboards avoid double-bordered nested panels", () => 
   );
 });
 
-test("venue dashboard uses a tonight-first command, shortcuts, metrics, and compact-management hierarchy", () => {
+test("venue dashboard uses a tonight-first command inside its standalone workspace hierarchy", () => {
   const venuePanel = routedDashboards.match(/function VenuePanel[\s\S]*?function VenueClubDealPanel/)?.[0] || "";
   const commandIndex = venuePanel.indexOf('className="venue-command-panel"');
   const shortcutsIndex = venuePanel.indexOf('className="venue-dashboard-shortcuts"');
@@ -79,7 +79,7 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   assert.ok(shortcutsIndex > commandIndex);
   assert.ok(metricsIndex > shortcutsIndex);
   assert.ok(managementIndex > metricsIndex);
-  assert.match(venuePanel, /className="primary-link" href="#venue-dancer-roster"[\s\S]*?Manage dancer NFC/);
+  assert.match(venuePanel, /className="primary-link" href="#venue-working-now"[\s\S]*?See who[\s\S]*?working now/);
   assert.match(
     routedDashboards,
     /\.venue-command-primary \.primary-link \{[^}]*?width: 100%; max-width: 100%;[^}]*?box-sizing: border-box;/,
@@ -105,14 +105,17 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
   assert.doesNotMatch(routedDashboards, /venue-deal-builder-progress/);
   assert.match(routedDashboards, /<section className=\{`dashboard-head dashboard-head-\$\{role\}`\}[\s\S]*?<h1>\{dashboardHeading\}<\/h1>/);
-  assert.doesNotMatch(routedDashboards, /\.dashboard-head-venue h1/);
+  assert.match(
+    routedDashboards,
+    /\.dashboard-shell-venue \.dashboard-head h1 \{[^}]*?font-size: clamp\(32px,5vw,48px\);[^}]*?white-space: normal;/,
+  );
   assert.match(
     aesthetic,
     /@media \(max-width: 720px\)[\s\S]*?\.dashboard-shell:not\(\.dashboard-shell-venue\) \.dashboard-head h1,[\s\S]*?font-size: clamp\(38px, 12vw, 54px\) !important;/,
   );
   assert.match(
     aesthetic,
-    /\.dashboard-shell-venue \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(20px, 5\.5vw, 26px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 0\.98 !important;/,
+    /\.dashboard-shell-venue \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(32px, 5vw, 48px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 1 !important;/,
   );
   assert.match(
     aesthetic,

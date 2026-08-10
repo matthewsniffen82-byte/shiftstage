@@ -23,7 +23,7 @@ test("NFC stickers store only high-entropy token digests and are provisioned by 
   assert.doesNotMatch(migration, /raw_token|token_plaintext/);
   assert.match(nfcService, /randomBytes\(32\)\.toString\("base64url"\)/);
   assert.match(nfcService, /createHash\("sha256"\)/);
-  assert.match(nfcService, /requireOwnedVenue/);
+  assert.match(nfcService, /requireVenueAccess\(client, ownerUserId, "view_nfc"\)/);
   assert.match(adminProvisioningMigration, /create or replace function public\.rotate_admin_venue_nfc_tag/);
   assert.match(adminTagRoute, /setAdminVenueNfcTagStatus/);
   assert.match(adminTagRoute, /requireAdmin/);

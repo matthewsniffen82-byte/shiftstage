@@ -1636,9 +1636,9 @@ body.dancr-button-system #results.venue-profile-overlay :is(
     font-size: clamp(38px, 12vw, 54px) !important;
   }
 
-  /* Venue dashboard mobile identity. This replaces the shared dashboard title
-   * rule above for the venue route so the venue name has one authoritative
-   * mobile size across iPhone, Android, and Samsung Browser. */
+  /* Venue dashboard mobile identity. This replaces the shared compact dashboard
+   * title rule so the full venue workspace presentation remains authoritative
+   * across iPhone, Android, and Samsung Browser. */
   .dashboard-shell-venue {
     color-scheme: dark;
     background-color: var(--dancr-color-background) !important;
@@ -1651,9 +1651,9 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   }
 
   .dashboard-shell-venue .dashboard-head h1 {
-    font-size: clamp(20px, 5.5vw, 26px) !important;
+    font-size: clamp(32px, 5vw, 48px) !important;
     font-weight: 850 !important;
-    line-height: 0.98 !important;
+    line-height: 1 !important;
   }
 
   body > .app main.stack > .hero.reference-hero,

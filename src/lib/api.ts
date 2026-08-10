@@ -15,5 +15,12 @@ export function apiError(error: unknown, fallback: string, status = 500) {
     return NextResponse.json({ ok: false, error: message }, { status: 403 });
   }
 
+  if (
+    message === "An active venue account is required."
+    || message === "Your venue team role does not allow this action."
+  ) {
+    return NextResponse.json({ ok: false, error: message }, { status: 403 });
+  }
+
   return NextResponse.json({ ok: false, error: message }, { status });
 }

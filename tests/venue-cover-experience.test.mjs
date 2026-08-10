@@ -41,7 +41,7 @@ test("venue cover storage is owner-scoped and public only after publication", ()
   );
 });
 
-test("venue cover uploads are validated, moderated, compensated, and owner-scoped", () => {
+test("venue cover uploads are validated, moderated, compensated, and permission-scoped", () => {
   assert.match(venueService, /uploadVenueCoverImage/);
   assert.match(venueService, /validateAndPrepareDancrImage\(file\)/);
   assert.match(venueService, /image\.width < 720 \|\| image\.height < 720/);
@@ -51,15 +51,17 @@ test("venue cover uploads are validated, moderated, compensated, and owner-scope
   assert.match(venueService, /const COVER_BUCKET = "venue-cover-images"/);
   assert.match(venueService, /cover_image_storage_path: finalPath/);
   assert.match(venueService, /if \(finalUploaded\)[\s\S]*?removeResponsiveImage\(/);
-  assert.match(venueService, /\.eq\("owner_user_id", userId\)/);
+  assert.match(venueService, /requireVenueAccess\(client, userId, "manage_profile"\)/);
+  assert.match(venueService, /\.eq\("id", access\.venueId\)/);
   assert.match(moderationService, /export async function moderateImageWithOpenAI/);
 });
 
 test("only active venue accounts can publish or remove a cover image", () => {
   assert.match(coverRoute, /createRequestSupabaseContext\(request\)/);
   assert.match(coverRoute, /account\.accountState !== "active" \|\| account\.role !== "venue"/);
-  assert.match(coverRoute, /uploadVenueCoverImage\([\s\S]*?createAdminSupabaseClient\(\)/);
-  assert.match(coverRoute, /deleteVenueCoverImage\(createAdminSupabaseClient\(\), user\.id\)/);
+  assert.match(coverRoute, /requireVenueAccess\(admin, user\.id, "manage_profile"\)/);
+  assert.match(coverRoute, /uploadVenueCoverImage\([\s\S]*?admin,[\s\S]*?user\.id/);
+  assert.match(coverRoute, /deleteVenueCoverImage\(admin, user\.id\)/);
   assert.match(coverRoute, /Choose a venue cover image to upload/);
 });
 

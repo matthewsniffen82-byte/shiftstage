@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClubDeal, ClubDealOfferType, DealSourceType } from "./types";
 import { isCurrentLocationVerification } from "./geofence";
 import { dancerHasActiveVenueAffiliation } from "./venue-affiliations";
+import { requireVenueAccess } from "./venue-access";
 
 type DancrClient = SupabaseClient;
 
@@ -503,24 +504,18 @@ export async function getVenueDealsForAccount(
   userId: string,
 ): Promise<{ venueId: string; deals: ClubDeal[] } | null> {
   const db = client as any;
-  const { data: venue, error: venueError } = await db
-    .from("venues")
-    .select("id")
-    .eq("owner_user_id", userId)
-    .maybeSingle();
-  if (venueError) throw venueError;
-  if (!venue) return null;
+  const access = await requireVenueAccess(client, userId, "view_deals");
 
   const { data: deals, error: dealError } = await db
     .from("club_deals")
     .select(CLUB_DEAL_COLUMNS)
-    .eq("venue_id", venue.id)
+    .eq("venue_id", access.venueId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   if (dealError) throw dealError;
 
   return {
-    venueId: String(venue.id),
+    venueId: access.venueId,
     deals: (deals || []).map(toClubDeal),
   };
 }
@@ -531,6 +526,7 @@ export async function updateVenueDealForAccount(
   input: VenueDealInput,
 ) {
   const db = client as any;
+  await requireVenueAccess(client, userId, "manage_deals");
   const owned = await getVenueDealsForAccount(client, userId);
   if (!owned) throw new Error("Venue profile not found.");
 
@@ -597,6 +593,7 @@ export async function deleteVenueDealForAccount(
   userId: string,
   dealId: string,
 ) {
+  await requireVenueAccess(client, userId, "manage_deals");
   const owned = await getVenueDealsForAccount(client, userId);
   if (!owned || !owned.deals.some((deal) => deal.id === dealId)) {
     throw new Error("Club Deal not found for this venue.");

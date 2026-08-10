@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireVenueAccess } from "./venue-access";
 
 type DancrClient = SupabaseClient;
 
@@ -18,6 +19,8 @@ export type NfcTagSummary = {
   status: NfcTagStatus;
   lastTappedAt: string | null;
   tapCount: number;
+  lastScannedAt: string | null;
+  scanCount: number;
   createdAt: string;
 };
 
@@ -74,11 +77,11 @@ export function requestAudit(request: Request) {
 }
 
 export async function listVenueNfcTags(client: DancrClient, ownerUserId: string): Promise<NfcTagSummary[]> {
-  const venue = await requireOwnedVenue(client, ownerUserId);
+  const access = await requireVenueAccess(client, ownerUserId, "view_nfc");
   const { data, error } = await (client as any)
     .from("nfc_tags")
-    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, created_at")
-    .eq("venue_id", venue.id)
+    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, last_scanned_at, scan_count, created_at")
+    .eq("venue_id", access.venueId)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data || []).map(toTagSummary);
@@ -87,7 +90,7 @@ export async function listVenueNfcTags(client: DancrClient, ownerUserId: string)
 export async function listAdminNfcTags(client: DancrClient): Promise<AdminNfcTagSummary[]> {
   const { data, error } = await (client as any)
     .from("nfc_tags")
-    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, created_at, venues(id, name, slug, city, state)")
+    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, last_scanned_at, scan_count, created_at, venues(id, name, slug, city, state)")
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
@@ -168,7 +171,7 @@ export async function resolveNfcTag(client: DancrClient, token: string): Promise
   if (!isNfcToken(token)) return null;
   const { data, error } = await (client as any)
     .from("nfc_tags")
-    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, created_at, venues(id, name, slug, city, state, is_active)")
+    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, last_scanned_at, scan_count, created_at, venues(id, name, slug, city, state, is_active)")
     .eq("token_digest", hashNfcToken(token))
     .maybeSingle();
   if (error) throw error;
@@ -184,6 +187,15 @@ export async function resolveNfcTag(client: DancrClient, token: string): Promise
       state: String(venue.state),
     },
   };
+}
+
+export async function recordNfcTagScan(client: DancrClient, tagId: string) {
+  if (!UUID_PATTERN.test(tagId)) throw new Error("Invalid NFC sticker.");
+  const { data, error } = await (client as any).rpc("record_nfc_tag_scan", {
+    p_tag_id: tagId,
+  });
+  if (error) throw error;
+  return data ? toTagSummary(data) : null;
 }
 
 export async function registerDancerFromNfc(
@@ -330,18 +342,6 @@ function normalizeTagLabel(value: unknown) {
   return label;
 }
 
-async function requireOwnedVenue(client: DancrClient, ownerUserId: string) {
-  const { data, error } = await (client as any)
-    .from("venues")
-    .select("id, name, slug")
-    .eq("owner_user_id", ownerUserId)
-    .eq("is_active", true)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) throw new Error("An active venue profile is required.");
-  return { id: String(data.id), name: String(data.name), slug: String(data.slug) };
-}
-
 async function requireActiveAdmin(client: DancrClient, adminUserId: string) {
   if (!UUID_PATTERN.test(adminUserId)) throw new Error("Admin access required.");
   const { data, error } = await (client as any)
@@ -376,6 +376,8 @@ function toTagSummary(row: any): NfcTagSummary {
     status: row.status as NfcTagStatus,
     lastTappedAt: row.last_tapped_at ? String(row.last_tapped_at) : null,
     tapCount: Number(row.tap_count || 0),
+    lastScannedAt: row.last_scanned_at ? String(row.last_scanned_at) : null,
+    scanCount: Number(row.scan_count || 0),
     createdAt: String(row.created_at),
   };
 }

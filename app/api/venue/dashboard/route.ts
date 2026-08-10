@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueFinance } from "@/src/lib/dancr/finance";
-import { getVenueDashboard } from "@/src/lib/dancr/venue";
+import { getVenueDashboard, readVenueAnalyticsPeriod } from "@/src/lib/dancr/venue";
+import { canVenue, requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { getVenueDancerVerificationState } from "@/src/lib/dancr/venue-affiliations";
 import { getLatestVenueOwnershipClaim } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -20,14 +21,20 @@ export async function GET(request: Request) {
     }
 
     const admin = createAdminSupabaseClient();
+    const access = await requireVenueAccess(admin, user.id, "view_dashboard").catch(() => null);
     const claim = await getLatestVenueOwnershipClaim(admin, user.id);
-    if (claim?.status === "pending" || claim?.status === "rejected") {
+    if (!access && (claim?.status === "pending" || claim?.status === "rejected")) {
       return NextResponse.json({ ok: true, profile: null, claim });
     }
+    if (!access) {
+      return NextResponse.json({ ok: false, error: "No active venue is connected to this account." }, { status: 403 });
+    }
+
+    const period = readVenueAnalyticsPeriod(new URL(request.url).searchParams.get("period"));
 
     const [dashboard, finance, verification] = await Promise.all([
-      getVenueDashboard(createAdminSupabaseClient(), user.id),
-      getVenueFinance(admin, user.id),
+      getVenueDashboard(admin, user.id, period),
+      canVenue(access, "view_finance") ? getVenueFinance(admin, user.id) : null,
       getVenueDancerVerificationState(admin, user.id),
     ]);
     return NextResponse.json({
@@ -35,6 +42,8 @@ export async function GET(request: Request) {
       ...dashboard,
       finance,
       affiliations: verification.affiliations,
+      venueAccess: access,
+      refreshedAt: new Date().toISOString(),
     });
   } catch (error) {
     return apiError(error, "Unable to load venue dashboard.");

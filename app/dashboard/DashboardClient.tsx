@@ -12,6 +12,7 @@ import {
 import DancerTvStudio from "./DancerTvStudio";
 import DancerNfcPanel from "./DancerNfcPanel";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
+import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
 
 type DashboardRole = "customer" | "dancer" | "venue";
@@ -108,6 +109,8 @@ type LoadState = {
   finance?: Record<string, unknown> | null;
   affiliations?: Array<Record<string, unknown>>;
   nfc?: Record<string, unknown> | null;
+  venueAccess?: { role?: string; permissions?: string[] } | null;
+  refreshedAt?: string | null;
   error?: string;
 };
 
@@ -123,6 +126,9 @@ export default function DashboardClient({
   const [state, setState] = useState<LoadState>({});
   const [isLoading, setIsLoading] = useState(true);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<"tonight" | "7d" | "30d">("30d");
+  const [isVenueRefreshing, setIsVenueRefreshing] = useState(false);
+  const [venueRefreshStatus, setVenueRefreshStatus] = useState("");
 
   const retryDashboard = useCallback(() => {
     setState((current) => ({ account: current.account }));
@@ -158,7 +164,7 @@ export default function DashboardClient({
             { profile: null },
           ),
           readOptionalJson(
-            role === "dancer" ? "/api/dancer/dashboard" : role === "venue" ? "/api/venue/dashboard" : "/api/customer/saved",
+            role === "dancer" ? "/api/dancer/dashboard" : role === "venue" ? "/api/venue/dashboard?period=30d" : "/api/customer/saved",
             authHeaders,
             {},
           ),
@@ -187,6 +193,8 @@ export default function DashboardClient({
             finance: secondary.finance || null,
             affiliations: secondary.affiliations || [],
             nfc: secondary.nfc || null,
+            venueAccess: secondary.venueAccess || null,
+            refreshedAt: secondary.refreshedAt || null,
           });
           setIsLoading(false);
         }
@@ -203,6 +211,49 @@ export default function DashboardClient({
       cancelled = true;
     };
   }, [loadAttempt, role]);
+
+  const refreshVenueDashboard = useCallback(async (showStatus = false) => {
+    if (role !== "venue") return;
+    const authHeaders = dashboardAuthHeaders(readSession());
+    if (!authHeaders) return;
+    if (showStatus) {
+      setIsVenueRefreshing(true);
+      setVenueRefreshStatus("Refreshing live venue data…");
+    }
+    try {
+      const secondary = await readOptionalJson(`/api/venue/dashboard?period=${analyticsPeriod}`, authHeaders, {});
+      setState((current) => ({
+        ...current,
+        profile: secondary.profile || current.profile,
+        analytics: secondary.analytics || current.analytics,
+        workingNow: secondary.workingNow || [],
+        deal: secondary.deal || null,
+        venueDeals: Array.isArray(secondary.deals) ? secondary.deals : current.venueDeals || [],
+        dealRevenue: secondary.dealRevenue || current.dealRevenue,
+        finance: secondary.finance === null ? null : secondary.finance || current.finance,
+        affiliations: secondary.affiliations || [],
+        venueAccess: secondary.venueAccess || current.venueAccess,
+        refreshedAt: secondary.refreshedAt || new Date().toISOString(),
+      }));
+      if (showStatus) setVenueRefreshStatus("Live venue data is up to date.");
+    } catch (error) {
+      if (showStatus) setVenueRefreshStatus(error instanceof Error ? error.message : "Unable to refresh live venue data.");
+    } finally {
+      if (showStatus) setIsVenueRefreshing(false);
+    }
+  }, [analyticsPeriod, role]);
+
+  useEffect(() => {
+    if (role !== "venue" || isLoading || state.error) return;
+    void refreshVenueDashboard(false);
+    const refreshWhenVisible = () => { if (document.visibilityState === "visible") void refreshVenueDashboard(false); };
+    const timer = window.setInterval(refreshWhenVisible, 45_000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error]);
 
   useEffect(() => {
     if (role !== "customer" || !initialSection || isLoading || state.error) return;
@@ -241,13 +292,15 @@ export default function DashboardClient({
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
   const dashboardEyebrow =
-    role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
-  const dashboardHeading = isLoading
-    ? role === "venue"
-      ? resolvedDisplayName || "\u00a0"
-      : title
-    : displayName;
-  const dashboardDescription = state.error || "";
+    role === "customer" ? "Customer dashboard" : role === "venue" ? "Live account" : "Dancer dashboard";
+  const dashboardHeading = role === "venue" ? title : isLoading ? title : displayName;
+  const dashboardDescription =
+    state.error ||
+    (role === "venue"
+      ? isLoading
+        ? "Loading your venue workspace..."
+        : `Welcome back, ${displayName}.`
+      : "");
 
   return (
     <main className={`dashboard-shell dashboard-shell-${role}`}>
@@ -356,6 +409,13 @@ export default function DashboardClient({
                   profile={state.profile}
                   workingNow={state.workingNow || []}
                   initialAffiliations={state.affiliations || []}
+                  venueAccess={state.venueAccess || null}
+                  refreshedAt={state.refreshedAt || null}
+                  analyticsPeriod={analyticsPeriod}
+                  isRefreshing={isVenueRefreshing}
+                  refreshStatus={venueRefreshStatus}
+                  onAnalyticsPeriodChange={setAnalyticsPeriod}
+                  onRefresh={() => void refreshVenueDashboard(true)}
                   onDealsChange={updateVenueDeals}
                   onProfileChange={updateProfile}
                 />
@@ -1576,6 +1636,13 @@ function VenuePanel({
   profile,
   workingNow,
   initialAffiliations,
+  venueAccess,
+  refreshedAt,
+  analyticsPeriod,
+  isRefreshing,
+  refreshStatus,
+  onAnalyticsPeriodChange,
+  onRefresh,
   onDealsChange,
   onProfileChange,
 }: {
@@ -1587,6 +1654,13 @@ function VenuePanel({
   profile?: LoadState["profile"];
   workingNow: Array<Record<string, unknown>>;
   initialAffiliations: Array<Record<string, unknown>>;
+  venueAccess?: LoadState["venueAccess"];
+  refreshedAt?: string | null;
+  analyticsPeriod: "tonight" | "7d" | "30d";
+  isRefreshing: boolean;
+  refreshStatus: string;
+  onAnalyticsPeriodChange: (period: "tonight" | "7d" | "30d") => void;
+  onRefresh: () => void;
   onDealsChange: (deals: Array<Record<string, unknown>>) => void;
   onProfileChange: (profile: Record<string, unknown>) => void;
 }) {
@@ -1714,39 +1788,51 @@ function VenuePanel({
   const liveDealSummary = activeDealCount
     ? `${activeDealCount} live Club ${activeDealCount === 1 ? "Deal" : "Deals"}`
     : "No live Club Deals";
+  const permissions = Array.isArray(venueAccess?.permissions) ? venueAccess.permissions : [];
+  const canManageProfile = permissions.includes("manage_profile");
+  const canManageDeals = permissions.includes("manage_deals");
+  const canManageRoster = permissions.includes("manage_roster");
+  const canRequestNfcSupport = permissions.includes("request_nfc_support");
+  const canViewTeam = permissions.includes("view_team");
+  const hasLiveActivity = workingNow.length > 0 || activeDealCount > 0;
 
   return (
     <>
       <section className="venue-command-panel" aria-labelledby="venue-command-heading">
         <div className="venue-command-status">
-          <span className="venue-live-pill">LIVE</span>
+          <span className={hasLiveActivity ? "venue-live-pill" : "venue-live-pill is-inactive"}>{hasLiveActivity ? "LIVE" : "NO LIVE ACTIVITY"}</span>
           <div>
             <h2 id="venue-command-heading">Tonight at {venueName}</h2>
             <p>Run the floor, deals, and dancer roster for {venueCity} from one live workspace.</p>
+          </div>
+          <div className="venue-refresh-control">
+            <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
+            <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
           </div>
         </div>
         <div className="venue-command-primary">
           <span className="eyebrow">Tonight at a glance</span>
           <strong>{liveDealSummary}</strong>
           <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
-          <a className="primary-link" href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
-            Manage dancer NFC access
+          <a className="primary-link" href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
+            See who&apos;s working now
           </a>
+          {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
         </div>
       </section>
 
       <nav className="venue-dashboard-shortcuts" aria-label="Venue dashboard shortcuts">
-        <a className="is-primary" href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
+        <a className="is-primary" href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
           <VenueDashboardActionIcon name="verify" />
-          <span><strong>Dancer NFC</strong><small>Tags and authorized roster</small></span>
+          <span><strong>Working now</strong><small>{workingNow.length} verified on the floor</small></span>
         </a>
         <a href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
           <VenueDashboardActionIcon name="deal" />
           <span><strong>Club Deals</strong><small>{liveDealSummary}</small></span>
         </a>
-        <a href="#venue-public-profile" onClick={(event) => openVenueSection(event, "venue-public-profile")}>
+        <a href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
           <VenueDashboardActionIcon name="edit" />
-          <span><strong>Edit venue</strong><small>Details and cover</small></span>
+          <span><strong>NFC access</strong><small>Stickers and authorized roster</small></span>
         </a>
         {venueSlug ? (
           <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>
@@ -1775,7 +1861,11 @@ function VenuePanel({
         title="Assigned NFC access"
         badge={`${nfcAuthorizedDancerCount} authorized`}
       >
-        <VenueNfcTagPanel initialAffiliations={activeAffiliations} />
+        <VenueNfcTagPanel
+          initialAffiliations={activeAffiliations}
+          canManageRoster={canManageRoster}
+          canRequestSupport={canRequestNfcSupport}
+        />
       </VenueDashboardSection>
 
       <VenueDashboardSection
@@ -1785,14 +1875,18 @@ function VenuePanel({
         id="venue-club-deals"
         title="Club Deals & cashier NFC"
       >
-        <VenueClubDealPanel
-          finance={finance}
-          hasWorkingNowDancers={workingNow.length > 0}
-          initialDeal={deal}
-          initialDeals={venueDeals}
-          onDealsChange={onDealsChange}
-          revenue={dealRevenue}
-        />
+        {canManageDeals ? (
+          <VenueClubDealPanel
+            finance={finance}
+            hasWorkingNowDancers={workingNow.length > 0}
+            initialDeal={deal}
+            initialDeals={venueDeals}
+            onDealsChange={onDealsChange}
+            revenue={dealRevenue}
+          />
+        ) : (
+          <VenueDealReadOnlyPanel deals={dashboardDeals} />
+        )}
       </VenueDashboardSection>
 
       <VenueDashboardSection
@@ -1807,8 +1901,11 @@ function VenuePanel({
           <div className="venue-working-list">
             {workingNow.map((dancer) => (
               <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
-                <strong>{String(dancer.stageName || "Dancer")}</strong>
-                <span>{String(dancer.locationStatus || "").replaceAll("_", " ")}</span>
+                <span className="venue-working-identity">
+                  {dancer.avatarUrl ? <img src={String(dancer.avatarUrl)} srcSet={dancer.avatarSrcSet ? String(dancer.avatarSrcSet) : undefined} sizes="48px" alt="" /> : <i aria-hidden="true">{String(dancer.stageName || "D").slice(0, 1)}</i>}
+                  <span><strong>{String(dancer.stageName || "Dancer")}</strong><small>Checked in {dancer.checkedInAt ? formatRelativeDashboardTime(String(dancer.checkedInAt)) : "during this shift"}</small></span>
+                </span>
+                <span className="venue-working-verification"><strong>Verified {dancer.lastLocationVerifiedAt ? formatRelativeDashboardTime(String(dancer.lastLocationVerifiedAt)) : "now"}</strong><small>Scheduled until {formatDashboardTime(String(dancer.endsAt || ""))}</small></span>
               </Link>
             ))}
             {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
@@ -1822,22 +1919,31 @@ function VenuePanel({
         id="venue-overview"
         title="Analytics & performance"
       >
+        <div className="venue-analytics-period" role="group" aria-label="Analytics period">
+          {(["tonight", "7d", "30d"] as const).map((period) => (
+            <button className={analyticsPeriod === period ? "active" : ""} type="button" key={period} onClick={() => onAnalyticsPeriodChange(period)}>
+              {period === "tonight" ? "Tonight" : period === "7d" ? "7 days" : "30 days"}
+            </button>
+          ))}
+        </div>
         <div className="venue-dashboard-inner-grid venue-dashboard-overview-grid">
           <InfoPanel title="Audience">
-            <Metric label="Page views today" value={String(analytics?.pageViewsToday || 0)} />
-            <Metric label="Page views · 30 days" value={String(analytics?.pageViews30Days || 0)} />
+            <VenueAnalyticsMetric label="Page views" value={Number(analytics?.pageViews || 0)} change={readOptionalNumber(analytics?.pageViewsChangePercent)} />
             <Metric label="Venue followers" value={String(analytics?.totalFollowers || 0)} />
+            <Metric label="New followers" value={String(analytics?.followersGained || 0)} />
           </InfoPanel>
           <InfoPanel title="Customer intent">
-            <Metric label="Directions · 30 days" value={String(analytics?.directions30Days || 0)} />
-            <Metric label="Going signals · 30 days" value={String(analytics?.goingSignals30Days || 0)} />
-            <Metric label="New followers · 30 days" value={String(analytics?.followersGained30Days || 0)} />
+            <VenueAnalyticsMetric label="Direction requests" value={Number(analytics?.directions || 0)} change={readOptionalNumber(analytics?.directionsChangePercent)} />
+            <Metric label="View → directions" value={formatPercent(analytics?.directionConversionPercent)} />
+            <Metric label="Going signals" value={String(analytics?.goingSignals || 0)} />
           </InfoPanel>
           <InfoPanel title="Live operations">
             <Metric label="Working now" value={String(analytics?.activeDancersNow || 0)} />
             <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
-            <Metric label="Dressing-room NFC taps · 30 days" value={String(analytics?.dressingRoomNfcTaps30Days || 0)} />
-            <Metric label="Cashier redemptions · 30 days" value={String(analytics?.cashierNfcRedemptions30Days || 0)} />
+            <Metric label="Dressing-room taps" value={String(analytics?.dressingRoomNfcTaps || 0)} />
+            <Metric label="Cashier tap attempts" value={String(analytics?.cashierNfcAttempts || 0)} />
+            <VenueAnalyticsMetric label="Deal redemptions" value={Number(analytics?.cashierNfcRedemptions || 0)} change={readOptionalNumber(analytics?.redemptionsChangePercent)} />
+            <Metric label="Tap → redemption" value={formatPercent(analytics?.redemptionConversionPercent)} />
           </InfoPanel>
         </div>
       </VenueDashboardSection>
@@ -1856,6 +1962,7 @@ function VenuePanel({
                 <label key={key}>
                   {venueFieldLabel(key)}
                   <input
+                    disabled={!canManageProfile}
                     required={key === "name" || key === "city"}
                     type={key === "website" ? "url" : "text"}
                     value={value}
@@ -1863,7 +1970,7 @@ function VenuePanel({
                   />
                 </label>
               ))}
-              <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button>
+              {canManageProfile ? <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button> : <small>Your staff role can view this profile but cannot edit it.</small>}
               {profile?.slug ? (
                 <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
                   Open live venue page
@@ -1886,7 +1993,7 @@ function VenuePanel({
                 alt={`${String(profile.name || "Venue")} discovery cover`}
               />
             ) : null}
-            <form onSubmit={uploadCover}>
+            {canManageProfile ? <form onSubmit={uploadCover}>
               <label>
                 Venue image
                 <input
@@ -1908,7 +2015,7 @@ function VenuePanel({
                   Remove image
                 </button>
               ) : null}
-            </form>
+            </form> : <p>Your staff role cannot replace or remove the venue cover.</p>}
             {coverStatus ? <p role="status">{coverStatus}</p> : null}
           </article>
         </div>
@@ -1922,6 +2029,17 @@ function VenuePanel({
       >
         <VenueTvPanel />
       </VenueDashboardSection>
+
+      {canViewTeam ? (
+        <VenueDashboardSection
+          description="Invite managers and staff with the minimum access they need, then review an auditable history of venue changes."
+          eyebrow="Security"
+          id="venue-team"
+          title="Team & activity"
+        >
+          <VenueTeamPanel initialAccess={venueAccess as { role: "owner" | "manager" | "staff"; permissions: string[] } | null} />
+        </VenueDashboardSection>
+      ) : null}
 
     </>
   );
@@ -4860,6 +4978,67 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function VenueAnalyticsMetric({ label, value, change }: { label: string; value: number; change: number | null }) {
+  return (
+    <div className="metric venue-analytics-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small className={change === null ? "" : change >= 0 ? "positive" : "negative"}>
+        {change === null ? "No prior-period baseline" : `${change >= 0 ? "+" : ""}${change}% vs prior period`}
+      </small>
+    </div>
+  );
+}
+
+function VenueDealReadOnlyPanel({ deals }: { deals: Array<Record<string, unknown>> }) {
+  const liveDeals = deals.filter((deal) => deal.isActive === true);
+  return (
+    <article className="info-panel venue-deal-readonly">
+      <h2>Published Club Deals</h2>
+      <p>Your staff role can review live offers but cannot publish, edit, delete, or access venue invoices.</p>
+      <div>
+        {liveDeals.map((deal) => (
+          <section key={String(deal.id)}>
+            <strong>{String(deal.dealTitle || "Club Deal")}</strong>
+            <span>{String(deal.dealDescription || "")}</span>
+            <small>Live · cashier NFC active</small>
+          </section>
+        ))}
+        {!liveDeals.length ? <p>No Club Deals are live right now.</p> : null}
+      </div>
+    </article>
+  );
+}
+
+function readOptionalNumber(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function formatPercent(value: unknown) {
+  const number = readOptionalNumber(value);
+  return number === null ? "—" : `${number}%`;
+}
+
+function formatRelativeDashboardTime(value: string) {
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return "just now";
+  const difference = Date.now() - timestamp;
+  if (difference < 45_000) return "just now";
+  const minutes = Math.max(1, Math.round(Math.abs(difference) / 60_000));
+  if (minutes < 60) return difference >= 0 ? `${minutes} min ago` : `in ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return difference >= 0 ? `${hours} hr ago` : `in ${hours} hr`;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(timestamp));
+}
+
+function formatDashboardTime(value: string) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "shift end";
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
+}
+
 function VenueDashboardSignInRecovery({ onSignedIn }: { onSignedIn: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -5066,6 +5245,12 @@ function DashboardStyles() {
       .dashboard-head h1 { max-width: 100%; overflow: hidden; color: #f8f7fb; font-family: var(--font-display, "Space Grotesk", "Outfit", sans-serif); font-size: clamp(21px, 5vw, 26px); font-weight: 850; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
       .dashboard-head p { font-size: clamp(15px, 2.2vw, 17px); line-height: 1.45; }
       .dashboard-head .eyebrow { color: #f8f7fb; }
+      .dashboard-shell-venue .dashboard-head { min-height: 0; gap: 18px; padding: 24px 26px; border-radius: 24px; background: #07070a; box-shadow: 0 20px 48px rgba(0,0,0,.34); }
+      .dashboard-shell-venue .dashboard-head-row { align-items: start; gap: 18px; }
+      .dashboard-shell-venue .dashboard-head-copy { gap: 8px; overflow: visible; }
+      .dashboard-shell-venue .dashboard-head h1 { overflow: visible; font-size: clamp(32px,5vw,48px); line-height: 1; text-overflow: clip; white-space: normal; }
+      .dashboard-shell-venue .dashboard-head p { color: var(--mydancr-dashboard-muted); font-size: clamp(15px,2.2vw,17px); }
+      .dashboard-shell-venue .dashboard-head .eyebrow { color: #94e5ff; }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
       h1 { margin: 0; font-size: clamp(32px, 5vw, 48px); line-height: 1; letter-spacing: -.025em; }
       h2 { margin: 0; font-size: 22px; }
@@ -5090,10 +5275,16 @@ function DashboardStyles() {
       @media (prefers-reduced-motion: reduce) { .venue-dashboard-loading-pill, .venue-dashboard-loading-copy span, .venue-dashboard-loading-actions span, .venue-dashboard-loading-metrics span { animation: none; } }
       .venue-command-panel, .venue-dashboard-shortcuts, .venue-dashboard-metrics { grid-column: 1 / -1; }
       .venue-command-panel { display: grid; gap: var(--mydancr-dashboard-gap); padding: 16px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 18px; background: var(--mydancr-dashboard-panel); }
-      .venue-command-status { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 11px; padding: 0 2px; }
+      .venue-command-status { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 11px; padding: 0 2px; }
       .venue-command-status h2 { color: #f8f7fb; font-size: 20px; letter-spacing: -.015em; line-height: 1.15; }
       .venue-command-status p, .venue-command-primary p { color: var(--mydancr-dashboard-muted); font-size: 12px; font-weight: 760; line-height: 1.35; }
       .venue-live-pill { display: grid; place-items: center; padding: 7px 10px; border: 1px solid rgba(38,210,159,.65); border-radius: 999px; color: #76f0c8; background: rgba(10,74,57,.36); font-size: 11px; font-weight: 950; letter-spacing: .08em; }
+      .venue-live-pill.is-inactive { border-color: var(--mydancr-dashboard-border); color: var(--mydancr-dashboard-muted); background: rgba(255,255,255,.035); }
+      .venue-refresh-control { display: grid; justify-items: end; gap: 5px; }
+      .venue-refresh-control small, .venue-refresh-status { color: var(--mydancr-dashboard-muted); font-size: 10px; font-weight: 760; }
+      .venue-refresh-control button { min-height: 34px; padding: 0 11px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 9px; color: #f8fafc; background: rgba(255,255,255,.045); font: inherit; font-size: 11px; font-weight: 850; cursor: pointer; }
+      .venue-refresh-control button:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+      .venue-refresh-control button:disabled { opacity: .6; cursor: wait; }
       .venue-command-primary { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(255,255,255,.13); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel-raised); }
       .venue-command-primary > strong { color: #f8f7fb; font-size: clamp(21px, 4vw, 27px); line-height: 1.08; }
       .venue-command-primary .primary-link { width: 100%; max-width: 100%; min-height: 52px; box-sizing: border-box; margin-top: 5px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); }
@@ -5345,8 +5536,28 @@ function DashboardStyles() {
       .venue-cover-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: end; gap: 10px; }
       .venue-cover-panel > p[role="status"] { color: #94e5ff; font-size: 14px; }
       .venue-working-list { display: grid; gap: 9px; }
-      .venue-working-list a { display: flex; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); color: #fff; background: rgba(255,255,255,.04); text-decoration: none; }
-      .venue-working-list span { color: #94e5ff; text-transform: capitalize; }
+      .venue-working-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); color: #fff; background: rgba(255,255,255,.04); text-decoration: none; }
+      .venue-working-list a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+      .venue-working-identity { min-width: 0; display: flex; align-items: center; gap: 10px; }
+      .venue-working-identity > img, .venue-working-identity > i { width: 48px; height: 48px; flex: 0 0 48px; display: grid; place-items: center; object-fit: cover; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; color: #f8fafc; background: #111118; font-style: normal; font-weight: 900; }
+      .venue-working-identity > span, .venue-working-verification { min-width: 0; display: grid; gap: 3px; }
+      .venue-working-identity strong { overflow: hidden; color: #f8fafc; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-working-list small { color: var(--mydancr-dashboard-muted); font-size: 10px; }
+      .venue-working-verification { justify-items: end; text-align: right; }
+      .venue-working-verification > strong { color: #76f0c8; font-size: 11px; }
+      .venue-analytics-period { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; padding: 5px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: #050507; }
+      .venue-analytics-period button { min-height: 40px; border: 1px solid transparent; border-radius: 9px; color: var(--mydancr-dashboard-muted); background: transparent; font: inherit; font-size: 12px; font-weight: 850; cursor: pointer; }
+      .venue-analytics-period button.active { border-color: rgba(124,58,237,.58); color: #f8fafc; background: #7c3aed; box-shadow: 0 0 16px rgba(124,58,237,.22); }
+      .venue-analytics-period button:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+      .venue-analytics-metric small { color: var(--mydancr-dashboard-muted); font-size: 9px; line-height: 1.25; }
+      .venue-analytics-metric small.positive { color: #6ee7b7; }
+      .venue-analytics-metric small.negative { color: #fca5a5; }
+      .venue-deal-readonly { display: grid; gap: 12px; }
+      .venue-deal-readonly > p { color: var(--mydancr-dashboard-muted); }
+      .venue-deal-readonly > div { display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 9px; }
+      .venue-deal-readonly section { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: #111118; }
+      .venue-deal-readonly span { color: #cbd5e1; font-size: 12px; line-height: 1.4; }
+      .venue-deal-readonly small { color: #6ee7b7; }
       .venue-deal-panel { grid-column: span 3; border-color: rgba(50,255,164,.24); background: radial-gradient(circle at 100% 0%, rgba(50,255,164,.1), transparent 28rem), rgba(12,12,18,.86); }
       .venue-deal-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .venue-deal-heading > div { display: grid; gap: 4px; }
@@ -5547,8 +5758,12 @@ function DashboardStyles() {
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }
+        .dashboard-shell-venue .dashboard-head { padding: 18px; border-radius: 20px; }
+        .dashboard-shell-venue .dashboard-head h1 { font-size: clamp(30px,9vw,38px); }
         .venue-command-panel { gap: var(--mydancr-dashboard-gap); padding: 16px; }
-        .venue-command-status { align-items: center; gap: 11px; }
+        .venue-command-status { grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 11px; }
+        .venue-refresh-control { grid-column: 1 / -1; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .venue-live-pill.is-inactive { font-size: 9px; }
         .venue-dashboard-shortcuts { gap: 10px; }
         .venue-dashboard-shortcuts > a { min-height: 78px; padding: 13px; }
         .venue-tonight-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -5556,6 +5771,8 @@ function DashboardStyles() {
         .venue-tonight-metrics .metric:nth-child(n + 3) { border-top: 1px solid var(--mydancr-dashboard-border); }
         .venue-dashboard-metrics .metric { min-height: 62px; padding: 12px 10px; text-align: center; }
         .venue-dashboard-section > summary { min-height: 70px; padding: 14px; }
+        .venue-working-list a { align-items: flex-start; flex-direction: column; }
+        .venue-working-verification { justify-items: start; text-align: left; padding-left: 58px; }
       }
     `}</style>
   );

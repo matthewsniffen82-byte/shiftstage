@@ -8,6 +8,8 @@ import {
 } from "@/src/lib/dancr/venue-affiliations";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
+import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireVenueAccount(client, user.id);
+    await requireVenueAccess(createAdminSupabaseClient(), user.id, "view_roster");
     const token = new URL(request.url).searchParams.get("token");
     const state = await getVenueDancerVerificationState(createAdminSupabaseClient(), user.id, token);
     return noStoreJson({ ok: true, ...state });
@@ -42,11 +45,22 @@ export async function DELETE(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireVenueAccount(client, user.id);
+    const admin = createAdminSupabaseClient();
+    const access = await requireVenueAccess(admin, user.id, "manage_roster");
     const body = await readBody(request);
-    const affiliation = await revokeDancerVenueAffiliation(createAdminSupabaseClient(), {
+    const affiliation = await revokeDancerVenueAffiliation(admin, {
       actorUserId: user.id,
       affiliationId: typeof body.affiliationId === "string" ? body.affiliationId : "",
       reason: typeof body.reason === "string" ? body.reason : "Venue manager removed affiliation.",
+    });
+    await recordVenueActivity(admin, {
+      venueId: access.venueId,
+      actorUserId: user.id,
+      actorRole: access.role,
+      action: "roster.access_removed",
+      targetType: "venue_dancer_affiliation",
+      targetId: String(affiliation.id),
+      summary: `${String(affiliation.stageName)} was removed from the NFC-authorized roster.`,
     });
     return noStoreJson({
       ok: true,

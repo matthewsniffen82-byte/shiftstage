@@ -39,33 +39,28 @@ test("venue dashboard session recovery rotates and persists authentication witho
   assert.match(nfcPanel, /dancrAuthSessionV1/);
 });
 
-test("the routed venue dashboard is isolated, closable, and uses the compact MyDancr identity", () => {
+test("the routed venue dashboard is isolated, closable, and restores the original full workspace identity", () => {
   assert.match(dashboardPage, /DashboardClient/);
   assert.match(dashboard, /dashboard-shell/);
   assert.match(dashboard, /dashboard-close/);
   assert.match(dashboard, /aria-label={`Close \$\{role\} dashboard and return to MyDancr`}/);
   assert.match(dashboard, /Venue dashboard/);
+  assert.match(dashboard, /role === "venue" \? "Live account"/);
+  assert.match(dashboard, /Loading your venue workspace/);
+  assert.match(dashboard, /\.dashboard-shell-venue \.dashboard-head h1 \{[^}]*?font-size: clamp\(32px,5vw,48px\)/);
   assert.doesNotMatch(dashboardPage, /Now[\s\S]*Dancers[\s\S]*Trending/);
 });
 
-test("the primary venue dashboard opens in-page before its live data refresh finishes", () => {
-  const revealVenueDashboard =
-    liveApp.match(/async function loadAndRevealVenueDashboard\(\) \{[\s\S]*?^    \}/m)?.[0] || "";
+test("the primary venue dashboard opens as its original routed full workspace", () => {
   const openVenueDashboard =
     liveApp.match(/async function openVenueDashboard\(\) \{[\s\S]*?^    \}/m)?.[0] || "";
   const startVenueSession =
     liveApp.match(/async function startVenueDashboardSession[\s\S]*?^    \}/m)?.[0] || "";
 
-  assert.match(revealVenueDashboard, /venueDashboard\.classList\.add\("show"\)/);
-  assert.match(revealVenueDashboard, /venueDashboard\.setAttribute\("aria-busy", "true"\)/);
-  assert.ok(
-    revealVenueDashboard.indexOf('venueDashboard.classList.add("show")') <
-      revealVenueDashboard.indexOf("await loadLiveVenueDashboard()"),
-    "the venue overlay must be visible before the dashboard API resolves",
-  );
-  assert.match(openVenueDashboard, /void loadAndRevealVenueDashboard\(\)\.catch/);
-  assert.doesNotMatch(openVenueDashboard, /window\.location\.href/);
-  assert.match(startVenueSession, /const opened = await openVenueDashboard\(\)/);
+  assert.match(openVenueDashboard, /window\.location\.href = "\/dashboard\/venue"/);
+  assert.doesNotMatch(openVenueDashboard, /loadAndRevealVenueDashboard/);
+  assert.match(startVenueSession, /window\.location\.href = destination/);
+  assert.doesNotMatch(startVenueSession, /openVenueDashboard\(\)/);
 });
 
 test("venue operations prioritize tonight, Club Deals, NFC stickers, and then reporting", () => {
@@ -102,7 +97,10 @@ test("MyDancr supplies NFC stickers while venue owners receive read-only invento
   assert.match(nfcTagRoute, /Only MyDancr can activate, disable, or replace/);
   assert.doesNotMatch(nfcTagRoute, /createVenueNfcTag/);
   assert.doesNotMatch(nfcTagRoute, /rotateVenueNfcTag/);
-  assert.match(nfcService, /requireOwnedVenue/);
+  assert.match(nfcService, /requireVenueAccess\(client, ownerUserId, "view_nfc"\)/);
+  assert.match(nfcService, /recordNfcTagScan/);
+  assert.match(nfcPanel, /scanCount > testBaselineRef\.current/);
+  assert.match(nfcPanel, /physical[\s\S]*?completed/);
   assert.match(nfcPanel, /MyDancr supplied hardware/);
   assert.match(nfcPanel, /Assigned NFC stickers/);
   assert.match(nfcPanel, /NFC-authorized roster/);

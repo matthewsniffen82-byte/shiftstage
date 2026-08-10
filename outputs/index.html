@@ -38234,7 +38234,6 @@
     let activeDashboardType = "customer";
     let activeVenueName = "Spearmint Rhino Las Vegas";
     let liveVenueDashboard = null;
-    let liveVenueDashboardRequest = null;
     let liveDancerVenueVerification = null;
     let dancerVenueVerificationRequest = null;
     let dancerVenueApprovalPollTimer = 0;
@@ -49312,52 +49311,37 @@
     }
 
     async function loadLiveVenueDashboard() {
-      if (liveVenueDashboardRequest) return liveVenueDashboardRequest;
       const status = document.getElementById("venueDashboardStatus");
       if (status) status.textContent = "Loading live venue data…";
-      liveVenueDashboardRequest = (async () => {
-        try {
-          liveVenueDashboard = await getAuthenticatedJson("/api/venue/dashboard");
-          renderVenueDashboard();
-          return liveVenueDashboard;
-        } catch (error) {
-          if (status) status.textContent = error.message || "Unable to load venue dashboard.";
-          throw error;
-        } finally {
-          liveVenueDashboardRequest = null;
-        }
-      })();
-      return liveVenueDashboardRequest;
+      try {
+        liveVenueDashboard = await getAuthenticatedJson("/api/venue/dashboard");
+        renderVenueDashboard();
+        return liveVenueDashboard;
+      } catch (error) {
+        if (status) status.textContent = error.message || "Unable to load venue dashboard.";
+        throw error;
+      }
     }
 
     async function loadAndRevealVenueDashboard() {
       if (!isVenueSession()) {
         throw new Error("A verified venue session is required. Sign in and try again.");
       }
+      const dashboard = await loadLiveVenueDashboard();
+      if (!dashboard?.profile && !dashboard?.claim) {
+        throw new Error("No venue is connected to this account.");
+      }
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;
       isVenueLoggedIn = true;
       activeDashboardType = "venue";
-      activeVenueName = liveVenueDashboard?.profile?.name || authSession?.account?.displayName || activeVenueName;
-      document.getElementById("venueDashName").textContent = activeVenueName || "Venue";
-      if (liveVenueDashboard) renderVenueDashboard();
+      activeVenueName = dashboard?.profile?.name || authSession?.account?.displayName || activeVenueName;
       venueDashboard.classList.add("show");
       venueDashboard.setAttribute("aria-hidden", "false");
-      venueDashboard.setAttribute("aria-busy", "true");
-      venueDashboard.scrollTop = 0;
       syncOverlayScrollLock();
       loadLiveNotifications();
-      try {
-        const dashboard = await loadLiveVenueDashboard();
-        if (!dashboard?.profile && !dashboard?.claim) {
-          throw new Error("No venue is connected to this account.");
-        }
-        activeVenueName = dashboard?.profile?.name || authSession?.account?.displayName || activeVenueName;
-        await processPendingVenueDancerVerification();
-        return dashboard;
-      } finally {
-        venueDashboard.removeAttribute("aria-busy");
-      }
+      await processPendingVenueDancerVerification();
+      return dashboard;
     }
 
     async function openVenueDashboard() {
@@ -49366,12 +49350,7 @@
         openAuthRole("venue");
         return false;
       }
-      void loadAndRevealVenueDashboard().catch((error) => {
-        const message = error?.message || "Unable to load venue dashboard.";
-        const status = document.getElementById("venueDashboardStatus");
-        if (status) status.textContent = message;
-        showToast(message);
-      });
+      window.location.href = "/dashboard/venue";
       return true;
     }
 
@@ -56953,13 +56932,9 @@
       pendingVenueAuthReturnTo = "";
       closeAuthPage();
       updateAccountHeader();
-      if (destination !== "/dashboard/venue") {
-        window.location.href = destination;
-        return true;
-      }
-      const opened = await openVenueDashboard();
-      if (opened) showToast(message);
-      return opened;
+      showToast(message);
+      window.location.href = destination;
+      return true;
     }
 
     document.getElementById("dancerVenueVerificationCreate").addEventListener("click", () => createDancerVenueVerification());

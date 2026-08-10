@@ -8,6 +8,8 @@ import {
 } from "@/src/lib/dancr/deals";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
+import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,9 +30,11 @@ export async function PATCH(request: Request) {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireActiveVenue(client, user.id);
     const body = await request.json();
+    const admin = createAdminSupabaseClient();
+    const access = await requireVenueAccess(admin, user.id, "manage_deals");
     const referralCommissionCents = Number(body?.referralCommissionCents);
     const { deal, deals } = await updateVenueDealForAccount(
-      createAdminSupabaseClient(),
+      admin,
       user.id,
       {
         dealId: typeof body?.dealId === "string" ? body.dealId : null,
@@ -44,6 +48,16 @@ export async function PATCH(request: Request) {
         sortOrder: Number(body?.sortOrder || 0),
       },
     );
+    await recordVenueActivity(admin, {
+      venueId: access.venueId,
+      actorUserId: user.id,
+      actorRole: access.role,
+      action: body?.dealId ? "deal.updated" : "deal.created",
+      targetType: "club_deal",
+      targetId: deal.id,
+      summary: `${deal.dealTitle} was ${deal.isActive ? "published" : "saved as a draft"}.`,
+      metadata: { active: deal.isActive, sortOrder: deal.sortOrder },
+    });
 
     console.info("VENUE_CLUB_DEAL_UPDATED", {
       venueId: deal.venueId,
@@ -68,11 +82,14 @@ export async function DELETE(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireActiveVenue(client, user.id);
+    const admin = createAdminSupabaseClient();
+    const access = await requireVenueAccess(admin, user.id, "manage_deals");
     const dealId = new URL(request.url).searchParams.get("dealId") || "";
     if (!/^[0-9a-f-]{36}$/i.test(dealId)) {
       return NextResponse.json({ ok: false, error: "A valid Club Deal is required." }, { status: 400 });
     }
-    await deleteVenueDealForAccount(createAdminSupabaseClient(), user.id, dealId);
+    await deleteVenueDealForAccount(admin, user.id, dealId);
+    await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role, action: "deal.deleted", targetType: "club_deal", targetId: dealId, summary: "A Club Deal was deleted." });
     return NextResponse.json({ ok: true, message: "Club Deal deleted." });
   } catch (error) {
     return apiError(error, "Unable to delete the venue Club Deal.", 400);

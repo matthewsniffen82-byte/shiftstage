@@ -20,8 +20,8 @@ test("customer dashboard leads with tonight, saved, deals, and alerts before acc
     /href="#customer-tonight">Tonight[\s\S]*?href="#customer-saved">Saved[\s\S]*?href="#customer-offers">Deals[\s\S]*?href="#customer-alerts">Alerts[\s\S]*?href="#customer-settings">Settings/,
   );
   assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
-  assert.match(dashboard, /const dashboardHeading = isLoading[\s\S]*?: title[\s\S]*?: displayName/);
-  assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
+  assert.match(dashboard, /const dashboardHeading = role === "venue" \? title : isLoading \? title : displayName/);
+  assert.match(dashboard, /role === "venue"[\s\S]*?Welcome back, \$\{displayName\}/);
   assert.match(dashboard, /className="dashboard-close"[\s\S]*?aria-label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
   assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" \/>/);
 });

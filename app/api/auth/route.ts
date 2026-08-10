@@ -7,6 +7,7 @@ import {
   redeemVenueSignupCode,
   resolveVenueSignupCode,
 } from "@/src/lib/dancr/venue-claims";
+import { redeemVenueTeamInvitation, resolveVenueTeamInvitation } from "@/src/lib/dancr/venue-team";
 import { initialDancerApprovalValues } from "@/src/lib/dancr/profile-approval";
 import {
   AccountRecoveryRateLimitError,
@@ -64,6 +65,17 @@ export async function POST(request: Request) {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (!data.user) throw new Error("Sign in required.");
+
+      const venueInvitationToken = role === "venue" && typeof body.venueCode === "string" && body.venueCode.startsWith("vti_")
+        ? body.venueCode
+        : "";
+      if (venueInvitationToken) {
+        await redeemVenueTeamInvitation(createAdminSupabaseClient(), {
+          token: venueInvitationToken,
+          userId: data.user.id,
+          email,
+        });
+      }
 
       const expectedRole = role === "admin" ? "admin" : null;
       return NextResponse.json(await authResponse(data.user.id, expectedRole, data.session, false));
@@ -207,9 +219,14 @@ async function createVenueSignupAccount(input: {
   venueCode: string;
 }) {
   const admin = createAdminSupabaseClient();
-  const access = await resolveVenueSignupCode(admin, input.venueCode);
+  const teamInvitation = input.venueCode.startsWith("vti_")
+    ? await resolveVenueTeamInvitation(admin, input.venueCode, input.email)
+    : null;
+  const ownerAccess = teamInvitation ? null : await resolveVenueSignupCode(admin, input.venueCode);
+  const venue = teamInvitation?.venue || ownerAccess?.venue;
+  if (!venue) throw new Error("This venue access invitation is invalid.");
   let createdUserId = "";
-  let codeRedeemed = false;
+  let accessRedeemed = false;
 
   try {
     const { data, error } = await admin.auth.admin.createUser({
@@ -218,10 +235,11 @@ async function createVenueSignupAccount(input: {
       email_confirm: true,
       user_metadata: {
         role: "venue",
-        display_name: access.venue.name,
-        venue_name: access.venue.name,
-        city: access.venue.city,
+        display_name: venue.name,
+        venue_name: venue.name,
+        city: venue.city,
         venue_access_invitation: true,
+        venue_team_role: teamInvitation?.role || "owner",
       },
     });
     if (error) throw error;
@@ -232,8 +250,8 @@ async function createVenueSignupAccount(input: {
       "venue",
       data.user.id,
       input.email,
-      access.venue.name,
-      access.venue.city,
+      venue.name,
+      venue.city,
       {},
     );
 
@@ -247,18 +265,26 @@ async function createVenueSignupAccount(input: {
     const account = await getAccountByUserId(admin, data.user.id);
     if (!account || account.role !== "venue") throw new Error("Unable to create venue account.");
 
-    await redeemVenueSignupCode(admin, {
-      codeId: access.codeId,
-      userId: data.user.id,
-    });
-    codeRedeemed = true;
+    if (teamInvitation) {
+      await redeemVenueTeamInvitation(admin, {
+        token: input.venueCode,
+        userId: data.user.id,
+        email: input.email,
+      });
+    } else if (ownerAccess) {
+      await redeemVenueSignupCode(admin, {
+        codeId: ownerAccess.codeId,
+        userId: data.user.id,
+      });
+    }
+    accessRedeemed = true;
 
     return {
       ok: true,
       requiresEmailConfirmation: false,
       user: { id: data.user.id },
       account,
-      venue: access.venue,
+      venue,
       session: {
         accessToken: sessionData.session.access_token,
         refreshToken: sessionData.session.refresh_token,
@@ -266,7 +292,7 @@ async function createVenueSignupAccount(input: {
       },
     };
   } catch (error) {
-    if (createdUserId && !codeRedeemed) {
+    if (createdUserId && !accessRedeemed) {
       const { error: cleanupError } = await admin.auth.admin.deleteUser(createdUserId);
       if (cleanupError) {
         console.error("VENUE_SIGNUP_ORPHAN_ACCOUNT_CLEANUP_FAILED", {

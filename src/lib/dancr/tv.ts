@@ -6,6 +6,7 @@ import { responsivePublicImage } from "./responsive-image";
 import type { ClubDeal } from "./types";
 import { prioritizeMyDancrTvVenue } from "./tv-feed-order";
 import { isCurrentLocationVerification } from "./geofence";
+import { requireVenueAccess } from "./venue-access";
 import {
   moderateStoredMyDancrTvVideo,
   type MyDancrTvModerationResult,
@@ -1315,10 +1316,11 @@ export async function reviewMyDancrTvVideo(
 }
 
 export async function getVenueMyDancrTvVideos(admin: AdminClient, ownerUserId: string) {
+  const access = await requireVenueAccess(admin, ownerUserId, "view_dashboard");
   const { data: venue, error: venueError } = await admin
     .from("venues")
     .select("id, name, slug, city")
-    .eq("owner_user_id", ownerUserId)
+    .eq("id", access.venueId)
     .maybeSingle();
   if (venueError) throw venueError;
   if (!venue) throw new Error("Venue profile required.");

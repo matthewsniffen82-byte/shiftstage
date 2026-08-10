@@ -16,6 +16,8 @@ import {
   getVenueDealRevenueMetrics,
 } from "./deals";
 import { isCurrentLocationVerification } from "./geofence";
+import { canVenue, getVenueAccess, requireVenueAccess } from "./venue-access";
+import { getTonightWindow } from "./schedule";
 import type {
   ClubDeal,
   VenueDashboardAnalytics,
@@ -72,10 +74,12 @@ export async function assertNewVenueAvailable(client: DancrClient, name: string)
 }
 
 export async function getVenueForAccount(client: DancrClient, userId: string): Promise<VenueOwnerProfile | null> {
+  const access = await getVenueAccess(client, userId);
+  if (!access) return null;
   const { data, error } = await client
     .from("venues")
     .select(VENUE_OWNER_COLUMNS)
-    .eq("owner_user_id", userId)
+    .eq("id", access.venueId)
     .maybeSingle();
 
   if (error) throw error;
@@ -95,6 +99,7 @@ export async function updateVenueForAccount(
     qrCodeLabel?: string | null;
   },
 ): Promise<VenueOwnerProfile> {
+  const access = await requireVenueAccess(client, userId, "manage_profile");
   const venue = await requireVenueForAccount(client, userId);
   const update: Record<string, string | null> = {};
   if (input.name !== undefined) update.name = requiredText(input.name, "Venue name", 2, 120);
@@ -110,8 +115,7 @@ export async function updateVenueForAccount(
   const { data, error } = await client
     .from("venues")
     .update(update)
-    .eq("id", venue.id)
-    .eq("owner_user_id", userId)
+    .eq("id", access.venueId)
     .select(VENUE_OWNER_COLUMNS)
     .single();
 
@@ -125,6 +129,7 @@ export async function uploadVenueQrCode(
   file: Blob,
   label?: string | null,
 ): Promise<VenueOwnerProfile> {
+  const access = await requireVenueAccess(client, userId, "manage_profile");
   const venue = await requireVenueForAccount(client, userId);
   const image = await validateAndPrepareDancrImage(file);
   if (image.width < 180 || image.height < 180) {
@@ -152,8 +157,7 @@ export async function uploadVenueQrCode(
       qr_code_label: optionalText(label, "QR label", 100),
       qr_code_updated_at: new Date().toISOString(),
     })
-    .eq("id", venue.id)
-    .eq("owner_user_id", userId)
+    .eq("id", access.venueId)
     .select(VENUE_OWNER_COLUMNS)
     .single();
 
@@ -170,6 +174,7 @@ export async function uploadVenueQrCode(
 }
 
 export async function deleteVenueQrCode(client: DancrClient, userId: string): Promise<VenueOwnerProfile> {
+  const access = await requireVenueAccess(client, userId, "manage_profile");
   const venue = await requireVenueForAccount(client, userId);
   const { data, error } = await client
     .from("venues")
@@ -178,8 +183,7 @@ export async function deleteVenueQrCode(client: DancrClient, userId: string): Pr
       qr_code_label: null,
       qr_code_updated_at: null,
     })
-    .eq("id", venue.id)
-    .eq("owner_user_id", userId)
+    .eq("id", access.venueId)
     .select(VENUE_OWNER_COLUMNS)
     .single();
 
@@ -195,6 +199,7 @@ export async function uploadVenueCoverImage(
   userId: string,
   file: Blob,
 ): Promise<VenueOwnerProfile> {
+  const access = await requireVenueAccess(client, userId, "manage_profile");
   const venue = await requireVenueForAccount(client, userId);
   const image = await validateAndPrepareDancrImage(file);
   if (image.width < 720 || image.height < 720) {
@@ -253,8 +258,7 @@ export async function uploadVenueCoverImage(
         cover_image_storage_path: finalPath,
         cover_image_updated_at: new Date().toISOString(),
       })
-      .eq("id", venue.id)
-      .eq("owner_user_id", userId)
+      .eq("id", access.venueId)
       .select(VENUE_OWNER_COLUMNS)
       .single();
 
@@ -292,6 +296,7 @@ export async function deleteVenueCoverImage(
   client: DancrClient,
   userId: string,
 ): Promise<VenueOwnerProfile> {
+  const access = await requireVenueAccess(client, userId, "manage_profile");
   const venue = await requireVenueForAccount(client, userId);
   const { data, error } = await client
     .from("venues")
@@ -299,8 +304,7 @@ export async function deleteVenueCoverImage(
       cover_image_storage_path: null,
       cover_image_updated_at: null,
     })
-    .eq("id", venue.id)
-    .eq("owner_user_id", userId)
+    .eq("id", access.venueId)
     .select(VENUE_OWNER_COLUMNS)
     .single();
 
@@ -324,68 +328,98 @@ export async function deleteVenueCoverImage(
 export async function getVenueDashboard(
   client: DancrClient,
   userId: string,
+  period: VenueAnalyticsPeriod = "30d",
 ): Promise<{
   profile: VenueOwnerProfile;
   analytics: VenueDashboardAnalytics;
   workingNow: VenueDashboardDancer[];
   deal: ClubDeal | null;
   deals: ClubDeal[];
-  dealRevenue: Awaited<ReturnType<typeof getVenueDealRevenueMetrics>>;
+  dealRevenue: Awaited<ReturnType<typeof getVenueDealRevenueMetrics>> | null;
 }> {
+  const access = await requireVenueAccess(client, userId, "view_dashboard");
   const profile = await requireVenueForAccount(client, userId);
   const now = new Date();
-  const since = new Date(now);
-  since.setDate(since.getDate() - 30);
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
+  const range = venueAnalyticsRange(profile.timezone, period, now);
+  const tonight = getTonightWindow(profile.timezone, now);
 
   const [
     totalFollowers,
-    followersGained30Days,
-    directions30Days,
-    pageViews30Days,
+    followersGained,
+    directions,
+    pageViews,
     pageViewsToday,
-    dressingRoomNfcTaps30Days,
-    cashierNfcRedemptions30Days,
+    dressingRoomNfcTaps,
+    cashierNfcAttempts,
+    cashierNfcRedemptions,
     upcomingShiftCount,
-    goingSignals30Days,
+    goingSignals,
+    previousPageViews,
+    previousDirections,
+    previousRedemptions,
     workingNow,
     venueDeal,
     dealRevenue,
   ] = await Promise.all([
     countByVenue(client, "venue_follows", profile.id),
-    countByVenueSince(client, "venue_follows", profile.id, "created_at", since),
-    countByVenueSince(client, "direction_requests", profile.id, "requested_at", since),
-    countVenueEvents(client, profile.id, "page_view", since),
-    countVenueEvents(client, profile.id, "page_view", today),
-    countVenueNfcTaps(client, profile.id, "dressing_room", since),
-    countVenueNfcTaps(client, profile.id, "cashier", since, "deal_redeemed"),
+    countByVenueBetween(client, "venue_follows", profile.id, "created_at", range.start, range.end),
+    countByVenueBetween(client, "direction_requests", profile.id, "requested_at", range.start, range.end),
+    countVenueEvents(client, profile.id, "page_view", range.start, range.end),
+    countVenueEvents(client, profile.id, "page_view", new Date(tonight.startsAt), now),
+    countVenueNfcTaps(client, profile.id, "dressing_room", range.start, range.end),
+    countVenueNfcTaps(client, profile.id, "cashier", range.start, range.end),
+    countVenueNfcTaps(client, profile.id, "cashier", range.start, range.end, "deal_redeemed"),
     countUpcomingShifts(client, profile.id, now),
-    countVenueGoingSignals(client, profile.id, since),
+    countVenueGoingSignals(client, profile.id, range.start, range.end),
+    countVenueEvents(client, profile.id, "page_view", range.previousStart, range.start),
+    countByVenueBetween(client, "direction_requests", profile.id, "requested_at", range.previousStart, range.start),
+    countVenueNfcTaps(client, profile.id, "cashier", range.previousStart, range.start, "deal_redeemed"),
     getWorkingDancers(client, profile.id, now),
     getVenueDealsForAccount(client, userId),
-    getVenueDealRevenueMetrics(client, profile.id),
+    canVenue(access, "view_finance") ? getVenueDealRevenueMetrics(client, profile.id) : null,
   ]);
 
   return {
     profile,
     analytics: {
+      period,
+      periodLabel: range.label,
+      periodStart: range.start.toISOString(),
+      periodEnd: range.end.toISOString(),
       totalFollowers,
-      followersGained30Days,
-      directions30Days,
-      pageViews30Days,
+      followersGained30Days: followersGained,
+      directions30Days: directions,
+      pageViews30Days: pageViews,
       pageViewsToday,
-      dressingRoomNfcTaps30Days,
-      cashierNfcRedemptions30Days,
+      dressingRoomNfcTaps30Days: dressingRoomNfcTaps,
+      cashierNfcRedemptions30Days: cashierNfcRedemptions,
       upcomingShiftCount,
       activeDancersNow: workingNow.length,
-      goingSignals30Days,
+      goingSignals30Days: goingSignals,
+      pageViews,
+      directions,
+      followersGained,
+      goingSignals,
+      dressingRoomNfcTaps,
+      cashierNfcAttempts,
+      cashierNfcRedemptions,
+      pageViewsChangePercent: percentChange(pageViews, previousPageViews),
+      directionsChangePercent: percentChange(directions, previousDirections),
+      redemptionsChangePercent: percentChange(cashierNfcRedemptions, previousRedemptions),
+      directionConversionPercent: conversionPercent(directions, pageViews),
+      redemptionConversionPercent: conversionPercent(cashierNfcRedemptions, cashierNfcAttempts),
     },
     workingNow,
     deal: venueDeal?.deals[0] || null,
     deals: venueDeal?.deals || [],
     dealRevenue,
   };
+}
+
+export type VenueAnalyticsPeriod = "tonight" | "7d" | "30d";
+
+export function readVenueAnalyticsPeriod(value: string | null | undefined): VenueAnalyticsPeriod {
+  return value === "tonight" || value === "7d" || value === "30d" ? value : "30d";
 }
 
 const VENUE_OWNER_COLUMNS =
@@ -438,12 +472,20 @@ async function countByVenue(client: DancrClient, table: string, venueId: string)
   return count || 0;
 }
 
-async function countByVenueSince(client: DancrClient, table: string, venueId: string, column: string, since: Date) {
+async function countByVenueBetween(
+  client: DancrClient,
+  table: string,
+  venueId: string,
+  column: string,
+  since: Date,
+  until: Date,
+) {
   const { count, error } = await client
     .from(table)
     .select("*", { count: "exact", head: true })
     .eq("venue_id", venueId)
-    .gte(column, since.toISOString());
+    .gte(column, since.toISOString())
+    .lt(column, until.toISOString());
   if (error) throw error;
   return count || 0;
 }
@@ -453,6 +495,7 @@ async function countVenueEvents(
   venueId: string,
   eventType: "page_view" | "qr_impression",
   since: Date,
+  until: Date,
   source?: "venue_page" | "dancer_profile",
 ) {
   let query = client
@@ -460,7 +503,8 @@ async function countVenueEvents(
     .select("*", { count: "exact", head: true })
     .eq("venue_id", venueId)
     .eq("event_type", eventType)
-    .gte("occurred_at", since.toISOString());
+    .gte("occurred_at", since.toISOString())
+    .lt("occurred_at", until.toISOString());
   if (source) query = query.eq("source", source);
   const { count, error } = await query;
   if (error) throw error;
@@ -472,6 +516,7 @@ async function countVenueNfcTaps(
   venueId: string,
   tagType: "dressing_room" | "cashier",
   since: Date,
+  until: Date,
   eventType?: "deal_redeemed",
 ) {
   let query = client
@@ -479,7 +524,8 @@ async function countVenueNfcTaps(
     .select("id", { count: "exact", head: true })
     .eq("venue_id", venueId)
     .eq("tag_type", tagType)
-    .gte("occurred_at", since.toISOString());
+    .gte("occurred_at", since.toISOString())
+    .lt("occurred_at", until.toISOString());
   if (eventType) query = query.eq("event_type", eventType);
   const { count, error } = await query;
   if (error) throw error;
@@ -492,17 +538,18 @@ async function countUpcomingShifts(client: DancrClient, venueId: string, now: Da
     .select("id", { count: "exact", head: true })
     .eq("venue_id", venueId)
     .eq("status", "posted")
-    .gt("ends_at", now.toISOString());
+    .gt("starts_at", now.toISOString());
   if (error) throw error;
   return count || 0;
 }
 
-async function countVenueGoingSignals(client: DancrClient, venueId: string, since: Date) {
+async function countVenueGoingSignals(client: DancrClient, venueId: string, since: Date, until: Date) {
   const { count, error } = await client
     .from("going_signals")
     .select("shift_id, shifts!inner(venue_id)", { count: "exact", head: true })
     .eq("shifts.venue_id", venueId)
-    .gte("created_at", since.toISOString());
+    .gte("created_at", since.toISOString())
+    .lt("created_at", until.toISOString());
   if (error) throw error;
   return count || 0;
 }
@@ -510,7 +557,7 @@ async function countVenueGoingSignals(client: DancrClient, venueId: string, sinc
 async function getWorkingDancers(client: DancrClient, venueId: string, now: Date): Promise<VenueDashboardDancer[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, location_status, checked_in_at, checked_out_at, location_verification_expires_at, dancer_profiles(id, slug, stage_name)")
+    .select("id, starts_at, ends_at, location_status, checked_in_at, checked_out_at, last_location_verified_at, location_verification_expires_at, dancer_profiles(id, slug, stage_name, avatar_storage_path)")
     .eq("venue_id", venueId)
     .eq("status", "posted")
     .not("checked_in_at", "is", null)
@@ -523,6 +570,7 @@ async function getWorkingDancers(client: DancrClient, venueId: string, now: Date
 
   return (data || []).filter((row: any) => isCurrentLocationVerification(row, now.getTime())).map((row: any) => {
     const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
+    const avatar = responsivePublicImage(client, "dancer-photos", dancer?.avatar_storage_path);
     return {
       shiftId: row.id,
       dancerId: dancer?.id || "",
@@ -531,9 +579,42 @@ async function getWorkingDancers(client: DancrClient, venueId: string, now: Date
       startsAt: row.starts_at,
       endsAt: row.ends_at,
       checkedInAt: row.checked_in_at,
+      lastLocationVerifiedAt: row.last_location_verified_at || null,
       locationStatus: row.location_status,
+      avatarUrl: avatar?.imageUrl || null,
+      avatarSrcSet: avatar?.imageSrcSet || null,
     };
   });
+}
+
+function venueAnalyticsRange(timeZone: string, period: VenueAnalyticsPeriod, now: Date) {
+  let start: Date;
+  let label: string;
+  if (period === "tonight") {
+    start = new Date(getTonightWindow(timeZone, now).startsAt);
+    label = "Tonight";
+  } else {
+    const days = period === "7d" ? 7 : 30;
+    start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    label = period === "7d" ? "Last 7 days" : "Last 30 days";
+  }
+  const duration = Math.max(60_000, now.getTime() - start.getTime());
+  return {
+    label,
+    start,
+    end: now,
+    previousStart: new Date(start.getTime() - duration),
+  };
+}
+
+function percentChange(current: number, previous: number) {
+  if (previous <= 0) return current > 0 ? 100 : null;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
+function conversionPercent(completed: number, total: number) {
+  if (total <= 0) return null;
+  return Math.round((completed / total) * 1000) / 10;
 }
 
 function requiredText(value: string, label: string, min: number, max: number) {

@@ -11,6 +11,7 @@ import {
 import {
   registerDancerFromNfc,
   confirmRedemptionFromNfc,
+  recordNfcTagScan,
   resolveNfcTag,
 } from "@/src/lib/dancr/nfc";
 import type { DealSourceType } from "@/src/lib/dancr/types";
@@ -31,6 +32,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const admin = createAdminSupabaseClient();
     const tag = await resolveNfcTag(admin, token);
     if (!tag) return inactiveTag();
+    await recordNfcTagScan(admin, tag.id);
     const deals = tag.type === "cashier" ? await getActiveClubDealsForVenue(admin, tag.venueId) : [];
     return noStore({
       ok: true,

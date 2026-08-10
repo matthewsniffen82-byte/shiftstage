@@ -5,6 +5,8 @@ import { getVenueForAccount, updateVenueForAccount } from "@/src/lib/dancr/venue
 import { getLatestVenueOwnershipClaim } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
+import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +32,9 @@ export async function PATCH(request: Request) {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireVenueRole(client, user.id);
     const body = await request.json();
-    const profile = await updateVenueForAccount(createAdminSupabaseClient(), user.id, {
+    const admin = createAdminSupabaseClient();
+    const access = await requireVenueAccess(admin, user.id, "manage_profile");
+    const profile = await updateVenueForAccount(admin, user.id, {
       name: optionalString(body.name),
       city: optionalString(body.city),
       state: optionalNullableString(body.state),
@@ -38,6 +42,15 @@ export async function PATCH(request: Request) {
       phone: optionalNullableString(body.phone),
       website: optionalNullableString(body.website),
       qrCodeLabel: optionalNullableString(body.qrCodeLabel),
+    });
+    await recordVenueActivity(admin, {
+      venueId: access.venueId,
+      actorUserId: user.id,
+      actorRole: access.role,
+      action: "profile.details_updated",
+      targetType: "venue",
+      targetId: profile.id,
+      summary: "Public venue details were updated.",
     });
     return NextResponse.json({ ok: true, profile, message: "Venue profile saved." });
   } catch (error) {
