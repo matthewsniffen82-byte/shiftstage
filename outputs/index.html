@@ -25842,6 +25842,11 @@
       box-shadow: 0 0 26px rgba(125, 74, 255, .28);
     }
 
+    .deal-pass-action.primary.is-saved {
+      background: linear-gradient(135deg, #087f5b, #0ea5a8);
+      box-shadow: 0 0 24px rgba(14, 165, 168, .24);
+    }
+
     .deal-pass-action.tertiary {
       border-color: rgba(255, 255, 255, .12);
       background: rgba(255, 255, 255, .035);
@@ -43281,7 +43286,12 @@
     }
 
     function saveSavedDealPasses() {
-      localStorage.setItem("dancrSavedDealPassesV1", JSON.stringify(savedDealPasses));
+      try {
+        localStorage.setItem("dancrSavedDealPassesV1", JSON.stringify(savedDealPasses));
+        return true;
+      } catch {
+        return false;
+      }
     }
 
     function dealPassFileName(pass, extension = "png") {
@@ -43502,14 +43512,17 @@
     }
 
     function saveCustomerDealPass(pass, message = "Club Deal ready for cashier NFC") {
-      if (!pass?.id) return;
+      if (!pass?.id) return false;
       const savedPass = { ...pass, savedAt: new Date().toISOString() };
       savedDealPasses = [savedPass, ...savedDealPasses.filter((item) => item.id !== pass.id)].slice(0, 20);
-      saveSavedDealPasses();
-      recordRevenueDealLifecycle(pass, "saved");
+      const persisted = saveSavedDealPasses();
+      if (persisted) recordRevenueDealLifecycle(pass, "saved");
       if (customerDashboard.classList.contains("show")) renderDashboard();
       renderCustomerQuickActions();
-      showToast(message);
+      showToast(persisted
+        ? message
+        : "Deal ready for this visit. Browser storage blocked saving it for later.");
+      return persisted;
     }
 
     function recordRevenueDealLifecycle(pass, eventType) {
@@ -43523,8 +43536,8 @@
       ).catch(() => null);
     }
 
-    async function downloadDealQrImage(pass) {
-      saveCustomerDealPass(pass, "Club Deal ready. Tap the cashier NFC sticker to redeem.");
+    function saveDealPassForLater(pass) {
+      return saveCustomerDealPass(pass, "Deal saved. Tap the cashier NFC sticker to redeem.");
     }
 
     async function shareDealPass(pass) {
@@ -43595,7 +43608,7 @@
             </div>
             <p class="deal-pass-how" id="dealPassHow">Your selected deal and dancer attribution are securely confirmed when the cashier sticker is tapped.</p>
             <div class="deal-pass-actions">
-              <button class="deal-pass-action primary" type="button" data-save-deal-pass>Keep deal ready</button>
+              <button class="deal-pass-action primary" type="button" data-save-deal-pass aria-pressed="false">Save deal</button>
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share deal</button>
               <button class="deal-pass-action tertiary" type="button" data-copy-deal-pass>Copy link</button>
             </div>
@@ -43605,6 +43618,9 @@
       `);
       overlay = document.getElementById("dealPassOverlay");
       const closeButton = overlay.querySelector("[data-close-deal-pass]");
+      const saveButton = overlay.querySelector("[data-save-deal-pass]");
+      const shareButton = overlay.querySelector("[data-share-deal-pass]");
+      const copyButton = overlay.querySelector("[data-copy-deal-pass]");
       const closeFromButton = (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -43614,23 +43630,46 @@
       closeButton?.addEventListener("click", closeFromButton);
       closeButton?.addEventListener("pointerup", closeFromButton);
       closeButton?.addEventListener("touchend", closeFromButton, { passive: false });
+      const bindDealPassAction = (button, action) => {
+        if (!button) return;
+        let suppressSyntheticClickUntil = 0;
+        button.addEventListener("pointerup", (event) => {
+          if (event.pointerType === "mouse") return;
+          suppressSyntheticClickUntil = Date.now() + 750;
+          event.preventDefault();
+          event.stopPropagation();
+          action(button);
+        }, { passive: false });
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (Date.now() < suppressSyntheticClickUntil) return;
+          action(button);
+        });
+      };
+      const currentPass = () => decodeDealPass(overlay.dataset.dealPass || "");
+      bindDealPassAction(saveButton, (button) => {
+        const pass = currentPass();
+        if (!pass) {
+          showToast("Club Deal unavailable");
+          return;
+        }
+        const persisted = saveDealPassForLater(pass);
+        button.textContent = persisted ? "Saved" : "Ready this visit";
+        button.setAttribute("aria-pressed", persisted ? "true" : "false");
+        button.classList.toggle("is-saved", persisted);
+      });
+      bindDealPassAction(shareButton, () => {
+        const pass = currentPass();
+        if (pass) shareDealPass(pass);
+      });
+      bindDealPassAction(copyButton, () => {
+        const pass = currentPass();
+        if (pass) copyText(pass.url, "Deal link copied");
+      });
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay || event.target.closest("[data-close-deal-pass]")) {
           closeDealPassOverlay();
-          return;
-        }
-        const pass = decodeDealPass(overlay.dataset.dealPass || "");
-        if (!pass) return;
-        if (event.target.closest("[data-save-deal-pass]")) {
-          downloadDealQrImage(pass);
-          return;
-        }
-        if (event.target.closest("[data-share-deal-pass]")) {
-          shareDealPass(pass);
-          return;
-        }
-        if (event.target.closest("[data-copy-deal-pass]")) {
-          copyText(pass.url, "Deal link copied");
         }
       });
       return overlay;
@@ -43673,6 +43712,13 @@
       document.getElementById("dealPassCopy").textContent = presentation.copy;
       document.getElementById("dealPassImage").setAttribute("aria-label", `${pass.venueName} cashier NFC tap`);
       document.getElementById("dealPassHow").textContent = presentation.status;
+      const saveButton = overlay.querySelector("[data-save-deal-pass]");
+      const isSaved = savedDealPasses.some((savedPass) => savedPass.id === pass.id);
+      if (saveButton) {
+        saveButton.textContent = isSaved ? "Saved" : "Save deal";
+        saveButton.setAttribute("aria-pressed", isSaved ? "true" : "false");
+        saveButton.classList.toggle("is-saved", isSaved);
+      }
       const bookingLink = document.getElementById("dealPassBooking");
       const hasBooking = pass.offerType === "bottle_service" && /^https:\/\//i.test(pass.bookingUrl || "");
       bookingLink.hidden = !hasBooking;
