@@ -298,7 +298,19 @@ test("Dancers reuses unchanged grid cards and keeps compact photos stable during
   assert.doesNotMatch(compactCardRule, /contain: layout paint style;/);
   assert.match(
     homeSource,
-    /Keep compact directory tiles in the normal mobile paint flow[\s\S]*?@media \(hover: none\) and \(pointer: coarse\)[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card,[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-link,[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-photo \{[\s\S]*?-webkit-backface-visibility: visible !important;[\s\S]*?backface-visibility: visible !important;/,
+    /Keep compact directory tiles in the normal mobile paint flow[\s\S]*?@media \(hover: none\) and \(pointer: coarse\)[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card,[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-link,[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-photo \{[\s\S]*?animation: none !important;[\s\S]*?will-change: auto !important;[\s\S]*?-webkit-backface-visibility: visible !important;[\s\S]*?backface-visibility: visible !important;/,
+  );
+  assert.match(
+    homeSource,
+    /A translate3d on the complete photo grid turns the full directory[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?transform: none;[\s\S]*?transition: opacity 170ms ease;[\s\S]*?will-change: auto;/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?opacity: 1 !important;[\s\S]*?isolation: isolate;/,
+  );
+  assert.match(
+    homeSource,
+    /body\.home-destination-swipe-active #results \{[\s\S]*?transform: translate3d\(var\(--home-destination-swipe-offset, 0px\), 0, 0\);[\s\S]*?will-change: transform;/,
   );
 });
 

@@ -30879,9 +30879,18 @@
         /* Keep the late-rendered discovery shell aligned with the canonical mobile utility header. */
         @media (max-width: 720px) {
           .content-head,
-          #results {
+          #results:not(.home-dancer-grid) {
             transform: translate3d(0, 0, 0);
             transition: transform 170ms cubic-bezier(.22, .74, .26, 1), opacity 170ms ease;
+          }
+          /* A translate3d on the complete photo grid turns the full directory
+             into one oversized WebKit compositing layer. Keep the resting grid
+             in normal document flow so iPhone can paint each visible card once
+             while scrolling; the swipe gesture still promotes it temporarily. */
+          #results.home-dancer-grid {
+            transform: none;
+            transition: opacity 170ms ease;
+            will-change: auto;
           }
           body.home-destination-swipe-active .content-head,
           body.home-destination-swipe-active #results {
@@ -34381,13 +34390,19 @@
           #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card,
           #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-link,
           #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo {
+            animation: none !important;
             transform: none !important;
             -webkit-transform: none !important;
             filter: none !important;
             -webkit-filter: none !important;
             transition: none !important;
+            will-change: auto !important;
             -webkit-backface-visibility: visible !important;
             backface-visibility: visible !important;
+          }
+          #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
+            opacity: 1 !important;
+            isolation: isolate;
           }
         }
         #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo::after {
