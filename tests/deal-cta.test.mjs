@@ -53,6 +53,14 @@ test("venue pages, venue cards, dancer profiles, and TV expose real active Club 
   assert.match(discoveryRoute, /activeDeals/);
 });
 
+test("venue, dancer, and TV cards retain NFC placeholders while Club Deals are unavailable", () => {
+  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?NFC Deal/);
+  assert.match(liveApp, /function homeDancerGridQrMarkup\(profile\)[\s\S]*?data-card-qr-label[\s\S]*?actionButtonLabel\("qr", "NFC"\)/);
+  assert.match(liveApp, /function homeTvFeedDealState\(item\)[\s\S]*?key: "no-active-offer"[\s\S]*?key: "available-when-working"[\s\S]*?key: "not-available-now"/);
+  assert.match(liveApp, /deal\.dataset\.cardQrLabel = dealState\.label[\s\S]*?deal\.dataset\.cardQrMessage = dealState\.detail/);
+  assert.match(tvClient, /<TvClubDealUnavailable video=\{video\} \/>/);
+});
+
 test("customers save an exact offer and dancer token locally until the physical cashier tap", () => {
   assert.match(dealCard, /mydancrPendingNfcDealV1/);
   assert.match(dealCard, /dealId: activeDeal\.id/);

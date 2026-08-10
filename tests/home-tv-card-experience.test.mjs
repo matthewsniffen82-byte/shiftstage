@@ -62,7 +62,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /const hasLiveDeal = item\?\.shift\?\.isActive === true[\s\S]*?item\?\.venue\?\.id && item\?\.deal\?\.id && item\?\.dealAttributionToken[\s\S]*?home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass[\s\S]*?sourceType: "dancer_profile"[\s\S]*?deal\.dataset\.feedLiveQr = "true"/,
+    /function homeTvFeedDealState\(item\)[\s\S]*?item\?\.venue\?\.id[\s\S]*?item\?\.deal\?\.id[\s\S]*?item\?\.dealAttributionToken[\s\S]*?home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass[\s\S]*?sourceType: "dancer_profile"[\s\S]*?deal\.dataset\.feedLiveQr = "true"/,
   );
   assert.match(
     homeSource,
@@ -103,7 +103,7 @@ test("TV cards expose separate right-side action icons with fullscreen anchored 
   )?.[0] || "";
 
   assert.match(actionsFactory, /createHomeTvFeedActionButton\([\s\S]*?"Applaud"[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?createHomeTvFeedActionButton\([\s\S]*?"Report"/);
-  assert.match(actionsFactory, /actions\.append\(applause\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow\)[\s\S]*?actions\.append\(report, reportMenu\)/);
+  assert.match(actionsFactory, /actions\.append\(applause\)[\s\S]*?actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow\)[\s\S]*?actions\.append\(report, reportMenu\)/);
   assert.doesNotMatch(actionsFactory, /More video actions|home-tv-feed-action-menu|home-tv-feed-menu-action/);
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
@@ -111,6 +111,25 @@ test("TV cards expose separate right-side action icons with fullscreen anchored 
   assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?gap: 9px;/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
+});
+
+test("TV cards retain a neutral NFC placeholder until a verified live Club Deal is available", () => {
+  const dealStateFactory = homeSource.match(
+    /function homeTvFeedDealState\(item\) \{[\s\S]*?(?=\n    function closeHomeTvFeedReportMenus)/,
+  )?.[0] || "";
+  const actionsFactory = homeSource.match(
+    /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+  )?.[0] || "";
+
+  assert.match(dealStateFactory, /key: "available"[\s\S]*?key: "no-active-offer"[\s\S]*?key: "available-when-working"[\s\S]*?key: "not-available-now"/);
+  assert.match(actionsFactory, /deal\.dataset\.cardActionSlot = "qr"/);
+  assert.match(actionsFactory, /deal\.dataset\.cardQrLabel = dealState\.label[\s\S]*?deal\.dataset\.cardQrMessage = dealState\.detail/);
+  assert.match(actionsFactory, /aria-disabled", "true"[\s\S]*?aria-expanded", "false"/);
+  assert.match(actionsFactory, /home-tv-feed-deal-count">NFC/);
+  assert.match(homeSource, /\.home-tv-feed-deal-action\.is-unavailable,[\s\S]*?background: rgba\(18,15,28,\.72\)[\s\S]*?cursor: pointer;/);
+  assert.match(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>/);
+  assert.match(fullTvFeedSource, /function TvClubDealUnavailable[\s\S]*?No Club Deal available[\s\S]*?Unlocks when working[\s\S]*?Not available now/);
+  assert.match(fullTvFeedSource, /className="tv-club-deal-unavailable"[\s\S]*?<NfcIcon \/>/);
 });
 
 test("TV cards are completely borderless without a violet perimeter", () => {

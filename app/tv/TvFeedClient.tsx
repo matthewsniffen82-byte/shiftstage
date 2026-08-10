@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import NfcIcon from "@/app/components/NfcIcon";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
@@ -737,7 +738,9 @@ export default function TvFeedClient({
                         presentation="launcher"
                         ctaLabel={video.deals.length > 1 ? `Club Deals · ${video.deals.length}` : undefined}
                       />
-                    ) : null}
+                    ) : (
+                      <TvClubDealUnavailable video={video} />
+                    )}
                   </div>
                 </div>
               </div>
@@ -755,6 +758,29 @@ export default function TvFeedClient({
       </section>
 
     </main>
+  );
+}
+
+function TvClubDealUnavailable({ video }: { video: MyDancrTvVideo }) {
+  const label = video.shift?.isActive
+    ? "No Club Deal available"
+    : video.shift
+      ? "Unlocks when working"
+      : "Not available now";
+  const detail = video.shift?.isActive
+    ? "This club does not have an active tracked offer right now."
+    : video.shift
+      ? "NFC Club Deals can unlock after a verified check-in."
+      : "A verified current check-in is required for dancer-attributed NFC redemption.";
+
+  return (
+    <aside className="tv-club-deal-unavailable" aria-label={`Club Deal NFC: ${label}. ${detail}`}>
+      <span className="tv-club-deal-unavailable-icon"><NfcIcon /></span>
+      <span className="tv-club-deal-unavailable-copy">
+        <small>Club Deal · NFC</small>
+        <strong>{label}</strong>
+      </span>
+    </aside>
   );
 }
 
@@ -995,6 +1021,12 @@ function TvStyles() {
       .tv-empty strong { font-size: 24px; }
       .tv-empty p { margin: 0; color: #b9accd; line-height: 1.5; }
       .tv-empty > div { display: flex; gap: 8px; }
+      .tv-club-deal-unavailable { width: fit-content; max-width: 100%; min-height: 48px; display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 9px; padding: 7px 14px 7px 8px; border: 1px solid rgba(196,181,253,.18); border-radius: 999px; color: rgba(245,245,255,.68); background: rgba(18,15,28,.72); box-shadow: 0 6px 16px rgba(0,0,0,.24); }
+      .tv-club-deal-unavailable-icon { width: 32px; height: 32px; display: grid; place-items: center; padding: 6px; border: 1px solid rgba(255,255,255,.1); border-radius: 50%; background: rgba(255,255,255,.035); opacity: .72; }
+      .tv-club-deal-unavailable-icon svg { width: 100%; height: 100%; }
+      .tv-club-deal-unavailable-copy { min-width: 0; display: grid; gap: 2px; }
+      .tv-club-deal-unavailable-copy small { color: rgba(196,181,253,.58); font-size: 8px; font-weight: 950; letter-spacing: .12em; line-height: 1; text-transform: uppercase; }
+      .tv-club-deal-unavailable-copy strong { max-width: 210px; overflow: hidden; font-size: 12px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
       @media (max-width: 760px) {
         .tv-shell { height: 100svh; height: 100dvh; min-height: 0; padding: 0 8px calc(62px + env(safe-area-inset-bottom)); border-inline: 0; }
         .tv-global-header { position: relative; flex: 0 0 auto; margin: 0 -8px 10px; padding: calc(9px + env(safe-area-inset-top, 0px)) 10px 9px; }

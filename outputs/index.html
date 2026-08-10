@@ -31468,6 +31468,21 @@
             linear-gradient(145deg, var(--dancr-color-success), color-mix(in srgb, var(--dancr-color-success) 64%, var(--dancr-color-background)));
           box-shadow: 0 10px 28px var(--dancr-color-black-medium), 0 0 22px var(--dancr-color-success-soft);
         }
+        .home-tv-feed-deal-action.is-unavailable,
+        .home-tv-feed-deal-action.is-unavailable:hover,
+        .home-tv-feed-deal-action.is-unavailable:focus-visible {
+          border-color: rgba(196,181,253,.18);
+          color: rgba(245,245,255,.68);
+          background: rgba(18,15,28,.72);
+          box-shadow: 0 6px 16px rgba(0,0,0,.24);
+          cursor: pointer;
+        }
+        .home-tv-feed-deal-action.is-unavailable .home-tv-feed-deal-count {
+          border-color: rgba(255,255,255,.12);
+          color: rgba(245,245,255,.68);
+          background: rgba(38,34,51,.94);
+          box-shadow: none;
+        }
         .home-tv-feed-report-menu {
           position: absolute;
           right: 52px;
@@ -54969,6 +54984,42 @@
       return button;
     }
 
+    function homeTvFeedDealState(item) {
+      const workingNow = item?.shift?.isActive === true;
+      const available = Boolean(
+        workingNow &&
+        item?.venue?.id &&
+        item?.deal?.id &&
+        item?.dealAttributionToken
+      );
+      if (available) {
+        return {
+          key: "available",
+          label: "Get Club Deal",
+          detail: "A tracked Club Deal is available during this verified check-in."
+        };
+      }
+      if (workingNow) {
+        return {
+          key: "no-active-offer",
+          label: "No Club Deal available",
+          detail: "This club does not have an active tracked offer right now."
+        };
+      }
+      if (item?.shift) {
+        return {
+          key: "available-when-working",
+          label: "Unlocks when working",
+          detail: "A tracked Club Deal can unlock after a verified check-in when the club has an active offer."
+        };
+      }
+      return {
+        key: "not-available-now",
+        label: "Not available now",
+        detail: "A verified current check-in is required before dancer attribution can be carried to a cashier NFC redemption."
+      };
+    }
+
     function closeHomeTvFeedReportMenus(exceptMenu = null) {
       results.querySelectorAll(".home-tv-feed-report-menu").forEach((menu) => {
         if (menu === exceptMenu) return;
@@ -55023,22 +55074,21 @@
       follow.innerHTML = actionIconMarkup(isFollowed ? "check" : "heart");
       follow.addEventListener("click", () => closeHomeTvFeedReportMenus());
 
-      const hasLiveDeal = item?.shift?.isActive === true &&
-        item?.venue?.id && item?.deal?.id && item?.dealAttributionToken;
-      let deal = null;
-      if (hasLiveDeal) {
+      const dealState = homeTvFeedDealState(item);
+      const deal = createHomeTvFeedActionButton(
+        `home-tv-feed-deal-action home-card-qr-rail-action ${dealState.key === "available" ? "is-available" : `is-unavailable is-${dealState.key}`}`,
+        dealState.label,
+        actionIconMarkup("qr")
+      );
+      deal.dataset.cardActionSlot = "qr";
+      deal.dataset.clubDealState = dealState.key;
+      if (dealState.key === "available") {
         const dealTitle = String(item.deal.dealTitle || "Club Deal").trim() || "Club Deal";
         const venueName = String(item.venue.name || "this club").trim() || "this club";
-        deal = createHomeTvFeedActionButton(
-          "home-tv-feed-deal-action home-card-qr-rail-action",
-          "Club Deal NFC",
-          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2h4zM14 18h2"></path></svg>'
-        );
         const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
         deal.setAttribute("aria-label", `Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} for ${venueName}`);
         deal.title = offerCount > 1 ? `${offerCount} Club Deals` : dealTitle;
         deal.insertAdjacentHTML("beforeend", `<span class="home-tv-feed-deal-count">${offerCount > 1 ? offerCount : "Deal"}</span>`);
-        deal.dataset.cardActionSlot = "qr";
         deal.dataset.clubDealCta = encodeDealPass({
           deal: item.deal,
           deals: item.deals,
@@ -55053,6 +55103,14 @@
         });
         deal.dataset.feedLiveQr = "true";
         deal.addEventListener("click", () => closeHomeTvFeedReportMenus());
+      } else {
+        deal.dataset.cardQrLabel = dealState.label;
+        deal.dataset.cardQrMessage = dealState.detail;
+        deal.setAttribute("aria-disabled", "true");
+        deal.setAttribute("aria-expanded", "false");
+        deal.setAttribute("aria-label", `Club Deal NFC: ${dealState.label}. Tap for details.`);
+        deal.title = dealState.label;
+        deal.insertAdjacentHTML("beforeend", '<span class="home-tv-feed-deal-count">NFC</span>');
       }
 
       const report = createHomeTvFeedActionButton(
@@ -55103,7 +55161,7 @@
         report.focus({ preventScroll: true });
       });
       actions.append(applause);
-      if (deal) actions.appendChild(deal);
+      actions.appendChild(deal);
       actions.append(share, follow);
       actions.append(report, reportMenu);
       return actions;
