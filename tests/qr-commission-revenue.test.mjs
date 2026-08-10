@@ -135,7 +135,7 @@ test("venues configure a real referral amount before a Club Deal can be redeemed
   assert.match(venueDashboard, /MyDancr referral fee per redemption/);
   assert.match(venueDashboard, /name="dealAction"[\s\S]*?value=\{form\.isActive \? "save" : "publish"\}/);
   assert.match(venueDashboard, /Publish Deal/);
-  assert.match(venueDashboard, /Cashier NFC redemption active/);
+  assert.match(venueDashboard, /Ready for redemption/);
   assert.doesNotMatch(venueDashboard, /Monthly successful dancer QR redemptions/);
 });
 

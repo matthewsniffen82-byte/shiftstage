@@ -65,7 +65,7 @@ test("the primary venue dashboard opens the shared routed workspace immediately"
 test("venue operations prioritize tonight, Club Deals, NFC stickers, and then reporting", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
   assert.match(venuePanel, /Tonight/);
-  assert.match(venuePanel, /Club Deals & cashier NFC/);
+  assert.match(venuePanel, /title="Club Deals"/);
   assert.match(venuePanel, /VenueNfcTagPanel/);
   assert.match(venuePanel, /Analytics & performance/);
   assert.ok(venuePanel.indexOf("Tonight") < venuePanel.indexOf("Analytics & performance"));
@@ -76,7 +76,7 @@ test("venue deal saves use the real API and immediately replace cards and counts
   assert.match(dashboard, /setDeals\(nextDeals\)/);
   assert.match(dashboard, /onDealsChange\(nextDeals\)/);
   assert.match(dashboard, /setEditingId/);
-  assert.match(dashboard, /Changes saved\. The live deal is ready on venue, dancer, and cashier NFC surfaces/);
+  assert.match(dashboard, /Changes saved\. This deal is live across MyDancr/);
   assert.match(venueDealRoute, /updateVenueDealForAccount/);
   assert.match(venueDealRoute, /ok: true,[\s\S]*deal,[\s\S]*deals/);
 });
@@ -88,6 +88,16 @@ test("venue managers can publish typed offers and bottle service with production
   assert.match(dashboard, /Display order/);
   assert.match(dashboard, /MyDancr referral fee per redemption/);
   assert.match(dashboard, /Publish Deal/);
+});
+
+test("venue Club Deal guidance stays concise with details available on demand", () => {
+  const venueDealPanel = dashboard.match(/function VenueClubDealPanel\([\s\S]*?(?=\nfunction upsertVenueDeal)/)?.[0] || "";
+  assert.match(venueDealPanel, /no reprogramming required/);
+  assert.match(venueDealPanel, /<summary>How Club Deals work<\/summary>/);
+  assert.match(venueDealPanel, /Customers select a deal and tap your MyDancr cashier sticker/);
+  assert.match(venueDealPanel, /Sticker status is managed in Assigned NFC access/);
+  assert.doesNotMatch(venueDealPanel, /Venue staff must confirm redemption while signed in/);
+  assert.doesNotMatch(venueDealPanel, /Only a server-verified active tag creates/);
 });
 
 test("MyDancr supplies NFC stickers while venue owners receive read-only inventory", () => {

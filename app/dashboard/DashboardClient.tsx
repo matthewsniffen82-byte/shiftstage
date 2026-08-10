@@ -1918,15 +1918,14 @@ function VenuePanel({
 
       <DashboardSection
         badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
-        description="Create offers, manage cashier NFC redemption, and review venue invoices."
+        description="Create or edit offers, then review redemptions and venue invoices."
         eyebrow="Revenue"
         id="venue-club-deals"
-        title="Club Deals & cashier NFC"
+        title="Club Deals"
       >
         {canManageDeals ? (
           <VenueClubDealPanel
             finance={finance}
-            hasWorkingNowDancers={workingNow.length > 0}
             initialDeal={deal}
             initialDeals={venueDeals}
             onDealsChange={onDealsChange}
@@ -2095,14 +2094,12 @@ function VenuePanel({
 
 function VenueClubDealPanel({
   finance,
-  hasWorkingNowDancers,
   initialDeal,
   initialDeals,
   onDealsChange,
   revenue,
 }: {
   finance?: LoadState["finance"];
-  hasWorkingNowDancers: boolean;
   initialDeal?: LoadState["deal"];
   initialDeals: Array<Record<string, unknown>>;
   onDealsChange: (deals: Array<Record<string, unknown>>) => void;
@@ -2217,7 +2214,7 @@ function VenueClubDealPanel({
       setEditingId(editingIdRef.current);
       setForm(venueDealForm(savedDeal));
       setStatus(savedDeal.isActive
-        ? "Changes saved. The live deal is ready on venue, dancer, and cashier NFC surfaces."
+        ? "Changes saved. This deal is live across MyDancr."
         : "Saved changes. This deal is a draft and is not visible on MyDancr.");
       setSaveConfirmed(true);
     } catch (error) {
@@ -2270,7 +2267,7 @@ function VenueClubDealPanel({
         </strong>
       </div>
       <p className="venue-deal-placement-note">
-        Publish multiple deals at the same time. Every deal keeps its own status, display order, cashier NFC redemption, and public offer.
+        Create or edit Club Deals anytime. Your existing MyDancr cashier NFC sticker automatically opens the current live deals—no reprogramming required.
       </p>
       <div className="venue-deal-counts" aria-label="Club Deal totals">
         <span><strong>{liveCount}</strong> live</span>
@@ -2287,7 +2284,7 @@ function VenueClubDealPanel({
           >
             <span>{dealTypeLabel(String(deal.offerType || "admission"))}</span>
             <strong>{String(deal.dealTitle || "Untitled offer")}</strong>
-            <small className={deal.isActive ? "is-live" : undefined}>{deal.isActive ? "Live · NFC active" : "Draft · Not public"}</small>
+            <small className={deal.isActive ? "is-live" : undefined}>{deal.isActive ? "Live" : "Draft"}</small>
           </button>
         ))}
         <button aria-pressed={!editingId} className={`add${!editingId ? " selected" : ""}`} type="button" onClick={addDeal}>
@@ -2363,7 +2360,7 @@ function VenueClubDealPanel({
                 onChange={(event) => updateDealForm("dealTerms", event.target.value)}
               />
             </label>
-            <p className="venue-deal-rule-note">Every customer receives a unique tracked pass. Venue staff must confirm redemption while signed in, and one customer pass can only be redeemed once.</p>
+            <p className="venue-deal-rule-note">Add only the conditions customers need to see before redeeming.</p>
           </div>
         </fieldset>
 
@@ -2407,7 +2404,7 @@ function VenueClubDealPanel({
           </dl>
           {form.isActive ? (
             <p className="venue-deal-live-edit-note">
-              Edit and save this live offer without unpublishing. Cashier NFC redemption stays active.
+              Save edits without unpublishing this deal.
             </p>
           ) : null}
           <div className="venue-deal-form-actions">
@@ -2435,7 +2432,7 @@ function VenueClubDealPanel({
           </div>
           {form.isActive ? (
             <small className="venue-deal-unpublish-note">
-              Unpublish only when you want to take this deal off venue, dancer, and cashier NFC surfaces.
+              Unpublishing removes this deal from MyDancr.
             </small>
           ) : null}
         </fieldset>
@@ -2451,40 +2448,29 @@ function VenueClubDealPanel({
             <span aria-hidden="true">{form.isActive ? "✓" : "•"}</span>
             <div>
               <strong>{form.isActive ? "Live on MyDancr" : "Draft — not live"}</strong>
-              <small>{form.isActive ? "This deal is published and available through cashier NFC." : "Publish this deal when it is ready for customers."}</small>
+              <small>{form.isActive ? "Available wherever your Club Deals appear." : "Publish this deal when it is ready for customers."}</small>
             </div>
           </div>
-          {form.isActive ? (
-            <ul>
-              <li>Live on venue page</li>
-              <li>{hasWorkingNowDancers ? "Available on eligible Working Now dancer profiles" : "Will appear automatically when an affiliated dancer is Working Now"}</li>
-              <li>Cashier NFC redemption active</li>
-            </ul>
-          ) : null}
         </section>
       ) : null}
       <section className="venue-deal-nfc-status" aria-labelledby="venue-deal-nfc-heading">
         <div aria-hidden="true">)))</div>
         <section>
-          <span className="eyebrow">Cashier redemption</span>
-          <h3 id="venue-deal-nfc-heading">Tracked NFC</h3>
-          <p>{form.isActive ? "This offer is now available when a customer taps any active cashier sticker for this venue. Deal selection, dancer credit, and billing are verified at the tap." : "Publish this deal to make it available through active cashier NFC stickers. Draft deals cannot be redeemed."}</p>
-          <small>Sticker URLs are managed in Dancer NFC verification above. A sticker can be disabled or rotated without editing the deal.</small>
+          <span className="eyebrow">Cashier sticker</span>
+          <h3 id="venue-deal-nfc-heading">{form.isActive ? "Ready for redemption" : "Waiting for a live deal"}</h3>
+          <p>{form.isActive ? "Customers can redeem this deal with any active cashier sticker assigned to your venue." : "Publish this deal to make it available at the cashier."}</p>
+          <small>Sticker status is managed in Assigned NFC access.</small>
         </section>
       </section>
       <details className="venue-deal-how">
         <summary>How Club Deals work</summary>
         <div>
           <p>
-            Published deals appear on your venue page and on affiliated dancer profiles while those dancers are verified Working Now.
+            Publish a deal and MyDancr shows it on your venue page and eligible Working Now dancer profiles.
           </p>
           <p>
-            Customers choose a deal on MyDancr, then tap the physical cashier sticker. Direct venue intent and dancer-profile intent preserve their source, while the same tap creates the verified referral fee and billing record.
+            Customers select a deal and tap your MyDancr cashier sticker. MyDancr records the confirmed redemption, attribution, and referral fee.
           </p>
-          <aside className="venue-redemption-instructions">
-            <strong>Cashier redemption</strong>
-            <p>Staff point the customer to the official MyDancr NFC sticker at the register. The customer taps, confirms the active offer, and receives an on-screen success result. Only a server-verified active tag creates the venue billing and attribution record.</p>
-          </aside>
         </div>
       </details>
       <div className="deal-metrics venue-deal-metrics">
