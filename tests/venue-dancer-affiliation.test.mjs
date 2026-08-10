@@ -26,8 +26,9 @@ const [
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 const migration = `${baseMigration}\n${approvalMigration}`;
-const [nfcMigration, nfcTapRoute, venueNfcPanel, dancerNfcPanel] = await Promise.all([
+const [nfcMigration, profileAuthorizationMigration, nfcTapRoute, venueNfcPanel, dancerNfcPanel] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608090003_nfc_tap_experience.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608090004_nfc_profile_authorization.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8"),
@@ -59,6 +60,10 @@ test("a dressing-room tap persists pending onboarding and activates without mana
   assert.match(nfcMigration, /'method', 'nfc'/);
   assert.match(nfcTapRoute, /registerDancerFromNfc/);
   assert.doesNotMatch(nfcTapRoute, /manager.*approve/i);
+  assert.match(profileAuthorizationMigration, /authorize_dancer_profile_from_nfc/);
+  assert.match(profileAuthorizationMigration, /venue_approved_at = coalesce\(dancer\.venue_approved_at, v_enrollment\.tapped_at\)/);
+  assert.match(profileAuthorizationMigration, /insert into public\.venue_dancer_affiliations/);
+  assert.match(profileAuthorizationMigration, /Public visibility remains governed by profile completeness and media moderation/);
 });
 
 test("manager approval is retired while the exact venue owner can still revoke an affiliation", () => {
@@ -107,9 +112,12 @@ test("check-ins and dancer-attributed commission require an active venue affilia
 test("dancer and venue dashboards expose the complete dressing-room NFC flow", () => {
   assert.match(dashboard, /DancerNfcPanel/);
   assert.match(dashboard, /VenueNfcTagPanel/);
-  assert.match(dancerNfcPanel, /tap the official MyDancr NFC sticker in the dressing room/);
-  assert.match(dancerNfcPanel, /No manager scan or separate approval is required/);
-  assert.match(venueNfcPanel, /Dressing room — dancer verification/);
+  assert.match(dancerNfcPanel, /tap its official MyDancr sticker in the dressing room/);
+  assert.match(dancerNfcPanel, /No manager scan or separate approval is waiting/);
+  assert.match(dancerNfcPanel, /Media safety moderation remains separate/);
+  assert.match(venueNfcPanel, /Dressing room — automatic dancer approval/);
+  assert.match(venueNfcPanel, /Staff never scan or approve a dancer/);
+  assert.match(venueNfcPanel, /NFC-authorized roster/);
   assert.match(venueNfcPanel, /Create programming URL/);
   assert.match(venueNfcPanel, /Rotate/);
   assert.match(venueNfcPanel, /Disable/);
@@ -120,8 +128,8 @@ test("dancer and venue dashboards expose the complete dressing-room NFC flow", (
 test("the physical venue sticker determines affiliation without a dancer venue dropdown", () => {
   assert.match(nfcMigration, /where tag\.id = p_tag_id and tag\.status = 'active' and tag\.tag_type = 'dressing_room'/);
   assert.match(nfcMigration, /where venue\.id = v_tag\.venue_id and venue\.is_active = true/);
-  assert.match(nfcMigration, /insert into public\.venue_dancer_affiliations/);
-  assert.match(nfcMigration, /on conflict \(venue_id, dancer_id\) do update/);
+  assert.match(profileAuthorizationMigration, /insert into public\.venue_dancer_affiliations/);
+  assert.match(profileAuthorizationMigration, /on conflict \(venue_id, dancer_id\) do update/);
   assert.doesNotMatch(dancerNfcPanel, /<select|venue dropdown/i);
 });
 

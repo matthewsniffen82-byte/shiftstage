@@ -25,6 +25,32 @@ export type ResolvedNfcTag = NfcTagSummary & {
   venue: { id: string; name: string; slug: string; city: string; state: string };
 };
 
+export type DancerNfcDashboardState = {
+  profileAuthorization: {
+    profileExists: boolean;
+    authorized: boolean;
+    authorizedAt: string | null;
+    profileStatus: string | null;
+    mediaReviewStatus: string | null;
+    isPublic: boolean;
+  };
+  affiliations: Array<{
+    id: string;
+    status: string;
+    approvedAt: string | null;
+    revokedAt: string | null;
+    venue: { id: string; name: string; slug: string; city: string; state: string | null } | null;
+  }>;
+  enrollment: {
+    id: string;
+    status: string;
+    tappedAt: string;
+    expiresAt: string;
+    completedAt: string | null;
+    venue: { id: string; name: string; slug: string; city: string; state: string | null } | null;
+  } | null;
+};
+
 export function hashNfcToken(token: string) {
   return crypto.createHash("sha256").update(token, "utf8").digest("hex");
 }
@@ -170,6 +196,7 @@ export async function registerDancerFromNfc(
     },
   });
   if (error) throw error;
+  await authorizeDancerProfileFromNfc(client, input.dancerUserId);
   return data;
 }
 
@@ -177,6 +204,7 @@ export async function finalizePendingDancerNfcEnrollment(
   client: DancrClient,
   input: { dancerUserId: string; sessionId?: string; request?: Request },
 ) {
+  await authorizeDancerProfileFromNfc(client, input.dancerUserId);
   const sessionId = input.sessionId && UUID_PATTERN.test(input.sessionId) ? input.sessionId : crypto.randomUUID();
   const audit = input.request ? requestAudit(input.request) : { ipAddress: null, userAgent: null, deviceFingerprint: null };
   const { data, error } = await (client as any).rpc("finalize_pending_dancer_nfc_enrollment", {
@@ -190,6 +218,74 @@ export async function finalizePendingDancerNfcEnrollment(
   });
   if (error) throw error;
   return data;
+}
+
+export async function getDancerNfcDashboardState(
+  client: DancrClient,
+  dancerUserId: string,
+): Promise<DancerNfcDashboardState> {
+  const { data: profile, error: profileError } = await (client as any)
+    .from("dancer_profiles")
+    .select("id, status, photo_review_status, is_public, venue_approved_at")
+    .eq("user_id", dancerUserId)
+    .maybeSingle();
+  if (profileError) throw profileError;
+
+  const affiliationQuery = profile
+    ? (client as any)
+        .from("venue_dancer_affiliations")
+        .select("id, status, approved_at, revoked_at, venues(id, name, slug, city, state)")
+        .eq("dancer_id", profile.id)
+        .order("updated_at", { ascending: false })
+    : Promise.resolve({ data: [], error: null });
+  const enrollmentQuery = (client as any)
+    .from("dancer_nfc_enrollments")
+    .select("id, status, tapped_at, expires_at, completed_at, venues(id, name, slug, city, state)")
+    .eq("dancer_user_id", dancerUserId)
+    .order("tapped_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const [{ data: affiliations, error: affiliationsError }, { data: enrollment, error: enrollmentError }] = await Promise.all([
+    affiliationQuery,
+    enrollmentQuery,
+  ]);
+  if (affiliationsError) throw affiliationsError;
+  if (enrollmentError) throw enrollmentError;
+
+  return {
+    profileAuthorization: {
+      profileExists: Boolean(profile),
+      authorized: Boolean(profile?.venue_approved_at),
+      authorizedAt: profile?.venue_approved_at ? String(profile.venue_approved_at) : null,
+      profileStatus: profile?.status ? String(profile.status) : null,
+      mediaReviewStatus: profile?.photo_review_status ? String(profile.photo_review_status) : null,
+      isPublic: profile?.is_public === true,
+    },
+    affiliations: (affiliations || []).map((row: any) => ({
+      id: String(row.id),
+      status: String(row.status),
+      approvedAt: row.approved_at ? String(row.approved_at) : null,
+      revokedAt: row.revoked_at ? String(row.revoked_at) : null,
+      venue: mapDashboardVenue(firstJoined(row.venues)),
+    })),
+    enrollment: enrollment
+      ? {
+          id: String(enrollment.id),
+          status: String(enrollment.status),
+          tappedAt: String(enrollment.tapped_at),
+          expiresAt: String(enrollment.expires_at),
+          completedAt: enrollment.completed_at ? String(enrollment.completed_at) : null,
+          venue: mapDashboardVenue(firstJoined(enrollment.venues)),
+        }
+      : null,
+  };
+}
+
+async function authorizeDancerProfileFromNfc(client: DancrClient, dancerUserId: string) {
+  const { error } = await (client as any).rpc("authorize_dancer_profile_from_nfc", {
+    p_dancer_user_id: dancerUserId,
+  });
+  if (error) throw error;
 }
 
 export async function confirmRedemptionFromNfc(
@@ -252,6 +348,17 @@ function toTagSummary(row: any): NfcTagSummary {
 
 function firstJoined(value: unknown): any {
   return Array.isArray(value) ? value[0] || null : value || null;
+}
+
+function mapDashboardVenue(row: any) {
+  if (!row) return null;
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    slug: String(row.slug),
+    city: String(row.city),
+    state: row.state ? String(row.state) : null,
+  };
 }
 
 function friendlyTagError(error: any) {

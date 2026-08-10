@@ -79,8 +79,10 @@ test("venue owners create, disable, and rotate one-time NFC programming URLs", (
   assert.match(nfcTagRoute, /rotateVenueNfcTag/);
   assert.match(nfcTagRoute, /setVenueNfcTagStatus/);
   assert.match(nfcService, /requireOwnedVenue/);
-  assert.match(nfcPanel, /Dressing room — dancer verification/);
+  assert.match(nfcPanel, /Dressing room — automatic dancer approval/);
   assert.match(nfcPanel, /Cashier — Club Deal redemption/);
+  assert.match(nfcPanel, /NFC-authorized roster/);
+  assert.match(nfcPanel, /Staff never scan or approve a dancer/);
   assert.match(nfcPanel, /Shown once — program this sticker now/);
   assert.match(nfcPanel, /lock the physical sticker/);
 });

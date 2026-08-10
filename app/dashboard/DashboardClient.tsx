@@ -107,6 +107,7 @@ type LoadState = {
   dealRevenue?: Record<string, unknown> | null;
   finance?: Record<string, unknown> | null;
   affiliations?: Array<Record<string, unknown>>;
+  nfc?: Record<string, unknown> | null;
   error?: string;
 };
 
@@ -185,6 +186,7 @@ export default function DashboardClient({
             dealRevenue: secondary.dealRevenue || null,
             finance: secondary.finance || null,
             affiliations: secondary.affiliations || [],
+            nfc: secondary.nfc || null,
           });
           setIsLoading(false);
         }
@@ -323,6 +325,8 @@ export default function DashboardClient({
               analytics={state.analytics}
               deals={state.deals}
               finance={state.finance}
+              affiliations={state.affiliations || []}
+              nfc={state.nfc}
               profile={state.profile}
               onProfileChange={updateProfile}
               rankingEvents={state.rankingEvents}
@@ -1281,6 +1285,11 @@ function CustomerDealPassPanel({
         </div>
         <strong>{activeDeals.length}</strong>
       </div>
+      <section className="customer-nfc-guide" aria-label="How cashier NFC redemption works">
+        <div><b>1</b><span><strong>Choose the exact deal</strong><small>Open an offer from a venue or a Working Now dancer before reaching the cashier.</small></span></div>
+        <div><b>2</b><span><strong>Tap at the cashier</strong><small>Keep the deal open and tap the official MyDancr NFC sticker with this signed-in phone.</small></span></div>
+        <div><b>3</b><span><strong>Wait for confirmation</strong><small>The on-screen confirmation records the redemption and the correct dancer attribution.</small></span></div>
+      </section>
       <div className="saved-deal-list">
         {activeDeals.map((item) => (
           <Link
@@ -1298,7 +1307,7 @@ function CustomerDealPassPanel({
         {!activeDeals.length ? (
           <div className="customer-empty-state">
             <strong>No active Club Deals</strong>
-            <p>Choose a Club Deal from a venue page or a verified Working Now dancer, then redeem by tapping the venue&apos;s cashier NFC sticker.</p>
+            <p>Choose a Club Deal first, then tap the venue&apos;s official cashier NFC sticker. There is no QR code to scan.</p>
             <Link href={homeDiscoveryHref("venues")}>Browse venues</Link>
           </div>
         ) : null}
@@ -1700,7 +1709,8 @@ function VenuePanel({
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
   const upcomingShiftCount = Number(analytics?.upcomingShiftCount || 0);
-  const verifiedDancerCount = initialAffiliations.length;
+  const activeAffiliations = initialAffiliations.filter((affiliation) => affiliation.status === "active");
+  const nfcAuthorizedDancerCount = activeAffiliations.length;
   const liveDealSummary = activeDealCount
     ? `${activeDealCount} live Club ${activeDealCount === 1 ? "Deal" : "Deals"}`
     : "No live Club Deals";
@@ -1720,7 +1730,7 @@ function VenuePanel({
           <strong>{liveDealSummary}</strong>
           <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
           <a className="primary-link" href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
-            Manage dancer NFC
+            Manage dancer NFC access
           </a>
         </div>
       </section>
@@ -1728,7 +1738,7 @@ function VenuePanel({
       <nav className="venue-dashboard-shortcuts" aria-label="Venue dashboard shortcuts">
         <a className="is-primary" href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
           <VenueDashboardActionIcon name="verify" />
-          <span><strong>Dancer NFC</strong><small>Manage stickers</small></span>
+          <span><strong>Dancer NFC</strong><small>Tags and authorized roster</small></span>
         </a>
         <a href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
           <VenueDashboardActionIcon name="deal" />
@@ -1755,17 +1765,17 @@ function VenuePanel({
         <Metric label="Working now" value={String(workingNow.length)} />
         <Metric label="Upcoming shifts" value={String(upcomingShiftCount)} />
         <Metric label="Live Club Deals" value={String(activeDealCount)} />
-        <Metric label="Verified roster" value={String(verifiedDancerCount)} />
+        <Metric label="NFC-authorized" value={String(nfcAuthorizedDancerCount)} />
       </section>
 
       <VenueDashboardSection
-        description="Program and manage the physical dressing-room NFC stickers dancers tap to verify affiliation and publish eligible profiles."
+        description="Program dressing-room stickers and review the roster they authorize automatically. Venue staff never scan or approve a dancer."
         eyebrow="Primary floor action"
         id="venue-dancer-roster"
-        title="Dancer NFC verification"
-        badge={`${verifiedDancerCount} verified`}
+        title="Dancer NFC access"
+        badge={`${nfcAuthorizedDancerCount} authorized`}
       >
-        <VenueNfcTagPanel />
+        <VenueNfcTagPanel initialAffiliations={activeAffiliations} />
       </VenueDashboardSection>
 
       <VenueDashboardSection
@@ -1787,13 +1797,13 @@ function VenuePanel({
 
       <VenueDashboardSection
         badge={`${workingNow.length} active`}
-        description="Review verified dancers currently checked in at this venue and open their live profiles."
+        description="Review NFC-authorized dancers currently checked in at this venue and open their live profiles."
         eyebrow="Floor status"
         id="venue-working-now"
         title="Working now"
       >
         <article className="info-panel venue-working-panel">
-          <h2>Verified check-ins</h2>
+          <h2>NFC-authorized check-ins</h2>
           <div className="venue-working-list">
             {workingNow.map((dancer) => (
               <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
@@ -2529,9 +2539,11 @@ function readSetting(profile: LoadState["profile"], key: string, fallback: boole
 
 function DancerPanel({
   accountState,
+  affiliations,
   analytics,
   deals,
   finance,
+  nfc,
   onProfileChange,
   profile,
   rankingEvents,
@@ -2539,9 +2551,11 @@ function DancerPanel({
   weeklyReport,
 }: {
   accountState?: string;
+  affiliations: Array<Record<string, unknown>>;
   analytics?: LoadState["analytics"];
   deals?: LoadState["deals"];
   finance?: LoadState["finance"];
+  nfc?: LoadState["nfc"];
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   rankingEvents?: LoadState["rankingEvents"];
@@ -2550,6 +2564,8 @@ function DancerPanel({
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
   const isApproved = effectiveStatus === "approved";
+  const nfcAuthorization = nfc?.profileAuthorization as Record<string, unknown> | undefined;
+  const isNfcAuthorized = nfcAuthorization?.authorized === true || affiliations.some((item) => item.status === "active");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
 
@@ -2558,8 +2574,10 @@ function DancerPanel({
       <InfoPanel title="Profile">
         <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
         <Metric label="Status" value={effectiveStatus} />
+        <Metric label="NFC approval" value={isNfcAuthorized ? "approved" : "tap required"} />
         <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
       </InfoPanel>
+      <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc} />
       {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
       <DancerSetupPanel
         deletedPhotoIds={deletedPhotoIds}
@@ -2581,7 +2599,6 @@ function DancerPanel({
         onProfileChange={onProfileChange}
       />
       <DancerTvStudio embedded />
-      <DancerNfcPanel />
       {isApproved ? <DancerShiftPanel /> : null}
       {isApproved ? (
         <>
@@ -5293,6 +5310,11 @@ function DashboardStyles() {
       .saved-deal-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
       .saved-deal-head h2 { margin: 0; }
       .saved-deal-head > strong { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
+      .customer-nfc-guide { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
+      .customer-nfc-guide > div { min-width: 0; display: flex; gap: 10px; padding: 12px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; background: linear-gradient(145deg, rgba(109,40,217,.12), rgba(34,199,255,.05)); }
+      .customer-nfc-guide > div > b { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 12px; }
+      .customer-nfc-guide span { min-width: 0; display: grid; gap: 4px; }
+      .customer-nfc-guide small { color: #b9accd; font-size: 11px; line-height: 1.4; }
       .saved-deal-list { display: grid; gap: 9px; margin-top: 14px; }
       .saved-deal-list > p { margin: 0; color: #b9accd; font-size: 14px; line-height: 1.45; }
       .saved-deal-item { min-height: 62px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid rgba(126,234,255,.3); border-radius: 10px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.2), rgba(34,199,255,.08)); text-decoration: none; }
@@ -5520,7 +5542,7 @@ function DashboardStyles() {
       .dashboard-shell-venue .commission-tier-table > strong { color: #d7d5dd; }
       .dashboard-shell-venue .commission-tier-table > strong { background: rgba(255,255,255,.04); }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {

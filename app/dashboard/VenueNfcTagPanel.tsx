@@ -15,8 +15,20 @@ type NfcTag = {
   createdAt: string;
 };
 
-export default function VenueNfcTagPanel() {
+type DancerAffiliation = {
+  id: string;
+  status: string;
+  approvedAt?: string | null;
+  dancer?: { stageName?: string; slug?: string; city?: string; avatarUrl?: string | null } | null;
+};
+
+export default function VenueNfcTagPanel({
+  initialAffiliations = [],
+}: {
+  initialAffiliations?: Array<Record<string, unknown>>;
+}) {
   const [tags, setTags] = useState<NfcTag[]>([]);
+  const [affiliations, setAffiliations] = useState<DancerAffiliation[]>(initialAffiliations as DancerAffiliation[]);
   const [type, setType] = useState<NfcTag["type"]>("dressing_room");
   const [label, setLabel] = useState("Dressing room");
   const [status, setStatus] = useState("Loading venue NFC tags…");
@@ -27,12 +39,17 @@ export default function VenueNfcTagPanel() {
     const auth = authHeaders();
     if (!auth) return setStatus("Sign in required.");
     try {
-      const response = await fetch("/api/venue/nfc-tags", { headers: auth, cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load NFC tags.");
-      persistRefreshedSession(data.session);
-      setTags(data.tags || []);
-      setStatus(data.tags?.length ? "" : "Create the first tag, then write its one-time URL to a physical NFC sticker.");
+      const [tagResponse, rosterResponse] = await Promise.all([
+        fetch("/api/venue/nfc-tags", { headers: auth, cache: "no-store" }),
+        fetch("/api/venue/dancer-verifications", { headers: auth, cache: "no-store" }),
+      ]);
+      const [tagData, rosterData] = await Promise.all([tagResponse.json(), rosterResponse.json()]);
+      if (!tagResponse.ok || !tagData.ok) throw new Error(tagData.error || "Unable to load NFC tags.");
+      if (!rosterResponse.ok || !rosterData.ok) throw new Error(rosterData.error || "Unable to load the NFC-authorized roster.");
+      persistRefreshedSession(tagData.session);
+      setTags(tagData.tags || []);
+      setAffiliations(rosterData.affiliations || []);
+      setStatus(tagData.tags?.length ? "" : "Create the first tag, then write its one-time URL to a physical NFC sticker.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load NFC tags.");
     }
@@ -98,12 +115,41 @@ export default function VenueNfcTagPanel() {
     }
   }
 
+  async function removeAccess(affiliation: DancerAffiliation) {
+    const dancerName = affiliation.dancer?.stageName || "this dancer";
+    if (!window.confirm(`Remove ${dancerName} from this venue's NFC-authorized roster? They must tap the dressing-room sticker again before checking in.`)) return;
+    const auth = authHeaders();
+    if (!auth) return setStatus("Sign in required.");
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/venue/dancer-verifications", {
+        method: "DELETE",
+        headers: { ...auth, "content-type": "application/json" },
+        body: JSON.stringify({ affiliationId: affiliation.id, reason: "Venue removed NFC access." }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove NFC access.");
+      setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
+      setStatus(`${dancerName} was removed. A new dressing-room tap restores access.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to remove NFC access.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const activeAffiliations = affiliations.filter((item) => item.status === "active");
+
   return (
     <article className="info-panel venue-nfc-panel" id="venue-nfc-tags">
       <div>
         <span className="eyebrow">Physical venue access</span>
         <h2>NFC stickers</h2>
-        <p>Dressing-room tags verify dancers and eligible profiles. Cashier tags redeem live Club Deals and record attribution.</p>
+        <p>The dressing-room tap automatically authorizes the dancer profile and venue affiliation. Staff never scan or approve a dancer. Cashier tags redeem Club Deals and record attribution.</p>
+      </div>
+      <div className="venue-nfc-flow" aria-label="NFC workflow">
+        <section><b>1</b><span><strong>Dressing room</strong><small>Dancer taps → profile and venue access are approved → a current posted shift checks in.</small></span></section>
+        <section><b>2</b><span><strong>Cashier</strong><small>Customer opens a selected Club Deal → taps the cashier sticker → redemption and attribution are recorded.</small></span></section>
       </div>
       <form onSubmit={createTag}>
         <label>Placement
@@ -112,7 +158,7 @@ export default function VenueNfcTagPanel() {
             setType(next);
             setLabel(next === "dressing_room" ? "Dressing room" : "Main cashier");
           }}>
-            <option value="dressing_room">Dressing room — dancer verification</option>
+            <option value="dressing_room">Dressing room — automatic dancer approval</option>
             <option value="cashier">Cashier — Club Deal redemption</option>
           </select>
         </label>
@@ -149,9 +195,21 @@ export default function VenueNfcTagPanel() {
           </section>
         ))}
       </div>
+      <section className="venue-nfc-roster" aria-label="NFC-authorized dancer roster">
+        <div className="venue-nfc-roster-head">
+          <span><strong>NFC-authorized roster</strong><small>Created only by dressing-room taps</small></span>
+          <b>{activeAffiliations.length} active</b>
+        </div>
+        {activeAffiliations.length ? activeAffiliations.map((affiliation) => (
+          <div className="venue-nfc-dancer" key={affiliation.id}>
+            <span><strong>{affiliation.dancer?.stageName || "Dancer"}</strong><small>Approved by NFC{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small></span>
+            <button type="button" disabled={isSaving} onClick={() => removeAccess(affiliation)}>Remove access</button>
+          </div>
+        )) : <p>No dancers have tapped this venue&apos;s dressing-room sticker yet.</p>}
+      </section>
       {status ? <p role="status">{status}</p> : null}
       <style>{`
-        .venue-nfc-panel{display:grid;gap:16px}.venue-nfc-panel h2,.venue-nfc-panel p{margin:4px 0}.venue-nfc-panel>div>p{color:#b9accd;line-height:1.45}.venue-nfc-panel form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}.venue-nfc-panel label{display:grid;gap:6px;color:#cfc5de;font-size:12px;font-weight:900}.venue-nfc-panel input,.venue-nfc-panel select{min-height:46px;min-width:0;padding:0 11px;border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff;background:#16131d;font:inherit}.venue-nfc-panel button{min-height:44px;padding:0 14px;border:1px solid rgba(146,102,255,.48);border-radius:10px;color:#fff;background:rgba(96,43,220,.32);font:inherit;font-weight:900;cursor:pointer}.venue-nfc-panel button:disabled{opacity:.6;cursor:wait}.nfc-programming{display:grid;gap:9px;padding:15px;border:1px solid rgba(69,255,165,.36);border-radius:12px;background:rgba(38,208,119,.07)}.nfc-programming code{overflow-wrap:anywhere;padding:10px;border-radius:8px;color:#c7ffe3;background:#070a08}.nfc-programming small{color:#9db5a8;line-height:1.4}.nfc-tag-list{display:grid;gap:8px}.nfc-tag-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:13px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.035)}.nfc-tag-row>div:first-child{display:grid;gap:2px}.nfc-tag-row span{color:#9d82ff;font-size:9px;font-weight:950;letter-spacing:.12em;text-transform:uppercase}.nfc-tag-row small{color:#938a9f}.nfc-tag-row b{color:#7dffbd;font-size:10px;text-transform:uppercase}.nfc-tag-row.disabled b,.nfc-tag-row.revoked b{color:#b4aabf}.nfc-tag-row>div:last-child{display:flex;gap:7px}@media(max-width:760px){.venue-nfc-panel form,.nfc-tag-row{grid-template-columns:1fr}.nfc-tag-row>div:last-child{display:grid;grid-template-columns:1fr 1fr}}
+        .venue-nfc-panel{display:grid;gap:16px}.venue-nfc-panel h2,.venue-nfc-panel p{margin:4px 0}.venue-nfc-panel>div>p{color:#b9accd;line-height:1.45}.venue-nfc-flow{display:grid;grid-template-columns:1fr 1fr;gap:9px}.venue-nfc-flow section{display:flex;gap:10px;padding:12px;border:1px solid rgba(114,80,255,.2);border-radius:12px;background:rgba(92,48,190,.07)}.venue-nfc-flow section>b{width:28px;height:28px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;color:#fff;background:#642bd7}.venue-nfc-flow span,.venue-nfc-roster-head span,.venue-nfc-dancer span{display:grid;gap:3px}.venue-nfc-flow small,.venue-nfc-roster small{color:#9e94aa;line-height:1.35}.venue-nfc-panel form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}.venue-nfc-panel label{display:grid;gap:6px;color:#cfc5de;font-size:12px;font-weight:900}.venue-nfc-panel input,.venue-nfc-panel select{min-height:46px;min-width:0;padding:0 11px;border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff;background:#16131d;font:inherit}.venue-nfc-panel button{min-height:44px;padding:0 14px;border:1px solid rgba(146,102,255,.48);border-radius:10px;color:#fff;background:rgba(96,43,220,.32);font:inherit;font-weight:900;cursor:pointer}.venue-nfc-panel button:disabled{opacity:.6;cursor:wait}.nfc-programming{display:grid;gap:9px;padding:15px;border:1px solid rgba(69,255,165,.36);border-radius:12px;background:rgba(38,208,119,.07)}.nfc-programming code{overflow-wrap:anywhere;padding:10px;border-radius:8px;color:#c7ffe3;background:#070a08}.nfc-programming small{color:#9db5a8;line-height:1.4}.nfc-tag-list{display:grid;gap:8px}.nfc-tag-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:13px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.035)}.nfc-tag-row>div:first-child{display:grid;gap:2px}.nfc-tag-row span{color:#9d82ff;font-size:9px;font-weight:950;letter-spacing:.12em;text-transform:uppercase}.nfc-tag-row small{color:#938a9f}.nfc-tag-row b{color:#7dffbd;font-size:10px;text-transform:uppercase}.nfc-tag-row.disabled b,.nfc-tag-row.revoked b{color:#b4aabf}.nfc-tag-row>div:last-child{display:flex;gap:7px}.venue-nfc-roster{display:grid;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}.venue-nfc-roster-head,.venue-nfc-dancer{display:flex;align-items:center;justify-content:space-between;gap:12px}.venue-nfc-roster-head>b{padding:6px 9px;border-radius:999px;color:#63ffb6;background:rgba(52,211,137,.1);font-size:10px}.venue-nfc-dancer{padding:11px 12px;border:1px solid rgba(69,255,165,.16);border-radius:11px;background:rgba(34,201,129,.05)}.venue-nfc-dancer button{min-height:38px}.venue-nfc-roster>p{color:#978da3}@media(max-width:760px){.venue-nfc-panel form,.nfc-tag-row,.venue-nfc-flow{grid-template-columns:1fr}.nfc-tag-row>div:last-child{display:grid;grid-template-columns:1fr 1fr}.venue-nfc-dancer{align-items:flex-start;flex-direction:column}}
       `}</style>
     </article>
   );

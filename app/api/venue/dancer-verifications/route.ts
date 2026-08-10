@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     await requireVenueAccount(client, user.id);
     return noStoreJson({
       ok: false,
-      error: "Manager QR approval has been retired. Dancers add affiliation by tapping the venue's dressing-room NFC sticker.",
+      error: "Manager approval has been retired. The dancer's dressing-room NFC tap automatically authorizes the profile and venue affiliation.",
       replacement: "dressing_room_nfc",
     }, 410);
   } catch (error) {
@@ -51,10 +51,10 @@ export async function DELETE(request: Request) {
     return noStoreJson({
       ok: true,
       affiliation,
-      message: `${String(affiliation.stageName)} is no longer verified at this venue.`,
+      message: `${String(affiliation.stageName)} no longer has NFC access at this venue.`,
     });
   } catch (error) {
-    return affiliationApiError(error, "Unable to remove dancer verification.");
+    return affiliationApiError(error, "Unable to remove dancer NFC access.");
   }
 }
 
