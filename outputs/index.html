@@ -2770,6 +2770,8 @@
     }
 
     .setup-avatar-editor {
+      position: relative;
+      isolation: isolate;
       display: grid;
       grid-template-columns: 76px minmax(0, 1fr);
       align-items: center;
@@ -2778,6 +2780,19 @@
       border: 1px solid rgba(255,255,255,.1);
       border-radius: 14px;
       background: rgba(255,255,255,.035);
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .setup-avatar-editor * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .setup-avatar-editor ::selection {
+      color: inherit;
+      background: transparent;
     }
 
     .setup-avatar-preview {

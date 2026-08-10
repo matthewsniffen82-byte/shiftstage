@@ -83,6 +83,19 @@ test("dancer dashboard avatar setup uses the same mobile-safe face-centering wor
   );
 });
 
+test("dancer dashboard avatar summary suppresses native mobile selection artifacts", () => {
+  const avatarEditorStyles =
+    liveShell.match(/\.setup-avatar-editor \{[\s\S]*?\n    \}[\s\S]*?\.setup-avatar-editor ::selection \{[\s\S]*?\n    \}/)?.[0] || "";
+
+  assert.match(avatarEditorStyles, /isolation: isolate/);
+  assert.match(avatarEditorStyles, /-webkit-tap-highlight-color: transparent/);
+  assert.match(avatarEditorStyles, /-webkit-touch-callout: none/);
+  assert.match(avatarEditorStyles, /-webkit-user-select: none/);
+  assert.match(avatarEditorStyles, /user-select: none/);
+  assert.match(avatarEditorStyles, /\.setup-avatar-editor \* \{[\s\S]*?-webkit-tap-highlight-color: transparent/);
+  assert.match(avatarEditorStyles, /\.setup-avatar-editor ::selection \{[\s\S]*?background: transparent/);
+});
+
 test("Step 1 stays expanded for the complete avatar upload started from profile setup", () => {
   const originGuard =
     liveShell.match(/function keepAvatarOriginSetupStepOpen\(\)[\s\S]*?\n    function openApprovedAvatarUploadPicker/)?.[0] || "";
