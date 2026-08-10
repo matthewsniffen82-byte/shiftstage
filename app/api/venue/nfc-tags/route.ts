@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import {
-  createVenueNfcTag,
-  listVenueNfcTags,
-  rotateVenueNfcTag,
-  setVenueNfcTagStatus,
-  type NfcTagType,
-} from "@/src/lib/dancr/nfc";
+import { listVenueNfcTags } from "@/src/lib/dancr/nfc";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -31,27 +25,13 @@ export async function POST(request: Request) {
     const authContext = await createRequestSupabaseContext(request);
     const { client, user } = authContext;
     await requireActiveVenue(client, user.id);
-    const body = await readBody(request);
-    const created = await createVenueNfcTag(createAdminSupabaseClient(), {
-      ownerUserId: user.id,
-      type: body.type as NfcTagType,
-      label: typeof body.label === "string" ? body.label : "",
-    });
-    const programmingUrl = new URL(`/nfc/${created.token}`, request.url).toString();
-    console.info("VENUE_NFC_TAG_CREATED", {
-      venueId: created.tag.venueId,
-      tagId: created.tag.id,
-      type: created.tag.type,
-    });
     return noStore({
-      ok: true,
-      tag: created.tag,
+      ok: false,
+      error: "MyDancr supplies and programs venue NFC stickers. Contact MyDancr support for a new or replacement sticker.",
       session: authContext.session || null,
-      programmingUrl,
-      message: "NFC programming URL created. It is shown once; write it to the sticker now.",
-    }, 201);
+    }, 403);
   } catch (error) {
-    return apiError(error, "Unable to create venue NFC tag.", 400);
+    return apiError(error, "Unable to verify venue NFC access.", 403);
   }
 }
 
@@ -60,37 +40,13 @@ export async function PATCH(request: Request) {
     const authContext = await createRequestSupabaseContext(request);
     const { client, user } = authContext;
     await requireActiveVenue(client, user.id);
-    const body = await readBody(request);
-    const tagId = typeof body.tagId === "string" ? body.tagId : "";
-    const admin = createAdminSupabaseClient();
-    if (body.action === "rotate") {
-      const rotated = await rotateVenueNfcTag(admin, { ownerUserId: user.id, tagId });
-      const programmingUrl = new URL(`/nfc/${rotated.token}`, request.url).toString();
-      console.info("VENUE_NFC_TAG_ROTATED", { tagId, replacementTagId: rotated.tag.id, venueId: rotated.tag.venueId });
-      return noStore({
-        ok: true,
-        tag: rotated.tag,
-        session: authContext.session || null,
-        programmingUrl,
-        message: "The old sticker URL was revoked. Program the replacement URL now; it is shown once.",
-      });
-    }
-    if (body.action !== "enable" && body.action !== "disable") {
-      return NextResponse.json({ ok: false, error: "Choose enable, disable, or rotate." }, { status: 400 });
-    }
-    const tag = await setVenueNfcTagStatus(admin, {
-      ownerUserId: user.id,
-      tagId,
-      status: body.action === "enable" ? "active" : "disabled",
-    });
     return noStore({
-      ok: true,
-      tag,
+      ok: false,
+      error: "Only MyDancr can activate, disable, or replace venue NFC stickers. Contact support if a sticker is lost, damaged, or moved.",
       session: authContext.session || null,
-      message: tag.status === "active" ? "NFC tag enabled." : "NFC tag disabled.",
-    });
+    }, 403);
   } catch (error) {
-    return apiError(error, "Unable to update venue NFC tag.", 400);
+    return apiError(error, "Unable to verify venue NFC access.", 403);
   }
 }
 
@@ -98,15 +54,6 @@ async function requireActiveVenue(client: Parameters<typeof getAccountByUserId>[
   const account = await getAccountByUserId(client, userId);
   if (!account || account.role !== "venue" || account.accountState !== "active") {
     throw new Error("Active venue account required.");
-  }
-}
-
-async function readBody(request: Request): Promise<Record<string, unknown>> {
-  try {
-    const value = await request.json();
-    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  } catch {
-    return {};
   }
 }
 

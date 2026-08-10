@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [accountClient, authRoute, dashboardPage, dashboard, venueDealRoute, nfcTagRoute, nfcPanel, nfcService, retiredVenueQr, retiredDealQr, venueDashboardRoute, liveApp] = await Promise.all([
+const [accountClient, authRoute, dashboardPage, dashboard, venueDealRoute, nfcTagRoute, nfcPanel, nfcService, adminNfcRoute, adminNfcPanel, nfcProvisioningMigration, retiredVenueQr, retiredDealQr, venueDashboardRoute, liveApp] = await Promise.all([
   readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/venue/page.tsx", import.meta.url), "utf8"),
@@ -11,6 +11,9 @@ const [accountClient, authRoute, dashboardPage, dashboard, venueDealRoute, nfcTa
   readFile(new URL("../app/api/venue/nfc-tags/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/nfc.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/nfc-tags/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminNfcInventoryPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608090005_admin_nfc_provisioning.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/qr-code/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal/qr/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/dashboard/route.ts", import.meta.url), "utf8"),
@@ -32,7 +35,7 @@ test("venue dashboard session recovery rotates and persists authentication witho
   assert.match(dashboard, /x-dancr-refresh-token/);
   assert.match(dashboard, /persistResponseSession/);
   assert.match(nfcTagRoute, /session: authContext\.session \|\| null/);
-  assert.match(nfcPanel, /persistRefreshedSession\(data\.session\)/);
+  assert.match(nfcPanel, /persistRefreshedSession\(tagData\.session\)/);
   assert.match(nfcPanel, /dancrAuthSessionV1/);
 });
 
@@ -73,18 +76,31 @@ test("venue managers can publish typed offers and bottle service with production
   assert.match(dashboard, /Publish Deal/);
 });
 
-test("venue owners create, disable, and rotate one-time NFC programming URLs", () => {
+test("MyDancr supplies NFC stickers while venue owners receive read-only inventory", () => {
   assert.match(nfcTagRoute, /requireActiveVenue/);
-  assert.match(nfcTagRoute, /createVenueNfcTag/);
-  assert.match(nfcTagRoute, /rotateVenueNfcTag/);
-  assert.match(nfcTagRoute, /setVenueNfcTagStatus/);
+  assert.match(nfcTagRoute, /MyDancr supplies and programs venue NFC stickers/);
+  assert.match(nfcTagRoute, /Only MyDancr can activate, disable, or replace/);
+  assert.doesNotMatch(nfcTagRoute, /createVenueNfcTag/);
+  assert.doesNotMatch(nfcTagRoute, /rotateVenueNfcTag/);
   assert.match(nfcService, /requireOwnedVenue/);
-  assert.match(nfcPanel, /Dressing room — automatic dancer approval/);
-  assert.match(nfcPanel, /Cashier — Club Deal redemption/);
+  assert.match(nfcPanel, /MyDancr supplied hardware/);
+  assert.match(nfcPanel, /Assigned NFC stickers/);
   assert.match(nfcPanel, /NFC-authorized roster/);
-  assert.match(nfcPanel, /Staff never scan or approve a dancer/);
-  assert.match(nfcPanel, /Shown once — program this sticker now/);
-  assert.match(nfcPanel, /lock the physical sticker/);
+  assert.match(nfcPanel, /staff never create tags, scan dancers, or approve profiles/i);
+  assert.doesNotMatch(nfcPanel, /Create programming URL/);
+  assert.doesNotMatch(nfcPanel, />Rotate</);
+});
+
+test("authenticated MyDancr admins provision, disable, and replace physical NFC inventory", () => {
+  assert.match(adminNfcRoute, /requireAdmin/);
+  assert.match(adminNfcRoute, /createAdminVenueNfcTag/);
+  assert.match(adminNfcRoute, /rotateAdminVenueNfcTag/);
+  assert.match(adminNfcRoute, /setAdminVenueNfcTagStatus/);
+  assert.match(adminNfcPanel, /Assign sticker/);
+  assert.match(adminNfcPanel, /Shown once — program the physical sticker now/);
+  assert.match(adminNfcPanel, /Do not send this URL to venue staff/);
+  assert.match(nfcProvisioningMigration, /rotate_admin_venue_nfc_tag/);
+  assert.match(nfcProvisioningMigration, /account\.role = 'admin'/);
 });
 
 test("legacy venue and deal QR write APIs return an explicit permanent replacement", () => {
@@ -102,9 +118,9 @@ test("venue dashboard data remains authenticated, owner-scoped, and backed by re
   assert.match(dashboard, /Working now/);
 });
 
-test("the compatibility live shell directs managers to NFC management instead of QR upload or dancer scans", () => {
+test("the compatibility live shell directs managers to assigned NFC inventory instead of QR upload or dancer scans", () => {
   assert.match(liveApp, /Dressing-room NFC roster/);
   assert.match(liveApp, /Managers do not scan or approve dancer profiles/);
-  assert.match(liveApp, /Manage NFC stickers/);
+  assert.match(liveApp, /View assigned NFC stickers/);
   assert.match(liveApp, /id="venueQrForm" hidden/);
 });

@@ -21,6 +21,10 @@ export type NfcTagSummary = {
   createdAt: string;
 };
 
+export type AdminNfcTagSummary = NfcTagSummary & {
+  venue: { id: string; name: string; slug: string; city: string; state: string | null };
+};
+
 export type ResolvedNfcTag = NfcTagSummary & {
   venue: { id: string; name: string; slug: string; city: string; state: string };
 };
@@ -80,78 +84,83 @@ export async function listVenueNfcTags(client: DancrClient, ownerUserId: string)
   return (data || []).map(toTagSummary);
 }
 
-export async function createVenueNfcTag(
-  client: DancrClient,
-  input: { ownerUserId: string; type: NfcTagType; label: string },
-) {
-  const venue = await requireOwnedVenue(client, input.ownerUserId);
-  const type = normalizeTagType(input.type);
-  const label = normalizeTagLabel(input.label);
-  const { count, error: countError } = await (client as any)
-    .from("nfc_tags")
-    .select("*", { count: "exact", head: true })
-    .eq("venue_id", venue.id)
-    .eq("status", "active");
-  if (countError) throw countError;
-  if ((count || 0) >= 25) throw new Error("This venue already has the maximum of 25 active NFC tags.");
-
-  const token = crypto.randomBytes(32).toString("base64url");
+export async function listAdminNfcTags(client: DancrClient): Promise<AdminNfcTagSummary[]> {
   const { data, error } = await (client as any)
     .from("nfc_tags")
-    .insert({
-      venue_id: venue.id,
-      tag_type: type,
-      label,
-      token_digest: hashNfcToken(token),
-      status: "active",
-      created_by_user_id: input.ownerUserId,
-    })
-    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, created_at")
-    .single();
-  if (error) throw friendlyTagError(error);
-
-  return { tag: toTagSummary(data), token, venue };
+    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, created_at, venues(id, name, slug, city, state)")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (error) throw error;
+  return (data || []).map((row: any) => {
+    const venue = firstJoined(row.venues);
+    if (!venue) throw new Error("An NFC tag is missing its venue assignment.");
+    return {
+      ...toTagSummary(row),
+      venue: {
+        id: String(venue.id),
+        name: String(venue.name),
+        slug: String(venue.slug),
+        city: String(venue.city),
+        state: venue.state ? String(venue.state) : null,
+      },
+    };
+  });
 }
 
-export async function rotateVenueNfcTag(
+export async function createAdminVenueNfcTag(
   client: DancrClient,
-  input: { ownerUserId: string; tagId: string },
+  input: { adminUserId: string; venueId: string; type: NfcTagType; label: string },
 ) {
-  if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid NFC tag is required.");
-  const venue = await requireOwnedVenue(client, input.ownerUserId);
+  if (!UUID_PATTERN.test(input.venueId)) throw new Error("A valid venue is required.");
+  const venue = await requireProvisionableVenue(client, input.venueId);
+  const type = normalizeTagType(input.type);
+  const label = normalizeTagLabel(input.label);
+  await requireActiveAdmin(client, input.adminUserId);
   const token = crypto.randomBytes(32).toString("base64url");
-  const replacementId = crypto.randomUUID();
-  const { data, error } = await (client as any).rpc("rotate_venue_nfc_tag", {
-    p_tag_id: input.tagId,
-    p_owner_user_id: input.ownerUserId,
-    p_replacement_id: replacementId,
+  const tagId = crypto.randomUUID();
+  const { data, error } = await (client as any).rpc("provision_admin_venue_nfc_tag", {
+    p_tag_id: tagId,
+    p_venue_id: venue.id,
+    p_admin_user_id: input.adminUserId,
+    p_tag_type: type,
+    p_label: label,
     p_token_digest: hashNfcToken(token),
   });
   if (error) throw friendlyTagError(error);
   return { tag: toTagSummary(data), token, venue };
 }
 
-export async function setVenueNfcTagStatus(
+export async function rotateAdminVenueNfcTag(
   client: DancrClient,
-  input: { ownerUserId: string; tagId: string; status: "active" | "disabled" },
+  input: { adminUserId: string; tagId: string },
 ) {
-  if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid NFC tag is required.");
-  const venue = await requireOwnedVenue(client, input.ownerUserId);
-  const now = new Date().toISOString();
-  const { data, error } = await (client as any)
-    .from("nfc_tags")
-    .update({
-      status: input.status,
-      disabled_at: input.status === "disabled" ? now : null,
-      updated_at: now,
-    })
-    .eq("id", input.tagId)
-    .eq("venue_id", venue.id)
-    .neq("status", "revoked")
-    .select("id, venue_id, tag_type, label, status, last_tapped_at, tap_count, created_at")
-    .maybeSingle();
+  if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid NFC sticker is required.");
+  await requireActiveAdmin(client, input.adminUserId);
+  const token = crypto.randomBytes(32).toString("base64url");
+  const replacementId = crypto.randomUUID();
+  const { data, error } = await (client as any).rpc("rotate_admin_venue_nfc_tag", {
+    p_tag_id: input.tagId,
+    p_admin_user_id: input.adminUserId,
+    p_replacement_id: replacementId,
+    p_token_digest: hashNfcToken(token),
+  });
   if (error) throw friendlyTagError(error);
-  if (!data) throw new Error("NFC tag not found.");
+  return { tag: toTagSummary(data), token };
+}
+
+export async function setAdminVenueNfcTagStatus(
+  client: DancrClient,
+  input: { adminUserId: string; tagId: string; status: "active" | "disabled" },
+) {
+  if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid NFC sticker is required.");
+  await requireActiveAdmin(client, input.adminUserId);
+  const { data, error } = await (client as any).rpc("set_admin_venue_nfc_tag_status", {
+    p_tag_id: input.tagId,
+    p_admin_user_id: input.adminUserId,
+    p_status: input.status,
+  });
+  if (error) throw friendlyTagError(error);
+  if (!data) throw new Error("NFC sticker not found.");
   return toTagSummary(data);
 }
 
@@ -330,6 +339,31 @@ async function requireOwnedVenue(client: DancrClient, ownerUserId: string) {
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("An active venue profile is required.");
+  return { id: String(data.id), name: String(data.name), slug: String(data.slug) };
+}
+
+async function requireActiveAdmin(client: DancrClient, adminUserId: string) {
+  if (!UUID_PATTERN.test(adminUserId)) throw new Error("Admin access required.");
+  const { data, error } = await (client as any)
+    .from("app_users")
+    .select("id")
+    .eq("id", adminUserId)
+    .eq("role", "admin")
+    .eq("account_state", "active")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Admin access required.");
+}
+
+async function requireProvisionableVenue(client: DancrClient, venueId: string) {
+  const { data, error } = await (client as any)
+    .from("venues")
+    .select("id, name, slug, is_active")
+    .eq("id", venueId)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("An active venue is required.");
   return { id: String(data.id), name: String(data.name), slug: String(data.slug) };
 }
 

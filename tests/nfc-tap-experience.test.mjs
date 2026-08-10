@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, nfcService, tapRoute, tagRoute, tapClient, accountClient, dashboardRoute, dealCard, legacyDancerQr, legacyDealQr] = await Promise.all([
+const [migration, adminProvisioningMigration, nfcService, tapRoute, tagRoute, adminTagRoute, tapClient, accountClient, dashboardRoute, dealCard, legacyDancerQr, legacyDealQr] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608090003_nfc_tap_experience.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608090005_admin_nfc_provisioning.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/nfc.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/nfc-tags/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/nfc-tags/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/nfc/[token]/NfcTapClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/dashboard/route.ts", import.meta.url), "utf8"),
@@ -15,15 +17,18 @@ const [migration, nfcService, tapRoute, tagRoute, tapClient, accountClient, dash
   readFile(new URL("../app/api/deals/redemptions/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("NFC tags store only high-entropy token digests and can be rotated or disabled by their venue owner", () => {
+test("NFC stickers store only high-entropy token digests and are provisioned by MyDancr admins", () => {
   assert.match(migration, /create table if not exists public\.nfc_tags/);
   assert.match(migration, /token_digest text not null unique/);
   assert.doesNotMatch(migration, /raw_token|token_plaintext/);
   assert.match(nfcService, /randomBytes\(32\)\.toString\("base64url"\)/);
   assert.match(nfcService, /createHash\("sha256"\)/);
   assert.match(nfcService, /requireOwnedVenue/);
-  assert.match(migration, /create or replace function public\.rotate_venue_nfc_tag/);
-  assert.match(tagRoute, /setVenueNfcTagStatus/);
+  assert.match(adminProvisioningMigration, /create or replace function public\.rotate_admin_venue_nfc_tag/);
+  assert.match(adminTagRoute, /setAdminVenueNfcTagStatus/);
+  assert.match(adminTagRoute, /requireAdmin/);
+  assert.match(tagRoute, /MyDancr supplies and programs venue NFC stickers/);
+  assert.doesNotMatch(tagRoute, /setVenueNfcTagStatus/);
   assert.match(tagRoute, /cache-control.*private, no-store/s);
 });
 

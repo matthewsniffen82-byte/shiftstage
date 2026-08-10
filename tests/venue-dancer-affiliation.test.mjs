@@ -115,12 +115,13 @@ test("dancer and venue dashboards expose the complete dressing-room NFC flow", (
   assert.match(dancerNfcPanel, /tap its official MyDancr sticker in the dressing room/);
   assert.match(dancerNfcPanel, /No manager scan or separate approval is waiting/);
   assert.match(dancerNfcPanel, /Media safety moderation remains separate/);
-  assert.match(venueNfcPanel, /Dressing room — automatic dancer approval/);
-  assert.match(venueNfcPanel, /Staff never scan or approve a dancer/);
+  assert.match(venueNfcPanel, /Dressing room/);
+  assert.match(venueNfcPanel, /staff never create tags, scan dancers, or approve profiles/i);
   assert.match(venueNfcPanel, /NFC-authorized roster/);
-  assert.match(venueNfcPanel, /Create programming URL/);
-  assert.match(venueNfcPanel, /Rotate/);
-  assert.match(venueNfcPanel, /Disable/);
+  assert.match(venueNfcPanel, /MyDancr programs and supplies every sticker/);
+  assert.doesNotMatch(venueNfcPanel, /Create programming URL/);
+  assert.doesNotMatch(venueNfcPanel, />Rotate</);
+  assert.doesNotMatch(venueNfcPanel, />Disable</);
   assert.match(dancerRoute, /cache-control": "private, no-store/);
   assert.match(venueRoute, /cache-control": "private, no-store/);
 });

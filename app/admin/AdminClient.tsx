@@ -5,6 +5,7 @@ import Link from "next/link";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
 import AdminDmcaPanel from "./AdminDmcaPanel";
+import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
 import AdminTvPanel from "./AdminTvPanel";
 
 type AdminState = {
@@ -432,6 +433,9 @@ export default function AdminClient() {
               <Metric key={key} label={labelize(key)} value={formatValue(value)} />
             ))}
             {!state.monitoring ? <Metric label="Status" value="Ready" /> : null}
+          </Panel> : null}
+          {workspace === "system" ? <Panel title="NFC sticker inventory">
+            <AdminNfcInventoryPanel />
           </Panel> : null}
           {workspace === "approvals" ? <Panel
             title="Dancer approvals"

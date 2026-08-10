@@ -1769,10 +1769,10 @@ function VenuePanel({
       </section>
 
       <VenueDashboardSection
-        description="Program dressing-room stickers and review the roster they authorize automatically. Venue staff never scan or approve a dancer."
+        description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue, plus the roster authorized automatically by dancer taps. Venue staff never create tags, scan dancers, or approve profiles."
         eyebrow="Primary floor action"
         id="venue-dancer-roster"
-        title="Dancer NFC access"
+        title="Assigned NFC access"
         badge={`${nfcAuthorizedDancerCount} authorized`}
       >
         <VenueNfcTagPanel initialAffiliations={activeAffiliations} />
