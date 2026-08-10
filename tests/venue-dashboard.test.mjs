@@ -48,6 +48,26 @@ test("the routed venue dashboard is isolated, closable, and uses the compact MyD
   assert.doesNotMatch(dashboardPage, /Now[\s\S]*Dancers[\s\S]*Trending/);
 });
 
+test("the primary venue dashboard opens in-page before its live data refresh finishes", () => {
+  const revealVenueDashboard =
+    liveApp.match(/async function loadAndRevealVenueDashboard\(\) \{[\s\S]*?^    \}/m)?.[0] || "";
+  const openVenueDashboard =
+    liveApp.match(/async function openVenueDashboard\(\) \{[\s\S]*?^    \}/m)?.[0] || "";
+  const startVenueSession =
+    liveApp.match(/async function startVenueDashboardSession[\s\S]*?^    \}/m)?.[0] || "";
+
+  assert.match(revealVenueDashboard, /venueDashboard\.classList\.add\("show"\)/);
+  assert.match(revealVenueDashboard, /venueDashboard\.setAttribute\("aria-busy", "true"\)/);
+  assert.ok(
+    revealVenueDashboard.indexOf('venueDashboard.classList.add("show")') <
+      revealVenueDashboard.indexOf("await loadLiveVenueDashboard()"),
+    "the venue overlay must be visible before the dashboard API resolves",
+  );
+  assert.match(openVenueDashboard, /void loadAndRevealVenueDashboard\(\)\.catch/);
+  assert.doesNotMatch(openVenueDashboard, /window\.location\.href/);
+  assert.match(startVenueSession, /const opened = await openVenueDashboard\(\)/);
+});
+
 test("venue operations prioritize tonight, Club Deals, NFC stickers, and then reporting", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
   assert.match(venuePanel, /Tonight/);
