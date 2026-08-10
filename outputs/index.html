@@ -2858,6 +2858,82 @@
       opacity: .62;
     }
 
+    .setup-profile-editor {
+      display: grid;
+      gap: 14px;
+    }
+
+    .setup-profile-editor-section {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      background: rgba(9,9,12,.94);
+      box-shadow: 0 14px 34px rgba(0,0,0,.28);
+    }
+
+    .setup-profile-editor-head {
+      display: grid;
+      gap: 3px;
+    }
+
+    .setup-profile-editor-head strong {
+      color: #fff;
+      font-size: 17px;
+      font-weight: 950;
+    }
+
+    .setup-profile-editor-head p {
+      margin: 0;
+      color: #aaa2b8;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .setup-profile-editor .approved-profile-video-manager {
+      margin: 0;
+      border-color: rgba(255,255,255,.10);
+      background: rgba(9,9,12,.94);
+      box-shadow: 0 14px 34px rgba(0,0,0,.28);
+    }
+
+    .setup-profile-editor-actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    [data-setup-profile-save][aria-busy="true"] {
+      cursor: wait;
+      opacity: .72;
+    }
+
+    [data-setup-profile-save].is-saved {
+      border-color: rgba(86,240,164,.55);
+      background: rgba(20,92,62,.78);
+      box-shadow: 0 0 20px rgba(86,240,164,.12);
+    }
+
+    #setupProfileSaveStatus {
+      margin: 0;
+      border-color: rgba(255,255,255,.10);
+      color: #c8c2d0;
+      background: rgba(255,255,255,.035);
+    }
+
+    #setupProfileSaveStatus.is-success {
+      border-color: rgba(86,240,164,.32);
+      color: #baffd9;
+      background: rgba(18,84,55,.25);
+    }
+
+    #setupProfileSaveStatus.is-error {
+      border-color: rgba(255,104,124,.38);
+      color: #ffd0d8;
+      background: rgba(92,12,28,.3);
+    }
+
     @media (max-width: 380px) {
       .approved-profile-identity-editor { margin-inline: 10px; padding: 12px; }
       .approved-profile-identity-row { grid-template-columns: 68px minmax(0, 1fr); gap: 11px; }
@@ -38863,7 +38939,7 @@
       const target = profileForm || profileStep || document.getElementById("setupChecklistWrap") || document.getElementById("dancerApprovalCommand");
       target?.scrollIntoView({ block: "start", behavior: "smooth" });
       setTimeout(() => {
-        document.getElementById("setupStageName")?.focus({ preventScroll: true });
+        document.querySelector('[data-setup-profile-editor] [data-approved-avatar-upload]')?.focus({ preventScroll: true });
       }, 260);
     }
 
@@ -49452,6 +49528,12 @@
       }
     }
 
+    function clearStoredDancerProfileDraft() {
+      try {
+        localStorage.removeItem(dancerProfileDraftStorageKey());
+      } catch (error) {}
+    }
+
     function hasCompletedDancerProfileSetup(profile = {}) {
       const stageName = String(profile.stage_name || profile.stageName || "").trim();
       const city = String(profile.city || profile.cityName || "").trim();
@@ -49466,11 +49548,29 @@
           ...dancerSignupSocials,
           ...(update.socials || {})
         },
+        dirty: true,
         updatedAt: Date.now()
       };
       try {
         localStorage.setItem(dancerProfileDraftStorageKey(), JSON.stringify(draft));
       } catch (error) {}
+    }
+
+    function captureDancerSetupProfileDraft() {
+      const editor = document.querySelector("[data-setup-profile-editor]");
+      const form = editor?.querySelector('[data-setup-form="profile"]') || document.querySelector('[data-setup-form="profile"]');
+      if (!form) return readStoredDancerProfileDraft();
+      const stageName = form.querySelector("#setupStageName")?.value ?? document.getElementById("dancerStageName")?.value ?? "";
+      const city = form.querySelector("#setupCity")?.value ?? document.getElementById("dancerCity")?.value ?? "";
+      const socials = { ...dancerSignupSocials };
+      (editor || form).querySelectorAll("[data-setup-social]").forEach((field) => {
+        socials[field.dataset.setupSocial] = field.value;
+      });
+      setDancerSetupField("dancerStageName", stageName);
+      setDancerSetupField("dancerCity", city);
+      assignSocialMap(dancerSignupSocials, socials);
+      saveDancerProfileDraft({ stageName, city, socials });
+      return readStoredDancerProfileDraft();
     }
 
     function applyStoredDancerProfileDraft() {
@@ -49841,7 +49941,7 @@
       const submittedForReview = normalizedReviewStatus(profile.status) === "pending_review";
       const savedProfileSetup = approved || rejected || hasCompletedDancerProfileSetup(profile);
       const draft = readStoredDancerProfileDraft();
-      const useDraftFields = Boolean(draft && !savedProfileSetup);
+      const useDraftFields = Boolean(draft && (draft.dirty === true || !savedProfileSetup));
       const liveSocials = dancerSocialMapFromProfile(profile);
       const draftSocials = draft?.socials && typeof draft.socials === "object" ? draft.socials : {};
       const legalName = useDraftFields ? (draft.legalName || profile.real_name || profile.realName || "") : (profile.real_name || profile.realName || draft?.legalName || "");
@@ -49938,7 +50038,7 @@
       return Boolean(
         activeElement &&
         activeElement !== document.body &&
-        activeElement.closest?.("#setupChecklist [data-setup-form]")
+        activeElement.closest?.("#setupChecklist [data-setup-form], #setupChecklist [data-setup-profile-editor]")
       );
     }
 
@@ -50418,6 +50518,7 @@
       const input = document.getElementById("approvedAvatarUploadInput");
       const message = "Choose a clear face photo for your avatar.";
       pendingAvatarSetupStep = options.preserveSetupStep === true ? "profile" : "";
+      if (pendingAvatarSetupStep === "profile") captureDancerSetupProfileDraft();
       keepAvatarOriginSetupStepOpen();
       setApprovedAvatarUploadStatus(message);
       showToast(message);
@@ -51195,47 +51296,73 @@
         return;
       }
 
-      const profileBody = `
-        <form class="auth-form" data-setup-form="profile">
-          <div class="field">
-            <label for="setupStageName">Stage name</label>
-            <input id="setupStageName" data-setup-profile-field="stageName" type="text" value="${escapeHtml(document.getElementById("dancerStageName").value || "")}" minlength="2" maxlength="40" autocomplete="nickname">
-            <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
+      const profileIdentityBody = `
+        <section class="setup-profile-editor-section">
+          <div class="setup-profile-editor-head">
+            <strong>Profile identity</strong>
+            <p>Start with your avatar, then add the public name and city customers will see.</p>
           </div>
-          <div class="field">
-            <label for="setupCity">City</label>
-            <select id="setupCity" data-setup-profile-field="city" required ${dancerSignupCitiesState === "ready" ? "" : "disabled"}>
-              ${dancerSignupCityOptionsMarkup(document.getElementById("dancerCity")?.value || pendingDancerSignupCity)}
-            </select>
-            <div class="field-note">Choose from active MyDancr venue markets.</div>
-          </div>
-          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" data-setup-social="instagram" type="text" value="${escapeHtml(dancerSignupSocials.instagram)}" placeholder="Username or profile URL"></div>
-          <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" data-setup-social="tiktok" type="text" value="${escapeHtml(dancerSignupSocials.tiktok)}" placeholder="Username or profile URL"></div>
-          <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" data-setup-social="snapchat" type="text" value="${escapeHtml(dancerSignupSocials.snapchat)}" placeholder="username or snapchat.com/add/username"></div>
-          <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" data-setup-social="onlyfans" type="text" value="${escapeHtml(dancerSignupSocials.onlyfans)}" placeholder="Username or profile URL"></div>
-          <div class="field"><label for="setupX">Optional X</label><input id="setupX" data-setup-social="x" type="text" value="${escapeHtml(dancerSignupSocials.x)}" placeholder="Username or profile URL"></div>
-          <div class="rule-note">Enter a handle or full profile URL. Dancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
-          <div class="field">
-            <label>Profile avatar</label>
-            ${dancerSetupAvatarEditorMarkup(activeProfile)}
-            <div class="field-note">Required. The same production face-centering and moderation used in Edit Profile is applied here.</div>
-          </div>
-          <button class="action-btn" type="submit">Save profile</button>
-        </form>
+          <form class="auth-form" id="setupProfileForm" data-setup-form="profile">
+            <div class="field">
+              <label>Profile avatar</label>
+              ${dancerSetupAvatarEditorMarkup(activeProfile)}
+              <div class="field-note">Required. Upload this first so your face-centered avatar is ready while you finish the rest of your profile. The same production moderation used in Edit Profile is applied here.</div>
+            </div>
+            <div class="field">
+              <label for="setupStageName">Stage name</label>
+              <input id="setupStageName" data-setup-profile-field="stageName" type="text" value="${escapeHtml(document.getElementById("dancerStageName").value || "")}" minlength="2" maxlength="40" autocomplete="nickname">
+              <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
+            </div>
+            <div class="field">
+              <label for="setupCity">City</label>
+              <select id="setupCity" data-setup-profile-field="city" required ${dancerSignupCitiesState === "ready" ? "" : "disabled"}>
+                ${dancerSignupCityOptionsMarkup(document.getElementById("dancerCity")?.value || pendingDancerSignupCity)}
+              </select>
+              <div class="field-note">Choose from active MyDancr venue markets.</div>
+            </div>
+          </form>
+        </section>
       `;
       const photosBody = `
-        <form class="auth-form" data-setup-form="photos">
-          ${dancerSetupPhotoPreviewMarkup()}
-          <div class="field">
-            <label for="setupProfilePhotos">Profile pictures</label>
-            <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple>
-            <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> For the sharpest result, choose original camera images—not screenshots or social-media copies—with at least 2,000 pixels on the longest edge. MyDancr keeps the high-resolution master, serves responsive sizes, and never enlarges a small upload. The first photo becomes your main profile photo. Each photo uses the live Dancr auto-moderation rules: it is approved automatically, sent for human review, or fully rejected.</div>
+        <section class="setup-profile-editor-section">
+          <div class="setup-profile-editor-head">
+            <strong>Profile pictures</strong>
+            <p>Add and review pictures with the same uploader used in Edit Profile.</p>
           </div>
-          <div class="rule-note" id="photoUploadResult">Every image is checked automatically. A pending or rejected image keeps profile submission locked until it passes or is removed.</div>
-          <button class="action-btn" type="submit">Upload pictures</button>
-        </form>
+          <form class="auth-form" data-setup-form="photos">
+            ${dancerSetupPhotoPreviewMarkup()}
+            <div class="field">
+              <label for="setupProfilePhotos">Choose pictures</label>
+              <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple>
+              <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> For the sharpest result, choose original camera images—not screenshots or social-media copies—with at least 2,000 pixels on the longest edge. MyDancr keeps the high-resolution master, serves responsive sizes, and never enlarges a small upload. The first photo becomes your main profile photo. Each photo uses the live Dancr auto-moderation rules: it is approved automatically, sent for human review, or fully rejected.</div>
+            </div>
+            <div class="rule-note" id="photoUploadResult">Every image is checked automatically. A pending or rejected image keeps profile submission locked until it passes or is removed.</div>
+            <button class="action-btn" type="submit">Upload pictures</button>
+          </form>
+        </section>
         ${approvedProfileVideoManagerMarkup()}
       `;
+      const profileSocialBody = `
+        <section class="setup-profile-editor-section">
+          <div class="setup-profile-editor-head">
+            <strong>Social links</strong>
+            <p>Add the same optional links that appear in Edit Profile. Uploading media will not clear these fields.</p>
+          </div>
+          <div class="auth-form">
+            <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" form="setupProfileForm" data-setup-social="instagram" type="text" value="${escapeHtml(dancerSignupSocials.instagram)}" placeholder="Username or profile URL"></div>
+            <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" form="setupProfileForm" data-setup-social="tiktok" type="text" value="${escapeHtml(dancerSignupSocials.tiktok)}" placeholder="Username or profile URL"></div>
+            <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" form="setupProfileForm" data-setup-social="snapchat" type="text" value="${escapeHtml(dancerSignupSocials.snapchat)}" placeholder="username or snapchat.com/add/username"></div>
+            <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" form="setupProfileForm" data-setup-social="onlyfans" type="text" value="${escapeHtml(dancerSignupSocials.onlyfans)}" placeholder="Username or profile URL"></div>
+            <div class="field"><label for="setupX">Optional X</label><input id="setupX" form="setupProfileForm" data-setup-social="x" type="text" value="${escapeHtml(dancerSignupSocials.x)}" placeholder="Username or profile URL"></div>
+            <div class="rule-note">Enter a username or full profile URL. MyDancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
+          </div>
+          <div class="setup-profile-editor-actions">
+            <button class="action-btn" type="submit" form="setupProfileForm" data-setup-profile-save>Save profile</button>
+            <div class="rule-note" id="setupProfileSaveStatus" role="status" aria-live="polite" hidden></div>
+          </div>
+        </section>
+      `;
+      const profileBody = `<div class="setup-profile-editor" data-setup-profile-editor>${profileIdentityBody}${photosBody}${profileSocialBody}</div>`;
       const reviewBody = `
         ${profileReviewNoticeMarkup(reviewSubmitted)}
         <button class="action-btn secondary" type="button" data-preview-profile>
@@ -51249,7 +51376,7 @@
         <div class="rule-note">The tap saves that exact venue affiliation. It activates immediately for an eligible profile or automatically after setup and media review finish. No manager scan is required.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
-        setupStepMarkup("profile", "Create profile and add media", `${profileBody}${photosBody}`),
+        setupStepMarkup("profile", "Create profile and add media", profileBody),
         setupStepMarkup("review", "Preview and submit", reviewBody),
         setupStepMarkup("approval", "Confirm venue affiliation", approvalBody)
       ].join("");
@@ -57781,7 +57908,7 @@
     });
 
     dancerDashboard.addEventListener("focusout", (event) => {
-      if (!event.target.closest("#setupChecklist [data-setup-form]")) return;
+      if (!event.target.closest("#setupChecklist [data-setup-form], #setupChecklist [data-setup-profile-editor]")) return;
       window.setTimeout(() => {
         if (dancerSetupRefreshPending && !dancerSetupEditorHasFocus()) {
           renderDancerSetupWhenEditorIdle();
@@ -57804,6 +57931,7 @@
       if (profileVideoForm) {
         event.preventDefault();
         if (approvedProfileVideoSubmitting) return;
+        if (document.querySelector("[data-setup-profile-editor]")) captureDancerSetupProfileDraft();
         approvedProfileVideoSubmitting = true;
         approvedProfileVideoStatus = "Checking your video...";
         approvedProfileVideoStatusTone = "";
@@ -57841,6 +57969,7 @@
       const photosForm = event.target.closest("[data-setup-form='photos']");
       if (photosForm) {
         event.preventDefault();
+        captureDancerSetupProfileDraft();
         submitSetupPhotos(photosForm);
         return;
       }
@@ -57885,8 +58014,18 @@
       updateDancerDashboardName(stageName);
       assignSocialMap(dancerSignupSocials, normalizedSocials);
       saveDancerProfileDraft({ stageName, city, socials: normalizedSocials });
-      const submit = form.querySelector('button[type="submit"]');
-      if (submit) submit.disabled = true;
+      const submit = document.querySelector("[data-setup-profile-save]");
+      const status = document.getElementById("setupProfileSaveStatus");
+      if (submit) {
+        submit.disabled = true;
+        submit.setAttribute("aria-busy", "true");
+        submit.textContent = "Saving profile...";
+      }
+      if (status) {
+        status.hidden = false;
+        status.classList.remove("is-success", "is-error");
+        status.textContent = "Saving your avatar, stage name, city, and social links...";
+      }
       try {
         if (isDancerSession()) {
           const data = await patchAuthenticatedJson("/api/dancer/profile", {
@@ -57897,15 +58036,48 @@
           if (!data) throw new Error("Sign in required");
           if (data.profile) applyDancerApprovalProfile(data.profile);
           markDancerProfileSetupSaved(true);
-          showToast("Profile saved");
         } else {
           markDancerProfileSetupSaved(true);
         }
         completeSetupStep("profile", { keepOpen: true });
+        clearStoredDancerProfileDraft();
+        const refreshedSubmit = document.querySelector("[data-setup-profile-save]");
+        const refreshedStatus = document.getElementById("setupProfileSaveStatus");
+        if (refreshedSubmit) {
+          refreshedSubmit.disabled = false;
+          refreshedSubmit.removeAttribute("aria-busy");
+          refreshedSubmit.classList.add("is-saved");
+          refreshedSubmit.textContent = "Saved ✓";
+        }
+        if (refreshedStatus) {
+          refreshedStatus.hidden = false;
+          refreshedStatus.classList.add("is-success");
+          refreshedStatus.textContent = "Profile saved. Your avatar, stage name, city, and social links are preserved.";
+        }
+        showToast("Profile saved");
+        window.setTimeout(() => {
+          const currentSubmit = document.querySelector("[data-setup-profile-save]");
+          if (currentSubmit && currentSubmit.textContent.includes("Saved")) {
+            currentSubmit.classList.remove("is-saved");
+            currentSubmit.textContent = "Save profile";
+          }
+        }, 3200);
       } catch (error) {
-        showToast(error.message || "Could not save live profile");
+        const message = error.message || "Could not save live profile";
+        const currentStatus = document.getElementById("setupProfileSaveStatus");
+        if (currentStatus) {
+          currentStatus.hidden = false;
+          currentStatus.classList.remove("is-success");
+          currentStatus.classList.add("is-error");
+          currentStatus.textContent = `Profile was not saved. ${message}`;
+        }
+        showToast(message);
       } finally {
-        if (submit) submit.disabled = false;
+        if (submit?.isConnected) {
+          submit.disabled = false;
+          submit.removeAttribute("aria-busy");
+          submit.textContent = "Save profile";
+        }
       }
     });
 
