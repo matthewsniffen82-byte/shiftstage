@@ -272,6 +272,36 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
 });
 
+test("Dancers reuses unchanged grid cards and keeps compact photos stable during touch scrolling", () => {
+  const contentKey = homeSource.match(
+    /function homeDancerGridContentKey\(city, markup\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/,
+  )?.[0] || "";
+  const renderer = homeSource.match(
+    /function renderHomeDancerGrid\(city, profiles\) \{[\s\S]*?(?=\n    function homeDiscoveryFeedSlide)/,
+  )?.[0] || "";
+  const compactCardRule = homeSource.match(
+    /#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[^}]*\}/,
+  )?.[0] || "";
+
+  assert.match(contentKey, /city,/);
+  assert.match(contentKey, /filter: dancerDirectoryFilter/);
+  assert.match(contentKey, /venueFilter: selectedVenueFilter\(\)/);
+  assert.match(contentKey, /markup/);
+  assert.match(renderer, /const gridMarkup = `/);
+  assert.match(renderer, /const nextRenderKey = homeDancerGridContentKey\(city, gridMarkup\)/);
+  assert.match(
+    renderer,
+    /homeDancerGridRenderKey === nextRenderKey[\s\S]*?results\.querySelector\(":scope > \.dancer-directory-filters"\)[\s\S]*?return;/,
+  );
+  assert.match(renderer, /homeDancerGridRenderKey = nextRenderKey;[\s\S]*?results\.innerHTML = gridMarkup;/);
+  assert.match(compactCardRule, /contain: layout style;/);
+  assert.doesNotMatch(compactCardRule, /contain: layout paint style;/);
+  assert.match(
+    homeSource,
+    /Keep compact directory tiles in the normal mobile paint flow[\s\S]*?@media \(hover: none\) and \(pointer: coarse\)[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card,[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-link,[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-photo \{[\s\S]*?-webkit-backface-visibility: visible !important;[\s\S]*?backface-visibility: visible !important;/,
+  );
+});
+
 test("Venues uses natural one-column cards with a visible next-card continuation", () => {
   assert.match(
     homeSource,

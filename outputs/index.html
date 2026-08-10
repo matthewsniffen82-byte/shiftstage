@@ -34144,7 +34144,7 @@
           background: #050507 !important;
           box-shadow: none !important;
           filter: none !important;
-          contain: layout paint style;
+          contain: layout style;
         }
         #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-link {
           position: relative;
@@ -34161,6 +34161,23 @@
           height: 100%;
           aspect-ratio: auto;
           background-position: center top !important;
+          background-repeat: no-repeat !important;
+        }
+        /* Keep compact directory tiles in the normal mobile paint flow. Promoting
+           every photo to an isolated paint layer can make Android discard and
+           re-rasterize cards while the page is moving. */
+        @media (hover: none) and (pointer: coarse) {
+          #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card,
+          #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-link,
+          #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo {
+            transform: none !important;
+            -webkit-transform: none !important;
+            filter: none !important;
+            -webkit-filter: none !important;
+            transition: none !important;
+            -webkit-backface-visibility: visible !important;
+            backface-visibility: visible !important;
+          }
         }
         #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo::after {
           background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);
@@ -37936,6 +37953,7 @@
     let homeDiscoveryFeedQrPromptTimer = 0;
     let homeDiscoveryFeedQrPromptKey = "";
     let homeDiscoveryFeedRenderKey = "";
+    let homeDancerGridRenderKey = "";
     const homeDiscoveryFeedPositions = new Map();
     const homeDiscoveryFeedQrPromptsShown = new Set();
     const HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000;
@@ -53197,6 +53215,15 @@
       ];
     }
 
+    function homeDancerGridContentKey(city, markup) {
+      return JSON.stringify({
+        city,
+        filter: dancerDirectoryFilter,
+        venueFilter: selectedVenueFilter(),
+        markup
+      });
+    }
+
     function renderHomeDancerGrid(city, profiles) {
       const sections = dancerDirectorySections(profiles, city);
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
@@ -53208,12 +53235,21 @@
       results.classList.add("card-grid", "home-dancer-grid");
       results.classList.add("home-dancer-three-column");
       results.setAttribute("aria-label", `Approved dancers in ${city}, grouped by live status, popularity, and schedule`);
-      results.innerHTML = `
+      const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
         ${visibleCount
           ? sections.map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles, city, true)).join("")
           : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available in ${city} yet.`)}</div>`}
       `;
+      const nextRenderKey = homeDancerGridContentKey(city, gridMarkup);
+      if (
+        homeDancerGridRenderKey === nextRenderKey &&
+        results.querySelector(":scope > .dancer-directory-filters")
+      ) {
+        return;
+      }
+      homeDancerGridRenderKey = nextRenderKey;
+      results.innerHTML = gridMarkup;
     }
 
     function homeDiscoveryFeedSlide(profile, index, total, tab) {
