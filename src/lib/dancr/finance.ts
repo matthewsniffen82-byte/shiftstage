@@ -133,7 +133,7 @@ async function publishClubInvoice(client: DancrClient, invoice: any) {
         ? { days_until_due: Number(account.payment_terms_days || DEFAULT_PAYMENT_TERMS_DAYS) }
         : {}),
       auto_advance: false,
-      description: `MyDancr QR commissions · ${invoice.period_start} through ${invoice.period_end}`,
+      description: `MyDancr Club Deal commissions · ${invoice.period_start} through ${invoice.period_end}`,
       metadata: {
         mydancr_invoice_id: invoice.id,
         venue_id: invoice.venue_id,
@@ -404,7 +404,7 @@ export async function processDancerPayouts(client: DancrClient) {
         amount,
         currency,
         destination: payoutAccount.stripe_account_id,
-        description: "MyDancr QR commission payout",
+        description: "MyDancr Club Deal commission payout",
         metadata: { payout_batch_id: batchId, dancer_id: dancerId },
       }, { idempotencyKey: `mydancr-payout-batch-${batchId}` });
       const { error: completeError } = await (client as any).rpc("complete_dancer_payout_batch", {

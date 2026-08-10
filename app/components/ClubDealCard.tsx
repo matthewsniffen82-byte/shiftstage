@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 
-const SESSION_KEY = "dancrAuthSessionV1";
-const DEAL_SESSION_KEY = "mydancrDealSessionV1";
+const DEAL_INTENT_KEY = "mydancrPendingNfcDealV1";
 
 type ClubDealCardProps = {
   deal: ClubDeal;
@@ -40,11 +38,8 @@ export function ClubDealCard({
   stickyCta = false,
   sectionId,
 }: ClubDealCardProps) {
-  const [qrDataUrl, setQrDataUrl] = useState("");
-  const [redemptionToken, setRedemptionToken] = useState("");
-  const [expiresAt, setExpiresAt] = useState("");
   const [status, setStatus] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [intentSaved, setIntentSaved] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const dialogReturnContext = useRef<{
     windowScrollY: number;
@@ -55,8 +50,7 @@ export function ClubDealCard({
   const offerDeals = deals?.length ? deals : [deal];
   const [selectedDealId, setSelectedDealId] = useState(deal.id);
   const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;
-  const passUrl = redemptionToken ? `/deals/pass/${encodeURIComponent(redemptionToken)}` : "";
-  const actionLabel = ctaLabel || (offerDeals.length > 1 ? `Club Deals · ${offerDeals.length}` : "Get Club Deal");
+  const actionLabel = ctaLabel || (offerDeals.length > 1 ? `Club Deals · ${offerDeals.length}` : "Use Club Deal");
 
   useEffect(() => {
     if (!dialogOpen) return;
@@ -111,84 +105,24 @@ export function ClubDealCard({
     setDialogOpen(true);
   }
 
-  async function generateDealQr() {
+  function saveForNfcTap() {
     setStatus("");
-    setIsLoading(true);
-
     try {
-      const session = readCustomerSession();
-      const headers: Record<string, string> = { "content-type": "application/json" };
-      if (session.accessToken) headers.authorization = `Bearer ${session.accessToken}`;
-
-      const response = await fetch("/api/deals/redemptions", {
-        method: "POST",
-        headers,
-        credentials: "same-origin",
-        body: JSON.stringify({
-          clubDealId: activeDeal.id,
-          venueId,
-          sourceType,
-          dancerId: sourceType === "dancer_profile" ? dancerId : null,
-          attributionToken: sourceType === "dancer_profile"
-            ? attributionTokens?.[activeDeal.id] || attributionToken
-            : null,
-          sessionId: readOrCreateDealSessionId(),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to create this QR code.");
-
-      setQrDataUrl(data.qrDataUrl);
-      setRedemptionToken(data.redemption?.redemptionToken || "");
-      setExpiresAt(data.redemption?.expiresAt || "");
-      if (session.accessToken && data.redemption?.redemptionToken) {
-        await recordLifecycleEvent(data.redemption.redemptionToken, "saved");
-      }
-      setStatus(session.accessToken
-        ? "QR ready and saved to your customer dashboard."
-        : "QR ready. Save or share it before you go.");
+      window.localStorage.setItem(DEAL_INTENT_KEY, JSON.stringify({
+        venueId,
+        dealId: activeDeal.id,
+        sourceType,
+        dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
+        attributionToken: sourceType === "dancer_profile"
+          ? attributionTokens?.[activeDeal.id] || attributionToken || null
+          : null,
+        savedAt: Date.now(),
+      }));
+      setIntentSaved(true);
+      setStatus(`Ready. At ${venueName || "the venue"}, tap the MyDancr NFC sticker at the cashier to redeem.`);
     } catch (error) {
-      setQrDataUrl("");
-      setRedemptionToken("");
-      setExpiresAt("");
-      setStatus(error instanceof Error ? error.message : "Unable to create this QR code.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function downloadQr() {
-    if (!qrDataUrl) return;
-    const link = document.createElement("a");
-    link.href = qrDataUrl;
-    link.download = `mydancr-${slugify(venueName || activeDeal.dealTitle)}-club-deal.png`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    await recordLifecycleEvent(redemptionToken, "saved");
-    setStatus("QR image saved.");
-  }
-
-  async function sharePass() {
-    if (!passUrl) return;
-    const absoluteUrl = new URL(passUrl, window.location.origin).toString();
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: activeDeal.dealTitle,
-          text: `${activeDeal.dealTitle}${venueName ? ` at ${venueName}` : ""}`,
-          url: absoluteUrl,
-        });
-        await recordLifecycleEvent(redemptionToken, "shared");
-        setStatus("Club Deal shared.");
-        return;
-      }
-      await navigator.clipboard.writeText(absoluteUrl);
-      await recordLifecycleEvent(redemptionToken, "shared");
-      setStatus("Club Deal link copied.");
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      setStatus("Unable to share this Club Deal.");
+      setIntentSaved(false);
+      setStatus(error instanceof Error ? error.message : "Unable to save this Club Deal on this device.");
     }
   }
 
@@ -199,30 +133,24 @@ export function ClubDealCard({
         <h2>{activeDeal.dealTitle}</h2>
         {!compact ? <p>{activeDeal.dealDescription}</p> : null}
         {activeDeal.dealTerms && !compact ? <small>{activeDeal.dealTerms}</small> : null}
-        {!compact ? <small>Scan at the club to redeem. No sign-in is required.</small> : null}
+        {!compact ? <small>Tap the MyDancr NFC sticker at the cashier to redeem. No sign-in is required.</small> : null}
         {dancerNote ? (
-          <small>Dancer credit is locked when the QR is issued during a verified check-in and stays attached when saved or shared.</small>
+          <small>Dancer credit is carried securely to the cashier NFC tap while this dancer remains verified at the venue.</small>
         ) : null}
       </div>
       <div className="club-deal-action">
-        {qrDataUrl ? (
-          <div className="deal-qr-frame">
-            <img src={qrDataUrl} alt={`${activeDeal.dealTitle} QR code`} />
-            <span>{expiresAt ? `Expires ${formatExpiry(expiresAt)}` : "Ready for club scan"}</span>
+        {intentSaved ? (
+          <div className="deal-nfc-ready">
+            <span aria-hidden="true">)))</span>
+            <strong>Ready for cashier tap</strong>
+            <small>Open this site by tapping the venue&apos;s MyDancr NFC sticker.</small>
           </div>
         ) : null}
-        <button type="button" onClick={() => generateDealQr()} disabled={isLoading}>
-          {isLoading ? "Creating your QR…" : qrDataUrl ? "Refresh QR" : actionLabel}
+        <button type="button" onClick={saveForNfcTap}>
+          {intentSaved ? "Change saved offer" : actionLabel}
         </button>
-        {qrDataUrl ? (
-          <div className="club-deal-pass-actions">
-            <button type="button" onClick={downloadQr}>Save QR</button>
-            <button type="button" onClick={sharePass}>Share</button>
-            {passUrl ? <Link href={passUrl}>View later</Link> : null}
-          </div>
-        ) : null}
         {status ? <em role="status">{status}</em> : null}
-        {qrDataUrl && activeDeal.offerType === "bottle_service" && activeDeal.bookingUrl ? (
+        {intentSaved && activeDeal.offerType === "bottle_service" && activeDeal.bookingUrl ? (
           <a className="club-deal-booking-link" href={activeDeal.bookingUrl} target="_blank" rel="noreferrer">
             Continue to venue booking
           </a>
@@ -239,12 +167,11 @@ export function ClubDealCard({
           type="button"
           onClick={(event) => {
             openDealDialog(event.currentTarget);
-            if (offerDeals.length === 1) void generateDealQr();
+            if (offerDeals.length === 1) saveForNfcTap();
           }}
-          disabled={isLoading}
         >
           <span>{offerDeals.length > 1 ? `${offerDeals.length} live offers` : "Club Deal"}</span>
-          <strong>{isLoading ? "Creating QR…" : actionLabel}</strong>
+          <strong>{actionLabel}</strong>
         </button>
       ) : (
         <article
@@ -261,12 +188,11 @@ export function ClubDealCard({
           type="button"
           onClick={(event) => {
             openDealDialog(event.currentTarget);
-            if (offerDeals.length === 1) void generateDealQr();
+            if (offerDeals.length === 1) saveForNfcTap();
           }}
-          disabled={isLoading}
         >
           <span>{deal.dealTitle}</span>
-          <strong>{isLoading ? "Creating QR…" : "Get Club Deal"}</strong>
+          <strong>Use with NFC</strong>
         </button>
       ) : null}
 
@@ -292,7 +218,7 @@ export function ClubDealCard({
             >
               ×
             </button>
-            {offerDeals.length > 1 && !qrDataUrl ? (
+            {offerDeals.length > 1 && !intentSaved ? (
               <div className="club-deal-offer-picker">
                 <span className="eyebrow">Choose your offer</span>
                 <h2>{venueName ? `Club Deals at ${venueName}` : "Club Deals"}</h2>
@@ -304,6 +230,7 @@ export function ClubDealCard({
                       type="button"
                       onClick={() => {
                         setSelectedDealId(offer.id);
+                        setIntentSaved(false);
                         setStatus("");
                       }}
                     >
@@ -325,76 +252,11 @@ export function ClubDealCard({
   );
 }
 
-async function recordLifecycleEvent(
-  token: string,
-  eventType: "saved" | "shared",
-) {
-  if (!token) return;
-  const session = readCustomerSession();
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (session.accessToken) headers.authorization = `Bearer ${session.accessToken}`;
-  await fetch(`/api/deals/redemptions/${encodeURIComponent(token)}/events`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      eventType,
-      sessionId: readOrCreateDealSessionId(),
-    }),
-    keepalive: true,
-  }).catch(() => null);
-}
-
-function readCustomerSession() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return {
-      accessToken: session?.account?.role === "customer" && typeof session?.accessToken === "string"
-        ? session.accessToken
-        : "",
-    };
-  } catch {
-    return { accessToken: "" };
-  }
-}
-
-function readOrCreateDealSessionId() {
-  try {
-    const existing = window.localStorage.getItem(DEAL_SESSION_KEY) || "";
-    if (/^[0-9a-f-]{36}$/i.test(existing)) return existing;
-    const next = crypto.randomUUID();
-    window.localStorage.setItem(DEAL_SESSION_KEY, next);
-    return next;
-  } catch {
-    return crypto.randomUUID();
-  }
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "club-deal";
-}
-
 function dealTypeLabel(value: ClubDeal["offerType"]) {
   if (value === "drink") return "Drink offer";
   if (value === "bottle_service") return "Bottle service";
   if (value === "other") return "Venue offer";
   return "Admission offer";
-}
-
-function formatExpiry(value: string) {
-  try {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "numeric",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(new Date(value));
-  } catch {
-    return "soon";
-  }
 }
 
 function ClubDealInteractionStyles() {
@@ -403,9 +265,6 @@ function ClubDealInteractionStyles() {
       .club-deal-launcher { width: fit-content; max-width: 100%; min-height: 48px; display: grid; gap: 1px; justify-items: start; padding: 7px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 999px; color: #fff; background: color-mix(in srgb, var(--dancr-color-success) 14%, var(--dancr-color-surface)); box-shadow: 0 8px 18px var(--dancr-color-black-soft); font: inherit; text-align: left; cursor: pointer; }
       .club-deal-launcher span { color: #d8f7ff; font-size: 9px; font-weight: 950; letter-spacing: .14em; line-height: 1; text-transform: uppercase; }
       .club-deal-launcher strong { max-width: 230px; overflow: hidden; font-size: 13px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
-      .club-deal-launcher:disabled, .club-deal-sticky:disabled { opacity: .72; cursor: wait; }
-      .club-deal-pass-actions { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-      .club-deal-pass-actions button, .club-deal-pass-actions a { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; border: 1px solid rgba(126,234,255,.28); border-radius: 999px; color: #fff; background: rgba(126,234,255,.08); font: inherit; font-size: 12px; font-weight: 900; text-decoration: none; cursor: pointer; }
       .club-deal-dialog-backdrop { position: fixed; z-index: 1700; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.82); backdrop-filter: blur(12px); }
       .club-deal-dialog { position: relative; width: min(430px, 100%); max-height: min(86dvh, 760px); display: grid; gap: 18px; overflow-y: auto; box-sizing: border-box; padding: 24px; border: 1px solid var(--dancr-color-border-subtle); border-radius: 18px; color: #f7f2ff; background: var(--dancr-color-surface-translucent); box-shadow: var(--dancr-shadow-modal); }
       .club-deal-dialog-close { position: absolute; z-index: 2; top: 10px; right: 10px; width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.38); border-radius: 50%; color: #fff; background: rgba(5,5,7,.82); font: inherit; font-size: 26px; cursor: pointer; }
@@ -415,9 +274,10 @@ function ClubDealInteractionStyles() {
       .club-deal-dialog .club-deal-copy small, .club-deal-dialog .club-deal-action em { color: #b9accd; font-size: 12px; line-height: 1.4; font-style: normal; }
       .club-deal-dialog .club-deal-action { display: grid; gap: 12px; }
       .club-deal-dialog .club-deal-action > button { min-height: 48px; border: 1px solid var(--dancr-color-success-medium); border-radius: 999px; color: #fff; background: color-mix(in srgb, var(--dancr-color-success) 18%, var(--dancr-color-surface)); font: inherit; font-weight: 950; cursor: pointer; }
-      .club-deal-dialog .deal-qr-frame { display: grid; justify-items: center; gap: 8px; padding: 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(0,0,0,.34); }
-      .club-deal-dialog .deal-qr-frame img { width: min(240px, 70vw); aspect-ratio: 1; border-radius: 10px; background: #fff; }
-      .club-deal-dialog .deal-qr-frame span { color: #d8f7ff; font-size: 12px; font-weight: 900; }
+      .club-deal-dialog .deal-nfc-ready { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:4px 12px; padding:16px; border:1px solid rgba(89,255,176,.28); border-radius:14px; background:rgba(35,196,118,.08); }
+      .club-deal-dialog .deal-nfc-ready>span { grid-row:1 / 3; width:44px; height:44px; display:grid; place-items:center; border-radius:50%; color:#fff; background:#5421d4; font-weight:950; letter-spacing:-5px; transform:rotate(-18deg); }
+      .club-deal-dialog .deal-nfc-ready strong { color:#d8ffeb; font-size:14px; }
+      .club-deal-dialog .deal-nfc-ready small { color:#a9c7b7; font-size:11px; line-height:1.35; }
       .club-deal-booking-link { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid rgba(126,234,255,.36); border-radius: 999px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; text-decoration: none; }
       .club-deal-offer-picker { display: grid; gap: 10px; }
       .club-deal-offer-picker h2 { margin: 0; padding-right: 34px; font-size: clamp(22px, 6vw, 30px); }
@@ -432,7 +292,6 @@ function ClubDealInteractionStyles() {
         .club-deal-sticky { position: fixed; z-index: 95; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 16px; color: #fff; background: var(--dancr-color-surface-translucent); box-shadow: 0 18px 50px rgba(0,0,0,.68); font: inherit; text-align: left; cursor: pointer; }
         .club-deal-sticky span { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
         .club-deal-sticky strong { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 12px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; white-space: nowrap; }
-        .club-deal-pass-actions { grid-template-columns: 1fr; }
       }
     `}</style>
   );

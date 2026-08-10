@@ -22,7 +22,8 @@ export type DealRedemptionInput = {
   shiftId?: string | null;
   customerId?: string | null;
   sessionId?: string | null;
-  campaignSource?: "venue_qr" | null;
+  campaignSource?: "venue_qr" | "venue_nfc" | null;
+  nfcTagId?: string | null;
   request: Request;
 };
 
@@ -197,6 +198,7 @@ export async function createDealRedemption(client: DancrClient, input: DealRedem
       attribution_locked_at: input.sourceType === "dancer_profile" ? new Date().toISOString() : null,
       customer_id: input.customerId || null,
       session_id: input.sessionId || null,
+      nfc_tag_id: input.nfcTagId || null,
       expires_at: expiresAt,
       ip_address: audit.ipAddress,
       user_agent: audit.userAgent,
@@ -239,7 +241,7 @@ export async function enforceDealGenerationRateLimit(
 
   if (error) throw error;
   if ((count || 0) >= 20) {
-    throw new Error("Too many QR requests. Try again in a few minutes.");
+    throw new Error("Too many Club Deal requests. Try again in a few minutes.");
   }
 }
 
@@ -287,7 +289,7 @@ export async function redeemDealToken(client: DancrClient, token: string, reques
   });
 
   if (error) {
-    const message = String(error.message || "Unable to redeem this QR code.");
+    const message = String(error.message || "Unable to redeem this Club Deal.");
     const status = message.includes("venue account") || message.includes("cannot redeem")
       ? 403
       : message.includes("not found")
@@ -301,7 +303,7 @@ export async function redeemDealToken(client: DancrClient, token: string, reques
     return {
       ok: false,
       status: Number(data.status || 400),
-      error: String(data.error || "Unable to redeem this QR code."),
+      error: String(data.error || "Unable to redeem this Club Deal."),
     };
   }
 

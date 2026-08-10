@@ -55,7 +55,7 @@ export async function POST(request: Request, { params }: RouteProps) {
       { actorUserId, sessionId },
     );
     if (!event) {
-      return NextResponse.json({ ok: false, error: "QR code not found." }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "Club Deal not found." }, { status: 404 });
     }
 
     return NextResponse.json({ ok: true, event });

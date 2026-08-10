@@ -1,6 +1,5 @@
 "use client";
 
-import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 
 export function ProfileCloseButton({
@@ -52,12 +51,9 @@ export function ProfileCloseButton({
     </button>
   );
 }
-
 export function ProfileShareButton({ stageName }: { stageName: string }) {
   const [status, setStatus] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [qrVisible, setQrVisible] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
     if (!dialogOpen) return;
@@ -79,7 +75,6 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
 
   function closeDialog() {
     setDialogOpen(false);
-    setQrVisible(false);
     setStatus("");
   }
 
@@ -111,22 +106,6 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
       setStatus("Profile link copied.");
     } catch {
       setStatus("Unable to copy this profile link.");
-    }
-  }
-
-  async function showProfileQr() {
-    setStatus("");
-    setQrVisible(true);
-    if (qrDataUrl) return;
-    try {
-      const nextQrDataUrl = await QRCode.toDataURL(profileUrl(), {
-        width: 520,
-        margin: 2,
-        color: { dark: "#050507", light: "#ffffff" },
-      });
-      setQrDataUrl(nextQrDataUrl);
-    } catch {
-      setStatus("Unable to generate the profile-sharing QR.");
     }
   }
 
@@ -169,35 +148,14 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
             <span>Share profile</span>
             <h2 id="profile-share-dialog-title">{stageName} on MyDancr</h2>
             <p>
-              Send this profile directly or let someone scan a profile-sharing
-              QR. This is not a Club Deal and cannot be redeemed at a venue.
+              Send the public profile directly or copy its secure link. Club
+              Deal redemption happens only through a venue cashier NFC tap.
             </p>
-
-            {qrVisible ? (
-              <div className="profile-share-qr">
-                <strong>Profile-sharing QR</strong>
-                {qrDataUrl ? (
-                  <img
-                    alt={`Profile-sharing QR for ${stageName}`}
-                    src={qrDataUrl}
-                  />
-                ) : (
-                  <div aria-label="Generating profile-sharing QR" role="status">
-                    Generating QR…
-                  </div>
-                )}
-                <small>Scan to open this dancer profile.</small>
-              </div>
-            ) : null}
 
             <div className="profile-share-dialog-actions">
               <button className="primary" onClick={shareProfile} type="button">
                 <ShareIcon />
                 Share profile
-              </button>
-              <button onClick={showProfileQr} type="button">
-                <QrIcon />
-                {qrVisible ? "Refresh profile QR" : "Show profile-sharing QR"}
               </button>
               <button onClick={copyProfileLink} type="button">
                 Copy profile link
@@ -220,17 +178,6 @@ function ShareIcon() {
       <circle cx="6" cy="12" r="3" />
       <circle cx="18" cy="19" r="3" />
       <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
-    </svg>
-  );
-}
-
-function QrIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
-      <rect height="7" rx="1" width="7" x="3" y="3" />
-      <rect height="7" rx="1" width="7" x="14" y="3" />
-      <rect height="7" rx="1" width="7" x="3" y="14" />
-      <path d="M14 14h3v3h-3zM19 14h2v5h-2M14 19h3v2h-3M19 21h2" />
     </svg>
   );
 }

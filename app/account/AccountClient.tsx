@@ -26,6 +26,7 @@ type DancerSignupCity = {
 };
 
 const SESSION_KEY = "dancrAuthSessionV1";
+const PENDING_DANCER_NFC_KEY = "mydancrPendingDancerNfcV1";
 
 export default function AccountClient() {
   const router = useRouter();
@@ -34,6 +35,9 @@ export default function AccountClient() {
   const isVenueAccessRedirect = requestedRole === "venue";
   const initialRole = searchParams.get("role") === "dancer" ? "dancer" : "customer";
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const venueNfcToken = /^[A-Za-z0-9_-]{40,120}$/.test(searchParams.get("venue_nfc") || "")
+    ? String(searchParams.get("venue_nfc"))
+    : "";
   const [role, setRole] = useState<AuthRole>(initialRole);
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
@@ -106,6 +110,13 @@ export default function AccountClient() {
       setExistingSessionRole(null);
     }
   }, []);
+
+  useEffect(() => {
+    if (!venueNfcToken || initialRole !== "dancer") return;
+    try {
+      window.localStorage.setItem(PENDING_DANCER_NFC_KEY, JSON.stringify({ token: venueNfcToken, savedAt: Date.now() }));
+    } catch { /* the confirmation callback still preserves the NFC return path */ }
+  }, [initialRole, venueNfcToken]);
 
   useEffect(() => {
     if (!isCustomerSignup) return;
@@ -249,7 +260,11 @@ export default function AccountClient() {
 
     const payload: Record<string, string> = { mode, role, email, password, city };
     if (mode === "signup" && typeof window !== "undefined") {
-      const returnTo = role === "dancer" ? "/dashboard/dancer" : "/";
+      const requestedReturnTo = searchParams.get("return_to") || "";
+      const safeReturnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
+        ? requestedReturnTo
+        : "";
+      const returnTo = role === "dancer" ? safeReturnTo || "/dashboard/dancer" : "/";
       payload.emailRedirectTo = `${window.location.origin}/auth/callback?dancr_confirm=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`;
     }
 
@@ -286,7 +301,11 @@ export default function AccountClient() {
       window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       setExistingSessionRole(data.account?.role || role);
       setStatus(role === "dancer" ? "Signed in. Opening your dancer dashboard..." : "Signed in. Opening your dashboard...");
-      router.push(destination);
+      const requestedReturnTo = searchParams.get("return_to") || "";
+      const safeReturnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
+        ? requestedReturnTo
+        : "";
+      router.push(safeReturnTo || destination);
     } catch (error) {
       setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to sign in."));
     } finally {
@@ -385,7 +404,7 @@ export default function AccountClient() {
           <span className="eyebrow">Live account</span>
           <h1>{role === "dancer" ? "Manage your dancer profile." : "Save your night out."}</h1>
           <p>
-            Sign in with a secure Mydancr account to manage saved profiles, private alerts, club deal QR codes, and dashboard data.
+            Sign in with a secure Mydancr account to manage saved profiles, private alerts, NFC Club Deals, and dashboard data.
           </p>
         </div>
 
@@ -429,8 +448,8 @@ export default function AccountClient() {
                 </button>
                 <div className="customer-benefit-grid">
                   <div className="customer-benefit-tile">
-                    <strong>Saved club deal QR codes</strong>
-                    <span>Keep the deals you want to use later in one place.</span>
+                    <strong>NFC Club Deals</strong>
+                    <span>Choose an offer, then redeem it by tapping the venue&apos;s cashier sticker.</span>
                   </div>
                   <div className="customer-benefit-tile">
                     <strong>Private follows</strong>
@@ -442,10 +461,10 @@ export default function AccountClient() {
                   </div>
                   <div className="customer-benefit-tile">
                     <strong>Your night dashboard</strong>
-                    <span>Manage saved profiles, venues, QR codes, and alerts quickly.</span>
+                    <span>Manage saved profiles, venues, Club Deals, and alerts quickly.</span>
                   </div>
                 </div>
-                <p>Your follows and saved QR codes are private. Confirm your email, then Mydancr opens the homepage signed in.</p>
+                <p>Your follows and saved Club Deals are private. Confirm your email, then Mydancr opens the homepage signed in.</p>
               </section>
             </>
           ) : null}
@@ -455,7 +474,9 @@ export default function AccountClient() {
               <section className="dancer-signup-note" aria-label="Dancer verification next steps">
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
-                <p>Confirm your email, then create your profile with stage name, city, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. Venue affiliation is confirmed separately for check-ins and Working Now.</p>
+                <p>{venueNfcToken
+                  ? "This venue NFC tap is saved with signup. Confirm your email, finish profile setup and media review, and MyDancr activates this club affiliation automatically—no venue QR scan is needed."
+                  : "Confirm your email, then create your profile with stage name, city, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. Tap a venue's dressing-room NFC sticker to add that club."}</p>
               </section>
             </>
           ) : null}

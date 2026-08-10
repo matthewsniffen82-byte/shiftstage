@@ -48,12 +48,12 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
         headers: { authorization: `Bearer ${venueAccessToken}` },
       });
       const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to redeem this QR code.");
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to redeem this Club Deal.");
 
       setRedemption(data.redemption);
       setStatus("Redeemed. This verified visit was recorded for MyDancr venue billing.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to redeem this QR code.");
+      setStatus(error instanceof Error ? error.message : "Unable to redeem this Club Deal.");
     } finally {
       setIsRedeeming(false);
     }

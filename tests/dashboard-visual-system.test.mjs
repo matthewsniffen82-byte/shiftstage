@@ -79,7 +79,7 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   assert.ok(shortcutsIndex > commandIndex);
   assert.ok(metricsIndex > shortcutsIndex);
   assert.ok(managementIndex > metricsIndex);
-  assert.match(venuePanel, /className="primary-link" href="#venue-dancer-roster"[\s\S]*?Verify dancer/);
+  assert.match(venuePanel, /className="primary-link" href="#venue-dancer-roster"[\s\S]*?Manage dancer NFC/);
   assert.match(
     routedDashboards,
     /\.venue-command-primary \.primary-link \{[^}]*?width: 100%; max-width: 100%;[^}]*?box-sizing: border-box;/,

@@ -130,8 +130,8 @@ export type VenueDashboardAnalytics = {
   directions30Days: number;
   pageViews30Days: number;
   pageViewsToday: number;
-  qrImpressions30Days: number;
-  dancerProfileQrImpressions30Days: number;
+  dressingRoomNfcTaps30Days: number;
+  cashierNfcRedemptions30Days: number;
   upcomingShiftCount: number;
   activeDancersNow: number;
   goingSignals30Days: number;

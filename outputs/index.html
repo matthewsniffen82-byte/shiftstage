@@ -25592,7 +25592,9 @@
       margin: 0 auto 16px;
       padding: 12px;
       border-radius: 24px;
-      background: #fff;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 45% 35%, rgba(133, 76, 255, .34), transparent 54%), #0c0914;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, .24),
         0 14px 38px rgba(0, 0, 0, .42),
@@ -25604,6 +25606,23 @@
       width: 100%;
       height: 100%;
       border-radius: 14px;
+    }
+
+    .deal-pass-frame .deal-pass-nfc-symbol {
+      width: 72%;
+      height: 72%;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(159, 117, 255, .42);
+      border-radius: 50%;
+      color: #f7f1ff;
+      background: rgba(11, 8, 20, .74);
+      box-shadow: 0 0 42px rgba(111, 49, 255, .32), inset 0 1px 0 rgba(255, 255, 255, .08);
+    }
+
+    .deal-pass-frame .deal-pass-nfc-symbol .club-deal-qr-symbol {
+      width: 58%;
+      height: 58%;
     }
 
     @media (max-width: 560px) {
@@ -30417,7 +30436,7 @@
               <span id="customerNotificationQuickCount" class="customer-quick-count" hidden>0</span>
               <span data-quick-icon="bell"></span>
             </button>
-            <button class="customer-quick-btn" id="customerDealQuickBtn" type="button" aria-label="Open saved club deal QR codes" title="Saved club deal QR codes" aria-expanded="false" aria-controls="customerDealsQuickPanel">
+            <button class="customer-quick-btn" id="customerDealQuickBtn" type="button" aria-label="Open saved Club Deals" title="Saved Club Deals" aria-expanded="false" aria-controls="customerDealsQuickPanel">
               <span data-quick-icon="qr"></span>
             </button>
             <div class="customer-quick-panel" id="customerNotificationsQuickPanel" hidden>
@@ -36378,7 +36397,7 @@
               <a class="continue-signup" id="continueCustomerSignupBtn" href="#customerEmail" role="button">Continue to create account <span aria-hidden="true">↓</span></a>
               <div class="customer-benefit-grid">
                 <div class="customer-benefit-tile">
-                  <strong>Saved club deal QR codes</strong>
+                  <strong>Saved Club Deals</strong>
                   <span>Keep the deals you want to use later in one place.</span>
                 </div>
                 <div class="customer-benefit-tile">
@@ -36391,10 +36410,10 @@
                 </div>
                 <div class="customer-benefit-tile">
                   <strong>Your night dashboard</strong>
-                  <span>Manage saved profiles, venues, QR codes, and alerts quickly.</span>
+                  <span>Manage saved profiles, venues, Club Deals, and alerts quickly.</span>
                 </div>
               </div>
-              <div class="rule-note">Your follows and saved QR codes are private. After you create the account, Mydancr sends a confirmation email. Tap the email link and you’ll return to the homepage signed in.</div>
+              <div class="rule-note">Your follows and saved Club Deals are private. After you create the account, Mydancr sends a confirmation email. Tap the email link and you’ll return to the homepage signed in.</div>
             </div>
             <div class="field">
               <label for="customerEmail">Email</label>
@@ -36800,10 +36819,10 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse approved-analytics" id="dancerCommissionSection">
-          <summary><span class="dashboard-collapse-title"><strong>QR commissions</strong><span>Expand to see commissions earned from customer QR scans and redeemed profile deals.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>NFC commissions</strong><span>Expand to see commissions earned from cashier NFC redemptions attributed to your profile.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
           <div class="dashboard-collapse-body">
-            <p class="value-message" id="dancerCommissionSummary">QR commissions appear after customers scan and redeem deals from your profile.</p>
-            <div class="metric-grid" id="dancerCommissionMetrics" aria-label="QR commission metrics"></div>
+            <p class="value-message" id="dancerCommissionSummary">NFC commissions appear after customers choose your attributed deal and tap the venue cashier sticker.</p>
+            <div class="metric-grid" id="dancerCommissionMetrics" aria-label="NFC commission metrics"></div>
             <div class="rank-notification-list" id="dancerCommissionActivity">Commission activity will appear here.</div>
           </div>
         </details>
@@ -36947,11 +36966,10 @@
                   <div class="control-card-head">
                     <span class="eyebrow">Share profile</span>
                     <strong>Send customers to your profile</strong>
-                    <p>Share the public profile link or show a QR code customers can scan. No account needed to view.</p>
+                    <p>Share the public profile directly or copy its link. No account is needed to view it.</p>
                   </div>
                   <div class="control-action-row">
                     <button type="button" data-dancer-control-action="share-profile">Share profile</button>
-                    <button type="button" data-dancer-control-action="show-qr">Show QR code</button>
                     <button type="button" data-dancer-control-action="save-profile">Save Profile</button>
                   </div>
                   <p class="control-result" id="dancerControlResult" aria-live="polite">Profile controls are ready.</p>
@@ -36987,7 +37005,7 @@
               <input id="shiftEnd" type="time" value="02:00" required>
             </div>
             <div class="rule-note" id="shiftDisplayPreview">
-              Profile cards show active checked-in shifts as Working Now. Upcoming shifts show the date only. Exact times are private and used for shift windows and QR commission eligibility.
+              Profile cards show active checked-in shifts as Working Now. Upcoming shifts show the date only. Exact times are private and used for shift windows and NFC commission eligibility.
             </div>
             <div class="rule-note">
               <strong>Tracked Club Deal:</strong> During a verified check-in, customers can create a unique dancer-attributed MyDancr QR. Saving or sharing keeps your credit attached until that QR expires.
@@ -37084,8 +37102,8 @@
         <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
           <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
           <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
-          <p id="dancerVenueVerificationDescription">Use a new personal QR whenever you add or switch clubs. Your already-approved profile stays live while affiliations change.</p>
-          <div class="venue-affiliation-controls">
+          <p id="dancerVenueVerificationDescription">At each club, tap its official dressing-room NFC sticker with your signed-in phone. The same tap activates a new dancer after setup or immediately adds the venue to an already-approved profile.</p>
+          <div class="venue-affiliation-controls" hidden>
             <label for="dancerVenueVerificationVenue">
               Venue
               <select id="dancerVenueVerificationVenue" aria-label="Venue to verify" disabled>
@@ -37094,7 +37112,7 @@
             </label>
             <button class="action-btn" id="dancerVenueVerificationCreate" type="button" disabled>Show my verification QR</button>
           </div>
-          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Personal venue verification QR">
+          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Retired venue verification method">
             <img id="dancerVenueVerificationQrImage" alt="Personal venue verification QR">
             <div>
               <strong id="dancerVenueVerificationQrVenue">Venue</strong>
@@ -37105,7 +37123,8 @@
             </div>
           </section>
           <div class="venue-affiliation-list" id="dancerVenueAffiliationList" aria-label="Verified venues"></div>
-          <div class="rule-note" id="dancerVenueVerificationStatus" role="status" aria-live="polite">Loading venue verification…</div>
+          <div class="rule-note">No manager scan is required. A pending first tap is saved while MyDancr finishes the profile and media review.</div>
+          <div id="dancerVenueVerificationStatus" role="status" aria-live="polite" hidden>Loading venue affiliations…</div>
         </section>
         <details class="auth-card dashboard-collapse approved-analytics dancer-visibility-section" id="dancerVisibilitySection">
           <summary><span class="dashboard-collapse-title"><strong>Profile visibility</strong><span id="dancerVisibilitySummary">Visible to customers</span></span></summary>
@@ -37208,8 +37227,8 @@
         <div class="customer-summary venue-summary">
           <div>
             <span class="eyebrow">Live venue tools</span>
-            <h3>Manage your public venue page, published QR, and live performance.</h3>
-            <p>Your QR appears on your venue page and on a dancer profile only while that dancer has a verified working-now check-in at your club.</p>
+            <h3>Manage your public venue page, physical NFC access, and live performance.</h3>
+            <p>The dressing-room sticker activates dancer affiliations and check-ins. The cashier sticker completes the exact Club Deal a customer selected in MyDancr.</p>
           </div>
           <div class="customer-summary-actions">
             <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
@@ -37224,8 +37243,8 @@
         </div>
         <section class="auth-card venue-affiliation-card" id="venueDancerVerificationPanel">
           <span class="eyebrow">Verified roster</span>
-          <h3>Confirm dancer affiliations</h3>
-          <p>The dancer shows her short-lived personal MyDancr QR. Match the avatar and stage name only to confirm identity, then attest that she is affiliated with your venue. Profile content is moderated separately by MyDancr.</p>
+          <h3>Dressing-room NFC roster</h3>
+          <p>Dancers add this venue by tapping your official dressing-room NFC sticker. New dancers finish MyDancr profile and media review; eligible existing dancers join the roster immediately. Managers do not scan or approve dancer profiles.</p>
           <section class="venue-affiliation-preview" id="venueDancerVerificationPreview" hidden aria-label="Dancer verification confirmation">
             <span class="venue-affiliation-avatar" id="venueDancerVerificationAvatar"></span>
             <div>
@@ -37236,7 +37255,7 @@
             <button class="action-btn" id="venueDancerVerificationApprove" type="button">Confirm she works here</button>
           </section>
           <div class="venue-affiliation-list" id="venueDancerAffiliationList" aria-label="Approved dancer roster"></div>
-          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Scan a dancer's personal MyDancr QR to verify her affiliation.</div>
+          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Manage and rotate the dressing-room sticker from the NFC tags section of the venue dashboard.</div>
         </section>
         <div class="venue-dashboard-grid">
           <form class="auth-card auth-form" id="venueProfileForm">
@@ -37262,9 +37281,9 @@
             </div>
             <button class="action-btn" type="submit">Save venue page</button>
           </form>
-          <form class="auth-card auth-form venue-offer-preview" id="venueQrForm">
-            <span class="eyebrow">Published venue QR</span>
-            <p>Upload a square PNG, JPEG, or WebP image. The previous QR is removed after a successful replacement.</p>
+          <form class="auth-card auth-form venue-offer-preview" id="venueQrForm" hidden>
+            <span class="eyebrow">Retired venue code</span>
+            <p>This compatibility form is no longer available.</p>
             <div class="field">
               <label for="venueQrFileInput">QR image</label>
               <input id="venueQrFileInput" type="file" accept="image/jpeg,image/png,image/webp" required>
@@ -37283,14 +37302,20 @@
             <button class="action-btn" type="submit">Upload QR code</button>
             <button class="ghost" id="venueQrRemoveBtn" type="button" hidden>Remove QR code</button>
           </form>
+          <section class="auth-card auth-form venue-offer-preview">
+            <span class="eyebrow">Physical venue access</span>
+            <h3>NFC stickers</h3>
+            <p>Create, program, disable, and rotate dressing-room and cashier NFC stickers from the production venue dashboard.</p>
+            <a class="action-btn" href="/dashboard#venue-nfc-tags" style="text-decoration:none">Manage NFC stickers</a>
+          </section>
         </div>
         <div class="rule-note" id="venueDashboardStatus" role="status" aria-live="polite">Loading live venue data…</div>
         <div class="auth-card">
           <h3>Useful analytics</h3>
           <div class="dashboard-stats">
             <div class="stat"><strong id="venuePageViewsToday">0</strong><span>page views today</span></div>
-            <div class="stat"><strong id="venueQrImpressions">0</strong><span>QR impressions · 30 days</span></div>
-            <div class="stat"><strong id="venueDancerQrImpressions">0</strong><span>dancer-profile QR impressions</span></div>
+            <div class="stat"><strong id="venueDressingRoomNfcTaps">0</strong><span>dressing-room NFC taps · 30 days</span></div>
+            <div class="stat"><strong id="venueCashierNfcRedemptions">0</strong><span>cashier redemptions · 30 days</span></div>
             <div class="stat"><strong id="venueGoingSignals">0</strong><span>going signals · 30 days</span></div>
           </div>
         </div>
@@ -37515,7 +37540,7 @@
         <div class="customer-venue-list" id="dashVenueList"></div>
         <button class="view-all" id="dashVenueViewAll" hidden>View All Venues</button>
         <div class="section-title-row" data-dashboard-section="deals">
-          <h3 class="section-title">Saved club deal QR codes</h3>
+          <h3 class="section-title">Saved Club Deals</h3>
           <span class="section-context" id="dashSavedDealsContext">0 saved</span>
         </div>
         <div class="saved-deal-list" id="dashSavedDealsList"></div>
@@ -38209,7 +38234,7 @@
       notice.className = "home-card-qr-notice";
       notice.setAttribute("role", "status");
       notice.setAttribute("aria-live", "polite");
-      heading.textContent = label || "Club Deal QR";
+      heading.textContent = label || "Club Deal NFC";
       detail.textContent = message || "No Club Deal is available right now.";
       notice.append(heading, detail);
       notice.style.setProperty(
@@ -40638,12 +40663,12 @@
             <button class="customer-quick-item has-qr" type="button" data-deal-pass="${encodeDealPass(pass)}">
               <span>
                 <strong>${displayText(pass.title)}</strong>
-                <span>${displayText(pass.venueName)} · saved QR</span>
+                <span>${displayText(pass.venueName)} · cashier NFC</span>
               </span>
-              <img src="${pass.qrImageUrl}" alt="${displayText(pass.venueName)} saved QR code" loading="lazy" decoding="async">
+              ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
             </button>
           `).join("")
-        : `<div class="customer-quick-empty">Saved club deals will appear here after you save a venue or dancer profile QR.</div>`;
+        : `<div class="customer-quick-empty">Saved Club Deals will appear here after you choose an offer. Redeem by tapping the venue cashier NFC sticker.</div>`;
     }
 
     function renderCustomerQuickActions() {
@@ -40995,7 +41020,7 @@
         renderDancerSetupWhenEditorIdle();
       } catch (error) {
         liveDancerDeals = null;
-        reportOptionalDancerLoadError(error, "Could not load QR commissions", options);
+        reportOptionalDancerLoadError(error, "Could not load Club Deal commissions", options);
       }
     }
 
@@ -41837,7 +41862,7 @@
     function reviewStepLabel(step) {
       if (step === "profile") return "Step 1 profile";
       if (step === "photos") return "Step 2 photos";
-      return "Step 3 approval";
+      return "Step 3 venue NFC";
     }
 
     function hasRejectedDancerReviews() {
@@ -43129,7 +43154,7 @@
         close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
         report: '<svg viewBox="0 0 24 24"><path d="M12 4.2 3.8 18.5a1.4 1.4 0 0 0 1.2 2.1h14a1.4 1.4 0 0 0 1.2-2.1L12 4.2Z"></path><path d="M12 9v4.4"></path><path d="M12 17h.01"></path></svg>',
-        qr: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.2"></rect><rect x="14" y="4" width="6" height="6" rx="1.2"></rect><rect x="4" y="14" width="6" height="6" rx="1.2"></rect><path d="M14 14h2v2h-2z"></path><path d="M18 14h2v6h-6v-2h4z"></path><path d="M14 18h2v2h-2z"></path></svg>',
+        qr: '<svg viewBox="0 0 24 24"><path d="M7.4 8.2a5.4 5.4 0 0 1 0 7.6"></path><path d="M4.7 5.4a9.3 9.3 0 0 1 0 13.2"></path><path d="M10.4 10.7a1.9 1.9 0 0 1 0 2.6"></path><rect x="13" y="6" width="7" height="12" rx="2"></rect></svg>',
         lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>'
       };
       return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
@@ -43137,7 +43162,7 @@
 
     function clubDealQrSymbolMarkup(className = "") {
       const classes = ["club-deal-qr-symbol", className].filter(Boolean).join(" ");
-      return `<span class="${classes}" aria-hidden="true"><svg viewBox="0 0 28 28"><path class="qr-finder" d="M2 2h8v8H2zM18 2h8v8h-8zM2 18h8v8H2z"></path><path class="qr-module" d="M5 5h2v2H5zM21 5h2v2h-2zM5 21h2v2H5zM13 2h2v4h-2zM12 9h3v3h-3zM18 13h3v3h-3zM23 12h3v3h-3zM12 15h3v5h-3zM16 18h3v3h-3zM21 18h5v3h-5zM12 23h3v3h-3zM18 23h3v3h-3zM23 23h3v3h-3z"></path></svg></span>`;
+      return `<span class="${classes}" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M8.8 9.2a6.8 6.8 0 0 1 0 9.6"></path><path d="M5.2 5.6a11.8 11.8 0 0 1 0 16.8"></path><path d="M12 12.1a2.7 2.7 0 0 1 0 3.8"></path><rect x="15" y="7" width="8" height="14" rx="2"></rect></svg></span>`;
     }
 
     document.querySelectorAll("[data-quick-icon]").forEach((target) => {
@@ -43284,20 +43309,8 @@
       attributionToken = ""
     }) {
       if (!deal?.id || !venueId) throw new Error("This Club Deal is unavailable.");
-      const data = await postOptionalAuthJson("/api/deals/redemptions", {
-        clubDealId: deal.id,
-        venueId,
-        sourceType,
-        dancerId: sourceType === "dancer_profile" ? dancerId : null,
-        attributionToken: sourceType === "dancer_profile" ? attributionToken : null,
-        sessionId: liveDealSessionId()
-      });
-      const redemption = data?.redemption;
-      if (!data?.qrDataUrl || !redemption?.redemptionToken) {
-        throw new Error("The Club Deal QR could not be confirmed.");
-      }
-      return {
-        id: redemption.id,
+      const intent = {
+        id: `nfc:${venueId}:${deal.id}`,
         venueId,
         venueSlug,
         venueName,
@@ -43307,15 +43320,24 @@
         title: deal.dealTitle || "Club Deal",
         offerType: deal.offerType || "admission",
         bookingUrl: deal.bookingUrl || "",
+        dealId: deal.id,
+        attributionToken: sourceType === "dancer_profile" ? attributionToken : "",
         details: sourceType === "dancer_profile"
-          ? `Attributed to ${dancerName} when issued during a verified check-in. Saving or sharing keeps that credit attached.`
-          : `Active Club Deal from ${venueName}.`,
-        url: `${window.location.origin}/deals/pass/${encodeURIComponent(redemption.redemptionToken)}`,
-        qrImageUrl: data.qrDataUrl,
-        redemptionToken: redemption.redemptionToken,
-        expiresAt: redemption.expiresAt || "",
-        serverGenerated: true
+          ? `Tap the cashier NFC sticker while this dancer is verified at ${venueName}; her attribution will be validated at redemption.`
+          : `Tap the cashier NFC sticker at ${venueName} to redeem this offer.`,
+        url: venueExperienceHref({ slug: venueSlug, name: venueName }),
+        nfcIntent: true,
+        savedAt: Date.now()
       };
+      localStorage.setItem("mydancrPendingNfcDealV1", JSON.stringify({
+        venueId,
+        dealId: deal.id,
+        sourceType,
+        dancerId: sourceType === "dancer_profile" ? dancerId : null,
+        attributionToken: sourceType === "dancer_profile" ? attributionToken : null,
+        savedAt: Date.now()
+      }));
+      return intent;
     }
 
     function profileClubDealPassKey(config) {
@@ -43330,9 +43352,7 @@
     function isReusableProfileClubDealPass(entry, key) {
       if (!entry || entry.key !== key || !entry.pass) return false;
       const pass = entry.pass;
-      if (!pass.redemptionToken || !/^data:image\/png;base64,/i.test(pass.qrImageUrl || "")) return false;
-      const expiresAt = Date.parse(pass.expiresAt || "");
-      return !Number.isFinite(expiresAt) || expiresAt > Date.now() + 60_000;
+      return pass.nfcIntent === true && Date.now() - Number(pass.savedAt || 0) < 12 * 60 * 60 * 1000;
     }
 
     function readReusableProfileClubDealPass(key) {
@@ -43340,13 +43360,13 @@
         return activeProfileClubDealPassCache.pass;
       }
       try {
-        const stored = JSON.parse(sessionStorage.getItem("dancrActiveProfileClubDealQrV1") || "null");
+        const stored = JSON.parse(sessionStorage.getItem("dancrActiveProfileClubDealNfcV1") || "null");
         if (isReusableProfileClubDealPass(stored, key)) {
           activeProfileClubDealPassCache = stored;
           return stored.pass;
         }
       } catch {
-        // A new server-confirmed QR is generated when the session cache is unavailable.
+        // The intent is recreated when session storage is unavailable.
       }
       return null;
     }
@@ -43354,7 +43374,7 @@
     function cacheProfileClubDealPass(key, pass) {
       activeProfileClubDealPassCache = { key, pass };
       try {
-        sessionStorage.setItem("dancrActiveProfileClubDealQrV1", JSON.stringify(activeProfileClubDealPassCache));
+        sessionStorage.setItem("dancrActiveProfileClubDealNfcV1", JSON.stringify(activeProfileClubDealPassCache));
       } catch {
         // The in-memory cache still prevents duplicate issuance during this page visit.
       }
@@ -43384,14 +43404,14 @@
         if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.setAttribute("data-save-deal-pass-on-open", "");
-        qrButton.setAttribute("aria-label", `Open the ${config.venueName || "active"} Club Deal QR`);
-        qrButton.innerHTML = `<img src="${escapeHtml(pass.qrImageUrl)}" alt="Scan the ${escapeHtml(config.venueName || "venue")} Club Deal QR">`;
+        qrButton.setAttribute("aria-label", `Prepare the ${config.venueName || "active"} Club Deal for cashier NFC`);
+        qrButton.innerHTML = clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol");
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({
           venueId: pass.venueId,
           dancerId: pass.dancerId,
-          eventType: "qr_impression",
+          eventType: "deal_view",
           source: "dancer_profile"
         });
       } catch (error) {
@@ -43400,7 +43420,7 @@
         qrButton.hidden = true;
         const label = tile.querySelector(".profile-club-deal-label");
         if (label) label.textContent = "Club Deal unavailable";
-        tile.setAttribute("aria-label", error?.message || "Club Deal QR unavailable");
+        tile.setAttribute("aria-label", error?.message || "Club Deal unavailable");
       } finally {
         if (tile.isConnected && tile.dataset.profileClubDealConfig === encodedConfig) {
           tile.removeAttribute("aria-busy");
@@ -43441,8 +43461,8 @@
         ? `Published while ${pass.dancerName} is working now`
         : `Published by ${pass.venueName}`;
       return `
-        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Open ${pass.venueName} club deal QR">
-          <img src="${pass.qrImageUrl}" alt="${pass.venueName} venue QR code" loading="lazy" decoding="async">
+        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${pass.venueName} Club Deal for cashier NFC">
+          ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
           <span class="meta">${sourceLabel}</span>
         </button>
       `;
@@ -43451,19 +43471,19 @@
     function savedDealPassMarkup(pass) {
       const sourceLabel = pass.sourceType === "dancer_profile" && pass.dancerName
         ? `From ${pass.dancerName}'s working-now profile`
-        : "Venue page QR";
+        : "Venue page";
       return `
         <button class="saved-deal-pass" type="button" data-deal-pass="${encodeDealPass(pass)}">
           <span>
             <strong>${pass.title}</strong>
             <span>${pass.venueName} · ${sourceLabel}</span>
           </span>
-          <img src="${pass.qrImageUrl}" alt="${pass.venueName} saved QR code" loading="lazy" decoding="async">
+          ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
         </button>
       `;
     }
 
-    function saveCustomerDealPass(pass, message = "Deal QR saved on this device") {
+    function saveCustomerDealPass(pass, message = "Club Deal ready for cashier NFC") {
       if (!pass?.id) return;
       const savedPass = { ...pass, savedAt: new Date().toISOString() };
       savedDealPasses = [savedPass, ...savedDealPasses.filter((item) => item.id !== pass.id)].slice(0, 20);
@@ -43486,42 +43506,25 @@
     }
 
     async function downloadDealQrImage(pass) {
-      if (!pass?.qrImageUrl) return;
-      try {
-        const response = await fetch(pass.qrImageUrl, { cache: "no-store" });
-        if (!response.ok) throw new Error("QR image unavailable");
-        const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = objectUrl;
-        link.download = dealPassFileName(pass);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-        saveCustomerDealPass(pass, "QR image downloaded. You're still on this profile.");
-      } catch {
-        await copyText(pass.qrImageUrl, "QR image link copied");
-        saveCustomerDealPass(pass, "QR saved on this device");
-      }
+      saveCustomerDealPass(pass, "Club Deal ready. Tap the cashier NFC sticker to redeem.");
     }
 
     async function shareDealPass(pass) {
       if (!pass?.url) return;
       const shareData = {
-        title: `${pass.venueName} venue QR`,
-        text: `${pass.title} from ${pass.venueName}.`,
+        title: `${pass.venueName} Club Deal`,
+        text: `${pass.title} from ${pass.venueName}. Select it in MyDancr, then tap the cashier NFC sticker at the venue.`,
         url: pass.url
       };
       try {
         if (navigator.share) {
           await navigator.share(shareData);
           recordRevenueDealLifecycle(pass, "shared");
-          saveCustomerDealPass(pass, "QR saved on this device");
+          saveCustomerDealPass(pass, "Club Deal saved on this device");
         } else {
           await copyText(pass.url, "Deal link copied");
           recordRevenueDealLifecycle(pass, "shared");
-          saveCustomerDealPass(pass, "QR saved on this device");
+          saveCustomerDealPass(pass, "Club Deal saved on this device");
         }
       } catch {
         showToast("Share cancelled");
@@ -43565,17 +43568,17 @@
       document.body.insertAdjacentHTML("beforeend", `
         <div class="deal-pass-overlay" id="dealPassOverlay" aria-hidden="true" hidden>
           <div class="deal-pass-sheet" role="dialog" aria-modal="true" aria-labelledby="dealPassTitle">
-            <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close deal QR">${actionIconMarkup("close")}</button>
-            <p class="deal-pass-kicker" id="dealPassKicker">Venue-published QR</p>
-            <h3 class="deal-pass-title" id="dealPassTitle">Venue QR</h3>
-            <p class="deal-pass-copy" id="dealPassCopy">Show this QR at the venue.</p>
+            <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close Club Deal">${actionIconMarkup("close")}</button>
+            <p class="deal-pass-kicker" id="dealPassKicker">Cashier NFC Club Deal</p>
+            <h3 class="deal-pass-title" id="dealPassTitle">Club Deal</h3>
+            <p class="deal-pass-copy" id="dealPassCopy">Tap the cashier NFC sticker at the venue.</p>
             <div class="deal-pass-frame">
-              <img id="dealPassImage" alt="Club deal QR code" loading="lazy" decoding="async">
+              <div id="dealPassImage" class="deal-pass-nfc-symbol" role="img" aria-label="NFC tap">${clubDealQrSymbolMarkup("deal-pass-nfc-icon")}</div>
             </div>
-            <p class="deal-pass-how" id="dealPassHow">This unique MyDancr QR is tracked through venue confirmation.</p>
+            <p class="deal-pass-how" id="dealPassHow">Your selected deal and dancer attribution are securely confirmed when the cashier sticker is tapped.</p>
             <div class="deal-pass-actions">
-              <button class="deal-pass-action primary" type="button" data-save-deal-pass>Save QR</button>
-              <button class="deal-pass-action" type="button" data-share-deal-pass>Share QR</button>
+              <button class="deal-pass-action primary" type="button" data-save-deal-pass>Keep deal ready</button>
+              <button class="deal-pass-action" type="button" data-share-deal-pass>Share deal</button>
               <button class="deal-pass-action tertiary" type="button" data-copy-deal-pass>Copy link</button>
             </div>
             <a class="deal-pass-booking" id="dealPassBooking" href="#" target="_blank" rel="noreferrer" hidden>Continue to venue booking</a>
@@ -43621,21 +43624,21 @@
       const dancerAttributed = pass?.sourceType === "dancer_profile" && dancerName;
       if (pass?.serverGenerated) {
         return {
-          kicker: "MyDancr Club Deal QR",
+          kicker: "Cashier NFC Club Deal",
           copy: dancerAttributed
             ? `${venueName} · Credited to ${dancerName}`
             : `${venueName} · Valid tonight`,
           status: dancerAttributed
-            ? "Unique QR · Attribution locked when issued · Venue confirmation required"
-            : "Unique QR · Tracked for redemption"
+            ? "Dancer attribution is revalidated when the cashier NFC sticker is tapped"
+            : "Tap the cashier NFC sticker to securely redeem"
         };
       }
       return {
-        kicker: "Venue-published QR",
+        kicker: "Cashier NFC Club Deal",
         copy: dancerAttributed
           ? `${venueName} · Available while ${dancerName} is working now`
-          : `${venueName} · Venue-published QR`,
-        status: `Published by ${venueName} · No sign-in required`
+          : `${venueName} · Venue offer`,
+        status: `Choose the deal here, then tap the cashier NFC sticker at ${venueName}`
       };
     }
 
@@ -43650,8 +43653,7 @@
       document.getElementById("dealPassKicker").textContent = presentation.kicker;
       document.getElementById("dealPassTitle").textContent = pass.title;
       document.getElementById("dealPassCopy").textContent = presentation.copy;
-      document.getElementById("dealPassImage").src = pass.qrImageUrl;
-      document.getElementById("dealPassImage").alt = `${pass.venueName} deal QR code`;
+      document.getElementById("dealPassImage").setAttribute("aria-label", `${pass.venueName} cashier NFC tap`);
       document.getElementById("dealPassHow").textContent = presentation.status;
       const bookingLink = document.getElementById("dealPassBooking");
       const hasBooking = pass.offerType === "bottle_service" && /^https:\/\//i.test(pass.bookingUrl || "");
@@ -43719,7 +43721,7 @@
             <button class="deal-pass-close" type="button" data-close-club-deal-hub aria-label="Close Club Deals">${actionIconMarkup("close")}</button>
             <p class="deal-pass-kicker">Live venue offers</p>
             <h3 class="deal-pass-title" id="clubDealHubTitle">Club Deals</h3>
-            <p class="deal-pass-copy" id="clubDealHubCopy">Choose one offer to create your unique tracked pass.</p>
+            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer now, then tap the cashier NFC sticker at the venue.</p>
             <p class="club-deal-hub-status" id="clubDealHubStatus" role="status" aria-live="polite" hidden></p>
             <div class="club-deal-hub-list" id="clubDealHubList"></div>
           </section>
@@ -43746,17 +43748,17 @@
         offerButton.classList.add("is-loading");
         offerButton.setAttribute("aria-busy", "true");
         overlay.setAttribute("aria-busy", "true");
-        status.textContent = "Creating your tracked QR…";
+        status.textContent = "Preparing this deal for the cashier NFC tap…";
         status.hidden = false;
         try {
           const pass = await createRevenueDealPass(selection);
-          saveCustomerDealPass(pass, "Club Deal QR saved");
+          saveCustomerDealPass(pass, "Club Deal ready for cashier NFC");
           closeClubDealHub(false);
           openDealPassOverlay(pass);
         } catch (error) {
-          status.textContent = error.message || "Unable to create the Club Deal QR. Please try again.";
+          status.textContent = error.message || "Unable to prepare this Club Deal. Please try again.";
           status.hidden = false;
-          showToast(error.message || "Unable to create the Club Deal QR");
+          showToast(error.message || "Unable to prepare this Club Deal");
         } finally {
           overlay.removeAttribute("aria-busy");
           offerButtons.forEach((button) => {
@@ -43781,13 +43783,13 @@
       const venueName = String(config?.venueName || "this venue").trim() || "this venue";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one before MyDancr creates the tracked pass.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one now, then tap the cashier NFC sticker at the venue.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");
       document.getElementById("clubDealHubList").innerHTML = offers.map((deal) => {
         const selection = clubDealSelectionConfig(config, deal);
-        const booking = deal.offerType === "bottle_service" ? "Tracked pass, then venue booking" : "Unique QR · Venue confirmation required";
+        const booking = deal.offerType === "bottle_service" ? "Cashier NFC redemption · Venue booking available" : "Cashier NFC tap required at redemption";
         return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(deal.dealDescription || "View and redeem this venue offer.")}</small><em>${booking}</em></button>`;
       }).join("");
       overlay.hidden = false;
@@ -43817,7 +43819,7 @@
         revenueTrigger.classList.add("is-loading");
         try {
           const pass = await createRevenueDealPass(config);
-          saveCustomerDealPass(pass, "Club Deal QR saved");
+          saveCustomerDealPass(pass, "Club Deal ready for cashier NFC");
           openDealPassOverlay(pass, revenueTrigger);
           if (
             revenueTrigger.hasAttribute("data-feed-live-qr") ||
@@ -43833,8 +43835,8 @@
         } catch (error) {
           showCardQrNotice(
             revenueTrigger,
-            "Club Deal QR",
-            error.message || "Unable to create the Club Deal QR"
+            "Club Deal NFC",
+            error.message || "Unable to prepare this Club Deal"
           );
         } finally {
           revenueTrigger.disabled = false;
@@ -43848,11 +43850,11 @@
       event.stopPropagation();
       const pass = decodeDealPass(trigger.dataset.dealPass || "");
       if (!pass) {
-        showToast("Deal QR unavailable");
+        showToast("Club Deal unavailable");
         return true;
       }
       if (trigger.hasAttribute("data-save-deal-pass-on-open")) {
-        saveCustomerDealPass(pass, "Club QR saved to Offers");
+        saveCustomerDealPass(pass, "Club Deal ready for cashier NFC");
       }
       openDealPassOverlay(pass, trigger);
       if (
@@ -43885,14 +43887,14 @@
               <div>
                 <span class="eyebrow">Club Deals</span>
                 <h3>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
-                <p>${venue.activeDeals?.length > 1 ? "Choose admission, drinks, bottle service, or another venue offer before MyDancr creates your tracked pass." : escapeHtml(venue.activeDeal.dealDescription || "Get a unique QR and show it at the venue.")}</p>
+                <p>${venue.activeDeals?.length > 1 ? "Choose admission, drinks, bottle service, or another venue offer, then tap the cashier NFC sticker at the venue." : escapeHtml(venue.activeDeal.dealDescription || "Choose this offer, then tap the cashier NFC sticker at the venue.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Click for Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">
                   ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol")}
                   <span class="venue-detail-club-deal-qr-copy">
                     <strong>${venue.activeDeals?.length > 1 ? "View Club Deals" : "Click for Club Deal"}</strong>
-                    <small>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : "Unique tracked QR"}</small>
+                    <small>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : "Cashier NFC redemption"}</small>
                   </span>
                 </button>
               </div>
@@ -43948,7 +43950,7 @@
       return {
         key: "not-available-now",
         label: "Not available now",
-        detail: "A verified current check-in is required before a customer Club Deal QR can be issued."
+        detail: "A verified current check-in is required before dancer attribution can be carried to a cashier NFC redemption."
       };
     }
 
@@ -43971,9 +43973,9 @@
           <div class="info-tile profile-qr-tile profile-club-deal-tile" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
             <div class="profile-club-deal-copy">
               <strong class="profile-club-deal-label">Club Deal</strong>
-              <small>Scan at the club to redeem</small>
+              <small>Select here · Tap cashier NFC at the club</small>
             </div>
-            <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal QR" disabled>
+            <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
             </button>
           </div>
@@ -44187,7 +44189,7 @@
         shiftEndsAt: range.endsAt
       };
       const upcomingText = displayPublicShiftTime(profile.time, profile);
-      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong>. Exact start and end times stay private and are used only for shift windows and QR commission eligibility. If you check in during that window, the card changes to <strong>Working Now</strong>.`;
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong>. Exact start and end times stay private and are used only for shift windows and Club Deal commission eligibility. If you check in during that window, the card changes to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
@@ -44358,13 +44360,13 @@
       const checkInRejected = canAttemptCheckIn && shiftCheckInTone === "error";
       const summary = profile.shiftSummary || (ended ? shiftSummaryForProfile(profile, profile.endedReason || "completed") : null);
       const statusCopy = ended
-        ? "This shift has ended. QR commission tracking is stopped."
+        ? "This shift has ended. Club Deal commission tracking is stopped."
         : checkedIn
           ? locationVerified
             ? "Your venue location is verified and rechecked while this dashboard remains active."
             : "Your profile is hidden from Working Now until the venue location is verified again."
           : canCheckInNow
-            ? "Check in from the venue during your posted hours to appear in Working Now and start QR commission tracking."
+            ? "Check in from the venue during your posted hours to appear in Working Now and start Club Deal commission tracking."
             : "Your shift is posted. Tap Check in now during the posted hours and Dancr will verify your location at the club.";
 
       panel.hidden = false;
@@ -44387,7 +44389,7 @@
             <div class="shift-summary-grid">
               <span><small>Hours Worked</small>${displayText(summary.hoursWorked)}</span>
               <span><small>Profile Views</small>${Number(summary.profileViews || 0).toLocaleString()}</span>
-              <span><small>QR Code Scans</small>${Number(summary.qrCodeScans || 0).toLocaleString()}</span>
+              <span><small>Cashier Redemptions</small>${Number(summary.qrCodeScans || 0).toLocaleString()}</span>
               <span><small>Estimated Commissions</small>${displayText(summary.estimatedCommissions || "$0")}</span>
               <span><small>New Followers</small>${Number(summary.newFollowers || 0).toLocaleString()}</span>
             </div>
@@ -44457,7 +44459,7 @@
           const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
           if (data?.shift) applyShiftState(profile, data.shift);
           stopShiftLocationRefresh();
-          setCheckInStatus("Shift ended. QR commission tracking is stopped.", "success");
+          setCheckInStatus("Shift ended. Club Deal commission tracking is stopped.", "success");
           actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
         } else if (action === "check-in" || action === "refresh") {
@@ -48219,7 +48221,7 @@
       document.getElementById("authPageTitle").textContent = isVenue ? "Venue access" : "Sign in to Mydancr";
       document.getElementById("authRoleTitle").textContent = isVenue ? "Venue access" : isDancer ? "Dancer login" : "Customer login";
       document.getElementById("authRoleSubtitle").textContent = isVenue
-        ? "Manage your venue page, published QR code, verified working-now dancers, and live analytics."
+        ? "Manage your venue page, NFC stickers, verified working-now dancers, and live analytics."
         : isDancer
         ? "Manage profile setup, approval, shifts, photos, and billing."
         : "Free account. Save profiles, follow venues, and get alerts.";
@@ -48610,40 +48612,36 @@
       const onboardingRequired = state.dancer?.onboardingRequired === true;
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
-      const managerReadyVenues = venues.filter((venue) => venue.managerReady === true);
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 3 · Venue verification" : "Venue affiliation";
-      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 3 · Dressing-room NFC" : "Venue affiliation";
+      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Tap at your first venue" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
-        ? "Your first verified venue manager scan approves your profile, makes it live, and activates that club affiliation."
-        : "Use a new personal QR whenever you add or switch clubs. Your already-approved profile stays live while affiliations change.";
+        ? "At the venue, tap its official dressing-room NFC sticker with your signed-in phone. MyDancr saves the affiliation while profile setup and media review finish, then activates it automatically."
+        : "Tap each venue's official dressing-room NFC sticker to add that club. Your already-approved profile stays live while affiliations change.";
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
       select.innerHTML = venues.length
         ? venues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)} · ${venue.managerReady === true ? "Manager ready" : "Manager setup needed"}</option>`).join("")
         : `<option value="">No active venues available in ${escapeHtml(dancerCity)}</option>`;
       select.disabled = !venues.length;
-      const preferredVenue = venues.find((venue) => venue.id === previousVenueId) || managerReadyVenues[0] || venues[0] || null;
+      const preferredVenue = venues.find((venue) => venue.id === previousVenueId) || venues[0] || null;
       select.value = preferredVenue?.id || "";
-      document.getElementById("dancerVenueVerificationCreate").disabled = preferredVenue?.managerReady !== true;
+      document.getElementById("dancerVenueVerificationCreate").disabled = true;
       const list = document.getElementById("dancerVenueAffiliationList");
-      list.innerHTML = `<strong>Verified venues</strong>${affiliations.length
+      list.innerHTML = `<strong>NFC-connected venues</strong>${affiliations.length
         ? affiliations.map((item) => `
             <div>
               <span><b>✓ ${escapeHtml(item.venue?.name || "Venue")}</b><small>Approved ${escapeHtml(formatVenueAffiliationTime(item.approvedAt, true))}</small></span>
               <button type="button" data-dancer-affiliation-remove="${escapeHtml(item.id)}">Remove</button>
             </div>
           `).join("")
-        : "<small>No venue has verified your profile yet.</small>"}`;
+        : "<small>No venue affiliation yet. Tap the official dressing-room NFC sticker at the club where you work.</small>"}`;
       list.querySelectorAll("[data-dancer-affiliation-remove]").forEach((button) => {
         button.onclick = () => removeDancerVenueAffiliation(button.dataset.dancerAffiliationRemove);
       });
       renderShiftPostForm();
-      document.getElementById("dancerVenueVerificationStatus").textContent = managerReadyVenues.length
-        ? `Choose a ${dancerCity} club marked Manager ready, then show the personal QR to its verified manager.`
-        : venues.length
-          ? `${venues.length} active ${dancerCity} venues found, but none have activated a venue manager account yet.`
-          : `No active venues are available in ${dancerCity} yet.`;
+      document.getElementById("dancerVenueVerificationStatus").textContent =
+        `At the club, unlock this signed-in phone and tap its official MyDancr dressing-room NFC sticker. No manager scan or separate approval is required.`;
     }
 
     function selectedDancerVenueVerificationVenue() {
@@ -48660,9 +48658,7 @@
       button.disabled = venue?.managerReady !== true;
       status.textContent = !venue
         ? `Choose an active ${dancerCity} venue.`
-        : venue.managerReady === true
-          ? `Show your personal QR to ${venue.name}'s verified manager.`
-          : `${venue.name} is listed in ${dancerCity}, but its venue manager account must be activated before it can scan your QR.`;
+        : `Use ${venue.name}'s official dressing-room NFC sticker at the venue. No personal QR is needed.`;
     }
 
     function loadDancerVenueVerification({ quiet = false } = {}) {
@@ -48971,8 +48967,8 @@
       document.getElementById("venueDirectionCount").textContent = String(analytics.directions30Days || 0);
       document.getElementById("venueShiftCount").textContent = String(analytics.activeDancersNow || 0);
       document.getElementById("venuePageViewsToday").textContent = String(analytics.pageViewsToday || 0);
-      document.getElementById("venueQrImpressions").textContent = String(analytics.qrImpressions30Days || 0);
-      document.getElementById("venueDancerQrImpressions").textContent = String(analytics.dancerProfileQrImpressions30Days || 0);
+      document.getElementById("venueDressingRoomNfcTaps").textContent = String(analytics.dressingRoomNfcTaps30Days || 0);
+      document.getElementById("venueCashierNfcRedemptions").textContent = String(analytics.cashierNfcRedemptions30Days || 0);
       document.getElementById("venueGoingSignals").textContent = String(analytics.goingSignals30Days || 0);
       document.getElementById("venueProfileNameInput").value = profile.name || "";
       document.getElementById("venueProfileAddressInput").value = profile.address || "";
@@ -49304,7 +49300,7 @@
     function completeSetupStep(step, options = {}) {
       if (!canOpenStep(step)) return;
       if (step === "approval" && isDancerSession()) {
-        showToast("A verified venue manager completes this step by scanning your QR.");
+        showToast("Complete this step by tapping the venue's official dressing-room NFC sticker.");
         return;
       }
       setupChecklistExpanded = true;
@@ -50217,7 +50213,7 @@
             : review
         ));
         activeSetupStep = "approval";
-        profileSubmitNotice = "Profile submitted. Choose your affiliated venue and show the personal QR to its verified manager.";
+        profileSubmitNotice = "Profile submitted. At the venue where you work, tap its official dressing-room NFC sticker with this signed-in phone.";
         profileSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Profile saved. Venue affiliation is the final step.");
@@ -50723,7 +50719,7 @@
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the customers Dancr sends you."
         : reviewSubmitted
-          ? "Your profile is private and ready. A verified manager at your selected venue must scan your QR and confirm only that you are affiliated with that venue."
+          ? "Your profile is private and ready. Tap the official dressing-room NFC sticker at the venue where you work; MyDancr activates the saved affiliation automatically when setup and media review are complete."
           : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
@@ -50733,7 +50729,7 @@
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
-          ? "Waiting for venue scan"
+          ? "Waiting for venue NFC tap"
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
@@ -50773,11 +50769,11 @@
           approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
         } else if (reviewSubmitted) {
-          approvalStatusPrimary.textContent = "Profile submitted and private. Show your Step 3 QR to a verified manager at your affiliated venue.";
-          approvalStatusSecondary.textContent = "The manager confirms only your venue affiliation; MyDancr already handles profile and media safety checks.";
+          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dressing-room NFC sticker at the venue where you work.";
+          approvalStatusSecondary.textContent = "MyDancr reviews profile photos, videos, and public information for safety, then activates the saved venue affiliation automatically. No manager scan or approval is required.";
         } else if (readyForReview) {
           approvalStatusPrimary.textContent = "Ready to preview. Review your public profile and submit it in Step 2.";
-          approvalStatusSecondary.textContent = "Your profile remains private until Step 3 venue affiliation is confirmed.";
+          approvalStatusSecondary.textContent = "Your profile remains private until the dressing-room NFC tap and profile/media review are complete.";
         } else {
           approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
           approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after venue affiliation.";
@@ -50826,7 +50822,7 @@
 
         document.getElementById("dancerValueMessage").innerHTML = hasTrafficData
           ? `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${dashboardMetrics.venue}</strong> this month.`
-          : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and QR commissions will appear here after customers interact with your profile.";
+          : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after customers interact with your profile.";
         document.getElementById("dancerRankMetrics").innerHTML = [
           metricCardMarkup(rankLabel(dashboardMetrics.currentRank), `${city} rank`),
           metricCardMarkup(rankMovementText(dashboardMetrics.rankChangeYesterday), "Rank change this week"),
@@ -50871,17 +50867,17 @@
         ].join("");
         document.getElementById("dancerCommissionSummary").textContent =
           qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
-            ? `Profile QR scans generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
-            : "QR commission tracking is ready. Earnings appear here when customers scan and redeem a deal from your profile.";
+            ? `Cashier NFC taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
+            : "NFC commission tracking is ready. Earnings appear when customers choose your attributed deal and tap the cashier sticker.";
         document.getElementById("dancerCommissionMetrics").innerHTML = [
           metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
           metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
-          metricCardMarkup(compactNumber(qrOpens), "Profile QR scans"),
-          metricCardMarkup(compactNumber(qrRedeemed), "Redeemed QR deals")
+          metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
+          metricCardMarkup(compactNumber(qrRedeemed), "Cashier NFC redemptions")
         ].join("");
         document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
           ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No QR commission activity yet</strong><p>When customers redeem a profile QR deal, the commission and venue will show here.</p></span></article>`;
+          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No NFC commission activity yet</strong><p>When customers choose your attributed deal and tap the cashier NFC sticker, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = totalSocialClicks
           ? `${bestSocial.name} is your top-performing link this month.`
           : "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
@@ -50916,7 +50912,7 @@
           : `<article class="rank-event stable"><span class="rank-event-icon">!</span><span><strong>No ranking milestones yet</strong><p>Real ranking alerts will appear after your profile earns Top 10, moves up 3+ spots, or reaches #1.</p></span></article>`;
       } else if (approved) {
         document.getElementById("dancerValueMessage").textContent =
-          "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and QR commissions will appear here after customers interact with your profile.";
+          "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after customers interact with your profile.";
         document.getElementById("dancerRankMetrics").innerHTML = [
           metricCardMarkup("No rank yet", `${city} rank`),
           metricCardMarkup("No change", "Rank change this week"),
@@ -50955,17 +50951,17 @@
         const pendingCommissionCents = liveDancerDeals?.pendingCommissionCents || 0;
         document.getElementById("dancerCommissionSummary").textContent =
           qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
-            ? `Profile QR scans generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
-            : "QR commission tracking is ready. Earnings appear here when customers scan and redeem a deal from your profile.";
+            ? `Cashier NFC taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
+            : "Club Deal commission tracking is ready. Earnings appear here when customers select your attributed deal and tap the cashier NFC sticker.";
         document.getElementById("dancerCommissionMetrics").innerHTML = [
           metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
           metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
-          metricCardMarkup(compactNumber(qrOpens), "Profile QR scans"),
+          metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
           metricCardMarkup(compactNumber(qrRedeemed), "Redeemed QR deals")
         ].join("");
         document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
           ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No QR commission activity yet</strong><p>When customers redeem a profile QR deal, the commission and venue will show here.</p></span></article>`;
+          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No Club Deal commission activity yet</strong><p>When customers select your attributed deal and redeem it with the cashier NFC sticker, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
         document.getElementById("dancerSocialMetrics").innerHTML = [
           metricCardMarkup("0", "Total social clicks"),
@@ -51027,15 +51023,15 @@
           "Direction requests",
           "Average views by club"
         ]);
-        document.getElementById("dancerCommissionSummary").textContent = "QR commissions unlock after approval and track scans, redeemed deals, earned commission, and pending commission from your profile QR.";
+        document.getElementById("dancerCommissionSummary").textContent = "NFC commissions unlock after approval and track attributed deal opens, cashier redemptions, earned commission, and pending commission.";
         document.getElementById("dancerCommissionMetrics").innerHTML = lockedMetricCards([
           "Earned commissions",
           "Pending commissions",
-          "Profile QR scans",
-          "Redeemed QR deals"
+          "Attributed deal opens",
+          "Cashier NFC redemptions"
         ]);
         document.getElementById("dancerCommissionActivity").innerHTML =
-          `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>QR commissions locked</strong><p>Commission activity appears here after approval and customer redemptions.</p></span></article>`;
+          `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>NFC commissions locked</strong><p>Commission activity appears here after approval and cashier NFC redemptions.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = "Social growth unlocks after approval across Instagram, Snapchat, TikTok, OnlyFans, and X.";
         document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
           "Total social clicks",
@@ -51149,8 +51145,8 @@
         <div class="rule-note">Confirm the preview is accurate. Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete venue affiliation.</div>
       `;
       const approvalBody = `
-        <div class="info-tile"><strong>Confirm venue affiliation</strong><div class="meta">Choose the venue where you work and show the short-lived personal QR below to its verified manager. The manager confirms only your affiliation; they do not review your profile content.</div></div>
-        <div class="rule-note">A successful manager scan confirms that you are affiliated with this venue for check-ins and Working Now.</div>
+        <div class="info-tile"><strong>Confirm venue affiliation</strong><div class="meta">At the venue where you work, unlock your signed-in phone and tap its official MyDancr dressing-room NFC sticker.</div></div>
+        <div class="rule-note">The tap saves that exact venue affiliation. It activates immediately for an eligible profile or automatically after setup and media review finish. No manager scan is required.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create profile and add media", `${profileBody}${photosBody}`),
@@ -52093,7 +52089,7 @@
         : `<div class="locked">No followed venues in ${city} yet.</div>`;
       dashSavedDealsList.innerHTML = savedDealPasses.length
         ? savedDealPasses.map((pass) => savedDealPassMarkup(pass)).join("")
-        : `<div class="locked">Saved club deal QR codes will appear here after you tap a venue or dancer profile QR and save it.</div>`;
+        : `<div class="locked">Saved Club Deals will appear here after you choose an offer on a venue or dancer profile. Redeem at the venue by tapping its cashier NFC sticker.</div>`;
       dashTonightViewAll.hidden = workingTonight.length <= 5 || dashboardTonightExpanded;
       dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
       dashVenueViewAll.hidden = venues.length <= 5 || dashboardVenuesExpanded;
@@ -52945,7 +52941,7 @@
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr || state.key !== "available") {
         const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
-        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deal QR: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "QR")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deal NFC: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "NFC")}</button>`;
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this venue");
@@ -52966,7 +52962,7 @@
         const offerCount = venue.activeDeals?.length || 1;
         return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", offerCount > 1 ? `${offerCount} Deals` : "Get Deal")}</button>`;
       }
-      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This venue has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deal QR status at ${venueName}">${actionButtonLabel("qr", "Club QR")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This venue has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deal NFC status at ${venueName}">${actionButtonLabel("qr", "NFC Deal")}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
@@ -54467,7 +54463,7 @@
         const venueName = String(item.venue.name || "this venue").trim() || "this venue";
         deal = createHomeTvFeedActionButton(
           "home-tv-feed-deal-action home-card-qr-rail-action",
-          "Club Deal QR",
+          "Club Deal NFC",
           '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2h4zM14 18h2"></path></svg>'
         );
         const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
@@ -54951,7 +54947,7 @@
         event.stopPropagation();
         showCardQrNotice(
           unavailableCardQr,
-          unavailableCardQr.dataset.cardQrLabel || "Club Deal QR",
+          unavailableCardQr.dataset.cardQrLabel || "Club Deal NFC",
           unavailableCardQr.dataset.cardQrMessage || "No Club Deal is available right now."
         );
         return;
@@ -55170,10 +55166,9 @@
             <button class="profile-qr-close" type="button" data-close-profile-share-choice aria-label="Close profile sharing">${actionIconMarkup("close")}</button>
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
-            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Send the profile or show a profile-sharing QR. This is not a Club Deal.</p>
+            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Send the public profile directly or copy its link. Club Deals redeem only through venue NFC.</p>
             <div class="profile-share-choice-actions">
               <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
-              <button class="profile-qr-action" type="button" data-show-profile-share-qr>${actionButtonLabel("qr", "Show profile-sharing QR")}</button>
               <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
             </div>
           </div>
@@ -55193,13 +55188,6 @@
           runShareAction(profileName, city);
           return;
         }
-        if (event.target.closest("[data-show-profile-share-qr]")) {
-          const triggerButton = overlay.profileShareTrigger || null;
-          closeProfileShareChoice({ restoreFocus: false });
-          openQrOverlay(profileName, city, triggerButton);
-          recordLiveEvent("profile_action", { dancerName: profileName, source: "qr_opened" });
-          return;
-        }
         if (event.target.closest("[data-copy-profile-choice]")) {
           copyText(profileShareUrl(profileName, city), "Profile link copied");
         }
@@ -55215,7 +55203,7 @@
       overlay.profileShareTrigger = triggerButton || null;
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
       document.getElementById("profileShareChoiceSubtitle").textContent =
-        "Send this profile directly or let someone scan a profile-sharing QR. This is not a Club Deal and cannot be redeemed at a venue.";
+        "Send this public profile directly or copy its link. Club Deals redeem only through a venue cashier NFC tap.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");

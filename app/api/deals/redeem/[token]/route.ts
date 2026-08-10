@@ -16,11 +16,11 @@ export async function GET(_request: Request, { params }: RouteProps) {
   try {
     const { token } = await params;
     const redemption = await getRedemptionForScanner(createAdminSupabaseClient(), token);
-    if (!redemption) return NextResponse.json({ ok: false, error: "QR code not found." }, { status: 404 });
+    if (!redemption) return NextResponse.json({ ok: false, error: "Club Deal not found." }, { status: 404 });
 
     return NextResponse.json({ ok: true, redemption });
   } catch (error) {
-    return apiError(error, "Unable to load QR redemption.");
+    return apiError(error, "Unable to load Club Deal redemption.");
   }
 }
 
@@ -52,6 +52,6 @@ export async function POST(request: Request, { params }: RouteProps) {
       confirmation: result.confirmation,
     });
   } catch (error) {
-    return apiError(error, "Unable to redeem QR code.");
+    return apiError(error, "Unable to redeem Club Deal.");
   }
 }

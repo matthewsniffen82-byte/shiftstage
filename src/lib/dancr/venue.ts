@@ -345,8 +345,8 @@ export async function getVenueDashboard(
     directions30Days,
     pageViews30Days,
     pageViewsToday,
-    qrImpressions30Days,
-    dancerProfileQrImpressions30Days,
+    dressingRoomNfcTaps30Days,
+    cashierNfcRedemptions30Days,
     upcomingShiftCount,
     goingSignals30Days,
     workingNow,
@@ -358,8 +358,8 @@ export async function getVenueDashboard(
     countByVenueSince(client, "direction_requests", profile.id, "requested_at", since),
     countVenueEvents(client, profile.id, "page_view", since),
     countVenueEvents(client, profile.id, "page_view", today),
-    countVenueEvents(client, profile.id, "qr_impression", since),
-    countVenueEvents(client, profile.id, "qr_impression", since, "dancer_profile"),
+    countVenueNfcTaps(client, profile.id, "dressing_room", since),
+    countVenueNfcTaps(client, profile.id, "cashier", since, "deal_redeemed"),
     countUpcomingShifts(client, profile.id, now),
     countVenueGoingSignals(client, profile.id, since),
     getWorkingDancers(client, profile.id, now),
@@ -375,8 +375,8 @@ export async function getVenueDashboard(
       directions30Days,
       pageViews30Days,
       pageViewsToday,
-      qrImpressions30Days,
-      dancerProfileQrImpressions30Days,
+      dressingRoomNfcTaps30Days,
+      cashierNfcRedemptions30Days,
       upcomingShiftCount,
       activeDancersNow: workingNow.length,
       goingSignals30Days,
@@ -462,6 +462,25 @@ async function countVenueEvents(
     .eq("event_type", eventType)
     .gte("occurred_at", since.toISOString());
   if (source) query = query.eq("source", source);
+  const { count, error } = await query;
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countVenueNfcTaps(
+  client: DancrClient,
+  venueId: string,
+  tagType: "dressing_room" | "cashier",
+  since: Date,
+  eventType?: "deal_redeemed",
+) {
+  let query = client
+    .from("nfc_tap_events")
+    .select("id", { count: "exact", head: true })
+    .eq("venue_id", venueId)
+    .eq("tag_type", tagType)
+    .gte("occurred_at", since.toISOString());
+  if (eventType) query = query.eq("event_type", eventType);
   const { count, error } = await query;
   if (error) throw error;
   return count || 0;

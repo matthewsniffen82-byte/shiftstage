@@ -448,7 +448,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.equal(mergedVenue.popularity.profileViews30d, 18, "real profile views are retained during deduplication");
   assert.match(
     homeSource,
-    /function publicVenueRecordScore\(venue\)[\s\S]*?venue\?\.slug === canonicalSlug \? 32 : 0[\s\S]*?venue\?\.activeDeal\?\.id[\s\S]*?venue\?\.qrCodeUrl/,
+    /function publicVenueRecordScore\(venue\)[\s\S]*?venue\?\.slug === canonicalSlug \? 32 : 0[\s\S]*?venue\?\.activeDeal\?\.id/,
   );
   assert.match(
     homeSource,
@@ -472,7 +472,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", offerCount > 1 \? `\$\{offerCount\} Deals` : "Get Deal"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Club Deal unavailable"[\s\S]*?actionButtonLabel\("qr", "Club QR"\)/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", offerCount > 1 \? `\$\{offerCount\} Deals` : "Get Deal"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Club Deal unavailable"[\s\S]*?actionButtonLabel\("qr", "NFC Deal"\)/,
   );
   const venueQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
@@ -689,7 +689,7 @@ test("mobile discovery cards use neutral edges while TV is completely borderless
   assert.doesNotMatch(dancerShellOverride, /width: calc\(100% - 8px\)/);
 });
 
-test("Working Now dancer grid cards expose a functional production Club QR action", () => {
+test("Working Now dancer grid cards expose a functional cashier NFC Club Deal action", () => {
   assert.match(
     homeSource,
     /function homeDiscoveryFeedLiveQrData\(profile\) \{\s*if \(!isWorkingTonight\(profile\) \|\| !profile\.venueId\) return null;/,
@@ -700,16 +700,15 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?dancerClubDealState\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?state\.key !== "available"[\s\S]*?class="feed-card-action home-card-qr-rail-action is-unavailable is-\$\{state\.key\}"[\s\S]*?data-card-qr-label[\s\S]*?data-card-qr-message[\s\S]*?actionButtonLabel\("qr", "QR"\)[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?dancerClubDealState\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?state\.key !== "available"[\s\S]*?class="feed-card-action home-card-qr-rail-action is-unavailable is-\$\{state\.key\}"[\s\S]*?data-card-qr-label[\s\S]*?data-card-qr-message[\s\S]*?actionButtonLabel\("qr", "NFC"\)[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr/,
   );
   assert.match(
     homeSource,
     /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\], \[data-deal-pass\]"\)[\s\S]*?await handleDealPassClick\(event\);[\s\S]*?return;/,
   );
-  assert.match(
-    homeSource,
-    /trigger\.hasAttribute\("data-save-deal-pass-on-open"\)[\s\S]*?saveCustomerDealPass\(pass, "Club QR saved to Offers"\)[\s\S]*?openDealPassOverlay\(pass, trigger\)/,
-  );
+  assert.match(homeSource, /mydancrPendingNfcDealV1/);
+  assert.match(homeSource, /Club Deal ready for cashier NFC/);
+  assert.match(homeSource, /Tap the cashier NFC sticker to securely redeem/);
   assert.match(
     homeSource,
     /Shared scrolling-card QR rail shell[\s\S]*?\.home-venue-discovery-action-rail \.home-venue-discovery-rail-qr \{[\s\S]*?width: 48px !important;[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?opacity: 1 !important;[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,
@@ -738,10 +737,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
     homeSource,
     /\.home-card-qr-notice \{[\s\S]*?position: absolute[\s\S]*?right: var\(--home-card-qr-notice-right, 72px\)[\s\S]*?width: min\(280px,[\s\S]*?transform: translate\(8px, -50%\) scale\(\.98\)[\s\S]*?pointer-events: none/,
   );
-  assert.match(
-    homeSource,
-    /catch \(error\) \{[\s\S]*?showCardQrNotice\(\s*revenueTrigger,\s*"Club Deal QR",\s*error\.message \|\| "Unable to create the Club Deal QR"/,
-  );
+  assert.doesNotMatch(homeSource, /fetch\("\/api\/deals\/redemptions",\s*\{\s*method:\s*"POST"/);
   assert.doesNotMatch(homeSource, /unavailableCardQr\.title/);
   assert.doesNotMatch(homeSource, /\.home-dancer-grid-qr \{[\s\S]*?position: absolute/);
 });

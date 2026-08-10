@@ -27,7 +27,7 @@ const [
   readFile(new URL("../supabase/migrations/202608080001_separate_venue_receivables_and_dancer_payouts.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/commission-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/deals/redemptions/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redemptions/[token]/events/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redeem/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/deals/redeem/[token]/RedeemDealClient.tsx", import.meta.url), "utf8"),
@@ -59,21 +59,21 @@ test("the monthly commission tiers remain private to MyDancr and dancers", () =>
   assert.match(venueDashboard, /75\+ monthly[\s\S]*?50% dancer[\s\S]*?50% MyDancr/);
 });
 
-test("dancer attribution is locked to a verified shift when the unique QR is issued", () => {
+test("dancer attribution is locked to a verified shift when the cashier NFC tap is confirmed", () => {
   assert.match(attribution, /createHmac\("sha256"/);
   assert.match(attribution, /timingSafeEqual/);
   assert.match(attribution, /dancerId[\s\S]*?venueId[\s\S]*?dealId[\s\S]*?shiftId[\s\S]*?expiresAt/);
   assert.match(generationRoute, /verifyDancerDealAttributionToken\(attributionToken\)/);
-  assert.match(generationRoute, /attribution\.dancerId !== dancerId[\s\S]*?attribution\.venueId !== venueId[\s\S]*?attribution\.dealId !== clubDealId/);
+  assert.match(generationRoute, /attribution\.dancerId !== dancerId[\s\S]*?attribution\.venueId !== tag\.venueId[\s\S]*?attribution\.dealId !== dealId/);
   assert.match(generationRoute, /verifiedCheckIn\.shiftId !== attribution\.shiftId/);
-  assert.match(generationRoute, /getVerifiedActiveCheckInAtVenue\(admin, dancerId, venueId\)/);
+  assert.match(generationRoute, /getVerifiedActiveCheckInAtVenue\(admin, dancerId, tag\.venueId\)/);
   assert.match(generationRoute, /shiftId = verifiedCheckIn\.shiftId/);
   assert.match(deals, /shift_id: input\.sourceType === "dancer_profile" \? input\.shiftId/);
   assert.match(deals, /attribution_locked_at: input\.sourceType === "dancer_profile"/);
   assert.match(migration, /shift_id uuid references public\.shifts/);
   assert.match(migration, /v_redemption\.source_type = 'dancer_profile'[\s\S]*?v_redemption\.shift_id is null/);
   assert.doesNotMatch(passPage, /dancerHasVerifiedActiveCheckInAtVenue|hasLiveDancerAttribution/);
-  assert.match(passPage, /Dancer credit was locked when this QR was issued during a verified check-in/);
+  assert.match(generationRoute, /campaignSource: "venue_nfc"/);
   assert.match(dancerPage, /createDancerDealAttributionToken/);
   assert.match(dancerPage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(dancerPage, /attributionTokens=\{dealAttributionTokens\}/);
@@ -125,7 +125,7 @@ test("venue QR revenue goes entirely to MyDancr while dancer QR revenue enters t
   assert.match(migration, /successful_redemption_number[\s\S]*?commission_month[\s\S]*?policy_version/);
 });
 
-test("venues configure a real referral amount before a tracked QR can be published", () => {
+test("venues configure a real referral amount before a Club Deal can be redeemed by NFC", () => {
   assert.match(deals, /\.eq\("payout_type", "flat"\)[\s\S]*?\.gt\("payout_amount_cents", 0\)/);
   assert.match(venueDealRoute, /referralCommissionCents/);
   assert.match(venueDealRoute, /updateVenueDealForAccount/);
@@ -134,8 +134,8 @@ test("venues configure a real referral amount before a tracked QR can be publish
   assert.match(migration, /is_active = false/);
   assert.match(venueDashboard, /MyDancr referral fee per redemption/);
   assert.match(venueDashboard, /name="dealAction"[\s\S]*?value=\{form\.isActive \? "save" : "publish"\}/);
-  assert.match(venueDashboard, /"Publish Deal & Create QR"/);
-  assert.match(venueDashboard, /Only that authenticated confirmation creates a verified MyDancr referral fee for venue billing/);
+  assert.match(venueDashboard, /Publish Deal/);
+  assert.match(venueDashboard, /Cashier NFC redemption active/);
   assert.doesNotMatch(venueDashboard, /Monthly successful dancer QR redemptions/);
 });
 

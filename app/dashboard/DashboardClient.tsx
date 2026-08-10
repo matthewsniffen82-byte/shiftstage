@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
-import QRCode from "qrcode";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import {
@@ -11,6 +10,8 @@ import {
   locationVerificationRefreshDue,
 } from "@/src/lib/dancr/geofence";
 import DancerTvStudio from "./DancerTvStudio";
+import DancerNfcPanel from "./DancerNfcPanel";
+import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTvPanel from "./VenueTvPanel";
 
 type DashboardRole = "customer" | "dancer" | "venue";
@@ -1275,7 +1276,7 @@ function CustomerDealPassPanel({
     <article className="info-panel saved-deal-panel" id="customer-offers" tabIndex={-1}>
       <div className="saved-deal-head">
         <div>
-          <span>Saved QR wallet</span>
+          <span>Club Deal history</span>
           <h2>Club Deals</h2>
         </div>
         <strong>{activeDeals.length}</strong>
@@ -1291,13 +1292,13 @@ function CustomerDealPassPanel({
               <strong>{item.deal?.title || "Club Deal"}</strong>
               <small>{item.venue?.name || "Venue"} · {dealExpiryLabel(item.expiresAt, now)}</small>
             </span>
-            <em>Open QR</em>
+            <em>Open details</em>
           </Link>
         ))}
         {!activeDeals.length ? (
           <div className="customer-empty-state">
             <strong>No active Club Deals</strong>
-            <p>Get a Club Deal from a venue page or a verified Working Now dancer and its QR will stay here until it expires.</p>
+            <p>Choose a Club Deal from a venue page or a verified Working Now dancer, then redeem by tapping the venue&apos;s cashier NFC sticker.</p>
             <Link href={homeDiscoveryHref("venues")}>Browse venues</Link>
           </div>
         ) : null}
@@ -1719,7 +1720,7 @@ function VenuePanel({
           <strong>{liveDealSummary}</strong>
           <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
           <a className="primary-link" href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
-            Verify dancer
+            Manage dancer NFC
           </a>
         </div>
       </section>
@@ -1727,7 +1728,7 @@ function VenuePanel({
       <nav className="venue-dashboard-shortcuts" aria-label="Venue dashboard shortcuts">
         <a className="is-primary" href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
           <VenueDashboardActionIcon name="verify" />
-          <span><strong>Verify dancer</strong><small>Scan or enter code</small></span>
+          <span><strong>Dancer NFC</strong><small>Manage stickers</small></span>
         </a>
         <a href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
           <VenueDashboardActionIcon name="deal" />
@@ -1758,21 +1759,21 @@ function VenuePanel({
       </section>
 
       <VenueDashboardSection
-        description="Scan a dancer QR or enter a verification code, then manage the roster allowed to appear in your venue feed."
+        description="Program and manage the physical dressing-room NFC stickers dancers tap to verify affiliation and publish eligible profiles."
         eyebrow="Primary floor action"
         id="venue-dancer-roster"
-        title="Verify dancer"
+        title="Dancer NFC verification"
         badge={`${verifiedDancerCount} verified`}
       >
-        <VenueDancerVerificationPanel initialAffiliations={initialAffiliations} />
+        <VenueNfcTagPanel />
       </VenueDashboardSection>
 
       <VenueDashboardSection
         badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
-        description="Create offers, publish tracked QR codes, and review venue invoices."
+        description="Create offers, manage cashier NFC redemption, and review venue invoices."
         eyebrow="Revenue"
         id="venue-club-deals"
-        title="Club Deals & tracked QR"
+        title="Club Deals & cashier NFC"
       >
         <VenueClubDealPanel
           finance={finance}
@@ -1806,7 +1807,7 @@ function VenuePanel({
       </VenueDashboardSection>
 
       <VenueDashboardSection
-        description="Customer reach, intent, live activity, and QR visibility."
+        description="Customer reach, intent, live activity, and NFC Deal visibility."
         eyebrow="Live performance"
         id="venue-overview"
         title="Analytics & performance"
@@ -1825,7 +1826,8 @@ function VenuePanel({
           <InfoPanel title="Live operations">
             <Metric label="Working now" value={String(analytics?.activeDancersNow || 0)} />
             <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
-            <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
+            <Metric label="Dressing-room NFC taps · 30 days" value={String(analytics?.dressingRoomNfcTaps30Days || 0)} />
+            <Metric label="Cashier redemptions · 30 days" value={String(analytics?.cashierNfcRedemptions30Days || 0)} />
           </InfoPanel>
         </div>
       </VenueDashboardSection>
@@ -1915,13 +1917,6 @@ function VenuePanel({
   );
 }
 
-type VenueDealQrAsset = {
-  dealId: string;
-  dealTitle: string;
-  claimUrl: string;
-  qrDataUrl: string;
-};
-
 function VenueClubDealPanel({
   finance,
   hasWorkingNowDancers,
@@ -1945,8 +1940,6 @@ function VenueClubDealPanel({
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveConfirmed, setSaveConfirmed] = useState(false);
-  const [isGeneratingQr, setIsGeneratingQr] = useState(false);
-  const [qrAsset, setQrAsset] = useState<VenueDealQrAsset | null>(null);
 
   useEffect(() => {
     const nextDeals = initialDeals.length ? initialDeals : initialDeal ? [initialDeal] : [];
@@ -1957,32 +1950,6 @@ function VenueClubDealPanel({
     setEditingId(nextEditingId);
     setForm(venueDealForm(selectedDeal));
   }, [initialDeal, initialDeals]);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!editingId || !form.isActive) {
-      setQrAsset(null);
-      setIsGeneratingQr(false);
-      return;
-    }
-    const session = readSession();
-    if (!session?.accessToken) return;
-    setQrAsset(null);
-    setIsGeneratingQr(true);
-    void fetchVenueDealQrAsset(editingId, session.accessToken)
-      .then((asset) => {
-        if (!cancelled && editingIdRef.current === editingId) setQrAsset(asset);
-      })
-      .catch((error) => {
-        if (!cancelled) setStatus(error instanceof Error ? error.message : "Unable to load this tracked Club Deal QR.");
-      })
-      .finally(() => {
-        if (!cancelled) setIsGeneratingQr(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [editingId, form.isActive]);
 
   function updateDealForm<Key extends keyof typeof form>(key: Key, value: (typeof form)[Key]) {
     setSaveConfirmed(false);
@@ -1996,7 +1963,6 @@ function VenueClubDealPanel({
     setEditingId(nextEditingId);
     setForm(venueDealForm(deal));
     setSaveConfirmed(false);
-    setQrAsset(null);
     setStatus("");
   }
 
@@ -2005,7 +1971,6 @@ function VenueClubDealPanel({
     setEditingId("");
     setForm(venueDealForm(null, deals.length));
     setSaveConfirmed(false);
-    setQrAsset(null);
     setStatus("New deal started. Save it as a draft or publish it when every detail is ready.");
   }
 
@@ -2075,19 +2040,8 @@ function VenueClubDealPanel({
       editingIdRef.current = String(savedDeal.id);
       setEditingId(editingIdRef.current);
       setForm(venueDealForm(savedDeal));
-      setQrAsset(null);
-      if (savedDeal.isActive) {
-        try {
-          const publishedQr = await fetchVenueDealQrAsset(editingIdRef.current, session.accessToken);
-          setQrAsset(publishedQr);
-        } catch {
-          setStatus("This deal is live, but its QR could not be loaded. Reopen the deal to retry without republishing it.");
-          setSaveConfirmed(true);
-          return;
-        }
-      }
       setStatus(savedDeal.isActive
-        ? "Changes saved. The live deal and QR are updated."
+        ? "Changes saved. The live deal is ready on venue, dancer, and cashier NFC surfaces."
         : "Saved changes. This deal is a draft and is not visible on MyDancr.");
       setSaveConfirmed(true);
     } catch (error) {
@@ -2117,91 +2071,12 @@ function VenueClubDealPanel({
       editingIdRef.current = nextEditingId;
       setEditingId(nextEditingId);
       setForm(venueDealForm(nextDeals[0], nextDeals.length));
-      setQrAsset(null);
       setStatus(data.message || "Club Deal deleted.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to delete this Club Deal.");
     } finally {
       setIsSaving(false);
     }
-  }
-
-  async function prepareVenueQr(dealId = editingId): Promise<VenueDealQrAsset | null> {
-    if (qrAsset?.dealId === dealId) return qrAsset;
-    if (!dealId || isGeneratingQr) return null;
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return null;
-    }
-    setIsGeneratingQr(true);
-    setStatus("Preparing this deal's QR…");
-    try {
-      const asset = await fetchVenueDealQrAsset(dealId, session.accessToken);
-      setQrAsset(asset);
-      return asset;
-    } catch (error) {
-      setQrAsset(null);
-      setStatus(error instanceof Error ? error.message : "Unable to generate this tracked Club Deal QR.");
-      return null;
-    } finally {
-      setIsGeneratingQr(false);
-    }
-  }
-
-  async function shareVenueQrFromDevice() {
-    const asset = qrAsset || await prepareVenueQr();
-    if (!asset) return;
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: asset.dealTitle,
-          text: `Open the ${asset.dealTitle} Club Deal on MyDancr.`,
-          url: asset.claimUrl,
-        });
-        setStatus("QR deal link shared.");
-        return;
-      }
-      await navigator.clipboard.writeText(asset.claimUrl);
-      setStatus("Sharing is unavailable on this browser, so the deal link was copied.");
-    } catch (error) {
-      if ((error as DOMException)?.name !== "AbortError") setStatus("Unable to open device sharing. Choose another share option.");
-    }
-  }
-
-  function downloadVenueQr() {
-    if (!qrAsset) return;
-    const link = document.createElement("a");
-    link.href = qrAsset.qrDataUrl;
-    link.download = dealQrFilename(qrAsset.dealTitle);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setStatus("QR image saved.");
-  }
-
-  async function copyVenueQrLink() {
-    if (!qrAsset) return;
-    try {
-      await navigator.clipboard.writeText(qrAsset.claimUrl);
-      setStatus("Tracked Club Deal link copied.");
-    } catch {
-      setStatus("Unable to copy the link. Choose Save QR image instead.");
-    }
-  }
-
-  function printVenueQrSign() {
-    if (!qrAsset) return;
-    const printWindow = window.open("", "_blank", "width=900,height=1100");
-    if (!printWindow) {
-      setStatus("Allow pop-ups for MyDancr to print this QR sign.");
-      return;
-    }
-    printWindow.opener = null;
-    const safeTitle = escapePrintableText(qrAsset.dealTitle);
-    printWindow.document.write(`<!doctype html><html><head><title>${safeTitle} QR sign</title><style>@page{size:auto;margin:.45in}*{box-sizing:border-box}body{margin:0;background:#fff;color:#07070a;font-family:Arial,sans-serif}.sheet{min-height:9.5in;display:grid;place-content:center;justify-items:center;gap:20px;padding:40px;border:5px solid #07070a;text-align:center}.brand{font-size:24px;font-weight:900;letter-spacing:.08em}.title{max-width:7in;margin:0;font-size:42px;line-height:1.08}.qr{width:min(6.2in,78vw);height:auto}.help{max-width:6.5in;margin:0;font-size:22px;line-height:1.35}.tracked{font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}@media print{.sheet{min-height:calc(100vh - .9in)}} </style></head><body><main class="sheet"><div class="brand">MYDANCR CLUB DEAL</div><h1 class="title">${safeTitle}</h1><img class="qr" src="${qrAsset.qrDataUrl}" alt=""><p class="help">Scan to open this venue's tracked Club Deal and create your customer pass.</p><div class="tracked">Verified venue offer · MyDancr tracked</div></main><script>window.addEventListener('load',()=>{window.focus();window.print()});<\/script></body></html>`);
-    printWindow.document.close();
-    setStatus("Print sign opened.");
   }
 
   const liveCount = deals.filter((deal) => deal.isActive === true).length;
@@ -2219,7 +2094,7 @@ function VenueClubDealPanel({
         </strong>
       </div>
       <p className="venue-deal-placement-note">
-        Publish multiple deals at the same time. Every deal keeps its own status, display order, tracked QR, and public offer.
+        Publish multiple deals at the same time. Every deal keeps its own status, display order, cashier NFC redemption, and public offer.
       </p>
       <div className="venue-deal-counts" aria-label="Club Deal totals">
         <span><strong>{liveCount}</strong> live</span>
@@ -2236,7 +2111,7 @@ function VenueClubDealPanel({
           >
             <span>{dealTypeLabel(String(deal.offerType || "admission"))}</span>
             <strong>{String(deal.dealTitle || "Untitled offer")}</strong>
-            <small className={deal.isActive ? "is-live" : undefined}>{deal.isActive ? "Live · QR active" : "Draft · Not public"}</small>
+            <small className={deal.isActive ? "is-live" : undefined}>{deal.isActive ? "Live · NFC active" : "Draft · Not public"}</small>
           </button>
         ))}
         <button aria-pressed={!editingId} className={`add${!editingId ? " selected" : ""}`} type="button" onClick={addDeal}>
@@ -2356,7 +2231,7 @@ function VenueClubDealPanel({
           </dl>
           {form.isActive ? (
             <p className="venue-deal-live-edit-note">
-              Edit and save this live offer without unpublishing. Its QR stays active.
+              Edit and save this live offer without unpublishing. Cashier NFC redemption stays active.
             </p>
           ) : null}
           <div className="venue-deal-form-actions">
@@ -2365,11 +2240,11 @@ function VenueClubDealPanel({
               aria-live="polite"
               disabled={isSaving}
               name="dealAction"
-              title={form.isActive ? "Takes this deal and its QR offline until you publish it again" : undefined}
+              title={form.isActive ? "Takes this deal offline until you publish it again" : undefined}
               type="submit"
               value={form.isActive ? "save" : "publish"}
             >
-              {isSaving ? "Saving..." : saveConfirmed ? "Saved Changes" : form.isActive ? "Save This Deal" : "Publish Deal & Create QR"}
+              {isSaving ? "Saving..." : saveConfirmed ? "Saved Changes" : form.isActive ? "Save This Deal" : "Publish Deal"}
             </button>
             <button
               className="secondary"
@@ -2384,7 +2259,7 @@ function VenueClubDealPanel({
           </div>
           {form.isActive ? (
             <small className="venue-deal-unpublish-note">
-              Unpublish only when you want to take this deal and its QR offline.
+              Unpublish only when you want to take this deal off venue, dancer, and cashier NFC surfaces.
             </small>
           ) : null}
         </fieldset>
@@ -2400,42 +2275,26 @@ function VenueClubDealPanel({
             <span aria-hidden="true">{form.isActive ? "✓" : "•"}</span>
             <div>
               <strong>{form.isActive ? "Live on MyDancr" : "Draft — not live"}</strong>
-              <small>{form.isActive ? "This deal and its QR are published." : "Publish this deal when it is ready for customers."}</small>
+              <small>{form.isActive ? "This deal is published and available through cashier NFC." : "Publish this deal when it is ready for customers."}</small>
             </div>
           </div>
           {form.isActive ? (
             <ul>
               <li>Live on venue page</li>
               <li>{hasWorkingNowDancers ? "Available on eligible Working Now dancer profiles" : "Will appear automatically when an affiliated dancer is Working Now"}</li>
-              <li>Venue QR active</li>
+              <li>Cashier NFC redemption active</li>
             </ul>
           ) : null}
         </section>
       ) : null}
-      <section className={`venue-deal-qr-generator${qrAsset ? " has-qr" : ""}`} aria-labelledby="venue-deal-qr-heading">
-        <div className="venue-deal-qr-copy">
-          <span className="eyebrow">This deal&apos;s campaign</span>
-          <h3 id="venue-deal-qr-heading">Tracked Deal QR</h3>
-          <p>{form.isActive ? "This stable QR belongs only to the selected deal. Editing this deal does not require replacing signs already in use." : "Publish this deal to create its real tracked QR. Drafts never display a fake or inactive code."}</p>
-          {form.isActive ? (
-            <div className="venue-deal-share-options" role="group" aria-label="QR actions">
-              <button disabled={!qrAsset || isGeneratingQr} type="button" onClick={shareVenueQrFromDevice}>Share</button>
-              <button disabled={!qrAsset || isGeneratingQr} type="button" onClick={downloadVenueQr}>Download</button>
-              <button disabled={!qrAsset || isGeneratingQr} type="button" onClick={copyVenueQrLink}>Copy link</button>
-              <button disabled={!qrAsset || isGeneratingQr} type="button" onClick={printVenueQrSign}>Print sign</button>
-            </div>
-          ) : null}
-          {isGeneratingQr ? <small>Loading this deal&apos;s tracked QR…</small> : null}
-          {!editingId ? <small>Complete the builder, then publish this deal to create its QR.</small> : null}
-          {editingId && !form.isActive ? <small>This draft is private. Publishing it will not change your other live deals.</small> : null}
-        </div>
-        {qrAsset ? (
-          <div className="venue-deal-qr-preview">
-            <img src={qrAsset.qrDataUrl} alt={`${qrAsset.dealTitle} tracked venue QR`} />
-            <strong>{qrAsset.dealTitle}</strong>
-            <small>Direct venue attribution · MyDancr tracked</small>
-          </div>
-        ) : form.isActive && isGeneratingQr ? <div className="venue-deal-qr-loading" role="status">Preparing secure QR…</div> : null}
+      <section className="venue-deal-nfc-status" aria-labelledby="venue-deal-nfc-heading">
+        <div aria-hidden="true">)))</div>
+        <section>
+          <span className="eyebrow">Cashier redemption</span>
+          <h3 id="venue-deal-nfc-heading">Tracked NFC</h3>
+          <p>{form.isActive ? "This offer is now available when a customer taps any active cashier sticker for this venue. Deal selection, dancer credit, and billing are verified at the tap." : "Publish this deal to make it available through active cashier NFC stickers. Draft deals cannot be redeemed."}</p>
+          <small>Sticker URLs are managed in Dancer NFC verification above. A sticker can be disabled or rotated without editing the deal.</small>
+        </section>
       </section>
       <details className="venue-deal-how">
         <summary>How Club Deals work</summary>
@@ -2444,11 +2303,11 @@ function VenueClubDealPanel({
             Published deals appear on your venue page and on affiliated dancer profiles while those dancers are verified Working Now.
           </p>
           <p>
-            Each generated QR creates a tracked customer pass. Direct venue passes and dancer-profile passes preserve their source, while the venue is billed the same published MyDancr referral fee after staff confirms redemption.
+            Customers choose a deal on MyDancr, then tap the physical cashier sticker. Direct venue intent and dancer-profile intent preserve their source, while the same tap creates the verified referral fee and billing record.
           </p>
           <aside className="venue-redemption-instructions">
-            <strong>Venue staff redemption</strong>
-            <p>Staff scan the customer&apos;s QR, sign in to this venue account, review the offer, and select Redeem Deal. Only that authenticated confirmation creates a verified MyDancr referral fee for venue billing.</p>
+            <strong>Cashier redemption</strong>
+            <p>Staff point the customer to the official MyDancr NFC sticker at the register. The customer taps, confirms the active offer, and receives an on-screen success result. Only a server-verified active tag creates the venue billing and attribution record.</p>
           </aside>
         </div>
       </details>
@@ -2458,35 +2317,13 @@ function VenueClubDealPanel({
         <Metric label="Direct venue" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
         <Metric label="MyDancr referral fees" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
         <Metric label="Outstanding to MyDancr" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
-        <Metric label="Posted QR scans" value={String(revenue?.postedVenueQrScansThisMonth || 0)} />
-        <Metric label="Customer passes issued" value={String(revenue?.passesIssuedThisMonth || 0)} />
-        <Metric label="Saves / scanner opens" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
+        <Metric label="Confirmed cashier taps" value={String(revenue?.postedVenueQrScansThisMonth || 0)} />
+        <Metric label="Redemption intents" value={String(revenue?.passesIssuedThisMonth || 0)} />
+        <Metric label="Saved / opened" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
       </div>
       <VenueFinanceSummary finance={finance} />
     </article>
   );
-}
-
-async function fetchVenueDealQrAsset(dealId: string, accessToken: string): Promise<VenueDealQrAsset> {
-  const response = await fetch(`/api/venue/deal/qr?dealId=${encodeURIComponent(dealId)}`, {
-    headers: { authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
-  const data = await response.json();
-  if (!response.ok || !data.ok || !data.asset?.qrDataUrl) {
-    throw new Error(data.error || "Unable to generate this tracked Club Deal QR.");
-  }
-  return data.asset as VenueDealQrAsset;
-}
-
-function escapePrintableText(value: string) {
-  return value.replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  })[character] || character);
 }
 
 function upsertVenueDeal(
@@ -2529,15 +2366,6 @@ function dollarsToCents(value: string) {
   return cents >= 100 && cents <= 100_000 ? cents : null;
 }
 
-function dealQrFilename(value: string) {
-  const slug = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 64) || "club-deal";
-  return `mydancr-${slug}-tracked-qr.png`;
-}
-
 function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
   const [status, setStatus] = useState("");
   const invoices = Array.isArray(finance?.invoices) ? finance.invoices as Array<Record<string, unknown>> : [];
@@ -2577,7 +2405,7 @@ function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
         <Metric label="Payment terms" value={`${String((finance?.account as Record<string, unknown> | undefined)?.payment_terms_days || 15)} days`} />
       </div>
       {openInvoices.length ? (
-        <div className="commission-tier-table" aria-label="Open QR commission invoices">
+        <div className="commission-tier-table" aria-label="Open Club Deal commission invoices">
           {openInvoices.slice(0, 6).map((invoice) => (
             <div key={String(invoice.id)}>
               <span>{String(invoice.period_start).slice(0, 7)} · {String(invoice.status)}</span>
@@ -2753,7 +2581,7 @@ function DancerPanel({
         onProfileChange={onProfileChange}
       />
       <DancerTvStudio embedded />
-      <DancerVenueVerificationPanel />
+      <DancerNfcPanel />
       {isApproved ? <DancerShiftPanel /> : null}
       {isApproved ? (
         <>
@@ -2860,10 +2688,10 @@ function DancerLockedAnalyticsPanel() {
         <span>Locked</span>
       </div>
       <p>Locked until profile approval.</p>
-      <small>Once your profile is approved, you&apos;ll see profile views, QR scans, followers, and shift activity here.</small>
+      <small>Once your profile is approved, you&apos;ll see profile views, attributed NFC redemptions, followers, and shift activity here.</small>
       <div className="locked-preview-list" aria-label="Analytics preview">
         <span>Profile views</span>
-        <span>QR scans</span>
+        <span>NFC redemptions</span>
         <span>Followers</span>
       </div>
     </article>
@@ -2879,17 +2707,17 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
 
   return (
     <article className="info-panel deal-panel">
-      <h2>QR commissions</h2>
+      <h2>Club Deal commissions</h2>
       <p>
-        Your dancer credit is locked when a QR is created from your profile during a verified check-in. Saves and shares keep that attribution; venue-confirmed successful redemptions earn commission.
+        Your dancer credit is carried from your profile during a verified check-in to the customer&apos;s cashier NFC tap. Successful server-confirmed redemptions earn commission.
       </p>
       <div className="deal-metrics">
         <Metric label="MyDancr rewards earned" value={formatCents(earnedCommissionCents)} />
         <Metric label="Ready for MyDancr payout" value={formatCents(payableCommissionCents)} />
         <Metric label="Successful this month" value={String(successfulThisMonth)} />
         <Metric label="Current dancer share" value={`${currentShare}%`} />
-        <Metric label="QR saves / shares" value={`${String(deals?.qrSaves || 0)} / ${String(deals?.qrShares || 0)}`} />
-        <Metric label="Scanner opens" value={String(deals?.qrOpens || 0)} />
+        <Metric label="Saved / shared intent" value={`${String(deals?.qrSaves || 0)} / ${String(deals?.qrShares || 0)}`} />
+        <Metric label="Cashier opens" value={String(deals?.qrOpens || 0)} />
         <Metric label="Payable / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
         <Metric label="Rejected / voided" value={String(deals?.rejectedCommissions || 0)} />
       </div>
@@ -3996,7 +3824,7 @@ function DancerShiftPanel() {
     setEditVenueId(String(shift.venue_id || ""));
     setEditStartsAt(toDateTimeLocalValue(shift.starts_at));
     setEditEndsAt(toDateTimeLocalValue(shift.ends_at));
-    setStatus("Edit the shift hours, then save. Exact times stay private and are used for check-in and QR commission eligibility.");
+    setStatus("Edit the shift hours, then save. Exact times stay private and are used for check-in and NFC commission eligibility.");
   }
 
   function stopEditingShift() {
@@ -4143,7 +3971,7 @@ function DancerShiftPanel() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check out.");
-      setCheckInStatus("Checked out. QR commission tracking is stopped.");
+      setCheckInStatus("Checked out. Club Deal commission tracking is stopped.");
       setCheckInTone("success");
       setStatus("Checked out. This shift is no longer location confirmed.");
       await loadShifts(session.accessToken);
@@ -4445,7 +4273,6 @@ function formatEventDate(value: string) {
 
 function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
   const [shareUrl, setShareUrl] = useState("");
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [status, setStatus] = useState("");
   const slug = String(profile?.slug || "");
 
@@ -4453,13 +4280,6 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
     if (!slug) return;
     const nextShareUrl = `${window.location.origin}/dancers/${slug}`;
     setShareUrl(nextShareUrl);
-    QRCode.toDataURL(nextShareUrl, {
-      width: 220,
-      margin: 1,
-      color: { dark: "#050507", light: "#f7f2ff" },
-    })
-      .then(setQrCodeUrl)
-      .catch(() => setStatus("Unable to generate QR code."));
   }, [slug]);
 
   async function copyLink() {
@@ -4477,7 +4297,6 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
       <h2>Share Profile</h2>
       {slug ? (
         <div className="share-grid">
-          {qrCodeUrl ? <img alt="Profile QR code" src={qrCodeUrl} /> : <div className="qr-placeholder">QR</div>}
           <div>
             <label>
               Public link
@@ -5565,6 +5384,9 @@ function DashboardStyles() {
       .venue-deal-publish-status ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
       .venue-deal-publish-status li { position: relative; padding-left: 24px; color: #e8fff4; font-size: 14px; font-weight: 800; }
       .venue-deal-publish-status li::before { content: "✓"; position: absolute; left: 2px; color: #78ffc0; font-weight: 950; }
+      .venue-deal-nfc-status { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:16px; padding:18px; border:1px solid rgba(124,58,237,.46); border-radius:14px; background:radial-gradient(circle at 100% 0%,rgba(124,58,237,.16),transparent 22rem),#0a0910; }
+      .venue-deal-nfc-status>div { width:62px; height:62px; display:grid; place-items:center; border-radius:50%; color:#fff; background:linear-gradient(145deg,#4817bd,#852cff); box-shadow:0 0 28px rgba(125,59,255,.4); font-weight:950; letter-spacing:-6px; transform:rotate(-18deg); }
+      .venue-deal-nfc-status>section { display:grid; gap:7px; }.venue-deal-nfc-status h3,.venue-deal-nfc-status p{margin:0}.venue-deal-nfc-status p{color:#cbd5e1;line-height:1.48}.venue-deal-nfc-status small{color:#b9accd;line-height:1.4}
       .venue-deal-qr-generator { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: center; padding: 18px; border: 1px solid rgba(124,58,237,.46); border-radius: 14px; background: radial-gradient(circle at 100% 0%, rgba(124,58,237,.16), transparent 22rem), #0a0910; box-shadow: inset 0 1px 0 rgba(248,250,252,.04); }
       .venue-deal-qr-generator.has-qr { grid-template-columns: minmax(0, 1fr) minmax(190px, 250px); }
       .venue-deal-qr-copy { display: grid; gap: 9px; }

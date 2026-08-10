@@ -99,9 +99,9 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       .order("checked_in_at", { ascending: false })
       .limit(30)),
     safeCount("Active venues", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true)),
-    safeCount("QR codes generated today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).gte("generated_at", dayAgo)),
-    safeCount("QR codes redeemed today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("status", "redeemed").gte("redeemed_at", dayAgo)),
-    safeCount("Suspicious QR activity", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("suspicious", true).gte("generated_at", dayAgo)),
+    safeCount("Club Deal intents created today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).gte("generated_at", dayAgo)),
+    safeCount("Cashier NFC redemptions today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("status", "redeemed").gte("redeemed_at", dayAgo)),
+    safeCount("Suspicious Club Deal activity", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("suspicious", true).gte("generated_at", dayAgo)),
     safeRows("Missed check-ins", () => db.from("shifts")
       .select("id, starts_at, ends_at, location_status, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
       .eq("status", "posted")

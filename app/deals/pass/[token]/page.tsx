@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import QRCode from "qrcode";
 import { getRedemptionForScanner } from "@/src/lib/dancr/deals";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
-import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -22,18 +20,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
   if (!redemption?.deal || !redemption.venue) notFound();
 
   const isExpired = new Date(redemption.expiresAt).getTime() <= Date.now();
-  const isAvailable =
-    redemption.status === "generated" &&
-    redemption.deal.isActive &&
-    !isExpired;
-  const redemptionUrl = `${getPublicEnv().siteUrl.replace(/\/+$/, "")}/deals/redeem/${encodeURIComponent(token)}`;
-  const qrDataUrl = isAvailable
-    ? await QRCode.toDataURL(redemptionUrl, {
-        margin: 1,
-        width: 520,
-        color: { dark: "#050505", light: "#ffffff" },
-      })
-    : "";
+  const isAvailable = false;
 
   return (
     <main className="deal-pass-page">
@@ -43,44 +30,26 @@ export default async function ClubDealPassPage({ params }: PageProps) {
         <Link href={homeDiscoveryHref("venues")}>Venues</Link>
       </nav>
       <section className={isAvailable ? "deal-pass-card" : "deal-pass-card unavailable"}>
-        <span className="eyebrow">{isAvailable ? "Club Deal ready" : "Club Deal unavailable"}</span>
+        <span className="eyebrow">Legacy Club Deal pass</span>
         <h1>{redemption.deal.dealTitle}</h1>
         <p>{redemption.venue.name}</p>
-        {isAvailable ? (
-          <>
-            <img src={qrDataUrl} alt={`${redemption.deal.dealTitle} QR code`} />
-            <strong>Show this QR to venue staff</strong>
-            <small>Expires {formatExpiry(redemption.expiresAt)}</small>
-            {redemption.sourceType === "dancer_profile" ? (
-              <small>Dancer credit was locked when this QR was issued during a verified check-in.</small>
-            ) : null}
-            {redemption.deal.dealTerms ? <small>{redemption.deal.dealTerms}</small> : null}
-          </>
-        ) : (
-          <>
-            <strong>{unavailableMessage(redemption.status, isExpired)}</strong>
-            <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find another Club Deal</Link>
-          </>
-        )}
+        <>
+          <div className="nfc-retired" aria-hidden="true">)))</div>
+          <strong>{legacyPassMessage(redemption.status, isExpired)}</strong>
+          <small>MyDancr Club Deals now redeem through the venue&apos;s physical cashier NFC sticker. Choose a current offer in MyDancr before tapping.</small>
+          {redemption.deal.dealTerms ? <small>{redemption.deal.dealTerms}</small> : null}
+          <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find a current NFC Club Deal</Link>
+        </>
       </section>
     </main>
   );
 }
 
-function unavailableMessage(status: string, isExpired: boolean) {
+function legacyPassMessage(status: string, isExpired: boolean) {
   if (status === "redeemed") return "This Club Deal has already been redeemed.";
   if (status === "voided") return "This Club Deal is no longer valid.";
   if (isExpired || status === "expired") return "This Club Deal has expired.";
-  return "This Club Deal is not currently available.";
-}
-
-function formatExpiry(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
+  return "This older QR pass cannot be redeemed. Use the cashier NFC flow instead.";
 }
 
 function DealPassStyles() {
@@ -95,7 +64,7 @@ function DealPassStyles() {
       .eyebrow { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       h1 { margin: 0; font-size: clamp(32px, 8vw, 52px); line-height: .95; }
       p { margin: 0; color: #cfc5de; font-size: 18px; font-weight: 850; }
-      img { width: min(320px, 76vw); aspect-ratio: 1; border-radius: 14px; background: #fff; box-shadow: 0 0 36px rgba(126,234,255,.22); }
+      .nfc-retired { width: 132px; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.35); border-radius: 50%; color: #fff; background: radial-gradient(circle, rgba(109,40,217,.55), rgba(9,7,17,.95)); box-shadow: 0 0 36px rgba(126,234,255,.16); font-size: 30px; font-weight: 950; letter-spacing: -8px; transform: rotate(-18deg); }
       strong { font-size: 18px; }
       small { max-width: 42ch; color: #b9accd; font-size: 13px; line-height: 1.45; }
       .primary-action { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; text-decoration: none; }

@@ -55,7 +55,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(liveApp, /profileViewsToday\(profile, city\)\.toLocaleString\(\)/);
 });
 
-test("profile actions expose live customer actions and nest profile QR inside Share Profile", () => {
+test("profile actions expose live customer actions and keep Club Deal NFC distinct from profile sharing", () => {
   assert.match(profileActions, /\{saved\.following \? "Following" : "Follow"\}/);
   assert.match(profileActions, /\{saved\.notificationsEnabled \? "Notifications on" : "Notify me"\}/);
   assert.match(profileActions, /"I’m Going"/);
@@ -63,15 +63,16 @@ test("profile actions expose live customer actions and nest profile QR inside Sh
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share Profile"\)/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
-  assert.match(liveApp, /data-show-profile-share-qr/);
-  assert.match(liveApp, /Show profile-sharing QR/);
-  assert.match(liveApp, /This is not a Club Deal and cannot be redeemed at a venue/);
-  assert.match(profileNavigationActions, /import QRCode from "qrcode"/);
-  assert.match(profileNavigationActions, /Show profile-sharing QR/);
-  assert.match(profileNavigationActions, /Profile-sharing QR/);
+  assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
+  assert.match(liveApp, /Club Deals redeem only through a venue cashier NFC tap/);
+  assert.doesNotMatch(profileNavigationActions, /import QRCode from "qrcode"/);
   assert.match(
     profileNavigationActions,
-    /This is not a Club Deal and cannot be redeemed at a venue/,
+    /Club\s+Deal redemption happens only through a venue cashier NFC tap/,
+  );
+  assert.match(
+    profileNavigationActions,
+    /copy its secure link/,
   );
   assert.match(liveApp, /followerCountEl\.textContent = followerNumber/);
   assert.match(liveApp, /notificationCount: confirmedNotificationCount\(/);
@@ -79,7 +80,7 @@ test("profile actions expose live customer actions and nest profile QR inside Sh
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
 });
 
-test("Working Now profiles promote the checked-in venue, directions, and Club QR", () => {
+test("Working Now profiles promote the checked-in venue, directions, and cashier NFC Club Deal", () => {
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
@@ -88,7 +89,7 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(profilePage, /View venue/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `Club Deals · \$\{activeDeals\.length\}` : "Get Club Deal QR"\}/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `Club Deals · \$\{activeDeals\.length\}` : "Use Club Deal with NFC"\}/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /attributionTokens=\{dealAttributionTokens\}/);
@@ -109,7 +110,7 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
 });
 
-test("active full-profile Club Deals render a real compact QR and use one live-status color", () => {
+test("active full-profile Club Deals render a compact cashier NFC action and use one live-status color", () => {
   const activeDealMarkup = liveApp.match(
     /function profileDealTileMarkup\(profile\)[\s\S]*?function profileShareText/,
   )?.[0] || "";
@@ -124,12 +125,12 @@ test("active full-profile Club Deals render a real compact QR and use one live-s
   assert.match(activeDealMarkup, /data-profile-club-deal-config=/);
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
   assert.match(activeDealMarkup, /class="profile-club-deal-label">Club Deal<\/strong>/);
-  assert.match(activeDealMarkup, /<small>Scan at the club to redeem<\/small>/);
+  assert.match(activeDealMarkup, /<small>Select here · Tap cashier NFC at the club<\/small>/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?pass\.qrImageUrl[\s\S]*?<img src=/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol/,
   );
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
 });

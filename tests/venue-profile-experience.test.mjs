@@ -95,12 +95,12 @@ test("venue profiles reserve customer QR language for active Club Deals", () => 
   assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR|Venue QR/);
 });
 
-test("venue profiles use the dancer full-profile QR box in every Club Deal state", () => {
+test("venue profiles use the dancer full-profile Club Deal box for cashier NFC in every state", () => {
   const venueOffer = liveApp.match(
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
 
-  assert.match(venueOffer, /<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?Click for Club Deal[\s\S]*?Unique tracked QR[\s\S]*?<\/button>/);
+  assert.match(venueOffer, /<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?Click for Club Deal[\s\S]*?Cashier NFC redemption[\s\S]*?<\/button>/);
   assert.match(
     venueOffer,
     /venue-club-deal-unavailable[\s\S]*?venue-qr-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)[\s\S]*?<strong>No active Club Deal<\/strong>/,

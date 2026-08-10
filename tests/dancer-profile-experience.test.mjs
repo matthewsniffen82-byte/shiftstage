@@ -107,7 +107,7 @@ test("the mobile profile places schedule directly after media, before revenue an
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
   assert.match(profilePage, /presentation="launcher"/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `Club Deals · \$\{activeDeals\.length\}` : "Get Club Deal QR"\}/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `Club Deals · \$\{activeDeals\.length\}` : "Use Club Deal with NFC"\}/);
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);

@@ -224,7 +224,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
         {activeShift ? (
           <section
             className={`profile-active-deal${activeDeal ? " has-club-deal" : ""}`}
-            aria-label={activeDeal ? "Active Club Deal QR" : "Club Deal status"}
+            aria-label={activeDeal ? "Active Club Deal for cashier NFC" : "Club Deal status"}
           >
             {activeDeal ? (
               <ClubDealCard
@@ -238,7 +238,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 attributionTokens={dealAttributionTokens}
                 dancerNote
                 presentation="launcher"
-                ctaLabel={activeDeals.length > 1 ? `Club Deals · ${activeDeals.length}` : "Get Club Deal QR"}
+                ctaLabel={activeDeals.length > 1 ? `Club Deals · ${activeDeals.length}` : "Use Club Deal with NFC"}
                 sectionId="club-deal"
               />
             ) : (

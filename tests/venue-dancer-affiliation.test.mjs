@@ -26,8 +26,14 @@ const [
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 const migration = `${baseMigration}\n${approvalMigration}`;
+const [nfcMigration, nfcTapRoute, venueNfcPanel, dancerNfcPanel] = await Promise.all([
+  readFile(new URL("../supabase/migrations/202608090003_nfc_tap_experience.sql", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8"),
+]);
 
-test("venue affiliation tokens are private, short-lived, venue-bound, and single-use", () => {
+test("retired venue verification tokens remain private while issuance is permanently disabled", () => {
   assert.match(migration, /create table if not exists public\.venue_dancer_verification_tokens/);
   assert.match(migration, /token_digest text not null unique/);
   assert.doesNotMatch(migration, /raw_token|verification_token text/);
@@ -39,46 +45,34 @@ test("venue affiliation tokens are private, short-lived, venue-bound, and single
   assert.match(migration, /count\(\*\)[\s\S]*created_at >= v_now - interval '1 hour'/);
   assert.match(service, /randomBytes\(32\)\.toString\("base64url"\)/);
   assert.match(service, /createHmac\("sha256", secret\)\.update\(token\)\.digest\("hex"\)/);
-  assert.match(dancerRoute, /QRCode\.toDataURL/);
-  assert.match(dancerRoute, /errorCorrectionLevel: "H"/);
+  assert.match(dancerRoute, /}, 410\);/);
+  assert.match(dancerRoute, /replacement: "dressing_room_nfc"/);
+  assert.doesNotMatch(dancerRoute, /QRCode\.toDataURL/);
 });
 
-test("pending dancer verification QRs renew every ten minutes until venue approval", () => {
-  assert.match(service, /export async function rotateDancerVenueVerification/);
-  assert.match(service, /\.eq\("created_by_user_id", input\.userId\)/);
-  assert.match(service, /\.eq\("token_digest", currentDigest\)/);
-  assert.match(service, /\.is\("used_at", null\)/);
-  assert.match(service, /\.is\("revoked_at", null\)/);
-  assert.match(service, /\.update\(\{[\s\S]*?token_digest: tokenDigest,[\s\S]*?created_at: createdAt,[\s\S]*?expires_at: expiresAt/);
-  assert.match(service, /event_type: "token_issued"[\s\S]*?rotated: true/);
-  assert.match(dancerRoute, /tokenId: issued\.tokenId/);
-  assert.match(dancerRoute, /rotationToken: issued\.token/);
-  assert.match(dancerRoute, /rotateDancerVenueVerification/);
-  assert.match(dashboard, /window\.setTimeout\([\s\S]*?createVerification\(verification\)[\s\S]*?renewalDelay/);
-  assert.match(dashboard, /window\.setInterval\([\s\S]*?pollForApproval\(\)[\s\S]*?5_000/);
-  assert.match(dashboard, /refreshes automatically every 10 minutes until the venue approves you/);
-  assert.match(liveApp, /startDancerVenueVerificationLifecycle/);
-  assert.match(liveApp, /createDancerVenueVerification\(\{ rotate: true \}\)/);
-  assert.match(liveApp, /dancerVenueAffiliationIsApproved/);
-  assert.match(liveApp, /refreshes automatically every 10 minutes until the venue approves you/);
+test("a dressing-room tap persists pending onboarding and activates without manager approval", () => {
+  assert.match(nfcMigration, /create table if not exists public\.dancer_nfc_enrollments/);
+  assert.match(nfcMigration, /v_now \+ interval '7 days'/);
+  assert.match(nfcMigration, /register_dancer_nfc_enrollment/);
+  assert.match(nfcMigration, /finalize_pending_dancer_nfc_enrollment/);
+  assert.match(nfcMigration, /approve_dancer_venue_affiliation_from_nfc/);
+  assert.match(nfcMigration, /'method', 'nfc'/);
+  assert.match(nfcTapRoute, /registerDancerFromNfc/);
+  assert.doesNotMatch(nfcTapRoute, /manager.*approve/i);
 });
 
-test("only the exact verified venue owner can approve or revoke an affiliation", () => {
+test("manager approval is retired while the exact venue owner can still revoke an affiliation", () => {
   assert.match(migration, /v_venue\.owner_user_id is distinct from p_manager_user_id/);
   assert.match(migration, /Only this venue''s verified manager can approve the dancer/);
   assert.match(migration, /p_actor_user_id is distinct from v_venue\.owner_user_id/);
-  assert.match(venueRoute, /account\.role !== "venue"/);
-  assert.match(venueRoute, /approveDancerVenueVerification/);
+  assert.match(venueRoute, /requireVenueAccount/);
+  assert.match(venueRoute, /}, 410\);/);
+  assert.match(venueRoute, /replacement: "dressing_room_nfc"/);
+  assert.doesNotMatch(venueRoute, /approveDancerVenueVerification/);
   assert.match(venueRoute, /revokeDancerVenueAffiliation/);
-  assert.match(service, /\.eq\("owner_user_id", managerUserId\)/);
-  assert.match(service, /requireVenueApprovalCandidate/);
-  assert.match(service, /avatar must pass automated moderation/i);
-  assert.doesNotMatch(service, /requireApprovedDancer/);
-  assert.match(approvalMigration, /status = 'approved'/);
-  assert.match(approvalMigration, /venue_approved_at = coalesce/);
-  assert.match(approvalMigration, /'profileActivated', v_profile_activated/);
-  assert.match(approvalMigration, /where affiliation\.status = 'active'[\s\S]*affiliation\.revoked_at is null/);
-  assert.match(approvalMigration, /not exists \(\s*select 1 from public\.dancer_photos/);
+  assert.match(nfcMigration, /join public\.app_users owner on owner\.id = venue\.owner_user_id/);
+  assert.match(nfcMigration, /owner\.role = 'venue'/);
+  assert.match(nfcMigration, /owner\.account_state = 'active'/);
 });
 
 test("successful venue approval durably creates one dancer in-app affiliation notification", () => {
@@ -110,59 +104,25 @@ test("check-ins and dancer-attributed commission require an active venue affilia
   assert.match(migration, /ended_reason = 'venue_affiliation_revoked'/);
 });
 
-test("dancer and venue dashboards expose the complete one-tap verification flow", () => {
-  assert.match(dashboard, /Show my verification QR/);
-  assert.match(dashboard, /Scan Dancer QR/);
-  assert.match(dashboard, /import\("@zxing\/browser"\)/);
-  assert.match(dashboard, /facingMode: \{ ideal: "environment" \}/);
-  assert.match(dashboard, /Camera access was blocked/);
-  assert.match(dashboard, /Enter code instead/);
-  assert.match(dashboard, /parseVenueVerificationToken/);
-  assert.match(dashboard, /\^\[A-Za-z0-9_-\]\{43\}\$/);
-  assert.match(dashboard, /Confirm she works here/);
-  assert.match(liveApp, /Manage where you work/);
-  assert.match(liveApp, /Verify your first venue/);
-  assert.match(liveApp, /Show my verification QR/);
-  assert.match(liveApp, /Confirm she works here/);
-  assert.match(liveApp, /Approved roster/);
-  assert.match(liveApp, /first verified venue manager scan approves your profile/i);
-  assert.match(liveApp, /dancrPendingVenueDancerVerificationV1/);
-  assert.match(liveApp, /handleVenueDancerVerificationDeepLink/);
-  assert.match(liveApp, /processPendingVenueDancerVerification/);
-  assert.match(liveApp, /sessionStorage\.setItem\(PENDING_VENUE_DANCER_VERIFICATION_KEY/);
-  assert.match(liveApp, /savePendingVenueDancerVerificationToken\(""\)/);
-  assert.match(liveApp, /navigator\.share/);
-  assert.match(liveApp, /navigator\.clipboard\.writeText/);
+test("dancer and venue dashboards expose the complete dressing-room NFC flow", () => {
+  assert.match(dashboard, /DancerNfcPanel/);
+  assert.match(dashboard, /VenueNfcTagPanel/);
+  assert.match(dancerNfcPanel, /tap the official MyDancr NFC sticker in the dressing room/);
+  assert.match(dancerNfcPanel, /No manager scan or separate approval is required/);
+  assert.match(venueNfcPanel, /Dressing room — dancer verification/);
+  assert.match(venueNfcPanel, /Create programming URL/);
+  assert.match(venueNfcPanel, /Rotate/);
+  assert.match(venueNfcPanel, /Disable/);
   assert.match(dancerRoute, /cache-control": "private, no-store/);
   assert.match(venueRoute, /cache-control": "private, no-store/);
 });
 
-test("dancer verification lists every active signup-city venue and gates QR creation on manager readiness", () => {
-  const stateService = service.slice(
-    service.indexOf("export async function getDancerVenueVerificationState"),
-    service.indexOf("export async function issueDancerVenueVerification"),
-  );
-  const issueService = service.slice(
-    service.indexOf("export async function issueDancerVenueVerification"),
-    service.indexOf("export async function getVenueDancerVerificationState"),
-  );
-  assert.match(service, /const dancerCity = String\(dancer\.city\)\.trim\(\)/);
-  assert.match(stateService, /select\("id, slug, name, city, state, owner_user_id"\)[\s\S]*?eq\("is_active", true\)[\s\S]*?eq\("city", dancerCity\)[\s\S]*?order\("name", \{ ascending: true \}\)/);
-  assert.doesNotMatch(stateService, /not\("owner_user_id", "is", null\)/);
-  assert.match(stateService, /from\("app_users"\)[\s\S]*?in\("id", ownerUserIds\)[\s\S]*?eq\("role", "venue"\)[\s\S]*?eq\("account_state", "active"\)/);
-  assert.match(stateService, /managerReady: readyOwnerUserIds\.has/);
-  assert.match(issueService, /eq\("id", venueId\)[\s\S]*?eq\("city", dancerCity\)[\s\S]*?eq\("is_active", true\)[\s\S]*?maybeSingle\(\)/);
-  assert.match(issueService, /venue manager account is not activated yet/);
-  assert.match(dashboard, /Manager ready/);
-  assert.match(dashboard, /Manager setup needed/);
-  assert.match(dashboard, /selectedVenueManagerReady/);
-  assert.match(liveApp, /Loading venues…/);
-  assert.match(liveApp, /Manager setup needed/);
-  assert.match(liveApp, /Venue verification took too long to load/);
-  assert.match(liveApp, /dancerVenueVerificationRequest/);
-  assert.match(liveApp, /if \(dancerVenueVerificationRequest\) return dancerVenueVerificationRequest/);
-  const approvalPolling = liveApp.match(/function startDancerVenueApprovalPolling[\s\S]*?function formatVenueAffiliationTime/)?.[0] || "";
-  assert.doesNotMatch(approvalPolling, /loadDancerVenueVerification/);
+test("the physical venue sticker determines affiliation without a dancer venue dropdown", () => {
+  assert.match(nfcMigration, /where tag\.id = p_tag_id and tag\.status = 'active' and tag\.tag_type = 'dressing_room'/);
+  assert.match(nfcMigration, /where venue\.id = v_tag\.venue_id and venue\.is_active = true/);
+  assert.match(nfcMigration, /insert into public\.venue_dancer_affiliations/);
+  assert.match(nfcMigration, /on conflict \(venue_id, dancer_id\) do update/);
+  assert.doesNotMatch(dancerNfcPanel, /<select|venue dropdown/i);
 });
 
 test("restored dancer dashboards load affiliations after approval state hydration", () => {

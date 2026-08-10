@@ -436,7 +436,7 @@ export async function assertDancerVenueAffiliationForShift(
   if (activeError) throw activeError;
   if (!active) {
     throw new VenueAffiliationUserError(
-      "Ask this venue's verified manager to scan your personal verification QR before checking in.",
+      "Tap this venue's official dressing-room NFC sticker with your signed-in phone before checking in.",
     );
   }
   return active;
