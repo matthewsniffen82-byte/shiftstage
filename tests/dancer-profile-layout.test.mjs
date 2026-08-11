@@ -89,7 +89,7 @@ test("Working Now profiles promote the checked-in venue, directions, and cashier
   assert.match(profilePage, /Club &amp; directions/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `Club Deals · \$\{activeDeals\.length\}` : "Use Club Deal with NFC"\}/);
+  assert.match(profilePage, /ctaLabel="Club Deals"/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /attributionTokens=\{dealAttributionTokens\}/);

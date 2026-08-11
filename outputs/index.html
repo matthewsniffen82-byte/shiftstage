@@ -31435,7 +31435,7 @@
         }
         .home-tv-feed-deal-count {
           position: absolute;
-          right: -5px;
+          right: 50%;
           bottom: -5px;
           min-width: 17px;
           height: 17px;
@@ -31447,9 +31447,11 @@
           color: #061015;
           background: #78ffc0;
           box-sizing: border-box;
-          font-size: 8px;
+          font-size: 7px;
           font-weight: 950;
           line-height: 1;
+          white-space: nowrap;
+          transform: translateX(50%);
         }
         .home-tv-feed-deal-action svg {
           width: 20px;
@@ -44286,7 +44288,7 @@
         } catch (error) {
           showCardQrNotice(
             revenueTrigger,
-            "Club Deal NFC",
+            "Club Deals",
             error.message || "Unable to prepare this Club Deal"
           );
         } finally {
@@ -46933,7 +46935,7 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"}">${actionButtonLabel("qr", offerCount > 1 ? `${offerCount} Deals` : "Get Club Deal")}</button>`;
+        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"}">${actionButtonLabel("qr", "Club Deals")}</button>`;
       }
       return "";
     }
@@ -53488,7 +53490,7 @@
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr) {
         if (presentation === "prompt") return "";
-        return `<button class="feed-card-action home-discovery-feed-live-qr is-unavailable" type="button" data-club-deal-state="${state.key}" disabled aria-disabled="true" aria-label="${escapeHtml(state.label)}">${actionButtonLabel("qr", state.label)}</button>`;
+        return `<button class="feed-card-action home-discovery-feed-live-qr is-unavailable" type="button" data-club-deal-state="${state.key}" disabled aria-disabled="true" aria-label="${escapeHtml(state.label)}">${actionButtonLabel("qr", "Club Deals")}</button>`;
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       if (presentation === "prompt") {
@@ -53500,11 +53502,11 @@
               <small>Club Deal available</small>
               <strong>${safeVenueName}</strong>
             </span>
-            <span class="home-discovery-feed-qr-prompt-action">Get Deal</span>
+            <span class="home-discovery-feed-qr-prompt-action">Club Deals</span>
           </button>
         `;
       }
-      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club Deals">${actionButtonLabel("qr", qr.offerCount > 1 ? `${qr.offerCount} Deals` : "Get Club Deal")}</button>`;
+      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club Deals">${actionButtonLabel("qr", "Club Deals")}</button>`;
     }
 
     function homeDancerGridQrMarkup(profile) {
@@ -53512,11 +53514,11 @@
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr || state.key !== "available") {
         const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
-        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deal NFC: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "NFC")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deals: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "Club Deals")}</button>`;
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this club");
-      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Open Club Deals for ${venueName}">${actionButtonLabel("qr", qr.offerCount > 1 ? `${qr.offerCount} Deals` : "Deal")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Open Club Deals for ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue) {
@@ -53531,9 +53533,9 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", offerCount > 1 ? `${offerCount} Deals` : "Get Deal")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
       }
-      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deal NFC status at ${venueName}">${actionButtonLabel("qr", "NFC Deal")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deals status at ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
@@ -55094,7 +55096,7 @@
         const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
         deal.setAttribute("aria-label", `Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} for ${venueName}`);
         deal.title = offerCount > 1 ? `${offerCount} Club Deals` : dealTitle;
-        deal.insertAdjacentHTML("beforeend", `<span class="home-tv-feed-deal-count">${offerCount > 1 ? offerCount : "Deal"}</span>`);
+        deal.insertAdjacentHTML("beforeend", '<span class="home-tv-feed-deal-count">Club Deals</span>');
         deal.dataset.clubDealCta = encodeDealPass({
           deal: item.deal,
           deals: item.deals,
@@ -55114,9 +55116,9 @@
         deal.dataset.cardQrMessage = dealState.detail;
         deal.setAttribute("aria-disabled", "true");
         deal.setAttribute("aria-expanded", "false");
-        deal.setAttribute("aria-label", `Club Deal NFC: ${dealState.label}. Tap for details.`);
+        deal.setAttribute("aria-label", `Club Deals: ${dealState.label}. Tap for details.`);
         deal.title = dealState.label;
-        deal.insertAdjacentHTML("beforeend", '<span class="home-tv-feed-deal-count">NFC</span>');
+        deal.insertAdjacentHTML("beforeend", '<span class="home-tv-feed-deal-count">Club Deals</span>');
       }
 
       const report = createHomeTvFeedActionButton(

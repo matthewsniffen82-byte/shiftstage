@@ -125,11 +125,12 @@ test("TV cards retain a neutral NFC placeholder until a verified live Club Deal 
   assert.match(actionsFactory, /deal\.dataset\.cardActionSlot = "qr"/);
   assert.match(actionsFactory, /deal\.dataset\.cardQrLabel = dealState\.label[\s\S]*?deal\.dataset\.cardQrMessage = dealState\.detail/);
   assert.match(actionsFactory, /aria-disabled", "true"[\s\S]*?aria-expanded", "false"/);
-  assert.match(actionsFactory, /home-tv-feed-deal-count">NFC/);
+  assert.match(actionsFactory, /home-tv-feed-deal-count">Club Deals/);
+  assert.doesNotMatch(actionsFactory, /home-tv-feed-deal-count">NFC/);
   assert.match(homeSource, /\.home-tv-feed-deal-action\.is-unavailable,[\s\S]*?background: rgba\(18,15,28,\.72\)[\s\S]*?cursor: pointer;/);
   assert.match(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>/);
   assert.match(fullTvFeedSource, /function TvClubDealUnavailable[\s\S]*?No Club Deal available[\s\S]*?Unlocks when working[\s\S]*?Not available now/);
-  assert.match(fullTvFeedSource, /className="tv-club-deal-unavailable"[\s\S]*?<NfcIcon \/>/);
+  assert.match(fullTvFeedSource, /className="tv-club-deal-unavailable"[\s\S]*?<NfcIcon \/>[\s\S]*?<small>Club Deals<\/small>/);
 });
 
 test("TV cards are completely borderless without a violet perimeter", () => {

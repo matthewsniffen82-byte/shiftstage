@@ -19,14 +19,14 @@ export function VenueQrUnavailable({
   const label = availability === "no-active-offer"
     ? "No Club Deal available"
     : availability === "available-when-working"
-      ? "NFC Deal available when working"
-      : "No NFC Deal available now";
+      ? "Club Deals available when working"
+      : "No Club Deal available now";
 
   return (
     <aside className={`venue-qr-unavailable is-${availability}`} aria-label={`${label} for ${venueName}`}>
       <span className="venue-qr-placeholder-icon venue-nfc-placeholder-icon"><NfcIcon /></span>
       <div className="venue-qr-unavailable-copy">
-        <span className="venue-qr-unavailable-label">Club Deal · NFC</span>
+        <span className="venue-qr-unavailable-label">Club Deals</span>
         <strong>{label}</strong>
       </div>
     </aside>

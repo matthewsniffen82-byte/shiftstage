@@ -736,7 +736,7 @@ export default function TvFeedClient({
                         attributionToken={video.dealAttributionToken}
                         attributionTokens={video.dealAttributionTokens}
                         presentation="launcher"
-                        ctaLabel={video.deals.length > 1 ? `Club Deals · ${video.deals.length}` : undefined}
+                        ctaLabel="Club Deals"
                       />
                     ) : (
                       <TvClubDealUnavailable video={video} />
@@ -774,10 +774,10 @@ function TvClubDealUnavailable({ video }: { video: MyDancrTvVideo }) {
       : "A verified current check-in is required for dancer-attributed NFC redemption.";
 
   return (
-    <aside className="tv-club-deal-unavailable" aria-label={`Club Deal NFC: ${label}. ${detail}`}>
+    <aside className="tv-club-deal-unavailable" aria-label={`Club Deals: ${label}. ${detail}`}>
       <span className="tv-club-deal-unavailable-icon"><NfcIcon /></span>
       <span className="tv-club-deal-unavailable-copy">
-        <small>Club Deal · NFC</small>
+        <small>Club Deals</small>
         <strong>{label}</strong>
       </span>
     </aside>

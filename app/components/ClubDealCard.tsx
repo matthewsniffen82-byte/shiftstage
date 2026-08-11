@@ -192,7 +192,7 @@ export function ClubDealCard({
           }}
         >
           <span>{deal.dealTitle}</span>
-          <strong>Use with NFC</strong>
+          <strong>Club Deals</strong>
         </button>
       ) : null}
 

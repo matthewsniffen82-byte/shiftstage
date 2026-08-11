@@ -34,7 +34,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueCardRenderer, /venueCardQrMarkup\(venue\)[\s\S]*?directionsMarkup/);
   assert.match(
     homeSource,
-    /function venueCardQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?Get Club Deal[\s\S]*?return "";/,
+    /function venueCardQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?return "";/,
   );
   const venueCardQrHelper = homeSource.match(
     /function venueCardQrMarkup\(venue\) \{[\s\S]*?(?=\n    function venueCard)/,
@@ -63,7 +63,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", offerCount > 1 \? `\$\{offerCount\} Deals` : "Get Deal"\)[\s\S]*?data-card-qr-label="Club Deal unavailable"/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-card-qr-label="Club Deal unavailable"/,
   );
   const venueSwipeQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,

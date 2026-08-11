@@ -238,7 +238,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 attributionTokens={dealAttributionTokens}
                 dancerNote
                 presentation="launcher"
-                ctaLabel={activeDeals.length > 1 ? `Club Deals · ${activeDeals.length}` : "Use Club Deal with NFC"}
+                ctaLabel="Club Deals"
                 sectionId="club-deal"
               />
             ) : (

@@ -46,19 +46,23 @@ test("venue pages, venue cards, dancer profiles, and TV expose real active Club 
   assert.match(venuePage, /getVenueProfile/);
   assert.match(venuePage, /permanentRedirect/);
   assert.match(venueDirectory, /permanentRedirect/);
-  assert.match(dancerPage, /Use Club Deal with NFC/);
+  assert.match(dancerPage, /ctaLabel="Club Deals"/);
   assert.match(tvSource, /deals: venueDeals/);
   assert.match(tvSource, /dealAttributionToken/);
   assert.match(tvClient, /ClubDealCard/);
   assert.match(discoveryRoute, /activeDeals/);
 });
 
-test("venue, dancer, and TV cards retain NFC placeholders while Club Deals are unavailable", () => {
-  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?NFC Deal/);
-  assert.match(liveApp, /function homeDancerGridQrMarkup\(profile\)[\s\S]*?data-card-qr-label[\s\S]*?actionButtonLabel\("qr", "NFC"\)/);
+test("venue, dancer, and TV cards label active and inactive NFC actions as Club Deals", () => {
+  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/);
+  assert.match(liveApp, /function homeDancerGridQrMarkup\(profile\)[\s\S]*?data-card-qr-label[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/);
   assert.match(liveApp, /function homeTvFeedDealState\(item\)[\s\S]*?key: "no-active-offer"[\s\S]*?key: "available-when-working"[\s\S]*?key: "not-available-now"/);
   assert.match(liveApp, /deal\.dataset\.cardQrLabel = dealState\.label[\s\S]*?deal\.dataset\.cardQrMessage = dealState\.detail/);
+  assert.match(liveApp, /home-tv-feed-deal-count">Club Deals/);
   assert.match(tvClient, /<TvClubDealUnavailable video=\{video\} \/>/);
+  assert.match(tvClient, /<small>Club Deals<\/small>/);
+  assert.match(dealCard, /<strong>Club Deals<\/strong>/);
+  assert.doesNotMatch(liveApp, /actionButtonLabel\("qr", "NFC(?: Deal)?"\)|home-tv-feed-deal-count">NFC/);
 });
 
 test("customers save an exact offer and dancer token locally until the physical cashier tap", () => {
