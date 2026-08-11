@@ -23,4 +23,9 @@ export function verifiedVenueLogoUrl(slug?: string | null) {
   return VENUE_LOGO_BY_SLUG[normalizedSlug] || null;
 }
 
+export function isFictionalVenueBranding(slug?: string | null) {
+  const normalizedSlug = String(slug || "").trim().toLowerCase();
+  return Boolean(VENUE_LOGO_BY_SLUG[normalizedSlug]);
+}
+
 export const verifiedVenueLogoSlugs = Object.freeze(Object.keys(VENUE_LOGO_BY_SLUG));

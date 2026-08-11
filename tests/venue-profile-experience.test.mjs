@@ -33,9 +33,10 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /venueOfferMarkup\(venue\)/);
   assert.doesNotMatch(venueDetail, /\/api\/public\/maps\/embed\?address=|<iframe/i);
   assert.match(venueDetail, /class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venue\.name\}"/);
-  assert.match(venueDetail, /https:\/\/maps\.google\.com\/\?q=/);
-  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel[\s\S]*?class="info-tile venue-address-tile"[\s\S]*?class="venue-address-copy"[\s\S]*?class="venue-address-directions"/);
-  assert.equal((venueDetail.match(/encodeURIComponent\(details\.address\)/g) || []).length, 1);
+  assert.match(venueDetail, /venueDirectionsMarkup\(\{ venue, className: "venue-address-directions", city \}\)/);
+  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel[\s\S]*?class="info-tile venue-address-tile"[\s\S]*?class="venue-address-copy"[\s\S]*?className: "venue-address-directions"/);
+  assert.equal((venueDetail.match(/encodeURIComponent\(details\.address\)/g) || []).length, 0);
+  assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?https:\/\/maps\.google\.com\/\?q=\$\{encodeURIComponent\(details\.address\)\}/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Distance<\/strong>/);
   assert.doesNotMatch(venueDetail, /details\.description|venue-confirmed shifts|nightlife venue in/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Hours/);

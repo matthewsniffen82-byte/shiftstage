@@ -36270,6 +36270,17 @@
           outline-offset: 3px !important;
         }
 
+        .venue-directions-btn.is-inactive-demo,
+        .venue-address-directions.is-inactive-demo,
+        .uber-ride-link.is-inactive-demo {
+          cursor: not-allowed !important;
+          opacity: .42 !important;
+          pointer-events: none !important;
+          filter: grayscale(.35) !important;
+          box-shadow: none !important;
+          transform: none !important;
+        }
+
         .uber-ride-link .action-icon {
           width: 20px;
           height: 20px;
@@ -38863,11 +38874,29 @@
       };
     }
 
+    function isFictionalDemoVenue(venue) {
+      return String(venue?.logoImageUrl || "").trim().startsWith("/venue-logos/fictional/");
+    }
+
+    function venueDirectionsMarkup({ venue, className, label = "Directions", city = selectedCity() }) {
+      const details = venueDetails(venue, city);
+      if (!details.address) return "";
+      const safeName = escapeHtml(venue?.name || details.name || "this club");
+      const venueValue = escapeOptionValue(venue?.name || details.name || "");
+      if (isFictionalDemoVenue(venue)) {
+        return `<button class="${className} is-inactive-demo" type="button" disabled aria-disabled="true" aria-label="${escapeHtml(label)} unavailable for this demonstration club">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
+      }
+      return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
+    }
+
     function uberRideLinkMarkup({ venue, source, label, className = "", dancerId = "", city = selectedCity() }) {
       const destination = publicVenueUberDestination(venue, city);
       if (!destination) return "";
-      const href = buildUberRideUrl(destination);
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
+      if (isFictionalDemoVenue(venue)) {
+        return `<button class="${classes} is-inactive-demo" type="button" disabled aria-disabled="true" aria-label="${escapeHtml(label)} unavailable for this demonstration club">${actionButtonLabel("car", escapeHtml(label))}</button>`;
+      }
+      const href = buildUberRideUrl(destination);
       return `<a class="${classes}" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" data-uber-ride-link data-uber-venue-id="${escapeOptionValue(venue.id || "")}" data-uber-venue-name="${escapeOptionValue(destination.name)}" data-uber-dancer-id="${escapeOptionValue(dancerId)}" data-uber-source="${escapeOptionValue(source)}" data-uber-city="${escapeOptionValue(city)}" aria-label="${escapeHtml(label)}. Opens Uber with ${escapeHtml(destination.formattedAddress)} as the destination.">${actionButtonLabel("car", escapeHtml(label))}</a>`;
     }
 
@@ -46897,9 +46926,11 @@
       const dealMarkup = venue.activeDeal?.dealTitle
         ? `<span class="venue-card-offer"><small>Tonight's offer</small><strong>${escapeHtml(venue.activeDeal.dealTitle)}</strong></span>`
         : "";
-      const directionsMarkup = details.address
-        ? `<a class="venue-card-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
-        : "";
+      const directionsMarkup = venueDirectionsMarkup({
+        venue,
+        className: "venue-card-directions venue-directions-btn",
+        city
+      });
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "tonight_feed",
@@ -47054,7 +47085,7 @@
                       <span class="meta">${escapeHtml(details.address)}</span>
                     </span>
                     <div class="venue-location-actions">
-                      <a class="venue-address-directions" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${escapeHtml(venue.name)}" aria-label="Get directions to ${escapeHtml(details.name)}">${actionButtonLabel("pin", "Directions")}</a>
+                      ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
                       ${rideMarkup}
                     </div>
                   </div>
@@ -53505,9 +53536,11 @@
       const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);
       const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow });
-      const directionsMarkup = details.address
-        ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
-        : "";
+      const directionsMarkup = venueDirectionsMarkup({
+        venue,
+        className: "home-discovery-feed-directions venue-directions-btn",
+        city
+      });
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "tonight_feed",
@@ -53564,8 +53597,12 @@
       const venueActionMarkup = venue
         ? `<button class="feed-card-action home-dancer-grid-venue-action" type="button" data-card-venue="${venueValue}" aria-label="Open ${escapeHtml(venueName)} club profile">${actionButtonLabel("venue", "Club")}</button>`
         : "";
-      const directionsMarkup = venue?.address
-        ? `<a class="feed-card-action home-dancer-grid-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(venue.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${escapeHtml(venueName)}">${actionButtonLabel("pin", "Directions")}</a>`
+      const directionsMarkup = venue
+        ? venueDirectionsMarkup({
+            venue,
+            className: "feed-card-action home-dancer-grid-directions venue-directions-btn",
+            city
+          })
         : "";
       const rideMarkup = profile.scheduled && venue
         ? uberRideLinkMarkup({
@@ -53783,8 +53820,12 @@
       const isGoing = !!goingTonightSavedByProfile[profile.name];
       const canMarkGoing = Boolean(isLive && profile.shiftId);
       const venue = resolveVenueByName(venueName, city);
-      const directionsMarkup = tab === "tonight" && venue?.address
-        ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(venue.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeVenueName}">${actionButtonLabel("pin", "Directions")}</a>`
+      const directionsMarkup = tab === "tonight" && venue
+        ? venueDirectionsMarkup({
+            venue,
+            className: "home-discovery-feed-directions venue-directions-btn",
+            city
+          })
         : "";
       const goingMarkup = canMarkGoing
         ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="tonight" aria-pressed="${isGoing}">${actionButtonLabel(isGoing ? "check" : "clock", isGoing ? "Going" : "I'm Going")}</button>`

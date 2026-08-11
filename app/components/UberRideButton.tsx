@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/dancr/uber";
 import { trackUberRideLinkClicked } from "@/src/lib/dancr/uber-analytics";
 import type { UberRideSource } from "@/src/lib/dancr/uber-types";
+import { isFictionalVenueBranding } from "@/src/lib/dancr/venue-branding";
 
 type UberRideVenue = PublicVenueDestination & {
   id: string;
@@ -39,6 +40,21 @@ export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps)
     : source === "dancer_profile"
       ? `Ride to ${destination.name}`
       : "Get a Ride";
+
+  if (isFictionalVenueBranding(venue.slug)) {
+    return (
+      <button
+        aria-disabled="true"
+        aria-label={`${label} unavailable for this demonstration club.`}
+        className={`${styles.button} ${sourceClass[source]}`}
+        disabled
+        type="button"
+      >
+        <RideIcon />
+        <span>{label}</span>
+      </button>
+    );
+  }
 
   return (
     <a

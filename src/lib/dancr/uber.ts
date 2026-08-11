@@ -8,6 +8,7 @@ export type UberDestination = {
 };
 
 export type PublicVenueDestination = {
+  slug?: string | null;
   name?: string | null;
   formattedAddress?: string | null;
   address?: string | null;

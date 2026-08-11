@@ -44,7 +44,7 @@ const fictionalNames = {
   "treasures-las-vegas": "Aurora Room",
 };
 
-const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic, migration, generator] =
+const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic, migration, addressMigration, generator, uberButton] =
   await Promise.all([
     readFile(new URL("../src/lib/dancr/venue-branding.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
@@ -54,7 +54,9 @@ const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aes
     readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
     readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/202608110003_fictional_las_vegas_venue_identities.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/202608110004_fictional_las_vegas_venue_addresses.sql", import.meta.url), "utf8"),
     readFile(new URL("../scripts/generate-fictional-venue-logos.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/UberRideButton.tsx", import.meta.url), "utf8"),
   ]);
 
 test("every currently listed Las Vegas venue slug resolves to an original fictional logo", async () => {
@@ -109,6 +111,20 @@ test("the production migration fictionalizes every current Las Vegas venue witho
   assert.match(migration, /update public\.venues as venue/);
   assert.doesNotMatch(migration, /update public\.(shifts|dancer_venue_affiliations|venue_deals)/);
   assert.match(migration, /Every Las Vegas venue must receive an explicit fictional identity/);
+});
+
+test("fictional Vegas venues use one pitch address and cannot launch real directions or Uber", () => {
+  assert.match(addressMigration, /0000 MyDancr Ave, Las Vegas, NV 55555/g);
+  assert.match(addressMigration, /expected_count integer := 17/);
+  assert.match(addressMigration, /Every listed Las Vegas demonstration venue must use the fictional pitch address/);
+  assert.match(branding, /export function isFictionalVenueBranding/);
+  assert.match(liveApp, /function isFictionalDemoVenue\(venue\)/);
+  assert.match(liveApp, /startsWith\("\/venue-logos\/fictional\/"\)/);
+  assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?is-inactive-demo[\s\S]*?disabled[\s\S]*?aria-disabled="true"/);
+  assert.match(liveApp, /function uberRideLinkMarkup[\s\S]*?isFictionalDemoVenue\(venue\)[\s\S]*?is-inactive-demo[\s\S]*?disabled/);
+  assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?venue-address-directions/);
+  assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?home-discovery-feed-directions venue-directions-btn/);
+  assert.match(uberButton, /isFictionalVenueBranding\(venue\.slug\)[\s\S]*?aria-disabled="true"[\s\S]*?disabled/);
 });
 
 test("verified logo identity flows through every public venue response", () => {
