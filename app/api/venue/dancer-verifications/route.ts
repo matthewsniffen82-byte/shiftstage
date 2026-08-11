@@ -19,7 +19,8 @@ export async function GET(request: Request) {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireVenueAccount(client, user.id);
     await requireVenueAccess(createAdminSupabaseClient(), user.id, "view_roster");
-    const state = await getVenueDancerVerificationState(createAdminSupabaseClient(), user.id, null);
+    const token = new URL(request.url).searchParams.get("token");
+    const state = await getVenueDancerVerificationState(createAdminSupabaseClient(), user.id, token);
     return noStoreJson({ ok: true, ...state });
   } catch (error) {
     return affiliationApiError(error, "Unable to load dancer verification.");
@@ -32,8 +33,8 @@ export async function POST(request: Request) {
     await requireVenueAccount(client, user.id);
     return noStoreJson({
       ok: false,
-      error: "Manager QR approval has been retired. A dancer approves her eligible profile and venue affiliation by tapping this venue's official dressing-room NFC sticker.",
-      replacement: "dressing_room_nfc",
+      code: "dressing_room_nfc_required",
+      error: "Manager QR approval is retired. A dancer authorizes venue access by tapping the official dressing-room NFC sticker.",
     }, 410);
   } catch (error) {
     return affiliationApiError(error, "Unable to approve dancer verification.");
@@ -59,12 +60,12 @@ export async function DELETE(request: Request) {
       action: "roster.access_removed",
       targetType: "venue_dancer_affiliation",
       targetId: String(affiliation.id),
-      summary: `${String(affiliation.stageName)} was removed from the NFC-authorized roster.`,
+      summary: `${String(affiliation.stageName)} was removed from the verified roster.`,
     });
     return noStoreJson({
       ok: true,
       affiliation,
-      message: `${String(affiliation.stageName)} no longer has NFC access at this venue.`,
+      message: `${String(affiliation.stageName)} is no longer verified at this venue.`,
     });
   } catch (error) {
     return affiliationApiError(error, "Unable to remove dancer verification.");

@@ -54,7 +54,7 @@ export default function VenueNfcTagPanel({
       ]);
       const [tagData, rosterData] = await Promise.all([tagResponse.json(), rosterResponse.json()]);
       if (!tagResponse.ok || !tagData.ok) throw new Error(tagData.error || "Unable to load assigned NFC stickers.");
-      if (!rosterResponse.ok || !rosterData.ok) throw new Error(rosterData.error || "Unable to load the NFC-authorized roster.");
+      if (!rosterResponse.ok || !rosterData.ok) throw new Error(rosterData.error || "Unable to load the verified dancer roster.");
       persistRefreshedSession(tagData.session);
       setTags(tagData.tags || []);
       setAffiliations(rosterData.affiliations || []);
@@ -120,7 +120,7 @@ export default function VenueNfcTagPanel({
 
   async function removeAccess(affiliation: DancerAffiliation) {
     const dancerName = affiliation.dancer?.stageName || "this dancer";
-    if (!window.confirm(`Remove ${dancerName} from this venue's NFC-authorized roster? They must tap the dressing-room sticker again before checking in.`)) return;
+    if (!window.confirm(`Remove ${dancerName} from this venue's NFC-authorized roster? They must tap the dressing-room sticker again before they can check in here.`)) return;
     const auth = authHeaders();
     if (!auth) return setStatus("Sign in required.");
     setIsSaving(true);
@@ -177,10 +177,10 @@ export default function VenueNfcTagPanel({
       <div>
         <span className="eyebrow">MyDancr supplied hardware</span>
         <h2>Assigned NFC stickers</h2>
-        <p>MyDancr programs and supplies every sticker. This venue only installs the labeled stickers and monitors status and activity here—staff never create tags, scan dancers, or approve profiles.</p>
+        <p>MyDancr programs and supplies every sticker. This venue installs the labeled stickers and monitors activity here. The dressing-room tap itself authorizes dancer access—no separate manager approval is needed.</p>
       </div>
       <div className="venue-nfc-flow" aria-label="NFC workflow">
-        <section><b>1</b><span><strong>Dressing room</strong><small>Dancer taps → profile and venue access are approved → a current posted shift checks in.</small></span></section>
+        <section><b>1</b><span><strong>Dressing room</strong><small>Dancer taps → venue access is authorized → a current posted shift checks in for up to five hours.</small></span></section>
         <section><b>2</b><span><strong>Cashier</strong><small>Customer opens a selected Club Deal → taps the cashier sticker → redemption and attribution are recorded.</small></span></section>
       </div>
       <section className="nfc-supply-note" aria-label="NFC sticker support">
@@ -219,14 +219,14 @@ export default function VenueNfcTagPanel({
           <div><button type="button" disabled={isSaving} onClick={() => void sendSupportRequest()}>Send request</button><button type="button" disabled={isSaving} onClick={() => setSupportTagId("")}>Cancel</button></div>
         </section>
       ) : null}
-      <section className="venue-nfc-roster" aria-label="NFC-authorized dancer roster">
+      <section className="venue-nfc-roster" aria-label="Verified dancer roster">
         <div className="venue-nfc-roster-head">
-          <span><strong>NFC-authorized roster</strong><small>Created only by dressing-room taps</small></span>
+          <span><strong>NFC-authorized dancer roster</strong><small>Authorized by the dressing-room sticker</small></span>
           <b>{activeAffiliations.length} active</b>
         </div>
         {activeAffiliations.length ? activeAffiliations.map((affiliation) => (
           <div className="venue-nfc-dancer" key={affiliation.id}>
-            <span><strong>{affiliation.dancer?.stageName || "Dancer"}</strong><small>Approved by NFC{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small></span>
+            <span><strong>{affiliation.dancer?.stageName || "Dancer"}</strong><small>NFC-authorized{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small></span>
             {canManageRoster ? <button type="button" disabled={isSaving} onClick={() => removeAccess(affiliation)}>Remove access</button> : null}
           </div>
         )) : <p>No dancers have tapped this venue&apos;s dressing-room sticker yet.</p>}

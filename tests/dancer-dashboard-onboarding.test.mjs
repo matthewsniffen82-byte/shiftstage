@@ -2,9 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboard, dancerNfcPanel, dancerRoute, avatarRoute, venueRoute, dashboardRoute, nfcTapRoute] = await Promise.all([
+const [dashboard, dancerRoute, avatarRoute, venueRoute, dashboardRoute, nfcTapRoute] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/venue-verification/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/avatar/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/dancer-verifications/route.ts", import.meta.url), "utf8"),
@@ -21,15 +20,16 @@ test("initial dancers use the canonical premium dashboard shell and loading stat
   assert.match(dashboard, /linear-gradient\(145deg, #111116, #09090d/);
 });
 
-test("the setup command center exposes the real three-step production flow", () => {
+test("the setup command center exposes the real three-step NFC production flow", () => {
   assert.match(dashboard, /Create profile & media/);
   assert.match(dashboard, /Preview & submit/);
-  assert.match(dashboard, /Venue NFC tap/);
+  assert.match(dashboard, /Dressing-room tap/);
   assert.match(dashboard, /submitForReview: true/);
-  assert.match(dashboard, /DancerNfcPanel/);
-  assert.match(dancerNfcPanel, /Tap to approve your profile/);
-  assert.match(dancerRoute, /Dancer QR approval has been retired/);
-  assert.match(venueRoute, /Manager QR approval has been retired/);
+  assert.match(dashboard, /See NFC instructions/);
+  assert.match(dancerRoute, /dressing_room_nfc_required/);
+  assert.doesNotMatch(dancerRoute, /QRCode\.toDataURL/);
+  assert.match(venueRoute, /dressing_room_nfc_required/);
+  assert.doesNotMatch(venueRoute, /approveDancerVenueVerification/);
 });
 
 test("draft identity and social form values survive refreshes without bypassing explicit saves", () => {
@@ -80,12 +80,12 @@ test("pre-approval tools remain hidden while help and account recovery stay avai
   assert.match(dashboard, /body: JSON\.stringify\(\{ mode: "login", role/);
 });
 
-test("approval transitions in place and the first NFC tap can finish an eligible profile", () => {
+test("approval transitions in place and saved NFC enrollment finalizes automatically", () => {
   assert.match(dashboard, /window\.setInterval\(\(\) => void refreshProfile\(\), 8_000\)/);
   assert.match(dashboard, /onProfileChange\?\.\(data\.profile\)/);
   assert.match(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
   assert.match(nfcTapRoute, /registerDancerFromNfc/);
-  assert.match(nfcTapRoute, /venue affiliation and profile are active/);
+  assert.doesNotMatch(nfcTapRoute, /venue_dancer_affiliations|manager must scan/i);
 });
 
 test("mobile onboarding remains one-column with reachable 44px-plus controls", () => {

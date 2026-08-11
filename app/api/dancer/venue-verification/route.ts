@@ -35,11 +35,11 @@ export async function POST(request: Request) {
     }
     return noStoreJson({
       ok: false,
-      error: "Dancer QR approval has been retired. Tap the venue's official dressing-room NFC sticker to approve your eligible profile and add that affiliation.",
-      replacement: "dressing_room_nfc",
+      code: "dressing_room_nfc_required",
+      error: "Venue approval QR codes are retired. Tap the venue's official MyDancr dressing-room NFC sticker to authorize access and check in.",
     }, 410);
   } catch (error) {
-    return affiliationApiError(error, "Unable to open venue NFC approval.");
+    return affiliationApiError(error, "Unable to create venue verification QR.");
   }
 }
 
@@ -58,7 +58,7 @@ export async function DELETE(request: Request) {
     });
     return noStoreJson({ ok: true, affiliation, message: "Venue NFC access removed." });
   } catch (error) {
-    return affiliationApiError(error, "Unable to remove venue NFC access.");
+    return affiliationApiError(error, "Unable to remove venue verification.");
   }
 }
 

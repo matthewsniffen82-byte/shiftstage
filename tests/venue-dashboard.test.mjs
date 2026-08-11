@@ -112,9 +112,8 @@ test("MyDancr supplies NFC stickers while venue owners receive read-only invento
   assert.match(nfcPanel, /physical[\s\S]*?completed/);
   assert.match(nfcPanel, /MyDancr supplied hardware/);
   assert.match(nfcPanel, /Assigned NFC stickers/);
-  assert.match(nfcPanel, /NFC-authorized roster/);
-  assert.match(nfcPanel, /Created only by dressing-room taps/i);
-  assert.match(nfcPanel, /staff never create tags, scan dancers, or approve profiles/i);
+  assert.match(nfcPanel, /NFC-authorized dancer roster/);
+  assert.match(nfcPanel, /no separate manager approval is needed/i);
   assert.doesNotMatch(nfcPanel, /Create programming URL/);
   assert.doesNotMatch(nfcPanel, />Rotate</);
 });
@@ -146,9 +145,8 @@ test("venue dashboard data remains authenticated, owner-scoped, and backed by re
   assert.match(dashboard, /Working now/);
 });
 
-test("the compatibility live shell exposes the dressing-room NFC roster and keeps venue QR uploads retired", () => {
-  assert.match(liveApp, /Dressing-room NFC roster/);
-  assert.match(liveApp, /Managers do not scan or approve dancer profiles/);
+test("the compatibility live shell exposes dressing-room NFC and keeps venue QR uploads retired", () => {
+  assert.match(liveApp, /dressing-room sticker authorizes dancer venue access/i);
   assert.match(liveApp, /View assigned NFC stickers/);
   assert.match(liveApp, /id="venueQrForm" hidden/);
 });

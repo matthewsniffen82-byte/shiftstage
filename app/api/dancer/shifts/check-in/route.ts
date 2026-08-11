@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { validateClientLocationReading } from "@/src/lib/dancr/geofence";
 import { endDancerShift } from "@/src/lib/dancr/shift-lifecycle";
-import {
-  assertDancerVenueAffiliationForShift,
-  VenueAffiliationUserError,
-} from "@/src/lib/dancr/venue-affiliations";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
-  return verifyLocation(request, "check_in");
+export async function POST() {
+  return nfcRequiredResponse();
 }
 
 export async function PATCH(request: Request) {
@@ -24,7 +19,7 @@ export async function PATCH(request: Request) {
     const shiftId = readShiftId(body);
     if (!shiftId) return missingShiftIdResponse();
 
-    if (action === "refresh") return verifyAuthenticatedLocation(user.id, shiftId, body, "refresh");
+    if (action === "refresh") return nfcRequiredResponse();
 
     if (action !== "end" && action !== "auto_end") {
       return NextResponse.json({ ok: false, error: "Unknown shift action." }, { status: 400 });
@@ -48,7 +43,7 @@ export async function PATCH(request: Request) {
     console.info("Dancer shift ended", { shiftId, dancerId: dancer.id, reason: action });
     return NextResponse.json({ ok: true, shift: ended });
   } catch (error) {
-    return apiError(error, "Unable to update check-in.");
+    return apiError(error, "Unable to update NFC check-in.");
   }
 }
 
@@ -76,79 +71,6 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to check out.");
   }
-}
-
-async function verifyLocation(request: Request, eventType: "check_in" | "refresh") {
-  try {
-    const { user } = await createRequestSupabaseContext(request);
-    const body = await readJsonBody(request);
-    const shiftId = readShiftId(body);
-    if (!shiftId) return missingShiftIdResponse();
-    return verifyAuthenticatedLocation(user.id, shiftId, body, eventType);
-  } catch (error) {
-    return apiError(error, "Unable to check in.");
-  }
-}
-
-async function verifyAuthenticatedLocation(
-  userId: string,
-  shiftId: string,
-  body: Record<string, unknown>,
-  eventType: "check_in" | "refresh",
-) {
-  const validation = validateClientLocationReading(body);
-  if (!validation.ok) {
-    return NextResponse.json(
-      { ok: false, code: validation.code, error: validation.error },
-      { status: 400 },
-    );
-  }
-
-  const admin = createAdminSupabaseClient() as any;
-  if (eventType === "check_in") {
-    try {
-      await assertDancerVenueAffiliationForShift(admin, userId, shiftId);
-    } catch (error) {
-      if (error instanceof VenueAffiliationUserError) {
-        return NextResponse.json(
-          { ok: false, code: "venue_verification_required", error: error.message },
-          { status: 403 },
-        );
-      }
-      throw error;
-    }
-  }
-  const { data, error } = await admin.rpc("process_dancer_location_verification", {
-    p_user_id: userId,
-    p_shift_id: shiftId,
-    p_event_type: eventType,
-    p_latitude: validation.reading.latitude,
-    p_longitude: validation.reading.longitude,
-    p_accuracy_meters: validation.reading.accuracyMeters,
-    p_captured_at: validation.reading.capturedAt,
-  });
-  if (error) throw error;
-
-  const status = boundedHttpStatus(data?.status);
-  if (data?.ok !== true) {
-    console.warn("Dancer shift geofence rejected", {
-      shiftId,
-      eventType,
-      code: String(data?.code || "verification_failed"),
-      distanceFeet: Number.isFinite(Number(data?.distanceFeet)) ? Number(data.distanceFeet) : undefined,
-      accuracyMeters: validation.reading.accuracyMeters,
-    });
-    const headers = status === 429 ? { "retry-after": "60" } : undefined;
-    return NextResponse.json(data || { ok: false, error: "Unable to verify location." }, { status, headers });
-  }
-
-  console.info("Dancer shift geofence accepted", {
-    shiftId,
-    eventType,
-    distanceFeet: Number(data?.shift?.checkin_distance_feet || 0),
-    accuracyMeters: validation.reading.accuracyMeters,
-  });
-  return NextResponse.json(data, { status: 200 });
 }
 
 async function getOwnDancerProfile(client: any, userId: string) {
@@ -195,7 +117,10 @@ function missingShiftIdResponse() {
   return NextResponse.json({ ok: false, error: "Missing shiftId." }, { status: 400 });
 }
 
-function boundedHttpStatus(value: unknown) {
-  const status = Number(value);
-  return Number.isInteger(status) && status >= 400 && status <= 599 ? status : 400;
+function nfcRequiredResponse() {
+  return NextResponse.json({
+    ok: false,
+    code: "nfc_required",
+    error: "Check in by tapping the club's official MyDancr dressing-room NFC sticker.",
+  }, { status: 410 });
 }

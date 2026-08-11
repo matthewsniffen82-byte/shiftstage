@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ClubDeal } from "@/src/lib/dancr/types";
 import NfcIcon from "@/app/components/NfcIcon";
 
@@ -32,6 +32,7 @@ export function NfcTapClient({ token }: { token: string }) {
   const [complete, setComplete] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState("");
   const [auth, setAuth] = useState({ role: "", accessToken: "", refreshToken: "" });
+  const autoSubmittedRef = useRef(false);
   const pendingIntent = useMemo(() => readPendingDealIntent(), []);
 
   useEffect(() => setAuth(readAuthSession()), []);
@@ -102,6 +103,19 @@ export function NfcTapClient({ token }: { token: string }) {
     }
   }, [isSubmitting, pendingIntent, selectedDealId, state, token]);
 
+  useEffect(() => {
+    if (
+      autoSubmittedRef.current
+      || !state
+      || state.tag.type !== "dressing_room"
+      || auth.role !== "dancer"
+      || !auth.accessToken
+      || complete
+    ) return;
+    autoSubmittedRef.current = true;
+    void submitTap();
+  }, [auth.accessToken, auth.role, complete, state, submitTap]);
+
   const activeDeal = state?.deals.find((deal) => deal.id === selectedDealId) || state?.deals[0] || null;
   const dancerNeedsSignIn = state?.tag.type === "dressing_room" && (auth.role !== "dancer" || !auth.accessToken);
 
@@ -147,20 +161,25 @@ export function NfcTapClient({ token }: { token: string }) {
 
         {!complete && state ? (
           dancerNeedsSignIn ? (
-            <Link className="nfc-primary" href={`/account?role=dancer&mode=signup&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
-              Sign in or create dancer account
-            </Link>
+            <>
+              <Link className="nfc-primary" href={`/account?role=dancer&mode=login&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
+                Sign in to use venue NFC
+              </Link>
+              <Link className="nfc-secondary" href={`/account?role=dancer&mode=signup&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
+                Create dancer account
+              </Link>
+            </>
           ) : state.tag.type === "cashier" && !activeDeal ? null : (
             <button className="nfc-primary" type="button" onClick={submitTap} disabled={isSubmitting}>
               {isSubmitting
                 ? "Confirming…"
                 : state.tag.type === "dressing_room"
-                  ? "Confirm club tap"
+                  ? "Activate this club tap"
                   : "Redeem this Club Deal"}
             </button>
           )
         ) : null}
-        {complete ? <Link className="nfc-secondary" href={state?.tag.type === "dressing_room" ? "/dashboard" : "/"}>Done</Link> : null}
+        {complete ? <Link className="nfc-secondary" href={state?.tag.type === "dressing_room" ? "/dashboard/dancer" : "/"}>Done</Link> : null}
       </section>
       <p className="nfc-security">Only use MyDancr NFC stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
       <style>{`

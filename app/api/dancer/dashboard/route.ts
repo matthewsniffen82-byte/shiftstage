@@ -19,7 +19,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
     }
     const admin = createAdminSupabaseClient();
-    const nfcEnrollment = await finalizePendingDancerNfcEnrollment(admin, { dancerUserId: user.id, request });
+    const nfcEnrollment = await finalizePendingDancerNfcEnrollment(admin, {
+      dancerUserId: user.id,
+      request,
+    });
     const [analytics, deals, finance, nfc] = await Promise.all([
       getOwnDancerDashboardAnalytics(client, user.id),
       getDancerDealMetrics(client, user.id),
@@ -32,7 +35,10 @@ export async function GET(request: Request) {
       analytics,
       deals,
       finance,
-      nfc: { ...nfc, enrollment: nfc.enrollment || nfcEnrollment },
+      nfc: {
+        ...nfc,
+        enrollment: nfc.enrollment || nfcEnrollment || null,
+      },
       affiliations: nfc.affiliations,
     });
   } catch (error) {

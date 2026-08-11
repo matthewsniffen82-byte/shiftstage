@@ -227,7 +227,9 @@ export async function finalizePendingDancerNfcEnrollment(
 ) {
   await authorizeDancerProfileFromNfc(client, input.dancerUserId);
   const sessionId = input.sessionId && UUID_PATTERN.test(input.sessionId) ? input.sessionId : crypto.randomUUID();
-  const audit = input.request ? requestAudit(input.request) : { ipAddress: null, userAgent: null, deviceFingerprint: null };
+  const audit = input.request
+    ? requestAudit(input.request)
+    : { ipAddress: null, userAgent: null, deviceFingerprint: null };
   const { data, error } = await (client as any).rpc("finalize_pending_dancer_nfc_enrollment", {
     p_dancer_user_id: input.dancerUserId,
     p_session_id: sessionId,
@@ -302,6 +304,13 @@ export async function getDancerNfcDashboardState(
   };
 }
 
+async function authorizeDancerProfileFromNfc(client: DancrClient, dancerUserId: string) {
+  const { error } = await (client as any).rpc("authorize_dancer_profile_from_nfc", {
+    p_dancer_user_id: dancerUserId,
+  });
+  if (error) throw error;
+}
+
 export async function confirmRedemptionFromNfc(
   client: DancrClient,
   input: { tagId: string; redemptionToken: string; sessionId: string; request: Request },
@@ -322,13 +331,6 @@ export async function confirmRedemptionFromNfc(
   });
   if (error) throw error;
   return data;
-}
-
-async function authorizeDancerProfileFromNfc(client: DancrClient, dancerUserId: string) {
-  const { error } = await (client as any).rpc("authorize_dancer_profile_from_nfc", {
-    p_dancer_user_id: dancerUserId,
-  });
-  if (error) throw error;
 }
 
 function normalizeTagType(value: unknown): NfcTagType {

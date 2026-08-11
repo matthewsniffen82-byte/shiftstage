@@ -85,8 +85,7 @@ export function validateClientLocationReading(
 
 export function isCurrentLocationVerification(shift: Record<string, unknown> | null | undefined, now = Date.now()) {
   if (!shift || shift.checked_out_at || !shift.checked_in_at) return false;
-  if (shift.location_status === "club_confirmed") return true;
-  if (shift.location_status !== "location_confirmed") return false;
+  if (shift.location_status !== "club_confirmed" && shift.location_status !== "location_confirmed") return false;
   const expiresAt = Date.parse(String(shift.location_verification_expires_at || ""));
   return Number.isFinite(expiresAt) && expiresAt > now;
 }

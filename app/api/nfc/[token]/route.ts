@@ -75,7 +75,7 @@ export async function POST(request: Request, context: RouteContext) {
         sessionId,
         request,
       });
-      console.info("DANCER_NFC_AFFILIATION_APPROVED", {
+      console.info("DANCER_NFC_AUTHORIZATION_COMPLETED", {
         venueId: tag.venueId,
         tagId: tag.id,
         dancerId: affiliation?.dancerId,
@@ -83,14 +83,14 @@ export async function POST(request: Request, context: RouteContext) {
       });
       return noStore({
         ok: true,
-        action: "dancer_affiliation",
+        action: "dancer_check_in",
         affiliation,
         session: authContext.session || null,
         message: affiliation?.enrollmentStatus === "pending"
-          ? `Your ${tag.venue.name} NFC affiliation is saved. Finish profile setup and media review; it will activate automatically without a venue QR scan.`
+          ? `Tap saved for ${tag.venue.name}. Finish profile setup and media review; venue access activates automatically when your profile is ready.`
           : affiliation?.shiftCheckedIn
-            ? `Verified at ${tag.venue.name}. Your profile is live and your current shift is checked in.`
-            : `Verified at ${tag.venue.name}. Your venue affiliation and profile are active.`,
+            ? `Checked in at ${tag.venue.name}. Your eligible profile is approved and your current posted shift is Working Now for up to five hours or until the shift ends.`
+            : `Your eligible profile and venue access are active for ${tag.venue.name}. Post a shift, then tap this dressing-room sticker during that shift to appear Working Now.`,
       });
     }
 

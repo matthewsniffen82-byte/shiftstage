@@ -4,13 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import Link from "next/link";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
-import {
-  LOCATION_REFRESH_INTERVAL_MS,
-  isCurrentLocationVerification,
-  locationVerificationRefreshDue,
-} from "@/src/lib/dancr/geofence";
-import DancerTvStudio from "./DancerTvStudio";
+import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
 import DancerNfcPanel from "./DancerNfcPanel";
+import DancerTvStudio from "./DancerTvStudio";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -1884,6 +1880,10 @@ function VenuePanel({
           <VenueDashboardActionIcon name="deal" />
           <span><strong>Club Deals</strong><small>{liveDealSummary}</small></span>
         </a>
+        <a href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
+          <VenueDashboardActionIcon name="edit" />
+          <span><strong>Dancer access</strong><small>Dressing-room NFC roster</small></span>
+        </a>
         {venueSlug ? (
           <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>
             <VenueDashboardActionIcon name="profile" />
@@ -1901,11 +1901,11 @@ function VenuePanel({
         <Metric label="Working now" value={String(workingNow.length)} />
         <Metric label="Upcoming shifts" value={String(upcomingShiftCount)} />
         <Metric label="Live Club Deals" value={String(activeDealCount)} />
-        <Metric label="NFC roster" value={String(nfcAuthorizedDancerCount)} />
+        <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
       </section>
 
       <DashboardSection
-        description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue. A dancer's first dressing-room tap approves her eligible profile, adds this venue, and checks in a current posted shift."
+        description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue. A dressing-room tap authorizes the dancer at this venue and checks in a current posted shift."
         eyebrow="Floor access"
         id="venue-dancer-roster"
         title="Assigned NFC access"
@@ -2745,9 +2745,9 @@ function DancerOnboardingCommand({
     },
     {
       id: "dancer-venue-verification",
-      label: "Venue NFC tap",
+      label: "Dressing-room tap",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "Your official dressing-room NFC tap approved the profile and venue affiliation." : submitted ? "At the venue, tap its official dressing-room NFC sticker with this signed-in phone." : "This final unlock becomes available after submission.",
+      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room NFC sticker." : "This final unlock becomes available after submission.",
     },
   ], [isVenueApproved, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
@@ -2789,7 +2789,7 @@ function DancerOnboardingCommand({
       return;
     }
     setIsSubmitting(true);
-    setStatus("Submitting your saved profile for venue NFC approval...");
+    setStatus("Submitting your saved profile for media review...");
     try {
       const response = await fetch("/api/dancer/profile", {
         method: "PATCH",
@@ -2800,7 +2800,7 @@ function DancerOnboardingCommand({
       if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to submit profile.");
       onProfileChange?.(data.profile);
       window.localStorage.setItem(storageKey, "dancer-venue-verification");
-      setStatus("Profile submitted. At the venue, tap its official dressing-room NFC sticker with this signed-in phone.");
+      setStatus("Profile submitted. Tap the official dressing-room NFC sticker at the club when you are ready.");
       window.requestAnimationFrame(() => openStep("dancer-venue-verification"));
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to submit profile.");
@@ -2815,7 +2815,7 @@ function DancerOnboardingCommand({
         <span>
           <span className="eyebrow">Profile setup</span>
           <h2 id="dancer-onboarding-heading">Complete your profile</h2>
-          <p>Finish the three secure steps below. Your profile stays private until your first successful dressing-room NFC tap completes approval.</p>
+          <p>Finish the three secure steps below. Your profile stays private until media review is complete and a dressing-room NFC tap authorizes a venue.</p>
         </span>
         <b>{steps.filter((step) => step.complete).length} of 3 complete</b>
       </div>
@@ -2848,11 +2848,11 @@ function DancerOnboardingCommand({
       </div>
       {firstIncomplete.id === "dancer-onboarding-preview" ? (
         <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
-          {isSubmitting ? "Submitting..." : "Submit profile for NFC approval"}
+          {isSubmitting ? "Submitting..." : "Submit profile for review"}
         </button>
       ) : (
         <button className="dancer-onboarding-primary" type="button" onClick={() => openStep(firstIncomplete.id)}>
-          {firstIncomplete.id === "dancer-venue-verification" ? "View NFC approval step" : "Continue setup"}
+          {firstIncomplete.id === "dancer-venue-verification" ? "See NFC instructions" : "Continue setup"}
         </button>
       )}
       <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
@@ -2970,7 +2970,7 @@ function DancerPanel({
           <InfoPanel title="Profile">
             <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
             <Metric label="Status" value={effectiveStatus} />
-            <Metric label="NFC approval" value={isVenueApproved ? "approved" : "first venue tap required"} />
+            <Metric label="Dressing-room NFC" value={isVenueApproved ? "authorized" : "tap required"} />
             <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
           </InfoPanel>
           <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />
@@ -4306,71 +4306,6 @@ function DancerShiftPanel() {
       : "");
   }, []);
 
-  const refreshShiftLocation = useCallback(async (shiftId: string, silent = false) => {
-    const session = readSession();
-    if (!session?.accessToken || !navigator.geolocation) return;
-
-    if (!silent) {
-      setCheckInStatus("Refreshing your verified venue location...");
-      setCheckInTone("loading");
-    }
-    try {
-      const position = await readBrowserLocation();
-      const response = await fetch("/api/dancer/shifts/check-in", {
-        method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          action: "refresh",
-          shiftId,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          capturedAt: new Date(position.timestamp).toISOString(),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(checkInErrorMessage(data));
-      setCheckInStatus("Location verified. Working Now stays active while verification remains current.");
-      setCheckInTone("success");
-      await loadShifts(session.accessToken);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to refresh location.";
-      setCheckInStatus(message);
-      setCheckInTone("error");
-      if (!silent) setStatus(message);
-    }
-  }, [loadShifts]);
-
-  useEffect(() => {
-    const active = shifts.find((shift) => canCheckOutOfShift(shift));
-    if (!active || active.location_status === "club_confirmed") return;
-
-    let disposed = false;
-    let refreshing = false;
-    const refresh = async (onlyWhenDue = false) => {
-      if (disposed || refreshing || document.visibilityState !== "visible") return;
-      if (onlyWhenDue && !locationVerificationRefreshDue(active)) return;
-      refreshing = true;
-      try {
-        await refreshShiftLocation(String(active.id), true);
-      } finally {
-        refreshing = false;
-      }
-    };
-    const timer = window.setInterval(() => void refresh(false), LOCATION_REFRESH_INTERVAL_MS);
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") void refresh(true);
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    if (locationVerificationRefreshDue(active)) void refresh(true);
-
-    return () => {
-      disposed = true;
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [refreshShiftLocation, shifts]);
-
   useEffect(() => {
     const session = readSession();
     if (!session?.accessToken) return;
@@ -4407,7 +4342,7 @@ function DancerShiftPanel() {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to post shift.");
       setStatus(`Shift posted. ${data.broadcastRecipients || 0} followers notified.`);
-      setCheckInStatus("Shift posted. Tap Check in now when you are ready to verify your location.");
+      setCheckInStatus("Shift posted. During the shift, tap the venue's official dressing-room NFC sticker to appear Working Now.");
       setStartsAt("");
       setEndsAt("");
       await loadShifts(session.accessToken);
@@ -4460,7 +4395,7 @@ function DancerShiftPanel() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update shift.");
-      setStatus("Shift updated. Check-in is available only during those posted hours and inside the club geofence.");
+      setStatus("Shift updated. During those posted hours, tap the venue's dressing-room NFC sticker to check in.");
       stopEditingShift();
       await loadShifts(session.accessToken);
     } catch (error) {
@@ -4492,67 +4427,6 @@ function DancerShiftPanel() {
     await loadShifts(session.accessToken);
   }
 
-  async function checkInShift(shiftId: string) {
-    const session = readSession();
-    if (!session?.accessToken) {
-      setCheckInStatus("Sign in to your dancer account before checking in.");
-      setCheckInTone("error");
-      setStatus("Sign in required.");
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      setCheckInStatus("This device cannot provide the precise location required for check-in.");
-      setCheckInTone("error");
-      setStatus("Location permission is required to check in.");
-      return;
-    }
-
-    setActiveCheckInId(shiftId);
-    setStatus("");
-    setCheckInStatus("Asking your phone for location permission...");
-    setCheckInTone("loading");
-    try {
-      const position = await readBrowserLocation();
-      setCheckInStatus("Checking your location against the venue geofence...");
-      const response = await fetch("/api/dancer/shifts/check-in", {
-        method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          shiftId,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          capturedAt: new Date(position.timestamp).toISOString(),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(checkInErrorMessage(data));
-      if (data.shift) {
-        setShifts((current) => current.map((shift) => (
-          String(shift.id) === String(data.shift.id) ? { ...shift, ...data.shift } : shift
-        )));
-      }
-      setCheckInStatus("Checked in. Your shift can now appear in Working Now.");
-      setCheckInTone("success");
-      setStatus("Checked in.");
-      void loadShifts(session.accessToken).catch(() => undefined);
-    } catch (error) {
-      if ((error as any)?.code === 1) {
-        setCheckInStatus("Location permission is required to check in.");
-        setCheckInTone("error");
-        setStatus("Location permission is required to check in.");
-      } else {
-        const message = error instanceof Error ? error.message : "Unable to check in.";
-        setCheckInStatus(message);
-        setCheckInTone("error");
-        setStatus(message);
-      }
-    } finally {
-      setActiveCheckInId("");
-    }
-  }
-
   async function checkOutShift(shiftId: string) {
     const session = readSession();
     if (!session?.accessToken) {
@@ -4570,9 +4444,9 @@ function DancerShiftPanel() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check out.");
-      setCheckInStatus("Checked out. Club Deal commission tracking is stopped.");
+      setCheckInStatus("NFC check-in ended. Club Deal commission tracking is stopped.");
       setCheckInTone("success");
-      setStatus("Checked out. This shift is no longer location confirmed.");
+      setStatus("Checked out. This shift is no longer Working Now.");
       await loadShifts(session.accessToken);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to check out.";
@@ -4603,27 +4477,18 @@ function DancerShiftPanel() {
       <h2>Post Schedule</h2>
       <div className={activeShift ? "shift-checkin-card ready" : "shift-checkin-card"}>
         <span>
-          <strong>{activeShift ? (isCheckedInToActiveShift ? (activeLocationIsVerified ? "Checked in" : "Location re-verification required") : canCheckInToShift(activeShift) ? "Check in available" : "Next posted shift") : "No shift ready for check-in"}</strong>
+          <strong>{activeShift ? (isCheckedInToActiveShift ? (activeLocationIsVerified ? "NFC check-in active" : "NFC check-in expired") : canCheckInToShift(activeShift) ? "Ready for dressing-room tap" : "Next posted shift") : "No shift ready for check-in"}</strong>
           <small>
             {activeShift
               ? isCheckedInToActiveShift
                 ? activeLocationIsVerified
-                  ? `${venueName(activeShift)} is live in Now. Location is rechecked while this dashboard remains active.`
-                  : `${venueName(activeShift)} is not shown in Working Now until the venue location is verified again.`
-                : `${venueName(activeShift)} is posted. Tap Check in now during your posted hours and Dancr will verify your location at the club.`
+                  ? `${venueName(activeShift)} is live in Now until this NFC check-in expires or the shift ends.`
+                  : `${venueName(activeShift)} is not shown in Working Now. Tap the dressing-room NFC sticker again to renew for up to five hours.`
+                : `${venueName(activeShift)} is posted. During the shift, tap the venue's official dressing-room NFC sticker to check in.`
               : "Post one or more shifts below. Your public cards only show Working Now when checked in, or the nearest upcoming shift when you are not checked in."}
           </small>
         </span>
-        {activeShift && !isCheckedInToActiveShift ? (
-          <button
-            type="button"
-            className={checkInTone === "error" ? "check-in-retry" : undefined}
-            disabled={activeCheckInId === String(activeShift.id)}
-            onClick={() => checkInShift(String(activeShift.id))}
-          >
-            {activeCheckInId === String(activeShift.id) ? "Checking location..." : checkInTone === "error" ? "Try check in again" : "Check in now"}
-          </button>
-        ) : null}
+        {activeShift && !isCheckedInToActiveShift ? <b className="check-in-confirmation">Tap NFC at the club</b> : null}
         {activeShift && isCheckedInToActiveShift ? (
           <button
             type="button"
@@ -4637,11 +4502,6 @@ function DancerShiftPanel() {
         ) : null}
         {activeShift && canCheckOutOfShift(activeShift) ? (
           <>
-            {!activeLocationIsVerified ? (
-              <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => refreshShiftLocation(String(activeShift.id))}>
-                Re-verify location
-              </button>
-            ) : null}
             <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => checkOutShift(String(activeShift.id))}>
               {activeCheckInId === String(activeShift.id) ? "Saving..." : "Check out"}
             </button>
@@ -4661,7 +4521,7 @@ function DancerShiftPanel() {
         <label>
           Approved venue
           <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={!venues.length || isSaving} required>
-            <option value="">{venues.length ? "Choose approved venue" : "No approved venue affiliations"}</option>
+            <option value="">{venues.length ? "Choose NFC-authorized venue" : "No NFC-authorized venues"}</option>
             {venues.map((venue) => (
               <option key={venue.id} value={venue.id}>
                 {venue.name}
@@ -4680,7 +4540,7 @@ function DancerShiftPanel() {
         <button type="submit" disabled={isSaving || !venues.length}>
           {isSaving ? "Posting..." : "Post another shift"}
         </button>
-        {!venues.length ? <p>A venue manager must approve your affiliation before you can post a shift there.</p> : null}
+        {!venues.length ? <p>Tap a venue&apos;s official dressing-room NFC sticker to authorize it before posting a shift there.</p> : null}
         {status ? <p>{status}</p> : null}
       </form>
       <div className="shift-list-head">
@@ -4728,11 +4588,7 @@ function DancerShiftPanel() {
                 </span>
                 <em>{dashboardShiftStatus(shift)}</em>
                 <div className="shift-actions">
-                  {canCheckInToShift(shift) ? (
-                    <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkInShift(String(shift.id))}>
-                      {activeCheckInId === String(shift.id) ? "Checking..." : "Check In"}
-                    </button>
-                  ) : null}
+                  {canCheckInToShift(shift) ? <b className="check-in-confirmation">Tap dressing-room NFC</b> : null}
                   {canCheckOutOfShift(shift) ? (
                     <>
                       <button type="button" className="check-in-confirmation" disabled aria-label="Check-in confirmed">
@@ -4764,16 +4620,6 @@ function DancerShiftPanel() {
   );
 }
 
-function readBrowserLocation() {
-  return new Promise<GeolocationPosition>((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 15000,
-    });
-  });
-}
-
 function canCheckInToShift(shift: Record<string, any>) {
   if (shift.status !== "posted" || shift.checked_in_at || shift.checked_out_at) return false;
   return isShiftCheckInWindowOpen(shift);
@@ -4794,9 +4640,8 @@ function isShiftCheckInWindowOpen(shift: Record<string, any>) {
 function dashboardShiftStatus(shift: Record<string, any>) {
   if (shift.status === "cancelled") return "Cancelled";
   if (shift.checked_out_at) return "Checked Out";
-  if (shift.location_status === "club_confirmed") return "Club Confirmed";
-  if (isCurrentLocationVerification(shift) && new Date(shift.ends_at).getTime() >= Date.now()) return "Checked in";
-  if (shift.checked_in_at && !shift.checked_out_at) return "Re-verify location";
+  if (isCurrentLocationVerification(shift) && new Date(shift.ends_at).getTime() >= Date.now()) return "NFC checked in";
+  if (shift.checked_in_at && !shift.checked_out_at) return "Tap NFC again";
   return "Not checked in";
 }
 

@@ -771,9 +771,8 @@ function isShiftPubliclyVisible(shift: any, now = Date.now()) {
 
 function publicLocationStatus(shift: any): "self_reported" | "location_confirmed" | "club_confirmed" {
   if (!shift) return "self_reported";
-  if (shift.location_status === "club_confirmed") return "club_confirmed";
   if (isCurrentLocationVerification(shift) && new Date(shift.ends_at).getTime() >= Date.now()) {
-    return "location_confirmed";
+    return shift.location_status === "club_confirmed" ? "club_confirmed" : "location_confirmed";
   }
   return "self_reported";
 }

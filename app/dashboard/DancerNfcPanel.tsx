@@ -55,7 +55,7 @@ export default function DancerNfcPanel({
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to refresh NFC access.");
       setAffiliations(data.affiliations || []);
       setNfcState({ profileAuthorization: data.profileAuthorization, enrollment: data.enrollment });
-      setStatus("NFC access is current.");
+      setStatus("Dressing-room NFC access is current.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to refresh NFC access.");
     } finally {
@@ -66,7 +66,7 @@ export default function DancerNfcPanel({
   async function removeAffiliation(affiliation: Affiliation) {
     if (!affiliation.id) return;
     const venueName = affiliation.venue?.name || "this venue";
-    if (!window.confirm(`Remove NFC access for ${venueName}? You will need to tap its dressing-room sticker again before checking in there.`)) return;
+    if (!window.confirm(`Remove ${venueName} from your NFC-authorized venues? You must tap its dressing-room sticker again before working there.`)) return;
     const auth = authHeaders();
     if (!auth) return setStatus("Sign in required.");
     setPendingId(affiliation.id);
@@ -94,15 +94,15 @@ export default function DancerNfcPanel({
       <div className="dancer-nfc-content">
         <span className="eyebrow">Dressing-room NFC</span>
         <div className="dancer-nfc-heading">
-          <h2>{authorized ? "Profile NFC-approved" : pendingEnrollment ? "Tap saved" : "Tap to approve your profile"}</h2>
+          <h2>{authorized ? "Profile and venue approved" : pendingEnrollment ? "Tap saved" : "Tap to approve your profile"}</h2>
           <b>{authorized ? "APPROVED" : pendingEnrollment ? "FINISH SETUP" : "TAP REQUIRED"}</b>
         </div>
         {authorized ? (
-          <p>Your first successful dressing-room tap approved your profile and venue affiliation. Tap another venue&apos;s official sticker to add that club.</p>
+          <p>Your first eligible dressing-room tap approved your profile and venue access. No manager QR or separate venue approval is required.</p>
         ) : pendingEnrollment ? (
-          <p>Your tap at {enrollment?.venue?.name || "the venue"} is saved. Finish the required profile details and media checks; that same tap will complete approval automatically.</p>
+          <p>Your tap at {enrollment?.venue?.name || "the club"} is saved. Complete profile setup and media review; MyDancr will activate the venue automatically when the profile is ready.</p>
         ) : (
-          <p>At the venue where you work, unlock this signed-in phone and tap its official MyDancr dressing-room sticker. The first successful tap approves your eligible profile and adds that venue.</p>
+          <p>At the club, unlock your signed-in phone and tap its official MyDancr dressing-room sticker. The first eligible tap approves your profile, connects that venue, and checks in a current posted shift.</p>
         )}
 
         {activeAffiliations.length ? (
@@ -120,15 +120,15 @@ export default function DancerNfcPanel({
         ) : null}
 
         <div className="dancer-nfc-notes">
-          <span>The same tap checks in a current posted shift at that venue.</span>
-          <span>Future venue taps add affiliations without taking your approved profile offline.</span>
-          <span>Media safety moderation remains separate{isPublic ? "; your profile is live." : " and must finish before the profile is public."}</span>
+          <span>A current posted shift becomes Working Now for up to five hours after the tap.</span>
+          <span>Tap the same dressing-room sticker again to renew an active shift&apos;s NFC check-in.</span>
+          <span>Media safety review remains separate{isPublic ? "; your profile is live." : " and must finish before your profile is public."}</span>
         </div>
         <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
           {pendingId === "refresh" ? "Refreshing…" : "Refresh NFC status"}
         </button>
-        {status ? <p className="dancer-nfc-status" role="status" aria-live="polite">{status}</p> : null}
-      <small>Disabled or rotated stickers are rejected by the server. Only tap the labeled sticker installed inside the venue.</small>
+        {status ? <p className="dancer-nfc-status" role="status">{status}</p> : null}
+        <small>Only an active MyDancr-supplied dressing-room sticker can authorize this action.</small>
       </div>
       <style>{DANCER_NFC_STYLE}</style>
     </article>
@@ -161,7 +161,7 @@ const DANCER_NFC_STYLE = [
   ".dancer-nfc-content{min-width:0}.dancer-nfc-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.dancer-nfc-heading h2,.dancer-nfc-panel p{margin:4px 0}",
   ".dancer-nfc-heading b{padding:6px 9px;border:1px solid rgba(142,102,255,.36);border-radius:999px;color:#c8b9ff;font-size:9px;letter-spacing:.1em;white-space:nowrap}.is-authorized .dancer-nfc-heading b{border-color:rgba(69,255,165,.36);color:#70ffc1}",
   ".dancer-nfc-panel p,.dancer-nfc-panel small,.dancer-nfc-notes{color:#b9accd;line-height:1.45}.dancer-nfc-roster{display:grid;gap:7px;margin:14px 0}.dancer-nfc-roster section{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid rgba(69,255,165,.18);border-radius:11px;background:rgba(34,201,129,.06)}",
-  ".dancer-nfc-roster span{display:grid;gap:2px}.dancer-nfc-roster small{font-size:11px}.dancer-nfc-roster button,.dancer-nfc-refresh{min-height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.15);border-radius:9px;color:#fff;background:rgba(255,255,255,.06);font:inherit;font-weight:800;cursor:pointer}",
+  ".dancer-nfc-roster span{display:grid;gap:2px}.dancer-nfc-roster small{font-size:11px}.dancer-nfc-roster button,.dancer-nfc-refresh{min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.15);border-radius:9px;color:#fff;background:rgba(255,255,255,.06);font:inherit;font-weight:800;cursor:pointer}",
   ".dancer-nfc-notes{display:grid;gap:6px;margin:12px 0;font-size:12px}.dancer-nfc-notes span{padding-left:15px;position:relative}.dancer-nfc-notes span:before{content:'✓';position:absolute;left:0;color:#5fffb5}.dancer-nfc-status{font-size:12px}.dancer-nfc-refresh{margin:0 0 10px}.dancer-nfc-panel small{display:block}",
   "@media(max-width:620px){.dancer-nfc-panel{grid-template-columns:1fr}.dancer-nfc-icon{width:54px;height:54px}.dancer-nfc-icon svg{width:32px;height:32px}.dancer-nfc-heading{align-items:flex-start;flex-direction:column}.dancer-nfc-roster section{align-items:flex-start}}",
 ].join("");
