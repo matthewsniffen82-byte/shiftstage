@@ -5454,3 +5454,93 @@ body.dancr-button-system #dancerDashboard #setupChecklist .setup-step.open .step
   border-top-color: var(--dancr-color-border-subtle) !important;
   background: var(--dancr-color-surface-soft) !important;
 }
+
+/* Android media luminance recovery must remain the final media layer. The
+ * mobile paint-stability rules in the legacy shell intentionally disable
+ * filters on coarse pointers; their more-specific selector previously won
+ * over the shared dancer-photo lift on Android. These selectors outrank that
+ * reset without changing image geometry, spacing, overlays, or non-Android
+ * rendering. */
+html:is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid.home-dancer-three-column
+  .home-dancer-grid-photo.has-custom-photo,
+html:is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) body.dancr-button-system > .app main.stack > section.stack
+  > #results.venue-profile-overlay
+  .venue-dancer-grid .home-dancer-grid-photo.has-custom-photo,
+html:is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-discovery-feed
+  .home-discovery-feed-slide:not(.home-venue-discovery-slide)
+  .home-discovery-feed-photo.has-custom-photo,
+html:is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) body.dancr-button-system #profileBackdrop :is(
+  .modal-image.has-custom-photo,
+  .profile-modal-avatar.has-photo,
+  .gallery .thumb .portrait.has-custom-photo,
+  .profile-photo-viewer-image
+),
+html:is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) body :is(
+  .public-profile-shell .profile-titlebar-avatar img,
+  .public-profile-shell .profile-media-feature > img,
+  .public-profile-shell .profile-media-grid-item img,
+  .public-profile-shell .profile-media-viewer-stage > img,
+  .tv-shell .tv-profile-photo-image
+) {
+  filter: brightness(1.14) contrast(1.03) !important;
+  -webkit-filter: brightness(1.14) contrast(1.03) !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+
+/* The venue-card shade is still required for copy legibility. On Android,
+ * lift only verified logo artwork above that shade and apply a small source
+ * luminance correction; text and action layers already sit above z-index 2. */
+html:is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-art.has-venue-logo {
+  z-index: 2 !important;
+}
+
+html:is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) body.dancr-button-system :is(
+  .home-venue-discovery-logo,
+  .venue-card-logo,
+  .venue-detail-logo
+) {
+  filter: brightness(1.12) contrast(1.03) !important;
+  -webkit-filter: brightness(1.12) contrast(1.03) !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}

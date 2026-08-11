@@ -30635,7 +30635,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=104" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=105" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -53554,7 +53554,7 @@
         : `${safeName} venue artwork`;
       return `
         <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
-          <div class="home-venue-discovery-art${visual.attrs.className}"${visual.attrs.style} role="img" aria-label="${visualLabel}">
+          <div class="home-venue-discovery-art${visual.attrs.className}${logoMarkup ? " has-venue-logo" : ""}"${visual.attrs.style} role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>

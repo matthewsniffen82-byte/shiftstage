@@ -14,6 +14,10 @@ const tvSource = fs.readFileSync(
   new URL("../app/tv/TvFeedClient.tsx", import.meta.url),
   "utf8",
 );
+const aestheticSource = fs.readFileSync(
+  new URL("../public/dancr-aesthetic.v1.css", import.meta.url),
+  "utf8",
+);
 
 test("current dancer cards brighten the approved photo without an image-wide dimming layer", () => {
   assert.match(
@@ -61,5 +65,47 @@ test("profile avatars, gallery thumbnails, and full-screen photos share the rest
   assert.match(
     tvSource,
     /\.tv-profile-photo\.has-photo \{[^}]*filter: none;[^}]*opacity: 1;[^}]*mix-blend-mode: normal;/,
+  );
+});
+
+test("Android's final media layer outranks the coarse-pointer filter reset", () => {
+  const androidMediaLayer = aestheticSource.match(
+    /Android media luminance recovery must remain the final media layer[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.ok(androidMediaLayer, "the final Android media correction must exist");
+  assert.match(
+    androidMediaLayer,
+    /#results\.home-dancer-grid\.home-dancer-three-column[\s\S]*?\.home-dancer-grid-photo\.has-custom-photo/,
+  );
+  assert.match(
+    androidMediaLayer,
+    /#profileBackdrop :is\([\s\S]*?\.profile-modal-avatar\.has-photo,[\s\S]*?\.profile-photo-viewer-image/,
+  );
+  assert.match(
+    androidMediaLayer,
+    /\.tv-shell \.tv-profile-photo-image[\s\S]*?filter: brightness\(1\.14\) contrast\(1\.03\) !important;[\s\S]*?-webkit-filter: brightness\(1\.14\) contrast\(1\.03\) !important;/,
+  );
+});
+
+test("Android venue logos paint above the card shade without changing other platforms", () => {
+  assert.match(
+    homeSource,
+    /home-venue-discovery-art\$\{visual\.attrs\.className\}\$\{logoMarkup \? " has-venue-logo" : ""\}/,
+  );
+  const androidMediaLayer = aestheticSource.match(
+    /Android media luminance recovery must remain the final media layer[\s\S]*$/,
+  )?.[0] || "";
+  assert.match(
+    androidMediaLayer,
+    /\.home-venue-discovery-art\.has-venue-logo \{[\s\S]*?z-index: 2 !important;/,
+  );
+  assert.match(
+    androidMediaLayer,
+    /\.home-venue-discovery-logo,[\s\S]*?\.venue-card-logo,[\s\S]*?\.venue-detail-logo[\s\S]*?filter: brightness\(1\.12\) contrast\(1\.03\) !important;/,
+  );
+  assert.doesNotMatch(
+    androidMediaLayer,
+    /body\.dancr-button-system :is\([\s\S]*?\.home-venue-discovery-logo[\s\S]*?\) \{[\s\S]*?background:/,
   );
 });
