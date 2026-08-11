@@ -49,9 +49,9 @@ test("confirmation cooldowns begin only after a successful email send", () => {
 });
 
 test("dancer and venue signups explain their real approval requirements", () => {
-  assert.match(liveApp, /class="dancer-signup-progress"[\s\S]*?Create account[\s\S]*?Confirm email[\s\S]*?Complete profile and venue approval/);
+  assert.match(liveApp, /class="dancer-signup-progress"[\s\S]*?Create account[\s\S]*?Confirm email[\s\S]*?Tap your venue's dressing-room NFC sticker/);
   assert.match(liveApp, /id="dancerPassword"[^>]*autocomplete="new-password"[^>]*minlength="8"/);
-  assert.match(liveApp, /verified venue approves your first affiliation/);
+  assert.match(liveApp, /you tap your first venue's official dressing-room NFC sticker/);
   assert.match(liveApp, /id="venueSignupCode"[^>]*minlength="30"[^>]*maxlength="30"/);
   assert.match(liveApp, /function openVenueSignup\(\)[\s\S]*?setVenueAuthMode\("signup"\)/);
 });

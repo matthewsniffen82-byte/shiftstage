@@ -9,7 +9,7 @@ import {
   getVerifiedActiveCheckInAtVenue,
 } from "@/src/lib/dancr/deals";
 import {
-  checkInDancerFromNfc,
+  registerDancerFromNfc,
   confirmRedemptionFromNfc,
   recordNfcTagScan,
   resolveNfcTag,
@@ -69,35 +69,13 @@ export async function POST(request: Request, context: RouteContext) {
       if (account?.role !== "dancer" || account?.account_state !== "active") {
         return NextResponse.json({ ok: false, error: "Sign in with an active dancer account to use this tag." }, { status: 403 });
       }
-      const { data: dancer, error: dancerError } = await admin
-        .from("dancer_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (dancerError) throw dancerError;
-      const { data: approvedAffiliation, error: affiliationError } = dancer?.id
-        ? await admin
-            .from("venue_dancer_affiliations")
-            .select("id")
-            .eq("dancer_id", dancer.id)
-            .eq("venue_id", tag.venueId)
-            .eq("status", "active")
-            .maybeSingle()
-        : { data: null, error: null };
-      if (affiliationError) throw affiliationError;
-      if (!approvedAffiliation) {
-        return NextResponse.json({
-          ok: false,
-          error: `A verified ${tag.venue.name} manager must scan your dancer approval QR before this dressing-room NFC sticker can check you in.`,
-        }, { status: 403 });
-      }
-      const affiliation = await checkInDancerFromNfc(admin, {
+      const affiliation = await registerDancerFromNfc(admin, {
         tagId: tag.id,
         dancerUserId: user.id,
         sessionId,
         request,
       });
-      console.info("DANCER_NFC_CHECKIN_VERIFIED", {
+      console.info("DANCER_NFC_AFFILIATION_APPROVED", {
         venueId: tag.venueId,
         tagId: tag.id,
         dancerId: affiliation?.dancerId,
@@ -108,9 +86,11 @@ export async function POST(request: Request, context: RouteContext) {
         action: "dancer_affiliation",
         affiliation,
         session: authContext.session || null,
-        message: affiliation?.shiftCheckedIn
-          ? `Verified at ${tag.venue.name}. Your profile is live and your current shift is checked in.`
-          : `Verified at ${tag.venue.name}. Your manager-approved venue affiliation is active.`,
+        message: affiliation?.enrollmentStatus === "pending"
+          ? `Your ${tag.venue.name} NFC affiliation is saved. Finish profile setup and media review; it will activate automatically without a venue QR scan.`
+          : affiliation?.shiftCheckedIn
+            ? `Verified at ${tag.venue.name}. Your profile is live and your current shift is checked in.`
+            : `Verified at ${tag.venue.name}. Your venue affiliation and profile are active.`,
       });
     }
 

@@ -78,14 +78,14 @@ test("collapsed setup pills fill their rounded shell with the matching state col
   );
 });
 
-test("Step 3 venue affiliation is completed by a verified venue manager QR scan", () => {
+test("Step 3 venue affiliation is completed by the official dressing-room NFC tap", () => {
   const order = liveAppSource.match(/function setupOrder\(\) \{[\s\S]*?\n    }/)?.[0] || "";
   const completion = liveAppSource.match(/function completeSetupStep[\s\S]*?\n    }/)?.[0] || "";
   assert.match(order, /\["profile", "review", "approval"\]/);
-  assert.match(completion, /verified venue manager scan your private approval QR/i);
+  assert.match(completion, /official dressing-room NFC sticker/i);
   assert.match(liveAppSource, /Confirm venue affiliation/);
-  assert.match(liveAppSource, /Step 3 · Venue approval/);
-  assert.match(liveAppSource, /show your private one-time QR to its verified manager/i);
+  assert.match(liveAppSource, /Step 3 · Dressing-room NFC/);
+  assert.match(liveAppSource, /No manager scan or approval is required/i);
   assert.match(liveAppSource, /Manage where you work/);
 });
 
@@ -108,12 +108,12 @@ test("profile setup rows stay readable and use restrained state cues", () => {
   );
 });
 
-test("profile submission stays private until manager affiliation approval and media review complete", () => {
+test("profile submission stays private until the first NFC affiliation and media review complete", () => {
   const serverSubmit =
     profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
   assert.match(serverSubmit, /pendingVenueApprovalValues\(\)/);
   assert.match(liveAppSource, /data-submit-review/);
-  assert.match(liveAppSource, /profile remains private until venue manager approval and profile\/media review are complete/i);
+  assert.match(liveAppSource, /profile remains private until the dressing-room NFC tap and profile\/media review are complete/i);
 });
 
 test("real setup steps advance only after their production save succeeds", () => {

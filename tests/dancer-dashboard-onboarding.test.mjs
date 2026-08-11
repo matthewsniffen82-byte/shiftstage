@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboard, dancerRoute, avatarRoute, venueRoute, dashboardRoute, nfcTapRoute] = await Promise.all([
+const [dashboard, dancerNfcPanel, dancerRoute, avatarRoute, venueRoute, dashboardRoute, nfcTapRoute] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/venue-verification/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/avatar/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/dancer-verifications/route.ts", import.meta.url), "utf8"),
@@ -23,13 +24,12 @@ test("initial dancers use the canonical premium dashboard shell and loading stat
 test("the setup command center exposes the real three-step production flow", () => {
   assert.match(dashboard, /Create profile & media/);
   assert.match(dashboard, /Preview & submit/);
-  assert.match(dashboard, /Venue approval/);
+  assert.match(dashboard, /Venue NFC tap/);
   assert.match(dashboard, /submitForReview: true/);
-  assert.match(dashboard, /Show my verification QR/);
-  assert.match(dancerRoute, /issueDancerVenueVerification/);
-  assert.match(dancerRoute, /QRCode\.toDataURL/);
-  assert.match(venueRoute, /approveDancerVenueVerification/);
-  assert.match(venueRoute, /"manage_roster"/);
+  assert.match(dashboard, /DancerNfcPanel/);
+  assert.match(dancerNfcPanel, /Tap to approve your profile/);
+  assert.match(dancerRoute, /Dancer QR approval has been retired/);
+  assert.match(venueRoute, /Manager QR approval has been retired/);
 });
 
 test("draft identity and social form values survive refreshes without bypassing explicit saves", () => {
@@ -80,12 +80,12 @@ test("pre-approval tools remain hidden while help and account recovery stay avai
   assert.match(dashboard, /body: JSON\.stringify\(\{ mode: "login", role/);
 });
 
-test("approval transitions in place and NFC cannot auto-approve a new affiliation", () => {
+test("approval transitions in place and the first NFC tap can finish an eligible profile", () => {
   assert.match(dashboard, /window\.setInterval\(\(\) => void refreshProfile\(\), 8_000\)/);
   assert.match(dashboard, /onProfileChange\?\.\(data\.profile\)/);
-  assert.doesNotMatch(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
-  assert.match(nfcTapRoute, /venue_dancer_affiliations/);
-  assert.match(nfcTapRoute, /manager must scan your dancer approval QR/);
+  assert.match(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
+  assert.match(nfcTapRoute, /registerDancerFromNfc/);
+  assert.match(nfcTapRoute, /venue affiliation and profile are active/);
 });
 
 test("mobile onboarding remains one-column with reachable 44px-plus controls", () => {

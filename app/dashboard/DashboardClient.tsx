@@ -10,6 +10,7 @@ import {
   locationVerificationRefreshDue,
 } from "@/src/lib/dancr/geofence";
 import DancerTvStudio from "./DancerTvStudio";
+import DancerNfcPanel from "./DancerNfcPanel";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -1883,10 +1884,6 @@ function VenuePanel({
           <VenueDashboardActionIcon name="deal" />
           <span><strong>Club Deals</strong><small>{liveDealSummary}</small></span>
         </a>
-        <a href="#venue-dancer-approvals" onClick={(event) => openVenueSection(event, "venue-dancer-approvals")}>
-          <VenueDashboardActionIcon name="edit" />
-          <span><strong>Approve dancers</strong><small>Scan affiliation QR</small></span>
-        </a>
         {venueSlug ? (
           <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>
             <VenueDashboardActionIcon name="profile" />
@@ -1904,23 +1901,11 @@ function VenuePanel({
         <Metric label="Working now" value={String(workingNow.length)} />
         <Metric label="Upcoming shifts" value={String(upcomingShiftCount)} />
         <Metric label="Live Club Deals" value={String(activeDealCount)} />
-        <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
+        <Metric label="NFC roster" value={String(nfcAuthorizedDancerCount)} />
       </section>
 
-      {canManageRoster ? (
-        <DashboardSection
-          description="Scan a dancer's private one-time QR and confirm only that she works at this venue. MyDancr handles profile and media moderation separately."
-          eyebrow="Venue affiliation"
-          id="venue-dancer-approvals"
-          title="Approve dancers"
-          badge={`${nfcAuthorizedDancerCount} verified`}
-        >
-          <VenueDancerVerificationPanel initialAffiliations={activeAffiliations} />
-        </DashboardSection>
-      ) : null}
-
       <DashboardSection
-        description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue. Dressing-room NFC checks in dancers only after manager affiliation approval."
+        description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue. A dancer's first dressing-room tap approves her eligible profile, adds this venue, and checks in a current posted shift."
         eyebrow="Floor access"
         id="venue-dancer-roster"
         title="Assigned NFC access"
@@ -2760,9 +2745,9 @@ function DancerOnboardingCommand({
     },
     {
       id: "dancer-venue-verification",
-      label: "Venue approval",
+      label: "Venue NFC tap",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "A verified venue manager approved your affiliation." : submitted ? "Show your one-time QR to a verified venue manager." : "This final unlock becomes available after submission.",
+      detail: isVenueApproved ? "Your official dressing-room NFC tap approved the profile and venue affiliation." : submitted ? "At the venue, tap its official dressing-room NFC sticker with this signed-in phone." : "This final unlock becomes available after submission.",
     },
   ], [isVenueApproved, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
@@ -2804,7 +2789,7 @@ function DancerOnboardingCommand({
       return;
     }
     setIsSubmitting(true);
-    setStatus("Submitting your saved profile for venue approval...");
+    setStatus("Submitting your saved profile for venue NFC approval...");
     try {
       const response = await fetch("/api/dancer/profile", {
         method: "PATCH",
@@ -2815,7 +2800,7 @@ function DancerOnboardingCommand({
       if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to submit profile.");
       onProfileChange?.(data.profile);
       window.localStorage.setItem(storageKey, "dancer-venue-verification");
-      setStatus("Profile submitted. Generate your private QR for the venue manager.");
+      setStatus("Profile submitted. At the venue, tap its official dressing-room NFC sticker with this signed-in phone.");
       window.requestAnimationFrame(() => openStep("dancer-venue-verification"));
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to submit profile.");
@@ -2830,7 +2815,7 @@ function DancerOnboardingCommand({
         <span>
           <span className="eyebrow">Profile setup</span>
           <h2 id="dancer-onboarding-heading">Complete your profile</h2>
-          <p>Finish the three secure steps below. Your profile stays private until a verified venue manager approves the affiliation.</p>
+          <p>Finish the three secure steps below. Your profile stays private until your first successful dressing-room NFC tap completes approval.</p>
         </span>
         <b>{steps.filter((step) => step.complete).length} of 3 complete</b>
       </div>
@@ -2863,11 +2848,11 @@ function DancerOnboardingCommand({
       </div>
       {firstIncomplete.id === "dancer-onboarding-preview" ? (
         <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
-          {isSubmitting ? "Submitting..." : "Submit profile for venue approval"}
+          {isSubmitting ? "Submitting..." : "Submit profile for NFC approval"}
         </button>
       ) : (
         <button className="dancer-onboarding-primary" type="button" onClick={() => openStep(firstIncomplete.id)}>
-          {firstIncomplete.id === "dancer-venue-verification" ? "Get venue approval" : "Continue setup"}
+          {firstIncomplete.id === "dancer-venue-verification" ? "View NFC approval step" : "Continue setup"}
         </button>
       )}
       <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
@@ -2909,6 +2894,7 @@ function DancerPanel({
   analytics,
   deals,
   finance,
+  nfc,
   onProfileChange,
   profile,
   rankingEvents,
@@ -2984,10 +2970,10 @@ function DancerPanel({
           <InfoPanel title="Profile">
             <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
             <Metric label="Status" value={effectiveStatus} />
-            <Metric label="Venue approval" value={isVenueApproved ? "approved" : "manager scan required"} />
+            <Metric label="NFC approval" value={isVenueApproved ? "approved" : "first venue tap required"} />
             <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
           </InfoPanel>
-          <DancerVenueVerificationPanel />
+          <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />
           {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
         </div>
       </DashboardSection>

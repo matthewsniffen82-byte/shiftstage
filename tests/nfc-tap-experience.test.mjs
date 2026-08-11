@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, managerApprovedNfcMigration, adminProvisioningMigration, nfcService, tapRoute, tagRoute, adminTagRoute, tapClient, accountClient, dashboardRoute, dealCard, legacyDancerQr, legacyDealQr] = await Promise.all([
+const [migration, restoredFirstTapMigration, profileAuthorizationMigration, adminProvisioningMigration, nfcService, tapRoute, tagRoute, adminTagRoute, tapClient, accountClient, dashboardRoute, dealCard, retiredDancerQr, legacyDealQr] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608090003_nfc_tap_experience.sql", import.meta.url), "utf8"),
-  readFile(new URL("../supabase/migrations/202608100003_require_manager_approval_for_nfc_checkin.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608110001_restore_first_tap_nfc_affiliation.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608090004_nfc_profile_authorization.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608090005_admin_nfc_provisioning.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/nfc.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
@@ -33,28 +34,29 @@ test("NFC stickers store only high-entropy token digests and are provisioned by 
   assert.match(tagRoute, /cache-control.*private, no-store/s);
 });
 
-test("one dressing-room tag supports check-in only after venue manager affiliation approval", () => {
-  assert.match(managerApprovedNfcMigration, /check_in_manager_approved_dancer_from_nfc/);
-  assert.match(managerApprovedNfcMigration, /dancer\.status = 'approved'[\s\S]*dancer\.verification_status = 'approved'[\s\S]*dancer\.is_public = true/);
-  assert.match(managerApprovedNfcMigration, /affiliation\.status = 'active'/);
-  assert.doesNotMatch(managerApprovedNfcMigration, /insert into public\.venue_dancer_affiliations|update public\.dancer_profiles/);
+test("one dressing-room tag records, approves, affiliates, and checks in a dancer", () => {
+  assert.match(migration, /register_dancer_nfc_enrollment/);
+  assert.match(migration, /finalize_pending_dancer_nfc_enrollment/);
+  assert.match(migration, /approve_dancer_venue_affiliation_from_nfc/);
+  assert.match(profileAuthorizationMigration, /authorize_dancer_profile_from_nfc/);
+  assert.match(profileAuthorizationMigration, /insert into public\.venue_dancer_affiliations/);
   assert.match(tapRoute, /account\?\.role !== "dancer"/);
-  assert.match(tapRoute, /venue_dancer_affiliations/);
-  assert.match(tapRoute, /manager must scan your dancer approval QR/);
-  assert.match(tapRoute, /checkInDancerFromNfc/);
-  assert.match(nfcService, /check_in_manager_approved_dancer_from_nfc/);
-  assert.doesNotMatch(nfcService, /register_dancer_nfc_enrollment|finalize_pending_dancer_nfc_enrollment|authorize_dancer_profile_from_nfc/);
-  assert.match(accountClient, /verified venue manager approves only your venue affiliation/);
-  assert.doesNotMatch(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
-  assert.match(legacyDancerQr, /issueDancerVenueVerification/);
-  assert.match(legacyDancerQr, /QRCode\.toDataURL/);
+  assert.match(tapRoute, /registerDancerFromNfc/);
+  assert.match(nfcService, /register_dancer_nfc_enrollment/);
+  assert.match(nfcService, /authorize_dancer_profile_from_nfc/);
+  assert.match(accountClient, /dressing-room NFC sticker to approve your profile and add that club/);
+  assert.match(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
+  assert.match(retiredDancerQr, /Dancer QR approval has been retired/);
 });
 
-test("repeat dressing-room taps preserve manager approval and record check-in activity only", () => {
-  assert.match(managerApprovedNfcMigration, /'affiliationActivated', false/);
-  assert.match(managerApprovedNfcMigration, /'profileActivated', false/);
-  assert.match(managerApprovedNfcMigration, /case when v_shift_checked_in then 'shift_checked_in' else 'opened' end/);
-  assert.doesNotMatch(managerApprovedNfcMigration, /insert into public\.notifications/);
+test("repeat dressing-room taps are idempotent while pending taps finish automatically", () => {
+  assert.match(migration, /on conflict \(dancer_user_id, venue_id\) do update/);
+  assert.match(migration, /status = case when public\.dancer_nfc_enrollments\.status = 'completed' then 'completed' else 'pending' end/);
+  assert.match(migration, /'affiliationActivated', v_affiliation_activated/);
+  assert.match(migration, /'profileActivated', v_profile_activated/);
+  assert.match(restoredFirstTapMigration, /drop function if exists public\.check_in_manager_approved_dancer_from_nfc/);
+  assert.match(restoredFirstTapMigration, /grant execute on function public\.register_dancer_nfc_enrollment[\s\S]*service_role/);
+  assert.match(restoredFirstTapMigration, /grant execute on function public\.finalize_pending_dancer_nfc_enrollment[\s\S]*service_role/);
 });
 
 test("cashier NFC redemption preserves deal and current-shift attribution and prevents replay", () => {

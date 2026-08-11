@@ -198,7 +198,7 @@ export async function recordNfcTagScan(client: DancrClient, tagId: string) {
   return data ? toTagSummary(data) : null;
 }
 
-export async function checkInDancerFromNfc(
+export async function registerDancerFromNfc(
   client: DancrClient,
   input: { tagId: string; dancerUserId: string; sessionId: string; request: Request },
 ) {
@@ -206,10 +206,31 @@ export async function checkInDancerFromNfc(
     throw new Error("Invalid NFC tap session.");
   }
   const audit = requestAudit(input.request);
-  const { data, error } = await (client as any).rpc("check_in_manager_approved_dancer_from_nfc", {
+  const { data, error } = await (client as any).rpc("register_dancer_nfc_enrollment", {
     p_tag_id: input.tagId,
     p_dancer_user_id: input.dancerUserId,
     p_session_id: input.sessionId,
+    p_audit: {
+      ip_address: audit.ipAddress,
+      user_agent: audit.userAgent,
+      device_fingerprint: audit.deviceFingerprint,
+    },
+  });
+  if (error) throw error;
+  await authorizeDancerProfileFromNfc(client, input.dancerUserId);
+  return data;
+}
+
+export async function finalizePendingDancerNfcEnrollment(
+  client: DancrClient,
+  input: { dancerUserId: string; sessionId?: string; request?: Request },
+) {
+  await authorizeDancerProfileFromNfc(client, input.dancerUserId);
+  const sessionId = input.sessionId && UUID_PATTERN.test(input.sessionId) ? input.sessionId : crypto.randomUUID();
+  const audit = input.request ? requestAudit(input.request) : { ipAddress: null, userAgent: null, deviceFingerprint: null };
+  const { data, error } = await (client as any).rpc("finalize_pending_dancer_nfc_enrollment", {
+    p_dancer_user_id: input.dancerUserId,
+    p_session_id: sessionId,
     p_audit: {
       ip_address: audit.ipAddress,
       user_agent: audit.userAgent,
@@ -301,6 +322,13 @@ export async function confirmRedemptionFromNfc(
   });
   if (error) throw error;
   return data;
+}
+
+async function authorizeDancerProfileFromNfc(client: DancrClient, dancerUserId: string) {
+  const { error } = await (client as any).rpc("authorize_dancer_profile_from_nfc", {
+    p_dancer_user_id: dancerUserId,
+  });
+  if (error) throw error;
 }
 
 function normalizeTagType(value: unknown): NfcTagType {

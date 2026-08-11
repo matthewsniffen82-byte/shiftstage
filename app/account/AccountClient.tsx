@@ -26,6 +26,7 @@ type DancerSignupCity = {
 };
 
 const SESSION_KEY = "dancrAuthSessionV1";
+const PENDING_DANCER_NFC_KEY = "mydancrPendingDancerNfcV1";
 
 export default function AccountClient() {
   const router = useRouter();
@@ -85,6 +86,13 @@ export default function AccountClient() {
     setRecoveryView(null);
     window.setTimeout(() => recoveryTriggerRef.current?.focus({ preventScroll: true }), 0);
   }, []);
+
+  useEffect(() => {
+    if (!venueNfcToken || initialRole !== "dancer") return;
+    try {
+      window.localStorage.setItem(PENDING_DANCER_NFC_KEY, JSON.stringify({ token: venueNfcToken, savedAt: Date.now() }));
+    } catch { /* the confirmation callback still preserves the NFC return path */ }
+  }, [initialRole, venueNfcToken]);
 
   const scrollCustomerBenefitsToTop = useCallback((behavior: ScrollBehavior = "smooth") => {
     const benefits = customerBenefitsRef.current;
@@ -467,8 +475,8 @@ export default function AccountClient() {
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
                 <p>{venueNfcToken
-                  ? "Venue NFC check-in becomes available after your profile is complete and that venue's verified manager approves your affiliation QR. Confirm your email to begin setup."
-                  : "Confirm your email, then create your profile with stage name, city, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. A verified venue manager approves only your venue affiliation in the final step."}</p>
+                  ? "This venue NFC tap is saved with signup. Confirm your email, finish profile setup and media review, and MyDancr activates this club affiliation automatically—no venue QR scan is needed."
+                  : "Confirm your email, then create your profile with stage name, city, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. Tap a venue's dressing-room NFC sticker to approve your profile and add that club."}</p>
               </section>
             </>
           ) : null}
