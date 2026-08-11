@@ -5,32 +5,46 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const supportedLogos = {
-  "centerfolds-cabaret-las-vegas": "centerfolds-cabaret-las-vegas.png",
-  "chicas-bonitas": "chicas-bonitas.jpg",
-  "crazy-horse-3": "crazy-horse-3.png",
-  "deja-vu-showgirls": "deja-vu-showgirls-las-vegas-dark.png",
-  "deja-vu-showgirls-las-vegas": "deja-vu-showgirls-las-vegas-dark.png",
-  "hustler-club-las-vegas": "hustler-club-las-vegas.png",
-  "little-darlings": "little-darlings-las-vegas-dark.png",
-  "little-darlings-las-vegas": "little-darlings-las-vegas-dark.png",
-  "palomino-club": "palomino-club.svg",
-  "peppermint-hippo-las-vegas": "peppermint-hippo-las-vegas.svg",
-  "play-it-again-sams": "play-it-again-sams.svg",
-  "sapphire-las-vegas": "sapphire-las-vegas.png",
-  "spearmint-rhino": "spearmint-rhino-las-vegas.png",
-  "spearmint-rhino-las-vegas": "spearmint-rhino-las-vegas.png",
-  "talk-of-the-town": "talk-of-the-town-dark.png",
-  "the-library-gentlemens-club": "the-library-gentlemens-club.png",
-  "treasures-las-vegas": "treasures-las-vegas.png",
+  "centerfolds-cabaret-las-vegas": "fictional/neon-ember.svg",
+  "chicas-bonitas": "fictional/velvet-orbit.svg",
+  "crazy-horse-3": "fictional/electric-mirage.svg",
+  "deja-vu-showgirls": "fictional/afterglow-social.svg",
+  "deja-vu-showgirls-las-vegas": "fictional/violet-hour.svg",
+  "hustler-club-las-vegas": "fictional/lunar-house.svg",
+  "little-darlings": "fictional/prism-room.svg",
+  "little-darlings-las-vegas": "fictional/golden-halo.svg",
+  "palomino-club": "fictional/midnight-current.svg",
+  "peppermint-hippo-las-vegas": "fictional/nova-lounge.svg",
+  "play-it-again-sams": "fictional/silver-circuit.svg",
+  "sapphire-las-vegas": "fictional/blue-ember.svg",
+  "spearmint-rhino": "fictional/radiant-room.svg",
+  "spearmint-rhino-las-vegas": "fictional/moonline-social.svg",
+  "talk-of-the-town": "fictional/echo-house.svg",
+  "the-library-gentlemens-club": "fictional/starlight-club.svg",
+  "treasures-las-vegas": "fictional/aurora-room.svg",
 };
 
-const darkCardLogoFiles = [
-  "deja-vu-showgirls-las-vegas-dark.png",
-  "little-darlings-las-vegas-dark.png",
-  "talk-of-the-town-dark.png",
-];
+const fictionalNames = {
+  "centerfolds-cabaret-las-vegas": "Neon Ember",
+  "chicas-bonitas": "Velvet Orbit",
+  "crazy-horse-3": "Electric Mirage",
+  "deja-vu-showgirls": "Afterglow Social",
+  "deja-vu-showgirls-las-vegas": "Violet Hour",
+  "hustler-club-las-vegas": "Lunar House",
+  "little-darlings": "Prism Room",
+  "little-darlings-las-vegas": "Golden Halo",
+  "palomino-club": "Midnight Current",
+  "peppermint-hippo-las-vegas": "Nova Lounge",
+  "play-it-again-sams": "Silver Circuit",
+  "sapphire-las-vegas": "Blue Ember",
+  "spearmint-rhino": "Radiant Room",
+  "spearmint-rhino-las-vegas": "Moonline Social",
+  "talk-of-the-town": "Echo House",
+  "the-library-gentlemens-club": "Starlight Club",
+  "treasures-las-vegas": "Aurora Room",
+};
 
-const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic] =
+const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic, migration, generator] =
   await Promise.all([
     readFile(new URL("../src/lib/dancr/venue-branding.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
@@ -39,22 +53,29 @@ const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aes
     readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
     readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
     readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/202608110003_fictional_las_vegas_venue_identities.sql", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/generate-fictional-venue-logos.mjs", import.meta.url), "utf8"),
   ]);
 
-test("every currently listed Las Vegas venue slug resolves to a local verified logo", async () => {
+test("every currently listed Las Vegas venue slug resolves to an original fictional logo", async () => {
   for (const [slug, fileName] of Object.entries(supportedLogos)) {
     assert.match(branding, new RegExp(`"${slug}": "\\/venue-logos\\/${fileName.replaceAll(".", "\\.")}"`));
     const asset = await stat(new URL(`../public/venue-logos/${fileName}`, import.meta.url));
     assert.ok(asset.isFile());
-    assert.ok(asset.size > 1_000, `${fileName} must contain a real logo asset`);
+    assert.ok(asset.size > 1_000, `${fileName} must contain a complete logo asset`);
+    const source = await readFile(new URL(`../public/venue-logos/${fileName}`, import.meta.url), "utf8");
+    assert.match(source, /Original MyDancr demonstration venue identity/);
+    assert.match(source, /MYDANCR DEMO VENUE/);
+    assert.doesNotMatch(source, /<script/i);
   }
 
-  assert.equal(new Set(Object.values(supportedLogos)).size, 14);
+  assert.equal(new Set(Object.values(supportedLogos)).size, 17);
   assert.match(branding, /return VENUE_LOGO_BY_SLUG\[normalizedSlug\] \|\| null/);
+  assert.doesNotMatch(branding, /"\/venue-logos\/(?!fictional\/)/);
 });
 
-test("monochrome venue marks remain readable on the production dark card", async () => {
-  for (const fileName of darkCardLogoFiles) {
+test("fictional venue marks remain readable on the production dark card", async () => {
+  for (const fileName of Object.values(supportedLogos)) {
     const { data, info } = await sharp(
       fileURLToPath(new URL(`../public/venue-logos/${fileName}`, import.meta.url)),
     )
@@ -71,12 +92,23 @@ test("monochrome venue marks remain readable on the production dark card", async
         0.2126 * data[offset] + 0.7152 * data[offset + 1] + 0.0722 * data[offset + 2];
     }
 
-    assert.ok(visiblePixels > 1_000, `${fileName} must retain its visible source mark`);
+    assert.ok(visiblePixels > 1_000, `${fileName} must retain a visible mark and wordmark`);
     assert.ok(
-      visibleLuminance / visiblePixels >= 220,
+      visibleLuminance / visiblePixels >= 100,
       `${fileName} must remain high contrast on a near-black card`,
     );
   }
+});
+
+test("the production migration fictionalizes every current Las Vegas venue without replacing relational IDs", () => {
+  for (const [slug, fictionalName] of Object.entries(fictionalNames)) {
+    assert.match(migration, new RegExp(`'${slug}', '${fictionalName}'`));
+    assert.match(generator, new RegExp(`name: "${fictionalName}"`));
+  }
+  assert.equal(Object.keys(fictionalNames).length, 17);
+  assert.match(migration, /update public\.venues as venue/);
+  assert.doesNotMatch(migration, /update public\.(shifts|dancer_venue_affiliations|venue_deals)/);
+  assert.match(migration, /Every Las Vegas venue must receive an explicit fictional identity/);
 });
 
 test("verified logo identity flows through every public venue response", () => {

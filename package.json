@@ -22,6 +22,7 @@
   },
   "scripts": {
     "generate:live-shell-version": "node scripts/generate-live-shell-version.mjs",
+    "generate:fictional-venue-logos": "node scripts/generate-fictional-venue-logos.mjs",
     "generate:venue-logo-variants": "node scripts/generate-dark-card-venue-logos.mjs",
     "predev": "npm run generate:live-shell-version",
     "dev": "next dev",

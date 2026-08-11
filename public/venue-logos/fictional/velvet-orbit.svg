@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="title description">
+  <title id="title">Velvet Orbit fictional venue logo</title>
+  <desc id="description">Original MyDancr demonstration venue identity.</desc>
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ec4899"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g transform="translate(20 28)" filter="url(#softGlow)"><ellipse cx="160" cy="180" rx="113" ry="52" fill="none" stroke="url(#accent)" stroke-width="9" transform="rotate(-18 160 180)"/><ellipse cx="160" cy="180" rx="52" ry="113" fill="none" stroke="url(#accent)" stroke-width="9" transform="rotate(32 160 180)"/><circle cx="252" cy="126" r="13" fill="url(#accent)"/></g>
+  <text x="348" y="184" fill="#f8fafc" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="68" font-weight="900" letter-spacing="-2">VELVET ORBIT</text>
+  <rect x="350" y="217" width="470" height="3" rx="2" fill="url(#accent)"/>
+  <text x="350" y="267" fill="#cbd5e1" font-family="Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="8">MYDANCR DEMO VENUE</text>
+  <text x="350" y="311" fill="url(#accent)" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="900" letter-spacing="9">VO · LAS VEGAS</text>
+</svg>
