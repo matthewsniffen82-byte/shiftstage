@@ -10,7 +10,6 @@ import {
   locationVerificationRefreshDue,
 } from "@/src/lib/dancr/geofence";
 import DancerTvStudio from "./DancerTvStudio";
-import DancerNfcPanel from "./DancerNfcPanel";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -287,7 +286,7 @@ export default function DashboardClient({
   }
 
   const title = useMemo(() => {
-    if (role === "dancer") return "Dancer dashboard";
+    if (role === "dancer") return "Complete your profile";
     if (role === "venue") return "Venue dashboard";
     return "Customer dashboard";
   }, [role]);
@@ -297,7 +296,7 @@ export default function DashboardClient({
   const resolvedDisplayName = role === "dancer"
     ? profileDisplayName
     : accountDisplayName || profileDisplayName;
-  const displayName = resolvedDisplayName || (role === "dancer" ? "Dancer dashboard" : "Dancr");
+  const displayName = resolvedDisplayName || (role === "dancer" ? "Complete your profile" : "Dancr");
   const dashboardCloseHref = homeDiscoveryHref(
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
@@ -329,8 +328,8 @@ export default function DashboardClient({
             </svg>
           </Link>
         </div>
-        {state.error && role === "venue" ? (
-          <VenueDashboardSignInRecovery onSignedIn={retryDashboard} />
+        {state.error && (role === "venue" || role === "dancer") ? (
+          <DashboardSignInRecovery role={role} onSignedIn={retryDashboard} />
         ) : state.error ? (
           <Link
             className="primary-link"
@@ -394,7 +393,7 @@ export default function DashboardClient({
                 description="Notifications, admin support, sign-in security, and account controls."
                 eyebrow="Dancer workspace"
                 id="dancer-account"
-                title="Account & support"
+                title={effectiveDancerProfileStatus(state.profile, state.account?.accountState) === "approved" ? "Account & support" : "Help & account"}
               >
                 <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
                   <InfoPanel title="Account">
@@ -878,7 +877,7 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
         <button className="danger-button" type="button" onClick={deleteAccount} disabled={isWorking}>
           Delete account
         </button>
-        {status ? <p>{status}</p> : null}
+        {status ? <p role="status" aria-live="polite">{status}</p> : null}
       </div>
     </article>
   );
@@ -1884,9 +1883,9 @@ function VenuePanel({
           <VenueDashboardActionIcon name="deal" />
           <span><strong>Club Deals</strong><small>{liveDealSummary}</small></span>
         </a>
-        <a href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
+        <a href="#venue-dancer-approvals" onClick={(event) => openVenueSection(event, "venue-dancer-approvals")}>
           <VenueDashboardActionIcon name="edit" />
-          <span><strong>NFC access</strong><small>Stickers and authorized roster</small></span>
+          <span><strong>Approve dancers</strong><small>Scan affiliation QR</small></span>
         </a>
         {venueSlug ? (
           <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>
@@ -1905,12 +1904,24 @@ function VenuePanel({
         <Metric label="Working now" value={String(workingNow.length)} />
         <Metric label="Upcoming shifts" value={String(upcomingShiftCount)} />
         <Metric label="Live Club Deals" value={String(activeDealCount)} />
-        <Metric label="NFC-authorized" value={String(nfcAuthorizedDancerCount)} />
+        <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
       </section>
 
+      {canManageRoster ? (
+        <DashboardSection
+          description="Scan a dancer's private one-time QR and confirm only that she works at this venue. MyDancr handles profile and media moderation separately."
+          eyebrow="Venue affiliation"
+          id="venue-dancer-approvals"
+          title="Approve dancers"
+          badge={`${nfcAuthorizedDancerCount} verified`}
+        >
+          <VenueDancerVerificationPanel initialAffiliations={activeAffiliations} />
+        </DashboardSection>
+      ) : null}
+
       <DashboardSection
-        description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue, plus the roster authorized automatically by dancer taps. Venue staff never create tags, scan dancers, or approve profiles."
-        eyebrow="Primary floor action"
+        description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue. Dressing-room NFC checks in dancers only after manager affiliation approval."
+        eyebrow="Floor access"
         id="venue-dancer-roster"
         title="Assigned NFC access"
         badge={`${nfcAuthorizedDancerCount} authorized`}
@@ -2695,13 +2706,209 @@ function readSetting(profile: LoadState["profile"], key: string, fallback: boole
   return fallback;
 }
 
+type DancerIdentityDraft = { stageName: string; city: string };
+
+function DancerOnboardingCommand({
+  draftIdentity,
+  effectiveStatus,
+  isVenueApproved,
+  onProfileChange,
+  profile,
+}: {
+  draftIdentity: DancerIdentityDraft;
+  effectiveStatus: string;
+  isVenueApproved: boolean;
+  onProfileChange?: (profile: Record<string, unknown>) => void;
+  profile?: LoadState["profile"];
+}) {
+  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const didRestoreStepRef = useRef(false);
+  const persistedStageName = String(profile?.stage_name || profile?.stageName || "").trim();
+  const persistedCity = String(profile?.city || "").trim();
+  const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
+  const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
+  const photos = dancerPhotoItemsFromProfile(profile);
+  const approvedPhotos = photos.filter((photo) => photo.status === "approved");
+  const pendingPhotos = photos.filter((photo) => photo.status === "pending");
+  const rejectedPhotos = photos.filter((photo) => photo.status === "rejected");
+  const profileReady = Boolean(
+    persistedStageName
+    && persistedCity
+    && avatarUrl
+    && approvedPhotos.length
+    && String(profile?.photo_review_status || "").toLowerCase() === "approved"
+    && !pendingPhotos.length
+    && !rejectedPhotos.length,
+  );
+  const submitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
+  const setupDetail = profileReady
+    ? "Identity, avatar, and profile pictures are saved and moderation-approved."
+    : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
+  const steps = useMemo(() => [
+    {
+      id: "dancer-profile-media",
+      label: "Create profile & media",
+      complete: profileReady,
+      detail: setupDetail,
+    },
+    {
+      id: "dancer-onboarding-preview",
+      label: "Preview & submit",
+      complete: submitted,
+      detail: submitted ? "Your saved profile is ready for venue affiliation." : profileReady ? "Review the live preview and submit your saved profile." : "Complete the saved profile and media requirements first.",
+    },
+    {
+      id: "dancer-venue-verification",
+      label: "Venue approval",
+      complete: isVenueApproved,
+      detail: isVenueApproved ? "A verified venue manager approved your affiliation." : submitted ? "Show your one-time QR to a verified venue manager." : "This final unlock becomes available after submission.",
+    },
+  ], [isVenueApproved, profileReady, setupDetail, submitted]);
+  const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
+  const previewImage = avatarUrl || approvedPhotos[0]?.imageUrl || "";
+  const previewName = draftIdentity.stageName.trim() || persistedStageName || "Your stage name";
+  const previewCity = draftIdentity.city.trim() || persistedCity || "Choose your city";
+  const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
+
+  useEffect(() => {
+    if (didRestoreStepRef.current) return;
+    didRestoreStepRef.current = true;
+    const restored = window.localStorage.getItem(storageKey);
+    const targetId = steps.some((step) => step.id === restored && !step.complete) ? String(restored) : firstIncomplete.id;
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(targetId);
+      if (target instanceof HTMLDetailsElement) target.open = true;
+      const parentDetails = target?.closest("details");
+      if (parentDetails instanceof HTMLDetailsElement) parentDetails.open = true;
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [firstIncomplete.id, steps, storageKey]);
+
+  function openStep(id: string) {
+    window.localStorage.setItem(storageKey, id);
+    const section = document.getElementById(id);
+    if (section instanceof HTMLDetailsElement) section.open = true;
+    const parentDetails = section?.closest("details");
+    if (parentDetails instanceof HTMLDetailsElement) parentDetails.open = true;
+    section?.scrollIntoView({ behavior: "smooth", block: "start" });
+    section?.focus({ preventScroll: true });
+  }
+
+  async function submitProfile() {
+    if (isSubmitting || !profileReady) return;
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in again before submitting your profile.");
+      return;
+    }
+    setIsSubmitting(true);
+    setStatus("Submitting your saved profile for venue approval...");
+    try {
+      const response = await fetch("/api/dancer/profile", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ submitForReview: true }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to submit profile.");
+      onProfileChange?.(data.profile);
+      window.localStorage.setItem(storageKey, "dancer-venue-verification");
+      setStatus("Profile submitted. Generate your private QR for the venue manager.");
+      window.requestAnimationFrame(() => openStep("dancer-venue-verification"));
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to submit profile.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="dancer-onboarding-command" aria-labelledby="dancer-onboarding-heading">
+      <div className="dancer-onboarding-command-head">
+        <span>
+          <span className="eyebrow">Profile setup</span>
+          <h2 id="dancer-onboarding-heading">Complete your profile</h2>
+          <p>Finish the three secure steps below. Your profile stays private until a verified venue manager approves the affiliation.</p>
+        </span>
+        <b>{steps.filter((step) => step.complete).length} of 3 complete</b>
+      </div>
+      <div className="dancer-onboarding-layout">
+        <ol className="dancer-onboarding-steps" aria-label="Dancer profile approval progress">
+          {steps.map((step, index) => (
+            <li className={step.complete ? "is-complete" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>
+              <button type="button" onClick={() => openStep(step.id)} aria-current={step.id === firstIncomplete.id ? "step" : undefined}>
+                <span>{step.complete ? "✓" : index + 1}</span>
+                <strong>{step.label}</strong>
+                <small>{step.detail}</small>
+              </button>
+            </li>
+          ))}
+        </ol>
+        <article className="dancer-onboarding-preview" id="dancer-onboarding-preview" aria-label="Live dancer profile preview">
+          <span className="eyebrow">Live preview</span>
+          <div className="dancer-onboarding-preview-card">
+            <span className="dancer-onboarding-preview-avatar">
+              {previewImage ? <img src={previewImage} alt="" /> : previewName.slice(0, 1).toUpperCase()}
+            </span>
+            <span>
+              <strong>{previewName}</strong>
+              <small>{previewCity}</small>
+            </span>
+            <b>{profileReady ? "Ready" : "Draft"}</b>
+          </div>
+          <p>{pendingAvatar ? "Avatar moderation is in progress." : avatarUrl ? "Avatar approved." : "Add a clear face avatar."} {approvedPhotos.length ? `${approvedPhotos.length} profile ${approvedPhotos.length === 1 ? "photo" : "photos"} approved.` : "Add at least one moderated profile photo."}</p>
+        </article>
+      </div>
+      {firstIncomplete.id === "dancer-onboarding-preview" ? (
+        <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
+          {isSubmitting ? "Submitting..." : "Submit profile for venue approval"}
+        </button>
+      ) : (
+        <button className="dancer-onboarding-primary" type="button" onClick={() => openStep(firstIncomplete.id)}>
+          {firstIncomplete.id === "dancer-venue-verification" ? "Get venue approval" : "Continue setup"}
+        </button>
+      )}
+      <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
+        {status || `Current step: ${firstIncomplete.label}. ${firstIncomplete.detail}`}
+      </p>
+    </section>
+  );
+}
+
+function dancerProfileSetupBlocker({
+  persistedStageName,
+  persistedCity,
+  avatarUrl,
+  pendingAvatar,
+  approvedPhotos,
+  pendingPhotos,
+  rejectedPhotos,
+}: {
+  persistedStageName: string;
+  persistedCity: string;
+  avatarUrl: string;
+  pendingAvatar?: Record<string, unknown>;
+  approvedPhotos: DancerPhotoItem[];
+  pendingPhotos: DancerPhotoItem[];
+  rejectedPhotos: DancerPhotoItem[];
+}) {
+  if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
+  if (pendingAvatar) return "Your avatar is being moderated.";
+  if (!avatarUrl) return "Upload a clear face avatar.";
+  if (!approvedPhotos.length) return "Upload at least one profile picture that passes moderation.";
+  if (pendingPhotos.length) return `${pendingPhotos.length} profile ${pendingPhotos.length === 1 ? "picture is" : "pictures are"} still being moderated.`;
+  if (rejectedPhotos.length) return "Replace the profile picture that did not pass moderation.";
+  return "Save the remaining profile changes.";
+}
+
 function DancerPanel({
   accountState,
   affiliations,
   analytics,
   deals,
   finance,
-  nfc,
   onProfileChange,
   profile,
   rankingEvents,
@@ -2722,15 +2929,52 @@ function DancerPanel({
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
   const isApproved = effectiveStatus === "approved";
-  const nfcAuthorization = nfc?.profileAuthorization as Record<string, unknown> | undefined;
-  const isNfcAuthorized = nfcAuthorization?.authorized === true || affiliations.some((item) => item.status === "active");
+  const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
+    || affiliations.some((item) => item.status === "active");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
+  const [draftIdentity, setDraftIdentity] = useState(() => ({
+    stageName: String(profile?.stage_name || profile?.stageName || ""),
+    city: String(profile?.city || ""),
+  }));
+
+  useEffect(() => {
+    if (isApproved || effectiveStatus !== "pending_review") return;
+    let cancelled = false;
+    const refreshProfile = async () => {
+      const session = readSession();
+      if (!session?.accessToken) return;
+      try {
+        const response = await fetch("/api/dancer/profile", {
+          headers: { authorization: `Bearer ${session.accessToken}` },
+          cache: "no-store",
+        });
+        const data = await response.json();
+        if (!cancelled && response.ok && data.ok && data.profile) onProfileChange?.(data.profile);
+      } catch {
+        // The visible dashboard remains usable and the next interval retries quietly.
+      }
+    };
+    const interval = window.setInterval(() => void refreshProfile(), 8_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [effectiveStatus, isApproved, onProfileChange]);
 
   return (
     <>
+      {!isApproved ? (
+        <DancerOnboardingCommand
+          draftIdentity={draftIdentity}
+          effectiveStatus={effectiveStatus}
+          isVenueApproved={isVenueApproved}
+          onProfileChange={onProfileChange}
+          profile={profile}
+        />
+      ) : null}
       <DashboardSection
-        defaultOpen
+        defaultOpen={isApproved}
         description="Approval, venue authorization, public visibility, and the current state of your profile."
         eyebrow="Dancer workspace"
         id="dancer-overview"
@@ -2740,15 +2984,16 @@ function DancerPanel({
           <InfoPanel title="Profile">
             <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
             <Metric label="Status" value={effectiveStatus} />
-            <Metric label="NFC approval" value={isNfcAuthorized ? "approved" : "tap required"} />
+            <Metric label="Venue approval" value={isVenueApproved ? "approved" : "manager scan required"} />
             <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
           </InfoPanel>
-          <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc} />
+          <DancerVenueVerificationPanel />
           {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
         </div>
       </DashboardSection>
       <DashboardSection
-        description="Edit your stage name, city, social links, photos, and MyDancr TV videos."
+        defaultOpen={!isApproved}
+        description="Create your identity, avatar, social links, moderated photos, and MyDancr TV videos in one workspace."
         eyebrow="Dancer workspace"
         id="dancer-profile-media"
         title="Profile & media"
@@ -2763,7 +3008,9 @@ function DancerPanel({
             }}
             profile={profile}
             onProfileChange={onProfileChange}
+            onDraftChange={setDraftIdentity}
           />
+          <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />
           <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
           <DancerPhotoPanel
             deletedPhotoIds={deletedPhotoIds}
@@ -2786,14 +3033,14 @@ function DancerPanel({
           <DancerShiftPanel />
         </DashboardSection>
       ) : null}
-      <DashboardSection
-        description="Profile reach, Club Deal rewards, payouts, ranking impact, and weekly performance."
-        eyebrow="Dancer workspace"
-        id="dancer-performance"
-        title="Performance & rewards"
-      >
-        <div className="venue-dashboard-inner-grid">
-          {isApproved ? (
+      {isApproved ? (
+        <DashboardSection
+          description="Profile reach, Club Deal rewards, payouts, ranking impact, and weekly performance."
+          eyebrow="Dancer workspace"
+          id="dancer-performance"
+          title="Performance & rewards"
+        >
+          <div className="venue-dashboard-inner-grid">
             <>
           <InfoPanel title="Last 30 days">
             <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
@@ -2804,11 +3051,9 @@ function DancerPanel({
           <DancerPayoutPanel finance={finance} />
           <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
             </>
-          ) : (
-            <DancerLockedAnalyticsPanel />
-          )}
-        </div>
-      </DashboardSection>
+          </div>
+        </DashboardSection>
+      ) : null}
       {isApproved ? (
         <DashboardSection
           description="Share your approved public profile and manage dancer billing."
@@ -3040,12 +3285,14 @@ function DancerSetupPanel({
   deletedPhotoIds = [],
   deletedPhotoStoragePaths = [],
   onDeletedPhotoIdsSaved,
+  onDraftChange,
   onProfileChange,
   profile,
 }: {
   deletedPhotoIds?: string[];
   deletedPhotoStoragePaths?: string[];
   onDeletedPhotoIdsSaved?: () => void;
+  onDraftChange?: (draft: DancerIdentityDraft) => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
@@ -3059,17 +3306,47 @@ function DancerSetupPanel({
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
   const saveInFlightRef = useRef(false);
+  const draftHydratedRef = useRef(false);
+  const draftDirtyRef = useRef(false);
+  const draftKey = `mydancr:dancer-profile-draft:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
     console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v13");
   }, []);
 
   useEffect(() => {
-    setStageName(String(profile?.stage_name || profile?.stageName || ""));
+    if (draftDirtyRef.current) return;
+    const savedStageName = String(profile?.stage_name || profile?.stageName || "");
     const profileCity = String(profile?.city || "").trim();
     const matchingCity = cityOptions.find((option) => option.value.toLocaleLowerCase("en-US") === profileCity.toLocaleLowerCase("en-US"));
-    setCity(cityOptionsStatus === "ready" ? matchingCity?.value || "" : profileCity);
-  }, [cityOptions, cityOptionsStatus, profile]);
+    const savedCity = cityOptionsStatus === "ready" ? matchingCity?.value || "" : profileCity;
+    let nextDraft = { stageName: savedStageName, city: savedCity };
+    if (!draftHydratedRef.current) {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(draftKey) || "null");
+        if (stored && typeof stored === "object") {
+          nextDraft = {
+            stageName: typeof stored.stageName === "string" ? stored.stageName : savedStageName,
+            city: typeof stored.city === "string" ? stored.city : savedCity,
+          };
+          draftDirtyRef.current = nextDraft.stageName !== savedStageName || nextDraft.city !== savedCity;
+        }
+      } catch {
+        window.localStorage.removeItem(draftKey);
+      }
+      draftHydratedRef.current = true;
+    }
+    setStageName(nextDraft.stageName);
+    setCity(nextDraft.city);
+    onDraftChange?.(nextDraft);
+  }, [cityOptions, cityOptionsStatus, draftKey, onDraftChange, profile]);
+
+  useEffect(() => {
+    if (!draftHydratedRef.current) return;
+    const draft = { stageName, city };
+    onDraftChange?.(draft);
+    if (draftDirtyRef.current) window.localStorage.setItem(draftKey, JSON.stringify(draft));
+  }, [city, draftKey, onDraftChange, stageName]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3151,6 +3428,8 @@ function DancerSetupPanel({
       deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsSaved?.();
       onProfileChange?.(data.profile);
+      draftDirtyRef.current = false;
+      window.localStorage.removeItem(draftKey);
       setSaveStatus("idle");
       setStatus("Latest saved profile reloaded.");
     } catch (error) {
@@ -3220,6 +3499,8 @@ function DancerSetupPanel({
       if (unconfirmedDeletedIds.length) throw new Error("PROFILE_PHOTO_DELETE_COUNT_MISMATCH");
 
       if (data.profile) onProfileChange?.(data.profile);
+      draftDirtyRef.current = false;
+      window.localStorage.removeItem(draftKey);
       deletedPhotoIdsRef.current = [];
       deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsSaved?.();
@@ -3244,6 +3525,7 @@ function DancerSetupPanel({
         <label>
           Stage name
           <input value={stageName} minLength={2} maxLength={40} autoComplete="nickname" onChange={(event) => {
+            draftDirtyRef.current = true;
             setStageName(event.target.value);
             setSaveStatus("idle");
           }} required />
@@ -3251,6 +3533,7 @@ function DancerSetupPanel({
         <label>
           City
           <select value={city} disabled={cityOptionsStatus !== "ready"} onChange={(event) => {
+            draftDirtyRef.current = true;
             setCity(event.target.value);
             setSaveStatus("idle");
           }} required>
@@ -3265,10 +3548,128 @@ function DancerSetupPanel({
           {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved Profile" : "Save Profile"}
         </button>
         <button type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
-          {isResetting ? "Resetting..." : "Hard Reset"}
+          {isResetting ? "Reloading..." : "Reload saved profile"}
         </button>
-        {status ? <p>{status}</p> : null}
+        {status ? <p role="status" aria-live="polite">{status}</p> : null}
       </form>
+    </article>
+  );
+}
+
+function DancerAvatarPanel({
+  onProfileChange,
+  profile,
+}: {
+  onProfileChange?: (profile: Record<string, unknown>) => void;
+  profile?: LoadState["profile"];
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const avatarUrl = String(profile?.avatarPhotoUrl || "");
+  const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
+
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  function selectAvatar(nextFile: File | null) {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(nextFile);
+    setPreviewUrl(nextFile ? URL.createObjectURL(nextFile) : "");
+    setStatus(nextFile ? "Avatar selected. Upload it to start face centering and safety moderation." : "");
+  }
+
+  async function refreshProfile(accessToken: string) {
+    const response = await fetch("/api/dancer/profile", {
+      headers: { authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to refresh your avatar.");
+    onProfileChange?.(data.profile);
+    return data.profile as Record<string, unknown>;
+  }
+
+  async function uploadAvatar(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    if (!file) return setStatus("Choose a clear face photo first.");
+    const formData = new FormData();
+    const uploadKey = `${file.name}:${file.size}:${file.lastModified}:avatar:${Date.now()}`;
+    formData.set("file", file);
+    formData.set("idempotencyKey", uploadKey);
+    setIsSaving(true);
+    setStatus("Centering your face and checking the avatar...");
+    try {
+      const response = await fetch("/api/dancer/avatar", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "idempotency-key": uploadKey },
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || data.error || "Unable to upload avatar.");
+      await refreshProfile(session.accessToken);
+      selectAvatar(null);
+      const decision = String(data.decision || "pending").toLowerCase();
+      setStatus(decision === "approved"
+        ? "Avatar approved, face-centered, and saved."
+        : "Avatar uploaded and awaiting moderation. Your current approved avatar stays visible until review finishes.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to upload avatar.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function removeAvatar() {
+    if (!window.confirm("Remove your current avatar? A moderated avatar is required before profile submission.")) return;
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    setIsSaving(true);
+    setStatus("Removing avatar...");
+    try {
+      const response = await fetch("/api/dancer/avatar", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove avatar.");
+      await refreshProfile(session.accessToken);
+      setStatus("Avatar removed.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to remove avatar.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const visibleAvatar = previewUrl || avatarUrl;
+  const moderationLabel = pendingAvatar ? "Moderation pending" : avatarUrl ? "Approved" : "Required";
+  return (
+    <article className="info-panel dancer-avatar-panel">
+      <span className="eyebrow">Profile identity</span>
+      <h2>Avatar</h2>
+      <div className="dancer-avatar-editor">
+        <span className="dancer-avatar-preview">
+          {visibleAvatar ? <img src={visibleAvatar} alt="Selected dancer avatar preview" /> : <b aria-hidden="true">+</b>}
+        </span>
+        <span>
+          <strong>{moderationLabel}</strong>
+          <small>Upload a clear face photo. MyDancr automatically finds and centers the face, then runs production safety moderation.</small>
+        </span>
+      </div>
+      <form onSubmit={uploadAvatar}>
+        <label>
+          Avatar photo
+          <input accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" type="file" onChange={(event) => selectAvatar(event.target.files?.[0] || null)} />
+        </label>
+        <button type="submit" disabled={isSaving || !file}>{isSaving ? "Checking..." : "Upload avatar"}</button>
+        {avatarUrl ? <button type="button" disabled={isSaving} onClick={() => void removeAvatar()}>Remove avatar</button> : null}
+      </form>
+      <p role="status" aria-live="polite">{status || `${moderationLabel}. Avatar changes only appear publicly after approval.`}</p>
     </article>
   );
 }
@@ -4540,16 +4941,38 @@ function DancerSocialPanel({
   const [socials, setSocials] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const draftHydratedRef = useRef(false);
+  const draftDirtyRef = useRef(false);
+  const draftKey = `mydancr:dancer-social-draft:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
+    if (draftDirtyRef.current) return;
     const existing = Array.isArray(profile?.social_links) ? profile.social_links : [];
     const nextSocials: Record<string, string> = {};
     for (const platform of SOCIAL_PLATFORMS) {
       const row = existing.find((item: any) => item?.platform === platform.key && item?.is_active !== false);
       nextSocials[platform.key] = String(row?.url || row?.handle || "");
     }
+    if (!draftHydratedRef.current) {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(draftKey) || "null");
+        if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+          Object.assign(nextSocials, stored);
+          draftDirtyRef.current = true;
+        }
+      } catch {
+        window.localStorage.removeItem(draftKey);
+      }
+      draftHydratedRef.current = true;
+    }
     setSocials(nextSocials);
-  }, [profile]);
+  }, [draftKey, profile]);
+
+  useEffect(() => {
+    if (draftHydratedRef.current && draftDirtyRef.current) {
+      window.localStorage.setItem(draftKey, JSON.stringify(socials));
+    }
+  }, [draftKey, socials]);
 
   async function saveSocials(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -4580,6 +5003,8 @@ function DancerSocialPanel({
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save socials.");
       if (data.profile) onProfileChange?.(data.profile);
+      draftDirtyRef.current = false;
+      window.localStorage.removeItem(draftKey);
       setStatus("Social links saved.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save socials.");
@@ -4598,14 +5023,17 @@ function DancerSocialPanel({
             <input
               placeholder={platform.placeholder}
               value={socials[platform.key] || ""}
-              onChange={(event) => setSocials((current) => ({ ...current, [platform.key]: event.target.value }))}
+              onChange={(event) => {
+                draftDirtyRef.current = true;
+                setSocials((current) => ({ ...current, [platform.key]: event.target.value }));
+              }}
             />
           </label>
         ))}
         <button type="submit" disabled={isSaving}>
           {isSaving ? "Saving..." : "Save socials"}
         </button>
-        {status ? <p>{status}</p> : null}
+        {status ? <p role="status" aria-live="polite">{status}</p> : null}
       </form>
     </article>
   );
@@ -4873,7 +5301,7 @@ function DancerPhotoPanel({
         <button type="submit" disabled={isUploading}>
           {isUploading ? "Uploading..." : "Upload photo"}
         </button>
-        {status ? <p>{status}</p> : null}
+        {status ? <p role="status" aria-live="polite">{status}</p> : null}
       </form>
       {selectedPreview ? (
         <div className="photo-review-card is-pending">
@@ -5116,7 +5544,13 @@ function formatDashboardTime(value: string) {
   return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
 }
 
-function VenueDashboardSignInRecovery({ onSignedIn }: { onSignedIn: () => void }) {
+function DashboardSignInRecovery({
+  onSignedIn,
+  role,
+}: {
+  onSignedIn: () => void;
+  role: "dancer" | "venue";
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -5133,19 +5567,19 @@ function VenueDashboardSignInRecovery({ onSignedIn }: { onSignedIn: () => void }
       const response = await fetch("/api/auth", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode: "login", role: "venue", email: email.trim(), password }),
+        body: JSON.stringify({ mode: "login", role, email: email.trim(), password }),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
-      if (data.account?.role !== "venue" || !data.session?.accessToken || !data.session?.refreshToken) {
-        throw new Error("Use a venue account to open this dashboard.");
+      if (data.account?.role !== role || !data.session?.accessToken || !data.session?.refreshToken) {
+        throw new Error(`Use a ${role} account to open this dashboard.`);
       }
 
       window.localStorage.setItem(
         SESSION_KEY,
         JSON.stringify({ ...data.session, account: data.account }),
       );
-      setStatus("Signed in. Opening your venue dashboard...");
+      setStatus(`Signed in. Opening your ${role} dashboard...`);
       onSignedIn();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to sign in.");
@@ -5163,10 +5597,10 @@ function VenueDashboardSignInRecovery({ onSignedIn }: { onSignedIn: () => void }
   }
 
   return (
-    <form className="venue-sign-in-recovery" onSubmit={signIn}>
+    <form className="venue-sign-in-recovery dashboard-sign-in-recovery" onSubmit={signIn}>
       <p>Sign in here to reopen the dashboard without leaving this page.</p>
       <label>
-        Venue account email
+        {role === "venue" ? "Venue" : "Dancer"} account email
         <input
           autoComplete="email"
           inputMode="email"
@@ -5188,7 +5622,7 @@ function VenueDashboardSignInRecovery({ onSignedIn }: { onSignedIn: () => void }
         />
       </label>
       <button className="primary-link" disabled={isSubmitting} type="submit">
-        {isSubmitting ? "Signing in..." : "Sign in to venue dashboard"}
+        {isSubmitting ? "Signing in..." : `Sign in to ${role} dashboard`}
       </button>
       {status ? <p className="venue-sign-in-status" role="status">{status}</p> : null}
     </form>
@@ -5781,6 +6215,47 @@ function DashboardStyles() {
       .venue-verification-preview { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 16px; border: 1px solid rgba(50,255,164,.3); border-radius: 12px; background: rgba(50,255,164,.055); }
       .venue-verification-avatar { width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #171722; font-size: 24px; font-weight: 950; }
       .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
+      .dashboard-shell-dancer { --mydancr-dashboard-panel: #09090d; --mydancr-dashboard-panel-raised: #111116; --mydancr-dashboard-border: rgba(255,255,255,.105); --mydancr-dashboard-muted: rgba(218,218,226,.68); color-scheme: dark; background: radial-gradient(circle at 14% 2%, rgba(110,54,220,.08), transparent 22rem), #050507; }
+      .dashboard-shell-dancer .dashboard-head { min-height: 0; padding: 20px 22px; border-color: var(--mydancr-dashboard-border); border-radius: 22px; background: #07070a; box-shadow: 0 20px 48px rgba(0,0,0,.34); }
+      .dashboard-shell-dancer .dashboard-head h1 { overflow: visible; font-size: clamp(29px,5vw,42px); text-overflow: clip; white-space: normal; }
+      .dancer-onboarding-command { grid-column: 1 / -1; display: grid; gap: 18px; padding: clamp(16px,3vw,24px); border: 1px solid var(--mydancr-dashboard-border); border-radius: 20px; background: linear-gradient(145deg, #111116, #09090d 72%); box-shadow: 0 22px 54px rgba(0,0,0,.32); scroll-margin-top: 18px; }
+      .dancer-onboarding-command-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+      .dancer-onboarding-command-head > span { display: grid; gap: 7px; }
+      .dancer-onboarding-command-head h2 { color: #f8f7fb; font-size: clamp(25px,4vw,34px); letter-spacing: -.025em; }
+      .dancer-onboarding-command-head p { color: var(--mydancr-dashboard-muted); font-size: 14px; line-height: 1.45; }
+      .dancer-onboarding-command-head > b { flex: 0 0 auto; padding: 8px 11px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #dad7e1; background: rgba(255,255,255,.045); font-size: 11px; }
+      .dancer-onboarding-layout { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(260px,.75fr); align-items: start; gap: 16px; }
+      .dancer-onboarding-steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+      .dancer-onboarding-steps button { width: 100%; min-height: 74px; display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 3px 11px; align-items: center; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; color: #f8f7fb; background: #0d0d12; font: inherit; text-align: left; cursor: pointer; }
+      .dancer-onboarding-steps button > span { grid-row: 1 / span 2; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.17); border-radius: 50%; color: #d7d5dd; background: rgba(255,255,255,.045); font-size: 12px; font-weight: 950; }
+      .dancer-onboarding-steps strong { font-size: 15px; }
+      .dancer-onboarding-steps small { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.35; }
+      .dancer-onboarding-steps .is-current button { border-color: rgba(139,92,246,.56); background: rgba(97,45,188,.12); box-shadow: inset 3px 0 0 #8b5cf6; }
+      .dancer-onboarding-steps .is-complete button > span { border-color: rgba(76,223,166,.42); color: #70efbd; background: rgba(25,140,101,.13); }
+      .dancer-onboarding-preview { position: sticky; top: 18px; display: grid; gap: 11px; padding: 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #0d0d12; }
+      .dancer-onboarding-preview-card { min-width: 0; display: grid; grid-template-columns: 62px minmax(0,1fr) auto; align-items: center; gap: 12px; }
+      .dancer-onboarding-preview-avatar, .dancer-avatar-preview { overflow: hidden; display: grid; place-items: center; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #17171d; font-weight: 950; }
+      .dancer-onboarding-preview-avatar { width: 58px; height: 58px; font-size: 22px; }
+      .dancer-onboarding-preview-avatar img, .dancer-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+      .dancer-onboarding-preview-card > span:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
+      .dancer-onboarding-preview-card strong { overflow: hidden; color: #fff; font-size: 18px; text-overflow: ellipsis; white-space: nowrap; }
+      .dancer-onboarding-preview-card small, .dancer-onboarding-preview p { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
+      .dancer-onboarding-preview-card > b { color: #bfefff; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+      .dancer-onboarding-primary { width: 100%; min-height: 52px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); font: inherit; font-weight: 950; cursor: pointer; }
+      .dancer-onboarding-primary:disabled { opacity: .58; cursor: wait; }
+      .dancer-onboarding-steps button:focus-visible, .dancer-onboarding-primary:focus-visible, .dancer-avatar-panel button:focus-visible, .dancer-avatar-panel input:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
+      .dancer-onboarding-announcement { min-height: 20px; color: #bfefff; font-size: 12px; font-weight: 760; line-height: 1.4; }
+      .dancer-avatar-panel { grid-column: span 3; display: grid; gap: 13px; }
+      .dancer-avatar-editor { display: grid; grid-template-columns: 78px minmax(0,1fr); align-items: center; gap: 14px; }
+      .dancer-avatar-preview { width: 74px; height: 74px; font-size: 26px; }
+      .dancer-avatar-editor > span:last-child { display: grid; gap: 5px; }
+      .dancer-avatar-editor strong { color: #fff; }
+      .dancer-avatar-editor small { color: var(--mydancr-dashboard-muted); line-height: 1.4; }
+      .dancer-avatar-panel form { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: end; gap: 10px; }
+      .dancer-avatar-panel label { display: grid; gap: 7px; color: #d7d5dd; font-size: 13px; font-weight: 850; }
+      .dancer-avatar-panel input { min-height: 48px; box-sizing: border-box; padding: 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #fff; background: #16161b; }
+      .dancer-avatar-panel button { min-height: 48px; padding: 0 15px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #fff; background: #17171d; font: inherit; font-weight: 900; cursor: pointer; }
+      .dancer-avatar-panel p { color: var(--mydancr-dashboard-muted); font-size: 12px; }
       .dashboard-shell-venue { --mydancr-dashboard-panel: #09090d; --mydancr-dashboard-panel-raised: #111116; --mydancr-dashboard-border: rgba(255,255,255,.105); --mydancr-dashboard-muted: rgba(218,218,226,.68); color-scheme: dark; background: #050507; }
       .dashboard-shell .dashboard-head { border-color: var(--mydancr-dashboard-border); background: #07070a; }
       .dashboard-shell-venue .venue-command-primary,
@@ -5832,6 +6307,8 @@ function DashboardStyles() {
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
+      @media (max-width: 860px) { .dancer-onboarding-layout, .dancer-avatar-panel form { grid-template-columns: 1fr; } .dancer-onboarding-preview { position: static; } .dancer-avatar-panel { grid-column: auto; } }
+      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 78px; } .dancer-onboarding-primary { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 8; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }

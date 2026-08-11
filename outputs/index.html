@@ -37512,8 +37512,8 @@
         <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
           <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
           <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
-          <p id="dancerVenueVerificationDescription">At each club, tap its official dressing-room NFC sticker with your signed-in phone. The same tap activates a new dancer after setup or immediately adds the venue to an already-approved profile.</p>
-          <div class="venue-affiliation-controls" hidden>
+          <p id="dancerVenueVerificationDescription">Choose the club where you work, generate a private one-time QR, and show it to that venue's verified manager for affiliation approval.</p>
+          <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
               Venue
               <select id="dancerVenueVerificationVenue" aria-label="Venue to verify" disabled>
@@ -37522,7 +37522,7 @@
             </label>
             <button class="action-btn" id="dancerVenueVerificationCreate" type="button" disabled>Show my verification QR</button>
           </div>
-          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Retired venue verification method">
+          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Personal venue verification QR">
             <img id="dancerVenueVerificationQrImage" alt="Personal venue verification QR">
             <div>
               <strong id="dancerVenueVerificationQrVenue">Venue</strong>
@@ -37533,8 +37533,8 @@
             </div>
           </section>
           <div class="venue-affiliation-list" id="dancerVenueAffiliationList" aria-label="Verified venues"></div>
-          <div class="rule-note">No manager scan is required. A pending first tap is saved while MyDancr finishes the profile and media review.</div>
-          <div id="dancerVenueVerificationStatus" role="status" aria-live="polite" hidden>Loading venue affiliations…</div>
+          <div class="rule-note">The manager confirms only that you work at the venue. MyDancr handles profile and media safety moderation separately.</div>
+          <div id="dancerVenueVerificationStatus" role="status" aria-live="polite">Loading venue affiliations…</div>
         </section>
         <details class="auth-card dashboard-collapse approved-analytics dancer-visibility-section" id="dancerVisibilitySection">
           <summary><span class="dashboard-collapse-title"><strong>Profile visibility</strong><span id="dancerVisibilitySummary">Visible to customers</span></span></summary>
@@ -37638,7 +37638,7 @@
           <div>
             <span class="eyebrow">Live venue tools</span>
             <h3>Manage your public venue page, physical NFC access, and live performance.</h3>
-            <p>The dressing-room sticker activates dancer affiliations and check-ins. The cashier sticker completes the exact Club Deal a customer selected in MyDancr.</p>
+            <p>Venue managers approve dancer affiliations from a private one-time QR. The dressing-room sticker handles approved dancer check-ins, and the cashier sticker completes the exact Club Deal a customer selected in MyDancr.</p>
           </div>
           <div class="customer-summary-actions">
             <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
@@ -37653,8 +37653,8 @@
         </div>
         <section class="auth-card venue-affiliation-card" id="venueDancerVerificationPanel">
           <span class="eyebrow">Verified roster</span>
-          <h3>Dressing-room NFC roster</h3>
-          <p>Dancers add this venue by tapping your official dressing-room NFC sticker. New dancers finish MyDancr profile and media review; eligible existing dancers join the roster immediately. Managers do not scan or approve dancer profiles.</p>
+          <h3>Dancer affiliation approvals</h3>
+          <p>Scan a dancer's current MyDancr approval QR to confirm only that she works at this venue. MyDancr reviews her profile and media separately.</p>
           <section class="venue-affiliation-preview" id="venueDancerVerificationPreview" hidden aria-label="Dancer verification confirmation">
             <span class="venue-affiliation-avatar" id="venueDancerVerificationAvatar"></span>
             <div>
@@ -37665,7 +37665,7 @@
             <button class="action-btn" id="venueDancerVerificationApprove" type="button">Confirm she works here</button>
           </section>
           <div class="venue-affiliation-list" id="venueDancerAffiliationList" aria-label="Approved dancer roster"></div>
-          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Manage and rotate the dressing-room sticker from the NFC tags section of the venue dashboard.</div>
+          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Open the venue workspace to scan a dancer QR, or scan it with this phone's camera to open the secure approval preview.</div>
         </section>
         <div class="venue-dashboard-grid">
           <form class="auth-card auth-form" id="venueProfileForm">
@@ -49082,11 +49082,11 @@
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 3 · Dressing-room NFC" : "Venue affiliation";
-      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Tap at your first venue" : "Manage where you work";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 3 · Venue approval" : "Venue affiliation";
+      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
-        ? "At the venue, tap its official dressing-room NFC sticker with your signed-in phone. MyDancr saves the affiliation while profile setup and media review finish, then activates it automatically."
-        : "Tap each venue's official dressing-room NFC sticker to add that club. Your already-approved profile stays live while affiliations change.";
+        ? "Choose the club where you work and show your private one-time QR to its verified manager. The manager confirms the affiliation; MyDancr reviews profile content separately."
+        : "Use a new personal QR whenever you add or switch clubs. Your approved profile stays live while affiliations change.";
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
       select.innerHTML = venues.length
@@ -49095,22 +49095,26 @@
       select.disabled = !venues.length;
       const preferredVenue = venues.find((venue) => venue.id === previousVenueId) || venues[0] || null;
       select.value = preferredVenue?.id || "";
-      document.getElementById("dancerVenueVerificationCreate").disabled = true;
+      document.getElementById("dancerVenueVerificationCreate").disabled = preferredVenue?.managerReady !== true;
       const list = document.getElementById("dancerVenueAffiliationList");
-      list.innerHTML = `<strong>NFC-connected venues</strong>${affiliations.length
+      list.innerHTML = `<strong>Verified venues</strong>${affiliations.length
         ? affiliations.map((item) => `
             <div>
               <span><b>✓ ${escapeHtml(item.venue?.name || "Venue")}</b><small>Approved ${escapeHtml(formatVenueAffiliationTime(item.approvedAt, true))}</small></span>
               <button type="button" data-dancer-affiliation-remove="${escapeHtml(item.id)}">Remove</button>
             </div>
           `).join("")
-        : "<small>No venue affiliation yet. Tap the official dressing-room NFC sticker at the club where you work.</small>"}`;
+        : "<small>No venue has verified your affiliation yet.</small>"}`;
       list.querySelectorAll("[data-dancer-affiliation-remove]").forEach((button) => {
         button.onclick = () => removeDancerVenueAffiliation(button.dataset.dancerAffiliationRemove);
       });
       renderShiftPostForm();
       document.getElementById("dancerVenueVerificationStatus").textContent =
-        `At the club, unlock this signed-in phone and tap its official MyDancr dressing-room NFC sticker. No manager scan or separate approval is required.`;
+        preferredVenue?.managerReady === true
+          ? `Generate a private QR and show it to ${preferredVenue.name}'s verified manager.`
+          : preferredVenue
+            ? `${preferredVenue.name}'s venue manager account must be activated before it can approve your QR.`
+            : `Choose an active ${dancerCity} venue.`;
     }
 
     function selectedDancerVenueVerificationVenue() {
@@ -49127,7 +49131,9 @@
       button.disabled = venue?.managerReady !== true;
       status.textContent = !venue
         ? `Choose an active ${dancerCity} venue.`
-        : `Use ${venue.name}'s official dressing-room NFC sticker at the venue. No personal QR is needed.`;
+        : venue.managerReady === true
+          ? `Generate a private QR and show it to ${venue.name}'s verified manager.`
+          : `${venue.name}'s venue manager account must be activated before it can approve your QR.`;
     }
 
     function loadDancerVenueVerification({ quiet = false } = {}) {
@@ -49768,7 +49774,7 @@
     function completeSetupStep(step, options = {}) {
       if (!canOpenStep(step)) return;
       if (step === "approval" && isDancerSession()) {
-        showToast("Complete this step by tapping the venue's official dressing-room NFC sticker.");
+        showToast("Complete this step by having a verified venue manager scan your private approval QR.");
         return;
       }
       setupChecklistExpanded = true;
@@ -50705,7 +50711,7 @@
             : review
         ));
         activeSetupStep = "approval";
-        profileSubmitNotice = "Profile submitted. At the venue where you work, tap its official dressing-room NFC sticker with this signed-in phone.";
+        profileSubmitNotice = "Profile submitted. Generate your private QR and show it to a verified manager at the venue where you work.";
         profileSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Profile saved. Venue affiliation is the final step.");
@@ -51263,7 +51269,7 @@
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the customers Dancr sends you."
         : reviewSubmitted
-          ? "Your profile is private and ready. Tap the official dressing-room NFC sticker at the venue where you work; MyDancr activates the saved affiliation automatically when setup and media review are complete."
+          ? "Your profile is private and ready. Generate your one-time QR and show it to a verified manager at the venue where you work."
           : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
@@ -51273,7 +51279,7 @@
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
-          ? "Waiting for venue NFC tap"
+          ? "Waiting for venue approval"
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
@@ -51313,11 +51319,11 @@
           approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
         } else if (reviewSubmitted) {
-          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dressing-room NFC sticker at the venue where you work.";
-          approvalStatusSecondary.textContent = "MyDancr reviews profile photos, videos, and public information for safety, then activates the saved venue affiliation automatically. No manager scan or approval is required.";
+          approvalStatusPrimary.textContent = "Profile submitted and private. Show your one-time QR to the verified manager at the venue where you work.";
+          approvalStatusSecondary.textContent = "The manager confirms only your venue affiliation. MyDancr separately reviews profile photos, videos, and public information for safety.";
         } else if (readyForReview) {
           approvalStatusPrimary.textContent = "Ready to preview. Review your public profile and submit it in Step 2.";
-          approvalStatusSecondary.textContent = "Your profile remains private until the dressing-room NFC tap and profile/media review are complete.";
+          approvalStatusSecondary.textContent = "Your profile remains private until venue manager approval and profile/media review are complete.";
         } else {
           approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
           approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after venue affiliation.";
@@ -51715,8 +51721,8 @@
         <div class="rule-note">Confirm the preview is accurate. Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete venue affiliation.</div>
       `;
       const approvalBody = `
-        <div class="info-tile"><strong>Confirm venue affiliation</strong><div class="meta">At the venue where you work, unlock your signed-in phone and tap its official MyDancr dressing-room NFC sticker.</div></div>
-        <div class="rule-note">The tap saves that exact venue affiliation. It activates immediately for an eligible profile or automatically after setup and media review finish. No manager scan is required.</div>
+        <div class="info-tile"><strong>Confirm venue affiliation</strong><div class="meta">Choose the venue, generate your private one-time QR, and show it to the verified venue manager.</div></div>
+        <div class="rule-note">The manager confirms only that you work there. MyDancr handles profile and media moderation separately before your profile goes live.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create profile and add media", profileBody),

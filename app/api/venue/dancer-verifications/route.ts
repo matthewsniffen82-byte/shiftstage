@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import {
+  approveDancerVenueVerification,
   getVenueDancerVerificationState,
   revokeDancerVenueAffiliation,
   VenueAffiliationUserError,
@@ -31,11 +32,17 @@ export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireVenueAccount(client, user.id);
+    await requireVenueAccess(createAdminSupabaseClient(), user.id, "manage_roster");
+    const body = await readBody(request);
+    const affiliation = await approveDancerVenueVerification(createAdminSupabaseClient(), {
+      managerUserId: user.id,
+      token: typeof body.token === "string" ? body.token : "",
+    });
     return noStoreJson({
-      ok: false,
-      error: "Manager approval has been retired. The dancer's dressing-room NFC tap automatically authorizes the profile and venue affiliation.",
-      replacement: "dressing_room_nfc",
-    }, 410);
+      ok: true,
+      affiliation,
+      message: `${String(affiliation.stageName)} is now verified at ${String(affiliation.venueName)}.`,
+    });
   } catch (error) {
     return affiliationApiError(error, "Unable to approve dancer verification.");
   }
@@ -60,15 +67,15 @@ export async function DELETE(request: Request) {
       action: "roster.access_removed",
       targetType: "venue_dancer_affiliation",
       targetId: String(affiliation.id),
-      summary: `${String(affiliation.stageName)} was removed from the NFC-authorized roster.`,
+      summary: `${String(affiliation.stageName)} was removed from the verified roster.`,
     });
     return noStoreJson({
       ok: true,
       affiliation,
-      message: `${String(affiliation.stageName)} no longer has NFC access at this venue.`,
+      message: `${String(affiliation.stageName)} is no longer verified at this venue.`,
     });
   } catch (error) {
-    return affiliationApiError(error, "Unable to remove dancer NFC access.");
+    return affiliationApiError(error, "Unable to remove dancer verification.");
   }
 }
 

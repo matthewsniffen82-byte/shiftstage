@@ -4,7 +4,7 @@ import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getDancerDealMetrics } from "@/src/lib/dancr/deals";
 import { getOwnDancerDashboardAnalytics } from "@/src/lib/dancr/dancer";
 import { getDancerFinance } from "@/src/lib/dancr/finance";
-import { finalizePendingDancerNfcEnrollment, getDancerNfcDashboardState } from "@/src/lib/dancr/nfc";
+import { getDancerNfcDashboardState } from "@/src/lib/dancr/nfc";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -19,7 +19,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
     }
     const admin = createAdminSupabaseClient();
-    const nfcEnrollment = await finalizePendingDancerNfcEnrollment(admin, { dancerUserId: user.id, request });
     const [analytics, deals, finance, nfc] = await Promise.all([
       getOwnDancerDashboardAnalytics(client, user.id),
       getDancerDealMetrics(client, user.id),
@@ -32,7 +31,7 @@ export async function GET(request: Request) {
       analytics,
       deals,
       finance,
-      nfc: { ...nfc, enrollment: nfc.enrollment || nfcEnrollment },
+      nfc,
       affiliations: nfc.affiliations,
     });
   } catch (error) {

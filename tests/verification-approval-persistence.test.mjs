@@ -40,7 +40,7 @@ const [
   readFile(new URL("../.env.example", import.meta.url), "utf8"),
 ]);
 
-test("new dancers stay private until dressing-room NFC activation while existing approved profiles remain live", () => {
+test("new dancers stay private until manager venue approval while existing approved profiles remain live", () => {
   assert.match(profileApproval, /function initialDancerApprovalValues/);
   assert.match(profileApproval, /status: "draft"/);
   assert.match(profileApproval, /verification_status: "pending"/);
@@ -50,7 +50,7 @@ test("new dancers stay private until dressing-room NFC activation while existing
   assert.match(profileRoute, /pendingVenueApprovalValues\(\)/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
   assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_onboarding_required/);
-  assert.match(liveApp, /No manager scan or approval is required/i);
+  assert.match(liveApp, /show your private one-time QR to its verified manager/i);
   assert.match(venueMigration, /venue_approved_at is not null/);
   assert.match(restoreMigration, /'profileDeactivated', false/);
   assert.match(restoreMigration, /is_public = true/);

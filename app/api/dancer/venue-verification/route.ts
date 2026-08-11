@@ -1,10 +1,15 @@
+import QRCode from "qrcode";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { getDancerNfcDashboardState } from "@/src/lib/dancr/nfc";
 import {
+  getDancerVenueVerificationState,
+  hashVenueAffiliationRequestIp,
+  issueDancerVenueVerification,
+  rotateDancerVenueVerification,
   revokeDancerVenueAffiliation,
   VenueAffiliationUserError,
+  venueAffiliationRequestIp,
 } from "@/src/lib/dancr/venue-affiliations";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -19,7 +24,7 @@ export async function GET(request: Request) {
     if (!account || account.role !== "dancer" || account.accountState !== "active") {
       return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
     }
-    const state = await getDancerNfcDashboardState(createAdminSupabaseClient(), user.id);
+    const state = await getDancerVenueVerificationState(createAdminSupabaseClient(), user.id);
     return noStoreJson({ ok: true, ...state });
   } catch (error) {
     return affiliationApiError(error, "Unable to load venue verification.");
@@ -33,11 +38,46 @@ export async function POST(request: Request) {
     if (!account || account.role !== "dancer" || account.accountState !== "active") {
       return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
     }
+    const body = await readBody(request);
+    const venueId = typeof body.venueId === "string" ? body.venueId : "";
+    const tokenId = typeof body.tokenId === "string" ? body.tokenId : "";
+    const rotationToken = typeof body.rotationToken === "string" ? body.rotationToken : "";
+    const requestIpHash = hashVenueAffiliationRequestIp(venueAffiliationRequestIp(request));
+    const issued = tokenId || rotationToken
+      ? await rotateDancerVenueVerification(createAdminSupabaseClient(), {
+          userId: user.id,
+          venueId,
+          tokenId,
+          currentToken: rotationToken,
+          requestIpHash,
+        })
+      : await issueDancerVenueVerification(createAdminSupabaseClient(), {
+          userId: user.id,
+          venueId,
+          requestIpHash,
+        });
+    const verificationUrl = new URL("/", request.url);
+    verificationUrl.searchParams.set("venueVerify", issued.token);
+    const qrDataUrl = await QRCode.toDataURL(verificationUrl.toString(), {
+      errorCorrectionLevel: "H",
+      margin: 2,
+      width: 320,
+      color: { dark: "#050507", light: "#ffffff" },
+    });
     return noStoreJson({
-      ok: false,
-      error: "Dancer QR approval has been retired. Tap the venue's dressing-room NFC sticker to authorize your profile and add the affiliation.",
-      replacement: "dressing_room_nfc",
-    }, 410);
+      ok: true,
+      verification: {
+        venue: issued.venue,
+        tokenId: issued.tokenId,
+        rotationToken: issued.token,
+        expiresAt: issued.expiresAt,
+        verificationUrl: verificationUrl.toString(),
+        qrDataUrl,
+      },
+      message: tokenId || rotationToken
+        ? "Your verification QR refreshed automatically. Show the current QR to the venue manager."
+        : `Show this personal QR to ${issued.venue.name}'s verified manager.`,
+    }, 201);
   } catch (error) {
     return affiliationApiError(error, "Unable to create venue verification QR.");
   }
@@ -56,9 +96,9 @@ export async function DELETE(request: Request) {
       affiliationId: typeof body.affiliationId === "string" ? body.affiliationId : "",
       reason: "Dancer removed venue affiliation.",
     });
-    return noStoreJson({ ok: true, affiliation, message: "Venue NFC access removed." });
+    return noStoreJson({ ok: true, affiliation, message: "Venue verification removed." });
   } catch (error) {
-    return affiliationApiError(error, "Unable to remove venue NFC access.");
+    return affiliationApiError(error, "Unable to remove venue verification.");
   }
 }
 

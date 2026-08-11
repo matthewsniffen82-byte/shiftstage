@@ -147,9 +147,14 @@ export function NfcTapClient({ token }: { token: string }) {
 
         {!complete && state ? (
           dancerNeedsSignIn ? (
-            <Link className="nfc-primary" href={`/account?role=dancer&mode=signup&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
-              Sign in or create dancer account
-            </Link>
+            <>
+              <Link className="nfc-primary" href={`/account?role=dancer&mode=login&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
+                Sign in to use venue NFC
+              </Link>
+              <Link className="nfc-secondary" href="/account?role=dancer&mode=signup">
+                Create dancer account
+              </Link>
+            </>
           ) : state.tag.type === "cashier" && !activeDeal ? null : (
             <button className="nfc-primary" type="button" onClick={submitTap} disabled={isSubmitting}>
               {isSubmitting
