@@ -2078,6 +2078,14 @@
       box-shadow: inset 0 0 18px rgba(255,255,255,.018);
     }
 
+    .shift-manager-row.is-deleting {
+      opacity: .66;
+    }
+
+    .shift-manager-row.is-deleting button {
+      cursor: wait;
+    }
+
     .shift-manager-meta {
       color: #cfc7dc;
       font-size: 12px;
@@ -46537,36 +46545,56 @@
         return;
       }
       if (action === "remove") {
-        shiftCheckInMessage = "";
-        shiftCheckInTone = "";
-        shiftCheckInCode = "";
-        removeLocalPostedShift(activeDancerCity(), profile?.name || activeDancerName(), shiftId);
-        if (profile) {
-          profile.postedShifts = shifts.filter((shift) => String(shift.shiftId) !== String(shiftId));
-          applyDisplayShift(profile);
-          lastPostedShift = profile.postedShifts.length ? lastPostedShift : null;
-        } else {
-          lastPostedShift = locallyStoredPostedShifts().length ? lastPostedShift : null;
+        if (!selectedShift || trigger?.getAttribute("aria-busy") === "true") return;
+        const row = trigger?.closest(".shift-manager-row");
+        const originalLabel = trigger?.textContent || "Delete shift";
+        if (row) row.classList.add("is-deleting");
+        if (trigger) {
+          trigger.disabled = true;
+          trigger.setAttribute("aria-busy", "true");
+          trigger.textContent = "Deleting...";
         }
-        const result = document.getElementById("shiftPostResult");
-        if (result) {
-          result.hidden = false;
-          result.textContent = "Shift removed from your public profile and venue page.";
-        }
-        render();
-        renderDancerManagement();
-        renderDancerSetup();
-        if (customerDashboard.classList.contains("show")) renderDashboard();
-        showToast("Shift removed");
-        if (shiftId && isDancerSession()) {
-          patchAuthenticatedJson("/api/dancer/shifts", {
-            shiftId,
-            status: "cancelled"
-          }).then((data) => {
-            if (data) showToast("Live shift cancelled");
-          }).catch((error) => showToast(error.message || "Could not cancel live shift"));
-        }
-        editingShiftId = null;
+        void (async () => {
+          try {
+            if (shiftId && isDancerSession()) {
+              await patchAuthenticatedJson("/api/dancer/shifts", {
+                shiftId,
+                status: "cancelled"
+              });
+            }
+            shiftCheckInMessage = "";
+            shiftCheckInTone = "";
+            shiftCheckInCode = "";
+            removeLocalPostedShift(activeDancerCity(), profile?.name || activeDancerName(), shiftId);
+            if (profile) {
+              profile.postedShifts = shifts.filter((shift) => String(shift.shiftId) !== String(shiftId));
+              applyDisplayShift(profile);
+              lastPostedShift = profile.postedShifts.length ? lastPostedShift : null;
+            } else {
+              lastPostedShift = locallyStoredPostedShifts().length ? lastPostedShift : null;
+            }
+            render();
+            const shiftList = document.getElementById("dancerShiftManager");
+            if (row?.isConnected && shiftList) {
+              row.remove();
+              if (!shiftList.querySelector(".shift-manager-row")) renderDancerShiftManager();
+            } else {
+              renderDancerShiftManager();
+            }
+            renderShiftVerificationPanel();
+            if (customerDashboard.classList.contains("show")) renderDashboard();
+            showToast("Shift removed from your public profile and venue page");
+            editingShiftId = null;
+          } catch (error) {
+            if (row) row.classList.remove("is-deleting");
+            if (trigger) {
+              trigger.disabled = false;
+              trigger.setAttribute("aria-busy", "false");
+              trigger.textContent = originalLabel;
+            }
+            showToast(error.message || "Could not cancel live shift");
+          }
+        })();
       }
     }
 

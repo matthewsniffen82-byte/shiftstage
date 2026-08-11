@@ -4285,6 +4285,7 @@ function DancerShiftPanel() {
   const [checkInStatus, setCheckInStatus] = useState("");
   const [checkInTone, setCheckInTone] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingShiftId, setDeletingShiftId] = useState("");
   const [activeCheckInId, setActiveCheckInId] = useState("");
   const [editingShiftId, setEditingShiftId] = useState("");
   const [editVenueId, setEditVenueId] = useState("");
@@ -4412,19 +4413,24 @@ function DancerShiftPanel() {
       return;
     }
 
-    setStatus("");
-    const response = await fetch("/api/dancer/shifts", {
-      method: "PATCH",
-      headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
-      body: JSON.stringify({ shiftId, status: "cancelled" }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setStatus(data.error || "Unable to cancel shift.");
-      return;
+    setDeletingShiftId(shiftId);
+    try {
+      const response = await fetch("/api/dancer/shifts", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ shiftId, status: "cancelled" }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to cancel shift.");
+
+      setShifts((current) => current.filter((shift) => String(shift.id) !== shiftId));
+      if (editingShiftId === shiftId) stopEditingShift();
+      setStatus(`Shift cancelled. ${data.cancellationRecipients || 0} customers notified.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to cancel shift.");
+    } finally {
+      setDeletingShiftId("");
     }
-    setStatus(`Shift cancelled. ${data.cancellationRecipients || 0} customers notified.`);
-    await loadShifts(session.accessToken);
   }
 
   async function checkOutShift(shiftId: string) {
@@ -4541,7 +4547,6 @@ function DancerShiftPanel() {
           {isSaving ? "Posting..." : "Post another shift"}
         </button>
         {!venues.length ? <p>Tap a venue&apos;s official dressing-room NFC sticker to authorize it before posting a shift there.</p> : null}
-        {status ? <p>{status}</p> : null}
       </form>
       <div className="shift-list-head">
         <strong>Posted shifts</strong>
@@ -4549,7 +4554,7 @@ function DancerShiftPanel() {
       </div>
       <div className="shift-list">
         {editablePostedShifts.map((shift) => (
-          <div className="dashboard-shift" key={String(shift.id)}>
+          <div className={deletingShiftId === String(shift.id) ? "dashboard-shift is-deleting" : "dashboard-shift"} key={String(shift.id)}>
             {editingShiftId === String(shift.id) ? (
               <>
                 <label>
@@ -4601,11 +4606,16 @@ function DancerShiftPanel() {
                   ) : null}
                   {shift.status !== "cancelled" ? (
                     <>
-                      <button type="button" onClick={() => startEditingShift(shift)}>
+                      <button type="button" disabled={Boolean(deletingShiftId)} onClick={() => startEditingShift(shift)}>
                         Edit
                       </button>
-                      <button type="button" onClick={() => cancelShift(String(shift.id))}>
-                        Delete shift
+                      <button
+                        type="button"
+                        disabled={Boolean(deletingShiftId)}
+                        aria-busy={deletingShiftId === String(shift.id)}
+                        onClick={() => cancelShift(String(shift.id))}
+                      >
+                        {deletingShiftId === String(shift.id) ? "Deleting..." : "Delete shift"}
                       </button>
                     </>
                   ) : null}
@@ -4616,6 +4626,7 @@ function DancerShiftPanel() {
         ))}
         {!editablePostedShifts.length ? <p>No posted shifts yet. Add as many shifts as you need above.</p> : null}
       </div>
+      {status ? <p className="shift-panel-feedback" role="status" aria-live="polite">{status}</p> : null}
     </article>
   );
 }
@@ -5748,14 +5759,17 @@ function DashboardStyles() {
       .review-row.is-approved { border-color: rgba(50,255,164,.36); background: rgba(50,255,164,.08); }
       .shift-list { display: grid; gap: 10px; }
       .dashboard-shift { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .dashboard-shift.is-deleting { opacity: .66; }
       .dashboard-shift span { display: grid; gap: 4px; }
       .dashboard-shift small { color: #b9accd; }
       .dashboard-shift em { width: fit-content; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(148,229,255,.22); background: rgba(148,229,255,.08); color: #94e5ff; font-size: 11px; font-style: normal; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
       .dashboard-shift label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .dashboard-shift input, .dashboard-shift select { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
       .dashboard-shift button { color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); padding: 0 12px; }
+      .dashboard-shift button:disabled { cursor: wait; }
       .shift-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
       .shift-actions button:first-child { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.1); }
+      .shift-panel-feedback { margin: 0; color: #94e5ff; font-size: 14px; line-height: 1.45; }
       .billing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
       .billing-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
       .billing-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
