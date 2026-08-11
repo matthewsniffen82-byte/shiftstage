@@ -96,7 +96,7 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   );
   assert.match(
     scriptSource,
-    /const NO_SCHEDULE_PROFILE_INDEXES = new Set\(\[0\]\)/,
+    /const NO_SCHEDULE_PROFILE_INDEXES = new Set\(\[0, 1\]\)/,
   );
   assert.match(
     scriptSource,
@@ -104,7 +104,7 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   );
   assert.match(
     scriptSource,
-    /checked_in_at: isWorkingNow[\s\S]*?checked_out_at: null,[\s\S]*?location_status: isWorkingNow \? "club_confirmed" : "self_reported"/,
+    /checked_in_at: isWorkingNow[\s\S]*?checked_out_at: null,[\s\S]*?location_status: isWorkingNow \? "club_confirmed" : "self_reported"[\s\S]*?location_verification_expires_at: isWorkingNow \? endsAt\.toISOString\(\) : null/,
   );
   assert.match(scriptSource, /workingNowShifts: workingNowCount/);
   assert.match(
@@ -197,6 +197,10 @@ test("layout-review schedules and rollback support the deployed production schem
   assert.match(
     scriptSource,
     /Expected \$\{WORKING_NOW_PROFILE_INDEXES\.size\} Working Now shifts/,
+  );
+  assert.match(
+    scriptSource,
+    /async function countWorkingNowShifts[\s\S]*?\.gt\("location_verification_expires_at", now\)/,
   );
   assert.match(
     scriptSource,

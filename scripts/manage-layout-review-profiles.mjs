@@ -16,7 +16,7 @@ const DEFAULT_COUNT = PRODUCTION_PROFILE_COUNT;
 const MAX_COUNT = PROFILE_DEFINITIONS.length;
 const REVIEW_CITY = "Las Vegas";
 const REVIEW_PHOTO_COUNT = 5;
-const NO_SCHEDULE_PROFILE_INDEXES = new Set([0]);
+const NO_SCHEDULE_PROFILE_INDEXES = new Set([0, 1]);
 const WORKING_NOW_PROFILE_INDEXES = new Set([4, 5, 6, 7, 8, 9]);
 const PEPPERMINT_HIPPO_VENUE_SLUG = "peppermint-hippo-las-vegas";
 const PEPPERMINT_HIPPO_WORKING_NOW_COUNT = 2;
@@ -711,6 +711,7 @@ async function replaceProfileSchedule(
     dancer_id: profile.id,
     ends_at: endsAt.toISOString(),
     location_status: isWorkingNow ? "club_confirmed" : "self_reported",
+    location_verification_expires_at: isWorkingNow ? endsAt.toISOString() : null,
     starts_at: startsAt.toISOString(),
     status: "posted",
     timezone: venue.timezone || "America/Los_Angeles",
@@ -1033,6 +1034,7 @@ async function countWorkingNowShifts(profileIds) {
     .gte("ends_at", now)
     .not("checked_in_at", "is", null)
     .is("checked_out_at", null)
+    .gt("location_verification_expires_at", now)
     .in("location_status", ["location_confirmed", "club_confirmed"]);
   assertSuccess(error, "count Working Now layout-review shifts");
   return total || 0;
