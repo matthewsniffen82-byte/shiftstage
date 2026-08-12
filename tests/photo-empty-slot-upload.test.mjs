@@ -57,6 +57,80 @@ test("deleted live photo slots are persisted before a replacement upload", () =>
   );
 });
 
+test("deleting a pending review keeps every approved profile photo visible", () => {
+  const sourceBetween = (start, end) => {
+    const startIndex = liveSource.indexOf(start);
+    const endIndex = liveSource.indexOf(end, startIndex);
+    assert.ok(startIndex >= 0, `missing ${start}`);
+    assert.ok(endIndex > startIndex, `missing ${end}`);
+    return liveSource.slice(startIndex, endIndex);
+  };
+  const helpers = [
+    sourceBetween("    function canonicalDancerPhotoRows", "    function dancerPhotoDebugShape"),
+    sourceBetween("    function normalizeLocalDancerPhotos", "    function normalizeDancerPhotoKey"),
+    sourceBetween("    function normalizeDancerPhotoKey", '    if (new URLSearchParams(window.location.search).get("photo-source-test")'),
+    sourceBetween("    function rememberDeletedDancerPhoto", "    function clearDeletedDancerPhotos"),
+    sourceBetween("    function removeLocalDancerPhoto", "    function approvedVisualProfileFixCount"),
+  ].join("\n");
+  const profile = {
+    id: "profile-1",
+    mainPhotoUrl: "https://cdn.example/approved-main.jpg",
+    galleryPhotoUrls: ["https://cdn.example/approved-gallery.jpg"],
+    dancer_photos: [
+      {
+        id: "approved-main",
+        imageUrl: "https://cdn.example/approved-main.jpg",
+        storage_path: "profile/approved-main.jpg",
+        review_status: "approved",
+        is_primary: true,
+        sort_order: 0,
+        created_at: "2026-08-11T20:00:00.000Z",
+      },
+      {
+        id: "approved-gallery",
+        imageUrl: "https://cdn.example/approved-gallery.jpg",
+        storage_path: "profile/approved-gallery.jpg",
+        review_status: "approved",
+        is_primary: false,
+        sort_order: 2,
+        created_at: "2026-08-11T20:01:00.000Z",
+      },
+    ],
+    submittedPhotos: [{
+      id: "pending-review",
+      imageUrl: "blob:pending-review",
+      storagePath: "profile/pending-review.jpg",
+      review_status: "pending",
+      is_primary: false,
+      sort_order: 3,
+    }],
+    deletedPhotoIds: [],
+    deletedPhotoUrls: [],
+    deletedPhotoStoragePaths: [],
+  };
+  const context = {
+    MAX_DANCER_PROFILE_PHOTOS: 5,
+    URL,
+    normalizedReviewStatus: (value) => String(value || "pending").toLowerCase(),
+    window: { location: { origin: "https://www.mydancr.com" } },
+    profile,
+    visibleIds: [],
+  };
+
+  vm.runInNewContext(
+    `${helpers}\nremoveLocalDancerPhoto(profile, { target: "gallery:2", photoId: "pending-review", photoUrl: "blob:pending-review", storagePath: "profile/pending-review.jpg" });\nvisibleIds = editableDancerPhotoRows(profile).map((photo) => photo.id);`,
+    context,
+  );
+
+  assert.deepEqual([...context.visibleIds], ["approved-main", "approved-gallery"]);
+  assert.equal(profile.mainPhotoUrl, "https://cdn.example/approved-main.jpg");
+  assert.deepEqual([...profile.galleryPhotoUrls], ["https://cdn.example/approved-gallery.jpg"]);
+  assert.deepEqual([...profile.deletedPhotoIds], ["pending-review"]);
+  assert.deepEqual([...profile.deletedPhotoUrls], []);
+  assert.deepEqual([...profile.deletedPhotoStoragePaths], []);
+  assert.equal(profile.dancer_photos.length, 2);
+});
+
 test("the general gallery-photo action is also treated as an addition", () => {
   assert.match(
     liveSource,

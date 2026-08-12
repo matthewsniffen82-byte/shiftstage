@@ -4960,7 +4960,7 @@ function DancerPhotoPanel({
   const [file, setFile] = useState<File | null>(null);
   const [isPrimary, setIsPrimary] = useState(false);
   const [photos, setPhotos] = useState<DancerPhotoItem[]>(() =>
-    excludePendingDeletions(relabelPhotoItems(dancerPhotoItemsFromProfile(profile)), deletedPhotoIds),
+    relabelPhotoItems(dancerPhotoItemsFromProfile(profile, deletedPhotoIds)),
   );
   const [selectedPreview, setSelectedPreview] = useState("");
   const [status, setStatus] = useState("");
@@ -4973,7 +4973,7 @@ function DancerPhotoPanel({
     deletedPhotoStoragePathsRef.current = [...deletedPhotoStoragePaths];
     setPhotos((current) =>
       excludePendingDeletions(
-        relabelPhotoItems(preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(profile), current)),
+        relabelPhotoItems(preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(profile, deletedPhotoIdsRef.current), current)),
         deletedPhotoIdsRef.current,
       ),
     );
@@ -5009,10 +5009,7 @@ function DancerPhotoPanel({
     const response = await fetch("/api/dancer/profile", {
       method: "PATCH",
       headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        deletedPhotoIds: idsToDelete,
-        deletedPhotoStoragePaths: [...deletedPhotoStoragePathsRef.current],
-      }),
+      body: JSON.stringify({ deletedPhotoIds: idsToDelete }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Unable to save deleted photos before upload.");
@@ -5101,11 +5098,6 @@ function DancerPhotoPanel({
     const nextDeletedPhotoIds = deletedPhotoIdsRef.current.includes(photo.id)
       ? deletedPhotoIdsRef.current
       : [...deletedPhotoIdsRef.current, photo.id];
-    const photoStorageKeys = [photo.storagePath, photo.imageUrl].map((value) => String(value || "").trim()).filter(Boolean);
-    const nextDeletedPhotoStoragePaths = [
-      ...deletedPhotoStoragePathsRef.current,
-      ...photoStorageKeys.filter((path) => !deletedPhotoStoragePathsRef.current.includes(path)),
-    ];
     console.log("EDIT_PROFILE_PHOTO_DELETE", { photoId: photo.id });
     console.log("PHOTO_ACTION_DEBUG", {
       clickedPhotoId: photo.id,
@@ -5127,10 +5119,17 @@ function DancerPhotoPanel({
     });
 
     deletedPhotoIdsRef.current = nextDeletedPhotoIds;
-    deletedPhotoStoragePathsRef.current = nextDeletedPhotoStoragePaths;
+    deletedPhotoStoragePathsRef.current = [];
     onDeletedPhotoIdsChange?.(nextDeletedPhotoIds);
-    onDeletedPhotoStoragePathsChange?.(nextDeletedPhotoStoragePaths);
-    setPhotos((current) => excludePendingDeletions(relabelPhotoItems(current), nextDeletedPhotoIds));
+    onDeletedPhotoStoragePathsChange?.([]);
+    setPhotos((current) =>
+      relabelPhotoItems(
+        mergePhotoItems(
+          dancerPhotoItemsFromProfile(profile, nextDeletedPhotoIds),
+          excludePendingDeletions(current, nextDeletedPhotoIds),
+        ),
+      ),
+    );
     setStatus("Photo hidden. Select Save Profile to permanently delete it.");
   }
 
@@ -5195,7 +5194,10 @@ function DancerPhotoPanel({
   );
 }
 
-function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhotoItem[] {
+function dancerPhotoItemsFromProfile(
+  profile: LoadState["profile"],
+  excludedPhotoIds: string[] = [],
+): DancerPhotoItem[] {
   const approvedPhotos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos as Array<Record<string, unknown>> : [];
   const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews as Array<Record<string, unknown>> : [];
 
@@ -5232,7 +5234,7 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
     }];
   });
 
-  return mergePhotoItems([approvedItems, pendingItems].flat());
+  return mergePhotoItems(excludePendingDeletions([approvedItems, pendingItems].flat(), excludedPhotoIds));
 }
 
 function excludePendingDeletions(incomingPhotos: DancerPhotoItem[], pendingDeletedIds: string[]) {

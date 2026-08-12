@@ -60,9 +60,9 @@ test("Hard Reset is a read-only database reload", () => {
 });
 
 test("fresh database photos replace stale editor photos", () => {
-  assert.match(dashboardSource, /relabelPhotoItems\(dancerPhotoItemsFromProfile\(profile\)\)/);
+  assert.match(dashboardSource, /relabelPhotoItems\(dancerPhotoItemsFromProfile\(profile, deletedPhotoIds\)\)/);
   assert.doesNotMatch(dashboardSource, /mergePhotoItems\(current, dancerPhotoItemsFromProfile\(profile\)\)/);
-  assert.match(dashboardSource, /preserveConfirmedPhotoPreviews\(dancerPhotoItemsFromProfile\(profile\), current\)/);
+  assert.match(dashboardSource, /preserveConfirmedPhotoPreviews\(dancerPhotoItemsFromProfile\(profile, deletedPhotoIdsRef\.current\), current\)/);
 
   const stalePhotos = [{ id: "A" }, { id: "DELETED" }];
   const fetchedPhotos = [{ id: "A" }, { id: "B" }];
@@ -184,6 +184,17 @@ test("gallery uploads use unique database slots and deletion targets one exact i
   assert.match(deleteHandler, /\.eq\("id", photo\.id\)/);
   assert.match(deleteHandler, /exactIdOnly: true/);
   assert.doesNotMatch(deleteHandler, /matchingPhotosQuery|\.eq\("sort_order", photo\.sort_order\)/);
+
+  assert.doesNotMatch(profileRouteSource, /deleteDancerPhotosByStoragePaths|PROFILE_PHOTO_DELETE_BY_PATH/);
+  assert.doesNotMatch(dashboardSource, /photoStorageKeys|nextDeletedPhotoStoragePaths/);
+  assert.match(dashboardSource, /body: JSON\.stringify\(\{ deletedPhotoIds: idsToDelete \}\)/);
+  assert.match(dashboardSource, /dancerPhotoItemsFromProfile\(profile, nextDeletedPhotoIds\)/);
+  assert.match(mobileAppSource, /deletedPhotoStoragePaths: \[\]/);
+  assert.match(mobileAppSource, /function rememberDeletedDancerPhoto\(profile, \{ photoId = "" \} = \{\}\)/);
+  assert.doesNotMatch(
+    mobileAppSource.match(/function rememberDeletedDancerPhoto[\s\S]*?\n    }/)?.[0] || "",
+    /queued\.urls\.add|queued\.storagePaths\.add/,
+  );
 
   const used = new Set([1, 2]);
   const nextSortOrder = [1, 2, 3, 4, 5].find((sortOrder) => !used.has(sortOrder));

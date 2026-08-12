@@ -45277,11 +45277,7 @@
       const queued = dancerPhotoDeletionQueue(profile);
       return new Set([
         ...(profile?.deletedPhotoIds || []),
-        ...(profile?.deletedPhotoStoragePaths || []),
-        ...(profile?.deletedPhotoUrls || []),
-        ...(queued?.ids || []),
-        ...(queued?.storagePaths || []),
-        ...(queued?.urls || [])
+        ...(queued?.ids || [])
       ].map(normalizeDancerPhotoKey).filter(Boolean));
     }
 
@@ -45292,44 +45288,28 @@
           ...(profile?.deletedPhotoIds || []),
           ...(queued?.ids || [])
         ].map(normalizeDancerPhotoKey).filter(Boolean))],
-        deletedPhotoStoragePaths: [...new Set([
-          ...(profile?.deletedPhotoStoragePaths || []),
-          ...(profile?.deletedPhotoUrls || []),
-          ...(queued?.storagePaths || []),
-          ...(queued?.urls || [])
-        ].map(normalizeDancerPhotoKey).filter(Boolean))]
+        deletedPhotoStoragePaths: []
       };
     }
 
     function deletedPhotosStillInServerProfile(serverProfile, deletedPayload) {
       const deletedKeys = new Set([
-        ...(deletedPayload?.deletedPhotoIds || []),
-        ...(deletedPayload?.deletedPhotoStoragePaths || [])
+        ...(deletedPayload?.deletedPhotoIds || [])
       ].map(normalizeDancerPhotoKey).filter(Boolean));
       if (!deletedKeys.size) return [];
       return (serverProfile?.dancer_photos || []).filter((photo) => [
-        photo?.id,
-        photo?.storage_path,
-        photo?.storagePath,
-        photo?.imageUrl,
-        photo?.image_url,
-        photo?.url
+        photo?.id
       ].map(normalizeDancerPhotoKey).filter(Boolean).some((key) => deletedKeys.has(key)));
     }
 
-    function rememberDeletedDancerPhoto(profile, { photoId = "", photoUrl = "", storagePath = "" } = {}) {
+    function rememberDeletedDancerPhoto(profile, { photoId = "" } = {}) {
       if (!profile) return;
       const id = normalizeDancerPhotoKey(photoId);
-      const url = normalizeDancerPhotoKey(photoUrl);
-      const path = normalizeDancerPhotoKey(storagePath);
       const queued = dancerPhotoDeletionQueue(profile, true);
       if (id) queued.ids.add(id);
-      if (url) queued.urls.add(url);
-      if (path) queued.storagePaths.add(path);
-      if (url) queued.storagePaths.add(url);
       profile.deletedPhotoIds = [...new Set([...(profile.deletedPhotoIds || []), id].filter(Boolean))];
-      profile.deletedPhotoUrls = [...new Set([...(profile.deletedPhotoUrls || []), url].filter(Boolean))];
-      profile.deletedPhotoStoragePaths = [...new Set([...(profile.deletedPhotoStoragePaths || []), path, url].filter(Boolean))];
+      profile.deletedPhotoUrls = [];
+      profile.deletedPhotoStoragePaths = [];
     }
 
     function clearDeletedDancerPhotos(profile) {
