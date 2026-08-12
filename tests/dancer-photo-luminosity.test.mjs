@@ -109,3 +109,17 @@ test("Android venue logos paint above the card shade without changing other plat
     /body\.dancr-button-system :is\([\s\S]*?\.home-venue-discovery-logo[\s\S]*?\) \{[\s\S]*?background:/,
   );
 });
+
+test("iPhone compact grid photos avoid filtered momentum-scroll layers", () => {
+  const iosPaintLayer = aestheticSource.match(
+    /iOS Safari can evict filtered photo layers[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.ok(iosPaintLayer, "the final iOS compact-grid paint correction must exist");
+  assert.match(iosPaintLayer, /@supports \(-webkit-touch-callout: none\)/);
+  assert.match(
+    iosPaintLayer,
+    /#results\.home-dancer-grid\.home-dancer-three-column[\s\S]*?img\.home-dancer-grid-photo[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;[\s\S]*?will-change: auto !important;/,
+  );
+  assert.match(iosPaintLayer, /isolation: auto !important;[\s\S]*?opacity: 1 !important;/);
+});

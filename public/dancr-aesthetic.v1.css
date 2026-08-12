@@ -5515,6 +5515,40 @@ html:is(
   mix-blend-mode: normal !important;
 }
 
+/* iOS Safari can evict filtered photo layers during momentum scrolling. The
+ * compact directory uses native responsive images, so keep those tiles in the
+ * ordinary paint flow and leave color correction to the source image. This is
+ * intentionally limited to WebKit touch devices and does not alter full-size
+ * profile cards or Android's luminance recovery above. */
+@supports (-webkit-touch-callout: none) {
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid.home-dancer-three-column
+    > .home-dancer-grid-card,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid.home-dancer-three-column
+    .home-dancer-grid-link,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid.home-dancer-three-column
+    img.home-dancer-grid-photo {
+    animation: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    transform: none !important;
+    -webkit-transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+    -webkit-backface-visibility: visible !important;
+    backface-visibility: visible !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid.home-dancer-three-column
+    > .home-dancer-grid-card {
+    isolation: auto !important;
+    opacity: 1 !important;
+  }
+}
+
 /* The venue-card shade is still required for copy legibility. On Android,
  * lift only verified logo artwork above that shade and apply a small source
  * luminance correction; text and action layers already sit above z-index 2. */

@@ -30643,7 +30643,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=105" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=106" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -34427,8 +34427,13 @@
           }
           #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
             opacity: 1 !important;
-            isolation: isolate;
           }
+        }
+        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo {
+          display: block !important;
+          object-fit: cover;
+          object-position: center top;
+          background: #0b0b10 !important;
         }
         #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo::after {
           background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);
@@ -40414,6 +40419,22 @@
         className: " has-custom-photo",
         style: ` style="--custom-photo: ${responsiveImageSet || `url('${safeUrl}')`}"`
       } : { className: "", style: "" };
+    }
+
+    function nativeResponsivePhotoAttrs(url, srcSet = "") {
+      const sources = String(srcSet || "")
+        .split(",")
+        .map((entry) => entry.trim().match(/^(\S+)\s+(\d+)w$/))
+        .filter(Boolean)
+        .map((match) => ({ url: safeExternalHref(match[1]), width: Number(match[2]) }))
+        .filter((source) => source.url && Number.isFinite(source.width))
+        .sort((left, right) => left.width - right.width);
+      const fallbackUrl = sources[0]?.url || safeExternalHref(url);
+      if (!fallbackUrl) return "";
+      const safeSrcSet = sources
+        .map((source) => `${escapeOptionValue(source.url)} ${source.width}w`)
+        .join(", ");
+      return `src="${escapeOptionValue(fallbackUrl)}"${safeSrcSet ? ` srcset="${safeSrcSet}"` : ""}`;
     }
 
     function avatarPhotoPosition(focalX, focalY) {
@@ -53570,9 +53591,13 @@
       const profileReference = escapeOptionValue(profileReferenceValue(profile));
       const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
       const photoUrl = publicProfilePhotoUrl(profile);
-      const photoAttrs = customPhotoAttrs(photoUrl, publicProfilePhotoSrcSet(profile));
+      const photoSrcSet = publicProfilePhotoSrcSet(profile);
+      const photoAttrs = customPhotoAttrs(photoUrl, photoSrcSet);
+      const nativePhotoAttrs = nativeResponsivePhotoAttrs(photoUrl, photoSrcSet);
       const photoMarkup = photoUrl
-        ? `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
+        ? compactDirectory && nativePhotoAttrs
+          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="lazy" decoding="async" draggable="false" alt="" aria-hidden="true">`
+          : `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();
       const hasPublishedVenue = Boolean(

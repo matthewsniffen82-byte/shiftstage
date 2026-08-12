@@ -272,7 +272,7 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
 });
 
-test("Dancers reuses unchanged grid cards and keeps compact photos stable during touch scrolling", () => {
+test("Dancers reuses unchanged grid cards and keeps responsive compact photos stable during touch scrolling", () => {
   const contentKey = homeSource.match(
     /function homeDancerGridContentKey\(city, markup\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/,
   )?.[0] || "";
@@ -302,12 +302,21 @@ test("Dancers reuses unchanged grid cards and keeps compact photos stable during
   );
   assert.match(
     homeSource,
-    /A translate3d on the complete photo grid turns the full directory[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?transform: none;[\s\S]*?transition: opacity 170ms ease;[\s\S]*?will-change: auto;/,
+    /function nativeResponsivePhotoAttrs\(url, srcSet = ""\) \{[\s\S]*?safeExternalHref\(match\[1\]\)[\s\S]*?sort\(\(left, right\) => left\.width - right\.width\)[\s\S]*?srcset="\$\{safeSrcSet\}"/,
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?opacity: 1 !important;[\s\S]*?isolation: isolate;/,
+    /compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="lazy" decoding="async" draggable="false"/,
   );
+  assert.match(
+    homeSource,
+    /#results\.home-dancer-grid\.home-dancer-three-column img\.home-dancer-grid-photo \{[\s\S]*?display: block !important;[\s\S]*?object-fit: cover;[\s\S]*?object-position: center top;/,
+  );
+  assert.match(
+    homeSource,
+    /A translate3d on the complete photo grid turns the full directory[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?transform: none;[\s\S]*?transition: opacity 170ms ease;[\s\S]*?will-change: auto;/,
+  );
+  assert.doesNotMatch(homeSource, /home-dancer-three-column > \.home-dancer-grid-card \{[^}]*isolation: isolate;/);
   assert.match(
     homeSource,
     /body\.home-destination-swipe-active #results \{[\s\S]*?transform: translate3d\(var\(--home-destination-swipe-offset, 0px\), 0, 0\);[\s\S]*?will-change: transform;/,
