@@ -88,7 +88,8 @@ export async function GET(request: Request) {
     const withActiveDeal = (dancer: (typeof discovery.dancers)[number]) => {
       const dancerDeals = dancer.venueId ? activeDeals.get(dancer.venueId) || [] : [];
       const activeDeal = dancerDeals[0] || null;
-      const dealAttributionTokens = dancer.venueId && dancer.shiftId
+      const commissionEligible = dancer.shiftSource !== "demo_locked";
+      const dealAttributionTokens = commissionEligible && dancer.venueId && dancer.shiftId
         ? Object.fromEntries(dancerDeals.map((deal) => [
             deal.id,
             createDancerDealAttributionToken({
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
         activeDeals: dancerDeals,
         activeDeal,
         dealAttributionTokens,
-        dealAttributionToken: activeDeal && dancer.venueId && dancer.shiftId
+        dealAttributionToken: commissionEligible && activeDeal && dancer.venueId && dancer.shiftId
           ? dealAttributionTokens[activeDeal.id]
           : null,
       };

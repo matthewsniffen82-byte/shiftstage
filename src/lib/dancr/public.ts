@@ -489,6 +489,7 @@ function buildDancerCard(
       venueQrCodeUrl: venue?.is_active === true ? venueQrCodeUrl(client, venue?.qr_code_storage_path) : null,
       venueQrCodeLabel: venue?.is_active === true ? venue?.qr_code_label || null : null,
       shiftId: shift?.id || null,
+      shiftSource: shift?.shift_source || null,
       shiftLabel: shift ? formatShiftLabel(shift) : null,
       shiftStartsAt: shift?.starts_at || null,
       shiftEndsAt: shift?.ends_at || null,

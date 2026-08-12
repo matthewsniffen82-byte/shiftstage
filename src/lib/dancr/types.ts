@@ -160,7 +160,7 @@ export type VenueDashboardDancer = {
   startsAt: string;
   endsAt: string;
   shiftDate?: string | null;
-  shiftSource?: "scheduled" | "nfc_presence";
+  shiftSource?: "scheduled" | "nfc_presence" | "demo_locked";
   checkedInAt: string | null;
   lastLocationVerifiedAt: string | null;
   locationStatus: string;
@@ -197,6 +197,7 @@ export type DancerCard = {
   venueQrCodeUrl?: string | null;
   venueQrCodeLabel?: string | null;
   shiftId: string | null;
+  shiftSource?: "scheduled" | "nfc_presence" | "demo_locked" | null;
   shiftLabel: string | null;
   shiftStartsAt: string | null;
   shiftEndsAt: string | null;

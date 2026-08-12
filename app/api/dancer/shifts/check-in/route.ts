@@ -28,6 +28,7 @@ export async function PATCH(request: Request) {
     const admin = createAdminSupabaseClient() as any;
     const dancer = await getOwnDancerProfile(admin, user.id);
     const shift = await getOwnShift(admin, dancer.id, shiftId);
+    if (shift.shift_source === "demo_locked") return demoAssignmentResponse();
     if (!shift.checked_in_at) {
       return NextResponse.json({ ok: false, error: "This shift has not been checked in." }, { status: 400 });
     }
@@ -53,6 +54,7 @@ export async function DELETE(request: Request) {
     const admin = createAdminSupabaseClient() as any;
     const dancer = await getOwnDancerProfile(admin, user.id);
     const shift = await getOwnShift(admin, dancer.id, shiftId);
+    if (shift.shift_source === "demo_locked") return demoAssignmentResponse();
     if (!shift.checked_in_at) {
       return NextResponse.json({ ok: false, error: "This shift has not been checked in." }, { status: 400 });
     }
@@ -85,7 +87,7 @@ async function getOwnShift(client: any, dancerId: string, shiftId: string) {
   const { data, error } = await client
     .from("shifts")
     .select(
-      "id, dancer_id, starts_at, ends_at, status, checked_in_at, checked_out_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at",
+      "id, dancer_id, shift_source, starts_at, ends_at, status, checked_in_at, checked_out_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at",
     )
     .eq("id", shiftId)
     .eq("dancer_id", dancerId)
@@ -119,4 +121,11 @@ function nfcRequiredResponse() {
     code: "nfc_tap_required",
     error: "Tap the venue's official MyDancr dressing-room NFC tag to go Working Now. Phone-location check-in is no longer used.",
   }, { status: 410 });
+}
+
+function demoAssignmentResponse() {
+  return NextResponse.json(
+    { ok: false, code: "demo_assignment_locked", error: "Demo Mode Working Now assignments are managed centrally." },
+    { status: 409 },
+  );
 }

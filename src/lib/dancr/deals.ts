@@ -153,13 +153,14 @@ export async function getVerifiedActiveCheckInAtVenue(
   const nowIso = now.toISOString();
   const { data, error } = await (client as any)
     .from("shifts")
-    .select("id, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at")
+    .select("id, shift_source, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at")
     .eq("dancer_id", dancerId)
     .eq("venue_id", venueId)
     .eq("status", "posted")
     .not("checked_in_at", "is", null)
     .is("checked_out_at", null)
     .eq("location_status", "club_confirmed")
+    .neq("shift_source", "demo_locked")
     .gt("location_verification_expires_at", nowIso)
     .limit(5);
 

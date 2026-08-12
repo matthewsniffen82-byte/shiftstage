@@ -106,6 +106,12 @@ export async function PATCH(request: Request) {
 
     const dancer = await getOwnDancerProfile(client as any, user.id);
     const existingShift = await getOwnShift(client as any, dancer.id, body.shiftId);
+    if (existingShift.shift_source === "demo_locked") {
+      return NextResponse.json(
+        { ok: false, error: "Demo Mode Working Now assignments are managed centrally." },
+        { status: 409 },
+      );
+    }
     const update: Record<string, unknown> = {};
     let nextTimezone = existingShift.timezone || "America/Los_Angeles";
     if (typeof body.venueId === "string") {
