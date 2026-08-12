@@ -130,6 +130,11 @@ test("mobile onboarding remains one-column with reachable 44px-plus controls", (
   assert.match(dashboard, /\.dancer-onboarding-primary \{ position: sticky/);
   assert.match(dashboard, /\.dancer-onboarding-primary \{ width: 100%; min-height: 52px/);
   assert.match(dashboard, /\.dancer-avatar-panel button \{ min-height: 48px/);
-  assert.match(dashboard, /\.dancer-profile-preview-shell \{ padding-inline: 12px/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \{[^}]*overflow-x: hidden; overflow-y: auto;[^}]*overscroll-behavior-x: none/);
+  assert.match(dashboard, /\.dancer-profile-preview-shell \{[^}]*width: 100%; max-width: 100%; min-width: 0;[^}]*overflow-x: hidden/);
+  assert.match(dashboard, /\.dancer-profile-preview-shell \{ padding-inline: max\(12px,env\(safe-area-inset-left\)\) max\(12px,env\(safe-area-inset-right\)\)/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-titlebar \{ min-height: 60px/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-titlebar-context \{ max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading \{ min-width: 0; display: grid; grid-template-columns: minmax\(0,1fr\) auto/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading h2 \{[^}]*overflow-wrap: anywhere/);
 });
