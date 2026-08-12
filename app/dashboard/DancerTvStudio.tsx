@@ -182,32 +182,42 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const content = (
     <>
       <DancerTvStudioStyles />
-      <div className="tv-studio-head">
-        <div>
-          <span>Creator tools</span>
-          <h2>
-            MyDancr TV
-            {workspace?.profile ? (
-              <>
-                {" — "}
-                <Link href={`/dancers/${encodeURIComponent(workspace.profile.slug)}`}>
-                  {workspace.profile.stageName}
-                </Link>
-              </>
-            ) : " Studio"}
-          </h2>
-          {workspace?.profile ? (
-            <p className="tv-profile-connection">
-              Videos published here appear on your public {workspace.profile.stageName} profile.
-            </p>
-          ) : null}
-          <p>Post vertical videos to your real profile. MyDancr TV automatically uses your verified current shift, or your next posted shift, whenever it shows venue context.</p>
+      {embedded ? (
+        <div className="tv-studio-embedded-head">
+          <div>
+            <h2>Profile videos</h2>
+            <p>Upload vertical or square videos for moderation. Approved videos appear on your profile and MyDancr TV after your profile is approved.</p>
+          </div>
+          {workspace ? <strong aria-label={`${currentVideoCount} of ${maxVideos} profile video slots used`}>{currentVideoCount}/{maxVideos}</strong> : null}
         </div>
-        <Link href={homeDiscoveryHref("tv")}>Watch MyDancr TV</Link>
-      </div>
+      ) : (
+        <div className="tv-studio-head">
+          <div>
+            <span>Creator tools</span>
+            <h2>
+              MyDancr TV
+              {workspace?.profile ? (
+                <>
+                  {" — "}
+                  <Link href={`/dancers/${encodeURIComponent(workspace.profile.slug)}`}>
+                    {workspace.profile.stageName}
+                  </Link>
+                </>
+              ) : " Studio"}
+            </h2>
+            {workspace?.profile ? (
+              <p className="tv-profile-connection">
+                Videos published here appear on your public {workspace.profile.stageName} profile.
+              </p>
+            ) : null}
+            <p>Post vertical videos to your real profile. MyDancr TV automatically uses your verified current shift, or your next posted shift, whenever it shows venue context.</p>
+          </div>
+          <Link href={homeDiscoveryHref("tv")}>Watch MyDancr TV</Link>
+        </div>
+      )}
 
       {isLoading ? <p className="tv-studio-status">Loading your real videos…</p> : null}
-      {!isLoading && workspace && !workspace.profileEligible ? (
+      {!embedded && !isLoading && workspace && !workspace.profileEligible ? (
         <div className="tv-studio-lock">
           <strong>Profile approval required</strong>
           <p>Your dancer profile must be approved before its moderated videos can appear publicly.</p>
@@ -241,10 +251,12 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             <small>Vertical or square MP4/WebM · 1–30 seconds · 75 MB maximum</small>
           </label>
           {previewUrl ? <video className="tv-upload-preview" controls playsInline src={previewUrl} /> : null}
-          <div className="tv-schedule-context-note">
-            <strong>Venue context is automatic</strong>
-            <span>Working Now takes priority. Otherwise, MyDancr TV shows your next posted shift. With no current or upcoming shift, no venue is shown.</span>
-          </div>
+          {!embedded ? (
+            <div className="tv-schedule-context-note">
+              <strong>Venue context is automatic</strong>
+              <span>Working Now takes priority. Otherwise, MyDancr TV shows your next posted shift. With no current or upcoming shift, no venue is shown.</span>
+            </div>
+          ) : null}
           <label className="tv-check">
             <input checked={consentConfirmed} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
             <span>I have permission from every identifiable person shown.</span>
@@ -254,7 +266,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
           </label>
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Uploading and submitting…" : "Submit for MyDancr TV review"}
+            {isSubmitting ? "Uploading and submitting…" : embedded ? "Submit video for review" : "Submit for MyDancr TV review"}
           </button>
         </form>
       ) : null}
@@ -367,6 +379,11 @@ function DancerTvStudioStyles() {
       .tv-studio-page { min-height: 100vh; padding: 28px clamp(14px, 4vw, 54px) 60px; background: radial-gradient(circle at 10% 0%, rgba(139,92,246,.22), transparent 26rem), #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
       .tv-studio-page > * { max-width: 920px; margin-left: auto; margin-right: auto; }
       .tv-studio-embedded { grid-column: 1 / -1; }
+      .tv-studio-embedded-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+      .tv-studio-embedded-head > div { display: grid; gap: 7px; }
+      .tv-studio-embedded-head h2 { margin: 0; font-size: 23px; line-height: 1.1; }
+      .tv-studio-embedded-head p { margin: 0; max-width: 64ch; color: #b9accd; line-height: 1.5; }
+      .tv-studio-embedded-head > strong { min-width: 44px; min-height: 32px; display: grid; place-items: center; border: 1px solid rgba(34,199,255,.25); border-radius: 999px; color: #7eeaff; background: rgba(34,199,255,.08); font-size: 12px; white-space: nowrap; }
       .tv-studio-head { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
       .tv-studio-head > div { display: grid; gap: 7px; }
       .tv-studio-head span { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
@@ -418,6 +435,7 @@ function DancerTvStudioStyles() {
       @media (max-width: 680px) {
         .tv-studio-page { padding: 18px 10px 50px; }
         .tv-studio-head { align-items: start; flex-direction: column; }
+        .tv-studio-embedded-head { gap: 10px; }
         .tv-upload-form { grid-template-columns: 1fr; padding: 12px; }
         .tv-upload-form > * { grid-column: auto !important; }
         .tv-managed-video { grid-template-columns: 112px minmax(0, 1fr); padding: 8px; }
