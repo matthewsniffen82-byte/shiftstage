@@ -84,6 +84,12 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /input\[type="file"\] \{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%;/);
 });
 
+test("a completed profile photo upload clears the native filename from onboarding", () => {
+  assert.match(dashboard, /const photoInputRef = useRef<HTMLInputElement>\(null\)/);
+  assert.match(dashboard, /ref=\{photoInputRef\}[\s\S]*?type="file"/);
+  assert.match(dashboard, /setStatus\(photoUploadStatusMessage\(uploadStatus, data\.message\)\);\s*selectPhoto\(null\);\s*if \(photoInputRef\.current\) photoInputRef\.current\.value = "";/);
+});
+
 test("the live preview reflects current profile drafts and real moderation state", () => {
   assert.match(dashboard, /Live dancer profile preview/);
   assert.match(dashboard, /draftIdentity\.stageName/);

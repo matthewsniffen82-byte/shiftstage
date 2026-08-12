@@ -4967,6 +4967,7 @@ function DancerPhotoPanel({
   const [isUploading, setIsUploading] = useState(false);
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     deletedPhotoIdsRef.current = [...deletedPhotoIds];
@@ -5083,6 +5084,7 @@ function DancerPhotoPanel({
       else setPhotos((current) => relabelPhotoItems(mergePhotoItems(current, [uploadedPhoto])));
       setStatus(photoUploadStatusMessage(uploadStatus, data.message));
       selectPhoto(null);
+      if (photoInputRef.current) photoInputRef.current.value = "";
     } catch (error) {
       URL.revokeObjectURL(localPreviewUrl);
       const message = error instanceof Error ? error.message : "Unable to upload photo.";
@@ -5147,6 +5149,7 @@ function DancerPhotoPanel({
           Profile photo
           <input
             accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+            ref={photoInputRef}
             type="file"
             onChange={(event) => selectPhoto(event.target.files?.[0] || null)}
           />
