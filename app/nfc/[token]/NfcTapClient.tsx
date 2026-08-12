@@ -50,7 +50,7 @@ export function NfcTapClient({ token }: { token: string }) {
           : data.deals?.[0]?.id || "";
         setSelectedDealId(preferred || "");
         setStatus(data.tag.type === "dressing_room"
-          ? "Create a dancer account or sign in to attach this club tap."
+          ? "Sign in as a dancer to start one six-hour Working Now session."
           : data.deals?.length
             ? "Choose the offer being used at this register."
             : "This club has no active Club Deals right now.");
@@ -129,8 +129,8 @@ export function NfcTapClient({ token }: { token: string }) {
 
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
-            <strong>Dancer club activation</strong>
-            <p>New here? This tap carries the club&apos;s authorization into dancer account creation. Already have a reviewed profile? Sign in and the same tap adds this club immediately.</p>
+            <strong>Dressing-room Working Now</strong>
+            <p>Sign in and confirm this physical venue tap. An eligible profile appears in Working Now for six hours, followed by a six-hour cooldown. Retaps do not extend the session, and no phone location is collected.</p>
           </div>
         ) : null}
 
@@ -174,7 +174,7 @@ export function NfcTapClient({ token }: { token: string }) {
               {isSubmitting
                 ? "Confirming…"
                 : state.tag.type === "dressing_room"
-                  ? "Activate this club tap"
+                  ? "Confirm Working Now"
                   : "Redeem this Club Deal"}
             </button>
           )

@@ -34,11 +34,7 @@ export async function PATCH(request: Request) {
     if (shift.checked_out_at || shift.working_status === "ended") {
       return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
     }
-    if (action === "auto_end" && new Date(shift.ends_at).getTime() > Date.now()) {
-      return NextResponse.json({ ok: false, error: "This shift has not ended yet." }, { status: 403 });
-    }
-
-    const ended = await endDancerShift(admin, dancer.id, shift, action === "auto_end" ? "automatic" : "manual");
+    const ended = await endDancerShift(admin, dancer.id, shift, "manual");
     if (!ended) return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
     console.info("Dancer shift ended", { shiftId, dancerId: dancer.id, reason: action });
     return NextResponse.json({ ok: true, shift: ended });
@@ -120,7 +116,7 @@ function missingShiftIdResponse() {
 function nfcRequiredResponse() {
   return NextResponse.json({
     ok: false,
-    code: "nfc_required",
-    error: "Check in by tapping the club's official MyDancr dressing-room NFC sticker.",
+    code: "nfc_tap_required",
+    error: "Tap the venue's official MyDancr dressing-room NFC tag to go Working Now. Phone-location check-in is no longer used.",
   }, { status: 410 });
 }

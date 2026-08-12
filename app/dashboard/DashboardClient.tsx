@@ -7,6 +7,7 @@ import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
+import DancerShiftManager from "./DancerShiftManager";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -3032,7 +3033,7 @@ function DancerPanel({
           id="dancer-schedule"
           title="Schedule"
         >
-          <DancerShiftPanel />
+          <DancerShiftManager />
         </DashboardSection>
       ) : null}
       {isApproved ? (
@@ -4505,7 +4506,7 @@ function DancerShiftPanel() {
               ? isCheckedInToActiveShift
                 ? activeLocationIsVerified
                   ? `${venueName(activeShift)} is live in Now until this NFC check-in expires or the shift ends.`
-                  : `${venueName(activeShift)} is not shown in Working Now. Tap the dressing-room NFC sticker again to renew for up to five hours.`
+                  : `${venueName(activeShift)} is not shown in Working Now. A new dressing-room tap can start one six-hour session only after the cooldown ends.`
                 : `${venueName(activeShift)} is posted. During the shift, tap the venue's official dressing-room NFC sticker to check in.`
               : "Post one or more shifts below. Your public cards only show Working Now when checked in, or the nearest upcoming shift when you are not checked in."}
           </small>

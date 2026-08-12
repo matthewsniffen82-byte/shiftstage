@@ -21,10 +21,11 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const { data, error } = await client
       .from("shifts")
-      .select("id, dancer_id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, status, approved_at, venue_approved_at, disabled_at, verification_status, photo_review_status, is_public)")
+      .select("id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, status, approved_at, venue_approved_at, disabled_at, verification_status, photo_review_status, is_public)")
       .eq("venue_id", venue.id)
       .eq("status", "posted")
-      .gte("starts_at", new Date().toISOString())
+      .eq("shift_source", "scheduled")
+      .gte("ends_at", new Date().toISOString())
       .order("starts_at", { ascending: true });
 
     if (error) throw error;
@@ -41,8 +42,9 @@ export async function GET(_request: Request, context: RouteContext) {
         dancerId: shift.dancer_id,
         dancerSlug: dancer.slug,
         dancerStageName: dancer.stage_name,
+        shiftDate: shift.shift_date,
         startsAt: shift.starts_at,
-        shiftLabel: formatPublicShiftStart(shift.starts_at),
+        shiftLabel: formatPublicShiftStart(shift.shift_date || shift.starts_at),
         timezone: shift.timezone,
         status: shift.status,
       }));

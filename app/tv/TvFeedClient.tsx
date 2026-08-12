@@ -714,7 +714,7 @@ export default function TvFeedClient({
                         <span className={video.shift.isActive ? "tv-card-schedule-text tonight" : "tv-card-schedule-text upcoming"}>
                           {video.shift.isActive
                             ? "Working Now"
-                            : `Upcoming · ${formatShift(video.shift.startsAt, video.shift.timezone)}`}
+                            : `Upcoming · ${formatShift(video.shift.shiftDate || video.shift.startsAt, video.shift.timezone)}`}
                         </span>
                       </div>
                     ) : (

@@ -37416,8 +37416,8 @@
               </div>
           <div class="post-shift-head">
             <span class="eyebrow">Shift posting</span>
-            <h3>Post or update a verified shift</h3>
-            <p>Choose one of your manager-approved clubs, then add the date and time. Dancr broadcasts the shift after posting.</p>
+            <h3>Shift Manager</h3>
+            <p>Tap the dressing-room NFC tag to go Working Now. Upcoming schedules contain only the venue and date.</p>
           </div>
           <div class="post-shift-value-row" aria-label="Post shift benefits">
             <div><strong>Broadcast</strong><span>followers notified</span></div>
@@ -37435,16 +37435,8 @@
               <label for="shiftDate">Date</label>
               <input id="shiftDate" type="date" required>
             </div>
-            <div class="field">
-              <label for="shiftStart">Start time</label>
-              <input id="shiftStart" type="time" value="21:30" required>
-            </div>
-            <div class="field">
-              <label for="shiftEnd">End time</label>
-              <input id="shiftEnd" type="time" value="02:00" required>
-            </div>
             <div class="rule-note" id="shiftDisplayPreview">
-              Profile cards show active checked-in shifts as Working Now. Upcoming shifts show the date only. Exact times are private and used for shift windows and NFC commission eligibility.
+              A secure dressing-room NFC tap starts one six-hour Working Now session. A six-hour cooldown follows, and retaps cannot extend the session. No phone location is collected.
             </div>
             <div class="rule-note">
               <strong>Tracked Club Deal:</strong> During a verified check-in, customers can create a unique dancer-attributed MyDancr QR. Saving or sharing keeps your credit attached until that QR expires.
@@ -43239,10 +43231,7 @@
 
     function isWorkingTonight(profile, city = selectedCity()) {
       if (profile?.workingStatus === "ended" || profile?.endedAt || profile?.checkedOutAt) return false;
-      const confirmed = isShiftLocationVerificationCurrent(profile);
-      if (!confirmed) return false;
-      if (profile.liveTonight) return true;
-      return Boolean(tonightShiftWindow(profile, new Date(), city));
+      return isShiftLocationVerificationCurrent(profile);
     }
 
     function todayValue(city = selectedCity()) {
@@ -43286,10 +43275,7 @@
             day: "numeric"
           })
         : (shift.shiftLabel || "Date pending");
-      const timeLabel = shift.shiftStart && shift.shiftEnd
-        ? formatShiftTime(shift.shiftStart, shift.shiftEnd)
-        : (displayShiftTime(shift.time) || "Time pending");
-      return `${dateLabel} · ${timeLabel}`;
+      return dateLabel;
     }
 
     function shortMeridiemTime(timeValue, omitZeroMinutes = false) {
@@ -44650,18 +44636,12 @@
       if (!preview) return;
       const city = activeDancerCity();
       const dateValue = document.getElementById("shiftDate")?.value || todayValue(city);
-      const startValue = document.getElementById("shiftStart")?.value || "21:30";
-      const endValue = document.getElementById("shiftEnd")?.value || "02:00";
-      const range = shiftIsoRange(dateValue, startValue, endValue);
       const profile = {
         scheduled: true,
-        time: formatShiftTime(startValue, endValue),
-        shiftDate: dateValue,
-        shiftStartsAt: range.startsAt,
-        shiftEndsAt: range.endsAt
+        shiftDate: dateValue
       };
       const upcomingText = displayPublicShiftTime(profile.time, profile);
-      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong>. Exact start and end times stay private and are used only for shift windows and Club Deal commission eligibility. If you check in during that window, the card changes to <strong>Working Now</strong>.`;
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible physical dressing-room NFC tap changes the card to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
@@ -44682,13 +44662,13 @@
     }
 
     function isCheckedInShift(profile) {
-      return Boolean(profile?.checkedInAt && !profile?.checkedOutAt && !profile?.endedAt);
+      const expiresAt = Date.parse(profile?.locationVerificationExpiresAt || "");
+      return Boolean(profile?.checkedInAt && !profile?.checkedOutAt && !profile?.endedAt && profile?.locationStatus === "club_confirmed" && Number.isFinite(expiresAt) && expiresAt > Date.now());
     }
 
     function isShiftLocationVerificationCurrent(profile) {
       if (!isCheckedInShift(profile)) return false;
-      if (profile.locationStatus === "club_confirmed") return true;
-      if (profile.locationStatus !== "location_confirmed") return false;
+      if (profile.locationStatus !== "club_confirmed") return false;
       const expiresAt = Date.parse(profile.locationVerificationExpiresAt || "");
       return Number.isFinite(expiresAt) && expiresAt > Date.now();
     }
@@ -44715,8 +44695,8 @@
 
     function shiftAutoEnded(profile, city = activeDancerCity()) {
       if (!isCheckedInShift(profile) || profile.endedAt) return false;
-      const window = shiftWindowForProfile(profile, city);
-      return Boolean(window && new Date() > window.end);
+      const expiresAt = Date.parse(profile.locationVerificationExpiresAt || "");
+      return Number.isFinite(expiresAt) && expiresAt <= Date.now();
     }
 
     function shiftSummaryForProfile(profile, reason = "completed", city = activeDancerCity()) {
@@ -44760,54 +44740,37 @@
       const panel = document.getElementById("shiftVerificationPanel");
       if (!panel) return;
       const profile = activeDancerProfile();
-      if (!profile || !profile.scheduled) {
+      if (!profile) {
         stopShiftLocationRefresh();
         panel.hidden = true;
         panel.innerHTML = "";
         return;
       }
-      if (shiftAutoEnded(profile)) {
-        patchAuthenticatedJson("/api/dancer/shifts/check-in", {
-          shiftId: profile.shiftId,
-          action: "auto_end"
-        }).then((data) => {
-          if (data?.shift) applyShiftState(profile, data.shift);
-        }).catch(() => {});
-      }
-
       const checkedIn = isCheckedInShift(profile);
-      const locationVerified = isShiftLocationVerificationCurrent(profile);
       const ended = profile.workingStatus === "ended" || profile.endedAt;
       const statusLabel = ended
-        ? "Shift Ended"
+        ? "Working Now ended"
         : checkedIn
-          ? locationVerified ? "NFC check-in active" : "NFC check-in expired"
-          : "Ready for dressing-room tap";
-      const canAttemptCheckIn = !checkedIn && !ended;
-      const canCheckInNow = canAttemptCheckIn && checkInWindowOpen(profile);
-      const checkInRejected = canAttemptCheckIn && shiftCheckInTone === "error";
+          ? "Working Now"
+          : "Not working now";
       const summary = profile.shiftSummary || (ended ? shiftSummaryForProfile(profile, profile.endedReason || "completed") : null);
       const statusCopy = ended
-        ? "This shift has ended. Club Deal commission tracking is stopped."
+        ? "This Working Now session has ended."
         : checkedIn
-          ? locationVerified
-            ? "Your dressing-room NFC check-in is active until it expires or the shift ends."
-            : "Your profile is hidden from Working Now. Tap the dressing-room NFC sticker again to renew for up to five hours."
-          : canCheckInNow
-            ? "Tap the venue's official dressing-room NFC sticker during your posted hours to appear in Working Now."
-            : "Your shift is posted. During the posted hours, tap the venue's dressing-room NFC sticker to check in.";
+          ? `Dressing-room NFC verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
+          : "Press the button, then hold your phone near the venue's dressing-room NFC tag. The secure tap starts one six-hour Working Now session followed by a six-hour cooldown.";
 
       panel.hidden = false;
       panel.innerHTML = `
         <div class="shift-verification-head">
           <span class="shift-status-pill">${displayText(statusLabel)}</span>
-          <span class="shift-verification-copy">${displayText(displayShiftTime(profile.time) || "Shift time pending")}</span>
+          <span class="shift-verification-copy">${checkedIn ? "6-hour NFC session" : "NFC required"}</span>
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
         <div class="shift-action-grid">
-          ${canAttemptCheckIn ? '<span class="mini-action primary">Tap dressing-room NFC</span>' : ""}
-          ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Check-in confirmed" aria-live="polite">✓ Checked in</button>' : ""}
-          ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>' : ""}
+          ${!checkedIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="nfc-ready" aria-describedby="shiftCheckInStatus">Tap dressing-room NFC to go Working Now</button>' : ""}
+          ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Working Now confirmed" aria-live="polite">✓ Working Now</button>' : ""}
+          ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Working Now</button>' : ""}
         </div>
         <div class="shift-verification-copy shift-checkin-feedback${shiftCheckInTone ? ` is-${shiftCheckInTone}` : ""}" id="shiftCheckInStatus" role="${shiftCheckInTone === "error" ? "alert" : "status"}" aria-live="${shiftCheckInTone === "error" ? "assertive" : "polite"}">${displayText(shiftCheckInMessage)}</div>
         ${summary ? `
@@ -44875,13 +44838,19 @@
       if (trigger) {
         trigger.disabled = true;
         trigger.setAttribute("aria-busy", "true");
-        if (triggerLabel) triggerLabel.textContent = action === "end" ? "Ending shift..." : action === "refresh" ? "Verifying location..." : "Checking location...";
+        if (triggerLabel) triggerLabel.textContent = action === "end" ? "Ending shift..." : "Ready for NFC tap...";
       }
       try {
-        if (!profile.shiftId || !isDancerSession()) {
-          throw new Error("Sign in to your dancer account before updating a live shift.");
+        if (!isDancerSession()) {
+          throw new Error("Sign in to your dancer account before using Working Now.");
+        }
+        if (action === "nfc-ready") {
+          setCheckInStatus("Ready to tap. Hold this unlocked phone near the official dressing-room NFC tag. The physical tap starts one six-hour Working Now session followed by a six-hour cooldown.", "success");
+          if (!options.silent) showToast("Ready for dressing-room NFC tap");
+          return;
         }
         if (action === "end") {
+          if (!profile.shiftId) throw new Error("No active Working Now session was found.");
           setCheckInStatus("Ending shift...", "loading");
           const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
           if (data?.shift) applyShiftState(profile, data.shift);
@@ -44889,8 +44858,8 @@
           setCheckInStatus("Shift ended. Club Deal commission tracking is stopped.", "success");
           actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
-        } else if (action === "check-in" || action === "refresh") {
-          throw new Error("Check in by tapping the club's official MyDancr dressing-room NFC sticker.");
+        } else {
+          throw new Error("Use the venue's physical dressing-room NFC tag to start Working Now.");
         }
       } catch (error) {
         const message = error.message || "Could not update shift";
@@ -44945,8 +44914,8 @@
           <div class="shift-manager-meta">${displayText(label)}${shift.repeat && shift.repeat !== "No repeat" ? ` · ${displayText(shift.repeat)}` : ""}</div>
           ${shift.notes ? `<div class="shift-manager-meta">${displayText(shift.notes)}</div>` : ""}
           <div class="shift-manager-actions">
-            <button class="mini-action" type="button" data-shift-action="edit" data-shift-id="${displayText(shift.shiftId)}">Edit shift</button>
-            <button class="mini-action danger" type="button" data-shift-action="remove" data-shift-id="${displayText(shift.shiftId)}">Delete shift</button>
+            <button class="mini-action" type="button" data-shift-action="edit" data-shift-id="${displayText(shift.shiftId)}">Edit date</button>
+            <button class="mini-action danger" type="button" data-shift-action="remove" data-shift-id="${displayText(shift.shiftId)}">Delete date</button>
           </div>
         </div>
       `;
@@ -46489,13 +46458,11 @@
         const approvedVenue = approvedDancerShiftVenues().find((venue) => venue.name === selectedShift.venue);
         if (clubField) clubField.value = approvedVenue?.id || "";
         setFieldValueIfIdle("shiftDate", selectedShift.shiftDate || todayValue(activeDancerCity()));
-        setFieldValueIfIdle("shiftStart", selectedShift.shiftStart || "21:30");
-        setFieldValueIfIdle("shiftEnd", selectedShift.shiftEnd || "02:00");
         const repeatField = document.getElementById("shiftRepeat");
         if (repeatField) repeatField.value = selectedShift.repeat || "No repeat";
         setFieldValueIfIdle("shiftNotes", selectedShift.notes || "");
         document.getElementById("shiftPostForm")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        showToast("Shift loaded for editing");
+        showToast("Upcoming date loaded for editing");
         return;
       }
       if (action === "remove") {
@@ -46568,20 +46535,18 @@
       const venueName = approvedVenue.name;
       const venue = market.venues.find((item) => item.id === venueId || item.name === venueName) || approvedVenue;
       const dateValue = document.getElementById("shiftDate").value;
-      const startValue = document.getElementById("shiftStart").value;
-      const endValue = document.getElementById("shiftEnd").value;
       const notes = displayText(document.getElementById("shiftNotes").value.trim());
       const repeat = document.getElementById("shiftRepeat").value;
       const name = cleanDisplayValue(activeDancerName());
-      const time = formatShiftTime(startValue, endValue);
+      const time = "";
       const existing = market.dancers.find((profile) => profile.name === name);
       const wasScheduled = Boolean(existing?.scheduled);
-      const range = shiftIsoRange(dateValue, startValue, endValue);
+      const range = shiftIsoRange(dateValue, "00:01", "23:59");
       const localShiftId = editingShiftId || `local-shift-${Date.now()}`;
       const existingShift = editingShiftId && existing
         ? profilePostedShifts(existing).find((shift) => String(shift.shiftId) === String(editingShiftId))
         : null;
-      shiftCheckInMessage = "Shift posted. During the shift, tap the venue's official dressing-room NFC sticker to check in.";
+      shiftCheckInMessage = "Upcoming date posted. Tap the dressing-room NFC tag when you arrive to go Working Now.";
       shiftCheckInTone = "";
       shiftCheckInCode = "";
       const shiftData = {
@@ -46594,8 +46559,8 @@
         trend: existing?.trend || 9,
         distance: venue?.distance || "2.4 mi",
         shiftDate: dateValue,
-        shiftStart: startValue,
-        shiftEnd: endValue,
+        shiftStart: "",
+        shiftEnd: "",
         shiftStartsAt: range.startsAt,
         shiftEndsAt: range.endsAt,
         shiftTimeZone: timeZoneByCity[city] || "America/Los_Angeles",
@@ -46649,9 +46614,7 @@
       if (approvedVenue.id) {
         const payload = {
           venueId: approvedVenue.id,
-          startsAt: range.startsAt,
-          endsAt: range.endsAt,
-          timezone: timeZoneByCity[city] || "America/Los_Angeles"
+          shiftDate: dateValue
         };
         const request = editingShiftId
           ? patchAuthenticatedJson("/api/dancer/shifts", { ...payload, shiftId: editingShiftId, status: "posted" })
@@ -51088,43 +51051,30 @@
       const action = document.getElementById("dancerDashboardShiftAction");
       const actionLabel = action?.querySelector("span");
       const checkedIn = Boolean(profile && isCheckedInShift(profile) && profile.workingStatus !== "ended" && !profile.endedAt);
-      const canCheckIn = Boolean(profile?.scheduled && !checkedIn && profile.workingStatus !== "ended" && !profile.endedAt && checkInWindowOpen(profile));
-      const checkInRejected = canCheckIn && shiftCheckInTone === "error";
       const nextShift = dancerDashboardPostedShifts(profile, city)[0] || null;
-      if (action) action.classList.toggle("is-retry", checkInRejected);
+      if (action) action.classList.remove("is-retry");
 
       if (checkedIn) {
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working now";
         if (title) title.textContent = profile.venue || "Current shift";
-        if (detail) detail.textContent = `${displayShiftTime(profile.time) || "Posted shift"} · Check-in verified and QR tracking active.`;
+        if (detail) detail.textContent = `Dressing-room NFC verified until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend it.`;
         if (action) action.dataset.dashboardShiftAction = "post-schedule";
         if (actionLabel) actionLabel.textContent = "Manage shift";
-      } else if (canCheckIn) {
-        if (kicker) kicker.textContent = "Shift starting";
-        if (title) title.textContent = profile.venue || "Posted shift";
-        if (detail) detail.textContent = checkInRejected
-          ? shiftCheckInMessage
-          : `${postedShiftDateTimeLabel(profile, city)} · Tap the venue's dressing-room NFC sticker to appear in Working Now.`;
-        if (action) {
-          action.dataset.dashboardShiftAction = "check-in";
-          action.disabled = true;
-        }
-        if (actionLabel) actionLabel.textContent = "Tap dressing-room NFC";
       } else if (nextShift) {
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Next shift";
         if (title) title.textContent = nextShift.venue || "Posted shift";
-        if (detail) detail.textContent = postedShiftDateTimeLabel(nextShift, city);
-        if (action) action.dataset.dashboardShiftAction = "post-schedule";
-        if (actionLabel) actionLabel.textContent = "Edit schedule";
+        if (detail) detail.textContent = `${postedShiftDateTimeLabel(nextShift, city)} · Tap the dressing-room NFC tag when you arrive.`;
+        if (action) action.dataset.dashboardShiftAction = "nfc-ready";
+        if (actionLabel) actionLabel.textContent = "Tap NFC when you arrive";
       } else {
         if (action) action.disabled = false;
-        if (kicker) kicker.textContent = "Schedule";
-        if (title) title.textContent = "No shift posted";
-        if (detail) detail.textContent = "Post your schedule so customers can find you at the right venue.";
-        if (action) action.dataset.dashboardShiftAction = "post-schedule";
-        if (actionLabel) actionLabel.textContent = "Post schedule";
+        if (kicker) kicker.textContent = "Working Now";
+        if (title) title.textContent = "Not working now";
+        if (detail) detail.textContent = "Tap the official dressing-room NFC tag at your venue to start one six-hour session.";
+        if (action) action.dataset.dashboardShiftAction = "nfc-ready";
+        if (actionLabel) actionLabel.textContent = "Tap dressing-room NFC";
       }
     }
 
@@ -57451,8 +57401,9 @@
       }
 
       if (action === "dashboard-primary") {
-        if (trigger?.dataset.dashboardShiftAction === "check-in") {
-          await handleShiftVerificationAction("check-in", trigger);
+        if (trigger?.dataset.dashboardShiftAction === "nfc-ready") {
+          openApprovedScheduleEditor();
+          await handleShiftVerificationAction("nfc-ready", trigger);
           renderDancerSetup();
           return;
         }
@@ -58058,7 +58009,7 @@
     });
 
     dancerDashboard.addEventListener("input", (event) => {
-      if (event.target.closest("#shiftDate, #shiftStart, #shiftEnd")) {
+      if (event.target.closest("#shiftDate")) {
         renderShiftDisplayPreview();
         return;
       }
@@ -58112,7 +58063,7 @@
     });
 
     dancerDashboard.addEventListener("change", (event) => {
-      if (event.target.closest("#shiftDate, #shiftStart, #shiftEnd")) {
+      if (event.target.closest("#shiftDate")) {
         renderShiftDisplayPreview();
         return;
       }

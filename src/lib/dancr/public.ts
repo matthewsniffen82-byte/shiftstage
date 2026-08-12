@@ -1,10 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerCard, DancerProfile, ShiftSummary, VenueSummary } from "./types";
-import { getTonightWindow } from "./schedule";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
 import { verifiedVenueLogoUrl } from "./venue-branding";
-import { isCurrentLocationVerification } from "./geofence";
+import { isActiveNfcPresence } from "./shift-presence";
 import { ensureAutomaticPublicProfileConsistency } from "./profile-recovery";
 
 type DancrClient = SupabaseClient;
@@ -41,15 +40,10 @@ export async function getLiveDancerDiscovery(
   const tonightDancers = rows
     .map((row) => buildDancerCard(client, row, { checkedInOnly: true }).card)
     .filter((card) => {
-      const startsAt = new Date(card.shiftStartsAt || "").getTime();
-      const endsAt = new Date(card.shiftEndsAt || "").getTime();
       return Boolean(
         card.shiftId &&
-        card.locationStatus !== "self_reported" &&
-        Number.isFinite(startsAt) &&
-        Number.isFinite(endsAt) &&
-        startsAt <= now &&
-        endsAt >= now
+        card.locationStatus === "club_confirmed" &&
+        new Date(card.locationVerificationExpiresAt || "").getTime() > now
       );
     });
   const hydratedCards = await hydrateDancerCardMetrics(client, [...dancers, ...tonightDancers]);
@@ -82,7 +76,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
       `,
     )
     .ilike("city", cityName))
@@ -112,7 +106,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           trending_scores(rank),
           dancer_photos(storage_path, is_primary, review_status, sort_order),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
         `,
       )
       .ilike("city", cityName))
@@ -137,9 +131,6 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
   await ensureAutomaticPublicProfileConsistency(client);
   const cityName = city.trim();
-  const timeZone = await getCityTimeZone(client, cityName);
-  const window = getTonightWindow(timeZone, now);
-
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
     .select(
@@ -159,7 +150,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
         social_links(id, platform, handle, url, is_active),
-        shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
       `,
     )
     .ilike("city", cityName))
@@ -167,8 +158,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
     .eq("shifts.status", "posted")
     .not("shifts.checked_in_at", "is", null)
     .is("shifts.checked_out_at", null)
-    .lt("shifts.starts_at", window.endsAt)
-    .gt("shifts.ends_at", window.activeAfter)
+    .eq("shifts.location_status", "club_confirmed")
+    .gt("shifts.location_verification_expires_at", now.toISOString())
     .order("starts_at", { referencedTable: "shifts", ascending: true });
 
   let data: any[] | null = current.data as any[] | null;
@@ -193,15 +184,15 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
           trending_scores(rank),
           dancer_photos(storage_path, is_primary, review_status, sort_order),
           social_links(id, platform, handle, url, is_active),
-          shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
         `,
       )
       .ilike("city", cityName))
       .eq("shifts.status", "posted")
       .not("shifts.checked_in_at", "is", null)
       .is("shifts.checked_out_at", null)
-      .lt("shifts.starts_at", window.endsAt)
-      .gt("shifts.ends_at", window.activeAfter)
+      .eq("shifts.location_status", "club_confirmed")
+      .gt("shifts.location_verification_expires_at", now.toISOString())
       .order("starts_at", { referencedTable: "shifts", ascending: true });
     data = legacy.data as any[] | null;
     error = legacy.error;
@@ -235,7 +226,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, sort_order, review_status),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
       `,
     )
     .eq("slug", slug))
@@ -264,7 +255,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
           trending_scores(rank),
           dancer_photos(id, storage_path, is_primary, sort_order, review_status),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
         `,
       )
       .eq("slug", slug))
@@ -363,10 +354,11 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
 export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: string): Promise<ShiftSummary[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label)")
+    .select("id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label)")
     .eq("dancer_id", dancerId)
     .eq("status", "posted")
-    .gte("starts_at", new Date().toISOString())
+    .eq("shift_source", "scheduled")
+    .gte("ends_at", new Date().toISOString())
     .order("starts_at", { ascending: true });
 
   if (error) throw error;
@@ -448,15 +440,11 @@ function buildDancerCard(
     .filter(
       (item: any) =>
         !options.checkedInOnly ||
-        (Boolean(item.checked_in_at) && !item.checked_out_at && publicLocationStatus(item) !== "self_reported"),
+        isActiveNfcPresence(item, now),
     )
     .sort((left: any, right: any) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime());
-  const liveShift = visibleShifts.find((item: any) => {
-    const startsAt = new Date(item.starts_at).getTime();
-    const endsAt = new Date(item.ends_at).getTime();
-    return startsAt <= now && endsAt >= now && publicLocationStatus(item) !== "self_reported";
-  });
-  const upcomingShift = visibleShifts.find((item: any) => new Date(item.ends_at).getTime() >= now);
+  const liveShift = visibleShifts.find((item: any) => isActiveNfcPresence(item, now));
+  const upcomingShift = visibleShifts.find((item: any) => item.shift_source === "scheduled" && new Date(item.ends_at).getTime() >= now);
   const shift = liveShift || upcomingShift || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
@@ -722,6 +710,8 @@ function toShiftSummary(row: any): ShiftSummary {
     venueSlug: venue?.slug,
     startsAt: row.starts_at,
     endsAt: row.ends_at,
+    shiftDate: row.shift_date || null,
+    shiftSource: row.shift_source || "scheduled",
     timezone: row.timezone || venue?.timezone || null,
     status: row.status,
     locationStatus: publicLocationStatus(row),
@@ -766,14 +756,13 @@ function venueQrCodeUrlFromRow(venue: any) {
 
 function isShiftPubliclyVisible(shift: any, now = Date.now()) {
   if (shift.checked_out_at) return false;
-  return new Date(shift.ends_at).getTime() >= now;
+  if (isActiveNfcPresence(shift, now)) return true;
+  return shift.shift_source === "scheduled" && new Date(shift.ends_at).getTime() >= now;
 }
 
 function publicLocationStatus(shift: any): "self_reported" | "location_confirmed" | "club_confirmed" {
   if (!shift) return "self_reported";
-  if (isCurrentLocationVerification(shift) && new Date(shift.ends_at).getTime() >= Date.now()) {
-    return shift.location_status === "club_confirmed" ? "club_confirmed" : "location_confirmed";
-  }
+  if (isActiveNfcPresence(shift)) return "club_confirmed";
   return "self_reported";
 }
 
@@ -792,12 +781,8 @@ async function getCityTimeZone(client: DancrClient, city: string) {
 }
 
 function formatShiftLabel(shift: any): string {
-  const startMs = new Date(shift.starts_at).getTime();
-  const isCheckedIn = publicLocationStatus(shift) !== "self_reported";
-
-  if (isCheckedIn) return "Working Now";
-  if (startMs > Date.now()) return `Starts ${formatPublicShiftStartDate(shift.starts_at)}`;
-  return "Scheduled";
+  if (isActiveNfcPresence(shift)) return "Working Now";
+  return `Upcoming · ${formatPublicShiftStartDate(shift.shift_date || shift.starts_at)}`;
 }
 
 function formatPublicShiftStartDate(startsAt: string): string {

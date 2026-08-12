@@ -59,7 +59,7 @@ test("club TV scope includes confirmed current or unexpired posted shifts", () =
     tvSource,
     /from\("shifts"\)[\s\S]*?eq\("venue_id", venueId\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?gte\("ends_at"/,
   );
-  assert.match(tvSource, /const active = isConfirmedActiveTvShift\(shift, now\);[\s\S]*?const scheduled = Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now;[\s\S]*?active \|\| scheduled/);
+  assert.match(tvSource, /const active = isConfirmedActiveTvShift\(shift, now\);[\s\S]*?const scheduled = shift\.shift_source === "scheduled" && Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now;[\s\S]*?active \|\| scheduled/);
   assert.match(tvSource, /const candidateDancerIds = \[\.\.\.new Set\(shiftDancerIds\)\][\s\S]*?getPublicTvShiftContexts\(admin, candidateDancerIds, now\)[\s\S]*?resolvedContexts\.get\(dancerId\)\?\.venue\?\.id === venueId/);
   assert.match(tvSource, /function applyPublicTvShiftContext[\s\S]*?context[\s\S]*?venue: null, shift: null/);
   assert.match(tvSource, /!venueId \|\| venueDancerIds\.includes\(selectedRowWithShift\.dancer\.id\)/);

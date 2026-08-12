@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [baseMigration, nfcMigration, restoreMigration, service, dancerRoute, venueRoute, checkInRoute, deals, dashboard, dancerPanel, venuePanel] = await Promise.all([
+const [baseMigration, firstTapMigration, lifecycleMigration, restoreMigration, service, dancerRoute, venueRoute, checkInRoute, deals, dashboard, dancerPanel, venuePanel] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608050001_dancer_venue_affiliations.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608110002_dressing_room_nfc_checkins.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608110005_nfc_shift_lifecycle.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608090001_restore_public_dancer_media.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-affiliations.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/venue-verification/route.ts", import.meta.url), "utf8"),
@@ -17,13 +18,13 @@ const [baseMigration, nfcMigration, restoreMigration, service, dancerRoute, venu
 ]);
 
 test("the dressing-room transaction creates or restores the active venue affiliation", () => {
-  assert.match(nfcMigration, /insert into public\.venue_dancer_affiliations/);
-  assert.match(nfcMigration, /on conflict \(venue_id, dancer_id\) do update/);
-  assert.match(nfcMigration, /status = 'active'/);
-  assert.match(nfcMigration, /revoked_at = null/);
-  assert.match(nfcMigration, /'method', 'dressing_room_nfc'/);
-  assert.match(nfcMigration, /owner\.role = 'venue'/);
-  assert.match(nfcMigration, /owner\.account_state = 'active'/);
+  assert.match(firstTapMigration, /insert into public\.venue_dancer_affiliations/);
+  assert.match(firstTapMigration, /on conflict \(venue_id, dancer_id\) do update/);
+  assert.match(firstTapMigration, /status = 'active'/);
+  assert.match(firstTapMigration, /revoked_at = null/);
+  assert.match(firstTapMigration, /'method', 'dressing_room_nfc'/);
+  assert.match(firstTapMigration, /owner\.role = 'venue'/);
+  assert.match(firstTapMigration, /owner\.account_state = 'active'/);
 });
 
 test("manager QR approval endpoints are retired but both sides retain roster removal", () => {
@@ -37,24 +38,27 @@ test("manager QR approval endpoints are retired but both sides retain roster rem
   assert.match(venueRoute, /revokeDancerVenueAffiliation/);
 });
 
-test("dancer and venue dashboards show NFC authorization rather than manager approval", () => {
+test("dancer and venue dashboards show the official NFC workflow", () => {
   assert.match(dashboard, /<DancerNfcPanel initialAffiliations=\{affiliations\}/);
+  assert.match(dashboard, /<DancerShiftManager \/>/);
   assert.match(dashboard, /<VenueNfcTagPanel/);
-  assert.doesNotMatch(dashboard, /<DancerVenueVerificationPanel/);
-  assert.doesNotMatch(dashboard, /<VenueDancerVerificationPanel/);
-  assert.match(dancerPanel, /No manager QR or separate venue approval is required/);
-  assert.match(dancerPanel, /up to five hours/);
+  assert.doesNotMatch(dashboard, /<DancerVenueVerificationPanel|<VenueDancerVerificationPanel/);
+  assert.match(dancerPanel, /approved dressing-room tap added this venue/);
+  assert.match(dancerPanel, /six-hour Working Now session/);
+  assert.match(dancerPanel, /six-hour cooldown/);
   assert.match(venuePanel, /no separate manager approval is needed/);
   assert.match(venuePanel, /NFC-authorized dancer roster/);
   assert.match(venuePanel, /MyDancr programs and supplies every sticker/);
 });
 
-test("active affiliation remains required for posted shifts and attributed deals", () => {
+test("active affiliation remains required for NFC activation and attributed deals", () => {
   assert.match(baseMigration, /enforce_verified_venue_affiliation_for_checkin/);
   assert.match(baseMigration, /affiliation\.status = 'active'/);
-  assert.match(nfcMigration, /venue_affiliation_id = v_affiliation\.id/);
+  assert.match(lifecycleMigration, /create or replace function public\.activate_dancer_shift_from_nfc/);
+  assert.match(lifecycleMigration, /affiliation\.status = 'active'/);
+  assert.match(lifecycleMigration, /An active venue affiliation is required/);
   assert.match(deals, /dancerHasActiveVenueAffiliation/);
-  assert.match(checkInRoute, /code: "nfc_required"/);
+  assert.match(checkInRoute, /code: "nfc_tap_required"/);
 });
 
 test("revocation remains audited and ends matching live shifts", () => {

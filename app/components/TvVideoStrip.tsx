@@ -388,7 +388,7 @@ function tvProfileShiftLabel(video: MyDancrTvVideo) {
   if (video.shift) {
     return {
       className: "is-upcoming",
-      label: formatTvProfileShift(video.shift.startsAt, video.shift.timezone),
+      label: formatTvProfileShift(video.shift.shiftDate || video.shift.startsAt, video.shift.timezone),
     };
   }
   return { className: "is-no-shift", label: "No shift posted" };

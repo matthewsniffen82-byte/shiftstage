@@ -15,7 +15,7 @@ import {
   getVenueDealsForAccount,
   getVenueDealRevenueMetrics,
 } from "./deals";
-import { isCurrentLocationVerification } from "./geofence";
+import { isActiveNfcPresence } from "./shift-presence";
 import { canVenue, getVenueAccess, requireVenueAccess } from "./venue-access";
 import { getTonightWindow } from "./schedule";
 import type {
@@ -557,18 +557,17 @@ async function countVenueGoingSignals(client: DancrClient, venueId: string, sinc
 async function getWorkingDancers(client: DancrClient, venueId: string, now: Date): Promise<VenueDashboardDancer[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, location_status, checked_in_at, checked_out_at, last_location_verified_at, location_verification_expires_at, dancer_profiles(id, slug, stage_name, avatar_storage_path)")
+    .select("id, status, shift_date, shift_source, starts_at, ends_at, location_status, checked_in_at, checked_out_at, last_location_verified_at, location_verification_expires_at, dancer_profiles(id, slug, stage_name, avatar_storage_path)")
     .eq("venue_id", venueId)
     .eq("status", "posted")
     .not("checked_in_at", "is", null)
     .is("checked_out_at", null)
-    .lte("starts_at", now.toISOString())
-    .gte("ends_at", now.toISOString())
-    .in("location_status", ["location_confirmed", "club_confirmed"])
+    .eq("location_status", "club_confirmed")
+    .gt("location_verification_expires_at", now.toISOString())
     .order("checked_in_at", { ascending: false });
   if (error) throw error;
 
-  return (data || []).filter((row: any) => isCurrentLocationVerification(row, now.getTime())).map((row: any) => {
+  return (data || []).filter((row: any) => isActiveNfcPresence(row, now.getTime())).map((row: any) => {
     const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
     const avatar = responsivePublicImage(client, "dancer-photos", dancer?.avatar_storage_path);
     return {
@@ -578,6 +577,8 @@ async function getWorkingDancers(client: DancrClient, venueId: string, now: Date
       stageName: dancer?.stage_name || "Dancer",
       startsAt: row.starts_at,
       endsAt: row.ends_at,
+      shiftDate: row.shift_date || null,
+      shiftSource: row.shift_source || "scheduled",
       checkedInAt: row.checked_in_at,
       lastLocationVerifiedAt: row.last_location_verified_at || null,
       locationStatus: row.location_status,

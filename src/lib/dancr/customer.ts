@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isApprovedPublicDancerRow } from "./public";
 import { responsivePublicImage } from "./responsive-image";
-import { isCurrentLocationVerification } from "./geofence";
+import { isActiveNfcPresence } from "./shift-presence";
 
 type DancrClient = SupabaseClient;
 
@@ -301,7 +301,7 @@ async function getSavedDancerSchedules(client: DancrClient, dancerIds: string[])
 
   const { data, error } = await client
     .from("shifts")
-    .select("id, dancer_id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path)")
+    .select("id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path)")
     .in("dancer_id", dancerIds)
     .eq("status", "posted")
     .gt("ends_at", new Date().toISOString())
@@ -317,9 +317,11 @@ async function getSavedDancerSchedules(client: DancrClient, dancerIds: string[])
       id: shift.id,
       startsAt: shift.starts_at,
       endsAt: shift.ends_at,
+      shiftDate: shift.shift_date,
+      shiftSource: shift.shift_source,
       timezone: shift.timezone,
       status: shift.status,
-      locationStatus: isCurrentLocationVerification(shift) ? shift.location_status : "self_reported",
+      locationStatus: isActiveNfcPresence(shift) ? "club_confirmed" : "self_reported",
       checkedInAt: shift.checked_in_at,
       checkedOutAt: shift.checked_out_at,
       venue,

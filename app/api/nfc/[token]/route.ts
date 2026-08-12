@@ -80,6 +80,9 @@ export async function POST(request: Request, context: RouteContext) {
         tagId: tag.id,
         dancerId: affiliation?.dancerId,
         shiftCheckedIn: affiliation?.shiftCheckedIn === true,
+        workingUntil: affiliation?.workingUntil || null,
+        nextTapAllowedAt: affiliation?.nextTapAllowedAt || null,
+        tapApplied: affiliation?.tapApplied === true,
       });
       return noStore({
         ok: true,
@@ -87,10 +90,14 @@ export async function POST(request: Request, context: RouteContext) {
         affiliation,
         session: authContext.session || null,
         message: affiliation?.enrollmentStatus === "pending"
-          ? `Tap saved for ${tag.venue.name}. Finish profile setup and media review; venue access activates automatically when your profile is ready.`
-          : affiliation?.shiftCheckedIn
-            ? `Checked in at ${tag.venue.name}. Your eligible profile is approved and your current posted shift is Working Now for up to five hours or until the shift ends.`
-            : `Your eligible profile and venue access are active for ${tag.venue.name}. Post a shift, then tap this dressing-room sticker during that shift to appear Working Now.`,
+          ? `Your ${tag.venue.name} NFC affiliation is saved. Finish profile setup and media review; it will activate automatically without a venue QR scan.`
+           : affiliation?.alreadyWorking
+             ? `You are already Working Now at ${affiliation?.venueName || tag.venue.name}. This tap did not extend the six-hour session.`
+           : affiliation?.cooldownActive
+             ? `Your Working Now cooldown is active. You can tap again after ${formatTapTime(affiliation?.nextTapAllowedAt)}.`
+           : affiliation?.shiftCheckedIn
+             ? `You are Working Now at ${tag.venue.name} for six hours. A six-hour cooldown follows, and retaps cannot extend it.`
+             : `Verified at ${tag.venue.name}. Your venue affiliation and profile are active.`,
       });
     }
 
@@ -180,6 +187,19 @@ export async function POST(request: Request, context: RouteContext) {
     console.error("NFC_TAP_FAILED", { message });
     return NextResponse.json({ ok: false, error: message || "Unable to complete this NFC tap." }, { status });
   }
+}
+
+function formatTapTime(value: unknown) {
+  if (typeof value !== "string") return "the cooldown ends";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "the cooldown ends";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(parsed);
 }
 
 async function optionalCustomerId(request: Request, admin: ReturnType<typeof createAdminSupabaseClient>) {

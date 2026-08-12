@@ -102,7 +102,7 @@ test("the mobile profile places schedule directly after media, before revenue an
   assert.match(profilePage, /shareControl=\{<ProfileShareButton stageName=\{profile\.stageName\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
-  assert.match(profilePage, /Verified check-in · until/);
+  assert.match(profilePage, /Dressing-room NFC verified · active until/);
   assert.match(profilePage, /Club &amp; directions/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
@@ -160,7 +160,7 @@ test("the primary shift is not repeated and empty profile sections stay hidden",
     /const upcomingShifts = profile\.upcomingShifts\.filter\([\s\S]*?shift\.id !== activeShift\?\.id/,
   );
   assert.match(profilePage, /upcomingShifts\.length \? \(/);
-  assert.match(profilePage, /<h2 id="profile-schedule-title">Upcoming shifts<\/h2>/);
+  assert.match(profilePage, /<h2 id="profile-schedule-title">Upcoming dates<\/h2>/);
   assert.match(profilePage, /\{upcomingShifts\.map\(\(shift\) =>/);
   assert.doesNotMatch(profilePage, /<p className="muted">No posted shifts right now\.<\/p>/);
 });

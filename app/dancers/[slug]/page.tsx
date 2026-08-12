@@ -8,6 +8,7 @@ import { getActiveClubDealsForVenue } from "@/src/lib/dancr/deals";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
+import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import type { ShiftSummary } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
@@ -173,7 +174,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 <span className="profile-live-state">Schedule</span>
                 <h2 id="profile-working-title">Working Now</h2>
                 <p>
-                  {activeShift.venueName} · Verified check-in · until {formatShiftTime(activeShift.endsAt, activeShift.timezone)}
+                  {activeShift.venueName} · Dressing-room NFC verified · active until {formatShiftTime(activeShift.locationVerificationExpiresAt || activeShift.endsAt, activeShift.timezone)}
                 </p>
               </div>
               <Link href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}>
@@ -196,7 +197,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
             <div className="profile-section-heading">
               <div>
                 <span className="eyebrow">Schedule</span>
-                <h2 id="profile-schedule-title">Upcoming shifts</h2>
+                <h2 id="profile-schedule-title">Upcoming dates</h2>
               </div>
               <span>{upcomingShifts.length} posted</span>
             </div>
@@ -208,11 +209,11 @@ export default async function DancerPublicPage({ params }: PageProps) {
                   key={shift.id}
                 >
                   <span className="shift-date">
-                    {formatShiftDate(shift.startsAt, shift.timezone)}
+                    {formatShiftDate(shift.shiftDate || shift.startsAt, shift.timezone)}
                   </span>
                   <strong>{shift.venueName}</strong>
                   <span className="shift-time">
-                    {formatShiftTime(shift.startsAt, shift.timezone)} · Posted shift
+                    Upcoming · Venue and date posted
                   </span>
                   <em>Club</em>
                 </Link>
@@ -260,7 +261,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           shareControl={<ProfileShareButton stageName={profile.stageName} />}
           shifts={profile.upcomingShifts.map((shift) => ({
             id: shift.id,
-            label: shortShiftLabel(shift.startsAt, shift.timezone),
+            label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
             isActive: isActiveNow(shift),
           }))}
         />
@@ -334,17 +335,7 @@ function formatDateValue(
 }
 
 function isActiveNow(shift: ShiftSummary) {
-  const now = Date.now();
-  const isCheckedIn =
-    Boolean(shift.checkedInAt) &&
-    !shift.checkedOutAt &&
-    (shift.locationStatus === "location_confirmed" ||
-      shift.locationStatus === "club_confirmed");
-  return (
-    isCheckedIn &&
-    new Date(shift.startsAt).getTime() <= now &&
-    new Date(shift.endsAt).getTime() >= now
-  );
+  return isActiveNfcPresence(shift);
 }
 
 function initials(value: string) {

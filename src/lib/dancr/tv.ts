@@ -5,7 +5,7 @@ import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
 import type { ClubDeal } from "./types";
 import { prioritizeMyDancrTvVenue } from "./tv-feed-order";
-import { isCurrentLocationVerification } from "./geofence";
+import { isActiveNfcPresence } from "./shift-presence";
 import { requireVenueAccess } from "./venue-access";
 import {
   moderateStoredMyDancrTvVideo,
@@ -109,6 +109,7 @@ export type MyDancrTvVideo = {
     id: string;
     startsAt: string;
     endsAt: string;
+    shiftDate: string | null;
     timezone: string;
     status: string;
     isActive: boolean;
@@ -431,7 +432,7 @@ async function getPublicTvVenueScope(
   const shiftResult = await admin
     .from("shifts")
     .select(
-      "dancer_id, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, is_active)",
+      "dancer_id, shift_date, shift_source, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, is_active)",
     )
     .eq("venue_id", venueId)
     .eq("status", "posted")
@@ -446,7 +447,7 @@ async function getPublicTvVenueScope(
     const start = new Date(shift.starts_at).getTime();
     const end = new Date(shift.ends_at).getTime();
     const active = isConfirmedActiveTvShift(shift, now);
-    const scheduled = Number.isFinite(start) && Number.isFinite(end) && end >= now;
+    const scheduled = shift.shift_source === "scheduled" && Number.isFinite(start) && Number.isFinite(end) && end >= now;
     return active || scheduled ? [String(shift.dancer_id || "")] : [];
   }).filter(Boolean);
   const candidateDancerIds = [...new Set(shiftDancerIds)];
@@ -471,7 +472,7 @@ async function getPublicTvShiftContexts(
   let query = admin
     .from("shifts")
     .select(
-      "id, dancer_id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, slug, name, city, is_active)",
+      "id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, slug, name, city, is_active)",
     )
     .in("dancer_id", uniqueDancerIds)
     .eq("status", "posted")
@@ -492,7 +493,7 @@ async function getPublicTvShiftContexts(
     const start = new Date(row.starts_at).getTime();
     const end = new Date(row.ends_at).getTime();
     const isActive = isConfirmedActiveTvShift(row, now);
-    const isScheduled = Number.isFinite(start) && Number.isFinite(end) && end >= now;
+    const isScheduled = row.shift_source === "scheduled" && Number.isFinite(start) && Number.isFinite(end) && end >= now;
     if (!venue || (!isActive && !isScheduled)) continue;
 
     const candidate: PublicTvShiftContext = {
@@ -506,10 +507,11 @@ async function getPublicTvShiftContexts(
         id: row.id,
         startsAt: row.starts_at,
         endsAt: row.ends_at,
+        shiftDate: row.shift_date || null,
         timezone: row.timezone || "UTC",
         status: row.status,
         isActive,
-        isStartingSoon: start > now && start <= now + 2 * 60 * 60 * 1000,
+        isStartingSoon: false,
       },
     };
     const current = contexts.get(row.dancer_id);
@@ -532,11 +534,7 @@ function applyPublicTvShiftContext(
 }
 
 function isConfirmedActiveTvShift(shift: any, now: number) {
-  if (!shift?.checked_in_at || shift.checked_out_at) return false;
-  if (!isCurrentLocationVerification(shift, now)) return false;
-  const start = new Date(shift.starts_at).getTime();
-  const end = new Date(shift.ends_at).getTime();
-  return Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;
+  return isActiveNfcPresence(shift, now);
 }
 
 function tvSchedulePriority(video: NormalizedFeedRow) {

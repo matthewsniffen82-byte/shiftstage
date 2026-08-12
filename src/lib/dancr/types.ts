@@ -159,6 +159,8 @@ export type VenueDashboardDancer = {
   stageName: string;
   startsAt: string;
   endsAt: string;
+  shiftDate?: string | null;
+  shiftSource?: "scheduled" | "nfc_presence";
   checkedInAt: string | null;
   lastLocationVerifiedAt: string | null;
   locationStatus: string;
@@ -296,6 +298,8 @@ export type ShiftSummary = {
   venueSlug: string;
   startsAt: string;
   endsAt: string;
+  shiftDate?: string | null;
+  shiftSource?: "scheduled" | "nfc_presence";
   timezone?: string | null;
   status: ShiftStatus;
   locationStatus?: LocationStatus;

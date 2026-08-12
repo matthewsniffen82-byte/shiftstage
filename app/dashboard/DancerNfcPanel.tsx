@@ -66,7 +66,7 @@ export default function DancerNfcPanel({
   async function removeAffiliation(affiliation: Affiliation) {
     if (!affiliation.id) return;
     const venueName = affiliation.venue?.name || "this venue";
-    if (!window.confirm(`Remove ${venueName} from your NFC-authorized venues? You must tap its dressing-room sticker again before working there.`)) return;
+    if (!window.confirm(`Remove NFC access for ${venueName}? You will need to tap its dressing-room sticker again before going Working Now there.`)) return;
     const auth = authHeaders();
     if (!auth) return setStatus("Sign in required.");
     setPendingId(affiliation.id);
@@ -98,11 +98,11 @@ export default function DancerNfcPanel({
           <b>{authorized ? "APPROVED" : pendingEnrollment ? "FINISH SETUP" : "TAP REQUIRED"}</b>
         </div>
         {authorized ? (
-          <p>Your first eligible dressing-room tap approved your profile and venue access. No manager QR or separate venue approval is required.</p>
+          <p>Your approved dressing-room tap added this venue. Each time you arrive, tap that venue&apos;s official tag to appear in Working Now for six hours.</p>
         ) : pendingEnrollment ? (
           <p>Your tap at {enrollment?.venue?.name || "the club"} is saved. Complete profile setup and media review; MyDancr will activate the venue automatically when the profile is ready.</p>
         ) : (
-          <p>At the club, unlock your signed-in phone and tap its official MyDancr dressing-room sticker. The first eligible tap approves your profile, connects that venue, and checks in a current posted shift.</p>
+          <p>At the club, unlock your signed-in phone and tap its official MyDancr dressing-room sticker. When setup is complete, the first eligible tap approves your profile, connects that venue, and starts one six-hour Working Now session.</p>
         )}
 
         {activeAffiliations.length ? (
@@ -120,9 +120,10 @@ export default function DancerNfcPanel({
         ) : null}
 
         <div className="dancer-nfc-notes">
-          <span>A current posted shift becomes Working Now for up to five hours after the tap.</span>
-          <span>Tap the same dressing-room sticker again to renew an active shift&apos;s NFC check-in.</span>
-          <span>Media safety review remains separate{isPublic ? "; your profile is live." : " and must finish before your profile is public."}</span>
+          <span>Each eligible tap starts one six-hour Working Now session; retaps never extend it and no phone location is collected.</span>
+          <span>A six-hour cooldown follows. No venue tag can start another session until that cooldown ends.</span>
+          <span>Upcoming venue dates are optional and never make you Working Now by themselves.</span>
+          <span>Media safety moderation remains separate{isPublic ? "; your profile is live." : " and must finish before the profile is public."}</span>
         </div>
         <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
           {pendingId === "refresh" ? "Refreshing…" : "Refresh NFC status"}

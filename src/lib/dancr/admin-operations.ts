@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isCurrentLocationVerification } from "./geofence";
+import { isActiveNfcPresence } from "./shift-presence";
 
 type DancrClient = SupabaseClient;
 
@@ -76,7 +76,6 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
   const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const shiftGraceCutoff = new Date(now.getTime() - 45 * 60 * 1000).toISOString();
 
   const results = await Promise.all([
     safeCount("Dancer approvals", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_review")),
@@ -92,10 +91,11 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("created_at", dayAgo)),
     safeCount("Overdue video moderation", () => db.from("mydancr_tv_videos").select("id", { count: "exact", head: true }).eq("status", "submitted").lt("submitted_at", dayAgo)),
     safeRows("Checked-in dancers", () => db.from("shifts")
-      .select("id, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
+      .select("id, status, shift_date, shift_source, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
       .not("checked_in_at", "is", null)
       .is("checked_out_at", null)
-      .gt("ends_at", checkedAt)
+      .eq("location_status", "club_confirmed")
+      .gt("location_verification_expires_at", checkedAt)
       .order("checked_in_at", { ascending: false })
       .limit(30)),
     safeCount("Active venues", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true)),
@@ -103,11 +103,11 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Cashier NFC redemptions today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("status", "redeemed").gte("redeemed_at", dayAgo)),
     safeCount("Suspicious Club Deal activity", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("suspicious", true).gte("generated_at", dayAgo)),
     safeRows("Missed check-ins", () => db.from("shifts")
-      .select("id, starts_at, ends_at, location_status, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
+      .select("id, shift_date, shift_source, starts_at, ends_at, location_status, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
       .eq("status", "posted")
       .is("checked_in_at", null)
-      .lte("starts_at", shiftGraceCutoff)
-      .gt("ends_at", checkedAt)
+      .eq("shift_source", "scheduled")
+      .lt("shift_date", checkedAt.slice(0, 10))
       .order("starts_at", { ascending: true })
       .limit(20)),
     safeRows("Revenue health", () => db.from("deal_revenue_events")
@@ -167,7 +167,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     },
     live: {
       checkedInDancers: (checkedInDancers.rows || []).filter((shift) =>
-        isCurrentLocationVerification(shift, now.getTime()),
+        isActiveNfcPresence(shift, now.getTime()),
       ),
       activeVenueCount: count(activeVenueCount),
       qrGeneratedToday: count(qrGeneratedToday),

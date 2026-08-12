@@ -218,7 +218,20 @@ export async function registerDancerFromNfc(
   });
   if (error) throw error;
   await authorizeDancerProfileFromNfc(client, input.dancerUserId);
-  return data;
+  if (data?.enrollmentStatus !== "completed") return data;
+
+  const { data: presence, error: presenceError } = await (client as any).rpc("activate_dancer_shift_from_nfc", {
+    p_tag_id: input.tagId,
+    p_dancer_user_id: input.dancerUserId,
+    p_session_id: input.sessionId,
+    p_audit: {
+      ip_address: audit.ipAddress,
+      user_agent: audit.userAgent,
+      device_fingerprint: audit.deviceFingerprint,
+    },
+  });
+  if (presenceError) throw presenceError;
+  return { ...data, ...presence };
 }
 
 export async function finalizePendingDancerNfcEnrollment(

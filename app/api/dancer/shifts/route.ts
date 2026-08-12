@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deliverNotificationRows } from "@/src/lib/dancr/notification-delivery";
-import { isValidShiftRange } from "@/src/lib/dancr/schedule";
+import { getScheduleDateWindow, isValidScheduleDate, localDateInTimeZone } from "@/src/lib/dancr/schedule";
 import { reconcileExpiredDancerShifts } from "@/src/lib/dancr/shift-lifecycle";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const [{ data, error }, venues] = await Promise.all([
       admin
         .from("shifts")
-        .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, checkin_accuracy_meters, last_location_verified_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
+        .select("id, venue_id, shift_date, shift_source, nfc_tag_id, nfc_last_tapped_at, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, checkin_accuracy_meters, last_location_verified_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
         .eq("dancer_id", dancer.id)
         .order("starts_at", { ascending: false })
         .limit(25),
@@ -43,12 +43,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Profile approval required before posting shifts." }, { status: 403 });
     }
 
-    if (!body?.venueId || !body?.startsAt || !body?.endsAt) {
-      return NextResponse.json({ ok: false, error: "Missing venueId, startsAt, or endsAt." }, { status: 400 });
-    }
-
-    if (!isValidShiftRange(body.startsAt, body.endsAt)) {
-      return NextResponse.json({ ok: false, error: "Shift end must be after shift start." }, { status: 400 });
+    if (!body?.venueId) {
+      return NextResponse.json({ ok: false, error: "Choose a venue." }, { status: 400 });
     }
 
     const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
@@ -59,14 +55,21 @@ export async function POST(request: Request) {
       );
     }
     const timezone = typeof body.timezone === "string" ? body.timezone : venue.timezone;
+    const shiftDate = requestedShiftDate(body, timezone);
+    if (!shiftDate || !isValidScheduleDate(shiftDate, timezone)) {
+      return NextResponse.json({ ok: false, error: "Choose a valid upcoming date." }, { status: 400 });
+    }
+    const window = getScheduleDateWindow(shiftDate, timezone);
 
     const { data, error } = await (client as any)
       .from("shifts")
       .insert({
         dancer_id: dancer.id,
         venue_id: body.venueId,
-        starts_at: body.startsAt,
-        ends_at: body.endsAt,
+        shift_date: shiftDate,
+        shift_source: "scheduled",
+        starts_at: window.startsAt,
+        ends_at: window.endsAt,
         timezone,
         status: "posted",
       })
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    const broadcastRecipients = await broadcastShiftPosted(dancer, data.id, body.venueId, body.startsAt);
+    const broadcastRecipients = await broadcastShiftPosted(dancer, data.id, body.venueId, shiftDate);
     const { error: updateError } = await (client as any)
       .from("shifts")
       .update({
@@ -104,6 +107,7 @@ export async function PATCH(request: Request) {
     const dancer = await getOwnDancerProfile(client as any, user.id);
     const existingShift = await getOwnShift(client as any, dancer.id, body.shiftId);
     const update: Record<string, unknown> = {};
+    let nextTimezone = existingShift.timezone || "America/Los_Angeles";
     if (typeof body.venueId === "string") {
       const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
       if (!venue) {
@@ -114,11 +118,25 @@ export async function PATCH(request: Request) {
       }
       update.venue_id = body.venueId;
       update.timezone = venue.timezone;
+      nextTimezone = venue.timezone;
     }
-    if (typeof body.startsAt === "string") update.starts_at = body.startsAt;
-    if (typeof body.endsAt === "string") update.ends_at = body.endsAt;
-    if (typeof body.timezone === "string") update.timezone = body.timezone;
     if (["posted", "cancelled", "draft"].includes(body.status)) update.status = body.status;
+
+    const editingSchedule = typeof body.shiftDate === "string" || typeof body.startsAt === "string" || typeof body.venueId === "string";
+    if (editingSchedule) {
+      if (existingShift.shift_source === "nfc_presence") {
+        return NextResponse.json({ ok: false, error: "Working Now sessions cannot be edited." }, { status: 409 });
+      }
+      const shiftDate = requestedShiftDate(body, nextTimezone) || existingShift.shift_date;
+      if (!shiftDate || !isValidScheduleDate(shiftDate, nextTimezone)) {
+        return NextResponse.json({ ok: false, error: "Choose a valid upcoming date." }, { status: 400 });
+      }
+      const window = getScheduleDateWindow(shiftDate, nextTimezone);
+      update.shift_date = shiftDate;
+      update.shift_source = "scheduled";
+      update.starts_at = window.startsAt;
+      update.ends_at = window.endsAt;
+    }
 
     if (existingShift.checked_in_at && !existingShift.checked_out_at && Object.keys(update).length) {
       return NextResponse.json(
@@ -128,12 +146,6 @@ export async function PATCH(request: Request) {
     }
     if (!Object.keys(update).length) {
       return NextResponse.json({ ok: false, error: "No editable shift fields were provided." }, { status: 400 });
-    }
-
-    const nextStartsAt = typeof update.starts_at === "string" ? update.starts_at : existingShift.starts_at;
-    const nextEndsAt = typeof update.ends_at === "string" ? update.ends_at : existingShift.ends_at;
-    if (!isValidShiftRange(nextStartsAt, nextEndsAt)) {
-      return NextResponse.json({ ok: false, error: "Shift end must be after shift start." }, { status: 400 });
     }
 
     const cancellingShift = update.status === "cancelled" && existingShift.status !== "cancelled";
@@ -158,7 +170,7 @@ export async function PATCH(request: Request) {
 async function getOwnShift(client: any, dancerId: string, shiftId: string) {
     const { data, error } = await client
     .from("shifts")
-    .select("id, venue_id, starts_at, ends_at, status, checked_in_at, checked_out_at, venues(name)")
+    .select("id, venue_id, shift_date, shift_source, starts_at, ends_at, timezone, status, checked_in_at, checked_out_at, venues(name)")
     .eq("id", shiftId)
     .eq("dancer_id", dancerId)
     .maybeSingle();
@@ -239,7 +251,7 @@ async function broadcastShiftPosted(
   dancer: { id: string; stage_name: string },
   shiftId: string,
   venueId: string,
-  startsAt: string,
+  shiftDate: string,
 ) {
   const admin = createAdminSupabaseClient() as any;
   const { data: followers, error: followersError } = await admin
@@ -255,8 +267,8 @@ async function broadcastShiftPosted(
     notification_type: "shift_posted",
     channel: "in_app",
     title: `${dancer.stage_name} posted a shift`,
-    body: `${dancer.stage_name} posted a new schedule. Tap to view details.`,
-    payload: { dancerId: dancer.id, shiftId, venueId, startsAt },
+    body: `${dancer.stage_name} posted an upcoming venue date. Tap to view details.`,
+    payload: { dancerId: dancer.id, shiftId, venueId, shiftDate },
     sent_at: new Date().toISOString(),
   }));
 
@@ -268,6 +280,15 @@ async function broadcastShiftPosted(
   await deliverNotificationRows(admin, rows);
 
   return rows.length;
+}
+
+function requestedShiftDate(body: Record<string, unknown>, timeZone: string) {
+  if (typeof body.shiftDate === "string") return body.shiftDate.trim();
+  if (typeof body.startsAt === "string") {
+    const legacyDate = new Date(body.startsAt);
+    if (Number.isFinite(legacyDate.getTime())) return localDateInTimeZone(timeZone, legacyDate);
+  }
+  return "";
 }
 
 async function broadcastShiftCancelled(

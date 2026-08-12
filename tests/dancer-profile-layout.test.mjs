@@ -85,7 +85,7 @@ test("Working Now profiles promote the checked-in venue, directions, and cashier
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /<span className="profile-live-state">Schedule<\/span>[\s\S]*?<h2 id="profile-working-title">Working Now<\/h2>/);
-  assert.match(profilePage, /Verified check-in · until/);
+  assert.match(profilePage, /Dressing-room NFC verified · active until/);
   assert.match(profilePage, /Club &amp; directions/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClubDeal, ClubDealOfferType, DealSourceType } from "./types";
-import { isCurrentLocationVerification } from "./geofence";
+import { isActiveNfcPresence } from "./shift-presence";
 import { dancerHasActiveVenueAffiliation } from "./venue-affiliations";
 import { requireVenueAccess } from "./venue-access";
 
@@ -153,20 +153,19 @@ export async function getVerifiedActiveCheckInAtVenue(
   const nowIso = now.toISOString();
   const { data, error } = await (client as any)
     .from("shifts")
-    .select("id, location_status, checked_in_at, checked_out_at, location_verification_expires_at")
+    .select("id, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at")
     .eq("dancer_id", dancerId)
     .eq("venue_id", venueId)
     .eq("status", "posted")
-    .lte("starts_at", nowIso)
-    .gte("ends_at", nowIso)
     .not("checked_in_at", "is", null)
     .is("checked_out_at", null)
-    .in("location_status", ["location_confirmed", "club_confirmed"])
+    .eq("location_status", "club_confirmed")
+    .gt("location_verification_expires_at", nowIso)
     .limit(5);
 
   if (error) throw error;
   const verified = (data || []).find((shift: Record<string, unknown>) =>
-    isCurrentLocationVerification(shift, now.getTime()),
+    isActiveNfcPresence(shift, now.getTime()),
   );
   return verified ? { shiftId: String(verified.id) } : null;
 }

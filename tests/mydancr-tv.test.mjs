@@ -123,6 +123,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /\.tv-header h1 \{[\s\S]*?font-size: clamp\(30px, 4\.2vw, 48px\)/);
   assert.match(feedClient, /@media \(max-width: 760px\)[\s\S]*?\.tv-header h1 \{ font-size: clamp\(23px, 6\.5vw, 29px\); white-space: nowrap;/);
   assert.match(feedClient, /eventType: "engaged_view"|trackEvent\((?:video\.id|videoId), "engaged_view"\)/);
+  assert.match(feedClient, /video\.shift\.isActive[\s\S]*?\? "Working Now"[\s\S]*?: `Upcoming · \$\{formatShift\(video\.shift\.shiftDate \|\| video\.shift\.startsAt, video\.shift\.timezone\)\}`/);
   assert.doesNotMatch(feedClient, /\/api\/reports/);
   assert.match(feedClient, /initialVenueName \? `MyDancr TV at \$\{initialVenueName\}` : `MyDancr TV \$\{myDancrTvCityLabel\(city\)\}`/);
   assert.match(feedClient, /function myDancrTvCityLabel\(city: string\) \{\s*return city\.trim\(\) \|\| "Las Vegas";\s*\}/);
@@ -195,14 +196,14 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /function updateFollow|function updateGoing|function shareVideo|function reportVideo/);
   assert.match(
     feedClient,
-    /video\.shift\.isActive[\s\S]*?\? "Working Now"[\s\S]*?: `Upcoming · \$\{formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)\}`/,
+    /video\.shift\.isActive[\s\S]*?\? "Working Now"[\s\S]*?: `Upcoming · \$\{formatShift\(video\.shift\.shiftDate \|\| video\.shift\.startsAt, video\.shift\.timezone\)\}`/,
   );
   assert.match(tvSource, /async function getPublicTvShiftContexts/);
   assert.match(tvSource, /\.from\("shifts"\)[\s\S]*?\.in\("dancer_id", uniqueDancerIds\)/);
-  assert.match(tvSource, /isCurrentLocationVerification\(shift, now\)/);
+  assert.match(tvSource, /isActiveNfcPresence\(shift, now\)/);
   assert.match(tvSource, /location_verification_expires_at/);
   assert.match(tvSource, /timezone: row\.timezone \|\| "UTC"/);
-  assert.match(feedClient, /formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)/);
+  assert.match(feedClient, /formatShift\(video\.shift\.shiftDate \|\| video\.shift\.startsAt, video\.shift\.timezone\)/);
   assert.match(feedClient, /function formatShift\(value: string, timeZone: string\)[\s\S]*?timeZone,/);
   assert.match(
     tvSource,
@@ -217,7 +218,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
     tvSource,
     /function shuffleVideos\(rows: NormalizedFeedRow\[\]\) \{[\s\S]*?for \(let index = shuffled\.length - 1; index > 0; index -= 1\)[\s\S]*?Math\.floor\(Math\.random\(\) \* \(index \+ 1\)\)[\s\S]*?return shuffled/,
   );
-  assert.match(tvSource, /from\("shifts"\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?is\("checked_out_at", null\)[\s\S]*?const scheduled = Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now/);
+  assert.match(tvSource, /from\("shifts"\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?is\("checked_out_at", null\)[\s\S]*?const scheduled = shift\.shift_source === "scheduled" && Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now/);
   assert.match(liveApp, /class="controls home-discovery-controls"[\s\S]*?class="field home-city-filter"[\s\S]*?id="homeFilterToggle"[\s\S]*?aria-controls="homeAdvancedFilters"/);
   assert.match(liveApp, /class="home-advanced-filters" id="homeAdvancedFilters"[\s\S]*?id="distanceSelect"[\s\S]*?id="venueSelect"[\s\S]*?id="locationBtn"/);
   assert.match(liveApp, /homeFilterToggle\?\.addEventListener\("click"[\s\S]*?aria-expanded[\s\S]*?classList\.toggle\("is-open"/);
@@ -295,8 +296,8 @@ test("video publishing never asks for a venue tag and public venue context comes
   assert.match(dancerStudio, /Venue context is automatic/);
   assert.match(tvSource, /venue_id: null,[\s\S]*?shift_id: null,[\s\S]*?venue_tag_status: "unlinked"/);
   assert.doesNotMatch(tvSource, /eq\("venue_tag_status"/);
-  assert.match(tvSource, /const isActive = isConfirmedActiveTvShift\(row, now\);[\s\S]*?const isScheduled = Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now;[\s\S]*?if \(!current \|\| \(!current\.shift\?\.isActive && candidate\.shift\?\.isActive\)\)/);
-  assert.match(tvSource, /isStartingSoon: start > now && start <= now \+ 2 \* 60 \* 60 \* 1000/);
+  assert.match(tvSource, /const isActive = isConfirmedActiveTvShift\(row, now\);[\s\S]*?const isScheduled = row\.shift_source === "scheduled" && Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now;[\s\S]*?if \(!current \|\| \(!current\.shift\?\.isActive && candidate\.shift\?\.isActive\)\)/);
+  assert.match(tvSource, /isStartingSoon: false/);
   assert.match(tvSource, /context[\s\S]*?venue: null, shift: null/);
 });
 

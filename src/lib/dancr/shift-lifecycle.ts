@@ -9,20 +9,20 @@ export async function endDancerShift(
   shift: Record<string, any>,
   reason: EndReason,
 ) {
-  const endedAt = reason === "automatic" && shift.ends_at
-    ? new Date(Math.min(Date.now(), new Date(shift.ends_at).getTime())).toISOString()
+  const endedAt = reason === "automatic" && shift.location_verification_expires_at
+    ? new Date(Math.min(Date.now(), new Date(shift.location_verification_expires_at).getTime())).toISOString()
     : new Date().toISOString();
   const shiftSummary = await buildShiftSummary(client, dancerId, shift, endedAt, reason);
   const { data, error } = await (client as any)
     .from("shifts")
     .update({
       checked_out_at: endedAt,
-      location_status: "self_reported",
+      location_status: "club_confirmed",
       working_status: "ended",
       location_verification_expires_at: endedAt,
       commission_tracking_stopped_at: endedAt,
       ended_at: endedAt,
-      ended_reason: reason,
+      ended_reason: reason === "automatic" ? "nfc_window_expired" : "manual",
       shift_summary: shiftSummary,
       updated_at: new Date().toISOString(),
     })
@@ -44,13 +44,14 @@ export async function reconcileExpiredDancerShifts(
   let query = (client as any)
     .from("shifts")
     .select(
-      "id, dancer_id, starts_at, ends_at, checked_in_at, checked_out_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at",
+      "id, dancer_id, starts_at, ends_at, checked_in_at, checked_out_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at",
     )
     .eq("status", "posted")
     .not("checked_in_at", "is", null)
     .is("checked_out_at", null)
-    .lt("ends_at", new Date().toISOString())
-    .order("ends_at", { ascending: true })
+    .not("location_verification_expires_at", "is", null)
+    .lt("location_verification_expires_at", new Date().toISOString())
+    .order("location_verification_expires_at", { ascending: true })
     .limit(Math.max(1, Math.min(100, limit)));
   if (dancerId) query = query.eq("dancer_id", dancerId);
 
