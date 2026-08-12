@@ -80,6 +80,8 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
   assert.match(dancerStudio, /embedded \? "Submit video for review" : "Submit for MyDancr TV review"/);
+  assert.match(dancerStudio, /\.tv-upload-form > label \{ min-width: 0;/);
+  assert.match(dancerStudio, /input\[type="file"\] \{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%;/);
 });
 
 test("the live preview reflects current profile drafts and real moderation state", () => {

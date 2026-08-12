@@ -394,9 +394,9 @@ function DancerTvStudioStyles() {
       .tv-studio-head .tv-profile-connection { color: #e2d9ef; font-weight: 800; }
       .tv-studio-head > a, .tv-managed-video a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(34,199,255,.38); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font-weight: 900; text-decoration: none; white-space: nowrap; }
       .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; border: 1px solid rgba(139,92,246,.3); border-radius: 12px; background: rgba(11,11,16,.84); }
-      .tv-upload-form > label { display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
-      .tv-file-picker, .tv-upload-preview, .tv-upload-form > button { grid-column: 1 / -1; }
-      .tv-upload-form input[type="file"] { width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 10px 12px; font: inherit; }
+      .tv-upload-form > label { min-width: 0; display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
+      .tv-file-picker, .tv-upload-preview, .tv-upload-form > button { min-width: 0; max-width: 100%; grid-column: 1 / -1; }
+      .tv-upload-form input[type="file"] { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 10px 12px; font: inherit; overflow: hidden; }
       .tv-upload-form small { color: #9f94b3; font-size: 11px; font-weight: 700; }
       .tv-upload-preview { width: min(360px, 100%); max-height: 560px; justify-self: center; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: #000; }
       .tv-check { grid-column: 1 / -1; grid-template-columns: 20px minmax(0, 1fr) !important; align-items: start; }
