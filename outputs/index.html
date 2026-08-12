@@ -40199,17 +40199,7 @@
       try {
         const data = await deleteAuthenticatedJson("/api/account");
         if (data?.account) applyLiveAccountState(data.account);
-        closeDeletedAccount(role);
-        liveCustomerProfile = null;
-        liveNotifications = [];
-        liveDancerAnalytics = null;
-        liveDancerDeals = null;
-        liveDancerWeeklyReport = null;
-        liveDancerBilling = null;
-        liveDancerRankingEvents = [];
-        liveDancerReviews = [];
-        saveAuthSession(null);
-        showToast(`${accountRoleLabel(role)} deleted`);
+        finalizeDeletedAccount(role);
         return true;
       } catch (error) {
         showToast(error.message || "Could not delete account");
@@ -40228,23 +40218,8 @@
       return "Customer account";
     }
 
-    function closeDeletedAccount(role) {
-      if (role === "customer") {
-        isCustomerLoggedIn = false;
-        closeDashboard();
-      }
-      if (role === "dancer") {
-        isDancerLoggedIn = false;
-        closeDancerDashboard();
-      }
-      if (role === "venue") {
-        isVenueLoggedIn = false;
-        liveVenueDashboard = null;
-        closeVenueDashboard();
-      }
-      activeDashboardType = "customer";
-      updateAccountHeader();
-      syncOverlayScrollLock();
+    function finalizeDeletedAccount(role) {
+      logoutAccount({ message: `${accountRoleLabel(role)} deleted` });
     }
 
     function setAccountCenterStatus(role, message, isError = false) {
@@ -40391,8 +40366,7 @@
           state.deleted = true;
           state.disabled = false;
           renderAccountControlPanel(role);
-          closeDeletedAccount(role);
-          showToast(`${roleLabel} deleted`);
+          finalizeDeletedAccount(role);
         }
         return true;
       }
@@ -48830,7 +48804,7 @@
       accountBtn.setAttribute("aria-expanded", String(willOpen));
     }
 
-    function logoutAccount() {
+    function logoutAccount({ message = "Logged out" } = {}) {
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;
       isVenueLoggedIn = false;
@@ -48857,7 +48831,7 @@
       closeDancerDashboard();
       closeVenueDashboard();
       updateAccountHeader();
-      showToast("Logged out");
+      showToast(message);
     }
 
     function setCustomerAuthMode(mode) {

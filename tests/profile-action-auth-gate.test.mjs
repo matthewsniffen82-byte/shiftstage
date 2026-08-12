@@ -195,7 +195,7 @@ test("venue follows are empty and unavailable until a real customer session is a
   );
   assert.match(
     homeSource,
-    /function logoutAccount\(\) \{[\s\S]*?saveAuthSession\(null\);\s+clearCustomerSavedCollections\(\);/,
+    /function logoutAccount\(\{ message = "Logged out" \} = \{\}\) \{[\s\S]*?saveAuthSession\(null\);\s+clearCustomerSavedCollections\(\);/,
   );
 
   assert.match(venueActionsSource, /const \[following, setFollowing\] = useState\(false\)/);

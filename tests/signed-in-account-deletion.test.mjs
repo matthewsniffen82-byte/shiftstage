@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 
 const liveShell = fs.readFileSync("outputs/index.html", "utf8");
 const accountRoute = fs.readFileSync("app/api/account/route.ts", "utf8");
+const dashboardClient = fs.readFileSync("app/dashboard/DashboardClient.tsx", "utf8");
 
 test("every supported signed-in role gets a persistent account-menu deletion control", () => {
   assert.match(
@@ -23,9 +24,24 @@ test("the global deletion control requires confirmation and calls the authentica
   );
   assert.match(
     liveShell,
-    /async function deleteLiveAccount\(role, button\)[\s\S]*?deleteAuthenticatedJson\("\/api\/account"\)[\s\S]*?saveAuthSession\(null\)/,
+    /async function deleteLiveAccount\(role, button\)[\s\S]*?deleteAuthenticatedJson\("\/api\/account"\)[\s\S]*?finalizeDeletedAccount\(role\)/,
+  );
+  assert.match(
+    liveShell,
+    /function finalizeDeletedAccount\(role\) \{\s*logoutAccount\(\{ message: `\$\{accountRoleLabel\(role\)\} deleted` \}\);\s*\}/,
+  );
+  assert.match(
+    liveShell,
+    /function logoutAccount\([\s\S]*?saveAuthSession\(null\)[\s\S]*?closeDashboard\(\)[\s\S]*?closeDancerDashboard\(\)[\s\S]*?closeVenueDashboard\(\)[\s\S]*?updateAccountHeader\(\)/,
   );
   assert.doesNotMatch(liveShell, /This demo will sign out of the account/);
+});
+
+test("the standalone dashboard clears the session and replaces browser history after deletion", () => {
+  assert.match(
+    dashboardClient,
+    /async function deleteAccount\(\)[\s\S]*?method: "DELETE"[\s\S]*?window\.localStorage\.removeItem\(SESSION_KEY\);\s*window\.location\.replace\("\/"\);/,
+  );
 });
 
 test("the account endpoint permanently removes the authenticated login", () => {

@@ -849,7 +849,7 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete account.");
       window.localStorage.removeItem(SESSION_KEY);
-      window.location.href = "/";
+      window.location.replace("/");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to delete account.");
       setIsWorking(false);
