@@ -2813,9 +2813,9 @@ function DancerOnboardingCommand({
     <section className="dancer-onboarding-command" aria-labelledby="dancer-onboarding-heading">
       <div className="dancer-onboarding-command-head">
         <span>
-          <span className="eyebrow">Profile setup</span>
-          <h2 id="dancer-onboarding-heading">Complete your profile</h2>
-          <p>Finish the three secure steps below. Your profile stays private until media review is complete and a dressing-room NFC tap authorizes a venue.</p>
+          <span className="eyebrow">Step 2</span>
+          <h2 id="dancer-onboarding-heading">Preview and submit</h2>
+          <p>Review your saved profile, submit it for media approval, then complete the dressing-room NFC tap in the section below.</p>
         </span>
         <b>{steps.filter((step) => step.complete).length} of 3 complete</b>
       </div>
@@ -2948,8 +2948,44 @@ function DancerPanel({
     };
   }, [effectiveStatus, isApproved, onProfileChange]);
 
+  const profileMediaSection = (
+    <DashboardSection
+      defaultOpen={!isApproved}
+      description="Create your identity, avatar, social links, moderated photos, and MyDancr TV videos in one workspace."
+      eyebrow={isApproved ? "Dancer workspace" : "Step 1"}
+      id="dancer-profile-media"
+      title="Profile & media"
+    >
+      <div className="venue-dashboard-inner-grid">
+        <DancerSetupPanel
+          deletedPhotoIds={deletedPhotoIds}
+          deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+          onDeletedPhotoIdsSaved={() => {
+            setDeletedPhotoIds([]);
+            setDeletedPhotoStoragePaths([]);
+          }}
+          profile={profile}
+          onProfileChange={onProfileChange}
+          onDraftChange={setDraftIdentity}
+        />
+        <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />
+        <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
+        <DancerPhotoPanel
+          deletedPhotoIds={deletedPhotoIds}
+          deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+          onDeletedPhotoIdsChange={setDeletedPhotoIds}
+          onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
+          profile={profile}
+          onProfileChange={onProfileChange}
+        />
+        <DancerTvStudio embedded />
+      </div>
+    </DashboardSection>
+  );
+
   return (
     <>
+      {!isApproved ? profileMediaSection : null}
       {!isApproved ? (
         <DancerOnboardingCommand
           draftIdentity={draftIdentity}
@@ -2958,6 +2994,17 @@ function DancerPanel({
           onProfileChange={onProfileChange}
           profile={profile}
         />
+      ) : null}
+      {!isApproved ? (
+        <DashboardSection
+          defaultOpen={effectiveStatus === "pending_review"}
+          description="At the club, tap its official MyDancr dressing-room NFC sticker to authorize your first venue."
+          eyebrow="Step 3"
+          id="dancer-nfc-authorization"
+          title="Venue NFC tap"
+        >
+          <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />
+        </DashboardSection>
       ) : null}
       <DashboardSection
         defaultOpen={isApproved}
@@ -2973,42 +3020,11 @@ function DancerPanel({
             <Metric label="Dressing-room NFC" value={isVenueApproved ? "authorized" : "tap required"} />
             <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
           </InfoPanel>
-          <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />
+          {isApproved ? <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} /> : null}
           {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
         </div>
       </DashboardSection>
-      <DashboardSection
-        defaultOpen={!isApproved}
-        description="Create your identity, avatar, social links, moderated photos, and MyDancr TV videos in one workspace."
-        eyebrow="Dancer workspace"
-        id="dancer-profile-media"
-        title="Profile & media"
-      >
-        <div className="venue-dashboard-inner-grid">
-          <DancerSetupPanel
-            deletedPhotoIds={deletedPhotoIds}
-            deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-            onDeletedPhotoIdsSaved={() => {
-              setDeletedPhotoIds([]);
-              setDeletedPhotoStoragePaths([]);
-            }}
-            profile={profile}
-            onProfileChange={onProfileChange}
-            onDraftChange={setDraftIdentity}
-          />
-          <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />
-          <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
-          <DancerPhotoPanel
-            deletedPhotoIds={deletedPhotoIds}
-            deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-            onDeletedPhotoIdsChange={setDeletedPhotoIds}
-            onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
-            profile={profile}
-            onProfileChange={onProfileChange}
-          />
-          <DancerTvStudio embedded />
-        </div>
-      </DashboardSection>
+      {isApproved ? profileMediaSection : null}
       {isApproved ? (
         <DashboardSection
           description="Post, edit, or remove the real shifts shown on your public profile and venue pages."

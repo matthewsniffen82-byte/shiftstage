@@ -32,6 +32,21 @@ test("the setup command center exposes the real three-step NFC production flow",
   assert.doesNotMatch(venueRoute, /approveDancerVenueVerification/);
 });
 
+test("initial onboarding renders profile media, preview submission, and NFC tap in completion order", () => {
+  const panelStart = dashboard.indexOf("function DancerPanel(");
+  const panelEnd = dashboard.indexOf("function DancerVisibilityPanel(", panelStart);
+  const panel = dashboard.slice(panelStart, panelEnd);
+  const profileMedia = panel.indexOf("{!isApproved ? profileMediaSection : null}");
+  const previewSubmit = panel.indexOf("<DancerOnboardingCommand");
+  const nfcTap = panel.indexOf('id="dancer-nfc-authorization"');
+
+  assert.ok(profileMedia >= 0, "initial profile and media section should render");
+  assert.ok(previewSubmit > profileMedia, "preview and submit should follow profile and media");
+  assert.ok(nfcTap > previewSubmit, "NFC tap should follow preview and submit");
+  assert.match(dashboard, /<h2 id="dancer-onboarding-heading">Preview and submit<\/h2>/);
+  assert.match(panel, /defaultOpen=\{effectiveStatus === "pending_review"\}/);
+});
+
 test("draft identity and social form values survive refreshes without bypassing explicit saves", () => {
   assert.match(dashboard, /mydancr:dancer-profile-draft/);
   assert.match(dashboard, /mydancr:dancer-social-draft/);
