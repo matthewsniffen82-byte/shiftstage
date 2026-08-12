@@ -45,7 +45,14 @@ test("all dancer stage-name editors enforce the same production length limits", 
   assert.match(liveApp, /id="profileStageName" type="text" minlength="2" maxlength="40"/);
   assert.match(liveApp, /id="approvedControlStageName"[\s\S]*?minlength="2" maxlength="40"/);
   assert.match(liveApp, /id="setupStageName"[\s\S]*?minlength="2" maxlength="40"/);
-  assert.match(dashboard, /value=\{stageName\} minLength=\{2\} maxLength=\{40\} autoComplete="nickname"/);
+  assert.match(dashboard, /className="dancer-stage-name-input" type="text" value=\{stageName\} minLength=\{2\} maxLength=\{40\} autoComplete="nickname"/);
+});
+
+test("the routed dancer setup keeps the stage-name editor compact", () => {
+  assert.match(
+    dashboard,
+    /\.setup-panel \.dancer-stage-name-input \{[^}]*height: 56px;[^}]*min-height: 56px;[^}]*max-height: 56px;/,
+  );
 });
 
 test("the authenticated profile API normalizes and validates changed stage names", () => {

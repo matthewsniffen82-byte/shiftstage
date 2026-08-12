@@ -3510,7 +3510,7 @@ function DancerSetupPanel({
       <form onSubmit={saveProfile}>
         <label>
           Stage name
-          <input value={stageName} minLength={2} maxLength={40} autoComplete="nickname" onChange={(event) => {
+          <input className="dancer-stage-name-input" type="text" value={stageName} minLength={2} maxLength={40} autoComplete="nickname" onChange={(event) => {
             draftDirtyRef.current = true;
             setStageName(event.target.value);
             setSaveStatus("idle");
@@ -5692,6 +5692,7 @@ function DashboardStyles() {
       .setup-panel label:nth-of-type(4) { grid-column: span 3; }
       .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input[type="text"], .customer-settings-panel input:not([type]), .socials-panel input, .share-panel input { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
       .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input:not([type]), .socials-panel input, .share-panel input { min-height: 42px; }
+      .setup-panel .dancer-stage-name-input { box-sizing: border-box; height: 56px; min-height: 56px; max-height: 56px; padding-block: 0; }
       .setup-panel textarea { resize: vertical; min-height: 108px; }
       .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button, .socials-panel button, .share-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled, .socials-panel button:disabled { opacity: .62; cursor: wait; }
