@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
@@ -2709,7 +2710,12 @@ function DancerOnboardingCommand({
 }) {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const didRestoreStepRef = useRef(false);
+  const previewCloseRef = useRef<HTMLButtonElement>(null);
+  const previewOverlayRef = useRef<HTMLDivElement>(null);
+  const previewTriggerRef = useRef<HTMLButtonElement>(null);
+  const previewScrollRef = useRef(0);
   const persistedStageName = String(profile?.stage_name || profile?.stageName || "").trim();
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
@@ -2755,6 +2761,10 @@ function DancerOnboardingCommand({
   const previewImage = avatarUrl || approvedPhotos[0]?.imageUrl || "";
   const previewName = draftIdentity.stageName.trim() || persistedStageName || "Your stage name";
   const previewCity = draftIdentity.city.trim() || persistedCity || "Choose your city";
+  const previewPhotos = approvedPhotos.map((photo) => ({
+    id: photo.id,
+    imageUrl: photo.imageUrl,
+  }));
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
@@ -2767,10 +2777,71 @@ function DancerOnboardingCommand({
       if (target instanceof HTMLDetailsElement) target.open = true;
       const parentDetails = target?.closest("details");
       if (parentDetails instanceof HTMLDetailsElement) parentDetails.open = true;
-      target?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [firstIncomplete.id, steps, storageKey]);
+
+  useEffect(() => {
+    if (!isPreviewOpen) return;
+    const scrollY = previewScrollRef.current;
+    const body = document.body;
+    const previewTrigger = previewTriggerRef.current;
+    const previous = {
+      left: body.style.left,
+      overflow: body.style.overflow,
+      position: body.style.position,
+      right: body.style.right,
+      top: body.style.top,
+      width: body.style.width,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    const frame = window.requestAnimationFrame(() => previewCloseRef.current?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsPreviewOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(
+        previewOverlayRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) || [],
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKeyDown);
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      body.style.overflow = previous.overflow;
+      window.scrollTo({ top: scrollY, behavior: "auto" });
+      window.requestAnimationFrame(() => previewTrigger?.focus({ preventScroll: true }));
+    };
+  }, [isPreviewOpen]);
+
+  function openProfilePreview() {
+    previewScrollRef.current = window.scrollY;
+    setIsPreviewOpen(true);
+  }
 
   function openStep(id: string) {
     window.localStorage.setItem(storageKey, id);
@@ -2814,9 +2885,9 @@ function DancerOnboardingCommand({
     <section className="dancer-onboarding-command" aria-labelledby="dancer-onboarding-heading">
       <div className="dancer-onboarding-command-head">
         <span>
-          <span className="eyebrow">Step 2</span>
-          <h2 id="dancer-onboarding-heading">Preview and submit</h2>
-          <p>Review your saved profile, submit it for media approval, then complete the dressing-room NFC tap in the section below.</p>
+          <span className="eyebrow">Setup checklist</span>
+          <h2 id="dancer-onboarding-heading">Profile setup</h2>
+          <p>Complete these steps in order, preview the customer-facing profile, then authorize your first venue at the club.</p>
         </span>
         <b>{steps.filter((step) => step.complete).length} of 3 complete</b>
       </div>
@@ -2832,8 +2903,8 @@ function DancerOnboardingCommand({
             </li>
           ))}
         </ol>
-        <article className="dancer-onboarding-preview" id="dancer-onboarding-preview" aria-label="Live dancer profile preview">
-          <span className="eyebrow">Live preview</span>
+        <article className="dancer-onboarding-preview" id="dancer-onboarding-preview" aria-label="Customer profile preview">
+          <span className="eyebrow">Customer view</span>
           <div className="dancer-onboarding-preview-card">
             <span className="dancer-onboarding-preview-avatar">
               {previewImage ? <img src={previewImage} alt="" /> : previewName.slice(0, 1).toUpperCase()}
@@ -2844,7 +2915,15 @@ function DancerOnboardingCommand({
             </span>
             <b>{profileReady ? "Ready" : "Draft"}</b>
           </div>
-          <p>{pendingAvatar ? "Avatar moderation is in progress." : avatarUrl ? "Avatar approved." : "Add a clear face avatar."} {approvedPhotos.length ? `${approvedPhotos.length} profile ${approvedPhotos.length === 1 ? "photo" : "photos"} approved.` : "Add at least one moderated profile photo."}</p>
+          <p>{pendingAvatar ? "Avatar moderation is in progress." : avatarUrl ? "Avatar approved." : "Add a clear face avatar."} {approvedPhotos.length ? `${approvedPhotos.length} approved profile ${approvedPhotos.length === 1 ? "photo is" : "photos are"} ready to preview.` : "Add at least one moderated profile photo."}</p>
+          <button
+            className="dancer-onboarding-preview-open"
+            onClick={openProfilePreview}
+            ref={previewTriggerRef}
+            type="button"
+          >
+            Preview full profile
+          </button>
         </article>
       </div>
       {firstIncomplete.id === "dancer-onboarding-preview" ? (
@@ -2859,6 +2938,52 @@ function DancerOnboardingCommand({
       <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
         {status || `Current step: ${firstIncomplete.label}. ${firstIncomplete.detail}`}
       </p>
+      {isPreviewOpen ? (
+        <div
+          aria-labelledby="dancer-profile-preview-heading"
+          aria-modal="true"
+          className="dancer-profile-preview-overlay"
+          ref={previewOverlayRef}
+          role="dialog"
+        >
+          <div className="public-profile-shell dancer-profile-preview-shell">
+            <header className="profile-titlebar">
+              <span className={`profile-titlebar-avatar${previewImage ? " has-photo" : ""}`}>
+                {previewImage ? <img alt="" src={previewImage} /> : previewName.slice(0, 1).toUpperCase()}
+              </span>
+              <div className="profile-titlebar-identity">
+                <div>
+                  <h1 id="dancer-profile-preview-heading">{previewName}</h1>
+                </div>
+                <div className="profile-titlebar-context">
+                  <span className="profile-titlebar-city">{previewCity}</span>
+                  <span className="profile-titlebar-status is-empty">Private preview</span>
+                </div>
+              </div>
+              <button
+                aria-label="Close profile preview"
+                className="public-profile-close"
+                onClick={() => setIsPreviewOpen(false)}
+                ref={previewCloseRef}
+                type="button"
+              >
+                ×
+              </button>
+            </header>
+            <DancerPhotoCarousel photos={previewPhotos} stageName={previewName} />
+            <section className="profile-schedule-section dancer-profile-preview-status" aria-labelledby="dancer-profile-preview-status-heading">
+              <div className="profile-section-heading">
+                <div>
+                  <span className="eyebrow">Private preview</span>
+                  <h2 id="dancer-profile-preview-status-heading">Customer profile preview</h2>
+                </div>
+                <span>{approvedPhotos.length} approved</span>
+              </div>
+              <p>Only moderation-approved photos appear here. Your profile stays private until every setup step is complete.</p>
+            </section>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -2986,7 +3111,6 @@ function DancerPanel({
 
   return (
     <>
-      {!isApproved ? profileMediaSection : null}
       {!isApproved ? (
         <DancerOnboardingCommand
           draftIdentity={draftIdentity}
@@ -2996,6 +3120,7 @@ function DancerPanel({
           profile={profile}
         />
       ) : null}
+      {!isApproved ? profileMediaSection : null}
       {!isApproved ? (
         <DashboardSection
           defaultOpen={effectiveStatus === "pending_review"}
@@ -6109,6 +6234,59 @@ function DashboardStyles() {
       .dancer-onboarding-preview-card strong { overflow: hidden; color: #fff; font-size: 18px; text-overflow: ellipsis; white-space: nowrap; }
       .dancer-onboarding-preview-card small, .dancer-onboarding-preview p { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
       .dancer-onboarding-preview-card > b { color: #bfefff; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+      .dancer-onboarding-preview-open { width: 100%; min-height: 46px; border: 1px solid rgba(126,234,255,.34); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.8), rgba(11,148,201,.58)); font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
+      .dancer-onboarding-preview-open:disabled { opacity: .48; cursor: not-allowed; }
+      .dancer-profile-preview-overlay { position: fixed; z-index: 1498; inset: var(--mydancr-preview-banner-offset,0px) 0 0; overflow: auto; overscroll-behavior: contain; color: #f7f2ff; background: #050507; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent; }
+      .dancer-profile-preview-overlay::-webkit-scrollbar { width: 4px; }
+      .dancer-profile-preview-overlay::-webkit-scrollbar-track { background: transparent; }
+      .dancer-profile-preview-overlay::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(255,255,255,.28); }
+      .dancer-profile-preview-shell { min-height: 100dvh; padding: 0 clamp(18px,4vw,56px) max(130px,calc(env(safe-area-inset-bottom) + 110px)); background: radial-gradient(circle at 78% 8%,rgba(139,92,246,.22),transparent 28rem),linear-gradient(180deg,#090911,#050507 62%); }
+      .dancer-profile-preview-overlay .profile-titlebar { position: sticky; z-index: 10; top: 0; max-width: 760px; min-height: 64px; display: flex; align-items: center; gap: 10px; margin: 0 auto; padding: max(8px,env(safe-area-inset-top)) 52px 8px 0; background: radial-gradient(circle at 14% 0%,rgba(126,234,255,.055),transparent 11rem),linear-gradient(180deg,rgba(5,5,8,.98),rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
+      .dancer-profile-preview-overlay .profile-titlebar-avatar { position: relative; width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg,rgba(124,58,237,.72),rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36),0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
+      .dancer-profile-preview-overlay .profile-titlebar-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(1.14) contrast(1.03); }
+      .dancer-profile-preview-overlay .profile-titlebar-identity { min-width: 0; display: grid; flex: 1 1 auto; gap: 6px; }
+      .dancer-profile-preview-overlay .profile-titlebar-identity > div { min-width: 0; display: flex; align-items: center; gap: 7px; }
+      .dancer-profile-preview-overlay .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(20px,4vw,26px); line-height: 1.05; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
+      .dancer-profile-preview-overlay .profile-titlebar-context { overflow: hidden; }
+      .dancer-profile-preview-overlay .profile-titlebar-city, .dancer-profile-preview-overlay .profile-titlebar-status { min-height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; color: #c8bfd6; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 850; white-space: nowrap; }
+      .dancer-profile-preview-overlay .profile-titlebar-status { color: #a99eb7; font-size: 8px; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; }
+      .dancer-profile-preview-overlay .public-profile-close { position: absolute; top: max(8px,env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
+      .dancer-profile-preview-overlay .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13),0 0 22px rgba(34,199,255,.18); }
+      .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-schedule-section { width: min(100%,760px); margin-inline: auto; }
+      .dancer-profile-preview-overlay .profile-media-section { display: grid; gap: 9px; margin-top: 8px; }
+      .dancer-profile-preview-overlay .profile-media-tabs { width: fit-content; display: grid; grid-template-columns: repeat(2,44px); justify-self: center; padding: 0; }
+      .dancer-profile-preview-overlay .profile-media-tabs button { position: relative; isolation: isolate; width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #91869f; background: transparent; box-shadow: none; cursor: pointer; }
+      .dancer-profile-preview-overlay .profile-media-tabs button::before { position: absolute; z-index: 0; inset: 4px; content: ""; border: 1px solid rgba(255,255,255,.11); border-radius: 50%; background: rgba(255,255,255,.055); }
+      .dancer-profile-preview-overlay .profile-media-tabs button.active::before { border-color: rgba(126,234,255,.42); background: linear-gradient(135deg,rgba(109,40,217,.72),rgba(11,148,201,.34)); box-shadow: var(--dancr-shadow-beam-active); }
+      body.dancr-button-system .dancer-profile-preview-overlay .profile-media-tabs button { border: 0 !important; border-radius: 50% !important; color: #91869f !important; background: transparent !important; box-shadow: none !important; }
+      body.dancr-button-system .dancer-profile-preview-overlay .profile-media-tabs button.active { color: #fff !important; background: transparent !important; box-shadow: none !important; }
+      .dancer-profile-preview-overlay .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
+      .dancer-profile-preview-overlay .profile-media-tab-icon { position: relative; z-index: 1; width: 18px; height: 18px; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .dancer-profile-preview-overlay .profile-media-tab-play { fill: currentColor; stroke: none; }
+      .dancer-profile-preview-overlay .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42),0 0 34px rgba(124,58,237,.12); isolation: isolate; touch-action: pan-y; }
+      .dancer-profile-preview-overlay .profile-media-feature::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 28%; pointer-events: none; background: linear-gradient(180deg,transparent,rgba(0,0,0,.7)); }
+      .dancer-profile-preview-overlay .profile-media-feature > img, .dancer-profile-preview-overlay .profile-media-feature > video { width: 100%; height: 100%; display: block; background: #000; pointer-events: none; user-select: none; }
+      .dancer-profile-preview-overlay .profile-media-feature > img { object-fit: contain; filter: brightness(1.14) contrast(1.03); }
+      .dancer-profile-preview-overlay .profile-media-feature > video { object-fit: cover; }
+      .dancer-profile-preview-overlay .profile-media-feature-position, .dancer-profile-preview-overlay .profile-media-feature-expand { position: absolute; z-index: 2; display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #fff; background: rgba(4,4,8,.68); backdrop-filter: blur(12px); font-size: 10px; font-weight: 900; }
+      .dancer-profile-preview-overlay .profile-media-feature-position { top: 12px; left: 12px; }
+      .dancer-profile-preview-overlay .profile-media-feature-expand { right: 12px; bottom: 12px; }
+      .dancer-profile-preview-overlay .profile-media-feature-previous, .dancer-profile-preview-overlay .profile-media-feature-next { position: absolute; z-index: 3; top: 50%; width: 42px; height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #fff; background: rgba(4,4,8,.52); font-size: 30px; transform: translateY(-50%); cursor: pointer; backdrop-filter: blur(9px); }
+      .dancer-profile-preview-overlay .profile-media-feature-previous { left: 10px; }
+      .dancer-profile-preview-overlay .profile-media-feature-next { right: 10px; }
+      .dancer-profile-preview-overlay .profile-media-feature-previous:disabled, .dancer-profile-preview-overlay .profile-media-feature-next:disabled { opacity: 0; pointer-events: none; }
+      .dancer-profile-preview-overlay .profile-media-grid { min-height: 76px; display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 6px; scroll-snap-type: x proximity; scrollbar-width: thin; touch-action: pan-x pan-y; }
+      .dancer-profile-preview-overlay .profile-media-grid-item { position: relative; width: 64px; min-width: 64px; aspect-ratio: 4 / 5; display: block; flex: 0 0 64px; padding: 0; overflow: hidden; scroll-snap-align: start; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; color: #fff; background: #0b0b10; cursor: pointer; }
+      .dancer-profile-preview-overlay .profile-media-grid-item img, .dancer-profile-preview-overlay .profile-media-grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
+      .dancer-profile-preview-overlay .profile-media-grid-item img { filter: brightness(1.14) contrast(1.03); }
+      .dancer-profile-preview-overlay .profile-media-grid-item.active { border-color: #7eeaff; box-shadow: 0 0 0 2px rgba(126,234,255,.16),0 0 16px rgba(34,199,255,.12); }
+      .dancer-profile-preview-overlay .profile-media-empty { align-self: center; justify-self: center; color: #8f849c; }
+      .dancer-profile-preview-overlay .profile-schedule-section { display: grid; gap: 14px; margin-top: 24px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
+      .dancer-profile-preview-overlay .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+      .dancer-profile-preview-overlay .profile-section-heading > div { display: grid; gap: 5px; }
+      .dancer-profile-preview-overlay .profile-section-heading h2 { margin: 0; color: #fff; font-size: clamp(22px,5vw,32px); line-height: 1.05; }
+      .dancer-profile-preview-overlay .profile-section-heading > span { color: #9487a5; font-size: 11px; font-weight: 850; }
+      .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .dancer-onboarding-primary { width: 100%; min-height: 52px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); font: inherit; font-weight: 950; cursor: pointer; }
       .dancer-onboarding-primary:disabled { opacity: .58; cursor: wait; }
       .dancer-onboarding-steps button:focus-visible, .dancer-onboarding-primary:focus-visible, .dancer-avatar-panel button:focus-visible, .dancer-avatar-panel input:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
@@ -6176,7 +6354,7 @@ function DashboardStyles() {
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 860px) { .dancer-onboarding-layout, .dancer-avatar-panel form { grid-template-columns: 1fr; } .dancer-onboarding-preview { position: static; } .dancer-avatar-panel { grid-column: auto; } }
-      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 78px; } .dancer-onboarding-primary { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 8; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } }
+      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 78px; } .dancer-onboarding-primary { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 8; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: 12px; } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { border-radius: 17px; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }

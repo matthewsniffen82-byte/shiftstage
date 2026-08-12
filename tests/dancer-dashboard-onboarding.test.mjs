@@ -33,18 +33,19 @@ test("the setup command center exposes the real three-step NFC production flow",
   assert.doesNotMatch(venueRoute, /approveDancerVenueVerification/);
 });
 
-test("initial onboarding renders profile media, preview submission, and NFC tap in completion order", () => {
+test("initial onboarding puts the complete setup checklist before its workspaces", () => {
   const panelStart = dashboard.indexOf("function DancerPanel(");
   const panelEnd = dashboard.indexOf("function DancerVisibilityPanel(", panelStart);
   const panel = dashboard.slice(panelStart, panelEnd);
   const profileMedia = panel.indexOf("{!isApproved ? profileMediaSection : null}");
-  const previewSubmit = panel.indexOf("<DancerOnboardingCommand");
+  const checklist = panel.indexOf("<DancerOnboardingCommand");
   const nfcTap = panel.indexOf('id="dancer-nfc-authorization"');
 
-  assert.ok(profileMedia >= 0, "initial profile and media section should render");
-  assert.ok(previewSubmit > profileMedia, "preview and submit should follow profile and media");
-  assert.ok(nfcTap > previewSubmit, "NFC tap should follow preview and submit");
-  assert.match(dashboard, /<h2 id="dancer-onboarding-heading">Preview and submit<\/h2>/);
+  assert.ok(checklist >= 0, "setup checklist should render");
+  assert.ok(profileMedia > checklist, "profile and media workspace should follow the checklist");
+  assert.ok(nfcTap > profileMedia, "NFC tap should follow profile and media");
+  assert.match(dashboard, /<span className="eyebrow">Setup checklist<\/span>/);
+  assert.match(dashboard, /<h2 id="dancer-onboarding-heading">Profile setup<\/h2>/);
   assert.match(panel, /defaultOpen=\{effectiveStatus === "pending_review"\}/);
 });
 
@@ -90,12 +91,20 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /setStatus\(photoUploadStatusMessage\(uploadStatus, data\.message\)\);\s*selectPhoto\(null\);\s*if \(photoInputRef\.current\) photoInputRef\.current\.value = "";/);
 });
 
-test("the live preview reflects current profile drafts and real moderation state", () => {
-  assert.match(dashboard, /Live dancer profile preview/);
+test("the full profile preview renders approved media and restores the dashboard position", () => {
+  assert.match(dashboard, /Customer profile preview/);
   assert.match(dashboard, /draftIdentity\.stageName/);
   assert.match(dashboard, /draftIdentity\.city/);
   assert.match(dashboard, /pending_avatar_review/);
   assert.match(dashboard, /approvedPhotos\.length/);
+  assert.match(dashboard, /const previewPhotos = approvedPhotos\.map/);
+  assert.match(dashboard, /<DancerPhotoCarousel photos=\{previewPhotos\} stageName=\{previewName\} \/>/);
+  assert.match(dashboard, /aria-label="Close profile preview"/);
+  assert.match(dashboard, /previewScrollRef\.current = window\.scrollY/);
+  assert.match(dashboard, /window\.scrollTo\(\{ top: scrollY, behavior: "auto" \}\)/);
+  assert.match(dashboard, /event\.key === "Escape"/);
+  assert.match(dashboard, /event\.key !== "Tab"/);
+  assert.match(dashboard, /previewOverlayRef\.current\?\.querySelectorAll<HTMLElement>/);
   assert.match(dashboard, /Avatar moderation is in progress/);
 });
 
@@ -121,4 +130,6 @@ test("mobile onboarding remains one-column with reachable 44px-plus controls", (
   assert.match(dashboard, /\.dancer-onboarding-primary \{ position: sticky/);
   assert.match(dashboard, /\.dancer-onboarding-primary \{ width: 100%; min-height: 52px/);
   assert.match(dashboard, /\.dancer-avatar-panel button \{ min-height: 48px/);
+  assert.match(dashboard, /\.dancer-profile-preview-shell \{ padding-inline: 12px/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-titlebar \{ min-height: 60px/);
 });
