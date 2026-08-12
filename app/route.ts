@@ -12,6 +12,18 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const ADMIN_AUTH_ENTRY_STYLES = `<style>
+#authPage .auth-admin-entry{width:100%;min-height:68px;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:13px;padding:14px 15px;color:#f8fafc;text-decoration:none;border:1px solid rgba(255,255,255,.14);border-radius:18px;background:rgba(33,33,43,.76);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+#authPage .auth-admin-entry:hover,#authPage .auth-admin-entry:focus-visible{border-color:rgba(124,58,237,.8);background:rgba(43,34,68,.88);outline:0;box-shadow:0 0 0 3px rgba(124,58,237,.2),inset 0 1px 0 rgba(255,255,255,.06)}
+#authPage .auth-admin-entry-mark{width:42px;aspect-ratio:1;display:grid;place-items:center;border-radius:50%;color:#fff;background:rgba(91,33,218,.85);font-size:10px;font-weight:950;letter-spacing:.04em}
+#authPage .auth-admin-entry-copy{min-width:0;display:grid;gap:4px}
+#authPage .auth-admin-entry-copy strong{font-size:18px;line-height:1.2}
+#authPage .auth-admin-entry-copy small{color:rgba(226,226,237,.68);font-size:13px;line-height:1.4}
+#authPage .auth-admin-entry-arrow{color:#c4b5fd;font-size:30px;line-height:1}
+</style>`;
+
+const ADMIN_AUTH_ENTRY_HTML = `<a class="auth-admin-entry" id="platformAdminAuthLink" href="/admin" aria-label="Open Platform admin sign in or signup"><span class="auth-admin-entry-mark" aria-hidden="true">ADMIN</span><span class="auth-admin-entry-copy"><strong>Platform admin</strong><small>Sign in or create an admin account with your private admin code.</small></span><span class="auth-admin-entry-arrow" aria-hidden="true">›</span></a>`;
+
 export async function GET() {
   const htmlPath = path.join(process.cwd(), "outputs", "index.html");
   const html = await readFile(htmlPath, "utf8");
@@ -21,14 +33,18 @@ export async function GET() {
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
   const withLiveProfileAssets = withBase.replace(
     "</head>",
-    '<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><script src="/video-autoplay-recovery.js?v=3" defer></script></head>',
+    `<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><script src="/video-autoplay-recovery.js?v=3" defer></script>${ADMIN_AUTH_ENTRY_STYLES}</head>`,
   );
   const withPreviewBanner = withLiveProfileAssets.replace(
     '<body class="dancr-button-system">',
     `<body class="dancr-button-system">${myDancrPreviewBannerHtml}`,
   );
+  const withAdminAuthEntry = withPreviewBanner.replace(
+    '<section class="recovery-popover" id="passwordRecoveryCard"',
+    `${ADMIN_AUTH_ENTRY_HTML}<section class="recovery-popover" id="passwordRecoveryCard"`,
+  );
 
-  return new Response(withPreviewBanner, {
+  return new Response(withAdminAuthEntry, {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
