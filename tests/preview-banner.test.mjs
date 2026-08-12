@@ -11,10 +11,11 @@ const [layout, homeRoute, banner, aesthetic] = await Promise.all([
 
 test("the root layout presents one persistent preview notice across the application", () => {
   assert.equal((layout.match(/<MyDancrPreviewBanner \/>/g) || []).length, 1);
-  assert.match(banner, /TEST SITE/);
-  assert.match(banner, /All profiles, affiliations, schedules, offers, and activity shown are test data\./);
+  assert.match(banner, /DEMO MODE/);
+  assert.match(banner, /All profiles, venues, schedules, offers, and activity shown are fictional demo content\./);
+  assert.doesNotMatch(banner, /TEST\s+SITE|shown are test\s+data/);
   assert.doesNotMatch(banner, /MyDancr Preview|Venue participation/);
-  assert.equal((banner.match(/aria-label="Test site notice"/g) || []).length, 2);
+  assert.equal((banner.match(/aria-label="Demo mode notice"/g) || []).length, 2);
   assert.match(homeRoute, /myDancrPreviewBannerHtml/);
   assert.match(homeRoute, /<body class=\"dancr-button-system\">\$\{myDancrPreviewBannerHtml\}/);
   assert.match(aesthetic, /\.mydancr-preview-banner \{[\s\S]*?position: fixed;[\s\S]*?inset: 0 0 auto;/);
@@ -22,7 +23,8 @@ test("the root layout presents one persistent preview notice across the applicat
 });
 
 test("the preview notice remains compact and responsive on mobile", () => {
-  assert.match(aesthetic, /@media \(max-width: 520px\)[\s\S]*?--mydancr-preview-banner-height: 50px;/);
+  assert.match(aesthetic, /@media \(max-width: 600px\)[\s\S]*?--mydancr-preview-banner-height: 46px;/);
+  assert.match(aesthetic, /\.mydancr-preview-banner span \{[\s\S]*?max-width: min\(52ch, 100%\);/);
   assert.match(aesthetic, /@media \(prefers-reduced-transparency: reduce\)[\s\S]*?backdrop-filter: none;/);
 });
 
