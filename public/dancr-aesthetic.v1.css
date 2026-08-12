@@ -3787,6 +3787,40 @@ body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-d
   border-color: var(--dancr-color-avatar-ring-live) !important;
 }
 
+/* Venue lineup avatars move inside paint-contained cards. Keep their outer
+ * node layout-only and paint the photo, ring, and existing live glow once on
+ * the real border child. This prevents Android from alternately rasterizing
+ * two identical circular background layers while the page is scrolling. */
+body.dancr-button-system :is(
+    .home-venue-discovery-lineup-avatar,
+    .venue-card-lineup-avatar
+  ) {
+  isolation: auto !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+    .home-venue-discovery-lineup-avatar,
+    .venue-card-lineup-avatar
+  ) > [data-dancer-avatar-border] {
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: var(--custom-photo, none) !important;
+  background-position: var(--custom-photo-position, center) !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+}
+
+body.dancr-button-system :is(
+    .home-venue-discovery-lineup-avatar,
+    .venue-card-lineup-avatar
+  )[data-working-now="true"] > [data-dancer-avatar-border] {
+  box-shadow:
+    0 0 0 1px var(--dancr-color-avatar-ring-live),
+    0 0 11px var(--dancr-color-success-medium) !important;
+}
+
 body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-working-now-indicator] {
   position: absolute !important;
   z-index: 6 !important;

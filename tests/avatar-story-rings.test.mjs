@@ -106,3 +106,32 @@ test("working-now avatars keep one complete live-teal ring with NOW reserved for
   assert.doesNotMatch(publicProfile, /profile-titlebar-status is-live">Working Now/);
   assert.doesNotMatch(profileSummary, /profile-modal-live-status/);
 });
+
+test("venue-card lineup avatars use one stable circular paint layer while scrolling", () => {
+  const lineupLayoutRule = wrapperRules.match(
+    /body\.dancr-button-system :is\(\s*\.home-venue-discovery-lineup-avatar,\s*\.venue-card-lineup-avatar\s*\) \{[\s\S]*?\n\}/,
+  )?.[0] || "";
+  const lineupBorderRule = wrapperRules.match(
+    /body\.dancr-button-system :is\(\s*\.home-venue-discovery-lineup-avatar,\s*\.venue-card-lineup-avatar\s*\) > \[data-dancer-avatar-border\] \{[\s\S]*?\n\}/,
+  )?.[0] || "";
+  const lineupLiveRule = wrapperRules.match(
+    /body\.dancr-button-system :is\(\s*\.home-venue-discovery-lineup-avatar,\s*\.venue-card-lineup-avatar\s*\)\[data-working-now="true"\] > \[data-dancer-avatar-border\] \{[\s\S]*?\n\}/,
+  )?.[0] || "";
+
+  assert.ok(lineupLayoutRule);
+  assert.match(lineupLayoutRule, /isolation: auto !important;/);
+  assert.match(lineupLayoutRule, /background-color: transparent !important;/);
+  assert.match(lineupLayoutRule, /background-image: none !important;/);
+  assert.match(lineupLayoutRule, /box-shadow: none !important;/);
+  assert.ok(lineupBorderRule);
+  assert.match(lineupBorderRule, /background-image: var\(--custom-photo, none\) !important;/);
+  assert.match(lineupBorderRule, /background-position: var\(--custom-photo-position, center\) !important;/);
+  assert.match(lineupBorderRule, /background-size: cover !important;/);
+  assert.ok(lineupLiveRule);
+  assert.match(lineupLiveRule, /0 0 0 1px var\(--dancr-color-avatar-ring-live\)/);
+  assert.match(lineupLiveRule, /0 0 11px var\(--dancr-color-success-medium\) !important;/);
+  assert.doesNotMatch(
+    `${lineupLayoutRule}\n${lineupBorderRule}\n${lineupLiveRule}`,
+    /translateZ|backface-visibility|will-change|mask-image|clip-path/,
+  );
+});

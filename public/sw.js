@@ -1,4 +1,4 @@
-/* dancr-sw-release: avatar-wrapper-border-v4 */
+/* dancr-sw-release: venue-avatar-scroll-stability-v1 */
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
