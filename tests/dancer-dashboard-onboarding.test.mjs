@@ -182,3 +182,13 @@ test("mobile onboarding remains one-column with reachable 44px-plus controls", (
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading \{ min-width: 0; display: grid; grid-template-columns: minmax\(0,1fr\) auto/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading h2 \{[^}]*overflow-wrap: anywhere/);
 });
+
+test("step one mobile media and social controls stay inside their accordion", () => {
+  assert.match(dashboard, /\.dancer-step-one-section-panel \{ width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box/);
+  assert.match(dashboard, /\.dancer-step-one-section-panel input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\), \.dancer-step-one-section-panel select, \.dancer-step-one-section-panel textarea \{ width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box/);
+  assert.match(dashboard, /\.dancer-step-one-section-panel input\[type="file"\] \{ overflow: hidden; font-size: 12px/);
+  assert.match(dashboard, /\.dancer-step-one-section-panel p, \.dancer-step-one-section-panel small,[^}]*overflow-wrap: anywhere/);
+  assert.match(dashboard, /\.dancer-step-one-optional-panel \.socials-panel input \{ height: 46px; min-height: 46px; max-height: 46px/);
+  assert.match(dashboard, /\.dancer-step-one-section-panel \.photo-review-card \{ grid-template-columns: 72px minmax\(0,1fr\)/);
+  assert.match(dashboard, /\.dancer-step-one-section-panel \.photo-preview \{ width: 72px/);
+});
