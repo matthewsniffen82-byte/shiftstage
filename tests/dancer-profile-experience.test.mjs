@@ -40,7 +40,7 @@ const [
 ]);
 
 test("the public dancer profile keeps a compact identity that scrolls with the whole profile", () => {
-  assert.match(profilePage, /<header className="profile-titlebar profile-identity-summary">/);
+  assert.match(profilePage, /<header className="profile-titlebar">/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /<h1>\{profile\.stageName\}<\/h1>/);
   assert.match(profilePage, /className="profile-verified" aria-label="Verified dancer"/);
@@ -56,10 +56,10 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);
   assert.match(
     profilePage,
-    /\.profile-close-layer \{ position: sticky;[\s\S]*?height: 0;[\s\S]*?pointer-events: none;/,
+    /\.public-profile-close \{ position: absolute; top: max\(8px, env\(safe-area-inset-top\)\); right: 0; width: 40px; min-height: 40px;/,
   );
-  assert.match(profilePage, /\.public-profile-close \{ position: relative; top: 8px; right: 8px; width: 40px; min-height: 40px;/);
-  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?padding: 10px 12px;[\s\S]*?border: 1px solid rgba\(255,255,255,\.075\);/);
+  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?padding: max\(8px, env\(safe-area-inset-top\)\) 52px 8px 0;/);
+  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?border-bottom: 0;/);
   assert.doesNotMatch(profileCarousel, /profile-media-heading|Photos &amp; TV|approved<\/span>/);
   assert.match(profileCarousel, /className="profile-media-section"[\s\S]*?className="profile-media-tabs"/);
   assert.match(profilePage, /\.profile-media-tabs \{[\s\S]*?grid-template-columns: repeat\(2, 44px\);[\s\S]*?gap: 0;[\s\S]*?padding: 0;[\s\S]*?border: 0;/);
@@ -79,24 +79,22 @@ test("standalone dancer profiles keep the document scrollbar neutral", () => {
   );
 });
 
-test("the mobile profile uses one media, identity, action, schedule, deal, and utility hierarchy", () => {
-  const identityIndex = profilePage.indexOf('className="profile-titlebar profile-identity-summary"');
+test("the mobile profile places schedule directly after media, before revenue and actions", () => {
+  const identityIndex = profilePage.indexOf('className="profile-titlebar"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const overviewIndex = profilePage.indexOf('className="profile-overview"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const utilityIndex = profilePage.indexOf("<DancerProfileUtilityActions");
   const scheduleIndex = profilePage.indexOf('className={`profile-working-card');
   const dealIndex = profilePage.indexOf('className={`profile-active-deal');
   const socialIndex = profilePage.indexOf('className="profile-social-section"');
 
   assert.ok(identityIndex > -1);
-  assert.ok(mediaIndex > -1 && mediaIndex < identityIndex);
-  assert.ok(actionsIndex > identityIndex);
-  assert.ok(scheduleIndex > actionsIndex);
+  assert.ok(mediaIndex > identityIndex);
+  assert.ok(scheduleIndex > mediaIndex);
   assert.ok(dealIndex > scheduleIndex);
-  assert.ok(socialIndex > dealIndex);
+  assert.ok(actionsIndex > dealIndex);
+  assert.ok(socialIndex > actionsIndex);
   assert.ok(overviewIndex > socialIndex);
-  assert.ok(utilityIndex > overviewIndex);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /\{profile\.profileViewsToday \|\| 0\}[\s\S]*?<dt>Views today<\/dt>/);
@@ -105,8 +103,7 @@ test("the mobile profile uses one media, identity, action, schedule, deal, and u
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
   assert.match(profilePage, /Dressing-room NFC verified · active until/);
-  assert.match(profilePage, /directionsHref=\{directionsHref\}/);
-  assert.match(profilePage, /venueHref=\{venueHref\}/);
+  assert.match(profilePage, /Club &amp; directions/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
   assert.match(profilePage, /presentation="launcher"/);
@@ -128,7 +125,7 @@ test("profile actions prioritize Going and demote reporting to a complete safety
   assert.match(profileActions, /className="profile-action-overflow-toggle"/);
   assert.match(profileActions, /className="profile-action-overflow-menu" role="menu"/);
   assert.match(profileActions, /Report profile/);
-  assert.match(profileActions, /setReportDialogOpen\(true\)/);
+  assert.match(profileActions, /onClick=\{submitReport\}/);
   assert.match(profileActions, /className="profile-report-dialog"/);
   assert.match(profileActions, /<select[\s\S]*required[\s\S]*value=\{reportReason\}/);
   assert.match(profileActions, /<textarea[\s\S]*maxLength=\{1200\}/);

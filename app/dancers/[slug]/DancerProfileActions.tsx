@@ -113,16 +113,14 @@ export function DancerNotificationCount() {
 
 export function DancerProfileActions({
   dancerId,
-  directionsHref,
-  rideControl,
+  profileName,
   shifts,
-  venueHref,
+  shareControl,
 }: {
   dancerId: string;
-  directionsHref?: string | null;
-  rideControl?: ReactNode;
+  profileName: string;
   shifts: ShiftAction[];
-  venueHref?: string | null;
+  shareControl?: ReactNode;
 }) {
   const {
     setFollowerCount,
@@ -138,8 +136,16 @@ export function DancerProfileActions({
   const [savedLoaded, setSavedLoaded] = useState(false);
   const [followSaving, setFollowSaving] = useState(false);
   const [goingSaving, setGoingSaving] = useState(false);
+  const [reportSaving, setReportSaving] = useState(false);
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportError, setReportError] = useState("");
+  const [moreActionsOpen, setMoreActionsOpen] = useState(false);
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
+  const moreActionsRef = useRef<HTMLDivElement | null>(null);
   const actionShift = useMemo(
     () => shifts.find((shift) => shift.isActive) || shifts[0] || null,
     [shifts],
@@ -214,11 +220,12 @@ export function DancerProfileActions({
   }, [actionShiftId, dancerId, setGoingCount]);
 
   useEffect(() => {
-    if (!accountRequiredAction) return;
+    if (!accountRequiredAction && !reportDialogOpen) return;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setAccountRequiredAction(null);
+      setReportDialogOpen(false);
     };
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeOnEscape);
@@ -226,7 +233,25 @@ export function DancerProfileActions({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [accountRequiredAction]);
+  }, [accountRequiredAction, reportDialogOpen]);
+
+  useEffect(() => {
+    if (!moreActionsOpen) return;
+    const closeMoreActions = (event: PointerEvent) => {
+      if (!moreActionsRef.current?.contains(event.target as Node)) {
+        setMoreActionsOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreActionsOpen(false);
+    };
+    document.addEventListener("pointerdown", closeMoreActions);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeMoreActions);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [moreActionsOpen]);
 
   function requireCustomerAccount(action: AccountAction) {
     if (token) return true;
@@ -331,6 +356,55 @@ export function DancerProfileActions({
     return data;
   }
 
+  function submitReport() {
+    if (reportSaving || reportSubmitted) return;
+    setMoreActionsOpen(false);
+    setReportError("");
+    setReportDialogOpen(true);
+  }
+
+  async function submitReportForm(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (reportSaving || reportSubmitted) return;
+    if (!reportReason) {
+      setReportError("Choose a reason for the report.");
+      return;
+    }
+    setReportSaving(true);
+    setReportError("");
+    setStatus("");
+    try {
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      if (token) headers.authorization = `Bearer ${token}`;
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers,
+        credentials: "same-origin",
+        body: JSON.stringify({
+          targetType: "dancer_profile",
+          targetId: dancerId,
+          targetLabel: profileName,
+          reason: reportReason,
+          details: reportDetails.trim() || null,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to submit report.");
+      }
+      if (!data.report) throw new Error("The report could not be confirmed.");
+      setReportSubmitted(true);
+      setReportDialogOpen(false);
+      setStatus("Report submitted for review.");
+    } catch (error) {
+      setReportError(
+        error instanceof Error ? error.message : "Unable to submit report.",
+      );
+    } finally {
+      setReportSaving(false);
+    }
+  }
+
   async function postAction(
     path: string,
     body: Record<string, unknown>,
@@ -358,7 +432,7 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className="live-actions profile-primary-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving}>
+      <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
           className={`profile-action-primary profile-action-public profile-action-going${isGoing ? " is-going" : ""}${actionShift ? "" : " profile-action-unavailable"}`}
           type="button"
@@ -401,13 +475,31 @@ export function DancerProfileActions({
             <small className="profile-action-requirement">Sign in required</small>
           ) : null}
         </button>
-        {venueHref ? <Link className="profile-action-destination" href={venueHref}>Club</Link> : <button className="profile-action-destination" type="button" disabled>Club</button>}
-        {directionsHref ? (
-          <a className="profile-action-destination" href={directionsHref} target="_blank" rel="noreferrer">Directions</a>
-        ) : (
-          <button className="profile-action-destination" type="button" disabled aria-label="Directions unavailable for this demonstration club">Directions</button>
-        )}
-        {rideControl ? <div className="profile-action-ride-slot">{rideControl}</div> : null}
+        {shareControl ? <div className="profile-action-share-slot">{shareControl}</div> : null}
+        <div className="profile-action-overflow" ref={moreActionsRef}>
+          <button
+            aria-expanded={moreActionsOpen}
+            aria-haspopup="menu"
+            className="profile-action-overflow-toggle"
+            onClick={() => setMoreActionsOpen((current) => !current)}
+            type="button"
+          >
+            <span aria-hidden="true">•••</span>
+            <span>More</span>
+          </button>
+          {moreActionsOpen ? (
+            <div className="profile-action-overflow-menu" role="menu">
+              <button
+                disabled={reportSaving || reportSubmitted}
+                onClick={submitReport}
+                role="menuitem"
+                type="button"
+              >
+                {reportSubmitted ? "Profile reported" : reportSaving ? "Submitting report" : "Report profile"}
+              </button>
+            </div>
+          ) : null}
+        </div>
         {status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </div>
       {accountRequiredAction ? (
@@ -443,131 +535,6 @@ export function DancerProfileActions({
           </section>
         </div>
       ) : null}
-    </>
-  );
-}
-
-export function DancerProfileUtilityActions({
-  dancerId,
-  profileName,
-  shareControl,
-}: {
-  dancerId: string;
-  profileName: string;
-  shareControl?: ReactNode;
-}) {
-  const [reportSaving, setReportSaving] = useState(false);
-  const [reportSubmitted, setReportSubmitted] = useState(false);
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [reportDetails, setReportDetails] = useState("");
-  const [reportError, setReportError] = useState("");
-  const [moreActionsOpen, setMoreActionsOpen] = useState(false);
-  const [status, setStatus] = useState("");
-  const moreActionsRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!reportDialogOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !reportSaving) setReportDialogOpen(false);
-    };
-    document.body.style.overflow = "hidden";
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [reportDialogOpen, reportSaving]);
-
-  useEffect(() => {
-    if (!moreActionsOpen) return;
-    const closeMoreActions = (event: PointerEvent) => {
-      if (!moreActionsRef.current?.contains(event.target as Node)) setMoreActionsOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMoreActionsOpen(false);
-    };
-    document.addEventListener("pointerdown", closeMoreActions);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeMoreActions);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [moreActionsOpen]);
-
-  async function submitReportForm(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (reportSaving || reportSubmitted) return;
-    if (!reportReason) {
-      setReportError("Choose a reason for the report.");
-      return;
-    }
-    setReportSaving(true);
-    setReportError("");
-    setStatus("");
-    try {
-      const token = readToken();
-      const headers: Record<string, string> = { "content-type": "application/json" };
-      if (token) headers.authorization = `Bearer ${token}`;
-      const response = await fetch("/api/reports", {
-        method: "POST",
-        headers,
-        credentials: "same-origin",
-        body: JSON.stringify({
-          targetType: "dancer_profile",
-          targetId: dancerId,
-          targetLabel: profileName,
-          reason: reportReason,
-          details: reportDetails.trim() || null,
-        }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.ok || !data.report) throw new Error(data.error || "Unable to submit report.");
-      setReportSubmitted(true);
-      setReportDialogOpen(false);
-      setStatus("Report submitted for review.");
-    } catch (error) {
-      setReportError(error instanceof Error ? error.message : "Unable to submit report.");
-    } finally {
-      setReportSaving(false);
-    }
-  }
-
-  return (
-    <>
-      <div className="profile-utility-actions" aria-label="Profile sharing and safety actions">
-        {shareControl ? <div className="profile-action-share-slot">{shareControl}</div> : null}
-        <div className="profile-action-overflow" ref={moreActionsRef}>
-          <button
-            aria-expanded={moreActionsOpen}
-            aria-haspopup="menu"
-            className="profile-action-overflow-toggle"
-            onClick={() => setMoreActionsOpen((current) => !current)}
-            type="button"
-          >
-            <span aria-hidden="true">•••</span>
-            <span>More</span>
-          </button>
-          {moreActionsOpen ? (
-            <div className="profile-action-overflow-menu" role="menu">
-              <button
-                disabled={reportSaving || reportSubmitted}
-                onClick={() => {
-                  setMoreActionsOpen(false);
-                  setReportError("");
-                  setReportDialogOpen(true);
-                }}
-                role="menuitem"
-                type="button"
-              >
-                {reportSubmitted ? "Profile reported" : "Report profile"}
-              </button>
-            </div>
-          ) : null}
-        </div>
-        {status ? <span className="profile-action-status" role="status">{status}</span> : null}
-      </div>
       {reportDialogOpen ? (
         <div
           className="profile-report-gate"

@@ -172,7 +172,7 @@ test("the reusable control uses the required source-specific labels", () => {
 test("the reusable control hides private, unpublished, and invalid destinations", () => {
   assert.match(componentSource, /venue\.isActive === false \|\| venue\.isPublic === false/);
   assert.match(componentSource, /if \(!isValidUberDestination\(destination\)\) return null/);
-  assert.match(dancerPageSource, /featuredShift[\s\S]*?getVenueProfile\(client, featuredShift\.venueSlug\)/);
+  assert.match(dancerPageSource, /activeShift[\s\S]*?getVenueProfile\(client, activeShift\.venueSlug\)/);
   assert.match(dancerPageSource, /source="dancer_profile"/);
 });
 

@@ -2,11 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [liveShell, navigation, dancerProfile, dancerProfileActions, clubDeal, clubActions, nfcTap] = await Promise.all([
+const [liveShell, navigation, dancerProfile, clubDeal, clubActions, nfcTap] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/components/GlobalMobileBottomNav.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/venues/[slug]/VenueProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/nfc/[token]/NfcTapClient.tsx", import.meta.url), "utf8"),
@@ -33,9 +32,7 @@ test("customer discovery consistently presents venues as clubs", () => {
 });
 
 test("customer profile and Club Deal actions use club language", () => {
-  assert.match(dancerProfileActions, />Club<\/Link>/);
-  assert.match(dancerProfileActions, />Directions<\/a>/);
-  assert.match(liveShell, /profileActionButtonMarkup\("venue", "Club"\)/);
+  assert.match(dancerProfile, /Club &amp; directions/);
   assert.match(liveShell, /actionButtonLabel\("profile", "View Club"\)/);
   assert.match(clubActions, /Follow club/);
   assert.match(clubActions, /Club alerts/);

@@ -347,9 +347,6 @@ test("profile violet side beams are limited to live, upcoming, and active deals"
   const profileAccentBlock = liveApp.match(
     /\/\* Profile color is reserved[\s\S]*?(?=\s*<\/style>)/,
   )?.[0] || "";
-  const profileAccentSelectors = profileAccentBlock.match(
-    /#profileBackdrop :is\([\s\S]*?\)::before \{/,
-  )?.[0] || "";
 
   assert.ok(profileAccentBlock, "profile accent CSS must exist");
   assert.match(
@@ -361,7 +358,7 @@ test("profile violet side beams are limited to live, upcoming, and active deals"
     /Full profiles carry one quiet violet side beam[\s\S]*?\.public-profile-shell :is\([\s\S]*?\.profile-working-card,[\s\S]*?\.profile-schedule-section,[\s\S]*?\.profile-working-card \.club-deal-card[\s\S]*?\)::before \{[\s\S]*?width: 2px;[\s\S]*?var\(--dancr-color-beam-violet\)[\s\S]*?pointer-events: none;/,
   );
   assert.doesNotMatch(
-    profileAccentSelectors,
+    profileAccentBlock,
     /\.schedule-empty|\.social-tile|\.profile-qr-unavailable/,
   );
   assert.match(
