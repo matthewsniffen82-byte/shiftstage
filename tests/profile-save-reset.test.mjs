@@ -187,8 +187,6 @@ test("gallery uploads use unique database slots and deletion targets one exact i
 
   assert.doesNotMatch(profileRouteSource, /deleteDancerPhotosByStoragePaths|PROFILE_PHOTO_DELETE_BY_PATH/);
   assert.doesNotMatch(dashboardSource, /photoStorageKeys|nextDeletedPhotoStoragePaths/);
-  assert.match(dashboardSource, /body: JSON\.stringify\(\{ deletedPhotoIds: idsToDelete \}\)/);
-  assert.match(dashboardSource, /dancerPhotoItemsFromProfile\(profile, nextDeletedPhotoIds\)/);
   assert.match(mobileAppSource, /deletedPhotoStoragePaths: \[\]/);
   assert.match(mobileAppSource, /function rememberDeletedDancerPhoto\(profile, \{ photoId = "" \} = \{\}\)/);
   assert.doesNotMatch(
@@ -199,6 +197,18 @@ test("gallery uploads use unique database slots and deletion targets one exact i
   const used = new Set([1, 2]);
   const nextSortOrder = [1, 2, 3, 4, 5].find((sortOrder) => !used.has(sortOrder));
   assert.equal(nextSortOrder, 3);
+});
+
+test("routed dashboard photo deletion is immediate, authenticated, and refresh-persistent", () => {
+  const photoPanel = dashboardSource.match(/function DancerPhotoPanel[\s\S]*?function dancerPhotoItemsFromProfile/)?.[0] || "";
+
+  assert.match(photoPanel, /async function deletePhoto\(photo: DancerPhotoItem\)/);
+  assert.match(photoPanel, /fetch\("\/api\/dancer\/photos", \{[\s\S]*?method: "DELETE"/);
+  assert.match(photoPanel, /body: JSON\.stringify\(\{ photoId: photo\.id \}\)/);
+  assert.match(photoPanel, /fetch\("\/api\/dancer\/profile", \{[\s\S]*?cache: "no-store"/);
+  assert.match(photoPanel, /current\.filter\(\(item\) => item\.id !== photo\.id\)/);
+  assert.match(photoPanel, /Photo deleted permanently\./);
+  assert.doesNotMatch(photoPanel, /Select Save Profile to permanently delete it/);
 });
 
 test("save verifies affected rows, deletion, stages, and public state", () => {
@@ -224,7 +234,8 @@ test("save verifies affected rows, deletion, stages, and public state", () => {
   assert.match(profileRouteSource, /PROTECTED_FIELDS_CHANGED/);
   assert.match(profileRouteSource, /DANCER_PROFILE_VISIBILITY_COLUMN_MISSING/);
   assert.match(profileRouteSource, /loadProfileForSave/);
-  assert.match(dashboardSource, /Saving\.\.\.[\s\S]*Saved Profile[\s\S]*Save Profile/);
+  assert.match(dashboardSource, /saveStatus === "saving" \? "Saving\.\.\." : saveStatus === "saved" \? "Saved" : "Save profile"/);
+  assert.match(dashboardSource, /setStatus\(hasPendingPhotos[\s\S]*?"Saved Profile"/);
 });
 
 test("confirmed profile saves stay visible on the save button until another edit", () => {

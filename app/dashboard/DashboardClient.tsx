@@ -5358,6 +5358,7 @@ function DancerPhotoPanel({
   const [selectedPreview, setSelectedPreview] = useState("");
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingPhotoIds, setDeletingPhotoIds] = useState<Set<string>>(() => new Set());
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -5487,45 +5488,51 @@ function DancerPhotoPanel({
     }
   }
 
-  function deletePhoto(photo: DancerPhotoItem) {
+  async function deletePhoto(photo: DancerPhotoItem) {
     if (!window.confirm("Delete this photo from your profile?")) return;
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
 
-    const nextDeletedPhotoIds = deletedPhotoIdsRef.current.includes(photo.id)
-      ? deletedPhotoIdsRef.current
-      : [...deletedPhotoIdsRef.current, photo.id];
-    console.log("EDIT_PROFILE_PHOTO_DELETE", { photoId: photo.id });
-    console.log("PHOTO_ACTION_DEBUG", {
-      clickedPhotoId: photo.id,
-      clickedPhotoLabel: photo.label,
-      clickedPhotoStoragePath: photo.storagePath || null,
-      clickedPhotoIsPrimary: Boolean(photo.isPrimary),
-      currentPhotoIds: photos.map((item) => item.id),
-    });
-    console.log("PHOTO_DELETE_CLICKED", {
-      id: photo.id,
-      storagePath: photo.storagePath || null,
-      urlPresent: Boolean(photo.imageUrl),
-    });
-    console.log("DELETE_DEBUG_BEFORE_SAVE", {
-      visiblePhotoIds: photos.filter((item) => item.id !== photo.id).map((item) => item.id),
-      deletedPhotoIds: nextDeletedPhotoIds,
-      profilePhotoIds: Array.isArray(profile?.dancer_photos) ? (profile.dancer_photos as Array<any>).map((item) => item.id) : [],
-      primaryPhotoId: primaryPhotoIdFromProfile(profile),
-    });
+    setDeletingPhotoIds((current) => new Set(current).add(photo.id));
+    setStatus("Deleting photo...");
+    try {
+      const response = await fetch("/api/dancer/photos", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ photoId: photo.id }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete photo.");
 
-    deletedPhotoIdsRef.current = nextDeletedPhotoIds;
-    deletedPhotoStoragePathsRef.current = [];
-    onDeletedPhotoIdsChange?.(nextDeletedPhotoIds);
-    onDeletedPhotoStoragePathsChange?.([]);
-    setPhotos((current) =>
-      relabelPhotoItems(
-        mergePhotoItems(
-          dancerPhotoItemsFromProfile(profile, nextDeletedPhotoIds),
-          excludePendingDeletions(current, nextDeletedPhotoIds),
-        ),
-      ),
-    );
-    setStatus("Photo hidden. Select Save Profile to permanently delete it.");
+      setPhotos((current) => relabelPhotoItems(current.filter((item) => item.id !== photo.id)));
+      deletedPhotoIdsRef.current = deletedPhotoIdsRef.current.filter((id) => id !== photo.id);
+      deletedPhotoStoragePathsRef.current = [];
+      onDeletedPhotoIdsChange?.(deletedPhotoIdsRef.current);
+      onDeletedPhotoStoragePathsChange?.([]);
+      setStatus("Photo deleted permanently.");
+
+      const refreshResponse = await fetch("/api/dancer/profile", {
+        headers: { authorization: `Bearer ${session.accessToken}` },
+        cache: "no-store",
+      });
+      const refreshData = await refreshResponse.json();
+      if (refreshResponse.ok && refreshData.ok && refreshData.profile) {
+        const refreshedPhotos = dancerPhotoItemsFromProfile(refreshData.profile);
+        if (refreshedPhotos.some((item) => item.id === photo.id)) {
+          throw new Error("The photo could not be permanently deleted. Please try again.");
+        }
+        setPhotos(relabelPhotoItems(refreshedPhotos));
+        onProfileChange?.(refreshData.profile);
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
+    } finally {
+      setDeletingPhotoIds((current) => {
+        const next = new Set(current);
+        next.delete(photo.id);
+        return next;
+      });
+    }
   }
 
   return (
@@ -5577,9 +5584,10 @@ function DancerPhotoPanel({
               <button
                 className="photo-delete-button"
                 type="button"
+                disabled={deletingPhotoIds.has(photo.id)}
                 onClick={() => deletePhoto(photo)}
               >
-                Delete photo
+                {deletingPhotoIds.has(photo.id) ? "Deleting..." : "Delete photo"}
               </button>
             </span>
           </div>
