@@ -46994,6 +46994,7 @@
         .filter((profile) => !isWorkingTonight(profile, city) && !profile.scheduled)
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
       const followsVenue = isFollowingVenue(city, venue.name);
+      const venueValue = escapeOptionValue(venue.name);
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "venue_page",
@@ -47083,7 +47084,7 @@
                       <strong>Address</strong>
                       <span class="meta">${escapeHtml(details.address)}</span>
                     </span>
-                    <div class="venue-location-actions">
+                    <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
                       ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
                       ${rideMarkup}
                     </div>
@@ -47092,9 +47093,14 @@
                 ${details.phone ? `<div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>` : ""}
                 ${details.website ? `<div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace(/^https?:\/\//, "")}</div></div>` : ""}
               </div>
-              <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
-                ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following club" : "Follow club")}
-              </button>
+              <div class="venue-secondary-actions" aria-label="Venue profile actions">
+                <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
+                  ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following club" : "Follow club")}
+                </button>
+                <button class="action-btn secondary venue-detail-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">
+                  ${actionButtonLabel("share", "Share club")}
+                </button>
+              </div>
             </div>
           </article>
 

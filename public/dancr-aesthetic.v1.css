@@ -4669,8 +4669,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
     var(--dancr-color-brand-glow-soft) 48%,
     transparent 76%
   );
-  filter: blur(18px);
-  opacity: 0.72;
+  filter: blur(22px);
+  opacity: 0.3;
   pointer-events: none;
 }
 
@@ -4843,7 +4843,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-quick-stat.is-upcoming strong {
-  color: var(--dancr-color-info) !important;
+  color: var(--dancr-color-text-primary) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-info .info-tile {
@@ -4866,6 +4866,31 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-loc
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-secondary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-secondary-actions .action-btn {
+  width: 100% !important;
+  min-height: 48px !important;
+  margin: 0 !important;
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-secondary-actions .action-btn:not(.is-following) .action-icon {
+  color: var(--dancr-color-text-secondary) !important;
+  filter: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -5073,7 +5098,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .action-btn.follow-venue-btn:not(.is-following) .action-icon {
-  color: var(--dancr-color-brand-core) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  filter: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
