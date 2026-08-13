@@ -2701,16 +2701,21 @@ function DancerOnboardingCommand({
   isVenueApproved,
   onProfileChange,
   profile,
+  profileMediaContent,
+  venueVerificationContent,
 }: {
   draftIdentity: DancerIdentityDraft;
   effectiveStatus: string;
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
+  profileMediaContent: ReactNode;
+  venueVerificationContent: ReactNode;
 }) {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   const didRestoreStepRef = useRef(false);
   const previewCloseRef = useRef<HTMLButtonElement>(null);
   const previewOverlayRef = useRef<HTMLDivElement>(null);
@@ -2743,21 +2748,25 @@ function DancerOnboardingCommand({
       label: "Create profile & media",
       complete: profileReady,
       detail: setupDetail,
+      locked: false,
     },
     {
       id: "dancer-onboarding-preview",
       label: "Preview & submit",
       complete: submitted,
       detail: submitted ? "Your saved profile is ready for venue affiliation." : profileReady ? "Review the live preview and submit your saved profile." : "Complete the saved profile and media requirements first.",
+      locked: !profileReady && !submitted,
     },
     {
-      id: "dancer-venue-verification",
+      id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
       detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room NFC sticker." : "This final unlock becomes available after submission.",
+      locked: !submitted && !isVenueApproved,
     },
   ], [isVenueApproved, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
+  const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
   const previewImage = avatarUrl || approvedPhotos[0]?.imageUrl || "";
   const previewName = draftIdentity.stageName.trim() || persistedStageName || "Your stage name";
   const previewCity = draftIdentity.city.trim() || persistedCity || "Choose your city";
@@ -2771,14 +2780,8 @@ function DancerOnboardingCommand({
     if (didRestoreStepRef.current) return;
     didRestoreStepRef.current = true;
     const restored = window.localStorage.getItem(storageKey);
-    const targetId = steps.some((step) => step.id === restored && !step.complete) ? String(restored) : firstIncomplete.id;
-    const frame = window.requestAnimationFrame(() => {
-      const target = document.getElementById(targetId);
-      if (target instanceof HTMLDetailsElement) target.open = true;
-      const parentDetails = target?.closest("details");
-      if (parentDetails instanceof HTMLDetailsElement) parentDetails.open = true;
-    });
-    return () => window.cancelAnimationFrame(frame);
+    const targetId = steps.some((step) => step.id === restored && !step.locked) ? String(restored) : firstIncomplete.id;
+    setExpandedStepId(targetId);
   }, [firstIncomplete.id, steps, storageKey]);
 
   useEffect(() => {
@@ -2844,13 +2847,26 @@ function DancerOnboardingCommand({
   }
 
   function openStep(id: string) {
+    const step = steps.find((candidate) => candidate.id === id);
+    if (!step || step.locked) return;
     window.localStorage.setItem(storageKey, id);
-    const section = document.getElementById(id);
-    if (section instanceof HTMLDetailsElement) section.open = true;
-    const parentDetails = section?.closest("details");
-    if (parentDetails instanceof HTMLDetailsElement) parentDetails.open = true;
-    section?.scrollIntoView({ behavior: "smooth", block: "start" });
-    section?.focus({ preventScroll: true });
+    setExpandedStepId(id);
+    window.requestAnimationFrame(() => {
+      const section = document.getElementById(id);
+      section?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById(`${id}-button`)?.focus({ preventScroll: true });
+    });
+  }
+
+  function toggleStep(id: string) {
+    const step = steps.find((candidate) => candidate.id === id);
+    if (!step || step.locked) return;
+    if (visibleExpandedStepId === id) {
+      setExpandedStepId("");
+      window.localStorage.removeItem(storageKey);
+      return;
+    }
+    openStep(id);
   }
 
   async function submitProfile() {
@@ -2871,9 +2887,13 @@ function DancerOnboardingCommand({
       const data = await response.json();
       if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to submit profile.");
       onProfileChange?.(data.profile);
-      window.localStorage.setItem(storageKey, "dancer-venue-verification");
+      window.localStorage.setItem(storageKey, "dancer-onboarding-nfc");
+      setExpandedStepId("dancer-onboarding-nfc");
       setStatus("Profile submitted. Tap the official dressing-room NFC sticker at the club when you are ready.");
-      window.requestAnimationFrame(() => openStep("dancer-venue-verification"));
+      window.requestAnimationFrame(() => {
+        document.getElementById("dancer-onboarding-nfc")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById("dancer-onboarding-nfc-button")?.focus({ preventScroll: true });
+      });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to submit profile.");
     } finally {
@@ -2891,53 +2911,87 @@ function DancerOnboardingCommand({
         </span>
         <b>{steps.filter((step) => step.complete).length} of 3 complete</b>
       </div>
-      <div className="dancer-onboarding-layout">
-        <ol className="dancer-onboarding-steps" aria-label="Dancer profile approval progress">
-          {steps.map((step, index) => (
-            <li className={step.complete ? "is-complete" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>
-              <button type="button" onClick={() => openStep(step.id)} aria-current={step.id === firstIncomplete.id ? "step" : undefined}>
-                <span>{step.complete ? "✓" : index + 1}</span>
-                <strong>{step.label}</strong>
-                <small>{step.detail}</small>
+      <ol className="dancer-onboarding-steps" aria-label="Dancer profile approval progress">
+        {steps.map((step, index) => {
+          const open = visibleExpandedStepId === step.id;
+          const stateLabel = step.complete ? "Complete" : step.locked ? "Locked" : step.id === firstIncomplete.id ? "Current" : "Ready";
+          const panelId = `${step.id}-panel`;
+          return (
+            <li
+              className={`${step.complete ? "is-complete" : step.id === firstIncomplete.id ? "is-current" : ""} ${open ? "is-open" : ""} ${step.locked ? "is-locked" : ""}`.trim()}
+              id={step.id}
+              key={step.id}
+            >
+              <button
+                aria-controls={panelId}
+                aria-current={step.id === firstIncomplete.id ? "step" : undefined}
+                aria-expanded={open}
+                disabled={step.locked}
+                id={`${step.id}-button`}
+                onClick={() => toggleStep(step.id)}
+                type="button"
+              >
+                <span className="dancer-onboarding-step-marker" aria-hidden="true">{step.complete ? "✓" : index + 1}</span>
+                <span className="dancer-onboarding-step-copy">
+                  <strong>{step.label}</strong>
+                  <small>{step.detail}</small>
+                </span>
+                <span className="dancer-onboarding-step-state">{stateLabel}</span>
+                <span className="dancer-onboarding-step-toggle" aria-hidden="true">{open ? "−" : "+"}</span>
               </button>
+              <div
+                aria-labelledby={`${step.id}-button`}
+                className="dancer-onboarding-step-panel"
+                hidden={!open}
+                id={panelId}
+                role="region"
+              >
+                {step.id === "dancer-profile-media" ? profileMediaContent : null}
+                {step.id === "dancer-onboarding-preview" ? (
+                  <div className="dancer-onboarding-preview-workspace">
+                    <article className="dancer-onboarding-preview" aria-label="Customer profile preview">
+                      <span className="eyebrow">Customer view</span>
+                      <div className="dancer-onboarding-preview-card">
+                        <span className="dancer-onboarding-preview-avatar">
+                          {previewImage ? <img src={previewImage} alt="" /> : previewName.slice(0, 1).toUpperCase()}
+                        </span>
+                        <span>
+                          <strong>{previewName}</strong>
+                          <small>{previewCity}</small>
+                        </span>
+                        <b>{submitted ? "Submitted" : profileReady ? "Ready" : "Draft"}</b>
+                      </div>
+                      <p>{pendingAvatar ? "Avatar moderation is in progress." : avatarUrl ? "Avatar approved." : "Add a clear face avatar."} {approvedPhotos.length ? `${approvedPhotos.length} approved profile ${approvedPhotos.length === 1 ? "photo is" : "photos are"} ready to preview.` : "Add at least one moderated profile photo."}</p>
+                      <button
+                        className="dancer-onboarding-preview-open"
+                        onClick={openProfilePreview}
+                        ref={previewTriggerRef}
+                        type="button"
+                      >
+                        Preview full profile
+                      </button>
+                    </article>
+                    {submitted ? (
+                      <div className="dancer-onboarding-complete-note" role="status">
+                        <strong>✓ Step 2 complete</strong>
+                        <span>Your profile was submitted. Continue to the dressing-room tap when you are at the club.</span>
+                      </div>
+                    ) : (
+                      <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
+                        {isSubmitting ? "Submitting..." : "Submit profile for review"}
+                      </button>
+                    )}
+                    <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
+                      {status || "Preview the complete customer-facing profile before submitting it."}
+                    </p>
+                  </div>
+                ) : null}
+                {step.id === "dancer-onboarding-nfc" ? venueVerificationContent : null}
+              </div>
             </li>
-          ))}
-        </ol>
-        <article className="dancer-onboarding-preview" id="dancer-onboarding-preview" aria-label="Customer profile preview">
-          <span className="eyebrow">Customer view</span>
-          <div className="dancer-onboarding-preview-card">
-            <span className="dancer-onboarding-preview-avatar">
-              {previewImage ? <img src={previewImage} alt="" /> : previewName.slice(0, 1).toUpperCase()}
-            </span>
-            <span>
-              <strong>{previewName}</strong>
-              <small>{previewCity}</small>
-            </span>
-            <b>{profileReady ? "Ready" : "Draft"}</b>
-          </div>
-          <p>{pendingAvatar ? "Avatar moderation is in progress." : avatarUrl ? "Avatar approved." : "Add a clear face avatar."} {approvedPhotos.length ? `${approvedPhotos.length} approved profile ${approvedPhotos.length === 1 ? "photo is" : "photos are"} ready to preview.` : "Add at least one moderated profile photo."}</p>
-          <button
-            className="dancer-onboarding-preview-open"
-            onClick={openProfilePreview}
-            ref={previewTriggerRef}
-            type="button"
-          >
-            Preview full profile
-          </button>
-        </article>
-      </div>
-      {firstIncomplete.id === "dancer-onboarding-preview" ? (
-        <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
-          {isSubmitting ? "Submitting..." : "Submit profile for review"}
-        </button>
-      ) : (
-        <button className="dancer-onboarding-primary" type="button" onClick={() => openStep(firstIncomplete.id)}>
-          {firstIncomplete.id === "dancer-venue-verification" ? "See NFC instructions" : "Continue setup"}
-        </button>
-      )}
-      <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
-        {status || `Current step: ${firstIncomplete.label}. ${firstIncomplete.detail}`}
-      </p>
+          );
+        })}
+      </ol>
       {isPreviewOpen ? (
         <div
           aria-labelledby="dancer-profile-preview-heading"
@@ -3074,38 +3128,40 @@ function DancerPanel({
     };
   }, [effectiveStatus, isApproved, onProfileChange]);
 
+  const profileMediaWorkspace = (
+    <div className="venue-dashboard-inner-grid dancer-onboarding-profile-workspace">
+      <DancerSetupPanel
+        deletedPhotoIds={deletedPhotoIds}
+        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+        onDeletedPhotoIdsSaved={() => {
+          setDeletedPhotoIds([]);
+          setDeletedPhotoStoragePaths([]);
+        }}
+        profile={profile}
+        onProfileChange={onProfileChange}
+        onDraftChange={setDraftIdentity}
+      />
+      <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />
+      <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
+      <DancerPhotoPanel
+        deletedPhotoIds={deletedPhotoIds}
+        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+        onDeletedPhotoIdsChange={setDeletedPhotoIds}
+        onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
+        profile={profile}
+        onProfileChange={onProfileChange}
+      />
+      <DancerTvStudio embedded />
+    </div>
+  );
   const profileMediaSection = (
     <DashboardSection
-      defaultOpen={!isApproved}
       description="Create your identity, avatar, social links, moderated photos, and MyDancr TV videos in one workspace."
-      eyebrow={isApproved ? "Dancer workspace" : "Step 1"}
+      eyebrow="Dancer workspace"
       id="dancer-profile-media"
       title="Profile & media"
     >
-      <div className="venue-dashboard-inner-grid">
-        <DancerSetupPanel
-          deletedPhotoIds={deletedPhotoIds}
-          deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-          onDeletedPhotoIdsSaved={() => {
-            setDeletedPhotoIds([]);
-            setDeletedPhotoStoragePaths([]);
-          }}
-          profile={profile}
-          onProfileChange={onProfileChange}
-          onDraftChange={setDraftIdentity}
-        />
-        <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />
-        <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
-        <DancerPhotoPanel
-          deletedPhotoIds={deletedPhotoIds}
-          deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-          onDeletedPhotoIdsChange={setDeletedPhotoIds}
-          onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
-          profile={profile}
-          onProfileChange={onProfileChange}
-        />
-        <DancerTvStudio embedded />
-      </div>
+      {profileMediaWorkspace}
     </DashboardSection>
   );
 
@@ -3118,38 +3174,30 @@ function DancerPanel({
           isVenueApproved={isVenueApproved}
           onProfileChange={onProfileChange}
           profile={profile}
+          profileMediaContent={profileMediaWorkspace}
+          venueVerificationContent={<DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />}
         />
       ) : null}
-      {!isApproved ? profileMediaSection : null}
-      {!isApproved ? (
+      {isApproved ? (
         <DashboardSection
-          defaultOpen={effectiveStatus === "pending_review"}
-          description="At the club, tap its official MyDancr dressing-room NFC sticker to authorize your first venue."
-          eyebrow="Step 3"
-          id="dancer-nfc-authorization"
-          title="Venue NFC tap"
+          defaultOpen
+          description="Approval, venue authorization, public visibility, and the current state of your profile."
+          eyebrow="Dancer workspace"
+          id="dancer-overview"
+          title="Profile status"
         >
-          <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />
+          <div className="venue-dashboard-inner-grid">
+            <InfoPanel title="Profile">
+              <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
+              <Metric label="Status" value={effectiveStatus} />
+              <Metric label="Dressing-room NFC" value={isVenueApproved ? "authorized" : "tap required"} />
+              <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
+            </InfoPanel>
+            <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />
+            <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} />
+          </div>
         </DashboardSection>
       ) : null}
-      <DashboardSection
-        defaultOpen={isApproved}
-        description="Approval, venue authorization, public visibility, and the current state of your profile."
-        eyebrow="Dancer workspace"
-        id="dancer-overview"
-        title="Profile status"
-      >
-        <div className="venue-dashboard-inner-grid">
-          <InfoPanel title="Profile">
-            <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
-            <Metric label="Status" value={effectiveStatus} />
-            <Metric label="Dressing-room NFC" value={isVenueApproved ? "authorized" : "tap required"} />
-            <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
-          </InfoPanel>
-          {isApproved ? <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} /> : null}
-          {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
-        </div>
-      </DashboardSection>
       {isApproved ? profileMediaSection : null}
       {isApproved ? (
         <DashboardSection
@@ -6217,15 +6265,33 @@ function DashboardStyles() {
       .dancer-onboarding-command-head h2 { color: #f8f7fb; font-size: clamp(25px,4vw,34px); letter-spacing: -.025em; }
       .dancer-onboarding-command-head p { color: var(--mydancr-dashboard-muted); font-size: 14px; line-height: 1.45; }
       .dancer-onboarding-command-head > b { flex: 0 0 auto; padding: 8px 11px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #dad7e1; background: rgba(255,255,255,.045); font-size: 11px; }
-      .dancer-onboarding-layout { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(260px,.75fr); align-items: start; gap: 16px; }
       .dancer-onboarding-steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-      .dancer-onboarding-steps button { width: 100%; min-height: 74px; display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 3px 11px; align-items: center; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; color: #f8f7fb; background: #0d0d12; font: inherit; text-align: left; cursor: pointer; }
-      .dancer-onboarding-steps button > span { grid-row: 1 / span 2; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.17); border-radius: 50%; color: #d7d5dd; background: rgba(255,255,255,.045); font-size: 12px; font-weight: 950; }
-      .dancer-onboarding-steps strong { font-size: 15px; }
-      .dancer-onboarding-steps small { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.35; }
-      .dancer-onboarding-steps .is-current button { border-color: rgba(139,92,246,.56); background: rgba(97,45,188,.12); box-shadow: inset 3px 0 0 #8b5cf6; }
-      .dancer-onboarding-steps .is-complete button > span { border-color: rgba(76,223,166,.42); color: #70efbd; background: rgba(25,140,101,.13); }
-      .dancer-onboarding-preview { position: sticky; top: 18px; display: grid; gap: 11px; padding: 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #0d0d12; }
+      .dancer-onboarding-steps > li { min-width: 0; overflow: clip; border: 1px solid rgba(255,255,255,.09); border-radius: 15px; background: #0d0d12; scroll-margin-top: 18px; }
+      .dancer-onboarding-steps button { width: 100%; min-height: 78px; display: grid; grid-template-columns: 34px minmax(0,1fr) auto 28px; gap: 7px 11px; align-items: center; padding: 12px; border: 0; border-radius: 14px; color: #f8f7fb; background: #0d0d12; font: inherit; text-align: left; cursor: pointer; }
+      .dancer-onboarding-step-marker { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.17); border-radius: 50%; color: #d7d5dd; background: rgba(255,255,255,.045); font-size: 12px; font-weight: 950; }
+      .dancer-onboarding-step-copy { min-width: 0; display: grid; gap: 4px; }
+      .dancer-onboarding-step-copy strong { font-size: 15px; }
+      .dancer-onboarding-step-copy small { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.35; }
+      .dancer-onboarding-step-state { min-width: 66px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #c9c6d0; background: rgba(255,255,255,.045); font-size: 9px; font-weight: 950; letter-spacing: .05em; text-align: center; text-transform: uppercase; }
+      .dancer-onboarding-step-toggle { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #f5efff; background: #301b46; font-size: 20px; font-weight: 700; line-height: 1; }
+      .dancer-onboarding-steps .is-current > button { background: rgba(97,45,188,.12); box-shadow: inset 3px 0 0 #8b5cf6; }
+      .dancer-onboarding-steps .is-current { border-color: rgba(139,92,246,.56); }
+      .dancer-onboarding-steps .is-complete { border-color: rgba(76,223,166,.28); }
+      .dancer-onboarding-steps .is-complete > button { background: rgba(25,140,101,.07); }
+      .dancer-onboarding-steps .is-complete .dancer-onboarding-step-marker { border-color: rgba(76,223,166,.42); color: #70efbd; background: rgba(25,140,101,.13); }
+      .dancer-onboarding-steps .is-complete .dancer-onboarding-step-state { border-color: rgba(76,223,166,.3); color: #70efbd; background: rgba(25,140,101,.1); }
+      .dancer-onboarding-steps .is-locked > button { cursor: not-allowed; }
+      .dancer-onboarding-steps .is-locked > button:disabled { opacity: 1; }
+      .dancer-onboarding-steps .is-locked .dancer-onboarding-step-toggle { color: #8e8996; background: rgba(255,255,255,.04); }
+      .dancer-onboarding-steps .is-open > button { border-radius: 14px 14px 0 0; }
+      .dancer-onboarding-step-panel { display: grid; gap: 14px; padding: 14px; border-top: 1px solid rgba(255,255,255,.09); background: #09090d; animation: dancer-onboarding-panel-in .18s ease-out; }
+      .dancer-onboarding-step-panel[hidden] { display: none; }
+      .dancer-onboarding-step-panel .dancer-onboarding-profile-workspace { margin: 0; }
+      .dancer-onboarding-preview-workspace { display: grid; gap: 12px; }
+      .dancer-onboarding-preview { display: grid; gap: 11px; padding: 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #0d0d12; }
+      .dancer-onboarding-complete-note { display: grid; gap: 4px; padding: 13px; border: 1px solid rgba(76,223,166,.28); border-radius: 12px; color: #70efbd; background: rgba(25,140,101,.09); }
+      .dancer-onboarding-complete-note span { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
+      @keyframes dancer-onboarding-panel-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
       .dancer-onboarding-preview-card { min-width: 0; display: grid; grid-template-columns: 62px minmax(0,1fr) auto; align-items: center; gap: 12px; }
       .dancer-onboarding-preview-avatar, .dancer-avatar-preview { overflow: hidden; display: grid; place-items: center; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #17171d; font-weight: 950; }
       .dancer-onboarding-preview-avatar { width: 58px; height: 58px; font-size: 22px; }
@@ -6289,7 +6355,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .dancer-onboarding-primary { width: 100%; min-height: 52px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); font: inherit; font-weight: 950; cursor: pointer; }
       .dancer-onboarding-primary:disabled { opacity: .58; cursor: wait; }
-      .dancer-onboarding-steps button:focus-visible, .dancer-onboarding-primary:focus-visible, .dancer-avatar-panel button:focus-visible, .dancer-avatar-panel input:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
+      .dancer-onboarding-steps button:focus-visible, .dancer-onboarding-primary:focus-visible, .dancer-avatar-panel button:focus-visible, .dancer-avatar-panel input:focus-visible { outline: 2px solid #7eeaff; outline-offset: -3px; }
       .dancer-onboarding-announcement { min-height: 20px; color: #bfefff; font-size: 12px; font-weight: 760; line-height: 1.4; }
       .dancer-avatar-panel { grid-column: span 3; display: grid; gap: 13px; }
       .dancer-avatar-editor { display: grid; grid-template-columns: 78px minmax(0,1fr); align-items: center; gap: 14px; }
@@ -6353,8 +6419,8 @@ function DashboardStyles() {
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
-      @media (max-width: 860px) { .dancer-onboarding-layout, .dancer-avatar-panel form { grid-template-columns: 1fr; } .dancer-onboarding-preview { position: static; } .dancer-avatar-panel { grid-column: auto; } }
-      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 78px; } .dancer-onboarding-primary { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 8; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
+      @media (max-width: 860px) { .dancer-avatar-panel form { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
+      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }

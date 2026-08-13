@@ -26,27 +26,29 @@ test("the setup command center exposes the real three-step NFC production flow",
   assert.match(dashboard, /Preview & submit/);
   assert.match(dashboard, /Dressing-room tap/);
   assert.match(dashboard, /submitForReview: true/);
-  assert.match(dashboard, /See NFC instructions/);
+  assert.match(dashboard, /dancer-onboarding-nfc/);
   assert.match(dancerRoute, /dressing_room_nfc_required/);
   assert.doesNotMatch(dancerRoute, /QRCode\.toDataURL/);
   assert.match(venueRoute, /dressing_room_nfc_required/);
   assert.doesNotMatch(venueRoute, /approveDancerVenueVerification/);
 });
 
-test("initial onboarding puts the complete setup checklist before its workspaces", () => {
+test("initial onboarding nests every production workspace directly under its step button", () => {
   const panelStart = dashboard.indexOf("function DancerPanel(");
   const panelEnd = dashboard.indexOf("function DancerVisibilityPanel(", panelStart);
   const panel = dashboard.slice(panelStart, panelEnd);
-  const profileMedia = panel.indexOf("{!isApproved ? profileMediaSection : null}");
   const checklist = panel.indexOf("<DancerOnboardingCommand");
-  const nfcTap = panel.indexOf('id="dancer-nfc-authorization"');
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.ok(profileMedia > checklist, "profile and media workspace should follow the checklist");
-  assert.ok(nfcTap > profileMedia, "NFC tap should follow profile and media");
+  assert.match(panel, /profileMediaContent=\{profileMediaWorkspace\}/);
+  assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
+  assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);
+  assert.doesNotMatch(panel, /id="dancer-nfc-authorization"/);
   assert.match(dashboard, /<span className="eyebrow">Setup checklist<\/span>/);
   assert.match(dashboard, /<h2 id="dancer-onboarding-heading">Profile setup<\/h2>/);
-  assert.match(panel, /defaultOpen=\{effectiveStatus === "pending_review"\}/);
+  assert.match(dashboard, /className="dancer-onboarding-step-panel"/);
+  assert.match(dashboard, /step\.id === "dancer-profile-media" \? profileMediaContent : null/);
+  assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" \? venueVerificationContent : null/);
 });
 
 test("draft identity and social form values survive refreshes without bypassing explicit saves", () => {
@@ -59,12 +61,18 @@ test("draft identity and social form values survive refreshes without bypassing 
   assert.match(dashboard, /draftDirtyRef\.current/);
 });
 
-test("onboarding restores the active incomplete step and announces progress accessibly", () => {
+test("onboarding restores one accordion step and exposes accessible collapsible controls", () => {
   assert.match(dashboard, /mydancr:dancer-onboarding-step/);
   assert.match(dashboard, /scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/);
   assert.match(dashboard, /aria-current=\{step\.id === firstIncomplete\.id \? "step"/);
+  assert.match(dashboard, /aria-controls=\{panelId\}/);
+  assert.match(dashboard, /aria-expanded=\{open\}/);
+  assert.match(dashboard, /hidden=\{!open\}/);
+  assert.match(dashboard, /role="region"/);
+  assert.match(dashboard, /visibleExpandedStepId === id/);
   assert.match(dashboard, /role="status" aria-live="polite"/);
-  assert.match(dashboard, /Current step:/);
+  assert.match(dashboard, /step\.complete \? "Complete" : step\.locked \? "Locked"/);
+  assert.match(dashboard, /step\.complete \? "✓" : index \+ 1/);
 });
 
 test("profile and media workspace uses production avatar face centering and moderation", () => {
@@ -126,8 +134,10 @@ test("approval transitions in place and saved NFC enrollment finalizes automatic
 });
 
 test("mobile onboarding remains one-column with reachable 44px-plus controls", () => {
-  assert.match(dashboard, /@media \(max-width: 860px\) \{ \.dancer-onboarding-layout, \.dancer-avatar-panel form \{ grid-template-columns: 1fr/);
-  assert.match(dashboard, /\.dancer-onboarding-primary \{ position: sticky/);
+  assert.match(dashboard, /@media \(max-width: 860px\) \{ \.dancer-avatar-panel form \{ grid-template-columns: 1fr/);
+  assert.match(dashboard, /\.dancer-onboarding-steps button \{ min-height: 82px; grid-template-columns: 34px minmax\(0,1fr\) 28px/);
+  assert.match(dashboard, /\.dancer-onboarding-step-panel \{ padding: 10px/);
+  assert.match(dashboard, /\.dancer-onboarding-primary \{ position: static/);
   assert.match(dashboard, /\.dancer-onboarding-primary \{ width: 100%; min-height: 52px/);
   assert.match(dashboard, /\.dancer-avatar-panel button \{ min-height: 48px/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \{[^}]*overflow-x: hidden; overflow-y: auto;[^}]*overscroll-behavior-x: none/);
