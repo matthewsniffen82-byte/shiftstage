@@ -68,6 +68,9 @@ test("full dancer profiles use a quiet neutral vertical scrollbar", () => {
 });
 
 test("profile actions have a clear hierarchy and preserve every real action", () => {
+  const liveActionsMarkup = liveApp.match(
+    /function liveProfileModalActionsMarkup\(profile, status\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
   assert.match(
     liveApp,
     /<div class="modal-actions" aria-label="Customer actions">\s*\$\{goingButton\}/,
@@ -83,8 +86,20 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     /class="action-btn secondary profile-share-action"[\s\S]*?data-profile-share-menu=/,
   );
   assert.match(liveApp, /data-profile-more-actions aria-haspopup="menu" aria-expanded="false"/);
+  assert.match(
+    liveApp,
+    /aria-label="Report and profile options"><span aria-hidden="true">•••<\/span><span>Report &amp; options<\/span>/,
+  );
   assert.match(liveApp, /data-profile-more-menu role="menu" hidden/);
   assert.match(liveApp, /id="reportBtn" type="button" role="menuitem"/);
+  assert.doesNotMatch(
+    liveActionsMarkup.match(/<button class="action-btn secondary profile-share-action"[^>]*>/)?.[0] || "",
+    /disabled|aria-disabled/,
+  );
+  assert.match(
+    liveApp,
+    /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\)[\s\S]*?!requireCustomerAccountForProfileAction\(actionButton\)/,
+  );
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.modal-actions \.going-btn \{\s*grid-column: 1 \/ -1 !important;/,
@@ -92,6 +107,50 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.modal-actions \.profile-share-action \{\s*grid-column: auto !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#profileBackdrop \.modal-actions :is\([\s\S]*?\.action-btn:not\(\.going-btn\),[\s\S]*?\.profile-action-overflow-toggle[\s\S]*?min-height: 44px !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#profileBackdrop \.modal-actions :is\([\s\S]*?#followBtn,[\s\S]*?#notifyBtn,[\s\S]*?\.profile-share-action,[\s\S]*?\.profile-action-overflow-toggle[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;/,
+  );
+  assert.doesNotMatch(
+    aesthetic.match(/Full-profile actions and supporting information stay compact[\s\S]*?Production TV-card branding/)?.[0] || "",
+    /(?:^|\n)[^\{\n]*\.going-btn\s*\{[^\}]*min-height:/m,
+  );
+});
+
+test("profile socials and activity metrics use a compact neutral presentation", () => {
+  const compactProfileBlock = aesthetic.match(
+    /Full-profile actions and supporting information stay compact[\s\S]*?Production TV-card branding/,
+  )?.[0] || "";
+
+  assert.match(
+    compactProfileBlock,
+    /#profileBackdrop \.social-tile \{[\s\S]*?padding: 6px 0 4px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    compactProfileBlock,
+    /#profileBackdrop \.social-tile \.social-link \{[\s\S]*?width: 48px !important;[\s\S]*?height: 48px !important;/,
+  );
+  assert.match(
+    compactProfileBlock,
+    /#profileBackdrop \.profile-activity-metrics::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
+  assert.match(
+    compactProfileBlock,
+    /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?padding: 6px 0 5px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /const followerCount = followerNumber\(profile, city\);[\s\S]*?id="modalFollowerLabel">\$\{followerCount === 1 \? "Follower" : "Followers"\}/,
+  );
+  assert.match(liveApp, /<dt>Views today<\/dt>/);
+  assert.match(
+    liveApp,
+    /followerLabelEl\.textContent = followerCount === 1 \? "Follower" : "Followers"/,
   );
 });
 

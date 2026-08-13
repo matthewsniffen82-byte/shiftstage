@@ -74,7 +74,8 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
     profileNavigationActions,
     /copy its secure link/,
   );
-  assert.match(liveApp, /followerCountEl\.textContent = followerNumber/);
+  assert.match(liveApp, /followerCountEl\.textContent = followerCount\.toLocaleString\(\)/);
+  assert.match(liveApp, /followerLabelEl\.textContent = followerCount === 1 \? "Follower" : "Followers"/);
   assert.match(liveApp, /notificationCount: confirmedNotificationCount\(/);
   assert.doesNotMatch(liveApp, /id="modalNotificationCount"/);
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);

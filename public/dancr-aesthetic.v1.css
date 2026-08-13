@@ -3666,6 +3666,110 @@ body.dancr-button-system .public-profile-shell .profile-metrics dt {
   color: var(--dancr-color-text-muted) !important;
 }
 
+/* Full-profile actions and supporting information stay compact so the media,
+ * schedule, and Club Deal remain the visual focus. Public actions remain
+ * visibly tappable even when an account is needed for the next step. */
+body.dancr-button-system #profileBackdrop .modal-grid {
+  gap: 7px !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions {
+  gap: 6px !important;
+  padding-bottom: 0 !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions :is(
+    .action-btn:not(.going-btn),
+    .profile-action-overflow-toggle
+  ) {
+  min-height: 44px !important;
+  padding: 5px 8px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  line-height: 1.15 !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions :is(
+    #followBtn,
+    #notifyBtn,
+    .profile-share-action,
+    .profile-action-overflow-toggle
+  ) {
+  border-color: var(--dancr-color-border-strong) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: pointer !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions :is(
+    #followBtn,
+    #notifyBtn,
+    .profile-share-action,
+    .profile-action-overflow-toggle
+  ) :is(.profile-action-main, svg, span) {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions .profile-action-requirement {
+  font-size: 9px !important;
+  line-height: 1 !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tile {
+  padding: 6px 0 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tile::before,
+body.dancr-button-system #profileBackdrop .profile-activity-metrics::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tile .social-tile-head {
+  margin-bottom: 6px !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tile .social-links {
+  gap: 7px !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tile .social-link {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  flex: 0 0 48px !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tile .social-link svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics {
+  padding: 6px 0 5px !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics > div {
+  gap: 1px !important;
+  padding: 1px 4px !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics dd {
+  font-size: clamp(17px, 4vw, 21px) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
+  font-size: clamp(9px, 2.2vw, 10px) !important;
+  line-height: 1.15 !important;
+}
+
 /* Production TV-card branding keeps the moving media as the visual hero.
  * Card framing, idle utilities, playback controls, and progress stay neutral;
  * the beam violet is reserved for profile identity, selection, and keyboard focus.

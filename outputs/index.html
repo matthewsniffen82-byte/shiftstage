@@ -47749,11 +47749,12 @@
     }
 
     function profileActivityMetricsMarkup(profile, city = selectedCity()) {
+      const followerCount = followerNumber(profile, city);
       return `
         <dl class="profile-activity-metrics" aria-label="Profile activity">
           <div>
-            <dd id="modalFollowerCount" aria-live="polite">${followerNumber(profile, city).toLocaleString()}</dd>
-            <dt>Followers</dt>
+            <dd id="modalFollowerCount" aria-live="polite">${followerCount.toLocaleString()}</dd>
+            <dt id="modalFollowerLabel">${followerCount === 1 ? "Follower" : "Followers"}</dt>
           </div>
           <div>
             <dd id="tonightInterestCount" aria-live="polite">${tonightInterestCount(profile).toLocaleString()}</dd>
@@ -47829,7 +47830,7 @@
           <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
           <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share Profile")}</button>
           <div class="profile-action-overflow">
-            <button class="profile-action-overflow-toggle" type="button" data-profile-more-actions aria-haspopup="menu" aria-expanded="false"><span aria-hidden="true">•••</span><span>More</span></button>
+            <button class="profile-action-overflow-toggle" type="button" data-profile-more-actions aria-haspopup="menu" aria-expanded="false" aria-label="Report and profile options"><span aria-hidden="true">•••</span><span>Report &amp; options</span></button>
             <div class="profile-action-overflow-menu" data-profile-more-menu role="menu" hidden>
               <button id="reportBtn" type="button" role="menuitem" data-profile="${profile.name}">Report profile</button>
             </div>
@@ -56363,7 +56364,10 @@
       }
 
       const followerCountEl = document.getElementById("modalFollowerCount");
-      if (followerCountEl) followerCountEl.textContent = followerNumber(profile, city).toLocaleString();
+      const followerCount = followerNumber(profile, city);
+      if (followerCountEl) followerCountEl.textContent = followerCount.toLocaleString();
+      const followerLabelEl = document.getElementById("modalFollowerLabel");
+      if (followerLabelEl) followerLabelEl.textContent = followerCount === 1 ? "Follower" : "Followers";
       syncHomeFeedActionButtons(profile, city);
       return { following, notificationsEnabled };
     }
