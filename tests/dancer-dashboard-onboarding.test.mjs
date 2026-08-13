@@ -152,7 +152,11 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /pending_avatar_review/);
   assert.match(dashboard, /approvedPhotos\.length/);
   assert.match(dashboard, /const previewPhotos = approvedPhotos\.map/);
-  assert.match(dashboard, /<DancerPhotoCarousel photos=\{previewPhotos\} stageName=\{previewName\} \/>/);
+  assert.match(dashboard, /readJson\("\/api\/dancer\/tv\/videos", headers\)/);
+  assert.match(dashboard, /String\(video\?\.status \|\| ""\)\.toLowerCase\(\) !== "approved"/);
+  assert.match(dashboard, /videos=\{previewVideos\}/);
+  assert.match(dashboard, /const previewSocialLinks = dancerPreviewSocialLinks\(profile\)/);
+  assert.match(dashboard, /<SocialLinks[\s\S]*links=\{previewSocialLinks\}[\s\S]*trackClicks=\{false\}/);
   assert.match(dashboard, /aria-label="Close profile preview"/);
   assert.match(dashboard, /previewScrollRef\.current = window\.scrollY/);
   assert.match(dashboard, /window\.scrollTo\(\{ top: scrollY, behavior: "auto" \}\)/);

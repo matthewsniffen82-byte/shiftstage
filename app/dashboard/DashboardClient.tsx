@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
+import { SocialLinks } from "@/app/dancers/[slug]/SocialLinks";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
+import type { SocialPlatform } from "@/src/lib/dancr/types";
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
 import DancerShiftManager from "./DancerShiftManager";
@@ -2695,6 +2697,14 @@ function readSetting(profile: LoadState["profile"], key: string, fallback: boole
 
 type DancerIdentityDraft = { stageName: string; city: string };
 
+type DancerPreviewVideo = {
+  id: string;
+  videoUrl: string;
+  durationSeconds: number;
+};
+
+const DANCER_PREVIEW_SOCIAL_PLATFORMS = new Set<SocialPlatform>(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
+
 function DancerOnboardingCommand({
   draftIdentity,
   effectiveStatus,
@@ -2715,6 +2725,9 @@ function DancerOnboardingCommand({
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isPreviewMediaLoading, setIsPreviewMediaLoading] = useState(false);
+  const [previewMediaError, setPreviewMediaError] = useState("");
+  const [previewVideos, setPreviewVideos] = useState<DancerPreviewVideo[]>([]);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   const didRestoreStepRef = useRef(false);
   const previewCloseRef = useRef<HTMLButtonElement>(null);
@@ -2771,6 +2784,7 @@ function DancerOnboardingCommand({
     id: photo.id,
     imageUrl: photo.imageUrl,
   }));
+  const previewSocialLinks = dancerPreviewSocialLinks(profile);
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
@@ -2835,6 +2849,49 @@ function DancerOnboardingCommand({
       body.style.overflow = previous.overflow;
       window.scrollTo({ top: scrollY, behavior: "auto" });
       window.requestAnimationFrame(() => previewTrigger?.focus({ preventScroll: true }));
+    };
+  }, [isPreviewOpen]);
+
+  useEffect(() => {
+    if (!isPreviewOpen) return;
+    const headers = dashboardAuthHeaders(readSession());
+    if (!headers) {
+      setIsPreviewMediaLoading(false);
+      setPreviewVideos([]);
+      setPreviewMediaError("Sign in again to load your saved profile videos.");
+      return;
+    }
+
+    let cancelled = false;
+    setIsPreviewMediaLoading(true);
+    setPreviewMediaError("");
+    setPreviewVideos([]);
+    void readJson("/api/dancer/tv/videos", headers)
+      .then((data) => {
+        if (cancelled) return;
+        const videos = Array.isArray(data?.videos) ? data.videos : [];
+        setPreviewVideos(videos.flatMap((video: Record<string, unknown>) => {
+          const id = String(video?.id || "").trim();
+          const videoUrl = String(video?.videoUrl || "").trim();
+          if (String(video?.status || "").toLowerCase() !== "approved" || !id || !videoUrl) return [];
+          return [{
+            id,
+            videoUrl,
+            durationSeconds: Math.max(0, Number(video?.durationSeconds || 0)),
+          }];
+        }));
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setPreviewVideos([]);
+        setPreviewMediaError(error instanceof Error ? error.message : "Unable to load your saved profile videos.");
+      })
+      .finally(() => {
+        if (!cancelled) setIsPreviewMediaLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
     };
   }, [isPreviewOpen]);
 
@@ -3024,22 +3081,61 @@ function DancerOnboardingCommand({
                 ×
               </button>
             </header>
-            <DancerPhotoCarousel photos={previewPhotos} stageName={previewName} />
+            <DancerPhotoCarousel
+              photos={previewPhotos}
+              stageName={previewName}
+              videos={previewVideos}
+            />
+            {previewSocialLinks.length ? (
+              <section className="profile-social-section" aria-labelledby="profile-social-heading">
+                <SocialLinks
+                  dancerId={String(profile?.id || "private-preview")}
+                  links={previewSocialLinks}
+                  trackClicks={false}
+                />
+              </section>
+            ) : null}
             <section className="profile-schedule-section dancer-profile-preview-status" aria-labelledby="dancer-profile-preview-status-heading">
               <div className="profile-section-heading">
                 <div>
                   <span className="eyebrow">Private preview</span>
                   <h2 id="dancer-profile-preview-status-heading">Customer profile preview</h2>
                 </div>
-                <span>{approvedPhotos.length} approved</span>
+                <span>{approvedPhotos.length} photos · {previewVideos.length} videos</span>
               </div>
-              <p>Only moderation-approved photos appear here. Your profile stays private until every setup step is complete.</p>
+              <p>
+                {isPreviewMediaLoading
+                  ? "Loading your approved profile videos. "
+                  : previewMediaError
+                    ? `${previewMediaError} `
+                    : "Approved photos and videos appear in the media switcher above. "}
+                {previewSocialLinks.length
+                  ? `${previewSocialLinks.length} saved social ${previewSocialLinks.length === 1 ? "link is" : "links are"} included in this private preview. `
+                  : "Saved social links will appear here. "}
+                Your profile stays private until every setup step is complete.
+              </p>
             </section>
           </div>
         </div>
       ) : null}
     </section>
   );
+}
+
+function dancerPreviewSocialLinks(profile?: LoadState["profile"]) {
+  const rows = Array.isArray(profile?.social_links) ? profile.social_links : [];
+  return rows.flatMap((value, index) => {
+    const row = value && typeof value === "object" ? value as Record<string, unknown> : null;
+    const platform = String(row?.platform || "").toLowerCase() as SocialPlatform;
+    const url = String(row?.url || "").trim();
+    if (!row || row.is_active === false || !DANCER_PREVIEW_SOCIAL_PLATFORMS.has(platform) || !url) return [];
+    return [{
+      id: String(row.id || `preview-${platform}-${index}`),
+      platform,
+      handle: String(row.handle || ""),
+      url,
+    }];
+  });
 }
 
 function dancerProfileSetupBlocker({
@@ -6600,7 +6696,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-titlebar-status { color: #a99eb7; font-size: 8px; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; }
       .dancer-profile-preview-overlay .public-profile-close { position: absolute; top: max(8px,env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .dancer-profile-preview-overlay .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13),0 0 22px rgba(34,199,255,.18); }
-      .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-schedule-section { width: min(100%,760px); max-width: 100%; min-width: 0; box-sizing: border-box; margin-inline: auto; }
+      .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-social-section, .dancer-profile-preview-overlay .profile-schedule-section { width: min(100%,760px); max-width: 100%; min-width: 0; box-sizing: border-box; margin-inline: auto; }
       .dancer-profile-preview-overlay .profile-media-section { display: grid; gap: 9px; margin-top: 8px; }
       .dancer-profile-preview-overlay .profile-media-tabs { width: fit-content; display: grid; grid-template-columns: repeat(2,44px); justify-self: center; padding: 0; }
       .dancer-profile-preview-overlay .profile-media-tabs button { position: relative; isolation: isolate; width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #91869f; background: transparent; box-shadow: none; cursor: pointer; }
@@ -6629,6 +6725,18 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-media-grid-item img { filter: brightness(1.14) contrast(1.03); }
       .dancer-profile-preview-overlay .profile-media-grid-item.active { border-color: #7eeaff; box-shadow: 0 0 0 2px rgba(126,234,255,.16),0 0 16px rgba(34,199,255,.12); }
       .dancer-profile-preview-overlay .profile-media-empty { align-self: center; justify-self: center; color: #8f849c; }
+      .dancer-profile-preview-overlay .profile-social-section { display: grid; margin-top: 20px; margin-bottom: 8px; padding: 15px 14px 14px; border: 1px solid rgba(126,234,255,.18); border-radius: 18px; background: radial-gradient(circle at 50% 0%,rgba(126,234,255,.08),transparent 11rem),rgba(13,10,23,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035),0 16px 38px rgba(0,0,0,.2); }
+      .dancer-profile-preview-overlay .social-links-control { display: grid; justify-items: center; gap: 12px; text-align: center; }
+      .dancer-profile-preview-overlay .social-list-heading { display: grid; justify-items: center; gap: 3px; }
+      .dancer-profile-preview-overlay .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
+      .dancer-profile-preview-overlay .social-list-heading h2 { margin: 0; font-size: 15px; line-height: 1.1; }
+      .dancer-profile-preview-overlay .social-list { width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+      .dancer-profile-preview-overlay .social-list a { width: 48px; min-width: 48px; height: 48px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 48px; padding: 0; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; color: #fff; background: linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); text-decoration: none; transition: border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease; }
+      .dancer-profile-preview-overlay .social-list a:hover { border-color: rgba(126,234,255,.56); background: linear-gradient(135deg,rgba(139,92,246,.22),rgba(34,199,255,.12)); box-shadow: 0 0 18px rgba(34,199,255,.1); transform: translateY(-1px); }
+      .dancer-profile-preview-overlay .social-list a:focus-visible { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 3px; }
+      .dancer-profile-preview-overlay .social-list a svg { width: 23px; height: 23px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .dancer-profile-preview-overlay .social-list a.social-link-instagram svg, .dancer-profile-preview-overlay .social-list a.social-link-x svg { fill: none; }
+      .dancer-profile-preview-overlay .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       .dancer-profile-preview-overlay .profile-schedule-section { display: grid; gap: 14px; margin-top: 24px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
       .dancer-profile-preview-overlay .profile-section-heading { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 14px; }
       .dancer-profile-preview-overlay .profile-section-heading > div { min-width: 0; display: grid; gap: 5px; }

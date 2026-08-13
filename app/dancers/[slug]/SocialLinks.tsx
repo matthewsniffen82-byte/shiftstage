@@ -12,6 +12,7 @@ type PublicSocialLink = {
 type SocialLinksProps = {
   dancerId: string;
   links: PublicSocialLink[];
+  trackClicks?: boolean;
 };
 
 const platformLabels: Record<SocialPlatform, string> = {
@@ -22,7 +23,7 @@ const platformLabels: Record<SocialPlatform, string> = {
   onlyfans: "OnlyFans",
 };
 
-export function SocialLinks({ dancerId, links }: SocialLinksProps) {
+export function SocialLinks({ dancerId, links, trackClicks = true }: SocialLinksProps) {
   if (!links.length) return null;
 
   function recordClick(platform: SocialPlatform) {
@@ -59,7 +60,7 @@ export function SocialLinks({ dancerId, links }: SocialLinksProps) {
             className={`social-link social-link-${link.platform}`}
             href={link.url}
             key={link.id}
-            onClick={() => recordClick(link.platform)}
+            onClick={trackClicks ? () => recordClick(link.platform) : undefined}
             rel="noopener noreferrer"
             target="_blank"
             title={platformLabels[link.platform]}
