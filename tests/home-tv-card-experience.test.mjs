@@ -108,7 +108,7 @@ test("TV cards expose separate right-side action icons with fullscreen anchored 
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
   assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedCopy/);
-  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?gap: 9px;/);
+  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 9px;/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
 });
@@ -131,6 +131,25 @@ test("TV cards retain a neutral NFC placeholder until a verified live Club Deal 
   assert.match(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>/);
   assert.match(fullTvFeedSource, /function TvClubDealUnavailable[\s\S]*?No Club Deal available[\s\S]*?Unlocks when working[\s\S]*?Not available now/);
   assert.match(fullTvFeedSource, /className="tv-club-deal-unavailable"[\s\S]*?<NfcIcon \/>[\s\S]*?<small>Club Deals<\/small>/);
+});
+
+test("TV Club Deal states keep one fixed rounded-square shape", () => {
+  const dealShell = homeSource.match(
+    /\.home-tv-feed-deal-action \{[\s\S]*?\n        \}/,
+  )?.[0] || "";
+  const dealLabel = homeSource.match(
+    /\.home-tv-feed-deal-count \{[\s\S]*?\n        \}/,
+  )?.[0] || "";
+  const actionsFactory = homeSource.match(
+    /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+  )?.[0] || "";
+
+  assert.match(dealShell, /box-sizing: border-box;/);
+  assert.match(dealShell, /width: 56px;[\s\S]*?min-width: 56px;[\s\S]*?max-width: 56px;/);
+  assert.match(dealShell, /height: 56px;[\s\S]*?min-height: 56px;[\s\S]*?max-height: 56px;/);
+  assert.match(dealShell, /border-radius: 16px;/);
+  assert.match(dealLabel, /position: static;[\s\S]*?width: 100%;[\s\S]*?background: transparent;/);
+  assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Club Deals/g) || []).length, 2);
 });
 
 test("TV cards are completely borderless without a violet perimeter", () => {

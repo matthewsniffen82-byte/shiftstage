@@ -31384,6 +31384,7 @@
           right: 12px;
           bottom: 76px;
           display: grid;
+          justify-items: end;
           gap: 9px;
         }
         .home-tv-feed-action {
@@ -31434,6 +31435,18 @@
         }
         .home-tv-feed-deal-action {
           position: relative;
+          box-sizing: border-box;
+          width: 56px;
+          min-width: 56px;
+          max-width: 56px;
+          height: 56px;
+          min-height: 56px;
+          max-height: 56px;
+          grid-template-rows: 22px 10px;
+          align-content: center;
+          gap: 3px;
+          padding: 5px 3px;
+          border-radius: 16px;
           border-color: var(--dancr-color-success-strong);
           color: var(--dancr-color-text-primary);
           background:
@@ -31442,24 +31455,23 @@
           box-shadow: 0 8px 24px var(--dancr-color-black-medium), 0 0 20px var(--dancr-color-success-soft);
         }
         .home-tv-feed-deal-count {
-          position: absolute;
-          right: 50%;
-          bottom: -5px;
-          min-width: 17px;
-          height: 17px;
+          position: static;
+          width: 100%;
+          min-width: 0;
+          height: 10px;
           display: grid;
           place-items: center;
-          padding: 0 4px;
-          border: 1px solid rgba(255,255,255,.24);
-          border-radius: 999px;
-          color: #061015;
-          background: #78ffc0;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          color: currentColor;
+          background: transparent;
           box-sizing: border-box;
           font-size: 7px;
           font-weight: 950;
           line-height: 1;
           white-space: nowrap;
-          transform: translateX(50%);
+          transform: none;
         }
         .home-tv-feed-deal-action svg {
           width: 20px;
@@ -31488,9 +31500,8 @@
           cursor: pointer;
         }
         .home-tv-feed-deal-action.is-unavailable .home-tv-feed-deal-count {
-          border-color: rgba(255,255,255,.12);
           color: rgba(245,245,255,.68);
-          background: rgba(38,34,51,.94);
+          background: transparent;
           box-shadow: none;
         }
         .home-tv-feed-report-menu {
