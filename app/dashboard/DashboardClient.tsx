@@ -3090,6 +3090,7 @@ function DancerOnboardingCommand({
               <section className="profile-social-section" aria-labelledby="profile-social-heading">
                 <SocialLinks
                   dancerId={String(profile?.id || "private-preview")}
+                  heading="Social links"
                   links={previewSocialLinks}
                   showConnectLabel={false}
                   trackClicks={false}

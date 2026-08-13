@@ -12,6 +12,7 @@ type PublicSocialLink = {
 type SocialLinksProps = {
   dancerId: string;
   links: PublicSocialLink[];
+  heading?: string;
   showConnectLabel?: boolean;
   trackClicks?: boolean;
 };
@@ -24,7 +25,7 @@ const platformLabels: Record<SocialPlatform, string> = {
   onlyfans: "OnlyFans",
 };
 
-export function SocialLinks({ dancerId, links, showConnectLabel = true, trackClicks = true }: SocialLinksProps) {
+export function SocialLinks({ dancerId, heading = "Official socials", links, showConnectLabel = true, trackClicks = true }: SocialLinksProps) {
   if (!links.length) return null;
 
   function recordClick(platform: SocialPlatform) {
@@ -52,7 +53,7 @@ export function SocialLinks({ dancerId, links, showConnectLabel = true, trackCli
     <div className="social-links-control">
       <div className="social-list-heading">
         {showConnectLabel ? <span>Connect</span> : null}
-        <h2 id="profile-social-heading">Official socials</h2>
+        <h2 id="profile-social-heading">{heading}</h2>
       </div>
       <div className="social-list" aria-label="Social links">
         {links.map((link) => (

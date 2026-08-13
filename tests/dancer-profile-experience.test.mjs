@@ -193,7 +193,8 @@ test("inline profile TV has complete play, sound, progress, and duration control
 });
 
 test("official social icons stay centered without publishing handles", () => {
-  assert.match(socialLinks, /<h2 id="profile-social-heading">Official socials<\/h2>/);
+  assert.match(socialLinks, /heading = "Official socials"/);
+  assert.match(socialLinks, /<h2 id="profile-social-heading">\{heading\}<\/h2>/);
   assert.match(socialLinks, /rel="noopener noreferrer"/);
   assert.match(socialLinks, /opens in a new tab/);
   assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
