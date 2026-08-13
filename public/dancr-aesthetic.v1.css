@@ -5728,6 +5728,284 @@ html:is(
   mix-blend-mode: normal !important;
 }
 
+/* Discovery control refinement
+ * Keep Android and iOS on the same branded city-selection surface while the
+ * native select remains available as the progressive-enhancement fallback. */
+body.dancr-button-system > .app main.stack > .home-discovery-controls
+  .home-city-filter.is-enhanced #citySelect,
+body.dancr-button-system > .app main.stack > .home-discovery-controls
+  .home-city-filter.is-enhanced .home-city-select-icon {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+}
+
+.city-picker-trigger[hidden] {
+  display: none !important;
+}
+
+body.dancr-button-system > .app main.stack > .home-discovery-controls .city-picker-trigger {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px !important;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 17px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 13px !important;
+  border-color: var(--dancr-color-border) !important;
+  border-radius: 14px !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+}
+
+.city-picker-trigger-icon,
+.city-picker-chevron {
+  width: 100%;
+  height: auto;
+  fill: none;
+  stroke: var(--dancr-color-text-secondary);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.city-picker-trigger-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.city-picker-dialog {
+  width: min(440px, calc(100vw - 24px)) !important;
+  max-width: none !important;
+  max-height: min(520px, calc(100dvh - 24px)) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--dancr-color-border) !important;
+  border-radius: 20px !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.68) !important;
+}
+
+.city-picker-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.8) !important;
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+
+.city-picker-panel {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.city-picker-header {
+  min-height: 68px !important;
+  padding: 13px 15px 11px !important;
+  border-bottom-color: var(--dancr-color-border-subtle) !important;
+}
+
+.city-picker-header strong {
+  font-size: 19px !important;
+  letter-spacing: -0.02em;
+}
+
+.city-picker-close {
+  width: 40px !important;
+  height: 40px !important;
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface-subtle) !important;
+  box-shadow: none !important;
+}
+
+.city-picker-options {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  max-height: min(360px, calc(100dvh - 188px)) !important;
+  padding: 8px !important;
+}
+
+.city-picker-option {
+  min-height: 54px !important;
+  grid-template-columns: 24px minmax(0, 1fr) auto !important;
+  padding: 8px 11px !important;
+  border-color: transparent !important;
+  border-radius: 13px !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 16px !important;
+}
+
+.city-picker-option:hover {
+  background: var(--dancr-color-surface-subtle) !important;
+}
+
+.city-picker-option[aria-selected="true"] {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 10%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-soft) !important;
+}
+
+.city-picker-option[aria-selected="true"] .venue-picker-radio {
+  border-color: var(--dancr-color-brand-primary) !important;
+}
+
+.city-picker-option[aria-selected="true"] .venue-picker-radio::after {
+  background: var(--dancr-color-brand-primary) !important;
+}
+
+.city-picker-selected-label {
+  color: var(--dancr-color-text-muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.city-picker-done {
+  min-height: 48px !important;
+  margin: 8px 14px 14px !important;
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 12%,
+    var(--dancr-color-surface-subtle)
+  ) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter:not(.is-active) {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter:not(.is-active) > span {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter.is-active {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 10%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-soft) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) {
+  border-color: var(--dancr-color-live-medium) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-live) 10%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-live-soft) !important;
+}
+
+@media (max-width: 640px) {
+  body.dancr-button-system > .app main.stack > .home-discovery-controls {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 7px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    :is(.city-picker-trigger, .home-filter-toggle) {
+    min-height: 44px !important;
+    border-radius: 13px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls .city-picker-trigger {
+    font-size: 15px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls .home-filter-toggle {
+    min-width: 100px;
+    padding-inline: 11px !important;
+    font-size: 14px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-live-summary {
+    margin-top: -2px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack > .content-head.discovery-sticky-head {
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    padding-block: 4px 8px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > .content-head.discovery-sticky-head > #tabTitle {
+    font-size: clamp(25px, 7.1vw, 31px) !important;
+    line-height: 1.02 !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > .content-head.discovery-sticky-head > #tabCount {
+    min-height: 30px !important;
+    padding-inline: 10px !important;
+    font-size: 10px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid .dancer-directory-filters {
+    gap: 6px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid .dancer-directory-filter {
+    min-height: 44px !important;
+    padding-inline: 6px !important;
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+  }
+
+  .city-picker-dialog[open] {
+    position: fixed !important;
+    inset: auto 10px max(10px, env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-height: min(430px, calc(100dvh - 28px)) !important;
+    margin: 0 !important;
+    border-radius: 20px !important;
+  }
+
+  .city-picker-options {
+    max-height: min(292px, calc(100dvh - 166px)) !important;
+  }
+}
+
 /* iOS Safari can evict filtered photo layers during momentum scrolling. The
  * compact directory uses native responsive images, so keep those tiles in the
  * ordinary paint flow and leave color correction to the source image. This is

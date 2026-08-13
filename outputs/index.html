@@ -30716,8 +30716,8 @@
       </section>
 
       <section class="controls home-discovery-controls" aria-label="Discovery filters">
-        <div class="field home-city-filter">
-          <label for="citySelect">City</label>
+        <div class="field home-city-filter" id="cityPickerField">
+          <label id="citySelectLabel" for="citySelect">City</label>
           <div class="home-city-select-shell">
             <svg class="home-city-select-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path>
@@ -30729,6 +30729,23 @@
               <option>Atlanta</option>
               <option>New York</option>
             </select>
+            <button
+              class="city-picker-trigger"
+              id="citySelectButton"
+              type="button"
+              aria-haspopup="dialog"
+              aria-controls="citySelectDialog"
+              aria-expanded="false"
+              aria-labelledby="citySelectLabel citySelectButtonText"
+              hidden
+            >
+              <svg class="city-picker-trigger-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="2.5"></circle>
+              </svg>
+              <span class="city-picker-trigger-value" id="citySelectButtonText">Las Vegas</span>
+              <svg class="city-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+            </button>
           </div>
         </div>
         <button
@@ -30776,6 +30793,16 @@
             <span class="location-btn-label">Use my location</span>
           </button>
         </div>
+        <dialog class="venue-picker-dialog city-picker-dialog" id="citySelectDialog" aria-labelledby="citySelectDialogTitle">
+          <div class="venue-picker-panel city-picker-panel">
+            <div class="venue-picker-header city-picker-header">
+              <div><span>City</span><strong id="citySelectDialogTitle">Choose a city</strong></div>
+              <button class="venue-picker-close city-picker-close" id="citySelectClose" type="button" aria-label="Close city selection">&times;</button>
+            </div>
+            <div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectDialogTitle"></div>
+            <button class="venue-picker-done city-picker-done" id="citySelectDone" type="button">Done</button>
+          </div>
+        </dialog>
         <dialog class="venue-picker-dialog" id="venueSelectDialog" aria-labelledby="venueSelectDialogTitle">
           <div class="venue-picker-panel">
             <div class="venue-picker-header">
@@ -38275,6 +38302,16 @@
     };
 
     const citySelect = document.getElementById("citySelect");
+    const cityPickerField = document.getElementById("cityPickerField");
+    const citySelectLabel = document.getElementById("citySelectLabel");
+    const citySelectButton = document.getElementById("citySelectButton");
+    const citySelectButtonText = document.getElementById("citySelectButtonText");
+    const citySelectDialog = document.getElementById("citySelectDialog");
+    const citySelectOptions = document.getElementById("citySelectOptions");
+    const citySelectClose = document.getElementById("citySelectClose");
+    const citySelectDone = document.getElementById("citySelectDone");
+    let pendingCitySelection = citySelect?.value || "Las Vegas";
+    let cityPickerRestoreFocus = null;
     const distanceSelect = document.getElementById("distanceSelect");
     const venueSelect = document.getElementById("venueSelect");
     const venuePickerField = document.getElementById("venuePickerField");
@@ -54093,6 +54130,7 @@
 
     function render() {
       const city = citySelect.value;
+      syncCityPickerSelection(city);
       populateVenueSelect(city);
       const tvVenueFilter = selectedHomeTvVenueFilter(city);
       const tvLaunchScope = `${city}:${tvVenueFilter?.id || ""}`;
@@ -58704,6 +58742,88 @@
     homeFeedReturnHomeBtn?.addEventListener("click", returnToHomeDiscoveryMain);
     brandHome.addEventListener("click", returnToHomeDiscoveryMain);
 
+    function cityPickerOptionMarkup(city) {
+      const safeCity = escapeHtml(city);
+      const selected = city === pendingCitySelection;
+      return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeCity}</span><span class="city-picker-selected-label" aria-hidden="true">${selected ? "Selected" : ""}</span></button>`;
+    }
+
+    function renderCityPickerOptions() {
+      if (!citySelectOptions || !citySelect) return;
+      citySelectOptions.innerHTML = [...citySelect.options]
+        .map((option) => cityPickerOptionMarkup(option.value))
+        .join("");
+    }
+
+    function syncCityPickerSelection(city = citySelect?.value || "Las Vegas") {
+      if (!citySelect) return;
+      const availableCities = [...citySelect.options].map((option) => option.value);
+      pendingCitySelection = availableCities.includes(city) ? city : citySelect.value;
+      if (citySelectButtonText) citySelectButtonText.textContent = citySelect.value;
+      renderCityPickerOptions();
+    }
+
+    function openCityPicker() {
+      if (!citySelectDialog || typeof citySelectDialog.showModal !== "function") return;
+      cityPickerRestoreFocus = document.activeElement;
+      syncCityPickerSelection(citySelect?.value || "Las Vegas");
+      citySelectButton?.setAttribute("aria-expanded", "true");
+      citySelectDialog.showModal();
+      window.requestAnimationFrame(() => citySelectOptions?.querySelector('[aria-selected="true"]')?.focus());
+    }
+
+    function closeCityPicker() {
+      syncCityPickerSelection(citySelect?.value || "Las Vegas");
+      if (citySelectDialog?.open) citySelectDialog.close();
+      citySelectButton?.setAttribute("aria-expanded", "false");
+      const focusTarget = cityPickerRestoreFocus instanceof HTMLElement ? cityPickerRestoreFocus : citySelectButton;
+      window.requestAnimationFrame(() => focusTarget?.focus());
+      cityPickerRestoreFocus = null;
+    }
+
+    function applyCityPickerSelection() {
+      if (!citySelect) return closeCityPicker();
+      const changed = citySelect.value !== pendingCitySelection;
+      citySelect.value = pendingCitySelection;
+      syncCityPickerSelection(citySelect.value);
+      closeCityPicker();
+      if (changed) citySelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    if (cityPickerField && citySelectButton && citySelectDialog && typeof citySelectDialog.showModal === "function") {
+      cityPickerField.classList.add("is-enhanced");
+      citySelect.tabIndex = -1;
+      citySelect.setAttribute("aria-hidden", "true");
+      citySelectButton.hidden = false;
+      syncCityPickerSelection(citySelect.value);
+    }
+    citySelectButton?.addEventListener("click", openCityPicker);
+    citySelectLabel?.addEventListener("click", (event) => {
+      if (!cityPickerField?.classList.contains("is-enhanced")) return;
+      event.preventDefault();
+      openCityPicker();
+    });
+    citySelectDone?.addEventListener("click", applyCityPickerSelection);
+    citySelectClose?.addEventListener("click", closeCityPicker);
+    citySelectOptions?.addEventListener("click", (event) => {
+      const option = event.target.closest("[data-city-picker-value]");
+      if (!option) return;
+      pendingCitySelection = option.dataset.cityPickerValue || citySelect.value;
+      renderCityPickerOptions();
+      citySelectOptions.querySelector('[aria-selected="true"]')?.focus();
+    });
+    citySelectOptions?.addEventListener("keydown", (event) => {
+      if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+      const options = [...citySelectOptions.querySelectorAll("[data-city-picker-value]")];
+      const currentIndex = options.indexOf(document.activeElement);
+      if (!options.length || currentIndex < 0) return;
+      event.preventDefault();
+      const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1 : (currentIndex + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
+      options[nextIndex]?.focus();
+    });
+    citySelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeCityPicker(); });
+    citySelectDialog?.addEventListener("click", (event) => { if (event.target === citySelectDialog) closeCityPicker(); });
+
     homeFilterToggle?.addEventListener("click", () => {
       const expanded = homeFilterToggle.getAttribute("aria-expanded") === "true";
       homeFilterToggle.setAttribute("aria-expanded", String(!expanded));
@@ -58720,6 +58840,7 @@
     });
 
     citySelect.addEventListener("change", () => {
+      syncCityPickerSelection(citySelect.value);
       deactivateHomeTvFeed();
       homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
