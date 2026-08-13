@@ -3091,6 +3091,7 @@ function DancerOnboardingCommand({
                 <SocialLinks
                   dancerId={String(profile?.id || "private-preview")}
                   links={previewSocialLinks}
+                  showConnectLabel={false}
                   trackClicks={false}
                 />
               </section>
