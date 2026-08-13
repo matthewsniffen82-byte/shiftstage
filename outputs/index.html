@@ -44525,12 +44525,34 @@
       return new URL(venueExperienceHref(venue, city), window.location.origin).toString();
     }
 
-    async function runVenueShareAction(venueName, city = selectedCity()) {
+    function setVenueShareButtonState(button, state) {
+      if (!button?.classList.contains("venue-detail-share")) return;
+      const isSharing = state === "sharing";
+      const isConfirmed = state === "confirmed";
+      button.disabled = isSharing;
+      button.classList.toggle("is-confirmed", isConfirmed);
+      button.setAttribute("aria-live", "polite");
+      button.innerHTML = actionButtonLabel(
+        isConfirmed ? "check" : "share",
+        isSharing ? "Sharing..." : isConfirmed ? "Shared" : "Share club"
+      );
+      const resetTimer = Number(button.dataset.shareResetTimer || 0);
+      if (resetTimer) window.clearTimeout(resetTimer);
+      delete button.dataset.shareResetTimer;
+      if (!isConfirmed) return;
+      button.dataset.shareResetTimer = String(window.setTimeout(() => {
+        if (!button.isConnected) return;
+        setVenueShareButtonState(button, "idle");
+      }, 1800));
+    }
+
+    async function runVenueShareAction(venueName, city = selectedCity(), trigger = null) {
       const venue = resolveVenueByName(venueName, city);
       if (!venue) {
         showToast("Club profile unavailable");
         return;
       }
+      setVenueShareButtonState(trigger, "sharing");
       const url = venueShareUrl(venue, city);
       const shareData = {
         title: `${venue.name} on MyDancr`,
@@ -44540,12 +44562,17 @@
       if (navigator.share) {
         try {
           await navigator.share(shareData);
+          setVenueShareButtonState(trigger, "confirmed");
+          showToast("Club profile shared");
           return;
-        } catch {
+        } catch (error) {
+          setVenueShareButtonState(trigger, "idle");
+          if (error?.name !== "AbortError") showToast("Sharing unavailable");
           return;
         }
       }
-      await copyText(url, "Club link copied");
+      const copied = await copyText(url, "Club link copied");
+      setVenueShareButtonState(trigger, copied ? "confirmed" : "idle");
     }
 
     function socialShareUrl(platformKey, profileName, city = selectedCity()) {
@@ -44572,12 +44599,15 @@
           textarea.style.opacity = "0";
           document.body.appendChild(textarea);
           textarea.select();
-          document.execCommand("copy");
+          const copied = document.execCommand("copy");
           textarea.remove();
+          if (!copied) throw new Error("Copy command was rejected");
         }
         showToast(successMessage);
+        return true;
       } catch {
         showToast("Copy link unavailable");
+        return false;
       }
     }
 
@@ -55975,9 +56005,10 @@
     function handleShareClick(event) {
       const venueButton = event.target.closest("[data-share-venue]");
       if (venueButton) {
-        runVenueShareAction(
+        void runVenueShareAction(
           venueButton.dataset.shareVenue,
-          venueButton.dataset.shareCity || selectedCity()
+          venueButton.dataset.shareCity || selectedCity(),
+          venueButton
         );
         return true;
       }

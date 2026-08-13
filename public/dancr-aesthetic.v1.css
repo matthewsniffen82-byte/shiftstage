@@ -4863,16 +4863,28 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-add
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-actions {
-  display: grid;
+  display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-secondary-actions {
-  display: grid;
+  display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4880,11 +4892,22 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   width: 100% !important;
   min-height: 48px !important;
   margin: 0 !important;
+  padding: 10px 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  border-radius: 15px !important;
   border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface-raised) !important;
   background-image: none !important;
   box-shadow: none !important;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.12s ease !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4913,7 +4936,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-add
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding-inline: 10px !important;
+  gap: 8px !important;
+  padding: 10px 12px !important;
+  border-radius: 15px !important;
   font-size: 12.5px !important;
 }
 
@@ -4921,7 +4946,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   width: 100% !important;
   min-height: 48px !important;
   margin: 0 !important;
-  padding-inline: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 12px !important;
+  border-radius: 15px !important;
   font-size: 12.5px !important;
 }
 
@@ -4941,6 +4971,38 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   cursor: pointer !important;
   pointer-events: auto !important;
   transform: none !important;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.12s ease !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(.venue-primary-actions, .venue-secondary-actions) .action-icon {
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  flex: 0 0 20px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  color: inherit;
+  filter: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(.venue-primary-actions, .venue-secondary-actions) .action-icon svg {
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;
+  stroke: currentColor !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(.venue-primary-actions, .venue-secondary-actions) :is(a, button) > span:not(.action-icon) {
+  min-width: 0;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4962,7 +5024,44 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):active {
-  transform: translateY(1px) !important;
+  transform: translateY(1px) scale(0.985) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-secondary-actions .action-btn:is(:hover, :focus-visible) {
+  border-color: var(--dancr-color-border-strong) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-text-primary) 5%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-secondary-actions .action-btn:active {
+  transform: translateY(1px) scale(0.985) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-secondary-actions .venue-detail-share.is-confirmed {
+  border-color: var(--dancr-color-success-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-success) 6%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-secondary-actions .venue-detail-share.is-confirmed .action-icon {
+  color: var(--dancr-color-success) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-secondary-actions .venue-detail-share:disabled {
+  opacity: 0.74 !important;
+  cursor: wait !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail

@@ -149,6 +149,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 60px !important;[\s\S]*?background: var\(--dancr-color-surface-subtle\) !important;/);
   assert.match(refinement, /\.venue-address-tile \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/);
   assert.match(refinement, /\.venue-location-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+  assert.match(refinement, /\.venue-location-actions \{[\s\S]*?padding: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?width: 100% !important;[\s\S]*?min-height: 48px !important;[\s\S]*?display: inline-flex !important;/);
   assert.match(refinement, /\.venue-detail-uber \{[\s\S]*?width: 100% !important;[\s\S]*?min-height: 48px !important;[\s\S]*?margin: 0 !important;/);
   assert.match(refinement, /button\.venue-detail-club-deal-qr-state\.is-available:focus-visible \{[\s\S]*?var\(--dancr-color-success\)[\s\S]*?transparent/);
@@ -163,7 +164,9 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-text-primary\)/);
   assert.match(refinement, /\.venue-secondary-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+  assert.match(refinement, /\.venue-secondary-actions \{[\s\S]*?padding: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(refinement, /:is\(\.venue-primary-actions, \.venue-secondary-actions\) \.action-icon \{[\s\S]*?width: 20px !important;[\s\S]*?min-width: 20px !important;[\s\S]*?flex: 0 0 20px !important;/);
   assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?border: 1px solid var\(--dancr-color-border-strong\) !important;[\s\S]*?color: var\(--dancr-color-text-primary\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;[\s\S]*?pointer-events: auto !important;/);
   assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-info\) !important;/);
   assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?filter: none !important;/);
@@ -173,6 +176,14 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-activity-section\.is-upcoming \.venue-activity-count \{[\s\S]*?color: var\(--dancr-color-info\);/);
   assert.match(refinement, /\.venue-activity-section\.is-open \.section-title \{[\s\S]*?border-left-color: var\(--dancr-color-text-muted\) !important;/);
   assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
+});
+
+test("venue profile share action confirms success in the pressed button", () => {
+  assert.match(liveApp, /function setVenueShareButtonState\(button, state\) \{[\s\S]*?classList\.contains\("venue-detail-share"\)[\s\S]*?is-confirmed[\s\S]*?Sharing\.\.\.[\s\S]*?Shared[\s\S]*?Share club/);
+  assert.match(liveApp, /async function runVenueShareAction\(venueName, city = selectedCity\(\), trigger = null\) \{[\s\S]*?setVenueShareButtonState\(trigger, "sharing"\)[\s\S]*?await navigator\.share\(shareData\)[\s\S]*?setVenueShareButtonState\(trigger, "confirmed"\)[\s\S]*?showToast\("Club profile shared"\)/);
+  assert.match(liveApp, /const copied = await copyText\(url, "Club link copied"\);[\s\S]*?setVenueShareButtonState\(trigger, copied \? "confirmed" : "idle"\)/);
+  assert.match(liveApp, /void runVenueShareAction\([\s\S]*?venueButton\.dataset\.shareVenue,[\s\S]*?venueButton\.dataset\.shareCity \|\| selectedCity\(\),[\s\S]*?venueButton/);
+  assert.match(aesthetic, /\.venue-secondary-actions \.venue-detail-share\.is-confirmed \{[\s\S]*?var\(--dancr-color-success-medium\)[\s\S]*?var\(--dancr-color-success\) 6%/);
 });
 
 test("venue profiles replace repeated zero sections with one truthful empty explanation", () => {
