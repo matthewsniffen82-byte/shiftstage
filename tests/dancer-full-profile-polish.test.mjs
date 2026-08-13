@@ -121,7 +121,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   );
 });
 
-test("home full-profile identity scrolls on larger screens and remains fully visible on mobile", () => {
+test("home full-profile identity scrolls naturally on desktop and mobile", () => {
   const identityRule = profilePolishBlock?.match(
     /#profileBackdrop \.profile-modal-summary \{[\s\S]*?\n        \}/,
   )?.[0] || "";
@@ -131,7 +131,11 @@ test("home full-profile identity scrolls on larger screens and remains fully vis
   assert.doesNotMatch(identityRule, /position: sticky;/);
   assert.match(
     profilePolishBlock,
-    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop\.modal-backdrop\.show \{[\s\S]*?overflow-y: hidden !important;[\s\S]*?#profileBackdrop \.profile-modal-summary \{[\s\S]*?position: sticky !important;[\s\S]*?top: 0 !important;[\s\S]*?z-index: 219;/,
+    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop\.modal-backdrop\.show \{[\s\S]*?overflow-y: hidden !important;[\s\S]*?Let the dancer identity and close control leave the viewport[\s\S]*?#profileBackdrop \.profile-modal-summary \{[\s\S]*?position: relative !important;[\s\S]*?top: auto !important;[\s\S]*?z-index: 1;/,
+  );
+  assert.doesNotMatch(
+    profilePolishBlock,
+    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.profile-modal-summary \{[\s\S]*?position: sticky !important;/,
   );
 });
 

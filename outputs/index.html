@@ -35742,10 +35742,13 @@
           #profileBackdrop.modal-backdrop.show {
             overflow-y: hidden !important;
           }
+          /* Let the dancer identity and close control leave the viewport with
+             the rest of the profile instead of locking a header while the
+             customer scrolls. */
           #profileBackdrop .profile-modal-summary {
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 219;
+            position: relative !important;
+            top: auto !important;
+            z-index: 1;
             flex: 0 0 auto;
           }
           /* Profile content clears the existing dock; the dock itself is intentionally untouched. */
