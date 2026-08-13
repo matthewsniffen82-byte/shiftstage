@@ -22,7 +22,7 @@ test("the Now dancer filter contains only approved dancers with confirmed active
 test("the Dancers directory groups every profile once as Working Now, Trending, Upcoming, or No Shift", () => {
   assert.match(
     homeSource,
-    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*const trending = profiles[\s\S]*!isWorkingTonight\(profile, city\)[\s\S]*profile\.trendRank[\s\S]*const trendingNames = new Set[\s\S]*const upcoming = profiles[\s\S]*!trendingNames\.has\(profile\.name\)[\s\S]*const noSchedule = profiles[\s\S]*!trendingNames\.has\(profile\.name\)[\s\S]*return \{ workingNow, trending, upcoming, noSchedule \}/,
+    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*const trending = trendingDirectoryProfiles\(profiles, city, \{ excludeWorkingNow: true \}\)[\s\S]*const trendingNames = new Set[\s\S]*const upcoming = profiles[\s\S]*!trendingNames\.has\(profile\.name\)[\s\S]*const noSchedule = profiles[\s\S]*!trendingNames\.has\(profile\.name\)[\s\S]*return \{ workingNow, trending, upcoming, noSchedule \}/,
   );
   assert.match(
     homeSource,

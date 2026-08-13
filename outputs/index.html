@@ -43507,14 +43507,7 @@
           shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
           dailyRotationScore(a, city) - dailyRotationScore(b, city)
         ));
-      const trending = profiles
-        .filter((profile) => (
-          !isWorkingTonight(profile, city) &&
-          Number.isInteger(Number(profile.trendRank)) &&
-          Number(profile.trendRank) > 0 &&
-          Number(profile.trendRank) <= 10
-        ))
-        .sort((a, b) => Number(a.trendRank) - Number(b.trendRank));
+      const trending = trendingDirectoryProfiles(profiles, city, { excludeWorkingNow: true });
       const trendingNames = new Set(trending.map((profile) => profile.name));
       const upcoming = profiles
         .filter((profile) => (
@@ -53796,11 +53789,45 @@
       );
     }
 
+    function publicTrendingActivityScore(profile) {
+      const metric = (value) => Math.max(0, Number(value) || 0);
+      return (
+        metric(profile?.goingCount) * 10 +
+        metric(profile?.followerCount) * 8 +
+        metric(profile?.notificationCount) * 5 +
+        metric(profile?.profileViewsToday) * 3 +
+        (profile?.scheduled ? 2 : 0)
+      );
+    }
+
+    function trendingDirectoryProfiles(profiles, city = selectedCity(), options = {}) {
+      const excludeWorkingNow = options.excludeWorkingNow === true;
+      return profiles
+        .filter(isApprovedPublicProfile)
+        .filter((profile) => !excludeWorkingNow || !isWorkingTonight(profile, city))
+        .sort((a, b) => {
+          const aRanked = isTrendingDirectoryProfile(a);
+          const bRanked = isTrendingDirectoryProfile(b);
+          if (aRanked !== bRanked) return aRanked ? -1 : 1;
+          if (aRanked && bRanked) {
+            const rankDifference = Number(a.trendRank) - Number(b.trendRank);
+            if (rankDifference) return rankDifference;
+          }
+          const activityDifference = publicTrendingActivityScore(b) - publicTrendingActivityScore(a);
+          if (activityDifference) return activityDifference;
+          const scheduleDifference = Number(Boolean(b.scheduled)) - Number(Boolean(a.scheduled));
+          if (scheduleDifference) return scheduleDifference;
+          return dailyRotationScore(a, city) - dailyRotationScore(b, city);
+        })
+        .slice(0, 10);
+    }
+
     function dancerDirectoryFilterMarkup(profiles, city) {
+      const trending = trendingDirectoryProfiles(profiles, city);
       const counts = {
         all: profiles.length,
         now: profiles.filter((profile) => isWorkingTonight(profile, city)).length,
-        trending: profiles.filter(isTrendingDirectoryProfile).length,
+        trending: trending.length,
         upcoming: profiles.filter((profile) => profile.scheduled && !isWorkingTonight(profile, city)).length
       };
       const filters = [
@@ -53829,9 +53856,7 @@
         return [{
           label: "Trending",
           className: "is-trending",
-          profiles: profiles
-            .filter(isTrendingDirectoryProfile)
-            .sort((a, b) => Number(a.trendRank) - Number(b.trendRank))
+          profiles: trendingDirectoryProfiles(profiles, city)
         }];
       }
       if (dancerDirectoryFilter === "upcoming") {
