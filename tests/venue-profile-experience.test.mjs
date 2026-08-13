@@ -164,6 +164,8 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-text-primary\)/);
   assert.match(refinement, /\.venue-secondary-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?border: 1px solid var\(--dancr-color-border-strong\) !important;[\s\S]*?color: var\(--dancr-color-text-primary\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;[\s\S]*?pointer-events: auto !important;/);
+  assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-info\) !important;/);
   assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?filter: none !important;/);
   assert.match(refinement, /\.venue-activity-empty \{[\s\S]*?grid-template-columns: 38px minmax\(0, 1fr\);[\s\S]*?padding: 12px 13px;/);
   assert.match(refinement, /\.venue-activity-count \{[\s\S]*?min-width: 28px;[\s\S]*?color: var\(--dancr-color-info\);/);

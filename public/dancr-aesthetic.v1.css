@@ -4925,6 +4925,46 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   font-size: 12.5px !important;
 }
 
+/* Travel actions remain obvious and responsive. Fictional demo venues explain
+ * why travel cannot open instead of presenting dimmed, apparently broken UI. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber) {
+  border: 1px solid var(--dancr-color-border-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  text-decoration: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber) .action-icon {
+  color: var(--dancr-color-info) !important;
+  stroke: currentColor !important;
+  filter: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):is(:hover, :focus-visible) {
+  border-color: var(--dancr-color-info-medium) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-text-primary) 6%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):active {
+  transform: translateY(1px) !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-club-deal-qr-state {
   box-sizing: border-box;

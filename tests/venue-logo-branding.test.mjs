@@ -113,15 +113,17 @@ test("the production migration fictionalizes every current Las Vegas venue witho
   assert.match(migration, /Every Las Vegas venue must receive an explicit fictional identity/);
 });
 
-test("fictional Vegas venues use one pitch address and cannot launch real directions or Uber", () => {
+test("fictional Vegas venues use one pitch address and explain unavailable travel actions", () => {
   assert.match(addressMigration, /0000 MyDancr Ave, Las Vegas, NV 55555/g);
   assert.match(addressMigration, /expected_count integer := 17/);
   assert.match(addressMigration, /Every listed Las Vegas demonstration venue must use the fictional pitch address/);
   assert.match(branding, /export function isFictionalVenueBranding/);
   assert.match(liveApp, /function isFictionalDemoVenue\(venue\)/);
   assert.match(liveApp, /startsWith\("\/venue-logos\/fictional\/"\)/);
-  assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?is-inactive-demo[\s\S]*?disabled[\s\S]*?aria-disabled="true"/);
-  assert.match(liveApp, /function uberRideLinkMarkup[\s\S]*?isFictionalDemoVenue\(venue\)[\s\S]*?is-inactive-demo[\s\S]*?disabled/);
+  assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?is-inactive-demo[\s\S]*?data-demo-travel="directions"/);
+  assert.match(liveApp, /function uberRideLinkMarkup[\s\S]*?isFictionalDemoVenue\(venue\)[\s\S]*?is-inactive-demo[\s\S]*?data-demo-travel="uber"/);
+  assert.doesNotMatch(liveApp.match(/function venueDirectionsMarkup[\s\S]*?function uberRideLinkMarkup/)?.[0] || "", /disabled|aria-disabled/);
+  assert.match(liveApp, /closest\?\.\("\[data-demo-travel\]"\)[\s\S]*?Uber requests are unavailable for fictional demo venues\.[\s\S]*?Directions are unavailable for fictional demo venues\./);
   assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?venue-address-directions/);
   assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?home-discovery-feed-directions venue-directions-btn/);
   assert.match(uberButton, /isFictionalVenueBranding\(venue\.slug\)[\s\S]*?aria-disabled="true"[\s\S]*?disabled/);
