@@ -78,7 +78,19 @@ test("venue details reuse the production Dancers grid card for every schedule st
   assert.match(sharedCard, /class="dancer-card home-dancer-grid-card \$\{groupClass\}/);
   assert.match(sharedCard, /href="\$\{profileHref\}"[\s\S]*?aria-label="Open \$\{safeName\}'s full profile"/);
   assert.match(liveApp, /Venue detail uses the exact same compact production profile tiles[\s\S]*?\.venue-dancer-grid \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
-  assert.match(liveApp, /\.venue-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?aspect-ratio: 9 \/ 16 !important;/);
+  const venueCardRule = liveApp.match(/\.venue-dancer-grid > \.home-dancer-grid-card \{[^}]*\}/)?.[0] || "";
+  assert.match(venueCardRule, /aspect-ratio: 9 \/ 16 !important;/);
+  assert.match(venueCardRule, /contain: layout style;/);
+  assert.doesNotMatch(venueCardRule, /contain: layout paint style;/);
+  assert.match(liveApp, /\.venue-dancer-grid img\.home-dancer-grid-photo \{[\s\S]*?display: block !important;[\s\S]*?object-fit: cover;[\s\S]*?object-position: center top;/);
+  assert.match(
+    liveApp,
+    /@media \(max-width: 420px\) \{[\s\S]*?\.venue-dancer-grid \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?gap: 2px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /Venue-profile portraits use the same normal mobile paint flow[\s\S]*?@media \(hover: none\) and \(pointer: coarse\)[\s\S]*?\.venue-dancer-grid > \.home-dancer-grid-card,[\s\S]*?\.venue-dancer-grid \.home-dancer-grid-link,[\s\S]*?\.venue-dancer-grid \.home-dancer-grid-photo \{[\s\S]*?animation: none !important;[\s\S]*?will-change: auto !important;[\s\S]*?backface-visibility: visible !important;/,
+  );
 });
 
 test("venue profiles reserve customer QR language for active Club Deals", () => {

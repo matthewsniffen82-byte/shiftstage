@@ -34537,7 +34537,7 @@
           background: #050507 !important;
           box-shadow: none !important;
           filter: none !important;
-          contain: layout paint style;
+          contain: layout style;
         }
         .venue-dancer-grid .home-dancer-grid-link {
           position: relative;
@@ -34554,6 +34554,13 @@
           height: 100%;
           aspect-ratio: auto;
           background-position: center top !important;
+          background-repeat: no-repeat !important;
+        }
+        .venue-dancer-grid img.home-dancer-grid-photo {
+          display: block !important;
+          object-fit: cover;
+          object-position: center top;
+          background: #0b0b10 !important;
         }
         .venue-dancer-grid .home-dancer-grid-photo::after {
           background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);
@@ -34614,11 +34621,37 @@
           font-size: clamp(7px, 1.9vw, 9px);
         }
         @media (max-width: 420px) {
+          .venue-dancer-grid {
+            width: calc(100% + 16px) !important;
+            margin-inline: -8px !important;
+            padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+            gap: 2px !important;
+          }
           .venue-dancer-grid .home-dancer-grid-copy {
             padding: 20px 5px 5px;
           }
           .venue-dancer-grid .home-dancer-grid-status {
             min-height: 17px;
+          }
+        }
+        /* Venue-profile portraits use the same normal mobile paint flow as the
+           home grid so touch scrolling cannot re-rasterize or shift tiles. */
+        @media (hover: none) and (pointer: coarse) {
+          .venue-dancer-grid > .home-dancer-grid-card,
+          .venue-dancer-grid .home-dancer-grid-link,
+          .venue-dancer-grid .home-dancer-grid-photo {
+            animation: none !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            filter: none !important;
+            -webkit-filter: none !important;
+            transition: none !important;
+            will-change: auto !important;
+            -webkit-backface-visibility: visible !important;
+            backface-visibility: visible !important;
+          }
+          .venue-dancer-grid > .home-dancer-grid-card {
+            opacity: 1 !important;
           }
         }
 
