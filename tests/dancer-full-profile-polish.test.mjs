@@ -70,7 +70,7 @@ test("full dancer profiles use a quiet neutral vertical scrollbar", () => {
 test("profile actions have a clear hierarchy and preserve every real action", () => {
   assert.match(
     liveApp,
-    /<div class="modal-actions" aria-label="Customer actions">\s*\$\{goingButton\}/,
+    /<div class="modal-actions profile-primary-actions" aria-label="Customer actions">\s*\$\{goingButton\}/,
   );
   assert.match(
     liveApp,
@@ -78,9 +78,11 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(liveApp, /id="notifyBtn"/);
   assert.match(liveApp, /id="goingBtn"/);
+  assert.match(liveApp, /class="action-btn secondary profile-venue-action"/);
+  assert.match(liveApp, /className: "action-btn secondary profile-directions-action"/);
   assert.match(
     liveApp,
-    /class="action-btn secondary profile-share-action"[\s\S]*?data-profile-share-menu=/,
+    /<div class="modal-actions profile-utility-actions"[\s\S]*?class="action-btn secondary profile-share-action"[\s\S]*?data-profile-share-menu=/,
   );
   assert.match(liveApp, /data-profile-more-actions aria-haspopup="menu" aria-expanded="false"/);
   assert.match(liveApp, /data-profile-more-menu role="menu" hidden/);
@@ -104,12 +106,14 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   const metricsIndex = gridFunction.indexOf("profileActivityMetricsMarkup");
   const socialIndex = gridFunction.indexOf("${socialMarkup}");
   const scheduleIndex = gridFunction.indexOf("shiftsMarkup");
+  const utilityIndex = gridFunction.indexOf("liveProfileUtilityActionsMarkup");
 
-  assert.ok(scheduleIndex > -1);
+  assert.ok(actionsIndex > -1);
+  assert.ok(scheduleIndex > actionsIndex);
   assert.ok(dealIndex > scheduleIndex);
-  assert.ok(actionsIndex > dealIndex);
-  assert.ok(socialIndex > actionsIndex);
+  assert.ok(socialIndex > dealIndex);
   assert.ok(metricsIndex > socialIndex);
+  assert.ok(utilityIndex > metricsIndex);
   assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
   assert.match(liveApp, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
   assert.doesNotMatch(liveApp, /profile-modal-live-status|modalLiveStatus/);
@@ -121,7 +125,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   );
 });
 
-test("home full-profile identity scrolls on larger screens and remains fully visible on mobile", () => {
+test("home full-profile identity follows media and scrolls naturally on every device", () => {
   const identityRule = profilePolishBlock?.match(
     /#profileBackdrop \.profile-modal-summary \{[\s\S]*?\n        \}/,
   )?.[0] || "";
@@ -129,10 +133,7 @@ test("home full-profile identity scrolls on larger screens and remains fully vis
   assert.match(identityRule, /position: relative;/);
   assert.match(identityRule, /top: auto;/);
   assert.doesNotMatch(identityRule, /position: sticky;/);
-  assert.match(
-    profilePolishBlock,
-    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop\.modal-backdrop\.show \{[\s\S]*?overflow-y: hidden !important;[\s\S]*?#profileBackdrop \.profile-modal-summary \{[\s\S]*?position: sticky !important;[\s\S]*?top: 0 !important;[\s\S]*?z-index: 219;/,
-  );
+  assert.match(liveApp, /Public dancer profiles use one clear reading order on every device:[\s\S]*?#profileBackdrop \.profile-modal-summary,[\s\S]*?position: relative !important;[\s\S]*?top: auto !important;/);
 });
 
 test("the full-profile verified badge stays circular like scroll-card checks", () => {
@@ -251,12 +252,12 @@ test("profile polish preserves the existing site color system", () => {
 test("profile identity and media controls form a compact balanced top section", () => {
   assert.match(
     liveApp,
-    /<div class="profile-modal-summary">[\s\S]*?<button class="close-btn" id="modalClose" type="button" aria-label="Close profile">/,
+    /<button class="close-btn" id="modalClose" type="button" aria-label="Close profile">[\s\S]*?<section class="profile-modal-media"[\s\S]*?<div class="profile-modal-summary">/,
   );
   assert.doesNotMatch(liveApp, /<div class="modal-top">\s*<button class="close-btn" id="modalClose"/);
   assert.match(
     liveApp,
-    /#profileBackdrop #modalClose \{[\s\S]*?position: absolute !important;[\s\S]*?top: 8px !important;[\s\S]*?transform: none !important;/,
+    /Public dancer profiles use one clear reading order[\s\S]*?#profileBackdrop #modalClose \{[\s\S]*?position: sticky !important;[\s\S]*?top: max\(8px, env\(safe-area-inset-top, 0px\)\) !important;/,
   );
   assert.match(
     profilePolishBlock,
@@ -270,7 +271,7 @@ test("profile identity and media controls form a compact balanced top section", 
     profilePolishBlock,
     /#profileBackdrop #modalCity \{[\s\S]*?min-height: 22px !important;[\s\S]*?border-radius: 999px !important;/,
   );
-  assert.match(profilePolishBlock, /#profileBackdrop \.profile-modal-summary \{[\s\S]*?border-bottom: 0;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-modal-summary,[\s\S]*?border: 1px solid rgba\(255,255,255,\.075\) !important;/);
   assert.doesNotMatch(liveApp, /profileModalMediaTitle|profileModalMediaCount|profile-modal-media-head/);
   assert.match(liveApp, /<section class="profile-modal-media" aria-label="Dancer profile media">\s*<div class="profile-modal-media-tabs"/);
   assert.match(

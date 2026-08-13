@@ -81,7 +81,7 @@ test("inactive and Working Now avatar rings remain centralized in the Dancr bran
 
 test("working-now avatars keep one complete live-teal ring with NOW reserved for full profiles", () => {
   const profileSummary = liveShell.match(
-    /<div class="profile-modal-summary">[\s\S]*?(?=<section class="profile-modal-media")/,
+    /<section class="profile-modal-media"[\s\S]*?<div class="profile-modal-summary">[\s\S]*?data-working-now-indicator aria-hidden="true">NOW<\/span>/,
   )?.[0] || "";
   const homeTvAvatarBuilder = liveShell.match(
     /const dancerPhoto = document\.createElement\("span"\);[\s\S]*?(?=const nameRow = document\.createElement\("span"\);)/,

@@ -236,7 +236,7 @@ test("public profiles keep Going visible for the next posted shift and gate only
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
   assert.match(actionsSource, /\{isGoing \? "Going" : "I’m Going"\}/);
   assert.match(actionsSource, /disabled=\{!actionShift \|\| !savedLoaded \|\| goingSaving\}/);
-  assert.match(actionsSource, /onClick=\{submitReport\}/);
+  assert.match(actionsSource, /setReportDialogOpen\(true\)/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
   assert.match(actionsSource, /href="\/account\?role=customer&mode=signup"/);

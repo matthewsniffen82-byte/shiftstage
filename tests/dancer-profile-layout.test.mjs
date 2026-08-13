@@ -35,7 +35,7 @@ const [
   ]);
 
 test("full dancer profiles use a compact identity and honest public activity header without a bio", () => {
-  assert.match(profilePage, /className="profile-titlebar"/);
+  assert.match(profilePage, /className="profile-titlebar profile-identity-summary"/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /className="profile-metrics"/);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
@@ -86,7 +86,8 @@ test("Working Now profiles promote the checked-in venue, directions, and cashier
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /<span className="profile-live-state">Schedule<\/span>[\s\S]*?<h2 id="profile-working-title">Working Now<\/h2>/);
   assert.match(profilePage, /Dressing-room NFC verified · active until/);
-  assert.match(profilePage, /Club &amp; directions/);
+  assert.match(profilePage, /directionsHref=\{directionsHref\}/);
+  assert.match(profilePage, /venueHref=\{venueHref\}/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
   assert.match(profilePage, /ctaLabel="Club Deals"/);
@@ -102,11 +103,10 @@ test("Working Now profiles promote the checked-in venue, directions, and cashier
   assert.match(liveScheduleBranch, /<strong>Schedule<\/strong>/);
   assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working Now<\/div>/);
   assert.match(liveScheduleBranch, /class="meta profile-working-stack"/);
-  assert.match(liveScheduleBranch, />Club &amp; directions<\/button>/);
-  assert.match(liveScheduleBranch, /profile-working-directions[\s\S]*?\$\{rideMarkup\}/);
+  assert.doesNotMatch(liveScheduleBranch, /Club &amp; directions|profile-working-directions|rideMarkup/);
   assert.doesNotMatch(liveScheduleBranch, /Checked in for current shift|activeShiftStartedMarkup/);
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
-  assert.match(liveApp, /class="profile-working-directions"/);
+  assert.match(liveApp, /className: "action-btn secondary profile-directions-action"/);
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
 });
 
