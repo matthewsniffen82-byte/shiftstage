@@ -24,7 +24,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: 64px minmax\(0, 1fr\)[\s\S]*?gap: 10px;[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 64px;[\s\S]*?height: 64px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?overflow-wrap: anywhere/,
+    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 52px;[\s\S]*?grid-template-columns: 52px minmax\(0, 1fr\)[\s\S]*?gap: 10px;[\s\S]*?font-size: clamp\(22px, 5\.4vw, 28px\);[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 52px;[\s\S]*?height: 52px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?gap: 3px;[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?overflow-wrap: anywhere/,
   );
   assert.match(
     homeSource,
@@ -108,7 +108,7 @@ test("TV cards expose separate right-side action icons with fullscreen anchored 
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
   assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedCopy/);
-  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 9px;/);
+  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 8px;/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
 });
@@ -145,8 +145,8 @@ test("TV Club Deal states keep one fixed rounded-square shape", () => {
   )?.[0] || "";
 
   assert.match(dealShell, /box-sizing: border-box !important;/);
-  assert.match(dealShell, /width: 56px !important;[\s\S]*?min-width: 56px !important;[\s\S]*?max-width: 56px !important;/);
-  assert.match(dealShell, /height: 56px !important;[\s\S]*?min-height: 56px !important;[\s\S]*?max-height: 56px !important;/);
+  assert.match(dealShell, /width: 52px !important;[\s\S]*?min-width: 52px !important;[\s\S]*?max-width: 52px !important;/);
+  assert.match(dealShell, /height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;/);
   assert.match(dealShell, /padding: 5px 3px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?overflow: hidden !important;/);
   assert.match(dealLabel, /position: static;[\s\S]*?width: 100%;[\s\S]*?background: transparent;/);
   assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Club Deals/g) || []).length, 2);
@@ -241,7 +241,7 @@ test("TV cards are completely borderless without a violet perimeter", () => {
 test("mobile TV controls stay inside the stable card that snaps above navigation", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-copy \{[\s\S]*?padding: 96px 0 34px 14px;/,
+    /\.home-tv-feed-copy \{[\s\S]*?padding: 82px 0 28px 14px;/,
   );
   assert.match(
     homeSource,
@@ -391,10 +391,10 @@ test("intentional pauses persist while fullscreen resumes playback and keeps ver
   assert.doesNotMatch(fullscreenToggle, /slide\.requestFullscreen|video\.webkitEnterFullscreen/);
 });
 
-test("TV sound and lower-right fullscreen controls stay compact and icon-only", () => {
+test("TV sound and lower-right fullscreen controls stay consistent and icon-only", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-sound \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?padding: 0;/,
+    /\.home-tv-feed-sound \{[\s\S]*?width: 52px;[\s\S]*?min-width: 52px;[\s\S]*?max-width: 52px;[\s\S]*?height: 52px;[\s\S]*?min-height: 52px;[\s\S]*?max-height: 52px;[\s\S]*?padding: 0;/,
   );
   const soundFactory = homeSource.match(
     /function createHomeTvFeedSoundButton\(slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedFullscreenButton)/,

@@ -989,15 +989,15 @@ function TvStyles() {
       .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; width: 58px; min-width: 58px; max-width: 58px; height: 58px; min-height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f5f4f7; background: rgba(25,25,30,.9); box-shadow: 0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07); transform: translate(-50%, -50%); cursor: pointer; }
       .tv-playback-retry svg { width: 27px; height: 27px; fill: currentColor; stroke: none; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
-      .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; width: 44px; min-width: 44px; max-width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); cursor: pointer; }
-      .tv-sound svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-      .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: end; gap: 14px; padding: 86px 20px 22px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
-      .tv-profile-photo { position: relative; width: 58px; height: 58px; display: grid; place-items: center; overflow: hidden; padding: 2px; border: 0; border-radius: 50%; color: #fff; background: #fff; box-shadow: none; font-size: 18px; font-weight: 950; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+      .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); cursor: pointer; }
+      .tv-sound svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: end; gap: 10px; padding: 76px 18px 18px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
+      .tv-profile-photo { position: relative; width: 52px; height: 52px; display: grid; place-items: center; overflow: hidden; padding: 2px; border: 0; border-radius: 50%; color: #fff; background: #fff; box-shadow: none; font-size: 17px; font-weight: 950; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
       .tv-profile-photo.has-photo { background: #fff; filter: none; opacity: 1; mix-blend-mode: normal; }
       .tv-profile-photo-image { position: absolute; z-index: 2; inset: 2px; display: block; border-radius: 50%; background-color: #08080b; background-position: center; background-repeat: no-repeat; background-size: cover; filter: none; opacity: 1; mix-blend-mode: normal; }
       .tv-profile-details { min-width: 0; display: grid; gap: 5px; }
       .tv-card-info-stack { min-width: 0; display: grid; gap: 3px; }
-      .tv-profile-body h2 { min-width: 0; margin: 0 0 2px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: clamp(20px, 3vw, 26px); font-weight: 900; line-height: 1.04; text-shadow: 0 2px 12px rgba(0,0,0,.72); }
+      .tv-profile-body h2 { min-width: 0; margin: 0 0 2px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: clamp(20px, 3vw, 28px); font-weight: 900; line-height: 1.04; text-shadow: 0 2px 12px rgba(0,0,0,.72); }
       .tv-card-stage-link { width: fit-content; min-width: 0; max-width: 100%; display: block; color: inherit; text-decoration: none; }
       .tv-card-stage-identity { min-width: 0; display: grid; gap: 4px; }
       .tv-card-stage-row { min-width: 0; display: flex; align-items: center; gap: 6px; }
@@ -1053,9 +1053,9 @@ function TvStyles() {
         .tv-slide { height: 100%; min-height: 100%; padding: 3px 0; }
         .tv-player { width: 100%; height: 100%; min-height: 0; max-height: none; border-radius: 16px; }
         .tv-player video { object-fit: contain; }
-        .tv-profile-body { grid-template-columns: 50px minmax(0, 1fr); gap: 11px; padding: 74px 14px 16px; }
-        .tv-profile-photo { width: 50px; height: 50px; font-size: 16px; }
-        .tv-profile-body h2 { font-size: clamp(18px, 5.2vw, 22px); }
+        .tv-profile-body { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding: 72px 14px 16px; }
+        .tv-profile-photo { width: 52px; height: 52px; font-size: 16px; }
+        .tv-profile-body h2 { font-size: clamp(20px, 5.6vw, 28px); }
         .tv-card-venue-line { font-size: clamp(11px, 3.2vw, 13px); }
         .tv-card-schedule-text, .tv-no-shifts-state { font-size: clamp(11px, 3.1vw, 13px); }
       }
