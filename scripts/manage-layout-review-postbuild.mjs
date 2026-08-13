@@ -7,6 +7,46 @@ const dealSyncFlag = String(process.env.LAYOUT_REVIEW_SYNC_DEALS || "").trim();
 const scheduleSyncFlag = String(
   process.env.LAYOUT_REVIEW_SYNC_SCHEDULES || "",
 ).trim();
+const upcomingSyncFlag = String(process.env.DEMO_UPCOMING_SYNC || "").trim();
+
+if (upcomingSyncFlag) {
+  if (populationFlag || dealSyncFlag || scheduleSyncFlag) {
+    throw new Error(
+      "Demo Upcoming sync cannot run with another layout-review production operation.",
+    );
+  }
+  if (upcomingSyncFlag !== "mydancr-three-upcoming-v1") {
+    throw new Error(
+      "The Demo Upcoming sync flag must exactly equal mydancr-three-upcoming-v1.",
+    );
+  }
+  if (process.env.VERCEL_ENV !== "production") {
+    throw new Error("Demo Upcoming sync is restricted to an explicit production build.");
+  }
+
+  const upcomingManagerPath = fileURLToPath(
+    new URL("./manage-demo-upcoming.mjs", import.meta.url),
+  );
+  const upcomingResult = spawnSync(
+    process.execPath,
+    [
+      upcomingManagerPath,
+      "--mode=apply",
+      "--target=production",
+      "--confirm=mydancr-three-upcoming-v1",
+    ],
+    {
+      env: process.env,
+      stdio: "inherit",
+    },
+  );
+
+  if (upcomingResult.error) throw upcomingResult.error;
+  if (upcomingResult.status !== 0) {
+    throw new Error(`Demo Upcoming sync exited with status ${upcomingResult.status}.`);
+  }
+  process.exit(0);
+}
 
 if (!populationFlag && !dealSyncFlag && !scheduleSyncFlag) {
   console.log("LAYOUT_REVIEW_POPULATION_SKIPPED");
