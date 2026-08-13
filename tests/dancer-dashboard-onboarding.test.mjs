@@ -40,14 +40,15 @@ test("initial onboarding nests every production workspace directly under its ste
   const checklist = panel.indexOf("<DancerOnboardingCommand");
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.match(panel, /profileMediaContent=\{profileMediaWorkspace\}/);
+  assert.match(panel, /profileMediaContent=\{\(\{ continueToPreview, profileReady \}\) => \(/);
+  assert.match(panel, /<DancerOnboardingProfileMediaWorkspace/);
   assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
   assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);
   assert.doesNotMatch(panel, /id="dancer-nfc-authorization"/);
   assert.match(dashboard, /<span className="eyebrow">Setup checklist<\/span>/);
   assert.match(dashboard, /<h2 id="dancer-onboarding-heading">Profile setup<\/h2>/);
   assert.match(dashboard, /className="dancer-onboarding-step-panel"/);
-  assert.match(dashboard, /step\.id === "dancer-profile-media" \? profileMediaContent : null/);
+  assert.match(dashboard, /step\.id === "dancer-profile-media" \? profileMediaContent\(\{/);
   assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" \? venueVerificationContent : null/);
 });
 
@@ -78,8 +79,8 @@ test("onboarding restores one accordion step and exposes accessible collapsible 
 test("profile and media workspace uses production avatar face centering and moderation", () => {
   assert.match(dashboard, /DancerAvatarPanel/);
   assert.match(dashboard, /fetch\("\/api\/dancer\/avatar"/);
-  assert.match(dashboard, /Centering your face and checking the avatar/);
-  assert.match(dashboard, /Moderation pending/);
+  assert.match(dashboard, /Checking your avatar/);
+  assert.match(dashboard, /pendingAvatar \? "Checking"/);
   assert.match(avatarRoute, /moderateAndStoreDancerPhoto/);
   assert.match(avatarRoute, /PROFILE_AVATAR_CONTEXT/);
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);
@@ -91,6 +92,36 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /embedded \? "Submit video for review" : "Submit for MyDancr TV review"/);
   assert.match(dancerStudio, /\.tv-upload-form > label \{ min-width: 0;/);
   assert.match(dancerStudio, /input\[type="file"\] \{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%;/);
+});
+
+test("step one guides dancers through required work before optional profile enhancements", () => {
+  assert.match(dashboard, /Required for approval/);
+  assert.match(dashboard, /Finish your public profile/);
+  assert.match(dashboard, /Stage name & city/);
+  assert.match(dashboard, /\{completeCount\} of 3 complete/);
+  assert.match(dashboard, /Social links & videos/);
+  assert.match(dashboard, /Optional — add now or any time after approval/);
+  assert.match(dashboard, /Continue to preview/);
+  assert.match(dashboard, /disabled=\{!profileReady\}/);
+  assert.match(dashboard, /continueToPreview: \(\) => openStep\("dancer-onboarding-preview"\)/);
+});
+
+test("step one required items are accessible accordions that advance to the next unfinished item", () => {
+  assert.match(dashboard, /const previousIncompleteIdRef = useRef\(firstIncompleteId\)/);
+  assert.match(dashboard, /setExpandedId\(firstIncompleteId\)/);
+  assert.match(dashboard, /aria-controls=\{panelId\}/);
+  assert.match(dashboard, /aria-expanded=\{open\}/);
+  assert.match(dashboard, /hidden=\{!open\}/);
+  assert.match(dashboard, /dancerStepOneStateLabel/);
+  assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
+});
+
+test("step one shows clear save, photo-count, and automatic-check states", () => {
+  assert.match(dashboard, /Unsaved changes/);
+  assert.match(dashboard, /dancer-form-save-state/);
+  assert.match(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\} photos · \$\{approvedPhotos\.length\} approved/);
+  assert.match(dashboard, /We are checking this photo\. This page updates automatically/);
+  assert.match(dashboard, /This photo cannot be used\. Choose another photo/);
 });
 
 test("a completed profile photo upload clears the native filename from onboarding", () => {
@@ -136,6 +167,9 @@ test("approval transitions in place and saved NFC enrollment finalizes automatic
 test("mobile onboarding remains one-column with reachable 44px-plus controls", () => {
   assert.match(dashboard, /@media \(max-width: 860px\) \{ \.dancer-avatar-panel form \{ grid-template-columns: 1fr/);
   assert.match(dashboard, /\.dancer-onboarding-steps button \{ min-height: 82px; grid-template-columns: 34px minmax\(0,1fr\) 28px/);
+  assert.match(dashboard, /\.dancer-step-one-checklist \{ grid-template-columns: 1fr/);
+  assert.match(dashboard, /\.dancer-step-one-section-button \{ min-height: 72px; grid-template-columns: 30px minmax\(0,1fr\) 26px/);
+  assert.match(dashboard, /\.dancer-step-one-footer \{ grid-template-columns: 1fr/);
   assert.match(dashboard, /\.dancer-onboarding-step-panel \{ padding: 10px/);
   assert.match(dashboard, /\.dancer-onboarding-primary \{ position: static/);
   assert.match(dashboard, /\.dancer-onboarding-primary \{ width: 100%; min-height: 52px/);

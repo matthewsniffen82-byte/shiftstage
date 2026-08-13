@@ -2709,7 +2709,7 @@ function DancerOnboardingCommand({
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
-  profileMediaContent: ReactNode;
+  profileMediaContent: (controls: { continueToPreview: () => void; profileReady: boolean }) => ReactNode;
   venueVerificationContent: ReactNode;
 }) {
   const [status, setStatus] = useState("");
@@ -2946,7 +2946,10 @@ function DancerOnboardingCommand({
                 id={panelId}
                 role="region"
               >
-                {step.id === "dancer-profile-media" ? profileMediaContent : null}
+                {step.id === "dancer-profile-media" ? profileMediaContent({
+                  continueToPreview: () => openStep("dancer-onboarding-preview"),
+                  profileReady,
+                }) : null}
                 {step.id === "dancer-onboarding-preview" ? (
                   <div className="dancer-onboarding-preview-workspace">
                     <article className="dancer-onboarding-preview" aria-label="Customer profile preview">
@@ -3068,6 +3071,192 @@ function dancerProfileSetupBlocker({
   return "Save the remaining profile changes.";
 }
 
+function persistedStageNameAndCity(profile?: LoadState["profile"]) {
+  return Boolean(String(profile?.stage_name || profile?.stageName || "").trim() && String(profile?.city || "").trim());
+}
+
+type DancerStepOneItemState = "complete" | "checking" | "missing" | "replace" | "unsaved";
+
+function dancerStepOneStateLabel(state: DancerStepOneItemState) {
+  if (state === "complete") return "Complete";
+  if (state === "checking") return "Checking";
+  if (state === "replace") return "Choose another";
+  if (state === "unsaved") return "Unsaved changes";
+  return "Missing";
+}
+
+function DancerOnboardingProfileMediaWorkspace({
+  avatarContent,
+  continueToPreview,
+  draftIdentity,
+  identityContent,
+  optionalContent,
+  photoContent,
+  profile,
+  profileReady,
+}: {
+  avatarContent: ReactNode;
+  continueToPreview: () => void;
+  draftIdentity: DancerIdentityDraft;
+  identityContent: ReactNode;
+  optionalContent: ReactNode;
+  photoContent: ReactNode;
+  profile?: LoadState["profile"];
+  profileReady: boolean;
+}) {
+  const persistedStageName = String(profile?.stage_name || profile?.stageName || "").trim();
+  const persistedCity = String(profile?.city || "").trim();
+  const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
+  const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
+  const photos = dancerPhotoItemsFromProfile(profile);
+  const approvedPhotos = photos.filter((photo) => photo.status === "approved");
+  const pendingPhotos = photos.filter((photo) => photo.status === "pending");
+  const rejectedPhotos = photos.filter((photo) => photo.status === "rejected");
+  const draftChanged = draftIdentity.stageName.trim() !== persistedStageName
+    || draftIdentity.city.trim() !== persistedCity;
+  const identityState: DancerStepOneItemState = draftChanged
+    ? "unsaved"
+    : persistedStageName && persistedCity
+      ? "complete"
+      : "missing";
+  const avatarState: DancerStepOneItemState = pendingAvatar
+    ? "checking"
+    : avatarUrl
+      ? "complete"
+      : "missing";
+  const photoState: DancerStepOneItemState = rejectedPhotos.length
+    ? "replace"
+    : pendingPhotos.length
+      ? "checking"
+      : approvedPhotos.length && String(profile?.photo_review_status || "").toLowerCase() === "approved"
+        ? "complete"
+        : "missing";
+  const requiredItems = [
+    {
+      id: "identity",
+      label: "Stage name & city",
+      detail: identityState === "complete" ? `${persistedStageName} · ${persistedCity}` : "Save the name and city customers will see.",
+      state: identityState,
+      content: identityContent,
+    },
+    {
+      id: "avatar",
+      label: "Avatar",
+      detail: avatarState === "complete" ? "Your approved face photo is ready." : avatarState === "checking" ? "We are checking your new avatar." : "Add one clear face photo.",
+      state: avatarState,
+      content: avatarContent,
+    },
+    {
+      id: "photos",
+      label: "Profile photos",
+      detail: `${photos.length} of ${MAX_DANCER_PROFILE_PHOTOS} photos · ${approvedPhotos.length} approved`,
+      state: photoState,
+      content: photoContent,
+    },
+  ];
+  const firstIncompleteId = requiredItems.find((item) => item.state !== "complete")?.id || null;
+  const [expandedId, setExpandedId] = useState<string | null>(firstIncompleteId);
+  const previousIncompleteIdRef = useRef(firstIncompleteId);
+  const completeCount = requiredItems.filter((item) => item.state === "complete").length;
+
+  useEffect(() => {
+    if (previousIncompleteIdRef.current === firstIncompleteId) return;
+    previousIncompleteIdRef.current = firstIncompleteId;
+    setExpandedId(firstIncompleteId);
+  }, [firstIncompleteId]);
+
+  function toggleSection(id: string) {
+    setExpandedId((current) => current === id ? null : id);
+  }
+
+  return (
+    <div className="dancer-step-one-workspace">
+      <section className="dancer-step-one-summary" aria-labelledby="dancer-step-one-summary-heading">
+        <span>
+          <span className="eyebrow">Required for approval</span>
+          <h3 id="dancer-step-one-summary-heading">Finish your public profile</h3>
+          <p>Complete the three required items below. Social links and videos can be added now or later.</p>
+        </span>
+        <b>{completeCount} of 3 complete</b>
+        <div className="dancer-step-one-checklist" aria-label="Required profile items">
+          {requiredItems.map((item) => (
+            <button
+              className={`is-${item.state}`}
+              key={`checklist-${item.id}`}
+              onClick={() => setExpandedId(item.id)}
+              type="button"
+            >
+              <span aria-hidden="true">{item.state === "complete" ? "✓" : "•"}</span>
+              <strong>{item.label}</strong>
+              <small>{dancerStepOneStateLabel(item.state)}</small>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <div className="dancer-step-one-sections">
+        {requiredItems.map((item) => {
+          const open = expandedId === item.id;
+          const panelId = `dancer-step-one-${item.id}-panel`;
+          return (
+            <section className={`dancer-step-one-section is-${item.state} ${open ? "is-open" : ""}`.trim()} key={item.id}>
+              <button
+                aria-controls={panelId}
+                aria-expanded={open}
+                className="dancer-step-one-section-button"
+                onClick={() => toggleSection(item.id)}
+                type="button"
+              >
+                <span className="dancer-step-one-section-marker" aria-hidden="true">{item.state === "complete" ? "✓" : requiredItems.indexOf(item) + 1}</span>
+                <span>
+                  <strong>{item.label}</strong>
+                  <small>{item.detail}</small>
+                </span>
+                <em>{dancerStepOneStateLabel(item.state)}</em>
+                <i aria-hidden="true">{open ? "−" : "+"}</i>
+              </button>
+              <div className="dancer-step-one-section-panel" hidden={!open} id={panelId}>
+                {item.content}
+              </div>
+            </section>
+          );
+        })}
+
+        <section className={`dancer-step-one-section is-optional ${expandedId === "optional" ? "is-open" : ""}`.trim()}>
+          <button
+            aria-controls="dancer-step-one-optional-panel"
+            aria-expanded={expandedId === "optional"}
+            className="dancer-step-one-section-button"
+            onClick={() => toggleSection("optional")}
+            type="button"
+          >
+            <span className="dancer-step-one-section-marker" aria-hidden="true">+</span>
+            <span>
+              <strong>Social links & videos</strong>
+              <small>Optional — add now or any time after approval.</small>
+            </span>
+            <em>Optional</em>
+            <i aria-hidden="true">{expandedId === "optional" ? "−" : "+"}</i>
+          </button>
+          <div className="dancer-step-one-section-panel dancer-step-one-optional-panel" hidden={expandedId !== "optional"} id="dancer-step-one-optional-panel">
+            {optionalContent}
+          </div>
+        </section>
+      </div>
+
+      <footer className={`dancer-step-one-footer ${profileReady ? "is-ready" : ""}`.trim()}>
+        <span>
+          <strong>{profileReady ? "Step 1 complete" : `${completeCount} of 3 required items complete`}</strong>
+          <small>{profileReady ? "Your saved profile is ready to preview." : "Finish the open required item to continue."}</small>
+        </span>
+        <button className="dancer-onboarding-primary" disabled={!profileReady} onClick={continueToPreview} type="button">
+          Continue to preview
+        </button>
+      </footer>
+    </div>
+  );
+}
+
 function DancerPanel({
   accountState,
   affiliations,
@@ -3128,30 +3317,39 @@ function DancerPanel({
     };
   }, [effectiveStatus, isApproved, onProfileChange]);
 
+  const identityContent = (
+    <DancerSetupPanel
+      deletedPhotoIds={deletedPhotoIds}
+      deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+      onDeletedPhotoIdsSaved={() => {
+        setDeletedPhotoIds([]);
+        setDeletedPhotoStoragePaths([]);
+      }}
+      profile={profile}
+      onProfileChange={onProfileChange}
+      onDraftChange={setDraftIdentity}
+    />
+  );
+  const avatarContent = <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />;
+  const socialContent = <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />;
+  const photoContent = (
+    <DancerPhotoPanel
+      deletedPhotoIds={deletedPhotoIds}
+      deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+      onDeletedPhotoIdsChange={setDeletedPhotoIds}
+      onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
+      profile={profile}
+      onProfileChange={onProfileChange}
+    />
+  );
+  const videoContent = <DancerTvStudio embedded />;
   const profileMediaWorkspace = (
     <div className="venue-dashboard-inner-grid dancer-onboarding-profile-workspace">
-      <DancerSetupPanel
-        deletedPhotoIds={deletedPhotoIds}
-        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-        onDeletedPhotoIdsSaved={() => {
-          setDeletedPhotoIds([]);
-          setDeletedPhotoStoragePaths([]);
-        }}
-        profile={profile}
-        onProfileChange={onProfileChange}
-        onDraftChange={setDraftIdentity}
-      />
-      <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />
-      <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
-      <DancerPhotoPanel
-        deletedPhotoIds={deletedPhotoIds}
-        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-        onDeletedPhotoIdsChange={setDeletedPhotoIds}
-        onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
-        profile={profile}
-        onProfileChange={onProfileChange}
-      />
-      <DancerTvStudio embedded />
+      {identityContent}
+      {avatarContent}
+      {socialContent}
+      {photoContent}
+      {videoContent}
     </div>
   );
   const profileMediaSection = (
@@ -3174,7 +3372,18 @@ function DancerPanel({
           isVenueApproved={isVenueApproved}
           onProfileChange={onProfileChange}
           profile={profile}
-          profileMediaContent={profileMediaWorkspace}
+          profileMediaContent={({ continueToPreview, profileReady }) => (
+            <DancerOnboardingProfileMediaWorkspace
+              avatarContent={avatarContent}
+              continueToPreview={continueToPreview}
+              draftIdentity={draftIdentity}
+              identityContent={identityContent}
+              optionalContent={<>{socialContent}{videoContent}</>}
+              photoContent={photoContent}
+              profile={profile}
+              profileReady={profileReady}
+            />
+          )}
           venueVerificationContent={<DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />}
         />
       ) : null}
@@ -3704,6 +3913,7 @@ function DancerSetupPanel({
             draftDirtyRef.current = true;
             setStageName(event.target.value);
             setSaveStatus("idle");
+            setStatus("");
           }} required />
         </label>
         <label>
@@ -3712,6 +3922,7 @@ function DancerSetupPanel({
             draftDirtyRef.current = true;
             setCity(event.target.value);
             setSaveStatus("idle");
+            setStatus("");
           }} required>
             <option value="" disabled>
               {cityOptionsStatus === "loading" ? "Loading available cities..." : cityOptionsStatus === "error" ? "Cities temporarily unavailable" : "Select a city"}
@@ -3721,12 +3932,14 @@ function DancerSetupPanel({
           <small>{cityOptionsStatus === "error" ? "The live city list could not be loaded. Try again before saving." : "Choose from active MyDancr venue markets."}</small>
         </label>
         <button type="submit" disabled={saveStatus === "saving" || cityOptionsStatus !== "ready"}>
-          {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved Profile" : "Save Profile"}
+          {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save profile"}
         </button>
         <button type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
           {isResetting ? "Reloading..." : "Reload saved profile"}
         </button>
-        {status ? <p role="status" aria-live="polite">{status}</p> : null}
+        <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
+          {status || (saveStatus === "saving" ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : persistedStageNameAndCity(profile) ? "Saved" : "Add and save your stage name and city.")}
+        </p>
       </form>
     </article>
   );
@@ -3754,7 +3967,7 @@ function DancerAvatarPanel({
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(nextFile);
     setPreviewUrl(nextFile ? URL.createObjectURL(nextFile) : "");
-    setStatus(nextFile ? "Avatar selected. Upload it to start face centering and safety moderation." : "");
+    setStatus(nextFile ? "Avatar selected. Upload it when you are ready." : "");
   }
 
   async function refreshProfile(accessToken: string) {
@@ -3778,7 +3991,7 @@ function DancerAvatarPanel({
     formData.set("file", file);
     formData.set("idempotencyKey", uploadKey);
     setIsSaving(true);
-    setStatus("Centering your face and checking the avatar...");
+    setStatus("Checking your avatar...");
     try {
       const response = await fetch("/api/dancer/avatar", {
         method: "POST",
@@ -3791,8 +4004,8 @@ function DancerAvatarPanel({
       selectAvatar(null);
       const decision = String(data.decision || "pending").toLowerCase();
       setStatus(decision === "approved"
-        ? "Avatar approved, face-centered, and saved."
-        : "Avatar uploaded and awaiting moderation. Your current approved avatar stays visible until review finishes.");
+        ? "Avatar approved and saved."
+        : "Avatar uploaded. We are checking it now; your current approved avatar stays visible.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to upload avatar.");
     } finally {
@@ -3823,7 +4036,7 @@ function DancerAvatarPanel({
   }
 
   const visibleAvatar = previewUrl || avatarUrl;
-  const moderationLabel = pendingAvatar ? "Moderation pending" : avatarUrl ? "Approved" : "Required";
+  const moderationLabel = pendingAvatar ? "Checking" : avatarUrl ? "Approved" : "Required";
   return (
     <article className="info-panel dancer-avatar-panel">
       <span className="eyebrow">Profile identity</span>
@@ -3834,7 +4047,7 @@ function DancerAvatarPanel({
         </span>
         <span>
           <strong>{moderationLabel}</strong>
-          <small>Upload a clear face photo. MyDancr automatically finds and centers the face, then runs production safety moderation.</small>
+          <small>Choose a clear face photo. We will center it and check it automatically.</small>
         </span>
       </div>
       <form onSubmit={uploadAvatar}>
@@ -3845,7 +4058,7 @@ function DancerAvatarPanel({
         <button type="submit" disabled={isSaving || !file}>{isSaving ? "Checking..." : "Upload avatar"}</button>
         {avatarUrl ? <button type="button" disabled={isSaving} onClick={() => void removeAvatar()}>Remove avatar</button> : null}
       </form>
-      <p role="status" aria-live="polite">{status || `${moderationLabel}. Avatar changes only appear publicly after approval.`}</p>
+      <p role="status" aria-live="polite">{status || (pendingAvatar ? "We are checking this avatar. This page updates automatically." : avatarUrl ? "Approved and saved." : "Add one clear face photo to continue.")}</p>
     </article>
   );
 }
@@ -5058,6 +5271,7 @@ function DancerSocialPanel({
               onChange={(event) => {
                 draftDirtyRef.current = true;
                 setSocials((current) => ({ ...current, [platform.key]: event.target.value }));
+                setStatus("");
               }}
             />
           </label>
@@ -5065,7 +5279,9 @@ function DancerSocialPanel({
         <button type="submit" disabled={isSaving}>
           {isSaving ? "Saving..." : "Save socials"}
         </button>
-        {status ? <p role="status" aria-live="polite">{status}</p> : null}
+        <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
+          {status || (isSaving ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : "Saved")}
+        </p>
       </form>
     </article>
   );
@@ -5343,7 +5559,7 @@ function DancerPhotoPanel({
           <span>
             <strong>{isPrimary ? "Main Photo" : "Photo"}</strong>
             <small>Ready to upload</small>
-            <em>Selected from your photo gallery. Press Upload photo to check it with live moderation.</em>
+            <em>Selected from your gallery. Press Upload photo when you are ready.</em>
           </span>
         </div>
       ) : null}
@@ -5404,7 +5620,7 @@ function dancerPhotoItemsFromProfile(
       imageUrl: String(review.previewUrl || review.preview_url || ""),
       label: isPrimary ? "Main Photo" : "Photo",
       status: "pending",
-      note: "Pending review. This photo keeps its slot occupied until it is approved or rejected.",
+      note: "We are checking this photo. This page updates automatically.",
       storagePath: String(review.temporary_storage_path || review.storagePath || ""),
       isPrimary,
       sortOrder: Number(review.sort_order ?? review.sortOrder ?? (isPrimary ? 0 : 0)),
@@ -5485,21 +5701,21 @@ function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
 
 function photoStatusLabel(status: DancerPhotoItem["status"]) {
   if (status === "approved") return "Approved";
-  if (status === "rejected") return "Rejected";
-  return "Pending review";
+  if (status === "rejected") return "Choose another";
+  return "Checking";
 }
 
 function photoStatusNote(status: DancerPhotoItem["status"]) {
-  if (status === "approved") return "Live on your profile.";
-  if (status === "rejected") return "Rejected by automated moderation. Choose a different photo.";
-  return "Pending review. This photo keeps its slot occupied until it is approved or rejected.";
+  if (status === "approved") return "Ready for your profile.";
+  if (status === "rejected") return "This photo cannot be used. Choose another photo.";
+  return "We are checking this photo. This page updates automatically.";
 }
 
 function photoUploadStatusMessage(status: DancerPhotoItem["status"], message?: unknown) {
   const detail = typeof message === "string" && message.trim() ? message.trim() : photoStatusNote(status);
   if (status === "approved") return `Approved: ${detail}`;
-  if (status === "rejected") return `Rejected: ${detail}`;
-  return `Pending review: ${detail}`;
+  if (status === "rejected") return `Choose another photo: ${detail}`;
+  return `Checking: ${detail}`;
 }
 
 function InfoPanel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -6267,7 +6483,7 @@ function DashboardStyles() {
       .dancer-onboarding-command-head > b { flex: 0 0 auto; padding: 8px 11px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #dad7e1; background: rgba(255,255,255,.045); font-size: 11px; }
       .dancer-onboarding-steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
       .dancer-onboarding-steps > li { min-width: 0; overflow: clip; border: 1px solid rgba(255,255,255,.09); border-radius: 15px; background: #0d0d12; scroll-margin-top: 18px; }
-      .dancer-onboarding-steps button { width: 100%; min-height: 78px; display: grid; grid-template-columns: 34px minmax(0,1fr) auto 28px; gap: 7px 11px; align-items: center; padding: 12px; border: 0; border-radius: 14px; color: #f8f7fb; background: #0d0d12; font: inherit; text-align: left; cursor: pointer; }
+      .dancer-onboarding-steps > li > button { width: 100%; min-height: 78px; display: grid; grid-template-columns: 34px minmax(0,1fr) auto 28px; gap: 7px 11px; align-items: center; padding: 12px; border: 0; border-radius: 14px; color: #f8f7fb; background: #0d0d12; font: inherit; text-align: left; cursor: pointer; }
       .dancer-onboarding-step-marker { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.17); border-radius: 50%; color: #d7d5dd; background: rgba(255,255,255,.045); font-size: 12px; font-weight: 950; }
       .dancer-onboarding-step-copy { min-width: 0; display: grid; gap: 4px; }
       .dancer-onboarding-step-copy strong { font-size: 15px; }
@@ -6287,6 +6503,52 @@ function DashboardStyles() {
       .dancer-onboarding-step-panel { display: grid; gap: 14px; padding: 14px; border-top: 1px solid rgba(255,255,255,.09); background: #09090d; animation: dancer-onboarding-panel-in .18s ease-out; }
       .dancer-onboarding-step-panel[hidden] { display: none; }
       .dancer-onboarding-step-panel .dancer-onboarding-profile-workspace { margin: 0; }
+      .dancer-step-one-workspace { min-width: 0; display: grid; gap: 12px; }
+      .dancer-step-one-summary { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; padding: 14px; border: 1px solid rgba(126,234,255,.17); border-radius: 14px; background: linear-gradient(145deg,rgba(17,17,24,.96),rgba(7,7,11,.98)); }
+      .dancer-step-one-summary > span { min-width: 0; display: grid; gap: 5px; }
+      .dancer-step-one-summary h3 { color: #fff; font-size: clamp(20px,4vw,26px); }
+      .dancer-step-one-summary p { color: var(--mydancr-dashboard-muted); font-size: 12px; line-height: 1.45; }
+      .dancer-step-one-summary > b { padding: 6px 9px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #d8d5df; background: rgba(255,255,255,.04); font-size: 10px; white-space: nowrap; }
+      .dancer-step-one-checklist { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; }
+      .dancer-step-one-checklist button { min-width: 0; min-height: 54px; display: grid; grid-template-columns: 22px minmax(0,1fr); align-items: center; gap: 2px 7px; padding: 8px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; color: #f7f5fa; background: rgba(255,255,255,.035); font: inherit; text-align: left; cursor: pointer; }
+      .dancer-step-one-checklist button > span { width: 20px; height: 20px; grid-row: 1 / span 2; display: grid; place-items: center; border-radius: 50%; color: #aaa5b1; background: rgba(255,255,255,.07); font-size: 11px; font-weight: 950; }
+      .dancer-step-one-checklist button strong { min-width: 0; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+      .dancer-step-one-checklist button small { color: #aaa5b1; font-size: 8px; font-weight: 900; letter-spacing: .03em; text-transform: uppercase; }
+      .dancer-step-one-checklist button.is-complete { border-color: rgba(76,223,166,.25); background: rgba(25,140,101,.07); }
+      .dancer-step-one-checklist button.is-complete > span { color: #70efbd; background: rgba(25,140,101,.17); }
+      .dancer-step-one-checklist button.is-complete small { color: #70efbd; }
+      .dancer-step-one-checklist button.is-checking { border-color: rgba(126,234,255,.23); }
+      .dancer-step-one-checklist button.is-checking small { color: #8fe9fa; }
+      .dancer-step-one-checklist button.is-replace, .dancer-step-one-checklist button.is-unsaved { border-color: rgba(235,187,91,.25); }
+      .dancer-step-one-checklist button.is-replace small, .dancer-step-one-checklist button.is-unsaved small { color: #f2ce83; }
+      .dancer-step-one-sections { display: grid; gap: 7px; }
+      .dancer-step-one-section { min-width: 0; overflow: clip; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: #0c0c11; }
+      .dancer-step-one-section.is-complete { border-color: rgba(76,223,166,.23); }
+      .dancer-step-one-section.is-checking { border-color: rgba(126,234,255,.23); }
+      .dancer-step-one-section.is-replace, .dancer-step-one-section.is-unsaved { border-color: rgba(235,187,91,.28); }
+      .dancer-step-one-section-button { width: 100%; min-height: 66px; display: grid; grid-template-columns: 30px minmax(0,1fr) auto 26px; align-items: center; gap: 9px; padding: 10px 11px; border: 0; color: #f8f7fb; background: #0c0c11; font: inherit; text-align: left; cursor: pointer; }
+      .dancer-step-one-section-marker { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; color: #ccc8d2; background: rgba(255,255,255,.045); font-size: 11px; font-weight: 950; }
+      .dancer-step-one-section-button > span:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
+      .dancer-step-one-section-button strong { font-size: 14px; }
+      .dancer-step-one-section-button small { overflow: hidden; color: var(--mydancr-dashboard-muted); font-size: 10px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+      .dancer-step-one-section-button em { padding: 5px 7px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; color: #bcb8c3; background: rgba(255,255,255,.035); font-size: 8px; font-style: normal; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+      .dancer-step-one-section-button i { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #f5efff; background: #301b46; font-size: 18px; font-style: normal; line-height: 1; }
+      .dancer-step-one-section.is-complete .dancer-step-one-section-marker, .dancer-step-one-section.is-complete .dancer-step-one-section-button em { border-color: rgba(76,223,166,.28); color: #70efbd; background: rgba(25,140,101,.1); }
+      .dancer-step-one-section.is-checking .dancer-step-one-section-button em { color: #8fe9fa; }
+      .dancer-step-one-section.is-replace .dancer-step-one-section-button em, .dancer-step-one-section.is-unsaved .dancer-step-one-section-button em { color: #f2ce83; }
+      .dancer-step-one-section-panel { display: grid; gap: 10px; padding: 10px; border-top: 1px solid rgba(255,255,255,.08); background: #08080c; animation: dancer-onboarding-panel-in .18s ease-out; }
+      .dancer-step-one-section-panel[hidden] { display: none; }
+      .dancer-step-one-section-panel > .info-panel { grid-column: 1 / -1; padding: 12px; border: 0; border-radius: 10px; background: #0d0d12; }
+      .dancer-step-one-section-panel > .setup-panel > h2, .dancer-step-one-section-panel > .upload-panel > h2, .dancer-step-one-section-panel > .dancer-avatar-panel > .eyebrow, .dancer-step-one-section-panel > .dancer-avatar-panel > h2 { display: none; }
+      .dancer-step-one-optional-panel { grid-template-columns: 1fr; }
+      .dancer-step-one-optional-panel > * { min-width: 0; }
+      .dancer-form-save-state { grid-column: 1 / -1; min-height: 18px; margin: 0; color: #70efbd !important; font-size: 11px !important; }
+      .dancer-form-save-state.is-unsaved { color: #f2ce83 !important; }
+      .dancer-step-one-footer { display: grid; grid-template-columns: minmax(0,1fr) minmax(180px,240px); align-items: center; gap: 12px; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: #0c0c11; }
+      .dancer-step-one-footer > span { display: grid; gap: 3px; }
+      .dancer-step-one-footer strong { color: #fff; font-size: 13px; }
+      .dancer-step-one-footer small { color: var(--mydancr-dashboard-muted); font-size: 10px; }
+      .dancer-step-one-footer.is-ready { border-color: rgba(76,223,166,.3); background: rgba(25,140,101,.07); }
       .dancer-onboarding-preview-workspace { display: grid; gap: 12px; }
       .dancer-onboarding-preview { display: grid; gap: 11px; padding: 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #0d0d12; }
       .dancer-onboarding-complete-note { display: grid; gap: 4px; padding: 13px; border: 1px solid rgba(76,223,166,.28); border-radius: 12px; color: #70efbd; background: rgba(25,140,101,.09); }
@@ -6421,6 +6683,7 @@ function DashboardStyles() {
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 860px) { .dancer-avatar-panel form { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
+      @media (max-width: 620px) { .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }
