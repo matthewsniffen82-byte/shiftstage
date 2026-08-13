@@ -30643,7 +30643,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=107" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=108" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31435,18 +31435,26 @@
         }
         .home-tv-feed-deal-action {
           position: relative;
-          box-sizing: border-box;
-          width: 56px;
-          min-width: 56px;
-          max-width: 56px;
-          height: 56px;
-          min-height: 56px;
-          max-height: 56px;
-          grid-template-rows: 22px 10px;
-          align-content: center;
-          gap: 3px;
-          padding: 5px 3px;
-          border-radius: 16px;
+          box-sizing: border-box !important;
+          width: 56px !important;
+          min-width: 56px !important;
+          max-width: 56px !important;
+          height: 56px !important;
+          min-height: 56px !important;
+          max-height: 56px !important;
+          display: grid !important;
+          grid-template-rows: 22px 10px !important;
+          align-content: center !important;
+          justify-items: center !important;
+          gap: 3px !important;
+          padding: 5px 3px !important;
+          border-width: 1px !important;
+          border-style: solid !important;
+          border-radius: 16px !important;
+          overflow: hidden !important;
+          opacity: 1 !important;
+          -webkit-appearance: none;
+          appearance: none;
           border-color: var(--dancr-color-success-strong);
           color: var(--dancr-color-text-primary);
           background:
@@ -31493,16 +31501,16 @@
         .home-tv-feed-deal-action.is-unavailable,
         .home-tv-feed-deal-action.is-unavailable:hover,
         .home-tv-feed-deal-action.is-unavailable:focus-visible {
-          border-color: rgba(196,181,253,.18);
-          color: rgba(245,245,255,.68);
-          background: rgba(18,15,28,.72);
-          box-shadow: 0 6px 16px rgba(0,0,0,.24);
+          border-color: rgba(148,163,184,.42) !important;
+          color: rgba(248,250,252,.82) !important;
+          background: rgba(17,17,24,.92) !important;
+          box-shadow: 0 8px 24px rgba(0,0,0,.34), inset 0 1px 0 rgba(248,250,252,.07) !important;
           cursor: pointer;
         }
         .home-tv-feed-deal-action.is-unavailable .home-tv-feed-deal-count {
-          color: rgba(245,245,255,.68);
-          background: transparent;
-          box-shadow: none;
+          color: rgba(248,250,252,.82) !important;
+          background: transparent !important;
+          box-shadow: none !important;
         }
         .home-tv-feed-report-menu {
           position: absolute;

@@ -4080,7 +4080,10 @@ body.dancr-button-system .home-tv-feed-schedule.is-upcoming {
   text-shadow: none !important;
 }
 
-body.dancr-button-system .home-tv-feed-deal-action {
+/* TV Club Deal controls share one fixed shell in the component stylesheet.
+ * Availability changes semantic color and behavior only; this branding layer
+ * must never change the control's silhouette. */
+body.dancr-button-system .home-tv-feed-deal-action.is-available {
   border-color: var(--dancr-color-success-strong) !important;
   color: var(--dancr-color-text-primary) !important;
   background: color-mix(
@@ -4089,6 +4092,17 @@ body.dancr-button-system .home-tv-feed-deal-action {
     var(--dancr-color-surface-raised)
   ) !important;
   box-shadow: 0 0 10px var(--dancr-color-success-soft) !important;
+}
+
+body.dancr-button-system .home-tv-feed-deal-action.is-unavailable,
+body.dancr-button-system .home-tv-feed-deal-action.is-unavailable:hover,
+body.dancr-button-system .home-tv-feed-deal-action.is-unavailable:focus-visible {
+  border-color: rgba(148, 163, 184, 0.42) !important;
+  color: rgba(248, 250, 252, 0.82) !important;
+  background: rgba(17, 17, 24, 0.92) !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(248, 250, 252, 0.07) !important;
 }
 
 /* Production venue-detail branding is neutral first. The venue's approved

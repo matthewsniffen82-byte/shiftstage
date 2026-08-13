@@ -144,12 +144,22 @@ test("TV Club Deal states keep one fixed rounded-square shape", () => {
     /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
 
-  assert.match(dealShell, /box-sizing: border-box;/);
-  assert.match(dealShell, /width: 56px;[\s\S]*?min-width: 56px;[\s\S]*?max-width: 56px;/);
-  assert.match(dealShell, /height: 56px;[\s\S]*?min-height: 56px;[\s\S]*?max-height: 56px;/);
-  assert.match(dealShell, /border-radius: 16px;/);
+  assert.match(dealShell, /box-sizing: border-box !important;/);
+  assert.match(dealShell, /width: 56px !important;[\s\S]*?min-width: 56px !important;[\s\S]*?max-width: 56px !important;/);
+  assert.match(dealShell, /height: 56px !important;[\s\S]*?min-height: 56px !important;[\s\S]*?max-height: 56px !important;/);
+  assert.match(dealShell, /padding: 5px 3px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?overflow: hidden !important;/);
   assert.match(dealLabel, /position: static;[\s\S]*?width: 100%;[\s\S]*?background: transparent;/);
   assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Club Deals/g) || []).length, 2);
+});
+
+test("TV Club Deal branding cannot change the shell between active and inactive states", () => {
+  const stateStyles = aestheticSource.match(
+    /\/\* TV Club Deal controls share one fixed shell[\s\S]*?(?=\/\* Production venue-detail branding)/,
+  )?.[0] || "";
+
+  assert.match(stateStyles, /\.home-tv-feed-deal-action\.is-available \{[\s\S]*?var\(--dancr-color-success-strong\)/);
+  assert.match(stateStyles, /\.home-tv-feed-deal-action\.is-unavailable,[\s\S]*?border-color: rgba\(148, 163, 184, 0\.42\) !important;[\s\S]*?background: rgba\(17, 17, 24, 0\.92\) !important;/);
+  assert.doesNotMatch(stateStyles, /\.home-tv-feed-deal-action \{|\b(?:width|height|padding|margin|position|inset|display|grid|flex|gap|overflow|transform):/);
 });
 
 test("TV cards are completely borderless without a violet perimeter", () => {
@@ -446,7 +456,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=107/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=108/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
