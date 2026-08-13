@@ -119,9 +119,24 @@ test("step one required items are accessible accordions that advance to the next
 test("step one shows clear save, photo-count, and automatic-check states", () => {
   assert.match(dashboard, /Unsaved changes/);
   assert.match(dashboard, /dancer-form-save-state/);
-  assert.match(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\} photos · \$\{approvedPhotos\.length\} approved/);
+  assert.match(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\} photos/);
+  assert.match(dashboard, /pendingPhotos\.length \? `\$\{pendingPhotos\.length\} checking`/);
   assert.match(dashboard, /We are checking this photo\. This page updates automatically/);
   assert.match(dashboard, /This photo cannot be used\. Choose another photo/);
+});
+
+test("one approved profile photo completes the requirement without hiding extra moderation states", () => {
+  assert.match(dashboard, /const profileReady = Boolean\([\s\S]*?&& approvedPhotos\.length,\s*\);/);
+  assert.doesNotMatch(dashboard, /&& !pendingPhotos\.length/);
+  assert.match(dashboard, /const photoState: DancerStepOneItemState = approvedPhotos\.length\s*\? "complete"/);
+  assert.match(dashboard, /rejectedPhotos\.length \? `\$\{rejectedPhotos\.length\} needs replacement`/);
+});
+
+test("embedded video management uses a contained mobile stack", () => {
+  assert.match(dancerStudio, /\.tv-studio-embedded \{[^}]*max-width: 100%;[^}]*overflow: hidden;/);
+  assert.match(dancerStudio, /@media \(max-width: 680px\) \{[\s\S]*?\.tv-managed-video \{ grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(dancerStudio, /\.tv-managed-video > video, \.tv-video-unavailable \{ width: min\(100%, 240px\); max-height: 420px; justify-self: center; \}/);
+  assert.match(dancerStudio, /\.tv-managed-video > div > a, \.tv-managed-video > div > button \{ width: 100%; justify-self: stretch;/);
 });
 
 test("a completed profile photo upload clears the native filename from onboarding", () => {

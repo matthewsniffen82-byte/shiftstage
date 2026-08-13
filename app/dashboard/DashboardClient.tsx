@@ -2733,10 +2733,7 @@ function DancerOnboardingCommand({
     persistedStageName
     && persistedCity
     && avatarUrl
-    && approvedPhotos.length
-    && String(profile?.photo_review_status || "").toLowerCase() === "approved"
-    && !pendingPhotos.length
-    && !rejectedPhotos.length,
+    && approvedPhotos.length,
   );
   const submitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
   const setupDetail = profileReady
@@ -3065,9 +3062,9 @@ function dancerProfileSetupBlocker({
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
   if (pendingAvatar) return "Your avatar is being moderated.";
   if (!avatarUrl) return "Upload a clear face avatar.";
-  if (!approvedPhotos.length) return "Upload at least one profile picture that passes moderation.";
   if (pendingPhotos.length) return `${pendingPhotos.length} profile ${pendingPhotos.length === 1 ? "picture is" : "pictures are"} still being moderated.`;
   if (rejectedPhotos.length) return "Replace the profile picture that did not pass moderation.";
+  if (!approvedPhotos.length) return "Upload at least one profile picture that passes moderation.";
   return "Save the remaining profile changes.";
 }
 
@@ -3124,13 +3121,19 @@ function DancerOnboardingProfileMediaWorkspace({
     : avatarUrl
       ? "complete"
       : "missing";
-  const photoState: DancerStepOneItemState = rejectedPhotos.length
-    ? "replace"
+  const photoState: DancerStepOneItemState = approvedPhotos.length
+    ? "complete"
     : pendingPhotos.length
       ? "checking"
-      : approvedPhotos.length && String(profile?.photo_review_status || "").toLowerCase() === "approved"
-        ? "complete"
+      : rejectedPhotos.length
+        ? "replace"
         : "missing";
+  const photoDetail = [
+    `${photos.length} of ${MAX_DANCER_PROFILE_PHOTOS} photos`,
+    `${approvedPhotos.length} approved`,
+    pendingPhotos.length ? `${pendingPhotos.length} checking` : "",
+    rejectedPhotos.length ? `${rejectedPhotos.length} needs replacement` : "",
+  ].filter(Boolean).join(" · ");
   const requiredItems = [
     {
       id: "identity",
@@ -3149,7 +3152,7 @@ function DancerOnboardingProfileMediaWorkspace({
     {
       id: "photos",
       label: "Profile photos",
-      detail: `${photos.length} of ${MAX_DANCER_PROFILE_PHOTOS} photos · ${approvedPhotos.length} approved`,
+      detail: photoDetail,
       state: photoState,
       content: photoContent,
     },

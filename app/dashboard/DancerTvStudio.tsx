@@ -378,7 +378,7 @@ function DancerTvStudioStyles() {
     <style>{`
       .tv-studio-page { min-height: 100vh; padding: 28px clamp(14px, 4vw, 54px) 60px; background: radial-gradient(circle at 10% 0%, rgba(139,92,246,.22), transparent 26rem), #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
       .tv-studio-page > * { max-width: 920px; margin-left: auto; margin-right: auto; }
-      .tv-studio-embedded { grid-column: 1 / -1; }
+      .tv-studio-embedded { grid-column: 1 / -1; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden; }
       .tv-studio-embedded-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
       .tv-studio-embedded-head > div { display: grid; gap: 7px; }
       .tv-studio-embedded-head h2 { margin: 0; font-size: 23px; line-height: 1.1; }
@@ -409,17 +409,17 @@ function DancerTvStudioStyles() {
       .tv-studio-lock, .tv-studio-incognito, .tv-studio-limit { display: grid; gap: 4px; }
       .tv-studio-lock p, .tv-studio-incognito p, .tv-studio-limit p { margin: 0; color: #cfc5de; }
       .tv-studio-incognito { border-color: rgba(255,200,90,.3); background: rgba(255,200,90,.07); color: #ffe19d; }
-      .tv-video-manager { margin-top: 22px; display: grid; gap: 12px; }
+      .tv-video-manager { width: 100%; max-width: 100%; min-width: 0; margin-top: 22px; display: grid; gap: 12px; box-sizing: border-box; }
       .tv-manager-title { display: flex; align-items: center; justify-content: space-between; }
       .tv-manager-title h3 { margin: 0; font-size: 23px; }
       .tv-manager-title span { min-width: 34px; min-height: 28px; display: grid; place-items: center; border-radius: 999px; color: #7eeaff; background: rgba(34,199,255,.09); font-weight: 900; }
-      .tv-managed-grid { display: grid; gap: 12px; }
-      .tv-managed-video { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 13px; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(11,11,16,.82); }
+      .tv-managed-grid { width: 100%; max-width: 100%; min-width: 0; display: grid; gap: 12px; box-sizing: border-box; }
+      .tv-managed-video { width: 100%; max-width: 100%; min-width: 0; display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 13px; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(11,11,16,.82); box-sizing: border-box; overflow: hidden; }
       .tv-managed-video > video, .tv-video-unavailable { width: 180px; aspect-ratio: 9 / 16; max-height: 310px; object-fit: contain; border-radius: 8px; background: #000; }
       .tv-video-unavailable { display: grid; place-items: center; color: #9f94b3; font-size: 12px; }
-      .tv-managed-video > div { display: grid; align-content: start; gap: 8px; }
-      .tv-managed-video small { color: #a99ebc; }
-      .tv-managed-video p { margin: 0; padding: 9px; border: 1px solid rgba(255,91,116,.22); border-radius: 8px; color: #ffc2cc; background: rgba(255,91,116,.06); }
+      .tv-managed-video > div { width: 100%; max-width: 100%; min-width: 0; display: grid; align-content: start; gap: 8px; box-sizing: border-box; }
+      .tv-managed-video small { max-width: 100%; color: #a99ebc; overflow-wrap: anywhere; }
+      .tv-managed-video p { max-width: 100%; margin: 0; padding: 9px; border: 1px solid rgba(255,91,116,.22); border-radius: 8px; color: #ffc2cc; background: rgba(255,91,116,.06); box-sizing: border-box; overflow-wrap: anywhere; }
       .tv-video-status { width: fit-content; padding: 5px 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #d8d0e8; font-size: 10px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .tv-video-status.status-approved { color: #85ffc1; border-color: rgba(58,255,164,.32); background: rgba(58,255,164,.07); }
       .tv-video-status.status-moderating { color: #94e5ff; border-color: rgba(34,199,255,.34); background: rgba(34,199,255,.08); }
@@ -438,9 +438,10 @@ function DancerTvStudioStyles() {
         .tv-studio-embedded-head { gap: 10px; }
         .tv-upload-form { grid-template-columns: 1fr; padding: 12px; }
         .tv-upload-form > * { grid-column: auto !important; }
-        .tv-managed-video { grid-template-columns: 112px minmax(0, 1fr); padding: 8px; }
-        .tv-managed-video > video, .tv-video-unavailable { width: 112px; max-height: 210px; }
+        .tv-managed-video { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 10px; }
+        .tv-managed-video > video, .tv-video-unavailable { width: min(100%, 240px); max-height: 420px; justify-self: center; }
         .tv-managed-video dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .tv-managed-video > div > a, .tv-managed-video > div > button { width: 100%; justify-self: stretch; box-sizing: border-box; }
       }
     `}</style>
   );
