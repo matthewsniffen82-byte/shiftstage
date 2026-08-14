@@ -24,6 +24,11 @@ type AdminTvVideo = {
   dancer?: { id: string; stageName: string; slug: string; city: string } | null;
 };
 
+type ReviewResult = {
+  decision: "approved" | "rejected" | "error";
+  message: string;
+};
+
 export default function AdminTvPanel() {
   const [videos, setVideos] = useState<AdminTvVideo[]>([]);
   const [filter, setFilter] = useState("all");
@@ -31,6 +36,8 @@ export default function AdminTvPanel() {
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [workingId, setWorkingId] = useState("");
+  const [workingDecision, setWorkingDecision] = useState<"approved" | "rejected" | "">("");
+  const [reviewResults, setReviewResults] = useState<Record<string, ReviewResult>>({});
 
   useEffect(() => {
     loadVideos(filter);
@@ -75,6 +82,12 @@ export default function AdminTvPanel() {
     const token = readToken();
     if (!token) return setStatus("Admin sign in required.");
     setWorkingId(video.id);
+    setWorkingDecision(decision);
+    setReviewResults((current) => {
+      const next = { ...current };
+      delete next[video.id];
+      return next;
+    });
     setStatus(decision === "approved" ? "Approving and publishing…" : "Rejecting and notifying dancer…");
     try {
       const response = await fetch("/api/admin/tv/videos", {
@@ -84,9 +97,7 @@ export default function AdminTvPanel() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to review video.");
-      setVideos((current) => filter === "submitted"
-        ? current.filter((item) => item.id !== video.id)
-        : current.map((item) => item.id === video.id
+      setVideos((current) => current.map((item) => item.id === video.id
           ? {
               ...item,
               status: decision,
@@ -99,11 +110,24 @@ export default function AdminTvPanel() {
         delete next[video.id];
         return next;
       });
-      setStatus(data.message || (decision === "approved" ? "Video approved and published." : "Video rejected."));
+      const successMessage = data.message || (decision === "approved"
+        ? "Video approved and published on MyDancr TV."
+        : "Video rejected and the dancer was notified.");
+      setReviewResults((current) => ({
+        ...current,
+        [video.id]: { decision, message: successMessage },
+      }));
+      setStatus(successMessage);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to review video.");
+      const errorMessage = error instanceof Error ? error.message : "Unable to review video.";
+      setReviewResults((current) => ({
+        ...current,
+        [video.id]: { decision: "error", message: errorMessage },
+      }));
+      setStatus(errorMessage);
     } finally {
       setWorkingId("");
+      setWorkingDecision("");
     }
   }
 
@@ -119,7 +143,7 @@ export default function AdminTvPanel() {
             {filter === "all"
               ? `${pendingCount} need review · ${videos.length} total`
               : filter === "submitted"
-                ? `${videos.length} videos need review`
+                ? `${pendingCount} videos need review`
                 : `${videos.length} ${filter} videos`}
           </span>
         </div>
@@ -181,18 +205,46 @@ export default function AdminTvPanel() {
                   </label>
                   <div className="admin-tv-actions">
                     <button type="button" disabled={workingId === video.id} onClick={() => review(video, "approved")}>
-                      {workingId === video.id ? "Working…" : "Approve and publish"}
+                      {workingId === video.id && workingDecision === "approved" ? "Publishing…" : "Approve and publish"}
                     </button>
                     <button className="reject" type="button" disabled={workingId === video.id} onClick={() => review(video, "rejected")}>
-                      Reject video
+                      {workingId === video.id && workingDecision === "rejected" ? "Rejecting…" : "Reject video"}
                     </button>
                   </div>
+                  {workingId === video.id ? (
+                    <div className="admin-tv-result is-working" role="status" aria-live="polite">
+                      <span className="admin-tv-result-icon" aria-hidden="true">↻</span>
+                      <div>
+                        <strong>{workingDecision === "approved" ? "Publishing video…" : "Rejecting video…"}</strong>
+                        <small>Please keep this page open while the update is saved.</small>
+                      </div>
+                    </div>
+                  ) : reviewResults[video.id]?.decision === "error" ? (
+                    <div className="admin-tv-result is-error" role="alert">
+                      <span className="admin-tv-result-icon" aria-hidden="true">!</span>
+                      <div>
+                        <strong>Video was not updated</strong>
+                        <small>{reviewResults[video.id].message}</small>
+                      </div>
+                    </div>
+                  ) : null}
                 </>
               ) : (
-                <small>
-                  {video.status === "approved" ? "Approved and published." : video.status === "rejected" ? "Rejected." : "Not awaiting review."}
-                  {video.reviewNotes ? ` ${video.reviewNotes}` : ""}
-                </small>
+                reviewResults[video.id] ? (
+                  <div className={`admin-tv-result ${video.status === "approved" ? "is-success" : "is-rejected"}`} role="status" aria-live="polite">
+                    <span className="admin-tv-result-icon" aria-hidden="true">{video.status === "approved" ? "✓" : "!"}</span>
+                    <div>
+                      <strong>{reviewResults[video.id].message}</strong>
+                      {video.status === "approved" ? <Link href={`/tv/${video.id}`}>Open live video</Link> : null}
+                      {video.reviewNotes ? <small>{video.reviewNotes}</small> : null}
+                    </div>
+                  </div>
+                ) : (
+                  <small>
+                    {video.status === "approved" ? "Approved and published." : video.status === "rejected" ? "Rejected." : "Not awaiting review."}
+                    {video.reviewNotes ? ` ${video.reviewNotes}` : ""}
+                  </small>
+                )
               )}
             </div>
           </article>
@@ -254,7 +306,19 @@ function AdminTvPanelStyles() {
       .admin-tv-actions button.reject { color: #fff; border-color: rgba(255,91,116,.4); background: #bc3048; }
       .admin-tv-actions button:disabled { opacity: .65; cursor: wait; }
       .admin-tv-status { padding: 9px 10px; border: 1px solid rgba(34,199,255,.24); border-radius: 8px; color: #a9efff; background: rgba(34,199,255,.07); font-size: 12px; font-weight: 800; }
+      .admin-tv-result { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 9px; padding: 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; background: rgba(255,255,255,.045); }
+      .admin-tv-result > div { display: grid; gap: 3px; min-width: 0; }
+      .admin-tv-result strong { color: #fff; font-size: 12px; line-height: 1.35; }
+      .admin-tv-result a { width: fit-content; color: #a9efff; font-size: 11px; font-weight: 900; text-decoration: underline; }
+      .admin-tv-result-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; background: rgba(255,255,255,.1); font-size: 16px; font-weight: 950; }
+      .admin-tv-result.is-success { border-color: rgba(58,255,164,.34); background: rgba(58,255,164,.08); }
+      .admin-tv-result.is-success .admin-tv-result-icon { color: #07170f; background: #85ffc1; }
+      .admin-tv-result.is-working { border-color: rgba(34,199,255,.3); background: rgba(34,199,255,.07); }
+      .admin-tv-result.is-working .admin-tv-result-icon { color: #a9efff; animation: admin-tv-spin .9s linear infinite; }
+      .admin-tv-result.is-error, .admin-tv-result.is-rejected { border-color: rgba(255,91,116,.38); background: rgba(255,91,116,.08); }
+      .admin-tv-result.is-error .admin-tv-result-icon, .admin-tv-result.is-rejected .admin-tv-result-icon { background: #bc3048; }
       .admin-tv-empty { padding: 18px; border: 1px dashed rgba(255,255,255,.14); border-radius: 8px; color: #a99ebc; text-align: center; }
+      @keyframes admin-tv-spin { to { transform: rotate(360deg); } }
       @media (max-width: 680px) {
         .admin-tv-head { align-items: stretch; flex-direction: column; }
         .admin-tv-video { grid-template-columns: 104px minmax(0, 1fr); padding: 7px; }

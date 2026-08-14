@@ -278,6 +278,12 @@ test("administrator moderation persists decisions and venue TV is schedule-deriv
   assert.match(adminPanel, /video\.status === "submitted"/);
   assert.match(adminPanel, /item\.id === video\.id[\s\S]*?status: decision/);
   assert.match(adminPanel, /Approved and published\./);
+  assert.match(adminPanel, /Publishing…/);
+  assert.match(adminPanel, /Publishing video…/);
+  assert.match(adminPanel, /Video was not updated/);
+  assert.match(adminPanel, /reviewResults\[video\.id\][\s\S]*?Open live video/);
+  assert.match(adminPanel, /className="admin-tv-result is-working" role="status" aria-live="polite"/);
+  assert.match(adminPanel, /className="admin-tv-result is-error" role="alert"/);
   assert.match(adminPanel, /pendingCount[\s\S]*?videos\.length[\s\S]*?total/);
   assert.match(adminPanel, /window\.confirm/);
   assert.match(venueApi, /requireActiveVenue/);
