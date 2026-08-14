@@ -16,7 +16,7 @@ const lateMobileHeader = homeSource.match(
 )?.[0] || "";
 
 const mobileAuthClearance = homeSource.match(
-  /\/\* Keep the mobile login sheet below the canonical utility header\. \*\/[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: calc\(66px \+ env\(safe-area-inset-top\)\);[\s\S]*?#authPage > \.page-inner \{[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?#authPage \.auth-choice-card \{[\s\S]*?overflow: visible !important;[\s\S]*?#authPage > \.page-inner::after \{[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\}\s*\}/,
+  /\/\* The utility header is hidden while account surfaces are open,[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: 0;[\s\S]*?#authPage > \.page-inner \{[\s\S]*?padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?#authPage \.auth-choice-card \{[\s\S]*?overflow: visible !important;[\s\S]*?#authPage > \.page-inner::after \{[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\}\s*\}/,
 )?.[0] || "";
 
 test("mobile utility header is rounded, compact, and aligned with the page", () => {
@@ -131,12 +131,17 @@ test("the mobile notification panel opens inside the visible viewport", () => {
   );
 });
 
-test("the mobile login sheet begins below the utility header", () => {
+test("the mobile login sheet begins at the visible top after the utility header is hidden", () => {
   assert.ok(mobileAuthClearance, "mobile login clearance CSS must exist");
   assert.match(
-    mobileAuthClearance,
-    /#authPage\.show \{[\s\S]*?top: calc\(66px \+ env\(safe-area-inset-top\)\);[\s\S]*?bottom: 0;[\s\S]*?min-height: 0;[\s\S]*?height: auto;[\s\S]*?overflow-y: auto;/,
+    homeSource,
+    /body\.account-surface-open \.app > header,[\s\S]*?display: none !important;/,
   );
+  assert.match(
+    mobileAuthClearance,
+    /#authPage\.show \{[\s\S]*?top: 0;[\s\S]*?bottom: 0;[\s\S]*?min-height: 0;[\s\S]*?height: auto;[\s\S]*?overflow-y: auto;/,
+  );
+  assert.match(mobileAuthClearance, /padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);/);
   assert.doesNotMatch(mobileAuthClearance, /\.page-panel\.show/);
 });
 

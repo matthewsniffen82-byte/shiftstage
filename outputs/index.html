@@ -36679,10 +36679,11 @@
           max-height: 58px;
         }
 
-        /* Keep the mobile login sheet below the canonical utility header. */
+        /* The utility header is hidden while account surfaces are open, so the
+           mobile login sheet should begin at the visible top of the viewport. */
         @media (max-width: 720px) {
           #authPage.show {
-            top: calc(66px + env(safe-area-inset-top));
+            top: 0;
             bottom: 0;
             min-height: 0;
             height: auto;
@@ -36691,6 +36692,7 @@
 
           #authPage > .page-inner {
             min-height: 100%;
+            padding-top: max(10px, env(safe-area-inset-top, 0px));
             padding-bottom: calc(112px + env(safe-area-inset-bottom));
           }
 

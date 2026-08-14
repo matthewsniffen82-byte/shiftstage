@@ -55,9 +55,11 @@ test("Login / Join visibly links to separate platform admin access", () => {
   );
   assert.match(
     homeRoute,
-    /<strong>Platform admin<\/strong><small>Sign in or create an admin account with your private admin code\.<\/small>/,
+    /<strong>Platform admin<\/strong><small>Private admin access<\/small>/,
   );
-  assert.match(homeRoute, /#authPage \.auth-admin-entry\{[^}]*min-height:68px;[^}]*grid-template-columns:42px minmax\(0,1fr\) auto;/);
+  assert.match(homeRoute, /#authPage \.auth-admin-entry\{[^}]*min-height:54px;[^}]*grid-template-columns:30px minmax\(0,1fr\) auto;[^}]*padding:9px 12px/);
+  assert.match(homeRoute, /#authPage \.auth-admin-entry-mark\{[^}]*width:30px;/);
+  assert.match(homeRoute, /#authPage \.auth-admin-entry-copy strong\{font-size:15px;/);
   assert.match(
     homeRoute,
     /withLiveProfileAssets\.replace\([\s\S]*?passwordRecoveryCard[\s\S]*?ADMIN_AUTH_ENTRY_HTML/,
