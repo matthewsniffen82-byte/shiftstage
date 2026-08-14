@@ -2931,7 +2931,7 @@ function DancerOnboardingCommand({
       return;
     }
     setIsSubmitting(true);
-    setStatus("Submitting your saved profile for media review...");
+    setStatus("Submitting your completed profile for final approval...");
     try {
       const response = await fetch("/api/dancer/profile", {
         method: "PATCH",
@@ -3035,11 +3035,11 @@ function DancerOnboardingCommand({
                       </div>
                     ) : (
                       <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
-                        {isSubmitting ? "Submitting..." : "Submit profile for review"}
+                        {isSubmitting ? "Submitting..." : "Submit completed profile"}
                       </button>
                     )}
                     <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
-                      {status || "Preview the complete customer-facing profile before submitting it."}
+                      {status || "Sends your profile for final approval."}
                     </p>
                   </div>
                 ) : null}
