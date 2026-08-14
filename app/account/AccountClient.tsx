@@ -25,6 +25,11 @@ type DancerSignupCity = {
   label: string;
 };
 
+type NfcAccountContext = {
+  tag: { type: "dressing_room" | "cashier"; label: string };
+  venue: { name: string; city: string; state: string };
+};
+
 const SESSION_KEY = "dancrAuthSessionV1";
 
 export default function AccountClient() {
@@ -32,11 +37,12 @@ export default function AccountClient() {
   const searchParams = useSearchParams();
   const requestedRole = searchParams.get("role");
   const isVenueAccessRedirect = requestedRole === "venue";
-  const initialRole = searchParams.get("role") === "dancer" ? "dancer" : "customer";
-  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const venueNfcToken = /^[A-Za-z0-9_-]{40,120}$/.test(searchParams.get("venue_nfc") || "")
     ? String(searchParams.get("venue_nfc"))
     : "";
+  const isNfcAuth = Boolean(venueNfcToken);
+  const initialRole = isNfcAuth || searchParams.get("role") === "dancer" ? "dancer" : "customer";
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const [role, setRole] = useState<AuthRole>(initialRole);
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
@@ -59,6 +65,8 @@ export default function AccountClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [existingSessionRole, setExistingSessionRole] = useState<SessionRole | null>(null);
+  const [nfcAccountContext, setNfcAccountContext] = useState<NfcAccountContext | null>(null);
+  const [nfcContextStatus, setNfcContextStatus] = useState<"idle" | "loading" | "ready" | "error">(isNfcAuth ? "loading" : "idle");
   const customerBenefitsRef = useRef<HTMLElement | null>(null);
   const customerEmailRef = useRef<HTMLInputElement | null>(null);
   const passwordRecoveryEmailRef = useRef<HTMLInputElement | null>(null);
@@ -76,6 +84,39 @@ export default function AccountClient() {
     }
     window.location.replace(destination.toString());
   }, [isVenueAccessRedirect, searchParams]);
+
+  useEffect(() => {
+    if (!venueNfcToken) return;
+    let cancelled = false;
+    setNfcContextStatus("loading");
+
+    async function loadNfcAccountContext() {
+      try {
+        const response = await fetch(`/api/nfc/${encodeURIComponent(venueNfcToken)}`, {
+          headers: { accept: "application/json" },
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        const data = await response.json() as { ok?: boolean; error?: string; tag?: NfcAccountContext["tag"]; venue?: NfcAccountContext["venue"] };
+        if (!response.ok || !data.ok || !data.tag || !data.venue) {
+          throw new Error(data.error || "Unable to load this venue NFC connection.");
+        }
+        if (data.tag.type !== "dressing_room") {
+          throw new Error("This NFC tag is not a dancer venue-access sticker.");
+        }
+        if (cancelled) return;
+        setNfcAccountContext({ tag: data.tag, venue: data.venue });
+        setNfcContextStatus("ready");
+      } catch {
+        if (cancelled) return;
+        setNfcAccountContext(null);
+        setNfcContextStatus("error");
+      }
+    }
+
+    void loadNfcAccountContext();
+    return () => { cancelled = true; };
+  }, [venueNfcToken]);
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
   const isCustomerSignup = role === "customer" && mode === "signup";
@@ -375,42 +416,89 @@ export default function AccountClient() {
     );
   }
 
+  const nfcReturnHref = venueNfcToken ? `/nfc/${venueNfcToken}` : "/";
+  const nfcVenueName = nfcAccountContext?.venue.name || "this venue";
+
   return (
-    <main className="account-shell">
+    <main className={`account-shell${isNfcAuth ? " nfc-account-shell" : ""}`}>
       <AccountStyles />
-      <nav className="top-nav" aria-label="Primary">
-        <Link className="brand" href="/">
-          Mydancr
-        </Link>
-        <div className="nav-links">
-          <Link href={homeDiscoveryHref("tonight")}>Now</Link>
-          <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
-          <Link href={homeDiscoveryHref("venues")}>Venues</Link>
-          <Link href={homeDiscoveryHref("trending")}>Trending</Link>
-          <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
-        </div>
-      </nav>
+      {isNfcAuth ? (
+        <header className="nfc-account-header">
+          <Link className="brand nfc-brand" href="/" aria-label="MyDancr home">mydancr</Link>
+          <Link className="nfc-back-link" href={nfcReturnHref}>Back to venue tap</Link>
+        </header>
+      ) : (
+        <nav className="top-nav" aria-label="Primary">
+          <Link className="brand" href="/">
+            Mydancr
+          </Link>
+          <div className="nav-links">
+            <Link href={homeDiscoveryHref("tonight")}>Now</Link>
+            <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
+            <Link href={homeDiscoveryHref("venues")}>Venues</Link>
+            <Link href={homeDiscoveryHref("trending")}>Trending</Link>
+            <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
+          </div>
+        </nav>
+      )}
 
-      <section className="account-grid">
+      <section className={`account-grid${isNfcAuth ? " nfc-account-grid" : ""}`}>
         <div className="account-copy">
-          <span className="eyebrow">Live account</span>
-          <h1>{role === "dancer" ? "Manage your dancer profile." : "Save your night out."}</h1>
-          <p>
-            Sign in with a secure Mydancr account to manage saved profiles, private alerts, NFC Club Deals, and dashboard data.
-          </p>
+          {isNfcAuth ? (
+            <>
+              <div className="nfc-account-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 7.5a6.4 6.4 0 0 1 0 9M10 5a10 10 0 0 1 0 14M13 2.5a13.5 13.5 0 0 1 0 19" /></svg>
+              </div>
+              <span className="eyebrow">Verified dressing-room NFC</span>
+              <h1>Connect to {nfcVenueName}.</h1>
+              <p>
+                {mode === "login"
+                  ? "Sign in to your dancer account. MyDancr will return to this sticker and confirm the venue connection automatically."
+                  : "Create your dancer login, confirm your email, and complete the required profile steps. MyDancr keeps this venue connection saved while you finish."}
+              </p>
+              <div className={`nfc-venue-context ${nfcContextStatus}`} role="status" aria-live="polite">
+                <span className="nfc-venue-dot" aria-hidden="true" />
+                <span>
+                  <strong>{nfcContextStatus === "loading" ? "Checking venue…" : nfcAccountContext?.venue.name || "Venue connection saved"}</strong>
+                  <small>{nfcAccountContext
+                    ? `${nfcAccountContext.venue.city}, ${nfcAccountContext.venue.state} · ${nfcAccountContext.tag.label}`
+                    : nfcContextStatus === "error"
+                      ? "Return to the sticker after signing in to verify it again."
+                      : "Secure MyDancr NFC"}</small>
+                </span>
+              </div>
+              <ol className="nfc-account-steps" aria-label="Venue connection steps">
+                <li><span>1</span><strong>Use a dancer account</strong></li>
+                <li><span>2</span><strong>Finish required setup if new</strong></li>
+                <li><span>3</span><strong>Venue affiliation activates automatically</strong></li>
+              </ol>
+            </>
+          ) : (
+            <>
+              <span className="eyebrow">Live account</span>
+              <h1>{role === "dancer" ? "Manage your dancer profile." : "Save your night out."}</h1>
+              <p>
+                Sign in with a secure Mydancr account to manage saved profiles, private alerts, NFC Club Deals, and dashboard data.
+              </p>
+            </>
+          )}
         </div>
 
-        <form className={`account-panel account-panel-${role}`} onSubmit={submit}>
+        <form className={`account-panel account-panel-${role}${isNfcAuth ? " account-panel-nfc" : ""}`} onSubmit={submit}>
           {!isCustomerSignup ? (
             <>
-              <div className="segmented" aria-label="Account type">
-                <button className={role === "customer" ? "active" : ""} type="button" onClick={() => chooseRole("customer")}>
-                  Customer
-                </button>
-                <button className={role === "dancer" ? "active" : ""} type="button" onClick={() => chooseRole("dancer")}>
-                  Dancer
-                </button>
-              </div>
+              {isNfcAuth ? (
+                <div className="nfc-dancer-lock"><span aria-hidden="true">✓</span> Dancer account</div>
+              ) : (
+                <div className="segmented" aria-label="Account type">
+                  <button className={role === "customer" ? "active" : ""} type="button" onClick={() => chooseRole("customer")}>
+                    Customer
+                  </button>
+                  <button className={role === "dancer" ? "active" : ""} type="button" onClick={() => chooseRole("dancer")}>
+                    Dancer
+                  </button>
+                </div>
+              )}
 
               <div className="segmented" aria-label="Auth mode">
                 <button className={mode === "login" ? "active" : ""} type="button" onClick={() => chooseMode("login")}>
@@ -425,7 +513,7 @@ export default function AccountClient() {
 
           {mode === "login" && role === "dancer" && existingSessionRole === "admin" ? (
             <p className="session-notice" role="status">
-              An admin session is active in this browser. Signing in here will safely switch it to your dancer account.
+              An admin session is active in this browser. Signing in here will safely switch it to your dancer account{isNfcAuth ? ` and return to ${nfcVenueName}` : ""}.
             </p>
           ) : null}
 
@@ -736,8 +824,38 @@ function AccountStyles() {
       .dancer-signup-note { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(139,92,246,.34); border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(5,5,9,.72)); box-shadow: 0 0 24px rgba(139,92,246,.12); }
       .dancer-signup-note h2 { margin: 0; font-size: 20px; }
       .dancer-signup-note p { font-size: 14px; line-height: 1.45; }
+      .nfc-account-shell { padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: max(112px, calc(96px + env(safe-area-inset-bottom))); background: radial-gradient(circle at 50% -8%, rgba(124,58,237,.3), transparent 26rem), radial-gradient(circle at 82% 30%, rgba(34,211,238,.08), transparent 22rem), #050507; }
+      .nfc-account-header { width: min(100%, 920px); min-height: 60px; margin: 0 auto clamp(24px,5vw,52px); display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 2px 14px; border-bottom: 1px solid rgba(248,250,252,.1); }
+      .nfc-brand { position: relative; color: #f8fafc; font-size: 25px; letter-spacing: -.055em; text-transform: lowercase; text-shadow: 0 0 20px rgba(124,58,237,.4); }
+      .nfc-brand::after { content: ""; position: absolute; right: -3px; bottom: 3px; width: 19px; height: 2px; border-radius: 999px; background: #7c3aed; box-shadow: 0 0 12px rgba(124,58,237,.68); }
+      .nfc-back-link { min-height: 40px; display: inline-flex; align-items: center; padding: 0 13px; border: 1px solid rgba(248,250,252,.14); border-radius: 999px; color: #f8fafc; background: rgba(17,17,24,.78); text-decoration: none; font-size: 12px; font-weight: 900; }
+      .nfc-account-grid { width: min(100%, 920px); grid-template-columns: minmax(0,1fr) minmax(320px,420px); align-items: start; }
+      .nfc-account-grid .account-copy { gap: 14px; }
+      .nfc-account-grid h1 { max-width: 620px; font-size: clamp(38px,6vw,68px); line-height: .98; }
+      .nfc-account-grid .account-copy>p { color: #cbd5e1; font-size: clamp(15px,2.1vw,18px); line-height: 1.55; }
+      .nfc-account-mark { width: 72px; height: 72px; display: grid; place-items: center; border: 1px solid rgba(248,250,252,.16); border-radius: 22px; color: #f8fafc; background: radial-gradient(circle at 42% 34%,rgba(124,58,237,.42),transparent 58%),#111118; box-shadow: 0 16px 40px rgba(0,0,0,.42),0 0 28px rgba(124,58,237,.14); }
+      .nfc-account-mark svg { width: 38px; height: 38px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+      .nfc-venue-context { min-height: 62px; display: flex; align-items: center; gap: 12px; box-sizing: border-box; margin-top: 4px; padding: 12px 14px; border: 1px solid rgba(34,211,238,.28); border-radius: 16px; background: rgba(17,17,24,.84); box-shadow: inset 0 1px 0 rgba(248,250,252,.035); }
+      .nfc-venue-context.error { border-color: rgba(251,191,36,.28); }
+      .nfc-venue-dot { width: 11px; height: 11px; flex: 0 0 11px; border: 2px solid rgba(248,250,252,.92); border-radius: 50%; background: #22d3ee; box-shadow: 0 0 14px rgba(34,211,238,.5); }
+      .nfc-venue-context.error .nfc-venue-dot { background: #fbbf24; box-shadow: 0 0 14px rgba(251,191,36,.36); }
+      .nfc-venue-context>span:last-child { min-width: 0; display: grid; gap: 3px; }
+      .nfc-venue-context strong { color: #f8fafc; font-size: 14px; }
+      .nfc-venue-context small { overflow: hidden; color: #94a3b8; font-size: 12px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+      .nfc-account-steps { display: grid; gap: 9px; margin: 4px 0 0; padding: 0; list-style: none; }
+      .nfc-account-steps li { display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 13px; }
+      .nfc-account-steps li span { width: 25px; height: 25px; display: grid; place-items: center; flex: 0 0 25px; border: 1px solid rgba(124,58,237,.48); border-radius: 50%; color: #f8fafc; background: rgba(124,58,237,.16); font-size: 11px; }
+      .account-panel-nfc { border-color: rgba(248,250,252,.16); border-radius: 20px; background: linear-gradient(155deg,rgba(17,17,24,.97),rgba(5,5,7,.96)); box-shadow: 0 26px 72px rgba(0,0,0,.48),inset 0 1px 0 rgba(248,250,252,.04); }
+      .nfc-dancer-lock { min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(34,211,238,.24); border-radius: 12px; color: #f8fafc; background: rgba(34,211,238,.055); font-size: 13px; font-weight: 900; }
+      .nfc-dancer-lock span { width: 19px; height: 19px; display: grid; place-items: center; border-radius: 50%; color: #050507; background: #22d3ee; font-size: 12px; }
+      .account-panel-nfc .segmented { border-radius: 12px; background: rgba(248,250,252,.035); }
+      .account-panel-nfc .segmented button { border-radius: 9px; }
+      .account-panel-nfc.account-panel-dancer .segmented button.active,
+      .account-panel-nfc .submit { border: 1px solid rgba(166,126,255,.5); color: #f8fafc; background: linear-gradient(135deg,#7c3aed,#4c1d95); box-shadow: 0 10px 26px rgba(124,58,237,.24),0 0 18px rgba(124,58,237,.14); }
+      .account-panel-nfc input,.account-panel-nfc select { border-color: rgba(248,250,252,.15); background: #111118; }
       @media (max-width: 780px) { .account-grid { grid-template-columns: 1fr; } }
-      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-benefit-grid, .login-recovery-grid { grid-template-columns: 1fr; } .login-recovery-actions { display: grid; grid-template-columns: 1fr; } .recovery-submit, .recovery-cancel { width: 100%; } }
+      @media (max-width: 780px) { .nfc-account-grid { gap: 22px; } .nfc-account-grid .account-copy { max-width: 620px; } .nfc-account-grid h1 { font-size: clamp(36px,10vw,52px); } }
+      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-benefit-grid, .login-recovery-grid { grid-template-columns: 1fr; } .login-recovery-actions { display: grid; grid-template-columns: 1fr; } .recovery-submit, .recovery-cancel { width: 100%; } .nfc-account-shell { padding-inline: 18px; } .nfc-account-header { margin-bottom: 22px; } .nfc-back-link { min-height: 38px; padding-inline: 11px; font-size: 11px; } .nfc-account-grid .account-copy { gap: 11px; } .nfc-account-mark { width: 58px; height: 58px; border-radius: 18px; } .nfc-account-mark svg { width: 31px; height: 31px; } .nfc-account-grid h1 { font-size: clamp(34px,10.5vw,44px); } .nfc-account-steps { display: none; } .account-panel-nfc { padding: 15px; } }
       @media (max-width: 340px) { .auth-help-row { grid-template-columns: 1fr; } }
     `}</style>
   );

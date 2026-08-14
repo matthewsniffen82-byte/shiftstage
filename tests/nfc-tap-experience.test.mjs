@@ -66,6 +66,16 @@ test("failed NFC taps always provide a clear mobile escape route", () => {
   assert.match(client, /\.nfc-exit\{[\s\S]*?width:48px;height:48px[\s\S]*?border-radius:50%/);
 });
 
+test("dressing-room authentication stays venue-aware and dancer-only", () => {
+  assert.match(account, /fetch\(`\/api\/nfc\/\$\{encodeURIComponent\(venueNfcToken\)\}`/);
+  assert.match(account, /Verified dressing-room NFC/);
+  assert.match(account, /Connect to \{nfcVenueName\}/);
+  assert.match(account, /Venue affiliation activates automatically/);
+  assert.match(account, /isNfcAuth \? \(\s*<div className="nfc-dancer-lock"/);
+  assert.match(account, /Back to venue tap/);
+  assert.match(account, /router\.push\(safeReturnTo \|\| destination\)/);
+});
+
 test("cashier NFC preserves the selected Club Deal and current-shift attribution", () => {
   assert.match(baseMigration, /confirm_deal_redemption_from_nfc/);
   assert.match(baseMigration, /previous\.redeemed_at >= v_now - interval '24 hours'/);
