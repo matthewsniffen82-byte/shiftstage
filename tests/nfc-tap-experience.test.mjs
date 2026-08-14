@@ -58,6 +58,14 @@ test("new and existing dancers use the same saved NFC enrollment flow without ma
   assert.match(client, /return_to=/);
 });
 
+test("failed NFC taps always provide a clear mobile escape route", () => {
+  assert.match(client, /const exitHref = auth\.role === "dancer" \? "\/dashboard\/dancer" : "\/"/);
+  assert.match(client, /className="nfc-exit"[\s\S]*?aria-label=\{exitLabel\}/);
+  assert.match(client, /phase === "error" && !complete[\s\S]*?\{exitLabel\}/);
+  assert.match(client, /phase === "error"[\s\S]*?"Try again"/);
+  assert.match(client, /\.nfc-exit\{[\s\S]*?width:48px;height:48px[\s\S]*?border-radius:50%/);
+});
+
 test("cashier NFC preserves the selected Club Deal and current-shift attribution", () => {
   assert.match(baseMigration, /confirm_deal_redemption_from_nfc/);
   assert.match(baseMigration, /previous\.redeemed_at >= v_now - interval '24 hours'/);

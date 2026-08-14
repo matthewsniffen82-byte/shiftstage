@@ -130,10 +130,17 @@ export function NfcTapClient({ token }: { token: string }) {
 
   const activeDeal = state?.deals.find((deal) => deal.id === selectedDealId) || state?.deals[0] || null;
   const dancerNeedsSignIn = state?.tag.type === "dressing_room" && (auth.role !== "dancer" || !auth.accessToken);
+  const exitHref = auth.role === "dancer" ? "/dashboard/dancer" : "/";
+  const exitLabel = auth.role === "dancer" ? "Back to dancer dashboard" : "Back to MyDancr";
 
   return (
     <main className="nfc-page">
       <section className={`nfc-card${complete ? " complete" : ""}`} data-phase={phase} aria-busy={phase === "reading" || phase === "redeeming"}>
+        <Link className="nfc-exit" href={exitHref} aria-label={exitLabel} title={exitLabel}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </Link>
         <div className="nfc-symbol"><NfcIcon /></div>
         <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier NFC redemption" : "Verified club NFC"}</span>
         <h1>{state?.venue.name || "MyDancr NFC"}</h1>
@@ -185,18 +192,22 @@ export function NfcTapClient({ token }: { token: string }) {
             <button className="nfc-primary" type="button" onClick={submitTap} disabled={isSubmitting}>
               {isSubmitting
                 ? "Confirming…"
+                : phase === "error"
+                  ? "Try again"
                 : state.tag.type === "dressing_room"
                   ? "Confirm Working Now"
-                  : phase === "error" ? "Try redemption again" : "Redeem this Club Deal"}
+                  : "Redeem this Club Deal"}
             </button>
           )
         ) : null}
+        {phase === "error" && !complete ? <Link className="nfc-secondary" href={exitHref}>{exitLabel}</Link> : null}
         {complete ? <Link className="nfc-secondary" href={state?.tag.type === "dressing_room" ? "/dashboard/dancer" : "/"}>Done</Link> : null}
       </section>
       <p className="nfc-security">Only use MyDancr NFC stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
       <style>{`
         .nfc-page{min-height:100dvh;display:grid;place-content:center;gap:18px;padding:max(24px,env(safe-area-inset-top)) 16px max(90px,calc(24px + env(safe-area-inset-bottom)));color:#fff;background:radial-gradient(circle at 50% 18%,rgba(53,216,255,.08),transparent 30rem),#050507;font-family:var(--font-body,Arial,sans-serif)}
-        .nfc-card{width:min(430px,calc(100vw - 32px));display:grid;justify-items:center;gap:13px;padding:26px 20px;border:1px solid rgba(255,255,255,.14);border-radius:24px;background:linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985));box-shadow:0 28px 80px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.06)}
+        .nfc-card{position:relative;width:min(430px,calc(100vw - 32px));display:grid;justify-items:center;gap:13px;padding:26px 20px;border:1px solid rgba(255,255,255,.14);border-radius:24px;background:linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985));box-shadow:0 28px 80px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.06)}
+        .nfc-exit{position:absolute;z-index:2;top:14px;right:14px;width:48px;height:48px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:50%;color:rgba(255,255,255,.78);background:rgba(34,35,41,.94);box-shadow:0 10px 28px rgba(0,0,0,.34);text-decoration:none}.nfc-exit svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.nfc-exit:focus-visible{outline:3px solid rgba(53,216,255,.74);outline-offset:3px}
         .nfc-card.complete{border-color:rgba(126,234,255,.28)}.nfc-symbol{width:88px;height:88px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:20px;color:#f7f1ff;background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.22),transparent 56%),rgba(9,9,13,.92);box-shadow:0 14px 34px rgba(0,0,0,.38);font-weight:950}
         .nfc-symbol svg{width:60px;height:60px;padding:12px;box-sizing:border-box;border:1px solid rgba(159,117,255,.42);border-radius:50%;background:rgba(11,8,20,.74)}.nfc-card .eyebrow{color:#35d8ff;font-size:11px;font-weight:950;letter-spacing:.17em;text-transform:uppercase}.nfc-card h1,.nfc-card h2,.nfc-card p{margin:0}.nfc-card>h1{font-size:clamp(28px,8vw,40px);text-align:center}.nfc-card>p{color:rgba(248,248,252,.72);text-align:center}.nfc-action-copy,.nfc-deals{width:100%;display:grid;gap:10px;padding:15px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.035);box-sizing:border-box}.nfc-action-copy strong,.nfc-deals>strong{font-size:16px}.nfc-action-copy p,.nfc-deals p,.nfc-deals small{color:rgba(248,248,252,.7);line-height:1.45}.nfc-deals label{display:grid;gap:6px;color:rgba(248,248,252,.72);font-size:12px;font-weight:850}.nfc-deals select{min-height:48px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:12px;color:#fff;background:#17181d;font:inherit}.nfc-deals article{display:grid;gap:6px}.nfc-deals article>span{color:#8deeff;font-size:10px;font-weight:950;letter-spacing:.13em;text-transform:uppercase}.nfc-deals h2{font-size:22px}.nfc-status{width:100%;padding:10px 12px;box-sizing:border-box;border:1px solid rgba(126,234,255,.2);border-radius:13px;color:#d9f9ff!important;background:rgba(53,216,255,.06);font-size:12px;line-height:1.4}.nfc-card[data-phase="error"] .nfc-status,.nfc-error{border-color:rgba(255,157,174,.28);color:#ffd5dd!important;background:rgba(255,99,132,.07)}.nfc-error{width:100%;padding:10px 12px;box-sizing:border-box;border:1px solid rgba(255,157,174,.28);border-radius:13px;font-size:12px;line-height:1.4}.nfc-primary,.nfc-secondary{width:100%;min-height:52px;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.28);border-radius:999px;color:#fff;background:linear-gradient(135deg,rgba(76,35,176,.96),rgba(24,94,126,.96));font:inherit;font-weight:950;text-decoration:none;cursor:pointer}.nfc-primary:disabled{opacity:.7;cursor:wait}.nfc-secondary{border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.045)}.nfc-security{width:min(410px,calc(100vw - 44px));margin:0 auto;color:rgba(248,248,252,.4);font-size:11px;line-height:1.45;text-align:center}
       `}</style>
