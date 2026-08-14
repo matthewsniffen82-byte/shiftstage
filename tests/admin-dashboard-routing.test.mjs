@@ -44,6 +44,6 @@ test("Login / Join visibly links to separate platform admin access", () => {
   assert.match(homeRoute, /#authPage \.auth-admin-entry\{[^}]*min-height:68px;[^}]*grid-template-columns:42px minmax\(0,1fr\) auto;/);
   assert.match(
     homeRoute,
-    /withPreviewBanner\.replace\([\s\S]*?passwordRecoveryCard[\s\S]*?ADMIN_AUTH_ENTRY_HTML/,
+    /withLiveProfileAssets\.replace\([\s\S]*?passwordRecoveryCard[\s\S]*?ADMIN_AUTH_ENTRY_HTML/,
   );
 });

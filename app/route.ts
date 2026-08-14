@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { myDancrPreviewBannerHtml } from "./components/MyDancrPreviewBanner";
 
 import { LIVE_SHELL_SHA256 } from "../src/generated/live-shell-version";
 
@@ -35,11 +34,7 @@ export async function GET() {
     "</head>",
     `<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><script src="/video-autoplay-recovery.js?v=3" defer></script>${ADMIN_AUTH_ENTRY_STYLES}</head>`,
   );
-  const withPreviewBanner = withLiveProfileAssets.replace(
-    '<body class="dancr-button-system">',
-    `<body class="dancr-button-system">${myDancrPreviewBannerHtml}`,
-  );
-  const withAdminAuthEntry = withPreviewBanner.replace(
+  const withAdminAuthEntry = withLiveProfileAssets.replace(
     '<section class="recovery-popover" id="passwordRecoveryCard"',
     `${ADMIN_AUTH_ENTRY_HTML}<section class="recovery-popover" id="passwordRecoveryCard"`,
   );
