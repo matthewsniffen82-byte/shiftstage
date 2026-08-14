@@ -13,6 +13,7 @@ type AdminState = {
   queue?: Array<Record<string, unknown>>;
   dancers?: Array<Record<string, unknown>>;
   venues?: Array<Record<string, unknown>>;
+  venueClaimCodes?: Array<Record<string, unknown>>;
   subscriptions?: unknown[];
   reports?: Array<Record<string, unknown>>;
   deals?: Array<Record<string, unknown>>;
@@ -196,7 +197,14 @@ export default function AdminClient() {
           path: "/api/admin/approvals",
           apply: (data) => ({ queue: data.queue || [], dancers: data.dancers || [] }),
         },
-        { label: "Venues", path: "/api/admin/venues", apply: (data) => ({ venues: data.venues || [] }) },
+        {
+          label: "Venues",
+          path: "/api/admin/venues",
+          apply: (data) => ({
+            venues: data.venues || [],
+            venueClaimCodes: data.claimCodes || [],
+          }),
+        },
         {
           label: "Subscriptions",
           path: "/api/admin/subscriptions",
@@ -237,6 +245,7 @@ export default function AdminClient() {
         queue: [],
         dancers: [],
         venues: [],
+        venueClaimCodes: [],
         subscriptions: [],
         deals: [],
         supportThreads: [],
@@ -512,7 +521,9 @@ export default function AdminClient() {
             <Metric label="Managed venues" value={String(state.venues?.length || 0)} />
             <VenueManager
               venues={state.venues || []}
+              claimCodes={state.venueClaimCodes || []}
               onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
+              onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
             />
           </Panel> : null}
           {workspace === "accounts" ? <Panel title="Subscriptions">
@@ -1580,17 +1591,43 @@ function ReportManager({
 
 function VenueManager({
   venues,
+  claimCodes,
   onVenuesChange,
+  onClaimCodesChange,
 }: {
   venues: Array<Record<string, unknown>>;
+  claimCodes: Array<Record<string, unknown>>;
   onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
+  onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
 }) {
   const [name, setName] = useState("");
   const [city, setCity] = useState("Las Vegas");
   const [state, setState] = useState("NV");
   const [address, setAddress] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [status, setStatus] = useState("");
+  const [statusByVenue, setStatusByVenue] = useState<Record<string, string>>({});
+  const [revealedCodes, setRevealedCodes] = useState<Record<string, string>>({});
+  const [busyVenueId, setBusyVenueId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const visibleVenues = normalizedSearch
+    ? venues.filter((venue) => [venue.name, venue.city, venue.state, venue.address]
+      .some((value) => asText(value).toLowerCase().includes(normalizedSearch)))
+    : venues;
+
+  function setVenueStatus(venueId: string, message: string) {
+    setStatusByVenue((current) => ({ ...current, [venueId]: message }));
+  }
+
+  function activeCodeForVenue(venueId: string) {
+    return claimCodes.find((claimCode) => (
+      asText(claimCode.venueId) === venueId
+      && asText(claimCode.status) === "active"
+      && new Date(asText(claimCode.expiresAt)).getTime() > Date.now()
+    ));
+  }
 
   async function createVenue(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1600,92 +1637,276 @@ function VenueManager({
       return;
     }
 
-    setIsSaving(true);
-    setStatus("");
-    const response = await fetch("/api/admin/venues", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ name, city, state, address, timezone: "America/Los_Angeles" }),
-    });
-    const data = await response.json();
-    setIsSaving(false);
-    if (!response.ok || !data.ok) {
-      setStatus(data.error || "Unable to create venue.");
-      return;
-    }
+    try {
+      setIsSaving(true);
+      setStatus("");
+      const response = await fetch("/api/admin/venues", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ name, city, state, address, timezone: "America/Los_Angeles" }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || "Unable to create venue.");
+      }
 
-    onVenuesChange([data.venue, ...venues]);
-    setName("");
-    setAddress("");
-    setStatus("Venue created and active.");
+      onVenuesChange([data.venue, ...venues]);
+      setName("");
+      setAddress("");
+      setStatus("Venue created and active.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to create venue.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function toggleVenue(venue: Record<string, unknown>) {
+    const venueId = asText(venue.id);
     const token = readToken();
     if (!token) {
-      setStatus("Admin sign in required.");
+      setVenueStatus(venueId, "Admin sign in required.");
       return;
     }
 
-    const venueId = String(venue.id || "");
     const nextActive = venue.is_active === false;
-    const response = await fetch("/api/admin/venues", {
-      method: "PATCH",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ venueId, isActive: nextActive }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setStatus(data.error || "Unable to update venue.");
+    try {
+      setBusyVenueId(venueId);
+      setVenueStatus(venueId, "Saving venue status...");
+      const response = await fetch("/api/admin/venues", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ venueId, isActive: nextActive }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || "Unable to update venue.");
+      }
+
+      onVenuesChange(venues.map((item) => (String(item.id) === venueId ? { ...item, ...data.venue } : item)));
+      setVenueStatus(venueId, nextActive ? "Venue activated. Access codes are now available." : "Venue hidden.");
+    } catch (error) {
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue.");
+    } finally {
+      setBusyVenueId("");
+    }
+  }
+
+  async function issueAccessCode(venue: Record<string, unknown>, replacesActiveCode: boolean) {
+    const venueId = asText(venue.id);
+    const token = readToken();
+    if (!token) {
+      setVenueStatus(venueId, "Admin sign in required.");
+      return;
+    }
+    if (venue.is_active === false) {
+      setVenueStatus(venueId, "Activate this venue before creating an access code.");
+      return;
+    }
+    if (asText(venue.owner_user_id || venue.ownerUserId)) {
+      setVenueStatus(venueId, "This venue already has a connected manager.");
+      return;
+    }
+    if (replacesActiveCode && !window.confirm("Replace the active access code? The current code will stop working immediately.")) {
       return;
     }
 
-    onVenuesChange(venues.map((item) => (String(item.id) === venueId ? { ...item, ...data.venue } : item)));
-    setStatus(nextActive ? "Venue activated." : "Venue hidden.");
+    try {
+      setBusyVenueId(venueId);
+      setVenueStatus(venueId, replacesActiveCode ? "Replacing access code..." : "Creating access code...");
+      const response = await fetch("/api/admin/venue-claim-codes", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "issue", venueId, expiresInDays: 7 }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok || !data?.claimCode || !asText(data.code)) {
+        throw new Error(data?.error || "Unable to create venue access code.");
+      }
+
+      const nextClaimCodes = claimCodes.map((claimCode) => (
+        asText(claimCode.venueId) === venueId && asText(claimCode.status) === "active"
+          ? { ...claimCode, status: "revoked", revokedAt: new Date().toISOString() }
+          : claimCode
+      ));
+      onClaimCodesChange([data.claimCode, ...nextClaimCodes]);
+      setRevealedCodes((current) => ({ ...current, [venueId]: asText(data.code) }));
+      setVenueStatus(venueId, "Access code created. Copy it now; for security it cannot be retrieved later.");
+    } catch (error) {
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to create venue access code.");
+    } finally {
+      setBusyVenueId("");
+    }
+  }
+
+  async function revokeAccessCode(venueId: string, claimCode: Record<string, unknown>) {
+    if (!window.confirm("Revoke this access code? It will stop working immediately.")) return;
+    const token = readToken();
+    if (!token) {
+      setVenueStatus(venueId, "Admin sign in required.");
+      return;
+    }
+
+    try {
+      setBusyVenueId(venueId);
+      setVenueStatus(venueId, "Revoking access code...");
+      const response = await fetch("/api/admin/venue-claim-codes", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "revoke", codeId: asText(claimCode.id) }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok || !data?.claimCode) {
+        throw new Error(data?.error || "Unable to revoke venue access code.");
+      }
+
+      onClaimCodesChange(claimCodes.map((item) => (
+        asText(item.id) === asText(data.claimCode.id) ? data.claimCode : item
+      )));
+      setRevealedCodes((current) => {
+        const next = { ...current };
+        delete next[venueId];
+        return next;
+      });
+      setVenueStatus(venueId, "Access code revoked.");
+    } catch (error) {
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to revoke venue access code.");
+    } finally {
+      setBusyVenueId("");
+    }
+  }
+
+  async function copyAccessCode(venueId: string) {
+    try {
+      await copyAdminText(revealedCodes[venueId] || "");
+      setVenueStatus(venueId, "Access code copied.");
+    } catch {
+      setVenueStatus(venueId, "Unable to copy automatically. Select and copy the code manually.");
+    }
   }
 
   return (
     <div className="venue-manager">
-      <form onSubmit={createVenue}>
-        <label>
-          Name
-          <input value={name} onChange={(event) => setName(event.target.value)} required />
-        </label>
-        <label>
-          City
-          <input value={city} onChange={(event) => setCity(event.target.value)} required />
-        </label>
-        <label>
-          State
-          <input value={state} onChange={(event) => setState(event.target.value)} />
-        </label>
-        <label>
-          Address
-          <input value={address} onChange={(event) => setAddress(event.target.value)} />
-        </label>
-        <button type="submit" disabled={isSaving}>
-          {isSaving ? "Saving..." : "Create venue"}
-        </button>
-      </form>
-      <div className="venue-list">
-        {venues.slice(0, 6).map((venue) => (
-          <details className="venue-admin-row" key={String(venue.id)}>
-            <summary>
-              <strong>{String(venue.name || "Venue")}</strong>
-              <small>{String(venue.city || "City")}</small>
-              <em>{venue.is_active === false ? "Inactive" : "Active"}</em>
-            </summary>
-            <div className="venue-admin-actions">
-              <small>{String(venue.address || "No address submitted")}</small>
-              <button type="button" onClick={() => toggleVenue(venue)}>
-                {venue.is_active === false ? "Activate" : "Hide"}
-              </button>
-            </div>
-          </details>
-        ))}
-        {!venues.length ? <p className="empty">No venues returned.</p> : null}
+      <details className="venue-create-panel">
+        <summary>
+          <span>
+            <strong>Create a venue</strong>
+            <small>Add a new venue, then create its manager access code.</small>
+          </span>
+          <span className="venue-disclosure" aria-hidden="true">⌄</span>
+        </summary>
+        <form onSubmit={createVenue}>
+          <label>
+            Name
+            <input value={name} onChange={(event) => setName(event.target.value)} required />
+          </label>
+          <label>
+            City
+            <input value={city} onChange={(event) => setCity(event.target.value)} required />
+          </label>
+          <label>
+            State
+            <input value={state} onChange={(event) => setState(event.target.value)} />
+          </label>
+          <label>
+            Address
+            <input value={address} onChange={(event) => setAddress(event.target.value)} />
+          </label>
+          <button type="submit" disabled={isSaving}>
+            {isSaving ? "Saving..." : "Create venue"}
+          </button>
+        </form>
+        {status ? <p role="status" aria-live="polite">{status}</p> : null}
+      </details>
+      <label className="venue-search">
+        Find venue
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search name, city, state, or address"
+        />
+      </label>
+      <div className="venue-list-heading">
+        <strong>Venue access</strong>
+        <small>{visibleVenues.length} {visibleVenues.length === 1 ? "venue" : "venues"}</small>
       </div>
-      {status ? <p>{status}</p> : null}
+      <div className="venue-list">
+        {visibleVenues.map((venue) => {
+          const venueId = asText(venue.id);
+          const activeCode = activeCodeForVenue(venueId);
+          const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
+          const isActive = venue.is_active !== false;
+          const isBusy = busyVenueId === venueId;
+          const revealedCode = revealedCodes[venueId];
+          return (
+            <details className="venue-admin-row" key={venueId}>
+              <summary>
+                <span className="venue-admin-identity">
+                  <strong>{asText(venue.name) || "Venue"}</strong>
+                  <small>{[asText(venue.city) || "City", asText(venue.state)].filter(Boolean).join(", ")}</small>
+                </span>
+                <span className="venue-admin-summary-state">
+                  <em className={connectedManager ? "connected" : isActive ? "active" : "inactive"}>
+                    {connectedManager ? "Connected" : isActive ? "Active" : "Inactive"}
+                  </em>
+                  <span className="venue-disclosure" aria-hidden="true">⌄</span>
+                </span>
+              </summary>
+              <div className="venue-admin-actions">
+                <small>{asText(venue.address) || "No address submitted"}</small>
+                <button type="button" disabled={isBusy} onClick={() => toggleVenue(venue)}>
+                  {isActive ? "Hide venue" : "Activate venue"}
+                </button>
+              </div>
+              <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>
+                <span className="eyebrow">Manager access</span>
+                {connectedManager ? (
+                  <div className="venue-access-state connected">
+                    <strong>Venue account connected</strong>
+                    <p>A verified manager already controls this venue. Access codes are disabled.</p>
+                  </div>
+                ) : !isActive ? (
+                  <div className="venue-access-state inactive">
+                    <strong>Venue is inactive</strong>
+                    <p>Activate this venue before creating a manager access code.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="venue-access-state">
+                      <strong>{activeCode ? "Active one-time access code" : "No active access code"}</strong>
+                      <p>
+                        {activeCode
+                          ? `Expires ${formatDate(activeCode.expiresAt)}. The code can be used once to create this venue's manager account.`
+                          : "Create a one-time code for the venue manager. It expires in 7 days and is only displayed once."}
+                      </p>
+                    </div>
+                    {revealedCode ? (
+                      <div className="venue-access-secret">
+                        <span>Copy now</span>
+                        <code>{revealedCode}</code>
+                        <button type="button" disabled={isBusy} onClick={() => copyAccessCode(venueId)}>Copy access code</button>
+                      </div>
+                    ) : null}
+                    <div className="venue-access-actions">
+                      <button type="button" disabled={isBusy} onClick={() => issueAccessCode(venue, Boolean(activeCode))}>
+                        {isBusy ? "Saving..." : activeCode ? "Replace access code" : "Create access code"}
+                      </button>
+                      {activeCode ? (
+                        <button className="secondary" type="button" disabled={isBusy} onClick={() => revokeAccessCode(venueId, activeCode)}>
+                          Revoke access code
+                        </button>
+                      ) : null}
+                    </div>
+                  </>
+                )}
+              </section>
+              {statusByVenue[venueId] ? <p className="venue-status" role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
+            </details>
+          );
+        })}
+        {!visibleVenues.length ? <p className="empty">{venues.length ? "No venues match this search." : "No venues returned."}</p> : null}
+      </div>
     </div>
   );
 }
@@ -2702,13 +2923,16 @@ function formatDate(value: unknown) {
 
 function Panel({ title, badge, children }: { title: string; badge?: string; children: React.ReactNode }) {
   return (
-    <article className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"}>
-      <header className="admin-panel-head">
+    <details className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"}>
+      <summary className="admin-panel-head">
         <h2>{title}</h2>
-        {badge ? <span className="admin-panel-badge">{badge}</span> : null}
-      </header>
-      <div>{children}</div>
-    </article>
+        <span className="admin-panel-summary-side">
+          {badge ? <span className="admin-panel-badge">{badge}</span> : null}
+          <span className="admin-panel-chevron" aria-hidden="true">⌄</span>
+        </span>
+      </summary>
+      <div className="admin-panel-body">{children}</div>
+    </details>
   );
 }
 
@@ -2801,6 +3025,25 @@ function readToken() {
   }
 }
 
+async function copyAdminText(value: string) {
+  if (!value) throw new Error("Nothing to copy.");
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const field = document.createElement("textarea");
+  field.value = value;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.opacity = "0";
+  document.body.appendChild(field);
+  field.select();
+  const copied = document.execCommand("copy");
+  field.remove();
+  if (!copied) throw new Error("Unable to copy.");
+}
+
 async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers });
   const data = await response.json().catch(() => null);
@@ -2854,9 +3097,14 @@ function AdminStyles() {
       h2 { margin: 0; font-size: clamp(18px, 4vw, 22px); line-height: 1.15; overflow-wrap: anywhere; }
       p { margin: 0; color: #cfc5de; font-size: clamp(14px, 3.8vw, 18px); line-height: 1.45; max-width: 58ch; overflow-wrap: anywhere; }
       .admin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-      .admin-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: clamp(12px, 2.8vw, 16px); display: grid; gap: 14px; overflow: hidden; }
-      .admin-panel > div { display: grid; gap: 10px; }
-      .admin-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .admin-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: clamp(12px, 2.8vw, 16px); overflow: hidden; }
+      .admin-panel-head { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; list-style: none; }
+      .admin-panel-head::-webkit-details-marker { display: none; }
+      .admin-panel-head:focus-visible { border-radius: 8px; outline: 2px solid #94e5ff; outline-offset: 4px; }
+      .admin-panel-summary-side { display: flex; align-items: center; gap: 9px; }
+      .admin-panel-chevron { color: #b9accd; font-size: 22px; line-height: 1; transition: transform .18s ease; }
+      .admin-panel[open] .admin-panel-chevron { transform: rotate(180deg); }
+      .admin-panel-body { display: grid; gap: 10px; padding-top: 14px; }
       .admin-panel-badge { flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; color: #090911; background: #94e5ff; font-size: 12px; font-weight: 950; white-space: nowrap; }
       .admin-warning { margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 14px; border: 1px solid rgba(255,193,92,.38); border-radius: 8px; color: #fff4d8; background: rgba(99,63,13,.34); }
       .admin-warning > div { display: grid; gap: 7px; }
@@ -2978,20 +3226,50 @@ function AdminStyles() {
       .submission-json { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 10px; background: rgba(255,255,255,.035); }
       .submission-json summary { cursor: pointer; color: #94e5ff; font-weight: 900; }
       .submission-json pre { max-height: 260px; overflow: auto; color: #d8cfeb; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
-      .venue-manager { display: grid; gap: 12px; }
-      .venue-manager form { display: grid; gap: 10px; }
+      .venue-manager { display: grid; gap: 14px; }
+      .venue-manager form { display: grid; gap: 10px; padding-top: 12px; }
       .venue-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .venue-manager input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .venue-manager input:focus { border-color: rgba(148,229,255,.7); outline: 2px solid rgba(148,229,255,.16); outline-offset: 1px; }
       .venue-manager button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .venue-manager button.secondary { color: #f7f2ff; border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.06); }
+      .venue-manager button:disabled { cursor: wait; opacity: .62; }
       .venue-manager p { color: #94e5ff; font-size: 14px; }
+      .venue-create-panel { padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(255,255,255,.025); }
+      .venue-create-panel > summary { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; list-style: none; }
+      .venue-create-panel > summary::-webkit-details-marker, .venue-admin-row > summary::-webkit-details-marker { display: none; }
+      .venue-create-panel > summary > span:first-child { display: grid; gap: 3px; }
+      .venue-create-panel > summary strong { color: #fff; }
+      .venue-create-panel > summary small { color: #9c90b3; }
+      .venue-disclosure { color: #b9accd; font-size: 21px; line-height: 1; transition: transform .18s ease; }
+      .venue-create-panel[open] > summary .venue-disclosure, .venue-admin-row[open] > summary .venue-disclosure { transform: rotate(180deg); }
+      .venue-search input::-webkit-search-cancel-button { filter: invert(1); opacity: .72; }
+      .venue-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #fff; }
+      .venue-list-heading small { color: #9c90b3; }
       .venue-list { display: grid; gap: 8px; }
-      .venue-admin-row { display: grid; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); overflow: hidden; }
-      .venue-admin-row summary { cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; color: #fff; }
+      .venue-admin-row { padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.09); background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018)); overflow: hidden; }
+      .venue-admin-row > summary { cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; color: #fff; list-style: none; }
+      .venue-admin-row > summary:focus-visible, .venue-create-panel > summary:focus-visible { border-radius: 8px; outline: 2px solid #94e5ff; outline-offset: 4px; }
       .venue-admin-row summary strong, .venue-admin-row summary small { display: block; min-width: 0; overflow-wrap: anywhere; }
       .venue-admin-row small { color: #b9accd; }
-      .venue-admin-row em { color: #94e5ff; font-style: normal; font-weight: 850; }
-      .venue-admin-actions { display: grid; gap: 8px; }
+      .venue-admin-identity { display: grid; gap: 3px; min-width: 0; }
+      .venue-admin-summary-state { display: flex; align-items: center; gap: 8px; }
+      .venue-admin-row em { padding: 5px 8px; border: 1px solid rgba(148,229,255,.22); border-radius: 999px; color: #94e5ff; background: rgba(148,229,255,.06); font-size: 11px; font-style: normal; font-weight: 900; }
+      .venue-admin-row em.connected { color: #8dffc4; border-color: rgba(50,255,164,.24); background: rgba(50,255,164,.07); }
+      .venue-admin-row em.inactive { color: #b9accd; border-color: rgba(185,172,205,.18); background: rgba(185,172,205,.05); }
+      .venue-admin-actions { display: grid; gap: 8px; padding-top: 12px; }
       .venue-admin-actions button { justify-self: start; }
+      .venue-access-panel { display: grid; gap: 11px; margin-top: 12px; padding: 13px; border: 1px solid rgba(148,229,255,.16); border-radius: 10px; background: #08090d; }
+      .venue-access-state { display: grid; gap: 5px; }
+      .venue-access-state strong { color: #fff; }
+      .venue-access-state p { color: #b9accd; font-size: 13px; }
+      .venue-access-state.connected strong { color: #8dffc4; }
+      .venue-access-state.inactive strong { color: #c8bdd8; }
+      .venue-access-secret { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(148,229,255,.42); border-radius: 9px; background: rgba(148,229,255,.065); }
+      .venue-access-secret > span { color: #94e5ff; font-size: 11px; font-weight: 950; letter-spacing: .15em; text-transform: uppercase; }
+      .venue-access-secret code { user-select: all; color: #fff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: clamp(18px, 5vw, 24px); font-weight: 900; letter-spacing: .08em; overflow-wrap: anywhere; }
+      .venue-access-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .venue-status { margin-top: 10px; color: #94e5ff !important; }
       .report-list { display: grid; gap: 12px; }
       .report-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .report-row span { color: #b9accd; }
@@ -3140,7 +3418,7 @@ function AdminStyles() {
         .top-nav, .admin-warning { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
         .nav-links { justify-content: flex-start; }
         .approval-summary { display: grid; grid-template-columns: 1fr; }
-        .approval-actions, .report-row div, .content-review-actions { display: grid; grid-template-columns: 1fr; }
+        .approval-actions, .report-row div, .content-review-actions, .venue-access-actions { display: grid; grid-template-columns: 1fr; }
         .approval-row button, .report-row button, .venue-manager button, .deal-activity-row button { width: 100%; }
         .deal-settlement-action { grid-template-columns: 1fr; }
         .admin-shell { padding-left: 8px; padding-right: 8px; overflow-x: hidden; }
