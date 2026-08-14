@@ -16,7 +16,7 @@ const lateMobileHeader = homeSource.match(
 )?.[0] || "";
 
 const mobileAuthClearance = homeSource.match(
-  /\/\* Keep the mobile login sheet below the canonical utility header\. \*\/[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: calc\(66px \+ env\(safe-area-inset-top\)\);[\s\S]*?\}\s*\}/,
+  /\/\* Keep the mobile login sheet below the canonical utility header\. \*\/[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: calc\(66px \+ env\(safe-area-inset-top\)\);[\s\S]*?#authPage > \.page-inner \{[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?#authPage \.auth-choice-card \{[\s\S]*?overflow: visible !important;[\s\S]*?#authPage > \.page-inner::after \{[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\}\s*\}/,
 )?.[0] || "";
 
 test("mobile utility header is rounded, compact, and aligned with the page", () => {
@@ -135,7 +135,18 @@ test("the mobile login sheet begins below the utility header", () => {
   assert.ok(mobileAuthClearance, "mobile login clearance CSS must exist");
   assert.match(
     mobileAuthClearance,
-    /#authPage\.show \{\s*top: calc\(66px \+ env\(safe-area-inset-top\)\);\s*\}/,
+    /#authPage\.show \{[\s\S]*?top: calc\(66px \+ env\(safe-area-inset-top\)\);[\s\S]*?bottom: 0;[\s\S]*?min-height: 0;[\s\S]*?height: auto;[\s\S]*?overflow-y: auto;/,
   );
   assert.doesNotMatch(mobileAuthClearance, /\.page-panel\.show/);
+});
+
+test("the mobile login sheet scrolls every sign-in and signup action above the floating navigation", () => {
+  assert.match(
+    mobileAuthClearance,
+    /#authPage > \.page-inner \{[\s\S]*?min-height: 100%;[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);/,
+  );
+  assert.match(mobileAuthClearance, /#authPage \.auth-choice-card \{\s*overflow: visible !important;\s*\}/);
+  assert.match(mobileAuthClearance, /#authPage > \.page-inner::after \{[\s\S]*?content: "";[\s\S]*?display: block;[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);/);
+  assert.match(homeSource, /id="authSubmit" type="submit">Sign in<\/button>/);
+  assert.match(homeSource, /id="customerJoinNowBtn" type="button">Create an account<\/button>/);
 });
