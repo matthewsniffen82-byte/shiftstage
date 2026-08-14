@@ -5723,6 +5723,49 @@ html:is(
   mix-blend-mode: normal !important;
 }
 
+/* Shared form-field color and focus system. Keep fields neutral at rest and
+ * reserve Electric Violet for the active control without adding a glow. */
+body.dancr-button-system :is(
+  input:not([type="button"]):not([type="checkbox"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="image"]):not([type="radio"]):not([type="range"]):not([type="reset"]):not([type="submit"]),
+  select,
+  textarea,
+  .select-field,
+  .form-field
+) {
+  border-color: var(--dancr-color-border) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  input:not([type="button"]):not([type="checkbox"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="image"]):not([type="radio"]):not([type="range"]):not([type="reset"]):not([type="submit"]),
+  select,
+  textarea
+):focus,
+body.dancr-button-system :is(.select-field, .form-field):focus-within {
+  border-color: var(--dancr-color-brand-primary) !important;
+  outline: 2px solid var(--dancr-color-brand-primary) !important;
+  outline-offset: -2px !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  input:not([type="button"]):not([type="checkbox"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="image"]):not([type="radio"]):not([type="range"]):not([type="reset"]):not([type="submit"]),
+  select,
+  textarea
+)[aria-invalid="true"] {
+  border-color: var(--dancr-color-danger) !important;
+  outline-color: var(--dancr-color-danger) !important;
+}
+
+body.dancr-button-system .dancer-schedule-control {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding-block: 0 !important;
+  box-sizing: border-box !important;
+}
+
 /* Discovery control refinement
  * Keep Android and iOS on the same branded city-selection surface while the
  * native select remains available as the progressive-enhancement fallback. */

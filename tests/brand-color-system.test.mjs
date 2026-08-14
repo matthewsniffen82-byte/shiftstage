@@ -11,6 +11,7 @@ const [
   venueProfile,
   manifest,
   appIcon,
+  dancerShiftManager,
 ] =
   await Promise.all([
     readFile(
@@ -30,6 +31,7 @@ const [
     ),
     readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"),
     readFile(new URL("../public/mydancr-icon.svg", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/DancerShiftManager.tsx", import.meta.url), "utf8"),
   ]);
 
 const requiredTokens = new Map([
@@ -170,6 +172,38 @@ test("the shared palette does not target the frozen navigation systems", () => {
   assert.doesNotMatch(
     frozenNavigation,
     /--dancr-color-|var\(--dancr-color-/,
+  );
+});
+
+test("form fields use neutral borders and a crisp tokenized focus ring", () => {
+  assert.match(
+    aesthetic,
+    /border-color: var\(--dancr-color-border\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\):focus,[\s\S]*?border-color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?outline: 2px solid var\(--dancr-color-brand-primary\) !important;[\s\S]*?outline-offset: -2px !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\[aria-invalid="true"\][\s\S]*?var\(--dancr-color-danger\)/,
+  );
+  assert.match(
+    liveShell,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=109" rel="stylesheet">/,
+  );
+});
+
+test("dancer schedule venue and date controls share one compact field height", () => {
+  assert.match(
+    aesthetic,
+    /\.dancer-schedule-control \{[\s\S]*?height: 44px !important;[\s\S]*?min-height: 44px !important;[\s\S]*?max-height: 44px !important;/,
+  );
+  assert.match(liveShell, /class="dancer-schedule-control" id="shiftClub"/);
+  assert.match(liveShell, /class="dancer-schedule-control" id="shiftDate" type="date"/);
+  assert.equal(
+    dancerShiftManager.match(/className="dancer-schedule-control"/g)?.length,
+    4,
   );
 });
 

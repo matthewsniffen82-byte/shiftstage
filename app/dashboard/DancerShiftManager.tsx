@@ -164,14 +164,14 @@ export default function DancerShiftManager() {
       <form onSubmit={postDate}>
         <label>
           Approved venue
-          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={!venues.length || saving} required>
+          <select className="dancer-schedule-control" value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={!venues.length || saving} required>
             <option value="">{venues.length ? "Choose approved venue" : "No approved venue affiliations"}</option>
             {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
           </select>
         </label>
         <label>
           Upcoming date
-          <input type="date" min={todayDate()} value={shiftDate} onChange={(event) => setShiftDate(event.target.value)} required />
+          <input className="dancer-schedule-control" type="date" min={todayDate()} value={shiftDate} onChange={(event) => setShiftDate(event.target.value)} required />
         </label>
         <button type="submit" disabled={saving || !venues.length}>{saving ? "Posting..." : "Post upcoming date"}</button>
         <p>Schedules show only the venue and date. No shift time or phone location is collected.</p>
@@ -190,13 +190,13 @@ export default function DancerShiftManager() {
               <>
                 <label>
                   Approved venue
-                  <select value={editVenueId} onChange={(event) => setEditVenueId(event.target.value)} required>
+                  <select className="dancer-schedule-control" value={editVenueId} onChange={(event) => setEditVenueId(event.target.value)} required>
                     {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
                   </select>
                 </label>
                 <label>
                   Upcoming date
-                  <input type="date" min={todayDate()} value={editDate} onChange={(event) => setEditDate(event.target.value)} required />
+                  <input className="dancer-schedule-control" type="date" min={todayDate()} value={editDate} onChange={(event) => setEditDate(event.target.value)} required />
                 </label>
                 <div className="shift-actions">
                   <button type="button" disabled={saving} onClick={() => void saveEdit(String(shift.id))}>{saving ? "Saving..." : "Save date"}</button>

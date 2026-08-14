@@ -22482,18 +22482,26 @@
     .select-field,
     .form-field {
       background: #050507 !important;
-      border-color: rgba(139, 92, 246, 0.2) !important;
+      border-color: var(--dancr-color-border, #334155) !important;
       box-shadow: none !important;
       color: #fff !important;
     }
 
     select:focus,
     input:focus,
-    textarea:focus,
+    textarea:focus {
+      border-color: var(--dancr-color-brand-primary, #7c3aed) !important;
+      outline: 2px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+      outline-offset: -2px !important;
+      box-shadow: none !important;
+    }
+
     .select-field:focus-within,
     .form-field:focus-within {
-      border-color: rgba(139, 92, 246, 0.48) !important;
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12) !important;
+      border-color: var(--dancr-color-brand-primary, #7c3aed) !important;
+      outline: 2px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+      outline-offset: -2px !important;
+      box-shadow: none !important;
     }
 
     .locate-btn {
@@ -29334,6 +29342,15 @@
       inline-size: 100% !important;
     }
 
+    #approvedScheduleDropdown #shiftPostForm .dancer-schedule-control {
+      width: 100% !important;
+      height: 44px !important;
+      min-height: 44px !important;
+      max-height: 44px !important;
+      padding-block: 0 !important;
+      box-sizing: border-box !important;
+    }
+
     #approvedScheduleDropdown .post-shift-value-row div,
     #approvedScheduleDropdown .schedule-broadcast-note,
     #approvedScheduleDropdown .dancer-manager-card {
@@ -30779,7 +30796,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=108" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=109" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -37678,11 +37695,11 @@
           <form class="auth-form" id="shiftPostForm">
             <div class="field">
               <label for="shiftClub">Approved club</label>
-              <select id="shiftClub" disabled><option value="">Loading approved clubs…</option></select>
+              <select class="dancer-schedule-control" id="shiftClub" disabled><option value="">Loading approved clubs…</option></select>
             </div>
             <div class="field">
               <label for="shiftDate">Date</label>
-              <input id="shiftDate" type="date" required>
+              <input class="dancer-schedule-control" id="shiftDate" type="date" required>
             </div>
             <div class="rule-note" id="shiftDisplayPreview">
               A secure dressing-room NFC tap starts one six-hour Working Now session. A six-hour cooldown follows, and retaps cannot extend the session. No phone location is collected.
