@@ -49048,15 +49048,7 @@
     }
 
     function openAdminDashboard() {
-      if (!isAdminSession()) {
-        showAdminAuthPage("Admin username and password required.");
-      } else {
-        showAdminDashboardPage();
-      }
-      adminDashboard.classList.add("show");
-      adminDashboard.setAttribute("aria-hidden", "false");
-      syncOverlayScrollLock();
-      if (isAdminSession()) loadLiveAdminApprovals();
+      window.location.assign("/admin");
     }
 
     function closeAdminDashboard() {

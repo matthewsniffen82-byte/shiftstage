@@ -10,26 +10,41 @@ const [adminRoute, operationsRoute, adminClient, liveApp, homeRoute] = await Pro
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("/admin opens the production app's real platform admin dashboard", () => {
-  assert.match(adminRoute, /redirect\("\/\?dancr_dashboard=admin"\)/);
-  assert.doesNotMatch(adminRoute, /<AdminClient/);
+test("/admin opens the routed production admin workspace", () => {
+  assert.match(adminRoute, /import AdminClient from "\.\/AdminClient"/);
+  assert.match(adminRoute, /return <AdminClient \/>/);
+  assert.doesNotMatch(adminRoute, /redirect\(/);
   assert.match(liveApp, /function handleAdminDashboardDeepLink\(\)/);
   assert.match(liveApp, /params\.get\("dancr_dashboard"\) !== "admin"/);
-  assert.match(liveApp, /openAdminDashboard\(\)/);
+  assert.match(liveApp, /function openAdminDashboard\(\) \{\s*window\.location\.assign\("\/admin"\);\s*\}/);
   assert.match(
     liveApp,
     /!handleAdminDashboardDeepLink\(\) && !handleVenueDashboardDeepLink\(\) && !handleDancerDashboardDeepLink\(\)/,
   );
 });
 
-test("advanced admin operations stay available without replacing the real dashboard", () => {
+test("advanced admin operations stay available through the canonical dashboard", () => {
   assert.match(operationsRoute, /import AdminClient from "\.\.\/AdminClient"/);
   assert.match(operationsRoute, /return <AdminClient \/>/);
   assert.match(liveApp, /href="\/admin\/operations"[^>]*>Open full operations center<\/a>/);
   assert.match(
     adminClient,
-    /return_to=\$\{encodeURIComponent\("\/admin\/operations"\)\}/,
+    /return_to=\$\{encodeURIComponent\("\/admin"\)\}/,
   );
+});
+
+test("admin uses the same routed dashboard chrome and structured loading hierarchy", () => {
+  assert.match(adminClient, /className="admin-shell dashboard-shell-admin"/);
+  assert.match(adminClient, /className="dashboard-head admin-dashboard-head"/);
+  assert.match(adminClient, /className="dashboard-close"/);
+  assert.match(adminClient, /href=\{homeDiscoveryHref\("tonight"\)\}/);
+  assert.match(adminClient, /<AdminDashboardLoadingState \/>/);
+  assert.match(adminClient, /className="admin-dashboard-loading-command"/);
+  assert.match(adminClient, /className="admin-dashboard-loading-actions"/);
+  assert.match(adminClient, /className="admin-dashboard-loading-metrics"/);
+  assert.match(adminClient, /\.admin-workspace-nav \{[^}]*grid-template-columns: repeat\(6, minmax\(0, 1fr\)\)/);
+  assert.match(adminClient, /\.admin-shell\.dashboard-shell-admin \{[^}]*safe-area-inset-top/);
+  assert.doesNotMatch(adminClient, /className="top-nav"/);
 });
 
 test("Login / Join visibly links to separate platform admin access", () => {

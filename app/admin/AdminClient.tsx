@@ -137,7 +137,7 @@ export default function AdminClient() {
           emailRedirectTo:
             typeof window === "undefined"
               ? undefined
-              : `${window.location.origin}/auth/callback?dancr_reset=1&role=admin&return_to=${encodeURIComponent("/admin/operations")}`,
+              : `${window.location.origin}/auth/callback?dancr_reset=1&role=admin&return_to=${encodeURIComponent("/admin")}`,
         }),
       });
       const data = await response.json();
@@ -273,9 +273,16 @@ export default function AdminClient() {
   const needsSignIn = state.authRequired === true;
   const dashboardWarnings = state.warnings || [];
   const pendingDancerApprovalCount = state.queue?.length || 0;
+  const dashboardDescription = isLoading
+    ? "Loading live operations..."
+    : needsSignIn
+      ? state.error || "Admin sign in required."
+      : dashboardWarnings.length
+        ? `${dashboardWarnings.length} dashboard ${dashboardWarnings.length === 1 ? "section is" : "sections are"} temporarily unavailable. All other admin tools are ready.`
+        : "Live approvals, revenue, accounts, activity, and platform health.";
 
   return (
-    <main className="admin-shell">
+    <main className="admin-shell dashboard-shell-admin">
       <AdminStyles />
       {actionNotice ? (
         <div className="admin-action-toast" role="status" aria-live="polite" aria-atomic="true">
@@ -284,42 +291,36 @@ export default function AdminClient() {
           <button type="button" aria-label="Dismiss confirmation" onClick={() => setActionNotice(null)}>×</button>
         </div>
       ) : null}
-      <nav className="top-nav" aria-label="Primary">
-        <Link className="brand" href="/">
-          Dancr
-        </Link>
-        <div className="nav-links">
-          <Link href={homeDiscoveryHref("tonight")}>Now</Link>
-          <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
-          <Link href={homeDiscoveryHref("venues")}>Venues</Link>
-          <Link href={homeDiscoveryHref("trending")}>Trending</Link>
-          <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
+      <section className="dashboard-head admin-dashboard-head" aria-busy={isLoading || undefined}>
+        <div className="dashboard-head-row">
+          <div className="dashboard-head-copy">
+            <span className="eyebrow">Platform operations</span>
+            <h1>Admin dashboard</h1>
+            <p>{dashboardDescription}</p>
+          </div>
+          <Link
+            className="dashboard-close"
+            href={homeDiscoveryHref("tonight")}
+            aria-label="Close admin dashboard and return to MyDancr"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M6 6l12 12" />
+              <path d="M18 6L6 18" />
+            </svg>
+          </Link>
         </div>
         {!isLoading && !needsSignIn ? (
-          <button className="admin-logout" type="button" onClick={signOut} disabled={isSigningOut}>
-            {isSigningOut ? "Logging out..." : "Log out"}
-          </button>
+          <div className="admin-dashboard-session">
+            <span><i aria-hidden="true" />Admin session active</span>
+            <button className="admin-logout" type="button" onClick={signOut} disabled={isSigningOut}>
+              {isSigningOut ? "Logging out..." : "Log out"}
+            </button>
+          </div>
         ) : null}
-      </nav>
-
-      <section className="admin-head">
-        <span className="eyebrow">Operations</span>
-        <h1>Admin dashboard</h1>
-        <p>
-          {isLoading
-            ? "Loading live operations..."
-            : needsSignIn
-              ? state.error || "Admin sign in required."
-              : dashboardWarnings.length
-                ? `${dashboardWarnings.length} dashboard ${dashboardWarnings.length === 1 ? "section is" : "sections are"} temporarily unavailable. All other admin tools are ready.`
-                : "Live queue, venue, and subscription health."}
-        </p>
       </section>
 
       {isLoading ? (
-        <section className="admin-panel sign-in" aria-live="polite">
-          <p>Checking admin session...</p>
-        </section>
+        <AdminDashboardLoadingState />
       ) : needsSignIn ? (
         <form className="admin-panel sign-in" onSubmit={signIn}>
           <div className="segmented" aria-label="Admin auth mode">
@@ -560,6 +561,31 @@ export default function AdminClient() {
         </>
       )}
     </main>
+  );
+}
+
+function AdminDashboardLoadingState() {
+  return (
+    <section className="admin-dashboard-loading" aria-busy="true" aria-label="Loading admin dashboard">
+      <span className="dashboard-sr-only">Loading admin dashboard</span>
+      <div className="admin-dashboard-loading-command">
+        <span className="admin-dashboard-loading-pill" />
+        <div className="admin-dashboard-loading-copy">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+      <div className="admin-dashboard-loading-actions">
+        <span />
+        <span />
+      </div>
+      <div className="admin-dashboard-loading-metrics">
+        <span />
+        <span />
+        <span />
+      </div>
+    </section>
   );
 }
 
@@ -3141,6 +3167,90 @@ function AdminStyles() {
         .account-table { padding: 0 10px; }
         .account-table [role="row"] { grid-template-columns: 1fr auto; gap: 7px; }
         .account-table [role="cell"]:first-child, .account-table [role="cell"]:last-child { grid-column: 1 / -1; }
+      }
+
+      /* Keep the routed admin workspace visually and behaviorally aligned with the
+         production customer and venue dashboards. */
+      .admin-shell.dashboard-shell-admin {
+        --mydancr-dashboard-gap: 18px;
+        --mydancr-dashboard-panel: #0b0b10;
+        --mydancr-dashboard-panel-raised: #111118;
+        --mydancr-dashboard-border: rgba(255,255,255,.11);
+        --mydancr-dashboard-radius: 16px;
+        --mydancr-dashboard-muted: rgba(218,214,230,.72);
+        min-height: 100vh;
+        padding: max(18px, calc(env(safe-area-inset-top) + 12px)) clamp(12px, 4vw, 56px) 56px;
+        scroll-padding-top: max(18px, calc(env(safe-area-inset-top) + 12px));
+        color-scheme: dark;
+        background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.1), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.14), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%);
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+      .dashboard-head, .admin-grid, .admin-warning, .sign-in, .admin-workspace-nav, .operations-center, .workspace-lead { width: 100%; max-width: 1120px; margin-left: auto; margin-right: auto; }
+      .dashboard-head { min-height: 0; box-sizing: border-box; display: grid; gap: 18px; margin-bottom: var(--mydancr-dashboard-gap); padding: 24px 26px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 24px; background: #07070a; box-shadow: 0 20px 48px rgba(0,0,0,.34); }
+      .dashboard-head-row { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: start; gap: 18px; }
+      .dashboard-head-copy { min-width: 0; display: grid; gap: 8px; align-content: center; overflow: visible; }
+      .dashboard-head h1 { max-width: 100%; overflow: visible; color: #f8f7fb; font-family: var(--font-display, "Space Grotesk", "Outfit", sans-serif); font-size: clamp(32px, 5vw, 48px); font-weight: 850; line-height: 1; letter-spacing: -.025em; text-overflow: clip; white-space: normal; }
+      .dashboard-head p { color: var(--mydancr-dashboard-muted); font-size: clamp(15px, 2.2vw, 17px); line-height: 1.45; }
+      .dashboard-head .eyebrow { color: #94e5ff; }
+      .dashboard-close { flex: 0 0 42px; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #f8f7fb; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 10px 24px rgba(0,0,0,.3); text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
+      .dashboard-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+      .dashboard-close:hover { border-color: rgba(126,234,255,.42); background: rgba(38,34,48,.92); }
+      .dashboard-close:active { transform: scale(.96); }
+      .dashboard-close:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .admin-dashboard-session { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 16px; border-top: 1px solid var(--mydancr-dashboard-border); }
+      .admin-dashboard-session > span { display: inline-flex; align-items: center; gap: 8px; color: var(--mydancr-dashboard-muted); font-size: 12px; font-weight: 850; }
+      .admin-dashboard-session i { flex: 0 0 9px; width: 9px; height: 9px; border-radius: 50%; background: #32ffa4; box-shadow: 0 0 13px rgba(50,255,164,.45); }
+      .admin-dashboard-session .admin-logout { min-height: 38px; padding: 0 14px; box-shadow: none; }
+      .dashboard-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+      .admin-dashboard-loading { width: 100%; max-width: 1120px; display: grid; gap: var(--mydancr-dashboard-gap); margin: 0 auto; }
+      .admin-dashboard-loading-command, .admin-dashboard-loading-actions, .admin-dashboard-loading-metrics { border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
+      .admin-dashboard-loading-command { min-height: 226px; display: grid; grid-template-columns: 112px minmax(0,1fr); align-items: start; gap: 18px; padding: 22px; }
+      .admin-dashboard-loading-pill, .admin-dashboard-loading-copy span, .admin-dashboard-loading-actions span, .admin-dashboard-loading-metrics span { display: block; background: linear-gradient(100deg, rgba(255,255,255,.055) 20%, rgba(139,92,246,.13) 45%, rgba(255,255,255,.055) 70%); background-size: 240% 100%; animation: adminDashboardLoadingPulse 1.25s ease-in-out infinite; }
+      .admin-dashboard-loading-pill { width: 86px; height: 42px; border-radius: 999px; }
+      .admin-dashboard-loading-copy { display: grid; gap: 13px; padding-top: 3px; }
+      .admin-dashboard-loading-copy span { height: 18px; border-radius: 7px; }
+      .admin-dashboard-loading-copy span:first-child { width: min(78%, 330px); height: 28px; }
+      .admin-dashboard-loading-copy span:last-child { width: min(62%, 260px); }
+      .admin-dashboard-loading-actions { min-height: 86px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 12px; }
+      .admin-dashboard-loading-actions span { border-radius: 12px; }
+      .admin-dashboard-loading-metrics { min-height: 74px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; overflow: hidden; }
+      .admin-dashboard-loading-metrics span { border-radius: 0; }
+      @keyframes adminDashboardLoadingPulse { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+      .admin-workspace-nav { top: max(8px, env(safe-area-inset-top)); grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-bottom: var(--mydancr-dashboard-gap); padding: 5px; border-color: rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
+      .admin-workspace-nav button { min-width: 0; min-height: 42px; padding: 0 8px; border: 0; border-radius: 11px; color: #d8cfeb; font-size: 13px; text-align: center; }
+      .admin-workspace-nav button:hover { color: #fff; background: rgba(126,234,255,.08); }
+      .admin-workspace-nav button:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
+      .admin-workspace-nav button.active { color: #fff; border: 0; background: linear-gradient(135deg, rgba(139,92,246,.42), rgba(34,199,255,.12)); box-shadow: inset 0 0 22px rgba(139,92,246,.12); }
+      .admin-workspace-nav button span { top: 2px; right: 3px; }
+      .admin-grid { grid-template-columns: 1fr; gap: var(--mydancr-dashboard-gap); }
+      .admin-panel { border-color: var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: none; }
+      .support-admin-panel { grid-column: auto; }
+      .admin-warning { margin-bottom: var(--mydancr-dashboard-gap); border-radius: 14px; }
+      .sign-in { max-width: 520px; border-color: var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
+      .sign-in input { min-height: 48px; border-radius: 12px; background: #15141b; }
+      .sign-in > button[type="submit"] { min-height: 48px; border-radius: 12px; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .admin-dashboard-loading-pill, .admin-dashboard-loading-copy span, .admin-dashboard-loading-actions span, .admin-dashboard-loading-metrics span { animation: none; }
+        .dashboard-close { transition: none; }
+      }
+      @media (max-width: 680px) {
+        .admin-shell.dashboard-shell-admin { padding-left: 12px; padding-right: 12px; padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }
+        .admin-dashboard-head { padding: 18px; border-radius: 20px; }
+        .dashboard-head-row { gap: 10px; }
+        .dashboard-head h1 { font-size: clamp(30px, 9vw, 38px); }
+        .admin-dashboard-session { align-items: flex-start; flex-direction: column; }
+        .admin-dashboard-session .admin-logout { width: 100%; }
+        .admin-dashboard-loading-command { min-height: 206px; grid-template-columns: 1fr; }
+        .admin-dashboard-loading-actions { grid-template-columns: 1fr; }
+        .admin-dashboard-loading-metrics { grid-template-columns: 1fr; min-height: 174px; }
+        .admin-dashboard-loading-metrics span { border-top: 1px solid var(--mydancr-dashboard-border); }
+        .admin-dashboard-loading-metrics span:first-child { border-top: 0; }
+        .admin-workspace-nav { top: max(4px, env(safe-area-inset-top)); grid-template-columns: repeat(6, minmax(84px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x mandatory; }
+        .admin-workspace-nav::-webkit-scrollbar { display: none; }
+        .admin-workspace-nav button { min-height: 42px; padding: 0 6px; font-size: 12px; scroll-snap-align: start; }
+        .admin-panel, .approval-row, .submission-detail { padding: 12px; }
       }
     `}</style>
   );
