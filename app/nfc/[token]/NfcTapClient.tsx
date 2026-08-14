@@ -121,7 +121,9 @@ export function NfcTapClient({ token }: { token: string }) {
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to complete this NFC tap.");
-      setStatus("The tap was not completed. Check the offer and try again at this sticker.");
+      setStatus(state?.tag.type === "dressing_room"
+        ? "Profile activation was not completed. Step 3 remains open—stay at this sticker and try the tap again."
+        : "The tap was not completed. Check the offer and try again at this sticker.");
       setPhase("error");
     } finally {
       setIsSubmitting(false);

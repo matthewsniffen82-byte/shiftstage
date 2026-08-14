@@ -307,6 +307,12 @@ export default function DashboardClient({
     ? (role === "dancer" ? profileDisplayName || title : resolvedDisplayName || title)
     : displayName;
   const dashboardDescription = state.error || "";
+  const dancerProfileStatus = role === "dancer"
+    ? effectiveDancerProfileStatus(state.profile, state.account?.accountState)
+    : "";
+  const dancerProfileIsLive = dancerProfileStatus === "approved"
+    && state.profile?.is_public !== false
+    && state.profile?.isPublic !== false;
 
   return (
     <main className={`dashboard-shell dashboard-shell-${role}`}>
@@ -315,7 +321,10 @@ export default function DashboardClient({
         <div className="dashboard-head-row">
           <div className="dashboard-head-copy">
             <span className="eyebrow">{dashboardEyebrow}</span>
-            <h1>{dashboardHeading}</h1>
+            <div className="dashboard-head-title-row">
+              <h1>{dashboardHeading}</h1>
+              {dancerProfileIsLive ? <span className="dashboard-live-status"><i aria-hidden="true" /> Live</span> : null}
+            </div>
             {dashboardDescription ? <p>{dashboardDescription}</p> : null}
           </div>
           <Link
@@ -3484,6 +3493,12 @@ function DancerPanel({
 
   return (
     <>
+      <DancerActivationConfirmation
+        affiliations={affiliations}
+        isLive={isApproved && profile?.is_public !== false && profile?.isPublic !== false}
+        nfc={nfc}
+        profile={profile}
+      />
       {!isApproved ? (
         <DancerOnboardingCommand
           draftIdentity={draftIdentity}
@@ -3576,6 +3591,81 @@ function DancerPanel({
         </DashboardSection>
       ) : null}
     </>
+  );
+}
+
+function DancerActivationConfirmation({
+  affiliations,
+  isLive,
+  nfc,
+  profile,
+}: {
+  affiliations: Array<Record<string, unknown>>;
+  isLive: boolean;
+  nfc?: LoadState["nfc"];
+  profile?: LoadState["profile"];
+}) {
+  const [completionRequested, setCompletionRequested] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setCompletionRequested(params.get("nfc") === "complete");
+  }, []);
+
+  if (!completionRequested || !isLive) return null;
+
+  const enrollment = nfc?.enrollment && typeof nfc.enrollment === "object"
+    ? nfc.enrollment as Record<string, unknown>
+    : null;
+  const enrollmentVenue = enrollment?.venue && typeof enrollment.venue === "object"
+    ? enrollment.venue as Record<string, unknown>
+    : null;
+  const activeAffiliation = affiliations.find((item) => item.status === "active");
+  const affiliatedVenue = activeAffiliation?.venue && typeof activeAffiliation.venue === "object"
+    ? activeAffiliation.venue as Record<string, unknown>
+    : null;
+  const venueName = String(enrollmentVenue?.name || affiliatedVenue?.name || "").trim();
+  const slug = String(profile?.slug || "").trim();
+
+  function acknowledgeCompletion() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("nfc");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    setCompletionRequested(false);
+  }
+
+  function openProfileManager(event: MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    const sectionId = "dancer-profile-media";
+    const url = new URL(window.location.href);
+    url.searchParams.delete("nfc");
+    url.hash = sectionId;
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    setCompletionRequested(false);
+    const section = document.getElementById(sectionId);
+    if (section instanceof HTMLDetailsElement) section.open = true;
+    section?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  return (
+    <section className="dancer-activation-confirmation" role="status" aria-live="polite" aria-labelledby="dancer-activation-title">
+      <span className="dancer-activation-check" aria-hidden="true">✓</span>
+      <div className="dancer-activation-copy">
+        <span className="eyebrow">Dancer activation complete</span>
+        <h2 id="dancer-activation-title">Your profile is live</h2>
+        <p>
+          {venueName ? `Approved through ${venueName}. ` : "Your dressing-room tap was approved. "}
+          Customers can now discover your profile on MyDancr.
+        </p>
+        <div className="dancer-activation-actions">
+          {slug ? <Link href={`/dancers/${encodeURIComponent(slug)}`} onClick={acknowledgeCompletion}>View live profile</Link> : null}
+          <a href="#dancer-profile-media" onClick={openProfileManager}>Manage profile</a>
+        </div>
+      </div>
+      <button type="button" onClick={acknowledgeCompletion} aria-label="Dismiss profile live confirmation">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
+    </section>
   );
 }
 
@@ -6137,7 +6227,10 @@ function DashboardStyles() {
       .dashboard-head { min-height: 72px; box-sizing: border-box; display: grid; gap: 12px; margin-bottom: var(--mydancr-dashboard-gap); padding: 10px 12px 14px; border: 1px solid rgba(139,92,246,.16); border-radius: var(--mydancr-dashboard-radius); background: rgba(5,5,8,.98); box-shadow: 0 14px 34px rgba(0,0,0,.38); }
       .dashboard-head-row { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: center; gap: 12px; }
       .dashboard-head-copy { min-width: 0; display: grid; gap: 5px; align-content: center; overflow: hidden; }
+      .dashboard-head-title-row { min-width: 0; display: flex; align-items: center; gap: 10px; }
       .dashboard-head h1 { max-width: 100%; overflow: hidden; color: #f8f7fb; font-family: var(--font-display, "Space Grotesk", "Outfit", sans-serif); font-size: clamp(21px, 5vw, 26px); font-weight: 850; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+      .dashboard-live-status { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 1px solid rgba(99,255,190,.28); border-radius: 999px; color: #8dffd0; background: rgba(32,185,121,.1); font-size: 10px; font-weight: 950; letter-spacing: .12em; text-transform: uppercase; }
+      .dashboard-live-status i { width: 7px; height: 7px; border-radius: 50%; background: #65ffb9; box-shadow: 0 0 10px rgba(101,255,185,.5); }
       .dashboard-head p { font-size: clamp(15px, 2.2vw, 17px); line-height: 1.45; }
       .dashboard-head .eyebrow { color: #f8f7fb; }
       .dashboard-shell-venue .dashboard-head { min-height: 0; gap: 18px; padding: 24px 26px; border-radius: 24px; background: #07070a; box-shadow: 0 20px 48px rgba(0,0,0,.34); }
@@ -6693,6 +6786,17 @@ function DashboardStyles() {
       .dancer-onboarding-preview { display: grid; gap: 11px; padding: 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #0d0d12; }
       .dancer-onboarding-complete-note { display: grid; gap: 4px; padding: 13px; border: 1px solid rgba(76,223,166,.28); border-radius: 12px; color: #70efbd; background: rgba(25,140,101,.09); }
       .dancer-onboarding-complete-note span { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
+      .dancer-activation-confirmation { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: 52px minmax(0,1fr) 42px; align-items: start; gap: 14px; padding: 18px; border: 1px solid rgba(96,255,188,.28); border-radius: var(--mydancr-dashboard-radius); background: radial-gradient(circle at 0 0,rgba(42,205,137,.14),transparent 25rem),#0a0d0c; box-shadow: 0 18px 42px rgba(0,0,0,.32); }
+      .dancer-activation-check { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; color: #06110d; background: #7dffc7; font-size: 24px; font-weight: 950; }
+      .dancer-activation-copy { min-width: 0; display: grid; gap: 7px; }
+      .dancer-activation-copy .eyebrow { color: #8dffd0; }
+      .dancer-activation-copy h2 { color: #fff; font-size: clamp(22px,5vw,30px); }
+      .dancer-activation-copy p { max-width: 60ch; color: rgba(236,242,239,.76); font-size: 14px; line-height: 1.45; }
+      .dancer-activation-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 4px; }
+      .dancer-activation-actions a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #fff; background: rgba(255,255,255,.06); font-size: 12px; font-weight: 900; text-decoration: none; }
+      .dancer-activation-actions a:first-child { border-color: rgba(96,255,188,.36); color: #07110d; background: #8dffd0; }
+      .dancer-activation-confirmation > button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; color: rgba(255,255,255,.76); background: rgba(255,255,255,.055); cursor: pointer; }
+      .dancer-activation-confirmation > button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
       @keyframes dancer-onboarding-panel-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
       .dancer-onboarding-preview-card { min-width: 0; display: grid; grid-template-columns: 62px minmax(0,1fr) auto; align-items: center; gap: 12px; }
       .dancer-onboarding-preview-avatar, .dancer-avatar-preview { overflow: hidden; display: grid; place-items: center; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #17171d; font-weight: 950; }
@@ -6834,7 +6938,7 @@ function DashboardStyles() {
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 860px) { .dancer-avatar-panel form { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
-      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
+      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
       @media (max-width: 620px) { .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .dancer-step-one-section-panel .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {

@@ -69,6 +69,7 @@ test("failed NFC taps always provide a clear mobile escape route", () => {
   assert.match(client, /className="nfc-exit"[\s\S]*?aria-label=\{exitLabel\}/);
   assert.match(client, /phase === "error" && !complete[\s\S]*?\{exitLabel\}/);
   assert.match(client, /phase === "error"[\s\S]*?"Try again"/);
+  assert.match(client, /Profile activation was not completed\. Step 3 remains open/);
   assert.match(client, /\.nfc-exit\{[\s\S]*?width:48px;height:48px[\s\S]*?border-radius:50%/);
 });
 
