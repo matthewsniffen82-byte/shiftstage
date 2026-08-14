@@ -38,6 +38,9 @@ test("the live dancer signup and setup flows use the database city dropdown", ()
 
 test("the Next account and dashboard surfaces use the same production city source", () => {
   assert.match(accountClient, /fetch\("\/api\/public\/cities"/);
+  assert.match(accountClient, /\[dancerSignupCitiesLoadAttempt, isDancerSignup\]/);
+  assert.doesNotMatch(accountClient, /\[dancerSignupCitiesStatus, isDancerSignup\]/);
+  assert.match(accountClient, /setDancerSignupCitiesLoadAttempt\(\(attempt\) => attempt \+ 1\)/);
   assert.match(accountClient, /isDancerSignup \? \([\s\S]*?<select[\s\S]*?dancerSignupCities\.map/);
   assert.match(accountClient, /Cities are loaded from active MyDancr venue markets/);
   assert.match(dashboardClient, /fetch\("\/api\/public\/cities"/);

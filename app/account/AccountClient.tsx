@@ -51,6 +51,7 @@ export default function AccountClient() {
   const [city, setCity] = useState(initialRole === "dancer" ? "" : "Las Vegas");
   const [dancerSignupCities, setDancerSignupCities] = useState<DancerSignupCity[]>([]);
   const [dancerSignupCitiesStatus, setDancerSignupCitiesStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [dancerSignupCitiesLoadAttempt, setDancerSignupCitiesLoadAttempt] = useState(0);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -168,7 +169,7 @@ export default function AccountClient() {
   }, [isCustomerSignup, scrollCustomerBenefitsToTop]);
 
   useEffect(() => {
-    if (!isDancerSignup || dancerSignupCitiesStatus !== "idle") return;
+    if (!isDancerSignup) return;
 
     let cancelled = false;
     setDancerSignupCitiesStatus("loading");
@@ -203,7 +204,7 @@ export default function AccountClient() {
     return () => {
       cancelled = true;
     };
-  }, [dancerSignupCitiesStatus, isDancerSignup]);
+  }, [dancerSignupCitiesLoadAttempt, isDancerSignup]);
 
   useEffect(() => {
     if (!recoveryView) return;
@@ -659,7 +660,7 @@ export default function AccountClient() {
                 </small>
               </label>
               {dancerSignupCitiesStatus === "error" ? (
-                <button className="city-retry" type="button" onClick={() => setDancerSignupCitiesStatus("idle")}>Retry city list</button>
+                <button className="city-retry" type="button" onClick={() => setDancerSignupCitiesLoadAttempt((attempt) => attempt + 1)}>Retry city list</button>
               ) : null}
             </div>
           ) : null}
