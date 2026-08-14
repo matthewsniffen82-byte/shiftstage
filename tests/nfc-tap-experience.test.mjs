@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [baseMigration, nfcCheckInMigration, adminMigration, service, tapRoute, tagRoute, adminRoute, client, account, dashboardRoute, dealCard, retiredDealQr] = await Promise.all([
+const [baseMigration, nfcCheckInMigration, submissionGateMigration, adminMigration, service, tapRoute, tagRoute, adminRoute, client, account, dashboardRoute, dealCard, retiredDealQr] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608090003_nfc_tap_experience.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608110002_dressing_room_nfc_checkins.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608140001_require_dancer_submission_before_nfc.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608090005_admin_nfc_provisioning.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/nfc.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
@@ -43,10 +44,13 @@ test("a dressing-room tap authorizes the venue and renews a current shift for no
   assert.doesNotMatch(nfcCheckInMigration, /if found and v_shift\.checked_in_at is null/);
 });
 
-test("new and existing dancers use the same saved NFC enrollment flow without manager QR approval", () => {
+test("new and existing dancers use the same submitted-profile NFC flow without manager QR approval", () => {
   assert.match(service, /register_dancer_nfc_enrollment/);
   assert.match(service, /finalize_pending_dancer_nfc_enrollment/);
-  assert.match(service, /authorize_dancer_profile_from_nfc/);
+  assert.doesNotMatch(service, /authorize_dancer_profile_from_nfc/);
+  assert.match(submissionGateMigration, /require_submitted_dancer_profile_for_active_affiliation/);
+  assert.match(submissionGateMigration, /v_profile_status not in \('pending_review', 'approved'\)/);
+  assert.match(submissionGateMigration, /Submit your completed profile before using dressing-room NFC/);
   assert.match(tapRoute, /registerDancerFromNfc/);
   assert.doesNotMatch(tapRoute, /venue_dancer_affiliations/);
   assert.doesNotMatch(tapRoute, /manager must scan/i);
@@ -56,6 +60,8 @@ test("new and existing dancers use the same saved NFC enrollment flow without ma
   assert.match(client, /void submitTap\(\)/);
   assert.match(client, /mode=signup&venue_nfc=/);
   assert.match(client, /return_to=/);
+  assert.match(client, /enrollmentStatus === "completed"/);
+  assert.match(client, /window\.location\.replace\("\/dashboard\/dancer\?nfc=complete"\)/);
 });
 
 test("failed NFC taps always provide a clear mobile escape route", () => {

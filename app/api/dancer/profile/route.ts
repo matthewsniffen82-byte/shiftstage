@@ -18,7 +18,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const PROFILE_SAVE_VERSION = "canonical-profile-approval-v13";
+const PROFILE_SAVE_VERSION = "canonical-profile-approval-v14";
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
@@ -565,7 +565,7 @@ export async function PATCH(request: Request) {
 
     setSaveStage("submit_for_review");
     if (body.submitForReview === true && profile.status !== "approved") {
-      await submitProfileForReview(db, profile.id, {
+      await submitProfileForReview(adminDb, profile.id, {
         stageName: String(cleanProfilePayload.stage_name || profile.stage_name || ""),
         city: String(cleanProfilePayload.city || profile.city || ""),
         status: profile.status,
@@ -601,6 +601,13 @@ export async function PATCH(request: Request) {
       ...protectedFieldsAfter,
     });
     console.log("PUBLIC_PROFILE_STATE_AFTER_SAVE", protectedFieldsAfter);
+
+    if (
+      body.submitForReview === true
+      && !["pending_review", "approved"].includes(String(protectedProfileAfter.status || ""))
+    ) {
+      throw new Error("PROFILE_SUBMISSION_NOT_APPLIED");
+    }
 
     const comparableProtectedKeys = PROTECTED_PROFILE_KEYS.filter(
       (key) => key !== "isPublic" || (supportsIsPublic && supportsIsPublicAfter),
@@ -856,14 +863,19 @@ async function submitProfileForReview(
     throw new Error("Wait for every uploaded video to finish moderation before submitting your profile.");
   }
 
-  const { error } = await db
+  const { data: submittedProfile, error } = await db
     .from("dancer_profiles")
     .update(pendingVenueApprovalValues())
     .eq("id", dancerId)
-    .neq("status", "rejected")
-    .is("disabled_at", null);
+    .neq("status", "disabled")
+    .is("disabled_at", null)
+    .select("id, status")
+    .maybeSingle();
 
   if (error) throw error;
+  if (!submittedProfile?.id || submittedProfile.status !== "pending_review") {
+    throw new Error("PROFILE_SUBMISSION_NOT_APPLIED");
+  }
 }
 
 async function loadDeletedPhotoStoragePaths(db: any, dancerId: string, userId: string, deletedPhotoIds: string[]) {

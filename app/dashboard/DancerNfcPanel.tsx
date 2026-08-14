@@ -30,9 +30,11 @@ type NfcState = {
 export default function DancerNfcPanel({
   initialAffiliations = [],
   initialNfcState,
+  onAuthorizationChange,
 }: {
   initialAffiliations?: Array<Record<string, unknown>>;
   initialNfcState?: Record<string, unknown> | null;
+  onAuthorizationChange?: () => void | Promise<void>;
 }) {
   const [affiliations, setAffiliations] = useState<Affiliation[]>(initialAffiliations as Affiliation[]);
   const [nfcState, setNfcState] = useState<NfcState>((initialNfcState || {}) as NfcState);
@@ -55,6 +57,7 @@ export default function DancerNfcPanel({
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to refresh NFC access.");
       setAffiliations(data.affiliations || []);
       setNfcState({ profileAuthorization: data.profileAuthorization, enrollment: data.enrollment });
+      await onAuthorizationChange?.();
       setStatus("Dressing-room NFC access is current.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to refresh NFC access.");

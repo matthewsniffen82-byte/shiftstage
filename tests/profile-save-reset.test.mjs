@@ -289,8 +289,8 @@ test("save integrity verifies the editor snapshot instead of hidden history rows
 
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /canonical-profile-approval-v13/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "canonical-profile-approval-v13"/);
+  assert.match(rootRouteSource, /canonical-profile-approval-v14/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "canonical-profile-approval-v14"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(publicSource, /isPublicDancerProfileEligible\(dancer\)/);

@@ -2940,6 +2940,10 @@ function DancerOnboardingCommand({
       });
       const data = await response.json();
       if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to submit profile.");
+      const confirmedStatus = effectiveDancerProfileStatus(data.profile);
+      if (confirmedStatus !== "pending_review" && confirmedStatus !== "approved") {
+        throw new Error("Your profile submission was not saved. Please try again.");
+      }
       onProfileChange?.(data.profile);
       window.localStorage.setItem(storageKey, "dancer-onboarding-nfc");
       setExpandedStepId("dancer-onboarding-nfc");
@@ -3418,6 +3422,20 @@ function DancerPanel({
     };
   }, [effectiveStatus, isApproved, onProfileChange]);
 
+  const refreshDancerProfile = useCallback(async () => {
+    const session = readSession();
+    if (!session?.accessToken) return;
+    const response = await fetch("/api/dancer/profile", {
+      headers: { authorization: `Bearer ${session.accessToken}` },
+      cache: "no-store",
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok || !data.profile) {
+      throw new Error(data.error || "Unable to refresh dancer profile.");
+    }
+    onProfileChange?.(data.profile);
+  }, [onProfileChange]);
+
   const identityContent = (
     <DancerSetupPanel
       deletedPhotoIds={deletedPhotoIds}
@@ -3485,7 +3503,7 @@ function DancerPanel({
               profileReady={profileReady}
             />
           )}
-          venueVerificationContent={<DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />}
+          venueVerificationContent={<DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />}
         />
       ) : null}
       {isApproved ? (
@@ -3503,7 +3521,11 @@ function DancerPanel({
               <Metric label="Dressing-room NFC" value={isVenueApproved ? "authorized" : "tap required"} />
               <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
             </InfoPanel>
-            <DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} />
+            <DancerNfcPanel
+              initialAffiliations={affiliations}
+              initialNfcState={nfc || null}
+              onAuthorizationChange={refreshDancerProfile}
+            />
             <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} />
           </div>
         </DashboardSection>
@@ -3797,7 +3819,7 @@ function DancerSetupPanel({
   const draftKey = `mydancr:dancer-profile-draft:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v13");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v14");
   }, []);
 
   useEffect(() => {
@@ -6048,7 +6070,7 @@ function dashboardLoadErrorMessage(error: unknown) {
 }
 
 async function readJson(path: string, headers: Record<string, string>) {
-  const response = await fetch(path, { headers });
+  const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();
   if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dashboard.");
   persistResponseSession(data);

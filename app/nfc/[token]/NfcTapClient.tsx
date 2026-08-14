@@ -37,9 +37,14 @@ export function NfcTapClient({ token }: { token: string }) {
   const [selectedDealId, setSelectedDealId] = useState("");
   const [auth, setAuth] = useState({ role: "", accessToken: "", refreshToken: "" });
   const autoSubmittedRef = useRef(false);
+  const redirectTimerRef = useRef<number | null>(null);
   const pendingIntent = useMemo(() => readPendingDealIntent(), []);
 
   useEffect(() => setAuth(readAuthSession()), []);
+
+  useEffect(() => () => {
+    if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,7 +110,15 @@ export function NfcTapClient({ token }: { token: string }) {
       if (state.tag.type === "cashier") clearPendingDealIntent();
       setComplete(true);
       setPhase("redeemed");
-      setStatus(data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "NFC tap confirmed."));
+      const completedDancerTap = state.tag.type === "dressing_room"
+        && data.affiliation?.enrollmentStatus === "completed";
+      const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "NFC tap confirmed.");
+      setStatus(completedDancerTap ? `${successMessage} Opening your live dancer dashboard…` : successMessage);
+      if (completedDancerTap) {
+        redirectTimerRef.current = window.setTimeout(() => {
+          window.location.replace("/dashboard/dancer?nfc=complete");
+        }, 700);
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to complete this NFC tap.");
       setStatus("The tap was not completed. Check the offer and try again at this sticker.");
