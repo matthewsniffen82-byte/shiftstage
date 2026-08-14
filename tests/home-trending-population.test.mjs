@@ -23,6 +23,13 @@ test("the public Trending destination never includes dancers or visible ranks", 
 });
 
 test("Trending count, filter, and grouped directory share the empty public ranking", () => {
+  const groupedSource = homeSource.match(
+    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\)[\s\S]*?(?=\n    function dancerDirectoryProfiles)/,
+  )?.[0] || "";
+  const directorySource = homeSource.match(
+    /function dancerDirectoryFilterMarkup\(profiles, city\) \{[\s\S]*?(?=\n    function homeDancerGridContentKey)/,
+  )?.[0] || "";
+
   assert.match(
     homeSource,
     /function dancerDirectoryFilterMarkup\(profiles, city\) \{[\s\S]*?const trending = trendingDirectoryProfiles\(profiles, city\);[\s\S]*?trending: trending\.length/,
@@ -32,7 +39,12 @@ test("Trending count, filter, and grouped directory share the empty public ranki
     /if \(dancerDirectoryFilter === "trending"\) \{[\s\S]*?label: "Trending"[\s\S]*?profiles: trendingDirectoryProfiles\(profiles, city\)/,
   );
   assert.match(
-    homeSource,
-    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*?trendingDirectoryProfiles\(profiles, city, \{ excludeWorkingNow: true \}\)/,
+    directorySource,
+    /label: "Working Now"[\s\S]*label: "Upcoming"[\s\S]*label: "No Schedule"/,
   );
+  assert.match(directorySource, /id: "now", label: "Now"/);
+  assert.match(directorySource, /id: "trending", label: "Trending"/);
+  assert.match(directorySource, /id: "upcoming", label: "Upcoming"/);
+  assert.doesNotMatch(groupedSource, /trendingDirectoryProfiles|groups\.trending/);
+  assert.match(homeSource, /requestedView === "trending"\) return "trending"/);
 });

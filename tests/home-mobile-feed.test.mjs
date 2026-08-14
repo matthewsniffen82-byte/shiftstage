@@ -221,7 +221,7 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   );
   assert.match(
     homeSource,
-    /function dancerDirectorySections\(profiles, city\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Trending"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Shift Posted"/,
+    /function dancerDirectorySections\(profiles, city\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Schedule"/,
   );
 });
 

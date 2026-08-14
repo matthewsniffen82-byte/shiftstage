@@ -19,14 +19,14 @@ test("the Now dancer filter contains only approved dancers with confirmed active
   );
 });
 
-test("the Dancers directory groups every profile once as Working Now, Trending, Upcoming, or No Shift", () => {
+test("the Dancers directory groups every profile once as Working Now, Upcoming, or No Shift", () => {
   assert.match(
     homeSource,
-    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*const trending = trendingDirectoryProfiles\(profiles, city, \{ excludeWorkingNow: true \}\)[\s\S]*const trendingNames = new Set[\s\S]*const upcoming = profiles[\s\S]*!trendingNames\.has\(profile\.name\)[\s\S]*const noSchedule = profiles[\s\S]*!trendingNames\.has\(profile\.name\)[\s\S]*return \{ workingNow, trending, upcoming, noSchedule \}/,
+    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*const upcoming = profiles[\s\S]*profile\.scheduled[\s\S]*const noSchedule = profiles[\s\S]*!profile\.scheduled[\s\S]*return \{ workingNow, upcoming, noSchedule \}/,
   );
   assert.match(
     homeSource,
-    /function dancerDirectoryProfiles\(profiles, city = selectedCity\(\)\) \{[\s\S]*return \[\.\.\.groups\.workingNow, \.\.\.groups\.trending, \.\.\.groups\.upcoming, \.\.\.groups\.noSchedule\]/,
+    /function dancerDirectoryProfiles\(profiles, city = selectedCity\(\)\) \{[\s\S]*return \[\.\.\.groups\.workingNow, \.\.\.groups\.upcoming, \.\.\.groups\.noSchedule\]/,
   );
   assert.match(
     homeSource,
@@ -34,11 +34,15 @@ test("the Dancers directory groups every profile once as Working Now, Trending, 
   );
   assert.match(
     homeSource,
-    /function dancerDirectorySections\(profiles, city\)[\s\S]*label: "Working Now"[\s\S]*label: "Trending"[\s\S]*label: "Upcoming"[\s\S]*label: "No Shift Posted"/,
+    /function dancerDirectorySections\(profiles, city\)[\s\S]*label: "Working Now"[\s\S]*label: "Upcoming"[\s\S]*label: "No Schedule"/,
   );
+  const groupedSource = homeSource.match(
+    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\)[\s\S]*?(?=\n    function dancerDirectoryProfiles)/,
+  )?.[0] || "";
+  assert.doesNotMatch(groupedSource, /groups\.trending|trendingDirectoryProfiles/);
 });
 
-test("the consolidated Dancers destination exposes working, trending, and schedule filters", () => {
+test("the consolidated Dancers destination keeps the Trending filter separate from schedule groups", () => {
   assert.match(
     homeSource,
     /class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers<\/button>/,
@@ -61,6 +65,8 @@ test("the consolidated Dancers destination exposes working, trending, and schedu
   );
   assert.match(homeSource, /dancerDirectoryFilter = nextFilter;[\s\S]*?syncHomeDestinationLocation\("dancers"\)[\s\S]*?render\(\)/);
   assert.match(homeSource, /No dancers are working now in \$\{city\}\./);
+  assert.match(homeSource, /No dancers are trending in \$\{city\} yet\./);
+  assert.match(homeSource, /data-dancer-directory-filter="\$\{filter\.id\}"/);
   assert.match(homeSource, /No approved dancer profiles \$\{scope\}\./);
 });
 

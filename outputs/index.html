@@ -43643,13 +43643,10 @@
           shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
           dailyRotationScore(a, city) - dailyRotationScore(b, city)
         ));
-      const trending = trendingDirectoryProfiles(profiles, city, { excludeWorkingNow: true });
-      const trendingNames = new Set(trending.map((profile) => profile.name));
       const upcoming = profiles
         .filter((profile) => (
           profile.scheduled &&
-          !isWorkingTonight(profile, city) &&
-          !trendingNames.has(profile.name)
+          !isWorkingTonight(profile, city)
         ))
         .sort((a, b) => (
           upcomingSortValue(a, city) - upcomingSortValue(b, city) ||
@@ -43658,16 +43655,15 @@
       const noSchedule = profiles
         .filter((profile) => (
           !profile.scheduled &&
-          !isWorkingTonight(profile, city) &&
-          !trendingNames.has(profile.name)
+          !isWorkingTonight(profile, city)
         ))
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      return { workingNow, trending, upcoming, noSchedule };
+      return { workingNow, upcoming, noSchedule };
     }
 
     function dancerDirectoryProfiles(profiles, city = selectedCity()) {
       const groups = dancerDirectoryGroups(profiles, city);
-      return [...groups.workingNow, ...groups.trending, ...groups.upcoming, ...groups.noSchedule];
+      return [...groups.workingNow, ...groups.upcoming, ...groups.noSchedule];
     }
 
     function daysFromToday(date, city = selectedCity()) {
@@ -54096,9 +54092,8 @@
       }
       return [
         { label: "Working Now", className: "is-now", profiles: groups.workingNow },
-        { label: "Trending", className: "is-trending", profiles: groups.trending },
         { label: "Upcoming", className: "is-upcoming", profiles: groups.upcoming },
-        { label: "No Shift Posted", className: "is-open", profiles: groups.noSchedule }
+        { label: "No Schedule", className: "is-open", profiles: groups.noSchedule }
       ];
     }
 
@@ -54121,7 +54116,7 @@
       };
       results.classList.add("card-grid", "home-dancer-grid");
       results.classList.add("home-dancer-three-column");
-      results.setAttribute("aria-label", `Approved dancers in ${city}, grouped by live status, popularity, and schedule`);
+      results.setAttribute("aria-label", `Approved dancers in ${city}, grouped by live status and schedule`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
         ${visibleCount
