@@ -33,7 +33,7 @@ if (upcomingSyncFlag) {
       upcomingManagerPath,
       "--mode=apply",
       "--target=production",
-      "--confirm=mydancr-three-upcoming-v1",
+      "--confirm=mydancr-six-now-two-unscheduled-v1",
     ],
     {
       env: process.env,

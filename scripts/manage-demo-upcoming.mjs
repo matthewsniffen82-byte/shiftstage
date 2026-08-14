@@ -5,10 +5,12 @@ import { createClient } from "@supabase/supabase-js";
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.env.DANCR_ENV_DIR?.trim() || process.cwd());
 
-const OPERATION_CONFIRMATION = "mydancr-three-upcoming-v1";
+const OPERATION_CONFIRMATION = "mydancr-six-now-two-unscheduled-v1";
 const DATASET_MARKER = "mydancr-layout-review-v1";
 const MANAGED_BY = "manage-demo-upcoming";
-const UPCOMING_COUNT = 3;
+const WORKING_NOW_COUNT = 6;
+const UPCOMING_COUNT = 2;
+const NO_SCHEDULE_COUNT = 2;
 const EMAIL_DOMAIN = "synthetic.mydancr.invalid";
 const DEMO_PROFILE_SLUGS = Object.freeze(
   Array.from({ length: 10 }, (_, index) => `layout-review-${String(index + 1).padStart(2, "0")}`),
@@ -50,6 +52,11 @@ async function inspectState() {
     loadWorkingNowDancerIds(profileIds, now),
     loadUpcomingAssignments(profileIds, now),
   ]);
+  const scheduledDancerIds = new Set(upcoming.map((shift) => String(shift.dancer_id)));
+  const noSchedule = profiles.filter((profile) => (
+    !workingNowIds.has(String(profile.id))
+    && !scheduledDancerIds.has(String(profile.id))
+  ));
 
   writeResult({
     event: "demo_upcoming.inspected",
@@ -57,7 +64,12 @@ async function inspectState() {
     eligibleProfileCount: profiles.length,
     workingNowCount: workingNowIds.size,
     upcomingCount: upcoming.length,
+    noScheduleCount: noSchedule.length,
     upcoming: upcoming.map(publicAssignment),
+    noSchedule: noSchedule.map((profile) => ({
+      stageName: profile.stage_name,
+      profileSlug: profile.slug,
+    })),
   });
 }
 
@@ -73,10 +85,20 @@ async function applyAssignments() {
   const now = new Date().toISOString();
   const profileIds = profiles.map((profile) => profile.id);
   const workingNowIds = await loadWorkingNowDancerIds(profileIds, now);
+  if (workingNowIds.size !== WORKING_NOW_COUNT) {
+    throw new Error(
+      `Expected exactly ${WORKING_NOW_COUNT} Working Now demo dancers; found ${workingNowIds.size}.`,
+    );
+  }
+  if (profiles.length !== WORKING_NOW_COUNT + UPCOMING_COUNT + NO_SCHEDULE_COUNT) {
+    throw new Error(
+      `Expected ${WORKING_NOW_COUNT + UPCOMING_COUNT + NO_SCHEDULE_COUNT} eligible demo profiles; found ${profiles.length}.`,
+    );
+  }
   const candidates = profiles.filter((profile) => !workingNowIds.has(String(profile.id)));
   if (candidates.length < UPCOMING_COUNT) {
     throw new Error(
-      `Three non-working eligible demo profiles are required; found ${candidates.length}.`,
+      `${UPCOMING_COUNT} non-working eligible demo profiles are required; found ${candidates.length}.`,
     );
   }
 
@@ -131,9 +153,9 @@ async function applyAssignments() {
     .select(
       "id, dancer_id, venue_id, shift_date, shift_source, starts_at, ends_at, checked_in_at, shift_summary, dancer_profiles(stage_name, slug), venues(name, slug)",
     );
-  assertSuccess(error, "create three managed Demo Mode upcoming assignments");
+  assertSuccess(error, "create managed Demo Mode upcoming assignments");
   if ((data || []).length !== UPCOMING_COUNT) {
-    throw new Error(`Expected three inserted assignments; received ${(data || []).length}.`);
+    throw new Error(`Expected ${UPCOMING_COUNT} inserted assignments; received ${(data || []).length}.`);
   }
 
   const verification = await loadUpcomingAssignments(
@@ -142,11 +164,21 @@ async function applyAssignments() {
   );
   if (verification.length !== UPCOMING_COUNT) {
     throw new Error(
-      `Expected exactly three upcoming demo dancers after verification; found ${verification.length}.`,
+      `Expected exactly ${UPCOMING_COUNT} Upcoming demo dancers after verification; found ${verification.length}.`,
     );
   }
   if (verification.some((shift) => workingNowIds.has(String(shift.dancer_id)))) {
     throw new Error("A Working Now dancer was incorrectly assigned to Upcoming.");
+  }
+  const scheduledDancerIds = new Set(verification.map((shift) => String(shift.dancer_id)));
+  const noSchedule = profiles.filter((profile) => (
+    !workingNowIds.has(String(profile.id))
+    && !scheduledDancerIds.has(String(profile.id))
+  ));
+  if (noSchedule.length !== NO_SCHEDULE_COUNT) {
+    throw new Error(
+      `Expected exactly ${NO_SCHEDULE_COUNT} demo dancers without a posted schedule; found ${noSchedule.length}.`,
+    );
   }
 
   writeResult({
@@ -154,7 +186,12 @@ async function applyAssignments() {
     target,
     workingNowCount: workingNowIds.size,
     upcomingCount: verification.length,
+    noScheduleCount: noSchedule.length,
     upcoming: verification.map(publicAssignment),
+    noSchedule: noSchedule.map((profile) => ({
+      stageName: profile.stage_name,
+      profileSlug: profile.slug,
+    })),
   });
 }
 

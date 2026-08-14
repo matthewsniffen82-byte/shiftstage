@@ -43599,21 +43599,11 @@
     }
 
     function rankedTrendingProfiles(city) {
-      return [...markets[city].dancers]
-        .filter(isApprovedPublicProfile)
-        .filter((profile) => Number.isInteger(Number(profile.trendRank)) && Number(profile.trendRank) > 0)
-        .map((profile) => ({
-          ...profile,
-          trendScore: firstRealMetric(profile, ["trendScore", "trendingScore"]),
-          trendSignals: privateTrendingSignals(profile, city)
-        }))
-        .sort((a, b) => (
-          Number(a.trendRank) - Number(b.trendRank)
-        ));
+      return [];
     }
 
     function trendingProfiles(city) {
-      return rankedTrendingProfiles(city).slice(0, 10);
+      return [];
     }
 
     function withTrendingRank(profile, city) {
@@ -53802,25 +53792,7 @@
     }
 
     function trendingDirectoryProfiles(profiles, city = selectedCity(), options = {}) {
-      const excludeWorkingNow = options.excludeWorkingNow === true;
-      return profiles
-        .filter(isApprovedPublicProfile)
-        .filter((profile) => !excludeWorkingNow || !isWorkingTonight(profile, city))
-        .sort((a, b) => {
-          const aRanked = isTrendingDirectoryProfile(a);
-          const bRanked = isTrendingDirectoryProfile(b);
-          if (aRanked !== bRanked) return aRanked ? -1 : 1;
-          if (aRanked && bRanked) {
-            const rankDifference = Number(a.trendRank) - Number(b.trendRank);
-            if (rankDifference) return rankDifference;
-          }
-          const activityDifference = publicTrendingActivityScore(b) - publicTrendingActivityScore(a);
-          if (activityDifference) return activityDifference;
-          const scheduleDifference = Number(Boolean(b.scheduled)) - Number(Boolean(a.scheduled));
-          if (scheduleDifference) return scheduleDifference;
-          return dailyRotationScore(a, city) - dailyRotationScore(b, city);
-        })
-        .slice(0, 10);
+      return [];
     }
 
     function dancerDirectoryFilterMarkup(profiles, city) {

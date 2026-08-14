@@ -4,23 +4,25 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("Trending stays populated with eligible production dancers before rank rows exist", () => {
+test("the public Trending destination never includes dancers or visible ranks", () => {
+  const destinationHelper = homeSource.match(
+    /function trendingProfiles\(city\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  const rankedHelper = homeSource.match(
+    /function rankedTrendingProfiles\(city\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
   const rankingHelper = homeSource.match(
     /function publicTrendingActivityScore\(profile\) \{[\s\S]*?(?=\n    function dancerDirectoryFilterMarkup)/,
   )?.[0] || "";
 
-  assert.match(rankingHelper, /goingCount[\s\S]*followerCount[\s\S]*notificationCount[\s\S]*profileViewsToday/);
+  assert.match(destinationHelper, /return \[\];/);
+  assert.match(rankedHelper, /return \[\];/);
   assert.match(rankingHelper, /function trendingDirectoryProfiles\(profiles, city = selectedCity\(\), options = \{\}\)/);
-  assert.match(rankingHelper, /\.filter\(isApprovedPublicProfile\)/);
-  assert.match(rankingHelper, /aRanked !== bRanked[\s\S]*aRanked \? -1 : 1/);
-  assert.match(rankingHelper, /Number\(a\.trendRank\) - Number\(b\.trendRank\)/);
-  assert.match(rankingHelper, /publicTrendingActivityScore\(b\) - publicTrendingActivityScore\(a\)/);
-  assert.match(rankingHelper, /dailyRotationScore\(a, city\) - dailyRotationScore\(b, city\)/);
-  assert.match(rankingHelper, /\.slice\(0, 10\)/);
-  assert.doesNotMatch(rankingHelper, /trendRank\s*:/);
+  assert.match(rankingHelper, /function trendingDirectoryProfiles[\s\S]*?return \[\];/);
+  assert.doesNotMatch(rankingHelper, /function trendingDirectoryProfiles[\s\S]*?\.filter\(isApprovedPublicProfile\)/);
 });
 
-test("Trending count, filter, and grouped directory share the populated ranking", () => {
+test("Trending count, filter, and grouped directory share the empty public ranking", () => {
   assert.match(
     homeSource,
     /function dancerDirectoryFilterMarkup\(profiles, city\) \{[\s\S]*?const trending = trendingDirectoryProfiles\(profiles, city\);[\s\S]*?trending: trending\.length/,
