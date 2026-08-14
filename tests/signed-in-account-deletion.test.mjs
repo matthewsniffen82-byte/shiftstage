@@ -28,7 +28,7 @@ test("the global deletion control requires confirmation and calls the authentica
   );
   assert.match(
     liveShell,
-    /function finalizeDeletedAccount\(role\) \{\s*logoutAccount\(\{ message: `\$\{accountRoleLabel\(role\)\} deleted` \}\);\s*\}/,
+    /function finalizeDeletedAccount\(role\) \{\s*logoutAccount\(\{ message: `\$\{accountRoleLabel\(role\)\} deleted` \}\);\s*window\.location\.replace\("\/"\);\s*\}/,
   );
   assert.match(
     liveShell,
@@ -49,4 +49,9 @@ test("the account endpoint permanently removes the authenticated login", () => {
   assert.match(accountRoute, /createRequestSupabaseContext\(request\)/);
   assert.match(accountRoute, /setAccountState\(client, user\.id, "deleted"\)/);
   assert.match(accountRoute, /admin\.auth\.admin\.deleteUser\(user\.id\)/);
+  assert.match(accountRoute, /return NextResponse\.json\(\{ ok: true, account \}\);/);
+  assert.doesNotMatch(
+    accountRoute,
+    /export async function DELETE[\s\S]*?return NextResponse\.json\(\{ ok: true, account, session \}\);/,
+  );
 });

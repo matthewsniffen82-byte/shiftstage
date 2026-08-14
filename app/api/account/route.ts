@@ -117,7 +117,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { client, user, session } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request);
     const account = await setAccountState(client, user.id, "deleted");
     const admin = createAdminSupabaseClient();
     const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id);
@@ -132,7 +132,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    return NextResponse.json({ ok: true, account, session });
+    return NextResponse.json({ ok: true, account });
   } catch (error) {
     return apiError(error, "Unable to delete account.");
   }

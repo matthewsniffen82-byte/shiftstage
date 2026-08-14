@@ -40498,6 +40498,7 @@
 
     function finalizeDeletedAccount(role) {
       logoutAccount({ message: `${accountRoleLabel(role)} deleted` });
+      window.location.replace("/");
     }
 
     function setAccountCenterStatus(role, message, isError = false) {
