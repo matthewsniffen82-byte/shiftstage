@@ -8,16 +8,24 @@ const scheduleSyncFlag = String(
   process.env.LAYOUT_REVIEW_SYNC_SCHEDULES || "",
 ).trim();
 const upcomingSyncFlag = String(process.env.DEMO_UPCOMING_SYNC || "").trim();
+const DEFAULT_UPCOMING_SYNC_FLAG = "mydancr-three-upcoming-v1";
+const shouldSyncDefaultUpcoming =
+  process.env.VERCEL_ENV === "production" &&
+  !upcomingSyncFlag &&
+  !populationFlag &&
+  !dealSyncFlag &&
+  !scheduleSyncFlag;
+const shouldSyncUpcoming = Boolean(upcomingSyncFlag) || shouldSyncDefaultUpcoming;
 
-if (upcomingSyncFlag) {
+if (shouldSyncUpcoming) {
   if (populationFlag || dealSyncFlag || scheduleSyncFlag) {
     throw new Error(
       "Demo Upcoming sync cannot run with another layout-review production operation.",
     );
   }
-  if (upcomingSyncFlag !== "mydancr-three-upcoming-v1") {
+  if (upcomingSyncFlag && upcomingSyncFlag !== DEFAULT_UPCOMING_SYNC_FLAG) {
     throw new Error(
-      "The Demo Upcoming sync flag must exactly equal mydancr-three-upcoming-v1.",
+      `The Demo Upcoming sync flag must exactly equal ${DEFAULT_UPCOMING_SYNC_FLAG}.`,
     );
   }
   if (process.env.VERCEL_ENV !== "production") {

@@ -18,9 +18,12 @@ test("the guarded production operation enforces six Now, two Upcoming, and two u
   assert.match(packageJson, /"demo:upcoming": "node scripts\/manage-demo-upcoming\.mjs"/);
 });
 
-test("the one-time Upcoming sync can run only inside an explicitly gated production build", () => {
+test("production builds keep the managed dancer status distribution current", () => {
   assert.match(postbuild, /const upcomingSyncFlag = String\(process\.env\.DEMO_UPCOMING_SYNC \|\| ""\)\.trim\(\)/);
-  assert.match(postbuild, /upcomingSyncFlag !== "mydancr-three-upcoming-v1"/);
+  assert.match(postbuild, /const DEFAULT_UPCOMING_SYNC_FLAG = "mydancr-three-upcoming-v1"/);
+  assert.match(postbuild, /const shouldSyncDefaultUpcoming =[\s\S]*?process\.env\.VERCEL_ENV === "production"[\s\S]*?!populationFlag[\s\S]*?!dealSyncFlag[\s\S]*?!scheduleSyncFlag/);
+  assert.match(postbuild, /const shouldSyncUpcoming = Boolean\(upcomingSyncFlag\) \|\| shouldSyncDefaultUpcoming/);
+  assert.match(postbuild, /upcomingSyncFlag && upcomingSyncFlag !== DEFAULT_UPCOMING_SYNC_FLAG/);
   assert.match(postbuild, /process\.env\.VERCEL_ENV !== "production"/);
   assert.match(postbuild, /new URL\("\.\/manage-demo-upcoming\.mjs", import\.meta\.url\)/);
   assert.match(postbuild, /"--mode=apply"[\s\S]*?"--target=production"[\s\S]*?"--confirm=mydancr-six-now-two-unscheduled-v1"/);
