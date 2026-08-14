@@ -64,7 +64,7 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
   assert.match(baseMigration, /'source', 'cashier_nfc_tap'/);
   assert.match(tapRoute, /verifyDancerDealAttributionToken/);
   assert.match(tapRoute, /getVerifiedActiveCheckInAtVenue/);
-  assert.match(dealCard, /mydancrPendingNfcDealV1/);
+  assert.match(dealCard, /mydancrPendingNfcDealV2/);
   assert.match(client, /readPendingDealIntent/);
   assert.match(client, /Redeem this Club Deal/);
   assert.match(retiredDealQr, /status: 410/);

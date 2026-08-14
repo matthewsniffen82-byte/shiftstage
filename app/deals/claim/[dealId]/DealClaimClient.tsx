@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { ClubDeal } from "@/src/lib/dancr/types";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
-const DEAL_INTENT_KEY = "mydancrPendingNfcDealV1";
+const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 
 export default function DealClaimClient({ deal }: { campaignToken: string; deal: ClubDeal }) {
   const [status, setStatus] = useState("Preparing this offer for cashier NFC…");

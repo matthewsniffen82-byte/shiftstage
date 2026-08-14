@@ -46,7 +46,7 @@ test("venue managers can keep multiple deals live and manage each campaign indep
 test("bottle service requires a real HTTPS handoff and appears only after pass creation", () => {
   assert.match(deals, /offerType === "bottle_service" && input\.isActive && !bookingUrl/);
   assert.match(deals, /Booking URL must use HTTPS/);
-  assert.match(dealCard, /intentSaved && activeDeal\.offerType === "bottle_service" && activeDeal\.bookingUrl/);
+  assert.match(dealCard, /intentState === "ready" && activeDeal\.offerType === "bottle_service" && activeDeal\.bookingUrl/);
   assert.match(dealCard, /Continue to club booking/);
   assert.match(liveApp, /const hasBooking = pass\.offerType === "bottle_service" && \/\^https/);
   assert.match(liveApp, /Cashier NFC redemption · Club booking available/);

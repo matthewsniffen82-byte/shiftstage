@@ -757,9 +757,9 @@ test("Working Now dancer grid cards expose a functional cashier NFC Club Deal ac
     homeSource,
     /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\], \[data-deal-pass\]"\)[\s\S]*?await handleDealPassClick\(event\);[\s\S]*?return;/,
   );
-  assert.match(homeSource, /mydancrPendingNfcDealV1/);
-  assert.match(homeSource, /Club Deal ready for cashier NFC/);
-  assert.match(homeSource, /Tap the cashier NFC sticker to securely redeem/);
+  assert.match(homeSource, /mydancrPendingNfcDealV2/);
+  assert.match(homeSource, /data-select-deal-pass aria-pressed="false">Use this deal/);
+  assert.match(homeSource, /Preview only—select this deal before tapping the cashier NFC sticker/);
   assert.match(
     homeSource,
     /Shared scrolling-card QR rail shell[\s\S]*?\.home-venue-discovery-action-rail \.home-venue-discovery-rail-qr \{[\s\S]*?width: 48px !important;[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?opacity: 1 !important;[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,

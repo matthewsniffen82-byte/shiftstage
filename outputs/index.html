@@ -25621,16 +25621,16 @@
 
     .deal-pass-sheet {
       position: relative;
-      width: min(430px, calc(100vw - 28px));
+      width: min(420px, calc(100vw - 28px));
       max-height: calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
       overflow-y: auto;
       overscroll-behavior: contain;
       scroll-padding-bottom: calc(22px + env(safe-area-inset-bottom));
-      padding: 22px 22px calc(22px + env(safe-area-inset-bottom));
+      padding: 24px 22px calc(22px + env(safe-area-inset-bottom));
       border: 1px solid rgba(255, 255, 255, .14);
-      border-radius: 26px;
+      border-radius: 24px;
       background:
-        linear-gradient(145deg, rgba(18, 19, 24, .98), rgba(5, 6, 9, .99)),
+        linear-gradient(145deg, rgba(17, 18, 22, .96), rgba(5, 6, 8, .985)),
         #050507;
       box-shadow:
         0 28px 80px rgba(0, 0, 0, .62),
@@ -25645,12 +25645,12 @@
       top: 12px;
       right: 12px;
       z-index: 2;
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, .14);
-      background: rgba(32, 33, 39, .92);
-      color: #fff;
+      background: rgba(26, 27, 32, .84);
+      color: rgba(255, 255, 255, .82);
       display: grid;
       place-items: center;
       cursor: pointer;
@@ -25678,26 +25678,67 @@
     }
 
     .deal-pass-copy {
-      margin: 9px auto 18px;
+      margin: 8px auto 14px;
       max-width: 360px;
       color: rgba(248, 248, 252, .82);
       font-size: .94rem;
       line-height: 1.36;
     }
 
+    .deal-pass-offer {
+      display: grid;
+      gap: 9px;
+      margin-bottom: 14px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .035);
+      text-align: left;
+    }
+
+    .deal-pass-description {
+      margin: 0;
+      color: rgba(255, 255, 255, .90);
+      font-size: .9rem;
+      font-weight: 850;
+      line-height: 1.4;
+    }
+
+    .deal-pass-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      color: rgba(255, 255, 255, .58);
+      font-size: .7rem;
+      font-weight: 850;
+      letter-spacing: .035em;
+    }
+
+    .deal-pass-terms {
+      margin: 0;
+      padding-top: 9px;
+      border-top: 1px solid rgba(255, 255, 255, .08);
+      color: rgba(255, 255, 255, .58);
+      font-size: .72rem;
+      line-height: 1.42;
+    }
+
+    .deal-pass-terms[hidden] {
+      display: none;
+    }
+
     .deal-pass-frame {
-      width: min(262px, 72vw);
+      width: 112px;
       aspect-ratio: 1;
-      margin: 0 auto 16px;
-      padding: 12px;
-      border-radius: 24px;
+      margin: 0 auto 13px;
+      padding: 9px;
+      border-radius: 22px;
       display: grid;
       place-items: center;
-      background: radial-gradient(circle at 45% 35%, rgba(133, 76, 255, .34), transparent 54%), #0c0914;
+      background: radial-gradient(circle at 45% 35%, rgba(133, 76, 255, .22), transparent 56%), rgba(9, 9, 13, .92);
       box-shadow:
-        0 0 0 1px rgba(255, 255, 255, .24),
-        0 14px 38px rgba(0, 0, 0, .42),
-        0 0 28px rgba(53, 216, 255, .13);
+        0 0 0 1px rgba(255, 255, 255, .14),
+        0 14px 34px rgba(0, 0, 0, .38);
     }
 
     .deal-pass-frame img {
@@ -25708,15 +25749,15 @@
     }
 
     .deal-pass-frame .deal-pass-nfc-symbol {
-      width: 72%;
-      height: 72%;
+      width: 78%;
+      height: 78%;
       display: grid;
       place-items: center;
       border: 1px solid rgba(159, 117, 255, .42);
       border-radius: 50%;
       color: #f7f1ff;
       background: rgba(11, 8, 20, .74);
-      box-shadow: 0 0 42px rgba(111, 49, 255, .32), inset 0 1px 0 rgba(255, 255, 255, .08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
     }
 
     .deal-pass-frame .deal-pass-nfc-symbol .club-deal-qr-symbol {
@@ -25743,7 +25784,6 @@
         border-radius: 22px;
       }
 
-      .deal-pass-frame,
       .profile-qr-frame {
         width: min(190px, 54vw);
         margin-bottom: 12px;
@@ -25751,12 +25791,25 @@
         border-radius: 18px;
       }
 
-      .deal-pass-close,
+      .deal-pass-frame {
+        width: 96px;
+        margin-bottom: 11px;
+        padding: 8px;
+        border-radius: 19px;
+      }
+
       .profile-qr-close {
         top: 10px;
         right: 10px;
         width: 36px;
         height: 36px;
+      }
+
+      .deal-pass-close {
+        top: 10px;
+        right: 10px;
+        width: 34px;
+        height: 34px;
       }
 
       .deal-pass-copy,
@@ -25768,15 +25821,76 @@
 
     .deal-pass-how {
       margin: 0 0 16px;
-      padding: 12px;
+      padding: 10px 12px;
       border: 1px solid rgba(255, 255, 255, .08);
-      border-radius: 16px;
-      color: rgba(245, 245, 255, .70);
-      background: rgba(0, 0, 0, .26);
-      font-size: .82rem;
+      border-radius: 13px;
+      color: rgba(245, 245, 255, .76);
+      background: rgba(0, 0, 0, .22);
+      font-size: .76rem;
       font-weight: 800;
       line-height: 1.35;
+      text-align: center;
+    }
+
+    .deal-pass-how.is-ready {
+      border-color: rgba(126, 234, 255, .28);
+      color: #d9f9ff;
+      background: rgba(53, 216, 255, .07);
+    }
+
+    .deal-pass-how.is-error,
+    .deal-pass-how.is-expired {
+      border-color: rgba(255, 157, 174, .28);
+      color: #ffd5dd;
+      background: rgba(255, 99, 132, .07);
+    }
+
+    .deal-pass-steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .deal-pass-step {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      align-items: center;
+      gap: 7px;
+      padding: 9px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 12px;
+      color: rgba(255, 255, 255, .66);
+      background: rgba(255, 255, 255, .025);
+      font-size: .68rem;
+      font-weight: 900;
+      line-height: 1.2;
       text-align: left;
+    }
+
+    .deal-pass-step > span {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(255, 255, 255, .04);
+      font-size: .66rem;
+    }
+
+    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-step:first-child {
+      border-color: rgba(126, 234, 255, .28);
+      color: #e5fbff;
+      background: rgba(53, 216, 255, .06);
+    }
+
+    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-step:first-child > span {
+      border-color: rgba(126, 234, 255, .46);
+      color: #071014;
+      background: #f7fbff;
     }
 
     .deal-pass-actions {
@@ -25926,8 +26040,8 @@
     .deal-pass-action {
       min-height: 44px;
       border-radius: 999px;
-      border: 1px solid rgba(125, 74, 255, .38);
-      background: rgba(5, 5, 7, .76);
+      border: 1px solid rgba(255, 255, 255, .13);
+      background: rgba(255, 255, 255, .045);
       color: #fff;
       font: inherit;
       font-weight: 950;
@@ -25936,21 +26050,43 @@
 
     .deal-pass-action.primary {
       grid-column: 1 / -1;
-      border: none;
-      background: linear-gradient(135deg, #7C3AED, #0EA5E9);
-      box-shadow: 0 0 26px rgba(125, 74, 255, .28);
+      border: 1px solid rgba(255, 255, 255, .28);
+      background: linear-gradient(135deg, rgba(76, 35, 176, .96), rgba(24, 94, 126, .96));
+      box-shadow: 0 12px 26px rgba(0, 0, 0, .26);
     }
 
-    .deal-pass-action.primary.is-saved {
-      background: linear-gradient(135deg, #087f5b, #0ea5a8);
-      box-shadow: 0 0 24px rgba(14, 165, 168, .24);
+    .deal-pass-action.primary.is-ready {
+      color: #071014;
+      border-color: rgba(255, 255, 255, .58);
+      background: #f7fbff;
+      box-shadow: none;
+    }
+
+    .deal-pass-action:disabled {
+      cursor: default;
+      opacity: .78;
+    }
+
+    .deal-pass-action.is-saved {
+      color: #d9f9ff;
+      border-color: rgba(126, 234, 255, .26);
+      background: rgba(53, 216, 255, .07);
     }
 
     .deal-pass-action.tertiary {
-      border-color: rgba(255, 255, 255, .12);
-      background: rgba(255, 255, 255, .035);
-      color: rgba(245, 245, 255, .78);
-      font-size: .9rem;
+      grid-column: 1 / -1;
+      min-height: 32px;
+      border-color: transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: rgba(245, 245, 255, .60);
+      font-size: .78rem;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .deal-pass-booking:not([hidden]) {
+      margin-top: 12px;
     }
 
     .saved-deal-list {
@@ -43783,7 +43919,7 @@
 
     function loadSavedDealPasses() {
       try {
-        const saved = JSON.parse(localStorage.getItem("dancrSavedDealPassesV1") || "[]");
+        const saved = JSON.parse(localStorage.getItem("dancrSavedDealPassesV2") || "[]");
         return Array.isArray(saved) ? saved : [];
       } catch {
         return [];
@@ -43792,7 +43928,7 @@
 
     function saveSavedDealPasses() {
       try {
-        localStorage.setItem("dancrSavedDealPassesV1", JSON.stringify(savedDealPasses));
+        localStorage.setItem("dancrSavedDealPassesV2", JSON.stringify(savedDealPasses));
         return true;
       } catch {
         return false;
@@ -43851,8 +43987,13 @@
         dancerName,
         sourceType,
         title: deal.dealTitle || "Club Deal",
+        description: deal.dealDescription || "",
+        terms: deal.dealTerms || "",
         offerType: deal.offerType || "admission",
         bookingUrl: deal.bookingUrl || "",
+        validDays: Array.isArray(deal.validDays) ? deal.validDays : [],
+        validStartTime: deal.validStartTime || "",
+        validEndTime: deal.validEndTime || "",
         dealId: deal.id,
         attributionToken: sourceType === "dancer_profile" ? attributionToken : "",
         details: sourceType === "dancer_profile"
@@ -43860,16 +44001,8 @@
           : `Tap the cashier NFC sticker at ${venueName} to redeem this offer.`,
         url: venueExperienceHref({ slug: venueSlug, name: venueName }),
         nfcIntent: true,
-        savedAt: Date.now()
+        preparedAt: Date.now()
       };
-      localStorage.setItem("mydancrPendingNfcDealV1", JSON.stringify({
-        venueId,
-        dealId: deal.id,
-        sourceType,
-        dancerId: sourceType === "dancer_profile" ? dancerId : null,
-        attributionToken: sourceType === "dancer_profile" ? attributionToken : null,
-        savedAt: Date.now()
-      }));
       return intent;
     }
 
@@ -43885,7 +44018,7 @@
     function isReusableProfileClubDealPass(entry, key) {
       if (!entry || entry.key !== key || !entry.pass) return false;
       const pass = entry.pass;
-      return pass.nfcIntent === true && Date.now() - Number(pass.savedAt || 0) < 12 * 60 * 60 * 1000;
+      return pass.nfcIntent === true && Date.now() - Number(pass.preparedAt || pass.savedAt || 0) < 12 * 60 * 60 * 1000;
     }
 
     function readReusableProfileClubDealPass(key) {
@@ -43936,7 +44069,7 @@
         cacheProfileClubDealPass(key, pass);
         if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
         qrButton.dataset.dealPass = encodeDealPass(pass);
-        qrButton.setAttribute("data-save-deal-pass-on-open", "");
+        qrButton.removeAttribute("data-save-deal-pass-on-open");
         qrButton.setAttribute("aria-label", `Prepare the ${config.venueName || "active"} Club Deal for cashier NFC`);
         qrButton.innerHTML = clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol");
         qrButton.disabled = false;
@@ -44018,15 +44151,18 @@
 
     function saveCustomerDealPass(pass, message = "Club Deal ready for cashier NFC") {
       if (!pass?.id) return false;
+      const wasAlreadySaved = savedDealPasses.some((item) => item.id === pass.id);
+      const previousPasses = savedDealPasses;
       const savedPass = { ...pass, savedAt: new Date().toISOString() };
       savedDealPasses = [savedPass, ...savedDealPasses.filter((item) => item.id !== pass.id)].slice(0, 20);
       const persisted = saveSavedDealPasses();
-      if (persisted) recordRevenueDealLifecycle(pass, "saved");
+      if (!persisted) savedDealPasses = previousPasses;
+      if (persisted && !wasAlreadySaved) recordRevenueDealLifecycle(pass, "saved");
       if (customerDashboard.classList.contains("show")) renderDashboard();
       renderCustomerQuickActions();
       showToast(persisted
-        ? message
-        : "Deal ready for this visit. Browser storage blocked saving it for later.");
+        ? wasAlreadySaved ? "Deal is already saved on this device." : message
+        : "Browser storage blocked saving this deal. Allow site storage and try again.");
       return persisted;
     }
 
@@ -44042,7 +44178,43 @@
     }
 
     function saveDealPassForLater(pass) {
-      return saveCustomerDealPass(pass, "Deal saved. Tap the cashier NFC sticker to redeem.");
+      return saveCustomerDealPass(pass, "Deal saved on this device.");
+    }
+
+    const pendingNfcDealIntentTtlMs = 12 * 60 * 60 * 1000;
+
+    function pendingNfcDealIntentForPass(pass) {
+      try {
+        const intent = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
+        if (!intent || intent.venueId !== pass?.venueId || intent.dealId !== pass?.dealId) return null;
+        const passSource = pass?.sourceType || "club_page";
+        if ((intent.sourceType || "club_page") !== passSource) return null;
+        if (passSource === "dancer_profile" && String(intent.dancerId || "") !== String(pass?.dancerId || "")) return null;
+        const selectedAt = Number(intent.savedAt || 0);
+        const expiresAt = Number(intent.expiresAt || selectedAt + pendingNfcDealIntentTtlMs);
+        return { ...intent, selectedAt, expiresAt, expired: !selectedAt || expiresAt <= Date.now() };
+      } catch {
+        return null;
+      }
+    }
+
+    function selectDealPassForNfc(pass) {
+      const selectedAt = Date.now();
+      const intent = {
+        venueId: pass.venueId,
+        dealId: pass.dealId,
+        sourceType: pass.sourceType || "club_page",
+        dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || null : null,
+        attributionToken: pass.sourceType === "dancer_profile" ? pass.attributionToken || null : null,
+        savedAt: selectedAt,
+        expiresAt: selectedAt + pendingNfcDealIntentTtlMs
+      };
+      try {
+        localStorage.setItem("mydancrPendingNfcDealV2", JSON.stringify(intent));
+        return { ok: true, intent };
+      } catch {
+        return { ok: false, intent: null };
+      }
     }
 
     async function shareDealPass(pass) {
@@ -44056,14 +44228,13 @@
         if (navigator.share) {
           await navigator.share(shareData);
           recordRevenueDealLifecycle(pass, "shared");
-          saveCustomerDealPass(pass, "Club Deal saved on this device");
+          showToast("Deal shared");
         } else {
           await copyText(pass.url, "Deal link copied");
           recordRevenueDealLifecycle(pass, "shared");
-          saveCustomerDealPass(pass, "Club Deal saved on this device");
         }
-      } catch {
-        showToast("Share cancelled");
+      } catch (error) {
+        showToast(error?.name === "AbortError" ? "Share cancelled" : "Sharing is unavailable. Copy the deal link instead.");
       }
     }
 
@@ -44103,17 +44274,31 @@
       if (overlay) return overlay;
       document.body.insertAdjacentHTML("beforeend", `
         <div class="deal-pass-overlay" id="dealPassOverlay" aria-hidden="true" hidden>
-          <div class="deal-pass-sheet" role="dialog" aria-modal="true" aria-labelledby="dealPassTitle">
+          <div class="deal-pass-sheet" role="dialog" aria-modal="true" aria-labelledby="dealPassTitle" data-deal-state="preview">
             <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close Club Deal">${actionIconMarkup("close")}</button>
-            <p class="deal-pass-kicker" id="dealPassKicker">Cashier NFC Club Deal</p>
+            <p class="deal-pass-kicker" id="dealPassKicker">Cashier NFC redemption</p>
             <h3 class="deal-pass-title" id="dealPassTitle">Club Deal</h3>
-            <p class="deal-pass-copy" id="dealPassCopy">Tap the cashier NFC sticker at the club.</p>
+            <p class="deal-pass-copy" id="dealPassCopy">Club offer</p>
+            <div class="deal-pass-offer">
+              <p class="deal-pass-description" id="dealPassDescription"></p>
+              <div class="deal-pass-meta">
+                <span id="dealPassOfferType">Club offer</span>
+                <span>One redemption per guest</span>
+                <span id="dealPassExpiry">Availability verified at tap</span>
+              </div>
+              <p class="deal-pass-terms" id="dealPassTerms" hidden></p>
+            </div>
             <div class="deal-pass-frame">
               <div id="dealPassImage" class="deal-pass-nfc-symbol" role="img" aria-label="NFC tap">${clubDealQrSymbolMarkup("deal-pass-nfc-icon")}</div>
             </div>
-            <p class="deal-pass-how" id="dealPassHow">Your selected deal and dancer attribution are securely confirmed when the cashier sticker is tapped.</p>
+            <div class="deal-pass-steps" aria-label="How to redeem">
+              <div class="deal-pass-step"><span>1</span><strong>Select this deal</strong></div>
+              <div class="deal-pass-step"><span>2</span><strong>Tap cashier sticker</strong></div>
+            </div>
+            <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite">Preview only—select this deal before tapping the cashier NFC sticker.</p>
             <div class="deal-pass-actions">
-              <button class="deal-pass-action primary" type="button" data-save-deal-pass aria-pressed="false">Save deal</button>
+              <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Use this deal</button>
+              <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save on device</button>
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share deal</button>
               <button class="deal-pass-action tertiary" type="button" data-copy-deal-pass>Copy link</button>
             </div>
@@ -44123,6 +44308,7 @@
       `);
       overlay = document.getElementById("dealPassOverlay");
       const closeButton = overlay.querySelector("[data-close-deal-pass]");
+      const selectButton = overlay.querySelector("[data-select-deal-pass]");
       const saveButton = overlay.querySelector("[data-save-deal-pass]");
       const shareButton = overlay.querySelector("[data-share-deal-pass]");
       const copyButton = overlay.querySelector("[data-copy-deal-pass]");
@@ -44153,6 +44339,25 @@
         });
       };
       const currentPass = () => decodeDealPass(overlay.dataset.dealPass || "");
+      bindDealPassAction(selectButton, (button) => {
+        const pass = currentPass();
+        if (!pass) {
+          showToast("Club Deal unavailable");
+          return;
+        }
+        button.disabled = true;
+        button.textContent = "Preparing…";
+        const result = selectDealPassForNfc(pass);
+        if (result.ok) {
+          syncDealPassOverlayState(overlay, pass);
+          showToast("Deal ready for the cashier NFC tap");
+        } else {
+          syncDealPassOverlayState(overlay, pass, {
+            state: "error",
+            message: "Couldn’t prepare this deal. Allow site storage, then try again."
+          });
+        }
+      });
       bindDealPassAction(saveButton, (button) => {
         const pass = currentPass();
         if (!pass) {
@@ -44160,9 +44365,10 @@
           return;
         }
         const persisted = saveDealPassForLater(pass);
-        button.textContent = persisted ? "Saved" : "Ready this visit";
+        button.textContent = persisted ? "Saved on device ✓" : "Try saving again";
         button.setAttribute("aria-pressed", persisted ? "true" : "false");
         button.classList.toggle("is-saved", persisted);
+        button.disabled = persisted;
       });
       bindDealPassAction(shareButton, () => {
         const pass = currentPass();
@@ -44184,24 +44390,84 @@
       const venueName = String(pass?.venueName || "Club").trim() || "Club";
       const dancerName = String(pass?.dancerName || "").trim();
       const dancerAttributed = pass?.sourceType === "dancer_profile" && dancerName;
-      if (pass?.serverGenerated) {
-        return {
-          kicker: "Cashier NFC Club Deal",
-          copy: dancerAttributed
-            ? `${venueName} · Credited to ${dancerName}`
-            : `${venueName} · Valid tonight`,
-          status: dancerAttributed
-            ? "Dancer attribution is revalidated when the cashier NFC sticker is tapped"
-            : "Tap the cashier NFC sticker to securely redeem"
-        };
-      }
       return {
-        kicker: "Cashier NFC Club Deal",
+        kicker: "Cashier NFC redemption",
         copy: dancerAttributed
-          ? `${venueName} · Available while ${dancerName} is working now`
-          : `${venueName} · Club offer`,
-        status: `Choose the deal here, then tap the cashier NFC sticker at ${venueName}`
+          ? `${venueName} · Credited to ${dancerName}`
+          : `${venueName} · ${clubDealOfferTypeLabel(pass?.offerType)}`
       };
+    }
+
+    function formatDealPassClockTime(value) {
+      const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
+      if (!match) return "";
+      const hours = Number(match[1]);
+      const minutes = Number(match[2]);
+      if (!Number.isFinite(hours) || hours < 0 || hours > 23 || !Number.isFinite(minutes) || minutes < 0 || minutes > 59) return "";
+      return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" })
+        .format(new Date(2000, 0, 1, hours, minutes));
+    }
+
+    function dealPassAvailabilityLabel(pass) {
+      const days = Array.isArray(pass?.validDays)
+        ? pass.validDays.map((day) => String(day || "").trim()).filter(Boolean)
+        : [];
+      const start = formatDealPassClockTime(pass?.validStartTime);
+      const end = formatDealPassClockTime(pass?.validEndTime);
+      const dayLabel = days.length
+        ? days.map((day) => day.slice(0, 3).replace(/^./, (letter) => letter.toUpperCase())).join(", ")
+        : "Published hours";
+      if (start && end) return `${dayLabel} · ${start}–${end}`;
+      if (start) return `${dayLabel} · From ${start}`;
+      if (end) return `${dayLabel} · Until ${end}`;
+      return `${dayLabel} · verified at tap`;
+    }
+
+    function formatNfcIntentExpiry(value) {
+      const date = new Date(Number(value || 0));
+      if (!Number.isFinite(date.getTime())) return "";
+      return new Intl.DateTimeFormat(undefined, {
+        weekday: "short",
+        hour: "numeric",
+        minute: "2-digit"
+      }).format(date);
+    }
+
+    function syncDealPassOverlayState(overlay, pass, override = null) {
+      const sheet = overlay.querySelector(".deal-pass-sheet");
+      const selectButton = overlay.querySelector("[data-select-deal-pass]");
+      const saveButton = overlay.querySelector("[data-save-deal-pass]");
+      const status = document.getElementById("dealPassHow");
+      const expiry = document.getElementById("dealPassExpiry");
+      const intent = pendingNfcDealIntentForPass(pass);
+      const state = override?.state || (intent?.expired ? "expired" : intent ? "ready" : "preview");
+      sheet.dataset.dealState = state;
+      status.classList.toggle("is-ready", state === "ready");
+      status.classList.toggle("is-error", state === "error");
+      status.classList.toggle("is-expired", state === "expired");
+      if (state === "ready") {
+        const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
+        status.textContent = `Selected on this device${readyUntil ? ` until ${readyUntil}` : ""}. Tap the cashier NFC sticker at ${pass.venueName}.`;
+        selectButton.textContent = "Ready to tap NFC ✓";
+        selectButton.disabled = true;
+        selectButton.setAttribute("aria-pressed", "true");
+        selectButton.classList.add("is-ready");
+        expiry.textContent = readyUntil ? `Ready until ${readyUntil}` : dealPassAvailabilityLabel(pass);
+      } else {
+        status.textContent = override?.message || (state === "expired"
+          ? "Your previous selection expired. Select this deal again before tapping NFC."
+          : "Preview only—select this deal before tapping the cashier NFC sticker.");
+        selectButton.textContent = state === "expired" ? "Select again" : state === "error" ? "Try again" : "Use this deal";
+        selectButton.disabled = false;
+        selectButton.setAttribute("aria-pressed", "false");
+        selectButton.classList.remove("is-ready");
+        expiry.textContent = dealPassAvailabilityLabel(pass);
+      }
+      const isSaved = savedDealPasses.some((savedPass) => savedPass.id === pass.id);
+      saveButton.textContent = isSaved ? "Saved on device ✓" : "Save on device";
+      saveButton.setAttribute("aria-pressed", isSaved ? "true" : "false");
+      saveButton.classList.toggle("is-saved", isSaved);
+      saveButton.disabled = isSaved;
     }
 
     function openDealPassOverlay(pass, triggerButton = null) {
@@ -44215,15 +44481,14 @@
       document.getElementById("dealPassKicker").textContent = presentation.kicker;
       document.getElementById("dealPassTitle").textContent = pass.title;
       document.getElementById("dealPassCopy").textContent = presentation.copy;
+      document.getElementById("dealPassDescription").textContent = pass.description || "Select this offer when you are ready to redeem at the cashier.";
+      document.getElementById("dealPassOfferType").textContent = clubDealOfferTypeLabel(pass.offerType);
+      const terms = String(pass.terms || "").trim();
+      const termsElement = document.getElementById("dealPassTerms");
+      termsElement.hidden = !terms;
+      termsElement.textContent = terms ? `Terms: ${terms}` : "";
       document.getElementById("dealPassImage").setAttribute("aria-label", `${pass.venueName} cashier NFC tap`);
-      document.getElementById("dealPassHow").textContent = presentation.status;
-      const saveButton = overlay.querySelector("[data-save-deal-pass]");
-      const isSaved = savedDealPasses.some((savedPass) => savedPass.id === pass.id);
-      if (saveButton) {
-        saveButton.textContent = isSaved ? "Saved" : "Save deal";
-        saveButton.setAttribute("aria-pressed", isSaved ? "true" : "false");
-        saveButton.classList.toggle("is-saved", isSaved);
-      }
+      syncDealPassOverlayState(overlay, pass);
       const bookingLink = document.getElementById("dealPassBooking");
       const hasBooking = pass.offerType === "bottle_service" && /^https:\/\//i.test(pass.bookingUrl || "");
       bookingLink.hidden = !hasBooking;
@@ -44388,7 +44653,6 @@
         revenueTrigger.classList.add("is-loading");
         try {
           const pass = await createRevenueDealPass(config);
-          saveCustomerDealPass(pass, "Club Deal ready for cashier NFC");
           openDealPassOverlay(pass, revenueTrigger);
           if (
             revenueTrigger.hasAttribute("data-feed-live-qr") ||
@@ -44421,9 +44685,6 @@
       if (!pass) {
         showToast("Club Deal unavailable");
         return true;
-      }
-      if (trigger.hasAttribute("data-save-deal-pass-on-open")) {
-        saveCustomerDealPass(pass, "Club Deal ready for cashier NFC");
       }
       openDealPassOverlay(pass, trigger);
       if (
@@ -53536,8 +53797,7 @@
         return {
           triggerAttribute: `data-club-deal-cta="${encodeDealPass(config)}"`,
           venueName: profile.venue,
-          offerCount: profile.activeDeals?.length || 1,
-          saveOnOpen: false
+          offerCount: profile.activeDeals?.length || 1
         };
       }
       return null;
@@ -53550,11 +53810,10 @@
         if (presentation === "prompt") return "";
         return `<button class="feed-card-action home-discovery-feed-live-qr is-unavailable" type="button" data-club-deal-state="${state.key}" disabled aria-disabled="true" aria-label="${escapeHtml(state.label)}">${actionButtonLabel("qr", "Club Deals")}</button>`;
       }
-      const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       if (presentation === "prompt") {
         const safeVenueName = escapeHtml(qr.venueName || "this club");
         return `
-          <button class="home-discovery-feed-qr-prompt" type="button" ${qr.triggerAttribute} data-feed-live-qr data-feed-qr-prompt${saveOnOpen} aria-hidden="true" aria-label="Get the Club Deal for ${safeVenueName}">
+          <button class="home-discovery-feed-qr-prompt" type="button" ${qr.triggerAttribute} data-feed-live-qr data-feed-qr-prompt aria-hidden="true" aria-label="Get the Club Deal for ${safeVenueName}">
             ${actionIconMarkup("qr")}
             <span class="home-discovery-feed-qr-prompt-copy">
               <small>Club Deal available</small>
@@ -53564,7 +53823,7 @@
           </button>
         `;
       }
-      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club Deals">${actionButtonLabel("qr", "Club Deals")}</button>`;
+      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr aria-label="Open the live Club Deals">${actionButtonLabel("qr", "Club Deals")}</button>`;
     }
 
     function homeDancerGridQrMarkup(profile) {
@@ -53574,9 +53833,8 @@
         const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
         return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deals: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "Club Deals")}</button>`;
       }
-      const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this club");
-      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Open Club Deals for ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr aria-label="Open Club Deals for ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue) {

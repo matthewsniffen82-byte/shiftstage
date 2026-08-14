@@ -7,7 +7,7 @@ import NfcIcon from "@/app/components/NfcIcon";
 
 const SESSION_KEY = "dancrAuthSessionV1";
 const TAP_SESSION_KEY = "mydancrNfcTapSessionV1";
-const DEAL_INTENT_KEY = "mydancrPendingNfcDealV1";
+const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 
 type TagState = {
   tag: { id: string; type: "dressing_room" | "cashier"; label: string };
@@ -22,12 +22,16 @@ type PendingDealIntent = {
   dancerId?: string | null;
   attributionToken?: string | null;
   savedAt: number;
+  expiresAt?: number;
 };
+
+type TapPhase = "reading" | "ready" | "redeeming" | "redeemed" | "error";
 
 export function NfcTapClient({ token }: { token: string }) {
   const [state, setState] = useState<TagState | null>(null);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("Reading club tag…");
+  const [phase, setPhase] = useState<TapPhase>("reading");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState("");
@@ -49,8 +53,12 @@ export function NfcTapClient({ token }: { token: string }) {
           ? pendingIntent?.dealId
           : data.deals?.[0]?.id || "";
         setSelectedDealId(preferred || "");
+        setPhase("ready");
+        const preferredDeal = data.deals?.find((deal: ClubDeal) => deal.id === preferred);
         setStatus(data.tag.type === "dressing_room"
           ? "Sign in as a dancer to start one six-hour Working Now session."
+          : pendingIntent?.venueId === data.venue.id && preferredDeal
+            ? `${preferredDeal.dealTitle} is selected on this device. Confirm it at this cashier NFC sticker.`
           : data.deals?.length
             ? "Choose the offer being used at this register."
             : "This club has no active Club Deals right now.");
@@ -59,16 +67,18 @@ export function NfcTapClient({ token }: { token: string }) {
         if (!cancelled) {
           setError(reason instanceof Error ? reason.message : "This NFC tag is unavailable.");
           setStatus("");
+          setPhase("error");
         }
       });
     return () => { cancelled = true; };
-  }, [pendingIntent?.dealId, token]);
+  }, [pendingIntent?.dealId, pendingIntent?.venueId, token]);
 
   const submitTap = useCallback(async () => {
     if (!state || isSubmitting) return;
     setIsSubmitting(true);
     setError("");
     setStatus("Verifying this tap with MyDancr…");
+    setPhase("redeeming");
     try {
       const auth = readAuthSession();
       const headers: Record<string, string> = { "content-type": "application/json" };
@@ -94,10 +104,12 @@ export function NfcTapClient({ token }: { token: string }) {
       persistRefreshedSession(data.session);
       if (state.tag.type === "cashier") clearPendingDealIntent();
       setComplete(true);
-      setStatus(data.message || "NFC tap confirmed.");
+      setPhase("redeemed");
+      setStatus(data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "NFC tap confirmed."));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to complete this NFC tap.");
-      setStatus("");
+      setStatus("The tap was not completed. Check the offer and try again at this sticker.");
+      setPhase("error");
     } finally {
       setIsSubmitting(false);
     }
@@ -121,9 +133,9 @@ export function NfcTapClient({ token }: { token: string }) {
 
   return (
     <main className="nfc-page">
-      <section className={`nfc-card${complete ? " complete" : ""}`}>
+      <section className={`nfc-card${complete ? " complete" : ""}`} data-phase={phase} aria-busy={phase === "reading" || phase === "redeeming"}>
         <div className="nfc-symbol"><NfcIcon /></div>
-        <span className="eyebrow">Verified club NFC</span>
+        <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier NFC redemption" : "Verified club NFC"}</span>
         <h1>{state?.venue.name || "MyDancr NFC"}</h1>
         {state ? <p>{state.venue.city}, {state.venue.state} · {state.tag.label}</p> : null}
 
@@ -156,7 +168,7 @@ export function NfcTapClient({ token }: { token: string }) {
           </div>
         ) : null}
 
-        {status ? <p className="nfc-status" role="status">{status}</p> : null}
+        {status ? <p className="nfc-status" role="status" aria-live="polite">{status}</p> : null}
         {error ? <p className="nfc-error" role="alert">{error}</p> : null}
 
         {!complete && state ? (
@@ -175,7 +187,7 @@ export function NfcTapClient({ token }: { token: string }) {
                 ? "Confirming…"
                 : state.tag.type === "dressing_room"
                   ? "Confirm Working Now"
-                  : "Redeem this Club Deal"}
+                  : phase === "error" ? "Try redemption again" : "Redeem this Club Deal"}
             </button>
           )
         ) : null}
@@ -183,10 +195,10 @@ export function NfcTapClient({ token }: { token: string }) {
       </section>
       <p className="nfc-security">Only use MyDancr NFC stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
       <style>{`
-        .nfc-page{min-height:100dvh;display:grid;place-content:center;gap:18px;padding:28px 16px 120px;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(112,42,255,.22),transparent 32%),#050507;font-family:var(--font-body,Arial,sans-serif)}
-        .nfc-card{width:min(460px,calc(100vw - 32px));display:grid;justify-items:center;gap:14px;padding:30px 22px;border:1px solid rgba(150,112,255,.38);border-radius:28px;background:rgba(12,10,18,.94);box-shadow:0 28px 90px rgba(0,0,0,.62)}
-        .nfc-card.complete{border-color:rgba(70,255,165,.5)}.nfc-symbol{width:84px;height:84px;display:grid;place-items:center;border-radius:50%;color:#fff;background:linear-gradient(145deg,#4a13c8,#8e36ff);box-shadow:0 0 34px rgba(125,60,255,.58);font-weight:950;transform:rotate(-18deg)}
-        .nfc-symbol svg{width:52px;height:52px}.nfc-card .eyebrow{color:#9a7aff;font-size:11px;font-weight:950;letter-spacing:.17em;text-transform:uppercase}.nfc-card h1,.nfc-card h2,.nfc-card p{margin:0}.nfc-card>h1{font-size:clamp(30px,8vw,44px);text-align:center}.nfc-card>p{color:#aaa2b8;text-align:center}.nfc-action-copy,.nfc-deals{width:100%;display:grid;gap:10px;padding:17px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(255,255,255,.035);box-sizing:border-box}.nfc-action-copy strong,.nfc-deals>strong{font-size:17px}.nfc-action-copy p,.nfc-deals p,.nfc-deals small{color:#b9b0c8;line-height:1.45}.nfc-deals label{display:grid;gap:6px;color:#c8bdd9;font-size:12px;font-weight:850}.nfc-deals select{min-height:48px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:12px;color:#fff;background:#17131f;font:inherit}.nfc-deals article{display:grid;gap:6px}.nfc-deals article>span{color:#72f0b2;font-size:10px;font-weight:950;letter-spacing:.13em;text-transform:uppercase}.nfc-deals h2{font-size:22px}.nfc-status{color:#8fffc7!important}.nfc-error{color:#ff9eaf!important}.nfc-primary,.nfc-secondary{width:100%;min-height:54px;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(167,118,255,.65);border-radius:16px;color:#fff;background:linear-gradient(135deg,#3910a9,#7119ef);font:inherit;font-weight:950;text-decoration:none;cursor:pointer}.nfc-primary:disabled{opacity:.7;cursor:wait}.nfc-secondary{background:rgba(255,255,255,.07)}.nfc-security{width:min(430px,calc(100vw - 44px));margin:0 auto;color:#716a7d;font-size:11px;line-height:1.45;text-align:center}
+        .nfc-page{min-height:100dvh;display:grid;place-content:center;gap:18px;padding:max(24px,env(safe-area-inset-top)) 16px max(90px,calc(24px + env(safe-area-inset-bottom)));color:#fff;background:radial-gradient(circle at 50% 18%,rgba(53,216,255,.08),transparent 30rem),#050507;font-family:var(--font-body,Arial,sans-serif)}
+        .nfc-card{width:min(430px,calc(100vw - 32px));display:grid;justify-items:center;gap:13px;padding:26px 20px;border:1px solid rgba(255,255,255,.14);border-radius:24px;background:linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985));box-shadow:0 28px 80px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.06)}
+        .nfc-card.complete{border-color:rgba(126,234,255,.28)}.nfc-symbol{width:88px;height:88px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:20px;color:#f7f1ff;background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.22),transparent 56%),rgba(9,9,13,.92);box-shadow:0 14px 34px rgba(0,0,0,.38);font-weight:950}
+        .nfc-symbol svg{width:60px;height:60px;padding:12px;box-sizing:border-box;border:1px solid rgba(159,117,255,.42);border-radius:50%;background:rgba(11,8,20,.74)}.nfc-card .eyebrow{color:#35d8ff;font-size:11px;font-weight:950;letter-spacing:.17em;text-transform:uppercase}.nfc-card h1,.nfc-card h2,.nfc-card p{margin:0}.nfc-card>h1{font-size:clamp(28px,8vw,40px);text-align:center}.nfc-card>p{color:rgba(248,248,252,.72);text-align:center}.nfc-action-copy,.nfc-deals{width:100%;display:grid;gap:10px;padding:15px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.035);box-sizing:border-box}.nfc-action-copy strong,.nfc-deals>strong{font-size:16px}.nfc-action-copy p,.nfc-deals p,.nfc-deals small{color:rgba(248,248,252,.7);line-height:1.45}.nfc-deals label{display:grid;gap:6px;color:rgba(248,248,252,.72);font-size:12px;font-weight:850}.nfc-deals select{min-height:48px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:12px;color:#fff;background:#17181d;font:inherit}.nfc-deals article{display:grid;gap:6px}.nfc-deals article>span{color:#8deeff;font-size:10px;font-weight:950;letter-spacing:.13em;text-transform:uppercase}.nfc-deals h2{font-size:22px}.nfc-status{width:100%;padding:10px 12px;box-sizing:border-box;border:1px solid rgba(126,234,255,.2);border-radius:13px;color:#d9f9ff!important;background:rgba(53,216,255,.06);font-size:12px;line-height:1.4}.nfc-card[data-phase="error"] .nfc-status,.nfc-error{border-color:rgba(255,157,174,.28);color:#ffd5dd!important;background:rgba(255,99,132,.07)}.nfc-error{width:100%;padding:10px 12px;box-sizing:border-box;border:1px solid rgba(255,157,174,.28);border-radius:13px;font-size:12px;line-height:1.4}.nfc-primary,.nfc-secondary{width:100%;min-height:52px;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.28);border-radius:999px;color:#fff;background:linear-gradient(135deg,rgba(76,35,176,.96),rgba(24,94,126,.96));font:inherit;font-weight:950;text-decoration:none;cursor:pointer}.nfc-primary:disabled{opacity:.7;cursor:wait}.nfc-secondary{border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.045)}.nfc-security{width:min(410px,calc(100vw - 44px));margin:0 auto;color:rgba(248,248,252,.4);font-size:11px;line-height:1.45;text-align:center}
       `}</style>
     </main>
   );

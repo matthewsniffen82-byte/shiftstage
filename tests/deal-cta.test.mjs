@@ -65,13 +65,14 @@ test("venue, dancer, and TV cards label active and inactive NFC actions as Club 
   assert.doesNotMatch(liveApp, /actionButtonLabel\("qr", "NFC(?: Deal)?"\)|home-tv-feed-deal-count">NFC/);
 });
 
-test("customers save an exact offer and dancer token locally until the physical cashier tap", () => {
-  assert.match(dealCard, /mydancrPendingNfcDealV1/);
+test("customers explicitly select an exact offer and dancer token until the physical cashier tap", () => {
+  assert.match(dealCard, /mydancrPendingNfcDealV2/);
   assert.match(dealCard, /dealId: activeDeal\.id/);
   assert.match(dealCard, /sourceType/);
   assert.match(dealCard, /dancerId: sourceType === "dancer_profile"/);
   assert.match(dealCard, /attributionTokens\?\.\[activeDeal\.id\]/);
-  assert.match(dealCard, /Tap the MyDancr NFC sticker at the cashier to redeem/);
+  assert.match(dealCard, /Preview only—select this deal before tapping the cashier NFC sticker/);
+  assert.match(dealCard, /setIntentState\("ready"\)/);
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
 });
 
@@ -84,7 +85,7 @@ test("multiple live offers stay selectable and bottle service keeps its real boo
 });
 
 test("the canonical live shell uses cashier NFC instead of generating customer QR images", () => {
-  assert.match(liveApp, /mydancrPendingNfcDealV1/);
+  assert.match(liveApp, /mydancrPendingNfcDealV2/);
   assert.match(liveApp, /Cashier NFC redemption/);
   assert.match(liveApp, /tap the cashier NFC sticker at the club/i);
   assert.doesNotMatch(liveApp, /fetch\("\/api\/deals\/redemptions",\s*\{\s*method:\s*"POST"/);
