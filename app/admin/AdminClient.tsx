@@ -3247,9 +3247,8 @@ function AdminStyles() {
         .admin-dashboard-loading-metrics { grid-template-columns: 1fr; min-height: 174px; }
         .admin-dashboard-loading-metrics span { border-top: 1px solid var(--mydancr-dashboard-border); }
         .admin-dashboard-loading-metrics span:first-child { border-top: 0; }
-        .admin-workspace-nav { top: max(4px, env(safe-area-inset-top)); grid-template-columns: repeat(6, minmax(84px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x mandatory; }
-        .admin-workspace-nav::-webkit-scrollbar { display: none; }
-        .admin-workspace-nav button { min-height: 42px; padding: 0 6px; font-size: 12px; scroll-snap-align: start; }
+        .admin-workspace-nav { top: max(4px, env(safe-area-inset-top)); grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+        .admin-workspace-nav button { min-height: 44px; padding: 0 6px; font-size: 12px; }
         .admin-panel, .approval-row, .submission-detail { padding: 12px; }
       }
     `}</style>

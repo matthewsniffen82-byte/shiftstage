@@ -60,7 +60,7 @@ const ADMIN_THREAD_SELECT = `
   last_message_at,
   created_at,
   updated_at,
-  app_users(display_name, email, role),
+  app_users!support_threads_user_id_fkey(display_name, email, role),
   support_messages(id, thread_id, sender_id, sender_role, sender_kind, body, read_at, created_at)
 `;
 
