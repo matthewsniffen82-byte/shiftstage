@@ -4204,13 +4204,38 @@ body.dancr-button-system .home-tv-feed-schedule.is-upcoming {
  * must never change the control's silhouette. */
 body.dancr-button-system .home-tv-feed-deal-action.is-available {
   border-color: var(--dancr-color-success-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: color-mix(
+  color: color-mix(
     in srgb,
-    var(--dancr-color-success) 18%,
-    var(--dancr-color-surface-raised)
+    var(--dancr-color-success) 52%,
+    var(--dancr-color-text-primary)
   ) !important;
-  box-shadow: 0 0 10px var(--dancr-color-success-soft) !important;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--dancr-color-success) 30%, transparent),
+      transparent 58%
+    ),
+    color-mix(
+      in srgb,
+      var(--dancr-color-success) 18%,
+      var(--dancr-color-surface-raised)
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 var(--dancr-color-white-medium),
+    0 0 18px color-mix(in srgb, var(--dancr-color-success) 30%, transparent),
+    0 9px 20px var(--dancr-color-black-medium) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system .home-tv-feed-deal-action.is-available .action-icon {
+  color: color-mix(
+    in srgb,
+    var(--dancr-color-success) 44%,
+    var(--dancr-color-text-primary)
+  ) !important;
+  filter: drop-shadow(
+    0 0 6px color-mix(in srgb, var(--dancr-color-success) 72%, transparent)
+  );
 }
 
 body.dancr-button-system .home-tv-feed-deal-action.is-unavailable,

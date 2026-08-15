@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [buttonCss, layoutSource, liveSource, dealCardSource] = await Promise.all([
+const [buttonCss, aestheticCss, layoutSource, liveSource, dealCardSource] = await Promise.all([
   readFile(new URL("../public/dancr-button-system.v1.css", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
@@ -103,6 +104,10 @@ test("every active NFC Club Deal control uses the venue-card glow", () => {
   assert.match(
     dealCardSource,
     /className="club-deal-sticky club-deal-active-action"[\s\S]*?data-club-deal-state="available"/,
+  );
+  assert.match(
+    aestheticCss,
+    /\.home-tv-feed-deal-action\.is-available \{[\s\S]*?0 0 18px color-mix\(in srgb, var\(--dancr-color-success\) 30%, transparent\)[\s\S]*?\.home-tv-feed-deal-action\.is-available \.action-icon \{[\s\S]*?0 0 6px color-mix\(in srgb, var\(--dancr-color-success\) 72%, transparent\)/,
   );
 });
 
