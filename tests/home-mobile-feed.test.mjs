@@ -527,7 +527,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Club Deal unavailable"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Deals"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Club Deal unavailable"[\s\S]*?actionButtonLabel\("qr", "Deals"\)/,
   );
   const venueQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
@@ -545,7 +545,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "View Club"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionIconMarkup\("venue"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionIconMarkup\("share"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
   );
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
   assert.match(

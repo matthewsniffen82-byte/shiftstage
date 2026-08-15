@@ -130,7 +130,7 @@ test("TV cards retain a neutral NFC placeholder until a verified live Club Deal 
   assert.match(actionsFactory, /deal\.dataset\.cardActionSlot = "qr"/);
   assert.match(actionsFactory, /deal\.dataset\.cardQrLabel = dealState\.label[\s\S]*?deal\.dataset\.cardQrMessage = dealState\.detail/);
   assert.match(actionsFactory, /aria-disabled", "true"[\s\S]*?aria-expanded", "false"/);
-  assert.match(actionsFactory, /home-tv-feed-deal-count">Club Deals/);
+  assert.match(actionsFactory, /home-tv-feed-deal-count">Deals/);
   assert.doesNotMatch(actionsFactory, /home-tv-feed-deal-count">NFC/);
   assert.match(homeSource, /\.home-tv-feed-deal-action\.is-unavailable,[\s\S]*?background: rgba\(18,15,28,\.72\)[\s\S]*?cursor: pointer;/);
   assert.match(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>/);
@@ -154,7 +154,7 @@ test("TV Club Deal states keep one fixed rounded-square shape", () => {
   assert.match(dealShell, /height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;/);
   assert.match(dealShell, /padding: 5px 3px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?overflow: hidden !important;/);
   assert.match(dealLabel, /position: static;[\s\S]*?width: 100%;[\s\S]*?background: transparent;/);
-  assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Club Deals/g) || []).length, 2);
+  assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Deals/g) || []).length, 2);
 });
 
 test("TV Club Deal branding cannot change the shell between active and inactive states", () => {

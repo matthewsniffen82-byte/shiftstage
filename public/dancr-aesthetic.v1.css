@@ -5929,6 +5929,193 @@ html:is(
   mix-blend-mode: normal !important;
 }
 
+/* Venue cards use the same compact glass action rail as MyDancr TV. Familiar
+ * actions remain icon-only; the custom NFC action keeps one short Deals label.
+ * This block intentionally excludes every floating and bottom-navigation rule. */
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail {
+  right: 12px !important;
+  width: 52px !important;
+  gap: 8px !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail
+  .feed-card-action:not(.home-venue-discovery-rail-qr) {
+  box-sizing: border-box !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  display: grid !important;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr) !important;
+  place-items: center !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 999px !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: rgba(5, 5, 10, 0.58) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28) !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail
+  .feed-card-action:not(.home-venue-discovery-rail-qr)
+  > span:not(.action-icon) {
+  display: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail .action-icon {
+  width: 21px !important;
+  height: 21px !important;
+  flex: 0 0 21px !important;
+  color: currentColor !important;
+  filter: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail
+  .feed-card-action:not(.home-venue-discovery-rail-qr):hover {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(12, 12, 19, 0.74) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail
+  [data-venue-follow]:is(.is-active, [aria-pressed="true"]) {
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 18%,
+    rgba(5, 5, 10, 0.72)
+  ) !important;
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.3),
+    0 0 16px color-mix(in srgb, var(--dancr-color-brand-primary) 18%, transparent) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail .home-venue-discovery-rail-qr {
+  box-sizing: border-box !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  display: grid !important;
+  grid-template-rows: 21px 10px !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: 3px !important;
+  padding: 5px 3px !important;
+  overflow: hidden !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 16px !important;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail .home-venue-discovery-rail-qr
+  > span:not(.action-icon) {
+  position: static !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 10px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  color: currentColor !important;
+  background: transparent !important;
+  font-size: 8px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail .home-venue-discovery-rail-qr.is-unavailable,
+body.dancr-button-system .home-tv-feed-deal-action.is-unavailable,
+body.dancr-button-system .home-tv-feed-deal-action.is-unavailable:hover,
+body.dancr-button-system .home-tv-feed-deal-action.is-unavailable:focus-visible {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(248, 250, 252, 0.78) !important;
+  background: rgba(5, 5, 10, 0.58) !important;
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Active cashier NFC availability keeps one identical emerald signal on TV
+ * and venue cards after the neutral rail treatment above. */
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail .home-venue-discovery-rail-qr.is-available,
+body.dancr-button-system .home-tv-feed-deal-action.is-available {
+  border-color: var(--dancr-color-success-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background:
+    linear-gradient(180deg, var(--dancr-color-white-medium), transparent 48%),
+    radial-gradient(circle at 50% -20%, var(--dancr-color-success-medium), transparent 58%),
+    linear-gradient(
+      135deg,
+      var(--dancr-color-success),
+      color-mix(in srgb, var(--dancr-color-success) 58%, var(--dancr-color-background))
+    ) !important;
+  box-shadow:
+    0 8px 18px var(--dancr-color-black-soft),
+    0 0 20px var(--dancr-color-success-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail .feed-card-action:focus-visible {
+  outline: 0 !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail .home-venue-discovery-rail-qr.is-available:focus-visible,
+body.dancr-button-system .home-tv-feed-deal-action.is-available:focus-visible {
+  outline: 2px solid var(--dancr-color-success) !important;
+  outline-offset: 3px !important;
+  box-shadow:
+    0 8px 18px var(--dancr-color-black-soft),
+    0 0 20px var(--dancr-color-success-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+}
+
 /* Compact venue travel actions keep both boxes identical while centering each
  * icon and label as one visual group. This refinement is scoped away from every
  * persistent navigation control. */

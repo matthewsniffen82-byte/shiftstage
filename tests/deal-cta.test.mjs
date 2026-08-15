@@ -53,12 +53,12 @@ test("venue pages, venue cards, dancer profiles, and TV expose real active Club 
   assert.match(discoveryRoute, /activeDeals/);
 });
 
-test("venue, dancer, and TV cards label active and inactive NFC actions as Club Deals", () => {
-  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/);
+test("venue, dancer, and TV cards label active and inactive NFC actions clearly", () => {
+  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Deals"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?actionButtonLabel\("qr", "Deals"\)/);
   assert.match(liveApp, /function homeDancerGridQrMarkup\(profile\)[\s\S]*?data-card-qr-label[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/);
   assert.match(liveApp, /function homeTvFeedDealState\(item\)[\s\S]*?key: "no-active-offer"[\s\S]*?key: "available-when-working"[\s\S]*?key: "not-available-now"/);
   assert.match(liveApp, /deal\.dataset\.cardQrLabel = dealState\.label[\s\S]*?deal\.dataset\.cardQrMessage = dealState\.detail/);
-  assert.match(liveApp, /home-tv-feed-deal-count">Club Deals/);
+  assert.match(liveApp, /home-tv-feed-deal-count">Deals/);
   assert.match(tvClient, /<TvClubDealUnavailable video=\{video\} \/>/);
   assert.match(tvClient, /<small>Club Deals<\/small>/);
   assert.match(dealCard, /<strong>Club Deals<\/strong>/);

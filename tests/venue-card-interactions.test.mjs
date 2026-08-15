@@ -48,7 +48,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   );
   assert.match(
     venueSwipeRenderer,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "View Club"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionIconMarkup\("venue"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionIconMarkup\("share"\)[\s\S]*?data-venue-follow/,
   );
   assert.match(
     venueSwipeRenderer,
@@ -63,7 +63,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-card-qr-label="Club Deal unavailable"/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Deals"\)[\s\S]*?data-card-qr-label="Club Deal unavailable"/,
   );
   const venueSwipeQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
