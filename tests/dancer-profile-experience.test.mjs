@@ -198,6 +198,10 @@ test("inline profile TV has complete play, sound, progress, and duration control
   assert.match(profileCarousel, /formatDuration\(inlineCurrentTime\)/);
   assert.match(profilePage, /\.profile-media-video-controls \{ position: absolute;/);
   assert.match(profilePage, /\.profile-media-video-controls\.is-visible \{ opacity: 1; pointer-events: auto;/);
+  assert.match(profilePage, /grid-template-columns: 36px minmax\(88px, 1fr\) auto 36px 36px;/);
+  assert.match(profilePage, /\.profile-media-video-controls input\[type="range"\][\s\S]*?height: 16px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(profilePage, /\.profile-media-video-controls output \{ min-width: 64px;[\s\S]*?font-size: 10px;[\s\S]*?font-variant-numeric: tabular-nums;/);
+  assert.match(profilePage, /\.profile-media-video-controls button \{ width: 36px;[\s\S]*?height: 36px;/);
   assert.match(profilePage, /\.profile-media-feature\.is-video \{ aspect-ratio: 9 \/ 16;/);
 });
 
