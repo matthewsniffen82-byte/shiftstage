@@ -256,7 +256,7 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
   assert.match(
     homeSource,
-    /phone grid keeps the same near-seamless gutter[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(140px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 2px !important;[\s\S]*?scroll-padding-bottom: calc\(140px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /phone grid keeps the same near-seamless gutter[\s\S]*?trailing[\s\S]*?clearance only lifts the final row above the fixed discovery dock[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 2px !important;[\s\S]*?scroll-padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     homeSource,
@@ -269,6 +269,10 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   assert.match(
     homeSource,
     /#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-venue \{[\s\S]*?gap: 2px;[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-venue > \.venue-dot \{[\s\S]*?width: 10px;[\s\S]*?flex: 0 0 10px;[\s\S]*?margin-right: 0;/,
+  );
+  assert.match(
+    homeSource,
+    /Compact dancer directories end with their final row[\s\S]*?\.discovery-sticky-head \+ #results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?min-height: 0 !important;/,
   );
 });
 

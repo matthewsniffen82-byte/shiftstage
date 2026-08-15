@@ -34755,15 +34755,16 @@
         }
 
         /* The phone grid keeps the same near-seamless gutter while retaining
-           the outer expansion and scrollbar-safe right rail. */
+           the outer expansion and scrollbar-safe right rail. Its trailing
+           clearance only lifts the final row above the fixed discovery dock. */
         @media (max-width: 420px) {
           #results.home-dancer-grid.home-dancer-three-column {
             width: calc(100% + 16px) !important;
             margin-inline: -8px !important;
             padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
-            padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+            padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
             gap: 2px !important;
-            scroll-padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+            scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
           }
           #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
             padding: 20px 5px 5px;
@@ -36582,6 +36583,12 @@
           .discovery-sticky-head + #results {
             min-height: calc(100svh - 112px) !important;
             align-content: start;
+          }
+
+          /* Compact dancer directories end with their final row. Full-height
+             discovery feeds keep the viewport floor above. */
+          .discovery-sticky-head + #results.home-dancer-grid.home-dancer-three-column {
+            min-height: 0 !important;
           }
         }
 
