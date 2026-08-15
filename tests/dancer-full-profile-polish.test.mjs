@@ -233,11 +233,14 @@ test("home profile TV previews expose inline playback, sound, progress, and dura
   assert.match(liveApp, /formatProfileTvDuration\(currentTime\)/);
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-modal-video-controls \{[\s\S]*?grid-template-columns: 36px 36px minmax\(64px, 1fr\) auto;[\s\S]*?border-radius: 999px;[\s\S]*?opacity: 0;[\s\S]*?pointer-events: none;/,
+    /#profileBackdrop \.profile-modal-video-controls \{[\s\S]*?right: 10px;[\s\S]*?grid-template-columns: 36px 36px minmax\(88px, 1fr\) 64px 36px;[\s\S]*?border-radius: 999px;[\s\S]*?opacity: 0;[\s\S]*?pointer-events: none;/,
   );
   assert.match(liveApp, /#profileBackdrop \.profile-modal-video-controls\.is-visible,[\s\S]*?opacity: 1;[\s\S]*?pointer-events: auto;/);
   assert.match(liveApp, /#profileBackdrop \.profile-modal-video-controls button \{[\s\S]*?border-radius: 50% !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(liveApp, /#profileBackdrop \.profile-modal-media-expand \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background: rgba\(12,12,20,\.72\) !important;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-modal-video-controls input\[type="range"\] \{[\s\S]*?height: 16px !important;[\s\S]*?border: 0 !important;[\s\S]*?background-color: transparent !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-modal-video-controls output \{[\s\S]*?min-width: 64px;[\s\S]*?font-size: 10px;[\s\S]*?font-variant-numeric: tabular-nums;/);
+  assert.match(liveApp, /id="modalVideoTime"[\s\S]*?class="profile-modal-media-expand" id="modalMediaExpand"/);
   assert.match(liveApp, /--profile-video-progress[\s\S]*?::-webkit-slider-runnable-track[\s\S]*?height: 3px;/);
   assert.match(liveApp, /function setModalVideoControlsVisible\(visible, options = \{\}\)[\s\S]*?window\.setTimeout[\s\S]*?1800/);
   assert.match(liveApp, /modalImage\?\.addEventListener\("click"[\s\S]*?modalImage\.dataset\.activeMediaType === "video"[\s\S]*?setModalVideoControlsVisible/);
