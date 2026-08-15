@@ -243,7 +243,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     aesthetic,
-    /\.venue-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?top: 12px !important;[\s\S]*?right: 12px !important;/,
+    /\.venue-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?top: 12px !important;[\s\S]*?right: 8px !important;/,
   );
   assert.match(
     liveApp,
