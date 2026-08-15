@@ -1229,7 +1229,7 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: stretch;
-      gap: 10px;
+      gap: 8px;
     }
 
     .venue-primary-actions > .venue-address-directions,
@@ -1241,27 +1241,26 @@
       min-height: 48px;
       max-height: 48px;
       margin-top: 0;
-      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 38px;
+      gap: 8px;
+      padding: 0 12px;
       border-radius: 15px;
       font-size: 12px;
     }
 
     .venue-primary-actions .action-icon {
-      position: absolute;
-      top: 50%;
-      left: 14px;
+      position: static;
       width: 20px;
       height: 20px;
       flex: 0 0 20px;
-      transform: translateY(-50%);
+      transform: none;
     }
 
     .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber) > span:not(.action-icon) {
-      width: 100%;
+      width: auto;
+      flex: 0 1 auto;
       text-align: center;
     }
 
@@ -32798,6 +32797,7 @@
           display: grid;
           grid-template-columns: minmax(0, 1fr);
           align-items: stretch;
+          gap: 8px;
         }
         .home-venue-discovery-context-actions .feed-card-action,
         .home-venue-discovery-context-actions .home-discovery-feed-directions {
@@ -32807,25 +32807,24 @@
           height: 52px;
           min-height: 52px;
           max-height: 52px;
-          position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0;
-          padding: 0 38px;
+          gap: 8px;
+          padding: 0 12px;
           border-radius: 15px;
           font-size: 11px;
         }
         .home-venue-discovery-context-actions .action-icon {
-          position: absolute;
-          top: 50%;
-          left: 14px;
+          position: static;
           width: 20px;
           height: 20px;
-          transform: translateY(-50%);
+          flex: 0 0 20px;
+          transform: none;
         }
         .home-venue-discovery-context-actions > :is(.feed-card-action, .home-discovery-feed-directions) > span:not(.action-icon) {
-          width: 100%;
+          width: auto;
+          flex: 0 1 auto;
           text-align: center;
           line-height: 1;
           white-space: nowrap;
