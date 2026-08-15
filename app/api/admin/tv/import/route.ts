@@ -223,7 +223,7 @@ function parseVideos(value: unknown): ImportVideoInput[] {
       throw new Error("Video files must be 75 MB or smaller.");
     }
     if (!Number.isFinite(video.durationSeconds) || video.durationSeconds < 1 || video.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
-      throw new Error("Videos must be between 1 and 30 seconds.");
+    throw new Error("Videos must be between 1 and 30 seconds.");
     }
     if (!Number.isSafeInteger(video.width) || !Number.isSafeInteger(video.height) || video.width < 240 || video.height < video.width || video.height > 7680) {
       throw new Error("Upload a vertical or square video at least 240 pixels wide.");

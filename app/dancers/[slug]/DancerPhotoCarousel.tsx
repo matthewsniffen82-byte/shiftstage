@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
+  CSSProperties,
   PointerEvent as ReactPointerEvent,
   WheelEvent as ReactWheelEvent,
 } from "react";
@@ -51,6 +52,7 @@ type SwipeGesture = {
 
 const SWIPE_DISTANCE_PX = 44;
 const TRACKPAD_LOCK_MS = 320;
+const INLINE_CONTROLS_HIDE_DELAY_MS = 1_500;
 
 export function DancerPhotoCarousel({
   photos,
@@ -80,6 +82,8 @@ export function DancerPhotoCarousel({
   const [inlinePlaying, setInlinePlaying] = useState(false);
   const [inlineCurrentTime, setInlineCurrentTime] = useState(0);
   const [inlineDuration, setInlineDuration] = useState(0);
+  const [inlineControlsVisible, setInlineControlsVisible] = useState(true);
+  const [inlineControlsActivity, setInlineControlsActivity] = useState(0);
   const [shareStatus, setShareStatus] = useState("");
   const inlineGesture = useRef<SwipeGesture>(emptyGesture());
   const gesture = useRef<SwipeGesture>(emptyGesture());
@@ -98,6 +102,10 @@ export function DancerPhotoCarousel({
   const selectedItem = activeItems[selectedIndex];
   const selectedVideoDuration =
     selectedItem?.kind === "video" ? selectedItem.durationSeconds : 0;
+  const inlineProgressDuration = inlineDuration || selectedVideoDuration;
+  const inlineProgressPercent = inlineProgressDuration > 0
+    ? Math.min(100, Math.max(0, (inlineCurrentTime / inlineProgressDuration) * 100))
+    : 0;
   const viewerItems = videoMedia;
   const viewerIndex = viewer
     ? Math.min(Math.max(viewer.index, 0), Math.max(0, viewerItems.length - 1))
@@ -141,7 +149,20 @@ export function DancerPhotoCarousel({
     setInlinePlaying(false);
     setInlineCurrentTime(0);
     setInlineDuration(selectedVideoDuration);
+    setInlineControlsVisible(true);
   }, [selectedItem?.id, selectedItem?.kind, selectedVideoDuration]);
+
+  useEffect(() => {
+    if (selectedItem?.kind !== "video" || !inlinePlaying) {
+      setInlineControlsVisible(true);
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setInlineControlsVisible(false),
+      INLINE_CONTROLS_HIDE_DELAY_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [inlineControlsActivity, inlinePlaying, selectedItem?.id, selectedItem?.kind]);
 
   useEffect(() => {
     const video = inlineVideo.current;
@@ -250,6 +271,7 @@ export function DancerPhotoCarousel({
   function toggleInlinePlayback() {
     const video = inlineVideo.current;
     if (!video) return;
+    revealInlineControls();
     if (video.paused) {
       inlineUserPaused.current = false;
       void video.play().catch(() => setInlinePlaying(false));
@@ -262,6 +284,7 @@ export function DancerPhotoCarousel({
   function toggleInlineSound() {
     const video = inlineVideo.current;
     if (!video) return;
+    revealInlineControls();
     const nextMuted = !video.muted;
     video.muted = nextMuted;
     setInlineMuted(nextMuted);
@@ -270,12 +293,18 @@ export function DancerPhotoCarousel({
   function seekInlineVideo(value: number) {
     const video = inlineVideo.current;
     if (!video || !Number.isFinite(value)) return;
+    revealInlineControls();
     const duration = Number.isFinite(video.duration) && video.duration > 0
       ? video.duration
       : inlineDuration;
     const nextTime = Math.min(Math.max(0, value), Math.max(0, duration));
     video.currentTime = nextTime;
     setInlineCurrentTime(nextTime);
+  }
+
+  function revealInlineControls() {
+    setInlineControlsVisible(true);
+    setInlineControlsActivity((activity) => activity + 1);
   }
 
   function showRelativeInlineItem(direction: -1 | 1) {
@@ -298,6 +327,7 @@ export function DancerPhotoCarousel({
     ) {
       return;
     }
+    if (selectedItem?.kind === "video") revealInlineControls();
     inlineGesture.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -480,7 +510,7 @@ export function DancerPhotoCarousel({
       {selectedItem ? (
         <div
           aria-label={`${stageName} ${selectedItem.kind} ${selectedIndex + 1} of ${activeItems.length}. ${selectedItem.kind === "video" ? "Open full screen or swipe to change media." : "Swipe to change photos."}`}
-          className={`profile-media-feature is-${selectedItem.kind}`}
+          className={`profile-media-feature is-${selectedItem.kind}${selectedItem.kind === "video" && (inlineControlsVisible || !inlinePlaying) ? " is-controls-visible" : ""}`}
           data-profile-inline-media-swipe-surface
           onClick={(event) => {
             if (
@@ -488,14 +518,16 @@ export function DancerPhotoCarousel({
                 "button, input, [data-profile-media-control]",
               )
             ) return;
-            if (selectedItem.kind === "video") {
-              openViewer(selectedIndex);
-            }
+            if (selectedItem.kind === "video") revealInlineControls();
           }}
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
               event.preventDefault();
               showRelativeInlineItem(event.key === "ArrowRight" ? 1 : -1);
+            }
+            if (selectedItem.kind === "video" && (event.key === " " || event.key === "Enter")) {
+              event.preventDefault();
+              toggleInlinePlayback();
             }
           }}
           onPointerCancel={resetInlineGesture}
@@ -537,7 +569,10 @@ export function DancerPhotoCarousel({
                 }
               }}
               onPause={() => setInlinePlaying(false)}
-              onPlay={() => setInlinePlaying(true)}
+              onPlay={() => {
+                setInlinePlaying(true);
+                revealInlineControls();
+              }}
               onTimeUpdate={(event) => setInlineCurrentTime(event.currentTarget.currentTime)}
               playsInline
               preload="auto"
@@ -550,9 +585,11 @@ export function DancerPhotoCarousel({
           </span>
           {selectedItem.kind === "video" ? (
             <div
-              className="profile-media-video-controls"
+              className={`profile-media-video-controls${inlineControlsVisible || !inlinePlaying ? " is-visible" : ""}`}
               data-profile-media-control
               onClick={(event) => event.stopPropagation()}
+              onFocusCapture={revealInlineControls}
+              onPointerEnter={revealInlineControls}
               onPointerDown={(event) => event.stopPropagation()}
             >
               <button
@@ -563,6 +600,22 @@ export function DancerPhotoCarousel({
               >
                 <PlaybackStateIcon paused={!inlinePlaying} />
               </button>
+              <input
+                aria-label="TV video progress"
+                aria-valuetext={`${formatDuration(inlineCurrentTime)} of ${formatDuration(inlineDuration || selectedItem.durationSeconds)}`}
+                max={Math.max(0.1, inlineDuration || selectedItem.durationSeconds)}
+                min="0"
+                onChange={(event) => seekInlineVideo(Number(event.currentTarget.value))}
+                step="0.1"
+                style={{
+                  "--profile-inline-video-progress": `${inlineProgressPercent}%`,
+                } as CSSProperties}
+                type="range"
+                value={Math.min(inlineCurrentTime, Math.max(0.1, inlineDuration || selectedItem.durationSeconds))}
+              />
+              <output>
+                {formatDuration(inlineCurrentTime)} / {formatDuration(inlineDuration || selectedItem.durationSeconds)}
+              </output>
               <button
                 aria-label={inlineMuted ? "Turn TV video sound on" : "Turn TV video sound off"}
                 className="profile-media-sound-control"
@@ -571,36 +624,22 @@ export function DancerPhotoCarousel({
               >
                 <SoundStateIcon muted={inlineMuted} />
               </button>
-              <input
-                aria-label="TV video progress"
-                aria-valuetext={`${formatDuration(inlineCurrentTime)} of ${formatDuration(inlineDuration || selectedItem.durationSeconds)}`}
-                max={Math.max(0.1, inlineDuration || selectedItem.durationSeconds)}
-                min="0"
-                onChange={(event) => seekInlineVideo(Number(event.currentTarget.value))}
-                step="0.1"
-                type="range"
-                value={Math.min(inlineCurrentTime, Math.max(0.1, inlineDuration || selectedItem.durationSeconds))}
-              />
-              <output>
-                {formatDuration(inlineCurrentTime)} / {formatDuration(inlineDuration || selectedItem.durationSeconds)}
-              </output>
+              <button
+                aria-label={`Open ${stageName} TV video ${selectedIndex + 1} full screen`}
+                className="profile-media-fullscreen-control"
+                onClick={() => openViewer(selectedIndex)}
+                type="button"
+              >
+                <FullscreenIcon />
+              </button>
             </div>
-          ) : null}
-          {selectedItem.kind === "video" ? (
-            <button
-              aria-label={`Open ${stageName} TV video ${selectedIndex + 1} full screen`}
-              className="profile-media-feature-expand"
-              onClick={() => openViewer(selectedIndex)}
-              type="button"
-            >
-              View full screen
-            </button>
           ) : null}
           <button
             aria-label={`Previous ${activeTab === "photo" ? "photo" : "TV video"}`}
             className="profile-media-feature-previous"
             disabled={selectedIndex <= 0}
             onClick={() => showRelativeInlineItem(-1)}
+            tabIndex={selectedItem.kind === "video" && !inlineControlsVisible && inlinePlaying ? -1 : 0}
             type="button"
           >
             ‹
@@ -610,6 +649,7 @@ export function DancerPhotoCarousel({
             className="profile-media-feature-next"
             disabled={selectedIndex >= activeItems.length - 1}
             onClick={() => showRelativeInlineItem(1)}
+            tabIndex={selectedItem.kind === "video" && !inlineControlsVisible && inlinePlaying ? -1 : 0}
             type="button"
           >
             ›
@@ -790,6 +830,14 @@ function SoundStateIcon({ muted }: { muted: boolean }) {
           <path d="M18.5 7a7.5 7.5 0 0 1 0 10" />
         </>
       )}
+    </svg>
+  );
+}
+
+function FullscreenIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" />
     </svg>
   );
 }

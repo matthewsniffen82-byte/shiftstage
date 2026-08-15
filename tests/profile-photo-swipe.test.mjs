@@ -85,23 +85,20 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
   assert.match(publicPhotoCarousel, /activeTab === "photo" \? photoMedia : videoMedia/);
   assert.match(
     publicPhotoCarousel,
-    /className=\{`profile-media-feature is-\$\{selectedItem\.kind\}`\}[\s\S]*?data-profile-inline-media-swipe-surface/,
+    /className=\{`profile-media-feature is-\$\{selectedItem\.kind\}\$\{selectedItem\.kind === "video"[\s\S]*?data-profile-inline-media-swipe-surface/,
   );
   assert.match(publicPhotoCarousel, /data-dancer-media-tabs/);
   assert.match(
     publicPhotoCarousel,
     /onClick=\{\(\) => setActiveIndex\(index\)\}/,
   );
-  assert.match(
-    publicPhotoCarousel,
-    /if \(selectedItem\.kind === "video"\) \{\s*openViewer\(selectedIndex\);\s*\}/,
-  );
+  assert.match(publicPhotoCarousel, /if \(selectedItem\.kind === "video"\) revealInlineControls\(\)/);
   assert.doesNotMatch(publicPhotoCarousel, /openViewer\(selectedItem\.kind, selectedIndex\)/);
   assert.doesNotMatch(publicPhotoCarousel, /setViewer\(\{ kind: "photo", index \}\)/);
   assert.match(publicPhotoCarousel, /profile-media-feature-position/);
   assert.match(
     publicPhotoCarousel,
-    /selectedItem\.kind === "video" \? \([\s\S]*?profile-media-feature-expand[\s\S]*?openViewer\(selectedIndex\)/,
+    /selectedItem\.kind === "video" \? \([\s\S]*?profile-media-fullscreen-control[\s\S]*?openViewer\(selectedIndex\)/,
   );
   assert.doesNotMatch(
     publicPhotoCarousel,
@@ -119,11 +116,15 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
   );
   assert.match(
     publicProfilePage,
-    /\.profile-media-grid \{[^}]*display: flex;[^}]*overflow-x: auto;[^}]*scroll-snap-type: x proximity/,
+    /\.profile-media-grid \{[^}]*display: flex;[^}]*overflow-x: auto;[^}]*scroll-snap-type: x mandatory/,
   );
   assert.match(
     publicProfilePage,
     /\.profile-media-feature \{[^}]*aspect-ratio: 4 \/ 5;[^}]*touch-action: pan-y/,
+  );
+  assert.match(
+    publicProfilePage,
+    /\.profile-media-feature\.is-video \{[^}]*aspect-ratio: 9 \/ 16;/,
   );
   assert.match(
     publicProfilePage,

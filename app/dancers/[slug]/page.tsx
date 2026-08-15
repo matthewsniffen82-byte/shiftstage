@@ -484,33 +484,42 @@ function PublicProfileStyles() {
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 660px; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: default; isolation: isolate; touch-action: pan-y; }
       .profile-media-feature.is-photo { max-height: none; }
+      .profile-media-feature.is-video { aspect-ratio: 9 / 16; max-height: min(72dvh, 720px); }
       .profile-media-feature::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 28%; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(0,0,0,.7)); }
       .profile-media-feature > img, .profile-media-feature > video { width: 100%; height: 100%; display: block; background: #000; pointer-events: none; user-select: none; }
       .profile-media-feature > img { object-fit: contain; filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
       .profile-media-feature > video { object-fit: cover; }
       .profile-media-feature:focus-visible { border-color: #7eeaff; outline: 3px solid rgba(126,234,255,.2); outline-offset: 3px; }
-      .profile-media-video-controls { position: absolute; z-index: 4; left: 12px; right: 12px; bottom: 54px; display: grid; grid-template-columns: auto auto minmax(52px, 1fr) auto; align-items: center; gap: 7px; padding: 7px; border: 1px solid rgba(255,255,255,.14); border-radius: 13px; background: rgba(4,4,8,.74); box-shadow: 0 10px 28px rgba(0,0,0,.32); backdrop-filter: blur(12px); cursor: default; }
-      .profile-media-video-controls button { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0 9px; border: 1px solid rgba(126,234,255,.26); border-radius: 9px; color: #fff; background: rgba(126,234,255,.08); font-size: 10px; font-weight: 900; cursor: pointer; white-space: nowrap; }
-      .profile-media-video-controls .profile-media-playback-control, .profile-media-video-controls .profile-media-sound-control { width: 34px; min-width: 34px; max-width: 34px; padding: 0; }
+      .profile-media-video-controls { position: absolute; z-index: 4; left: 12px; right: 12px; bottom: 12px; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 34px 34px; align-items: center; gap: 5px; padding: 4px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; background: rgba(8,8,12,.72); box-shadow: 0 8px 22px rgba(0,0,0,.3); backdrop-filter: blur(14px) saturate(110%); cursor: default; opacity: 0; pointer-events: none; transform: translateY(5px); transition: opacity 160ms ease, transform 160ms ease; }
+      .profile-media-video-controls.is-visible { opacity: 1; pointer-events: auto; transform: none; }
+      .profile-media-video-controls button { width: 34px; min-width: 34px; max-width: 34px; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; color: #f5f4f7; background: rgba(255,255,255,.075); box-shadow: none; font-size: 10px; font-weight: 900; cursor: pointer; white-space: nowrap; }
+      .profile-media-video-controls .profile-media-playback-control, .profile-media-video-controls .profile-media-sound-control, .profile-media-video-controls .profile-media-fullscreen-control { width: 34px; min-width: 34px; max-width: 34px; padding: 0; }
       .profile-media-video-controls button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .profile-media-video-controls button svg .is-fill { fill: currentColor; stroke: none; }
       body.dancr-button-system .public-profile-shell .profile-media-video-controls .profile-media-playback-control,
       body.dancr-button-system .public-profile-shell .profile-media-video-controls .profile-media-playback-control:is(:hover, :focus-visible, :active) { border-color: rgba(255,255,255,.18) !important; color: #f5f4f7 !important; background: rgba(25,25,30,.9) !important; background-image: none !important; box-shadow: 0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.07) !important; filter: none !important; text-shadow: none !important; }
       body.dancr-button-system .public-profile-shell .profile-media-video-controls .profile-media-playback-control:focus-visible { outline: 2px solid rgba(255,255,255,.58) !important; outline-offset: 2px; }
-      .profile-media-video-controls input { width: 100%; min-width: 48px; accent-color: #7eeaff; cursor: pointer; }
-      .profile-media-video-controls output { color: #d8d0e4; font-size: 9px; font-weight: 850; white-space: nowrap; }
-      .profile-media-feature-position, .profile-media-feature-expand { position: absolute; z-index: 2; display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #fff; background: rgba(4,4,8,.68); backdrop-filter: blur(12px); font-size: 10px; font-weight: 900; }
+      .profile-media-video-controls input { --profile-inline-video-progress: 0%; width: 100%; min-width: 44px; height: 18px; appearance: none; -webkit-appearance: none; border: 0; background: transparent; cursor: pointer; }
+      .profile-media-video-controls input::-webkit-slider-runnable-track { height: 3px; border-radius: 999px; background: linear-gradient(90deg, #7eeaff 0 var(--profile-inline-video-progress), rgba(255,255,255,.2) var(--profile-inline-video-progress) 100%); }
+      .profile-media-video-controls input::-moz-range-track { height: 3px; border-radius: 999px; background: rgba(255,255,255,.2); }
+      .profile-media-video-controls input::-moz-range-progress { height: 3px; border-radius: 999px; background: #7eeaff; }
+      .profile-media-video-controls input::-webkit-slider-thumb { width: 12px; height: 12px; margin-top: -4.5px; appearance: none; -webkit-appearance: none; border: 0; border-radius: 50%; background: #f8fafc; box-shadow: 0 2px 8px rgba(0,0,0,.48); }
+      .profile-media-video-controls input::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #f8fafc; box-shadow: 0 2px 8px rgba(0,0,0,.48); }
+      .profile-media-video-controls output { min-width: 58px; color: #d8d0e4; font-size: 8.5px; font-weight: 850; text-align: center; white-space: nowrap; }
+      .profile-media-feature-position { position: absolute; z-index: 2; display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #fff; background: rgba(4,4,8,.68); backdrop-filter: blur(12px); font-size: 10px; font-weight: 900; }
       .profile-media-feature-position { top: 12px; left: 12px; }
-      .profile-media-feature-expand { right: 12px; bottom: 12px; cursor: pointer; }
-      .profile-media-feature-previous, .profile-media-feature-next { position: absolute; z-index: 3; top: 50%; width: 42px; height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #fff; background: rgba(4,4,8,.52); font-size: 30px; transform: translateY(-50%); cursor: pointer; backdrop-filter: blur(9px); }
+      .profile-media-feature-previous, .profile-media-feature-next { position: absolute; z-index: 3; top: 50%; width: 32px; height: 42px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 999px; color: rgba(255,255,255,.78); background: rgba(4,4,8,.28); box-shadow: none; font-size: 22px; opacity: .54; transform: translateY(-50%); cursor: pointer; backdrop-filter: none; transition: opacity 160ms ease, background-color 160ms ease; }
       .profile-media-feature-previous { left: 10px; }
       .profile-media-feature-next { right: 10px; }
+      .profile-media-feature.is-video .profile-media-feature-previous, .profile-media-feature.is-video .profile-media-feature-next { opacity: 0; pointer-events: none; }
+      .profile-media-feature.is-video.is-controls-visible .profile-media-feature-previous:not(:disabled), .profile-media-feature.is-video.is-controls-visible .profile-media-feature-next:not(:disabled) { opacity: .5; pointer-events: auto; }
       .profile-media-feature-previous:disabled, .profile-media-feature-next:disabled { opacity: 0; pointer-events: none; }
-      .profile-media-grid { min-height: 76px; display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 6px; scroll-snap-type: x proximity; scrollbar-width: thin; touch-action: pan-x pan-y; }
-      .profile-media-grid-item { position: relative; width: 64px; min-width: 64px; aspect-ratio: 4 / 5; display: block; flex: 0 0 64px; padding: 0; overflow: hidden; scroll-snap-align: start; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; color: #fff; background: #0b0b10; cursor: pointer; }
+      .profile-media-grid { min-height: 76px; display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 6px; scroll-snap-type: x mandatory; scrollbar-width: thin; touch-action: pan-x pan-y; }
+      .profile-media-grid-item { position: relative; width: clamp(72px, 24vw, 104px); min-width: clamp(72px, 24vw, 104px); aspect-ratio: 4 / 5; display: block; flex: 0 0 clamp(72px, 24vw, 104px); padding: 0; overflow: hidden; scroll-snap-align: start; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; color: #fff; background: #0b0b10; cursor: pointer; }
+      .profile-media-grid-item.is-video { aspect-ratio: 9 / 16; }
       .profile-media-grid-item img, .profile-media-grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
       .profile-media-grid-item img { filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
-      .profile-media-grid-item.active { border-color: #7eeaff; box-shadow: 0 0 0 2px rgba(126,234,255,.16), 0 0 16px rgba(34,199,255,.12); }
+      .profile-media-grid-item.active { border-color: #7eeaff; box-shadow: inset 0 0 0 1px rgba(126,234,255,.34); }
       .profile-media-grid-item:focus-visible { z-index: 1; outline: 2px solid #7eeaff; outline-offset: 2px; }
       .profile-media-play { position: absolute; top: 50%; left: 50%; width: 30px; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 7px 22px rgba(0,0,0,.36); transform: translate(-50%, -50%); }
       .profile-media-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 9px solid #111; transform: translate(-50%, -50%); }
@@ -568,13 +577,16 @@ function PublicProfileStyles() {
         .deal-qr-frame { justify-items: center; }
         .deal-qr-frame img { width: 128px; }
         .profile-media-feature { max-height: min(64dvh, 540px); border-radius: 17px; }
-        .profile-media-video-controls { left: 9px; right: 9px; bottom: 52px; gap: 5px; padding: 6px; }
-        .profile-media-video-controls button { min-height: 32px; padding-inline: 7px; font-size: 9px; }
+        .profile-media-feature.is-video { max-height: min(68dvh, 620px); }
+        .profile-media-video-controls { left: 9px; right: 9px; bottom: 9px; grid-template-columns: 32px minmax(0, 1fr) auto 32px 32px; gap: 3px; padding: 4px; }
+        .profile-media-video-controls button { width: 32px; min-width: 32px; max-width: 32px; min-height: 32px; font-size: 9px; }
         .profile-media-video-controls output { font-size: 8px; }
-        .profile-media-feature-previous, .profile-media-feature-next { width: 38px; height: 48px; font-size: 28px; }
-        .profile-media-feature-expand { right: 10px; bottom: 10px; }
+        .profile-media-feature-previous, .profile-media-feature-next { width: 28px; height: 38px; font-size: 20px; }
         .profile-media-viewer-previous, .profile-media-viewer-next { width: 40px; height: 50px; font-size: 30px; }
         .shift-list { grid-template-columns: 1fr; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .profile-media-video-controls, .profile-media-feature-previous, .profile-media-feature-next { transition: none; }
       }
       @media (max-width: 340px) {
         .club-deal-card { grid-template-columns: 1fr; }

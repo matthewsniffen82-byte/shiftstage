@@ -3288,11 +3288,16 @@ body.dancr-button-system .public-profile-shell :is(.profile-media-position, .pro
   box-shadow: none !important;
 }
 
-body.dancr-button-system #profileBackdrop .gallery .thumb.active,
-body.dancr-button-system .public-profile-shell .profile-media-grid-item.active {
+body.dancr-button-system #profileBackdrop .gallery .thumb.active {
   border-color: var(--dancr-color-brand-primary) !important;
   outline-color: var(--dancr-color-brand-primary-medium) !important;
   box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+}
+
+body.dancr-button-system .public-profile-shell .profile-media-grid-item.active {
+  border-color: var(--dancr-color-info) !important;
+  outline-color: var(--dancr-color-info-medium) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-info-medium) !important;
 }
 
 body.dancr-button-system #profileBackdrop .gallery[data-media-tab="video"] .thumb.active {

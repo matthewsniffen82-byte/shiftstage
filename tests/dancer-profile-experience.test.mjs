@@ -179,17 +179,26 @@ test("profiles can be shared and close back to the referring site page", () => {
 });
 
 test("inline profile TV has complete play, sound, progress, and duration controls", () => {
+  assert.match(profileCarousel, /INLINE_CONTROLS_HIDE_DELAY_MS = 1_500/);
   assert.match(profileCarousel, /function toggleInlinePlayback\(\)/);
   assert.match(profileCarousel, /function toggleInlineSound\(\)/);
   assert.match(profileCarousel, /function seekInlineVideo\(value: number\)/);
+  assert.match(profileCarousel, /function revealInlineControls\(\)/);
+  assert.match(profileCarousel, /profile-media-video-controls\$\{inlineControlsVisible \|\| !inlinePlaying \? " is-visible" : ""\}/);
   assert.match(profileCarousel, /aria-label="TV video progress"/);
   assert.match(profileCarousel, /type="range"/);
+  assert.match(profileCarousel, /--profile-inline-video-progress/);
   assert.match(profileCarousel, /<PlaybackStateIcon paused=\{!inlinePlaying\} \/>/);
   assert.match(profileCarousel, /<SoundStateIcon muted=\{inlineMuted\} \/>/);
+  assert.match(profileCarousel, /className="profile-media-fullscreen-control"/);
+  assert.match(profileCarousel, /<FullscreenIcon \/>/);
   assert.doesNotMatch(profileCarousel, /\{inlinePlaying \? "Pause" : "Play"\}/);
   assert.doesNotMatch(profileCarousel, /\{inlineMuted \? "Sound on" : "Sound off"\}/);
+  assert.doesNotMatch(profileCarousel, />View full screen<\/button>/);
   assert.match(profileCarousel, /formatDuration\(inlineCurrentTime\)/);
   assert.match(profilePage, /\.profile-media-video-controls \{ position: absolute;/);
+  assert.match(profilePage, /\.profile-media-video-controls\.is-visible \{ opacity: 1; pointer-events: auto;/);
+  assert.match(profilePage, /\.profile-media-feature\.is-video \{ aspect-ratio: 9 \/ 16;/);
 });
 
 test("official social icons stay centered without publishing handles", () => {

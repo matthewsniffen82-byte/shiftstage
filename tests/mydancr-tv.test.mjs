@@ -6,6 +6,8 @@ const [
   migration,
   tenSecondMigration,
   thirtySecondMigration,
+  restoredTenSecondMigration,
+  restoredThirtySecondMigration,
   tvSource,
   publicRoute,
   publicCountRoute,
@@ -26,6 +28,8 @@ const [
   readFile(new URL("../supabase/migrations/202607270001_mydancr_tv.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202607270002_mydancr_tv_ten_second_limit.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608080001_mydancr_tv_thirty_second_feed_distribution.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608140003_restore_mydancr_tv_ten_second_limit.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608140004_restore_mydancr_tv_thirty_second_limit.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/tv/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/tv/count/route.ts", import.meta.url), "utf8"),
@@ -66,10 +70,16 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(tvSource, /\.lte\("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS\)/);
   assert.match(tvSource, /Only videos that are 30 seconds or shorter can be approved/);
   assert.match(dancerStudio, /1–30 seconds/);
-  assert.match(dancerStudio, /metadata\.duration > 30/);
+  assert.match(dancerStudio, /metadata\.duration > MAX_VIDEO_DURATION_SECONDS/);
   assert.match(tenSecondMigration, /where duration_seconds > 10[\s\S]*?status not in \('hidden', 'expired'\)/);
   assert.match(tenSecondMigration, /check \(duration_seconds between 1 and 10\)[\s\S]*?not valid/);
   assert.match(thirtySecondMigration, /check \(duration_seconds between 1 and 30\)[\s\S]*?not valid/);
+  assert.match(restoredTenSecondMigration, /published_at = null[\s\S]*?where duration_seconds > 10/);
+  assert.match(restoredTenSecondMigration, /check \(duration_seconds between 1 and 10\)[\s\S]*?not valid/);
+  assert.match(restoredTenSecondMigration, /status = 'approved'[\s\S]*?duration_seconds between 1 and 10/);
+  assert.match(restoredThirtySecondMigration, /moderation_decision = 'approved'[\s\S]*?duration_seconds > 10[\s\S]*?duration_seconds <= 30/);
+  assert.match(restoredThirtySecondMigration, /check \(duration_seconds between 1 and 30\)[\s\S]*?not valid/);
+  assert.match(restoredThirtySecondMigration, /status = 'approved'[\s\S]*?duration_seconds between 1 and 30/);
   assert.match(tvSource, /status: "submitted"/);
   assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, file/);
   assert.match(dancerStudio, /Your video completed automated safety review/);
