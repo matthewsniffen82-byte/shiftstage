@@ -200,12 +200,13 @@ test("venue and dancer profiles expose their required primary ride actions", () 
 });
 
 test("venue travel actions keep compact labels and explicit address-unavailable states", () => {
-  assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?data-travel-unavailable="directions"[\s\S]*?actionButtonLabel\("pin", "Unavailable"\)/);
-  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="uber"[\s\S]*?actionButtonLabel\("car", "Unavailable"\)/);
+  assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?data-travel-unavailable="directions"[\s\S]*?actionButtonLabel\("pin", escapeHtml\(label\)\)/);
+  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="uber"[\s\S]*?actionButtonLabel\("car", escapeHtml\(label\)\)/);
   assert.match(liveShellSource, /Uber is unavailable because this club has not published a usable address\./);
   assert.match(liveShellSource, /Directions are unavailable because this club has not published a usable address\./);
   assert.match(liveShellSource, /\.venue-primary-actions[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(liveShellSource, /\.home-venue-discovery-context-actions \.home-discovery-feed-directions[\s\S]*?border-color: rgba\(53,216,255,\.52\)/);
+  assert.match(liveShellSource, /\.home-venue-discovery-context-actions > :is\(\.feed-card-action, \.home-discovery-feed-directions\) > span:not\(\.action-icon\) \{[\s\S]*?text-align: center/);
 });
 
 test("Uber ride analytics are first-party, constrained, and documented", () => {

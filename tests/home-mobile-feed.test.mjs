@@ -582,11 +582,11 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?height: 58px;[\s\S]*?min-height: 58px;[\s\S]*?max-height: 58px;[\s\S]*?place-content: center;[\s\S]*?border-color: rgba\(53,216,255,\.52\);[\s\S]*?color: #b7f4ff;[\s\S]*?linear-gradient\(145deg, rgba\(10,52,72,\.96\), rgba\(4,18,29,\.96\)\);[\s\S]*?0 0 18px rgba\(53,216,255,\.11\);/,
+    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?height: 52px;[\s\S]*?min-height: 52px;[\s\S]*?max-height: 52px;[\s\S]*?place-content: center;[\s\S]*?border-color: rgba\(53,216,255,\.52\);[\s\S]*?color: #b7f4ff;[\s\S]*?linear-gradient\(145deg, rgba\(10,52,72,\.96\), rgba\(4,18,29,\.96\)\);[\s\S]*?0 0 18px rgba\(53,216,255,\.11\);/,
   );
   assert.match(
     homeSource,
-    /#results\.home-venue-discovery-feed \.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?height: 58px !important;[\s\S]*?min-height: 58px !important;[\s\S]*?max-height: 58px !important;[\s\S]*?place-content: center !important;[\s\S]*?border-color: rgba\(53,216,255,\.52\) !important;[\s\S]*?color: #b7f4ff !important;[\s\S]*?linear-gradient\(145deg,rgba\(10,52,72,\.96\),rgba\(4,18,29,\.96\)\) !important;[\s\S]*?0 0 18px rgba\(53,216,255,\.11\) !important;/,
+    /#results\.home-venue-discovery-feed \.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?place-content: center !important;[\s\S]*?border-color: rgba\(53,216,255,\.52\) !important;[\s\S]*?color: #b7f4ff !important;[\s\S]*?linear-gradient\(145deg,rgba\(10,52,72,\.96\),rgba\(4,18,29,\.96\)\) !important;[\s\S]*?0 0 18px rgba\(53,216,255,\.11\) !important;/,
   );
   assert.match(
     homeSource,
