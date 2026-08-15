@@ -35,7 +35,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /const venueValue = escapeOptionValue\(venue\.name\)/);
   assert.match(venueDetail, /class="venue-secondary-actions"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
   assert.match(venueDetail, /venueDirectionsMarkup\(\{ venue, className: "venue-address-directions", city \}\)/);
-  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel[\s\S]*?class="info-tile venue-address-tile"[\s\S]*?class="venue-address-copy"[\s\S]*?className: "venue-address-directions"/);
+  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel[\s\S]*?class="info-tile venue-address-tile\$\{details\.address \? "" : " venue-address-tile-no-address"\}"[\s\S]*?class="venue-address-copy"[\s\S]*?Address unavailable[\s\S]*?className: "venue-address-directions"/);
   assert.equal((venueDetail.match(/encodeURIComponent\(details\.address\)/g) || []).length, 0);
   assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?https:\/\/maps\.google\.com\/\?q=\$\{encodeURIComponent\(details\.address\)\}/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Distance<\/strong>/);
@@ -167,8 +167,12 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-secondary-actions \{[\s\S]*?padding: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /:is\(\.venue-primary-actions, \.venue-secondary-actions\) \.action-icon \{[\s\S]*?width: 20px !important;[\s\S]*?min-width: 20px !important;[\s\S]*?flex: 0 0 20px !important;/);
-  assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?border: 1px solid var\(--dancr-color-border-strong\) !important;[\s\S]*?color: var\(--dancr-color-text-primary\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;[\s\S]*?pointer-events: auto !important;/);
-  assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-info\) !important;/);
+  assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;[\s\S]*?pointer-events: auto !important;/);
+  assert.match(refinement, /\.venue-primary-actions > \.venue-address-directions \{[\s\S]*?border: 1px solid var\(--dancr-color-info-medium\) !important;[\s\S]*?color: var\(--dancr-color-info\) !important;/);
+  assert.match(refinement, /\.venue-primary-actions > \.venue-detail-uber \{[\s\S]*?border: 1px solid var\(--dancr-color-brand-primary-medium\) !important;[\s\S]*?var\(--dancr-color-brand-primary\) 28%/);
+  assert.match(refinement, /\.venue-primary-actions > \.venue-address-directions \.action-icon \{[\s\S]*?color: var\(--dancr-color-info\) !important;/);
+  assert.match(refinement, /\.venue-primary-actions > \.venue-detail-uber \.action-icon \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
+  assert.match(refinement, /\.venue-primary-actions > :is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?cursor: not-allowed !important;[\s\S]*?pointer-events: auto !important;/);
   assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?filter: none !important;/);
   assert.match(refinement, /\.venue-activity-empty \{[\s\S]*?grid-template-columns: 38px minmax\(0, 1fr\);[\s\S]*?padding: 12px 13px;/);
   assert.match(refinement, /\.venue-activity-count \{[\s\S]*?min-width: 28px;[\s\S]*?color: var\(--dancr-color-info\);/);

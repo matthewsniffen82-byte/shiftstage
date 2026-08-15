@@ -1184,8 +1184,8 @@
     .venue-address-tile {
       grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: stretch;
       gap: 14px;
     }
 
@@ -1223,6 +1223,31 @@
     .venue-address-directions .action-icon {
       width: 18px;
       height: 18px;
+    }
+
+    .venue-primary-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .venue-primary-actions > .venue-address-directions,
+    .venue-primary-actions > .venue-detail-uber {
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      min-height: 54px;
+      margin-top: 0;
+      padding: 0 14px;
+      border-radius: 15px;
+      font-size: 12px;
+    }
+
+    .venue-primary-actions .action-icon {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 20px;
     }
 
     .venue-address-directions:hover,
@@ -25557,7 +25582,7 @@
       }
 
       .venue-address-tile {
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr);
         gap: 10px;
       }
 
@@ -32784,15 +32809,15 @@
           max-height: 58px;
           place-content: center;
           align-self: stretch;
-          border-color: rgba(226,232,240,.28);
-          color: rgba(248,250,252,.96);
+          border-color: rgba(53,216,255,.52);
+          color: #b7f4ff;
           background:
             linear-gradient(180deg, rgba(255,255,255,.075), transparent 47%),
-            linear-gradient(145deg, rgba(20,21,24,.96), rgba(5,6,8,.96));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 10px 22px rgba(0,0,0,.28);
+            linear-gradient(145deg, rgba(10,52,72,.96), rgba(4,18,29,.96));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 10px 22px rgba(0,0,0,.28), 0 0 18px rgba(53,216,255,.11);
         }
         .home-venue-discovery-context-actions .home-discovery-feed-directions svg {
-          color: rgba(248,250,252,.9) !important;
+          color: #35d8ff !important;
           stroke: currentColor !important;
           filter: none !important;
         }
@@ -34219,15 +34244,15 @@
           min-height: 58px !important;
           max-height: 58px !important;
           place-content: center !important;
-          border-color: rgba(226,232,240,.28) !important;
-          color: rgba(248,250,252,.96) !important;
+          border-color: rgba(53,216,255,.52) !important;
+          color: #b7f4ff !important;
           background:
             linear-gradient(180deg,rgba(255,255,255,.075),transparent 47%),
-            linear-gradient(145deg,rgba(20,21,24,.96),rgba(5,6,8,.96)) !important;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.09),0 10px 22px rgba(0,0,0,.28) !important;
+            linear-gradient(145deg,rgba(10,52,72,.96),rgba(4,18,29,.96)) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.09),0 10px 22px rgba(0,0,0,.28),0 0 18px rgba(53,216,255,.11) !important;
         }
         #results.home-venue-discovery-feed .home-venue-discovery-context-actions .home-discovery-feed-directions svg {
-          color: rgba(248,250,252,.9) !important;
+          color: #35d8ff !important;
           stroke: currentColor !important;
           filter: none !important;
         }
@@ -36554,13 +36579,32 @@
 
         .venue-directions-btn.is-inactive-demo,
         .venue-address-directions.is-inactive-demo,
-        .uber-ride-link.is-inactive-demo {
+        .uber-ride-link.is-inactive-demo,
+        .venue-directions-btn.is-travel-unavailable,
+        .venue-address-directions.is-travel-unavailable,
+        .uber-ride-link.is-travel-unavailable {
           cursor: not-allowed !important;
-          opacity: .42 !important;
-          pointer-events: none !important;
-          filter: grayscale(.35) !important;
-          box-shadow: none !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          filter: none !important;
+          border-color: rgba(226,232,240,.22) !important;
+          color: rgba(248,250,252,.72) !important;
+          background:
+            linear-gradient(180deg,rgba(255,255,255,.065),transparent 48%),
+            linear-gradient(145deg,rgba(25,26,31,.96),rgba(8,9,12,.96)) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 18px rgba(0,0,0,.24) !important;
           transform: none !important;
+        }
+
+        .venue-directions-btn.is-inactive-demo svg,
+        .venue-address-directions.is-inactive-demo svg,
+        .uber-ride-link.is-inactive-demo svg,
+        .venue-directions-btn.is-travel-unavailable svg,
+        .venue-address-directions.is-travel-unavailable svg,
+        .uber-ride-link.is-travel-unavailable svg {
+          color: rgba(248,250,252,.66) !important;
+          stroke: currentColor !important;
+          filter: none !important;
         }
 
         .uber-ride-link .action-icon {
@@ -36572,7 +36616,7 @@
         .venue-detail-uber {
           width: 100%;
           min-height: 54px;
-          margin-top: 12px;
+          margin-top: 0;
           padding-inline: 18px;
           font-size: 14px;
         }
@@ -39190,21 +39234,26 @@
 
     function venueDirectionsMarkup({ venue, className, label = "Directions", city = selectedCity() }) {
       const details = venueDetails(venue, city);
-      if (!details.address) return "";
       const safeName = escapeHtml(venue?.name || details.name || "this club");
       const venueValue = escapeOptionValue(venue?.name || details.name || "");
       if (isFictionalDemoVenue(venue)) {
-        return `<button class="${className} is-inactive-demo" type="button" data-demo-travel="directions" aria-label="${escapeHtml(label)} for this demonstration club">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
+        return `<button class="${className} is-inactive-demo" type="button" data-demo-travel="directions" aria-label="Directions unavailable for this demonstration club">${actionButtonLabel("pin", "Unavailable")}</button>`;
+      }
+      if (!String(details.address || "").trim()) {
+        return `<button class="${className} is-travel-unavailable" type="button" data-travel-unavailable="directions" aria-label="Directions unavailable for ${safeName}">${actionButtonLabel("pin", "Unavailable")}</button>`;
       }
       return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
     }
 
     function uberRideLinkMarkup({ venue, source, label, className = "", dancerId = "", city = selectedCity() }) {
       const destination = publicVenueUberDestination(venue, city);
-      if (!destination) return "";
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
       if (isFictionalDemoVenue(venue)) {
-        return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" aria-label="${escapeHtml(label)} for this demonstration club">${actionButtonLabel("car", escapeHtml(label))}</button>`;
+        return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" aria-label="Uber unavailable for this demonstration club">${actionButtonLabel("car", "Unavailable")}</button>`;
+      }
+      if (!destination) {
+        const safeName = escapeHtml(venue?.name || "this club");
+        return `<button class="${classes} is-travel-unavailable" type="button" data-travel-unavailable="uber" aria-label="Uber unavailable for ${safeName}">${actionButtonLabel("car", "Unavailable")}</button>`;
       }
       const href = buildUberRideUrl(destination);
       return `<a class="${classes}" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" data-uber-ride-link data-uber-venue-id="${escapeOptionValue(venue.id || "")}" data-uber-venue-name="${escapeOptionValue(destination.name)}" data-uber-dancer-id="${escapeOptionValue(dancerId)}" data-uber-source="${escapeOptionValue(source)}" data-uber-city="${escapeOptionValue(city)}" aria-label="${escapeHtml(label)}. Opens Uber with ${escapeHtml(destination.formattedAddress)} as the destination.">${actionButtonLabel("car", escapeHtml(label))}</a>`;
@@ -39236,6 +39285,16 @@
       showToast(demoTravelButton.dataset.demoTravel === "uber"
         ? "Uber requests are unavailable for fictional demo venues."
         : "Directions are unavailable for fictional demo venues.");
+    });
+
+    document.addEventListener("click", (event) => {
+      const unavailableTravelButton = event.target.closest?.("[data-travel-unavailable]");
+      if (!unavailableTravelButton) return;
+      event.preventDefault();
+      event.stopPropagation();
+      showToast(unavailableTravelButton.dataset.travelUnavailable === "uber"
+        ? "Uber is unavailable because this club has not published a usable address."
+        : "Directions are unavailable because this club has not published a usable address.");
     });
 
     function loadAuthSession() {
@@ -47359,7 +47418,7 @@
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "tonight_feed",
-        label: "Get a Ride",
+        label: "Uber",
         className: "venue-card-uber feed-uber-ride"
       });
       return `
@@ -47504,18 +47563,16 @@
               </div>
               ${venueOfferMarkup(venue)}
               <div class="venue-info venue-location-section">
-                ${details.address ? `
-                  <div class="info-tile venue-address-tile">
-                    <span class="venue-address-copy">
-                      <strong>Address</strong>
-                      <span class="meta">${escapeHtml(details.address)}</span>
-                    </span>
-                    <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
-                      ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
-                      ${rideMarkup}
-                    </div>
+                <div class="info-tile venue-address-tile${details.address ? "" : " venue-address-tile-no-address"}">
+                  <span class="venue-address-copy">
+                    <strong>Address</strong>
+                    <span class="meta">${details.address ? escapeHtml(details.address) : "Address unavailable"}</span>
+                  </span>
+                  <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
+                    ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
+                    ${rideMarkup}
                   </div>
-                ` : `<div class="info-tile venue-address-tile venue-address-tile-no-address"><span class="venue-address-copy"><strong>Distance</strong><span class="meta">${escapeHtml(details.distanceLabel)}</span></span></div>`}
+                </div>
                 ${details.phone ? `<div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>` : ""}
                 ${details.website ? `<div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace(/^https?:\/\//, "")}</div></div>` : ""}
               </div>
@@ -53972,7 +54029,7 @@
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "tonight_feed",
-        label: "Get a Ride",
+        label: "Uber",
         className: "feed-card-action feed-uber-ride home-venue-discovery-uber"
       });
       const workingLabel = `${workingNow.length} working now`;

@@ -5088,15 +5088,11 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   font-size: 12.5px !important;
 }
 
-/* Travel actions remain obvious and responsive. Fictional demo venues explain
- * why travel cannot open instead of presenting dimmed, apparently broken UI. */
+/* Travel actions remain obvious and responsive. Directions use information
+ * cyan while Uber uses the brand violet; unavailable states stay legible and
+ * explain themselves instead of appearing dimmed or broken. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber) {
-  border: 1px solid var(--dancr-color-border-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: var(--dancr-color-surface-raised) !important;
-  background-image: none !important;
-  box-shadow: none !important;
   text-shadow: none !important;
   text-decoration: none !important;
   opacity: 1 !important;
@@ -5109,6 +5105,30 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
     background-color 0.16s ease,
     color 0.16s ease,
     transform 0.12s ease !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > .venue-address-directions {
+  border: 1px solid var(--dancr-color-info-medium) !important;
+  color: var(--dancr-color-info) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 10%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--dancr-color-info) 8%, transparent) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > .venue-detail-uber {
+  border: 1px solid var(--dancr-color-brand-primary-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 28%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -5139,20 +5159,54 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber) .action-icon {
+  .venue-primary-actions > .venue-address-directions .action-icon {
   color: var(--dancr-color-info) !important;
   stroke: currentColor !important;
   filter: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):is(:hover, :focus-visible) {
+  .venue-primary-actions > .venue-detail-uber .action-icon {
+  color: var(--dancr-color-brand-core) !important;
+  stroke: currentColor !important;
+  filter: drop-shadow(0 0 5px var(--dancr-color-brand-primary-medium)) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > .venue-address-directions:is(:hover, :focus-visible) {
   border-color: var(--dancr-color-info-medium) !important;
   background: color-mix(
     in srgb,
-    var(--dancr-color-text-primary) 6%,
+    var(--dancr-color-info) 15%,
     var(--dancr-color-surface-raised)
   ) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > .venue-detail-uber:is(:hover, :focus-visible) {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 36%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > :is(.is-inactive-demo, .is-travel-unavailable) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-primary-actions > :is(.is-inactive-demo, .is-travel-unavailable) .action-icon {
+  color: var(--dancr-color-text-secondary) !important;
+  filter: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail

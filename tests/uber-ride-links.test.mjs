@@ -188,7 +188,7 @@ test("eligible live-shell dancer and venue cards expose compact ride links witho
   assert.match(liveShellSource, /const fallback = "https:\/\/m\.uber\.com\/looking"/);
   assert.match(liveShellSource, /url\.searchParams\.set\("drop\[0\]", JSON\.stringify\(dropoff\)\)/);
   assert.match(liveShellSource, /function homeDancerGridActionsMarkup[\s\S]*?source: "tonight_feed"[\s\S]*?label: "Get a Ride"/);
-  assert.match(liveShellSource, /function homeVenueDiscoveryFeedSlide[\s\S]*?source: "tonight_feed"[\s\S]*?label: "Get a Ride"[\s\S]*?home-venue-discovery-uber/);
+  assert.match(liveShellSource, /function homeVenueDiscoveryFeedSlide[\s\S]*?source: "tonight_feed"[\s\S]*?label: "Uber"[\s\S]*?home-venue-discovery-uber/);
   assert.match(liveShellSource, /document\.addEventListener\("click", \(event\) => \{[\s\S]*?\[data-uber-ride-link\][\s\S]*?event\.stopPropagation\(\)[\s\S]*?recordUberRideLinkClick\(link\)[\s\S]*?\}, true\)/);
 });
 
@@ -197,6 +197,15 @@ test("venue and dancer profiles expose their required primary ride actions", () 
   assert.match(liveShellSource, /function dancerProfileUberRideMarkup[\s\S]*?source: "dancer_profile"[\s\S]*?label: `Ride to \$\{venue\.name\}`/);
   assert.match(componentStyles, /min-height: 44px/);
   assert.match(componentStyles, /\.venuePage[\s\S]*?width: 100%/);
+});
+
+test("venue travel actions keep compact labels and explicit address-unavailable states", () => {
+  assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?data-travel-unavailable="directions"[\s\S]*?actionButtonLabel\("pin", "Unavailable"\)/);
+  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="uber"[\s\S]*?actionButtonLabel\("car", "Unavailable"\)/);
+  assert.match(liveShellSource, /Uber is unavailable because this club has not published a usable address\./);
+  assert.match(liveShellSource, /Directions are unavailable because this club has not published a usable address\./);
+  assert.match(liveShellSource, /\.venue-primary-actions[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(liveShellSource, /\.home-venue-discovery-context-actions \.home-discovery-feed-directions[\s\S]*?border-color: rgba\(53,216,255,\.52\)/);
 });
 
 test("Uber ride analytics are first-party, constrained, and documented", () => {
