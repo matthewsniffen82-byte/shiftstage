@@ -30811,6 +30811,9 @@
               <span id="customerNotificationQuickCount" class="customer-quick-count" hidden>0</span>
               <span data-quick-icon="bell"></span>
             </button>
+            <button class="customer-quick-btn" id="dancerProfileQrQuickBtn" type="button" aria-label="Show my profile QR" title="My profile QR" aria-haspopup="dialog" aria-expanded="false" data-profile-qr="" hidden>
+              <span data-quick-icon="profileQr"></span>
+            </button>
             <button class="customer-quick-btn" id="customerDealQuickBtn" type="button" aria-label="Open saved Club Deals" title="Saved Club Deals" aria-expanded="false" aria-controls="customerDealsQuickPanel">
               <span data-quick-icon="qr"></span>
             </button>
@@ -38591,6 +38594,7 @@
     const moreMenuPanel = document.getElementById("moreMenuPanel");
     const customerQuickActions = document.getElementById("customerQuickActions");
     const customerNotificationQuickBtn = document.getElementById("customerNotificationQuickBtn");
+    const dancerProfileQrQuickBtn = document.getElementById("dancerProfileQrQuickBtn");
     const customerDealQuickBtn = document.getElementById("customerDealQuickBtn");
     const customerNotificationQuickCount = document.getElementById("customerNotificationQuickCount");
     const customerNotificationsQuickPanel = document.getElementById("customerNotificationsQuickPanel");
@@ -41400,10 +41404,12 @@
     function renderCustomerQuickActions() {
       if (!customerQuickActions) return;
       const showNotifications = isCustomerSession() || isDancerSession() || isVenueSession();
+      const showProfileQr = isDancerSession();
       const showDeals = isCustomerSession();
-      const show = showNotifications || showDeals;
+      const show = showNotifications || showProfileQr || showDeals;
       customerQuickActions.hidden = !show;
       customerNotificationQuickBtn.hidden = !showNotifications;
+      dancerProfileQrQuickBtn.hidden = !showProfileQr;
       customerDealQuickBtn.hidden = !showDeals;
       if (!showNotifications) {
         customerNotificationsQuickPanel.hidden = true;
@@ -41414,6 +41420,12 @@
         customerDealsQuickPanel.hidden = true;
         customerDealQuickBtn.classList.remove("active");
         customerDealQuickBtn.setAttribute("aria-expanded", "false");
+      }
+      if (!showProfileQr) {
+        dancerProfileQrQuickBtn.classList.remove("is-open");
+        dancerProfileQrQuickBtn.setAttribute("aria-expanded", "false");
+        dancerProfileQrQuickBtn.removeAttribute("data-share-city");
+        dancerProfileQrQuickBtn.dataset.profileQr = "";
       }
       if (!show) {
         closeCustomerQuickPanels();
@@ -43853,6 +43865,7 @@
         close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
         report: '<svg viewBox="0 0 24 24"><path d="M12 4.2 3.8 18.5a1.4 1.4 0 0 0 1.2 2.1h14a1.4 1.4 0 0 0 1.2-2.1L12 4.2Z"></path><path d="M12 9v4.4"></path><path d="M12 17h.01"></path></svg>',
+        profileQr: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx=".8"></rect><rect x="13.5" y="3.5" width="7" height="7" rx=".8"></rect><rect x="3.5" y="13.5" width="7" height="7" rx=".8"></rect><path d="M14 14h2.5v2.5H14zM18.5 13.5h2v2M18 18h2.5v2.5H18M13.5 18.5H16V21"></path></svg>',
         qr: '<svg viewBox="0 0 24 24"><path d="M7.4 8.2a5.4 5.4 0 0 1 0 7.6"></path><path d="M4.7 5.4a9.3 9.3 0 0 1 0 13.2"></path><path d="M10.4 10.7a1.9 1.9 0 0 1 0 2.6"></path><rect x="13" y="6" width="7" height="12" rx="2"></rect></svg>',
         lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>'
       };
@@ -56294,13 +56307,46 @@
       openShareQrOverlay({
         url: profileShareUrl(profileName, city),
         kicker: "Profile-sharing QR",
-        title: `${profileName} on MyDancr`,
-        subtitle: `Scan to open ${profileName}'s MyDancr profile. This is not a Club Deal and cannot be redeemed at a venue.`,
+        title: `${profileName} profile QR`,
+        subtitle: `Scan to open ${profileName}'s MyDancr profile and follow them. This is not a Club Deal and cannot be redeemed at a venue.`,
         imageAlt: `QR code for ${profileName} profile`,
         openLabel: "Open profile",
         kind: "profile",
         triggerButton
       });
+    }
+
+    function shareableDancerProfile(profile) {
+      if (!isApprovedPublicProfile(profile) || profile?.disabled_at || profile?.disabledAt) return null;
+      const profileName = cleanDisplayValue(profile?.stage_name || profile?.stageName || "");
+      const city = cleanDisplayValue(profile?.city || profile?.cityName || "");
+      return profileName && city ? { profileName, city } : null;
+    }
+
+    async function openOwnDancerProfileQr(triggerButton) {
+      if (!isDancerSession() || !triggerButton) return;
+      triggerButton.disabled = true;
+      triggerButton.setAttribute("aria-busy", "true");
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/profile");
+        const target = shareableDancerProfile(data?.profile);
+        if (!target) {
+          showToast("Publish your dancer profile before sharing its QR");
+          return;
+        }
+        triggerButton.dataset.profileQr = target.profileName;
+        triggerButton.dataset.shareCity = target.city;
+        openQrOverlay(target.profileName, target.city, triggerButton);
+        recordLiveEvent("profile_action", {
+          dancerName: target.profileName,
+          source: "profile_qr_nav_opened"
+        });
+      } catch (error) {
+        showToast(error?.message || "Profile QR unavailable");
+      } finally {
+        triggerButton.disabled = false;
+        triggerButton.setAttribute("aria-busy", "false");
+      }
     }
 
     function openVenueQrOverlay(venueName, city, triggerButton) {
@@ -57029,6 +57075,13 @@
       event.stopPropagation();
       closeUtilityMenu();
       toggleCustomerQuickPanel("notifications");
+    });
+
+    dancerProfileQrQuickBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeUtilityMenu();
+      closeCustomerQuickPanels();
+      void openOwnDancerProfileQr(dancerProfileQrQuickBtn);
     });
 
     customerDealQuickBtn.addEventListener("click", (event) => {
