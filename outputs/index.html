@@ -39287,11 +39287,20 @@
       return String(venue?.logoImageUrl || "").trim().startsWith("/venue-logos/fictional/");
     }
 
+    const FICTIONAL_DEMO_PITCH_ADDRESS = "0000 MyDancr Ave, Las Vegas, NV 55555";
+
+    function isFictionalDemoTravelUnavailable(venue, city = selectedCity()) {
+      if (!isFictionalDemoVenue(venue)) return false;
+      const details = venueDetails(venue, city);
+      const address = String(venue?.address || details.address || "").trim().toLowerCase();
+      return !address || address === FICTIONAL_DEMO_PITCH_ADDRESS.toLowerCase();
+    }
+
     function venueDirectionsMarkup({ venue, className, label = "Directions", city = selectedCity() }) {
       const details = venueDetails(venue, city);
       const safeName = escapeHtml(venue?.name || details.name || "this club");
       const venueValue = escapeOptionValue(venue?.name || details.name || "");
-      if (isFictionalDemoVenue(venue)) {
+      if (isFictionalDemoTravelUnavailable(venue, city)) {
         return `<button class="${className} is-inactive-demo" type="button" data-demo-travel="directions" aria-label="Directions unavailable for this demonstration club">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
       }
       if (!String(details.address || "").trim()) {
@@ -39303,7 +39312,7 @@
     function uberRideLinkMarkup({ venue, source, label, className = "", dancerId = "", city = selectedCity() }) {
       const destination = publicVenueUberDestination(venue, city);
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
-      if (isFictionalDemoVenue(venue)) {
+      if (isFictionalDemoTravelUnavailable(venue, city)) {
         return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" aria-label="Uber unavailable for this demonstration club">${actionButtonLabel("car", escapeHtml(label))}</button>`;
       }
       if (!destination) {

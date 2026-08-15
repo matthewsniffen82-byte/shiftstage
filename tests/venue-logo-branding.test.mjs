@@ -44,7 +44,7 @@ const fictionalNames = {
   "treasures-las-vegas": "Aurora Room",
 };
 
-const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic, migration, addressMigration, generator, uberButton] =
+const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic, migration, addressMigration, travelMigration, generator, uberButton] =
   await Promise.all([
     readFile(new URL("../src/lib/dancr/venue-branding.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
@@ -55,6 +55,7 @@ const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aes
     readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/202608110003_fictional_las_vegas_venue_identities.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/202608110004_fictional_las_vegas_venue_addresses.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/202608150001_enable_selected_demo_venue_travel.sql", import.meta.url), "utf8"),
     readFile(new URL("../scripts/generate-fictional-venue-logos.mjs", import.meta.url), "utf8"),
     readFile(new URL("../app/components/UberRideButton.tsx", import.meta.url), "utf8"),
   ]);
@@ -113,20 +114,33 @@ test("the production migration fictionalizes every current Las Vegas venue witho
   assert.match(migration, /Every Las Vegas venue must receive an explicit fictional identity/);
 });
 
-test("fictional Vegas venues use one pitch address and explain unavailable travel actions", () => {
+test("fictional Vegas venues activate travel only when they have a valid stored destination", () => {
   assert.match(addressMigration, /0000 MyDancr Ave, Las Vegas, NV 55555/g);
   assert.match(addressMigration, /expected_count integer := 17/);
   assert.match(addressMigration, /Every listed Las Vegas demonstration venue must use the fictional pitch address/);
+  for (const slug of [
+    "deja-vu-showgirls-las-vegas",
+    "little-darlings-las-vegas",
+    "peppermint-hippo-las-vegas",
+    "sapphire-las-vegas",
+    "spearmint-rhino-las-vegas",
+  ]) {
+    assert.match(travelMigration, new RegExp(`'${slug}'`));
+  }
+  assert.match(travelMigration, /active_destination_count <> 5/);
   assert.match(branding, /export function isFictionalVenueBranding/);
+  assert.match(branding, /export function isFictionalVenueTravelUnavailable/);
+  assert.match(branding, /FICTIONAL_VENUE_PITCH_ADDRESS/);
   assert.match(liveApp, /function isFictionalDemoVenue\(venue\)/);
   assert.match(liveApp, /startsWith\("\/venue-logos\/fictional\/"\)/);
-  assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?is-inactive-demo[\s\S]*?data-demo-travel="directions"/);
-  assert.match(liveApp, /function uberRideLinkMarkup[\s\S]*?isFictionalDemoVenue\(venue\)[\s\S]*?is-inactive-demo[\s\S]*?data-demo-travel="uber"/);
+  assert.match(liveApp, /function isFictionalDemoTravelUnavailable\(venue, city = selectedCity\(\)\)/);
+  assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?isFictionalDemoTravelUnavailable\(venue, city\)[\s\S]*?is-inactive-demo[\s\S]*?data-demo-travel="directions"/);
+  assert.match(liveApp, /function uberRideLinkMarkup[\s\S]*?isFictionalDemoTravelUnavailable\(venue, city\)[\s\S]*?is-inactive-demo[\s\S]*?data-demo-travel="uber"/);
   assert.doesNotMatch(liveApp.match(/function venueDirectionsMarkup[\s\S]*?function uberRideLinkMarkup/)?.[0] || "", /disabled|aria-disabled/);
   assert.match(liveApp, /closest\?\.\("\[data-demo-travel\]"\)[\s\S]*?Uber requests are unavailable for fictional demo venues\.[\s\S]*?Directions are unavailable for fictional demo venues\./);
   assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?venue-address-directions/);
   assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?home-discovery-feed-directions venue-directions-btn/);
-  assert.match(uberButton, /isFictionalVenueBranding\(venue\.slug\)[\s\S]*?aria-disabled="true"[\s\S]*?disabled/);
+  assert.match(uberButton, /isFictionalVenueTravelUnavailable\(venue\)[\s\S]*?aria-disabled="true"[\s\S]*?disabled/);
 });
 
 test("verified logo identity flows through every public venue response", () => {
