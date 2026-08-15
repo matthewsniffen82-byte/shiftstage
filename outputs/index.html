@@ -35433,6 +35433,28 @@
           stroke-linejoin: round;
         }
         #profileBackdrop .profile-media-tab-play { fill: currentColor; stroke: none; }
+        #profileBackdrop .profile-media-tab-count {
+          position: absolute;
+          z-index: 2;
+          top: 0;
+          right: 0;
+          min-width: 16px;
+          height: 16px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          padding: 0 4px;
+          border: 1px solid rgba(255,255,255,.18);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(5,5,9,.96);
+          box-shadow: 0 3px 9px rgba(0,0,0,.5);
+          font-size: 9px;
+          font-weight: 950;
+          line-height: 1;
+        }
+        #profileBackdrop .profile-media-tab-count[hidden] { display: none; }
         body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button.active {
           border-color: transparent !important;
           color: #fff !important;
@@ -35444,6 +35466,9 @@
           border-color: rgba(126,234,255,.42);
           background: linear-gradient(135deg, rgba(109,40,217,.72), rgba(11,148,201,.34));
           box-shadow: var(--dancr-shadow-beam-active);
+        }
+        #profileBackdrop .profile-modal-media-tabs button.active .profile-media-tab-count {
+          display: none;
         }
         #profileBackdrop .profile-modal-media-tabs button:disabled {
           opacity: .4;
@@ -38346,9 +38371,11 @@
           <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">
             <button class="active" id="modalMediaPhotoTab" type="button" role="tab" aria-label="Photos" title="Photos" aria-selected="true" aria-controls="modalGallery" data-profile-media-tab="photo">
               <svg class="profile-media-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="8.5" cy="9" r="1.5"></circle><path d="m5 17 4.5-4.5 3.2 3.2 2.2-2.2L19 17"></path></svg>
+              <span class="profile-media-tab-count" id="modalMediaPhotoCount" aria-hidden="true" hidden></span>
             </button>
             <button id="modalMediaTvTab" type="button" role="tab" aria-label="TV" title="TV" aria-selected="false" aria-controls="modalGallery" data-profile-media-tab="video" disabled>
               <svg class="profile-media-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path class="profile-media-tab-play" d="m10 9 5 3-5 3Z"></path></svg>
+              <span class="profile-media-tab-count" id="modalMediaTvCount" aria-hidden="true" hidden></span>
             </button>
           </div>
           <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
@@ -38530,6 +38557,8 @@
     const modalGallery = document.getElementById("modalGallery");
     const modalMediaPhotoTab = document.getElementById("modalMediaPhotoTab");
     const modalMediaTvTab = document.getElementById("modalMediaTvTab");
+    const modalMediaPhotoCount = document.getElementById("modalMediaPhotoCount");
+    const modalMediaTvCount = document.getElementById("modalMediaTvCount");
     const modalMediaEmpty = document.getElementById("modalMediaEmpty");
     const modalMediaPosition = document.getElementById("modalMediaPosition");
     const modalMediaPrevious = document.getElementById("modalMediaPrevious");
@@ -47606,8 +47635,28 @@
       if (video.paused) setModalVideoControlsVisible(true);
     }
 
+    function syncProfileMediaTabCounts(photoCount = 0, videoCount = 0) {
+      const mediaCounts = [
+        { button: modalMediaPhotoTab, badge: modalMediaPhotoCount, count: Math.max(0, Number(photoCount) || 0), label: "Photos" },
+        { button: modalMediaTvTab, badge: modalMediaTvCount, count: Math.max(0, Number(videoCount) || 0), label: "TV videos" }
+      ];
+      mediaCounts.forEach(({ button, badge, count, label }) => {
+        button.disabled = count === 0;
+        button.setAttribute("aria-label", count ? `${label}, ${count} available` : `${label} unavailable`);
+        button.title = count ? `${label} (${count})` : `${label} unavailable`;
+        badge.textContent = count ? String(count) : "";
+        badge.hidden = count === 0;
+      });
+    }
+
     function setProfileMediaTab(requestedTab) {
-      const tab = requestedTab === "video" && !modalMediaTvTab.disabled ? "video" : "photo";
+      const tab = requestedTab === "video" && !modalMediaTvTab.disabled
+        ? "video"
+        : !modalMediaPhotoTab.disabled
+          ? "photo"
+          : !modalMediaTvTab.disabled
+            ? "video"
+            : "photo";
       modalGallery.dataset.mediaTab = tab;
       [modalMediaPhotoTab, modalMediaTvTab].forEach((button) => {
         const active = button.dataset.profileMediaTab === tab;
@@ -48324,6 +48373,7 @@
       }
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
+      syncProfileMediaTabCounts(photoCount, 0);
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
       modalProfileAvatar.dataset.workingNow = String(modalIsWorkingNow);
       modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
@@ -48341,7 +48391,6 @@
         modalProfileAvatar.style.removeProperty("--custom-photo-position");
       }
       modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo${modalIsWorkingNow ? ", working now" : ""}`);
-      modalMediaTvTab.disabled = true;
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
 
@@ -48737,8 +48786,8 @@
           thumb.append(video, play, duration);
           modalGallery.appendChild(thumb);
         });
-        modalMediaTvTab.disabled = false;
         const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
+        syncProfileMediaTabCounts(photoCount, videos.length);
       } catch {
         // The live profile remains fully usable if optional profile videos cannot load.
       }

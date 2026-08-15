@@ -489,6 +489,11 @@ export function DancerPhotoCarousel({
             <circle cx="8.5" cy="9" r="1.5" />
             <path d="m5 17 4.5-4.5 3.2 3.2 2.2-2.2L19 17" />
           </svg>
+          {photoMedia.length ? (
+            <span aria-hidden="true" className="profile-media-tab-count">
+              {photoMedia.length}
+            </span>
+          ) : null}
         </button>
         <button
           aria-label={`TV videos, ${videoMedia.length}`}
@@ -505,6 +510,11 @@ export function DancerPhotoCarousel({
             <rect x="3" y="5" width="18" height="14" rx="3" />
             <path className="profile-media-tab-play" d="m10 9 5 3-5 3Z" />
           </svg>
+          {videoMedia.length ? (
+            <span aria-hidden="true" className="profile-media-tab-count">
+              {videoMedia.length}
+            </span>
+          ) : null}
         </button>
       </div>
       {selectedItem ? (

@@ -479,8 +479,10 @@ function PublicProfileStyles() {
       body.dancr-button-system .public-profile-shell .profile-media-tabs button::before { position: absolute; z-index: 0; inset: 4px; content: ""; border: 1px solid rgba(255,255,255,.11); border-radius: 50%; background: rgba(255,255,255,.055); box-sizing: border-box; }
       .profile-media-tab-icon { position: relative; z-index: 1; width: 18px; height: 18px; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-media-tab-play { fill: currentColor; stroke: none; }
+      .profile-media-tab-count { position: absolute; z-index: 2; top: 0; right: 0; min-width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 4px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(5,5,9,.96); box-shadow: 0 3px 9px rgba(0,0,0,.5); font-size: 9px; font-weight: 950; line-height: 1; }
       body.dancr-button-system .public-profile-shell .profile-media-tabs button.active { border-color: transparent !important; color: #fff !important; background: transparent !important; box-shadow: none !important; text-shadow: none; }
       body.dancr-button-system .public-profile-shell .profile-media-tabs button.active::before { border-color: rgba(126,234,255,.42); background: linear-gradient(135deg, rgba(109,40,217,.72), rgba(11,148,201,.34)); box-shadow: var(--dancr-shadow-beam-active); }
+      .profile-media-tabs button.active .profile-media-tab-count { display: none; }
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 660px; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: default; isolation: isolate; touch-action: pan-y; }
       .profile-media-feature.is-photo { max-height: none; }

@@ -200,6 +200,9 @@ test("the in-profile TV tab is dancer-only, opens full screen, and does not alte
   assert.match(profileMedia, /aria-label=\{`TV videos, \$\{videoMedia\.length\}`\}/);
   assert.match(profileMedia, /className="profile-media-tab-icon"[\s\S]*?<rect x="3" y="4"/);
   assert.match(profileMedia, /className="profile-media-tab-play"/);
+  assert.match(profileMedia, /className="profile-media-tab-count"/);
+  assert.match(profileMedia, /\{photoMedia\.length\}/);
+  assert.match(profileMedia, /\{videoMedia\.length\}/);
   assert.doesNotMatch(profileMedia, /Photos <span>|TV <span>/);
   assert.match(profileMedia, /className="profile-media-viewer"/);
   assert.match(profileMedia, /showRelativeViewerItem\(distanceX < 0 \? 1 : -1\)/);
@@ -208,6 +211,10 @@ test("the in-profile TV tab is dancer-only, opens full screen, and does not alte
   assert.match(liveApp, /data-profile-media-tab="video"/);
   assert.match(liveApp, /id="modalMediaPhotoTab"[\s\S]*?aria-label="Photos"[\s\S]*?class="profile-media-tab-icon"/);
   assert.match(liveApp, /id="modalMediaTvTab"[\s\S]*?aria-label="TV"[\s\S]*?class="profile-media-tab-play"/);
+  assert.match(liveApp, /id="modalMediaPhotoCount"/);
+  assert.match(liveApp, /id="modalMediaTvCount"/);
+  assert.match(liveApp, /function syncProfileMediaTabCounts\(photoCount = 0, videoCount = 0\)/);
+  assert.match(liveApp, /syncProfileMediaTabCounts\(photoCount, videos\.length\)/);
   assert.match(
     liveApp,
     /fetch\(`\/api\/public\/tv\?city=\$\{encodeURIComponent\(citySelect\.value\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}&limit=4`/,
