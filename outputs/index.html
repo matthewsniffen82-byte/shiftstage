@@ -55429,16 +55429,16 @@
       actions.className = "home-tv-feed-actions";
       actions.setAttribute("aria-label", "Video actions");
 
-      const applause = createHomeTvFeedActionButton(
-        "home-tv-feed-applause-action",
-        "Applaud",
-        actionIconMarkup("star")
+      const profile = createHomeTvFeedActionButton(
+        "home-tv-feed-profile-action",
+        `Open ${dancerName}'s full profile`,
+        actionIconMarkup("profile")
       );
-      applause.dataset.homeTvApplause = "true";
-      applause.setAttribute("aria-pressed", String(homeTvFeedApplaudedVideos.has(videoId)));
-      applause.addEventListener("click", () => {
-        applaudHomeTvFeedVideo(item, slide);
+      profile.dataset.homeTvProfile = "true";
+      profile.title = "Profile";
+      profile.addEventListener("click", () => {
         closeHomeTvFeedReportMenus();
+        slide.querySelector(".home-tv-feed-dancer")?.click();
       });
 
       const share = createHomeTvFeedActionButton(
@@ -55552,7 +55552,7 @@
         closeHomeTvFeedReportMenus();
         report.focus({ preventScroll: true });
       });
-      actions.append(applause);
+      actions.append(profile);
       actions.appendChild(deal);
       actions.append(share, follow);
       actions.append(report, reportMenu);

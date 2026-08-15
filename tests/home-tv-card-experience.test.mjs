@@ -55,7 +55,11 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
     homeSource,
     /actions\.className = "home-tv-feed-actions"[\s\S]*?follow\.className = `home-tv-feed-action home-tv-feed-follow-action feed-card-action[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?follow\.dataset\.profile = dancerName[\s\S]*?follow\.dataset\.homeTvVideoId = videoId[\s\S]*?follow\.dataset\.iconOnlyAction = "true"[\s\S]*?follow\.innerHTML = actionIconMarkup\(isFollowed \? "check" : "heart"\)/,
   );
-  assert.doesNotMatch(homeSource, /home-tv-feed-dancer-actions|home-tv-feed-profile-action/);
+  assert.doesNotMatch(homeSource, /home-tv-feed-dancer-actions/);
+  assert.match(
+    homeSource,
+    /profile\.className = "home-tv-feed-action home-tv-feed-profile-action"|"home-tv-feed-profile-action",[\s\S]*?actionIconMarkup\("profile"\)/,
+  );
   assert.match(
     homeSource,
     /const dancerPhotoUrl = String\(item\?\.dancer\?\.avatarPhotoUrl \|\| item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?dancerPhoto\.className = "home-tv-feed-dancer-photo"[\s\S]*?dancerPhotoImage\.src = dancerPhotoUrl[\s\S]*?dancerPhotoImage\.addEventListener\("error", \(\) => dancerPhotoImage\.remove\(\)\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)/,
@@ -102,8 +106,9 @@ test("TV cards expose separate right-side action icons with fullscreen anchored 
     /function renderHomeTvFeedSlide\(slide, item, videoIndex, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedSlide)/,
   )?.[0] || "";
 
-  assert.match(actionsFactory, /createHomeTvFeedActionButton\([\s\S]*?"Applaud"[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?createHomeTvFeedActionButton\([\s\S]*?"Report"/);
-  assert.match(actionsFactory, /actions\.append\(applause\)[\s\S]*?actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow\)[\s\S]*?actions\.append\(report, reportMenu\)/);
+  assert.match(actionsFactory, /createHomeTvFeedActionButton\([\s\S]*?"home-tv-feed-profile-action"[\s\S]*?actionIconMarkup\("profile"\)[\s\S]*?slide\.querySelector\("\.home-tv-feed-dancer"\)\?\.click\(\)[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?createHomeTvFeedActionButton\([\s\S]*?"Report"/);
+  assert.match(actionsFactory, /actions\.append\(profile\)[\s\S]*?actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow\)[\s\S]*?actions\.append\(report, reportMenu\)/);
+  assert.doesNotMatch(actionsFactory, /actionIconMarkup\("star"\)|"Applaud"/);
   assert.doesNotMatch(actionsFactory, /More video actions|home-tv-feed-action-menu|home-tv-feed-menu-action/);
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
@@ -287,7 +292,7 @@ test("empty schedules are hidden while real city, venue, and shift context remai
   );
 });
 
-test("every uploaded video gets a vertically scrollable card with playback, applause, sharing, and reporting", () => {
+test("every uploaded video gets a vertically scrollable card with profile access, applause gestures, sharing, and reporting", () => {
   assert.match(
     homeSource,
     /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \(\s*createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
