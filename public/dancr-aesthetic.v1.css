@@ -1075,7 +1075,8 @@ body > .app main.stack > .home-discovery-controls .home-filter-toggle-count[hidd
   display: none !important;
 }
 
-body > .app main.stack > .home-discovery-controls .home-advanced-filters.is-open {
+body > .app main.stack > .home-discovery-controls .home-advanced-filters.is-open,
+body > .app main.stack > .home-discovery-controls .city-picker-inline.is-open {
   padding: 12px !important;
   border: 1px solid var(--dancr-color-border-subtle);
   border-radius: 14px;
@@ -6146,67 +6147,42 @@ body.dancr-button-system > .app main.stack > .home-discovery-controls .city-pick
   white-space: nowrap;
 }
 
-.city-picker-dialog {
-  width: min(440px, calc(100vw - 24px)) !important;
-  max-width: none !important;
-  max-height: min(520px, calc(100dvh - 24px)) !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  border: 1px solid var(--dancr-color-border) !important;
-  border-radius: 20px !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: var(--dancr-color-surface-raised) !important;
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.68) !important;
+.city-picker-trigger[aria-expanded="true"] {
+  border-color: var(--dancr-color-brand-primary) !important;
+  box-shadow: var(--dancr-focus-ring) !important;
 }
 
-.city-picker-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.8) !important;
-  -webkit-backdrop-filter: blur(7px);
-  backdrop-filter: blur(7px);
+.city-picker-trigger[aria-expanded="true"] .city-picker-chevron {
+  transform: rotate(180deg);
 }
 
-.city-picker-panel {
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+.city-picker-inline {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
 }
 
-.city-picker-header {
-  min-height: 68px !important;
-  padding: 13px 15px 11px !important;
-  border-bottom-color: var(--dancr-color-border-subtle) !important;
-}
-
-.city-picker-header strong {
-  font-size: 19px !important;
-  letter-spacing: -0.02em;
-}
-
-.city-picker-close {
-  width: 40px !important;
-  height: 40px !important;
-  border-color: var(--dancr-color-border-subtle) !important;
-  color: var(--dancr-color-text-secondary) !important;
-  background: var(--dancr-color-surface-subtle) !important;
-  box-shadow: none !important;
+.city-picker-inline[hidden] {
+  display: none !important;
 }
 
 .city-picker-options {
   display: grid;
   align-content: start;
-  gap: 3px;
-  max-height: min(360px, calc(100dvh - 188px)) !important;
-  padding: 8px !important;
+  gap: 6px;
+  max-height: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
 }
 
 .city-picker-option {
-  min-height: 54px !important;
+  min-height: 48px !important;
   grid-template-columns: 24px minmax(0, 1fr) auto !important;
   padding: 8px 11px !important;
-  border-color: transparent !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   border-radius: 13px !important;
   color: var(--dancr-color-text-primary) !important;
-  background: transparent !important;
+  background: var(--dancr-color-surface-raised) !important;
   box-shadow: none !important;
   font-size: 16px !important;
 }
@@ -6239,19 +6215,6 @@ body.dancr-button-system > .app main.stack > .home-discovery-controls .city-pick
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.city-picker-done {
-  min-height: 48px !important;
-  margin: 8px 14px 14px !important;
-  border-color: var(--dancr-color-brand-primary-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-brand-primary) 12%,
-    var(--dancr-color-surface-subtle)
-  ) !important;
-  box-shadow: none !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
@@ -6344,17 +6307,8 @@ body.dancr-button-system > .app main.stack > section.stack
     font-size: clamp(9px, 2.55vw, 11px) !important;
   }
 
-  .city-picker-dialog[open] {
-    position: fixed !important;
-    inset: auto 10px max(10px, env(safe-area-inset-bottom)) !important;
-    width: auto !important;
-    max-height: min(430px, calc(100dvh - 28px)) !important;
-    margin: 0 !important;
-    border-radius: 20px !important;
-  }
-
   .city-picker-options {
-    max-height: min(292px, calc(100dvh - 166px)) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }
 

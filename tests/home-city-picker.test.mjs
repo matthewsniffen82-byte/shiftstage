@@ -7,23 +7,26 @@ const [liveShell, aesthetic] = await Promise.all([
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
-test("city discovery keeps the native select as a fallback and enhances it with a branded dialog", () => {
+test("city discovery keeps the native select as a fallback and enhances it with an inline picker", () => {
   assert.match(liveShell, /<select id="citySelect">[\s\S]*?<option>Las Vegas<\/option>[\s\S]*?<option>New York<\/option>[\s\S]*?<\/select>/);
-  assert.match(liveShell, /id="cityPickerField"[\s\S]*?id="citySelectButton"[\s\S]*?aria-controls="citySelectDialog"/);
-  assert.match(liveShell, /id="citySelectDialog"[\s\S]*?id="citySelectDialogTitle">Choose a city<[\s\S]*?id="citySelectOptions"[^>]*role="listbox"[\s\S]*?id="citySelectDone"/);
+  assert.match(liveShell, /id="cityPickerField"[\s\S]*?id="citySelectButton"[\s\S]*?aria-controls="citySelectPanel"/);
+  assert.match(liveShell, /id="citySelectPanel" hidden>[\s\S]*?id="citySelectOptions"[^>]*role="listbox"[^>]*aria-labelledby="citySelectLabel"/);
+  assert.doesNotMatch(liveShell, /id="citySelectDialog"|id="citySelectDone"|id="citySelectClose"/);
   assert.match(liveShell, /cityPickerField\.classList\.add\("is-enhanced"\)[\s\S]*?citySelect\.setAttribute\("aria-hidden", "true"\)[\s\S]*?citySelectButton\.hidden = false/);
   assert.match(aesthetic, /\.home-city-filter\.is-enhanced #citySelect[\s\S]*?clip-path: inset\(50%\)/);
 });
 
-test("city selection is keyboard accessible and applies through the existing production change flow", () => {
-  assert.match(liveShell, /function openCityPicker\(\)[\s\S]*?citySelectDialog\.showModal\(\)[\s\S]*?querySelector\('\[aria-selected="true"\]'\)\?\.focus\(\)/);
-  assert.match(liveShell, /function applyCityPickerSelection\(\)[\s\S]*?citySelect\.value = pendingCitySelection[\s\S]*?citySelect\.dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/);
+test("city selection expands inline, applies immediately, and remains keyboard accessible", () => {
+  assert.match(liveShell, /function openCityPicker\(\)[\s\S]*?citySelectPanel\.hidden = false[\s\S]*?querySelector\('\[aria-selected="true"\]'\)\?\.focus\(\)/);
+  assert.match(liveShell, /function applyCityPickerSelection\(nextCity\)[\s\S]*?citySelect\.value = nextCity[\s\S]*?closeCityPicker\(true\)[\s\S]*?citySelect\.dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/);
   assert.match(liveShell, /citySelectOptions\?\.addEventListener\("keydown"[\s\S]*?ArrowDown[\s\S]*?ArrowUp[\s\S]*?Home[\s\S]*?End/);
-  assert.match(liveShell, /citySelectDialog\?\.addEventListener\("cancel"[\s\S]*?closeCityPicker/);
+  assert.match(liveShell, /event\.key === "Escape"[\s\S]*?closeCityPicker\(true\)/);
+  assert.match(liveShell, /homeFilterToggle\?\.setAttribute\("aria-expanded", "false"\)[\s\S]*?homeAdvancedFilters\?\.classList\.remove\("is-open"\)/);
 });
 
-test("mobile discovery uses compact neutral controls and a bottom-sheet city picker", () => {
-  assert.match(aesthetic, /\.city-picker-dialog\[open\][\s\S]*?inset: auto 10px max\(10px, env\(safe-area-inset-bottom\)\)/);
+test("mobile discovery uses compact neutral controls and an inline city panel", () => {
+  assert.match(aesthetic, /\.city-picker-inline[\s\S]*?grid-column: 1 \/ -1[\s\S]*?\.city-picker-inline\[hidden\][\s\S]*?display: none !important/);
+  assert.match(aesthetic, /\.city-picker-trigger\[aria-expanded="true"\][\s\S]*?var\(--dancr-color-brand-primary\)/);
   assert.match(aesthetic, /\.city-picker-trigger, \.home-filter-toggle[\s\S]*?min-height: 44px/);
   assert.match(aesthetic, /\.dancer-directory-filter\.is-active[\s\S]*?var\(--dancr-color-brand-primary\) 10%[\s\S]*?box-shadow: inset/);
 });
