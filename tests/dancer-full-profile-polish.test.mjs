@@ -149,6 +149,10 @@ test("profile socials and activity metrics use a compact neutral presentation", 
   );
   assert.match(
     aesthetic,
+    /@media \(max-width: 759px\) \{[\s\S]*?#profileBackdrop \.profile-activity-metrics \{[\s\S]*?margin-bottom: 10px !important;/,
+  );
+  assert.match(
+    aesthetic,
     /#profileBackdrop \.profile-modal \{[\s\S]*?height: auto !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: min\(94vh, calc\(100dvh - var\(--mydancr-preview-banner-offset\)\)\) !important;/,
   );
   assert.match(

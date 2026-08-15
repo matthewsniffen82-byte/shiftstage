@@ -3588,12 +3588,17 @@ body.dancr-button-system .public-profile-shell :is(
 
 /* The profile sheet is bounded to the visible area above the persistent 72px
  * discovery bar. Its grid already contributes 12px of terminal clearance, so
- * the remaining 60px keeps the final stats divider directly above the dock
- * without creating a second empty footer. */
+ * the remaining 60px keeps the final stats at the dock without creating a
+ * second empty footer. A narrow reveal zone keeps the dock's glass paint and
+ * shadow from covering the stats divider. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop .profile-modal .modal-body {
     padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
     scroll-padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.dancr-button-system #profileBackdrop .profile-activity-metrics {
+    margin-bottom: 10px !important;
   }
 }
 
