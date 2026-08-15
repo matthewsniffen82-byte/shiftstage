@@ -20,6 +20,10 @@ test("homepage TV overlays use one balanced 52px control system", () => {
   );
   assert.match(
     homeSource,
+    /\.home-tv-feed-action \.action-icon \{[\s\S]*?width: 21px !important;[\s\S]*?height: 21px !important;[\s\S]*?flex: 0 0 21px !important;[\s\S]*?place-items: center;/,
+  );
+  assert.match(
+    homeSource,
     /\.home-tv-feed-deal-action \{[\s\S]*?width: 52px !important;[\s\S]*?height: 52px !important;[\s\S]*?font-size: 8px;/,
   );
   assert.match(
