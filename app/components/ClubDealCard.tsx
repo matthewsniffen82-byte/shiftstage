@@ -240,7 +240,13 @@ export function ClubDealCard({
             <small>Open this site by tapping the club&apos;s MyDancr NFC sticker.</small>
           </div>
         ) : null}
-        <button type="button" onClick={selectForNfcTap} disabled={intentState === "ready"}>
+        <button
+          className="club-deal-active-action"
+          type="button"
+          data-club-deal-state="available"
+          onClick={selectForNfcTap}
+          disabled={intentState === "ready"}
+        >
           {intentState === "ready" ? "Ready to tap NFC ✓" : intentState === "expired" || intentState === "error" ? "Try again" : actionLabel}
         </button>
         {status && (dialogOpen || intentState !== "preview") ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
@@ -266,8 +272,9 @@ export function ClubDealCard({
     <>
       {presentation === "launcher" ? (
         <button
-          className="club-deal-launcher"
+          className="club-deal-launcher club-deal-active-action"
           type="button"
+          data-club-deal-state="available"
           onClick={(event) => {
             openDealDialog(event.currentTarget);
           }}
@@ -286,8 +293,9 @@ export function ClubDealCard({
 
       {stickyCta ? (
         <button
-          className="club-deal-sticky"
+          className="club-deal-sticky club-deal-active-action"
           type="button"
+          data-club-deal-state="available"
           onClick={(event) => {
             openDealDialog(event.currentTarget);
           }}

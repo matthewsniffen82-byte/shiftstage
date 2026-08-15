@@ -176,6 +176,67 @@
     inset 0 2px 8px var(--dancr-color-black-soft) !important;
 }
 
+/* Active NFC Club Deals share the venue-card treatment everywhere they appear. */
+.dancr-button-system :is(
+  button[data-club-deal-cta],
+  a[data-club-deal-cta],
+  button[data-club-deal-state="available"],
+  a[data-club-deal-state="available"],
+  .club-deal-active-action
+) {
+  border-color: var(--dancr-color-success-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background:
+    linear-gradient(
+      180deg,
+      var(--dancr-color-white-medium),
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 50% -20%,
+      var(--dancr-color-success-medium),
+      transparent 58%
+    ),
+    linear-gradient(
+      135deg,
+      var(--dancr-color-success),
+      color-mix(in srgb, var(--dancr-color-success) 58%, var(--dancr-color-background))
+    ) !important;
+  box-shadow:
+    0 8px 18px var(--dancr-color-black-soft),
+    0 0 20px var(--dancr-color-success-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  text-shadow: none !important;
+}
+
+.dancr-button-system :is(
+  button[data-club-deal-cta],
+  a[data-club-deal-cta],
+  button[data-club-deal-state="available"],
+  a[data-club-deal-state="available"],
+  .club-deal-active-action
+):hover {
+  border-color: var(--dancr-color-success) !important;
+  box-shadow:
+    0 8px 18px var(--dancr-color-black-soft),
+    0 0 26px var(--dancr-color-success-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+}
+
+.dancr-button-system :is(
+  button[data-club-deal-cta],
+  a[data-club-deal-cta],
+  button[data-club-deal-state="available"],
+  a[data-club-deal-state="available"],
+  .club-deal-active-action
+):active {
+  border-color: var(--dancr-color-success-strong) !important;
+  box-shadow:
+    0 7px 20px var(--dancr-color-black-medium),
+    0 0 16px var(--dancr-color-success-medium),
+    inset 0 2px 8px var(--dancr-color-black-soft) !important;
+}
+
 .dancr-button-system .public-media-thumbnail {
   min-height: 0 !important;
   border: 3px solid transparent !important;
@@ -231,6 +292,8 @@
 .dancr-button-system :is(
   [data-feed-venue-qr],
   [data-club-deal-cta],
+  [data-club-deal-state="available"],
+  .club-deal-active-action,
   .venue-qr-launcher,
   .home-discovery-feed-qr-prompt
 ):focus-visible {

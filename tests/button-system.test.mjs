@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [buttonCss, layoutSource, liveSource] = await Promise.all([
+const [buttonCss, layoutSource, liveSource, dealCardSource] = await Promise.all([
   readFile(new URL("../public/dancr-button-system.v1.css", import.meta.url), "utf8"),
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
 ]);
 
 test("the live shell and every Next page load one shared production button system", () => {
@@ -83,6 +84,25 @@ test("venue-card QR revenue actions use the semantic emerald success treatment",
   assert.match(
     buttonCss,
     /\[data-feed-venue-qr\],[\s\S]*?:focus-visible \{[\s\S]*?outline-color: var\(--dancr-color-success\)[\s\S]*?0 0 0 4px var\(--dancr-color-success-medium\)/,
+  );
+});
+
+test("every active NFC Club Deal control uses the venue-card glow", () => {
+  assert.match(
+    liveSource,
+    /home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?is-available[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass/,
+  );
+  assert.match(
+    buttonCss,
+    /Active NFC Club Deals share the venue-card treatment everywhere[\s\S]*?button\[data-club-deal-cta\][\s\S]*?button\[data-club-deal-state="available"\][\s\S]*?\.club-deal-active-action[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)/,
+  );
+  assert.match(
+    dealCardSource,
+    /className="club-deal-launcher club-deal-active-action"[\s\S]*?data-club-deal-state="available"/,
+  );
+  assert.match(
+    dealCardSource,
+    /className="club-deal-sticky club-deal-active-action"[\s\S]*?data-club-deal-state="available"/,
   );
 });
 
