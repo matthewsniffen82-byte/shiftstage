@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=109" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=110" rel="stylesheet">/,
   );
 });
 
@@ -642,7 +642,7 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   );
   assert.match(
     fullProfilePalette,
-    /@media \(max-width: 759px\) \{[\s\S]*?#profileBackdrop \.profile-modal \.modal-body \{[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /@media \(max-width: 759px\) \{[\s\S]*?#profileBackdrop \.profile-modal \.modal-body \{[\s\S]*?padding-bottom: calc\(60px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-bottom: calc\(60px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     fullProfilePalette,

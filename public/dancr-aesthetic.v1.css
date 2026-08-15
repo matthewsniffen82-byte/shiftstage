@@ -3586,13 +3586,14 @@ body.dancr-button-system .public-profile-shell :is(
   color: var(--dancr-color-info) !important;
 }
 
-/* The persistent 72px discovery bar remains available inside full profiles.
- * Give mobile profile actions enough trailing scroll space to clear it so the
- * Going and overflow actions remain visible and receive the tap. */
+/* The profile sheet is bounded to the visible area above the persistent 72px
+ * discovery bar. Its grid already contributes 12px of terminal clearance, so
+ * the remaining 60px keeps the final stats divider directly above the dock
+ * without creating a second empty footer. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop .profile-modal .modal-body {
-    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
-    scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+    scroll-padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -3654,6 +3655,10 @@ body.dancr-button-system .public-profile-shell .profile-overview {
   border-color: var(--dancr-color-border-subtle) !important;
   background: var(--dancr-color-surface) !important;
   box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics {
+  border-bottom: 1px solid var(--dancr-color-border-subtle) !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics > div + div,
@@ -5595,6 +5600,8 @@ body.dancr-button-system #profileBackdrop.modal-backdrop.show {
 }
 
 body.dancr-button-system #profileBackdrop .profile-modal {
+  height: auto !important;
+  min-height: 0 !important;
   max-height: min(94vh, calc(100dvh - var(--mydancr-preview-banner-offset))) !important;
 }
 
