@@ -147,7 +147,7 @@ test("saved profiles keep every active photo moderation state in the editor", ()
   assert.doesNotMatch(mobileAppSource, /approved-photo-slot-status/);
 });
 
-test("onboarding Step 2 stays locked until every photo is fully approved", () => {
+test("onboarding Step 2 unlocks with one approved photo while extra photos can remain in review", () => {
   const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?\r?\n    }\r?\n\r?\n    async function uploadApprovedDancerPhoto/)?.[0] || "";
   const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?\r?\n    }\r?\n\r?\n    async function submitDancerProfileForReview/)?.[0] || "";
   const profileHydration = mobileAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\r?\n    }\r?\n\r?\n    function setDancerSetupField/)?.[0] || "";
@@ -160,13 +160,15 @@ test("onboarding Step 2 stays locked until every photo is fully approved", () =>
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "review"/);
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "rejected"/);
   assert.match(setupSubmit, /dancerProfileMediaModerationComplete\(profile\)/);
-  assert.match(setupSubmit, /approvedUploads\.length > 0 && reviewUploads\.length === 0/);
+  assert.match(setupSubmit, /\|\| approvedUploads\.length > 0/);
+  assert.doesNotMatch(setupSubmit, /approvedUploads\.length > 0 && reviewUploads\.length === 0/);
   assert.match(setupSubmit, /activeSetupStep = "profile";[\s\S]*?setupChecklistExpanded = true;/);
   assert.match(profileHydration, /photos: dancerProfileMediaModerationComplete\(profile\)/);
   assert.doesNotMatch(profileHydration, /photos: statusApproved \|\| photos\.length > 0 \|\| submittedPhotos\.length > 0/);
   assert.match(mobileAppSource, /Pending human review/);
   assert.match(mobileAppSource, /Approved automatically/);
-  assert.match(mobileAppSource, /Step 2 stays locked/);
+  assert.match(mobileAppSource, /Step 2 stays locked until at least one profile photo is approved/);
+  assert.match(mobileAppSource, /you can continue to Step 2 while the additional review finishes/);
   assert.match(mobileAppSource, /\.submitted-photo-slot\.is-pending/);
 });
 

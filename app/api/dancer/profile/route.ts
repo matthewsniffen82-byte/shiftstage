@@ -171,6 +171,9 @@ function safeProfileSaveError(stage: ProfileSaveStage, error: any) {
   if (message.startsWith("PROFILE_PHOTO_DELETE_COUNT_MISMATCH")) return "The selected photo could not be permanently deleted.";
   if (message.startsWith("PROTECTED_FIELDS_CHANGED")) return "Profile visibility or approval changed unexpectedly, so the save was stopped.";
   if (message.startsWith("PUBLIC_PROFILE_STATE_CHANGED")) return "Profile visibility or approval changed unexpectedly, so the save was stopped.";
+  if (message === "Save stage name and city before publishing your profile.") return message;
+  if (message === "Upload an avatar that passes moderation before submitting your profile.") return message;
+  if (message === "At least one profile picture must pass moderation before submitting your profile.") return message;
   if (message === "Sign in required." || message === "Dancer profile not found.") return message;
 
   const stageMessages: Record<ProfileSaveStage, string> = {
@@ -826,41 +829,26 @@ async function submitProfileForReview(
   }
 
   const adminDb = createAdminSupabaseClient() as any;
-  const [setupResult, photosResult, videosResult] = await Promise.all([
+  const [setupResult, photosResult] = await Promise.all([
     adminDb
       .from("dancer_profiles")
-      .select("avatar_storage_path, photo_review_status")
+      .select("avatar_storage_path")
       .eq("id", dancerId)
       .maybeSingle(),
     adminDb
       .from("dancer_photos")
       .select("id, review_status")
       .eq("dancer_id", dancerId),
-    adminDb
-      .from("mydancr_tv_videos")
-      .select("id, status")
-      .eq("dancer_id", dancerId),
   ]);
   if (setupResult.error) throw setupResult.error;
   if (photosResult.error) throw photosResult.error;
-  if (videosResult.error) throw videosResult.error;
 
   if (!String(setupResult.data?.avatar_storage_path || "").trim()) {
     throw new Error("Upload an avatar that passes moderation before submitting your profile.");
   }
   const photos = photosResult.data || [];
-  if (
-    setupResult.data?.photo_review_status !== "approved"
-    || !photos.length
-    || photos.some((photo: any) => photo.review_status !== "approved")
-  ) {
-    throw new Error("Every uploaded profile picture must pass moderation before submitting your profile.");
-  }
-  const unfinishedVideo = (videosResult.data || []).some((video: any) =>
-    ["uploading", "moderating", "submitted"].includes(String(video.status || "").toLowerCase()),
-  );
-  if (unfinishedVideo) {
-    throw new Error("Wait for every uploaded video to finish moderation before submitting your profile.");
+  if (!photos.some((photo: any) => photo.review_status === "approved")) {
+    throw new Error("At least one profile picture must pass moderation before submitting your profile.");
   }
 
   const { data: submittedProfile, error } = await db

@@ -46148,13 +46148,6 @@
       return pendingApprovedProfileVideoPreviewUrl;
     }
 
-    function dancerProfileVideoModerationComplete() {
-      if (!isDancerSession()) return true;
-      if (!approvedProfileVideoWorkspace) return false;
-      const videos = Array.isArray(approvedProfileVideoWorkspace.videos) ? approvedProfileVideoWorkspace.videos : [];
-      return videos.every((video) => !["uploading", "moderating", "submitted"].includes(String(video?.status || "").toLowerCase()));
-    }
-
     function approvedProfileVideoManagerMarkup() {
       const workspace = approvedProfileVideoWorkspace;
       const videos = Array.isArray(workspace?.videos)
@@ -50447,7 +50440,7 @@
       if (step === "profile") {
         const profile = activeDancerProfile();
         const avatarSaved = Boolean(profile?.avatarStoragePath || profile?.avatar_storage_path);
-        return Boolean(dancerSetup.profile && dancerSetup.photos && avatarSaved && dancerProfileVideoModerationComplete());
+        return Boolean(dancerSetup.profile && dancerSetup.photos && avatarSaved);
       }
       return Boolean(dancerSetup[step]);
     }
@@ -51110,7 +51103,7 @@
       const categories = [...rows, ...pendingReviews, ...submittedPhotos]
         .map((photo) => dancerSetupPhotoModerationCategory(photo))
         .filter(Boolean);
-      return categories.includes("approved") && categories.every((category) => category === "approved");
+      return categories.includes("approved");
     }
 
     function dancerSubmittedPhotosFromProfile(profile) {
@@ -51243,9 +51236,11 @@
       if (rejectedCount) outcomes.push(`${rejectedCount} fully rejected`);
       if (failedCount) outcomes.push(`${failedCount} could not be processed`);
       if (!canContinue) {
-        return `${outcomes.join(" · ")}. Step 2 stays locked until every uploaded photo passes moderation.`;
+        return `${outcomes.join(" · ")}. Step 2 stays locked until at least one profile photo is approved.`;
       }
-      return `${outcomes.join(" · ")}. Media moderation passed. You can continue to Step 2.`;
+      return reviewCount
+        ? `${outcomes.join(" · ")}. Your required profile photo is approved, so you can continue to Step 2 while the additional review finishes.`
+        : `${outcomes.join(" · ")}. The required profile-photo check passed. You can continue to Step 2.`;
     }
 
     async function submitSetupPhotos(form) {
@@ -51341,7 +51336,7 @@
         pendingSetupPhotoFiles = failedFiles;
         pendingSetupPhotoPreviewUrls = failedPreviewUrls;
         dancerSetup.photos = dancerProfileMediaModerationComplete(profile)
-          || (approvedUploads.length > 0 && reviewUploads.length === 0 && rejectedUploads.length === 0 && unresolvedUploads.length === 0);
+          || approvedUploads.length > 0;
         activeSetupStep = "profile";
         setupChecklistExpanded = true;
         const message = setupPhotoModerationResultMessage({
@@ -51376,12 +51371,12 @@
     async function submitDancerProfileForReview(button) {
       const setupProfile = activeDancerProfile();
       const avatarSaved = Boolean(setupProfile?.avatarStoragePath || setupProfile?.avatar_storage_path);
-      if (!dancerSetup.profile || !dancerSetup.photos || !avatarSaved || !dancerProfileVideoModerationComplete()) {
+      if (!dancerSetup.profile || !dancerSetup.photos || !avatarSaved) {
         activeSetupStep = "profile";
-        profileSubmitNotice = "Complete your profile and wait for every uploaded picture and video to pass moderation before submitting.";
+        profileSubmitNotice = "Complete your identity, approved avatar, and at least one approved profile picture before submitting. Other media can finish review separately.";
         profileSubmitNoticeTone = "error";
         renderDancerSetup();
-        showToast("Complete your profile and media first");
+        showToast("Complete the required profile items first");
         return;
       }
       const profile = ensureActiveDancerProfile("Pending");

@@ -198,20 +198,27 @@ test("background dashboard refreshes do not replace Step 1 while the dancer is t
   );
 });
 
-test("only fully moderated photos complete profile media", () => {
+test("one approved profile photo unlocks submission while optional media reviews continue separately", () => {
   const profileHydrator =
     liveAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
   const photoEligibility =
     liveAppSource.match(/function dancerSetupPhotoModerationCategory[\s\S]*?\n    function dancerSubmittedPhotosFromProfile/)?.[0] || "";
+  const liveSubmit =
+    liveAppSource.match(/async function submitDancerProfileForReview[\s\S]*?\n    function/)?.[0] || "";
+  const serverSubmit =
+    profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
 
   assert.match(profileHydrator, /photos: dancerProfileMediaModerationComplete\(profile\)/);
-  assert.match(liveAppSource, /categories\.includes\("approved"\) && categories\.every\(\(category\) => category === "approved"\)/);
-  assert.match(liveAppSource, /function dancerProfileVideoModerationComplete\(\)/);
-  assert.match(liveAppSource, /\["uploading", "moderating", "submitted"\]\.includes/);
-  assert.match(liveAppSource, /dancerProfileVideoModerationComplete\(\)/);
-  assert.match(profileRouteSource, /Every uploaded profile picture must pass moderation before submitting your profile/);
-  assert.match(profileRouteSource, /Wait for every uploaded video to finish moderation before submitting your profile/);
-  assert.match(profileRouteSource, /photos\.some\(\(photo: any\) => photo\.review_status !== "approved"\)/);
+  assert.match(liveAppSource, /return categories\.includes\("approved"\);/);
+  assert.doesNotMatch(liveAppSource, /categories\.every\(\(category\) => category === "approved"\)/);
+  assert.doesNotMatch(liveAppSource, /function dancerProfileVideoModerationComplete\(\)/);
+  assert.doesNotMatch(liveSubmit, /dancerProfileVideoModerationComplete/);
+  assert.match(liveSubmit, /Other media can finish review separately/);
+  assert.match(serverSubmit, /photos\.some\(\(photo: any\) => photo\.review_status === "approved"\)/);
+  assert.match(serverSubmit, /At least one profile picture must pass moderation before submitting your profile/);
+  assert.doesNotMatch(serverSubmit, /mydancr_tv_videos/);
+  assert.doesNotMatch(serverSubmit, /Every uploaded profile picture/);
+  assert.doesNotMatch(serverSubmit, /Wait for every uploaded video/);
   assert.match(photoEligibility, /decision === "rejected" \|\| status === "rejected"/);
 });
 

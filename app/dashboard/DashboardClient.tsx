@@ -2788,7 +2788,7 @@ function DancerOnboardingCommand({
   );
   const submitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
   const setupDetail = profileReady
-    ? "Identity, avatar, and profile pictures are saved and moderation-approved."
+    ? "Identity, avatar, and at least one profile picture are approved. Other media can finish review separately."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
   const steps = useMemo(() => [
     {
