@@ -127,6 +127,16 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
   assert.match(retiredDealQr, /status: 410/);
 });
 
+test("Club Deal checkout explains the complete NFC tap flow without requiring an open browser", () => {
+  assert.match(dealCard, /Select for checkout/);
+  assert.match(dealCard, /At cashier, unlock phone/);
+  assert.match(dealCard, /Hold near MyDancr NFC sticker/);
+  assert.match(dealCard, /Browser opens—confirm redemption/);
+  assert.match(dealCard, /Ready for cashier tap ✓/);
+  assert.match(dealCard, /Your browser opens automatically—then press Redeem this Club Deal/);
+  assert.match(dealCard, /Saved for later on this device\. This does not select or redeem the deal\./);
+});
+
 test("NFC activity remains auditable without exposing reusable tokens", () => {
   assert.match(baseMigration, /create table if not exists public\.nfc_tap_events/);
   assert.match(baseMigration, /device_fingerprint text/);

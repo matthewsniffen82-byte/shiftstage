@@ -71,7 +71,8 @@ test("customers explicitly select an exact offer and dancer token until the phys
   assert.match(dealCard, /sourceType/);
   assert.match(dealCard, /dancerId: sourceType === "dancer_profile"/);
   assert.match(dealCard, /attributionTokens\?\.\[activeDeal\.id\]/);
-  assert.match(dealCard, /At the register, select this offer for checkout/);
+  assert.match(dealCard, /Select this deal for checkout/);
+  assert.match(dealCard, /Your browser opens automatically—then confirm redemption/);
   assert.match(dealCard, /setIntentState\("ready"\)/);
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
 });
