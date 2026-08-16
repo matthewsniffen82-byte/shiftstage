@@ -4223,6 +4223,7 @@ function DancerAvatarPanel({
   const [previewUrl, setPreviewUrl] = useState("");
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const avatarUrl = String(profile?.avatarPhotoUrl || "");
   const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
 
@@ -4234,7 +4235,8 @@ function DancerAvatarPanel({
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(nextFile);
     setPreviewUrl(nextFile ? URL.createObjectURL(nextFile) : "");
-    setStatus(nextFile ? "Avatar selected. Upload it when you are ready." : "");
+    setStatus(nextFile ? "Avatar selected. Upload started automatically." : "");
+    if (nextFile) void uploadAvatar(nextFile);
   }
 
   async function refreshProfile(accessToken: string) {
@@ -4248,16 +4250,17 @@ function DancerAvatarPanel({
     return data.profile as Record<string, unknown>;
   }
 
-  async function uploadAvatar(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function uploadAvatar(nextFile: File) {
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
-    if (!file) return setStatus("Choose a clear face photo first.");
+    if (!nextFile.type.startsWith("image/")) return setStatus("Choose a JPEG, PNG, WebP, HEIC, or HEIF image.");
+    if (nextFile.size > 25 * 1024 * 1024) return setStatus("Avatar photos must be 25 MB or smaller.");
     const formData = new FormData();
-    const uploadKey = `${file.name}:${file.size}:${file.lastModified}:avatar:${Date.now()}`;
-    formData.set("file", file);
+    const uploadKey = `${nextFile.name}:${nextFile.size}:${nextFile.lastModified}:avatar:${Date.now()}`;
+    formData.set("file", nextFile);
     formData.set("idempotencyKey", uploadKey);
     setIsSaving(true);
+    setUploadProgress(25);
     setStatus("Checking your avatar...");
     try {
       const response = await fetch("/api/dancer/avatar", {
@@ -4267,8 +4270,13 @@ function DancerAvatarPanel({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || data.error || "Unable to upload avatar.");
+      setUploadProgress(85);
       await refreshProfile(session.accessToken);
-      selectAvatar(null);
+      setFile(null);
+      setPreviewUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return "";
+      });
       const decision = String(data.decision || "pending").toLowerCase();
       setStatus(decision === "approved"
         ? "Avatar approved and saved."
@@ -4277,6 +4285,7 @@ function DancerAvatarPanel({
       setStatus(error instanceof Error ? error.message : "Unable to upload avatar.");
     } finally {
       setIsSaving(false);
+      setUploadProgress(0);
     }
   }
 
@@ -4317,14 +4326,15 @@ function DancerAvatarPanel({
           <small>Choose a clear face photo. We will center it and check it automatically.</small>
         </span>
       </div>
-      <form onSubmit={uploadAvatar}>
+      <div className="dancer-avatar-upload-controls">
         <label>
-          Avatar photo
-          <input accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" type="file" onChange={(event) => selectAvatar(event.target.files?.[0] || null)} />
+          {avatarUrl ? "Replace avatar" : "Choose avatar"}
+          <input accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" disabled={isSaving} type="file" onChange={(event) => selectAvatar(event.target.files?.[0] || null)} />
         </label>
-        <button type="submit" disabled={isSaving || !file}>{isSaving ? "Checking..." : "Upload avatar"}</button>
+        {isSaving ? <progress aria-label="Avatar upload progress" max="100" value={uploadProgress} /> : null}
+        {file && !isSaving ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry avatar upload</button> : null}
         {avatarUrl ? <button type="button" disabled={isSaving} onClick={() => void removeAvatar()}>Remove avatar</button> : null}
-      </form>
+      </div>
       <p role="status" aria-live="polite">{status || (pendingAvatar ? "We are checking this avatar. This page updates automatically." : avatarUrl ? "Approved and saved." : "Add one clear face photo to continue.")}</p>
     </article>
   );
@@ -5605,6 +5615,9 @@ type DancerPhotoQueueItem = {
   file: File;
   previewUrl: string;
   source: "gallery" | "camera";
+  makePrimary: boolean;
+  stage: "queued" | "uploading" | "checking" | "failed";
+  progress: number;
   error?: string;
 };
 
@@ -5631,6 +5644,7 @@ function DancerPhotoPanel({
   const [uploadingQueueItemId, setUploadingQueueItemId] = useState("");
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isArranging, setIsArranging] = useState(false);
   const [deletingPhotoIds, setDeletingPhotoIds] = useState<Set<string>>(() => new Set());
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
@@ -5655,36 +5669,40 @@ function DancerPhotoPanel({
   }, []);
 
   function queuePhotos(files: File[], source: DancerPhotoQueueItem["source"]) {
-    const imageFiles = files.filter((nextFile) => nextFile.type.startsWith("image/"));
-    if (!imageFiles.length) {
-      setStatus("Choose image files from your phone or take a new photo.");
+    const replacingPrimary = isPrimary && photos.some((photo) => photo.isPrimary) ? 1 : 0;
+    const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length + replacingPrimary - queuedPhotos.length);
+    const selectedFiles = files.slice(0, availableProfileSlots);
+    if (!selectedFiles.length) {
+      setStatus(`All ${MAX_DANCER_PROFILE_PHOTOS} profile photo slots are occupied. Delete or replace a photo first.`);
       return;
     }
 
-    setQueuedPhotos((current) => {
-      const replacingPrimary = isPrimary && photos.some((photo) => photo.isPrimary) ? 1 : 0;
-      const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length + replacingPrimary - current.length);
-      const availableBatchSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - current.length);
-      const acceptedFiles = imageFiles.slice(0, Math.min(availableProfileSlots, availableBatchSlots));
-      if (!acceptedFiles.length) {
-        setStatus(`All ${MAX_DANCER_PROFILE_PHOTOS} profile photo slots are occupied. Delete or replace a photo first.`);
-        return current;
-      }
-
-      const additions = acceptedFiles.map((nextFile) => {
-        const previewUrl = URL.createObjectURL(nextFile);
-        queuedPreviewUrlsRef.current.add(previewUrl);
-        return {
-          id: `${nextFile.name}:${nextFile.size}:${nextFile.lastModified}:${crypto.randomUUID()}`,
-          file: nextFile,
-          previewUrl,
-          source,
-        } satisfies DancerPhotoQueueItem;
-      });
-      const omitted = imageFiles.length - acceptedFiles.length;
-      setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} ready to upload${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
-      return [...current, ...additions];
+    const additions = selectedFiles.map((nextFile, index) => {
+      const previewUrl = URL.createObjectURL(nextFile);
+      queuedPreviewUrlsRef.current.add(previewUrl);
+      const validType = nextFile.type.startsWith("image/");
+      const validSize = nextFile.size <= 25 * 1024 * 1024;
+      return {
+        id: `${nextFile.name}:${nextFile.size}:${nextFile.lastModified}:${crypto.randomUUID()}`,
+        file: nextFile,
+        previewUrl,
+        source,
+        makePrimary: isPrimary && index === 0,
+        stage: validType && validSize ? "queued" : "failed",
+        progress: 0,
+        error: !validType ? "Choose a JPEG, PNG, WebP, HEIC, or HEIF image." : !validSize ? "Photos must be 25 MB or smaller." : undefined,
+      } satisfies DancerPhotoQueueItem;
     });
+    const omitted = files.length - selectedFiles.length;
+    setQueuedPhotos((current) => [...current, ...additions]);
+    setIsPrimary(false);
+    setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} selected. Upload started automatically${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
+    const uploadable = additions.filter((item) => !item.error);
+    if (uploadable.length) void uploadPhotoBatch(uploadable);
+  }
+
+  function updateQueuedPhoto(id: string, changes: Partial<DancerPhotoQueueItem>) {
+    setQueuedPhotos((current) => current.map((item) => item.id === id ? { ...item, ...changes } : item));
   }
 
   function removeQueuedPhoto(id: string) {
@@ -5722,18 +5740,16 @@ function DancerPhotoPanel({
     if (data.profile) onProfileChange?.(data.profile);
   }
 
-  async function uploadPhotos(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function uploadPhotoBatch(batch: DancerPhotoQueueItem[]) {
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
-    if (!queuedPhotos.length) return setStatus("Choose up to five photos or take a new photo first.");
-    if (!isPrimary && photos.length + queuedPhotos.length > MAX_DANCER_PROFILE_PHOTOS) {
+    if (!batch.length) return setStatus("Choose up to five photos or take a new photo first.");
+    if (!batch.some((item) => item.makePrimary) && photos.length + batch.length > MAX_DANCER_PROFILE_PHOTOS) {
       return setStatus(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
     }
 
     setIsUploading(true);
-    setStatus(`Preparing ${queuedPhotos.length} ${queuedPhotos.length === 1 ? "photo" : "photos"}...`);
-    const batch = [...queuedPhotos];
+    setStatus(`Preparing ${batch.length} ${batch.length === 1 ? "photo" : "photos"}...`);
     const failedItems: DancerPhotoQueueItem[] = [];
     let workingPhotos = [...photos];
     let acceptedCount = 0;
@@ -5742,8 +5758,9 @@ function DancerPhotoPanel({
       await persistQueuedPhotoDeletions(session.accessToken);
       for (let index = 0; index < batch.length; index += 1) {
         const item = batch[index];
-        const makePrimary = isPrimary && index === 0;
+        const makePrimary = item.makePrimary;
         setUploadingQueueItemId(item.id);
+        updateQueuedPhoto(item.id, { stage: "uploading", progress: 25, error: undefined });
         setStatus(`Checking photo ${index + 1} of ${batch.length}...`);
         try {
           if (!makePrimary && workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
@@ -5765,6 +5782,7 @@ function DancerPhotoPanel({
           });
           const data = await response.json();
           if (!response.ok && data.decision !== "rejected") throw new Error(data.message || data.error || "Unable to upload photo.");
+          updateQueuedPhoto(item.id, { stage: "checking", progress: 85 });
           const uploadStatus = normalizePhotoStatus(data.photo?.reviewStatus || data.photo?.review_status || data.decision);
           const approved = uploadStatus === "approved";
           const uploadedPhoto: DancerPhotoItem = {
@@ -5795,7 +5813,7 @@ function DancerPhotoPanel({
           const friendlyMessage = message.includes("valid JPEG, PNG, or WebP") || message.includes("HEIC or HEIF")
             ? "That photo could not be converted. Choose another photo or set your phone camera to Most Compatible."
             : message;
-          failedItems.push({ ...item, error: friendlyMessage });
+          failedItems.push({ ...item, stage: "failed", progress: 0, error: friendlyMessage });
         }
       }
 
@@ -5813,8 +5831,11 @@ function DancerPhotoPanel({
         }
       }
 
-      setQueuedPhotos(failedItems);
-      if (!failedItems.length) setIsPrimary(false);
+      const processedIds = new Set(batch.map((item) => item.id));
+      setQueuedPhotos((current) => [
+        ...current.filter((item) => !processedIds.has(item.id)),
+        ...failedItems,
+      ]);
       if (galleryPhotoInputRef.current) galleryPhotoInputRef.current.value = "";
       if (cameraPhotoInputRef.current) cameraPhotoInputRef.current.value = "";
       const summary = [
@@ -5827,6 +5848,60 @@ function DancerPhotoPanel({
       setUploadingQueueItemId("");
       setIsUploading(false);
     }
+  }
+
+  async function savePhotoArrangement(nextOrder: DancerPhotoItem[]) {
+    if (nextOrder.some((photo) => photo.status !== "approved" || !photo.imageUrl)) {
+      setStatus("Wait for every photo to finish checking before changing the main photo or order.");
+      return;
+    }
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    const previousPhotos = photos;
+    const arranged = relabelPhotoItems(nextOrder.map((photo, index) => ({
+      ...photo,
+      isPrimary: index === 0,
+      sortOrder: index,
+    })));
+    setPhotos(arranged);
+    setIsArranging(true);
+    setStatus("Saving photo order...");
+    try {
+      const response = await fetch("/api/dancer/profile", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          mainPhotoUrl: arranged[0]?.imageUrl || "",
+          galleryPhotoUrls: arranged.slice(1).map((photo) => photo.imageUrl),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to save photo order.");
+      const refreshedPhotos = relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile));
+      setPhotos(refreshedPhotos);
+      onProfileChange?.(data.profile);
+      setStatus("Photo order saved.");
+    } catch (error) {
+      setPhotos(previousPhotos);
+      setStatus(error instanceof Error ? error.message : "Unable to save photo order.");
+    } finally {
+      setIsArranging(false);
+    }
+  }
+
+  function makePhotoPrimary(photoId: string) {
+    const selected = photos.find((photo) => photo.id === photoId);
+    if (!selected || selected.isPrimary) return;
+    void savePhotoArrangement([selected, ...photos.filter((photo) => photo.id !== photoId)]);
+  }
+
+  function moveGalleryPhoto(photoId: string, direction: -1 | 1) {
+    const index = photos.findIndex((photo) => photo.id === photoId);
+    const nextIndex = index + direction;
+    if (index <= 0 || nextIndex <= 0 || nextIndex >= photos.length) return;
+    const nextOrder = [...photos];
+    [nextOrder[index], nextOrder[nextIndex]] = [nextOrder[nextIndex], nextOrder[index]];
+    void savePhotoArrangement(nextOrder);
   }
 
   async function deletePhoto(photo: DancerPhotoItem) {
@@ -5880,12 +5955,17 @@ function DancerPhotoPanel({
   return (
     <article className="info-panel upload-panel">
       <h2>Photos</h2>
-      <form className="dancer-photo-upload-form" onSubmit={uploadPhotos}>
+      <div className="dancer-photo-upload-form">
+        <label className="check-row">
+          <input checked={isPrimary} disabled={isUploading} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
+          Make the first selected photo my main photo
+        </label>
         <div className="photo-source-grid">
           <label>
             Choose profile photos
             <input
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+              disabled={isUploading}
               multiple
               ref={galleryPhotoInputRef}
               type="file"
@@ -5894,13 +5974,14 @@ function DancerPhotoPanel({
                 event.target.value = "";
               }}
             />
-            <small>Select up to five photos from your phone at once.</small>
+            <small>Select several photos at once. Upload begins automatically.</small>
           </label>
           <label>
             Take a photo
             <input
               accept="image/*"
               capture="environment"
+              disabled={isUploading}
               ref={cameraPhotoInputRef}
               type="file"
               onChange={(event) => {
@@ -5908,32 +5989,26 @@ function DancerPhotoPanel({
                 event.target.value = "";
               }}
             />
-            <small>Open your phone camera and add the new photo to this queue.</small>
+            <small>Open your phone camera and upload the new photo automatically.</small>
           </label>
         </div>
-        <label className="check-row">
-          <input checked={isPrimary} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
-          Make the first queued photo my primary photo
-        </label>
-        <button type="submit" disabled={isUploading}>
-          {isUploading
-            ? `Uploading photo ${Math.max(1, queuedPhotos.findIndex((item) => item.id === uploadingQueueItemId) + 1)} of ${queuedPhotos.length}...`
-            : `Upload ${queuedPhotos.length || ""} ${queuedPhotos.length === 1 ? "photo" : "photos"}`.replace("  ", " ")}
-        </button>
+        <small className="photo-slot-summary">{queuedPhotos.length} selected · {Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - queuedPhotos.length)} slots remaining</small>
         {status ? <p role="status" aria-live="polite">{status}</p> : null}
-      </form>
+      </div>
       {queuedPhotos.length ? (
         <div className="photo-upload-queue" aria-label="Photos ready to upload">
           {queuedPhotos.map((item, index) => (
             <div className={`photo-review-card is-pending ${uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item.id}>
               <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
               <span>
-                <strong>{isPrimary && index === 0 ? "Main Photo" : `Queued photo ${index + 1}`}</strong>
-                <small>{uploadingQueueItemId === item.id ? "Uploading" : item.error ? "Upload failed" : "Ready to upload"}</small>
+                <strong>{item.makePrimary ? "Main Photo" : `Selected photo ${index + 1}`}</strong>
+                <small>{item.stage === "uploading" ? "Uploading securely" : item.stage === "checking" ? "Running automatic review" : item.error ? "Upload failed" : "Waiting to upload"}</small>
+                {item.stage !== "failed" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
                 <em>{item.error || (item.source === "camera" ? "Taken with your phone camera." : "Selected from your phone.")}</em>
-                <button className="photo-delete-button" disabled={isUploading} onClick={() => removeQueuedPhoto(item.id)} type="button">
-                  Remove from queue
-                </button>
+                <span className="photo-queue-actions">
+                  {item.error ? <button className="photo-retry-button" disabled={isUploading} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+                  <button className="photo-delete-button" disabled={isUploading} onClick={() => removeQueuedPhoto(item.id)} type="button">Remove</button>
+                </span>
               </span>
             </div>
           ))}
@@ -5947,14 +6022,19 @@ function DancerPhotoPanel({
               <strong>{photo.label}</strong>
               <small>{photoStatusLabel(photo.status)}</small>
               <em>{photo.note}</em>
-              <button
-                className="photo-delete-button"
-                type="button"
-                disabled={deletingPhotoIds.has(photo.id)}
-                onClick={() => deletePhoto(photo)}
-              >
-                {deletingPhotoIds.has(photo.id) ? "Deleting..." : "Delete photo"}
-              </button>
+              <span className="photo-card-actions">
+                {photo.status === "approved" && !photo.isPrimary ? <button disabled={isArranging} type="button" onClick={() => makePhotoPrimary(photo.id)}>Make main</button> : null}
+                {photo.status === "approved" && !photo.isPrimary ? <button aria-label={`Move ${photo.label} earlier`} disabled={isArranging || photos.findIndex((item) => item.id === photo.id) <= 1} type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>Earlier</button> : null}
+                {photo.status === "approved" && !photo.isPrimary ? <button aria-label={`Move ${photo.label} later`} disabled={isArranging || photos.findIndex((item) => item.id === photo.id) === photos.length - 1} type="button" onClick={() => moveGalleryPhoto(photo.id, 1)}>Later</button> : null}
+                <button
+                  className="photo-delete-button"
+                  type="button"
+                  disabled={deletingPhotoIds.has(photo.id) || isArranging}
+                  onClick={() => deletePhoto(photo)}
+                >
+                  {deletingPhotoIds.has(photo.id) ? "Deleting..." : "Delete"}
+                </button>
+              </span>
             </span>
           </div>
         ))}
@@ -6536,14 +6616,17 @@ function DashboardStyles() {
       .shift-list-head small { color: #b9accd; line-height: 1.45; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
-      .dancer-photo-upload-form { grid-template-columns: minmax(0, 1fr); }
+      .dancer-photo-upload-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
       .photo-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
       .photo-source-grid label { min-width: 0; display: grid; align-content: start; gap: 7px; }
       .photo-source-grid small { color: #94a3b8; font-size: 12px; line-height: 1.4; }
       .photo-upload-queue { display: grid; gap: 10px; margin-top: 12px; }
       .photo-review-card.is-uploading { border-color: rgba(34,211,238,.58); box-shadow: inset 3px 0 0 rgba(34,211,238,.88); }
-      .photo-review-list { display: grid; gap: 10px; }
+      .photo-slot-summary { color: #94e5ff; font-size: 12px; font-weight: 850; }
+      .photo-review-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
       .photo-review-card { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .photo-review-list .photo-review-card { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 310px; }
+      .photo-review-list .photo-preview { width: 100%; aspect-ratio: 4 / 5; }
       .photo-review-card.is-pending { border-color: rgba(217,173,79,.58); background: rgba(217,173,79,.1); box-shadow: inset 3px 0 0 rgba(217,173,79,.88); }
       .photo-review-card.is-approved { border-color: rgba(50,255,164,.36); background: rgba(50,255,164,.08); }
       .photo-review-card.is-rejected { border-color: rgba(255,104,124,.58); background: rgba(255,104,124,.12); box-shadow: inset 3px 0 0 rgba(255,104,124,.9); }
@@ -6551,6 +6634,10 @@ function DashboardStyles() {
       .photo-review-card strong { color: #fff; }
       .photo-review-card small { color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; letter-spacing: .08em; }
       .photo-review-card em { color: #cfc5de; font-size: 13px; font-style: normal; line-height: 1.35; }
+      .photo-review-card progress { width: 100%; height: 7px; accent-color: #7eeaff; }
+      .photo-queue-actions, .photo-card-actions { display: flex !important; flex-wrap: wrap; gap: 6px !important; }
+      .photo-card-actions button, .photo-retry-button { min-height: 34px; padding: 0 9px; border: 1px solid rgba(34,211,238,.28); border-radius: 8px; color: #b5f1ff; background: rgba(34,211,238,.08); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
+      .photo-card-actions button:disabled, .photo-retry-button:disabled { opacity: .5; cursor: wait; }
       .photo-delete-button { width: fit-content; min-height: 36px; margin-top: 4px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,104,124,.38); background: rgba(255,104,124,.14); color: #ffd6dc; font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
       .photo-delete-button:disabled { opacity: .62; cursor: wait; }
       .photo-preview { width: 96px; aspect-ratio: 3 / 4; display: grid; place-items: center; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; }
@@ -7050,7 +7137,8 @@ function DashboardStyles() {
       .dancer-avatar-editor > span:last-child { display: grid; gap: 5px; }
       .dancer-avatar-editor strong { color: #fff; }
       .dancer-avatar-editor small { color: var(--mydancr-dashboard-muted); line-height: 1.4; }
-      .dancer-avatar-panel form { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: end; gap: 10px; }
+      .dancer-avatar-upload-controls { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: end; gap: 10px; }
+      .dancer-avatar-upload-controls progress { width: 100%; height: 8px; grid-column: 1 / -1; accent-color: #7eeaff; }
       .dancer-avatar-panel label { display: grid; gap: 7px; color: #d7d5dd; font-size: 13px; font-weight: 850; }
       .dancer-avatar-panel input { min-height: 48px; box-sizing: border-box; padding: 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #fff; background: #16161b; }
       .dancer-avatar-panel button { min-height: 48px; padding: 0 15px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #fff; background: #17171d; font: inherit; font-weight: 900; cursor: pointer; }
@@ -7106,9 +7194,9 @@ function DashboardStyles() {
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
-      @media (max-width: 860px) { .dancer-avatar-panel form { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
+      @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
-      @media (max-width: 620px) { .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
+      @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }

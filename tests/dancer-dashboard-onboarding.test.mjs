@@ -96,7 +96,10 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /embedded \? \([\s\S]*?<h2>Profile videos<\/h2>[\s\S]*?approved videos appear on your profile and MyDancr TV/i);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
-  assert.match(dancerStudio, /Submit \$\{queuedVideos\.length \|\| ""\} \$\{queuedVideos\.length === 1 \? "video" : "videos"\} for review/);
+  assert.match(dancerStudio, /Upload started automatically/);
+  assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
+  assert.match(dancerStudio, />Retry<\/button>/);
+  assert.doesNotMatch(dancerStudio, /type="submit"/);
   assert.match(dancerStudio, /\.tv-video-source-grid label \{ min-width: 0;/);
   assert.match(dancerStudio, /input\[type="file"\] \{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%;/);
 });
@@ -154,11 +157,15 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /if \(cameraPhotoInputRef\.current\) cameraPhotoInputRef\.current\.value = ""/);
 });
 
-test("photo and video uploaders queue five phone files and expose camera capture", () => {
+test("photo and video uploaders auto-upload multiple phone files with independent recovery", () => {
   assert.match(dashboard, /type DancerPhotoQueueItem/);
   assert.match(dashboard, /multiple[\s\S]*?ref=\{galleryPhotoInputRef\}/);
   assert.match(dashboard, /capture="environment"[\s\S]*?ref=\{cameraPhotoInputRef\}/);
-  assert.match(dashboard, /imageFiles\.slice\(0, Math\.min\(availableProfileSlots, availableBatchSlots\)\)/);
+  assert.match(dashboard, /const selectedFiles = files\.slice\(0, availableProfileSlots\)/);
+  assert.match(dashboard, /void uploadPhotoBatch\(uploadable\)/);
+  assert.match(dashboard, /stage: "failed", progress: 0/);
+  assert.match(dashboard, /savePhotoArrangement/);
+  assert.match(dashboard, />Make main<\/button>/);
   assert.match(dashboard, /for \(let index = 0; index < batch\.length; index \+= 1\)/);
   assert.match(dashboard, /DANCER_PHOTOS_KEEP_OPEN_EVENT/);
   assert.doesNotMatch(dashboard, /Choose the original camera photo for maximum detail/);
@@ -166,7 +173,9 @@ test("photo and video uploaders queue five phone files and expose camera capture
   assert.match(dancerStudio, /type QueuedVideo/);
   assert.match(dancerStudio, /accept="video\/mp4,video\/webm,video\/quicktime,\.mov"[\s\S]*?multiple/);
   assert.match(dancerStudio, /capture="environment"/);
-  assert.match(dancerStudio, /videoFiles\.slice\(0, Math\.min\(availableSlots, maxVideos - current\.length\)\)/);
+  assert.match(dancerStudio, /const selectedFiles = files\.slice\(0, availableSlots\)/);
+  assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
+  assert.match(dancerStudio, /stage: "failed",\s*progress: 0/);
   assert.match(dancerStudio, /for \(let index = 0; index < batch\.length; index \+= 1\)/);
   assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, item\.file/);
   assert.match(dancerStudio, /preparedVideoId[\s\S]*?method: "DELETE"/);
@@ -211,7 +220,7 @@ test("approval transitions in place and saved NFC enrollment finalizes automatic
 });
 
 test("mobile onboarding remains one-column with reachable 44px-plus controls", () => {
-  assert.match(dashboard, /@media \(max-width: 860px\) \{ \.dancer-avatar-panel form \{ grid-template-columns: 1fr/);
+  assert.match(dashboard, /@media \(max-width: 860px\) \{ \.dancer-avatar-upload-controls \{ grid-template-columns: 1fr/);
   assert.match(dashboard, /\.dancer-onboarding-steps button \{ min-height: 82px; grid-template-columns: 34px minmax\(0,1fr\) 28px/);
   assert.match(dashboard, /\.dancer-step-one-checklist \{ grid-template-columns: 1fr/);
   assert.match(dashboard, /\.dancer-step-one-section-button \{ min-height: 72px; grid-template-columns: 30px minmax\(0,1fr\) 26px/);
@@ -235,6 +244,7 @@ test("step one mobile media and social controls stay inside their accordion", ()
   assert.match(dashboard, /\.dancer-step-one-section-panel input\[type="file"\] \{ overflow: hidden; font-size: 12px/);
   assert.match(dashboard, /\.dancer-step-one-section-panel p, \.dancer-step-one-section-panel small,[^}]*overflow-wrap: anywhere/);
   assert.match(dashboard, /\.dancer-step-one-optional-panel \.socials-panel input \{ height: 46px; min-height: 46px; max-height: 46px/);
-  assert.match(dashboard, /\.dancer-step-one-section-panel \.photo-review-card \{ grid-template-columns: 72px minmax\(0,1fr\)/);
-  assert.match(dashboard, /\.dancer-step-one-section-panel \.photo-preview \{ width: 72px/);
+  assert.match(dashboard, /\.dancer-step-one-section-panel \.photo-upload-queue \.photo-review-card \{ grid-template-columns: 72px minmax\(0,1fr\)/);
+  assert.match(dashboard, /\.dancer-step-one-section-panel \.photo-review-list \{ grid-template-columns: repeat\(2, minmax\(0,1fr\)\)/);
+  assert.match(dashboard, /\.dancer-step-one-section-panel \.photo-review-list \.photo-preview \{ width: 100%/);
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 
@@ -38,6 +38,8 @@ type QueuedVideo = {
   file: File;
   previewUrl: string;
   source: "library" | "camera";
+  stage: "queued" | "validating" | "uploading" | "checking" | "failed";
+  progress: number;
   error?: string;
 };
 
@@ -91,33 +93,41 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   }
 
   function queueVideoFiles(files: File[], source: QueuedVideo["source"]) {
-    const videoFiles = files.filter((nextFile) => nextFile.type.startsWith("video/"));
-    if (!videoFiles.length) {
-      setStatus("Choose video files from your phone or record a new video.");
+    if (!consentConfirmed || !rightsConfirmed) {
+      setStatus("Confirm both permissions before choosing videos. Your selection will upload automatically.");
       return;
     }
 
-    setQueuedVideos((current) => {
-      const availableSlots = Math.max(0, maxVideos - currentVideoCount - current.length);
-      const acceptedFiles = videoFiles.slice(0, Math.min(availableSlots, maxVideos - current.length));
-      if (!acceptedFiles.length) {
-        setStatus(`All ${maxVideos} profile video slots are occupied. Remove a video before adding another.`);
-        return current;
-      }
-      const additions = acceptedFiles.map((file) => {
-        const previewUrl = URL.createObjectURL(file);
-        queuedPreviewUrlsRef.current.add(previewUrl);
-        return {
-          id: `${file.name}:${file.size}:${file.lastModified}:${crypto.randomUUID()}`,
-          file,
-          previewUrl,
-          source,
-        } satisfies QueuedVideo;
-      });
-      const omitted = videoFiles.length - acceptedFiles.length;
-      setStatus(`${additions.length} ${additions.length === 1 ? "video" : "videos"} ready to upload${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
-      return [...current, ...additions];
+    const availableSlots = Math.max(0, maxVideos - currentVideoCount - queuedVideos.length);
+    const selectedFiles = files.slice(0, availableSlots);
+    if (!selectedFiles.length) {
+      setStatus(`All ${maxVideos} profile video slots are occupied. Remove a video before adding another.`);
+      return;
+    }
+
+    const additions = selectedFiles.map((file) => {
+      const previewUrl = URL.createObjectURL(file);
+      queuedPreviewUrlsRef.current.add(previewUrl);
+      const validType = file.type.startsWith("video/");
+      return {
+        id: `${file.name}:${file.size}:${file.lastModified}:${crypto.randomUUID()}`,
+        file,
+        previewUrl,
+        source,
+        stage: validType ? "queued" : "failed",
+        progress: 0,
+        error: validType ? undefined : "Choose an MP4, WebM, or MOV video.",
+      } satisfies QueuedVideo;
     });
+    const omitted = files.length - selectedFiles.length;
+    setQueuedVideos((current) => [...current, ...additions]);
+    setStatus(`${additions.length} ${additions.length === 1 ? "video" : "videos"} selected. Upload started automatically${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
+    const uploadable = additions.filter((item) => !item.error);
+    if (uploadable.length) void uploadVideoBatch(uploadable);
+  }
+
+  function updateQueuedVideo(id: string, changes: Partial<QueuedVideo>) {
+    setQueuedVideos((current) => current.map((item) => item.id === id ? { ...item, ...changes } : item));
   }
 
   function removeQueuedVideo(id: string) {
@@ -129,18 +139,16 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     }));
   }
 
-  async function submitVideo(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function uploadVideoBatch(batch: QueuedVideo[]) {
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in as a dancer to upload.");
     if (atVideoLimit) return setStatus(`You can upload up to ${maxVideos} profile videos. Remove one before adding another.`);
-    if (!queuedVideos.length) return setStatus("Choose up to five MP4, WebM, or MOV videos, or record a new video first.");
+    if (!batch.length) return setStatus("Choose up to five MP4, WebM, or MOV videos, or record a new video first.");
     if (!consentConfirmed || !rightsConfirmed) {
       return setStatus("Confirm consent and content rights for every queued video before submitting.");
     }
 
     setIsSubmitting(true);
-    const batch = [...queuedVideos];
     const failedItems: QueuedVideo[] = [];
     let submittedCount = 0;
     try {
@@ -148,9 +156,11 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         const item = batch[index];
         let preparedVideoId = "";
         setUploadingQueueItemId(item.id);
+        updateQueuedVideo(item.id, { stage: "validating", progress: 10, error: undefined });
         setStatus(`Checking video ${index + 1} of ${batch.length}...`);
         try {
           const metadata = await readVideoMetadata(item.file);
+          updateQueuedVideo(item.id, { stage: "uploading", progress: 30 });
           const response = await fetch("/api/dancer/tv/videos", {
             method: "POST",
             headers: { ...authHeaders(session), "content-type": "application/json" },
@@ -178,6 +188,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             });
           if (uploadError) throw uploadError;
 
+          updateQueuedVideo(item.id, { stage: "checking", progress: 85 });
           setStatus(`Running safety review for video ${index + 1} of ${batch.length}...`);
           const submitResponse = await fetch(`/api/dancer/tv/videos/${preparedVideoId}`, {
             method: "PATCH",
@@ -199,21 +210,23 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           }
           failedItems.push({
             ...item,
+            stage: "failed",
+            progress: 0,
             error: error instanceof Error ? error.message : "Unable to submit this video.",
           });
         }
       }
 
-      setQueuedVideos(failedItems);
+      const processedIds = new Set(batch.map((item) => item.id));
+      setQueuedVideos((current) => [
+        ...current.filter((item) => !processedIds.has(item.id)),
+        ...failedItems,
+      ]);
       if (libraryInputRef.current) libraryInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
       if (submittedCount) await loadWorkspace();
-      if (!failedItems.length) {
-        setConsentConfirmed(false);
-        setRightsConfirmed(false);
-      }
       setStatus([
-        submittedCount ? `${submittedCount} ${submittedCount === 1 ? "video" : "videos"} sent through moderation` : "",
+        submittedCount ? `${submittedCount} ${submittedCount === 1 ? "video" : "videos"} uploaded and sent through automatic review` : "",
         failedItems.length ? `${failedItems.length} ready to retry` : "",
       ].filter(Boolean).join(". ") || "No videos were uploaded.");
     } finally {
@@ -309,13 +322,26 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       ) : null}
 
       {workspace && !atVideoLimit ? (
-        <form className="tv-upload-form" onSubmit={submitVideo}>
+        <section className="tv-upload-form" aria-label="Add profile videos">
+          <div className="tv-upload-permissions">
+            <strong>Confirm permissions once, then choose videos</strong>
+            <small>Every selected video uploads automatically. One failed file will not stop the others.</small>
+          </div>
+          <label className="tv-check">
+            <input checked={consentConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
+            <span>I have permission from every identifiable person shown.</span>
+          </label>
+          <label className="tv-check">
+            <input checked={rightsConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setRightsConfirmed(event.target.checked)} />
+            <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
+          </label>
           <div className="tv-video-source-grid">
             <label className="tv-file-picker">
               Choose profile videos
               <input
                 ref={libraryInputRef}
                 accept="video/mp4,video/webm,video/quicktime,.mov"
+                disabled={isSubmitting || !consentConfirmed || !rightsConfirmed}
                 multiple
                 type="file"
                 onChange={(event) => {
@@ -323,7 +349,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                   event.target.value = "";
                 }}
               />
-              <small>Select up to five vertical or square MP4, WebM, or MOV videos from your phone.</small>
+              <small>Select several vertical or square videos at once.</small>
             </label>
             <label className="tv-file-picker">
               Record a video
@@ -331,26 +357,33 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                 ref={cameraInputRef}
                 accept="video/*"
                 capture="environment"
+                disabled={isSubmitting || !consentConfirmed || !rightsConfirmed}
                 type="file"
                 onChange={(event) => {
                   queueVideoFiles(Array.from(event.target.files || []), "camera");
                   event.target.value = "";
                 }}
               />
-              <small>Open your phone camera and add the recording to this queue.</small>
+              <small>Open your phone camera and upload the recording automatically.</small>
             </label>
           </div>
-          <small className="tv-upload-requirements">Vertical or square MP4/WebM/MOV · 1–30 seconds each · 75 MB maximum each</small>
+          <small className="tv-upload-requirements">
+            Vertical or square MP4/WebM/MOV · 1–30 seconds each · 75 MB maximum each · {queuedVideos.length} selected · {Math.max(0, maxVideos - currentVideoCount - queuedVideos.length)} slots remaining
+          </small>
           {queuedVideos.length ? (
-            <div className="tv-upload-queue" aria-label="Videos ready to upload">
+            <div className="tv-upload-queue" aria-label="Video upload progress">
               {queuedVideos.map((item, index) => (
                 <article className={`tv-upload-queue-item ${uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item.id}>
                   <video className="tv-upload-preview" muted playsInline preload="metadata" src={item.previewUrl} />
                   <div>
-                    <strong>Queued video {index + 1}</strong>
-                    <small>{uploadingQueueItemId === item.id ? "Uploading and checking" : item.error ? "Upload failed" : item.source === "camera" ? "Recorded with your phone camera" : "Selected from your phone"}</small>
+                    <strong>Selected video {index + 1}</strong>
+                    <small>{item.stage === "validating" ? "Validating video" : item.stage === "uploading" ? "Uploading securely" : item.stage === "checking" ? "Running automatic review" : item.error ? "Upload failed" : "Waiting to upload"}</small>
+                    {item.stage !== "failed" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
                     {item.error ? <p>{item.error}</p> : null}
-                    <button disabled={isSubmitting} onClick={() => removeQueuedVideo(item.id)} type="button">Remove from queue</button>
+                    <span className="tv-queue-actions">
+                      {item.error ? <button disabled={isSubmitting} onClick={() => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+                      <button disabled={isSubmitting} onClick={() => removeQueuedVideo(item.id)} type="button">Remove</button>
+                    </span>
                   </div>
                 </article>
               ))}
@@ -362,22 +395,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               <span>Working Now takes priority. Otherwise, MyDancr TV shows your next posted shift. With no current or upcoming shift, no venue is shown.</span>
             </div>
           ) : null}
-          <label className="tv-check">
-            <input checked={consentConfirmed} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
-            <span>I have permission from every identifiable person shown.</span>
-          </label>
-          <label className="tv-check">
-            <input checked={rightsConfirmed} type="checkbox" onChange={(event) => setRightsConfirmed(event.target.checked)} />
-            <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
-          </label>
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting
-              ? `Uploading video ${Math.max(1, queuedVideos.findIndex((item) => item.id === uploadingQueueItemId) + 1)} of ${queuedVideos.length}…`
-              : embedded
-                ? `Submit ${queuedVideos.length || ""} ${queuedVideos.length === 1 ? "video" : "videos"} for review`.replace("  ", " ")
-                : `Submit ${queuedVideos.length || ""} for MyDancr TV review`.replace("  ", " ")}
-          </button>
-        </form>
+        </section>
       ) : null}
 
       {status ? <div className="tv-studio-status" role="status" aria-live="polite">{status}</div> : null}
@@ -508,10 +526,13 @@ function DancerTvStudioStyles() {
       .tv-studio-head > a, .tv-managed-video a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(34,199,255,.38); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font-weight: 900; text-decoration: none; white-space: nowrap; }
       .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; border: 1px solid rgba(139,92,246,.3); border-radius: 12px; background: rgba(11,11,16,.84); }
       .tv-upload-form > label { min-width: 0; display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
-      .tv-video-source-grid, .tv-upload-requirements, .tv-upload-queue, .tv-upload-form > button { min-width: 0; max-width: 100%; grid-column: 1 / -1; }
+      .tv-upload-permissions, .tv-video-source-grid, .tv-upload-requirements, .tv-upload-queue { min-width: 0; max-width: 100%; grid-column: 1 / -1; }
+      .tv-upload-permissions { display: grid; gap: 4px; }
+      .tv-upload-permissions strong { color: #fff; font-size: 14px; }
       .tv-video-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
       .tv-video-source-grid label { min-width: 0; display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
       .tv-upload-form input[type="file"] { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 10px 12px; font: inherit; overflow: hidden; }
+      .tv-upload-form input[type="file"]:disabled { opacity: .45; cursor: not-allowed; }
       .tv-upload-form small { color: #9f94b3; font-size: 11px; font-weight: 700; }
       .tv-upload-requirements { display: block; }
       .tv-upload-queue { display: grid; gap: 10px; }
@@ -519,14 +540,15 @@ function DancerTvStudioStyles() {
       .tv-upload-queue-item.is-uploading { border-color: rgba(34,211,238,.58); box-shadow: inset 3px 0 0 rgba(34,211,238,.8); }
       .tv-upload-preview { width: 96px; aspect-ratio: 9 / 16; max-height: 170px; object-fit: contain; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: #000; }
       .tv-upload-queue-item > div { min-width: 0; display: grid; align-content: start; gap: 6px; }
+      .tv-upload-queue-item progress { width: 100%; height: 7px; accent-color: #7eeaff; }
       .tv-upload-queue-item p { margin: 0; color: #fca5a5; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
       .tv-upload-queue-item button { width: fit-content; min-height: 36px; padding: 0 12px; border: 1px solid rgba(239,68,68,.36); border-radius: 8px; color: #fecaca; background: rgba(239,68,68,.12); font-weight: 850; cursor: pointer; }
+      .tv-queue-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+      .tv-queue-actions button:first-child:not(:last-child) { border-color: rgba(34,211,238,.36); color: #b5f1ff; background: rgba(34,211,238,.1); }
       .tv-check { grid-column: 1 / -1; grid-template-columns: 20px minmax(0, 1fr) !important; align-items: start; }
       .tv-check input { width: 18px; height: 18px; }
       .tv-schedule-context-note { grid-column: 1 / -1; display: grid; gap: 4px; padding: 12px; border: 1px solid rgba(34,199,255,.22); border-radius: 8px; background: rgba(34,199,255,.07); }
       .tv-schedule-context-note span { color: #a9dce8; font-size: 12px; line-height: 1.45; }
-      .tv-upload-form > button { min-height: 50px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
-      .tv-upload-form > button:disabled { opacity: .65; cursor: wait; }
       .tv-studio-status, .tv-studio-lock, .tv-studio-incognito, .tv-studio-limit { margin-top: 12px; padding: 12px 14px; border: 1px solid rgba(34,199,255,.24); border-radius: 8px; background: rgba(34,199,255,.07); color: #b5f1ff; line-height: 1.5; }
       .tv-studio-lock, .tv-studio-incognito, .tv-studio-limit { display: grid; gap: 4px; }
       .tv-studio-lock p, .tv-studio-incognito p, .tv-studio-limit p { margin: 0; color: #cfc5de; }
