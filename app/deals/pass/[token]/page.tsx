@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRedemptionForScanner } from "@/src/lib/dancr/deals";
+import { customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
@@ -21,6 +22,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
 
   const isExpired = new Date(redemption.expiresAt).getTime() <= Date.now();
   const isAvailable = false;
+  const dealTerms = customerFacingDealTerms(redemption.deal.dealTerms);
 
   return (
     <main className="deal-pass-page">
@@ -37,7 +39,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
           <div className="nfc-retired" aria-hidden="true">)))</div>
           <strong>{legacyPassMessage(redemption.status, isExpired)}</strong>
           <small>MyDancr Club Deals now redeem through the club&apos;s physical cashier NFC sticker. Choose a current offer in MyDancr before tapping.</small>
-          {redemption.deal.dealTerms ? <small>{redemption.deal.dealTerms}</small> : null}
+          {dealTerms ? <small>{dealTerms}</small> : null}
           <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find a current NFC Club Deal</Link>
         </>
       </section>

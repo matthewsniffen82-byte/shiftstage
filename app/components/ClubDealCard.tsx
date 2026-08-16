@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ClubDeal, DealSourceType } from "@/src/lib/dancr/types";
+import { customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 import NfcIcon from "@/app/components/NfcIcon";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
@@ -55,6 +56,7 @@ export function ClubDealCard({
   const offerDeals = deals?.length ? deals : [deal];
   const [selectedDealId, setSelectedDealId] = useState(deal.id);
   const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;
+  const displayTerms = customerFacingDealTerms(activeDeal.dealTerms);
   const actionLabel = ctaLabel || (offerDeals.length > 1 ? `Club Deals · ${offerDeals.length}` : "Use Club Deal");
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export function ClubDealCard({
       ? "Your previous selection expired. Select this deal again before tapping NFC."
       : selection
         ? readyStatus(venueName, selection.expiresAt)
-        : "Select this deal for checkout. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically—then confirm redemption.");
+        : "");
   }, [activeDeal.id, dancerId, sourceType, venueId, venueName]);
 
   useEffect(() => {
@@ -159,7 +161,7 @@ export function ClubDealCard({
         dealId: activeDeal.id,
         title: activeDeal.dealTitle,
         description: activeDeal.dealDescription,
-        terms: activeDeal.dealTerms || "",
+        terms: displayTerms,
         offerType: activeDeal.offerType,
         sourceType,
         dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
@@ -224,7 +226,7 @@ export function ClubDealCard({
         <span className="eyebrow">{dealTypeLabel(activeDeal.offerType)} · Club Deal</span>
         <h2>{activeDeal.dealTitle}</h2>
         {!compact ? <p>{activeDeal.dealDescription}</p> : null}
-        {activeDeal.dealTerms && !compact ? <small>{activeDeal.dealTerms}</small> : null}
+        {displayTerms && !compact ? <small>{displayTerms}</small> : null}
         {!compact ? <small>One redemption per guest. Availability is verified at the cashier NFC tap.</small> : null}
         {dancerNote ? (
           <small>Dancer credit is carried securely to the cashier NFC tap while this dancer remains verified at the club.</small>
@@ -240,8 +242,7 @@ export function ClubDealCard({
           <div className="club-deal-redemption-steps" aria-label="How to redeem">
             <div><span>1</span><strong>Select for checkout</strong></div>
             <div><span>2</span><strong>Unlock phone — MyDancr can be closed</strong></div>
-            <div><span>3</span><strong>Hold near MyDancr NFC sticker</strong></div>
-            <div><span>4</span><strong>Browser opens—confirm redemption</strong></div>
+            <div><span>3</span><strong>Hold near MyDancr NFC sticker. Browser opens—confirm redemption</strong></div>
           </div>
         </div>
       ) : null}
@@ -249,8 +250,8 @@ export function ClubDealCard({
         {intentState === "ready" ? (
           <div className="deal-nfc-ready">
             <span aria-hidden="true">)))</span>
-            <strong>Ready for cashier tap</strong>
-            <small>MyDancr does not need to stay open. At the cashier, unlock this phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically—then confirm redemption.</small>
+            <strong>Ready for cashier tap ✓</strong>
+            <small>MyDancr does not need to stay open. Your browser opens automatically—then press Redeem this Club Deal.</small>
           </div>
         ) : null}
         <button
@@ -262,7 +263,7 @@ export function ClubDealCard({
         >
           {intentState === "ready" ? "Ready for cashier tap ✓" : intentState === "expired" || intentState === "error" ? "Try again" : dialogOpen ? "Select for checkout" : actionLabel}
         </button>
-        {status && (dialogOpen || intentState !== "preview") ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
+        {status && intentState !== "preview" ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
         {dialogOpen ? (
           <div className="club-deal-share-actions">
             <button
@@ -512,7 +513,7 @@ function ClubDealInteractionStyles() {
       .club-deal-nfc-symbol { width:96px; height:96px; display:grid; place-items:center; padding:9px; box-sizing:border-box; border:1px solid rgba(255,255,255,.14); border-radius:20px; color:#f7f1ff; background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.22),transparent 56%),rgba(9,9,13,.92); box-shadow:0 14px 34px rgba(0,0,0,.38); }
       .club-deal-nfc-symbol svg { width:66px; height:66px; padding:13px; box-sizing:border-box; border:1px solid rgba(159,117,255,.42); border-radius:50%; background:rgba(11,8,20,.74); }
       .club-deal-redemption-meta { display:flex; flex-wrap:wrap; justify-content:center; gap:5px 12px; color:rgba(255,255,255,.58); font-size:10px; font-weight:850; }
-      .club-deal-redemption-steps { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      .club-deal-redemption-steps { width:100%; display:grid; grid-template-columns:1fr; gap:8px; }
       .club-deal-redemption-steps>div { display:grid; grid-template-columns:24px minmax(0,1fr); align-items:center; gap:7px; padding:9px; border:1px solid rgba(255,255,255,.08); border-radius:12px; color:rgba(255,255,255,.66); background:rgba(255,255,255,.025); font-size:11px; text-align:left; }
       .club-deal-redemption-steps span { width:24px; height:24px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.14); border-radius:50%; color:#fff; }
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child { border-color:rgba(126,234,255,.28); color:#e5fbff; background:rgba(53,216,255,.06); }

@@ -16,32 +16,32 @@ const DEAL_TEMPLATES = Object.freeze([
   {
     title: "Complimentary admission",
     description: "Receive one complimentary general-admission entry after the venue cashier confirms this Club Deal.",
-    terms: "One redemption per guest. Cashier NFC confirmation is required. Subject to venue capacity, age requirements, dress code, and house rules.",
+    terms: "One redemption per guest. Subject to venue capacity, age requirements, dress code, and house rules.",
   },
   {
     title: "Two-for-one admission",
     description: "Purchase one general-admission entry and receive a second general-admission entry at no additional charge.",
-    terms: "One redemption per party. Cashier NFC confirmation is required. Both guests must arrive together. Subject to venue capacity, age requirements, dress code, and house rules.",
+    terms: "One redemption per party. Both guests must arrive together. Subject to venue capacity, age requirements, dress code, and house rules.",
   },
   {
     title: "$10 cover credit",
     description: "Receive a $10 credit toward the venue's standard general-admission cover charge.",
-    terms: "One redemption per guest. Cashier NFC confirmation is required. No cash value. Subject to venue capacity, age requirements, dress code, and house rules.",
+    terms: "One redemption per guest. No cash value. Subject to venue capacity, age requirements, dress code, and house rules.",
   },
   {
     title: "Priority guest entry",
     description: "Use the venue's designated priority guest line for general admission.",
-    terms: "One redemption per guest. Cashier NFC confirmation is required. Priority access does not guarantee immediate admission and remains subject to venue capacity, age requirements, dress code, and house rules.",
+    terms: "One redemption per guest. Priority access does not guarantee immediate admission and remains subject to venue capacity, age requirements, dress code, and house rules.",
   },
   {
     title: "Reduced general admission",
     description: "Receive the venue's reduced MyDancr general-admission rate after cashier confirmation.",
-    terms: "One redemption per guest. Cashier NFC confirmation is required. The venue confirms the current reduced rate at redemption. Subject to venue capacity, age requirements, dress code, and house rules.",
+    terms: "One redemption per guest. The venue confirms the current reduced rate at redemption. Subject to venue capacity, age requirements, dress code, and house rules.",
   },
   {
     title: "Guest-list admission",
     description: "Join the venue's MyDancr guest list for general admission after cashier confirmation.",
-    terms: "One redemption per guest. Cashier NFC confirmation is required. Guest-list access remains subject to venue capacity, age requirements, dress code, and house rules.",
+    terms: "One redemption per guest. Guest-list access remains subject to venue capacity, age requirements, dress code, and house rules.",
   },
 ]);
 

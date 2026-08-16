@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ClubDeal } from "@/src/lib/dancr/types";
 import NfcIcon from "@/app/components/NfcIcon";
+import { customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 
 const SESSION_KEY = "dancrAuthSessionV1";
 const TAP_SESSION_KEY = "mydancrNfcTapSessionV1";
@@ -165,6 +166,7 @@ export function NfcTapClient({ token }: { token: string }) {
   }, [auth.accessToken, auth.role, complete, state, submitTap]);
 
   const activeDeal = state?.deals.find((deal) => deal.id === selectedDealId) || state?.deals[0] || null;
+  const activeDealTerms = customerFacingDealTerms(activeDeal?.dealTerms);
   const dancerNeedsSignIn = state?.tag.type === "dressing_room" && (auth.role !== "dancer" || !auth.accessToken);
   const exitHref = auth.role === "dancer" ? "/dashboard/dancer" : "/";
   const exitLabel = auth.role === "dancer" ? "Back to dancer dashboard" : "Back to MyDancr";
@@ -205,7 +207,7 @@ export function NfcTapClient({ token }: { token: string }) {
                 <span>{dealTypeLabel(activeDeal.offerType)}</span>
                 <h2>{activeDeal.dealTitle}</h2>
                 <p>{activeDeal.dealDescription}</p>
-                {activeDeal.dealTerms ? <small>{activeDeal.dealTerms}</small> : null}
+                {activeDealTerms ? <small>{activeDealTerms}</small> : null}
               </article>
             ) : null}
           </div>

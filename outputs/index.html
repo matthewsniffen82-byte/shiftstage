@@ -25868,7 +25868,7 @@
 
     .deal-pass-steps {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 8px;
       margin-bottom: 10px;
     }
@@ -44664,10 +44664,9 @@
             <div class="deal-pass-steps" aria-label="How to redeem">
               <div class="deal-pass-step"><span>1</span><strong>Select for checkout</strong></div>
               <div class="deal-pass-step"><span>2</span><strong>Unlock phone — MyDancr can be closed</strong></div>
-              <div class="deal-pass-step"><span>3</span><strong>Hold near MyDancr NFC sticker</strong></div>
-              <div class="deal-pass-step"><span>4</span><strong>Browser opens—confirm redemption</strong></div>
+              <div class="deal-pass-step"><span>3</span><strong>Hold near MyDancr NFC sticker. Browser opens—confirm redemption</strong></div>
             </div>
-            <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite">Select this deal for checkout. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically—then confirm redemption.</p>
+            <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
             <div class="deal-pass-actions">
               <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Select for checkout</button>
               <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
@@ -44771,6 +44770,13 @@
       };
     }
 
+    function customerFacingDealTerms(value) {
+      return String(value || "")
+        .replace(/(?:^|\s+)Cashier NFC confirmation is required\.(?=\s+|$)/gi, " ")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim();
+    }
+
     function formatDealPassClockTime(value) {
       const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
       if (!match) return "";
@@ -44815,6 +44821,7 @@
       const intent = pendingNfcDealIntentForPass(pass);
       const state = override?.state || (intent?.expired ? "expired" : intent ? "ready" : "preview");
       sheet.dataset.dealState = state;
+      status.hidden = state === "preview";
       status.classList.toggle("is-ready", state === "ready");
       status.classList.toggle("is-error", state === "error");
       status.classList.toggle("is-expired", state === "expired");
@@ -44827,9 +44834,9 @@
         selectButton.classList.add("is-ready");
         expiry.textContent = readyUntil ? `Ready until ${readyUntil}` : dealPassAvailabilityLabel(pass);
       } else {
-        status.textContent = override?.message || (state === "expired"
+        status.textContent = state === "preview" ? "" : override?.message || (state === "expired"
           ? "Your previous selection expired. Select this deal again before tapping NFC."
-          : "Select this deal for checkout. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically—then confirm redemption.");
+          : "Unable to prepare this deal. Try again.");
         selectButton.textContent = state === "expired" ? "Select again" : state === "error" ? "Try again" : "Select for checkout";
         selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "false");
@@ -44856,7 +44863,7 @@
       document.getElementById("dealPassCopy").textContent = presentation.copy;
       document.getElementById("dealPassDescription").textContent = pass.description || "Select this offer when you are ready to redeem at the cashier.";
       document.getElementById("dealPassOfferType").textContent = clubDealOfferTypeLabel(pass.offerType);
-      const terms = String(pass.terms || "").trim();
+      const terms = customerFacingDealTerms(pass.terms);
       const termsElement = document.getElementById("dealPassTerms");
       termsElement.hidden = !terms;
       termsElement.textContent = terms ? `Terms: ${terms}` : "";

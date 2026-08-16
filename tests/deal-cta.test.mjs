@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [deals, tapRoute, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute] = await Promise.all([
+const [deals, tapRoute, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
@@ -17,6 +17,8 @@ const [deals, tapRoute, dealCard, passPage, venuePage, venueDirectory, dancerPag
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redemptions/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal/qr/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/deal-copy.ts", import.meta.url), "utf8"),
+  readFile(new URL("../scripts/manage-demo-club-deals.mjs", import.meta.url), "utf8"),
 ]);
 
 test("dancer-attributed cashier taps require a verified current shift and preserve locked attribution", () => {
@@ -71,10 +73,26 @@ test("customers explicitly select an exact offer and dancer token until the phys
   assert.match(dealCard, /sourceType/);
   assert.match(dealCard, /dancerId: sourceType === "dancer_profile"/);
   assert.match(dealCard, /attributionTokens\?\.\[activeDeal\.id\]/);
-  assert.match(dealCard, /Select this deal for checkout/);
-  assert.match(dealCard, /Your browser opens automatically—then confirm redemption/);
+  assert.doesNotMatch(dealCard, /Preview only—select this deal before tapping the cashier NFC sticker/);
   assert.match(dealCard, /setIntentState\("ready"\)/);
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
+});
+
+test("Club Deal checkout uses one concise three-step NFC flow across both public experiences", () => {
+  for (const source of [dealCard, liveApp]) {
+    assert.match(source, /<strong>Select for checkout<\/strong>/);
+    assert.match(source, /Unlock phone — MyDancr can be closed/);
+    assert.match(source, /Hold near MyDancr NFC sticker\. Browser opens—confirm redemption/);
+    assert.match(source, /Select for checkout/);
+    assert.match(source, /Save for later/);
+    assert.doesNotMatch(source, /<strong>Tap cashier sticker<\/strong>/);
+  }
+  assert.match(dealCard, /status && intentState !== "preview"/);
+  assert.match(liveApp, /status\.hidden = state === "preview"/);
+  assert.match(dealCopy, /Cashier NFC confirmation is required/);
+  assert.match(dealCard, /customerFacingDealTerms\(activeDeal\.dealTerms\)/);
+  assert.match(liveApp, /customerFacingDealTerms\(pass\.terms\)/);
+  assert.doesNotMatch(demoDeals, /terms: .*Cashier NFC confirmation is required/);
 });
 
 test("multiple live offers stay selectable and bottle service keeps its real booking handoff", () => {
