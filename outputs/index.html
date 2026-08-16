@@ -18918,9 +18918,9 @@
       margin-bottom: 0 !important;
     }
 
-    /* Keep the upcoming club destination visually attached to its schedule. */
-    #profileBackdrop .upcoming-venue-destination,
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-destination {
+    /* Keep every club destination visually attached to its schedule. */
+    #profileBackdrop .profile-venue-destination,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination {
       box-sizing: border-box !important;
       display: grid !important;
       grid-template-columns: 36px minmax(0, 1fr) 18px !important;
@@ -18945,8 +18945,8 @@
       transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease !important;
     }
 
-    #profileBackdrop .upcoming-venue-destination > .venue-dot,
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-destination > .venue-dot {
+    #profileBackdrop .profile-venue-destination > .venue-dot,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination > .venue-dot {
       display: grid !important;
       place-items: center !important;
       width: 36px !important;
@@ -18959,21 +18959,21 @@
       box-shadow: inset 0 0 14px rgba(34, 199, 255, 0.04) !important;
     }
 
-    #profileBackdrop .upcoming-venue-destination > .venue-dot svg,
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-destination > .venue-dot svg {
+    #profileBackdrop .profile-venue-destination > .venue-dot svg,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination > .venue-dot svg {
       width: 18px !important;
       height: 18px !important;
     }
 
-    #profileBackdrop .upcoming-venue-copy,
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-copy {
+    #profileBackdrop .profile-venue-copy,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-copy {
       display: grid !important;
       gap: 2px !important;
       min-width: 0 !important;
     }
 
-    #profileBackdrop .upcoming-venue-label,
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-label {
+    #profileBackdrop .profile-venue-label,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-label {
       color: rgba(156, 163, 175, 0.86) !important;
       font-size: 9px !important;
       font-weight: 900 !important;
@@ -18982,8 +18982,8 @@
       text-transform: uppercase !important;
     }
 
-    #profileBackdrop .upcoming-venue-name,
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-name {
+    #profileBackdrop .profile-venue-name,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-name {
       min-width: 0 !important;
       overflow: hidden !important;
       color: #FFFFFF !important;
@@ -18995,8 +18995,8 @@
       white-space: nowrap !important;
     }
 
-    #profileBackdrop .upcoming-venue-cue,
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-cue {
+    #profileBackdrop .profile-venue-cue,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-cue {
       display: grid !important;
       place-items: center !important;
       width: 18px !important;
@@ -19004,8 +19004,8 @@
       color: rgba(255, 255, 255, 0.56) !important;
     }
 
-    #profileBackdrop .upcoming-venue-cue svg,
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-cue svg {
+    #profileBackdrop .profile-venue-cue svg,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-cue svg {
       width: 16px !important;
       height: 16px !important;
       fill: none !important;
@@ -19015,8 +19015,8 @@
       stroke-width: 2.2 !important;
     }
 
-    #profileBackdrop .upcoming-venue-destination:is(:hover, :focus-visible),
-    #approvedEditProfileDropdown.show .profile-modal .upcoming-venue-destination:is(:hover, :focus-visible) {
+    #profileBackdrop .profile-venue-destination:is(:hover, :focus-visible),
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination:is(:hover, :focus-visible) {
       border-color: rgba(34, 199, 255, 0.38) !important;
       background:
         linear-gradient(180deg, rgba(34, 199, 255, 0.075), rgba(255, 255, 255, 0.025)) !important;
@@ -19027,8 +19027,34 @@
       outline: none !important;
     }
 
-    #profileBackdrop .upcoming-venue-destination:active {
+    #profileBackdrop .profile-venue-destination:active {
       transform: translateY(1px) !important;
+    }
+
+    #profileBackdrop .profile-venue-destination.is-live,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination.is-live {
+      border-color: rgba(77, 236, 157, 0.28) !important;
+      background:
+        linear-gradient(180deg, rgba(77, 236, 157, 0.075), rgba(255, 255, 255, 0.025)) !important;
+    }
+
+    #profileBackdrop .profile-venue-destination.is-live > .venue-dot,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination.is-live > .venue-dot {
+      border-color: rgba(77, 236, 157, 0.28) !important;
+      color: #4DEC9D !important;
+      background: rgba(77, 236, 157, 0.08) !important;
+      box-shadow: inset 0 0 14px rgba(77, 236, 157, 0.05) !important;
+    }
+
+    #profileBackdrop .profile-venue-destination.is-live:is(:hover, :focus-visible),
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination.is-live:is(:hover, :focus-visible) {
+      border-color: rgba(77, 236, 157, 0.48) !important;
+      background:
+        linear-gradient(180deg, rgba(77, 236, 157, 0.11), rgba(255, 255, 255, 0.025)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.055),
+        0 0 0 2px rgba(77, 236, 157, 0.08),
+        0 12px 26px rgba(0, 0, 0, 0.22) !important;
     }
 
     /* Restore the Dancr hero: one intentional right-side light beam, no flat lavender wash. */
@@ -37043,6 +37069,42 @@
           margin-top: 3px;
         }
 
+        /* Working Now mirrors the upcoming schedule hierarchy while retaining
+           the live green status treatment and existing destinations. */
+        #profileBackdrop .modal-grid > .working-now-tile {
+          grid-template-columns: minmax(0, 1fr) !important;
+          align-items: stretch !important;
+          gap: 8px !important;
+          padding: 12px 14px !important;
+        }
+
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile > .profile-schedule-primary,
+        #profileBackdrop .working-now-tile > .schedule-stack,
+        #profileBackdrop .working-now-tile > .profile-schedule-explanation,
+        #profileBackdrop .working-now-tile > .profile-uber-ride {
+          grid-column: 1 / -1 !important;
+          grid-row: auto !important;
+        }
+
+        #profileBackdrop .working-now-tile > .profile-schedule-primary {
+          width: auto !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font-size: clamp(16px, 4.5vw, 20px) !important;
+          line-height: 1.12 !important;
+          text-align: left !important;
+          text-transform: none !important;
+        }
+
+        #profileBackdrop .working-now-tile > .profile-uber-ride {
+          width: 100% !important;
+          margin-top: 3px !important;
+        }
+
         #profileBackdrop .profile-club-deal-tile {
           grid-template-columns: minmax(0, 1fr) 128px !important;
           gap: 14px !important;
@@ -48485,6 +48547,18 @@
       `;
     }
 
+    function profileVenueDestinationMarkup(profile, options = {}) {
+      const safeVenueName = displayText(profile.venue);
+      const liveClass = options.live ? " is-live" : "";
+      return `
+        <button class="profile-venue-destination${liveClass}" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
+          ${venueIconMarkup()}
+          <span class="profile-venue-copy"><span class="profile-venue-label">Club</span><span class="profile-venue-name">${safeVenueName}</span></span>
+          <span class="profile-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>
+        </button>
+      `;
+    }
+
     function shiftsMarkup(profile, status = shiftStatus(profile), options = {}) {
       const isEditorPreview = Boolean(options.preview);
       const city = options.city || selectedCity();
@@ -48492,28 +48566,23 @@
       if (isWorkingTonight(profile) && profile.scheduled) {
         return `
           <div class="info-tile profile-schedule-card working-now-tile schedule-live">
-            <strong>Schedule</strong>
+            <strong>Current shift</strong>
             <div class="profile-schedule-primary modal-schedule-text tonight">Working Now</div>
-            <div class="meta profile-working-stack">
-              <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">Club &amp; directions</button>
-              ${rideMarkup}
+            <div class="schedule-stack">
+              ${profileVenueDestinationMarkup(profile, { live: true })}
             </div>
+            <p class="profile-schedule-explanation">This dancer is venue-confirmed as working here now.</p>
+            ${rideMarkup}
           </div>
         `;
       }
       if (profile.scheduled) {
-        const safeVenueName = displayText(profile.venue);
         return `
           <div class="info-tile profile-schedule-card schedule-upcoming">
             <strong>Upcoming shift</strong>
             <div class="profile-schedule-primary">${displayPublicShiftTime(profile.time, profile)}</div>
             <div class="schedule-stack">
-              <button class="upcoming-venue-destination" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
-                ${venueIconMarkup()}
-                <span class="upcoming-venue-copy"><span class="upcoming-venue-label">Club</span><span class="upcoming-venue-name">${safeVenueName}</span></span>
-                <span class="upcoming-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>
-              </button>
+              ${profileVenueDestinationMarkup(profile)}
             </div>
             <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to customers." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
             ${rideMarkup}

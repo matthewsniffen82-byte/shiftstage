@@ -36,18 +36,22 @@ test("empty and upcoming schedules use one explanatory production card", () => {
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
 });
 
-test("upcoming schedules present the venue as one compact club destination", () => {
+test("current and upcoming schedules share one compact club destination", () => {
   assert.match(
     liveApp,
-    /class="upcoming-venue-destination"[^>]*data-open-venue="\$\{safeVenueName\}"[^>]*aria-label="Open \$\{safeVenueName\} club details"[\s\S]*?class="upcoming-venue-label">Club<[\s\S]*?class="upcoming-venue-name">\$\{safeVenueName\}<[\s\S]*?class="upcoming-venue-cue"/,
+    /function profileVenueDestinationMarkup\(profile, options = \{\}\)[\s\S]*?class="profile-venue-destination\$\{liveClass\}"[^>]*data-open-venue="\$\{safeVenueName\}"[^>]*aria-label="Open \$\{safeVenueName\} club details"[\s\S]*?class="profile-venue-label">Club<[\s\S]*?class="profile-venue-name">\$\{safeVenueName\}<[\s\S]*?class="profile-venue-cue"/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.upcoming-venue-destination,[\s\S]*?grid-template-columns: 36px minmax\(0, 1fr\) 18px !important;[\s\S]*?min-height: 58px !important;[\s\S]*?text-align: left !important;/,
+    /#profileBackdrop \.profile-venue-destination,[\s\S]*?grid-template-columns: 36px minmax\(0, 1fr\) 18px !important;[\s\S]*?min-height: 58px !important;[\s\S]*?text-align: left !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.upcoming-venue-name,[\s\S]*?text-overflow: ellipsis !important;[\s\S]*?white-space: nowrap !important;/,
+    /#profileBackdrop \.profile-venue-name,[\s\S]*?text-overflow: ellipsis !important;[\s\S]*?white-space: nowrap !important;/,
+  );
+  assert.match(
+    liveApp,
+    /profileVenueDestinationMarkup\(profile, \{ live: true \}\)[\s\S]*?profileVenueDestinationMarkup\(profile\)/,
   );
   assert.doesNotMatch(
     liveApp,
