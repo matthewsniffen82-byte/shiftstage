@@ -6825,7 +6825,7 @@ function DashboardStyles() {
       .dancer-onboarding-preview-card > b { color: #bfefff; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
       .dancer-onboarding-preview-open { width: 100%; min-height: 46px; border: 1px solid rgba(126,234,255,.34); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.8), rgba(11,148,201,.58)); font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
       .dancer-onboarding-preview-open:disabled { opacity: .48; cursor: not-allowed; }
-      .dancer-profile-preview-overlay { position: fixed; z-index: 1498; inset: 0; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-x: hidden; overflow-y: auto; overscroll-behavior-x: none; overscroll-behavior-y: contain; color: #f7f2ff; background: #050507; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent; }
+      .dancer-profile-preview-overlay { position: fixed; z-index: 1498; inset: var(--mydancr-preview-banner-offset,0px) 0 0; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-x: hidden; overflow-y: auto; overscroll-behavior-x: none; overscroll-behavior-y: contain; color: #f7f2ff; background: #050507; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent; }
       .dancer-profile-preview-overlay::-webkit-scrollbar { width: 4px; }
       .dancer-profile-preview-overlay::-webkit-scrollbar-track { background: transparent; }
       .dancer-profile-preview-overlay::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(255,255,255,.28); }

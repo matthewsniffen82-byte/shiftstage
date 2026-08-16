@@ -2,44 +2,55 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [layout, homeRoute, aesthetic, dashboard] = await Promise.all([
+const [layout, homeRoute, banner, aesthetic] = await Promise.all([
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/components/MyDancrPreviewBanner.tsx", import.meta.url), "utf8"),
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
-  readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
-test("the demo banner is absent from every application shell", () => {
-  for (const source of [layout, homeRoute, aesthetic, dashboard]) {
-    assert.doesNotMatch(source, /MyDancrPreviewBanner|myDancrPreviewBannerHtml/);
-    assert.doesNotMatch(source, /mydancr-preview-banner/);
-    assert.doesNotMatch(source, /Demo mode notice/);
-  }
-  assert.match(homeRoute, /const withAdminAuthEntry = withLiveProfileAssets\.replace\(/);
+test("the root layout presents one persistent preview notice across the application", () => {
+  assert.equal((layout.match(/<MyDancrPreviewBanner \/>/g) || []).length, 1);
+  assert.match(banner, /DEMO MODE/);
+  assert.match(banner, /All profiles, venues, schedules, offers, and activity shown are fictional demo content\./);
+  assert.doesNotMatch(banner, /TEST\s+SITE|shown are test\s+data/);
+  assert.doesNotMatch(banner, /MyDancr Preview|Venue participation/);
+  assert.equal((banner.match(/aria-label="Demo mode notice"/g) || []).length, 2);
+  assert.match(homeRoute, /myDancrPreviewBannerHtml/);
+  assert.match(homeRoute, /<body class=\"dancr-button-system\">\$\{myDancrPreviewBannerHtml\}/);
+  assert.match(aesthetic, /\.mydancr-preview-banner \{[\s\S]*?position: fixed;[\s\S]*?inset: 0 0 auto;/);
+  assert.match(aesthetic, /body\.dancr-button-system \{[\s\S]*?padding-top: var\(--mydancr-preview-banner-offset\) !important;/);
 });
 
-test("removing the banner also removes its reserved top spacing", () => {
-  assert.doesNotMatch(aesthetic, /padding-top:\s*var\(--mydancr-preview-banner-offset\)/);
-  assert.doesNotMatch(aesthetic, /--mydancr-preview-banner-(?:height|offset)/);
-  assert.doesNotMatch(dashboard, /--mydancr-preview-banner-offset/);
+test("the preview notice remains compact and responsive on mobile", () => {
+  assert.match(aesthetic, /@media \(max-width: 600px\)[\s\S]*?--mydancr-preview-banner-height: 46px;/);
+  assert.match(aesthetic, /\.mydancr-preview-banner span \{[\s\S]*?max-width: min\(52ch, 100%\);/);
+  assert.match(aesthetic, /@media \(prefers-reduced-transparency: reduce\)[\s\S]*?backdrop-filter: none;/);
 });
 
-test("full dancer and venue profiles use the complete viewport", () => {
+test("full dancer and venue profiles remain entirely below the persistent notice", () => {
   assert.match(
     aesthetic,
-    /\.page-panel\.show \{[\s\S]*?top: 0 !important;[\s\S]*?height: 100dvh !important;/,
+    /\.page-panel\.show \{[\s\S]*?top: var\(--mydancr-preview-banner-offset\) !important;[\s\S]*?height: calc\(100dvh - var\(--mydancr-preview-banner-offset\)\) !important;/,
   );
   assert.match(
     aesthetic,
-    /#profileBackdrop\.modal-backdrop,[\s\S]*?#profileBackdrop\.modal-backdrop\.show \{[\s\S]*?top: 0 !important;[\s\S]*?height: 100dvh !important;/,
+    /#profileBackdrop\.modal-backdrop,[\s\S]*?#profileBackdrop\.modal-backdrop\.show \{[\s\S]*?top: var\(--mydancr-preview-banner-offset\) !important;[\s\S]*?height: calc\(100dvh - var\(--mydancr-preview-banner-offset\)\) !important;/,
   );
   assert.match(
     aesthetic,
-    /#profileBackdrop \.profile-modal \{[\s\S]*?max-height: min\(94vh, 100dvh\) !important;/,
+    /#profileBackdrop \.profile-modal \{[\s\S]*?max-height: min\(94vh, calc\(100dvh - var\(--mydancr-preview-banner-offset\)\)\) !important;/,
   );
   assert.match(
     aesthetic,
-    /#results\.venue-profile-overlay \{[\s\S]*?top: 0 !important;[\s\S]*?height: 100dvh !important;[\s\S]*?padding-top: max\(10px, var\(--dancr-viewport-top\)\) !important;/,
+    /#results\.venue-profile-overlay \{[\s\S]*?top: var\(--mydancr-preview-banner-offset\) !important;[\s\S]*?height: calc\(100dvh - var\(--mydancr-preview-banner-offset\)\) !important;[\s\S]*?padding-top: max\(10px, var\(--dancr-viewport-top\)\) !important;/,
   );
-  assert.match(dashboard, /\.dancer-profile-preview-overlay \{[^}]*?inset: 0;/);
+  assert.match(
+    aesthetic,
+    /#profileBackdrop #modalClose \{[\s\S]*?top: 8px !important;[\s\S]*?transform: none !important;/,
+  );
+  assert.doesNotMatch(
+    aesthetic,
+    /\.venue-detail-close \{[\s\S]*?top: calc\(var\(--mydancr-preview-banner-offset\)/,
+  );
 });
