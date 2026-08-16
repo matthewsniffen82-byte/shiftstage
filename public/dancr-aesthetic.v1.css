@@ -4231,6 +4231,9 @@ body.dancr-button-system input.home-tv-feed-scrubber {
   background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
   appearance: none !important;
   -webkit-appearance: none !important;
 }
@@ -4241,6 +4244,9 @@ body.dancr-button-system input.home-tv-feed-scrubber:is(:focus, :focus-visible, 
   outline-offset: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
 }
 
 body.dancr-button-system input.home-tv-feed-scrubber::-webkit-slider-runnable-track,

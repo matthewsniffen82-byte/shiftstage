@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=118" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=119" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31915,7 +31915,7 @@
           position: absolute;
           z-index: 9;
           right: 14px;
-          bottom: -8px;
+          bottom: 0;
           left: 14px;
           width: auto;
           height: 28px;
@@ -31929,6 +31929,9 @@
           background-color: transparent !important;
           background-image: none !important;
           box-shadow: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          filter: none !important;
           appearance: none !important;
           -webkit-appearance: none !important;
           cursor: pointer;
@@ -31997,7 +32000,7 @@
         #results.home-tv-feed:fullscreen .home-tv-feed-scrubber,
         #results.home-tv-feed:-webkit-full-screen .home-tv-feed-scrubber,
         #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-scrubber {
-          bottom: calc(env(safe-area-inset-bottom) - 8px);
+          bottom: env(safe-area-inset-bottom, 0px);
         }
         /* Full-view controls retain their spacing while clearing the device edge. */
         #results.home-tv-feed:fullscreen .home-tv-feed-copy,
@@ -33615,7 +33618,7 @@
           }
           .home-tv-feed-scrubber {
             right: 12px;
-            bottom: -7px;
+            bottom: 0;
             left: 12px;
           }
           .home-discovery-feed-copy {
