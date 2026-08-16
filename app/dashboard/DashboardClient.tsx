@@ -7091,10 +7091,10 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .dancer-profile-preview-overlay .profile-media-tab-icon { position: relative; z-index: 1; width: 18px; height: 18px; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .dancer-profile-preview-overlay .profile-media-tab-play { fill: currentColor; stroke: none; }
-      .dancer-profile-preview-overlay .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42),0 0 34px rgba(124,58,237,.12); isolation: isolate; touch-action: pan-y; }
+      .dancer-profile-preview-overlay .profile-media-feature { position: relative; width: 100%; aspect-ratio: 9 / 16; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42),0 0 34px rgba(124,58,237,.12); isolation: isolate; touch-action: pan-y; }
       .dancer-profile-preview-overlay .profile-media-feature::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 28%; pointer-events: none; background: linear-gradient(180deg,transparent,rgba(0,0,0,.7)); }
       .dancer-profile-preview-overlay .profile-media-feature > img, .dancer-profile-preview-overlay .profile-media-feature > video { width: 100%; height: 100%; display: block; background: #000; pointer-events: none; user-select: none; }
-      .dancer-profile-preview-overlay .profile-media-feature > img { object-fit: contain; filter: brightness(1.14) contrast(1.03); }
+      .dancer-profile-preview-overlay .profile-media-feature > img { object-fit: cover; filter: brightness(1.14) contrast(1.03); }
       .dancer-profile-preview-overlay .profile-media-feature > video { object-fit: cover; }
       .dancer-profile-preview-overlay .profile-media-feature-position, .dancer-profile-preview-overlay .profile-media-feature-expand { position: absolute; z-index: 2; display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #fff; background: rgba(4,4,8,.68); backdrop-filter: blur(12px); font-size: 10px; font-weight: 900; }
       .dancer-profile-preview-overlay .profile-media-feature-position { top: 12px; left: 12px; }

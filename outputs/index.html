@@ -28470,7 +28470,7 @@
       width: 100%;
       height: 100%;
       display: block;
-      object-fit: contain;
+      object-fit: cover;
       background: #000;
       pointer-events: none;
     }
@@ -35367,7 +35367,7 @@
           height: auto !important;
           min-height: 0 !important;
           max-height: none !important;
-          aspect-ratio: var(--profile-photo-aspect-ratio, 4 / 5) !important;
+          aspect-ratio: 9 / 16 !important;
           margin: 0 !important;
           padding: 0 !important;
           overflow: hidden !important;
@@ -35376,7 +35376,7 @@
           border-radius: 20px !important;
           background-color: #020204 !important;
           background-position: center !important;
-          background-size: contain !important;
+          background-size: cover !important;
           box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12) !important;
           cursor: default;
           pointer-events: auto !important;
@@ -35391,7 +35391,7 @@
         #profileBackdrop .modal-image.has-custom-photo {
           background-image: var(--custom-photo), linear-gradient(145deg, #140a25, #040407) !important;
           background-position: center, center !important;
-          background-size: contain, cover !important;
+          background-size: cover, cover !important;
           background-repeat: no-repeat !important;
         }
         #profileBackdrop .modal-image::after {
@@ -38878,7 +38878,6 @@
     const modalVideoProgress = document.getElementById("modalVideoProgress");
     const modalVideoTime = document.getElementById("modalVideoTime");
     let modalVideoControlsHideTimer = 0;
-    let modalPhotoAspectRequestId = 0;
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
     const cityCoordinates = {
@@ -48029,29 +48028,9 @@
       if (modalMediaNext) modalMediaNext.disabled = index >= total - 1;
     }
 
-    function syncModalPhotoAspectRatio(photoUrl) {
-      const requestId = ++modalPhotoAspectRequestId;
-      modalImage.style.removeProperty("--profile-photo-aspect-ratio");
-      if (!photoUrl) return;
-      const image = new Image();
-      image.addEventListener("load", () => {
-        if (
-          requestId !== modalPhotoAspectRequestId ||
-          image.naturalWidth < 1 ||
-          image.naturalHeight < 1
-        ) return;
-        modalImage.style.setProperty(
-          "--profile-photo-aspect-ratio",
-          `${image.naturalWidth} / ${image.naturalHeight}`
-        );
-      }, { once: true });
-      image.src = photoUrl;
-    }
-
     function setModalPhoto(photoClass, photoUrl = "") {
       clearModalVideoPreview();
       const safeUrl = safeCssUrl(photoUrl);
-      syncModalPhotoAspectRatio(safeUrl ? String(photoUrl || "").trim() : "");
       modalImage.className = `modal-image ${photoClass}${safeUrl ? " has-custom-photo" : ""}`;
       if (safeUrl) {
         modalImage.style.setProperty("--custom-photo", `url('${safeUrl}')`);
@@ -48089,8 +48068,6 @@
 
     function setModalVideo(item, profileName, videos, index) {
       if (!item?.videoUrl) return false;
-      modalPhotoAspectRequestId += 1;
-      modalImage.style.removeProperty("--profile-photo-aspect-ratio");
       clearModalVideoPreview();
       modalImage.className = "modal-image is-video-media";
       modalImage.dataset.activeMediaType = "video";

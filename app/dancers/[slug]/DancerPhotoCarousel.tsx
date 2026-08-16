@@ -546,9 +546,6 @@ export function DancerPhotoCarousel({
           onPointerUp={handleInlinePointerEnd}
           onWheel={handleInlineWheel}
           role="group"
-          style={selectedItem.kind === "photo" && selectedItem.imageWidth && selectedItem.imageHeight
-            ? { aspectRatio: `${selectedItem.imageWidth} / ${selectedItem.imageHeight}` }
-            : undefined}
           tabIndex={0}
         >
           {selectedItem.kind === "photo" ? (

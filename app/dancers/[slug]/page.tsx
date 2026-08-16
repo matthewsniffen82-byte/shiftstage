@@ -484,12 +484,12 @@ function PublicProfileStyles() {
       body.dancr-button-system .public-profile-shell .profile-media-tabs button.active::before { border-color: rgba(126,234,255,.42); background: linear-gradient(135deg, rgba(109,40,217,.72), rgba(11,148,201,.34)); box-shadow: var(--dancr-shadow-beam-active); }
       .profile-media-tabs button.active .profile-media-tab-count { display: none; }
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
-      .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 660px; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: default; isolation: isolate; touch-action: pan-y; }
-      .profile-media-feature.is-photo { max-height: none; }
-      .profile-media-feature.is-video { aspect-ratio: 9 / 16; max-height: min(72dvh, 720px); }
+      .profile-media-feature { position: relative; width: 100%; aspect-ratio: 9 / 16; max-height: none; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: default; isolation: isolate; touch-action: pan-y; }
+      .profile-media-feature.is-photo { aspect-ratio: 9 / 16; max-height: none; }
+      .profile-media-feature.is-video { aspect-ratio: 9 / 16; max-height: none; }
       .profile-media-feature::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 28%; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(0,0,0,.7)); }
       .profile-media-feature > img, .profile-media-feature > video { width: 100%; height: 100%; display: block; background: #000; pointer-events: none; user-select: none; }
-      .profile-media-feature > img { object-fit: contain; filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
+      .profile-media-feature > img { object-fit: cover; filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
       .profile-media-feature > video { object-fit: cover; }
       .profile-media-feature:focus-visible { border-color: #7eeaff; outline: 3px solid rgba(126,234,255,.2); outline-offset: 3px; }
       .profile-media-video-controls { position: absolute; z-index: 4; left: 12px; right: 12px; bottom: 12px; display: grid; grid-template-columns: 36px minmax(88px, 1fr) auto 36px 36px; align-items: center; gap: 4px; min-height: 42px; padding: 3px 4px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; background: rgba(8,8,12,.72); box-shadow: 0 8px 22px rgba(0,0,0,.3); backdrop-filter: blur(14px) saturate(110%); cursor: default; opacity: 0; pointer-events: none; transform: translateY(5px); transition: opacity 160ms ease, transform 160ms ease; }
@@ -579,8 +579,7 @@ function PublicProfileStyles() {
         .club-deal-action { justify-items: stretch; }
         .deal-qr-frame { justify-items: center; }
         .deal-qr-frame img { width: 128px; }
-        .profile-media-feature { max-height: min(64dvh, 540px); border-radius: 17px; }
-        .profile-media-feature.is-video { max-height: min(68dvh, 620px); }
+        .profile-media-feature, .profile-media-feature.is-photo, .profile-media-feature.is-video { aspect-ratio: 9 / 16; max-height: none; border-radius: 17px; }
         .profile-media-video-controls { left: 9px; right: 9px; bottom: 9px; grid-template-columns: 36px minmax(88px, 1fr) auto 36px 36px; gap: 3px; min-height: 42px; padding: 3px 4px; }
         .profile-media-feature-previous, .profile-media-feature-next { width: 28px; height: 38px; font-size: 20px; }
         .profile-media-viewer-previous, .profile-media-viewer-next { width: 40px; height: 50px; font-size: 30px; }

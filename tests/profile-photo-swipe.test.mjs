@@ -120,7 +120,7 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
   );
   assert.match(
     publicProfilePage,
-    /\.profile-media-feature \{[^}]*aspect-ratio: 4 \/ 5;[^}]*touch-action: pan-y/,
+    /\.profile-media-feature \{[^}]*aspect-ratio: 9 \/ 16;[^}]*touch-action: pan-y/,
   );
   assert.match(
     publicProfilePage,
@@ -136,33 +136,24 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
   assert.doesNotMatch(publicProfilePage, /<TvVideoStrip/);
 });
 
-test("full-profile photo stages expand to the source ratio without cropping", () => {
+test("full-profile photo and video stages use one stable portrait frame", () => {
   assert.match(
     liveApp,
-    /#profileBackdrop \.modal-image \{[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: var\(--profile-photo-aspect-ratio, 4 \/ 5\) !important;[\s\S]*?background-size: contain !important;/,
+    /#profileBackdrop \.modal-image \{[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: 9 \/ 16 !important;[\s\S]*?background-size: cover !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.modal-image\.has-custom-photo \{[\s\S]*?background-size: contain, cover !important;/,
+    /#profileBackdrop \.modal-image\.has-custom-photo \{[\s\S]*?background-size: cover, cover !important;/,
   );
-  assert.match(
-    liveApp,
-    /function syncModalPhotoAspectRatio\(photoUrl\)[\s\S]*?new Image\(\)[\s\S]*?image\.naturalWidth[\s\S]*?image\.naturalHeight[\s\S]*?--profile-photo-aspect-ratio/,
-  );
-  assert.match(
-    liveApp,
-    /syncModalPhotoAspectRatio\(safeUrl \? String\(photoUrl \|\| ""\)\.trim\(\) : ""\)/,
-  );
+  assert.match(liveApp, /\.profile-modal \.modal-media-video-preview > video \{[\s\S]*?object-fit: cover;/);
+  assert.doesNotMatch(liveApp, /--profile-photo-aspect-ratio|syncModalPhotoAspectRatio/);
   assert.match(
     liveApp,
     /#profileBackdrop \.modal-grid > \.info-tile:not\(\.working-now-tile\):not\(\.schedule-upcoming\):not\(\.profile-club-deal-tile\)::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
   );
-  assert.match(
-    publicPhotoCarousel,
-    /style=\{selectedItem\.kind === "photo" && selectedItem\.imageWidth && selectedItem\.imageHeight[\s\S]*?aspectRatio: `\$\{selectedItem\.imageWidth\} \/ \$\{selectedItem\.imageHeight\}`/,
-  );
-  assert.match(publicProfilePage, /\.profile-media-feature\.is-photo \{ max-height: none; \}/);
-  assert.match(publicProfilePage, /\.profile-media-feature > img \{ object-fit: contain;/);
+  assert.doesNotMatch(publicPhotoCarousel, /style=\{selectedItem\.kind === "photo"[^}]*aspectRatio/);
+  assert.match(publicProfilePage, /\.profile-media-feature\.is-photo \{ aspect-ratio: 9 \/ 16; max-height: none; \}/);
+  assert.match(publicProfilePage, /\.profile-media-feature > img \{ object-fit: cover;/);
   assert.match(publicProfilePage, /\.profile-media-feature > video \{ object-fit: cover; \}/);
 });
 
