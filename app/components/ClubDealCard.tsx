@@ -66,7 +66,7 @@ export function ClubDealCard({
       ? "Your previous selection expired. Select this deal again before tapping NFC."
       : selection
         ? readyStatus(venueName, selection.expiresAt)
-        : "Preview only—select this deal before tapping the cashier NFC sticker.");
+        : "At the register, select this offer for checkout, then tap the cashier NFC sticker. The deal is redeemed only after you confirm on the NFC page.");
   }, [activeDeal.id, dancerId, sourceType, venueId, venueName]);
 
   useEffect(() => {
@@ -169,10 +169,23 @@ export function ClubDealCard({
       }, ...saved.filter((item) => item.id !== id)].slice(0, 20);
       window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
       setSavedOnDevice(true);
-      setStatus("Deal saved on this device. Select it separately when you are ready to redeem.");
+      setStatus("Saved for later on this device. This does not select or redeem the deal.");
     } catch {
       setSavedOnDevice(false);
       setStatus("Browser storage blocked saving this deal. Allow site storage and try again.");
+    }
+  }
+
+  function removeSavedDeal() {
+    try {
+      const id = savedDealId(venueId, activeDeal.id);
+      const next = readSavedDeals().filter((item) => item.id !== id);
+      window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
+      setSavedOnDevice(false);
+      setStatus("Removed from saved deals. You can still select it for checkout.");
+    } catch {
+      setSavedOnDevice(true);
+      setStatus("Browser storage blocked removing this deal. Allow site storage and try again.");
     }
   }
 
@@ -227,7 +240,7 @@ export function ClubDealCard({
             <span>{intentState === "ready" && intentExpiresAt ? `Ready until ${formatNfcExpiry(intentExpiresAt)}` : "Selection lasts 12 hours"}</span>
           </div>
           <div className="club-deal-redemption-steps" aria-label="How to redeem">
-            <div><span>1</span><strong>Select this deal</strong></div>
+            <div><span>1</span><strong>Select at checkout</strong></div>
             <div><span>2</span><strong>Tap cashier sticker</strong></div>
           </div>
         </div>
@@ -247,13 +260,18 @@ export function ClubDealCard({
           onClick={selectForNfcTap}
           disabled={intentState === "ready"}
         >
-          {intentState === "ready" ? "Ready to tap NFC ✓" : intentState === "expired" || intentState === "error" ? "Try again" : actionLabel}
+          {intentState === "ready" ? "Ready to tap NFC ✓" : intentState === "expired" || intentState === "error" ? "Try again" : dialogOpen ? "Select for checkout" : actionLabel}
         </button>
         {status && (dialogOpen || intentState !== "preview") ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
         {dialogOpen ? (
           <div className="club-deal-share-actions">
-            <button type="button" className={savedOnDevice ? "saved" : ""} disabled={savedOnDevice} onClick={saveForLater}>
-              {savedOnDevice ? "Saved on device ✓" : "Save on device"}
+            <button
+              type="button"
+              className={savedOnDevice ? "saved" : ""}
+              aria-pressed={savedOnDevice}
+              onClick={savedOnDevice ? removeSavedDeal : saveForLater}
+            >
+              {savedOnDevice ? "Saved for later ✓ · Remove" : "Save for later"}
             </button>
             <button type="button" onClick={() => void shareDeal()}>Share deal</button>
             <button type="button" className="copy" onClick={() => void copyCurrentDealLink()}>Copy link</button>
@@ -444,7 +462,7 @@ async function copyDealLink(url: string) {
 }
 
 function readyStatus(venueName: string | undefined, expiresAt: number) {
-  return `Selected on this device until ${formatNfcExpiry(expiresAt)}. Tap the cashier NFC sticker at ${venueName || "the club"}.`;
+  return `Selected on this device until ${formatNfcExpiry(expiresAt)}. At the register, tap the cashier NFC sticker at ${venueName || "the club"}, then confirm redemption.`;
 }
 
 function formatNfcExpiry(value: number) {

@@ -44551,6 +44551,20 @@
       return saveCustomerDealPass(pass, "Deal saved on this device.");
     }
 
+    function removeSavedDealPass(pass) {
+      if (!pass?.id) return false;
+      const previousPasses = savedDealPasses;
+      savedDealPasses = savedDealPasses.filter((item) => item.id !== pass.id);
+      const persisted = saveSavedDealPasses();
+      if (!persisted) savedDealPasses = previousPasses;
+      if (customerDashboard.classList.contains("show")) renderDashboard();
+      renderCustomerQuickActions();
+      showToast(persisted
+        ? "Removed from saved deals."
+        : "Browser storage blocked removing this deal. Allow site storage and try again.");
+      return persisted;
+    }
+
     const pendingNfcDealIntentTtlMs = 12 * 60 * 60 * 1000;
 
     function pendingNfcDealIntentForPass(pass) {
@@ -44662,13 +44676,13 @@
               <div id="dealPassImage" class="deal-pass-nfc-symbol" role="img" aria-label="NFC tap">${clubDealQrSymbolMarkup("deal-pass-nfc-icon")}</div>
             </div>
             <div class="deal-pass-steps" aria-label="How to redeem">
-              <div class="deal-pass-step"><span>1</span><strong>Select this deal</strong></div>
+              <div class="deal-pass-step"><span>1</span><strong>Select at checkout</strong></div>
               <div class="deal-pass-step"><span>2</span><strong>Tap cashier sticker</strong></div>
             </div>
-            <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite">Preview only—select this deal before tapping the cashier NFC sticker.</p>
+            <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite">At the register, select this offer for checkout, then tap the cashier NFC sticker. The deal is redeemed only after you confirm on the NFC page.</p>
             <div class="deal-pass-actions">
-              <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Use this deal</button>
-              <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save on device</button>
+              <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Select for checkout</button>
+              <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share deal</button>
               <button class="deal-pass-action tertiary" type="button" data-copy-deal-pass>Copy link</button>
             </div>
@@ -44734,11 +44748,18 @@
           showToast("Club Deal unavailable");
           return;
         }
+        const isSaved = savedDealPasses.some((item) => item.id === pass.id);
+        if (isSaved) {
+          const removed = removeSavedDealPass(pass);
+          button.textContent = removed ? "Save for later" : "Try removing again";
+          button.setAttribute("aria-pressed", removed ? "false" : "true");
+          button.classList.toggle("is-saved", !removed);
+          return;
+        }
         const persisted = saveDealPassForLater(pass);
-        button.textContent = persisted ? "Saved on device ✓" : "Try saving again";
+        button.textContent = persisted ? "Saved for later ✓ · Remove" : "Try saving again";
         button.setAttribute("aria-pressed", persisted ? "true" : "false");
         button.classList.toggle("is-saved", persisted);
-        button.disabled = persisted;
       });
       bindDealPassAction(shareButton, () => {
         const pass = currentPass();
@@ -44817,7 +44838,7 @@
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = `Selected on this device${readyUntil ? ` until ${readyUntil}` : ""}. Tap the cashier NFC sticker at ${pass.venueName}.`;
+        status.textContent = `Selected on this device${readyUntil ? ` until ${readyUntil}` : ""}. At the register, tap the cashier NFC sticker at ${pass.venueName}, then confirm redemption.`;
         selectButton.textContent = "Ready to tap NFC ✓";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");
@@ -44826,18 +44847,18 @@
       } else {
         status.textContent = override?.message || (state === "expired"
           ? "Your previous selection expired. Select this deal again before tapping NFC."
-          : "Preview only—select this deal before tapping the cashier NFC sticker.");
-        selectButton.textContent = state === "expired" ? "Select again" : state === "error" ? "Try again" : "Use this deal";
+          : "At the register, select this offer for checkout, then tap the cashier NFC sticker. The deal is redeemed only after you confirm on the NFC page.");
+        selectButton.textContent = state === "expired" ? "Select again" : state === "error" ? "Try again" : "Select for checkout";
         selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "false");
         selectButton.classList.remove("is-ready");
         expiry.textContent = dealPassAvailabilityLabel(pass);
       }
       const isSaved = savedDealPasses.some((savedPass) => savedPass.id === pass.id);
-      saveButton.textContent = isSaved ? "Saved on device ✓" : "Save on device";
+      saveButton.textContent = isSaved ? "Saved for later ✓ · Remove" : "Save for later";
       saveButton.setAttribute("aria-pressed", isSaved ? "true" : "false");
       saveButton.classList.toggle("is-saved", isSaved);
-      saveButton.disabled = isSaved;
+      saveButton.disabled = false;
     }
 
     function openDealPassOverlay(pass, triggerButton = null) {
@@ -44925,7 +44946,7 @@
             <button class="deal-pass-close" type="button" data-close-club-deal-hub aria-label="Close Club Deals">${actionIconMarkup("close")}</button>
             <p class="deal-pass-kicker">Live club offers</p>
             <h3 class="deal-pass-title" id="clubDealHubTitle">Club Deals</h3>
-            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer now, then tap the cashier NFC sticker at the club.</p>
+            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer to preview. At the register, select it for checkout, then tap the cashier NFC sticker.</p>
             <p class="club-deal-hub-status" id="clubDealHubStatus" role="status" aria-live="polite" hidden></p>
             <div class="club-deal-hub-list" id="clubDealHubList"></div>
           </section>
@@ -44956,7 +44977,6 @@
         status.hidden = false;
         try {
           const pass = await createRevenueDealPass(selection);
-          saveCustomerDealPass(pass, "Club Deal ready for cashier NFC");
           closeClubDealHub(false);
           openDealPassOverlay(pass);
         } catch (error) {
@@ -44987,7 +45007,7 @@
       const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one now, then tap the cashier NFC sticker at the club.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. At the register, select it for checkout, then tap the cashier NFC sticker.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");

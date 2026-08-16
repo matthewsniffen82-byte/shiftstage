@@ -15,14 +15,14 @@ test("Club Deals save without requiring customer authentication", () => {
 });
 
 test("preview, NFC selection, and saving are separate intentional actions", () => {
-  assert.match(liveSource, /data-select-deal-pass aria-pressed="false">Use this deal<\/button>/);
-  assert.match(liveSource, /data-save-deal-pass aria-pressed="false">Save on device<\/button>/);
+  assert.match(liveSource, /data-select-deal-pass aria-pressed="false">Select for checkout<\/button>/);
+  assert.match(liveSource, /data-save-deal-pass aria-pressed="false">Save for later<\/button>/);
   assert.match(
     liveSource,
     /const bindDealPassAction[\s\S]*?addEventListener\("pointerup"[\s\S]*?addEventListener\("click"/,
   );
   assert.match(liveSource, /function selectDealPassForNfc[\s\S]*?localStorage\.setItem\("mydancrPendingNfcDealV2"/);
-  assert.match(liveSource, /button\.textContent = persisted \? "Saved on device ✓" : "Try saving again"/);
+  assert.match(liveSource, /button\.textContent = persisted \? "Saved for later ✓ · Remove" : "Try saving again"/);
   assert.match(liveSource, /button\.classList\.toggle\("is-saved", persisted\)/);
   assert.match(liveSource, /if \(persisted && !wasAlreadySaved\) recordRevenueDealLifecycle\(pass, "saved"\)/);
 });
@@ -37,10 +37,20 @@ test("opening or sharing a Club Deal never silently selects or saves it", () => 
   const clickFlow = liveSource.match(
     /async function handleDealPassClick[\s\S]*?function venueOfferMarkup/,
   )?.[0] || "";
+  const hubSelectionFlow = liveSource.match(
+    /const offerButton = event\.target\.closest\("\[data-club-deal-offer\]"\)[\s\S]*?function openClubDealHub/,
+  )?.[0] || "";
 
   assert.doesNotMatch(creationFlow, /localStorage\.setItem\("mydancrPendingNfcDealV2"/);
   assert.doesNotMatch(shareFlow, /saveCustomerDealPass|selectDealPassForNfc/);
   assert.doesNotMatch(clickFlow, /saveCustomerDealPass/);
+  assert.doesNotMatch(hubSelectionFlow, /saveCustomerDealPass/);
+});
+
+test("saved Club Deals can be removed from the device", () => {
+  assert.match(liveSource, /function removeSavedDealPass[\s\S]*?savedDealPasses\.filter\(\(item\) => item\.id !== pass\.id\)/);
+  assert.match(liveSource, /button\.textContent = removed \? "Save for later" : "Try removing again"/);
+  assert.match(liveSource, /saveButton\.disabled = false/);
 });
 
 test("blocked browser storage returns a visible fallback instead of breaking the button", () => {
