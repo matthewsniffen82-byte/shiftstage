@@ -90,15 +90,15 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /function createHomeTvFeedProgress\(\)[\s\S]*?role", "progressbar"/,
+    /function createHomeTvFeedProgress\(slide, video\)[\s\S]*?createElement\("input"\)[\s\S]*?type = "range"[\s\S]*?aria-label", "Video playback position"/,
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?aria-valuenow/,
+    /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?progress\.max = String\(duration \|\| 0\)[\s\S]*?progress\.value = String\(currentTime\)[\s\S]*?--home-tv-feed-control-progress/,
   );
 });
 
-test("TV cards expose separate right-side actions and one unified playback dock", () => {
+test("TV cards expose separate right-side actions and a standalone seek bar", () => {
   const actionsFactory = homeSource.match(
     /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
@@ -112,9 +112,10 @@ test("TV cards expose separate right-side actions and one unified playback dock"
   assert.doesNotMatch(actionsFactory, /More video actions|home-tv-feed-action-menu|home-tv-feed-menu-action/);
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
-  assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedProgress\(\),[\s\S]*?createHomeTvFeedVideoControls\(slide, video\)/);
+  assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedProgress\(slide, video\)/);
   assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 8px;/);
-  assert.match(homeSource, /\.home-tv-feed-video-controls \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 11px;[\s\S]*?left: 12px;/);
+  assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
+  assert.doesNotMatch(homeSource, /function createHomeTvFeedVideoControls|className = "home-tv-feed-video-controls"/);
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
 });
 
@@ -243,7 +244,7 @@ test("TV cards are completely borderless without a violet perimeter", () => {
   assert.doesNotMatch(sharedVioletFocusRule, /\.tv-player video/);
 });
 
-test("mobile TV controls stay inside the stable card that snaps above navigation", () => {
+test("mobile TV seek and utility controls stay inside the stable card that snaps above navigation", () => {
   assert.match(
     homeSource,
     /\.home-tv-feed-copy \{[\s\S]*?padding: 82px 0 28px 14px;/,
@@ -254,22 +255,17 @@ test("mobile TV controls stay inside the stable card that snaps above navigation
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-video-controls \{[\s\S]*?bottom: 11px;/,
+    /\.home-tv-feed-progress \{[\s\S]*?right: 14px;[\s\S]*?bottom: 0;[\s\S]*?left: 14px;[\s\S]*?height: 28px;[\s\S]*?appearance: none;[\s\S]*?-webkit-appearance: none;[\s\S]*?touch-action: none;/,
   );
-  assert.match(
-    homeSource,
-    /\.home-tv-feed-progress \{[\s\S]*?height: 3px;[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-text-primary\) 58%, transparent\);[\s\S]*?box-shadow: 0 1px 5px var\(--dancr-color-black-strong\);[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-text-primary\) 88%, transparent\);[\s\S]*?box-shadow: none;/,
-  );
-  assert.doesNotMatch(
-    homeSource.match(/\.home-tv-feed-progress > span \{[\s\S]*?\}/)?.[0] || "",
-    /#a855f7|#22d3ee|linear-gradient/,
-  );
+  assert.match(homeSource, /\.home-tv-feed-progress::-webkit-slider-runnable-track \{[\s\S]*?height: 3px;[\s\S]*?--home-tv-feed-control-progress/);
+  assert.match(homeSource, /\.home-tv-feed-progress::-webkit-slider-thumb \{[\s\S]*?width: 14px;[\s\S]*?border-radius: 50%/);
+  assert.match(homeSource, /\.home-tv-feed-progress::-moz-range-thumb \{[\s\S]*?border-radius: 50%/);
   assert.match(
     homeSource,
     /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
   );
   assert.doesNotMatch(homeSource, /\.home-tv-feed-position|position\.textContent = `Video/);
-  assert.match(homeSource, /\.home-tv-feed-video-controls \{[\s\S]*?grid-template-columns: 36px 36px minmax\(74px, 1fr\) 64px 36px;/);
+  assert.doesNotMatch(homeSource, /\.home-tv-feed-video-controls \{/);
 });
 
 test("empty schedules are hidden while real city, venue, and shift context remains", () => {
@@ -342,24 +338,24 @@ test("applause is recorded through the constrained production TV analytics path"
 
 test("card controls expose accessible labels, keyboard alternatives, and feedback", () => {
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
-  const controlsFactory =
+  const progressFactory =
     homeSource.match(
-      /function createHomeTvFeedVideoControls\(slide, video\) \{[\s\S]*?(?=\n    function renderHomeTvFeedSlide)/,
+      /function createHomeTvFeedProgress\(slide, video\) \{[\s\S]*?(?=\n    function showRelativeHomeTvFeedSlide)/,
     )?.[0] || "";
   assert.match(
-    controlsFactory,
-    /aria-label", "Video playback controls"[\s\S]*?home-tv-feed-video-play[\s\S]*?createHomeTvFeedSoundButton\(slide\)[\s\S]*?type = "range"[\s\S]*?home-tv-feed-video-time[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\)/,
+    progressFactory,
+    /type = "range"[\s\S]*?aria-label", "Video playback position"[\s\S]*?aria-valuetext", "Video loading"/,
   );
   assert.match(
-    controlsFactory,
-    /range\.addEventListener\("input"[\s\S]*?video\.currentTime = Math\.min[\s\S]*?syncHomeTvFeedControls\(video, slide\)/,
+    progressFactory,
+    /progress\.addEventListener\("input"[\s\S]*?video\.currentTime = Math\.min[\s\S]*?syncHomeTvFeedProgress\(video, slide\)/,
   );
-  assert.match(homeSource, /function syncHomeTvFeedControls\(video, slide\)[\s\S]*?formatProfileTvDuration\(currentTime\)[\s\S]*?formatProfileTvDuration\(duration\)/);
-  assert.match(homeSource, /function showHomeTvFeedControls\(slide,[\s\S]*?is-controls-visible[\s\S]*?2200/);
-  assert.match(homeSource, /function syncHomeTvFeedFullscreenState\(\)[\s\S]*?alignHomeTvFeedFullscreenSlide\(activeSlide\)[\s\S]*?showHomeTvFeedControls\(activeSlide\)/);
+  assert.match(homeSource, /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?formatProfileTvDuration\(currentTime\)[\s\S]*?formatProfileTvDuration\(duration\)/);
+  assert.doesNotMatch(homeSource, /function showHomeTvFeedControls|is-controls-visible|homeTvControlsTimer/);
+  assert.match(homeSource, /function syncHomeTvFeedFullscreenState\(\)[\s\S]*?alignHomeTvFeedFullscreenSlide\(activeSlide\)/);
   assert.match(
     homeSource,
-    /Tap to show playback controls, double tap to applaud[\s\S]*?scroll up or down for another video[\s\S]*?event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"[\s\S]*?event\.key === "a" \|\| event\.key === "A"/,
+    /Tap to play or pause, double tap to applaud[\s\S]*?scroll up or down for another video[\s\S]*?event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"[\s\S]*?event\.key === "a" \|\| event\.key === "A"[\s\S]*?toggleHomeTvFeedPlayback\(video\)/,
   );
   assert.match(
     homeSource,
@@ -424,7 +420,7 @@ test("TV sound and lower-right fullscreen controls stay consistent and icon-only
   )?.[0] || "";
   assert.match(soundFactory, /sound\.innerHTML = '<svg[\s\S]*?<\/svg>'/);
   assert.match(fullscreenFactory, /button\.className = "home-tv-feed-action home-tv-feed-fullscreen"/);
-  assert.match(fullscreenFactory, /button\.innerHTML = '<svg[\s\S]*?<\/svg>'/);
+  assert.match(fullscreenFactory, /button\.innerHTML = \[[\s\S]*?home-tv-feed-video-expand-icon[\s\S]*?home-tv-feed-video-collapse-icon[\s\S]*?\.join\(""\)/);
   assert.doesNotMatch(fullscreenFactory, /<span|Full screen<\/span>/);
   assert.doesNotMatch(
     soundFactory.match(/sound\.innerHTML = '[^']*'/)?.[0] || "",
