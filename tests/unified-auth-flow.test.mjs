@@ -51,7 +51,8 @@ test("confirmation cooldowns begin only after a successful email send", () => {
 test("dancer and venue signups explain their real approval requirements", () => {
   assert.match(liveApp, /class="dancer-signup-progress"[\s\S]*?Create account[\s\S]*?Confirm email[\s\S]*?Complete profile and dressing-room tap/);
   assert.match(liveApp, /id="dancerPassword"[^>]*autocomplete="new-password"[^>]*minlength="8"/);
-  assert.match(liveApp, /tap an official dressing-room NFC sticker/);
+  assert.match(liveApp, /Free account\. Your profile becomes public after setup and verification\./);
+  assert.doesNotMatch(liveApp, /Your account is free\. Your public profile goes live only after/);
   assert.match(liveApp, /id="venueSignupCode"[^>]*minlength="30"[^>]*maxlength="30"/);
   assert.match(liveApp, /function openVenueSignup\(\)[\s\S]*?setVenueAuthMode\("signup"\)/);
 });
