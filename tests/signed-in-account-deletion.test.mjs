@@ -5,6 +5,8 @@ import assert from "node:assert/strict";
 const liveShell = fs.readFileSync("outputs/index.html", "utf8");
 const accountRoute = fs.readFileSync("app/api/account/route.ts", "utf8");
 const dashboardClient = fs.readFileSync("app/dashboard/DashboardClient.tsx", "utf8");
+const deletionConstraints = fs.readFileSync("supabase/migrations/202608150002_allow_account_login_deletion.sql", "utf8");
+const auditHistoryConstraints = fs.readFileSync("supabase/migrations/202608150003_preserve_deleted_account_audit_history.sql", "utf8");
 
 test("every supported signed-in role gets a persistent account-menu deletion control", () => {
   assert.match(
@@ -24,15 +26,15 @@ test("the global deletion control requires confirmation and calls the authentica
   );
   assert.match(
     liveShell,
-    /async function deleteLiveAccount\(role, button\)[\s\S]*?deleteAuthenticatedJson\("\/api\/account"\)[\s\S]*?finalizeDeletedAccount\(role\)/,
+    /async function deleteLiveAccount\(role, button\)[\s\S]*?const deletionSession = authSession[\s\S]*?logoutAccount\(\{ message: "Deleting account…" \}\)[\s\S]*?deleteAuthenticatedJson\("\/api\/account", deletionSession\)[\s\S]*?finalizeDeletedAccount\(role\)/,
   );
   assert.match(
     liveShell,
-    /function finalizeDeletedAccount\(role\) \{\s*logoutAccount\(\{ message: `\$\{accountRoleLabel\(role\)\} deleted` \}\);\s*window\.location\.replace\("\/"\);\s*\}/,
+    /function finalizeDeletedAccount\(role\) \{\s*saveAuthSession\(null\);[\s\S]*?logoutAccount\(\{ message: `\$\{accountRoleLabel\(role\)\} deleted` \}\);[\s\S]*?finally \{\s*window\.location\.replace\("\/"\);/,
   );
   assert.match(
     liveShell,
-    /function logoutAccount\([\s\S]*?saveAuthSession\(null\)[\s\S]*?closeDashboard\(\)[\s\S]*?closeDancerDashboard\(\)[\s\S]*?closeVenueDashboard\(\)[\s\S]*?updateAccountHeader\(\)/,
+    /function logoutAccount\([^)]*\) \{\s*saveAuthSession\(null\)[\s\S]*?closeDashboard\(\)[\s\S]*?closeDancerDashboard\(\)[\s\S]*?closeVenueDashboard\(\)[\s\S]*?updateAccountHeader\(\)/,
   );
   assert.doesNotMatch(liveShell, /This demo will sign out of the account/);
 });
@@ -40,8 +42,39 @@ test("the global deletion control requires confirmation and calls the authentica
 test("the standalone dashboard clears the session and replaces browser history after deletion", () => {
   assert.match(
     dashboardClient,
-    /async function deleteAccount\(\)[\s\S]*?method: "DELETE"[\s\S]*?window\.localStorage\.removeItem\(SESSION_KEY\);\s*window\.location\.replace\("\/"\);/,
+    /async function deleteAccount\(\)[\s\S]*?window\.localStorage\.removeItem\(SESSION_KEY\);[\s\S]*?method: "DELETE"[\s\S]*?finally \{\s*window\.location\.replace\("\/"\);/,
   );
+  assert.match(
+    dashboardClient,
+    /event\.key === SESSION_KEY && !event\.newValue[\s\S]*?leaveDeletedSessionDashboard\(\);\s*window\.addEventListener\("pageshow", leaveDeletedSessionDashboard\)/,
+  );
+});
+
+test("historical actor references cannot block permanent login deletion", () => {
+  for (const column of [
+    "venue_claim_codes_created_by_fkey",
+    "venue_dancer_affiliations_approved_by_user_id_fkey",
+    "venue_dancer_affiliation_events_actor_user_id_fkey",
+    "nfc_tags_created_by_user_id_fkey",
+    "venue_team_invitations_invited_by_user_id_fkey",
+    "venue_nfc_support_requests_requested_by_user_id_fkey",
+  ]) {
+    assert.match(deletionConstraints, new RegExp(`drop constraint if exists ${column}`));
+  }
+  assert.equal((deletionConstraints.match(/on delete set null/g) || []).length, 6);
+  assert.equal((deletionConstraints.match(/drop not null/g) || []).length, 6);
+  for (const constraint of [
+    "venue_claim_codes_used_pair_check",
+    "venue_claim_codes_revoked_pair_check",
+    "venue_dancer_affiliations_revoke_pair_check",
+    "venue_dancer_verification_tokens_used_pair_check",
+  ]) {
+    assert.match(auditHistoryConstraints, new RegExp(`drop constraint if exists ${constraint}`));
+  }
+  assert.match(auditHistoryConstraints, /used_at is not null or used_by is null/);
+  assert.match(auditHistoryConstraints, /revoked_at is not null or revoked_by is null/);
+  assert.match(auditHistoryConstraints, /status = 'revoked' and revoked_at is not null/);
+  assert.match(auditHistoryConstraints, /used_at is not null or used_by_user_id is null/);
 });
 
 test("the account endpoint permanently removes the authenticated login", () => {

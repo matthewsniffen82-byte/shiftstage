@@ -212,6 +212,22 @@ export default function DashboardClient({
     };
   }, [loadAttempt, role]);
 
+  useEffect(() => {
+    const leaveDeletedSessionDashboard = () => {
+      if (!readSession()?.accessToken) window.location.replace("/");
+    };
+    const handleSessionStorage = (event: StorageEvent) => {
+      if (event.key === SESSION_KEY && !event.newValue) leaveDeletedSessionDashboard();
+    };
+    leaveDeletedSessionDashboard();
+    window.addEventListener("pageshow", leaveDeletedSessionDashboard);
+    window.addEventListener("storage", handleSessionStorage);
+    return () => {
+      window.removeEventListener("pageshow", leaveDeletedSessionDashboard);
+      window.removeEventListener("storage", handleSessionStorage);
+    };
+  }, []);
+
   const refreshVenueDashboard = useCallback(async (showStatus = false) => {
     if (role !== "venue") return;
     const authHeaders = dashboardAuthHeaders(readSession());
@@ -854,6 +870,7 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
 
     setIsWorking(true);
     setStatus("");
+    window.localStorage.removeItem(SESSION_KEY);
     try {
       const response = await fetch("/api/account", {
         method: "DELETE",
@@ -861,11 +878,11 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete account.");
-      window.localStorage.removeItem(SESSION_KEY);
-      window.location.replace("/");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to delete account.");
-      setIsWorking(false);
+      const message = error instanceof Error ? error.message : "Unable to delete account.";
+      window.alert(`${message} You have been signed out; sign in again to retry.`);
+    } finally {
+      window.location.replace("/");
     }
   }
 

@@ -40235,16 +40235,16 @@
       return text;
     }
 
-    function authenticatedRequestHeaders(contentType) {
-      const token = authSession?.accessToken;
+    function authenticatedRequestHeaders(contentType, session = authSession) {
+      const token = session?.accessToken;
       if (!token) return null;
       const headers = {
         Accept: "application/json",
         Authorization: `Bearer ${token}`
       };
       if (contentType) headers["Content-Type"] = contentType;
-      if (authSession?.refreshToken) {
-        headers["X-Dancr-Refresh-Token"] = authSession.refreshToken;
+      if (session?.refreshToken) {
+        headers["X-Dancr-Refresh-Token"] = session.refreshToken;
       }
       return headers;
     }
@@ -40349,8 +40349,8 @@
       return data;
     }
 
-    async function deleteAuthenticatedJson(url) {
-      const headers = authenticatedRequestHeaders();
+    async function deleteAuthenticatedJson(url, session = authSession) {
+      const headers = authenticatedRequestHeaders(undefined, session);
       if (!headers) return null;
       const response = await fetch(url, {
         method: "DELETE",
@@ -40625,25 +40625,21 @@
     }
 
     async function deleteLiveAccount(role, button) {
-      if (!authSession?.accessToken) return false;
+      const deletionSession = authSession;
+      if (!deletionSession?.accessToken) return false;
       const buttonLabel = button?.textContent || "Delete account";
       if (button) {
         button.disabled = true;
         button.textContent = "Deleting account...";
       }
+      logoutAccount({ message: "Deleting account…" });
       try {
-        const data = await deleteAuthenticatedJson("/api/account");
-        if (data?.account) applyLiveAccountState(data.account);
+        await deleteAuthenticatedJson("/api/account", deletionSession);
         finalizeDeletedAccount(role);
         return true;
       } catch (error) {
-        showToast(error.message || "Could not delete account");
+        showToast(`${error.message || "Could not delete account"} You have been signed out; sign in again to retry.`);
         return false;
-      } finally {
-        if (button) {
-          button.disabled = false;
-          button.textContent = buttonLabel;
-        }
       }
     }
 
@@ -40654,8 +40650,12 @@
     }
 
     function finalizeDeletedAccount(role) {
-      logoutAccount({ message: `${accountRoleLabel(role)} deleted` });
-      window.location.replace("/");
+      saveAuthSession(null);
+      try {
+        logoutAccount({ message: `${accountRoleLabel(role)} deleted` });
+      } finally {
+        window.location.replace("/");
+      }
     }
 
     function setAccountCenterStatus(role, message, isError = false) {
@@ -49368,6 +49368,7 @@
     }
 
     function logoutAccount({ message = "Logged out" } = {}) {
+      saveAuthSession(null);
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;
       isVenueLoggedIn = false;
@@ -49388,7 +49389,6 @@
       pendingSetupPhotoFiles = [];
       pendingSetupPhotoPreviewUrls = [];
       clearPendingApprovedProfileVideoSelection();
-      saveAuthSession(null);
       clearCustomerSavedCollections();
       closeDashboard();
       closeDancerDashboard();
