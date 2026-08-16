@@ -4215,13 +4215,13 @@ body.dancr-button-system .home-tv-feed-playback {
 }
 
 body.dancr-button-system .home-tv-feed-progress {
-  background: rgba(255, 255, 255, 0.32) !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.82) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system .home-tv-feed-progress > span {
-  background: #fff !important;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.42) !important;
+  background: rgba(232, 232, 238, 0.78) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system input.home-tv-feed-scrubber {

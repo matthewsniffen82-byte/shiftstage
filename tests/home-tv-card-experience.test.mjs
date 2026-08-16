@@ -255,9 +255,9 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-progress \{[\s\S]*?right: 14px;[\s\S]*?bottom: 8px;[\s\S]*?left: 14px;[\s\S]*?height: 4px;[\s\S]*?overflow: hidden;[\s\S]*?background: rgba\(255,255,255,\.32\);[\s\S]*?pointer-events: none;/,
+    /\.home-tv-feed-progress \{[\s\S]*?right: 14px;[\s\S]*?bottom: 8px;[\s\S]*?left: 14px;[\s\S]*?height: 3px;[\s\S]*?overflow: hidden;[\s\S]*?background: rgba\(255,255,255,\.18\);[\s\S]*?box-shadow: none;[\s\S]*?pointer-events: none;/,
   );
-  assert.match(homeSource, /\.home-tv-feed-progress > span \{[\s\S]*?width: 0;[\s\S]*?background: #fff;[\s\S]*?box-shadow: 0 0 6px rgba\(255,255,255,\.42\);[\s\S]*?transition: width \.1s linear;/);
+  assert.match(homeSource, /\.home-tv-feed-progress > span \{[\s\S]*?width: 0;[\s\S]*?background: rgba\(232,232,238,\.78\);[\s\S]*?box-shadow: none;[\s\S]*?transition: width \.1s linear;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber \{[\s\S]*?right: 14px;[\s\S]*?bottom: -8px;[\s\S]*?left: 14px;[\s\S]*?height: 28px;[\s\S]*?background: transparent !important;[\s\S]*?appearance: none !important;[\s\S]*?touch-action: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber::-webkit-slider-thumb \{[\s\S]*?width: 28px;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber::-moz-range-thumb \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
@@ -280,6 +280,10 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
 });
 
 test("full-view TV actions and identity clear the device bottom edge together", () => {
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed:fullscreen \.home-tv-feed-progress,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-progress \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?height: 3px !important;[\s\S]*?display: block !important;[\s\S]*?visibility: visible !important;[\s\S]*?background: rgba\(255,255,255,\.18\) !important;[\s\S]*?opacity: 1 !important;/,
+  );
   assert.match(
     homeSource,
     /#results\.home-tv-feed:fullscreen \.home-tv-feed-copy,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-copy \{[\s\S]*?bottom: calc\(24px \+ env\(safe-area-inset-bottom, 0px\)\);/,
@@ -498,7 +502,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=115/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=116/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
@@ -520,7 +524,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   );
   assert.match(
     brandedCards,
-    /\.home-tv-feed-progress \{[\s\S]*?background: rgba\(255, 255, 255, 0\.32\) !important;[\s\S]*?box-shadow: 0 1px 4px rgba\(0, 0, 0, 0\.82\) !important;[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: #fff !important;[\s\S]*?box-shadow: 0 0 6px rgba\(255, 255, 255, 0\.42\) !important;/,
+    /\.home-tv-feed-progress \{[\s\S]*?background: rgba\(255, 255, 255, 0\.18\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: rgba\(232, 232, 238, 0\.78\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(brandedCards, /input\.home-tv-feed-scrubber \{[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?appearance: none !important;/);
   assert.match(brandedCards, /input\.home-tv-feed-scrubber:is\(:focus, :focus-visible, :active\) \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
