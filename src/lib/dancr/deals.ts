@@ -4,6 +4,7 @@ import type { ClubDeal, ClubDealOfferType, DealSourceType } from "./types";
 import { isActiveNfcPresence } from "./shift-presence";
 import { dancerHasActiveVenueAffiliation } from "./venue-affiliations";
 import { requireVenueAccess } from "./venue-access";
+import { getVenueReferralFeeState } from "./referral-fees";
 
 type DancrClient = SupabaseClient;
 
@@ -42,7 +43,6 @@ export type VenueDealInput = {
   dealTitle: string;
   dealDescription: string;
   dealTerms?: string | null;
-  referralCommissionCents: number;
   isActive: boolean;
   offerType: ClubDealOfferType;
   bookingUrl?: string | null;
@@ -542,9 +542,9 @@ export async function updateVenueDealForAccount(
   if (!Number.isSafeInteger(sortOrder) || sortOrder < 0 || sortOrder > 1000) {
     throw new Error("Offer order must be between 0 and 1000.");
   }
-  const referralCommissionCents = Math.trunc(Number(input.referralCommissionCents));
-  if (!Number.isSafeInteger(referralCommissionCents) || referralCommissionCents < 100 || referralCommissionCents > 100_000) {
-    throw new Error("Referral commission must be between $1.00 and $1,000.00 per successful redemption.");
+  const referralFee = (await getVenueReferralFeeState(client, owned.venueId)).current;
+  if (input.isActive && !referralFee) {
+    throw new Error("A MyDancr referral fee agreement is required before publishing a Club Deal.");
   }
 
   const row = {
@@ -560,8 +560,8 @@ export async function updateVenueDealForAccount(
       commission_policy: "monthly-tier-v1",
     },
     payout_type: "flat",
-    payout_amount_cents: referralCommissionCents,
-    currency: "usd",
+    payout_amount_cents: referralFee?.feeCents || 0,
+    currency: referralFee?.currency || "usd",
     offer_type: offerType,
     booking_url: bookingUrl,
     sort_order: sortOrder,

@@ -111,6 +111,7 @@ type LoadState = {
   affiliations?: Array<Record<string, unknown>>;
   nfc?: Record<string, unknown> | null;
   venueAccess?: { role?: string; permissions?: string[] } | null;
+  referralFee?: Record<string, unknown> | null;
   refreshedAt?: string | null;
   error?: string;
 };
@@ -216,6 +217,7 @@ export default function DashboardClient({
             affiliations: secondary.affiliations || [],
             nfc: secondary.nfc || null,
             venueAccess: secondary.venueAccess || null,
+            referralFee: secondary.referralFee || null,
             refreshedAt: secondary.refreshedAt || null,
           });
           setIsLoading(false);
@@ -271,6 +273,7 @@ export default function DashboardClient({
         finance: secondary.finance === null ? null : secondary.finance || current.finance,
         affiliations: secondary.affiliations || [],
         venueAccess: secondary.venueAccess || current.venueAccess,
+        referralFee: secondary.referralFee || current.referralFee,
         refreshedAt: secondary.refreshedAt || new Date().toISOString(),
       }));
       if (showStatus) setVenueRefreshStatus("Live venue data is up to date.");
@@ -318,6 +321,10 @@ export default function DashboardClient({
   function updateVenueDeals(venueDeals: Array<Record<string, unknown>>) {
     const primaryDeal = venueDeals.find((deal) => deal.isActive === true) || venueDeals[0] || null;
     setState((current) => ({ ...current, deal: primaryDeal, venueDeals }));
+  }
+
+  function updateVenueReferralFee(referralFee: Record<string, unknown>) {
+    setState((current) => ({ ...current, referralFee }));
   }
 
   function updateSaved(update: (saved: CustomerSavedState) => CustomerSavedState) {
@@ -473,6 +480,7 @@ export default function DashboardClient({
                   workingNow={state.workingNow || []}
                   initialAffiliations={state.affiliations || []}
                   venueAccess={state.venueAccess || null}
+                  referralFee={state.referralFee || null}
                   refreshedAt={state.refreshedAt || null}
                   analyticsPeriod={analyticsPeriod}
                   isRefreshing={isVenueRefreshing}
@@ -480,6 +488,7 @@ export default function DashboardClient({
                   onAnalyticsPeriodChange={setAnalyticsPeriod}
                   onRefresh={() => void refreshVenueDashboard(true)}
                   onDealsChange={updateVenueDeals}
+                  onReferralFeeChange={updateVenueReferralFee}
                   onProfileChange={updateProfile}
                 />
               )}
@@ -1733,6 +1742,7 @@ function VenuePanel({
   workingNow,
   initialAffiliations,
   venueAccess,
+  referralFee,
   refreshedAt,
   analyticsPeriod,
   isRefreshing,
@@ -1740,6 +1750,7 @@ function VenuePanel({
   onAnalyticsPeriodChange,
   onRefresh,
   onDealsChange,
+  onReferralFeeChange,
   onProfileChange,
 }: {
   analytics?: LoadState["analytics"];
@@ -1751,6 +1762,7 @@ function VenuePanel({
   workingNow: Array<Record<string, unknown>>;
   initialAffiliations: Array<Record<string, unknown>>;
   venueAccess?: LoadState["venueAccess"];
+  referralFee?: LoadState["referralFee"];
   refreshedAt?: string | null;
   analyticsPeriod: "tonight" | "7d" | "30d";
   isRefreshing: boolean;
@@ -1758,6 +1770,7 @@ function VenuePanel({
   onAnalyticsPeriodChange: (period: "tonight" | "7d" | "30d") => void;
   onRefresh: () => void;
   onDealsChange: (deals: Array<Record<string, unknown>>) => void;
+  onReferralFeeChange: (referralFee: Record<string, unknown>) => void;
   onProfileChange: (profile: Record<string, unknown>) => void;
 }) {
   const [form, setForm] = useState({
@@ -1977,6 +1990,8 @@ function VenuePanel({
             initialDeal={deal}
             initialDeals={venueDeals}
             onDealsChange={onDealsChange}
+            referralFee={referralFee}
+            onReferralFeeChange={onReferralFeeChange}
             revenue={dealRevenue}
           />
         ) : (
@@ -2145,12 +2160,16 @@ function VenueClubDealPanel({
   initialDeal,
   initialDeals,
   onDealsChange,
+  referralFee,
+  onReferralFeeChange,
   revenue,
 }: {
   finance?: LoadState["finance"];
   initialDeal?: LoadState["deal"];
   initialDeals: Array<Record<string, unknown>>;
   onDealsChange: (deals: Array<Record<string, unknown>>) => void;
+  referralFee?: LoadState["referralFee"];
+  onReferralFeeChange: (referralFee: Record<string, unknown>) => void;
   revenue?: LoadState["dealRevenue"];
 }) {
   const seedDeals = initialDeals.length ? initialDeals : initialDeal ? [initialDeal] : [];
@@ -2161,6 +2180,11 @@ function VenueClubDealPanel({
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveConfirmed, setSaveConfirmed] = useState(false);
+  const [showFeeRequest, setShowFeeRequest] = useState(false);
+  const [requestedFee, setRequestedFee] = useState("");
+  const [feeRequestReason, setFeeRequestReason] = useState("");
+  const [feeRequestStatus, setFeeRequestStatus] = useState("");
+  const [isRequestingFee, setIsRequestingFee] = useState(false);
 
   useEffect(() => {
     const nextDeals = initialDeals.length ? initialDeals : initialDeal ? [initialDeal] : [];
@@ -2219,9 +2243,8 @@ function VenueClubDealPanel({
       return;
     }
 
-    const referralCommissionCents = dollarsToCents(form.referralCommission);
-    if (referralCommissionCents === null) {
-      setStatus("Enter a referral commission between $1.00 and $1,000.00.");
+    if (nextIsActive && !currentReferralFee) {
+      setStatus("A MyDancr referral fee agreement is required before publishing this Club Deal.");
       return;
     }
 
@@ -2239,7 +2262,6 @@ function VenueClubDealPanel({
           dealTitle,
           dealDescription,
           dealTerms: form.dealTerms,
-          referralCommissionCents,
           isActive: nextIsActive,
           offerType: form.offerType,
           bookingUrl: form.offerType === "bottle_service" ? form.bookingUrl : null,
@@ -2300,8 +2322,47 @@ function VenueClubDealPanel({
     }
   }
 
+  async function requestFeeChange() {
+    const requestedFeeCents = dollarsToCents(requestedFee);
+    if (requestedFeeCents === null) {
+      setFeeRequestStatus("Enter a requested fee between $1.00 and $1,000.00.");
+      return;
+    }
+    if (feeRequestReason.trim().length < 10) {
+      setFeeRequestStatus("Add a short reason for the requested change.");
+      return;
+    }
+    const session = readSession();
+    if (!session?.accessToken) return setFeeRequestStatus("Sign in required.");
+    setIsRequestingFee(true);
+    setFeeRequestStatus("");
+    try {
+      const response = await fetch("/api/venue/referral-fee", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ requestedFeeCents, reason: feeRequestReason }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to request a fee change.");
+      onReferralFeeChange(data.referralFee);
+      setRequestedFee("");
+      setFeeRequestReason("");
+      setShowFeeRequest(false);
+      setFeeRequestStatus(data.message || "Referral fee change request sent to MyDancr.");
+    } catch (error) {
+      setFeeRequestStatus(error instanceof Error ? error.message : "Unable to request a fee change.");
+    } finally {
+      setIsRequestingFee(false);
+    }
+  }
+
   const liveCount = deals.filter((deal) => deal.isActive === true).length;
   const draftCount = deals.length - liveCount;
+  const currentReferralFee = referralFee?.current as Record<string, unknown> | null | undefined;
+  const referralRequests = Array.isArray(referralFee?.requests)
+    ? referralFee.requests as Array<Record<string, unknown>>
+    : [];
+  const pendingFeeRequest = referralRequests.find((request) => request.status === "pending");
 
   return (
     <article className="info-panel venue-deal-panel">
@@ -2413,21 +2474,24 @@ function VenueClubDealPanel({
         </fieldset>
 
         <fieldset className="venue-deal-builder-step">
-          <legend><span>3</span><span><strong>Cost & order</strong><small>Referral fee and public position</small></span></legend>
+          <legend><span>3</span><span><strong>Agreement & order</strong><small>Contract fee and public position</small></span></legend>
           <div className="venue-deal-step-grid">
-            <label>
-              MyDancr referral fee per redemption
-              <span className="currency-input">
-                <span>$</span>
-                <input
-                  inputMode="decimal"
-                  placeholder="20.00"
-                  required
-                  value={form.referralCommission}
-                  onChange={(event) => updateDealForm("referralCommission", event.target.value)}
-                />
-              </span>
-            </label>
+            <section className="venue-referral-agreement" aria-label="MyDancr referral fee agreement">
+              <span>MyDancr referral fee</span>
+              <strong>{currentReferralFee ? `${formatCents(Number(currentReferralFee.feeCents || 0))} per verified customer` : "Agreement required"}</strong>
+              <small>
+                {currentReferralFee
+                  ? `MyDancr-controlled agreement · effective ${formatDashboardDate(String(currentReferralFee.effectiveFrom || ""))}`
+                  : "MyDancr must record a signed venue agreement before a deal can go live."}
+              </small>
+              {pendingFeeRequest ? (
+                <em>Change requested: {formatCents(Number(pendingFeeRequest.requestedFeeCents || 0))} · awaiting MyDancr review</em>
+              ) : (
+                <button className="secondary" type="button" onClick={() => setShowFeeRequest((current) => !current)}>
+                  {showFeeRequest ? "Cancel request" : "Request fee change"}
+                </button>
+              )}
+            </section>
             <label>
               Display order
               <input
@@ -2440,6 +2504,22 @@ function VenueClubDealPanel({
               <small>Lower numbers appear first when several deals are live.</small>
             </label>
           </div>
+          {showFeeRequest && !pendingFeeRequest ? (
+            <div className="venue-referral-request-panel">
+              <label>
+                Requested fee per verified customer
+                <span className="currency-input"><span>$</span><input inputMode="decimal" placeholder="20.00" value={requestedFee} onChange={(event) => setRequestedFee(event.target.value)} /></span>
+              </label>
+              <label>
+                Reason for change
+                <textarea maxLength={500} minLength={10} rows={3} value={feeRequestReason} onChange={(event) => setFeeRequestReason(event.target.value)} />
+              </label>
+              <button disabled={isRequestingFee} type="button" onClick={() => void requestFeeChange()}>
+                {isRequestingFee ? "Sending…" : "Send request to MyDancr"}
+              </button>
+            </div>
+          ) : null}
+          {feeRequestStatus ? <p className="venue-deal-feedback" role="status">{feeRequestStatus}</p> : null}
         </fieldset>
 
         <fieldset className="venue-deal-builder-step review">
@@ -2447,7 +2527,7 @@ function VenueClubDealPanel({
           <dl className="venue-deal-review">
             <div><dt>Offer</dt><dd>{form.dealTitle.trim() || "Enter a deal title above"}</dd></div>
             <div><dt>Type</dt><dd>{dealTypeLabel(form.offerType)}</dd></div>
-            <div><dt>Referral fee</dt><dd>{dollarsToCents(form.referralCommission) === null ? "Enter a valid fee above" : `$${form.referralCommission} per redemption`}</dd></div>
+            <div><dt>Referral fee</dt><dd>{currentReferralFee ? `${formatCents(Number(currentReferralFee.feeCents || 0))} per verified customer` : "Agreement required"}</dd></div>
             <div><dt>Status</dt><dd>{form.isActive ? "Live" : "Draft"}</dd></div>
           </dl>
           {form.isActive ? (
@@ -2552,9 +2632,6 @@ function venueDealForm(deal?: Record<string, unknown> | null, fallbackOrder = 0)
     dealTitle: String(deal?.dealTitle || ""),
     dealDescription: String(deal?.dealDescription || ""),
     dealTerms: String(deal?.dealTerms || ""),
-    referralCommission: deal?.payoutAmountCents
-      ? (Number(deal.payoutAmountCents) / 100).toFixed(2)
-      : "",
     isActive: deal?.isActive === true,
     offerType: String(deal?.offerType || "admission"),
     bookingUrl: String(deal?.bookingUrl || ""),
@@ -6254,6 +6331,16 @@ function formatDashboardTime(value: string) {
   return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
 }
 
+function formatDashboardDate(value: string) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "date unavailable";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
 function DashboardSignInRecovery({
   onSignedIn,
   role,
@@ -6837,6 +6924,14 @@ function DashboardStyles() {
       .venue-deal-review dt { color: #9d92ad; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
       .venue-deal-review dd { margin: 0; color: #fff; font-size: 13px; font-weight: 850; overflow-wrap: anywhere; }
       .venue-deal-rule-note { margin: 0; padding: 12px; border-left: 3px solid #94e5ff; color: #cbd5e1; background: rgba(148,229,255,.045); font-size: 12px; line-height: 1.5; }
+      .venue-referral-agreement { min-width: 0; display: grid; align-content: start; gap: 7px; padding: 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; background: #111118; }
+      .venue-referral-agreement > span { color: #9d92ad; font-size: 10px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
+      .venue-referral-agreement > strong { color: #fff; font-size: 16px; overflow-wrap: anywhere; }
+      .venue-referral-agreement > small { color: #b9accd; line-height: 1.45; }
+      .venue-referral-agreement > em { padding: 9px 10px; border: 1px solid rgba(255,214,102,.25); border-radius: 8px; color: #ffd666; background: rgba(255,214,102,.07); font-size: 12px; font-style: normal; font-weight: 850; line-height: 1.4; }
+      .venue-referral-agreement > button { justify-self: start; min-height: 38px; }
+      .venue-referral-request-panel { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(160px,.7fr) minmax(220px,1.3fr) auto; align-items: end; gap: 10px; padding: 13px; border: 1px solid rgba(148,229,255,.24); border-radius: 10px; background: rgba(148,229,255,.045); }
+      .venue-referral-request-panel > button { min-height: 42px; }
       .venue-deal-panel label { display: grid; align-content: start; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .venue-deal-panel input, .venue-deal-panel textarea, .venue-deal-panel select { width: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: #17151d; padding: 10px 12px; font: inherit; }
       .venue-deal-panel input, .venue-deal-panel select { min-height: 42px; }
@@ -7213,6 +7308,8 @@ function DashboardStyles() {
         .venue-tonight-metrics .metric:nth-child(n + 3) { border-top: 1px solid var(--mydancr-dashboard-border); }
         .venue-dashboard-metrics .metric { min-height: 62px; padding: 12px 10px; text-align: center; }
         .venue-dashboard-section > summary { min-height: 70px; padding: 14px; }
+        .venue-referral-request-panel { grid-template-columns: 1fr; }
+        .venue-referral-request-panel > button { width: 100%; }
         .venue-working-list a { align-items: flex-start; flex-direction: column; }
         .venue-working-verification { justify-items: start; text-align: left; padding-left: 58px; }
       }

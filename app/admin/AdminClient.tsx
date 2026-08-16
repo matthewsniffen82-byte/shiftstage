@@ -22,6 +22,7 @@ type AdminState = {
   imageModeration?: Array<Record<string, unknown>>;
   operations?: AdminOperationsCenter | null;
   finance?: Record<string, unknown> | null;
+  referralFees?: Record<string, unknown> | null;
   authRequired?: boolean;
   warnings?: string[];
   error?: string;
@@ -193,6 +194,7 @@ export default function AdminClient() {
         { label: "Monitoring", path: "/api/admin/monitoring", apply: (data) => ({ monitoring: data.monitoring }) },
         { label: "Live operations", path: "/api/admin/operations", apply: (data) => ({ operations: data.operations }) },
         { label: "QR finance", path: "/api/admin/finance", apply: (data) => ({ finance: data.finance }) },
+        { label: "Referral fee agreements", path: "/api/admin/referral-fees", apply: (data) => ({ referralFees: data.referralFees }) },
         {
           label: "Dancer approvals",
           path: "/api/admin/approvals",
@@ -243,6 +245,7 @@ export default function AdminClient() {
         monitoring: null,
         operations: null,
         finance: null,
+        referralFees: null,
         queue: [],
         dancers: [],
         venues: [],
@@ -426,11 +429,19 @@ export default function AdminClient() {
           {workspace === "activity" ? <ActivityTimeline operations={state.operations || null} /> : null}
           {workspace === "accounts" ? <AccountOverview operations={state.operations || null} /> : null}
           {workspace === "finance" ? (
-            <FinanceManager
-              finance={state.finance || null}
-              onFinanceChange={(finance) => setState((current) => ({ ...current, finance }))}
-              onActionConfirmed={confirmAdminAction}
-            />
+            <>
+              <ReferralFeeManager
+                venues={state.venues || []}
+                referralFees={state.referralFees || null}
+                onReferralFeesChange={(referralFees) => setState((current) => ({ ...current, referralFees }))}
+                onActionConfirmed={confirmAdminAction}
+              />
+              <FinanceManager
+                finance={state.finance || null}
+                onFinanceChange={(finance) => setState((current) => ({ ...current, finance }))}
+                onActionConfirmed={confirmAdminAction}
+              />
+            </>
           ) : null}
           <section className="admin-grid">
           {workspace === "system" ? <Panel title="Monitoring">
@@ -747,6 +758,197 @@ function FinanceManager({
             </article>
           ))}
           {!payouts.length ? <p className="empty">No dancer payout batches have been created yet.</p> : null}
+        </div>
+      </Panel>
+    </section>
+  );
+}
+
+function ReferralFeeManager({
+  venues,
+  referralFees,
+  onReferralFeesChange,
+  onActionConfirmed,
+}: {
+  venues: Array<Record<string, unknown>>;
+  referralFees: Record<string, unknown> | null;
+  onReferralFeesChange: (referralFees: Record<string, unknown>) => void;
+  onActionConfirmed: (message: string) => void;
+}) {
+  const terms = asRecordArray(referralFees?.terms);
+  const requests = asRecordArray(referralFees?.requests);
+  const pendingRequests = requests.filter((request) => asText(request.status) === "pending");
+  const [venueId, setVenueId] = useState("");
+  const [fee, setFee] = useState("");
+  const [effectiveFrom, setEffectiveFrom] = useState(() => adminLocalDateTime(new Date()));
+  const [agreementReference, setAgreementReference] = useState("");
+  const [decisionNote, setDecisionNote] = useState("");
+  const [reviewRequestId, setReviewRequestId] = useState("");
+  const [requestNotes, setRequestNotes] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const selectedVenue = venues.find((venue) => asText(venue.id) === venueId);
+  const selectedTerms = terms.filter((term) => asText(term.venueId) === venueId);
+  const currentTerm = currentAdminReferralTerm(selectedTerms);
+
+  function beginRequestApproval(request: Record<string, unknown>) {
+    const requestedVenueId = asText(request.venueId);
+    setVenueId(requestedVenueId);
+    setFee((Number(request.requestedFeeCents || 0) / 100).toFixed(2));
+    setReviewRequestId(asText(request.id));
+    setDecisionNote(requestNotes[asText(request.id)] || "Approved after MyDancr agreement review.");
+    setStatus("Complete the agreement reference and effective date, then approve this request.");
+    window.requestAnimationFrame(() => document.getElementById("admin-referral-fee-form")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
+  async function saveAgreement(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    const feeCents = adminDollarsToCents(fee);
+    if (!venueId || feeCents === null || !agreementReference.trim() || !effectiveFrom) {
+      return setStatus("Choose a venue and enter a valid fee, effective date, and agreement reference.");
+    }
+    setIsSaving(true);
+    setStatus(reviewRequestId ? "Approving fee request and recording agreement…" : "Recording referral fee agreement…");
+    try {
+      const response = await fetch("/api/admin/referral-fees", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          action: reviewRequestId ? "approve_request" : "set_fee",
+          requestId: reviewRequestId || null,
+          venueId,
+          feeCents,
+          effectiveFrom: new Date(effectiveFrom).toISOString(),
+          agreementReference,
+          decisionNote,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save the referral fee agreement.");
+      onReferralFeesChange(data.referralFees);
+      const message = reviewRequestId ? "Venue fee request approved and agreement recorded." : "Referral fee agreement recorded.";
+      setStatus(message);
+      setReviewRequestId("");
+      setDecisionNote("");
+      onActionConfirmed(message);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save the referral fee agreement.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function rejectRequest(request: Record<string, unknown>) {
+    const token = readToken();
+    const requestId = asText(request.id);
+    const note = (requestNotes[requestId] || "").trim();
+    if (!token) return setStatus("Admin sign in required.");
+    if (note.length < 3) return setStatus("Add a decision note before rejecting a fee request.");
+    setIsSaving(true);
+    setStatus("Rejecting fee request…");
+    try {
+      const response = await fetch("/api/admin/referral-fees", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "reject_request", requestId, decisionNote: note }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to reject the fee request.");
+      onReferralFeesChange(data.referralFees);
+      setStatus("Venue fee request rejected with an audit note.");
+      onActionConfirmed("Venue fee request rejected.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to reject the fee request.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="operations-center referral-fee-manager" aria-labelledby="referral-fee-manager-heading">
+      <Panel title="Referral fee agreements" badge={`${pendingRequests.length} requests`}>
+        <span className="eyebrow">MyDancr controlled</span>
+        <h2 id="referral-fee-manager-heading">Venue referral terms</h2>
+        <p>Only MyDancr admins can set the fee charged for each verified individual NFC redemption. Venue managers can review the active amount and request a change.</p>
+        <form id="admin-referral-fee-form" className="referral-fee-form" onSubmit={saveAgreement}>
+          <label>
+            Venue
+            <select required value={venueId} onChange={(event) => { setVenueId(event.target.value); setReviewRequestId(""); }}>
+              <option value="">Choose venue</option>
+              {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)} · {asText(venue.city)}</option>)}
+            </select>
+          </label>
+          <label>
+            Fee per verified customer
+            <input required inputMode="decimal" placeholder="20.00" value={fee} onChange={(event) => setFee(event.target.value)} />
+          </label>
+          <label>
+            Effective date and time
+            <input required type="datetime-local" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
+          </label>
+          <label>
+            Signed agreement reference
+            <input required maxLength={160} placeholder="Agreement or amendment ID" value={agreementReference} onChange={(event) => setAgreementReference(event.target.value)} />
+          </label>
+          <label className="wide">
+            Internal decision note (optional)
+            <textarea maxLength={500} rows={2} value={decisionNote} onChange={(event) => setDecisionNote(event.target.value)} />
+          </label>
+          <button disabled={isSaving} type="submit">{isSaving ? "Saving…" : reviewRequestId ? "Approve request & set fee" : "Set referral fee"}</button>
+          {reviewRequestId ? <button className="secondary-action" type="button" onClick={() => { setReviewRequestId(""); setDecisionNote(""); }}>Cancel request review</button> : null}
+        </form>
+        {selectedVenue ? (
+          <div className="referral-fee-current">
+            <strong>{asText(selectedVenue.name)}</strong>
+            <span>{currentTerm ? `${formatAdminCents(Number(currentTerm.feeCents || 0))} per verified customer` : "No active agreement"}</span>
+            <small>{currentTerm ? `Effective ${formatDate(currentTerm.effectiveFrom)} · ${asText(currentTerm.agreementReference)}` : "Club Deals cannot be published until an agreement is recorded."}</small>
+          </div>
+        ) : null}
+        {status ? <p role="status">{status}</p> : null}
+      </Panel>
+
+      <Panel title="Venue fee change requests" badge={`${pendingRequests.length} pending`}>
+        <div className="referral-fee-request-list">
+          {pendingRequests.map((request) => {
+            const requestId = asText(request.id);
+            const venue = venues.find((item) => asText(item.id) === asText(request.venueId));
+            return (
+              <article key={requestId}>
+                <strong>{asText(venue?.name) || "Venue"} · {formatAdminCents(Number(request.requestedFeeCents || 0))}</strong>
+                <p>{asText(request.reason)}</p>
+                <small>Requested {formatDate(request.createdAt)}</small>
+                <label>
+                  Decision note
+                  <textarea maxLength={500} rows={2} value={requestNotes[requestId] || ""} onChange={(event) => setRequestNotes((current) => ({ ...current, [requestId]: event.target.value }))} />
+                </label>
+                <div className="admin-action-row">
+                  <button disabled={isSaving} type="button" onClick={() => beginRequestApproval(request)}>Review & approve</button>
+                  <button className="danger-action" disabled={isSaving} type="button" onClick={() => void rejectRequest(request)}>Reject</button>
+                </div>
+              </article>
+            );
+          })}
+          {!pendingRequests.length ? <p className="empty">No venue fee change requests are waiting.</p> : null}
+        </div>
+      </Panel>
+
+      <Panel title="Agreement history" badge={`${terms.length} terms`}>
+        <div className="referral-fee-history">
+          {terms.slice(0, 100).map((term) => {
+            const venue = venues.find((item) => asText(item.id) === asText(term.venueId));
+            const state = adminReferralTermState(term);
+            return (
+              <article key={asText(term.id)}>
+                <strong>{asText(venue?.name) || "Venue"} · {formatAdminCents(Number(term.feeCents || 0))}</strong>
+                <span className={`account-state ${state === "Active" ? "active" : ""}`}>{state}</span>
+                <p>{asText(term.agreementReference)}</p>
+                <small>{formatDate(term.effectiveFrom)}{term.effectiveUntil ? ` → ${formatDate(term.effectiveUntil)}` : " onward"}</small>
+              </article>
+            );
+          })}
+          {!terms.length ? <p className="empty">No referral fee agreements have been recorded.</p> : null}
         </div>
       </Panel>
     </section>
@@ -2973,6 +3175,35 @@ function previewCommission(item: Record<string, unknown>) {
   return `Commission: ${String(commission.status || "pending")}`;
 }
 
+function adminLocalDateTime(date: Date) {
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function adminDollarsToCents(value: string) {
+  const normalized = value.trim();
+  if (!/^\d{1,4}(?:\.\d{1,2})?$/.test(normalized)) return null;
+  const cents = Math.round(Number(normalized) * 100);
+  return cents >= 100 && cents <= 100_000 ? cents : null;
+}
+
+function currentAdminReferralTerm(terms: Array<Record<string, unknown>>) {
+  const now = Date.now();
+  return terms.find((term) => (
+    !term.supersededAt
+    && Date.parse(asText(term.effectiveFrom)) <= now
+    && (!term.effectiveUntil || Date.parse(asText(term.effectiveUntil)) > now)
+  )) || null;
+}
+
+function adminReferralTermState(term: Record<string, unknown>) {
+  if (term.supersededAt) return "Superseded";
+  const now = Date.now();
+  if (Date.parse(asText(term.effectiveFrom)) > now) return "Scheduled";
+  if (term.effectiveUntil && Date.parse(asText(term.effectiveUntil)) <= now) return "Expired";
+  return "Active";
+}
+
 function formatAdminCents(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -3351,6 +3582,22 @@ function AdminStyles() {
       .admin-workspace-nav button.active { color: #fff; border-color: rgba(148,229,255,.28); background: linear-gradient(135deg, rgba(139,92,246,.36), rgba(34,199,255,.14)); box-shadow: inset 0 0 22px rgba(139,92,246,.14); }
       .admin-workspace-nav button span { position: absolute; top: 3px; right: 5px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; color: #071016; background: #94e5ff; font-size: 10px; font-weight: 950; }
       .operations-center, .workspace-lead { max-width: 1120px; margin: 0 auto 18px; display: grid; gap: 14px; }
+      .referral-fee-manager .admin-panel-body > p { color: #b9accd; line-height: 1.5; }
+      .referral-fee-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; border: 1px solid rgba(148,229,255,.2); border-radius: 10px; background: rgba(148,229,255,.035); }
+      .referral-fee-form label, .referral-fee-request-list label { display: grid; gap: 6px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
+      .referral-fee-form label.wide { grid-column: 1 / -1; }
+      .referral-fee-form input, .referral-fee-form select, .referral-fee-form textarea, .referral-fee-request-list textarea { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: #15151c; font: inherit; }
+      .referral-fee-current { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 12px; border: 1px solid rgba(50,255,164,.24); border-radius: 9px; background: rgba(50,255,164,.055); }
+      .referral-fee-current strong { color: #fff; }
+      .referral-fee-current span { color: #8dffc4; font-weight: 950; }
+      .referral-fee-current small { grid-column: 1 / -1; color: #b9accd; }
+      .referral-fee-request-list, .referral-fee-history { display: grid; gap: 9px; }
+      .referral-fee-request-list article, .referral-fee-history article { display: grid; gap: 7px; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 9px; background: rgba(255,255,255,.035); }
+      .referral-fee-request-list strong, .referral-fee-history strong { color: #fff; }
+      .referral-fee-request-list p, .referral-fee-history p { color: #d8cfeb; font-size: 13px; }
+      .referral-fee-request-list small, .referral-fee-history small { color: #9c90b3; font-size: 11px; }
+      .referral-fee-history article { grid-template-columns: minmax(0,1fr) auto; }
+      .referral-fee-history p, .referral-fee-history small { grid-column: 1 / -1; }
       .operations-status-line, .workspace-lead > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; padding: 8px 2px 2px; }
       .workspace-lead > header { display: grid; justify-content: stretch; }
       .operations-status-line > div, .workspace-lead > header { gap: 7px; }
@@ -3416,6 +3663,9 @@ function AdminStyles() {
         .approval-actions, .report-row div, .content-review-actions, .venue-access-actions { display: grid; grid-template-columns: 1fr; }
         .approval-row button, .report-row button, .venue-manager button, .deal-activity-row button { width: 100%; }
         .deal-settlement-action { grid-template-columns: 1fr; }
+        .referral-fee-form, .referral-fee-current, .referral-fee-history article { grid-template-columns: 1fr; }
+        .referral-fee-form label.wide, .referral-fee-current small, .referral-fee-history p, .referral-fee-history small { grid-column: 1; }
+        .referral-fee-form > button { width: 100%; }
         .admin-shell { padding-left: 8px; padding-right: 8px; overflow-x: hidden; }
         .admin-head, .admin-grid, .admin-panel, .approval-row, .submission-detail, .submission-section, .submission-review-card, .submitted-social-review, .submitted-social-review-list, .submitted-social-icons { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
         .admin-panel, .approval-row, .submission-detail { padding: 10px; }

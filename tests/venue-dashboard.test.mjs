@@ -86,7 +86,9 @@ test("venue managers can publish typed offers and bottle service with production
   assert.match(dashboard, /Bottle service/);
   assert.match(dashboard, /Live venue booking URL/);
   assert.match(dashboard, /Display order/);
-  assert.match(dashboard, /MyDancr referral fee per redemption/);
+  assert.match(dashboard, /MyDancr referral fee/);
+  assert.match(dashboard, /MyDancr-controlled agreement/);
+  assert.match(dashboard, /Request fee change/);
   assert.match(dashboard, /Publish Deal/);
 });
 

@@ -32,7 +32,6 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_deals");
-    const referralCommissionCents = Number(body?.referralCommissionCents);
     const { deal, deals } = await updateVenueDealForAccount(
       admin,
       user.id,
@@ -41,7 +40,6 @@ export async function PATCH(request: Request) {
         dealTitle: typeof body?.dealTitle === "string" ? body.dealTitle : "",
         dealDescription: typeof body?.dealDescription === "string" ? body.dealDescription : "",
         dealTerms: typeof body?.dealTerms === "string" ? body.dealTerms : null,
-        referralCommissionCents,
         isActive: body?.isActive === true,
         offerType: typeof body?.offerType === "string" ? body.offerType : "admission",
         bookingUrl: typeof body?.bookingUrl === "string" ? body.bookingUrl : null,
@@ -63,7 +61,7 @@ export async function PATCH(request: Request) {
       venueId: deal.venueId,
       dealId: deal.id,
       active: deal.isActive,
-      referralCommissionCents: deal.payoutAmountCents,
+      referralFeeCents: deal.payoutAmountCents,
     });
     return NextResponse.json({
       ok: true,

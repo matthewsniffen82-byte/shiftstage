@@ -6,6 +6,7 @@ import { getVenueDashboard, readVenueAnalyticsPeriod } from "@/src/lib/dancr/ven
 import { canVenue, requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { getVenueDancerVerificationState } from "@/src/lib/dancr/venue-affiliations";
 import { getLatestVenueOwnershipClaim } from "@/src/lib/dancr/venue-claims";
+import { getVenueReferralFeeState } from "@/src/lib/dancr/referral-fees";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -32,10 +33,11 @@ export async function GET(request: Request) {
 
     const period = readVenueAnalyticsPeriod(new URL(request.url).searchParams.get("period"));
 
-    const [dashboard, finance, verification] = await Promise.all([
+    const [dashboard, finance, verification, referralFee] = await Promise.all([
       getVenueDashboard(admin, user.id, period),
       canVenue(access, "view_finance") ? getVenueFinance(admin, user.id) : null,
       getVenueDancerVerificationState(admin, user.id),
+      getVenueReferralFeeState(admin, access.venueId),
     ]);
     return NextResponse.json({
       ok: true,
@@ -43,6 +45,7 @@ export async function GET(request: Request) {
       finance,
       affiliations: verification.affiliations,
       venueAccess: access,
+      referralFee,
       refreshedAt: new Date().toISOString(),
     });
   } catch (error) {

@@ -125,14 +125,16 @@ test("venue QR revenue goes entirely to MyDancr while dancer QR revenue enters t
   assert.match(migration, /successful_redemption_number[\s\S]*?commission_month[\s\S]*?policy_version/);
 });
 
-test("venues configure a real referral amount before a Club Deal can be redeemed by NFC", () => {
+test("venues publish offers against a MyDancr-controlled referral agreement", () => {
   assert.match(deals, /\.eq\("payout_type", "flat"\)[\s\S]*?\.gt\("payout_amount_cents", 0\)/);
-  assert.match(venueDealRoute, /referralCommissionCents/);
   assert.match(venueDealRoute, /updateVenueDealForAccount/);
-  assert.match(deals, /between \$1\.00 and \$1,000\.00 per successful redemption/);
+  assert.doesNotMatch(venueDealRoute, /body\?\.referralCommissionCents/);
+  assert.match(deals, /getVenueReferralFeeState/);
+  assert.match(deals, /A MyDancr referral fee agreement is required before publishing/);
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
-  assert.match(venueDashboard, /MyDancr referral fee per redemption/);
+  assert.match(venueDashboard, /MyDancr referral fee/);
+  assert.match(venueDashboard, /Request fee change/);
   assert.match(venueDashboard, /name="dealAction"[\s\S]*?value=\{form\.isActive \? "save" : "publish"\}/);
   assert.match(venueDashboard, /Publish Deal/);
   assert.match(venueDashboard, /Ready for redemption/);
