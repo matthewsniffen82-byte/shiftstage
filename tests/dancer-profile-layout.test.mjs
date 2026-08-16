@@ -126,14 +126,27 @@ test("active full-profile Club Deals render a compact cashier NFC action and use
   assert.match(activeDealMarkup, /data-profile-club-deal-config=/);
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
   assert.match(activeDealMarkup, /class="profile-club-deal-label">Club Deal<\/strong>/);
-  assert.match(activeDealMarkup, /<small>Select here · Tap cashier NFC at the club<\/small>/);
+  assert.match(activeDealMarkup, /<small>Choose your deal here, then tap the cashier NFC sticker at the club\.<\/small>/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?Choose deal[\s\S]*?live offers[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?Open deal[\s\S]*?Cashier NFC/,
   );
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
+  assert.doesNotMatch(liveApp, /profile-club-deal-count/);
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?min-height: 112px !important;[\s\S]*?border: 1px solid rgba\(77, 236, 157, \.72\) !important;[\s\S]*?linear-gradient\(145deg, rgba\(8, 72, 55, \.98\), rgba\(3, 31, 25, \.98\)\) !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-qr-button \.club-deal-qr-symbol \{[\s\S]*?width: 42px;[\s\S]*?height: 42px;[\s\S]*?color: #7effbd;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-action-copy strong \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 950;/,
+  );
 });
 
 test("live dancer essentials stay compact, scannable, and tight against the mobile dock", () => {
