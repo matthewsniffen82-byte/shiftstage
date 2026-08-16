@@ -2015,7 +2015,7 @@ function VenuePanel({
                   {dancer.avatarUrl ? <img src={String(dancer.avatarUrl)} srcSet={dancer.avatarSrcSet ? String(dancer.avatarSrcSet) : undefined} sizes="48px" alt="" /> : <i aria-hidden="true">{String(dancer.stageName || "D").slice(0, 1)}</i>}
                   <span><strong>{String(dancer.stageName || "Dancer")}</strong><small>Checked in {dancer.checkedInAt ? formatRelativeDashboardTime(String(dancer.checkedInAt)) : "during this shift"}</small></span>
                 </span>
-                <span className="venue-working-verification"><strong>Verified {dancer.lastLocationVerifiedAt ? formatRelativeDashboardTime(String(dancer.lastLocationVerifiedAt)) : "now"}</strong><small>Scheduled until {formatDashboardTime(String(dancer.endsAt || ""))}</small></span>
+                <span className="venue-working-verification"><strong>NFC verified</strong><small>Check-in active until {formatDashboardTime(String(dancer.endsAt || ""))}</small></span>
               </Link>
             ))}
             {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
@@ -6321,7 +6321,10 @@ function formatRelativeDashboardTime(value: string) {
   const minutes = Math.max(1, Math.round(Math.abs(difference) / 60_000));
   if (minutes < 60) return difference >= 0 ? `${minutes} min ago` : `in ${minutes} min`;
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return difference >= 0 ? `${hours} hr ago` : `in ${hours} hr`;
+  if (hours < 24) {
+    const unit = hours === 1 ? "hr" : "hrs";
+    return difference >= 0 ? `${hours} ${unit} ago` : `in ${hours} ${unit}`;
+  }
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(timestamp));
 }
 

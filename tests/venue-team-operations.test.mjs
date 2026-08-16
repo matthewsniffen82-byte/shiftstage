@@ -68,8 +68,10 @@ test("venue dashboard live operations refresh real data and expose honest workin
   assert.match(dashboard, /\/api\/venue\/dashboard\?period=\$\{analyticsPeriod\}/);
   assert.match(dashboard, /\["tonight", "7d", "30d"\]/);
   assert.match(dashboard, /hasLiveActivity \? "LIVE" : "NO LIVE ACTIVITY"/);
-  assert.match(dashboard, /lastLocationVerifiedAt/);
-  assert.match(dashboard, /Scheduled until/);
+  assert.match(dashboard, /NFC verified/);
+  assert.match(dashboard, /Check-in active until/);
+  assert.doesNotMatch(dashboard, /Scheduled until/);
+  assert.match(dashboard, /hours === 1 \? "hr" : "hrs"/);
   assert.match(dashboard, /VenueTeamPanel/);
   assert.match(dashboardRoute, /readVenueAnalyticsPeriod/);
   assert.match(dashboardRoute, /canVenue\(access, "view_finance"\)/);
