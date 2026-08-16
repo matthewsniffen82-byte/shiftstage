@@ -54187,9 +54187,10 @@
     }
 
     function compareVenueDiscoveryPriority(left, right, city) {
+      const dealDifference = Number(Boolean(right?.activeDeal?.id)) - Number(Boolean(left?.activeDeal?.id));
       const activeDifference = Number(venueDiscoveryIsActiveNow(right, city)) - Number(venueDiscoveryIsActiveNow(left, city));
       const scheduleDifference = venueSchedulePriority(left, city) - venueSchedulePriority(right, city);
-      return activeDifference || scheduleDifference || compareVenuePopularity(left, right) || compareVenueDistance(left, right, city);
+      return dealDifference || activeDifference || scheduleDifference || compareVenuePopularity(left, right) || compareVenueDistance(left, right, city);
     }
 
     function getItems(city, tab) {

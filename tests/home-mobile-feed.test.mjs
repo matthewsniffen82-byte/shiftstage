@@ -399,7 +399,7 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   );
 });
 
-test("venue cards keep every active venue above inactive venues, then preserve schedule and popularity priority", () => {
+test("venue cards keep active Club Deals first, then preserve live status, schedule, and popularity priority", () => {
   assert.match(
     homeSource,
     /function mapLiveVenue\(item, city, venueShiftCounts\) \{[\s\S]*?popularity: \{[\s\S]*?followerCount: Math\.max\(0, Number\(item\.popularity\?\.followerCount\) \|\| 0\)[\s\S]*?directionRequests30d:[\s\S]*?profileViews30d:/,
@@ -418,7 +418,7 @@ test("venue cards keep every active venue above inactive venues, then preserve s
   );
   assert.match(
     homeSource,
-    /function compareVenueDiscoveryPriority\(left, right, city\) \{[\s\S]*?Number\(venueDiscoveryIsActiveNow\(right, city\)\) - Number\(venueDiscoveryIsActiveNow\(left, city\)\)[\s\S]*?venueSchedulePriority\(left, city\) - venueSchedulePriority\(right, city\)[\s\S]*?activeDifference \|\| scheduleDifference \|\| compareVenuePopularity\(left, right\) \|\| compareVenueDistance\(left, right, city\)/,
+    /function compareVenueDiscoveryPriority\(left, right, city\) \{[\s\S]*?Number\(Boolean\(right\?\.activeDeal\?\.id\)\) - Number\(Boolean\(left\?\.activeDeal\?\.id\)\)[\s\S]*?Number\(venueDiscoveryIsActiveNow\(right, city\)\) - Number\(venueDiscoveryIsActiveNow\(left, city\)\)[\s\S]*?venueSchedulePriority\(left, city\) - venueSchedulePriority\(right, city\)[\s\S]*?dealDifference \|\| activeDifference \|\| scheduleDifference \|\| compareVenuePopularity\(left, right\) \|\| compareVenueDistance\(left, right, city\)/,
   );
   assert.match(
     homeSource,
