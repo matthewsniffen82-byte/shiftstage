@@ -54112,7 +54112,7 @@
 
     function getItems(city, tab) {
       const market = markets[city];
-      if (["tonight", "dancers", "trending"].includes(tab) && liveMarketState[city] !== "ready") {
+      if (["tonight", "dancers", "venues", "trending"].includes(tab) && liveMarketState[city] !== "ready") {
         return [];
       }
       if (tab === "tonight") return workingNowItems(city);
@@ -54151,7 +54151,7 @@
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const tabName = tab.dataset.tab;
         const label = tab.dataset.tabLabel || tab.textContent.trim();
-        const count = loading && ["tonight", "dancers", "trending"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
+        const count = loading && ["tonight", "dancers", "venues", "trending"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
         tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
     }
@@ -54853,7 +54853,7 @@
       viewAllBtn.hidden = true;
 
       if (options.loading && !items.length) {
-        renderHomeDiscoveryFeedMessage(`Loading live ${activeTab === "tonight" ? "appearances" : activeTab === "venues" ? "venues" : "dancer profiles"} from ${city}…`);
+        renderHomeDiscoveryFeedMessage(`Loading live ${activeTab === "tonight" ? "appearances" : activeTab === "venues" ? "clubs" : "dancer profiles"} from ${city}…`);
         return;
       }
       if (!items.length) {
@@ -55005,7 +55005,7 @@
       }
       deactivateHomeTvFeed();
 
-      const loadingLiveProfiles = liveDiscoveryIsLoading(city) && activeTab === "dancers";
+      const loadingDiscovery = liveDiscoveryIsLoading(city);
       const allItems = getItems(city, activeTab);
       const items = allItems;
       const venueFilter = selectedVenueFilter();
@@ -55043,8 +55043,8 @@
       const resultCountLabel = activeTab === "venues"
         ? `${allItems.length} club${allItems.length === 1 ? "" : "s"}`
         : `${allItems.length} total`;
-      setHomeTvFeedCount(loadingLiveProfiles
-        ? "Loading live profiles..."
+      setHomeTvFeedCount(loadingDiscovery
+        ? activeTab === "venues" ? "Loading clubs..." : "Loading live profiles..."
         : selectedVenue
         ? city
         : resultCountLabel);
@@ -55057,7 +55057,7 @@
       // expose the retired venue grid for a frame before viewport events settle.
       homeDiscoveryFeedOpen = usesDiscoveryFeed;
       if (usesDiscoveryFeed) {
-        renderHomeDiscoveryFeed(city, allItems, { loading: loadingLiveProfiles });
+        renderHomeDiscoveryFeed(city, allItems, { loading: loadingDiscovery });
         return;
       }
       if (homeDiscoveryFeedOpen) homeDiscoveryFeedOpen = false;
@@ -55078,8 +55078,11 @@
         results.innerHTML = venueDetailPage(selectedVenue);
         return;
       }
-      if (loadingLiveProfiles && !items.length) {
-        results.innerHTML = '<div class="locked">Loading live profiles from Dancr...</div>';
+      if (loadingDiscovery && !items.length) {
+        const loadingLabel = activeTab === "venues"
+          ? `Loading live clubs from ${city}…`
+          : `Loading live profiles from ${city}…`;
+        results.innerHTML = `<div class="locked" role="status">${escapeHtml(loadingLabel)}</div>`;
         return;
       }
       if (activeTab === "dancers" && !items.length) {

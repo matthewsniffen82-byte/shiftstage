@@ -372,6 +372,33 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
 
+test("a hard refresh keeps Clubs in a truthful loading state until discovery is ready", () => {
+  assert.match(
+    homeSource,
+    /function getItems\(city, tab\) \{[\s\S]*?\["tonight", "dancers", "venues", "trending"\]\.includes\(tab\)[\s\S]*?liveMarketState\[city\] !== "ready"[\s\S]*?return \[\];/,
+  );
+  assert.match(
+    homeSource,
+    /const loadingDiscovery = liveDiscoveryIsLoading\(city\);[\s\S]*?setHomeTvFeedCount\(loadingDiscovery[\s\S]*?activeTab === "venues" \? "Loading clubs\.\.\." : "Loading live profiles\.\.\."/,
+  );
+  assert.match(
+    homeSource,
+    /renderHomeDiscoveryFeed\(city, allItems, \{ loading: loadingDiscovery \}\);/,
+  );
+  assert.match(
+    homeSource,
+    /renderHomeDiscoveryFeedMessage\(`Loading live \$\{activeTab === "tonight" \? "appearances" : activeTab === "venues" \? "clubs" : "dancer profiles"\} from \$\{city\}…`\);/,
+  );
+  assert.match(
+    homeSource,
+    /if \(loadingDiscovery && !items\.length\) \{[\s\S]*?`Loading live clubs from \$\{city\}…`[\s\S]*?role="status"[\s\S]*?return;[\s\S]*?if \(activeTab === "venues" && !items\.length\)/,
+  );
+  assert.match(
+    homeSource,
+    /const count = loading && \["tonight", "dancers", "venues", "trending"\]\.includes\(tabName\) \? "\.\.\."/,
+  );
+});
+
 test("venue cards keep every active venue above inactive venues, then preserve schedule and popularity priority", () => {
   assert.match(
     homeSource,
