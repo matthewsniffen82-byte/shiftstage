@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=114" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=115" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31900,13 +31900,13 @@
           position: absolute;
           z-index: 8;
           right: 14px;
-          bottom: 6px;
+          bottom: 8px;
           left: 14px;
-          height: 3px;
+          height: 4px;
           overflow: hidden;
           border-radius: 999px;
-          background: color-mix(in srgb, var(--dancr-color-text-primary) 58%, transparent);
-          box-shadow: 0 1px 5px var(--dancr-color-black-strong);
+          background: rgba(255,255,255,.32);
+          box-shadow: 0 1px 4px rgba(0,0,0,.82);
           pointer-events: none;
           opacity: 1;
           transition: opacity .16s ease;
@@ -31916,8 +31916,8 @@
           height: 100%;
           display: block;
           border-radius: inherit;
-          background: color-mix(in srgb, var(--dancr-color-text-primary) 88%, transparent);
-          box-shadow: none;
+          background: #fff;
+          box-shadow: 0 0 6px rgba(255,255,255,.42);
           transition: width .1s linear;
         }
         .home-tv-feed-scrubber {
@@ -31995,7 +31995,7 @@
         #results.home-tv-feed:fullscreen .home-tv-feed-progress,
         #results.home-tv-feed:-webkit-full-screen .home-tv-feed-progress,
         #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-progress {
-          bottom: calc(6px + env(safe-area-inset-bottom));
+          bottom: calc(8px + env(safe-area-inset-bottom));
         }
         #results.home-tv-feed:fullscreen .home-tv-feed-scrubber,
         #results.home-tv-feed:-webkit-full-screen .home-tv-feed-scrubber,
@@ -33613,7 +33613,7 @@
           }
           .home-tv-feed-progress {
             right: 12px;
-            bottom: 7px;
+            bottom: 8px;
             left: 12px;
           }
           .home-tv-feed-scrubber {
