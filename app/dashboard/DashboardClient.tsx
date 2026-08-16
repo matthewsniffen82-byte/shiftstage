@@ -2602,12 +2602,11 @@ function VenueClubDealPanel({
         </div>
       </details>
       <div className="deal-metrics venue-deal-metrics">
-        <Metric label="Successful this month" value={String(revenue?.successfulRedemptionsThisMonth || 0)} />
+        <Metric label="Confirmed cashier taps this month" value={String(revenue?.confirmedCashierTapsThisMonth || 0)} />
         <Metric label="Dancer attributed" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
         <Metric label="Direct venue" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
         <Metric label="MyDancr referral fees" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
         <Metric label="Outstanding to MyDancr" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
-        <Metric label="Confirmed cashier taps" value={String(revenue?.postedVenueQrScansThisMonth || 0)} />
         <Metric label="Redemption intents" value={String(revenue?.passesIssuedThisMonth || 0)} />
         <Metric label="Saved / opened" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
       </div>

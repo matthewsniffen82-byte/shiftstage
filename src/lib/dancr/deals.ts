@@ -635,7 +635,7 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
       .limit(1000),
     db
       .from("qr_redemptions")
-      .select("id, source_type, audit")
+      .select("id")
       .eq("venue_id", venueId)
       .gte("generated_at", monthStart.toISOString())
       .limit(1000),
@@ -652,7 +652,7 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
     (lifecycle || []).filter((item: any) => item.event_type === eventType).length;
 
   return {
-    successfulRedemptionsThisMonth: activeRows.length,
+    confirmedCashierTapsThisMonth: activeRows.length,
     dancerAttributedRedemptionsThisMonth: activeRows.filter((item: any) => item.source_type === "dancer_profile").length,
     directVenueRedemptionsThisMonth: activeRows.filter((item: any) => item.source_type === "club_page").length,
     myDancrFeesCentsThisMonth: sum("gross_commission_cents"),
@@ -660,9 +660,6 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
       "gross_commission_cents",
       rows.filter((item: any) => item.status === "pending_venue_payment"),
     ),
-    postedVenueQrScansThisMonth: (issuedPasses || []).filter(
-      (item: any) => item.source_type === "club_page" && item.audit?.campaign_source === "venue_qr",
-    ).length,
     passesIssuedThisMonth: (issuedPasses || []).length,
     savesThisMonth: countLifecycle("saved"),
     sharesThisMonth: countLifecycle("shared"),

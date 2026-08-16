@@ -102,6 +102,21 @@ test("save, share, scan, and confirmation have durable lifecycle events without 
   assert.doesNotMatch(lifecycleFunction, /commission_events|deal_revenue_events/);
 });
 
+test("venue cashier-tap totals use finalized revenue events across both attribution paths", () => {
+  const venueMetrics = deals.match(
+    /export async function getVenueDealRevenueMetrics[\s\S]*?(?=\nexport async function settleDealRevenueEvent)/,
+  )?.[0] || "";
+  assert.notEqual(venueMetrics, "");
+  assert.match(venueMetrics, /const activeRows = rows\.filter[\s\S]*?refunded[\s\S]*?voided/);
+  assert.match(venueMetrics, /confirmedCashierTapsThisMonth: activeRows\.length/);
+  assert.doesNotMatch(venueMetrics, /postedVenueQrScansThisMonth|campaign_source === "venue_qr"/);
+  assert.match(
+    venueDashboard,
+    /label="Confirmed cashier taps this month"[\s\S]*?revenue\?\.confirmedCashierTapsThisMonth/,
+  );
+  assert.doesNotMatch(venueDashboard, /revenue\?\.postedVenueQrScansThisMonth/);
+});
+
 test("only the active owning venue account can atomically create revenue and commission", () => {
   assert.match(redemptionRoute, /createRequestSupabaseContext\(request\)/);
   assert.match(redemptionRoute, /account\.role !== "venue" \|\| account\.accountState !== "active"/);
