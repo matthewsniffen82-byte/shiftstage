@@ -243,10 +243,10 @@ test("neutral mobile glass uses soft-white idle icons and a restrained transluce
   );
 });
 
-test("the mobile dock introduces itself once per session without overriding reduced motion", () => {
+test("the mobile dock introduces itself once per page load without overriding reduced motion", () => {
   assert.match(
     navigationSource,
-    /MOBILE_NAVIGATION_INTRO_KEY = "mydancr-mobile-nav-intro-v1"[\s\S]*?prefers-reduced-motion: reduce[\s\S]*?sessionStorage\.getItem\(MOBILE_NAVIGATION_INTRO_KEY\)[\s\S]*?sessionStorage\.setItem\(MOBILE_NAVIGATION_INTRO_KEY, "1"\)[\s\S]*?classList\.add\("is-introducing"\)[\s\S]*?classList\.remove\("is-introducing"\)/,
+    /prefers-reduced-motion: reduce[\s\S]*?requestAnimationFrame[\s\S]*?classList\.add\("is-introducing"\)[\s\S]*?classList\.remove\("is-introducing"\)/,
   );
   assert.match(
     navigationSource,
@@ -254,8 +254,10 @@ test("the mobile dock introduces itself once per session without overriding redu
   );
   assert.match(
     homeSource,
-    /MOBILE_NAVIGATION_INTRO_KEY = "mydancr-mobile-nav-intro-v1"[\s\S]*?sessionStorage\.getItem\(MOBILE_NAVIGATION_INTRO_KEY\)[\s\S]*?classList\.add\("is-introducing"\)[\s\S]*?classList\.remove\("is-introducing"\)/,
+    /prefers-reduced-motion: reduce[\s\S]*?requestAnimationFrame[\s\S]*?classList\.add\("is-introducing"\)[\s\S]*?classList\.remove\("is-introducing"\)/,
   );
+  assert.doesNotMatch(navigationSource, /mydancr-mobile-nav-intro/);
+  assert.doesNotMatch(homeSource, /mydancr-mobile-nav-intro/);
   for (const source of [navigationSource, homeSource]) {
     assert.match(
       source,

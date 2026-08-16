@@ -6,7 +6,6 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 const DEFAULT_CITY = "Las Vegas";
 const MOBILE_NAVIGATION_MAX_WIDTH = 720;
-const MOBILE_NAVIGATION_INTRO_KEY = "mydancr-mobile-nav-intro-v1";
 const MOBILE_SWIPE_EDGE_GUARD_PX = 20;
 const MOBILE_SWIPE_DIRECTION_LOCK_PX = 10;
 const MOBILE_SWIPE_MIN_DISTANCE_PX = 34;
@@ -87,13 +86,6 @@ export function GlobalMobileBottomNav() {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
       return;
-    }
-
-    try {
-      if (window.sessionStorage.getItem(MOBILE_NAVIGATION_INTRO_KEY)) return;
-      window.sessionStorage.setItem(MOBILE_NAVIGATION_INTRO_KEY, "1");
-    } catch {
-      // A blocked storage API must not prevent the navigation from rendering.
     }
 
     const navigationElement = navigation.current;
@@ -440,20 +432,20 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav.is-introducing {
-            animation: mobile-nav-dock-intro 520ms cubic-bezier(0.2, 0.8, 0.2, 1)
+            animation: mobile-nav-dock-intro 680ms cubic-bezier(0.16, 1, 0.3, 1)
               both;
           }
 
           .global-mobile-bottom-nav.is-introducing
             a.active
             .mobile-nav-selection-halo {
-            animation: mobile-nav-active-intro 900ms ease-out 120ms both;
+            animation: mobile-nav-active-intro 1000ms ease-out 100ms both;
           }
 
           @keyframes mobile-nav-dock-intro {
             from {
-              opacity: 0.35;
-              transform: translateX(-50%) translateY(14px) scale(0.985);
+              opacity: 0.12;
+              transform: translateX(-50%) translateY(22px) scale(0.97);
             }
             to {
               opacity: 1;
@@ -463,12 +455,12 @@ export function GlobalMobileBottomNav() {
 
           @keyframes mobile-nav-active-intro {
             0% {
-              opacity: 0.25;
-              transform: translate(-50%, -50%) scale(0.72);
+              opacity: 0.18;
+              transform: translate(-50%, -50%) scale(0.64);
             }
             55% {
               opacity: 1;
-              transform: translate(-50%, -50%) scale(1.08);
+              transform: translate(-50%, -50%) scale(1.12);
             }
             100% {
               opacity: 1;
