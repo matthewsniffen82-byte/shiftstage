@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const liveSource = readFileSync("outputs/index.html", "utf8");
+const dealCardSource = readFileSync("app/components/ClubDealCard.tsx", "utf8");
 
 test("Club Deals save without requiring customer authentication", () => {
   const saveFlow = liveSource.match(
@@ -45,6 +46,17 @@ test("opening or sharing a Club Deal never silently selects or saves it", () => 
   assert.doesNotMatch(shareFlow, /saveCustomerDealPass|selectDealPassForNfc/);
   assert.doesNotMatch(clickFlow, /saveCustomerDealPass/);
   assert.doesNotMatch(hubSelectionFlow, /saveCustomerDealPass/);
+});
+
+test("Club Deal dialogs keep one share action without a redundant copy-link button", () => {
+  const liveOverlay = liveSource.match(
+    /function dealPassOverlay\(\) \{[\s\S]*?(?=\n    function dealPassPresentation)/,
+  )?.[0] || "";
+
+  assert.match(liveOverlay, /data-share-deal-pass>Share deal<\/button>/);
+  assert.doesNotMatch(liveOverlay, /data-copy-deal-pass|>Copy link<\/button>|const copyButton/);
+  assert.match(dealCardSource, /navigator\.share[\s\S]*?copyDealLink\(url\)/);
+  assert.doesNotMatch(dealCardSource, /copyCurrentDealLink|className="copy"|>Copy link<\/button>/);
 });
 
 test("saved Club Deals can be removed from the device", () => {

@@ -205,18 +205,16 @@ export function ClubDealCard({
         setStatus("Deal link copied.");
       }
     } catch (error) {
-      setStatus(error instanceof DOMException && error.name === "AbortError"
-        ? "Share cancelled."
-        : "Sharing is unavailable. Copy the deal link instead.");
-    }
-  }
-
-  async function copyCurrentDealLink() {
-    try {
-      await copyDealLink(window.location.href);
-      setStatus("Deal link copied.");
-    } catch {
-      setStatus("Copy link is unavailable on this device.");
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setStatus("Share cancelled.");
+        return;
+      }
+      try {
+        await copyDealLink(url);
+        setStatus("Sharing was unavailable, so the deal link was copied.");
+      } catch {
+        setStatus("Sharing is unavailable on this device.");
+      }
     }
   }
 
@@ -276,7 +274,6 @@ export function ClubDealCard({
               {savedOnDevice ? "Saved for later ✓ · Remove" : "Save for later"}
             </button>
             <button type="button" onClick={() => void shareDeal()}>Share deal</button>
-            <button type="button" className="copy" onClick={() => void copyCurrentDealLink()}>Copy link</button>
           </div>
         ) : null}
         {intentState === "ready" && activeDeal.offerType === "bottle_service" && activeDeal.bookingUrl ? (
@@ -534,7 +531,6 @@ function ClubDealInteractionStyles() {
       .club-deal-share-actions button { min-height:42px; border:1px solid rgba(255,255,255,.13); border-radius:999px; color:#fff; background:rgba(255,255,255,.045); font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
       .club-deal-share-actions button.saved { color:#d9f9ff; border-color:rgba(126,234,255,.26); background:rgba(53,216,255,.07); }
       .club-deal-share-actions button:disabled { cursor:default; opacity:.82; }
-      .club-deal-share-actions button.copy { grid-column:1 / -1; min-height:30px; border-color:transparent; border-radius:8px; color:rgba(245,245,255,.6); background:transparent; font-size:11px; text-decoration:underline; text-underline-offset:3px; }
       .club-deal-booking-link { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid rgba(126,234,255,.36); border-radius: 999px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; text-decoration: none; }
       .club-deal-offer-picker { display: grid; gap: 10px; }
       .club-deal-offer-picker h2 { margin: 0; padding-right: 34px; font-size: clamp(22px, 6vw, 30px); }

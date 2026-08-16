@@ -26094,18 +26094,6 @@
       background: rgba(53, 216, 255, .07);
     }
 
-    .deal-pass-action.tertiary {
-      grid-column: 1 / -1;
-      min-height: 32px;
-      border-color: transparent;
-      border-radius: 10px;
-      background: transparent;
-      color: rgba(245, 245, 255, .60);
-      font-size: .78rem;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
     .deal-pass-booking:not([hidden]) {
       margin-top: 12px;
     }
@@ -44580,7 +44568,12 @@
           recordRevenueDealLifecycle(pass, "shared");
         }
       } catch (error) {
-        showToast(error?.name === "AbortError" ? "Share cancelled" : "Sharing is unavailable. Copy the deal link instead.");
+        if (error?.name === "AbortError") {
+          showToast("Share cancelled");
+          return;
+        }
+        const copied = await copyText(pass.url, "Sharing was unavailable, so the deal link was copied");
+        if (copied) recordRevenueDealLifecycle(pass, "shared");
       }
     }
 
@@ -44648,7 +44641,6 @@
               <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Select for checkout</button>
               <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share deal</button>
-              <button class="deal-pass-action tertiary" type="button" data-copy-deal-pass>Copy link</button>
             </div>
             <a class="deal-pass-booking" id="dealPassBooking" href="#" target="_blank" rel="noreferrer" hidden>Continue to club booking</a>
           </div>
@@ -44659,7 +44651,6 @@
       const selectButton = overlay.querySelector("[data-select-deal-pass]");
       const saveButton = overlay.querySelector("[data-save-deal-pass]");
       const shareButton = overlay.querySelector("[data-share-deal-pass]");
-      const copyButton = overlay.querySelector("[data-copy-deal-pass]");
       const closeFromButton = (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -44728,10 +44719,6 @@
       bindDealPassAction(shareButton, () => {
         const pass = currentPass();
         if (pass) shareDealPass(pass);
-      });
-      bindDealPassAction(copyButton, () => {
-        const pass = currentPass();
-        if (pass) copyText(pass.url, "Deal link copied");
       });
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay || event.target.closest("[data-close-deal-pass]")) {
