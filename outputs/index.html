@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=123" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=124" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31893,27 +31893,15 @@
           right: 14px;
           bottom: 8px;
           left: 14px;
+          width: calc(100% - 28px);
           height: 3px;
           overflow: hidden;
           border-radius: 999px;
-          background: rgba(255,255,255,.18);
+          display: block;
+          background: transparent;
           box-shadow: none;
           pointer-events: none;
           opacity: 1;
-          transition: opacity .16s ease;
-        }
-        .home-tv-feed-progress > span {
-          width: 0;
-          height: 100%;
-          display: block;
-          border-radius: inherit;
-          background: #f8f8fa;
-          box-shadow: none;
-          opacity: 1;
-          mix-blend-mode: normal;
-          filter: none;
-          -webkit-filter: none;
-          transition: width .1s linear;
         }
         .home-tv-feed-scrubber {
           position: absolute;
@@ -31965,18 +31953,9 @@
           height: 3px !important;
           display: block !important;
           visibility: visible !important;
-          background: rgba(255,255,255,.18) !important;
+          background: transparent !important;
           box-shadow: none !important;
           opacity: 1 !important;
-        }
-        #results.home-tv-feed:fullscreen .home-tv-feed-progress > span,
-        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-progress > span,
-        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-progress > span {
-          background: #f8f8fa !important;
-          opacity: 1 !important;
-          mix-blend-mode: normal !important;
-          filter: none !important;
-          -webkit-filter: none !important;
         }
         #results.home-tv-feed:fullscreen .home-tv-feed-scrubber,
         #results.home-tv-feed:-webkit-full-screen .home-tv-feed-scrubber,
@@ -33596,6 +33575,7 @@
             right: 12px;
             bottom: 8px;
             left: 12px;
+            width: calc(100% - 24px);
           }
           .home-tv-feed-scrubber {
             right: 12px;
@@ -39536,7 +39516,7 @@
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("/sw.js?v=venue-avatar-scroll-stability-v1", { updateViaCache: "none" })
+          .register("/sw.js?v=tv-progress-canvas-v1", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -55790,13 +55770,32 @@
 
     function syncHomeTvFeedProgress(video, slide) {
       const progress = slide.querySelector(".home-tv-feed-progress");
-      const fill = progress?.querySelector("span");
       const scrubber = slide.querySelector(".home-tv-feed-scrubber");
-      if (!progress || !fill || !scrubber) return;
+      if (!(progress instanceof HTMLCanvasElement) || !scrubber) return;
       const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
       const currentTime = duration ? Math.min(duration, Math.max(0, video.currentTime || 0)) : 0;
       const ratio = duration ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
-      fill.style.width = `${ratio * 100}%`;
+      const bounds = progress.getBoundingClientRect();
+      const scale = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+      const pixelWidth = Math.max(1, Math.round(bounds.width * scale));
+      const pixelHeight = Math.max(1, Math.round(bounds.height * scale));
+      if (progress.width !== pixelWidth || progress.height !== pixelHeight) {
+        progress.width = pixelWidth;
+        progress.height = pixelHeight;
+      }
+      const context = progress.getContext("2d");
+      if (context) {
+        context.clearRect(0, 0, pixelWidth, pixelHeight);
+        context.fillStyle = "rgba(255, 255, 255, 0.18)";
+        context.fillRect(0, 0, pixelWidth, pixelHeight);
+        const playedWidth = ratio > 0
+          ? Math.min(pixelWidth, Math.max(scale, Math.round(pixelWidth * ratio)))
+          : 0;
+        if (playedWidth > 0) {
+          context.fillStyle = "#f8f8fa";
+          context.fillRect(0, 0, playedWidth, pixelHeight);
+        }
+      }
       scrubber.setAttribute("aria-valuemax", String(duration || 1));
       scrubber.setAttribute("aria-valuenow", String(currentTime));
       scrubber.setAttribute("aria-disabled", String(!duration));
@@ -55810,10 +55809,9 @@
 
     function createHomeTvFeedProgress(slide, video) {
       const fragment = document.createDocumentFragment();
-      const progress = document.createElement("div");
+      const progress = document.createElement("canvas");
       progress.className = "home-tv-feed-progress";
       progress.setAttribute("aria-hidden", "true");
-      progress.appendChild(document.createElement("span"));
       const scrubber = document.createElement("div");
       scrubber.className = "home-tv-feed-scrubber";
       scrubber.setAttribute("role", "slider");

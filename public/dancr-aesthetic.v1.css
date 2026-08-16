@@ -4243,12 +4243,7 @@ body.dancr-button-system .home-tv-feed-playback {
 }
 
 body.dancr-button-system .home-tv-feed-progress {
-  background: rgba(255, 255, 255, 0.18) !important;
-  box-shadow: none !important;
-}
-
-body.dancr-button-system .home-tv-feed-progress > span {
-  background: #f8f8fa !important;
+  background: transparent !important;
   box-shadow: none !important;
   opacity: 1 !important;
   mix-blend-mode: normal !important;
