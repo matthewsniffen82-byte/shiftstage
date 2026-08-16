@@ -88,12 +88,13 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /function createHomeTvFeedProgress\(slide, video\)[\s\S]*?createElement\("div"\)[\s\S]*?progress\.appendChild\(document\.createElement\("span"\)\)[\s\S]*?createElement\("input"\)[\s\S]*?type = "range"[\s\S]*?aria-label", "Video playback position"/,
+    /function createHomeTvFeedProgress\(slide, video\)[\s\S]*?createElement\("div"\)[\s\S]*?progress\.appendChild\(document\.createElement\("span"\)\)[\s\S]*?scrubber = document\.createElement\("div"\)[\s\S]*?setAttribute\("role", "slider"\)[\s\S]*?aria-label", "Video playback position"/,
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?fill\.style\.width = `\$\{ratio \* 100\}%`[\s\S]*?scrubber\.max = String\(duration \|\| 1\)[\s\S]*?scrubber\.value = String\(currentTime\)[\s\S]*?scrubber\.setAttribute\("aria-disabled", String\(!duration\)\)/,
+    /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?fill\.style\.width = `\$\{ratio \* 100\}%`[\s\S]*?scrubber\.setAttribute\("aria-valuemax", String\(duration \|\| 1\)\)[\s\S]*?scrubber\.setAttribute\("aria-valuenow", String\(currentTime\)\)[\s\S]*?scrubber\.setAttribute\("aria-disabled", String\(!duration\)\)/,
   );
+  assert.doesNotMatch(homeSource, /scrubber\.type = "range"|createElement\("input"\)[\s\S]{0,300}?home-tv-feed-scrubber/);
 });
 
 test("TV cards expose separate right-side actions and a standalone seek bar", () => {
@@ -258,8 +259,7 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
   );
   assert.match(homeSource, /\.home-tv-feed-progress > span \{[\s\S]*?width: 0;[\s\S]*?background: #f8f8fa;[\s\S]*?box-shadow: none;[\s\S]*?opacity: 1;[\s\S]*?mix-blend-mode: normal;[\s\S]*?filter: none;[\s\S]*?transition: width \.1s linear;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber \{[\s\S]*?right: 14px;[\s\S]*?bottom: 0;[\s\S]*?left: 14px;[\s\S]*?height: 28px;[\s\S]*?background: transparent !important;[\s\S]*?backdrop-filter: none !important;[\s\S]*?filter: none !important;[\s\S]*?appearance: none !important;[\s\S]*?accent-color: transparent !important;[\s\S]*?opacity: 0 !important;[\s\S]*?touch-action: none;/);
-  assert.match(homeSource, /\.home-tv-feed-scrubber::-webkit-slider-thumb \{[\s\S]*?width: 28px;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
-  assert.match(homeSource, /\.home-tv-feed-scrubber::-moz-range-thumb \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
+  assert.doesNotMatch(homeSource, /\.home-tv-feed-scrubber::-(?:webkit-slider|moz-range)/);
   assert.match(homeSource, /\.home-tv-feed-scrubber:focus-visible \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(
     homeSource,
@@ -267,7 +267,7 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
   );
   assert.match(
     homeSource,
-    /function createHomeTvFeedProgress\(slide, video\)[\s\S]*?scrubber\.max = "1";[\s\S]*?scrubber\.setAttribute\("aria-disabled", "true"\)/,
+    /function createHomeTvFeedProgress\(slide, video\)[\s\S]*?scrubber\.setAttribute\("aria-valuemax", "1"\)[\s\S]*?scrubber\.setAttribute\("aria-disabled", "true"\)[\s\S]*?addEventListener\("pointerdown"[\s\S]*?addEventListener\("pointermove"[\s\S]*?addEventListener\("pointerup"[\s\S]*?addEventListener\("keydown"/,
   );
   assert.doesNotMatch(homeSource, /scrubber\.disabled = !duration|\.home-tv-feed-scrubber:disabled/);
   assert.match(
@@ -381,11 +381,11 @@ test("card controls expose accessible labels, keyboard alternatives, and feedbac
     )?.[0] || "";
   assert.match(
     progressFactory,
-    /type = "range"[\s\S]*?aria-label", "Video playback position"[\s\S]*?aria-valuetext", "Video loading"/,
+    /createElement\("div"\)[\s\S]*?setAttribute\("role", "slider"\)[\s\S]*?tabIndex = 0[\s\S]*?aria-label", "Video playback position"[\s\S]*?aria-valuetext", "Video loading"/,
   );
   assert.match(
     progressFactory,
-    /scrubber\.addEventListener\("input"[\s\S]*?video\.currentTime = Math\.min[\s\S]*?syncHomeTvFeedProgress\(video, slide\)/,
+    /scrubber\.addEventListener\("pointerdown"[\s\S]*?seekToClientX\(event\.clientX\)[\s\S]*?scrubber\.addEventListener\("keydown"[\s\S]*?video\.currentTime = Math\.min[\s\S]*?syncHomeTvFeedProgress\(video, slide\)/,
   );
   assert.match(homeSource, /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?formatProfileTvDuration\(currentTime\)[\s\S]*?formatProfileTvDuration\(duration\)/);
   assert.doesNotMatch(homeSource, /function showHomeTvFeedControls|is-controls-visible|homeTvControlsTimer/);
@@ -509,7 +509,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=122/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=123/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
@@ -533,9 +533,9 @@ test("production TV cards use the neutral-first brand palette without changing m
     brandedCards,
     /\.home-tv-feed-progress \{[\s\S]*?background: rgba\(255, 255, 255, 0\.18\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: #f8f8fa !important;[\s\S]*?box-shadow: none !important;[\s\S]*?opacity: 1 !important;[\s\S]*?mix-blend-mode: normal !important;[\s\S]*?filter: none !important;/,
   );
-  assert.match(brandedCards, /input\.home-tv-feed-scrubber \{[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;[\s\S]*?filter: none !important;[\s\S]*?appearance: none !important;[\s\S]*?accent-color: transparent !important;[\s\S]*?opacity: 0 !important;/);
-  assert.match(brandedCards, /input\.home-tv-feed-scrubber:is\(:focus, :focus-visible, :active\) \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(brandedCards, /input\.home-tv-feed-scrubber::-webkit-slider-runnable-track,[\s\S]*?input\.home-tv-feed-scrubber::-moz-range-thumb \{[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(brandedCards, /\.home-tv-feed-scrubber \{[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;[\s\S]*?filter: none !important;[\s\S]*?appearance: none !important;[\s\S]*?accent-color: transparent !important;[\s\S]*?opacity: 0 !important;/);
+  assert.match(brandedCards, /\.home-tv-feed-scrubber:is\(:focus, :focus-visible, :active\) \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
+  assert.doesNotMatch(brandedCards, /home-tv-feed-scrubber::-(?:webkit-slider|moz-range)/);
   const playbackControl = brandedCards.match(
     /\.home-tv-feed-playback \{[\s\S]*?\}/,
   )?.[0] || "";

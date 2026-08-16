@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=122" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=123" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31946,40 +31946,6 @@
           -webkit-tap-highlight-color: transparent;
           -webkit-touch-callout: none;
           user-select: none;
-        }
-        .home-tv-feed-scrubber::-webkit-slider-runnable-track {
-          height: 28px;
-          border: 0;
-          background: transparent;
-        }
-        .home-tv-feed-scrubber::-moz-range-track {
-          height: 28px;
-          border: 0;
-          background: transparent;
-        }
-        .home-tv-feed-scrubber::-moz-range-progress {
-          height: 28px;
-          border: 0;
-          background: transparent;
-        }
-        .home-tv-feed-scrubber::-webkit-slider-thumb {
-          width: 28px;
-          height: 28px;
-          margin-top: 0;
-          border: 0;
-          border-radius: 50%;
-          background: transparent;
-          box-shadow: none;
-          appearance: none;
-          -webkit-appearance: none;
-        }
-        .home-tv-feed-scrubber::-moz-range-thumb {
-          width: 28px;
-          height: 28px;
-          border: 0;
-          border-radius: 50%;
-          background: transparent;
-          box-shadow: none;
         }
         .home-tv-feed-scrubber:focus-visible {
           border-color: transparent !important;
@@ -55825,8 +55791,8 @@
       const currentTime = duration ? Math.min(duration, Math.max(0, video.currentTime || 0)) : 0;
       const ratio = duration ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
       fill.style.width = `${ratio * 100}%`;
-      scrubber.max = String(duration || 1);
-      scrubber.value = String(currentTime);
+      scrubber.setAttribute("aria-valuemax", String(duration || 1));
+      scrubber.setAttribute("aria-valuenow", String(currentTime));
       scrubber.setAttribute("aria-disabled", String(!duration));
       scrubber.setAttribute(
         "aria-valuetext",
@@ -55842,19 +55808,67 @@
       progress.className = "home-tv-feed-progress";
       progress.setAttribute("aria-hidden", "true");
       progress.appendChild(document.createElement("span"));
-      const scrubber = document.createElement("input");
+      const scrubber = document.createElement("div");
       scrubber.className = "home-tv-feed-scrubber";
-      scrubber.type = "range";
-      scrubber.min = "0";
-      scrubber.max = "1";
-      scrubber.step = "0.01";
-      scrubber.value = "0";
+      scrubber.setAttribute("role", "slider");
+      scrubber.tabIndex = 0;
+      scrubber.setAttribute("aria-orientation", "horizontal");
+      scrubber.setAttribute("aria-valuemin", "0");
+      scrubber.setAttribute("aria-valuemax", "1");
+      scrubber.setAttribute("aria-valuenow", "0");
       scrubber.setAttribute("aria-label", "Video playback position");
       scrubber.setAttribute("aria-valuetext", "Video loading");
       scrubber.setAttribute("aria-disabled", "true");
-      scrubber.addEventListener("input", () => {
+
+      const seekToClientX = (clientX) => {
         const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
-        if (duration) video.currentTime = Math.min(duration, Math.max(0, Number(scrubber.value) || 0));
+        if (!duration) return;
+        const bounds = scrubber.getBoundingClientRect();
+        const ratio = bounds.width > 0
+          ? Math.min(1, Math.max(0, (clientX - bounds.left) / bounds.width))
+          : 0;
+        video.currentTime = duration * ratio;
+        syncHomeTvFeedProgress(video, slide);
+      };
+
+      let seekingPointerId = null;
+      scrubber.addEventListener("pointerdown", (event) => {
+        if (scrubber.getAttribute("aria-disabled") === "true") return;
+        event.preventDefault();
+        seekingPointerId = event.pointerId;
+        try { scrubber.setPointerCapture(event.pointerId); } catch {}
+        seekToClientX(event.clientX);
+      });
+      scrubber.addEventListener("pointermove", (event) => {
+        if (seekingPointerId !== event.pointerId) return;
+        event.preventDefault();
+        seekToClientX(event.clientX);
+      });
+      const finishSeek = (event) => {
+        if (seekingPointerId !== event.pointerId) return;
+        seekToClientX(event.clientX);
+        seekingPointerId = null;
+        try { scrubber.releasePointerCapture(event.pointerId); } catch {}
+      };
+      scrubber.addEventListener("pointerup", finishSeek);
+      scrubber.addEventListener("pointercancel", (event) => {
+        if (seekingPointerId === event.pointerId) seekingPointerId = null;
+      });
+      scrubber.addEventListener("keydown", (event) => {
+        const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+        if (!duration) return;
+        const smallStep = Math.max(1, duration * 0.05);
+        const largeStep = Math.max(2, duration * 0.1);
+        let nextTime = video.currentTime || 0;
+        if (event.key === "ArrowLeft" || event.key === "ArrowDown") nextTime -= smallStep;
+        else if (event.key === "ArrowRight" || event.key === "ArrowUp") nextTime += smallStep;
+        else if (event.key === "PageDown") nextTime -= largeStep;
+        else if (event.key === "PageUp") nextTime += largeStep;
+        else if (event.key === "Home") nextTime = 0;
+        else if (event.key === "End") nextTime = duration;
+        else return;
+        event.preventDefault();
+        video.currentTime = Math.min(duration, Math.max(0, nextTime));
         syncHomeTvFeedProgress(video, slide);
       });
       fragment.append(progress, scrubber);

@@ -4227,7 +4227,7 @@ body.dancr-button-system .home-tv-feed-progress > span {
   -webkit-filter: none !important;
 }
 
-body.dancr-button-system input.home-tv-feed-scrubber {
+body.dancr-button-system .home-tv-feed-scrubber {
   border-color: transparent !important;
   outline: 0 !important;
   outline-offset: 0 !important;
@@ -4245,7 +4245,7 @@ body.dancr-button-system input.home-tv-feed-scrubber {
   opacity: 0 !important;
 }
 
-body.dancr-button-system input.home-tv-feed-scrubber:is(:focus, :focus-visible, :active) {
+body.dancr-button-system .home-tv-feed-scrubber:is(:focus, :focus-visible, :active) {
   border-color: transparent !important;
   outline: 0 !important;
   outline-offset: 0 !important;
@@ -4254,16 +4254,6 @@ body.dancr-button-system input.home-tv-feed-scrubber:is(:focus, :focus-visible, 
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   filter: none !important;
-}
-
-body.dancr-button-system input.home-tv-feed-scrubber::-webkit-slider-runnable-track,
-body.dancr-button-system input.home-tv-feed-scrubber::-moz-range-track,
-body.dancr-button-system input.home-tv-feed-scrubber::-moz-range-progress,
-body.dancr-button-system input.home-tv-feed-scrubber::-webkit-slider-thumb,
-body.dancr-button-system input.home-tv-feed-scrubber::-moz-range-thumb {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
 }
 
 body.dancr-button-system .home-tv-feed-feedback {
