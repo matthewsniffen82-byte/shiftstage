@@ -36,7 +36,9 @@ test("venue managers can keep multiple deals live and manage each campaign indep
   assert.match(venueDashboard, /\.venue-deal-editor \{[^}]*border-color: rgba\(139,92,246,\.44\)/);
   assert.match(venueDashboard, /\.venue-deal-editor > summary::after \{[^}]*border-radius: 999px/);
   assert.match(venueDashboard, /existing MyDancr cashier NFC sticker automatically opens current live deals/);
-  assert.match(venueDashboard, /const liveCount = deals\.filter/);
+  assert.match(venueDashboard, /const liveDeals = deals\.filter/);
+  assert.match(venueDashboard, /const liveCount = liveDeals\.length/);
+  assert.match(venueDashboard, /liveDeals\.map/);
   assert.match(venueDashboard, /const draftCount = deals\.length - liveCount/);
   assert.match(venueDashboard, /Keeps current live deals active/);
   assert.match(venueDashboard, /This action only changes this deal/);

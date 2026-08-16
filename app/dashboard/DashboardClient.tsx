@@ -2360,9 +2360,10 @@ function VenueClubDealPanel({
     }
   }
 
-  const liveCount = deals.filter((deal) => deal.isActive === true).length;
+  const liveDeals = deals.filter((deal) => deal.isActive === true);
+  const liveCount = liveDeals.length;
   const draftCount = deals.length - liveCount;
-  const liveDeal = deals.find((deal) => deal.isActive === true);
+  const liveDeal = liveDeals[0];
   const selectedDeal = deals.find((deal) => String(deal.id) === editingId) || liveDeal || deals[0];
   const primaryDeal = liveDeal || selectedDeal;
   const currentReferralFee = referralFee?.current as Record<string, unknown> | null | undefined;
@@ -2371,13 +2372,22 @@ function VenueClubDealPanel({
     : [];
   const pendingFeeRequest = referralRequests.find((request) => request.status === "pending");
 
-  function openDealEditor(mode: "primary" | "new") {
-    if (mode === "new" || !primaryDeal) addDeal();
-    else editDeal(primaryDeal);
+  function revealDealEditor() {
     if (editorRef.current) editorRef.current.open = true;
     window.setTimeout(() => {
       editorRef.current?.querySelector<HTMLElement>("input, select, textarea")?.focus({ preventScroll: true });
     }, 0);
+  }
+
+  function openDealEditor(mode: "primary" | "new") {
+    if (mode === "new" || !primaryDeal) addDeal();
+    else editDeal(primaryDeal);
+    revealDealEditor();
+  }
+
+  function openSpecificDealEditor(deal: Record<string, unknown>) {
+    editDeal(deal);
+    revealDealEditor();
   }
 
   return (
@@ -2393,9 +2403,22 @@ function VenueClubDealPanel({
       </div>
       <section className={liveCount ? "venue-deal-control-card is-live" : "venue-deal-control-card"} aria-label="Current Club Deal status">
         <div className="venue-deal-control-status">
-          <span>{liveCount ? "Live Club Deal" : deals.length ? "No live Club Deal" : "Club Deals are inactive"}</span>
-          <strong>{liveDeal ? String(liveDeal.dealTitle || "Live Club Deal") : deals.length ? `${draftCount} ${draftCount === 1 ? "draft" : "drafts"} ready to finish` : "Create your first Club Deal"}</strong>
+          <span>{liveCount > 1 ? "Live Club Deals" : liveCount ? "Live Club Deal" : deals.length ? "No live Club Deal" : "Club Deals are inactive"}</span>
+          <strong>{liveCount > 1 ? `${liveCount} Club Deals are live` : liveDeal ? String(liveDeal.dealTitle || "Live Club Deal") : deals.length ? `${draftCount} ${draftCount === 1 ? "draft" : "drafts"} ready to finish` : "Create your first Club Deal"}</strong>
           <small>{liveCount ? "Available on your venue page and assigned cashier NFC stickers." : "Publish a deal when you are ready to accept cashier NFC redemptions."}</small>
+          {liveDeals.length > 1 ? (
+            <div className="venue-deal-live-list" aria-label="Live Club Deals">
+              {liveDeals.map((deal) => (
+                <button key={String(deal.id)} type="button" onClick={() => openSpecificDealEditor(deal)}>
+                  <span>
+                    <strong>{String(deal.dealTitle || "Live Club Deal")}</strong>
+                    <small>{dealTypeLabel(String(deal.offerType || "admission"))}</small>
+                  </span>
+                  <em>Edit</em>
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
         <div className="venue-deal-control-metrics" aria-label="Club Deal performance summary">
           <span><small>Confirmed taps</small><strong>{String(revenue?.confirmedCashierTapsThisMonth || 0)}</strong></span>
@@ -2404,9 +2427,9 @@ function VenueClubDealPanel({
         </div>
         <div className="venue-deal-control-actions">
           <button className="venue-deal-control-primary" type="button" onClick={() => openDealEditor(primaryDeal ? "primary" : "new")}>
-            {liveDeal ? "Edit live deal" : primaryDeal ? "Continue draft" : "Create Club Deal"}
+            {liveCount > 1 ? "Manage live deals" : liveDeal ? "Edit live deal" : primaryDeal ? "Continue draft" : "Create Club Deal"}
           </button>
-          {venueSlug && liveCount ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Preview live deal</Link> : null}
+          {venueSlug && liveCount ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Preview live {liveCount === 1 ? "deal" : "deals"}</Link> : null}
         </div>
       </section>
       <details className="venue-deal-editor" ref={editorRef}>
@@ -6961,6 +6984,13 @@ function DashboardStyles() {
       .venue-deal-control-card.is-live .venue-deal-control-status > span { color: #6ee7b7; }
       .venue-deal-control-status > strong { color: #f8fafc; font-size: clamp(18px,3vw,24px); line-height: 1.15; overflow-wrap: anywhere; }
       .venue-deal-control-status > small { color: #94a3b8; line-height: 1.45; }
+      .venue-deal-live-list { display: grid; gap: 7px; margin-top: 7px; }
+      .venue-deal-live-list > button { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 11px; border: 1px solid rgba(16,185,129,.28); border-radius: 9px; color: #f8fafc; background: rgba(16,185,129,.07); text-align: left; cursor: pointer; }
+      .venue-deal-live-list > button > span { min-width: 0; display: grid; gap: 2px; }
+      .venue-deal-live-list > button strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-deal-live-list > button small { color: #94a3b8; font-size: 10px; }
+      .venue-deal-live-list > button em { color: #6ee7b7; font-size: 11px; font-style: normal; font-weight: 900; }
+      .venue-deal-live-list > button:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }
       .venue-deal-control-metrics { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 11px; background: #09090d; }
       .venue-deal-control-metrics > span { min-width: 0; display: grid; gap: 5px; padding: 12px; border-left: 1px solid var(--mydancr-dashboard-border); }
       .venue-deal-control-metrics > span:first-child { border-left: 0; }
@@ -7369,6 +7399,7 @@ function DashboardStyles() {
       .dashboard-shell-venue .venue-deal-panel textarea,
       .dashboard-shell-venue .venue-deal-panel select { border-color: rgba(255,255,255,.14); color: #f8f7fb; background: #16161b; }
       .dashboard-shell-venue .venue-deal-panel button { border: 1px solid rgba(255,255,255,.14); color: #f8f7fb; background: #17171d; box-shadow: none; }
+      .dashboard-shell-venue .venue-deal-live-list > button { border-color: rgba(16,185,129,.28); background: rgba(16,185,129,.07); }
       .dashboard-shell-venue .venue-deal-control-actions > button.venue-deal-control-primary { border-color: rgba(196,181,253,.54); color: #fff; background: #7c3aed; box-shadow: 0 0 16px rgba(124,58,237,.18); }
       .dashboard-shell-venue .venue-deal-form-actions .primary { border-color: rgba(196,122,255,.72); color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); }
       .dashboard-shell-venue .venue-deal-form-actions .secondary { color: #f8f7fb; background: #17171d; }
