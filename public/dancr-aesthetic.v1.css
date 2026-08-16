@@ -4219,8 +4219,12 @@ body.dancr-button-system .home-tv-feed-progress {
 }
 
 body.dancr-button-system .home-tv-feed-progress > span {
-  background: rgba(232, 232, 238, 0.78) !important;
+  background: #f8f8fa !important;
   box-shadow: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
 body.dancr-button-system input.home-tv-feed-scrubber {

@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=119" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=120" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31907,8 +31907,12 @@
           height: 100%;
           display: block;
           border-radius: inherit;
-          background: rgba(232,232,238,.78);
+          background: #f8f8fa;
           box-shadow: none;
+          opacity: 1;
+          mix-blend-mode: normal;
+          filter: none;
+          -webkit-filter: none;
           transition: width .1s linear;
         }
         .home-tv-feed-scrubber {
@@ -31996,6 +32000,15 @@
           background: rgba(255,255,255,.18) !important;
           box-shadow: none !important;
           opacity: 1 !important;
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-progress > span,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-progress > span,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-progress > span {
+          background: #f8f8fa !important;
+          opacity: 1 !important;
+          mix-blend-mode: normal !important;
+          filter: none !important;
+          -webkit-filter: none !important;
         }
         #results.home-tv-feed:fullscreen .home-tv-feed-scrubber,
         #results.home-tv-feed:-webkit-full-screen .home-tv-feed-scrubber,

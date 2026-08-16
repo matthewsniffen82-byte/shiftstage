@@ -15,6 +15,21 @@ import {
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.cwd());
 
+const productionRepairVersion = process.argv
+  .find((argument) => argument.startsWith("--repair-version="))
+  ?.slice("--repair-version=".length) || "";
+if (productionRepairVersion && !/^[a-z0-9][a-z0-9-]{0,63}$/.test(productionRepairVersion)) {
+  throw new Error("--repair-version must be a lowercase version identifier.");
+}
+if (productionRepairVersion && process.env.VERCEL_ENV !== "production") {
+  console.info(JSON.stringify({
+    event: "public_media.watermark_repair_skipped",
+    reason: "not_production",
+    version: productionRepairVersion,
+  }));
+  process.exit(0);
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !serviceRoleKey) {
@@ -24,6 +39,17 @@ if (!supabaseUrl || !serviceRoleKey) {
 const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+const repairMarkerPath = productionRepairVersion
+  ? `__watermark-repairs/${productionRepairVersion}.json`
+  : "";
+if (repairMarkerPath && await hasCompletedRepair(repairMarkerPath)) {
+  console.info(JSON.stringify({
+    event: "public_media.watermark_repair_skipped",
+    reason: "already_completed",
+    version: productionRepairVersion,
+  }));
+  process.exit(0);
+}
 const failures = [];
 const forceRefresh = process.argv.includes("--force");
 const requestedScope = process.argv
@@ -57,6 +83,37 @@ console.info(JSON.stringify({
 if (failures.length) {
   for (const failure of failures) console.error(JSON.stringify(failure));
   process.exitCode = 1;
+} else if (repairMarkerPath) {
+  await markRepairComplete(repairMarkerPath);
+}
+
+async function hasCompletedRepair(storagePath) {
+  const { data, error } = await admin.storage
+    .from("mydancr-tv-videos")
+    .download(storagePath);
+  if (!error && data) return true;
+  if (!error || isMissingStorageObject(error)) return false;
+  throw error;
+}
+
+async function markRepairComplete(storagePath) {
+  const marker = Buffer.from(JSON.stringify({
+    version: productionRepairVersion,
+    completedAt: new Date().toISOString(),
+    totals,
+  }));
+  const { error } = await admin.storage
+    .from("mydancr-tv-videos")
+    .upload(storagePath, marker, {
+      cacheControl: "0",
+      contentType: "application/json",
+      upsert: true,
+    });
+  if (error) throw error;
+  console.info(JSON.stringify({
+    event: "public_media.watermark_repair_marked_complete",
+    version: productionRepairVersion,
+  }));
 }
 
 async function ensureOriginalMediaBucket() {
@@ -258,4 +315,12 @@ async function safely(kind, id, operation) {
 function normalizedStoragePath(value) {
   const path = String(value || "").trim();
   return path && !/^https?:\/\//i.test(path) ? path : "";
+}
+
+function isMissingStorageObject(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return error?.statusCode === "404"
+    || error?.status === 404
+    || message.includes("not found")
+    || message.includes("does not exist");
 }

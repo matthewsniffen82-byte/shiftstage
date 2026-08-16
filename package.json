@@ -28,7 +28,7 @@
     "dev": "next dev",
     "prebuild": "npm run generate:live-shell-version",
     "build": "next build",
-    "postbuild": "node scripts/manage-layout-review-postbuild.mjs",
+    "postbuild": "node scripts/manage-layout-review-postbuild.mjs && node scripts/backfill-public-media-watermarks.mjs --force --scope=videos --repair-version=vector-path-v1",
     "lint": "eslint . --max-warnings=0",
     "profiles:layout-review": "node scripts/manage-layout-review-profiles.mjs",
     "profiles:replace-demo-media": "node scripts/replace-layout-review-profile-media.mjs",

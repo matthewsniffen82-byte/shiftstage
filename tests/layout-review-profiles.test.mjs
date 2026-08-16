@@ -54,7 +54,7 @@ test("layout-review profiles require an explicit marked and reversible database 
 test("production builds populate profiles only behind one explicit environment gate", () => {
   assert.match(
     packageSource,
-    /"postbuild": "node scripts\/manage-layout-review-postbuild\.mjs"/,
+    /"postbuild": "node scripts\/manage-layout-review-postbuild\.mjs(?: && [^"]+)?"/,
   );
   assert.match(
     postbuildSource,
