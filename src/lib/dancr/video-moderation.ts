@@ -49,6 +49,9 @@ const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 const MAX_VIDEO_FRAMES = 10;
 const FFMPEG_TIMEOUT_MS = 25_000;
 const OPENAI_TIMEOUT_MS = 30_000;
+const FRAME_MODERATION_TIMEOUT_MS = 12_000;
+const FRAME_MODERATION_CONCURRENCY = 3;
+const FRAME_MODERATION_RETRY_DELAYS_MS = [350] as const;
 // Keep AI moderation active while favoring publication of lawful adult promotional
 // content. High-risk provider categories below still reject independently.
 const VIDEO_POLICY_APPROVE_CONFIDENCE = 0.75;
@@ -258,21 +261,63 @@ async function transcribeAudio(openai: OpenAI, audioPath: string) {
 }
 
 async function moderateFrames(openai: OpenAI, frames: Buffer[]) {
-  const input = frames.map((frame) => ({
-    type: "image_url" as const,
-    image_url: { url: `data:image/jpeg;base64,${frame.toString("base64")}` },
+  const results = new Array<Awaited<ReturnType<typeof moderateFrame>>>(frames.length);
+  let nextFrameIndex = 0;
+  const workerCount = Math.min(FRAME_MODERATION_CONCURRENCY, frames.length);
+
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (nextFrameIndex < frames.length) {
+      const frameIndex = nextFrameIndex;
+      nextFrameIndex += 1;
+      results[frameIndex] = await moderateFrame(openai, frames[frameIndex], frameIndex);
+    }
   }));
-  const response = await withTimeout(
-    openai.moderations.create({
-      model: DANCR_IMAGE_MODERATION_MODEL,
-      input,
-    }),
-    OPENAI_TIMEOUT_MS,
-  );
-  if (!Array.isArray(response.results) || response.results.length !== frames.length) {
+
+  if (results.some((result) => !result)) {
     throw new Error("Video moderation returned an incomplete frame result.");
   }
-  return response.results;
+  return results;
+}
+
+async function moderateFrame(openai: OpenAI, frame: Buffer, frameIndex: number) {
+  return withVideoProviderRetry(async () => {
+    const response = await withTimeout(
+      openai.moderations.create({
+        model: DANCR_IMAGE_MODERATION_MODEL,
+        input: [
+          {
+            type: "image_url" as const,
+            image_url: { url: `data:image/jpeg;base64,${frame.toString("base64")}` },
+          },
+        ],
+      }),
+      FRAME_MODERATION_TIMEOUT_MS,
+    );
+    const result = response.results?.[0];
+    if (!result) throw new Error("Video moderation returned an incomplete frame result.");
+    return result;
+  }, frameIndex);
+}
+
+async function withVideoProviderRetry<T>(operation: () => Promise<T>, frameIndex: number) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await operation();
+    } catch (error) {
+      const retryDelayMs = FRAME_MODERATION_RETRY_DELAYS_MS[attempt];
+      if (retryDelayMs === undefined || !isRetryableVideoProviderError(error)) throw error;
+      attempt += 1;
+      console.warn(JSON.stringify({
+        event: "mydancr_tv.frame_moderation_retry",
+        frameNumber: frameIndex + 1,
+        nextAttempt: attempt + 1,
+        status: providerErrorStatus(error),
+        code: providerErrorCode(error),
+      }));
+      await delay(retryDelayMs);
+    }
+  }
 }
 
 async function moderateText(openai: OpenAI, text: string) {
@@ -434,4 +479,29 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
     const timer = setTimeout(() => reject(new Error("Video moderation provider timed out.")), timeoutMs);
     promise.then(resolve, reject).finally(() => clearTimeout(timer));
   });
+}
+
+function isRetryableVideoProviderError(error: unknown) {
+  const status = providerErrorStatus(error);
+  if ([408, 409, 425, 429].includes(status) || status >= 500) return true;
+  const code = providerErrorCode(error).toLowerCase();
+  if (["econnreset", "eai_again", "etimedout", "ecanceled", "und_err_connect_timeout"].includes(code)) {
+    return true;
+  }
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+  return /timed? out|timeout|rate.?limit|temporar|network|connection|fetch failed|socket hang up/.test(message);
+}
+
+function providerErrorStatus(error: unknown) {
+  const status = Number((error as { status?: unknown } | null)?.status);
+  return Number.isFinite(status) ? status : 0;
+}
+
+function providerErrorCode(error: unknown) {
+  const record = error as { code?: unknown; cause?: { code?: unknown } } | null;
+  return String(record?.code || record?.cause?.code || "").slice(0, 80);
+}
+
+function delay(milliseconds: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 }

@@ -118,6 +118,23 @@ test("video moderation distributes frames through the full decoded timeline", ()
   assert.equal(parseFfmpegDuration("out_time=N/A\nprogress=end"), null);
 });
 
+test("video frame moderation respects the provider one-image limit with bounded retries", () => {
+  assert.match(videoModeration, /const FRAME_MODERATION_CONCURRENCY = 3/);
+  assert.match(videoModeration, /const FRAME_MODERATION_RETRY_DELAYS_MS = \[350\] as const/);
+  assert.match(
+    videoModeration,
+    /const workerCount = Math\.min\(FRAME_MODERATION_CONCURRENCY, frames\.length\)[\s\S]*?results\[frameIndex\] = await moderateFrame\(openai, frames\[frameIndex\], frameIndex\)/,
+  );
+  assert.match(
+    videoModeration,
+    /openai\.moderations\.create\(\{[\s\S]*?input: \[[\s\S]*?type: "image_url" as const[\s\S]*?\][\s\S]*?\}\)/,
+  );
+  assert.doesNotMatch(videoModeration, /const input = frames\.map/);
+  assert.match(videoModeration, /withVideoProviderRetry/);
+  assert.match(videoModeration, /\[408, 409, 425, 429\]\.includes\(status\) \|\| status >= 500/);
+  assert.match(videoModeration, /"mydancr_tv\.frame_moderation_retry"/);
+});
+
 test("video submission persists exactly approve, human-review, or reject outcomes", () => {
   assert.match(tvSource, /status: "moderating"/);
   assert.match(tvSource, /moderateStoredMyDancrTvVideo/);
