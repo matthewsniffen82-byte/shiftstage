@@ -53,11 +53,11 @@ test("mobile destinations use native navigation for the checked-in discovery she
 test("iPhone, Android, and Next pages share the Android floating glass dock", () => {
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.09\)[\s\S]*?rgba\(9, 9, 12, 0\.9\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.16\)[\s\S]*?rgba\(8, 8, 11, 0\.94\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 1px 0 rgba\(255, 255, 255, 0\.13\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248,250,252,\.09\) !important[\s\S]*?rgba\(9,9,12,\.9\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255,255,255,\.026\) !important[\s\S]*?backdrop-filter: none !important;/,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248,250,252,\.16\) !important[\s\S]*?rgba\(8,8,11,\.94\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?inset 0 1px 0 rgba\(255,255,255,\.13\)[\s\S]*?inset 0 0 0 1px rgba\(255,255,255,\.026\) !important[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     navigationSource,
@@ -73,11 +73,11 @@ test("iPhone, Android, and Next pages share the Android floating glass dock", ()
   );
   assert.match(
     navigationSource,
-    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(20, 20, 24, 0\.78\)[\s\S]*?rgba\(5, 5, 8, 0\.7\)/,
+    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(18, 18, 23, 0\.88\)[\s\S]*?rgba\(4, 4, 7, 0\.82\)/,
   );
   assert.match(
     homeSource,
-    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(20,20,24,.78\)[\s\S]*?rgba\(5,5,8,.7\)/,
+    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(18,18,23,.88\)[\s\S]*?rgba\(4,4,7,.82\)/,
   );
 });
 
@@ -221,11 +221,11 @@ test("neutral mobile glass uses soft-white idle icons and a restrained transluce
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #f5f3ff;[\s\S]*?--mobile-nav-active-violet-core: rgba\(124, 58, 237, 0\.96\);[\s\S]*?--mobile-nav-active-violet-glow: rgba\(124, 58, 237, 0\.58\);[\s\S]*?--mobile-nav-active-violet-depth: rgba\(49, 46, 129, 0\.72\);/,
+    /--mobile-nav-accent: rgba\(244, 242, 248, 0\.86\);[\s\S]*?--mobile-nav-accent-soft: rgba\(244, 242, 248, 0\.78\);[\s\S]*?--mobile-nav-active: #f5f3ff;[\s\S]*?--mobile-nav-active-violet-core: rgba\(124, 58, 237, 0\.96\);[\s\S]*?--mobile-nav-active-violet-glow: rgba\(124, 58, 237, 0\.58\);[\s\S]*?--mobile-nav-active-violet-depth: rgba\(49, 46, 129, 0\.72\);/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #f5f3ff;[\s\S]*?--home-nav-active-violet-core: rgba\(124,58,237,.96\);[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.58\);[\s\S]*?--home-nav-active-violet-depth: rgba\(49,46,129,.72\);/,
+    /--home-nav-accent: rgba\(244,242,248,.86\);[\s\S]*?--home-nav-accent-soft: rgba\(244,242,248,.78\);[\s\S]*?--home-nav-active: #f5f3ff;[\s\S]*?--home-nav-active-violet-core: rgba\(124,58,237,.96\);[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.58\);[\s\S]*?--home-nav-active-violet-depth: rgba\(49,46,129,.72\);/,
   );
   assert.doesNotMatch(navigationSource, /--mobile-nav-active-cyan-glow/);
   assert.doesNotMatch(homeSource, /--home-nav-active-cyan-glow/);
@@ -241,4 +241,25 @@ test("neutral mobile glass uses soft-white idle icons and a restrained transluce
     homeSource,
     /#discoveryTabs \.(?:tab|home-bottom-tv)\.active [^{]+\{[^}]*box-shadow:[^}]*0 0 0 1px/,
   );
+});
+
+test("the mobile dock introduces itself once per session without overriding reduced motion", () => {
+  assert.match(
+    navigationSource,
+    /MOBILE_NAVIGATION_INTRO_KEY = "mydancr-mobile-nav-intro-v1"[\s\S]*?prefers-reduced-motion: reduce[\s\S]*?sessionStorage\.getItem\(MOBILE_NAVIGATION_INTRO_KEY\)[\s\S]*?sessionStorage\.setItem\(MOBILE_NAVIGATION_INTRO_KEY, "1"\)[\s\S]*?classList\.add\("is-introducing"\)[\s\S]*?classList\.remove\("is-introducing"\)/,
+  );
+  assert.match(
+    navigationSource,
+    /\.global-mobile-bottom-nav\.is-introducing \{[\s\S]*?mobile-nav-dock-intro[\s\S]*?a\.active[\s\S]*?mobile-nav-selection-halo[\s\S]*?mobile-nav-active-intro/,
+  );
+  assert.match(
+    homeSource,
+    /MOBILE_NAVIGATION_INTRO_KEY = "mydancr-mobile-nav-intro-v1"[\s\S]*?sessionStorage\.getItem\(MOBILE_NAVIGATION_INTRO_KEY\)[\s\S]*?classList\.add\("is-introducing"\)[\s\S]*?classList\.remove\("is-introducing"\)/,
+  );
+  for (const source of [navigationSource, homeSource]) {
+    assert.match(
+      source,
+      /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?is-introducing[\s\S]*?animation: none;/,
+    );
+  }
 });

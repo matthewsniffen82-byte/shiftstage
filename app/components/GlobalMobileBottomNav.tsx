@@ -6,6 +6,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 const DEFAULT_CITY = "Las Vegas";
 const MOBILE_NAVIGATION_MAX_WIDTH = 720;
+const MOBILE_NAVIGATION_INTRO_KEY = "mydancr-mobile-nav-intro-v1";
 const MOBILE_SWIPE_EDGE_GUARD_PX = 20;
 const MOBILE_SWIPE_DIRECTION_LOCK_PX = 10;
 const MOBILE_SWIPE_MIN_DISTANCE_PX = 34;
@@ -70,6 +71,7 @@ const destinations = [
 export function GlobalMobileBottomNav() {
   const pathname = usePathname();
   const [city, setCity] = useState(DEFAULT_CITY);
+  const navigation = useRef<HTMLElement>(null);
   const swipeIndicator = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -78,6 +80,36 @@ export function GlobalMobileBottomNav() {
       ?.trim();
     if (selectedCity) setCity(selectedCity);
   }, [pathname]);
+
+  useEffect(() => {
+    if (
+      window.innerWidth > MOBILE_NAVIGATION_MAX_WIDTH ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    try {
+      if (window.sessionStorage.getItem(MOBILE_NAVIGATION_INTRO_KEY)) return;
+      window.sessionStorage.setItem(MOBILE_NAVIGATION_INTRO_KEY, "1");
+    } catch {
+      // A blocked storage API must not prevent the navigation from rendering.
+    }
+
+    const navigationElement = navigation.current;
+    const frame = window.requestAnimationFrame(() => {
+      navigationElement?.classList.add("is-introducing");
+    });
+    const timer = window.setTimeout(() => {
+      navigationElement?.classList.remove("is-introducing");
+    }, 1_100);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+      navigationElement?.classList.remove("is-introducing");
+    };
+  }, []);
 
   useEffect(() => {
     const currentIndex = destinations.findIndex((destination) =>
@@ -264,6 +296,7 @@ export function GlobalMobileBottomNav() {
       <nav
         aria-label="Mobile primary navigation"
         className="global-mobile-bottom-nav"
+        ref={navigation}
       >
         {destinations.map((destination) => {
           const active = isActiveDestination(pathname, destination.id);
@@ -366,18 +399,19 @@ export function GlobalMobileBottomNav() {
             gap: 0;
             padding: 3px 4px;
             overflow: hidden;
-            border: 1px solid rgba(248, 250, 252, 0.09);
+            border: 1px solid rgba(248, 250, 252, 0.16);
             border-radius: 25px;
             background:
               linear-gradient(
                 180deg,
-                rgba(255, 255, 255, 0.09),
-                rgba(255, 255, 255, 0.025) 42%,
-                rgba(255, 255, 255, 0.01)
+                rgba(255, 255, 255, 0.12),
+                rgba(255, 255, 255, 0.04) 42%,
+                rgba(255, 255, 255, 0.015)
               ),
-              rgba(9, 9, 12, 0.9);
+              rgba(8, 8, 11, 0.94);
             box-shadow:
               0 18px 46px rgba(0, 0, 0, 0.46),
+              inset 0 1px 0 rgba(255, 255, 255, 0.13),
               inset 0 0 0 1px rgba(255, 255, 255, 0.026);
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
@@ -393,15 +427,52 @@ export function GlobalMobileBottomNav() {
               background:
                 linear-gradient(
                   180deg,
-                  rgba(255, 255, 255, 0.1),
-                  rgba(255, 255, 255, 0.03) 42%,
-                  rgba(255, 255, 255, 0.01)
+                  rgba(255, 255, 255, 0.12),
+                  rgba(255, 255, 255, 0.04) 42%,
+                  rgba(255, 255, 255, 0.015)
                 ),
                 linear-gradient(
                   135deg,
-                  rgba(20, 20, 24, 0.78),
-                  rgba(5, 5, 8, 0.7)
+                  rgba(18, 18, 23, 0.88),
+                  rgba(4, 4, 7, 0.82)
                 );
+            }
+          }
+
+          .global-mobile-bottom-nav.is-introducing {
+            animation: mobile-nav-dock-intro 520ms cubic-bezier(0.2, 0.8, 0.2, 1)
+              both;
+          }
+
+          .global-mobile-bottom-nav.is-introducing
+            a.active
+            .mobile-nav-selection-halo {
+            animation: mobile-nav-active-intro 900ms ease-out 120ms both;
+          }
+
+          @keyframes mobile-nav-dock-intro {
+            from {
+              opacity: 0.35;
+              transform: translateX(-50%) translateY(14px) scale(0.985);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0) scale(1);
+            }
+          }
+
+          @keyframes mobile-nav-active-intro {
+            0% {
+              opacity: 0.25;
+              transform: translate(-50%, -50%) scale(0.72);
+            }
+            55% {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1.08);
+            }
+            100% {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1);
             }
           }
 
@@ -411,8 +482,8 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a {
-            --mobile-nav-accent: rgba(232, 230, 238, 0.74);
-            --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
+            --mobile-nav-accent: rgba(244, 242, 248, 0.86);
+            --mobile-nav-accent-soft: rgba(244, 242, 248, 0.78);
             --mobile-nav-active: #f5f3ff;
             --mobile-nav-active-violet-core: rgba(124, 58, 237, 0.96);
             --mobile-nav-active-violet-glow: rgba(124, 58, 237, 0.58);
@@ -629,6 +700,13 @@ export function GlobalMobileBottomNav() {
           @media (prefers-reduced-motion: reduce) {
             .global-mobile-swipe-indicator {
               transition: none;
+            }
+
+            .global-mobile-bottom-nav.is-introducing,
+            .global-mobile-bottom-nav.is-introducing
+              a.active
+              .mobile-nav-selection-halo {
+              animation: none;
             }
           }
         }
