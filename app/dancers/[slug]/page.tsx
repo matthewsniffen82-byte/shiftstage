@@ -458,17 +458,21 @@ function PublicProfileStyles() {
       .deal-qr-frame span, .club-deal-action em { color: #9fefff; font-size: 10px; font-style: normal; }
       .venue-qr-launcher { width: 100%; display: flex; align-items: center; justify-content: space-between; }
       .venue-qr-launcher span { color: #d8f7ff; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
-      .profile-deal-availability { width: min(168px, 100%); margin: 0 auto; border: 0; background: transparent; box-shadow: none; }
-      .venue-qr-unavailable { width: min(168px, 100%); min-height: 168px; aspect-ratio: 1 / 1; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; place-items: center; align-content: center; justify-self: center; gap: 10px; padding: 14px; border: 1px solid rgba(148,163,184,.13); border-radius: 16px; color: rgba(148,163,184,.72); background: rgba(17,17,24,.82); box-shadow: none; text-align: center; }
+      .profile-deal-availability { width: min(100%, 760px); margin: 12px auto 0; border: 0; background: transparent; box-shadow: none; }
+      .venue-qr-unavailable { width: 100%; min-height: 140px; display: grid; grid-template-columns: minmax(0, 1fr) 128px; align-items: center; justify-self: stretch; gap: 14px; padding: 14px 15px; border: 1px solid rgba(148,163,184,.2); border-radius: 18px; color: rgba(203,196,214,.76); background: rgba(17,17,24,.82); box-shadow: none; text-align: left; }
       .profile-deal-availability .venue-qr-unavailable { border-color: rgba(148,163,184,.13); background: rgba(17,17,24,.82); }
       .profile-deal-availability::before, .profile-deal-availability::after, .venue-qr-unavailable::before, .venue-qr-unavailable::after { content: none !important; display: none !important; background: none !important; box-shadow: none !important; }
-      .venue-qr-placeholder-icon { width: 72px; height: 72px; display: grid; place-items: center; padding: 8px; border: 1px solid rgba(148,163,184,.14); border-radius: 12px; color: rgba(148,163,184,.58); background: rgba(148,163,184,.035); box-shadow: none; opacity: .62; }
-      .venue-qr-placeholder-icon svg { width: 100%; height: 100%; }
+      .venue-qr-placeholder-icon { width: 128px; min-width: 128px; min-height: 112px; display: grid; grid-template-rows: 42px auto; place-items: center; align-content: center; gap: 8px; padding: 12px 10px; border: 1px solid rgba(148,163,184,.18); border-radius: 14px; color: rgba(203,196,214,.58); background: rgba(255,255,255,.035); box-shadow: inset 0 1px 0 rgba(255,255,255,.03); opacity: 1; }
+      .venue-qr-placeholder-icon > svg { width: 42px; height: 42px; }
       .venue-qr-placeholder-icon .qr-finder { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: miter; }
       .venue-qr-placeholder-icon .qr-module { fill: currentColor; stroke: none; }
-      .venue-qr-unavailable-copy { min-width: 0; display: grid; justify-items: center; gap: 4px; }
-      .venue-qr-unavailable-label { color: rgba(148,163,184,.56); font-size: 9px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
-      .venue-qr-unavailable-copy strong { max-width: 136px; color: rgba(148,163,184,.72); font-size: 12px; line-height: 1.25; }
+      .venue-qr-unavailable-copy { min-width: 0; display: grid; justify-items: start; gap: 7px; }
+      .venue-qr-unavailable-label { color: rgba(203,196,214,.76); font-size: clamp(18px, 5vw, 23px); font-weight: 950; letter-spacing: -.015em; line-height: 1.05; }
+      .venue-qr-unavailable-copy small { color: rgba(203,196,214,.7); font-size: 11px; font-weight: 800; line-height: 1.3; }
+      .venue-qr-placeholder-copy { display: grid; gap: 2px; text-align: center; }
+      .venue-qr-placeholder-copy strong { color: rgba(203,196,214,.7); font-size: 12px; font-weight: 950; line-height: 1.08; }
+      .venue-qr-placeholder-copy small { color: rgba(203,196,214,.64); font-size: 9px; font-weight: 850; line-height: 1.12; }
+      @media (max-width: 340px) { .venue-qr-unavailable { grid-template-columns: minmax(0, 1fr) 112px; } .venue-qr-placeholder-icon { width: 112px; min-width: 112px; } }
       .profile-schedule-section { margin-top: 24px; }
       .profile-media-section { display: grid; gap: 9px; margin-top: 8px; }
       .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }

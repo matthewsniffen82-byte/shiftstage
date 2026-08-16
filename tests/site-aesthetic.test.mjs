@@ -28,7 +28,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=113" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=114" rel="stylesheet">/,
   );
 });
 
@@ -386,7 +386,7 @@ test("profile violet side beams are limited to live, upcoming, and active deals"
   );
   assert.doesNotMatch(
     profileAccentBlock,
-    /\.schedule-empty|\.social-tile|\.profile-qr-unavailable/,
+    /\.schedule-empty|\.social-tile/,
   );
   assert.match(
     aesthetic,
@@ -657,7 +657,7 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   );
   assert.match(
     fullProfilePalette,
-    /\.public-profile-shell \.venue-qr-placeholder-icon \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?color: var\(--dancr-color-text-muted\) !important;[\s\S]*?background: var\(--dancr-color-surface-subtle\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?opacity: \.62;/,
+    /\.public-profile-shell \.venue-qr-placeholder-icon \{[\s\S]*?width: 128px !important;[\s\S]*?min-height: 112px !important;[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?color: var\(--dancr-color-text-muted\) !important;[\s\S]*?background: var\(--dancr-color-surface-subtle\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?opacity: 1;/,
   );
   assert.match(
     fullProfilePalette,

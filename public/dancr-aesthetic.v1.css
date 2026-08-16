@@ -3477,53 +3477,91 @@ body.dancr-button-system .public-profile-shell .venue-qr-unavailable::after {
 }
 
 body.dancr-button-system .public-profile-shell .profile-deal-availability {
-  width: min(168px, 100%) !important;
+  width: min(100%, 760px) !important;
   margin-inline: auto !important;
   border: 0 !important;
   background: transparent !important;
 }
 
 body.dancr-button-system .public-profile-shell .venue-qr-unavailable {
-  width: min(168px, 100%) !important;
-  min-height: 168px !important;
-  aspect-ratio: 1 / 1;
-  grid-template-columns: minmax(0, 1fr) !important;
-  grid-template-rows: auto auto !important;
-  place-items: center !important;
-  align-content: center !important;
-  justify-self: center !important;
-  gap: 10px !important;
-  padding: 14px !important;
-  border-radius: 16px !important;
-  text-align: center;
+  width: 100% !important;
+  min-height: 140px !important;
+  aspect-ratio: auto !important;
+  grid-template-columns: minmax(0, 1fr) 128px !important;
+  align-items: center !important;
+  justify-self: stretch !important;
+  gap: 14px !important;
+  padding: 14px 15px !important;
+  border-radius: 18px !important;
+  text-align: left;
 }
 
 body.dancr-button-system .public-profile-shell .venue-qr-placeholder-icon {
-  width: 72px !important;
-  height: 72px !important;
-  padding: 8px !important;
+  width: 128px !important;
+  min-width: 128px !important;
+  height: auto !important;
+  min-height: 112px !important;
+  grid-template-rows: 42px auto !important;
+  align-content: center !important;
+  gap: 8px !important;
+  padding: 12px 10px !important;
   border-color: var(--dancr-color-border-subtle) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
   color: var(--dancr-color-text-muted) !important;
   background: var(--dancr-color-surface-subtle) !important;
   background-image: none !important;
   box-shadow: none !important;
-  opacity: .62;
+  opacity: 1;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-placeholder-icon > svg {
+  width: 42px !important;
+  height: 42px !important;
 }
 
 body.dancr-button-system .public-profile-shell .venue-qr-unavailable-copy {
-  justify-items: center;
+  justify-items: start;
 }
 
 body.dancr-button-system .public-profile-shell .venue-qr-unavailable-label {
   color: var(--dancr-color-text-muted) !important;
-  opacity: .72;
+  font-size: clamp(18px, 5vw, 23px) !important;
+  letter-spacing: -.015em !important;
+  line-height: 1.05 !important;
+  opacity: 1;
 }
 
-body.dancr-button-system .public-profile-shell .venue-qr-unavailable-copy strong {
-  max-width: 136px;
+body.dancr-button-system .public-profile-shell .venue-qr-unavailable-copy small {
+  color: var(--dancr-color-text-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.3;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-placeholder-copy {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-placeholder-copy strong {
   font-size: 12px !important;
-  line-height: 1.25;
+  line-height: 1.08;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-placeholder-copy small {
+  font-size: 9px !important;
+  line-height: 1.12;
+}
+
+@media (max-width: 340px) {
+  body.dancr-button-system .public-profile-shell .venue-qr-unavailable {
+    grid-template-columns: minmax(0, 1fr) 112px !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .venue-qr-placeholder-icon {
+    width: 112px !important;
+    min-width: 112px !important;
+  }
 }
 
 body.dancr-button-system #profileBackdrop .profile-qr-unavailable :is(.profile-deal-label, .profile-deal-main, .profile-deal-meta),

@@ -371,26 +371,29 @@ test("Working Now profiles do not repeat the Club Confirmed check-in card", () =
   assert.match(liveApp, /\$\{profileLocationStatusTile\(profile, city\)\}/);
 });
 
-test("unavailable profile QR stays visible in a compact square tile", () => {
+test("inactive profile Club Deals retain the active card geometry without implying a live offer", () => {
   const unavailableDealMarkup = liveApp.match(
     /const unavailableLabel = state\.key === "no-active-offer"[\s\S]*?(?=\n    function profileShareText)/,
   )?.[0] || "";
   assert.match(unavailableDealMarkup, /"Available when dancer is working"/);
   assert.match(unavailableDealMarkup, /state\.key === "no-active-offer"/);
-  assert.match(unavailableDealMarkup, /<span class="profile-deal-label">Club Deal<\/span>/);
-  assert.match(unavailableDealMarkup, /clubDealQrSymbolMarkup\("profile-deal-placeholder"\)/);
+  assert.match(unavailableDealMarkup, /profile-qr-tile profile-club-deal-tile profile-qr-unavailable/);
+  assert.match(unavailableDealMarkup, /<strong class="profile-club-deal-label">Club Deal<\/strong>/);
+  assert.match(unavailableDealMarkup, /profile-club-deal-qr-button is-unavailable/);
+  assert.match(unavailableDealMarkup, /clubDealQrSymbolMarkup\("profile-club-deal-unavailable-symbol"\)/);
+  assert.match(unavailableDealMarkup, /<strong>Not active<\/strong>[\s\S]*?<small>Check back later<\/small>/);
   assert.doesNotMatch(unavailableDealMarkup, /How Club Deals work|profile-deal-disclosure|profile-deal-note/);
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.profile-qr-unavailable \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;[\s\S]*?aspect-ratio: 1 \/ 1;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?justify-self: center !important;/,
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-tile \{[\s\S]*?width: 100% !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(96px, 112px\) !important;/,
   );
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.profile-deal-placeholder \{[\s\S]*?width: 72px !important;[\s\S]*?min-width: 72px !important;[\s\S]*?height: 72px !important;[\s\S]*?justify-self: center !important;/,
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-tile\.profile-qr-unavailable \{[\s\S]*?border-color: rgba\(148, 163, 184, \.2\) !important;[\s\S]*?background: rgba\(17, 17, 24, \.82\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.profile-deal-placeholder \{[\s\S]*?border-color: rgba\(148,163,184,\.14\) !important;[\s\S]*?color: rgba\(148,163,184,\.58\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?opacity: \.62;/,
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-qr-button\.is-unavailable:disabled \{[\s\S]*?background: rgba\(255, 255, 255, \.035\) !important;[\s\S]*?cursor: default !important;/,
   );
   assert.match(
     profilePolishBlock,
