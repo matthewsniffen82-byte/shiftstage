@@ -26,6 +26,12 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
 });
 const failures = [];
 const forceRefresh = process.argv.includes("--force");
+const requestedScope = process.argv
+  .find((argument) => argument.startsWith("--scope="))
+  ?.slice("--scope=".length) || "all";
+if (!["all", "images", "videos"].includes(requestedScope)) {
+  throw new Error("--scope must be one of: all, images, videos.");
+}
 const totals = {
   dancerPhotos: 0,
   venueCovers: 0,
@@ -33,13 +39,18 @@ const totals = {
   skipped: 0,
 };
 
-await ensureOriginalMediaBucket();
-await backfillDancerPhotos();
-await backfillVenueCovers();
-await backfillVideos();
+if (requestedScope === "all" || requestedScope === "images") {
+  await ensureOriginalMediaBucket();
+  await backfillDancerPhotos();
+  await backfillVenueCovers();
+}
+if (requestedScope === "all" || requestedScope === "videos") {
+  await backfillVideos();
+}
 
 console.info(JSON.stringify({
   event: "public_media.watermark_backfill_completed",
+  scope: requestedScope,
   totals,
   failures: failures.length,
 }));

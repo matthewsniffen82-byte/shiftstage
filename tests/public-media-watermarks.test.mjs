@@ -14,7 +14,9 @@ const {
   archivedOriginalStoragePath,
   chooseImageWatermarkPosition,
   DANCR_MEDIA_WATERMARK_OPACITY,
+  DANCR_MEDIA_WATERMARK_RENDERING,
   DANCR_ORIGINAL_MEDIA_BUCKET,
+  renderDancrMediaWatermarkSvg,
   watermarkStoredVideo,
 } = await import(
   new URL("../src/lib/dancr/media-watermark.ts", import.meta.url)
@@ -140,6 +142,21 @@ test("the image watermark is readable, baked into pixels, and placed away from t
   );
 });
 
+test("the mydancr watermark uses embedded vector outlines instead of worker fonts", async () => {
+  const svg = renderDancrMediaWatermarkSvg(240, 58).toString("utf8");
+  assert.equal(DANCR_MEDIA_WATERMARK_RENDERING, "vector-path-v1");
+  assert.match(svg, /<path\b/);
+  assert.doesNotMatch(svg, /<text\b|font-family|font-weight/);
+
+  const rendered = await sharp(Buffer.from(svg)).png().toBuffer();
+  const { width, height, channels } = await sharp(rendered).metadata();
+  const stats = await sharp(rendered).stats();
+  assert.equal(width, 240);
+  assert.equal(height, 58);
+  assert.equal(channels, 4);
+  assert.ok(stats.channels[3].max > 0, "the vector wordmark must render visible pixels");
+});
+
 test("original archive paths remain private, deterministic, and traversal-safe", () => {
   assert.equal(
     archivedOriginalStoragePath("dancer-photos", "user/profile/photo.jpg"),
@@ -184,6 +201,8 @@ test("the idempotent production backfill covers existing public media without av
   assert.match(backfillScript, /hasArchivedOriginalMedia/);
   assert.doesNotMatch(backfillScript, /avatar_storage_path|qr_code_storage_path/);
   assert.match(backfillScript, /process\.argv\.includes\("--force"\)/);
+  assert.match(backfillScript, /--scope=/);
+  assert.match(backfillScript, /\["all", "images", "videos"\]/);
   assert.match(backfillScript, /archivedOriginalStoragePath/);
 });
 

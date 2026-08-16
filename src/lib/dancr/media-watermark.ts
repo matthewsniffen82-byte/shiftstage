@@ -8,10 +8,29 @@ import ffmpegPath from "ffmpeg-static";
 export const DANCR_ORIGINAL_MEDIA_BUCKET = "dancr-media-originals";
 export const DANCR_MEDIA_WATERMARK_TEXT = "mydancr";
 export const DANCR_MEDIA_WATERMARK_OPACITY = 0.34;
+export const DANCR_MEDIA_WATERMARK_RENDERING = "vector-path-v1";
 
 const VIDEO_WATERMARK_TIMEOUT_MS = 120_000;
 const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 const PRIVATE_VIDEO_ORIGINAL_PREFIX = "__originals";
+const MYDANCR_WORDMARK_VIEWBOX_WIDTH = 4132;
+const MYDANCR_WORDMARK_VIEWBOX_HEIGHT = 1000;
+const MYDANCR_WORDMARK_BASELINE = 760;
+
+// These path-only glyphs are derived from the open-source Noto Sans font that
+// ships with Next.js. Keeping the outlines in the application makes public
+// media watermarking independent of fonts installed on the image/video worker.
+// An SVG <text> watermark previously rendered as seven missing-glyph squares
+// on production workers that could not resolve Arial.
+const MYDANCR_WORDMARK_PATHS = Object.freeze([
+  [0, "M673 546Q764 546 809 499.5Q854 453 854 349L854 0L767 0L767 345Q767 472 658 472Q580 472 546.5 427Q513 382 513 296L513 0L426 0L426 345Q426 472 316 472Q235 472 204 422Q173 372 173 278L173 0L85 0L85 536L156 536L169 463L174 463Q199 505 241.5 525.5Q284 546 332 546Q458 546 496 456L501 456Q528 502 574.5 524Q621 546 673 546Z"],
+  [935, "M1 536L95 536L211 231Q226 191 238 154.5Q250 118 256 85L260 85Q266 110 279 150.5Q292 191 306 232L415 536L510 536L279 -74Q251 -150 206.5 -195Q162 -240 84 -240Q60 -240 42 -237.5Q24 -235 11 -232L11 -162Q22 -164 37.5 -166Q53 -168 70 -168Q116 -168 144.5 -142Q173 -116 189 -73L217 -2Z"],
+  [1445, "M275 -10Q175 -10 115 59.5Q55 129 55 267Q55 405 115.5 475.5Q176 546 276 546Q338 546 377.5 523Q417 500 442 467L448 467Q447 480 444.5 505.5Q442 531 442 546L442 760L530 760L530 0L459 0L446 72L442 72Q418 38 378 14Q338 -10 275 -10ZM289 63Q374 63 408.5 109.5Q443 156 443 250L443 266Q443 366 410 419.5Q377 473 288 473Q217 473 181.5 416.5Q146 360 146 265Q146 169 181.5 116Q217 63 289 63Z"],
+  [2060, "M288 545Q386 545 433 502Q480 459 480 365L480 0L416 0L399 76L395 76Q360 32 321.5 11Q283 -10 215 -10Q142 -10 94 28.5Q46 67 46 149Q46 229 109 272.5Q172 316 303 320L394 323L394 355Q394 422 365 448Q336 474 283 474Q241 474 203 461.5Q165 449 132 433L105 499Q140 518 188 531.5Q236 545 288 545ZM314 259Q214 255 175.5 227Q137 199 137 148Q137 103 164.5 82Q192 61 235 61Q303 61 348 98.5Q393 136 393 214L393 262Z"],
+  [2621, "M343 546Q439 546 488 499.5Q537 453 537 349L537 0L450 0L450 343Q450 472 330 472Q241 472 207 422Q173 372 173 278L173 0L85 0L85 536L156 536L169 463L174 463Q200 505 246 525.5Q292 546 343 546Z"],
+  [3239, "M300 -10Q229 -10 173.5 19Q118 48 86.5 109Q55 170 55 265Q55 364 88 426Q121 488 177.5 517Q234 546 306 546Q347 546 385 537.5Q423 529 447 517L420 444Q396 453 364 461Q332 469 304 469Q146 469 146 266Q146 169 184.5 117.5Q223 66 299 66Q343 66 376.5 75Q410 84 438 97L438 19Q411 5 378.5 -2.5Q346 -10 300 -10Z"],
+  [3719, "M335 546Q350 546 367.5 544.5Q385 543 398 540L387 459Q374 462 358.5 464Q343 466 329 466Q288 466 252 443.5Q216 421 194.5 380.5Q173 340 173 286L173 0L85 0L85 536L157 536L167 438L171 438Q197 482 238 514Q279 546 335 546Z"],
+] as const);
 
 type DancrClient = SupabaseClient<any, any, any>;
 
@@ -309,18 +328,31 @@ async function downloadOptionalObject(client: DancrClient, bucket: string, stora
   return Buffer.from(await data.arrayBuffer());
 }
 
-function watermarkSvg(width: number, height: number, opacity: number) {
-  const fontSize = Math.max(12, Math.round(height * 0.58));
-  const strokeOpacity = Math.min(0.42, opacity + 0.06);
-  const strokeWidth = Math.max(1.35, height * 0.055);
+export function renderDancrMediaWatermarkSvg(
+  width: number,
+  height: number,
+  opacity = DANCR_MEDIA_WATERMARK_OPACITY,
+) {
+  const safeWidth = Math.max(1, Math.round(width));
+  const safeHeight = Math.max(1, Math.round(height));
+  const safeOpacity = Math.min(1, Math.max(0, opacity));
+  const strokeOpacity = Math.min(0.42, safeOpacity + 0.06);
+  const glyphs = MYDANCR_WORDMARK_PATHS.map(([left, data]) =>
+    `<path transform="translate(${left} 0)" d="${data}"/>`,
+  ).join("");
   return Buffer.from(
-    `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">` +
-      `<text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" ` +
-      `font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700" letter-spacing="-0.4" ` +
-      `paint-order="stroke fill" fill="#ffffff" fill-opacity="${opacity}" stroke="#000000" ` +
-      `stroke-opacity="${strokeOpacity}" stroke-width="${strokeWidth}">` +
-      `${DANCR_MEDIA_WATERMARK_TEXT}</text></svg>`,
+    `<svg width="${safeWidth}" height="${safeHeight}" viewBox="0 0 ${MYDANCR_WORDMARK_VIEWBOX_WIDTH} ${MYDANCR_WORDMARK_VIEWBOX_HEIGHT}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">` +
+      `<g transform="translate(0 ${MYDANCR_WORDMARK_BASELINE}) scale(1 -1)" ` +
+      `fill="#ffffff" fill-opacity="${safeOpacity}" stroke="#000000" stroke-opacity="${strokeOpacity}" ` +
+      `stroke-width="72" stroke-linejoin="round" paint-order="stroke fill">${glyphs}</g>` +
+      `<g transform="translate(0 ${MYDANCR_WORDMARK_BASELINE}) scale(1 -1)" ` +
+      `fill="#ffffff" fill-opacity="${safeOpacity}" stroke="#ffffff" stroke-opacity="${safeOpacity}" ` +
+      `stroke-width="18" stroke-linejoin="round" paint-order="stroke fill">${glyphs}</g></svg>`,
   );
+}
+
+function watermarkSvg(width: number, height: number, opacity: number) {
+  return renderDancrMediaWatermarkSvg(width, height, opacity);
 }
 
 function normalizeStorageSegment(value: string) {
