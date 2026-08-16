@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=120" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=121" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39671,10 +39671,10 @@
       const safeName = escapeHtml(venue?.name || details.name || "this club");
       const venueValue = escapeOptionValue(venue?.name || details.name || "");
       if (isFictionalDemoTravelUnavailable(venue, city)) {
-        return `<button class="${className} is-inactive-demo" type="button" data-demo-travel="directions" aria-label="Directions unavailable for this demonstration club">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
+        return `<button class="${className} is-inactive-demo" type="button" data-demo-travel="directions" disabled aria-disabled="true" aria-label="Directions unavailable for this demonstration club">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
       }
       if (!String(details.address || "").trim()) {
-        return `<button class="${className} is-travel-unavailable" type="button" data-travel-unavailable="directions" aria-label="Directions unavailable for ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
+        return `<button class="${className} is-travel-unavailable" type="button" data-travel-unavailable="directions" disabled aria-disabled="true" aria-label="Directions unavailable for ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
       }
       return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
     }
@@ -39683,11 +39683,11 @@
       const destination = publicVenueUberDestination(venue, city);
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
       if (isFictionalDemoTravelUnavailable(venue, city)) {
-        return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" aria-label="Uber unavailable for this demonstration club">${actionButtonLabel("car", escapeHtml(label))}</button>`;
+        return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" disabled aria-disabled="true" aria-label="Uber unavailable for this demonstration club">${actionButtonLabel("car", escapeHtml(label))}</button>`;
       }
       if (!destination) {
         const safeName = escapeHtml(venue?.name || "this club");
-        return `<button class="${classes} is-travel-unavailable" type="button" data-travel-unavailable="uber" aria-label="Uber unavailable for ${safeName}">${actionButtonLabel("car", escapeHtml(label))}</button>`;
+        return `<button class="${classes} is-travel-unavailable" type="button" data-travel-unavailable="uber" disabled aria-disabled="true" aria-label="Uber unavailable for ${safeName}">${actionButtonLabel("car", escapeHtml(label))}</button>`;
       }
       const href = buildUberRideUrl(destination);
       return `<a class="${classes}" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" data-uber-ride-link data-uber-venue-id="${escapeOptionValue(venue.id || "")}" data-uber-venue-name="${escapeOptionValue(destination.name)}" data-uber-dancer-id="${escapeOptionValue(dancerId)}" data-uber-source="${escapeOptionValue(source)}" data-uber-city="${escapeOptionValue(city)}" aria-label="${escapeHtml(label)}. Opens Uber with ${escapeHtml(destination.formattedAddress)} as the destination.">${actionButtonLabel("car", escapeHtml(label))}</a>`;

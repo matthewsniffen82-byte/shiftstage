@@ -152,13 +152,14 @@ test("public venue address fields form one postal destination when needed", () =
   );
 });
 
-const [componentSource, componentStyles, dancerPageSource, eventRouteSource, liveShellSource, docsSource] = await Promise.all([
+const [componentSource, componentStyles, dancerPageSource, eventRouteSource, liveShellSource, docsSource, sharedAesthetic] = await Promise.all([
   readFile(new URL("../app/components/UberRideButton.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/components/UberRideButton.module.css", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/events/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../docs/uber-universal-deep-links.md", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
 test("the reusable control uses the required source-specific labels", () => {
@@ -200,14 +201,17 @@ test("venue and dancer profiles expose their required primary ride actions", () 
 });
 
 test("venue travel actions keep compact labels and explicit address-unavailable states", () => {
-  assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?data-travel-unavailable="directions"[\s\S]*?actionButtonLabel\("pin", escapeHtml\(label\)\)/);
-  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="uber"[\s\S]*?actionButtonLabel\("car", escapeHtml\(label\)\)/);
+  assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?data-travel-unavailable="directions" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("pin", escapeHtml\(label\)\)/);
+  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="uber" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("car", escapeHtml\(label\)\)/);
   assert.match(liveShellSource, /Uber is unavailable because this club has not published a usable address\./);
   assert.match(liveShellSource, /Directions are unavailable because this club has not published a usable address\./);
   assert.match(liveShellSource, /\.venue-primary-actions[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(liveShellSource, /\.home-venue-discovery-context-actions \.home-discovery-feed-directions[\s\S]*?border-color: rgba\(53,216,255,\.52\)/);
   assert.match(liveShellSource, /\.home-venue-discovery-context-actions \{[\s\S]*?gap: 8px;/);
   assert.match(liveShellSource, /\.home-venue-discovery-context-actions > :is\(\.feed-card-action, \.home-discovery-feed-directions\) > span:not\(\.action-icon\) \{[\s\S]*?width: auto;[\s\S]*?flex: 0 1 auto;[\s\S]*?text-align: center/);
+  assert.match(sharedAesthetic, /\.home-venue-discovery-context-actions > :is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?opacity: 1 !important;[\s\S]*?pointer-events: none !important;/);
+  assert.match(sharedAesthetic, /> \.home-discovery-feed-directions:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-info-medium\)[\s\S]*?var\(--dancr-color-info\) 10%/);
+  assert.match(sharedAesthetic, /> \.home-venue-discovery-uber:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?var\(--dancr-color-brand-primary\) 28%[\s\S]*?var\(--dancr-shadow-brand-control\)/);
 });
 
 test("Uber ride analytics are first-party, constrained, and documented", () => {

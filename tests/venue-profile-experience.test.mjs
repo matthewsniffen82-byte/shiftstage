@@ -172,7 +172,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-primary-actions > \.venue-detail-uber \{[\s\S]*?border: 1px solid var\(--dancr-color-brand-primary-medium\) !important;[\s\S]*?var\(--dancr-color-brand-primary\) 28%/);
   assert.match(refinement, /\.venue-primary-actions > \.venue-address-directions \.action-icon \{[\s\S]*?color: var\(--dancr-color-info\) !important;/);
   assert.match(refinement, /\.venue-primary-actions > \.venue-detail-uber \.action-icon \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
-  assert.match(refinement, /\.venue-primary-actions > :is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?cursor: not-allowed !important;[\s\S]*?pointer-events: auto !important;/);
+  assert.match(refinement, /\.venue-primary-actions > :is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: default !important;[\s\S]*?pointer-events: none !important;/);
   assert.match(refinement, /Compact venue travel actions keep both boxes identical[\s\S]*?height: 52px !important;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 8px !important;[\s\S]*?padding: 0 12px !important;[\s\S]*?position: static !important;[\s\S]*?text-align: center !important;/);
   assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?filter: none !important;/);
   assert.match(refinement, /\.venue-activity-empty \{[\s\S]*?grid-template-columns: 38px minmax\(0, 1fr\);[\s\S]*?padding: 12px 13px;/);
