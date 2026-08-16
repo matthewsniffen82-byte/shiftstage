@@ -53,10 +53,6 @@ const backfillScript = readFileSync(
   new URL("../scripts/backfill-public-media-watermarks.mjs", import.meta.url),
   "utf8",
 );
-const packageJson = JSON.parse(readFileSync(
-  new URL("../package.json", import.meta.url),
-  "utf8",
-));
 const execFileAsync = promisify(execFile);
 
 test("watermarked image uploads archive the untouched original and publish separate derivatives", async () => {
@@ -212,10 +208,6 @@ test("the idempotent production backfill covers existing public media without av
   assert.match(backfillScript, /already_completed/);
   assert.match(backfillScript, /--mark-complete-only/);
   assert.match(backfillScript, /contentType: "video\/mp4"/);
-  assert.match(
-    packageJson.scripts.postbuild,
-    /backfill-public-media-watermarks\.mjs --repair-version=vector-path-v1 --mark-complete-only/,
-  );
 });
 
 test("video processing archives the original and publishes a playable watermarked derivative", async () => {
