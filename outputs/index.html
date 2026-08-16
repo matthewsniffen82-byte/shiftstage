@@ -31750,14 +31750,16 @@
           position: absolute;
           z-index: 8;
           right: 14px;
-          bottom: 7px;
+          bottom: 6px;
           left: 14px;
-          height: 6px;
+          height: 3px;
           overflow: hidden;
           border-radius: 999px;
           background: color-mix(in srgb, var(--dancr-color-text-primary) 58%, transparent);
           box-shadow: 0 1px 5px var(--dancr-color-black-strong);
           pointer-events: none;
+          opacity: 1;
+          transition: opacity .16s ease;
         }
         .home-tv-feed-progress > span {
           width: 0;
@@ -31767,6 +31769,193 @@
           background: color-mix(in srgb, var(--dancr-color-text-primary) 88%, transparent);
           box-shadow: none;
           transition: width .1s linear;
+        }
+        .home-tv-feed-video-controls {
+          position: absolute;
+          z-index: 10;
+          right: 12px;
+          bottom: 11px;
+          left: 12px;
+          min-width: 0;
+          min-height: 44px;
+          display: grid;
+          grid-template-columns: 36px 36px minmax(74px, 1fr) 64px 36px;
+          align-items: center;
+          gap: 5px;
+          padding: 3px 4px;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(6,6,9,.72);
+          box-shadow: 0 10px 30px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08);
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(5px);
+          transition: opacity .16s ease, transform .16s ease;
+          backdrop-filter: blur(16px) saturate(1.08);
+          -webkit-backdrop-filter: blur(16px) saturate(1.08);
+        }
+        .home-tv-feed-slide.is-controls-visible .home-tv-feed-video-controls,
+        .home-tv-feed-video-controls:focus-within {
+          opacity: 1;
+          pointer-events: auto;
+          transform: translateY(0);
+        }
+        .home-tv-feed-slide.is-controls-visible .home-tv-feed-progress,
+        .home-tv-feed-slide:focus-within .home-tv-feed-progress {
+          opacity: 0;
+        }
+        .home-tv-feed-copy {
+          transition: transform .16s ease;
+        }
+        .home-tv-feed-slide.is-controls-visible .home-tv-feed-copy,
+        .home-tv-feed-slide:focus-within .home-tv-feed-copy {
+          transform: translateY(-47px);
+        }
+        .home-tv-feed-video-control,
+        .home-tv-feed-video-controls .home-tv-feed-sound,
+        .home-tv-feed-video-controls .home-tv-feed-fullscreen {
+          position: static;
+          width: 36px;
+          min-width: 36px;
+          max-width: 36px;
+          height: 36px;
+          min-height: 36px;
+          max-height: 36px;
+          display: inline-grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(255,255,255,.055);
+          box-shadow: none;
+          touch-action: manipulation;
+        }
+        .home-tv-feed-video-control:hover,
+        .home-tv-feed-video-control:focus-visible,
+        .home-tv-feed-video-controls .home-tv-feed-sound:hover,
+        .home-tv-feed-video-controls .home-tv-feed-sound:focus-visible,
+        .home-tv-feed-video-controls .home-tv-feed-fullscreen:hover,
+        .home-tv-feed-video-controls .home-tv-feed-fullscreen:focus-visible {
+          border-color: rgba(255,255,255,.34);
+          background: rgba(255,255,255,.1);
+          outline: 0;
+        }
+        .home-tv-feed-video-control svg,
+        .home-tv-feed-video-controls .home-tv-feed-sound svg,
+        .home-tv-feed-video-controls .home-tv-feed-fullscreen svg {
+          width: 17px;
+          height: 17px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-tv-feed-video-play .home-tv-feed-video-pause-icon,
+        .home-tv-feed-video-play[data-state="playing"] .home-tv-feed-video-play-icon,
+        .home-tv-feed-video-controls .home-tv-feed-video-collapse-icon,
+        .home-tv-feed-video-controls .home-tv-feed-fullscreen[aria-pressed="true"] .home-tv-feed-video-expand-icon {
+          display: none;
+        }
+        .home-tv-feed-video-play[data-state="playing"] .home-tv-feed-video-pause-icon,
+        .home-tv-feed-video-controls .home-tv-feed-fullscreen[aria-pressed="true"] .home-tv-feed-video-collapse-icon {
+          display: initial;
+        }
+        .home-tv-feed-video-range {
+          --home-tv-feed-control-progress: 0%;
+          width: 100%;
+          min-width: 0;
+          height: 24px;
+          margin: 0;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          outline: 0;
+          background: transparent;
+          box-shadow: none;
+          appearance: none;
+          -webkit-appearance: none;
+          cursor: pointer;
+        }
+        .home-tv-feed-video-range::-webkit-slider-runnable-track {
+          height: 3px;
+          border: 0;
+          border-radius: 999px;
+          background: linear-gradient(
+            to right,
+            rgba(255,255,255,.92) 0 var(--home-tv-feed-control-progress),
+            rgba(255,255,255,.24) var(--home-tv-feed-control-progress) 100%
+          );
+        }
+        .home-tv-feed-video-range::-moz-range-track {
+          height: 3px;
+          border: 0;
+          border-radius: 999px;
+          background: rgba(255,255,255,.24);
+        }
+        .home-tv-feed-video-range::-moz-range-progress {
+          height: 3px;
+          border: 0;
+          border-radius: 999px;
+          background: rgba(255,255,255,.92);
+        }
+        .home-tv-feed-video-range::-webkit-slider-thumb {
+          width: 13px;
+          height: 13px;
+          margin-top: -5px;
+          border: 2px solid #fff;
+          border-radius: 50%;
+          background: #fff;
+          box-shadow: 0 2px 8px rgba(0,0,0,.46);
+          appearance: none;
+          -webkit-appearance: none;
+        }
+        .home-tv-feed-video-range::-moz-range-thumb {
+          width: 11px;
+          height: 11px;
+          border: 2px solid #fff;
+          border-radius: 50%;
+          background: #fff;
+          box-shadow: 0 2px 8px rgba(0,0,0,.46);
+        }
+        .home-tv-feed-video-range:focus-visible::-webkit-slider-thumb {
+          box-shadow: 0 0 0 3px rgba(126,234,255,.38), 0 2px 8px rgba(0,0,0,.46);
+        }
+        .home-tv-feed-video-range:disabled {
+          opacity: .45;
+          cursor: wait;
+        }
+        .home-tv-feed-video-time {
+          min-width: 0;
+          overflow: hidden;
+          color: rgba(255,255,255,.72);
+          font-size: 9px;
+          font-variant-numeric: tabular-nums;
+          font-weight: 850;
+          line-height: 1;
+          text-align: center;
+          text-overflow: clip;
+          white-space: nowrap;
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-video-controls,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-video-controls,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-video-controls {
+          bottom: calc(11px + env(safe-area-inset-bottom));
+        }
+        @media (max-width: 420px) {
+          .home-tv-feed-video-controls {
+            grid-template-columns: 34px 34px minmax(58px, 1fr) 58px 34px;
+            gap: 4px;
+          }
+          .home-tv-feed-video-control,
+          .home-tv-feed-video-controls .home-tv-feed-sound,
+          .home-tv-feed-video-controls .home-tv-feed-fullscreen {
+            width: 34px;
+            min-width: 34px;
+            max-width: 34px;
+          }
         }
         .home-tv-feed-feedback {
           position: absolute;
@@ -31825,6 +32014,9 @@
         @media (prefers-reduced-motion: reduce) {
           .home-tv-feed-video,
           .home-tv-feed-progress > span,
+          .home-tv-feed-progress,
+          .home-tv-feed-video-controls,
+          .home-tv-feed-copy,
           .home-tv-feed-feedback {
             transition: none;
           }
@@ -54843,6 +55035,7 @@
       if (feedIsFullscreen) {
         const activeSlide = homeTvFeedActiveSlide();
         alignHomeTvFeedFullscreenSlide(activeSlide);
+        showHomeTvFeedControls(activeSlide);
       } else if (homeTvFeedWasFullscreen) {
         document.documentElement.classList.remove("home-tv-feed-immersive-open");
         document.body.classList.remove("home-tv-feed-immersive-open");
@@ -55267,6 +55460,7 @@
           ? `${Math.round(video.currentTime)} of ${Math.round(duration)} seconds`
           : "Video loading"
       );
+      syncHomeTvFeedControls(video, slide);
     }
 
     function createHomeTvFeedProgress() {
@@ -55280,6 +55474,49 @@
       progress.setAttribute("aria-valuetext", "Video loading");
       progress.appendChild(document.createElement("span"));
       return progress;
+    }
+
+    function syncHomeTvFeedControls(video, slide) {
+      if (!video || !slide) return;
+      const play = slide.querySelector(".home-tv-feed-video-play");
+      const range = slide.querySelector(".home-tv-feed-video-range");
+      const time = slide.querySelector(".home-tv-feed-video-time");
+      const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+      const currentTime = duration ? Math.min(duration, Math.max(0, video.currentTime || 0)) : 0;
+      const progress = duration ? `${(currentTime / duration) * 100}%` : "0%";
+      if (play) {
+        const isPlaying = !video.paused && !video.ended;
+        play.dataset.state = isPlaying ? "playing" : "paused";
+        play.setAttribute("aria-label", isPlaying ? "Pause video" : "Play video");
+        play.setAttribute("title", isPlaying ? "Pause" : "Play");
+      }
+      if (range) {
+        range.max = String(duration || 0);
+        range.value = String(currentTime);
+        range.disabled = !duration;
+        range.style.setProperty("--home-tv-feed-control-progress", progress);
+        range.setAttribute(
+          "aria-valuetext",
+          duration
+            ? `${formatProfileTvDuration(currentTime)} of ${formatProfileTvDuration(duration)}`
+            : "Video loading"
+        );
+      }
+      if (time) {
+        time.textContent = `${formatProfileTvDuration(currentTime)} / ${formatProfileTvDuration(duration)}`;
+      }
+    }
+
+    function showHomeTvFeedControls(slide, { autoHide = true } = {}) {
+      if (!slide) return;
+      window.clearTimeout(slide.homeTvControlsTimer);
+      slide.classList.add("is-controls-visible");
+      slide.homeTvControlsTimer = 0;
+      if (!autoHide) return;
+      slide.homeTvControlsTimer = window.setTimeout(() => {
+        slide.homeTvControlsTimer = 0;
+        slide.classList.remove("is-controls-visible");
+      }, 2200);
     }
 
     function showRelativeHomeTvFeedSlide(slide, direction) {
@@ -55317,7 +55554,7 @@
       video.setAttribute("role", "button");
       video.setAttribute(
         "aria-label",
-        `${dancerName} MyDancr TV video. Tap to play or pause, double tap to applaud${
+        `${dancerName} MyDancr TV video. Tap to show playback controls, double tap to applaud${
           totalVideos > 1 ? ", or scroll up or down for another video" : ""
         }.`
       );
@@ -55335,7 +55572,7 @@
         singleTapTimer = window.setTimeout(() => {
           if (lastTapAt !== tapAt) return;
           lastTapAt = 0;
-          toggleHomeTvFeedPlayback(video);
+          showHomeTvFeedControls(slide);
         }, 260);
       });
       video.addEventListener("dblclick", (event) => event.preventDefault());
@@ -55353,6 +55590,7 @@
         }
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
+          showHomeTvFeedControls(slide);
           toggleHomeTvFeedPlayback(video);
         }
       });
@@ -55372,6 +55610,7 @@
         if (slide.classList.contains("is-active")) primeHomeTvFeedNeighbors(videoId);
         syncHomeTvFeedProgress(video, slide);
       });
+      video.addEventListener("durationchange", () => syncHomeTvFeedProgress(video, slide));
       video.addEventListener("error", () => {
         slide.classList.remove("is-media-loading");
         slide.classList.add("is-media-unavailable");
@@ -55385,10 +55624,14 @@
       });
       video.addEventListener("play", () => {
         slide.classList.remove("is-paused", "is-autoplay-blocked");
+        syncHomeTvFeedControls(video, slide);
+        showHomeTvFeedControls(slide);
         scheduleHomeTvFeedEngagedView(videoId, video);
       });
       video.addEventListener("pause", () => {
         slide.classList.add("is-paused");
+        syncHomeTvFeedControls(video, slide);
+        showHomeTvFeedControls(slide);
         clearHomeTvFeedEngagedTimer(videoId);
       });
       video.addEventListener("timeupdate", () => {
@@ -55737,6 +55980,58 @@
       return button;
     }
 
+    function createHomeTvFeedVideoControls(slide, video) {
+      const controls = document.createElement("div");
+      controls.className = "home-tv-feed-video-controls";
+      controls.setAttribute("role", "group");
+      controls.setAttribute("aria-label", "Video playback controls");
+      const play = document.createElement("button");
+      play.className = "home-tv-feed-video-control home-tv-feed-video-play";
+      play.type = "button";
+      play.innerHTML = [
+        '<svg class="home-tv-feed-video-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"></path></svg>',
+        '<svg class="home-tv-feed-video-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"></path></svg>'
+      ].join("");
+      play.addEventListener("click", () => {
+        showHomeTvFeedControls(slide);
+        toggleHomeTvFeedPlayback(video);
+      });
+      const sound = createHomeTvFeedSoundButton(slide);
+      sound.classList.add("home-tv-feed-video-control");
+      const range = document.createElement("input");
+      range.className = "home-tv-feed-video-range";
+      range.type = "range";
+      range.min = "0";
+      range.max = "0";
+      range.step = "0.01";
+      range.value = "0";
+      range.setAttribute("aria-label", "Video playback position");
+      range.addEventListener("pointerdown", () => showHomeTvFeedControls(slide, { autoHide: false }));
+      range.addEventListener("input", () => {
+        const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+        if (duration) video.currentTime = Math.min(duration, Math.max(0, Number(range.value) || 0));
+        syncHomeTvFeedControls(video, slide);
+      });
+      range.addEventListener("change", () => showHomeTvFeedControls(slide));
+      const time = document.createElement("output");
+      time.className = "home-tv-feed-video-time";
+      time.setAttribute("aria-live", "off");
+      time.textContent = "0:00 / 0:00";
+      const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
+      fullscreen.classList.add("home-tv-feed-video-control");
+      fullscreen.innerHTML = [
+        '<svg class="home-tv-feed-video-expand-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"></path></svg>',
+        '<svg class="home-tv-feed-video-collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8H3V3M16 8h5V3M21 21v-5h-5M3 21v-5h5"></path></svg>'
+      ].join("");
+      controls.addEventListener("pointerdown", () => showHomeTvFeedControls(slide, { autoHide: false }));
+      controls.addEventListener("focusin", () => showHomeTvFeedControls(slide, { autoHide: false }));
+      controls.addEventListener("focusout", () => showHomeTvFeedControls(slide));
+      controls.addEventListener("click", () => showHomeTvFeedControls(slide));
+      controls.append(play, sound, range, time, fullscreen);
+      window.requestAnimationFrame(() => syncHomeTvFeedControls(video, slide));
+      return controls;
+    }
+
     function renderHomeTvFeedSlide(slide, item, videoIndex, totalVideos) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const scheduleContext = homeTvFeedSchedule(item);
@@ -55774,11 +56069,10 @@
         video,
         shade,
         playback,
-        createHomeTvFeedSoundButton(slide),
         createHomeTvFeedActions(item, slide),
-        createHomeTvFeedFullscreenButton(slide, video),
         createHomeTvFeedCopy(item, scheduleContext),
         createHomeTvFeedProgress(),
+        createHomeTvFeedVideoControls(slide, video),
         applause,
         feedback
       ];
