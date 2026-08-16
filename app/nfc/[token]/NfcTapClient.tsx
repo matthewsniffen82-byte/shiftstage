@@ -34,6 +34,7 @@ export function NfcTapClient({ token }: { token: string }) {
   const [phase, setPhase] = useState<TapPhase>("reading");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [dancerActivationComplete, setDancerActivationComplete] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState("");
   const [auth, setAuth] = useState({ role: "", accessToken: "", refreshToken: "" });
   const autoSubmittedRef = useRef(false);
@@ -108,12 +109,32 @@ export function NfcTapClient({ token }: { token: string }) {
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to complete this NFC tap.");
       persistRefreshedSession(data.session);
       if (state.tag.type === "cashier") clearPendingDealIntent();
+      let completedDancerTap = state.tag.type === "dressing_room"
+        && data.affiliation?.enrollmentStatus === "completed";
+      if (state.tag.type === "dressing_room" && !completedDancerTap) {
+        const verificationResponse = await fetch("/api/dancer/dashboard", {
+          headers,
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        const verification = await verificationResponse.json();
+        completedDancerTap = verificationResponse.ok
+          && verification.ok === true
+          && (
+            verification.nfc?.profileAuthorization?.authorized === true
+            || verification.nfc?.enrollment?.status === "completed"
+            || verification.affiliations?.some((item: { status?: string }) => item.status === "active")
+          );
+      }
+      setDancerActivationComplete(completedDancerTap);
       setComplete(true);
       setPhase("redeemed");
-      const completedDancerTap = state.tag.type === "dressing_room"
-        && data.affiliation?.enrollmentStatus === "completed";
       const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "NFC tap confirmed.");
-      setStatus(completedDancerTap ? `${successMessage} Opening your live dancer dashboard…` : successMessage);
+      setStatus(completedDancerTap
+        ? `${successMessage} Opening your live dancer dashboard…`
+        : state.tag.type === "dressing_room"
+          ? "Your physical club tap was saved, but profile activation is not complete yet. Open the dancer dashboard to review the remaining setup requirement."
+          : successMessage);
       if (completedDancerTap) {
         redirectTimerRef.current = window.setTimeout(() => {
           window.location.replace("/dashboard/dancer?nfc=complete");
@@ -216,7 +237,14 @@ export function NfcTapClient({ token }: { token: string }) {
           )
         ) : null}
         {phase === "error" && !complete ? <Link className="nfc-secondary" href={exitHref}>{exitLabel}</Link> : null}
-        {complete ? <Link className="nfc-secondary" href={state?.tag.type === "dressing_room" ? "/dashboard/dancer" : "/"}>Done</Link> : null}
+        {complete ? (
+          <Link
+            className="nfc-secondary"
+            href={state?.tag.type === "dressing_room" && dancerActivationComplete ? "/dashboard/dancer?nfc=complete" : state?.tag.type === "dressing_room" ? "/dashboard/dancer" : "/"}
+          >
+            Done
+          </Link>
+        ) : null}
       </section>
       <p className="nfc-security">Only use MyDancr NFC stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
       <style>{`

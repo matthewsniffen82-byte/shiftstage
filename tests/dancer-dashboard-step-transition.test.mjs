@@ -33,6 +33,18 @@ test("NFC status refresh propagates profile authorization to the dashboard", () 
   assert.match(dashboardClient, /fetch\(path, \{ headers, cache: "no-store" \}\)/);
 });
 
+test("dashboard activation finalizes before the post-tap profile snapshot loads", () => {
+  const loaderStart = dashboardClient.indexOf("const loadDashboardPanels");
+  const loaderEnd = dashboardClient.indexOf("try {", loaderStart);
+  const loader = dashboardClient.slice(loaderStart, loaderEnd);
+  const activationLoad = loader.indexOf('await readOptionalJson("/api/dancer/dashboard"');
+  const profileLoad = loader.indexOf('readOptionalJson("/api/dancer/profile"');
+
+  assert.ok(activationLoad >= 0, "dancer dashboard should finalize saved NFC enrollment");
+  assert.ok(profileLoad > activationLoad, "profile must load after NFC activation finalization");
+  assert.match(loader, /profile snapshot while the NFC state is already complete/);
+});
+
 test("successful NFC activation confirms the live profile and preserves a real notification", () => {
   assert.match(dashboardClient, /params\.get\("nfc"\) === "complete"/);
   assert.match(dashboardClient, /Your profile is live/);

@@ -153,22 +153,31 @@ export default function DashboardClient({
         setState((current) => ({ ...current, account: cachedAccount }));
       }
 
-      const loadDashboardPanels = (headers: Record<string, string>) => Promise.all([
-        readOptionalJson(
-          role === "dancer" ? "/api/dancer/profile" : role === "venue" ? "/api/venue/profile" : "/api/customer/profile",
-          headers,
-          { profile: null },
-        ),
-        readOptionalJson(
-          role === "dancer" ? "/api/dancer/dashboard" : role === "venue" ? "/api/venue/dashboard?period=30d" : "/api/customer/saved",
-          headers,
-          {},
-        ),
-        readOptionalJson("/api/support", headers, { threads: [] }),
-        role === "dancer" ? readOptionalJson("/api/dancer/reviews", headers, { reviews: [] }) : null,
-        role === "dancer" ? readOptionalJson("/api/dancer/weekly-report", headers, { report: null }) : null,
-        role === "dancer" ? readOptionalJson("/api/dancer/ranking-events", headers, { events: [] }) : null,
-      ]);
+      const loadDashboardPanels = async (headers: Record<string, string>) => {
+        if (role === "dancer") {
+          // This request finalizes a saved eligible NFC enrollment. Load the
+          // profile afterward so onboarding never renders from a pre-activation
+          // profile snapshot while the NFC state is already complete.
+          const secondary = await readOptionalJson("/api/dancer/dashboard", headers, {});
+          const [profile, support, reviews, weeklyReport, rankingEvents] = await Promise.all([
+            readOptionalJson("/api/dancer/profile", headers, { profile: null }),
+            readOptionalJson("/api/support", headers, { threads: [] }),
+            readOptionalJson("/api/dancer/reviews", headers, { reviews: [] }),
+            readOptionalJson("/api/dancer/weekly-report", headers, { report: null }),
+            readOptionalJson("/api/dancer/ranking-events", headers, { events: [] }),
+          ]);
+          return [profile, secondary, support, reviews, weeklyReport, rankingEvents];
+        }
+
+        return Promise.all([
+          readOptionalJson(role === "venue" ? "/api/venue/profile" : "/api/customer/profile", headers, { profile: null }),
+          readOptionalJson(role === "venue" ? "/api/venue/dashboard?period=30d" : "/api/customer/saved", headers, {}),
+          readOptionalJson("/api/support", headers, { threads: [] }),
+          null,
+          null,
+          null,
+        ]);
+      };
 
       try {
         let account;

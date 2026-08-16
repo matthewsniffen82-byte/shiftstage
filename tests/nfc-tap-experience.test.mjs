@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [baseMigration, nfcCheckInMigration, submissionGateMigration, adminMigration, service, tapRoute, tagRoute, adminRoute, client, account, dashboardRoute, dealCard, retiredDealQr] = await Promise.all([
+const [baseMigration, nfcCheckInMigration, submissionGateMigration, activationMigration, adminMigration, service, tapRoute, tagRoute, adminRoute, client, account, dashboardRoute, dealCard, retiredDealQr] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608090003_nfc_tap_experience.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608110002_dressing_room_nfc_checkins.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608140001_require_dancer_submission_before_nfc.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608150006_align_nfc_activation_with_onboarding.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608090005_admin_nfc_provisioning.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/nfc.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
@@ -62,6 +63,24 @@ test("new and existing dancers use the same submitted-profile NFC flow without m
   assert.match(client, /return_to=/);
   assert.match(client, /enrollmentStatus === "completed"/);
   assert.match(client, /window\.location\.replace\("\/dashboard\/dancer\?nfc=complete"\)/);
+});
+
+test("Step 3 eligibility matches the submitted onboarding requirements", () => {
+  assert.match(activationMigration, /create or replace function public\.approve_dancer_venue_affiliation_from_nfc/);
+  assert.match(activationMigration, /create or replace function public\.register_dancer_nfc_enrollment/);
+  assert.match(activationMigration, /dancer\.status = 'pending_review'/);
+  assert.match(activationMigration, /nullif\(trim\(dancer\.avatar_storage_path\), ''\) is not null/);
+  assert.match(activationMigration, /photo\.review_status = 'approved'/);
+  assert.doesNotMatch(activationMigration, /photo_review_status <> 'approved'/);
+  assert.doesNotMatch(activationMigration, /photo\.review_status <> 'approved'/);
+  assert.doesNotMatch(activationMigration, /video\.status in \('uploading', 'moderating', 'submitted'\)/);
+});
+
+test("dressing-room completion is reconciled before Done returns to the dashboard", () => {
+  assert.match(client, /fetch\("\/api\/dancer\/dashboard", \{/);
+  assert.match(client, /verification\.nfc\?\.profileAuthorization\?\.authorized === true/);
+  assert.match(client, /setDancerActivationComplete\(completedDancerTap\)/);
+  assert.match(client, /dancerActivationComplete \? "\/dashboard\/dancer\?nfc=complete"/);
 });
 
 test("failed NFC taps always provide a clear mobile escape route", () => {
