@@ -2411,7 +2411,7 @@ function VenueClubDealPanel({
       </section>
       <details className="venue-deal-editor" ref={editorRef}>
         <summary>
-          <span><strong>Deal editor</strong><small>Create, edit, publish, or pause an offer</small></span>
+          <span><strong>Manage club deals</strong><small>Create, edit, publish, or pause offers</small></span>
           <em>{deals.length} {deals.length === 1 ? "deal" : "deals"}</em>
         </summary>
         <div className="venue-deal-editor-body">
@@ -6971,13 +6971,21 @@ function DashboardStyles() {
       .venue-deal-control-actions > button.venue-deal-control-primary { border-color: rgba(196,181,253,.54); background: #7c3aed; box-shadow: 0 0 16px rgba(124,58,237,.18); }
       .venue-deal-control-actions > button:focus-visible, .venue-deal-control-actions > a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
       .venue-deal-editor, .venue-deal-performance { overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: #0d0d12; }
+      .venue-deal-editor { border-color: rgba(139,92,246,.44); background: linear-gradient(105deg, rgba(32,22,54,.94), rgba(13,13,18,.98) 68%); box-shadow: inset 0 0 0 1px rgba(196,181,253,.05), 0 8px 24px rgba(0,0,0,.18); }
       .venue-deal-editor > summary, .venue-deal-performance > summary { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 15px; color: #f8fafc; cursor: pointer; list-style: none; }
+      .venue-deal-editor > summary { min-height: 74px; padding: 8px 14px 8px 16px; border-left: 3px solid #8b5cf6; transition: background .18s ease, border-color .18s ease; }
+      .venue-deal-editor > summary:hover { background: rgba(139,92,246,.09); }
+      .venue-deal-editor > summary:focus-visible { outline: 2px solid #a78bfa; outline-offset: -3px; }
       .venue-deal-editor > summary::-webkit-details-marker, .venue-deal-performance > summary::-webkit-details-marker { display: none; }
       .venue-deal-editor > summary > span, .venue-deal-performance > summary > span { display: grid; gap: 3px; }
+      .venue-deal-editor > summary strong { font-size: 16px; line-height: 1.15; }
       .venue-deal-editor > summary small, .venue-deal-performance > summary small { color: #94a3b8; font-size: 11px; }
-      .venue-deal-editor > summary em { color: #94a3b8; font-size: 11px; font-style: normal; font-weight: 850; }
+      .venue-deal-editor > summary small { color: #c2bcd0; font-size: 12px; line-height: 1.25; }
+      .venue-deal-editor > summary em { padding: 6px 9px; border: 1px solid rgba(196,181,253,.23); border-radius: 999px; color: #ddd6fe; background: rgba(139,92,246,.12); font-size: 11px; font-style: normal; font-weight: 900; white-space: nowrap; }
       .venue-deal-editor > summary::after, .venue-deal-performance > summary::after { content: "+"; color: #c4b5fd; font-size: 22px; line-height: 1; }
+      .venue-deal-editor > summary::after { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border: 1px solid rgba(196,181,253,.45); border-radius: 999px; background: rgba(124,58,237,.26); box-shadow: 0 0 15px rgba(124,58,237,.22); }
       .venue-deal-editor[open] > summary::after, .venue-deal-performance[open] > summary::after { content: "−"; }
+      .venue-deal-editor[open] > summary { border-left-color: #c4b5fd; background: rgba(139,92,246,.11); }
       .venue-deal-editor > summary > em { margin-left: auto; }
       .venue-deal-editor-body, .venue-deal-performance-body { display: grid; gap: 14px; padding: 0 14px 14px; border-top: 1px solid var(--mydancr-dashboard-border); }
       .venue-deal-editor-body > .venue-deal-placement-note, .venue-deal-performance-body > :first-child { margin-top: 14px; }
