@@ -261,6 +261,7 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
   assert.match(homeSource, /\.home-tv-feed-scrubber \{[\s\S]*?right: 14px;[\s\S]*?bottom: -8px;[\s\S]*?left: 14px;[\s\S]*?height: 28px;[\s\S]*?background: transparent !important;[\s\S]*?appearance: none !important;[\s\S]*?touch-action: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber::-webkit-slider-thumb \{[\s\S]*?width: 28px;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber::-moz-range-thumb \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
+  assert.match(homeSource, /\.home-tv-feed-scrubber:focus-visible \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(
     homeSource,
     /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
@@ -513,6 +514,7 @@ test("production TV cards use the neutral-first brand palette without changing m
     /\.home-tv-feed-progress \{[\s\S]*?background: var\(--dancr-color-white-medium\) !important;[\s\S]*?box-shadow: 0 1px 5px var\(--dancr-color-black-strong\) !important;[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?color-mix\(in srgb, var\(--dancr-color-text-primary\) 88%, transparent\) !important;/,
   );
   assert.match(brandedCards, /input\.home-tv-feed-scrubber \{[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?appearance: none !important;/);
+  assert.match(brandedCards, /input\.home-tv-feed-scrubber:is\(:focus, :focus-visible, :active\) \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(brandedCards, /input\.home-tv-feed-scrubber::-webkit-slider-runnable-track,[\s\S]*?input\.home-tv-feed-scrubber::-moz-range-thumb \{[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   const playbackControl = brandedCards.match(
     /\.home-tv-feed-playback \{[\s\S]*?\}/,

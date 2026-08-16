@@ -4225,12 +4225,23 @@ body.dancr-button-system .home-tv-feed-progress > span {
 }
 
 body.dancr-button-system input.home-tv-feed-scrubber {
+  border-color: transparent !important;
+  outline: 0 !important;
+  outline-offset: 0 !important;
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
   appearance: none !important;
   -webkit-appearance: none !important;
+}
+
+body.dancr-button-system input.home-tv-feed-scrubber:is(:focus, :focus-visible, :active) {
+  border-color: transparent !important;
+  outline: 0 !important;
+  outline-offset: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system input.home-tv-feed-scrubber::-webkit-slider-runnable-track,
