@@ -257,13 +257,13 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
     /\.home-tv-feed-progress \{[\s\S]*?right: 14px;[\s\S]*?bottom: 8px;[\s\S]*?left: 14px;[\s\S]*?height: 3px;[\s\S]*?overflow: hidden;[\s\S]*?background: rgba\(255,255,255,\.18\);[\s\S]*?box-shadow: none;[\s\S]*?pointer-events: none;/,
   );
   assert.match(homeSource, /\.home-tv-feed-progress > span \{[\s\S]*?width: 0;[\s\S]*?background: #f8f8fa;[\s\S]*?box-shadow: none;[\s\S]*?opacity: 1;[\s\S]*?mix-blend-mode: normal;[\s\S]*?filter: none;[\s\S]*?transition: width \.1s linear;/);
-  assert.match(homeSource, /\.home-tv-feed-scrubber \{[\s\S]*?right: 14px;[\s\S]*?bottom: 0;[\s\S]*?left: 14px;[\s\S]*?height: 28px;[\s\S]*?background: transparent !important;[\s\S]*?backdrop-filter: none !important;[\s\S]*?filter: none !important;[\s\S]*?appearance: none !important;[\s\S]*?touch-action: none;/);
+  assert.match(homeSource, /\.home-tv-feed-scrubber \{[\s\S]*?right: 14px;[\s\S]*?bottom: 0;[\s\S]*?left: 14px;[\s\S]*?height: 28px;[\s\S]*?background: transparent !important;[\s\S]*?backdrop-filter: none !important;[\s\S]*?filter: none !important;[\s\S]*?appearance: none !important;[\s\S]*?accent-color: transparent !important;[\s\S]*?opacity: 0 !important;[\s\S]*?touch-action: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber::-webkit-slider-thumb \{[\s\S]*?width: 28px;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber::-moz-range-thumb \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber:focus-visible \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(
     homeSource,
-    /\.home-tv-feed-scrubber\[aria-disabled="true"\] \{[\s\S]*?opacity: 1;[\s\S]*?pointer-events: none;/,
+    /\.home-tv-feed-scrubber\[aria-disabled="true"\] \{[\s\S]*?opacity: 0 !important;[\s\S]*?pointer-events: none;/,
   );
   assert.match(
     homeSource,
@@ -509,7 +509,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=121/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=122/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
@@ -533,7 +533,7 @@ test("production TV cards use the neutral-first brand palette without changing m
     brandedCards,
     /\.home-tv-feed-progress \{[\s\S]*?background: rgba\(255, 255, 255, 0\.18\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: #f8f8fa !important;[\s\S]*?box-shadow: none !important;[\s\S]*?opacity: 1 !important;[\s\S]*?mix-blend-mode: normal !important;[\s\S]*?filter: none !important;/,
   );
-  assert.match(brandedCards, /input\.home-tv-feed-scrubber \{[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;[\s\S]*?filter: none !important;[\s\S]*?appearance: none !important;/);
+  assert.match(brandedCards, /input\.home-tv-feed-scrubber \{[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;[\s\S]*?filter: none !important;[\s\S]*?appearance: none !important;[\s\S]*?accent-color: transparent !important;[\s\S]*?opacity: 0 !important;/);
   assert.match(brandedCards, /input\.home-tv-feed-scrubber:is\(:focus, :focus-visible, :active\) \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(brandedCards, /input\.home-tv-feed-scrubber::-webkit-slider-runnable-track,[\s\S]*?input\.home-tv-feed-scrubber::-moz-range-thumb \{[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   const playbackControl = brandedCards.match(

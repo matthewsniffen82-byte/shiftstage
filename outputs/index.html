@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=121" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=122" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31939,7 +31939,9 @@
           appearance: none !important;
           -webkit-appearance: none !important;
           cursor: pointer;
-          opacity: 1;
+          color: transparent !important;
+          accent-color: transparent !important;
+          opacity: 0 !important;
           touch-action: none;
           -webkit-tap-highlight-color: transparent;
           -webkit-touch-callout: none;
@@ -31986,7 +31988,7 @@
           box-shadow: none !important;
         }
         .home-tv-feed-scrubber[aria-disabled="true"] {
-          opacity: 1;
+          opacity: 0 !important;
           cursor: default;
           pointer-events: none;
         }

@@ -4240,6 +4240,9 @@ body.dancr-button-system input.home-tv-feed-scrubber {
   filter: none !important;
   appearance: none !important;
   -webkit-appearance: none !important;
+  color: transparent !important;
+  accent-color: transparent !important;
+  opacity: 0 !important;
 }
 
 body.dancr-button-system input.home-tv-feed-scrubber:is(:focus, :focus-visible, :active) {
