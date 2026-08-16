@@ -44771,7 +44771,7 @@
             </div>
             <div class="deal-pass-steps" aria-label="How to redeem">
               <div class="deal-pass-step"><span>1</span><strong>Select for checkout</strong></div>
-              <div class="deal-pass-step"><span>2</span><strong>At cashier, unlock phone</strong></div>
+              <div class="deal-pass-step"><span>2</span><strong>Unlock phone — MyDancr can be closed</strong></div>
               <div class="deal-pass-step"><span>3</span><strong>Hold near MyDancr NFC sticker</strong></div>
               <div class="deal-pass-step"><span>4</span><strong>Browser opens—confirm redemption</strong></div>
             </div>
@@ -44934,7 +44934,7 @@
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = `Ready${readyUntil ? ` until ${readyUntil}` : ""}. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker at ${pass.venueName}. Your browser opens automatically—then press Redeem this Club Deal.`;
+        status.textContent = `Ready${readyUntil ? ` until ${readyUntil}` : ""}. MyDancr does not need to stay open. At the cashier, unlock this phone and hold it near the official MyDancr NFC sticker at ${pass.venueName}. Your browser opens automatically—then press Redeem this Club Deal.`;
         selectButton.textContent = "Ready for cashier tap ✓";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");

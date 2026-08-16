@@ -241,7 +241,7 @@ export function ClubDealCard({
           </div>
           <div className="club-deal-redemption-steps" aria-label="How to redeem">
             <div><span>1</span><strong>Select for checkout</strong></div>
-            <div><span>2</span><strong>At cashier, unlock phone</strong></div>
+            <div><span>2</span><strong>Unlock phone — MyDancr can be closed</strong></div>
             <div><span>3</span><strong>Hold near MyDancr NFC sticker</strong></div>
             <div><span>4</span><strong>Browser opens—confirm redemption</strong></div>
           </div>
@@ -252,7 +252,7 @@ export function ClubDealCard({
           <div className="deal-nfc-ready">
             <span aria-hidden="true">)))</span>
             <strong>Ready for cashier tap</strong>
-            <small>At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically—then confirm redemption.</small>
+            <small>MyDancr does not need to stay open. At the cashier, unlock this phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically—then confirm redemption.</small>
           </div>
         ) : null}
         <button
@@ -464,7 +464,7 @@ async function copyDealLink(url: string) {
 }
 
 function readyStatus(venueName: string | undefined, expiresAt: number) {
-  return `Ready until ${formatNfcExpiry(expiresAt)}. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker at ${venueName || "the club"}. Your browser opens automatically—then press Redeem this Club Deal.`;
+  return `Ready until ${formatNfcExpiry(expiresAt)}. MyDancr does not need to stay open. At the cashier, unlock this phone and hold it near the official MyDancr NFC sticker at ${venueName || "the club"}. Your browser opens automatically—then press Redeem this Club Deal.`;
 }
 
 function formatNfcExpiry(value: number) {
