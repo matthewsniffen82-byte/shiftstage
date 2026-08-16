@@ -32,12 +32,17 @@ export default function AdminNfcInventoryPanel() {
   const [type, setType] = useState<AdminNfcTag["type"]>("dressing_room");
   const [label, setLabel] = useState("Dressing room");
   const [status, setStatus] = useState("Loading MyDancr NFC inventory…");
+  const [isLoading, setIsLoading] = useState(true);
   const [programmingUrl, setProgrammingUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const load = useCallback(async () => {
     const headers = authHeaders();
-    if (!headers) return setStatus("Admin sign in required.");
+    if (!headers) {
+      setIsLoading(false);
+      return setStatus("Admin sign in required.");
+    }
+    setIsLoading(true);
     try {
       const response = await fetch("/api/admin/nfc-tags", { headers, cache: "no-store" });
       const data = await response.json();
@@ -49,6 +54,8 @@ export default function AdminNfcInventoryPanel() {
       setStatus("");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load NFC inventory.");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -118,13 +125,13 @@ export default function AdminNfcInventoryPanel() {
   return (
     <div className="admin-nfc-inventory">
       <div className="admin-nfc-summary">
-        <span><strong>{activeCount}</strong><small>active supplied stickers</small></span>
-        <span><strong>{venues.length}</strong><small>active venues</small></span>
+        <span><strong>{isLoading && !tags.length ? "…" : activeCount}</strong><small>active supplied stickers</small></span>
+        <span><strong>{isLoading && !venues.length ? "…" : venues.length}</strong><small>active venues</small></span>
       </div>
       <p className="admin-nfc-intro">MyDancr owns provisioning. Program, test, label, and lock each physical sticker before it is delivered to the assigned venue.</p>
       <form onSubmit={provision}>
         <label>Assigned venue
-          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} required>
+          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={isLoading || isSaving || !venues.length} required>
             {venues.map((venue) => (
               <option key={venue.id} value={venue.id}>{venue.name} · {venue.city}{venue.isClaimed ? "" : " · account not claimed"}</option>
             ))}
@@ -169,7 +176,7 @@ export default function AdminNfcInventoryPanel() {
             ) : null}
           </section>
         ))}
-        {!tags.length ? <p>No NFC stickers have been assigned.</p> : null}
+        {!isLoading && !tags.length ? <p>No NFC stickers have been assigned.</p> : null}
       </div>
       {status ? <p role="status" className="admin-nfc-status">{status}</p> : null}
       <style>{`

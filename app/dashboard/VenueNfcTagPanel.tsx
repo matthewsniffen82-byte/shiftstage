@@ -42,6 +42,7 @@ export default function VenueNfcTagPanel({
   const [tags, setTags] = useState<NfcTag[]>([]);
   const [affiliations, setAffiliations] = useState<DancerAffiliation[]>(initialAffiliations as DancerAffiliation[]);
   const [status, setStatus] = useState("Loading assigned NFC stickers…");
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [testingTagId, setTestingTagId] = useState("");
   const [testStatus, setTestStatus] = useState("");
@@ -52,7 +53,11 @@ export default function VenueNfcTagPanel({
 
   const load = useCallback(async () => {
     const auth = authHeaders();
-    if (!auth) return setStatus("Sign in required.");
+    if (!auth) {
+      setIsLoading(false);
+      return setStatus("Sign in required.");
+    }
+    setIsLoading(true);
     try {
       const [tagResponse, rosterResponse] = await Promise.all([
         fetch("/api/venue/nfc-tags", { headers: auth, cache: "no-store" }),
@@ -69,6 +74,8 @@ export default function VenueNfcTagPanel({
         : "No stickers are assigned yet. MyDancr will program and supply this venue's physical NFC stickers.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load assigned NFC stickers.");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -228,7 +235,7 @@ export default function VenueNfcTagPanel({
       <section className="venue-nfc-roster" aria-label="Verified dancer roster">
         <div className="venue-nfc-roster-head">
           <span><strong>NFC-authorized dancer roster</strong><small>Authorized by the dressing-room sticker</small></span>
-          <b>{activeAffiliations.length} active</b>
+          <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} active`}</b>
         </div>
         {activeAffiliations.length ? activeAffiliations.map((affiliation) => (
           <div className="venue-nfc-dancer" key={affiliation.id}>
@@ -264,7 +271,7 @@ export default function VenueNfcTagPanel({
               </button>
             ) : null}
           </div>
-        )) : <p>No dancers have tapped this venue&apos;s dressing-room sticker yet.</p>}
+        )) : !isLoading ? <p>No dancers have tapped this venue&apos;s dressing-room sticker yet.</p> : null}
       </section>
       {status ? <p role="status">{status}</p> : null}
       <style>{`

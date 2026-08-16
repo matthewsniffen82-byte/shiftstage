@@ -403,7 +403,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       <section className="tv-video-manager">
         <div className="tv-manager-title">
           <h3>My videos</h3>
-          <span>{currentVideoCount}/{maxVideos}</span>
+          <span>{isLoading ? "…" : `${currentVideoCount}/${maxVideos}`}</span>
         </div>
         <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
@@ -433,7 +433,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               </div>
             </article>
           ))}
-          {!workspace?.videos.length ? <p className="tv-no-videos">No videos submitted yet.</p> : null}
+          {!isLoading && workspace && !workspace.videos.length ? <p className="tv-no-videos">No videos submitted yet.</p> : null}
         </div>
       </section>
     </>

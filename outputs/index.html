@@ -39255,8 +39255,12 @@
     let liveAdminImageModeration = [];
     let liveCustomerProfile = null;
     let liveNotifications = [];
+    let liveNotificationsState = authSession?.accessToken ? "loading" : "idle";
     let liveSupportThreads = [];
+    let liveSupportThreadsState = authSession?.accessToken ? "loading" : "idle";
     let liveAdminSupportThreads = [];
+    let liveAdminSupportThreadsState = authSession?.accessToken ? "loading" : "idle";
+    let liveCustomerDashboardState = authSession?.accessToken && authSession?.account?.role === "customer" ? "loading" : "idle";
     let savedAdminContentReviews = loadSavedAdminContentReviews();
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
@@ -41593,25 +41597,33 @@
     }
 
     async function loadLiveCustomerSaved() {
-      if (!isCustomerSession()) return;
+      if (!isCustomerSession()) return false;
       try {
         const data = await getAuthenticatedJson("/api/customer/saved");
         applyLiveCustomerSaved(data.saved || {});
         render();
         if (customerDashboard.classList.contains("show")) renderDashboard();
+        return true;
       } catch (error) {
         if (isCustomerSession()) showToast(error.message || "Could not load saved items");
+        return false;
       }
     }
 
     async function loadLiveCustomerDashboardData() {
       if (!isCustomerSession()) return;
+      liveCustomerDashboardState = "loading";
+      if (customerDashboard.classList.contains("show")) renderDashboard();
+      let loaded = true;
       try {
         await loadLiveCustomerProfile();
       } catch (error) {
+        loaded = false;
         showToast(error.message || "Could not load customer profile");
       }
-      await loadLiveCustomerSaved();
+      if (!(await loadLiveCustomerSaved())) loaded = false;
+      liveCustomerDashboardState = loaded ? "ready" : "error";
+      if (customerDashboard.classList.contains("show")) renderDashboard();
     }
 
     function customerNotificationSettingsPayload() {
@@ -41672,6 +41684,12 @@
     }
 
     function notificationCenterMarkup() {
+      if (liveNotificationsState === "loading") {
+        return '<div class="locked" role="status">Loading notifications…</div>';
+      }
+      if (liveNotificationsState === "error") {
+        return '<div class="locked" role="status">Notifications are temporarily unavailable.</div>';
+      }
       const notifications = visibleLiveNotifications();
       if (!notifications.length) {
         return '<div class="locked">No notifications yet.</div>';
@@ -41879,6 +41897,16 @@
 
     function renderCustomerQuickNotifications() {
       if (!customerNotificationsQuickList) return;
+      if (liveNotificationsState === "loading") {
+        customerNotificationQuickCount.hidden = true;
+        customerNotificationsQuickList.innerHTML = '<div class="customer-quick-empty" role="status">Loading notifications…</div>';
+        return;
+      }
+      if (liveNotificationsState === "error") {
+        customerNotificationQuickCount.hidden = true;
+        customerNotificationsQuickList.innerHTML = '<div class="customer-quick-empty" role="status">Notifications are temporarily unavailable.</div>';
+        return;
+      }
       const items = customerQuickNotificationItems();
       const unreadCount = visibleLiveNotifications().filter((notification) => !notification.readAt).length;
       const count = unreadCount;
@@ -41969,13 +41997,17 @@
 
     async function loadLiveNotifications() {
       if (!authSession?.accessToken) return;
+      liveNotificationsState = "loading";
+      renderNotificationCenters();
       try {
         const data = await getAuthenticatedJson("/api/notifications");
         liveNotifications = (data.notifications || []).filter(isVisibleAfterNotificationClear);
-        renderNotificationCenters();
+        liveNotificationsState = "ready";
       } catch (error) {
+        liveNotificationsState = "error";
         showToast(error.message || "Could not load notifications");
       }
+      renderNotificationCenters();
     }
 
     async function markLiveNotificationRead(notificationId) {
@@ -42122,37 +42154,63 @@
     function renderSupportInbox(role) {
       const container = document.getElementById(`${role}SupportThreads`);
       if (!container) return;
+      const summaryCount = document.getElementById(`${role}SupportSummaryCount`);
+      if (liveSupportThreadsState === "loading") {
+        if (summaryCount) summaryCount.textContent = "…";
+        container.innerHTML = '<div class="locked" role="status">Loading support conversations…</div>';
+        return;
+      }
+      if (liveSupportThreadsState === "error") {
+        if (summaryCount) summaryCount.textContent = "—";
+        container.innerHTML = '<div class="locked" role="status">Support conversations are temporarily unavailable.</div>';
+        return;
+      }
       const threads = ownSupportThreads(role);
       container.innerHTML = threads.length ? threads.map((thread) => supportThreadMarkup(thread)).join("") : "No support conversations yet.";
-      const summaryCount = document.getElementById(`${role}SupportSummaryCount`);
       if (summaryCount) summaryCount.textContent = String(threads.length);
     }
 
     function renderAdminSupportInbox() {
       const container = document.getElementById("adminSupportInbox");
       if (!container) return;
+      if (liveAdminSupportThreadsState === "loading") {
+        container.innerHTML = '<div class="locked" role="status">Loading support messages…</div>';
+        return;
+      }
+      if (liveAdminSupportThreadsState === "error") {
+        container.innerHTML = '<div class="locked" role="status">Support messages are temporarily unavailable.</div>';
+        return;
+      }
       const threads = liveAdminSupportThreads;
       container.innerHTML = threads.length ? threads.map((thread) => supportThreadMarkup(thread, true)).join("") : '<div class="locked">No support messages yet.</div>';
     }
 
     async function loadLiveSupportThreads() {
       if (!authSession?.accessToken || (!isCustomerSession() && !isDancerSession())) return;
+      liveSupportThreadsState = "loading";
+      renderSupportInbox(isDancerSession() ? "dancer" : "customer");
       try {
         const data = await getAuthenticatedJson("/api/support");
         liveSupportThreads = data.threads || [];
+        liveSupportThreadsState = "ready";
       } catch {
         liveSupportThreads = [];
+        liveSupportThreadsState = "error";
       }
       renderSupportInbox(isDancerSession() ? "dancer" : "customer");
     }
 
     async function loadLiveAdminSupportThreads() {
       if (!isAdminSession()) return;
+      liveAdminSupportThreadsState = "loading";
+      renderAdminSupportInbox();
       try {
         const data = await getAuthenticatedJson("/api/admin/support");
         liveAdminSupportThreads = data.threads || [];
+        liveAdminSupportThreadsState = "ready";
       } catch {
         liveAdminSupportThreads = [];
+        liveAdminSupportThreadsState = "error";
       }
       renderAdminSupportInbox();
     }
@@ -49901,6 +49959,7 @@
         openAuthRole("customer");
         return;
       }
+      liveCustomerDashboardState = "loading";
       prepareRealCustomerDashboardState();
       renderDashboard();
       renderAccountControls();
@@ -53546,6 +53605,13 @@
 
     function renderDashboard() {
       const city = citySelect.value;
+      const dashboardLoading = liveCustomerDashboardState === "loading";
+      const dashboardError = liveCustomerDashboardState === "error";
+      const dashboardListMessage = (loadingMessage, emptyMessage) => dashboardLoading
+        ? `<div class="locked" role="status">${loadingMessage}</div>`
+        : dashboardError
+          ? '<div class="locked" role="status">Saved dashboard data is temporarily unavailable.</div>'
+          : `<div class="locked">${emptyMessage}</div>`;
       const followed = followedProfiles(city);
       const venues = followedVenues(city);
       const workingTonight = followed
@@ -53554,41 +53620,51 @@
       const notificationsOn = followed.filter((profile) => isNotificationOn(city, profile.name)).length;
       document.getElementById("dashboardCity").textContent = city;
       document.getElementById("customerSummaryTitle").textContent = `Your private ${city} dashboard`;
-      document.getElementById("customerSummaryCopy").textContent = workingTonight.length
-        ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working now. Your follows, alerts, and directions stay private.`
-        : followed.length || venues.length
-          ? `No followed dancers are working now. Your saved dancers and clubs are ready for the next schedule update.`
-          : `Follow dancers and clubs in ${city} to build your private dashboard, schedule alerts, and directions list.`;
-      document.getElementById("dashTonightCount").textContent = workingTonight.length;
-      document.getElementById("dashFollowedCount").textContent = followed.length;
-      document.getElementById("dashVenueCount").textContent = venues.length;
-      document.getElementById("dashNotificationsCount").textContent = notificationsOn + venues.length;
+      document.getElementById("customerSummaryCopy").textContent = dashboardLoading
+        ? "Loading your saved dancers, clubs, and private alerts…"
+        : dashboardError
+          ? "Your saved dashboard data is temporarily unavailable. Try opening the dashboard again."
+          : workingTonight.length
+            ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working now. Your follows, alerts, and directions stay private.`
+            : followed.length || venues.length
+              ? `No followed dancers are working now. Your saved dancers and clubs are ready for the next schedule update.`
+              : `Follow dancers and clubs in ${city} to build your private dashboard, schedule alerts, and directions list.`;
+      document.getElementById("dashTonightCount").textContent = dashboardLoading ? "…" : dashboardError ? "—" : String(workingTonight.length);
+      document.getElementById("dashFollowedCount").textContent = dashboardLoading ? "…" : dashboardError ? "—" : String(followed.length);
+      document.getElementById("dashVenueCount").textContent = dashboardLoading ? "…" : dashboardError ? "—" : String(venues.length);
+      document.getElementById("dashNotificationsCount").textContent = dashboardLoading ? "…" : dashboardError ? "—" : String(notificationsOn + venues.length);
       document.getElementById("dashTonightTitle").textContent = `Followed dancers working now`;
       document.getElementById("dashFollowedTitle").textContent = `All followed dancers in ${city}`;
       document.getElementById("dashVenuesTitle").textContent = `Followed clubs in ${city}`;
-      document.getElementById("dashTonightContext").textContent = `${city} · ${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
-      document.getElementById("dashFollowedContext").textContent = `${city} · ${followed.length} saved`;
-      document.getElementById("dashVenuesContext").textContent = `${venues.length} saved`;
+      document.getElementById("dashTonightContext").textContent = dashboardLoading ? "Loading…" : dashboardError ? "Unavailable" : `${city} · ${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
+      document.getElementById("dashFollowedContext").textContent = dashboardLoading ? "Loading…" : dashboardError ? "Unavailable" : `${city} · ${followed.length} saved`;
+      document.getElementById("dashVenuesContext").textContent = dashboardLoading ? "Loading…" : dashboardError ? "Unavailable" : `${venues.length} saved`;
       document.getElementById("dashSavedDealsContext").textContent = `${savedDealPasses.length} saved`;
 
       const visibleTonight = limitedList(workingTonight, dashboardTonightExpanded);
       const visibleFollowed = limitedList(followed, dashboardFollowedExpanded);
       const visibleVenues = limitedList(venues, dashboardVenuesExpanded);
-      dashTonightList.innerHTML = visibleTonight.length
+      dashTonightList.innerHTML = dashboardLoading || dashboardError
+        ? dashboardListMessage("Loading followed dancers working now…", `No followed dancers working now in ${city}.`)
+        : visibleTonight.length
         ? visibleTonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("")
         : `<div class="locked">No followed dancers working now in ${city}.</div>`;
-      dashFollowedList.innerHTML = visibleFollowed.length
+      dashFollowedList.innerHTML = dashboardLoading || dashboardError
+        ? dashboardListMessage("Loading followed dancers…", `No followed dancers in ${city} yet.`)
+        : visibleFollowed.length
         ? visibleFollowed.map((profile, index) => profileCard(profile, index + 2)).join("")
         : `<div class="locked">No followed dancers in ${city} yet.</div>`;
-      dashVenueList.innerHTML = visibleVenues.length
+      dashVenueList.innerHTML = dashboardLoading || dashboardError
+        ? dashboardListMessage("Loading followed clubs…", `No followed clubs in ${city} yet.`)
+        : visibleVenues.length
         ? visibleVenues.map((venue) => venueCard(venue)).join("")
         : `<div class="locked">No followed clubs in ${city} yet.</div>`;
       dashSavedDealsList.innerHTML = savedDealPasses.length
         ? savedDealPasses.map((pass) => savedDealPassMarkup(pass)).join("")
         : `<div class="locked">No saved Club Deals yet. Save a Club Deal to find it here later.</div>`;
-      dashTonightViewAll.hidden = workingTonight.length <= 5 || dashboardTonightExpanded;
-      dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
-      dashVenueViewAll.hidden = venues.length <= 5 || dashboardVenuesExpanded;
+      dashTonightViewAll.hidden = dashboardLoading || dashboardError || workingTonight.length <= 5 || dashboardTonightExpanded;
+      dashFollowedViewAll.hidden = dashboardLoading || dashboardError || followed.length <= 5 || dashboardFollowedExpanded;
+      dashVenueViewAll.hidden = dashboardLoading || dashboardError || venues.length <= 5 || dashboardVenuesExpanded;
       renderSupportInbox("customer");
       renderNotificationSettings();
       renderNotificationCenters();

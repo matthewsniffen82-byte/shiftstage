@@ -4469,6 +4469,7 @@ function DancerVenueVerificationPanel() {
   const [venueId, setVenueId] = useState("");
   const [verification, setVerification] = useState<Record<string, any> | null>(null);
   const [status, setStatus] = useState("Loading venue verification...");
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [dancerCity, setDancerCity] = useState("your city");
   const [onboardingRequired, setOnboardingRequired] = useState(false);
@@ -4479,9 +4480,13 @@ function DancerVenueVerificationPanel() {
     const request = (async () => {
       const session = readSession();
       if (!session?.accessToken) {
-        if (!quiet) setStatus("Sign in required.");
+        if (!quiet) {
+          setStatus("Sign in required.");
+          setIsLoading(false);
+        }
         return null;
       }
+      if (!quiet) setIsLoading(true);
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
       let response: Response;
@@ -4520,6 +4525,7 @@ function DancerVenueVerificationPanel() {
       }
       return data;
     })().finally(() => {
+      if (!quiet) setIsLoading(false);
       loadInFlightRef.current = null;
     });
     loadInFlightRef.current = request;
@@ -4677,7 +4683,7 @@ function DancerVenueVerificationPanel() {
           Venue
           <select value={venueId} onChange={(event) => {
             selectVenue(event.target.value);
-          }} disabled={isSaving || !venues.length}>
+          }} disabled={isLoading || isSaving || !venues.length}>
             <option value="">Choose a venue</option>
             {venues.map((venue) => (
               <option key={String(venue.id)} value={String(venue.id)}>
@@ -4713,7 +4719,7 @@ function DancerVenueVerificationPanel() {
             </div>
           );
         })}
-        {!activeAffiliations.length ? <small>No venue has verified your profile yet.</small> : null}
+        {!isLoading && !activeAffiliations.length ? <small>No venue has verified your profile yet.</small> : null}
       </div>
       <p role="status" aria-live="polite">{status}</p>
     </article>

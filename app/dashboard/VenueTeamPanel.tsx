@@ -17,12 +17,17 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"manager" | "staff">("manager");
   const [status, setStatus] = useState("Loading venue team access…");
+  const [isLoading, setIsLoading] = useState(true);
   const [isWorking, setIsWorking] = useState(false);
   const [invitationUrl, setInvitationUrl] = useState("");
 
   const load = useCallback(async (clearStatus = true) => {
     const auth = authHeaders();
-    if (!auth) return setStatus("Sign in required.");
+    if (!auth) {
+      setIsLoading(false);
+      return setStatus("Sign in required.");
+    }
+    setIsLoading(true);
     try {
       const response = await fetch("/api/venue/team", { headers: auth, cache: "no-store" });
       const data = await response.json();
@@ -35,6 +40,8 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       if (clearStatus) setStatus("");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load venue team access.");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -138,7 +145,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       )}
       {invitationUrl ? <div className="venue-team-invite-link"><span>Invitation is ready even if email delivery is delayed.</span><div><a href={invitationUrl} rel="noreferrer" target="_blank">Open secure link</a><button type="button" onClick={() => void copyInvitation()}>Copy secure link</button></div></div> : null}
       <section className="venue-team-list" aria-label="Active venue team">
-        <div className="venue-team-subhead"><strong>Active team</strong><span>{members.filter((member) => member.status === "active").length + 1}</span></div>
+        <div className="venue-team-subhead"><strong>Active team</strong><span>{isLoading && !members.length ? "…" : members.filter((member) => member.status === "active").length + 1}</span></div>
         <div className="venue-team-member owner"><span><strong>Venue owner</strong><small>Full access</small></span><b>Owner</b></div>
         {members.filter((member) => member.status === "active").map((member) => (
           <div className="venue-team-member" key={member.id}>
@@ -155,9 +162,9 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         </section>
       ) : null}
       <section className="venue-activity-list" aria-label="Venue activity log">
-        <div className="venue-team-subhead"><strong>Recent activity</strong><span>{activity.length}</span></div>
+        <div className="venue-team-subhead"><strong>Recent activity</strong><span>{isLoading && !activity.length ? "…" : activity.length}</span></div>
         {activity.map((item) => <div key={item.id}><span><strong>{item.summary}</strong><small>{item.actorName} · {item.actorRole}</small></span><time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time></div>)}
-        {!activity.length ? <p>No venue team changes have been recorded yet.</p> : null}
+        {!isLoading && !activity.length ? <p>No venue team changes have been recorded yet.</p> : null}
       </section>
       {status ? <p role="status">{status}</p> : null}
       <style>{`
