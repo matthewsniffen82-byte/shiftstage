@@ -652,6 +652,7 @@ export default function TvFeedClient({
                   <span
                     className={`tv-profile-photo${video.dancer.avatarPhotoUrl ? " has-photo" : ""}`}
                     data-dancer-avatar=""
+                    data-upcoming={video.shift && !video.shift.isActive ? "true" : undefined}
                     data-working-now={video.shift?.isActive ? "true" : undefined}
                     aria-hidden="true"
                   >

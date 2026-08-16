@@ -73,10 +73,27 @@ test("routed pages still classify Android without placing device styles on the w
   assert.doesNotMatch(wrapperRules, /is-android|android-rendering|is-samsung-browser|samsung-rendering/);
 });
 
-test("inactive and Working Now avatar rings remain centralized in the Dancr brand palette", () => {
+test("no-schedule, Upcoming, and Working Now avatar rings remain centralized in the Dancr brand palette", () => {
   assert.match(tokens, /--dancr-color-avatar-ring-core: #ffffff;/);
   assert.match(tokens, /--dancr-color-avatar-ring-live: #34e3a4;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-inactive: rgba\(245, 245, 255, 0\.65\);/);
+  assert.match(tokens, /--dancr-color-avatar-ring-upcoming: #22d3ee;/);
+  assert.match(tokens, /--dancr-color-avatar-ring-inactive: #334155;/);
+});
+
+test("upcoming avatars use a cyan ring without being promoted to Working Now", () => {
+  const homeTvAvatarBuilder = liveShell.match(
+    /const dancerPhoto = document\.createElement\("span"\);[\s\S]*?(?=const nameRow = document\.createElement\("span"\);)/,
+  )?.[0] || "";
+
+  assert.match(
+    wrapperRules,
+    /\[data-dancer-avatar\]\[data-upcoming="true"\]:not\(\[data-working-now="true"\]\)[\s\S]*?border-color: var\(--dancr-color-avatar-ring-upcoming\) !important;/,
+  );
+  assert.match(publicProfile, /data-upcoming=\{hasUpcomingShift \? "true" : undefined\}/);
+  assert.match(tvFeed, /data-upcoming=\{video\.shift && !video\.shift\.isActive \? "true" : undefined\}/);
+  assert.match(liveShell, /modalProfileAvatar\.dataset\.upcoming = String\(modalHasUpcomingShift\)/);
+  assert.match(homeTvAvatarBuilder, /if \(item\?\.shift && !dancerIsWorkingNow\) dancerPhoto\.setAttribute\("data-upcoming", "true"\)/);
+  assert.doesNotMatch(homeTvAvatarBuilder, /data-working-now-indicator|workingNowIndicator|textContent = "NOW"/);
 });
 
 test("working-now avatars keep one complete live-teal ring with NOW reserved for full profiles", () => {

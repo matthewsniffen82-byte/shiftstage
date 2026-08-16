@@ -3952,6 +3952,13 @@ body.dancr-button-system [data-dancer-avatar-border] > .tv-profile-photo-image {
   mix-blend-mode: normal !important;
 }
 
+/* Upcoming is a useful schedule signal, but it is not a live state. Keep its
+ * cyan identity ring crisp and glow-free so Working Now remains dominant. */
+body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-working-now="true"])
+  > [data-dancer-avatar-border] {
+  border-color: var(--dancr-color-avatar-ring-upcoming) !important;
+}
+
 /* Working-now status replaces the neutral identity ring with live teal.
  * The real child badge and parent halo avoid changing avatar dimensions or
  * relying on pseudo-elements that can be clipped by Android renderers. */

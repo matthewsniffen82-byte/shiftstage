@@ -46801,6 +46801,7 @@
         profile?.avatarPhotoFocalY ?? profile?.avatar_photo_focal_y ?? profile?.mainPhotoFocalY ?? 50
       );
       const avatarIsWorkingNow = isWorkingTonight(profile, activeDancerCity());
+      const avatarIsUpcoming = Boolean(profile?.scheduled) && !avatarIsWorkingNow;
       const avatarInitials = String(editableStageName || "D")
         .trim()
         .split(/\s+/)
@@ -46847,7 +46848,7 @@
                 <small>Public name + circular avatar</small>
               </div>
               <div class="approved-profile-identity-row">
-                <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar${avatarIsWorkingNow ? ' data-working-now="true"' : ""} role="img" aria-label="Avatar preview${avatarIsWorkingNow ? ", working now" : ""}">
+                <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar${avatarIsWorkingNow ? ' data-working-now="true"' : avatarIsUpcoming ? ' data-upcoming="true"' : ""} role="img" aria-label="Avatar preview${avatarIsWorkingNow ? ", working now" : avatarIsUpcoming ? ", upcoming shift posted" : ""}">
                   <span data-dancer-avatar-border aria-hidden="true">${avatarPreviewUrl ? "" : displayText(avatarInitials)}</span>
                   ${avatarIsWorkingNow ? '<span data-working-now-indicator aria-hidden="true">NOW</span>' : ""}
                 </div>
@@ -48935,6 +48936,7 @@
       const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
       const modalIsWorkingNow = isWorkingTonight(profile, city);
+      const modalHasUpcomingShift = Boolean(profile.scheduled) && !modalIsWorkingNow;
       const basePhoto = portraitClass(profileIndex);
       const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
@@ -48964,6 +48966,7 @@
       syncProfileMediaTabCounts(photoCount, 0);
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
       modalProfileAvatar.dataset.workingNow = String(modalIsWorkingNow);
+      modalProfileAvatar.dataset.upcoming = String(modalHasUpcomingShift);
       modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (avatarPhotoUrl) {
         modalProfileAvatar.style.backgroundImage = `url('${safeCssUrl(avatarPhotoUrl)}')`;
@@ -48978,7 +48981,7 @@
         modalProfileAvatar.style.removeProperty("background-image");
         modalProfileAvatar.style.removeProperty("--custom-photo-position");
       }
-      modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo${modalIsWorkingNow ? ", working now" : ""}`);
+      modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo${modalIsWorkingNow ? ", working now" : modalHasUpcomingShift ? ", upcoming shift posted" : ""}`);
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
 
@@ -52066,10 +52069,13 @@
           ? "Live in dancer avatar circles across MyDancr."
           : "Your main photo is currently used in avatar circles.";
       const avatarStatusClass = pendingAvatarReview ? "is-pending" : dedicatedAvatarPath ? "is-live" : "";
+      const avatarIsWorkingNow = isWorkingTonight(profile, activeDancerCity());
+      const avatarIsUpcoming = dancerDashboardPostedShifts(profile).length > 0 && !avatarIsWorkingNow;
       return `
         <div class="dancer-dashboard-avatar-main">
-          <div class="dancer-dashboard-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar role="img" aria-label="Profile avatar preview">
+          <div class="dancer-dashboard-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar${avatarIsWorkingNow ? ' data-working-now="true"' : avatarIsUpcoming ? ' data-upcoming="true"' : ""} role="img" aria-label="Profile avatar preview${avatarIsWorkingNow ? ", working now" : avatarIsUpcoming ? ", upcoming shift posted" : ""}">
             <span data-dancer-avatar-border aria-hidden="true">${avatarPreviewUrl ? "" : displayText(avatarInitials)}</span>
+            ${avatarIsWorkingNow ? '<span data-working-now-indicator aria-hidden="true">NOW</span>' : ""}
           </div>
           <div class="dancer-dashboard-avatar-copy">
             <span class="eyebrow">Profile avatar</span>
@@ -56046,6 +56052,7 @@
       dancerPhoto.setAttribute("aria-hidden", "true");
       const dancerIsWorkingNow = Boolean(item?.shift?.isActive);
       if (dancerIsWorkingNow) dancerPhoto.setAttribute("data-working-now", "true");
+      if (item?.shift && !dancerIsWorkingNow) dancerPhoto.setAttribute("data-upcoming", "true");
       const dancerPhotoBorder = document.createElement("span");
       dancerPhotoBorder.setAttribute("data-dancer-avatar-border", "");
       dancerPhotoBorder.textContent = dancerName.charAt(0).toLocaleUpperCase();

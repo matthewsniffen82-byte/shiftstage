@@ -65,6 +65,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const upcomingShifts = profile.upcomingShifts.filter(
     (shift) => shift.id !== activeShift?.id,
   );
+  const hasUpcomingShift = !activeShift && upcomingShifts.length > 0;
   const [activeDeals, tvVideos, activeVenue] = await Promise.all([
     activeShift?.venueId
       ? getActiveClubDealsForVenue(client, activeShift.venueId)
@@ -105,9 +106,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         <header className="profile-titlebar">
           <div
-            aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}
+            aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : hasUpcomingShift ? ", upcoming shift posted" : ""}`}
             className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
             data-dancer-avatar=""
+            data-upcoming={hasUpcomingShift ? "true" : undefined}
             data-working-now={activeShift ? "true" : undefined}
             role="img"
           >
