@@ -31987,8 +31987,10 @@
           outline-offset: 0 !important;
           box-shadow: none !important;
         }
-        .home-tv-feed-scrubber:disabled {
-          cursor: wait;
+        .home-tv-feed-scrubber[aria-disabled="true"] {
+          opacity: 1;
+          cursor: default;
+          pointer-events: none;
         }
         #results.home-tv-feed:fullscreen .home-tv-feed-progress,
         #results.home-tv-feed:-webkit-full-screen .home-tv-feed-progress,
@@ -55672,9 +55674,9 @@
       const currentTime = duration ? Math.min(duration, Math.max(0, video.currentTime || 0)) : 0;
       const ratio = duration ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
       fill.style.width = `${ratio * 100}%`;
-      scrubber.max = String(duration || 0);
+      scrubber.max = String(duration || 1);
       scrubber.value = String(currentTime);
-      scrubber.disabled = !duration;
+      scrubber.setAttribute("aria-disabled", String(!duration));
       scrubber.setAttribute(
         "aria-valuetext",
         duration
@@ -55693,11 +55695,12 @@
       scrubber.className = "home-tv-feed-scrubber";
       scrubber.type = "range";
       scrubber.min = "0";
-      scrubber.max = "0";
+      scrubber.max = "1";
       scrubber.step = "0.01";
       scrubber.value = "0";
       scrubber.setAttribute("aria-label", "Video playback position");
       scrubber.setAttribute("aria-valuetext", "Video loading");
+      scrubber.setAttribute("aria-disabled", "true");
       scrubber.addEventListener("input", () => {
         const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
         if (duration) video.currentTime = Math.min(duration, Math.max(0, Number(scrubber.value) || 0));

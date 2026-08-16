@@ -94,7 +94,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?fill\.style\.width = `\$\{ratio \* 100\}%`[\s\S]*?scrubber\.max = String\(duration \|\| 0\)[\s\S]*?scrubber\.value = String\(currentTime\)/,
+    /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?fill\.style\.width = `\$\{ratio \* 100\}%`[\s\S]*?scrubber\.max = String\(duration \|\| 1\)[\s\S]*?scrubber\.value = String\(currentTime\)[\s\S]*?scrubber\.setAttribute\("aria-disabled", String\(!duration\)\)/,
   );
 });
 
@@ -262,6 +262,15 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
   assert.match(homeSource, /\.home-tv-feed-scrubber::-webkit-slider-thumb \{[\s\S]*?width: 28px;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber::-moz-range-thumb \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(homeSource, /\.home-tv-feed-scrubber:focus-visible \{[\s\S]*?border-color: transparent !important;[\s\S]*?outline: 0 !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-scrubber\[aria-disabled="true"\] \{[\s\S]*?opacity: 1;[\s\S]*?pointer-events: none;/,
+  );
+  assert.match(
+    homeSource,
+    /function createHomeTvFeedProgress\(slide, video\)[\s\S]*?scrubber\.max = "1";[\s\S]*?scrubber\.setAttribute\("aria-disabled", "true"\)/,
+  );
+  assert.doesNotMatch(homeSource, /scrubber\.disabled = !duration|\.home-tv-feed-scrubber:disabled/);
   assert.match(
     homeSource,
     /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
