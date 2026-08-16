@@ -21,7 +21,13 @@ type DancerAffiliation = {
   id: string;
   status: string;
   approvedAt?: string | null;
-  dancer?: { stageName?: string; slug?: string; city?: string; avatarUrl?: string | null } | null;
+  dancer?: {
+    stageName?: string;
+    slug?: string;
+    city?: string;
+    avatarUrl?: string | null;
+    avatarSrcSet?: string | null;
+  } | null;
 };
 
 export default function VenueNfcTagPanel({
@@ -226,14 +232,43 @@ export default function VenueNfcTagPanel({
         </div>
         {activeAffiliations.length ? activeAffiliations.map((affiliation) => (
           <div className="venue-nfc-dancer" key={affiliation.id}>
-            <span><strong>{affiliation.dancer?.stageName || "Dancer"}</strong><small>NFC-authorized{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small></span>
-            {canManageRoster ? <button type="button" disabled={isSaving} onClick={() => removeAccess(affiliation)}>Remove access</button> : null}
+            <span className="venue-nfc-dancer-identity">
+              <span className="venue-nfc-dancer-avatar" data-dancer-avatar="" aria-hidden="true">
+                <span data-dancer-avatar-border="">
+                  {affiliation.dancer?.avatarUrl ? (
+                    <img
+                      src={affiliation.dancer.avatarUrl}
+                      srcSet={affiliation.dancer.avatarSrcSet || undefined}
+                      sizes="48px"
+                      alt=""
+                    />
+                  ) : (
+                    (affiliation.dancer?.stageName || "D").slice(0, 1).toUpperCase()
+                  )}
+                </span>
+              </span>
+              <span className="venue-nfc-dancer-copy">
+                <strong>{affiliation.dancer?.stageName || "Dancer"}</strong>
+                <small>NFC verified{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small>
+              </span>
+            </span>
+            {canManageRoster ? (
+              <button
+                className="venue-nfc-remove-access"
+                type="button"
+                disabled={isSaving}
+                aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} access`}
+                onClick={() => removeAccess(affiliation)}
+              >
+                Remove access
+              </button>
+            ) : null}
           </div>
         )) : <p>No dancers have tapped this venue&apos;s dressing-room sticker yet.</p>}
       </section>
       {status ? <p role="status">{status}</p> : null}
       <style>{`
-        .venue-nfc-panel{display:grid;gap:16px}.venue-nfc-panel h2,.venue-nfc-panel p{margin:4px 0}.venue-nfc-panel>div>p{color:#b9accd;line-height:1.45}.venue-nfc-flow{display:grid;grid-template-columns:1fr 1fr;gap:9px}.venue-nfc-flow section{display:flex;gap:10px;padding:12px;border:1px solid rgba(114,80,255,.2);border-radius:12px;background:rgba(92,48,190,.07)}.venue-nfc-flow section>b{width:28px;height:28px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;color:#fff;background:#642bd7}.venue-nfc-flow span,.venue-nfc-roster-head span,.venue-nfc-dancer span{display:grid;gap:3px}.venue-nfc-flow small,.venue-nfc-roster small{color:#9e94aa;line-height:1.35}.venue-nfc-panel button{min-height:40px;padding:0 12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#f8fafc;background:rgba(255,255,255,.055);font:inherit;font-weight:850;cursor:pointer}.venue-nfc-panel button:focus-visible{outline:2px solid #7c3aed;outline-offset:2px}.venue-nfc-panel button:disabled{opacity:.6;cursor:wait}.nfc-supply-note{display:grid;gap:5px;padding:13px 14px;border:1px solid rgba(34,211,238,.24);border-radius:12px;background:rgba(34,211,238,.05)}.nfc-supply-note strong{color:#a5f3fc}.nfc-supply-note span{color:#a9a0b6;line-height:1.4}.nfc-tag-list{display:grid;gap:8px}.nfc-tag-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.035)}.nfc-tag-row>div{display:grid;gap:2px}.nfc-tag-row span{color:#c4b5fd;font-size:9px;font-weight:950;letter-spacing:.12em;text-transform:uppercase}.nfc-tag-row small{color:#938a9f}.nfc-tag-row b{color:#6ee7b7;font-size:10px;text-transform:uppercase}.nfc-tag-row.disabled b,.nfc-tag-row.revoked b{color:#b4aabf}.nfc-tag-actions{display:flex!important;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.nfc-tag-actions button{min-height:34px;font-size:11px}.nfc-test-status{padding:12px 14px;border:1px solid rgba(16,185,129,.3);border-radius:11px;color:#a7f3d0;background:rgba(16,185,129,.06)}.nfc-support-form{display:grid;gap:12px;padding:14px;border:1px solid #334155;border-radius:12px;background:#0b0b10}.nfc-support-form label{display:grid;gap:6px;color:#cbd5e1;font-size:12px;font-weight:850}.nfc-support-form select,.nfc-support-form textarea{width:100%;box-sizing:border-box;padding:11px;border:1px solid #334155;border-radius:9px;color:#f8fafc;background:#111118;font:inherit}.nfc-support-form>div{display:flex;gap:8px;flex-wrap:wrap}.venue-nfc-roster{display:grid;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}.venue-nfc-roster-head,.venue-nfc-dancer{display:flex;align-items:center;justify-content:space-between;gap:12px}.venue-nfc-roster-head>b{padding:6px 9px;border-radius:999px;color:#6ee7b7;background:rgba(16,185,129,.1);font-size:10px}.venue-nfc-dancer{padding:11px 12px;border:1px solid rgba(16,185,129,.16);border-radius:11px;background:rgba(16,185,129,.04)}.venue-nfc-dancer button{min-height:38px}.venue-nfc-roster>p{color:#978da3}@media(max-width:760px){.nfc-tag-row,.venue-nfc-flow{grid-template-columns:1fr}.nfc-tag-actions{justify-content:flex-start}.venue-nfc-dancer{align-items:flex-start;flex-direction:column}}
+        .venue-nfc-panel{display:grid;gap:16px}.venue-nfc-panel h2,.venue-nfc-panel p{margin:4px 0}.venue-nfc-panel>div>p{color:#b9accd;line-height:1.45}.venue-nfc-flow{display:grid;grid-template-columns:1fr 1fr;gap:9px}.venue-nfc-flow section{display:flex;gap:10px;padding:12px;border:1px solid rgba(114,80,255,.2);border-radius:12px;background:rgba(92,48,190,.07)}.venue-nfc-flow section>b{width:28px;height:28px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;color:#fff;background:#642bd7}.venue-nfc-flow span,.venue-nfc-roster-head span{display:grid;gap:3px}.venue-nfc-flow small,.venue-nfc-roster small{color:#9e94aa;line-height:1.35}.venue-nfc-panel button{min-height:40px;padding:0 12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#f8fafc;background:rgba(255,255,255,.055);font:inherit;font-weight:850;cursor:pointer}.venue-nfc-panel button:focus-visible{outline:2px solid #7c3aed;outline-offset:2px}.venue-nfc-panel button:disabled{opacity:.6;cursor:wait}.nfc-supply-note{display:grid;gap:5px;padding:13px 14px;border:1px solid rgba(34,211,238,.24);border-radius:12px;background:rgba(34,211,238,.05)}.nfc-supply-note strong{color:#a5f3fc}.nfc-supply-note span{color:#a9a0b6;line-height:1.4}.nfc-tag-list{display:grid;gap:8px}.nfc-tag-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.035)}.nfc-tag-row>div{display:grid;gap:2px}.nfc-tag-row span{color:#c4b5fd;font-size:9px;font-weight:950;letter-spacing:.12em;text-transform:uppercase}.nfc-tag-row small{color:#938a9f}.nfc-tag-row b{color:#6ee7b7;font-size:10px;text-transform:uppercase}.nfc-tag-row.disabled b,.nfc-tag-row.revoked b{color:#b4aabf}.nfc-tag-actions{display:flex!important;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.nfc-tag-actions button{min-height:34px;font-size:11px}.nfc-test-status{padding:12px 14px;border:1px solid rgba(16,185,129,.3);border-radius:11px;color:#a7f3d0;background:rgba(16,185,129,.06)}.nfc-support-form{display:grid;gap:12px;padding:14px;border:1px solid #334155;border-radius:12px;background:#0b0b10}.nfc-support-form label{display:grid;gap:6px;color:#cbd5e1;font-size:12px;font-weight:850}.nfc-support-form select,.nfc-support-form textarea{width:100%;box-sizing:border-box;padding:11px;border:1px solid #334155;border-radius:9px;color:#f8fafc;background:#111118;font:inherit}.nfc-support-form>div{display:flex;gap:8px;flex-wrap:wrap}.venue-nfc-roster{display:grid;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}.venue-nfc-roster-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.venue-nfc-roster-head>b{padding:6px 9px;border-radius:999px;color:#6ee7b7;background:rgba(16,185,129,.1);font-size:10px}.venue-nfc-dancer{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 11px;border:1px solid rgba(16,185,129,.16);border-radius:11px;background:rgba(16,185,129,.04)}.venue-nfc-dancer-identity{min-width:0;display:flex!important;align-items:center;gap:10px}.venue-nfc-dancer-avatar{width:48px;height:48px;display:grid!important;place-items:center;flex:0 0 48px;overflow:hidden;border-radius:50%;color:#f8fafc;background:#111118;font-weight:900}.venue-nfc-dancer-copy{min-width:0;display:grid!important;gap:3px}.venue-nfc-dancer-copy strong{overflow:hidden;color:#f8fafc;text-overflow:ellipsis;white-space:nowrap}.venue-nfc-remove-access{min-height:34px!important;padding:0 10px!important;border-color:rgba(251,113,133,.24)!important;color:#fda4af!important;background:rgba(159,18,57,.08)!important;font-size:11px!important;white-space:nowrap}.venue-nfc-remove-access:hover{border-color:rgba(251,113,133,.4)!important;background:rgba(159,18,57,.14)!important}.venue-nfc-roster>p{color:#978da3}@media(max-width:760px){.nfc-tag-row,.venue-nfc-flow{grid-template-columns:1fr}.nfc-tag-actions{justify-content:flex-start}}@media(max-width:390px){.venue-nfc-dancer{gap:8px;padding:9px}.venue-nfc-dancer-avatar{width:44px;height:44px;flex-basis:44px}.venue-nfc-remove-access{padding:0 8px!important;font-size:10px!important}}
       `}</style>
     </article>
   );

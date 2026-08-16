@@ -120,6 +120,17 @@ test("MyDancr supplies NFC stickers while venue owners receive read-only invento
   assert.doesNotMatch(nfcPanel, />Rotate</);
 });
 
+test("venue roster rows pair each dancer avatar with compact confirmed access removal", () => {
+  assert.match(nfcPanel, /className="venue-nfc-dancer-identity"/);
+  assert.match(nfcPanel, /affiliation\.dancer\?\.avatarUrl/);
+  assert.match(nfcPanel, /data-dancer-avatar=""[\s\S]*?data-dancer-avatar-border=""/);
+  assert.match(nfcPanel, /srcSet=\{affiliation\.dancer\.avatarSrcSet \|\| undefined\}/);
+  assert.match(nfcPanel, /className="venue-nfc-remove-access"/);
+  assert.match(nfcPanel, /window\.confirm\(`Remove \$\{dancerName\}/);
+  assert.match(nfcPanel, /\.venue-nfc-dancer\{display:grid;grid-template-columns:minmax\(0,1fr\) auto/);
+  assert.doesNotMatch(nfcPanel, /\.venue-nfc-dancer\{[^}]*flex-direction:column/);
+});
+
 test("authenticated MyDancr admins provision, disable, and replace physical NFC inventory", () => {
   assert.match(adminNfcRoute, /requireAdmin/);
   assert.match(adminNfcRoute, /createAdminVenueNfcTag/);

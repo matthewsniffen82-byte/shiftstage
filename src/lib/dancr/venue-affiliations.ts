@@ -2,6 +2,7 @@ import { createHash, createHmac, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireVenueAccess } from "./venue-access";
 import { deliverNotificationRows } from "./notification-delivery";
+import { responsivePublicImage } from "./responsive-image";
 
 type DancrClient = SupabaseClient;
 
@@ -510,6 +511,7 @@ async function previewDancerVenueVerification(
   }
 
   const existing = await activeAffiliation(client, String(data.venue_id), String(data.dancer_id));
+  const avatar = responsivePublicImage(client, DANCER_PHOTO_BUCKET, dancer.avatar_storage_path);
   return {
     tokenExpiresAt: data.expires_at,
     alreadyVerified: Boolean(existing),
@@ -518,7 +520,8 @@ async function previewDancerVenueVerification(
       stageName: dancer.stage_name,
       slug: dancer.slug,
       city: dancer.city,
-      avatarUrl: publicAvatarUrl(client, dancer.avatar_storage_path),
+      avatarUrl: avatar?.imageUrl || null,
+      avatarSrcSet: avatar?.imageSrcSet || null,
     },
     venue: mapVenue(venue),
   };
@@ -588,6 +591,7 @@ const AFFILIATION_COLUMNS = `
 function mapAffiliation(client: DancrClient, row: any) {
   const venue = Array.isArray(row.venues) ? row.venues[0] : row.venues;
   const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
+  const avatar = responsivePublicImage(client, DANCER_PHOTO_BUCKET, dancer?.avatar_storage_path);
   return {
     id: row.id,
     venueId: row.venue_id,
@@ -604,7 +608,8 @@ function mapAffiliation(client: DancrClient, row: any) {
           stageName: dancer.stage_name,
           slug: dancer.slug,
           city: dancer.city,
-          avatarUrl: publicAvatarUrl(client, dancer.avatar_storage_path),
+          avatarUrl: avatar?.imageUrl || null,
+          avatarSrcSet: avatar?.imageSrcSet || null,
         }
       : null,
   };
@@ -618,12 +623,6 @@ function mapVenue(row: any) {
     city: row.city,
     state: row.state || null,
   };
-}
-
-function publicAvatarUrl(client: DancrClient, storagePath: unknown) {
-  return typeof storagePath === "string" && storagePath
-    ? client.storage.from(DANCER_PHOTO_BUCKET).getPublicUrl(storagePath).data.publicUrl
-    : null;
 }
 
 function hashVenueAffiliationToken(value: unknown) {

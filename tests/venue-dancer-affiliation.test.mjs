@@ -51,6 +51,13 @@ test("dancer and venue dashboards show the official NFC workflow", () => {
   assert.match(venuePanel, /MyDancr programs and supplies every sticker/);
 });
 
+test("venue roster affiliations expose responsive approved dancer avatars", () => {
+  assert.match(service, /responsivePublicImage\(client, DANCER_PHOTO_BUCKET, dancer\?\.avatar_storage_path\)/);
+  assert.match(service, /avatarUrl: avatar\?\.imageUrl \|\| null/);
+  assert.match(service, /avatarSrcSet: avatar\?\.imageSrcSet \|\| null/);
+  assert.match(venuePanel, /sizes="48px"/);
+});
+
 test("active affiliation remains required for NFC activation and attributed deals", () => {
   assert.match(baseMigration, /enforce_verified_venue_affiliation_for_checkin/);
   assert.match(baseMigration, /affiliation\.status = 'active'/);
