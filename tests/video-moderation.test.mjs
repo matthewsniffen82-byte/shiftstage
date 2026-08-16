@@ -15,6 +15,7 @@ const [
   retryRoute,
   studio,
   adminPanel,
+  adminReviewRoute,
   nextConfig,
   vercelConfig,
 ] = await Promise.all([
@@ -25,6 +26,7 @@ const [
   readFile(new URL("../app/api/cron/video-moderation/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminTvPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/tv/videos/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../next.config.mjs", import.meta.url), "utf8"),
   readFile(new URL("../vercel.json", import.meta.url), "utf8"),
 ]);
@@ -175,4 +177,14 @@ test("video moderation decisions are durable, recoverable, and visible to dancer
   assert.match(nextConfig, /serverExternalPackages: \["ffmpeg-static"\]/);
   assert.match(nextConfig, /node_modules\/ffmpeg-static\/ffmpeg\*/);
   assert.match(videoModeration, /import ffmpegPath from "ffmpeg-static"/);
+});
+
+test("every production video-processing route bundles FFmpeg and admin failures stay private", () => {
+  assert.match(nextConfig, /"\/api\/admin\/tv\/import": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
+  assert.match(nextConfig, /"\/api\/admin\/tv\/videos": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
+  assert.match(nextConfig, /"\/api\/dancer\/tv\/videos\/\\\\\[id\\\\\]": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
+  assert.match(nextConfig, /"\/api\/cron\/video-moderation": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
+  assert.match(adminReviewRoute, /export const maxDuration = 180/);
+  assert.match(adminReviewRoute, /Video processing is temporarily unavailable\. The video was not changed\. Try again shortly\./);
+  assert.match(adminReviewRoute, /mydancr_tv\.admin_review_failed/);
 });

@@ -10,6 +10,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 
 export async function GET(request: Request) {
   try {
@@ -51,9 +52,33 @@ export async function POST(request: Request) {
         : "Video rejected and the dancer was notified.",
     });
   } catch (error) {
-    return apiError(error, "Unable to review MyDancr TV video.", 400);
+    const message = error instanceof Error ? error.message : "";
+    if (VIDEO_REVIEW_CLIENT_ERRORS.has(message)) {
+      return apiError(error, "Unable to review MyDancr TV video.", 400);
+    }
+    console.error(JSON.stringify({
+      event: "mydancr_tv.admin_review_failed",
+      message: message.slice(0, 500) || "Unknown video review failure",
+    }));
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Video processing is temporarily unavailable. The video was not changed. Try again shortly.",
+      },
+      { status: 503 },
+    );
   }
 }
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const VIDEO_REVIEW_CLIENT_ERRORS = new Set([
+  "Sign in required.",
+  "Admin access required.",
+  "Video not found.",
+  "This video is no longer waiting for review.",
+  "The dancer profile is not eligible for media onboarding.",
+  "Only videos that are 30 seconds or shorter can be approved.",
+  "Add a clear rejection reason for the dancer.",
+]);
