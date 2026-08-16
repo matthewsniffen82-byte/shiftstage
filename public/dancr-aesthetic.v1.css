@@ -3881,7 +3881,6 @@ body.dancr-button-system :is(
   filter: none !important;
 }
 
-body.dancr-button-system .home-tv-feed-shade,
 .tv-shell :is(.tv-player-shade, .tv-profile-body) {
   background: linear-gradient(
     180deg,

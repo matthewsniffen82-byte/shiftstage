@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=116" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=117" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31435,15 +31435,6 @@
         }
         .home-tv-feed-slide:not(.is-media-loading):not(.is-media-unavailable) .home-tv-feed-media-status {
           display: none;
-        }
-        .home-tv-feed-shade {
-          position: absolute;
-          z-index: 2;
-          inset: 0;
-          pointer-events: none;
-          background:
-            linear-gradient(180deg, rgba(0,0,0,.26) 0%, transparent 24%, transparent 46%, rgba(0,0,0,.5) 66%, rgba(0,0,0,.98) 100%),
-            linear-gradient(90deg, rgba(0,0,0,.08), transparent 54%, rgba(0,0,0,.18));
         }
         .home-tv-feed-copy {
           position: absolute;
@@ -56275,9 +56266,6 @@
       );
       const fallback = createHomeTvFeedMediaFallback();
       const video = createHomeTvFeedVideo(item, videoIndex, slide, totalVideos);
-      const shade = document.createElement("div");
-      shade.className = "home-tv-feed-shade";
-      shade.setAttribute("aria-hidden", "true");
       const playback = document.createElement("span");
       playback.className = "home-tv-feed-playback";
       playback.textContent = "▶";
@@ -56293,7 +56281,6 @@
       const children = [
         fallback,
         video,
-        shade,
         playback,
         createHomeTvFeedActions(item, slide),
         createHomeTvFeedCopy(item, scheduleContext),

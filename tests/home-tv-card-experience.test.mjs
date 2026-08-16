@@ -18,10 +18,8 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
     homeSource,
     /\.home-tv-feed-video \{[\s\S]*?object-fit: cover[\s\S]*?\.home-tv-feed-media-fallback \{[\s\S]*?background: var\(--dancr-color-background, #050507\);/,
   );
-  assert.match(
-    homeSource,
-    /\.home-tv-feed-shade \{[\s\S]*?rgba\(0,0,0,.98\) 100%/,
-  );
+  assert.doesNotMatch(homeSource, /\.home-tv-feed-shade\b|className = "home-tv-feed-shade"/);
+  assert.doesNotMatch(aestheticSource, /body\.dancr-button-system \.home-tv-feed-shade/);
   assert.match(
     homeSource,
     /\.home-tv-feed-dancer \{[\s\S]*?min-height: 52px;[\s\S]*?grid-template-columns: 52px minmax\(0, 1fr\)[\s\S]*?gap: 10px;[\s\S]*?font-size: clamp\(22px, 5\.4vw, 28px\);[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 52px;[\s\S]*?height: 52px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?gap: 3px;[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?overflow-wrap: anywhere/,
@@ -113,6 +111,7 @@ test("TV cards expose separate right-side actions and a standalone seek bar", ()
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
   assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedProgress\(slide, video\)/);
+  assert.doesNotMatch(renderFactory, /shade|home-tv-feed-shade|linear-gradient/);
   assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 8px;/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
   assert.doesNotMatch(homeSource, /function createHomeTvFeedVideoControls|className = "home-tv-feed-video-controls"/);
@@ -502,7 +501,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=116/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=117/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
