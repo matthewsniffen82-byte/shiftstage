@@ -557,6 +557,15 @@ test("production TV cards use the neutral-first brand palette without changing m
     brandedCards.match(/\.home-tv-feed-verified[\s\S]*?\{[\s\S]*?\}/)?.[0] || "",
     /glow|box-shadow:(?!\s*none)/,
   );
+  const cityLabel = brandedCards.match(
+    /body\.dancr-button-system \.home-tv-feed-meta \{[\s\S]*?\n\}/,
+  )?.[0] || "";
+  assert.match(cityLabel, /color: var\(--dancr-color-text-primary\) !important;/);
+  assert.match(cityLabel, /-webkit-text-fill-color: currentColor !important;/);
+  assert.match(cityLabel, /opacity: 1 !important;/);
+  assert.match(cityLabel, /var\(--dancr-color-black-strong\) !important;/);
+  assert.match(cityLabel, /filter: none !important;/);
+  assert.doesNotMatch(cityLabel, /dancr-color-(?:brand|info|live|success|featured|danger)/);
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-now/);
   assert.match(brandedCards, /var\(--dancr-color-success\)/);
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-upcoming/);

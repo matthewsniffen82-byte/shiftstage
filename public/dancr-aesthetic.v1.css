@@ -4074,9 +4074,21 @@ body.dancr-button-system :is(.home-tv-feed-dancer-name, .home-tv-feed-venue),
   text-shadow: 0 2px 12px var(--dancr-color-black-strong) !important;
 }
 
-body.dancr-button-system :is(.home-tv-feed-meta, .home-tv-feed-dancer-copy),
+body.dancr-button-system .home-tv-feed-dancer-copy,
 .tv-shell :is(.tv-card-venue-line, .tv-no-shifts-state) {
   color: var(--dancr-color-text-secondary) !important;
+}
+
+/* The city sits on unpredictable video imagery. Its smaller type preserves
+ * hierarchy, while full electric-white contrast keeps it legible. */
+body.dancr-button-system .home-tv-feed-meta {
+  color: var(--dancr-color-text-primary) !important;
+  -webkit-text-fill-color: currentColor !important;
+  opacity: 1 !important;
+  text-shadow:
+    0 1px 2px var(--dancr-color-background),
+    0 2px 12px var(--dancr-color-black-strong) !important;
+  filter: none !important;
 }
 
 /* Venue pins always represent place, never schedule state. Keep them muted
