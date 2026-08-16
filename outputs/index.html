@@ -44645,7 +44645,7 @@
       if (!pass?.url) return;
       const shareData = {
         title: `${pass.venueName} Club Deal`,
-        text: `${pass.title} from ${pass.venueName}. Select it in MyDancr, then tap the cashier NFC sticker at the club.`,
+        text: `${pass.title} from ${pass.venueName}. Select it for checkout, then at the cashier unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically to confirm redemption.`,
         url: pass.url
       };
       try {
@@ -44716,10 +44716,12 @@
               <div id="dealPassImage" class="deal-pass-nfc-symbol" role="img" aria-label="NFC tap">${clubDealQrSymbolMarkup("deal-pass-nfc-icon")}</div>
             </div>
             <div class="deal-pass-steps" aria-label="How to redeem">
-              <div class="deal-pass-step"><span>1</span><strong>Select at checkout</strong></div>
-              <div class="deal-pass-step"><span>2</span><strong>Tap cashier sticker</strong></div>
+              <div class="deal-pass-step"><span>1</span><strong>Select for checkout</strong></div>
+              <div class="deal-pass-step"><span>2</span><strong>At cashier, unlock phone</strong></div>
+              <div class="deal-pass-step"><span>3</span><strong>Hold near MyDancr NFC sticker</strong></div>
+              <div class="deal-pass-step"><span>4</span><strong>Browser opens—confirm redemption</strong></div>
             </div>
-            <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite">At the register, select this offer for checkout, then tap the cashier NFC sticker. The deal is redeemed only after you confirm on the NFC page.</p>
+            <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite">Select this deal for checkout. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically—then confirm redemption.</p>
             <div class="deal-pass-actions">
               <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Select for checkout</button>
               <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
@@ -44878,8 +44880,8 @@
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = `Selected on this device${readyUntil ? ` until ${readyUntil}` : ""}. At the register, tap the cashier NFC sticker at ${pass.venueName}, then confirm redemption.`;
-        selectButton.textContent = "Ready to tap NFC ✓";
+        status.textContent = `Ready${readyUntil ? ` until ${readyUntil}` : ""}. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker at ${pass.venueName}. Your browser opens automatically—then press Redeem this Club Deal.`;
+        selectButton.textContent = "Ready for cashier tap ✓";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");
         selectButton.classList.add("is-ready");
@@ -44887,7 +44889,7 @@
       } else {
         status.textContent = override?.message || (state === "expired"
           ? "Your previous selection expired. Select this deal again before tapping NFC."
-          : "At the register, select this offer for checkout, then tap the cashier NFC sticker. The deal is redeemed only after you confirm on the NFC page.");
+          : "Select this deal for checkout. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically—then confirm redemption.");
         selectButton.textContent = state === "expired" ? "Select again" : state === "error" ? "Try again" : "Select for checkout";
         selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "false");
@@ -44986,7 +44988,7 @@
             <button class="deal-pass-close" type="button" data-close-club-deal-hub aria-label="Close Club Deals">${actionIconMarkup("close")}</button>
             <p class="deal-pass-kicker">Live club offers</p>
             <h3 class="deal-pass-title" id="clubDealHubTitle">Club Deals</h3>
-            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer to preview. At the register, select it for checkout, then tap the cashier NFC sticker.</p>
+            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer to preview. To redeem, select it for checkout. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically to confirm redemption.</p>
             <p class="club-deal-hub-status" id="clubDealHubStatus" role="status" aria-live="polite" hidden></p>
             <div class="club-deal-hub-list" id="clubDealHubList"></div>
           </section>
@@ -45047,7 +45049,7 @@
       const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. At the register, select it for checkout, then tap the cashier NFC sticker.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. To redeem, select it for checkout. At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker. Your browser opens automatically to confirm redemption.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");

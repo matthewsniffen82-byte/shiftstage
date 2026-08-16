@@ -763,7 +763,10 @@ test("Working Now dancer grid cards expose a functional cashier NFC Club Deal ac
   );
   assert.match(homeSource, /mydancrPendingNfcDealV2/);
   assert.match(homeSource, /data-select-deal-pass aria-pressed="false">Select for checkout/);
-  assert.match(homeSource, /At the register, select this offer for checkout/);
+  assert.match(homeSource, /Select this deal for checkout/);
+  assert.match(homeSource, /At the cashier, unlock your phone and hold it near the official MyDancr NFC sticker/);
+  assert.match(homeSource, /Your browser opens automatically—then confirm redemption/);
+  assert.match(homeSource, /Ready for cashier tap ✓/);
   assert.match(
     homeSource,
     /Shared scrolling-card QR rail shell[\s\S]*?\.home-venue-discovery-action-rail \.home-venue-discovery-rail-qr \{[\s\S]*?width: 48px !important;[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?opacity: 1 !important;[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,

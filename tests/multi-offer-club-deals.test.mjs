@@ -60,7 +60,8 @@ test("each selected offer keeps its exact deal and dancer attribution token", ()
   assert.match(liveApp, /function clubDealSelectionConfig\(config, deal\)/);
   assert.match(liveApp, /config\?\.dealAttributionTokens\?\.\[deal\.id\]/);
   assert.match(liveApp, /function openClubDealHub\(config, triggerButton = null\)/);
-  assert.match(liveApp, /Choose one to preview\. At the register, select it for checkout/);
+  assert.match(liveApp, /Choose one to preview\. To redeem, select it for checkout/);
+  assert.match(liveApp, /Your browser opens automatically to confirm redemption/);
 });
 
 test("all public surfaces expose the full offer list while preserving first-deal compatibility", () => {
