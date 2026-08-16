@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { customerFacingDealTerms } from "../src/lib/dancr/deal-copy.ts";
+import { customerFacingDealDescription, customerFacingDealTerms } from "../src/lib/dancr/deal-copy.ts";
+
+test("customer Club Deal descriptions suppress the retired demo QR instruction", () => {
+  assert.equal(
+    customerFacingDealDescription("Open a tracked MyDancr QR to review the complete Club Deal experience."),
+    "",
+  );
+  assert.equal(customerFacingDealDescription("Two-for-one admission before midnight."), "Two-for-one admission before midnight.");
+});
 
 test("customer Club Deal terms omit redundant NFC instructions without removing venue rules", () => {
   assert.equal(

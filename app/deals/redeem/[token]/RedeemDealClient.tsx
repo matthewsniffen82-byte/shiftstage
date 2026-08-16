@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
+import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 
 const SESSION_KEY = "dancrAuthSessionV1";
 const DEAL_SESSION_KEY = "mydancrDealSessionV1";
@@ -61,6 +61,7 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
   }
 
   const deal = redemption?.deal;
+  const dealDescription = customerFacingDealDescription(deal?.dealDescription);
   const dealTerms = customerFacingDealTerms(deal?.dealTerms);
   const venue = redemption?.venue;
   const isRedeemed = redemption?.status === "redeemed";
@@ -69,7 +70,7 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
     <article className="scanner-card">
       <span className={`status-pill ${isRedeemed ? "success" : ""}`}>{redemption?.status || "unknown"}</span>
       <h1>{deal?.dealTitle || "Club Deal"}</h1>
-      <p>{deal?.dealDescription || "Show this screen to club staff."}</p>
+      <p>{dealDescription || "Show this screen to club staff."}</p>
       {dealTerms ? <small>{dealTerms}</small> : null}
       <dl>
         <div>

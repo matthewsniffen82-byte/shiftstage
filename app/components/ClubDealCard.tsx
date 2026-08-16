@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ClubDeal, DealSourceType } from "@/src/lib/dancr/types";
-import { customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
+import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 import NfcIcon from "@/app/components/NfcIcon";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
@@ -56,6 +56,7 @@ export function ClubDealCard({
   const offerDeals = deals?.length ? deals : [deal];
   const [selectedDealId, setSelectedDealId] = useState(deal.id);
   const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;
+  const displayDescription = customerFacingDealDescription(activeDeal.dealDescription);
   const displayTerms = customerFacingDealTerms(activeDeal.dealTerms);
   const actionLabel = ctaLabel || (offerDeals.length > 1 ? `Club Deals · ${offerDeals.length}` : "Use Club Deal");
 
@@ -160,7 +161,7 @@ export function ClubDealCard({
         venueName: venueName || "Club",
         dealId: activeDeal.id,
         title: activeDeal.dealTitle,
-        description: activeDeal.dealDescription,
+        description: displayDescription,
         terms: displayTerms,
         offerType: activeDeal.offerType,
         sourceType,
@@ -225,7 +226,7 @@ export function ClubDealCard({
       <div className="club-deal-copy">
         <span className="eyebrow">{dealTypeLabel(activeDeal.offerType)} · Club Deal</span>
         <h2>{activeDeal.dealTitle}</h2>
-        {!compact ? <p>{activeDeal.dealDescription}</p> : null}
+        {displayDescription && !compact ? <p>{displayDescription}</p> : null}
         {displayTerms && !compact ? <small>{displayTerms}</small> : null}
         {!compact ? <small>One redemption per guest. Availability is verified at the cashier NFC tap.</small> : null}
         {dancerNote ? (
@@ -361,7 +362,7 @@ export function ClubDealCard({
                     >
                       <span>{dealTypeLabel(offer.offerType)}</span>
                       <strong>{offer.dealTitle}</strong>
-                      <small>{offer.dealDescription}</small>
+                      <small>{customerFacingDealDescription(offer.dealDescription) || "Club offer"}</small>
                     </button>
                   ))}
                 </div>

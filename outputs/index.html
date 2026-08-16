@@ -44477,7 +44477,7 @@
         dancerName,
         sourceType,
         title: deal.dealTitle || "Club Deal",
-        description: deal.dealDescription || "",
+        description: customerFacingDealDescription(deal.dealDescription),
         terms: deal.dealTerms || "",
         offerType: deal.offerType || "admission",
         bookingUrl: deal.bookingUrl || "",
@@ -44916,6 +44916,13 @@
         .trim();
     }
 
+    function customerFacingDealDescription(value) {
+      const description = String(value || "").trim();
+      return /^Open a tracked MyDancr QR to review the complete Club Deal experience\.$/i.test(description)
+        ? ""
+        : description;
+    }
+
     function formatDealPassClockTime(value) {
       const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
       if (!match) return "";
@@ -45000,7 +45007,10 @@
       document.getElementById("dealPassKicker").textContent = presentation.kicker;
       document.getElementById("dealPassTitle").textContent = pass.title;
       document.getElementById("dealPassCopy").textContent = presentation.copy;
-      document.getElementById("dealPassDescription").textContent = pass.description || "Select this offer when you are ready to redeem at the cashier.";
+      const description = customerFacingDealDescription(pass.description);
+      const descriptionElement = document.getElementById("dealPassDescription");
+      descriptionElement.hidden = !description;
+      descriptionElement.textContent = description;
       document.getElementById("dealPassOfferType").textContent = clubDealOfferTypeLabel(pass.offerType);
       const terms = customerFacingDealTerms(pass.terms);
       const termsElement = document.getElementById("dealPassTerms");
@@ -45142,7 +45152,7 @@
       document.getElementById("clubDealHubList").innerHTML = offers.map((deal) => {
         const selection = clubDealSelectionConfig(config, deal);
         const booking = deal.offerType === "bottle_service" ? "Cashier NFC redemption · Club booking available" : "Cashier NFC tap required at redemption";
-        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(deal.dealDescription || "View and redeem this club offer.")}</small><em>${booking}</em></button>`;
+        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>${booking}</em></button>`;
       }).join("");
       overlay.hidden = false;
       overlay.classList.add("show");
@@ -45235,7 +45245,7 @@
               <div>
                 <span class="eyebrow">Club Deals</span>
                 <h3>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
-                <p>${venue.activeDeals?.length > 1 ? "Choose admission, drinks, bottle service, or another club offer, then tap the cashier NFC sticker at the club." : escapeHtml(venue.activeDeal.dealDescription || "Choose this offer, then tap the cashier NFC sticker at the club.")}</p>
+                <p>${venue.activeDeals?.length > 1 ? "Choose admission, drinks, bottle service, or another club offer, then tap the cashier NFC sticker at the club." : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Click for Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">
