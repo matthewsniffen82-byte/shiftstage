@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { SocialLinks } from "@/app/dancers/[slug]/SocialLinks";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -364,16 +365,10 @@ export default function DashboardClient({
             </div>
             {dashboardDescription ? <p>{dashboardDescription}</p> : null}
           </div>
-          <Link
-            className="dashboard-close"
-            href={dashboardCloseHref}
-            aria-label={`Close ${role} dashboard and return to MyDancr`}
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <path d="M6 6l12 12" />
-              <path d="M18 6L6 18" />
-            </svg>
-          </Link>
+          <DashboardCloseButton
+            fallbackHref={dashboardCloseHref}
+            label={`Close ${role} dashboard and return to MyDancr`}
+          />
         </div>
         {state.error && (role === "venue" || role === "dancer") ? (
           <DashboardSignInRecovery role={role} onSignedIn={retryDashboard} />

@@ -22,7 +22,7 @@ test("customer dashboard leads with tonight, saved, deals, and alerts before acc
   assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
   assert.match(dashboard, /const dashboardHeading = isLoading[\s\S]*?role === "dancer" \? profileDisplayName \|\| title : resolvedDisplayName \|\| title[\s\S]*?: displayName/);
   assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
-  assert.match(dashboard, /className="dashboard-close"[\s\S]*?aria-label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
+  assert.match(dashboard, /<DashboardCloseButton[\s\S]*?label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
   assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" \/>/);
 });
 

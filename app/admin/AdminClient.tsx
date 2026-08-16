@@ -2,6 +2,7 @@
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
 import AdminDmcaPanel from "./AdminDmcaPanel";
@@ -307,16 +308,10 @@ export default function AdminClient() {
             <h1>Admin dashboard</h1>
             <p>{dashboardDescription}</p>
           </div>
-          <Link
-            className="dashboard-close"
-            href={homeDiscoveryHref("tonight")}
-            aria-label="Close admin dashboard and return to MyDancr"
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <path d="M6 6l12 12" />
-              <path d="M18 6L6 18" />
-            </svg>
-          </Link>
+          <DashboardCloseButton
+            fallbackHref={homeDiscoveryHref("tonight")}
+            label="Close admin dashboard and return to MyDancr"
+          />
         </div>
         {!isLoading && !needsSignIn ? (
           <div className="admin-dashboard-session">

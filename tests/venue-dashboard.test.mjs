@@ -42,8 +42,8 @@ test("venue dashboard session recovery rotates and persists authentication witho
 test("the routed venue dashboard is isolated, closable, and restores the original full workspace identity", () => {
   assert.match(dashboardPage, /DashboardClient/);
   assert.match(dashboard, /dashboard-shell/);
-  assert.match(dashboard, /dashboard-close/);
-  assert.match(dashboard, /aria-label={`Close \$\{role\} dashboard and return to MyDancr`}/);
+  assert.match(dashboard, /<DashboardCloseButton/);
+  assert.match(dashboard, /label={`Close \$\{role\} dashboard and return to MyDancr`}/);
   assert.match(dashboard, /Venue dashboard/);
   assert.match(dashboard, /role === "venue" \? "Venue dashboard"/);
   assert.match(dashboard, /Loading \{role\} dashboard/);
