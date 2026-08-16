@@ -254,9 +254,9 @@ export function ClubDealCard({
           </div>
         ) : null}
         <button
-          className="club-deal-active-action"
+          className={`club-deal-checkout-action${intentState === "ready" ? " is-ready" : ""}`}
           type="button"
-          data-club-deal-state="available"
+          data-club-deal-state={intentState === "ready" ? "ready" : "checkout"}
           onClick={selectForNfcTap}
           disabled={intentState === "ready"}
         >
@@ -518,8 +518,11 @@ function ClubDealInteractionStyles() {
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child { border-color:rgba(126,234,255,.28); color:#e5fbff; background:rgba(53,216,255,.06); }
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child span { color:#071014; border-color:rgba(126,234,255,.46); background:#f7fbff; }
       .club-deal-dialog .club-deal-action { display: grid; gap: 10px; }
-      .club-deal-dialog .club-deal-action > button { min-height: 48px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; color: #fff; background: linear-gradient(135deg,rgba(76,35,176,.96),rgba(24,94,126,.96)); box-shadow:0 12px 26px rgba(0,0,0,.26); font: inherit; font-weight: 950; cursor: pointer; }
-      .club-deal-dialog .club-deal-action > button:disabled { color:#071014; border-color:rgba(255,255,255,.58); background:#f7fbff; box-shadow:none; cursor:default; }
+      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action { min-height:52px !important; border:1px solid rgba(167,139,250,.92) !important; border-radius:16px !important; color:#fff !important; background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%) !important; box-shadow:0 14px 32px rgba(0,0,0,.32),0 0 26px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.22) !important; font:inherit; font-weight:950 !important; cursor:pointer; transition:filter 160ms ease,transform 160ms ease,box-shadow 160ms ease !important; }
+      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action:hover:not(:disabled) { filter:brightness(1.08); box-shadow:0 16px 34px rgba(0,0,0,.34),0 0 32px rgba(124,58,237,.52),inset 0 1px 0 rgba(255,255,255,.26) !important; }
+      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action:active:not(:disabled) { transform:translateY(1px); filter:brightness(.96); box-shadow:0 9px 22px rgba(0,0,0,.34),0 0 18px rgba(124,58,237,.36),inset 0 2px 7px rgba(0,0,0,.22) !important; }
+      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action:focus-visible { outline:2px solid #c4b5fd !important; outline-offset:3px !important; }
+      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action.is-ready:disabled { opacity:1 !important; filter:none !important; color:#fff !important; border-color:rgba(74,222,128,.88) !important; background:linear-gradient(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%) !important; box-shadow:0 12px 28px rgba(0,0,0,.3),0 0 24px rgba(34,197,94,.34),inset 0 1px 0 rgba(255,255,255,.2) !important; cursor:default !important; }
       .club-deal-dialog .deal-nfc-status { padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:13px; color:rgba(245,245,255,.76); background:rgba(0,0,0,.22); text-align:center; }
       .club-deal-dialog .deal-nfc-status.ready { border-color:rgba(126,234,255,.28); color:#d9f9ff; background:rgba(53,216,255,.07); }
       .club-deal-dialog .deal-nfc-status.error,.club-deal-dialog .deal-nfc-status.expired { border-color:rgba(255,157,174,.28); color:#ffd5dd; background:rgba(255,99,132,.07); }

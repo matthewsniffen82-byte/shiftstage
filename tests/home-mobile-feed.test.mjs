@@ -769,6 +769,14 @@ test("Working Now dancer grid cards expose a functional cashier NFC Club Deal ac
   assert.match(homeSource, /Ready for cashier tap ✓/);
   assert.match(
     homeSource,
+    /\.deal-pass-action\.primary \{[^}]*min-height: 52px !important;[^}]*background: linear-gradient\(135deg, #5b21b6 0%, #7c3aed 52%, #8b5cf6 100%\) !important;[^}]*0 0 26px rgba\(124, 58, 237, \.42\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.deal-pass-action\.primary\.is-ready \{[^}]*opacity: 1 !important;[^}]*background: linear-gradient\(135deg, #087443 0%, #0f9f5b 58%, #16a34a 100%\) !important;[^}]*0 0 24px rgba\(34, 197, 94, \.34\)/,
+  );
+  assert.match(
+    homeSource,
     /Shared scrolling-card QR rail shell[\s\S]*?\.home-venue-discovery-action-rail \.home-venue-discovery-rail-qr \{[\s\S]*?width: 48px !important;[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?opacity: 1 !important;[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,
   );
   assert.match(

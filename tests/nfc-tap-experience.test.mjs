@@ -138,6 +138,12 @@ test("Club Deal checkout explains the complete NFC tap flow without requiring an
   assert.match(dealCard, /Saved for later on this device\. This does not select or redeem the deal\./);
 });
 
+test("Club Deal checkout is the prominent violet action and confirms readiness in green", () => {
+  assert.match(dealCard, /className=\{`club-deal-checkout-action\$\{intentState === "ready" \? " is-ready" : ""\}`\}/);
+  assert.match(dealCard, /button\.club-deal-checkout-action \{[^}]*min-height:52px !important;[^}]*background:linear-gradient\(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%\) !important;[^}]*0 0 26px rgba\(124,58,237,\.42\)/);
+  assert.match(dealCard, /button\.club-deal-checkout-action\.is-ready:disabled \{[^}]*opacity:1 !important;[^}]*background:linear-gradient\(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%\) !important;[^}]*0 0 24px rgba\(34,197,94,\.34\)/);
+});
+
 test("NFC activity remains auditable without exposing reusable tokens", () => {
   assert.match(baseMigration, /create table if not exists public\.nfc_tap_events/);
   assert.match(baseMigration, /device_fingerprint text/);
