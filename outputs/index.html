@@ -30841,8 +30841,7 @@
               <button class="customer-quick-clear" type="button" data-notification-action="clear-all">Clear notifications</button>
             </div>
             <div class="customer-quick-panel" id="customerDealsQuickPanel" hidden>
-              <h3>Saved club deals</h3>
-              <p>Tap a QR to enlarge it and show it at the club.</p>
+              <h3>Saved Club Deals</h3>
               <div class="customer-quick-list" id="customerDealsQuickList"></div>
             </div>
           </div>
@@ -41815,7 +41814,7 @@
               ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
             </button>
           `).join("")
-        : `<div class="customer-quick-empty">Saved Club Deals will appear here after you choose an offer. Redeem by tapping the club cashier NFC sticker.</div>`;
+        : `<div class="customer-quick-empty">No saved Club Deals yet. Save a Club Deal to find it here later.</div>`;
     }
 
     function renderCustomerQuickActions() {
@@ -53453,7 +53452,7 @@
         : `<div class="locked">No followed clubs in ${city} yet.</div>`;
       dashSavedDealsList.innerHTML = savedDealPasses.length
         ? savedDealPasses.map((pass) => savedDealPassMarkup(pass)).join("")
-        : `<div class="locked">Saved Club Deals will appear here after you choose an offer on a club or dancer profile. Redeem at the club by tapping its cashier NFC sticker.</div>`;
+        : `<div class="locked">No saved Club Deals yet. Save a Club Deal to find it here later.</div>`;
       dashTonightViewAll.hidden = workingTonight.length <= 5 || dashboardTonightExpanded;
       dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
       dashVenueViewAll.hidden = venues.length <= 5 || dashboardVenuesExpanded;

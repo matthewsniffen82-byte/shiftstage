@@ -97,7 +97,10 @@ test("signed-in customer dashboards retain saved Club Deal state without owning 
   assert.match(customerDashboard, /CustomerDealPassPanel/);
   assert.match(customerDashboard, /dealRedemptions/);
   assert.match(liveApp, /Saved Club Deals/);
-  assert.match(liveApp, /Redeem by tapping the club cashier NFC sticker/);
+  assert.match(liveApp, /No saved Club Deals yet/);
+  assert.match(liveApp, /Save a Club Deal to find it here later/);
+  assert.doesNotMatch(liveApp, /Tap a QR to enlarge it and show it at the club/);
+  assert.doesNotMatch(liveApp, /Saved Club Deals will appear here after you choose an offer/);
 });
 
 test("legacy QR issuance endpoints are explicitly retired instead of silently accepting writes", () => {
