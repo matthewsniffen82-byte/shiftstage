@@ -7,6 +7,7 @@ const [
   layout,
   liveApp,
   mobileNavigation,
+  tvFeed,
   venueProfileAesthetic,
 ] = await Promise.all([
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
@@ -16,6 +17,7 @@ const [
     new URL("../app/components/GlobalMobileBottomNav.tsx", import.meta.url),
     "utf8",
   ),
+  readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
   readFile(
     new URL("../app/venues/[slug]/VenueProfile.module.css", import.meta.url),
     "utf8",
@@ -26,8 +28,33 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=111" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=112" rel="stylesheet">/,
   );
+});
+
+test("scrollable production surfaces use one quiet neutral scrollbar", () => {
+  assert.match(
+    aesthetic,
+    /--mydancr-scrollbar-thumb: rgba\(255, 255, 255, \.24\);[\s\S]*?:where\(html, body, \*\) \{[\s\S]*?scrollbar-color: var\(--mydancr-scrollbar-thumb\) transparent;[\s\S]*?:where\(\*\)::\-webkit-scrollbar-thumb \{[\s\S]*?background: var\(--mydancr-scrollbar-thumb\);[\s\S]*?box-shadow: none;/,
+  );
+  assert.match(
+    liveApp,
+    /\*::\-webkit-scrollbar \{\s*width: 4px;\s*height: 4px;[\s\S]*?\*::\-webkit-scrollbar-thumb \{[\s\S]*?background: rgba\(255, 255, 255, (?:0|\.)24\);[\s\S]*?box-shadow: none;/,
+  );
+  assert.match(
+    tvFeed,
+    /\.tv-feed \{[^}]*scrollbar-color: rgba\(255,255,255,\.24\) transparent;/,
+  );
+  for (const source of [liveApp, aesthetic, tvFeed]) {
+    assert.doesNotMatch(
+      source,
+      /scrollbar-color:[^;}]*(?:139\s*,\s*92\s*,\s*246|124\s*,\s*58\s*,\s*237|109\s*,\s*40\s*,\s*217)/,
+    );
+    assert.doesNotMatch(
+      source,
+      /::\-webkit-scrollbar-thumb[^{}]*\{[^}]*(?:rgba\((?:139\s*,\s*92\s*,\s*246|124\s*,\s*58\s*,\s*237|109\s*,\s*40\s*,\s*217)|box-shadow:\s*0\s+0)/,
+    );
+  }
 });
 
 test("venue detail branding is neutral first with scoped brand and semantic actions", () => {

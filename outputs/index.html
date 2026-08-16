@@ -7230,7 +7230,7 @@
     }
 
     * {
-      scrollbar-color: rgba(139,92,246,.36) #080808;
+      scrollbar-color: rgba(255,255,255,.24) transparent;
     }
 
     body {
@@ -15542,39 +15542,32 @@
 
     * {
       scrollbar-width: thin;
-      scrollbar-color: rgba(139, 92, 246, .34) rgba(5, 5, 7, .42);
+      scrollbar-color: rgba(255, 255, 255, .24) transparent;
     }
 
     *::-webkit-scrollbar {
-      width: 7px;
-      height: 7px;
+      width: 4px;
+      height: 4px;
     }
 
     *::-webkit-scrollbar-track {
-      background: rgba(5, 5, 7, .48);
-      border-left: 1px solid rgba(139, 92, 246, .06);
+      border: 0;
+      background: transparent;
+      box-shadow: none;
     }
 
     *::-webkit-scrollbar-thumb {
+      border: 0;
       border-radius: 999px;
-      border: 2px solid rgba(5, 5, 7, .9);
-      background:
-        linear-gradient(180deg, rgba(139, 92, 246, .36), rgba(124, 58, 237, .24));
-      box-shadow:
-        0 0 10px rgba(139, 92, 246, .11),
-        inset 0 0 8px rgba(255, 255, 255, .04);
-      transition: background .22s ease, box-shadow .22s ease, border-color .22s ease;
+      background: rgba(255, 255, 255, .24);
+      box-shadow: none;
+      transition: background .18s ease;
     }
 
     *::-webkit-scrollbar-thumb:hover,
     *::-webkit-scrollbar-thumb:active {
-      background:
-        linear-gradient(180deg, rgba(139, 92, 246, .94), rgba(124, 58, 237, .74));
-      border-color: rgba(5, 5, 7, .78);
-      box-shadow:
-        0 0 14px rgba(139, 92, 246, .42),
-        0 0 22px rgba(124, 58, 237, .22),
-        inset 0 0 10px rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .4);
+      box-shadow: none;
     }
     .tabs .tab.active,
     .tabs .tab.active[data-tab="tonight"],
@@ -22653,25 +22646,27 @@
     }
 
     *::-webkit-scrollbar {
-      width: 9px;
-      height: 9px;
+      width: 4px;
+      height: 4px;
     }
 
     *::-webkit-scrollbar-track {
-      background: rgba(5, 5, 7, 0.96);
+      border: 0;
+      background: transparent;
+      box-shadow: none;
     }
 
     *::-webkit-scrollbar-thumb {
-      background: rgba(109, 40, 217, 0.38);
+      border: 0;
       border-radius: 999px;
-      box-shadow: 0 0 8px rgba(109, 40, 217, 0.12);
-      border: 2px solid rgba(5, 5, 7, 0.96);
+      background: rgba(255, 255, 255, 0.24);
+      box-shadow: none;
     }
 
     *::-webkit-scrollbar-thumb:hover,
     *::-webkit-scrollbar-thumb:active {
-      background: rgba(139, 92, 246, 0.72);
-      box-shadow: 0 0 14px rgba(139, 92, 246, 0.34);
+      background: rgba(255, 255, 255, 0.4);
+      box-shadow: none;
     }
 
     #dancerDashboard {
@@ -30813,7 +30808,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=111" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=112" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
