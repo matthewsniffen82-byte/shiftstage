@@ -153,5 +153,6 @@ test("the mobile login sheet scrolls every sign-in and signup action above the f
   assert.match(mobileAuthClearance, /#authPage \.auth-choice-card \{\s*overflow: visible !important;\s*\}/);
   assert.match(mobileAuthClearance, /#authPage > \.page-inner::after \{[\s\S]*?content: "";[\s\S]*?display: block;[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);/);
   assert.match(homeSource, /id="authSubmit" type="submit">Sign in<\/button>/);
-  assert.match(homeSource, /id="customerJoinNowBtn" type="button">Create an account<\/button>/);
+  assert.match(homeSource, /id="authCreateTab"[^>]*>Create account<\/button>/);
+  assert.doesNotMatch(homeSource, /id="customerJoinNowBtn"/);
 });

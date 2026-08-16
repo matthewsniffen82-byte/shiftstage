@@ -24915,7 +24915,6 @@
       }
     }
 
-    .auth-join-now.customer-join-now,
     .auth-join-now.dancer-join-now,
     .auth-join-now.venue-join-now {
       min-height: 52px;
@@ -24926,17 +24925,6 @@
       font-weight: 950;
       letter-spacing: 0;
       transform: translateZ(0);
-    }
-
-    .auth-join-now.customer-join-now {
-      border-color: rgba(53, 216, 255, .78);
-      background:
-        linear-gradient(135deg, #06233c 0%, #0a4f88 48%, #1ecfff 100%);
-      box-shadow:
-        0 0 24px rgba(53, 216, 255, .3),
-        0 16px 34px rgba(14, 109, 185, .3),
-        inset 0 0 18px rgba(255, 255, 255, .12);
-      text-shadow: 0 2px 12px rgba(0, 0, 0, .42);
     }
 
     .auth-join-now.dancer-join-now {
@@ -24959,15 +24947,6 @@
         0 16px 36px rgba(38, 174, 220, .2),
         inset 0 0 18px rgba(255, 255, 255, .12);
       text-shadow: 0 2px 12px rgba(0, 0, 0, .46);
-    }
-
-    .auth-join-now.customer-join-now:hover,
-    .auth-join-now.customer-join-now:focus-visible {
-      border-color: rgba(143, 242, 255, .92);
-      box-shadow:
-        0 0 34px rgba(53, 216, 255, .46),
-        0 18px 38px rgba(14, 109, 185, .28),
-        inset 0 0 20px rgba(255, 255, 255, .16);
     }
 
     .customer-signup-benefits {
@@ -26286,7 +26265,6 @@
       transform: translateZ(0);
     }
 
-    .auth-card .customer-join-now,
     .role-actions #customerSignupBtn {
       border-color: rgba(53, 216, 255, 0.82) !important;
       background:
@@ -37286,7 +37264,6 @@
             </div>
             <div class="rule-note auth-signup-note" id="customerSignupNote" hidden>Your customer account is private. We’ll email you a confirmation link after you create it.</div>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
-            <button class="ghost auth-join-now customer-join-now" id="customerJoinNowBtn" type="button">Create an account</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
           </form>
@@ -49417,8 +49394,6 @@
       if (confirmField) confirmField.hidden = !isSignup;
       if (confirmInput) confirmInput.required = isSignup;
       document.getElementById("customerSignupNote").hidden = !isSignup;
-      const joinButton = document.getElementById("customerJoinNowBtn");
-      if (joinButton) joinButton.hidden = isSignup;
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const forgotButton = document.getElementById("customerForgotPasswordBtn");
       if (forgotButton) forgotButton.hidden = mode !== "login";
@@ -57592,10 +57567,6 @@
     document.getElementById("authCreateTab").addEventListener("click", () => setAuthEntryMode("create"));
     document.getElementById("customerSignupBtn").addEventListener("click", () => {
       openCustomerSignup();
-    });
-
-    document.getElementById("customerJoinNowBtn").addEventListener("click", () => {
-      setAuthEntryMode("create");
     });
 
     document.getElementById("customerBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
