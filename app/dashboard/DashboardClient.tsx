@@ -2772,7 +2772,7 @@ function DancerOnboardingCommand({
   const previewOverlayRef = useRef<HTMLDivElement>(null);
   const previewTriggerRef = useRef<HTMLButtonElement>(null);
   const previewScrollRef = useRef(0);
-  const persistedStageName = String(profile?.stage_name || profile?.stageName || "").trim();
+  const persistedStageName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
   const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
@@ -3218,7 +3218,13 @@ function dancerProfileSetupBlocker({
 }
 
 function persistedStageNameAndCity(profile?: LoadState["profile"]) {
-  return Boolean(String(profile?.stage_name || profile?.stageName || "").trim() && String(profile?.city || "").trim());
+  return Boolean(persistedDancerStageName(profile) && String(profile?.city || "").trim());
+}
+
+function persistedDancerStageName(profile?: LoadState["profile"]) {
+  const identitySavedAt = String(profile?.identity_saved_at || profile?.identitySavedAt || "").trim();
+  if (!identitySavedAt) return "";
+  return String(profile?.stage_name || profile?.stageName || "").trim();
 }
 
 type DancerStepOneItemState = "complete" | "checking" | "missing" | "replace" | "unsaved";
@@ -3250,7 +3256,7 @@ function DancerOnboardingProfileMediaWorkspace({
   profile?: LoadState["profile"];
   profileReady: boolean;
 }) {
-  const persistedStageName = String(profile?.stage_name || profile?.stageName || "").trim();
+  const persistedStageName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
@@ -3447,7 +3453,7 @@ function DancerPanel({
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
   const [draftIdentity, setDraftIdentity] = useState(() => ({
-    stageName: String(profile?.stage_name || profile?.stageName || ""),
+    stageName: persistedDancerStageName(profile),
     city: String(profile?.city || ""),
   }));
 
@@ -3575,7 +3581,7 @@ function DancerPanel({
         >
           <div className="venue-dashboard-inner-grid">
             <InfoPanel title="Profile">
-              <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
+              <Metric label="Stage name" value={persistedDancerStageName(profile) || "Draft"} />
               <Metric label="Status" value={effectiveStatus} />
               <Metric label="Dressing-room NFC" value={isVenueApproved ? "authorized" : "tap required"} />
               <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
@@ -3958,7 +3964,7 @@ function DancerSetupPanel({
 
   useEffect(() => {
     if (draftDirtyRef.current) return;
-    const savedStageName = String(profile?.stage_name || profile?.stageName || "");
+    const savedStageName = persistedDancerStageName(profile);
     const profileCity = String(profile?.city || "").trim();
     const matchingCity = cityOptions.find((option) => option.value.toLocaleLowerCase("en-US") === profileCity.toLocaleLowerCase("en-US"));
     const savedCity = cityOptionsStatus === "ready" ? matchingCity?.value || "" : profileCity;
@@ -6343,7 +6349,7 @@ function checkInErrorMessage(data: any) {
 
 function dashboardName(profile: Record<string, unknown> | null | undefined, role: DashboardRole) {
   if (!profile) return "";
-  if (role === "dancer") return profile.stage_name || profile.stageName || "";
+  if (role === "dancer") return persistedDancerStageName(profile);
   return "";
 }
 

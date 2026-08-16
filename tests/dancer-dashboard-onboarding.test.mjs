@@ -56,6 +56,10 @@ test("initial onboarding nests every production workspace directly under its ste
 });
 
 test("draft identity and social form values survive refreshes without bypassing explicit saves", () => {
+  assert.match(dashboard, /function persistedDancerStageName/);
+  assert.match(dashboard, /profile\?\.identity_saved_at \|\| profile\?\.identitySavedAt/);
+  assert.match(dashboard, /if \(!identitySavedAt\) return ""/);
+  assert.match(dashboard, /const savedStageName = persistedDancerStageName\(profile\)/);
   assert.match(dashboard, /mydancr:dancer-profile-draft/);
   assert.match(dashboard, /mydancr:dancer-social-draft/);
   assert.match(dashboard, /window\.localStorage\.setItem\(draftKey/);

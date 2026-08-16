@@ -13,6 +13,7 @@ test("profile setup completion comes from the persisted dancer profile", () => {
     liveAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
 
   assert.doesNotMatch(completionResolver, /real_name|realName|legalName/);
+  assert.match(completionResolver, /profile\.identity_saved_at \|\| profile\.identitySavedAt/);
   assert.match(completionResolver, /profile\.stage_name \|\| profile\.stageName/);
   assert.match(completionResolver, /profile\.city \|\| profile\.cityName/);
   assert.match(profileHydrator, /hasCompletedDancerProfileSetup\(profile\)/);
@@ -112,6 +113,7 @@ test("profile submission stays private until NFC venue authorization and media r
   const serverSubmit =
     profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
   assert.match(serverSubmit, /pendingVenueApprovalValues\(\)/);
+  assert.match(serverSubmit, /profile\.identitySavedAt\?\.trim\(\)/);
   assert.match(liveAppSource, /data-submit-review/);
   assert.match(liveAppSource, /profile remains private until .*dressing-room.*profile\/media review are complete/i);
 });

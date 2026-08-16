@@ -141,7 +141,7 @@ function isMissingIsPublicColumnError(error: any) {
 }
 
 async function loadProfileForSave(db: any, userId: string) {
-  const columns = "id, real_name, stage_name, city, status, approved_at, disabled_at, verification_status, photo_review_status";
+  const columns = "id, real_name, stage_name, city, identity_saved_at, status, approved_at, disabled_at, verification_status, photo_review_status";
   const current = await db
     .from("dancer_profiles")
     .select(`${columns}, is_public`)
@@ -406,6 +406,9 @@ export async function PATCH(request: Request) {
         throw error;
       }
     }
+    if (Object.prototype.hasOwnProperty.call(body, "stageName") && typeof body.city === "string") {
+      update.identity_saved_at = new Date().toISOString();
+    }
     if (typeof body.isPublic === "boolean") {
       if (!supportsIsPublic) {
         setSaveStage("update_profile_fields");
@@ -571,6 +574,7 @@ export async function PATCH(request: Request) {
       await submitProfileForReview(adminDb, profile.id, {
         stageName: String(cleanProfilePayload.stage_name || profile.stage_name || ""),
         city: String(cleanProfilePayload.city || profile.city || ""),
+        identitySavedAt: String(cleanProfilePayload.identity_saved_at || profile.identity_saved_at || ""),
         status: profile.status,
       });
     } else if (body.submitForReview === true) {
@@ -822,9 +826,9 @@ async function markApprovedProfileContentPending(db: any, dancerId: string) {
 async function submitProfileForReview(
   db: any,
   dancerId: string,
-  profile: { stageName?: string; city?: string; status?: string },
+  profile: { stageName?: string; city?: string; identitySavedAt?: string; status?: string },
 ) {
-  if (!profile.stageName?.trim() || !profile.city?.trim()) {
+  if (!profile.identitySavedAt?.trim() || !profile.stageName?.trim() || !profile.city?.trim()) {
     throw new Error("Save stage name and city before publishing your profile.");
   }
 

@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       if (error) throw error;
       if (!data.user) throw new Error("Unable to create admin account.");
 
-      await upsertAccount(role, data.user.id, email, displayName, "Las Vegas", body);
+      await upsertAccount(role, data.user.id, email, displayName, "Las Vegas");
 
       const { data: sessionData, error: sessionError } = await client.auth.signInWithPassword({ email, password });
       if (sessionError) throw sessionError;
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     const city = role === "dancer"
       ? await requireDancerSignupCity(createAdminSupabaseClient(), body.city)
       : readOptional(body.city) || "Las Vegas";
-    const submittedStageName = role === "dancer" ? readOptional(body.stageName) : "";
+    const submittedStageName = "";
     const displayName =
       role === "customer"
         ? customerDisplayName(email)
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     if (error) throw error;
     if (!data.user) throw new Error("Unable to create account.");
 
-    await upsertAccount(role, data.user.id, email, displayName, city, body);
+    await upsertAccount(role, data.user.id, email, displayName, city);
 
     if (role === "customer") {
       return NextResponse.json(await authResponse(data.user.id, role, null, true));
@@ -253,7 +253,6 @@ async function createVenueSignupAccount(input: {
       input.email,
       venue.name,
       venue.city,
-      {},
     );
 
     const { data: sessionData, error: sessionError } = await input.client.auth.signInWithPassword({
@@ -312,7 +311,6 @@ async function upsertAccount(
   email: string,
   displayName: string,
   city: string,
-  body: Record<string, unknown>,
 ) {
   const admin = createAdminSupabaseClient();
   const { error: accountError } = await admin.from("app_users").upsert({
@@ -340,7 +338,7 @@ async function upsertAccount(
     return;
   }
 
-  const stageName = readOptional(body.stageName);
+  const stageName = "";
   const { data: existingProfile, error: existingProfileError } = await admin
     .from("dancer_profiles")
     .select("*")

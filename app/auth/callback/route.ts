@@ -302,9 +302,10 @@ async function ensureCallbackAccount(admin: AdminClient, user: CallbackUser, rol
   const email = user.email?.toLowerCase() || readMetadataText(metadata.email).toLowerCase();
   const submittedDisplayName =
     readMetadataText(metadata.display_name) ||
-    readMetadataText(metadata.stage_name) ||
     readMetadataText(metadata.venue_name);
-  const displayName = submittedDisplayName || (role === "dancer" ? "Dancer" : displayNameFromEmail(email, role));
+  const displayName = role === "dancer"
+    ? "Dancer"
+    : submittedDisplayName || displayNameFromEmail(email, role);
 
   const { error: accountError } = await admin.from("app_users").upsert({
     id: user.id,
@@ -333,7 +334,7 @@ async function ensureCallbackDancerProfile(
   userId: string,
   metadata: Record<string, unknown>,
 ) {
-  const stageName = readMetadataText(metadata.stage_name);
+  const stageName = "";
   const city = readMetadataText(metadata.city);
 
   const { data: existingProfile, error: existingProfileError } = await admin

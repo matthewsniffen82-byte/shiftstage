@@ -50532,9 +50532,10 @@
     }
 
     function hasCompletedDancerProfileSetup(profile = {}) {
+      const identitySavedAt = String(profile.identity_saved_at || profile.identitySavedAt || "").trim();
       const stageName = String(profile.stage_name || profile.stageName || "").trim();
       const city = String(profile.city || profile.cityName || "").trim();
-      return Boolean(stageName && city);
+      return Boolean(identitySavedAt && stageName && city);
     }
 
     function saveDancerProfileDraft(update = {}) {
@@ -50937,12 +50938,15 @@
       const rejected = isRejectedDancerStatus(profile.status);
       const submittedForReview = normalizedReviewStatus(profile.status) === "pending_review";
       const savedProfileSetup = approved || rejected || hasCompletedDancerProfileSetup(profile);
+      const savedStageName = String(profile.identity_saved_at || profile.identitySavedAt || "").trim()
+        ? (profile.stage_name || profile.stageName || "")
+        : "";
       const draft = readStoredDancerProfileDraft();
       const useDraftFields = Boolean(draft && (draft.dirty === true || !savedProfileSetup));
       const liveSocials = dancerSocialMapFromProfile(profile);
       const draftSocials = draft?.socials && typeof draft.socials === "object" ? draft.socials : {};
       const legalName = useDraftFields ? (draft.legalName || profile.real_name || profile.realName || "") : (profile.real_name || profile.realName || draft?.legalName || "");
-      const stageName = useDraftFields ? (draft.stageName || profile.stage_name || profile.stageName || "") : (profile.stage_name || profile.stageName || draft?.stageName || "");
+      const stageName = useDraftFields ? (draft.stageName || savedStageName) : (savedStageName || draft?.stageName || "");
       const city = useDraftFields ? (draft.city || profile.city || profile.cityName || "") : (profile.city || profile.cityName || draft?.city || "");
       const photos = dancerProfilePhotoUrls(profile);
       const submittedPhotos = dancerSubmittedPhotosFromProfile(profile);

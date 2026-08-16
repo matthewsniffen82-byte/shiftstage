@@ -12,7 +12,6 @@ export type CustomerSignupInput = {
 };
 
 export type DancerSignupInput = {
-  stageName: string;
   email: string;
   password: string;
   city?: string;
@@ -61,9 +60,9 @@ export async function signUpDancer(client: DancrClient, input: DancerSignupInput
     options: {
       data: {
         role: "dancer",
-        display_name: input.stageName,
-        stage_name: input.stageName,
-        city: input.city || "Las Vegas",
+        display_name: "Dancer",
+        stage_name: null,
+        city: input.city || "",
       },
     },
   });
@@ -74,16 +73,16 @@ export async function signUpDancer(client: DancrClient, input: DancerSignupInput
   await createAppUser(client, {
     id: data.user.id,
     role: "dancer",
-    displayName: input.stageName,
+    displayName: "Dancer",
     email: input.email,
   });
 
   const { error: profileError } = await client.from("dancer_profiles").upsert({
     user_id: data.user.id,
     real_name: null,
-    stage_name: input.stageName,
-    slug: slugify(input.stageName),
-    city: input.city || "Las Vegas",
+    stage_name: "",
+    slug: `dancer-${data.user.id.slice(0, 8)}`,
+    city: input.city || "",
     ...initialDancerApprovalValues(),
   });
 

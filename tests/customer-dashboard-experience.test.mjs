@@ -29,7 +29,8 @@ test("customer dashboard leads with tonight, saved, deals, and alerts before acc
 test("dancer dashboard header prefers the saved stage name and never the email-derived account name", () => {
   assert.match(dashboard, /const profileDisplayName = String\(dashboardName\(state\.profile, role\) \|\| ""\)\.trim\(\)/);
   assert.match(dashboard, /const resolvedDisplayName = role === "dancer"[\s\S]*?\? profileDisplayName[\s\S]*?: accountDisplayName \|\| profileDisplayName/);
-  assert.match(dashboard, /if \(role === "dancer"\) return profile\.stage_name \|\| profile\.stageName \|\| ""/);
+  assert.match(dashboard, /if \(role === "dancer"\) return persistedDancerStageName\(profile\)/);
+  assert.match(dashboard, /function persistedDancerStageName[\s\S]*?identity_saved_at[\s\S]*?return ""/);
   assert.doesNotMatch(dashboard, /role === "dancer"[\s\S]{0,120}\? accountDisplayName/);
 });
 

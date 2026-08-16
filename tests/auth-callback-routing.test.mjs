@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [callbackSource, liveAppSource, dancerDashboardSource, signupRouteSource, profileRouteSource] = await Promise.all([
+const [callbackSource, liveAppSource, dancerDashboardSource, signupRouteSource, profileRouteSource, explicitIdentityMigration] = await Promise.all([
   readFile(new URL("../app/auth/callback/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/dancer/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608150005_require_explicit_dancer_identity.sql", import.meta.url), "utf8"),
 ]);
 
 test("confirmed dancer accounts pause on a dedicated confirmation page before profile setup", () => {
@@ -112,14 +113,23 @@ test("new dancer confirmation never invents a stage name or city", () => {
   const dancerProfileSync =
     callbackSource.match(/async function ensureCallbackDancerProfile[\s\S]*?async function uniqueDancerSlug/)?.[0] || "";
 
-  assert.match(signupRouteSource, /const submittedStageName = role === "dancer" \? readOptional\(body\.stageName\) : ""/);
-  assert.match(signupRouteSource, /const stageName = readOptional\(body\.stageName\)/);
+  assert.match(signupRouteSource, /const submittedStageName = ""/);
+  assert.match(signupRouteSource, /const stageName = ""/);
   assert.doesNotMatch(signupRouteSource, /dancerDisplayName\(email\)/);
-  assert.match(dancerProfileSync, /const stageName = readMetadataText\(metadata\.stage_name\)/);
+  assert.match(dancerProfileSync, /const stageName = ""/);
   assert.match(dancerProfileSync, /const city = readMetadataText\(metadata\.city\)/);
   assert.doesNotMatch(dancerProfileSync, /readMetadataText\(metadata\.city\) \|\| "Las Vegas"/);
   assert.doesNotMatch(dancerProfileSync, /displayName \|\| "New Dancer"/);
   assert.match(callbackSource, /tokenRole === "dancer" \? "Dancer" : tokenEmail/);
+});
+
+test("database auth bootstrap leaves dancer identity incomplete until an explicit profile save", () => {
+  assert.match(explicitIdentityMigration, /add column if not exists identity_saved_at timestamptz/);
+  assert.match(explicitIdentityMigration, /stage_name := nullif\(trim\(coalesce\(new\.raw_user_meta_data->>'stage_name', ''\)\), ''\)/);
+  assert.doesNotMatch(explicitIdentityMigration, /stage_name[^;]*display_name/);
+  assert.match(explicitIdentityMigration, /coalesce\(stage_name, ''\)/);
+  assert.match(explicitIdentityMigration, /identity_saved_at[\s\S]*?null/);
+  assert.match(profileRouteSource, /update\.identity_saved_at = new Date\(\)\.toISOString\(\)/);
 });
 
 test("existing confirmed accounts skip redundant callback account synchronization", () => {
