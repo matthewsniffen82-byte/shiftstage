@@ -18,6 +18,10 @@ loadEnvConfig(process.cwd());
 const productionRepairVersion = process.argv
   .find((argument) => argument.startsWith("--repair-version="))
   ?.slice("--repair-version=".length) || "";
+const markCompleteOnly = process.argv.includes("--mark-complete-only");
+if (markCompleteOnly && !productionRepairVersion) {
+  throw new Error("--mark-complete-only requires --repair-version.");
+}
 if (productionRepairVersion && !/^[a-z0-9][a-z0-9-]{0,63}$/.test(productionRepairVersion)) {
   throw new Error("--repair-version must be a lowercase version identifier.");
 }
@@ -39,8 +43,14 @@ if (!supabaseUrl || !serviceRoleKey) {
 const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+const totals = {
+  dancerPhotos: 0,
+  venueCovers: 0,
+  videos: 0,
+  skipped: 0,
+};
 const repairMarkerPath = productionRepairVersion
-  ? `__watermark-repairs/${productionRepairVersion}.json`
+  ? `__watermark-repairs/${productionRepairVersion}.marker.mp4`
   : "";
 if (repairMarkerPath && await hasCompletedRepair(repairMarkerPath)) {
   console.info(JSON.stringify({
@@ -48,6 +58,10 @@ if (repairMarkerPath && await hasCompletedRepair(repairMarkerPath)) {
     reason: "already_completed",
     version: productionRepairVersion,
   }));
+  process.exit(0);
+}
+if (repairMarkerPath && markCompleteOnly) {
+  await markRepairComplete(repairMarkerPath);
   process.exit(0);
 }
 const failures = [];
@@ -58,13 +72,6 @@ const requestedScope = process.argv
 if (!["all", "images", "videos"].includes(requestedScope)) {
   throw new Error("--scope must be one of: all, images, videos.");
 }
-const totals = {
-  dancerPhotos: 0,
-  venueCovers: 0,
-  videos: 0,
-  skipped: 0,
-};
-
 if (requestedScope === "all" || requestedScope === "images") {
   await ensureOriginalMediaBucket();
   await backfillDancerPhotos();
@@ -106,7 +113,7 @@ async function markRepairComplete(storagePath) {
     .from("mydancr-tv-videos")
     .upload(storagePath, marker, {
       cacheControl: "0",
-      contentType: "application/json",
+      contentType: "video/mp4",
       upsert: true,
     });
   if (error) throw error;

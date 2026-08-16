@@ -210,9 +210,11 @@ test("the idempotent production backfill covers existing public media without av
   assert.match(backfillScript, /archivedOriginalStoragePath/);
   assert.match(backfillScript, /__watermark-repairs/);
   assert.match(backfillScript, /already_completed/);
+  assert.match(backfillScript, /--mark-complete-only/);
+  assert.match(backfillScript, /contentType: "video\/mp4"/);
   assert.match(
     packageJson.scripts.postbuild,
-    /backfill-public-media-watermarks\.mjs --force --scope=videos --repair-version=vector-path-v1/,
+    /backfill-public-media-watermarks\.mjs --repair-version=vector-path-v1 --mark-complete-only/,
   );
 });
 
