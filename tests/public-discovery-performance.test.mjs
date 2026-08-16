@@ -21,7 +21,7 @@ test("the production home shell cannot reuse a stale build artifact and keeps a 
 });
 
 test("home discovery uses one short-lived cached production endpoint", () => {
-  assert.match(homeSource, /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`\)/);
+  assert.match(homeSource, /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{/);
   assert.doesNotMatch(homeSource, /fetchJson\(`\/api\/public\/dancers\?\$\{query\}`\)/);
   assert.match(discoveryRouteSource, /getLiveDancerDiscovery\(client, city\)/);
   assert.match(discoveryRouteSource, /s-maxage=15/);

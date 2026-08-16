@@ -42699,10 +42699,51 @@
       return liveDancers.length || liveVenues.length;
     }
 
-    async function fetchJson(url) {
-      const response = await fetch(url, { headers: { Accept: "application/json" } });
-      if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-      return response.json();
+    const LIVE_JSON_REQUEST_TIMEOUT_MS = 7000;
+
+    async function fetchJson(url, options = {}) {
+      const timeoutMs = Number(options.timeoutMs) > 0
+        ? Number(options.timeoutMs)
+        : LIVE_JSON_REQUEST_TIMEOUT_MS;
+      const retries = Math.max(0, Number(options.retries) || 0);
+
+      for (let attempt = 0; attempt <= retries; attempt += 1) {
+        const controller = typeof AbortController === "function" ? new AbortController() : null;
+        let timeoutId = null;
+        const timeoutError = new Error("The live request timed out.");
+        timeoutError.name = "TimeoutError";
+        const timeoutRequest = new Promise((resolve, reject) => {
+          timeoutId = window.setTimeout(() => {
+            if (controller) controller.abort();
+            reject(timeoutError);
+          }, timeoutMs);
+        });
+
+        try {
+          const response = await Promise.race([
+            fetch(url, {
+              headers: { Accept: "application/json" },
+              signal: controller ? controller.signal : undefined
+            }),
+            timeoutRequest
+          ]);
+          if (!response.ok) {
+            const requestError = new Error(`Request failed: ${response.status}`);
+            requestError.status = response.status;
+            throw requestError;
+          }
+          return await response.json();
+        } catch (error) {
+          const status = Number(error?.status || 0);
+          const retryable = !status || status === 429 || status >= 500;
+          if (attempt >= retries || !retryable) throw error;
+          await new Promise((resolve) => window.setTimeout(resolve, 250 * (attempt + 1)));
+        } finally {
+          if (timeoutId !== null) window.clearTimeout(timeoutId);
+        }
+      }
+
+      throw new Error("The live request could not be completed.");
     }
 
     function dancerSignupCityOptionsMarkup(selectedCity = "") {
@@ -42797,7 +42838,10 @@
       if (cacheBust) params.set("refresh", String(Date.now()));
       const query = params.toString();
       try {
-        const discovery = await fetchJson(`/api/public/discovery?${query}`);
+        const discovery = await fetchJson(`/api/public/discovery?${query}`, {
+          timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
+          retries: 1
+        });
         const applied = applyLiveMarket(
           city,
           discovery.dancers || [],
@@ -42817,7 +42861,7 @@
           console.warn("Live discovery refresh failed; keeping the current public results", error);
           return;
         }
-        liveMarketState[city] = "fallback";
+        liveMarketState[city] = "error";
         if (markets[city]) {
           markets[city].dancers = [];
           markets[city].stats.dancers = 0;
@@ -55163,6 +55207,17 @@
         results.innerHTML = `<div class="locked" role="status">${escapeHtml(loadingLabel)}</div>`;
         return;
       }
+      if (liveMarketState[city] === "error" && !items.length) {
+        const contentLabel = activeTab === "venues" ? "clubs" : "dancer profiles";
+        results.innerHTML = `
+          <section class="home-discovery-empty" aria-labelledby="homeDiscoveryErrorTitle" role="alert">
+            <strong id="homeDiscoveryErrorTitle">Live ${contentLabel} could not load.</strong>
+            <p>Check your connection and try again. MyDancr will request the latest live results.</p>
+            <button class="home-discovery-empty-action" type="button" data-retry-live-discovery="${escapeHtml(city)}">Try again</button>
+          </section>
+        `;
+        return;
+      }
       if (activeTab === "dancers" && !items.length) {
         const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilter}`;
         results.innerHTML = `
@@ -56592,6 +56647,16 @@
 
     results.addEventListener("click", async (event) => {
       if (!event.target.closest(".home-tv-feed-actions")) closeHomeTvFeedReportMenus();
+      const liveDiscoveryRetry = event.target.closest("[data-retry-live-discovery]");
+      if (liveDiscoveryRetry) {
+        event.preventDefault();
+        const retryCity = liveDiscoveryRetry.dataset.retryLiveDiscovery || selectedCity();
+        liveMarketState[retryCity] = null;
+        const retryRequest = loadLiveDiscovery(retryCity, { force: true });
+        if (citySelect.value === retryCity) render();
+        await retryRequest;
+        return;
+      }
       const dancerFilterButton = event.target.closest("[data-dancer-directory-filter]");
       if (dancerFilterButton) {
         event.preventDefault();
