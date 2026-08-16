@@ -38,6 +38,18 @@ test("every Next page receives the shared consolidated mobile navigation", () =>
   assert.doesNotMatch(tvSource, /className="tv-mobile-nav"/);
 });
 
+test("mobile destinations use native navigation for the checked-in discovery shell", () => {
+  assert.doesNotMatch(navigationSource, /import Link from "next\/link"/);
+  assert.match(
+    navigationSource,
+    /<a[\s\S]*?href=\{href\}[\s\S]*?key=\{destination\.id\}/,
+  );
+  assert.match(
+    navigationSource,
+    /window\.location\.assign\(destinationHref\(destinations\[nextIndex\], city\)\)/,
+  );
+});
+
 test("iPhone, Android, and Next pages share the Android floating glass dock", () => {
   assert.match(
     navigationSource,

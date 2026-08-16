@@ -19,7 +19,7 @@ test("Next pages use the same consolidated three-destination full-screen swipe o
   );
   assert.match(
     navigationSource,
-    /const direction = deltaX < 0 \? 1 : -1;[\s\S]*?const nextIndex = currentIndex \+ direction;[\s\S]*?router\.push\(destinationHref\(destinations\[nextIndex\], city\)\)/,
+    /const direction = deltaX < 0 \? 1 : -1;[\s\S]*?const nextIndex = currentIndex \+ direction;[\s\S]*?window\.location\.assign\(destinationHref\(destinations\[nextIndex\], city\)\)/,
   );
 });
 

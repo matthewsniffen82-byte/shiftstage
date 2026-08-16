@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
@@ -70,7 +69,6 @@ const destinations = [
 
 export function GlobalMobileBottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const [city, setCity] = useState(DEFAULT_CITY);
   const swipeIndicator = useRef<HTMLDivElement>(null);
 
@@ -225,7 +223,7 @@ export function GlobalMobileBottomNav() {
       resetGesture();
       if (!shouldNavigate) return;
       if (event.cancelable) event.preventDefault();
-      router.push(destinationHref(destinations[nextIndex], city));
+      window.location.assign(destinationHref(destinations[nextIndex], city));
     };
 
     document.addEventListener("touchstart", onTouchStart, {
@@ -251,7 +249,7 @@ export function GlobalMobileBottomNav() {
       document.removeEventListener("touchend", onTouchEnd, true);
       document.removeEventListener("touchcancel", resetGesture, true);
     };
-  }, [city, pathname, router]);
+  }, [city, pathname]);
 
   return (
     <>
@@ -271,7 +269,7 @@ export function GlobalMobileBottomNav() {
           const active = isActiveDestination(pathname, destination.id);
           const href = homeDiscoveryHref(destination.view, city);
           return (
-            <Link
+            <a
               aria-current={active ? "page" : undefined}
               className={`${active ? "active " : ""}${destination.id}-destination`}
               href={href}
@@ -282,7 +280,7 @@ export function GlobalMobileBottomNav() {
                 {destination.icon}
               </span>
               <span>{destination.label}</span>
-            </Link>
+            </a>
           );
         })}
       </nav>

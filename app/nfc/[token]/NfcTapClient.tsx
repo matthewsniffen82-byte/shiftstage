@@ -172,11 +172,11 @@ export function NfcTapClient({ token }: { token: string }) {
   return (
     <main className="nfc-page">
       <section className={`nfc-card${complete ? " complete" : ""}`} data-phase={phase} aria-busy={phase === "reading" || phase === "redeeming"}>
-        <Link className="nfc-exit" href={exitHref} aria-label={exitLabel} title={exitLabel}>
+        <a className="nfc-exit" href={exitHref} aria-label={exitLabel} title={exitLabel}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="m6 6 12 12M18 6 6 18" />
           </svg>
-        </Link>
+        </a>
         <div className="nfc-symbol"><NfcIcon /></div>
         <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier NFC redemption" : "Verified club NFC"}</span>
         <h1>{state?.venue.name || "MyDancr NFC"}</h1>
@@ -236,14 +236,14 @@ export function NfcTapClient({ token }: { token: string }) {
             </button>
           )
         ) : null}
-        {phase === "error" && !complete ? <Link className="nfc-secondary" href={exitHref}>{exitLabel}</Link> : null}
+        {phase === "error" && !complete ? <a className="nfc-secondary" href={exitHref}>{exitLabel}</a> : null}
         {complete ? (
-          <Link
+          <a
             className="nfc-secondary"
             href={state?.tag.type === "dressing_room" && dancerActivationComplete ? "/dashboard/dancer?nfc=complete" : state?.tag.type === "dressing_room" ? "/dashboard/dancer" : "/"}
           >
             Done
-          </Link>
+          </a>
         ) : null}
       </section>
       <p className="nfc-security">Only use MyDancr NFC stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>

@@ -85,11 +85,16 @@ test("dressing-room completion is reconciled before Done returns to the dashboar
 
 test("failed NFC taps always provide a clear mobile escape route", () => {
   assert.match(client, /const exitHref = auth\.role === "dancer" \? "\/dashboard\/dancer" : "\/"/);
-  assert.match(client, /className="nfc-exit"[\s\S]*?aria-label=\{exitLabel\}/);
+  assert.match(client, /<a className="nfc-exit"[\s\S]*?aria-label=\{exitLabel\}/);
   assert.match(client, /phase === "error" && !complete[\s\S]*?\{exitLabel\}/);
   assert.match(client, /phase === "error"[\s\S]*?"Try again"/);
   assert.match(client, /Profile activation was not completed\. Step 3 remains open/);
   assert.match(client, /\.nfc-exit\{[\s\S]*?width:48px;height:48px[\s\S]*?border-radius:50%/);
+});
+
+test("NFC exits use native navigation so mobile browsers can leave immediately", () => {
+  assert.doesNotMatch(client, /<Link className="nfc-exit"/);
+  assert.match(client, /complete \? \([\s\S]*?<a[\s\S]*?className="nfc-secondary"[\s\S]*?>[\s\S]*?Done[\s\S]*?<\/a>/);
 });
 
 test("dressing-room authentication stays venue-aware and dancer-only", () => {
