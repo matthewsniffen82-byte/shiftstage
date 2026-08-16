@@ -31758,16 +31758,39 @@
           text-align: left;
         }
         .home-tv-feed-progress {
-          --home-tv-feed-control-progress: 0%;
           position: absolute;
           z-index: 8;
           right: 14px;
-          bottom: -12px;
+          bottom: 6px;
+          left: 14px;
+          height: 3px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: color-mix(in srgb, var(--dancr-color-text-primary) 58%, transparent);
+          box-shadow: 0 1px 5px var(--dancr-color-black-strong);
+          pointer-events: none;
+          opacity: 1;
+          transition: opacity .16s ease;
+        }
+        .home-tv-feed-progress > span {
+          width: 0;
+          height: 100%;
+          display: block;
+          border-radius: inherit;
+          background: color-mix(in srgb, var(--dancr-color-text-primary) 88%, transparent);
+          box-shadow: none;
+          transition: width .1s linear;
+        }
+        .home-tv-feed-scrubber {
+          position: absolute;
+          z-index: 9;
+          right: 14px;
+          bottom: -8px;
           left: 14px;
           width: auto;
-          height: 40px;
-          margin: 0;
+          height: 28px;
           min-height: 0 !important;
+          margin: 0;
           padding: 0 !important;
           border: 0 !important;
           border-radius: 0 !important;
@@ -31776,43 +31799,34 @@
           background-color: transparent !important;
           background-image: none !important;
           box-shadow: none !important;
-          accent-color: #b8b8c5 !important;
           appearance: none !important;
           -webkit-appearance: none !important;
           cursor: pointer;
-          pointer-events: auto;
           opacity: 1;
           touch-action: none;
           -webkit-tap-highlight-color: transparent;
           -webkit-touch-callout: none;
           user-select: none;
         }
-        .home-tv-feed-progress::-webkit-slider-runnable-track {
-          height: 3px;
+        .home-tv-feed-scrubber::-webkit-slider-runnable-track {
+          height: 28px;
           border: 0;
-          border-radius: 999px;
-          background: linear-gradient(
-            to right,
-            rgba(232,232,238,.74) 0 var(--home-tv-feed-control-progress),
-            rgba(255,255,255,.16) var(--home-tv-feed-control-progress) 100%
-          );
+          background: transparent;
         }
-        .home-tv-feed-progress::-moz-range-track {
-          height: 3px;
+        .home-tv-feed-scrubber::-moz-range-track {
+          height: 28px;
           border: 0;
-          border-radius: 999px;
-          background: rgba(255,255,255,.16);
+          background: transparent;
         }
-        .home-tv-feed-progress::-moz-range-progress {
-          height: 3px;
+        .home-tv-feed-scrubber::-moz-range-progress {
+          height: 28px;
           border: 0;
-          border-radius: 999px;
-          background: rgba(232,232,238,.74);
+          background: transparent;
         }
-        .home-tv-feed-progress::-webkit-slider-thumb {
-          width: 14px;
-          height: 14px;
-          margin-top: -5.5px;
+        .home-tv-feed-scrubber::-webkit-slider-thumb {
+          width: 28px;
+          height: 28px;
+          margin-top: 0;
           border: 0;
           border-radius: 50%;
           background: transparent;
@@ -31820,25 +31834,29 @@
           appearance: none;
           -webkit-appearance: none;
         }
-        .home-tv-feed-progress::-moz-range-thumb {
-          width: 12px;
-          height: 12px;
+        .home-tv-feed-scrubber::-moz-range-thumb {
+          width: 28px;
+          height: 28px;
           border: 0;
           border-radius: 50%;
           background: transparent;
           box-shadow: none;
         }
-        .home-tv-feed-progress:focus-visible {
+        .home-tv-feed-scrubber:focus-visible {
           outline: 0;
         }
-        .home-tv-feed-progress:disabled {
-          opacity: .45;
+        .home-tv-feed-scrubber:disabled {
           cursor: wait;
         }
         #results.home-tv-feed:fullscreen .home-tv-feed-progress,
         #results.home-tv-feed:-webkit-full-screen .home-tv-feed-progress,
         #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-progress {
-          bottom: calc(env(safe-area-inset-bottom) - 12px);
+          bottom: calc(6px + env(safe-area-inset-bottom));
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-scrubber,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-scrubber,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-scrubber {
+          bottom: calc(env(safe-area-inset-bottom) - 8px);
         }
         /* Full-view controls retain their spacing while clearing the device edge. */
         #results.home-tv-feed:fullscreen .home-tv-feed-copy,
@@ -33451,7 +33469,12 @@
           }
           .home-tv-feed-progress {
             right: 12px;
-            bottom: -12px;
+            bottom: 7px;
+            left: 12px;
+          }
+          .home-tv-feed-scrubber {
+            right: 12px;
+            bottom: -7px;
             left: 12px;
           }
           .home-discovery-feed-copy {
@@ -55442,15 +55465,17 @@
 
     function syncHomeTvFeedProgress(video, slide) {
       const progress = slide.querySelector(".home-tv-feed-progress");
-      if (!progress) return;
+      const fill = progress?.querySelector("span");
+      const scrubber = slide.querySelector(".home-tv-feed-scrubber");
+      if (!progress || !fill || !scrubber) return;
       const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
       const currentTime = duration ? Math.min(duration, Math.max(0, video.currentTime || 0)) : 0;
       const ratio = duration ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
-      progress.max = String(duration || 0);
-      progress.value = String(currentTime);
-      progress.disabled = !duration;
-      progress.style.setProperty("--home-tv-feed-control-progress", `${ratio * 100}%`);
-      progress.setAttribute(
+      fill.style.width = `${ratio * 100}%`;
+      scrubber.max = String(duration || 0);
+      scrubber.value = String(currentTime);
+      scrubber.disabled = !duration;
+      scrubber.setAttribute(
         "aria-valuetext",
         duration
           ? `${formatProfileTvDuration(currentTime)} of ${formatProfileTvDuration(duration)}`
@@ -55459,22 +55484,28 @@
     }
 
     function createHomeTvFeedProgress(slide, video) {
-      const progress = document.createElement("input");
+      const fragment = document.createDocumentFragment();
+      const progress = document.createElement("div");
       progress.className = "home-tv-feed-progress";
-      progress.type = "range";
-      progress.min = "0";
-      progress.max = "0";
-      progress.step = "0.01";
-      progress.value = "0";
-      progress.setAttribute("aria-label", "Video playback position");
-      progress.setAttribute("aria-valuetext", "Video loading");
-      progress.addEventListener("input", () => {
+      progress.setAttribute("aria-hidden", "true");
+      progress.appendChild(document.createElement("span"));
+      const scrubber = document.createElement("input");
+      scrubber.className = "home-tv-feed-scrubber";
+      scrubber.type = "range";
+      scrubber.min = "0";
+      scrubber.max = "0";
+      scrubber.step = "0.01";
+      scrubber.value = "0";
+      scrubber.setAttribute("aria-label", "Video playback position");
+      scrubber.setAttribute("aria-valuetext", "Video loading");
+      scrubber.addEventListener("input", () => {
         const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
-        if (duration) video.currentTime = Math.min(duration, Math.max(0, Number(progress.value) || 0));
+        if (duration) video.currentTime = Math.min(duration, Math.max(0, Number(scrubber.value) || 0));
         syncHomeTvFeedProgress(video, slide);
       });
+      fragment.append(progress, scrubber);
       window.requestAnimationFrame(() => syncHomeTvFeedProgress(video, slide));
-      return progress;
+      return fragment;
     }
 
     function showRelativeHomeTvFeedSlide(slide, direction) {
