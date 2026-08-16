@@ -83,6 +83,14 @@ test("dressing-room authentication stays venue-aware and dancer-only", () => {
   assert.match(account, /router\.push\(safeReturnTo \|\| destination\)/);
 });
 
+test("the NFC confirmation lands once without recentering or horizontal overflow", () => {
+  assert.match(client, /\.nfc-page\{[^}]*align-content:start;justify-items:center/);
+  assert.match(client, /\.nfc-page\{[^}]*overflow-anchor:none/);
+  assert.doesNotMatch(client, /\.nfc-page\{[^}]*place-content:center/);
+  assert.match(client, /\.nfc-card\{[^}]*max-width:100%[^}]*box-sizing:border-box/);
+  assert.match(client, /\.nfc-card\{[^}]*overflow-anchor:none/);
+});
+
 test("cashier NFC preserves the selected Club Deal and current-shift attribution", () => {
   assert.match(baseMigration, /confirm_deal_redemption_from_nfc/);
   assert.match(baseMigration, /previous\.redeemed_at >= v_now - interval '24 hours'/);
