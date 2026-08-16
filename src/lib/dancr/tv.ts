@@ -26,7 +26,7 @@ export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
 export const MYDANCR_TV_MAX_DURATION_SECONDS = 30;
 export const MYDANCR_TV_SIGNED_URL_SECONDS = 60 * 60;
 export const MYDANCR_TV_PROFILE_VIDEO_LIMIT = 5;
-export const MYDANCR_TV_MIME_TYPES = new Set(["video/mp4", "video/webm"]);
+export const MYDANCR_TV_MIME_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 
 export const MYDANCR_TV_PROFILE_SLOT_STATUSES = [
   "uploading",
@@ -709,7 +709,7 @@ export async function createMyDancrTvUpload(
     throw new Error("Save your stage name and city before uploading profile videos.");
   }
 
-  if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new Error("Upload an MP4 or WebM video.");
+  if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new Error("Upload an MP4, WebM, or MOV video.");
   if (!Number.isSafeInteger(input.fileSize) || input.fileSize < 1 || input.fileSize > MYDANCR_TV_MAX_BYTES) {
     throw new Error("Video files must be 75 MB or smaller.");
   }
@@ -744,7 +744,7 @@ export async function createMyDancrTvUpload(
   }
 
   const videoId = crypto.randomUUID();
-  const extension = input.mimeType === "video/webm" ? "webm" : "mp4";
+  const extension = input.mimeType === "video/webm" ? "webm" : input.mimeType === "video/quicktime" ? "mov" : "mp4";
   const storagePath = `${userId}/${dancer.id}/${videoId}.${extension}`;
   const { data: video, error: insertError } = await admin
     .from("mydancr_tv_videos")

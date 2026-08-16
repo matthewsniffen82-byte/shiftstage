@@ -217,7 +217,7 @@ test("public image responses expose responsive sources with legacy fallbacks", (
   assert.match(venueRoute, /coverImageSrcSet:/);
 });
 
-test("profile surfaces use responsive sources and explain how to retain upload quality", () => {
+test("profile surfaces use responsive sources and concise plural upload guidance", () => {
   assert.match(dancerProfile, /srcSet=\{avatarPhotoSrcSet \|\| undefined\}/);
   assert.match(dancerCarousel, /srcSet=\{item\.imageSrcSet \|\| undefined\}/);
   assert.match(
@@ -225,7 +225,9 @@ test("profile surfaces use responsive sources and explain how to retain upload q
     /srcSet=\{selectedItem\.imageSrcSet \|\| undefined\}/,
   );
   assert.match(dashboard, /original camera image/);
-  assert.match(dashboard, /never enlarges a small/);
+  assert.match(dashboard, /Choose profile photos/);
+  assert.doesNotMatch(dashboard, /Choose the original camera photo for maximum detail/);
+  assert.doesNotMatch(dashboard, /never enlarges a small/);
   assert.match(liveShell, /function responsiveCssImageSet/);
   assert.match(liveShell, /profilePhotoSrcSet/);
   assert.match(liveShell, /original camera images/);

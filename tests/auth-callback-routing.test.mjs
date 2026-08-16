@@ -107,3 +107,26 @@ test("email callbacks preserve existing dancer approval and account state", () =
   assert.match(existingProfileBranch, /EXISTING_DANCER_PROFILE_PRESERVED_DURING_EMAIL_CALLBACK/);
   assert.doesNotMatch(existingProfileBranch, /\.update\(|status:\s*"draft"|is_public\s*:/);
 });
+
+test("new dancer confirmation never invents a stage name or city", () => {
+  const dancerProfileSync =
+    callbackSource.match(/async function ensureCallbackDancerProfile[\s\S]*?async function uniqueDancerSlug/)?.[0] || "";
+
+  assert.match(signupRouteSource, /const submittedStageName = role === "dancer" \? readOptional\(body\.stageName\) : ""/);
+  assert.match(signupRouteSource, /const stageName = readOptional\(body\.stageName\)/);
+  assert.doesNotMatch(signupRouteSource, /dancerDisplayName\(email\)/);
+  assert.match(dancerProfileSync, /const stageName = readMetadataText\(metadata\.stage_name\)/);
+  assert.match(dancerProfileSync, /const city = readMetadataText\(metadata\.city\)/);
+  assert.doesNotMatch(dancerProfileSync, /readMetadataText\(metadata\.city\) \|\| "Las Vegas"/);
+  assert.doesNotMatch(dancerProfileSync, /displayName \|\| "New Dancer"/);
+  assert.match(callbackSource, /tokenRole === "dancer" \? "Dancer" : tokenEmail/);
+});
+
+test("existing confirmed accounts skip redundant callback account synchronization", () => {
+  const callbackSessionReader =
+    callbackSource.match(/async function readCallbackSession[\s\S]*?async function confirmSupabaseCallback/)?.[0] || "";
+
+  assert.match(callbackSessionReader, /if \(!account && authoritativeRole\)/);
+  assert.match(callbackSessionReader, /await ensureCallbackAccount/);
+  assert.match(callbackSessionReader, /account = await getAccountByUserId/);
+});

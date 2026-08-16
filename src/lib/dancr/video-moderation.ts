@@ -82,7 +82,7 @@ export async function moderateStoredMyDancrTvVideo(
   const apiKey = getServerEnv("OPENAI_API_KEY");
   const openai = new OpenAI({ apiKey });
   const workspace = await mkdtemp(path.join(tmpdir(), "mydancr-tv-moderation-"));
-  const extension = input.storageMime === "video/webm" ? "webm" : "mp4";
+  const extension = input.storageMime === "video/webm" ? "webm" : input.storageMime === "video/quicktime" ? "mov" : "mp4";
   const videoPath = path.join(workspace, `source.${extension}`);
 
   try {

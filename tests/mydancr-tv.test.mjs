@@ -8,6 +8,7 @@ const [
   thirtySecondMigration,
   restoredTenSecondMigration,
   restoredThirtySecondMigration,
+  quickTimeMigration,
   tvSource,
   publicRoute,
   publicCountRoute,
@@ -30,6 +31,7 @@ const [
   readFile(new URL("../supabase/migrations/202608080001_mydancr_tv_thirty_second_feed_distribution.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608140003_restore_mydancr_tv_ten_second_limit.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608140004_restore_mydancr_tv_thirty_second_limit.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608150004_allow_phone_camera_quicktime_videos.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/tv/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/tv/count/route.ts", import.meta.url), "utf8"),
@@ -81,11 +83,20 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(restoredThirtySecondMigration, /check \(duration_seconds between 1 and 30\)[\s\S]*?not valid/);
   assert.match(restoredThirtySecondMigration, /status = 'approved'[\s\S]*?duration_seconds between 1 and 30/);
   assert.match(tvSource, /status: "submitted"/);
-  assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, file/);
-  assert.match(dancerStudio, /Your video completed automated safety review/);
+  assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, item\.file/);
+  assert.match(dancerStudio, /sent through moderation/);
   assert.match(dancerStudio, /Under review/);
   assert.match(dancerStudio, /Incognito is on/);
   assert.doesNotMatch(dancerStudio, /sample video|placeholder video|mock/i);
+});
+
+test("phone camera uploads accept QuickTime video in storage and moderation", () => {
+  assert.match(tvSource, /MYDANCR_TV_MIME_TYPES = new Set\(\["video\/mp4", "video\/webm", "video\/quicktime"\]\)/);
+  assert.match(tvSource, /input\.mimeType === "video\/quicktime" \? "mov"/);
+  assert.match(dancerStudio, /accept="video\/mp4,video\/webm,video\/quicktime,\.mov"/);
+  assert.match(dancerStudio, /accept="video\/\*"[\s\S]*?capture="environment"/);
+  assert.match(quickTimeMigration, /storage_mime in \('video\/mp4', 'video\/webm', 'video\/quicktime'\)/);
+  assert.match(quickTimeMigration, /allowed_mime_types = array\['video\/mp4', 'video\/webm', 'video\/quicktime'\]/);
 });
 
 test("feed-only platform videos remain public in TV without consuming profile slots", () => {

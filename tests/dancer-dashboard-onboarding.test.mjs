@@ -92,8 +92,8 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /embedded \? \([\s\S]*?<h2>Profile videos<\/h2>[\s\S]*?approved videos appear on your profile and MyDancr TV/i);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
-  assert.match(dancerStudio, /embedded \? "Submit video for review" : "Submit for MyDancr TV review"/);
-  assert.match(dancerStudio, /\.tv-upload-form > label \{ min-width: 0;/);
+  assert.match(dancerStudio, /Submit \$\{queuedVideos\.length \|\| ""\} \$\{queuedVideos\.length === 1 \? "video" : "videos"\} for review/);
+  assert.match(dancerStudio, /\.tv-video-source-grid label \{ min-width: 0;/);
   assert.match(dancerStudio, /input\[type="file"\] \{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%;/);
 });
 
@@ -143,9 +143,29 @@ test("embedded video management uses a contained mobile stack", () => {
 });
 
 test("a completed profile photo upload clears the native filename from onboarding", () => {
-  assert.match(dashboard, /const photoInputRef = useRef<HTMLInputElement>\(null\)/);
-  assert.match(dashboard, /ref=\{photoInputRef\}[\s\S]*?type="file"/);
-  assert.match(dashboard, /setStatus\(photoUploadStatusMessage\(uploadStatus, data\.message\)\);\s*selectPhoto\(null\);\s*if \(photoInputRef\.current\) photoInputRef\.current\.value = "";/);
+  assert.match(dashboard, /const galleryPhotoInputRef = useRef<HTMLInputElement>\(null\)/);
+  assert.match(dashboard, /multiple[\s\S]*?ref=\{galleryPhotoInputRef\}[\s\S]*?type="file"/);
+  assert.match(dashboard, /event\.target\.value = ""/);
+  assert.match(dashboard, /if \(galleryPhotoInputRef\.current\) galleryPhotoInputRef\.current\.value = ""/);
+  assert.match(dashboard, /if \(cameraPhotoInputRef\.current\) cameraPhotoInputRef\.current\.value = ""/);
+});
+
+test("photo and video uploaders queue five phone files and expose camera capture", () => {
+  assert.match(dashboard, /type DancerPhotoQueueItem/);
+  assert.match(dashboard, /multiple[\s\S]*?ref=\{galleryPhotoInputRef\}/);
+  assert.match(dashboard, /capture="environment"[\s\S]*?ref=\{cameraPhotoInputRef\}/);
+  assert.match(dashboard, /imageFiles\.slice\(0, Math\.min\(availableProfileSlots, availableBatchSlots\)\)/);
+  assert.match(dashboard, /for \(let index = 0; index < batch\.length; index \+= 1\)/);
+  assert.match(dashboard, /DANCER_PHOTOS_KEEP_OPEN_EVENT/);
+  assert.doesNotMatch(dashboard, /Choose the original camera photo for maximum detail/);
+
+  assert.match(dancerStudio, /type QueuedVideo/);
+  assert.match(dancerStudio, /accept="video\/mp4,video\/webm,video\/quicktime,\.mov"[\s\S]*?multiple/);
+  assert.match(dancerStudio, /capture="environment"/);
+  assert.match(dancerStudio, /videoFiles\.slice\(0, Math\.min\(availableSlots, maxVideos - current\.length\)\)/);
+  assert.match(dancerStudio, /for \(let index = 0; index < batch\.length; index \+= 1\)/);
+  assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, item\.file/);
+  assert.match(dancerStudio, /preparedVideoId[\s\S]*?method: "DELETE"/);
 });
 
 test("the full profile preview renders approved media and restores the dashboard position", () => {

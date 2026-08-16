@@ -124,17 +124,18 @@ export async function POST(request: Request) {
     const city = role === "dancer"
       ? await requireDancerSignupCity(createAdminSupabaseClient(), body.city)
       : readOptional(body.city) || "Las Vegas";
+    const submittedStageName = role === "dancer" ? readOptional(body.stageName) : "";
     const displayName =
       role === "customer"
         ? customerDisplayName(email)
-        : readOptional(body.stageName) || dancerDisplayName(email);
+        : submittedStageName || "Dancer";
     const metadata =
       role === "customer"
         ? { role, display_name: displayName }
         : {
             role,
             display_name: displayName,
-            stage_name: readOptional(body.stageName) || null,
+            stage_name: submittedStageName || null,
             city,
           };
 
@@ -339,7 +340,7 @@ async function upsertAccount(
     return;
   }
 
-  const stageName = readOptional(body.stageName) || displayName;
+  const stageName = readOptional(body.stageName);
   const { data: existingProfile, error: existingProfileError } = await admin
     .from("dancer_profiles")
     .select("*")
@@ -449,10 +450,6 @@ function adminAuthEmail(username: string) {
 
 function customerDisplayName(email: string) {
   return email.split("@")[0]?.trim() || "Customer";
-}
-
-function dancerDisplayName(email: string) {
-  return email.split("@")[0]?.trim() || "Dancer";
 }
 
 function safeEmailRedirectTo(value: unknown) {

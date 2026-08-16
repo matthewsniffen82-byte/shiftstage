@@ -53,3 +53,16 @@ test("normal account navigation cannot reopen a legacy dashboard variant", () =>
   assert.match(liveShell, /await hydrateDancerApprovalProgress\(\);\s*openUnifiedDashboard\("dancer"\);/);
   assert.match(liveShell, /const opened = openUnifiedDashboard\("venue"\);/);
 });
+
+test("fresh confirmation sessions load the dashboard account and panels in parallel", () => {
+  assert.match(dashboard, /function storedSessionIsFresh\(session: StoredSession \| null\)/);
+  assert.match(dashboard, /expiresAt > Math\.floor\(Date\.now\(\) \/ 1000\) \+ 120/);
+  assert.match(
+    dashboard,
+    /if \(storedSessionIsFresh\(session\)\) \{[\s\S]*?\[account, panels\] = await Promise\.all\(\[[\s\S]*?readJson\("\/api\/account", initialAuthHeaders\)[\s\S]*?loadDashboardPanels\(initialAuthHeaders\)/,
+  );
+  assert.match(
+    dashboard,
+    /else \{[\s\S]*?account = await readJson\("\/api\/account", initialAuthHeaders\)[\s\S]*?const refreshedHeaders = dashboardAuthHeaders\(readSession\(\)\)[\s\S]*?panels = await loadDashboardPanels\(refreshedHeaders\)/,
+  );
+});

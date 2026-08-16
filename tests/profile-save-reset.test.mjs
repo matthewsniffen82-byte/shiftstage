@@ -172,7 +172,7 @@ test("onboarding Step 2 stays locked until every photo is fully approved", () =>
 
 test("gallery uploads use unique database slots and deletion targets one exact id", () => {
   assert.match(dashboardSource, /formData\.set\("sortOrder", String\(uploadSortOrder\)\)/);
-  assert.match(dashboardSource, /nextGalleryPhotoSortOrder\(photos\)/);
+  assert.match(dashboardSource, /nextGalleryPhotoSortOrder\(workingPhotos\)/);
   assert.match(imageModerationSource, /resolveDancerPhotoSortOrder\([^]*?input\.userId,[^]*?input\.sortOrder/);
   assert.match(imageModerationSource, /profilePhotoUploadContext\(Boolean\(input\.isPrimary\), resolvedSortOrder\)/);
   assert.match(imageModerationSource, /occupiedDancerPhotoSlots/);

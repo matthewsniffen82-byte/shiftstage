@@ -199,7 +199,7 @@ function callbackHtml(
                 : undefined,
             account: {
               role: tokenRole || redirectRole || null,
-              displayName: tokenMetadata.display_name || tokenMetadata.stage_name || tokenEmail || null,
+              displayName: tokenMetadata.display_name || tokenMetadata.stage_name || (tokenRole === "dancer" ? "Dancer" : tokenEmail) || null,
               email: tokenEmail || null,
               accountState: "active"
             }
@@ -251,7 +251,7 @@ async function readCallbackSession(request: Request) {
     let account = await getAccountByUserId(admin, authData.user.id);
     const existingRole = readCallbackRole(account?.role);
     const authoritativeRole = existingRole || (!account ? roleHint : null);
-    if (authoritativeRole) {
+    if (!account && authoritativeRole) {
       await ensureCallbackAccount(admin, authData.user, authoritativeRole);
       account = await getAccountByUserId(admin, authData.user.id);
     }
@@ -300,11 +300,11 @@ async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSes
 async function ensureCallbackAccount(admin: AdminClient, user: CallbackUser, role: CallbackRole) {
   const metadata = user.user_metadata || {};
   const email = user.email?.toLowerCase() || readMetadataText(metadata.email).toLowerCase();
-  const displayName =
+  const submittedDisplayName =
     readMetadataText(metadata.display_name) ||
     readMetadataText(metadata.stage_name) ||
-    readMetadataText(metadata.venue_name) ||
-    displayNameFromEmail(email, role);
+    readMetadataText(metadata.venue_name);
+  const displayName = submittedDisplayName || (role === "dancer" ? "Dancer" : displayNameFromEmail(email, role));
 
   const { error: accountError } = await admin.from("app_users").upsert({
     id: user.id,
@@ -324,18 +324,17 @@ async function ensureCallbackAccount(admin: AdminClient, user: CallbackUser, rol
   }
 
   if (role === "dancer") {
-    await ensureCallbackDancerProfile(admin, user.id, displayName, metadata);
+    await ensureCallbackDancerProfile(admin, user.id, metadata);
   }
 }
 
 async function ensureCallbackDancerProfile(
   admin: AdminClient,
   userId: string,
-  displayName: string,
   metadata: Record<string, unknown>,
 ) {
-  const stageName = readMetadataText(metadata.stage_name) || displayName || "New Dancer";
-  const city = readMetadataText(metadata.city) || "Las Vegas";
+  const stageName = readMetadataText(metadata.stage_name);
+  const city = readMetadataText(metadata.city);
 
   const { data: existingProfile, error: existingProfileError } = await admin
     .from("dancer_profiles")
