@@ -23,11 +23,11 @@ test("initial dancers use the canonical premium dashboard shell and loading stat
 
 test("the setup command center exposes the real three-step NFC production flow", () => {
   assert.match(dashboard, /Create profile & media/);
-  assert.match(dashboard, /Preview & submit/);
+  assert.match(dashboard, /Preview & continue/);
   assert.match(dashboard, /Dressing-room tap/);
-  assert.match(dashboard, /Submit completed profile/);
-  assert.match(dashboard, /Sends your profile for final approval\./);
-  assert.doesNotMatch(dashboard, /Submit profile for review/);
+  assert.match(dashboard, /Continue to club verification/);
+  assert.match(dashboard, /Confirms your completed profile, then opens club verification\./);
+  assert.doesNotMatch(dashboard, /Submit profile for review|Submit completed profile|final approval/);
   assert.match(dashboard, /submitForReview: true/);
   assert.match(dashboard, /dancer-onboarding-nfc/);
   assert.match(dancerRoute, /dressing_room_nfc_required/);

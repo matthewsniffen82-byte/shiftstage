@@ -2788,16 +2788,16 @@ function DancerOnboardingCommand({
     },
     {
       id: "dancer-onboarding-preview",
-      label: "Preview & submit",
+      label: "Preview & continue",
       complete: submitted,
-      detail: submitted ? "Your saved profile is ready for venue affiliation." : profileReady ? "Review the live preview and submit your saved profile." : "Complete the saved profile and media requirements first.",
+      detail: submitted ? "Your completed profile is ready for club verification." : profileReady ? "Review the full preview, then continue to club verification." : "Complete the saved profile and media requirements first.",
       locked: !profileReady && !submitted,
     },
     {
       id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room NFC sticker." : "This final unlock becomes available after submission.",
+      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room NFC sticker." : "Complete the profile preview step to unlock club verification.",
       locked: !submitted && !isVenueApproved,
     },
   ], [isVenueApproved, profileReady, setupDetail, submitted]);
@@ -2953,11 +2953,11 @@ function DancerOnboardingCommand({
     if (isSubmitting || !profileReady) return;
     const session = readSession();
     if (!session?.accessToken) {
-      setStatus("Sign in again before submitting your profile.");
+      setStatus("Sign in again before continuing to club verification.");
       return;
     }
     setIsSubmitting(true);
-    setStatus("Submitting your completed profile for final approval...");
+    setStatus("Preparing your profile for club verification...");
     try {
       const response = await fetch("/api/dancer/profile", {
         method: "PATCH",
@@ -2968,12 +2968,12 @@ function DancerOnboardingCommand({
       if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to submit profile.");
       const confirmedStatus = effectiveDancerProfileStatus(data.profile);
       if (confirmedStatus !== "pending_review" && confirmedStatus !== "approved") {
-        throw new Error("Your profile submission was not saved. Please try again.");
+        throw new Error("Club verification was not unlocked. Please try again.");
       }
       onProfileChange?.(data.profile);
       window.localStorage.setItem(storageKey, "dancer-onboarding-nfc");
       setExpandedStepId("dancer-onboarding-nfc");
-      setStatus("Profile submitted. Tap the official dressing-room NFC sticker at the club when you are ready.");
+      setStatus("Club verification is ready. Tap the official dressing-room NFC sticker at the club.");
       window.requestAnimationFrame(() => {
         document.getElementById("dancer-onboarding-nfc")?.scrollIntoView({ behavior: "smooth", block: "start" });
         document.getElementById("dancer-onboarding-nfc-button")?.focus({ preventScroll: true });
@@ -3061,15 +3061,15 @@ function DancerOnboardingCommand({
                     {submitted ? (
                       <div className="dancer-onboarding-complete-note" role="status">
                         <strong>✓ Step 2 complete</strong>
-                        <span>Your profile was submitted. Continue to the dressing-room tap when you are at the club.</span>
+                        <span>Your profile is ready for club verification. Complete the dressing-room tap when you are at the club.</span>
                       </div>
                     ) : (
                       <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
-                        {isSubmitting ? "Submitting..." : "Submit completed profile"}
+                        {isSubmitting ? "Preparing..." : "Continue to club verification"}
                       </button>
                     )}
                     <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
-                      {status || "Sends your profile for final approval."}
+                      {status || "Confirms your completed profile, then opens club verification."}
                     </p>
                   </div>
                 ) : null}
