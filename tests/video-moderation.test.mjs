@@ -204,4 +204,8 @@ test("every production video-processing route bundles FFmpeg and admin failures 
   assert.match(adminReviewRoute, /export const maxDuration = 180/);
   assert.match(adminReviewRoute, /Video processing is temporarily unavailable\. The video was not changed\. Try again shortly\./);
   assert.match(adminReviewRoute, /mydancr_tv\.admin_review_failed/);
+  assert.match(adminReviewRoute, /retrySubmittedMyDancrTvAutomatedModeration/);
+  assert.match(adminReviewRoute, /action === "retry_automated_review"/);
+  assert.match(adminPanel, /Retry automated review/);
+  assert.match(tvSource, /Only automated processing failures can restart automated review\./);
 });

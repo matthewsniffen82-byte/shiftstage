@@ -289,12 +289,16 @@ test("long selected venue names cannot widen the mobile homepage", () => {
 test("administrator moderation persists decisions and venue TV is schedule-derived analytics", () => {
   assert.match(adminApi, /requireAdmin\(client, user\.id\)/);
   assert.match(adminApi, /reviewMyDancrTvVideo/);
+  assert.match(adminApi, /retrySubmittedMyDancrTvAutomatedModeration/);
+  assert.match(adminApi, /body\?\.action === "retry_automated_review"/);
   assert.match(migration, /record_mydancr_tv_review_decision/);
   assert.match(migration, /'tv_video_status'/);
   assert.match(migration, /insert into public\.admin_actions/);
   assert.match(tvSource, /event: "mydancr_tv\.admin_decision"/);
   assert.match(adminPanel, /Approve and publish/);
   assert.match(adminPanel, /Reject video/);
+  assert.match(adminPanel, /Retry automated review/);
+  assert.match(adminPanel, /canRetryAutomatedReview\(video\)/);
   assert.match(adminPanel, /useState\("all"\)/);
   assert.match(adminPanel, /video\.status === "submitted"/);
   assert.match(adminPanel, /item\.id === video\.id[\s\S]*?status: decision/);
@@ -307,6 +311,9 @@ test("administrator moderation persists decisions and venue TV is schedule-deriv
   assert.match(adminPanel, /className="admin-tv-result is-error" role="alert"/);
   assert.match(adminPanel, /pendingCount[\s\S]*?videos\.length[\s\S]*?total/);
   assert.match(adminPanel, /window\.confirm/);
+  assert.match(tvSource, /export async function retrySubmittedMyDancrTvAutomatedModeration/);
+  assert.match(tvSource, /RETRYABLE_VIDEO_MODERATION_REASON_CODES/);
+  assert.match(tvSource, /event: "mydancr_tv\.admin_automated_review_restarted"/);
   assert.match(venueApi, /requireActiveVenue/);
   assert.match(venueApi, /getVenueMyDancrTvVideos/);
   assert.doesNotMatch(venueApi, /PATCH|updateVenueMyDancrTvVideo/);

@@ -975,6 +975,61 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
   return finalizeMyDancrTvAutomatedModeration(admin, claimed);
 }
 
+export async function retrySubmittedMyDancrTvAutomatedModeration(
+  admin: AdminClient,
+  adminId: string,
+  videoId: string,
+) {
+  const { data: video, error } = await admin
+    .from("mydancr_tv_videos")
+    .select("id, status, moderation_reason_codes, moderation_attempt_count")
+    .eq("id", videoId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!video) throw new Error("Video not found.");
+  if (video.status !== "submitted") {
+    throw new Error("This video is no longer waiting for review.");
+  }
+  const reasonCodes = Array.isArray(video.moderation_reason_codes)
+    ? video.moderation_reason_codes.map(String)
+    : [];
+  if (!reasonCodes.some((reason) => RETRYABLE_VIDEO_MODERATION_REASON_CODES.has(reason))) {
+    throw new Error("Only automated processing failures can restart automated review.");
+  }
+
+  const startedAt = new Date().toISOString();
+  const { data: claimed, error: claimError } = await admin
+    .from("mydancr_tv_videos")
+    .update({
+      status: "moderating",
+      review_notes: "Automated safety review restarted by an administrator.",
+      reviewed_by: null,
+      reviewed_at: null,
+      moderation_decision: null,
+      moderation_reason_codes: [],
+      moderation_category_scores: {},
+      moderation_provider_flagged: false,
+      moderation_frame_count: 0,
+      moderation_model: null,
+      moderation_details: {},
+      moderation_attempt_count: Number(video.moderation_attempt_count || 0) + 1,
+      moderation_started_at: startedAt,
+      moderation_completed_at: null,
+    })
+    .eq("id", video.id)
+    .eq("status", "submitted")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .maybeSingle();
+  if (claimError) throw claimError;
+  if (!claimed) throw new Error("This video is no longer waiting for review.");
+  console.info(JSON.stringify({
+    event: "mydancr_tv.admin_automated_review_restarted",
+    videoId: claimed.id,
+    adminId,
+  }));
+  return finalizeMyDancrTvAutomatedModeration(admin, claimed);
+}
+
 export async function autoApprovePendingMyDancrTvDemoVideo(
   admin: AdminClient,
   videoId: string,
@@ -1195,6 +1250,15 @@ function videoModerationErrorCode(error: unknown) {
   if (message.includes("incomplete")) return "video_moderation_incomplete";
   return "video_moderation_provider_error";
 }
+
+const RETRYABLE_VIDEO_MODERATION_REASON_CODES = new Set([
+  "video_moderation_not_configured",
+  "video_moderation_timeout",
+  "video_decode_failed",
+  "video_moderation_incomplete",
+  "video_moderation_provider_error",
+  "public_watermark_processing_failed",
+]);
 
 export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin

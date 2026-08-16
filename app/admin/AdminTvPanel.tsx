@@ -25,7 +25,7 @@ type AdminTvVideo = {
 };
 
 type ReviewResult = {
-  decision: "approved" | "rejected" | "error";
+  decision: "approved" | "rejected" | "retry" | "error";
   message: string;
 };
 
@@ -36,7 +36,7 @@ export default function AdminTvPanel() {
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [workingId, setWorkingId] = useState("");
-  const [workingDecision, setWorkingDecision] = useState<"approved" | "rejected" | "">("");
+  const [workingDecision, setWorkingDecision] = useState<"approved" | "rejected" | "retry" | "">("");
   const [reviewResults, setReviewResults] = useState<Record<string, ReviewResult>>({});
 
   useEffect(() => {
@@ -131,6 +131,48 @@ export default function AdminTvPanel() {
     }
   }
 
+  async function retryAutomatedReview(video: AdminTvVideo) {
+    if (!window.confirm(`Retry the automated safety review for ${video.dancer?.stageName || "this dancer"}’s video?`)) {
+      return;
+    }
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    setWorkingId(video.id);
+    setWorkingDecision("retry");
+    setReviewResults((current) => {
+      const next = { ...current };
+      delete next[video.id];
+      return next;
+    });
+    setStatus("Retrying automated safety review…");
+    try {
+      const response = await fetch("/api/admin/tv/videos", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ videoId: video.id, action: "retry_automated_review" }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to retry automated review.");
+      const successMessage = data.message || "Automated safety review completed.";
+      await loadVideos(filter);
+      setReviewResults((current) => ({
+        ...current,
+        [video.id]: { decision: "retry", message: successMessage },
+      }));
+      setStatus(successMessage);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unable to retry automated review.";
+      setReviewResults((current) => ({
+        ...current,
+        [video.id]: { decision: "error", message: errorMessage },
+      }));
+      setStatus(errorMessage);
+    } finally {
+      setWorkingId("");
+      setWorkingDecision("");
+    }
+  }
+
   const pendingCount = videos.filter((video) => video.status === "submitted").length;
 
   return (
@@ -210,12 +252,23 @@ export default function AdminTvPanel() {
                     <button className="reject" type="button" disabled={workingId === video.id} onClick={() => review(video, "rejected")}>
                       {workingId === video.id && workingDecision === "rejected" ? "Rejecting…" : "Reject video"}
                     </button>
+                    {canRetryAutomatedReview(video) ? (
+                      <button className="retry" type="button" disabled={workingId === video.id} onClick={() => retryAutomatedReview(video)}>
+                        {workingId === video.id && workingDecision === "retry" ? "Reviewing…" : "Retry automated review"}
+                      </button>
+                    ) : null}
                   </div>
                   {workingId === video.id ? (
                     <div className="admin-tv-result is-working" role="status" aria-live="polite">
                       <span className="admin-tv-result-icon" aria-hidden="true">↻</span>
                       <div>
-                        <strong>{workingDecision === "approved" ? "Publishing video…" : "Rejecting video…"}</strong>
+                        <strong>
+                          {workingDecision === "approved"
+                            ? "Publishing video…"
+                            : workingDecision === "retry"
+                              ? "Running automated safety review…"
+                              : "Rejecting video…"}
+                        </strong>
                         <small>Please keep this page open while the update is saved.</small>
                       </div>
                     </div>
@@ -226,6 +279,11 @@ export default function AdminTvPanel() {
                         <strong>Video was not updated</strong>
                         <small>{reviewResults[video.id].message}</small>
                       </div>
+                    </div>
+                  ) : reviewResults[video.id]?.decision === "retry" ? (
+                    <div className="admin-tv-result is-success" role="status" aria-live="polite">
+                      <span className="admin-tv-result-icon" aria-hidden="true">✓</span>
+                      <div><strong>{reviewResults[video.id].message}</strong></div>
                     </div>
                   ) : null}
                 </>
@@ -278,6 +336,19 @@ function readableReason(value: string) {
   return value.replace(/^frame_\d+_/, "Frame: ").replace(/^text_/, "Text/audio: ").replace(/^policy_/, "Policy: ").replaceAll("_", " ");
 }
 
+function canRetryAutomatedReview(video: AdminTvVideo) {
+  return video.status === "submitted" && (video.moderationReasonCodes || []).some((reason) =>
+    [
+      "video_moderation_not_configured",
+      "video_moderation_timeout",
+      "video_decode_failed",
+      "video_moderation_incomplete",
+      "video_moderation_provider_error",
+      "public_watermark_processing_failed",
+    ].includes(reason),
+  );
+}
+
 function AdminTvPanelStyles() {
   return (
     <style>{`
@@ -304,6 +375,7 @@ function AdminTvPanelStyles() {
       .admin-tv-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
       .admin-tv-actions button { min-height: 40px; border: 1px solid rgba(58,255,164,.34); border-radius: 8px; color: #0a1b12; background: #85ffc1; font-weight: 950; cursor: pointer; }
       .admin-tv-actions button.reject { color: #fff; border-color: rgba(255,91,116,.4); background: #bc3048; }
+      .admin-tv-actions button.retry { grid-column: 1 / -1; color: #dff9ff; border-color: rgba(34,199,255,.34); background: rgba(34,199,255,.1); }
       .admin-tv-actions button:disabled { opacity: .65; cursor: wait; }
       .admin-tv-status { padding: 9px 10px; border: 1px solid rgba(34,199,255,.24); border-radius: 8px; color: #a9efff; background: rgba(34,199,255,.07); font-size: 12px; font-weight: 800; }
       .admin-tv-result { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 9px; padding: 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; background: rgba(255,255,255,.045); }

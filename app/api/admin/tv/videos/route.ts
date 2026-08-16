@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   getAdminMyDancrTvVideos,
+  retrySubmittedMyDancrTvAutomatedModeration,
   reviewMyDancrTvVideo,
 } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -30,11 +31,26 @@ export async function POST(request: Request) {
     await requireAdmin(client, user.id);
     const body = await request.json();
     const videoId = typeof body?.videoId === "string" ? body.videoId.trim() : "";
+    if (!UUID_PATTERN.test(videoId)) {
+      return NextResponse.json({ ok: false, error: "Choose a valid video." }, { status: 400 });
+    }
+    if (body?.action === "retry_automated_review") {
+      const video = await retrySubmittedMyDancrTvAutomatedModeration(
+        createAdminSupabaseClient(),
+        user.id,
+        videoId,
+      );
+      return NextResponse.json({
+        ok: true,
+        video,
+        message: automatedReviewMessage(video),
+      });
+    }
     const decision = body?.decision === "approved" || body?.decision === "rejected"
       ? body.decision
       : null;
     const notes = typeof body?.notes === "string" ? body.notes.trim().slice(0, 1000) : "";
-    if (!UUID_PATTERN.test(videoId) || !decision) {
+    if (!decision) {
       return NextResponse.json({ ok: false, error: "Choose a video and decision." }, { status: 400 });
     }
     const video = await reviewMyDancrTvVideo(
@@ -78,7 +94,24 @@ const VIDEO_REVIEW_CLIENT_ERRORS = new Set([
   "Admin access required.",
   "Video not found.",
   "This video is no longer waiting for review.",
+  "Only automated processing failures can restart automated review.",
   "The dancer profile is not eligible for media onboarding.",
   "Only videos that are 30 seconds or shorter can be approved.",
   "Add a clear rejection reason for the dancer.",
 ]);
+
+function automatedReviewMessage(video: any) {
+  if (video?.status === "approved") {
+    return "Automated safety review passed. The video is published on MyDancr TV.";
+  }
+  if (video?.status === "rejected") {
+    return "Automated safety review rejected the video and notified the dancer.";
+  }
+  const reasonCodes = Array.isArray(video?.moderation_reason_codes)
+    ? video.moderation_reason_codes.map(String)
+    : [];
+  if (reasonCodes.some((reason: string) => reason.startsWith("video_moderation_") || reason === "video_decode_failed")) {
+    return "Automated safety review is still unavailable. The video remains in human review.";
+  }
+  return "Automated safety review completed. The video still needs a human decision.";
+}
