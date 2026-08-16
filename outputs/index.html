@@ -31762,23 +31762,30 @@
           position: absolute;
           z-index: 8;
           right: 14px;
-          bottom: 0;
+          bottom: -12px;
           left: 14px;
           width: auto;
-          height: 28px;
+          height: 40px;
           margin: 0;
-          padding: 0;
-          border: 0;
-          border-radius: 0;
+          min-height: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
           outline: 0;
-          background: transparent;
-          box-shadow: none;
-          appearance: none;
-          -webkit-appearance: none;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          accent-color: #b8b8c5 !important;
+          appearance: none !important;
+          -webkit-appearance: none !important;
           cursor: pointer;
           pointer-events: auto;
           opacity: 1;
           touch-action: none;
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          user-select: none;
         }
         .home-tv-feed-progress::-webkit-slider-runnable-track {
           height: 3px;
@@ -31786,47 +31793,43 @@
           border-radius: 999px;
           background: linear-gradient(
             to right,
-            rgba(255,255,255,.94) 0 var(--home-tv-feed-control-progress),
-            rgba(255,255,255,.28) var(--home-tv-feed-control-progress) 100%
+            rgba(232,232,238,.74) 0 var(--home-tv-feed-control-progress),
+            rgba(255,255,255,.16) var(--home-tv-feed-control-progress) 100%
           );
         }
         .home-tv-feed-progress::-moz-range-track {
           height: 3px;
           border: 0;
           border-radius: 999px;
-          background: rgba(255,255,255,.28);
+          background: rgba(255,255,255,.16);
         }
         .home-tv-feed-progress::-moz-range-progress {
           height: 3px;
           border: 0;
           border-radius: 999px;
-          background: rgba(255,255,255,.94);
+          background: rgba(232,232,238,.74);
         }
         .home-tv-feed-progress::-webkit-slider-thumb {
           width: 14px;
           height: 14px;
           margin-top: -5.5px;
-          border: 2px solid #fff;
+          border: 0;
           border-radius: 50%;
-          background: #fff;
-          box-shadow: 0 2px 8px rgba(0,0,0,.5);
+          background: transparent;
+          box-shadow: none;
           appearance: none;
           -webkit-appearance: none;
         }
         .home-tv-feed-progress::-moz-range-thumb {
           width: 12px;
           height: 12px;
-          border: 2px solid #fff;
+          border: 0;
           border-radius: 50%;
-          background: #fff;
-          box-shadow: 0 2px 8px rgba(0,0,0,.5);
+          background: transparent;
+          box-shadow: none;
         }
         .home-tv-feed-progress:focus-visible {
-          outline: 2px solid #7eeaff;
-          outline-offset: -2px;
-        }
-        .home-tv-feed-progress:focus-visible::-webkit-slider-thumb {
-          box-shadow: 0 0 0 3px rgba(126,234,255,.38), 0 2px 8px rgba(0,0,0,.46);
+          outline: 0;
         }
         .home-tv-feed-progress:disabled {
           opacity: .45;
@@ -31835,7 +31838,7 @@
         #results.home-tv-feed:fullscreen .home-tv-feed-progress,
         #results.home-tv-feed:-webkit-full-screen .home-tv-feed-progress,
         #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-progress {
-          bottom: env(safe-area-inset-bottom);
+          bottom: calc(env(safe-area-inset-bottom) - 12px);
         }
         .home-tv-feed-feedback {
           position: absolute;
@@ -33432,7 +33435,7 @@
           }
           .home-tv-feed-progress {
             right: 12px;
-            bottom: 0;
+            bottom: -12px;
             left: 12px;
           }
           .home-discovery-feed-copy {
