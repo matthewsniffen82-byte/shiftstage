@@ -268,6 +268,21 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
   assert.doesNotMatch(homeSource, /\.home-tv-feed-video-controls \{/);
 });
 
+test("full-view TV actions and identity clear the device bottom edge together", () => {
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed:fullscreen \.home-tv-feed-copy,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-copy \{[\s\S]*?bottom: calc\(24px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed:fullscreen \.home-tv-feed-actions,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-actions \{[\s\S]*?bottom: calc\(100px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed:fullscreen \.home-tv-feed-fullscreen,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-fullscreen \{[\s\S]*?bottom: calc\(44px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+  );
+});
+
 test("empty schedules are hidden while real city, venue, and shift context remains", () => {
   const scheduleFunction =
     homeSource.match(

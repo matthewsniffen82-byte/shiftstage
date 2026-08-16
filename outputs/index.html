@@ -31840,6 +31840,22 @@
         #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-progress {
           bottom: calc(env(safe-area-inset-bottom) - 12px);
         }
+        /* Full-view controls retain their spacing while clearing the device edge. */
+        #results.home-tv-feed:fullscreen .home-tv-feed-copy,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-copy,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-copy {
+          bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-actions,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-actions,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-actions {
+          bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-fullscreen,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-fullscreen,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-fullscreen {
+          bottom: calc(44px + env(safe-area-inset-bottom, 0px));
+        }
         .home-tv-feed-feedback {
           position: absolute;
           z-index: 9;
