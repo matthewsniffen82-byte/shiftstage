@@ -31,11 +31,11 @@ test("venues can publish a prioritized collection of typed Club Deals", () => {
 
 test("venue managers can keep multiple deals live and manage each campaign independently", () => {
   const updateFunction = deals.match(/export async function updateVenueDealForAccount[\s\S]*?(?=\nexport async function deleteVenueDealForAccount)/)?.[0] || "";
-  assert.match(venueDashboard, /Create or edit Club Deals anytime/);
-  assert.match(venueDashboard, /existing MyDancr cashier NFC sticker automatically opens the current live deals/);
+  assert.match(venueDashboard, /Create, edit, publish, or pause an offer/);
+  assert.match(venueDashboard, /existing MyDancr cashier NFC sticker automatically opens current live deals/);
   assert.match(venueDashboard, /const liveCount = deals\.filter/);
   assert.match(venueDashboard, /const draftCount = deals\.length - liveCount/);
-  assert.match(venueDashboard, /Does not change live deals/);
+  assert.match(venueDashboard, /Keeps current live deals active/);
   assert.match(venueDashboard, /This action only changes this deal/);
   assert.match(venueDashboard, /VenueNfcTagPanel/);
   assert.match(venueDashboard, /Ready for redemption/);

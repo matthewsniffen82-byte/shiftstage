@@ -1923,15 +1923,15 @@ function VenuePanel({
           <span className="eyebrow">Tonight at a glance</span>
           <strong>{liveDealSummary}</strong>
           <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
-          <a className="primary-link" href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
-            See who&apos;s working now
+          <a className={`primary-link venue-working-now-link${workingNow.length ? " is-live" : ""}`} href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
+            {workingNow.length ? `View ${workingNow.length} working now` : "Open working-now roster"}
           </a>
           {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
         </div>
       </section>
 
       <nav className="venue-dashboard-shortcuts" aria-label="Venue dashboard shortcuts">
-        <a className="is-primary" href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
+        <a className={workingNow.length ? "is-live" : undefined} href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
           <VenueDashboardActionIcon name="verify" />
           <span><strong>Working now</strong><small>{workingNow.length} verified on the floor</small></span>
         </a>
@@ -1993,6 +1993,7 @@ function VenuePanel({
             referralFee={referralFee}
             onReferralFeeChange={onReferralFeeChange}
             revenue={dealRevenue}
+            venueSlug={venueSlug}
           />
         ) : (
           <VenueDealReadOnlyPanel deals={dashboardDeals} />
@@ -2163,6 +2164,7 @@ function VenueClubDealPanel({
   referralFee,
   onReferralFeeChange,
   revenue,
+  venueSlug,
 }: {
   finance?: LoadState["finance"];
   initialDeal?: LoadState["deal"];
@@ -2171,9 +2173,11 @@ function VenueClubDealPanel({
   referralFee?: LoadState["referralFee"];
   onReferralFeeChange: (referralFee: Record<string, unknown>) => void;
   revenue?: LoadState["dealRevenue"];
+  venueSlug: string;
 }) {
   const seedDeals = initialDeals.length ? initialDeals : initialDeal ? [initialDeal] : [];
   const editingIdRef = useRef(String(seedDeals[0]?.id || ""));
+  const editorRef = useRef<HTMLDetailsElement>(null);
   const [deals, setDeals] = useState<Array<Record<string, unknown>>>(seedDeals);
   const [editingId, setEditingId] = useState(editingIdRef.current);
   const [form, setForm] = useState(() => venueDealForm(seedDeals[0]));
@@ -2358,51 +2362,87 @@ function VenueClubDealPanel({
 
   const liveCount = deals.filter((deal) => deal.isActive === true).length;
   const draftCount = deals.length - liveCount;
+  const liveDeal = deals.find((deal) => deal.isActive === true);
+  const selectedDeal = deals.find((deal) => String(deal.id) === editingId) || liveDeal || deals[0];
+  const primaryDeal = liveDeal || selectedDeal;
   const currentReferralFee = referralFee?.current as Record<string, unknown> | null | undefined;
   const referralRequests = Array.isArray(referralFee?.requests)
     ? referralFee.requests as Array<Record<string, unknown>>
     : [];
   const pendingFeeRequest = referralRequests.find((request) => request.status === "pending");
 
+  function openDealEditor(mode: "primary" | "new") {
+    if (mode === "new" || !primaryDeal) addDeal();
+    else editDeal(primaryDeal);
+    if (editorRef.current) editorRef.current.open = true;
+    window.setTimeout(() => {
+      editorRef.current?.querySelector<HTMLElement>("input, select, textarea")?.focus({ preventScroll: true });
+    }, 0);
+  }
+
   return (
     <article className="info-panel venue-deal-panel">
       <div className="venue-deal-heading">
         <div>
-          <span className="eyebrow">Club Deals</span>
+          <span className="eyebrow">Revenue control</span>
           <h2>Manage Club Deals</h2>
         </div>
         <strong className={liveCount ? "deal-state active" : "deal-state"}>
-          {deals.length} {deals.length === 1 ? "deal" : "deals"}
+          {liveCount ? `${liveCount} live` : "Inactive"}
         </strong>
       </div>
-      <p className="venue-deal-placement-note">
-        Create or edit Club Deals anytime. Your existing MyDancr cashier NFC sticker automatically opens the current live deals—no reprogramming required.
-      </p>
-      <div className="venue-deal-counts" aria-label="Club Deal totals">
-        <span><strong>{liveCount}</strong> live</span>
-        <span><strong>{draftCount}</strong> {draftCount === 1 ? "draft" : "drafts"}</span>
-      </div>
-      <div className="venue-deal-list" aria-label="Venue Club Deals">
-        {deals.map((deal) => (
-          <button
-            aria-pressed={String(deal.id) === editingId}
-            className={String(deal.id) === editingId ? "selected" : ""}
-            key={String(deal.id)}
-            type="button"
-            onClick={() => editDeal(deal)}
-          >
-            <span>{dealTypeLabel(String(deal.offerType || "admission"))}</span>
-            <strong>{String(deal.dealTitle || "Untitled offer")}</strong>
-            <small className={deal.isActive ? "is-live" : undefined}>{deal.isActive ? "Live" : "Draft"}</small>
+      <section className={liveCount ? "venue-deal-control-card is-live" : "venue-deal-control-card"} aria-label="Current Club Deal status">
+        <div className="venue-deal-control-status">
+          <span>{liveCount ? "Live Club Deal" : deals.length ? "No live Club Deal" : "Club Deals are inactive"}</span>
+          <strong>{liveDeal ? String(liveDeal.dealTitle || "Live Club Deal") : deals.length ? `${draftCount} ${draftCount === 1 ? "draft" : "drafts"} ready to finish` : "Create your first Club Deal"}</strong>
+          <small>{liveCount ? "Available on your venue page and assigned cashier NFC stickers." : "Publish a deal when you are ready to accept cashier NFC redemptions."}</small>
+        </div>
+        <div className="venue-deal-control-metrics" aria-label="Club Deal performance summary">
+          <span><small>Confirmed taps</small><strong>{String(revenue?.confirmedCashierTapsThisMonth || 0)}</strong></span>
+          <span><small>Redemption intents</small><strong>{String(revenue?.passesIssuedThisMonth || 0)}</strong></span>
+          <span><small>Outstanding</small><strong>{formatCents(Number(revenue?.pendingVenuePaymentCents || 0))}</strong></span>
+        </div>
+        <div className="venue-deal-control-actions">
+          <button className="venue-deal-control-primary" type="button" onClick={() => openDealEditor(primaryDeal ? "primary" : "new")}>
+            {liveDeal ? "Edit live deal" : primaryDeal ? "Continue draft" : "Create Club Deal"}
           </button>
-        ))}
-        <button aria-pressed={!editingId} className={`add${!editingId ? " selected" : ""}`} type="button" onClick={addDeal}>
-          <span>New deal</span>
-          <strong>+ Create another deal</strong>
-          <small>Does not change live deals</small>
-        </button>
-      </div>
-      <form onSubmit={saveDeal}>
+          {venueSlug && liveCount ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Preview live deal</Link> : null}
+        </div>
+      </section>
+      <details className="venue-deal-editor" ref={editorRef}>
+        <summary>
+          <span><strong>Deal editor</strong><small>Create, edit, publish, or pause an offer</small></span>
+          <em>{deals.length} {deals.length === 1 ? "deal" : "deals"}</em>
+        </summary>
+        <div className="venue-deal-editor-body">
+          <p className="venue-deal-placement-note">
+            Your existing MyDancr cashier NFC sticker automatically opens current live deals—no reprogramming required.
+          </p>
+          <div className="venue-deal-counts" aria-label="Club Deal totals">
+            <span><strong>{liveCount}</strong> live</span>
+            <span><strong>{draftCount}</strong> {draftCount === 1 ? "draft" : "drafts"}</span>
+          </div>
+          <div className="venue-deal-list" aria-label="Venue Club Deals">
+            {deals.map((deal) => (
+              <button
+                aria-pressed={String(deal.id) === editingId}
+                className={String(deal.id) === editingId ? "selected" : ""}
+                key={String(deal.id)}
+                type="button"
+                onClick={() => editDeal(deal)}
+              >
+                <span>{dealTypeLabel(String(deal.offerType || "admission"))}</span>
+                <strong>{String(deal.dealTitle || "Untitled offer")}</strong>
+                <small className={deal.isActive ? "is-live" : undefined}>{deal.isActive ? "Live" : "Draft"}</small>
+              </button>
+            ))}
+            <button aria-pressed={!editingId} className={`add${!editingId ? " selected" : ""}`} type="button" onClick={addDeal}>
+              <span>New Club Deal</span>
+              <strong>+ Create Club Deal</strong>
+              <small>Keeps current live deals active</small>
+            </button>
+          </div>
+          <form onSubmit={saveDeal}>
         <fieldset className="venue-deal-builder-step">
           <legend><span>1</span><span><strong>Offer</strong><small>What customers receive</small></span></legend>
           <div className="venue-deal-step-grid">
@@ -2541,26 +2581,26 @@ function VenueClubDealPanel({
               aria-live="polite"
               disabled={isSaving}
               name="dealAction"
-              title={form.isActive ? "Takes this deal offline until you publish it again" : undefined}
               type="submit"
               value={form.isActive ? "save" : "publish"}
             >
-              {isSaving ? "Saving..." : saveConfirmed ? "Saved Changes" : form.isActive ? "Save This Deal" : "Publish Deal"}
+              {isSaving ? "Saving..." : saveConfirmed ? "Saved Changes" : form.isActive ? "Save changes" : "Publish Club Deal"}
             </button>
             <button
               className="secondary"
               disabled={isSaving}
               name="dealAction"
+              title={form.isActive ? "Takes this deal offline until you publish it again" : undefined}
               type="submit"
               value={form.isActive ? "unpublish" : "draft"}
             >
-              {form.isActive ? "Unpublish This Deal" : "Save Draft"}
+              {form.isActive ? "Pause Deal" : "Save Draft"}
             </button>
-            {editingId ? <button className="danger" disabled={isSaving} type="button" onClick={deleteDeal}>Delete This Deal</button> : null}
+            {editingId ? <button className="danger" disabled={isSaving} type="button" onClick={deleteDeal}>Delete Deal</button> : null}
           </div>
           {form.isActive ? (
             <small className="venue-deal-unpublish-note">
-              Unpublishing removes this deal from MyDancr.
+              Pausing removes this deal from MyDancr until you publish it again.
             </small>
           ) : null}
         </fieldset>
@@ -2569,24 +2609,26 @@ function VenueClubDealPanel({
             {status}
           </p>
         ) : null}
-      </form>
-      {editingId ? (
-        <section className={form.isActive ? "venue-deal-publish-status live" : "venue-deal-publish-status"} aria-live="polite">
-          <div className="venue-deal-publish-status-heading">
-            <span aria-hidden="true">{form.isActive ? "✓" : "•"}</span>
-            <div>
-              <strong>{form.isActive ? "Live on MyDancr" : "Draft — not live"}</strong>
-              <small>{form.isActive ? "Available wherever your Club Deals appear." : "Publish this deal when it is ready for customers."}</small>
-            </div>
-          </div>
-        </section>
-      ) : null}
-      <section className="venue-deal-nfc-status" aria-labelledby="venue-deal-nfc-heading">
+          </form>
+          {editingId ? (
+            <section className={form.isActive ? "venue-deal-publish-status live" : "venue-deal-publish-status"} aria-live="polite">
+              <div className="venue-deal-publish-status-heading">
+                <span aria-hidden="true">{form.isActive ? "✓" : "•"}</span>
+                <div>
+                  <strong>{form.isActive ? "Live on MyDancr" : "Draft — not live"}</strong>
+                  <small>{form.isActive ? "Available wherever your Club Deals appear." : "Publish this deal when it is ready for customers."}</small>
+                </div>
+              </div>
+            </section>
+          ) : null}
+        </div>
+      </details>
+      <section className={liveCount ? "venue-deal-nfc-status is-live" : "venue-deal-nfc-status"} aria-labelledby="venue-deal-nfc-heading">
         <div aria-hidden="true">)))</div>
         <section>
           <span className="eyebrow">Cashier sticker</span>
-          <h3 id="venue-deal-nfc-heading">{form.isActive ? "Ready for redemption" : "Waiting for a live deal"}</h3>
-          <p>{form.isActive ? "Customers can redeem this deal with any active cashier sticker assigned to your venue." : "Publish this deal to make it available at the cashier."}</p>
+          <h3 id="venue-deal-nfc-heading">{liveCount ? "Ready for redemption" : "Waiting for a live deal"}</h3>
+          <p>{liveCount ? "Customers can redeem a live deal with any active cashier sticker assigned to your venue." : "Publish a deal to make it available at the cashier."}</p>
           <small>Sticker status is managed in Assigned NFC access.</small>
         </section>
       </section>
@@ -2601,16 +2643,21 @@ function VenueClubDealPanel({
           </p>
         </div>
       </details>
-      <div className="deal-metrics venue-deal-metrics">
-        <Metric label="Confirmed cashier taps this month" value={String(revenue?.confirmedCashierTapsThisMonth || 0)} />
-        <Metric label="Dancer attributed" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
-        <Metric label="Direct venue" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
-        <Metric label="MyDancr referral fees" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
-        <Metric label="Outstanding to MyDancr" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
-        <Metric label="Redemption intents" value={String(revenue?.passesIssuedThisMonth || 0)} />
-        <Metric label="Saved / opened" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
-      </div>
-      <VenueFinanceSummary finance={finance} />
+      <details className="venue-deal-performance">
+        <summary><span><strong>Performance & invoices</strong><small>Detailed redemptions, fees, and settlement</small></span></summary>
+        <div className="venue-deal-performance-body">
+          <div className="deal-metrics venue-deal-metrics">
+            <Metric label="Confirmed cashier taps this month" value={String(revenue?.confirmedCashierTapsThisMonth || 0)} />
+            <Metric label="Dancer attributed" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
+            <Metric label="Direct venue" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
+            <Metric label="MyDancr referral fees" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
+            <Metric label="Outstanding to MyDancr" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
+            <Metric label="Redemption intents" value={String(revenue?.passesIssuedThisMonth || 0)} />
+            <Metric label="Saved / opened" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
+          </div>
+          <VenueFinanceSummary finance={finance} />
+        </div>
+      </details>
     </article>
   );
 }
@@ -6605,15 +6652,16 @@ function DashboardStyles() {
       .venue-refresh-control button:disabled { opacity: .6; cursor: wait; }
       .venue-command-primary { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(255,255,255,.13); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel-raised); }
       .venue-command-primary > strong { color: #f8f7fb; font-size: clamp(21px, 4vw, 27px); line-height: 1.08; }
-      .venue-command-primary .primary-link { width: 100%; max-width: 100%; min-height: 52px; box-sizing: border-box; margin-top: 5px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); }
+      .venue-command-primary .venue-working-now-link { width: 100%; max-width: 100%; min-height: 52px; box-sizing: border-box; margin-top: 5px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; color: #f8fafc; background: #111118; box-shadow: none; }
+      .venue-command-primary .venue-working-now-link.is-live { border-color: rgba(16,185,129,.58); color: #d1fae5; background: rgba(6,78,59,.34); box-shadow: 0 0 18px rgba(16,185,129,.12); }
       .venue-dashboard-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
       .venue-dashboard-shortcuts > a { min-width: 0; min-height: 78px; display: flex; align-items: center; gap: 11px; padding: 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; color: #f8f7fb; background: var(--mydancr-dashboard-panel-raised); text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
       .venue-dashboard-shortcuts > a:hover { border-color: rgba(255,255,255,.2); background: #15151d; }
       .venue-dashboard-shortcuts > a:active { transform: scale(.985); }
       .venue-dashboard-shortcuts > a:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
-      .venue-dashboard-shortcuts > a.is-primary { border-color: rgba(126,234,255,.4); background: linear-gradient(135deg, rgba(126,234,255,.11), rgba(139,92,246,.11)); box-shadow: inset 3px 0 0 #7eeaff, 0 10px 24px rgba(0,0,0,.2); }
-      .venue-dashboard-shortcuts > a.is-primary svg { stroke: #7eeaff; }
-      .venue-dashboard-shortcuts > a.is-primary small { color: #bfefff; }
+      .venue-dashboard-shortcuts > a.is-live { border-color: rgba(16,185,129,.46); background: rgba(6,78,59,.25); box-shadow: inset 3px 0 0 #10b981, 0 10px 24px rgba(0,0,0,.2); }
+      .venue-dashboard-shortcuts > a.is-live svg { stroke: #34d399; }
+      .venue-dashboard-shortcuts > a.is-live small { color: #a7f3d0; }
       .venue-dashboard-shortcuts svg { flex: 0 0 21px; width: 21px; height: 21px; fill: none; stroke: #d9d4e3; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .venue-dashboard-shortcuts span { min-width: 0; display: grid; gap: 3px; }
       .venue-dashboard-shortcuts strong { overflow: hidden; font-size: 15px; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
@@ -6893,13 +6941,40 @@ function DashboardStyles() {
       .venue-deal-readonly section { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: #111118; }
       .venue-deal-readonly span { color: #cbd5e1; font-size: 12px; line-height: 1.4; }
       .venue-deal-readonly small { color: #6ee7b7; }
-      .venue-deal-panel { grid-column: span 3; border-color: rgba(50,255,164,.24); background: radial-gradient(circle at 100% 0%, rgba(50,255,164,.1), transparent 28rem), rgba(12,12,18,.86); }
+      .venue-deal-panel { grid-column: span 3; border-color: var(--mydancr-dashboard-border); background: #111118; }
       .venue-deal-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .venue-deal-heading > div { display: grid; gap: 4px; }
       .deal-state { width: fit-content; padding: 7px 10px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #b9accd; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
       .deal-state.active { border-color: rgba(50,255,164,.42); color: #78ffc0; background: rgba(50,255,164,.1); }
       .venue-deal-panel > p, .venue-redemption-instructions p { color: #cfc5de; line-height: 1.5; }
       .venue-deal-placement-note { margin: 0; color: #94e5ff !important; font-size: 14px; font-weight: 800; }
+      .venue-deal-control-card { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(260px,.75fr); gap: 16px; padding: 16px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; background: #0d0d12; }
+      .venue-deal-control-card.is-live { border-color: rgba(16,185,129,.34); box-shadow: inset 3px 0 0 rgba(16,185,129,.72); }
+      .venue-deal-control-status { display: grid; align-content: center; gap: 5px; }
+      .venue-deal-control-status > span { color: #94a3b8; font-size: 10px; font-weight: 950; letter-spacing: .12em; text-transform: uppercase; }
+      .venue-deal-control-card.is-live .venue-deal-control-status > span { color: #6ee7b7; }
+      .venue-deal-control-status > strong { color: #f8fafc; font-size: clamp(18px,3vw,24px); line-height: 1.15; overflow-wrap: anywhere; }
+      .venue-deal-control-status > small { color: #94a3b8; line-height: 1.45; }
+      .venue-deal-control-metrics { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 11px; background: #09090d; }
+      .venue-deal-control-metrics > span { min-width: 0; display: grid; gap: 5px; padding: 12px; border-left: 1px solid var(--mydancr-dashboard-border); }
+      .venue-deal-control-metrics > span:first-child { border-left: 0; }
+      .venue-deal-control-metrics small { color: #94a3b8; font-size: 10px; font-weight: 800; }
+      .venue-deal-control-metrics strong { color: #f8fafc; font-size: 17px; overflow-wrap: anywhere; }
+      .venue-deal-control-actions { display: flex; flex-wrap: wrap; align-content: center; justify-content: flex-end; gap: 9px; }
+      .venue-deal-control-actions > button, .venue-deal-control-actions > a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 15px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 9px; color: #f8fafc; background: #17171d; font-size: 13px; font-weight: 900; text-decoration: none; }
+      .venue-deal-control-actions > button.venue-deal-control-primary { border-color: rgba(196,181,253,.54); background: #7c3aed; box-shadow: 0 0 16px rgba(124,58,237,.18); }
+      .venue-deal-control-actions > button:focus-visible, .venue-deal-control-actions > a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+      .venue-deal-editor, .venue-deal-performance { overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: #0d0d12; }
+      .venue-deal-editor > summary, .venue-deal-performance > summary { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 15px; color: #f8fafc; cursor: pointer; list-style: none; }
+      .venue-deal-editor > summary::-webkit-details-marker, .venue-deal-performance > summary::-webkit-details-marker { display: none; }
+      .venue-deal-editor > summary > span, .venue-deal-performance > summary > span { display: grid; gap: 3px; }
+      .venue-deal-editor > summary small, .venue-deal-performance > summary small { color: #94a3b8; font-size: 11px; }
+      .venue-deal-editor > summary em { color: #94a3b8; font-size: 11px; font-style: normal; font-weight: 850; }
+      .venue-deal-editor > summary::after, .venue-deal-performance > summary::after { content: "+"; color: #c4b5fd; font-size: 22px; line-height: 1; }
+      .venue-deal-editor[open] > summary::after, .venue-deal-performance[open] > summary::after { content: "−"; }
+      .venue-deal-editor > summary > em { margin-left: auto; }
+      .venue-deal-editor-body, .venue-deal-performance-body { display: grid; gap: 14px; padding: 0 14px 14px; border-top: 1px solid var(--mydancr-dashboard-border); }
+      .venue-deal-editor-body > .venue-deal-placement-note, .venue-deal-performance-body > :first-child { margin-top: 14px; }
       .venue-deal-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
       .venue-deal-list > button { min-height: 92px; display: grid; align-content: center; justify-items: start; gap: 4px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #fff; background: rgba(255,255,255,.04); text-align: left; }
       .venue-deal-list > button.selected { border: 2px solid var(--dancr-color-beam-violet) !important; background: var(--dancr-color-beam-violet-soft) !important; box-shadow: inset 4px 0 0 var(--dancr-color-beam-violet) !important; }
@@ -6920,7 +6995,7 @@ function DashboardStyles() {
       .venue-deal-step-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       .venue-deal-step-grid.one-column { grid-template-columns: 1fr; }
       .deal-wide-field { grid-column: 1 / -1; }
-      .venue-deal-builder-step.review { border-color: rgba(50,255,164,.22); background: rgba(50,255,164,.035); }
+      .venue-deal-builder-step.review { border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.025); }
       .venue-deal-review { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin: 0; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; background: rgba(255,255,255,.1); }
       .venue-deal-review > div { min-width: 0; display: grid; gap: 4px; padding: 11px 12px; background: #0d0c12; }
       .venue-deal-review dt { color: #9d92ad; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
@@ -6960,8 +7035,10 @@ function DashboardStyles() {
       .venue-deal-publish-status ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
       .venue-deal-publish-status li { position: relative; padding-left: 24px; color: #e8fff4; font-size: 14px; font-weight: 800; }
       .venue-deal-publish-status li::before { content: "✓"; position: absolute; left: 2px; color: #78ffc0; font-weight: 950; }
-      .venue-deal-nfc-status { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:16px; padding:18px; border:1px solid rgba(124,58,237,.46); border-radius:14px; background:radial-gradient(circle at 100% 0%,rgba(124,58,237,.16),transparent 22rem),#0a0910; }
-      .venue-deal-nfc-status>div { width:62px; height:62px; display:grid; place-items:center; border-radius:50%; color:#fff; background:linear-gradient(145deg,#4817bd,#852cff); box-shadow:0 0 28px rgba(125,59,255,.4); font-weight:950; letter-spacing:-6px; transform:rotate(-18deg); }
+      .venue-deal-nfc-status { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:16px; padding:18px; border:1px solid var(--mydancr-dashboard-border); border-radius:14px; background:#0d0d12; }
+      .venue-deal-nfc-status.is-live { border-color:rgba(16,185,129,.38); box-shadow:inset 3px 0 0 rgba(16,185,129,.7),0 0 18px rgba(16,185,129,.09); }
+      .venue-deal-nfc-status>div { width:62px; height:62px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.13); border-radius:50%; color:#cbd5e1; background:#17171d; font-weight:950; letter-spacing:-6px; transform:rotate(-18deg); }
+      .venue-deal-nfc-status.is-live>div { border-color:rgba(16,185,129,.46); color:#ecfdf5; background:#047857; box-shadow:0 0 20px rgba(16,185,129,.18); }
       .venue-deal-nfc-status>section { display:grid; gap:7px; }.venue-deal-nfc-status h3,.venue-deal-nfc-status p{margin:0}.venue-deal-nfc-status p{color:#cbd5e1;line-height:1.48}.venue-deal-nfc-status small{color:#b9accd;line-height:1.4}
       .venue-deal-qr-generator { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: center; padding: 18px; border: 1px solid rgba(124,58,237,.46); border-radius: 14px; background: radial-gradient(circle at 100% 0%, rgba(124,58,237,.16), transparent 22rem), #0a0910; box-shadow: inset 0 1px 0 rgba(248,250,252,.04); }
       .venue-deal-qr-generator.has-qr { grid-template-columns: minmax(0, 1fr) minmax(190px, 250px); }
@@ -7248,9 +7325,9 @@ function DashboardStyles() {
       .dashboard-shell-venue .venue-dashboard-metrics { border-color: var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel); }
       .dashboard-shell-venue .venue-command-primary,
       .dashboard-shell-venue .venue-dashboard-shortcuts > a { background: var(--mydancr-dashboard-panel-raised); }
-      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary { border-color: rgba(139,92,246,.48); background: rgba(139,92,246,.11); box-shadow: inset 3px 0 0 #8b5cf6, 0 10px 24px rgba(0,0,0,.2); }
-      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary svg { stroke: #c4b5fd; }
-      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-primary small { color: #ddd6fe; }
+      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-live { border-color: rgba(16,185,129,.46); background: rgba(6,78,59,.25); box-shadow: inset 3px 0 0 #10b981, 0 10px 24px rgba(0,0,0,.2); }
+      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-live svg { stroke: #34d399; }
+      .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-live small { color: #a7f3d0; }
       .dashboard-shell .venue-dashboard-section[open] > summary { background: rgba(255,255,255,.022); }
       .dashboard-shell .venue-dashboard-section-badge { border-color: rgba(255,255,255,.13); color: #d7d5dd; background: rgba(255,255,255,.045); }
       .dashboard-shell .venue-dashboard-section-body > .info-panel,
@@ -7278,6 +7355,7 @@ function DashboardStyles() {
       .dashboard-shell-venue .venue-deal-panel textarea,
       .dashboard-shell-venue .venue-deal-panel select { border-color: rgba(255,255,255,.14); color: #f8f7fb; background: #16161b; }
       .dashboard-shell-venue .venue-deal-panel button { border: 1px solid rgba(255,255,255,.14); color: #f8f7fb; background: #17171d; box-shadow: none; }
+      .dashboard-shell-venue .venue-deal-control-actions > button.venue-deal-control-primary { border-color: rgba(196,181,253,.54); color: #fff; background: #7c3aed; box-shadow: 0 0 16px rgba(124,58,237,.18); }
       .dashboard-shell-venue .venue-deal-form-actions .primary { border-color: rgba(196,122,255,.72); color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); }
       .dashboard-shell-venue .venue-deal-form-actions .secondary { color: #f8f7fb; background: #17171d; }
       .dashboard-shell-venue .venue-deal-form-actions .danger { border-color: rgba(255,86,108,.3); color: #ffccd3; background: rgba(255,86,108,.12); }
@@ -7288,6 +7366,7 @@ function DashboardStyles() {
       .dashboard-shell-venue .currency-input > span,
       .dashboard-shell-venue .commission-tier-table > strong { color: #d7d5dd; }
       .dashboard-shell-venue .commission-tier-table > strong { background: rgba(255,255,255,.04); }
+      @media (max-width: 720px) { .venue-deal-control-card { grid-template-columns: 1fr; } .venue-deal-control-actions { justify-content: flex-start; } .venue-deal-control-actions > button, .venue-deal-control-actions > a { flex: 1 1 140px; } }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }

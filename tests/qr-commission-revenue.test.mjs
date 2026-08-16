@@ -151,7 +151,7 @@ test("venues publish offers against a MyDancr-controlled referral agreement", ()
   assert.match(venueDashboard, /MyDancr referral fee/);
   assert.match(venueDashboard, /Request fee change/);
   assert.match(venueDashboard, /name="dealAction"[\s\S]*?value=\{form\.isActive \? "save" : "publish"\}/);
-  assert.match(venueDashboard, /Publish Deal/);
+  assert.match(venueDashboard, /Publish Club Deal/);
   assert.match(venueDashboard, /Ready for redemption/);
   assert.doesNotMatch(venueDashboard, /Monthly successful dancer QR redemptions/);
 });

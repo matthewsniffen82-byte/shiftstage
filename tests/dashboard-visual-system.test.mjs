@@ -79,10 +79,10 @@ test("venue dashboard uses a tonight-first command inside its standalone workspa
   assert.ok(shortcutsIndex > commandIndex);
   assert.ok(metricsIndex > shortcutsIndex);
   assert.ok(managementIndex > metricsIndex);
-  assert.match(venuePanel, /className="primary-link" href="#venue-working-now"[\s\S]*?See who[\s\S]*?working now/);
+  assert.match(venuePanel, /className=\{`primary-link venue-working-now-link\$\{workingNow\.length \? " is-live" : ""\}`\} href="#venue-working-now"[\s\S]*?Open working-now roster/);
   assert.match(
     routedDashboards,
-    /\.venue-command-primary \.primary-link \{[^}]*?width: 100%; max-width: 100%;[^}]*?box-sizing: border-box;/,
+    /\.venue-command-primary \.venue-working-now-link \{[^}]*?width: 100%; max-width: 100%;[^}]*?box-sizing: border-box;/,
   );
   assert.match(venuePanel, /function openVenueSection[\s\S]*?section\.open = true[\s\S]*?scrollIntoView/);
   assert.doesNotMatch(venuePanel, /<DashboardSection\s+defaultOpen[\s\S]*?id="venue-overview"/);
@@ -131,7 +131,7 @@ test("venue dashboard uses a tonight-first command inside its standalone workspa
   );
   assert.match(
     routedDashboards,
-    /\.dashboard-shell-venue \.venue-dashboard-shortcuts > a\.is-primary \{[^}]*?rgba\(139,92,246,\.48\)[^}]*?#8b5cf6/,
+    /\.dashboard-shell-venue \.venue-dashboard-shortcuts > a\.is-live \{[^}]*?rgba\(16,185,129,\.46\)[^}]*?#10b981/,
   );
   assert.match(
     routedDashboards,

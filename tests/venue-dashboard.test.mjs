@@ -71,6 +71,17 @@ test("venue operations prioritize tonight, Club Deals, NFC stickers, and then re
   assert.ok(venuePanel.indexOf("Tonight") < venuePanel.indexOf("Analytics & performance"));
 });
 
+test("working-now actions are neutral when empty and emerald only for a live roster", () => {
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  assert.match(venuePanel, /venue-working-now-link\$\{workingNow\.length \? " is-live" : ""\}/);
+  assert.match(venuePanel, /className=\{workingNow\.length \? "is-live" : undefined\}/);
+  assert.match(venuePanel, /Open working-now roster/);
+  assert.match(venuePanel, /View \$\{workingNow\.length\} working now/);
+  assert.match(dashboard, /\.venue-command-primary \.venue-working-now-link\.is-live \{[^}]*rgba\(16,185,129/);
+  assert.match(dashboard, /\.venue-dashboard-shortcuts > a\.is-live \{[^}]*#10b981/);
+  assert.doesNotMatch(venuePanel, /className="is-primary"/);
+});
+
 test("venue deal saves use the real API and immediately replace cards and counts from the response", () => {
   assert.match(dashboard, /fetch\("\/api\/venue\/deal"/);
   assert.match(dashboard, /setDeals\(nextDeals\)/);
@@ -89,7 +100,26 @@ test("venue managers can publish typed offers and bottle service with production
   assert.match(dashboard, /MyDancr referral fee/);
   assert.match(dashboard, /MyDancr-controlled agreement/);
   assert.match(dashboard, /Request fee change/);
-  assert.match(dashboard, /Publish Deal/);
+  assert.match(dashboard, /Publish Club Deal/);
+});
+
+test("venue Club Deal management leads with live state, next action, and compact performance", () => {
+  const venueDealPanel = dashboard.match(/function VenueClubDealPanel\([\s\S]*?(?=\nfunction upsertVenueDeal)/)?.[0] || "";
+  assert.match(venueDealPanel, /venue-deal-control-card/);
+  assert.match(venueDealPanel, /Current Club Deal status/);
+  assert.match(venueDealPanel, /Live Club Deal/);
+  assert.match(venueDealPanel, /Confirmed taps/);
+  assert.match(venueDealPanel, /Redemption intents/);
+  assert.match(venueDealPanel, /Outstanding/);
+  assert.match(venueDealPanel, /venue-deal-control-primary/);
+  assert.match(venueDealPanel, /Edit live deal/);
+  assert.match(venueDealPanel, /Create Club Deal/);
+  assert.match(venueDealPanel, /Preview live deal/);
+  assert.match(venueDealPanel, /<details className="venue-deal-editor"/);
+  assert.match(venueDealPanel, /Pause Deal/);
+  assert.match(venueDealPanel, /<details className="venue-deal-performance">/);
+  assert.doesNotMatch(venueDealPanel, /Unpublish This Deal/);
+  assert.ok(venueDealPanel.indexOf("venue-deal-control-card") < venueDealPanel.indexOf("venue-deal-editor"));
 });
 
 test("venue Club Deal guidance stays concise with details available on demand", () => {
