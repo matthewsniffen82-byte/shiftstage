@@ -28,22 +28,22 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=112" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=113" rel="stylesheet">/,
   );
 });
 
 test("scrollable production surfaces use one quiet neutral scrollbar", () => {
   assert.match(
     aesthetic,
-    /--mydancr-scrollbar-thumb: rgba\(255, 255, 255, \.24\);[\s\S]*?:where\(html, body, \*\) \{[\s\S]*?scrollbar-color: var\(--mydancr-scrollbar-thumb\) transparent;[\s\S]*?:where\(\*\)::\-webkit-scrollbar-thumb \{[\s\S]*?background: var\(--mydancr-scrollbar-thumb\);[\s\S]*?box-shadow: none;/,
+    /--mydancr-scrollbar-thumb: rgba\(255, 255, 255, \.18\);[\s\S]*?:where\(html, body, \*\) \{[\s\S]*?scrollbar-color: var\(--mydancr-scrollbar-thumb\) transparent;[\s\S]*?:where\(\*\)::\-webkit-scrollbar \{[\s\S]*?width: 3px;[\s\S]*?height: 3px;[\s\S]*?:where\(\*\)::\-webkit-scrollbar-thumb \{[\s\S]*?background: var\(--mydancr-scrollbar-thumb\);[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     liveApp,
-    /\*::\-webkit-scrollbar \{\s*width: 4px;\s*height: 4px;[\s\S]*?\*::\-webkit-scrollbar-thumb \{[\s\S]*?background: rgba\(255, 255, 255, (?:0|\.)24\);[\s\S]*?box-shadow: none;/,
+    /\*::\-webkit-scrollbar \{\s*width: 3px;\s*height: 3px;[\s\S]*?\*::\-webkit-scrollbar-thumb \{[\s\S]*?background: rgba\(255, 255, 255, (?:0|\.)18\);[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     tvFeed,
-    /\.tv-feed \{[^}]*scrollbar-color: rgba\(255,255,255,\.24\) transparent;/,
+    /\.tv-feed \{[^}]*scrollbar-color: rgba\(255,255,255,\.18\) transparent;/,
   );
   for (const source of [liveApp, aesthetic, tvFeed]) {
     assert.doesNotMatch(

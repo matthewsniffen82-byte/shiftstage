@@ -9,8 +9,8 @@
   --mydancr-verified-foreground: var(--dancr-color-verification-foreground);
   --mydancr-verified-surface: var(--dancr-color-verification);
   --mydancr-verified-outline: var(--dancr-color-verification-outline);
-  --mydancr-scrollbar-thumb: rgba(255, 255, 255, .24);
-  --mydancr-scrollbar-thumb-active: rgba(255, 255, 255, .4);
+  --mydancr-scrollbar-thumb: rgba(255, 255, 255, .18);
+  --mydancr-scrollbar-thumb-active: rgba(255, 255, 255, .32);
   --mydancr-preview-banner-height: 34px;
   --mydancr-preview-banner-offset: calc(var(--mydancr-preview-banner-height) + env(safe-area-inset-top, 0px));
 }
@@ -21,8 +21,8 @@
 }
 
 :where(*)::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
 }
 
 :where(*)::-webkit-scrollbar-track {
