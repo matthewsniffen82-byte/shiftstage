@@ -201,6 +201,28 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   );
 });
 
+test("venue pins stay neutral while Upcoming keeps the cyan schedule signal", () => {
+  const venuePinRules = aesthetic.match(
+    /Venue pins always represent place, never schedule state[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-verified)/,
+  )?.[0] || "";
+
+  assert.ok(venuePinRules, "the shared neutral venue-pin rules must exist");
+  assert.match(venuePinRules, /#results\.home-dancer-grid \.home-dancer-grid-venue > \.venue-dot/);
+  assert.match(venuePinRules, /#results\.venue-profile-overlay \.venue-dancer-grid \.home-dancer-grid-venue > \.venue-dot/);
+  assert.match(venuePinRules, /#profileBackdrop \.profile-modal \.profile-venue-destination > \.venue-dot/);
+  assert.match(venuePinRules, /\.home-tv-feed-venue svg/);
+  assert.match(venuePinRules, /\.tv-shell \.tv-card-venue-line svg/);
+  assert.match(venuePinRules, /color: var\(--dancr-color-text-muted\) !important;/);
+  assert.match(venuePinRules, /stroke: currentColor !important;/);
+  assert.match(venuePinRules, /filter: none !important;/);
+  assert.match(venuePinRules, /border-color: var\(--dancr-color-border-subtle\) !important;/);
+  assert.doesNotMatch(venuePinRules, /dancr-color-info|dancr-color-live|dancr-color-success/);
+  assert.match(
+    aesthetic,
+    /\.home-dancer-grid-status\.is-upcoming[\s\S]*?var\(--dancr-color-info\)/,
+  );
+});
+
 test("large dancer profile media frames use a neutral edge without a colored halo", () => {
   const mediaFrameRule = aesthetic.match(
     /The large dancer-profile media frame stays neutral[\s\S]*?\n\}/,

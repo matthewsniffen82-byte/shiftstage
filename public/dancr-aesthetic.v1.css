@@ -4079,9 +4079,31 @@ body.dancr-button-system :is(.home-tv-feed-meta, .home-tv-feed-dancer-copy),
   color: var(--dancr-color-text-secondary) !important;
 }
 
+/* Venue pins always represent place, never schedule state. Keep them muted
+ * across discovery, profiles, and TV so cyan belongs only to Upcoming. */
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot,
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot svg,
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot,
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot svg,
+body.dancr-button-system .dancer-card .card-venue-line > .venue-dot,
+body.dancr-button-system .dancer-card .card-venue-line > .venue-dot svg,
+body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destination > .venue-dot,
+body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destination > .venue-dot svg,
 body.dancr-button-system .home-tv-feed-venue svg,
 .tv-shell .tv-card-venue-line svg {
-  color: var(--dancr-color-info) !important;
+  color: var(--dancr-color-text-muted) !important;
+  stroke: currentColor !important;
+  filter: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destination > .venue-dot {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background: var(--dancr-color-surface-subtle) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system .home-tv-feed-verified.home-tv-feed-verified.home-tv-feed-verified,
