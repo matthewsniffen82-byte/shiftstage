@@ -42,7 +42,7 @@ test("admin uses the same routed dashboard chrome and structured loading hierarc
   assert.match(adminClient, /className="admin-dashboard-loading-command"/);
   assert.match(adminClient, /className="admin-dashboard-loading-actions"/);
   assert.match(adminClient, /className="admin-dashboard-loading-metrics"/);
-  assert.match(adminClient, /\.admin-workspace-nav \{[^}]*grid-template-columns: repeat\(6, minmax\(0, 1fr\)\)/);
+  assert.match(adminClient, /\.admin-workspace-nav \{[^}]*grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/);
   assert.match(adminClient, /\.admin-shell\.dashboard-shell-admin \{[^}]*safe-area-inset-top/);
   assert.match(adminClient, /@media \(max-width: 680px\)[\s\S]*?\.admin-workspace-nav \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.doesNotMatch(adminClient, /className="top-nav"/);

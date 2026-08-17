@@ -7,6 +7,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
 import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
+import AdminPilotAnalytics from "./AdminPilotAnalytics";
 import AdminTvPanel from "./AdminTvPanel";
 
 type AdminState = {
@@ -35,7 +36,7 @@ type AdminActionNotice = {
 
 const SESSION_KEY = "dancrAuthSessionV1";
 const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
-type AdminWorkspace = "overview" | "approvals" | "finance" | "activity" | "accounts" | "system";
+type AdminWorkspace = "overview" | "approvals" | "finance" | "activity" | "accounts" | "system" | "pilot";
 
 export default function AdminClient() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -401,7 +402,7 @@ export default function AdminClient() {
             </aside>
           ) : null}
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
-            {(["overview", "approvals", "finance", "activity", "accounts", "system"] as AdminWorkspace[]).map((item) => (
+            {(["overview", "pilot", "approvals", "finance", "activity", "accounts", "system"] as AdminWorkspace[]).map((item) => (
               <button
                 key={item}
                 type="button"
@@ -424,6 +425,12 @@ export default function AdminClient() {
               operations={state.operations || null}
               monitoring={state.monitoring || null}
               onOpenWorkspace={setWorkspace}
+            />
+          ) : null}
+          {workspace === "pilot" ? (
+            <AdminPilotAnalytics
+              venues={state.venues || []}
+              onActionConfirmed={confirmAdminAction}
             />
           ) : null}
           {workspace === "activity" ? <ActivityTimeline operations={state.operations || null} /> : null}
@@ -3740,7 +3747,7 @@ function AdminStyles() {
       .admin-dashboard-loading-metrics { min-height: 74px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; overflow: hidden; }
       .admin-dashboard-loading-metrics span { border-radius: 0; }
       @keyframes adminDashboardLoadingPulse { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-      .admin-workspace-nav { top: max(8px, env(safe-area-inset-top)); grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-bottom: var(--mydancr-dashboard-gap); padding: 5px; border-color: rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
+      .admin-workspace-nav { top: max(8px, env(safe-area-inset-top)); grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: var(--mydancr-dashboard-gap); padding: 5px; border-color: rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
       .admin-workspace-nav button { min-width: 0; min-height: 42px; padding: 0 8px; border: 0; border-radius: 11px; color: #d8cfeb; font-size: 13px; text-align: center; }
       .admin-workspace-nav button:hover { color: #fff; background: rgba(126,234,255,.08); }
       .admin-workspace-nav button:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
