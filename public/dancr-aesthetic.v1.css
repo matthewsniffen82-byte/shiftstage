@@ -4313,7 +4313,8 @@ body.dancr-button-system .home-tv-feed-feedback.is-neutral {
 body.dancr-button-system .home-tv-feed-schedule.is-now {
   border-color: var(--dancr-color-live-strong) !important;
   color: var(--dancr-color-live) !important;
-  background: var(--dancr-color-live-surface-emphasis) !important;
+  background-color: var(--dancr-color-live-surface-emphasis, #28744f) !important;
+  background-image: none !important;
   box-shadow: none !important;
   text-shadow: none !important;
 }

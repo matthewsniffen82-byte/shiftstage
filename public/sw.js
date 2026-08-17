@@ -1,4 +1,4 @@
-/* dancr-sw-release: tv-progress-canvas-v1 */
+/* dancr-sw-release: working-now-pill-v2 */
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });

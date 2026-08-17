@@ -30957,7 +30957,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=11" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=126" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=127" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -31614,7 +31614,7 @@
         .home-tv-feed-schedule.is-now {
           border-color: rgba(77,236,157,.5);
           color: #4dec9d;
-          background: rgba(17,107,62,.48);
+          background: var(--dancr-color-live-surface-emphasis, #28744f);
         }
         .home-tv-feed-schedule.is-upcoming {
           border-color: rgba(126,234,255,.42);
@@ -39516,7 +39516,7 @@
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("/sw.js?v=tv-progress-canvas-v1", { updateViaCache: "none" })
+          .register("/sw.js?v=working-now-pill-v2", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
