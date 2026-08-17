@@ -437,7 +437,6 @@ export default function AccountClient() {
             <Link href={homeDiscoveryHref("tonight")}>Now</Link>
             <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
             <Link href={homeDiscoveryHref("venues")}>Venues</Link>
-            <Link href={homeDiscoveryHref("trending")}>Trending</Link>
             <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
           </div>
         </nav>

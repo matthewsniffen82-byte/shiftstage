@@ -77,6 +77,8 @@ test("all shared navigation targets canonical homepage views directly", () => {
     /view: "dancers"[\s\S]*?view: "tv"[\s\S]*?view: "venues"/,
   );
   assert.doesNotMatch(globalNavigation, /view: "(?:tonight|trending)"/);
+  assert.doesNotMatch(accountSource, /homeDiscoveryHref\("trending"\)/);
+  assert.doesNotMatch(homeSource, /data-tab="trending"/);
   assert.match(
     globalNavigation,
     /const href = homeDiscoveryHref\(destination\.view, city\)/,

@@ -375,7 +375,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
 test("a hard refresh keeps Clubs in a truthful loading state until discovery is ready", () => {
   assert.match(
     homeSource,
-    /function getItems\(city, tab\) \{[\s\S]*?\["tonight", "dancers", "venues", "trending"\]\.includes\(tab\)[\s\S]*?liveMarketState\[city\] !== "ready"[\s\S]*?return \[\];/,
+    /function getItems\(city, tab\) \{[\s\S]*?\["tonight", "dancers", "venues"\]\.includes\(tab\)[\s\S]*?liveMarketState\[city\] !== "ready"[\s\S]*?return \[\];/,
   );
   assert.match(
     homeSource,
@@ -395,7 +395,7 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   );
   assert.match(
     homeSource,
-    /const count = loading && \["tonight", "dancers", "venues", "trending"\]\.includes\(tabName\) \? "\.\.\."/,
+    /const count = loading && \["tonight", "dancers", "venues"\]\.includes\(tabName\) \? "\.\.\."/,
   );
 });
 
@@ -910,10 +910,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
     homeSource,
     /#discoveryTabs \.tab-count \{[\s\S]*?border: 0 !important[\s\S]*?color: #fff !important[\s\S]*?background: transparent !important[\s\S]*?text-shadow: 0 1px 2px rgba\(0,0,0,.96\)[\s\S]*?pointer-events: none/,
   );
-  assert.match(
-    homeSource,
-    /#discoveryTabs \.tab\[data-tab="trending"\] \.tab-count \{[\s\S]*?right: calc\(50% - 25px\) !important[\s\S]*?left: auto !important[\s\S]*?text-align: right/,
-  );
+  assert.doesNotMatch(homeSource, /#discoveryTabs \.tab\[data-tab="trending"\]/);
 });
 
 test("legal and support actions stay out of the mobile discovery scroll", () => {

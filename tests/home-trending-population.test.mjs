@@ -4,10 +4,7 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("the public Trending destination never includes dancers or visible ranks", () => {
-  const destinationHelper = homeSource.match(
-    /function trendingProfiles\(city\) \{[\s\S]*?\n    \}/,
-  )?.[0] || "";
+test("the standalone Trending destination is absent while its dancer filter stays private-safe", () => {
   const rankedHelper = homeSource.match(
     /function rankedTrendingProfiles\(city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
@@ -15,7 +12,7 @@ test("the public Trending destination never includes dancers or visible ranks", 
     /function publicTrendingActivityScore\(profile\) \{[\s\S]*?(?=\n    function dancerDirectoryFilterMarkup)/,
   )?.[0] || "";
 
-  assert.match(destinationHelper, /return \[\];/);
+  assert.doesNotMatch(homeSource, /function trendingProfiles\(city\)/);
   assert.match(rankedHelper, /return \[\];/);
   assert.match(rankingHelper, /function trendingDirectoryProfiles\(profiles, city = selectedCity\(\), options = \{\}\)/);
   assert.match(rankingHelper, /function trendingDirectoryProfiles[\s\S]*?return \[\];/);

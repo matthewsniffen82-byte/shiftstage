@@ -714,7 +714,6 @@ function isActiveDestination(
   if (destination === "dancers") {
     return (
       pathname === "/tonight" ||
-      pathname === "/trending" ||
       pathname === "/dancers" ||
       pathname.startsWith("/dancers/")
     );

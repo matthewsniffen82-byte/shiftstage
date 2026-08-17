@@ -23224,7 +23224,7 @@
         font-size: 15px !important;
       }
     }
-    /* Mobile tab fit: keep the full "Trending" label visible on narrow phones. */
+    /* Mobile destination fit. */
     @media (max-width: 520px) {
       .tabs {
         gap: 7px !important;
@@ -23246,16 +23246,6 @@
         min-width: 0 !important;
         overflow: visible !important;
         text-overflow: clip !important;
-      }
-
-      .tabs .tab[data-tab="trending"],
-      .tab[data-tab="trending"] {
-        gap: 8px !important;
-      }
-
-      .tabs .tab[data-tab="trending"] .tab-count,
-      .tab[data-tab="trending"] .tab-count {
-        margin-left: 2px !important;
       }
 
       .tabs .tab-count,
@@ -33838,11 +33828,6 @@
             pointer-events: none;
             transform: none !important;
           }
-          #discoveryTabs .tab[data-tab="trending"] .tab-count {
-            right: calc(50% - 25px) !important;
-            left: auto !important;
-            text-align: right;
-          }
           #discoveryTabs .home-nav-label,
           #discoveryTabs .home-bottom-tv > span:last-child {
             width: 100%;
@@ -44354,10 +44339,6 @@
       return [];
     }
 
-    function trendingProfiles(city) {
-      return [];
-    }
-
     function withTrendingRank(profile, city) {
       const ranked = rankedTrendingProfiles(city).find((item) => item.name === profile.name);
       if (!ranked || ranked.trendRank > 10) return { ...profile, trendRank: null, trendScore: 0, trendSignals: privateTrendingSignals(profile, city) };
@@ -54193,7 +54174,7 @@
 
     function getItems(city, tab) {
       const market = markets[city];
-      if (["tonight", "dancers", "venues", "trending"].includes(tab) && liveMarketState[city] !== "ready") {
+      if (["tonight", "dancers", "venues"].includes(tab) && liveMarketState[city] !== "ready") {
         return [];
       }
       if (tab === "tonight") return workingNowItems(city);
@@ -54208,15 +54189,14 @@
           .filter(venueMatchesCurrentFilter)
           .sort((a, b) => compareVenueDiscoveryPriority(a, b, city));
       }
-      return trendingProfiles(city);
+      return [];
     }
 
     function homeNavigationIconMarkup(tabName) {
       const icons = {
         tonight: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M8 3.5v4M16 3.5v4M3.5 10h17"></path><circle cx="15.5" cy="15.5" r="3"></circle><path d="M15.5 14v1.7l1.2.8"></path></svg>',
         dancers: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2"></path></svg>',
-        venues: '<svg viewBox="0 0 24 24"><path d="M5 20V7l7-3 7 3v13"></path><path d="M3 20h18"></path><path d="M9 10h6M9 14h6"></path></svg>',
-        trending: '<svg viewBox="0 0 24 24"><path d="m4 17 5-5 3.5 3.5L20 8"></path><path d="M15 8h5v5"></path></svg>'
+        venues: '<svg viewBox="0 0 24 24"><path d="M5 20V7l7-3 7 3v13"></path><path d="M3 20h18"></path><path d="M9 10h6M9 14h6"></path></svg>'
       };
       return `<span class="home-nav-icon" aria-hidden="true"><span class="mobile-nav-selection-halo"></span>${icons[tabName] || icons.tonight}</span>`;
     }
@@ -54226,13 +54206,12 @@
       const counts = {
         tonight: getItems(city, "tonight").length,
         dancers: getItems(city, "dancers").length,
-        venues: getItems(city, "venues").length,
-        trending: getItems(city, "trending").length
+        venues: getItems(city, "venues").length
       };
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const tabName = tab.dataset.tab;
         const label = tab.dataset.tabLabel || tab.textContent.trim();
-        const count = loading && ["tonight", "dancers", "venues", "trending"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
+        const count = loading && ["tonight", "dancers", "venues"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
         tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
     }

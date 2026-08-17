@@ -33,8 +33,9 @@ test("every Next page receives the shared consolidated mobile navigation", () =>
   );
   assert.match(
     navigationSource,
-    /pathname === "\/tonight"[\s\S]*?pathname === "\/trending"[\s\S]*?pathname === "\/dancers"[\s\S]*?pathname\.startsWith\("\/dancers\/"\)/,
+    /pathname === "\/tonight"[\s\S]*?pathname === "\/dancers"[\s\S]*?pathname\.startsWith\("\/dancers\/"\)/,
   );
+  assert.doesNotMatch(navigationSource, /pathname === "\/trending"/);
   assert.doesNotMatch(tvSource, /className="tv-mobile-nav"/);
 });
 
