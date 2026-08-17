@@ -48014,6 +48014,9 @@
       const city = citySelect.value;
       const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
+      const operatingSummaryLabel = operatingStatus.state === "unknown"
+        ? "Not posted"
+        : operatingStatus.label;
       const visual = venueVisualAttrs(venue);
       const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo");
       const localProfiles = venueDancers(city, venue.name);
@@ -48104,7 +48107,7 @@
               <div class="venue-status-grid" aria-label="Tonight at ${escapeHtml(details.name)}">
                 <span class="venue-operating-summary">
                   <span class="venue-status-kicker">Hours</span>
-                  <strong class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</strong>
+                  <strong class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingSummaryLabel)}</strong>
                   ${operatingStatus.hoursLabel ? `<span class="venue-status-pill">${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </span>
                 ${quickStats}

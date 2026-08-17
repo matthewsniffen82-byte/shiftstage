@@ -5111,11 +5111,15 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-operating-status {
+  width: 100%;
+  display: block !important;
   justify-content: center !important;
   color: var(--dancr-color-text-primary) !important;
   font-size: 11.5px;
   line-height: 1.2;
   text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-pill {
