@@ -48,6 +48,7 @@ const requiredTokens = new Map([
   ["--dancr-color-verification-outline", "#1d4ed8"],
   ["--dancr-color-success", "#10b981"],
   ["--dancr-color-live", "#4dec9d"],
+  ["--dancr-color-live-surface-emphasis", "#28744f"],
   ["--dancr-color-featured", "#fbbf24"],
   ["--dancr-color-danger", "#ef4444"],
 ]);
@@ -135,7 +136,7 @@ test("Next pages and the live shell load tokens before shared component styling"
   assert.ok(buttonImport < aestheticImport);
 
   const tokenLink = liveShell.indexOf(
-    '<link href="/dancr-brand-tokens.v1.css?v=10" rel="stylesheet">',
+    '<link href="/dancr-brand-tokens.v1.css?v=11" rel="stylesheet">',
   );
   const buttonLink = liveShell.indexOf(
     '<link href="/dancr-button-system.v1.css" rel="stylesheet">',
@@ -190,7 +191,7 @@ test("form fields use neutral borders and a crisp tokenized focus ring", () => {
   );
   assert.match(
     liveShell,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=125" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=126" rel="stylesheet">/,
   );
 });
 

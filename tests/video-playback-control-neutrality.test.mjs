@@ -49,5 +49,5 @@ test("visible video play and pause controls stay neutral in every interaction st
   assert.match(tvRetryStateRule, /background-image: none !important;/);
   assert.doesNotMatch(tvRetryStateRule, /brand-primary|beam-violet|color-info/);
 
-  assert.match(liveApp, /dancr-aesthetic\.v1\.css\?v=125/);
+  assert.match(liveApp, /dancr-aesthetic\.v1\.css\?v=126/);
 });
