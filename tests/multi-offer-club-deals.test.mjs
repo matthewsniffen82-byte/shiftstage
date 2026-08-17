@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, liquorMigration, dealPolicy, deals, venueDealRoute, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
+const [migration, liquorMigration, supportedOfferMigration, dealPolicy, deals, presets, venueDealRoute, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608080001_multi_offer_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608160004_prohibit_liquor_club_deals.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608170001_standardize_active_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/club-deal-presets.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
@@ -29,6 +31,25 @@ test("venues can publish a prioritized collection of non-alcohol Club Deals", ()
   assert.match(venueDealRoute, /ok: true,[\s\S]*?deal,[\s\S]*?deals,/);
   assert.match(deals, /return \{ deal, deals \};/);
   assert.match(venueDealRoute, /export async function DELETE/);
+});
+
+test("new and currently active Club Deals are limited to half-off admission or line skip", () => {
+  assert.match(presets, /title: "Half-off admission"/);
+  assert.match(presets, /title: "Skip the line"/);
+  assert.equal((presets.match(/title: "/g) || []).length, 2);
+  assert.match(deals, /clubDealOfferPresetForTitle\(input\.dealTitle\)/);
+  assert.match(deals, /Choose Half-off admission or Skip the line/);
+  assert.match(deals, /const offerType: ClubDealOfferType = "admission"/);
+  assert.match(deals, /booking_url: null/);
+  assert.match(venueDashboard, /Deal offered/);
+  assert.match(venueDashboard, /CLUB_DEAL_OFFER_PRESETS\.map/);
+  assert.doesNotMatch(venueDashboard, /<option value="drink">/);
+  assert.doesNotMatch(venueDashboard, /<option value="bottle_service">/);
+  assert.doesNotMatch(venueDashboard, /<option value="other">/);
+  assert.match(supportedOfferMigration, /where is_active = true/);
+  assert.match(supportedOfferMigration, /deal_title in \('Half-off admission', 'Skip the line'\)/);
+  assert.match(supportedOfferMigration, /offer_type = 'admission'/);
+  assert.match(supportedOfferMigration, /booking_url is null/);
 });
 
 test("venue managers can keep multiple deals live and manage each campaign independently", () => {

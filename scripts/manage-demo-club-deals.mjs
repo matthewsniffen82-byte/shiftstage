@@ -14,34 +14,14 @@ const REFERRAL_COMMISSION_CENTS = 500;
 const MANAGED_CASHIER_LABEL = "Main cashier · Demo Mode";
 const DEAL_TEMPLATES = Object.freeze([
   {
-    title: "Complimentary admission",
-    description: "Receive one complimentary general-admission entry after the venue cashier confirms this Club Deal.",
-    terms: "One redemption per guest. Subject to venue capacity, age requirements, dress code, and house rules.",
+    title: "Half-off admission",
+    description: "Receive 50% off the venue's standard general-admission cover charge after cashier confirmation.",
+    terms: "One redemption per guest. Discount applies to the standard general-admission cover only. Subject to venue capacity, age requirements, dress code, and house rules.",
   },
   {
-    title: "Two-for-one admission",
-    description: "Purchase one general-admission entry and receive a second general-admission entry at no additional charge.",
-    terms: "One redemption per party. Both guests must arrive together. Subject to venue capacity, age requirements, dress code, and house rules.",
-  },
-  {
-    title: "$10 cover credit",
-    description: "Receive a $10 credit toward the venue's standard general-admission cover charge.",
-    terms: "One redemption per guest. No cash value. Subject to venue capacity, age requirements, dress code, and house rules.",
-  },
-  {
-    title: "Priority guest entry",
-    description: "Use the venue's designated priority guest line for general admission.",
+    title: "Skip the line",
+    description: "Use the venue's designated priority admission line after cashier confirmation.",
     terms: "One redemption per guest. Priority access does not guarantee immediate admission and remains subject to venue capacity, age requirements, dress code, and house rules.",
-  },
-  {
-    title: "Reduced general admission",
-    description: "Receive the venue's reduced MyDancr general-admission rate after cashier confirmation.",
-    terms: "One redemption per guest. The venue confirms the current reduced rate at redemption. Subject to venue capacity, age requirements, dress code, and house rules.",
-  },
-  {
-    title: "Guest-list admission",
-    description: "Join the venue's MyDancr guest list for general admission after cashier confirmation.",
-    terms: "One redemption per guest. Guest-list access remains subject to venue capacity, age requirements, dress code, and house rules.",
   },
 ]);
 
@@ -107,19 +87,11 @@ async function applyDeals() {
     );
   }
 
-  const usedTemplateIndexes = new Set(
-    state.managedDeals
-      .map((deal) => Number(deal.redemption_rules?.template_index))
-      .filter((index) => Number.isInteger(index) && index >= 0 && index < DEAL_TEMPLATES.length),
-  );
-  const availableTemplateIndexes = DEAL_TEMPLATES
-    .map((_, index) => index)
-    .filter((index) => !usedTemplateIndexes.has(index));
   const now = new Date().toISOString();
   const selectedVenues = candidates.slice(0, missingCount);
   const programmingLinks = await provisionMissingCashierTags(selectedVenues, state.cashierVenueIds);
   const rows = selectedVenues.map((venue, index) => {
-    const templateIndex = availableTemplateIndexes[index];
+    const templateIndex = (state.managedDeals.length + index) % DEAL_TEMPLATES.length;
     const template = DEAL_TEMPLATES[templateIndex];
     return {
       venue_id: venue.id,
@@ -299,6 +271,11 @@ async function verifyManagedDeals() {
   const missingCashierNfc = venueIds.filter((venueId) => !state.cashierVenueIds.has(venueId));
   if (missingCashierNfc.length) {
     throw new Error(`${missingCashierNfc.length} managed Club Deals are missing an active cashier NFC sticker.`);
+  }
+  const supportedTitles = new Set(DEAL_TEMPLATES.map((template) => template.title));
+  const unsupportedDeals = state.managedDeals.filter((deal) => !supportedTitles.has(deal.deal_title));
+  if (unsupportedDeals.length) {
+    throw new Error(`${unsupportedDeals.length} managed Club Deals are not Half-off admission or Skip the line.`);
   }
   return state.managedDeals;
 }

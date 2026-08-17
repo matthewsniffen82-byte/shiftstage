@@ -9,6 +9,11 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
+import {
+  CLUB_DEAL_OFFER_PRESETS,
+  clubDealOfferPresetForTitle,
+  defaultClubDealOfferPreset,
+} from "@/src/lib/dancr/club-deal-presets";
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
 import DancerShiftManager from "./DancerShiftManager";
@@ -2206,6 +2211,19 @@ function VenueClubDealPanel({
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function selectDealOffer(title: string) {
+    const preset = clubDealOfferPresetForTitle(title) || defaultClubDealOfferPreset();
+    setSaveConfirmed(false);
+    setStatus("");
+    setForm((current) => ({
+      ...current,
+      dealTitle: preset.title,
+      dealDescription: preset.description,
+      dealTerms: preset.terms,
+      offerType: "admission",
+    }));
+  }
+
   function editDeal(deal: Record<string, unknown>) {
     const nextEditingId = String(deal.id || "");
     editingIdRef.current = nextEditingId;
@@ -2267,7 +2285,7 @@ function VenueClubDealPanel({
           dealDescription,
           dealTerms: form.dealTerms,
           isActive: nextIsActive,
-          offerType: form.offerType,
+          offerType: "admission",
           sortOrder: Number(form.sortOrder),
         }),
       });
@@ -2468,38 +2486,26 @@ function VenueClubDealPanel({
         <fieldset className="venue-deal-builder-step">
           <legend><span>1</span><span><strong>Offer</strong><small>What customers receive</small></span></legend>
           <div className="venue-deal-step-grid">
-            <label>
-              Offer type
-              <select
-                value={form.offerType}
-                onChange={(event) => updateDealForm("offerType", event.target.value)}
-              >
-                <option value="admission">Admission</option>
-                <option value="other">Other</option>
+            <label className="deal-wide-field">
+              Deal offered
+              <select value={form.dealTitle} onChange={(event) => selectDealOffer(event.target.value)}>
+                {CLUB_DEAL_OFFER_PRESETS.map((preset) => (
+                  <option key={preset.key} value={preset.title}>{preset.title}</option>
+                ))}
               </select>
-            </label>
-            <label>
-              Deal title
-              <input
-                maxLength={100}
-                minLength={3}
-                required
-                value={form.dealTitle}
-                onChange={(event) => updateDealForm("dealTitle", event.target.value)}
-              />
+              <small>MyDancr Club Deals are limited to these two clear admission offers.</small>
             </label>
             <label className="deal-wide-field">
               Offer details
               <textarea
                 maxLength={500}
                 minLength={8}
+                readOnly
                 required
                 rows={3}
                 value={form.dealDescription}
-                onChange={(event) => updateDealForm("dealDescription", event.target.value)}
               />
             </label>
-            <p className="venue-deal-rule-note deal-wide-field">Club Deals may cover admission and other non-alcohol benefits. Alcohol, drink specials, and bottle service are not permitted.</p>
           </div>
         </fieldset>
 
@@ -2680,12 +2686,13 @@ function upsertVenueDeal(
 }
 
 function venueDealForm(deal?: Record<string, unknown> | null, fallbackOrder = 0) {
+  const preset = clubDealOfferPresetForTitle(deal?.dealTitle) || defaultClubDealOfferPreset();
   return {
-    dealTitle: String(deal?.dealTitle || ""),
-    dealDescription: String(deal?.dealDescription || ""),
-    dealTerms: String(deal?.dealTerms || ""),
+    dealTitle: preset.title,
+    dealDescription: preset.description,
+    dealTerms: String(deal?.dealTerms || preset.terms),
     isActive: deal?.isActive === true,
-    offerType: String(deal?.offerType || "admission"),
+    offerType: "admission",
     sortOrder: String(deal?.sortOrder ?? fallbackOrder * 10),
   };
 }

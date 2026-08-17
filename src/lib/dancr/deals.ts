@@ -6,6 +6,7 @@ import { dancerHasActiveVenueAffiliation } from "./venue-affiliations";
 import { requireVenueAccess } from "./venue-access";
 import { getVenueReferralFeeState } from "./referral-fees";
 import { assertLiquorFreeClubDeal, isLiquorRelatedClubDeal } from "./deal-policy";
+import { clubDealOfferPresetForTitle } from "./club-deal-presets";
 
 type DancrClient = SupabaseClient;
 
@@ -529,11 +530,15 @@ export async function updateVenueDealForAccount(
   const owned = await getVenueDealsForAccount(client, userId);
   if (!owned) throw new Error("Venue profile not found.");
 
-  const dealTitle = requiredDealText(input.dealTitle, "Deal title", 3, 100);
-  const dealDescription = requiredDealText(input.dealDescription, "Deal description", 8, 500);
-  const dealTerms = optionalDealText(input.dealTerms, "Deal terms", 1200);
-  const offerType = normalizeOfferType(input.offerType);
-  assertLiquorFreeClubDeal({ offerType: input.offerType, dealTitle, dealDescription, dealTerms });
+  const offerPreset = clubDealOfferPresetForTitle(input.dealTitle);
+  if (!offerPreset) {
+    throw new Error("Choose Half-off admission or Skip the line for this Club Deal.");
+  }
+  const dealTitle = offerPreset.title;
+  const dealDescription = offerPreset.description;
+  const dealTerms = optionalDealText(input.dealTerms, "Deal terms", 1200) || offerPreset.terms;
+  const offerType: ClubDealOfferType = "admission";
+  assertLiquorFreeClubDeal({ offerType, dealTitle, dealDescription, dealTerms });
   const sortOrder = Math.trunc(Number(input.sortOrder || 0));
   if (!Number.isSafeInteger(sortOrder) || sortOrder < 0 || sortOrder > 1000) {
     throw new Error("Offer order must be between 0 and 1000.");
@@ -776,15 +781,6 @@ function isAllowedClubDealRow(row: any) {
     dealDescription: row?.deal_description,
     dealTerms: row?.deal_terms,
   });
-}
-
-function requiredDealText(value: string, label: string, minimum: number, maximum: number) {
-  const text = String(value || "").trim();
-  if (text.length < minimum || text.length > maximum) {
-    throw new Error(`${label} must be ${minimum} to ${maximum} characters.`);
-  }
-  if (/[<>]/.test(text)) throw new Error(`${label} contains unsupported characters.`);
-  return text;
 }
 
 function optionalDealText(value: string | null | undefined, label: string, maximum: number) {

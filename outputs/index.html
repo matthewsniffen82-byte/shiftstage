@@ -45365,7 +45365,7 @@
               <div>
                 <span class="eyebrow">Club Deals</span>
                 <h3>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
-                <p>${venue.activeDeals?.length > 1 ? "Choose admission, drinks, bottle service, or another club offer, then tap the cashier NFC sticker at the club." : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
+                <p>${venue.activeDeals?.length > 1 ? "Choose Half-off admission or Skip the line, then tap the cashier NFC sticker at the club." : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Click for Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">

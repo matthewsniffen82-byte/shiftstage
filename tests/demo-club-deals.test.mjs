@@ -30,6 +30,17 @@ test("managed Demo Mode deals satisfy the production publication contract", () =
   assert.match(deals, /\.gt\("payout_amount_cents", 0\)/);
 });
 
+test("managed Demo Mode deals alternate only the two supported admission offers", () => {
+  assert.match(manager, /title: "Half-off admission"/);
+  assert.match(manager, /title: "Skip the line"/);
+  assert.match(manager, /\(state\.managedDeals\.length \+ index\) % DEAL_TEMPLATES\.length/);
+  assert.match(manager, /not Half-off admission or Skip the line/);
+  assert.doesNotMatch(
+    manager,
+    /Complimentary admission|Two-for-one admission|\$10 cover credit|Priority guest entry|Reduced general admission|Guest-list admission/,
+  );
+});
+
 test("the operation preserves existing venue deals and only deactivates its own managed rows", () => {
   const applyBody = manager.match(/async function applyDeals\(\)[\s\S]*?async function deactivateManagedDeals/)?.[0] || "";
   const removeBody = manager.match(/async function deactivateManagedDeals\(\)[\s\S]*?async function loadState/)?.[0] || "";
