@@ -25905,6 +25905,8 @@
       padding: 8px 8px 7px;
       border-radius: 18px;
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      grid-auto-rows: max-content;
       gap: 5px;
       place-items: center;
       background: radial-gradient(circle at 45% 35%, rgba(133, 76, 255, .22), transparent 56%), rgba(9, 9, 13, .92);
@@ -25925,6 +25927,7 @@
       height: 62px;
       display: grid;
       place-items: center;
+      justify-self: center;
       border: 1px solid rgba(126, 234, 255, .72);
       border-radius: 50%;
       color: #f8fdff;
@@ -25959,6 +25962,7 @@
     }
 
     .deal-pass-frame > strong {
+      justify-self: center;
       color: rgba(255, 255, 255, .82);
       font-size: .58rem;
       font-weight: 950;
