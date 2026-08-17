@@ -4313,12 +4313,11 @@ body.dancr-button-system .home-tv-feed-feedback.is-neutral {
 body.dancr-button-system .home-tv-feed-schedule.is-now {
   border-color: var(--dancr-color-live-strong) !important;
   color: var(--dancr-color-live) !important;
-  background-color: color-mix(
+  background: color-mix(
     in srgb,
-    var(--dancr-color-live) 30%,
+    var(--dancr-color-live) 40%,
     var(--dancr-color-background)
   ) !important;
-  background-image: none !important;
   box-shadow: none !important;
   text-shadow: none !important;
 }
