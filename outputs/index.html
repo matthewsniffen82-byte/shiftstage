@@ -35950,6 +35950,44 @@
           box-shadow: none !important;
         }
 
+        /* Active venue details keep the frame quiet while making the live Club Deal unmistakable. */
+        #results.venue-profile-overlay .venue-detail .venue-offer-card.is-active-club-deal {
+          border-color: var(--dancr-color-success-medium) !important;
+          background:
+            radial-gradient(circle at 18% 0%, var(--dancr-color-success-soft), transparent 42%),
+            linear-gradient(145deg, rgba(10, 18, 16, .98), rgba(5, 7, 7, .99)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05) !important;
+        }
+        #results.venue-profile-overlay .venue-detail .venue-offer-card.is-active-club-deal p {
+          color: var(--dancr-color-text-secondary) !important;
+        }
+        .venue-detail-club-deal-heading {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 7px;
+        }
+        .venue-detail-club-deal-heading .eyebrow {
+          margin: 0 !important;
+        }
+        .venue-detail-club-deal-status {
+          display: inline-flex;
+          min-height: 24px;
+          align-items: center;
+          padding: 4px 9px;
+          border: 1px solid var(--dancr-color-success-medium);
+          border-radius: 999px;
+          color: var(--dancr-color-live);
+          background: var(--dancr-color-success-soft);
+          font-size: .67rem;
+          font-weight: 900;
+          line-height: 1;
+          letter-spacing: .09em;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
         /* Venue details use the same compact QR box geometry as dancer full profiles. */
         #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-state {
           box-sizing: border-box;
@@ -36007,15 +36045,28 @@
           color: inherit !important;
         }
         #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-state.is-available {
-          border-color: var(--dancr-color-success-medium) !important;
-          color: var(--dancr-color-success) !important;
-          background: color-mix(in srgb, var(--dancr-color-success) 6%, var(--dancr-color-surface)) !important;
+          border-color: var(--dancr-color-success-strong) !important;
+          color: var(--dancr-color-text-primary) !important;
+          background:
+            radial-gradient(circle at 50% -16%, var(--dancr-color-success-medium), transparent 58%),
+            linear-gradient(145deg, #07513d, #071d18) !important;
+          box-shadow:
+            0 10px 26px var(--dancr-color-black-medium),
+            0 0 20px var(--dancr-color-success-medium),
+            inset 0 1px 0 rgba(255, 255, 255, .1) !important;
         }
         #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-state.is-available .venue-detail-club-deal-symbol {
-          border-color: var(--dancr-color-success-medium) !important;
-          color: var(--dancr-color-success) !important;
+          border-color: var(--dancr-color-success-strong) !important;
+          color: var(--dancr-color-live) !important;
           background: var(--dancr-color-success-soft) !important;
+          box-shadow: 0 0 12px var(--dancr-color-success-medium) !important;
           opacity: 1;
+        }
+        #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-state.is-available .venue-detail-club-deal-qr-copy strong {
+          color: var(--dancr-color-text-primary) !important;
+        }
+        #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-state.is-available .venue-detail-club-deal-qr-copy small {
+          color: var(--dancr-color-live) !important;
         }
         #results.venue-profile-overlay .venue-detail .venue-club-deal-unavailable.venue-offer-card {
           width: min(168px, 100%) !important;
@@ -45340,18 +45391,21 @@
           sourceType: "club_page"
         };
         return `
-          <article class="venue-offer-card revenue-offer-card" id="club-deal">
+          <article class="venue-offer-card revenue-offer-card is-active-club-deal" id="club-deal">
             <div class="venue-offer-grid">
               <div>
-                <span class="eyebrow">Club Deals</span>
+                <div class="venue-detail-club-deal-heading">
+                  <span class="eyebrow">Club Deals</span>
+                  <span class="venue-detail-club-deal-status">Active tonight</span>
+                </div>
                 <h3>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
                 <p>${venue.activeDeals?.length > 1 ? "Choose Half-off admission or Skip the line, then tap the cashier NFC sticker at the club." : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
-                <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Click for Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">
+                <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Get Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">
                   ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol")}
                   <span class="venue-detail-club-deal-qr-copy">
-                    <strong>${venue.activeDeals?.length > 1 ? "View Club Deals" : "Click for Club Deal"}</strong>
+                    <strong>${venue.activeDeals?.length > 1 ? "View Club Deals" : "Get Club Deal"}</strong>
                     <small>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : "Cashier NFC redemption"}</small>
                   </span>
                 </button>

@@ -96,13 +96,13 @@ test("venue details reuse the production Dancers grid card for every schedule st
   );
 });
 
-test("venue profiles reserve customer QR language for active Club Deals", () => {
+test("venue profiles reserve customer Club Deal language for active offers", () => {
   const venueOffer = liveApp.match(
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
   assert.match(
     venueOffer,
-    /venue\?\.activeDeal[\s\S]*?<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Click for Club Deal/,
+    /venue\?\.activeDeal[\s\S]*?<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Get Club Deal/,
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
   assert.doesNotMatch(venueOffer, /clubDealCtaMarkup|venue-club-deal-cta|Opens after you tap Get Club Deal/);
@@ -116,7 +116,7 @@ test("venue profiles use the dancer full-profile Club Deal box for cashier NFC i
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
 
-  assert.match(venueOffer, /<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?Click for Club Deal[\s\S]*?Cashier NFC redemption[\s\S]*?<\/button>/);
+  assert.match(venueOffer, /is-active-club-deal[\s\S]*?Active tonight[\s\S]*?<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?Get Club Deal[\s\S]*?Cashier NFC redemption[\s\S]*?<\/button>/);
   assert.match(
     venueOffer,
     /venue-club-deal-unavailable[\s\S]*?venue-qr-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)[\s\S]*?<strong>No active Club Deal<\/strong>/,
@@ -127,6 +127,8 @@ test("venue profiles use the dancer full-profile Club Deal box for cashier NFC i
   assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \{[\s\S]*?color: var\(--dancr-color-text-muted\) !important;[\s\S]*?background: var\(--dancr-color-surface\) !important;/);
   assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \.venue-detail-club-deal-symbol \{[\s\S]*?border-color: rgba\(148, 163, 184, \.14\) !important;[\s\S]*?background: rgba\(148, 163, 184, \.035\) !important;/);
   assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \.venue-detail-club-deal-qr-copy :is\(\.eyebrow, strong, small\) \{[\s\S]*?color: inherit !important;/);
+  assert.match(liveApp, /Active venue details keep the frame quiet while making the live Club Deal unmistakable[\s\S]*?\.venue-offer-card\.is-active-club-deal \{[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, \.05\) !important;[\s\S]*?\.venue-detail-club-deal-status \{[\s\S]*?text-transform: uppercase;/);
+  assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-available \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)/);
   assert.match(liveApp, /#profileBackdrop \.profile-qr-unavailable \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;/);
 });
 
