@@ -28,16 +28,10 @@ export function isFictionalVenueBranding(slug?: string | null) {
   return Boolean(VENUE_LOGO_BY_SLUG[normalizedSlug]);
 }
 
-export const FICTIONAL_VENUE_PITCH_ADDRESS = "0000 MyDancr Ave, Las Vegas, NV 55555";
-
-export function isFictionalVenueTravelUnavailable(venue?: {
+export function isFictionalVenueTravelPreviewOnly(venue?: {
   slug?: string | null;
-  address?: string | null;
 }) {
-  if (!isFictionalVenueBranding(venue?.slug)) return false;
-
-  const address = String(venue?.address || "").trim().toLowerCase();
-  return !address || address === FICTIONAL_VENUE_PITCH_ADDRESS.toLowerCase();
+  return isFictionalVenueBranding(venue?.slug);
 }
 
 export const verifiedVenueLogoSlugs = Object.freeze(Object.keys(VENUE_LOGO_BY_SLUG));

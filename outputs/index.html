@@ -39596,20 +39596,15 @@
       return String(venue?.logoImageUrl || "").trim().startsWith("/venue-logos/fictional/");
     }
 
-    const FICTIONAL_DEMO_PITCH_ADDRESS = "0000 MyDancr Ave, Las Vegas, NV 55555";
-
-    function isFictionalDemoTravelUnavailable(venue, city = selectedCity()) {
-      if (!isFictionalDemoVenue(venue)) return false;
-      const details = venueDetails(venue, city);
-      const address = String(venue?.address || details.address || "").trim().toLowerCase();
-      return !address || address === FICTIONAL_DEMO_PITCH_ADDRESS.toLowerCase();
+    function isFictionalDemoTravelPreviewOnly(venue) {
+      return isFictionalDemoVenue(venue);
     }
 
     function venueDirectionsMarkup({ venue, className, label = "Directions", city = selectedCity() }) {
       const details = venueDetails(venue, city);
       const safeName = escapeHtml(venue?.name || details.name || "this club");
       const venueValue = escapeOptionValue(venue?.name || details.name || "");
-      if (isFictionalDemoTravelUnavailable(venue, city)) {
+      if (isFictionalDemoTravelPreviewOnly(venue)) {
         return `<button class="${className} is-inactive-demo" type="button" data-demo-travel="directions" tabindex="-1" aria-disabled="true" aria-label="${escapeHtml(label)}. Preview only.">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
       }
       if (!String(details.address || "").trim()) {
@@ -39621,7 +39616,7 @@
     function uberRideLinkMarkup({ venue, source, label, className = "", dancerId = "", city = selectedCity() }) {
       const destination = publicVenueUberDestination(venue, city);
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
-      if (isFictionalDemoTravelUnavailable(venue, city)) {
+      if (isFictionalDemoTravelPreviewOnly(venue)) {
         return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" tabindex="-1" aria-disabled="true" aria-label="${escapeHtml(label)}. Preview only.">${actionButtonLabel("car", escapeHtml(label))}</button>`;
       }
       if (!destination) {

@@ -8,6 +8,7 @@ import { SocialLinks } from "@/app/dancers/[slug]/SocialLinks";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
+import { isFictionalVenueTravelPreviewOnly } from "@/src/lib/dancr/venue-branding";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import {
   CLUB_DEAL_OFFER_PRESETS,
@@ -1043,6 +1044,8 @@ function CustomerPanel({
   }
 
   async function openDirections(venue: SavedVenueSummary, dancerId?: string | null) {
+    if (isFictionalVenueTravelPreviewOnly(venue)) return;
+
     const venueId = String(venue.id || "");
     const session = readSession();
     if (!venueId || !session?.accessToken) {
@@ -1180,9 +1183,12 @@ function CustomerNightPanel({
                 <div className="customer-card-actions">
                   {dancer.slug ? <Link href={customerDancerHref(dancer)}>Profile</Link> : null}
                   {venue.slug ? <Link href={customerVenueHref(venue)}>Venue</Link> : null}
-                  <button type="button" disabled={Boolean(pendingAction)} onClick={() => void onDirections(venue, dancer.id)}>
-                    Directions
-                  </button>
+                  <CustomerDirectionsButton
+                    dancerId={dancer.id}
+                    onDirections={onDirections}
+                    pending={Boolean(pendingAction)}
+                    venue={venue}
+                  />
                   <button className="customer-text-action" type="button" disabled={Boolean(pendingAction)} onClick={() => void onCancelGoing(item.shiftId)}>
                     Cancel Going
                   </button>
@@ -1354,7 +1360,14 @@ function SavedDancerCard({
         </small>
         <div className="customer-card-actions">
           <Link href={customerDancerHref(dancer)}>Profile</Link>
-          {shift?.venue.id ? <button type="button" disabled={pending} onClick={() => void onDirections(shift.venue, dancer.id)}>Directions</button> : null}
+          {shift?.venue.id ? (
+            <CustomerDirectionsButton
+              dancerId={dancer.id}
+              onDirections={onDirections}
+              pending={pending}
+              venue={shift.venue}
+            />
+          ) : null}
           {variant === "following" && onFollowChange ? (
             <>
               <button type="button" disabled={pending} onClick={() => onFollowChange(true, !notificationsEnabled)}>
@@ -1396,7 +1409,7 @@ function SavedVenueCard({
         <small>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}{distance ? ` · ${distance}` : ""}</small>
         <div className="customer-card-actions">
           <Link href={customerVenueHref(venue)}>Profile</Link>
-          <button type="button" disabled={pending} onClick={() => void onDirections(venue)}>Directions</button>
+          <CustomerDirectionsButton onDirections={onDirections} pending={pending} venue={venue} />
           <button type="button" disabled={pending} onClick={() => onFollowChange(true, !notificationsEnabled)}>
             {notificationsEnabled ? "Alerts on" : "Alerts off"}
           </button>
@@ -1404,6 +1417,40 @@ function SavedVenueCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function CustomerDirectionsButton({
+  dancerId,
+  onDirections,
+  pending,
+  venue,
+}: {
+  dancerId?: string | null;
+  onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
+  pending: boolean;
+  venue: SavedVenueSummary;
+}) {
+  const previewOnly = isFictionalVenueTravelPreviewOnly(venue);
+
+  return (
+    <button
+      aria-disabled={previewOnly ? "true" : undefined}
+      aria-label={previewOnly ? "Directions. Preview only." : "Directions"}
+      disabled={!previewOnly && pending}
+      onClick={(event) => {
+        if (previewOnly) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        void onDirections(venue, dancerId);
+      }}
+      tabIndex={previewOnly ? -1 : undefined}
+      type="button"
+    >
+      Directions
+    </button>
   );
 }
 
@@ -6888,6 +6935,7 @@ function DashboardStyles() {
       .customer-card-actions { display: flex !important; flex-wrap: wrap; gap: 7px !important; margin-top: 4px; }
       .customer-card-actions a, .customer-card-actions button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 11px; border: 1px solid rgba(255,255,255,.13); border-radius: 9px; color: #fff; background: rgba(255,255,255,.06); font: inherit; font-size: 12px; font-weight: 900; text-decoration: none; cursor: pointer; }
       .customer-card-actions button:disabled { opacity: .55; cursor: wait; }
+      .customer-card-actions button[aria-disabled="true"] { opacity: 1; cursor: default; }
       .customer-card-actions .customer-text-action { color: #cfc5de; background: transparent; }
       .customer-empty-state { min-height: 138px; display: grid; place-items: start; align-content: center; gap: 9px; padding: 16px; border: 1px dashed rgba(126,234,255,.24); border-radius: 12px; background: rgba(126,234,255,.035); }
       .customer-empty-state.compact { min-height: 106px; padding: 12px; }

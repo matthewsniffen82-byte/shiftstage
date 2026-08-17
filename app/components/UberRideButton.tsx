@@ -9,7 +9,7 @@ import {
 } from "@/src/lib/dancr/uber";
 import { trackUberRideLinkClicked } from "@/src/lib/dancr/uber-analytics";
 import type { UberRideSource } from "@/src/lib/dancr/uber-types";
-import { isFictionalVenueTravelUnavailable } from "@/src/lib/dancr/venue-branding";
+import { isFictionalVenueTravelPreviewOnly } from "@/src/lib/dancr/venue-branding";
 
 type UberRideVenue = PublicVenueDestination & {
   id: string;
@@ -32,16 +32,14 @@ const sourceClass: Record<UberRideSource, string> = {
 export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps) {
   if (venue.isActive === false || venue.isPublic === false) return null;
 
-  const destination = publicVenueUberDestination(venue);
-  if (!isValidUberDestination(destination)) return null;
-
+  const venueName = String(venue.name || "this club").trim() || "this club";
   const label = source === "venue_page"
     ? "Request Uber"
     : source === "dancer_profile"
-      ? `Ride to ${destination.name}`
+      ? `Ride to ${venueName}`
       : "Get a Ride";
 
-  if (isFictionalVenueTravelUnavailable(venue)) {
+  if (isFictionalVenueTravelPreviewOnly(venue)) {
     return (
       <button
         aria-disabled="true"
@@ -59,6 +57,9 @@ export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps)
       </button>
     );
   }
+
+  const destination = publicVenueUberDestination(venue);
+  if (!isValidUberDestination(destination)) return null;
 
   return (
     <a

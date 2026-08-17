@@ -164,7 +164,7 @@ const [componentSource, componentStyles, dancerPageSource, eventRouteSource, liv
 
 test("the reusable control uses the required source-specific labels", () => {
   assert.match(componentSource, /source === "venue_page"[\s\S]*?"Request Uber"/);
-  assert.match(componentSource, /source === "dancer_profile"[\s\S]*?`Ride to \$\{destination\.name\}`/);
+  assert.match(componentSource, /source === "dancer_profile"[\s\S]*?`Ride to \$\{venueName\}`/);
   assert.match(componentSource, /: "Get a Ride"/);
   assert.match(componentSource, /target="_blank"/);
   assert.match(componentSource, /rel="noopener noreferrer"/);
@@ -201,6 +201,9 @@ test("venue and dancer profiles expose their required primary ride actions", () 
 });
 
 test("venue travel actions keep compact labels and explicit address-unavailable states", () => {
+  assert.match(liveShellSource, /function isFictionalDemoTravelPreviewOnly\(venue\)[\s\S]*?return isFictionalDemoVenue\(venue\)/);
+  assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?isFictionalDemoTravelPreviewOnly\(venue\)[\s\S]*?data-demo-travel="directions"/);
+  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?isFictionalDemoTravelPreviewOnly\(venue\)[\s\S]*?data-demo-travel="uber"/);
   assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?data-travel-unavailable="directions" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("pin", escapeHtml\(label\)\)/);
   assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="uber" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("car", escapeHtml\(label\)\)/);
   assert.match(liveShellSource, /Uber is unavailable because this club has not published a usable address\./);
