@@ -42,9 +42,9 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.doesNotMatch(venueDetail, /details\.description|venue-confirmed shifts|nightlife venue in/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Hours/);
   assert.match(venueDetail, /Working now at \$\{escapeHtml\(details\.name\)\}/);
-  assert.match(venueDetail, /data-venue-jump="venue-upcoming-shifts"[\s\S]*?<span>upcoming shifts<\/span>/);
+  assert.match(venueDetail, /data-venue-jump="venue-upcoming-shifts"[\s\S]*?<span>upcoming<\/span>/);
   assert.match(venueDetail, /id="venue-upcoming-shifts"[\s\S]*?<span>Upcoming at \$\{escapeHtml\(details\.name\)\}<\/span><span class="venue-activity-count" aria-hidden="true">\$\{upcoming\.length\}<\/span>/);
-  assert.match(venueDetail, /class="venue-status-grid" aria-label="Club status"[\s\S]*?venue-operating-summary[\s\S]*?venue-status-kicker">Hours[\s\S]*?\$\{quickStats\}/);
+  assert.match(venueDetail, /class="venue-status-grid" aria-label="Tonight at \$\{escapeHtml\(details\.name\)\}"[\s\S]*?venue-operating-summary[\s\S]*?venue-status-kicker">Hours[\s\S]*?\$\{quickStats\}/);
   assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?venue-address-directions[\s\S]*?\$\{rideMarkup\}/);
   assert.ok(venueDetail.indexOf("${venueOfferMarkup(venue)}") < venueDetail.indexOf("venue-primary-actions"));
   assert.ok(venueDetail.indexOf("venue-primary-actions") < venueDetail.indexOf("venue-secondary-actions"));
@@ -147,8 +147,9 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-identity-copy \{[\s\S]*?padding-left: 0;/);
   assert.doesNotMatch(refinement, /\.venue-identity-copy::before/);
   assert.match(refinement, /\.venue-address-copy \.meta \{[\s\S]*?overflow: visible !important;[\s\S]*?-webkit-line-clamp: unset !important;/);
-  assert.match(refinement, /\.venue-status-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 8px;/);
-  assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 60px !important;[\s\S]*?background: var\(--dancr-color-surface-subtle\) !important;/);
+  assert.match(refinement, /\.venue-status-grid \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\);[\s\S]*?background: var\(--dancr-color-surface-subtle\);/);
+  assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 64px !important;[\s\S]*?justify-items: center;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
+  assert.match(refinement, /\.venue-status-grid > \* \+ \* \{[\s\S]*?border-left: 1px solid var\(--dancr-color-border-subtle\) !important;/);
   assert.match(refinement, /\.venue-address-tile \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/);
   assert.match(refinement, /\.venue-location-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
   assert.match(refinement, /\.venue-location-actions \{[\s\S]*?padding: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
@@ -164,7 +165,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
     /\.action-btn\.follow-venue-btn\.is-following \{[\s\S]*?var\(--dancr-color-brand-primary\) 28%,[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?color: var\(--dancr-color-text-primary\) !important;[\s\S]*?var\(--dancr-color-brand-primary\) 6%,[\s\S]*?var\(--dancr-color-surface-raised\) 94%[\s\S]*?var\(--dancr-color-brand-primary\) 8%,[\s\S]*?transparent/,
   );
   assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
-  assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-text-primary\)/);
+  assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
   assert.match(refinement, /\.venue-secondary-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
   assert.match(refinement, /\.venue-secondary-actions \{[\s\S]*?padding: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
@@ -197,8 +198,8 @@ test("venue profile share action confirms success in the pressed button", () => 
 test("venue profiles replace repeated zero sections with one truthful empty explanation", () => {
   const venueDetail = liveApp.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0] || "";
 
-  assert.match(venueDetail, /const quickStats = \[[\s\S]*?tonight\.length[\s\S]*?upcoming\.length[\s\S]*?filter\(Boolean\)\.join\(""\)/);
-  assert.match(venueDetail, /venue-quick-stat is-working[\s\S]*?venue-quick-stat is-upcoming/);
+  assert.match(venueDetail, /const quickStats = \[[\s\S]*?tonight\.length[\s\S]*?No dancers working now[\s\S]*?upcoming\.length[\s\S]*?No upcoming shifts[\s\S]*?\.join\(""\)/);
+  assert.match(venueDetail, /venue-quick-stat is-working[\s\S]*?is-empty[\s\S]*?venue-quick-stat is-upcoming[\s\S]*?is-empty/);
   assert.match(venueDetail, /const activitySections = \[[\s\S]*?venue-activity-section is-working[\s\S]*?venue-activity-section is-upcoming[\s\S]*?venue-activity-section is-open/);
   assert.match(venueDetail, /const activityMarkup = activitySections \|\|[\s\S]*?No affiliated dancers yet[\s\S]*?No approved dancer profiles are currently affiliated with \$\{escapeHtml\(details\.name\)\}\. Follow this club for updates\./);
   assert.doesNotMatch(venueDetail, /No active shifts now|No upcoming shifts posted|No trending profiles here yet/);

@@ -48036,12 +48036,12 @@
       });
       const quickStats = [
         tonight.length
-          ? `<button class="venue-quick-stat is-working" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>`
-          : "",
+          ? `<button class="venue-quick-stat is-working" type="button" data-venue-jump="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now"><strong>${tonight.length}</strong><span>working now</span></button>`
+          : `<span class="venue-quick-stat is-working is-empty" role="status" aria-label="No dancers working now"><strong>0</strong><span>working now</span></span>`,
         upcoming.length
-          ? `<button class="venue-quick-stat is-upcoming" type="button" data-venue-jump="venue-upcoming-shifts"><strong>${upcoming.length}</strong><span>upcoming shifts</span></button>`
-          : ""
-      ].filter(Boolean).join("");
+          ? `<button class="venue-quick-stat is-upcoming" type="button" data-venue-jump="venue-upcoming-shifts" aria-label="${upcoming.length} upcoming ${upcoming.length === 1 ? "shift" : "shifts"}"><strong>${upcoming.length}</strong><span>upcoming</span></button>`
+          : `<span class="venue-quick-stat is-upcoming is-empty" role="status" aria-label="No upcoming shifts"><strong>0</strong><span>upcoming</span></span>`
+      ].join("");
       const activitySections = [
         tonight.length ? `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
@@ -48101,7 +48101,7 @@
                   </div>
                 </div>
               </div>
-              <div class="venue-status-grid" aria-label="Club status">
+              <div class="venue-status-grid" aria-label="Tonight at ${escapeHtml(details.name)}">
                 <span class="venue-operating-summary">
                   <span class="venue-status-kicker">Hours</span>
                   <strong class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</strong>
