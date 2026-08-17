@@ -136,7 +136,6 @@ export async function POST(request: Request, context: RouteContext) {
       dealDescription: deal.dealDescription,
       dealTerms: deal.dealTerms,
       dealOfferType: deal.offerType,
-      dealBookingUrl: deal.bookingUrl,
       sourceType: sourceType as DealSourceType,
       dancerId,
       shiftId,

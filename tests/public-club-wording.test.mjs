@@ -36,7 +36,7 @@ test("customer profile and Club Deal actions use club language", () => {
   assert.match(liveShell, /home-venue-discovery-profile-action[\s\S]*?aria-label="Open \$\{safeName\}'s full club profile"[\s\S]*?actionIconMarkup\("clubProfile"\)/);
   assert.match(clubActions, /Follow club/);
   assert.match(clubActions, /Club alerts/);
-  assert.match(clubDeal, /Continue to club booking/);
+  assert.match(clubDeal, /Select for checkout/);
   assert.match(clubDeal, /official MyDancr NFC sticker/);
   assert.match(nfcTap, /Verified club NFC/);
   assert.match(nfcTap, /Confirm Working Now/);
@@ -44,4 +44,5 @@ test("customer profile and Club Deal actions use club language", () => {
   assert.doesNotMatch(dancerProfile, /View venue/);
   assert.doesNotMatch(clubActions, /Follow venue/);
   assert.doesNotMatch(clubDeal, /Continue to venue booking/);
+  assert.doesNotMatch(clubDeal, /Continue to club booking/);
 });

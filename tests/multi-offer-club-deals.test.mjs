@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, deals, venueDealRoute, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
+const [migration, liquorMigration, dealPolicy, deals, venueDealRoute, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608080001_multi_offer_club_deals.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608160004_prohibit_liquor_club_deals.sql", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/deal-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
@@ -13,16 +15,16 @@ const [migration, deals, venueDealRoute, dealCard, discoveryRoute, tvSource, liv
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
-test("venues can publish a prioritized collection of typed Club Deals", () => {
+test("venues can publish a prioritized collection of non-alcohol Club Deals", () => {
   assert.match(migration, /offer_type text not null default 'admission'/);
-  assert.match(migration, /'admission', 'drink', 'bottle_service', 'other'/);
-  assert.match(migration, /booking_url ~\* '\^https:\/\//);
+  assert.match(liquorMigration, /check \(offer_type in \('admission', 'other'\)\)/);
+  assert.match(liquorMigration, /club_deals_liquor_free_check/);
   assert.match(migration, /sort_order integer not null default 0/);
   assert.match(deals, /export async function getActiveClubDealsForVenue/);
   assert.match(deals, /export async function getActiveClubDealListsForVenues/);
   assert.match(deals, /\.order\("sort_order", \{ ascending: true \}\)/);
   assert.match(venueDealRoute, /offerType: typeof body\?\.offerType/);
-  assert.match(venueDealRoute, /bookingUrl: typeof body\?\.bookingUrl/);
+  assert.doesNotMatch(venueDealRoute, /bookingUrl: typeof body\?\.bookingUrl/);
   assert.match(venueDealRoute, /const \{ deal, deals \} = await updateVenueDealForAccount/);
   assert.match(venueDealRoute, /ok: true,[\s\S]*?deal,[\s\S]*?deals,/);
   assert.match(deals, /return \{ deal, deals \};/);
@@ -48,13 +50,17 @@ test("venue managers can keep multiple deals live and manage each campaign indep
   assert.doesNotMatch(updateFunction, /is_active:\s*false/);
 });
 
-test("bottle service requires a real HTTPS handoff and appears only after pass creation", () => {
-  assert.match(deals, /offerType === "bottle_service" && input\.isActive && !bookingUrl/);
-  assert.match(deals, /Booking URL must use HTTPS/);
-  assert.match(dealCard, /intentState === "ready" && activeDeal\.offerType === "bottle_service" && activeDeal\.bookingUrl/);
-  assert.match(dealCard, /Continue to club booking/);
-  assert.match(liveApp, /const hasBooking = pass\.offerType === "bottle_service" && \/\^https/);
-  assert.match(liveApp, /Cashier NFC redemption · Club booking available/);
+test("liquor offers are rejected in application code and at the database boundary", () => {
+  assert.match(dealPolicy, /offerType === "drink" \|\| offerType === "bottle_service"/);
+  assert.match(dealPolicy, /LIQUOR_TERMS/);
+  assert.match(dealPolicy, /Club Deals cannot include alcohol/);
+  assert.match(deals, /assertLiquorFreeClubDeal/);
+  assert.match(deals, /filter\(isAllowedClubDealRow\)/);
+  assert.match(liquorMigration, /status = 'voided'/);
+  assert.match(liquorMigration, /is_active = false/);
+  assert.doesNotMatch(dealCard, /bottle_service|Continue to club booking/);
+  assert.doesNotMatch(liveApp, /bottle_service|Drink offer|Bottle service/);
+  assert.doesNotMatch(venueDashboard, /value="drink"|value="bottle_service"/);
 });
 
 test("each selected offer keeps its exact deal and dancer attribution token", () => {

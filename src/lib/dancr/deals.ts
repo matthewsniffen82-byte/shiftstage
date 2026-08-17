@@ -5,6 +5,7 @@ import { isActiveNfcPresence } from "./shift-presence";
 import { dancerHasActiveVenueAffiliation } from "./venue-affiliations";
 import { requireVenueAccess } from "./venue-access";
 import { getVenueReferralFeeState } from "./referral-fees";
+import { assertLiquorFreeClubDeal, isLiquorRelatedClubDeal } from "./deal-policy";
 
 type DancrClient = SupabaseClient;
 
@@ -18,7 +19,6 @@ export type DealRedemptionInput = {
   dealDescription: string;
   dealTerms?: string | null;
   dealOfferType: ClubDealOfferType;
-  dealBookingUrl?: string | null;
   sourceType: DealSourceType;
   dancerId?: string | null;
   shiftId?: string | null;
@@ -45,7 +45,6 @@ export type VenueDealInput = {
   dealTerms?: string | null;
   isActive: boolean;
   offerType: ClubDealOfferType;
-  bookingUrl?: string | null;
   sortOrder?: number;
 };
 
@@ -67,7 +66,7 @@ export async function getActiveClubDealsForVenue(client: DancrClient, venueId: s
     .limit(20);
 
   if (error) throw error;
-  return (data || []).map(toClubDeal);
+  return (data || []).filter(isAllowedClubDealRow).map(toClubDeal);
 }
 
 export async function getActiveClubDealByIdForVenue(
@@ -86,7 +85,7 @@ export async function getActiveClubDealByIdForVenue(
     .maybeSingle();
 
   if (error) throw error;
-  return data ? toClubDeal(data) : null;
+  return data && isAllowedClubDealRow(data) ? toClubDeal(data) : null;
 }
 
 export async function getActiveClubDealById(
@@ -103,7 +102,7 @@ export async function getActiveClubDealById(
     .maybeSingle();
 
   if (error) throw error;
-  return data ? toClubDeal(data) : null;
+  return data && isAllowedClubDealRow(data) ? toClubDeal(data) : null;
 }
 
 export async function getActiveClubDealsForVenues(client: DancrClient, venueIds: string[]): Promise<Map<string, ClubDeal>> {
@@ -135,7 +134,7 @@ export async function getActiveClubDealListsForVenues(
   if (error) throw error;
 
   const deals = new Map<string, ClubDeal[]>();
-  for (const row of data || []) {
+  for (const row of (data || []).filter(isAllowedClubDealRow)) {
     const venueDeals = deals.get(row.venue_id) || [];
     venueDeals.push(toClubDeal(row));
     deals.set(row.venue_id, venueDeals);
@@ -516,7 +515,7 @@ export async function getVenueDealsForAccount(
 
   return {
     venueId: access.venueId,
-    deals: (deals || []).map(toClubDeal),
+    deals: (deals || []).filter(isAllowedClubDealRow).map(toClubDeal),
   };
 }
 
@@ -534,10 +533,7 @@ export async function updateVenueDealForAccount(
   const dealDescription = requiredDealText(input.dealDescription, "Deal description", 8, 500);
   const dealTerms = optionalDealText(input.dealTerms, "Deal terms", 1200);
   const offerType = normalizeOfferType(input.offerType);
-  const bookingUrl = optionalBookingUrl(input.bookingUrl);
-  if (offerType === "bottle_service" && input.isActive && !bookingUrl) {
-    throw new Error("A live HTTPS booking URL is required before publishing bottle service.");
-  }
+  assertLiquorFreeClubDeal({ offerType: input.offerType, dealTitle, dealDescription, dealTerms });
   const sortOrder = Math.trunc(Number(input.sortOrder || 0));
   if (!Number.isSafeInteger(sortOrder) || sortOrder < 0 || sortOrder > 1000) {
     throw new Error("Offer order must be between 0 and 1000.");
@@ -563,7 +559,7 @@ export async function updateVenueDealForAccount(
     payout_amount_cents: referralFee?.feeCents || 0,
     currency: referralFee?.currency || "usd",
     offer_type: offerType,
-    booking_url: bookingUrl,
+    booking_url: null,
     sort_order: sortOrder,
     updated_at: new Date().toISOString(),
   };
@@ -770,23 +766,16 @@ function toClubDeal(row: any): ClubDeal {
 }
 
 function normalizeOfferType(value: unknown): ClubDealOfferType {
-  return value === "drink" || value === "bottle_service" || value === "other"
-    ? value
-    : "admission";
+  return value === "other" ? "other" : "admission";
 }
 
-function optionalBookingUrl(value: string | null | undefined) {
-  const text = String(value || "").trim();
-  if (!text) return null;
-  if (text.length > 1000) throw new Error("Booking URL must be 1000 characters or fewer.");
-  let parsed: URL;
-  try {
-    parsed = new URL(text);
-  } catch {
-    throw new Error("Booking URL must be a valid HTTPS URL.");
-  }
-  if (parsed.protocol !== "https:") throw new Error("Booking URL must use HTTPS.");
-  return parsed.toString();
+function isAllowedClubDealRow(row: any) {
+  return !isLiquorRelatedClubDeal({
+    offerType: row?.offer_type,
+    dealTitle: row?.deal_title,
+    dealDescription: row?.deal_description,
+    dealTerms: row?.deal_terms,
+  });
 }
 
 function requiredDealText(value: string, label: string, minimum: number, maximum: number) {
@@ -845,13 +834,13 @@ function normalizeScannerRedemption(row: any) {
   };
 }
 
-function issuedDealSnapshot(input: Pick<DealRedemptionInput, "dealTitle" | "dealDescription" | "dealTerms" | "dealOfferType" | "dealBookingUrl">) {
+function issuedDealSnapshot(input: Pick<DealRedemptionInput, "dealTitle" | "dealDescription" | "dealTerms" | "dealOfferType">) {
   return {
     dealTitle: input.dealTitle,
     dealDescription: input.dealDescription,
     dealTerms: input.dealTerms || null,
     offerType: input.dealOfferType,
-    bookingUrl: input.dealBookingUrl || null,
+    bookingUrl: null,
   };
 }
 

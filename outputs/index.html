@@ -44939,7 +44939,6 @@
               <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share deal</button>
             </div>
-            <a class="deal-pass-booking" id="dealPassBooking" href="#" target="_blank" rel="noreferrer" hidden>Continue to club booking</a>
           </div>
         </div>
       `);
@@ -45146,10 +45145,6 @@
       termsElement.textContent = terms ? `Terms: ${terms}` : "";
       document.getElementById("dealPassImage").setAttribute("aria-label", `${pass.venueName} cashier NFC tap`);
       syncDealPassOverlayState(overlay, pass);
-      const bookingLink = document.getElementById("dealPassBooking");
-      const hasBooking = pass.offerType === "bottle_service" && /^https:\/\//i.test(pass.bookingUrl || "");
-      bookingLink.hidden = !hasBooking;
-      bookingLink.href = hasBooking ? pass.bookingUrl : "#";
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
@@ -45176,8 +45171,6 @@
     }
 
     function clubDealOfferTypeLabel(type) {
-      if (type === "drink") return "Drink offer";
-      if (type === "bottle_service") return "Bottle service";
       if (type === "other") return "Club offer";
       return "Admission offer";
     }
@@ -45279,8 +45272,7 @@
       overlay.removeAttribute("aria-busy");
       document.getElementById("clubDealHubList").innerHTML = offers.map((deal) => {
         const selection = clubDealSelectionConfig(config, deal);
-        const booking = deal.offerType === "bottle_service" ? "Cashier NFC redemption · Club booking available" : "Cashier NFC tap required at redemption";
-        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>${booking}</em></button>`;
+        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>Cashier NFC tap required at redemption</em></button>`;
       }).join("");
       overlay.hidden = false;
       overlay.classList.add("show");

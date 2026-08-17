@@ -317,8 +317,6 @@ function persistRefreshedSession(session: unknown) {
 }
 
 function dealTypeLabel(value: ClubDeal["offerType"]) {
-  if (value === "drink") return "Drink offer";
-  if (value === "bottle_service") return "Bottle service";
   if (value === "other") return "Club offer";
   return "Admission offer";
 }

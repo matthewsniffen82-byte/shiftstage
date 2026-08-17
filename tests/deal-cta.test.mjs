@@ -95,12 +95,10 @@ test("Club Deal checkout uses one concise three-step NFC flow across both public
   assert.doesNotMatch(demoDeals, /terms: .*Cashier NFC confirmation is required/);
 });
 
-test("multiple live offers stay selectable and bottle service keeps its real booking handoff", () => {
+test("multiple live non-alcohol offers stay selectable without external liquor booking handoffs", () => {
   assert.match(dealCard, /offerDeals\.map/);
   assert.match(dealCard, /selectedDealId/);
-  assert.match(dealCard, /activeDeal\.offerType === "bottle_service"/);
-  assert.match(dealCard, /activeDeal\.bookingUrl/);
-  assert.match(dealCard, /Continue to club booking/);
+  assert.doesNotMatch(dealCard, /bottle_service|activeDeal\.bookingUrl|Continue to club booking/);
 });
 
 test("the canonical live shell uses cashier NFC instead of generating customer QR images", () => {

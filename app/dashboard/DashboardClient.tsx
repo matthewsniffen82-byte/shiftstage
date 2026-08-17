@@ -2268,7 +2268,6 @@ function VenueClubDealPanel({
           dealTerms: form.dealTerms,
           isActive: nextIsActive,
           offerType: form.offerType,
-          bookingUrl: form.offerType === "bottle_service" ? form.bookingUrl : null,
           sortOrder: Number(form.sortOrder),
         }),
       });
@@ -2476,8 +2475,6 @@ function VenueClubDealPanel({
                 onChange={(event) => updateDealForm("offerType", event.target.value)}
               >
                 <option value="admission">Admission</option>
-                <option value="drink">Drink</option>
-                <option value="bottle_service">Bottle service</option>
                 <option value="other">Other</option>
               </select>
             </label>
@@ -2502,21 +2499,7 @@ function VenueClubDealPanel({
                 onChange={(event) => updateDealForm("dealDescription", event.target.value)}
               />
             </label>
-            {form.offerType === "bottle_service" ? (
-              <label className="deal-booking-url">
-                Live venue booking URL
-                <input
-                  inputMode="url"
-                  maxLength={1000}
-                  placeholder="https://yourvenue.com/reservations"
-                  required
-                  type="url"
-                  value={form.bookingUrl}
-                  onChange={(event) => updateDealForm("bookingUrl", event.target.value)}
-                />
-                <small>Customers create the tracked MyDancr pass first, then continue here to request the reservation.</small>
-              </label>
-            ) : null}
+            <p className="venue-deal-rule-note deal-wide-field">Club Deals may cover admission and other non-alcohol benefits. Alcohol, drink specials, and bottle service are not permitted.</p>
           </div>
         </fieldset>
 
@@ -2703,14 +2686,11 @@ function venueDealForm(deal?: Record<string, unknown> | null, fallbackOrder = 0)
     dealTerms: String(deal?.dealTerms || ""),
     isActive: deal?.isActive === true,
     offerType: String(deal?.offerType || "admission"),
-    bookingUrl: String(deal?.bookingUrl || ""),
     sortOrder: String(deal?.sortOrder ?? fallbackOrder * 10),
   };
 }
 
 function dealTypeLabel(value: string) {
-  if (value === "drink") return "Drink";
-  if (value === "bottle_service") return "Bottle service";
   if (value === "other") return "Other";
   return "Admission";
 }

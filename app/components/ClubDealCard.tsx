@@ -278,11 +278,6 @@ export function ClubDealCard({
             <button type="button" onClick={() => void shareDeal()}>Share deal</button>
           </div>
         ) : null}
-        {intentState === "ready" && activeDeal.offerType === "bottle_service" && activeDeal.bookingUrl ? (
-          <a className="club-deal-booking-link" href={activeDeal.bookingUrl} target="_blank" rel="noreferrer">
-            Continue to club booking
-          </a>
-        ) : null}
       </div>
     </>
   );
@@ -379,8 +374,6 @@ export function ClubDealCard({
 }
 
 function dealTypeLabel(value: ClubDeal["offerType"]) {
-  if (value === "drink") return "Drink offer";
-  if (value === "bottle_service") return "Bottle service";
   if (value === "other") return "Club offer";
   return "Admission offer";
 }
@@ -536,7 +529,6 @@ function ClubDealInteractionStyles() {
       .club-deal-share-actions button { min-height:42px; border:1px solid rgba(255,255,255,.13); border-radius:999px; color:#fff; background:rgba(255,255,255,.045); font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
       .club-deal-share-actions button.saved { color:#d9f9ff; border-color:rgba(126,234,255,.26); background:rgba(53,216,255,.07); }
       .club-deal-share-actions button:disabled { cursor:default; opacity:.82; }
-      .club-deal-booking-link { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid rgba(126,234,255,.36); border-radius: 999px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; text-decoration: none; }
       .club-deal-offer-picker { display: grid; gap: 10px; }
       .club-deal-offer-picker h2 { margin: 0; padding-right: 34px; font-size: clamp(22px, 6vw, 30px); }
       .club-deal-offer-picker > div { display: grid; gap: 8px; }

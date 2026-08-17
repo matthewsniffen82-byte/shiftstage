@@ -92,10 +92,10 @@ test("venue deal saves use the real API and immediately replace cards and counts
   assert.match(venueDealRoute, /ok: true,[\s\S]*deal,[\s\S]*deals/);
 });
 
-test("venue managers can publish typed offers and bottle service with production validation", () => {
+test("venue managers can publish admission and other non-alcohol offers", () => {
   assert.match(dashboard, /Admission/);
-  assert.match(dashboard, /Bottle service/);
-  assert.match(dashboard, /Live venue booking URL/);
+  assert.match(dashboard, /Alcohol, drink specials, and bottle service are not permitted/);
+  assert.doesNotMatch(dashboard, /value="drink"|value="bottle_service"|Live venue booking URL/);
   assert.match(dashboard, /Display order/);
   assert.match(dashboard, /MyDancr referral fee/);
   assert.match(dashboard, /MyDancr-controlled agreement/);

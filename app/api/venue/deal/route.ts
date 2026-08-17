@@ -42,7 +42,6 @@ export async function PATCH(request: Request) {
         dealTerms: typeof body?.dealTerms === "string" ? body.dealTerms : null,
         isActive: body?.isActive === true,
         offerType: typeof body?.offerType === "string" ? body.offerType : "admission",
-        bookingUrl: typeof body?.bookingUrl === "string" ? body.bookingUrl : null,
         sortOrder: Number(body?.sortOrder || 0),
       },
     );
