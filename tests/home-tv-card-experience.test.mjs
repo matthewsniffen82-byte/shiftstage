@@ -571,7 +571,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   )?.[0] || "";
   assert.match(workingNowPill, /border-color: var\(--dancr-color-live-strong\) !important;/);
   assert.match(workingNowPill, /color: var\(--dancr-color-live\) !important;/);
-  assert.match(workingNowPill, /var\(--dancr-color-live\) 8%/);
+  assert.match(workingNowPill, /var\(--dancr-color-live\) 30%/);
   assert.match(workingNowPill, /var\(--dancr-color-background\)/);
   assert.match(workingNowPill, /background-image: none !important;/);
   assert.match(workingNowPill, /box-shadow: none !important;/);
