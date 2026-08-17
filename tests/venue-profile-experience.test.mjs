@@ -149,7 +149,8 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-identity-copy \{[\s\S]*?padding-left: 0;/);
   assert.doesNotMatch(refinement, /\.venue-identity-copy::before/);
   assert.match(refinement, /\.venue-address-copy \.meta \{[\s\S]*?overflow: visible !important;[\s\S]*?-webkit-line-clamp: unset !important;/);
-  assert.match(refinement, /\.venue-status-grid \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\);[\s\S]*?background: var\(--dancr-color-surface-subtle\);/);
+  assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 1px solid transparent;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
+  assert.match(refinement, /\.venue-status-grid::after \{[\s\S]*?position: absolute;[\s\S]*?inset: 0;[\s\S]*?z-index: 2;[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\);[\s\S]*?border-radius: inherit;[\s\S]*?pointer-events: none;/);
   assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 64px !important;[\s\S]*?justify-items: center;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(refinement, /\.venue-status-grid > \* \+ \* \{[\s\S]*?border-left: 1px solid var\(--dancr-color-border-subtle\) !important;/);
   assert.match(refinement, /\.venue-operating-status \{[\s\S]*?width: 100%;[\s\S]*?display: block !important;[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: anywhere;/);
