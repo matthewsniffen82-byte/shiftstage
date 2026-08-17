@@ -34747,7 +34747,7 @@
         .dancer-directory-filters {
           width: 100%;
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 7px;
           margin-bottom: 4px;
         }
@@ -54688,41 +54688,15 @@
       `;
     }
 
-    function isTrendingDirectoryProfile(profile) {
-      return (
-        Number.isInteger(Number(profile?.trendRank)) &&
-        Number(profile.trendRank) > 0 &&
-        Number(profile.trendRank) <= 10
-      );
-    }
-
-    function publicTrendingActivityScore(profile) {
-      const metric = (value) => Math.max(0, Number(value) || 0);
-      return (
-        metric(profile?.goingCount) * 10 +
-        metric(profile?.followerCount) * 8 +
-        metric(profile?.notificationCount) * 5 +
-        metric(profile?.profileViewsToday) * 3 +
-        (profile?.scheduled ? 2 : 0)
-      );
-    }
-
-    function trendingDirectoryProfiles(profiles, city = selectedCity(), options = {}) {
-      return [];
-    }
-
     function dancerDirectoryFilterMarkup(profiles, city) {
-      const trending = trendingDirectoryProfiles(profiles, city);
       const counts = {
         all: profiles.length,
         now: profiles.filter((profile) => isWorkingTonight(profile, city)).length,
-        trending: trending.length,
         upcoming: profiles.filter((profile) => profile.scheduled && !isWorkingTonight(profile, city)).length
       };
       const filters = [
         { id: "all", label: "All" },
         { id: "now", label: "Now" },
-        { id: "trending", label: "Trending" },
         { id: "upcoming", label: "Upcoming" }
       ];
       return `
@@ -54740,13 +54714,6 @@
       const groups = dancerDirectoryGroups(profiles, city);
       if (dancerDirectoryFilter === "now") {
         return [{ label: "Working Now", className: "is-now", profiles: groups.workingNow }];
-      }
-      if (dancerDirectoryFilter === "trending") {
-        return [{
-          label: "Trending",
-          className: "is-trending",
-          profiles: trendingDirectoryProfiles(profiles, city)
-        }];
       }
       if (dancerDirectoryFilter === "upcoming") {
         return [{
@@ -54781,7 +54748,6 @@
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
       const emptyLabels = {
         now: `No dancers are working now in ${city}.`,
-        trending: `No dancers are trending in ${city} yet.`,
         upcoming: `No dancers have an upcoming shift in ${city}.`
       };
       results.classList.add("card-grid", "home-dancer-grid");
@@ -59545,7 +59511,7 @@
 
     const homeBottomTv = document.getElementById("homeBottomTv");
     const homeDestinationOrder = ["dancers", "tv", "venues"];
-    const dancerDirectoryFilters = ["all", "now", "trending", "upcoming"];
+    const dancerDirectoryFilters = ["all", "now", "upcoming"];
 
     function dancerDirectoryFilterFromLocation() {
       const params = new URLSearchParams(window.location.search);
@@ -59553,7 +59519,6 @@
       if (dancerDirectoryFilters.includes(requestedFilter)) return requestedFilter;
       const requestedView = params.get("view");
       if (requestedView === "tonight") return "now";
-      if (requestedView === "trending") return "trending";
       return "all";
     }
 

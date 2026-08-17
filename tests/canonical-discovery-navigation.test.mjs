@@ -119,7 +119,11 @@ test("canonical homepage deep links select and retain the requested destination"
   );
   assert.match(
     homeSource,
-    /function dancerDirectoryFilterFromLocation\(\)[\s\S]*?requestedView === "tonight"\) return "now"[\s\S]*?requestedView === "trending"\) return "trending"/,
+    /function dancerDirectoryFilterFromLocation\(\)[\s\S]*?requestedView === "tonight"\) return "now"[\s\S]*?return "all"/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /function dancerDirectoryFilterFromLocation\(\)[\s\S]*?requestedView === "trending"\) return "trending"/,
   );
   assert.match(
     homeSource,

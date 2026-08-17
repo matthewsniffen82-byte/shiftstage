@@ -4,22 +4,18 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("the standalone Trending destination is absent while its dancer filter stays private-safe", () => {
+test("the standalone Trending destination and public dancer filter are absent", () => {
   const rankedHelper = homeSource.match(
     /function rankedTrendingProfiles\(city\) \{[\s\S]*?\n    \}/,
-  )?.[0] || "";
-  const rankingHelper = homeSource.match(
-    /function publicTrendingActivityScore\(profile\) \{[\s\S]*?(?=\n    function dancerDirectoryFilterMarkup)/,
   )?.[0] || "";
 
   assert.doesNotMatch(homeSource, /function trendingProfiles\(city\)/);
   assert.match(rankedHelper, /return \[\];/);
-  assert.match(rankingHelper, /function trendingDirectoryProfiles\(profiles, city = selectedCity\(\), options = \{\}\)/);
-  assert.match(rankingHelper, /function trendingDirectoryProfiles[\s\S]*?return \[\];/);
-  assert.doesNotMatch(rankingHelper, /function trendingDirectoryProfiles[\s\S]*?\.filter\(isApprovedPublicProfile\)/);
+  assert.doesNotMatch(homeSource, /function trendingDirectoryProfiles\(/);
+  assert.doesNotMatch(homeSource, /id: "trending", label: "Trending"/);
 });
 
-test("Trending count, filter, and grouped directory share the empty public ranking", () => {
+test("legacy Trending links fall back to the complete dancer directory", () => {
   const groupedSource = homeSource.match(
     /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\)[\s\S]*?(?=\n    function dancerDirectoryProfiles)/,
   )?.[0] || "";
@@ -28,20 +24,13 @@ test("Trending count, filter, and grouped directory share the empty public ranki
   )?.[0] || "";
 
   assert.match(
-    homeSource,
-    /function dancerDirectoryFilterMarkup\(profiles, city\) \{[\s\S]*?const trending = trendingDirectoryProfiles\(profiles, city\);[\s\S]*?trending: trending\.length/,
-  );
-  assert.match(
-    homeSource,
-    /if \(dancerDirectoryFilter === "trending"\) \{[\s\S]*?label: "Trending"[\s\S]*?profiles: trendingDirectoryProfiles\(profiles, city\)/,
-  );
-  assert.match(
     directorySource,
     /label: "Working Now"[\s\S]*label: "Upcoming"[\s\S]*label: "No Schedule"/,
   );
   assert.match(directorySource, /id: "now", label: "Now"/);
-  assert.match(directorySource, /id: "trending", label: "Trending"/);
   assert.match(directorySource, /id: "upcoming", label: "Upcoming"/);
+  assert.doesNotMatch(directorySource, /id: "trending", label: "Trending"/);
   assert.doesNotMatch(groupedSource, /trendingDirectoryProfiles|groups\.trending/);
-  assert.match(homeSource, /requestedView === "trending"\) return "trending"/);
+  assert.match(homeSource, /const dancerDirectoryFilters = \["all", "now", "upcoming"\]/);
+  assert.doesNotMatch(homeSource, /requestedView === "trending"\) return "trending"/);
 });

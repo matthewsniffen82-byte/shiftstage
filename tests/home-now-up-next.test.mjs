@@ -42,7 +42,7 @@ test("the Dancers directory groups every profile once as Working Now, Upcoming, 
   assert.doesNotMatch(groupedSource, /groups\.trending|trendingDirectoryProfiles/);
 });
 
-test("the consolidated Dancers destination keeps the Trending filter separate from schedule groups", () => {
+test("the consolidated Dancers destination exposes only All, Now, and Upcoming filters", () => {
   assert.match(
     homeSource,
     /class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers<\/button>/,
@@ -53,8 +53,10 @@ test("the consolidated Dancers destination keeps the Trending filter separate fr
   assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
   assert.match(
     homeSource,
-    /filters = \[[\s\S]*id: "all", label: "All"[\s\S]*id: "now", label: "Now"[\s\S]*id: "trending", label: "Trending"[\s\S]*id: "upcoming", label: "Upcoming"/,
+    /filters = \[[\s\S]*id: "all", label: "All"[\s\S]*id: "now", label: "Now"[\s\S]*id: "upcoming", label: "Upcoming"/,
   );
+  assert.doesNotMatch(homeSource, /id: "trending", label: "Trending"/);
+  assert.match(homeSource, /\.dancer-directory-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(
     homeSource,
     /data-dancer-directory-filter="\$\{filter\.id\}" aria-pressed="\$\{active\}"/,
@@ -65,7 +67,7 @@ test("the consolidated Dancers destination keeps the Trending filter separate fr
   );
   assert.match(homeSource, /dancerDirectoryFilter = nextFilter;[\s\S]*?syncHomeDestinationLocation\("dancers"\)[\s\S]*?render\(\)/);
   assert.match(homeSource, /No dancers are working now in \$\{city\}\./);
-  assert.match(homeSource, /No dancers are trending in \$\{city\} yet\./);
+  assert.doesNotMatch(homeSource, /No dancers are trending in \$\{city\} yet\./);
   assert.match(homeSource, /data-dancer-directory-filter="\$\{filter\.id\}"/);
   assert.match(homeSource, /No approved dancer profiles \$\{scope\}\./);
 });
