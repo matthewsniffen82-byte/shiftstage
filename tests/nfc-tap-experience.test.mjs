@@ -128,20 +128,21 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
 });
 
 test("Club Deal checkout explains the complete NFC tap flow without requiring an open browser", () => {
-  assert.match(dealCard, /Select for checkout/);
-  assert.match(dealCard, /Unlock phone — MyDancr can be closed/);
-  assert.match(dealCard, /Hold near MyDancr NFC sticker/);
-  assert.match(dealCard, /Browser opens—confirm redemption/);
-  assert.match(dealCard, /Ready for cashier tap ✓/);
-  assert.match(dealCard, /MyDancr does not need to stay open/);
-  assert.match(dealCard, /Your browser opens automatically—then press Redeem this Club Deal/);
+  assert.match(dealCard, /Use this deal/);
+  assert.match(dealCard, /At the cashier, unlock your phone/);
+  assert.match(dealCard, /NFC tap will reopen your selected deal/);
+  assert.match(dealCard, /Tap the registered MyDancr NFC sticker/);
+  assert.match(dealCard, /Confirm redemption/);
+  assert.match(dealCard, /Selected — Ready to Tap/);
+  assert.match(dealCard, /Only the venue’s registered NFC sticker can redeem this deal/);
   assert.match(dealCard, /Saved for later on this device\. This does not select or redeem the deal\./);
 });
 
 test("Club Deal checkout is the prominent violet action and confirms readiness in green", () => {
   assert.match(dealCard, /className=\{`club-deal-checkout-action\$\{intentState === "ready" \? " is-ready" : ""\}`\}/);
-  assert.match(dealCard, /button\.club-deal-checkout-action \{[^}]*min-height:52px !important;[^}]*background:linear-gradient\(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%\) !important;[^}]*0 0 26px rgba\(124,58,237,\.42\)/);
-  assert.match(dealCard, /button\.club-deal-checkout-action\.is-ready:disabled \{[^}]*opacity:1 !important;[^}]*background:linear-gradient\(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%\) !important;[^}]*0 0 24px rgba\(34,197,94,\.34\)/);
+  assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action \{[^}]*min-height:52px !important;[^}]*background:linear-gradient\(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%\) !important;[^}]*0 0 26px rgba\(124,58,237,\.42\)/);
+  assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action\.is-ready:disabled \{[^}]*opacity:1 !important;[^}]*background:linear-gradient\(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%\) !important;[^}]*0 0 24px rgba\(34,197,94,\.34\)/);
+  assert.match(dealCard, /\.club-deal-primary-dock \{ position:fixed;[^}]*bottom:max\(18px,env\(safe-area-inset-bottom\)\)/);
 });
 
 test("NFC activity remains auditable without exposing reusable tokens", () => {

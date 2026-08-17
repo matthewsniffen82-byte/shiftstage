@@ -185,7 +185,7 @@ export function ClubDealCard({
       const next = readSavedDeals().filter((item) => item.id !== id);
       window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
       setSavedOnDevice(false);
-      setStatus("Removed from saved deals. You can still select it for checkout.");
+      setStatus("Removed from saved deals. You can still use it at the cashier.");
     } catch {
       setSavedOnDevice(true);
       setStatus("Browser storage blocked removing this deal. Allow site storage and try again.");
@@ -224,46 +224,40 @@ export function ClubDealCard({
   const dealContent = (
     <>
       <div className="club-deal-copy">
-        <span className="eyebrow">{dealTypeLabel(activeDeal.offerType)} · Club Deal</span>
+        <span className="eyebrow">{dialogOpen ? "Use at the cashier" : `${dealTypeLabel(activeDeal.offerType)} · Club Deal`}</span>
         <h2>{activeDeal.dealTitle}</h2>
+        {dialogOpen ? (
+          <span className={`club-deal-availability-status ${intentState === "ready" ? "is-ready" : ""}`} role="status">
+            {intentState === "ready" ? "Selected · Ready to tap" : "Available now · Not redeemed"}
+          </span>
+        ) : null}
         {displayDescription && !compact ? <p>{displayDescription}</p> : null}
         {displayTerms && !compact ? <small>{displayTerms}</small> : null}
-        {!compact ? <small>One redemption per guest. Availability is verified at the cashier NFC tap.</small> : null}
+        {!compact && !dialogOpen ? <small>Availability is verified at the cashier NFC tap.</small> : null}
         {dancerNote ? (
           <small>Dancer credit is carried securely to the cashier NFC tap while this dancer remains verified at the club.</small>
         ) : null}
       </div>
       {dialogOpen ? (
         <div className="club-deal-redemption" data-state={intentState}>
-          <div className="club-deal-nfc-symbol" aria-label="Cashier NFC tap"><NfcIcon /></div>
+          <div className="club-deal-nfc-prompt">
+            <div className="club-deal-nfc-symbol" aria-label="Tap cashier sticker"><NfcIcon /></div>
+            <strong>Tap cashier sticker</strong>
+          </div>
           <div className="club-deal-redemption-meta">
             <span>{dealAvailabilityLabel(activeDeal)}</span>
             <span>{intentState === "ready" && intentExpiresAt ? `Ready until ${formatNfcExpiry(intentExpiresAt)}` : "Selection lasts 12 hours"}</span>
           </div>
           <div className="club-deal-redemption-steps" aria-label="How to redeem">
-            <div><span>1</span><strong>Select for checkout</strong></div>
-            <div><span>2</span><strong>Unlock phone — MyDancr can be closed</strong></div>
-            <div><span>3</span><strong>Hold near MyDancr NFC sticker. Browser opens—confirm redemption</strong></div>
+            <div><span>1</span><strong>Use this deal</strong></div>
+            <div><span>2</span><strong>At the cashier, unlock your phone<small>You may close this page—the NFC tap will reopen your selected deal.</small></strong></div>
+            <div><span>3</span><strong>Tap the registered MyDancr NFC sticker</strong></div>
+            <div><span>4</span><strong>Confirm redemption</strong></div>
           </div>
+          <p className="club-deal-security-note">Only the venue’s registered NFC sticker can redeem this deal.</p>
         </div>
       ) : null}
       <div className="club-deal-action">
-        {intentState === "ready" ? (
-          <div className="deal-nfc-ready">
-            <span aria-hidden="true">)))</span>
-            <strong>Ready for cashier tap ✓</strong>
-            <small>MyDancr does not need to stay open. Your browser opens automatically—then press Redeem this Club Deal.</small>
-          </div>
-        ) : null}
-        <button
-          className={`club-deal-checkout-action${intentState === "ready" ? " is-ready" : ""}`}
-          type="button"
-          data-club-deal-state={intentState === "ready" ? "ready" : "checkout"}
-          onClick={selectForNfcTap}
-          disabled={intentState === "ready"}
-        >
-          {intentState === "ready" ? "Ready for cashier tap ✓" : intentState === "expired" || intentState === "error" ? "Try again" : dialogOpen ? "Select for checkout" : actionLabel}
-        </button>
         {status && intentState !== "preview" ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
         {dialogOpen ? (
           <div className="club-deal-share-actions">
@@ -278,6 +272,32 @@ export function ClubDealCard({
             <button type="button" onClick={() => void shareDeal()}>Share deal</button>
           </div>
         ) : null}
+        {dialogOpen ? (
+          <div className="club-deal-primary-dock">
+            <button
+              className={`club-deal-checkout-action${intentState === "ready" ? " is-ready" : ""}`}
+              type="button"
+              data-club-deal-state={intentState === "ready" ? "ready" : "checkout"}
+              onClick={selectForNfcTap}
+              disabled={intentState === "ready"}
+              aria-pressed={intentState === "ready"}
+            >
+              {intentState === "ready" ? "Selected — Ready to Tap" : intentState === "expired" || intentState === "error" ? "Try again" : "Use this deal"}
+            </button>
+            <small>{intentState === "ready" ? "Redeem only after tapping the venue’s registered sticker." : "Selecting does not redeem it."}</small>
+          </div>
+        ) : (
+          <button
+            className={`club-deal-checkout-action${intentState === "ready" ? " is-ready" : ""}`}
+            type="button"
+            data-club-deal-state={intentState === "ready" ? "ready" : "checkout"}
+            onClick={selectForNfcTap}
+            disabled={intentState === "ready"}
+            aria-pressed={intentState === "ready"}
+          >
+            {intentState === "ready" ? "Selected — Ready to Tap" : intentState === "expired" || intentState === "error" ? "Try again" : actionLabel}
+          </button>
+        )}
       </div>
     </>
   );
@@ -456,7 +476,7 @@ async function copyDealLink(url: string) {
 }
 
 function readyStatus(venueName: string | undefined, expiresAt: number) {
-  return `Ready until ${formatNfcExpiry(expiresAt)}. MyDancr does not need to stay open. At the cashier, unlock this phone and hold it near the official MyDancr NFC sticker at ${venueName || "the club"}. Your browser opens automatically—then press Redeem this Club Deal.`;
+  return `Selected until ${formatNfcExpiry(expiresAt)}. You may close this page—the NFC tap will reopen your selected deal. At the cashier, unlock this phone and tap the registered MyDancr NFC sticker at ${venueName || "the club"}.`;
 }
 
 function formatNfcExpiry(value: number) {
@@ -496,28 +516,36 @@ function ClubDealInteractionStyles() {
       .club-deal-launcher span { color: #d8f7ff; font-size: 9px; font-weight: 950; letter-spacing: .14em; line-height: 1; text-transform: uppercase; }
       .club-deal-launcher strong { max-width: 230px; overflow: hidden; font-size: 13px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
       .club-deal-dialog-backdrop { position: fixed; z-index: 1700; inset: 0; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); background: rgba(2,3,6,.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-      .club-deal-dialog { position: relative; width: min(420px, 100%); max-height: min(90dvh, 760px); display: grid; gap: 14px; overflow-y: auto; box-sizing: border-box; padding: 24px 20px; border: 1px solid rgba(255,255,255,.14); border-radius: 24px; color: #f7f2ff; background: linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985)); box-shadow: 0 28px 80px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06); }
+      .club-deal-dialog { position: relative; width: min(420px, 100%); max-height: min(90dvh, 760px); display: grid; gap: 14px; overflow-y: auto; box-sizing: border-box; padding: 24px 20px 112px; border: 1px solid rgba(255,255,255,.14); border-radius: 24px; color: #f7f2ff; background: linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985)); box-shadow: 0 28px 80px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06); }
       .club-deal-dialog-close { position: absolute; z-index: 2; top: 10px; right: 10px; width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; color: rgba(255,255,255,.82); background: rgba(26,27,32,.84); font: inherit; font-size: 23px; cursor: pointer; }
       .club-deal-dialog .club-deal-copy { padding-right: 34px; }
       .club-deal-dialog .club-deal-copy h2 { margin: 0; font-size: clamp(23px, 6vw, 32px); }
       .club-deal-dialog .club-deal-copy p { color: rgba(248,248,252,.82); font-size: 14px; line-height: 1.45; }
-      .club-deal-dialog .club-deal-copy small, .club-deal-dialog .club-deal-action em { color: rgba(245,245,255,.64); font-size: 11px; line-height: 1.4; font-style: normal; }
+      .club-deal-dialog .club-deal-copy small, .club-deal-dialog .club-deal-action em { color: rgba(245,245,255,.78); font-size: 11px; line-height: 1.4; font-style: normal; }
       .club-deal-dialog .club-deal-copy small { display:block; margin-top:7px; padding-top:7px; border-top:1px solid rgba(255,255,255,.07); }
+      .club-deal-availability-status { width:fit-content; display:inline-flex; align-items:center; min-height:28px; margin-top:8px; padding:0 11px; border:1px solid rgba(126,234,255,.3); border-radius:999px; color:#d9f9ff; background:rgba(53,216,255,.07); font-size:10px; font-weight:950; letter-spacing:.02em; }
+      .club-deal-availability-status.is-ready { border-color:rgba(74,222,128,.48); color:#b7ffd1; background:rgba(34,197,94,.1); }
       .club-deal-redemption { display:grid; justify-items:center; gap:10px; }
-      .club-deal-nfc-symbol { width:96px; height:96px; display:grid; place-items:center; padding:9px; box-sizing:border-box; border:1px solid rgba(255,255,255,.14); border-radius:20px; color:#f7f1ff; background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.22),transparent 56%),rgba(9,9,13,.92); box-shadow:0 14px 34px rgba(0,0,0,.38); }
-      .club-deal-nfc-symbol svg { width:66px; height:66px; padding:13px; box-sizing:border-box; border:1px solid rgba(159,117,255,.42); border-radius:50%; background:rgba(11,8,20,.74); }
-      .club-deal-redemption-meta { display:flex; flex-wrap:wrap; justify-content:center; gap:5px 12px; color:rgba(255,255,255,.58); font-size:10px; font-weight:850; }
+      .club-deal-nfc-prompt { display:grid; justify-items:center; gap:6px; color:rgba(255,255,255,.84); font-size:11px; font-weight:950; }
+      .club-deal-nfc-symbol { width:82px; height:82px; display:grid; place-items:center; padding:8px; box-sizing:border-box; border:1px solid rgba(255,255,255,.14); border-radius:18px; color:#f7f1ff; background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.22),transparent 56%),rgba(9,9,13,.92); box-shadow:0 12px 28px rgba(0,0,0,.34); }
+      .club-deal-nfc-symbol svg { width:58px; height:58px; padding:12px; box-sizing:border-box; border:1px solid rgba(159,117,255,.42); border-radius:50%; background:rgba(11,8,20,.74); }
+      .club-deal-redemption-meta { display:flex; flex-wrap:wrap; justify-content:center; gap:5px 12px; color:rgba(255,255,255,.76); font-size:10px; font-weight:850; }
       .club-deal-redemption-steps { width:100%; display:grid; grid-template-columns:1fr; gap:8px; }
-      .club-deal-redemption-steps>div { display:grid; grid-template-columns:24px minmax(0,1fr); align-items:center; gap:7px; padding:9px; border:1px solid rgba(255,255,255,.08); border-radius:12px; color:rgba(255,255,255,.66); background:rgba(255,255,255,.025); font-size:11px; text-align:left; }
+      .club-deal-redemption-steps>div { display:grid; grid-template-columns:24px minmax(0,1fr); align-items:center; gap:8px; padding:9px; border:1px solid rgba(255,255,255,.1); border-radius:12px; color:rgba(255,255,255,.84); background:rgba(255,255,255,.035); font-size:11px; text-align:left; }
       .club-deal-redemption-steps span { width:24px; height:24px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.14); border-radius:50%; color:#fff; }
+      .club-deal-redemption-steps strong { display:grid; gap:3px; }
+      .club-deal-redemption-steps small { color:rgba(255,255,255,.68); font-size:9px; font-weight:750; line-height:1.35; }
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child { border-color:rgba(126,234,255,.28); color:#e5fbff; background:rgba(53,216,255,.06); }
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child span { color:#071014; border-color:rgba(126,234,255,.46); background:#f7fbff; }
+      .club-deal-security-note { margin:0; color:rgba(255,255,255,.76); font-size:10px; font-weight:850; line-height:1.4; text-align:center; }
       .club-deal-dialog .club-deal-action { display: grid; gap: 10px; }
-      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action { min-height:52px !important; border:1px solid rgba(167,139,250,.92) !important; border-radius:16px !important; color:#fff !important; background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%) !important; box-shadow:0 14px 32px rgba(0,0,0,.32),0 0 26px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.22) !important; font:inherit; font-weight:950 !important; cursor:pointer; transition:filter 160ms ease,transform 160ms ease,box-shadow 160ms ease !important; }
-      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action:hover:not(:disabled) { filter:brightness(1.08); box-shadow:0 16px 34px rgba(0,0,0,.34),0 0 32px rgba(124,58,237,.52),inset 0 1px 0 rgba(255,255,255,.26) !important; }
-      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action:active:not(:disabled) { transform:translateY(1px); filter:brightness(.96); box-shadow:0 9px 22px rgba(0,0,0,.34),0 0 18px rgba(124,58,237,.36),inset 0 2px 7px rgba(0,0,0,.22) !important; }
-      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action:focus-visible { outline:2px solid #c4b5fd !important; outline-offset:3px !important; }
-      .club-deal-dialog .club-deal-action > button.club-deal-checkout-action.is-ready:disabled { opacity:1 !important; filter:none !important; color:#fff !important; border-color:rgba(74,222,128,.88) !important; background:linear-gradient(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%) !important; box-shadow:0 12px 28px rgba(0,0,0,.3),0 0 24px rgba(34,197,94,.34),inset 0 1px 0 rgba(255,255,255,.2) !important; cursor:default !important; }
+      .club-deal-primary-dock { position:fixed; z-index:1702; left:50%; bottom:max(18px,env(safe-area-inset-bottom)); width:min(380px,calc(100vw - 52px)); display:grid; gap:5px; box-sizing:border-box; padding:10px; border:1px solid rgba(255,255,255,.12); border-radius:18px; background:rgba(8,9,12,.96); box-shadow:0 16px 44px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.06); transform:translateX(-50%); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+      .club-deal-primary-dock>small { color:rgba(255,255,255,.72); font-size:9px; font-weight:800; line-height:1.3; text-align:center; }
+      .club-deal-dialog .club-deal-checkout-action { min-height:52px !important; border:1px solid rgba(167,139,250,.92) !important; border-radius:16px !important; color:#fff !important; background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%) !important; box-shadow:0 14px 32px rgba(0,0,0,.32),0 0 26px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.22) !important; font:inherit; font-weight:950 !important; cursor:pointer; transition:filter 160ms ease,transform 160ms ease,box-shadow 160ms ease !important; }
+      .club-deal-dialog .club-deal-checkout-action:hover:not(:disabled) { filter:brightness(1.08); box-shadow:0 16px 34px rgba(0,0,0,.34),0 0 32px rgba(124,58,237,.52),inset 0 1px 0 rgba(255,255,255,.26) !important; }
+      .club-deal-dialog .club-deal-checkout-action:active:not(:disabled) { transform:translateY(1px); filter:brightness(.96); box-shadow:0 9px 22px rgba(0,0,0,.34),0 0 18px rgba(124,58,237,.36),inset 0 2px 7px rgba(0,0,0,.22) !important; }
+      .club-deal-dialog .club-deal-checkout-action:focus-visible { outline:2px solid #c4b5fd !important; outline-offset:3px !important; }
+      .club-deal-dialog .club-deal-checkout-action.is-ready:disabled { opacity:1 !important; filter:none !important; color:#fff !important; border-color:rgba(74,222,128,.88) !important; background:linear-gradient(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%) !important; box-shadow:0 12px 28px rgba(0,0,0,.3),0 0 24px rgba(34,197,94,.34),inset 0 1px 0 rgba(255,255,255,.2) !important; cursor:default !important; }
       .club-deal-dialog .deal-nfc-status { padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:13px; color:rgba(245,245,255,.76); background:rgba(0,0,0,.22); text-align:center; }
       .club-deal-dialog .deal-nfc-status.ready { border-color:rgba(126,234,255,.28); color:#d9f9ff; background:rgba(53,216,255,.07); }
       .club-deal-dialog .deal-nfc-status.error,.club-deal-dialog .deal-nfc-status.expired { border-color:rgba(255,157,174,.28); color:#ffd5dd; background:rgba(255,99,132,.07); }
@@ -539,6 +567,7 @@ function ClubDealInteractionStyles() {
       .club-deal-offer-picker button small { color: #b9accd; font-size: 12px; line-height: 1.35; }
       .club-deal-sticky { display: none; }
       @media (max-width: 760px) {
+        .club-deal-primary-dock { width:min(388px,calc(100vw - 32px)); bottom:max(12px,env(safe-area-inset-bottom)); }
         .club-deal-sticky { position: fixed; z-index: 95; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 16px; color: #fff; background: var(--dancr-color-surface-translucent); box-shadow: 0 18px 50px rgba(0,0,0,.68); font: inherit; text-align: left; cursor: pointer; }
         .club-deal-sticky span { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
         .club-deal-sticky strong { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 12px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; white-space: nowrap; }

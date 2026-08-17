@@ -92,8 +92,8 @@ test("each selected offer keeps its exact deal and dancer attribution token", ()
   assert.match(liveApp, /function clubDealSelectionConfig\(config, deal\)/);
   assert.match(liveApp, /config\?\.dealAttributionTokens\?\.\[deal\.id\]/);
   assert.match(liveApp, /function openClubDealHub\(config, triggerButton = null\)/);
-  assert.match(liveApp, /Choose one to preview\. To redeem, select it for checkout/);
-  assert.match(liveApp, /Your browser opens automatically to confirm redemption/);
+  assert.match(liveApp, /Choose one to preview\. Use this deal does not redeem it/);
+  assert.match(liveApp, /tap the venue’s registered MyDancr NFC sticker/);
 });
 
 test("all public surfaces expose the full offer list while preserving first-deal compatibility", () => {

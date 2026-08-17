@@ -797,8 +797,9 @@ test("Working Now dancer grid cards expose a functional cashier NFC Club Deal ac
     /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\], \[data-deal-pass\]"\)[\s\S]*?await handleDealPassClick\(event\);[\s\S]*?return;/,
   );
   assert.match(homeSource, /mydancrPendingNfcDealV2/);
-  assert.match(homeSource, /data-select-deal-pass aria-pressed="false">Select for checkout/);
-  assert.match(homeSource, /Ready for cashier tap ✓/);
+  assert.match(homeSource, /data-select-deal-pass aria-pressed="false">Use this deal/);
+  assert.match(homeSource, /Selected — Ready to Tap/);
+  assert.match(homeSource, /\.deal-pass-primary-dock \{[^}]*position: fixed;[^}]*bottom: max\(18px, env\(safe-area-inset-bottom\)\)/);
   assert.doesNotMatch(homeSource, /Preview only—select this deal before tapping the cashier NFC sticker/);
   assert.match(
     homeSource,

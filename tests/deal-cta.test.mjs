@@ -78,14 +78,17 @@ test("customers explicitly select an exact offer and dancer token until the phys
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
 });
 
-test("Club Deal checkout uses one concise three-step NFC flow across both public experiences", () => {
+test("Club Deal checkout uses one concise four-step NFC flow across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /<strong>Select for checkout<\/strong>/);
-    assert.match(source, /Unlock phone — MyDancr can be closed/);
-    assert.match(source, /Hold near MyDancr NFC sticker\. Browser opens—confirm redemption/);
-    assert.match(source, /Select for checkout/);
+    assert.match(source, /<strong>Use this deal<\/strong>/);
+    assert.match(source, /At the cashier, unlock your phone/);
+    assert.match(source, /NFC tap will reopen your selected deal/);
+    assert.match(source, /Tap the registered MyDancr NFC sticker/);
+    assert.match(source, /<strong>Confirm redemption<\/strong>/);
+    assert.match(source, /Selecting does not redeem it/);
     assert.match(source, /Save for later/);
-    assert.doesNotMatch(source, /<strong>Tap cashier sticker<\/strong>/);
+    assert.match(source, /Tap cashier sticker/);
+    assert.match(source, /Only the venue’s registered NFC sticker can redeem this deal/);
   }
   assert.match(dealCard, /status && intentState !== "preview"/);
   assert.match(liveApp, /status\.hidden = state === "preview"/);
@@ -103,8 +106,8 @@ test("multiple live non-alcohol offers stay selectable without external liquor b
 
 test("the canonical live shell uses cashier NFC instead of generating customer QR images", () => {
   assert.match(liveApp, /mydancrPendingNfcDealV2/);
-  assert.match(liveApp, /Cashier NFC redemption/);
-  assert.match(liveApp, /tap the cashier NFC sticker at the club/i);
+  assert.match(liveApp, /Use at the cashier/);
+  assert.match(liveApp, /tap the venue’s registered MyDancr NFC sticker/i);
   assert.doesNotMatch(liveApp, /fetch\("\/api\/deals\/redemptions",\s*\{\s*method:\s*"POST"/);
   assert.doesNotMatch(liveApp, /<img src="\$\{pass\.qrImageUrl\}"/);
 });
