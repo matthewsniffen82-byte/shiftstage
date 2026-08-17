@@ -45,9 +45,13 @@ export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps)
     return (
       <button
         aria-disabled="true"
-        aria-label={`${label} unavailable for this demonstration club.`}
+        aria-label={`${label}. Preview only.`}
         className={`${styles.button} ${sourceClass[source]}`}
-        disabled
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        tabIndex={-1}
         type="button"
       >
         <RideIcon />

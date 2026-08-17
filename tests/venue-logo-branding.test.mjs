@@ -136,11 +136,13 @@ test("fictional Vegas venues activate travel only when they have a valid stored 
   assert.match(liveApp, /function isFictionalDemoTravelUnavailable\(venue, city = selectedCity\(\)\)/);
   assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?isFictionalDemoTravelUnavailable\(venue, city\)[\s\S]*?is-inactive-demo[\s\S]*?data-demo-travel="directions"/);
   assert.match(liveApp, /function uberRideLinkMarkup[\s\S]*?isFictionalDemoTravelUnavailable\(venue, city\)[\s\S]*?is-inactive-demo[\s\S]*?data-demo-travel="uber"/);
-  assert.match(liveApp.match(/function venueDirectionsMarkup[\s\S]*?function uberRideLinkMarkup/)?.[0] || "", /disabled aria-disabled="true"/);
-  assert.match(liveApp, /closest\?\.\("\[data-demo-travel\]"\)[\s\S]*?Uber requests are unavailable for fictional demo venues\.[\s\S]*?Directions are unavailable for fictional demo venues\./);
+  const demoDirectionsMarkup = liveApp.match(/function venueDirectionsMarkup[\s\S]*?function uberRideLinkMarkup/)?.[0] || "";
+  assert.match(demoDirectionsMarkup, /data-demo-travel="directions" tabindex="-1" aria-disabled="true"/);
+  assert.doesNotMatch(demoDirectionsMarkup, /data-demo-travel="directions"[^>]*\sdisabled(?:\s|>)/);
+  assert.match(liveApp, /closest\?\.\("\[data-demo-travel\]"\)[\s\S]*?event\.preventDefault\(\)[\s\S]*?event\.stopImmediatePropagation\(\)[\s\S]*?\}, true\)/);
   assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?venue-address-directions/);
   assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?home-discovery-feed-directions venue-directions-btn/);
-  assert.match(uberButton, /isFictionalVenueTravelUnavailable\(venue\)[\s\S]*?aria-disabled="true"[\s\S]*?disabled/);
+  assert.match(uberButton, /isFictionalVenueTravelUnavailable\(venue\)[\s\S]*?aria-disabled="true"[\s\S]*?event\.preventDefault\(\)[\s\S]*?event\.stopPropagation\(\)[\s\S]*?tabIndex=\{-1\}/);
 });
 
 test("verified logo identity flows through every public venue response", () => {

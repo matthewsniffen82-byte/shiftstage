@@ -46,9 +46,13 @@
 }
 
 .button[aria-disabled="true"] {
-  opacity: 0.46;
-  pointer-events: none;
-  box-shadow: none;
+  cursor: default;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.button[aria-disabled="true"]:active {
+  transform: none;
 }
 
 .button > span {
