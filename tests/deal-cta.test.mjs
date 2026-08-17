@@ -107,6 +107,13 @@ test("mobile Club Deal checkout fits the complete cashier flow into the phone vi
   assert.match(dealCard, /\.club-deal-primary-dock \{ width:min\(370px,calc\(100vw - 16px\)\); bottom:max\(8px,env\(safe-area-inset-bottom\)\)/);
 });
 
+test("cashier NFC mark is explicitly centered and visually emphasized", () => {
+  assert.match(liveApp, /\.deal-pass-frame \.deal-pass-nfc-symbol \.club-deal-qr-symbol \{[\s\S]*?display: grid;[\s\S]*?place-items: center;[\s\S]*?filter: drop-shadow/);
+  assert.match(liveApp, /\.deal-pass-frame \.deal-pass-nfc-symbol \.club-deal-qr-symbol svg \{[\s\S]*?display: block;[\s\S]*?width: 100%;[\s\S]*?height: 100%;/);
+  assert.match(liveApp, /border: 1px solid rgba\(126, 234, 255, \.72\);[\s\S]*?0 0 16px rgba\(53, 216, 255, \.34\)/);
+  assert.match(dealCard, /\.club-deal-nfc-symbol svg \{[\s\S]*?display:block;[\s\S]*?place-self:center;[\s\S]*?rgba\(126,234,255,\.72\)/);
+});
+
 test("multiple live non-alcohol offers stay selectable without external liquor booking handoffs", () => {
   assert.match(dealCard, /offerDeals\.map/);
   assert.match(dealCard, /selectedDealId/);
