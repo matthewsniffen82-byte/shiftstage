@@ -249,8 +249,8 @@ export function ClubDealCard({
             <span>{intentState === "ready" && intentExpiresAt ? `Ready until ${formatNfcExpiry(intentExpiresAt)}` : "Selection lasts 12 hours"}</span>
           </div>
           <div className="club-deal-redemption-steps" aria-label="How to redeem">
-            <div><span>1</span><strong>Use this deal</strong></div>
-            <div><span>2</span><strong>At the cashier, unlock your phone<small>You may close this page—the NFC tap will reopen your selected deal.</small></strong></div>
+            <div><span>1</span><strong>Press Use this deal</strong></div>
+            <div><span>2</span><strong>At the cashier, unlock your phone<small>The NFC tap will reopen your selected deal.</small></strong></div>
             <div><span>3</span><strong>Tap the registered MyDancr NFC sticker</strong></div>
             <div><span>4</span><strong>Confirm redemption</strong></div>
           </div>
@@ -567,7 +567,32 @@ function ClubDealInteractionStyles() {
       .club-deal-offer-picker button small { color: #b9accd; font-size: 12px; line-height: 1.35; }
       .club-deal-sticky { display: none; }
       @media (max-width: 760px) {
-        .club-deal-primary-dock { width:min(388px,calc(100vw - 32px)); bottom:max(12px,env(safe-area-inset-bottom)); }
+        .club-deal-dialog-backdrop { padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom)); }
+        .club-deal-dialog { width:min(370px,100%); max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); gap:7px; padding:12px 12px calc(76px + env(safe-area-inset-bottom)); border-radius:20px; }
+        .club-deal-dialog-close { top:8px; right:8px; width:32px; height:32px; font-size:20px; }
+        .club-deal-dialog .club-deal-copy { padding-right:28px; }
+        .club-deal-dialog .club-deal-copy .eyebrow { font-size:10px; }
+        .club-deal-dialog .club-deal-copy h2 { font-size:clamp(19px,5vw,22px); line-height:1.08; }
+        .club-deal-dialog .club-deal-copy p { margin-block:5px; font-size:12px; line-height:1.25; }
+        .club-deal-dialog .club-deal-copy small { margin-top:4px; padding-top:4px; font-size:9px; line-height:1.24; }
+        .club-deal-availability-status { min-height:24px; margin-top:5px; padding-inline:9px; font-size:9px; }
+        .club-deal-redemption { gap:6px; }
+        .club-deal-nfc-prompt { gap:2px; font-size:9px; }
+        .club-deal-nfc-symbol { width:64px; height:64px; padding:5px; border-radius:15px; }
+        .club-deal-nfc-symbol svg { width:46px; height:46px; padding:9px; }
+        .club-deal-redemption-meta { gap:3px 9px; font-size:9px; }
+        .club-deal-redemption-steps { gap:5px; }
+        .club-deal-redemption-steps>div { grid-template-columns:20px minmax(0,1fr); gap:6px; padding:5px 7px; border-radius:10px; font-size:10px; line-height:1.15; }
+        .club-deal-redemption-steps span { width:20px; height:20px; font-size:9px; }
+        .club-deal-redemption-steps strong { gap:1px; }
+        .club-deal-redemption-steps small { font-size:8px; line-height:1.18; }
+        .club-deal-security-note { font-size:9px; line-height:1.2; }
+        .club-deal-dialog .club-deal-action { gap:6px; }
+        .club-deal-share-actions { gap:6px; }
+        .club-deal-share-actions button { min-height:38px; font-size:11px; }
+        .club-deal-primary-dock { width:min(370px,calc(100vw - 16px)); bottom:max(8px,env(safe-area-inset-bottom)); gap:3px; padding:7px; border-radius:16px; }
+        .club-deal-primary-dock>small { font-size:8px; line-height:1.15; }
+        .club-deal-dialog .club-deal-checkout-action { min-height:46px !important; }
         .club-deal-sticky { position: fixed; z-index: 95; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 16px; color: #fff; background: var(--dancr-color-surface-translucent); box-shadow: 0 18px 50px rgba(0,0,0,.68); font: inherit; text-align: left; cursor: pointer; }
         .club-deal-sticky span { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
         .club-deal-sticky strong { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 12px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; white-space: nowrap; }

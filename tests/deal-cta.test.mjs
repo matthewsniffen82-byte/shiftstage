@@ -80,7 +80,7 @@ test("customers explicitly select an exact offer and dancer token until the phys
 
 test("Club Deal checkout uses one concise four-step NFC flow across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /<strong>Use this deal<\/strong>/);
+    assert.match(source, /<strong>Press Use this deal<\/strong>/);
     assert.match(source, /At the cashier, unlock your phone/);
     assert.match(source, /NFC tap will reopen your selected deal/);
     assert.match(source, /Tap the registered MyDancr NFC sticker/);
@@ -96,6 +96,15 @@ test("Club Deal checkout uses one concise four-step NFC flow across both public 
   assert.match(dealCard, /customerFacingDealTerms\(activeDeal\.dealTerms\)/);
   assert.match(liveApp, /customerFacingDealTerms\(pass\.terms\)/);
   assert.doesNotMatch(demoDeals, /terms: .*Cashier NFC confirmation is required/);
+});
+
+test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {
+  assert.match(liveApp, /width: min\(370px, calc\(100vw - 16px\)\)/);
+  assert.match(liveApp, /max-height: calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)/);
+  assert.match(liveApp, /padding: 12px 12px calc\(76px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(liveApp, /\.deal-pass-step \{[\s\S]*?grid-template-columns: 20px minmax\(0, 1fr\);[\s\S]*?padding: 5px 7px;/);
+  assert.match(dealCard, /\.club-deal-dialog \{ width:min\(370px,100%\); max-height:calc\(100dvh - 16px/);
+  assert.match(dealCard, /\.club-deal-primary-dock \{ width:min\(370px,calc\(100vw - 16px\)\); bottom:max\(8px,env\(safe-area-inset-bottom\)\)/);
 });
 
 test("multiple live non-alcohol offers stay selectable without external liquor booking handoffs", () => {

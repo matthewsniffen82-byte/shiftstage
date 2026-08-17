@@ -25946,7 +25946,13 @@
     }
 
     @media (max-width: 560px) {
-      .deal-pass-overlay,
+      .deal-pass-overlay {
+        padding:
+          max(8px, env(safe-area-inset-top))
+          8px
+          max(8px, env(safe-area-inset-bottom));
+      }
+
       .profile-qr-overlay {
         padding:
           max(14px, env(safe-area-inset-top))
@@ -25954,7 +25960,15 @@
           max(18px, env(safe-area-inset-bottom));
       }
 
-      .deal-pass-sheet,
+      .deal-pass-sheet {
+        width: min(370px, calc(100vw - 16px));
+        max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        overflow-y: auto;
+        scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom));
+        padding: 12px 12px calc(76px + env(safe-area-inset-bottom));
+        border-radius: 20px;
+      }
+
       .profile-qr-sheet {
         width: min(330px, calc(100vw - 42px));
         max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
@@ -25962,6 +25976,59 @@
         scroll-padding-bottom: calc(108px + env(safe-area-inset-bottom));
         padding: 18px 16px calc(108px + env(safe-area-inset-bottom));
         border-radius: 22px;
+      }
+
+      .deal-pass-close {
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+      }
+
+      .deal-pass-kicker {
+        margin-bottom: 3px;
+        font-size: .64rem;
+      }
+
+      .deal-pass-title {
+        padding-inline: 28px;
+        font-size: clamp(1.18rem, 5vw, 1.35rem);
+      }
+
+      .deal-pass-copy {
+        margin: 4px auto 6px;
+        font-size: .76rem;
+        line-height: 1.25;
+      }
+
+      .deal-pass-availability-status {
+        min-height: 24px;
+        margin-bottom: 7px;
+        padding-inline: 9px;
+        font-size: .6rem;
+      }
+
+      .deal-pass-offer {
+        gap: 5px;
+        margin-bottom: 7px;
+        padding: 9px 10px;
+        border-radius: 14px;
+      }
+
+      .deal-pass-description {
+        font-size: .76rem;
+        line-height: 1.25;
+      }
+
+      .deal-pass-meta {
+        gap: 4px 9px;
+        font-size: .6rem;
+      }
+
+      .deal-pass-terms {
+        padding-top: 5px;
+        font-size: .61rem;
+        line-height: 1.25;
       }
 
       .profile-qr-frame {
@@ -25972,10 +26039,20 @@
       }
 
       .deal-pass-frame {
-        width: 84px;
-        margin-bottom: 11px;
-        padding: 7px 7px 6px;
-        border-radius: 17px;
+        width: 64px;
+        margin-bottom: 7px;
+        padding: 5px 5px 4px;
+        gap: 2px;
+        border-radius: 15px;
+      }
+
+      .deal-pass-frame .deal-pass-nfc-symbol {
+        width: 46px;
+        height: 46px;
+      }
+
+      .deal-pass-frame > strong {
+        font-size: .5rem;
       }
 
       .profile-qr-close {
@@ -25985,17 +26062,53 @@
         height: 36px;
       }
 
-      .deal-pass-close {
-        top: 10px;
-        right: 10px;
-        width: 34px;
-        height: 34px;
-      }
-
-      .deal-pass-copy,
       .deal-pass-how,
       .profile-qr-subtitle {
-        font-size: .78rem;
+        font-size: .7rem;
+      }
+
+      .deal-pass-steps {
+        gap: 5px;
+        margin-bottom: 6px;
+      }
+
+      .deal-pass-step {
+        grid-template-columns: 20px minmax(0, 1fr);
+        gap: 6px;
+        padding: 5px 7px;
+        border-radius: 10px;
+        font-size: .62rem;
+        line-height: 1.15;
+      }
+
+      .deal-pass-step > span {
+        width: 20px;
+        height: 20px;
+        font-size: .58rem;
+      }
+
+      .deal-pass-step > strong {
+        gap: 1px;
+      }
+
+      .deal-pass-step small {
+        font-size: .53rem;
+        line-height: 1.18;
+      }
+
+      .deal-pass-security {
+        margin-bottom: 6px;
+        font-size: .57rem;
+        line-height: 1.2;
+      }
+
+      .deal-pass-actions {
+        gap: 6px;
+      }
+
+      .deal-pass-action {
+        min-height: 38px;
+        font-size: .72rem;
       }
     }
 
@@ -26129,7 +26242,20 @@
 
     @media (max-width: 560px) {
       .deal-pass-primary-dock {
-        width: min(330px, calc(100vw - 42px));
+        bottom: max(8px, env(safe-area-inset-bottom));
+        width: min(370px, calc(100vw - 16px));
+        gap: 3px;
+        padding: 7px;
+        border-radius: 16px;
+      }
+
+      .deal-pass-primary-dock .deal-pass-action.primary {
+        min-height: 46px !important;
+      }
+
+      .deal-pass-primary-dock > small {
+        font-size: .52rem;
+        line-height: 1.15;
       }
     }
 
@@ -45044,8 +45170,8 @@
               <strong>Tap cashier sticker</strong>
             </div>
             <div class="deal-pass-steps" aria-label="How to redeem">
-              <div class="deal-pass-step"><span>1</span><strong>Use this deal</strong></div>
-              <div class="deal-pass-step"><span>2</span><strong>At the cashier, unlock your phone<small>You may close this page—the NFC tap will reopen your selected deal.</small></strong></div>
+              <div class="deal-pass-step"><span>1</span><strong>Press Use this deal</strong></div>
+              <div class="deal-pass-step"><span>2</span><strong>At the cashier, unlock your phone<small>The NFC tap will reopen your selected deal.</small></strong></div>
               <div class="deal-pass-step"><span>3</span><strong>Tap the registered MyDancr NFC sticker</strong></div>
               <div class="deal-pass-step"><span>4</span><strong>Confirm redemption</strong></div>
             </div>
