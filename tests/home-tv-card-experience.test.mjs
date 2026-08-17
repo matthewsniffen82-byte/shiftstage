@@ -566,7 +566,16 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(cityLabel, /var\(--dancr-color-black-strong\) !important;/);
   assert.match(cityLabel, /filter: none !important;/);
   assert.doesNotMatch(cityLabel, /dancr-color-(?:brand|info|live|success|featured|danger)/);
-  assert.match(brandedCards, /\.home-tv-feed-schedule\.is-now/);
+  const workingNowPill = brandedCards.match(
+    /body\.dancr-button-system \.home-tv-feed-schedule\.is-now \{[\s\S]*?\n\}/,
+  )?.[0] || "";
+  assert.match(workingNowPill, /border-color: var\(--dancr-color-live-strong\) !important;/);
+  assert.match(workingNowPill, /color: var\(--dancr-color-live\) !important;/);
+  assert.match(workingNowPill, /var\(--dancr-color-live\) 8%/);
+  assert.match(workingNowPill, /var\(--dancr-color-background\)/);
+  assert.match(workingNowPill, /background-image: none !important;/);
+  assert.match(workingNowPill, /box-shadow: none !important;/);
+  assert.doesNotMatch(workingNowPill, /brand-|beam-|gradient|glow/);
   assert.match(brandedCards, /var\(--dancr-color-success\)/);
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-upcoming/);
   assert.match(brandedCards, /\.home-tv-feed-report-action\[aria-expanded="true"\]/);
