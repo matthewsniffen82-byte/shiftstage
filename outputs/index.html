@@ -34888,7 +34888,9 @@
           display: block !important;
           object-fit: cover;
           object-position: center top;
-          background: #0b0b10 !important;
+          background:
+            radial-gradient(circle at 70% 18%, rgba(255,255,255,.055), transparent 34%),
+            linear-gradient(145deg,#111118,#07070b) !important;
         }
         #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo::after {
           background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);
@@ -54743,6 +54745,21 @@
       });
     }
 
+    const HOME_DANCER_GRID_EAGER_PHOTO_LIMIT = 18;
+    const HOME_DANCER_GRID_HIGH_PRIORITY_PHOTO_LIMIT = 3;
+
+    function prioritizeHomeDancerGridPhotos(container) {
+      const photos = Array.from(container?.querySelectorAll?.("img.home-dancer-grid-photo") || []);
+      photos.forEach((photo, index) => {
+        const shouldEagerLoad = index < HOME_DANCER_GRID_EAGER_PHOTO_LIMIT;
+        photo.setAttribute("loading", shouldEagerLoad ? "eager" : "lazy");
+        photo.setAttribute(
+          "fetchpriority",
+          index < HOME_DANCER_GRID_HIGH_PRIORITY_PHOTO_LIMIT ? "high" : "auto"
+        );
+      });
+    }
+
     function renderHomeDancerGrid(city, profiles) {
       const sections = dancerDirectorySections(profiles, city);
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
@@ -54768,6 +54785,7 @@
       }
       homeDancerGridRenderKey = nextRenderKey;
       results.innerHTML = gridMarkup;
+      prioritizeHomeDancerGridPhotos(results);
     }
 
     function homeDiscoveryFeedSlide(profile, index, total, tab) {
