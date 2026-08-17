@@ -8,6 +8,7 @@ import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
 import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
 import AdminPilotAnalytics from "./AdminPilotAnalytics";
+import AdminSalesAgentPanel from "./AdminSalesAgentPanel";
 import AdminTvPanel from "./AdminTvPanel";
 
 type AdminState = {
@@ -24,6 +25,7 @@ type AdminState = {
   operations?: AdminOperationsCenter | null;
   finance?: Record<string, unknown> | null;
   referralFees?: Record<string, unknown> | null;
+  salesAgents?: Record<string, unknown> | null;
   authRequired?: boolean;
   warnings?: string[];
   error?: string;
@@ -36,7 +38,7 @@ type AdminActionNotice = {
 
 const SESSION_KEY = "dancrAuthSessionV1";
 const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
-type AdminWorkspace = "overview" | "approvals" | "finance" | "activity" | "accounts" | "system" | "pilot";
+type AdminWorkspace = "overview" | "approvals" | "finance" | "agents" | "activity" | "accounts" | "system" | "pilot";
 
 export default function AdminClient() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -196,6 +198,7 @@ export default function AdminClient() {
         { label: "Live operations", path: "/api/admin/operations", apply: (data) => ({ operations: data.operations }) },
         { label: "QR finance", path: "/api/admin/finance", apply: (data) => ({ finance: data.finance }) },
         { label: "Referral fee agreements", path: "/api/admin/referral-fees", apply: (data) => ({ referralFees: data.referralFees }) },
+        { label: "Sales agents", path: "/api/admin/sales-agents", apply: (data) => ({ salesAgents: data.program }) },
         {
           label: "Dancer approvals",
           path: "/api/admin/approvals",
@@ -247,6 +250,7 @@ export default function AdminClient() {
         operations: null,
         finance: null,
         referralFees: null,
+        salesAgents: null,
         queue: [],
         dancers: [],
         venues: [],
@@ -402,7 +406,7 @@ export default function AdminClient() {
             </aside>
           ) : null}
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
-            {(["overview", "pilot", "approvals", "finance", "activity", "accounts", "system"] as AdminWorkspace[]).map((item) => (
+            {(["overview", "pilot", "approvals", "finance", "agents", "activity", "accounts", "system"] as AdminWorkspace[]).map((item) => (
               <button
                 key={item}
                 type="button"
@@ -435,6 +439,13 @@ export default function AdminClient() {
           ) : null}
           {workspace === "activity" ? <ActivityTimeline operations={state.operations || null} /> : null}
           {workspace === "accounts" ? <AccountOverview operations={state.operations || null} /> : null}
+          {workspace === "agents" ? (
+            <AdminSalesAgentPanel
+              program={state.salesAgents || null}
+              onProgramChange={(salesAgents) => setState((current) => ({ ...current, salesAgents }))}
+              onActionConfirmed={confirmAdminAction}
+            />
+          ) : null}
           {workspace === "finance" ? (
             <>
               <ReferralFeeManager

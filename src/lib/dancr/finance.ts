@@ -450,7 +450,7 @@ export async function reverseDancerPayoutTransfer(client: DancrClient, transferI
 
 export async function getAdminFinanceOverview(client: DancrClient) {
   const now = new Date().toISOString();
-  const [invoicesResult, payoutsResult, revenueResult, commissionsResult] = await Promise.all([
+  const [invoicesResult, payoutsResult, revenueResult, commissionsResult, agentCommissionsResult] = await Promise.all([
     (client as any).from("club_invoices")
       .select("id, venue_id, period_start, period_end, sequence, status, currency, amount_due_cents, amount_paid_cents, due_at, hosted_invoice_url, invoice_pdf_url, external_payment_reference, paid_at, reminder_count, last_error, venues(name)")
       .order("created_at", { ascending: false }).limit(200),
@@ -458,17 +458,20 @@ export async function getAdminFinanceOverview(client: DancrClient) {
       .select("id, dancer_id, status, currency, amount_cents, stripe_transfer_id, failure_message, paid_at, created_at, dancer_profiles(stage_name)")
       .order("created_at", { ascending: false }).limit(200),
     (client as any).from("deal_revenue_events")
-      .select("status, gross_commission_cents, dancer_commission_cents, platform_commission_cents").limit(MAX_FINANCE_ROWS),
+      .select("status, gross_commission_cents, dancer_commission_cents, agent_commission_cents, platform_commission_cents").limit(MAX_FINANCE_ROWS),
     (client as any).from("commission_events")
       .select("status, amount_cents").limit(MAX_FINANCE_ROWS),
+    (client as any).from("agent_commission_events")
+      .select("status, amount_cents").limit(MAX_FINANCE_ROWS),
   ]);
-  for (const result of [invoicesResult, payoutsResult, revenueResult, commissionsResult]) {
+  for (const result of [invoicesResult, payoutsResult, revenueResult, commissionsResult, agentCommissionsResult]) {
     if (result.error) throw result.error;
   }
   const invoices = invoicesResult.data || [];
   const payouts = payoutsResult.data || [];
   const revenue = revenueResult.data || [];
   const commissions = commissionsResult.data || [];
+  const agentCommissions = agentCommissionsResult.data || [];
   const sum = (rows: any[], field: string) => rows.reduce((total, row) => total + Number(row[field] || 0), 0);
   const outstanding = invoices.filter((row: any) => ["open", "overdue"].includes(row.status));
   const overdue = outstanding.filter((row: any) => row.status === "overdue" || row.due_at < now);
@@ -481,6 +484,9 @@ export async function getAdminFinanceOverview(client: DancrClient) {
       paidClubRevenueCents: sum(paidInvoices, "amount_paid_cents"),
       dancerPayableCents: sum(commissions.filter((row: any) => row.status === "payable"), "amount_cents"),
       dancerPaidCents: sum(paidPayouts, "amount_cents"),
+      agentPendingVenuePaymentCents: sum(agentCommissions.filter((row: any) => row.status === "pending_venue_payment"), "amount_cents"),
+      agentPayableCents: sum(agentCommissions.filter((row: any) => row.status === "payable"), "amount_cents"),
+      agentPaidCents: sum(agentCommissions.filter((row: any) => row.status === "paid"), "amount_cents"),
       myDancrNetRevenueCents: sum(revenue.filter((row: any) => row.status === "settled"), "platform_commission_cents"),
       openInvoiceCount: outstanding.length,
       overdueInvoiceCount: overdue.length,
