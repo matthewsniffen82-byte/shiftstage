@@ -11,10 +11,6 @@ export function apiError(error: unknown, fallback: string, status = 500) {
     return NextResponse.json({ ok: false, error: message }, { status: 403 });
   }
 
-  if (message === "Active sales agent access required.") {
-    return NextResponse.json({ ok: false, error: message }, { status: 403 });
-  }
-
   if (message === "Profile approval required before posting shifts.") {
     return NextResponse.json({ ok: false, error: message }, { status: 403 });
   }
