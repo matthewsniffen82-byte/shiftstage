@@ -202,6 +202,13 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /Avatar moderation is in progress/);
 });
 
+test("the mobile full-profile preview leaves room for its media thumbnails above navigation", () => {
+  assert.match(
+    dashboard,
+    /@media \(max-width: 620px\) \{[\s\S]*?\.dancer-profile-preview-overlay \.profile-media-feature \{ aspect-ratio: 4 \/ 5;/,
+  );
+});
+
 test("pre-approval tools remain hidden while help and account recovery stay available", () => {
   assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-schedule"/);
   assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-performance"/);

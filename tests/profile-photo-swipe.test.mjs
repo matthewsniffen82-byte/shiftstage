@@ -152,7 +152,8 @@ test("full-profile photo and video stages use one stable portrait frame", () => 
     /#profileBackdrop \.modal-grid > \.info-tile:not\(\.working-now-tile\):not\(\.schedule-upcoming\):not\(\.profile-club-deal-tile\)::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
   );
   assert.doesNotMatch(publicPhotoCarousel, /style=\{selectedItem\.kind === "photo"[^}]*aspectRatio/);
-  assert.match(publicProfilePage, /\.profile-media-feature\.is-photo \{ aspect-ratio: 9 \/ 16; max-height: none; \}/);
+  assert.match(publicProfilePage, /@media \(max-width: 600px\)[\s\S]*?\.profile-media-feature, \.profile-media-feature\.is-photo, \.profile-media-feature\.is-video \{ aspect-ratio: 4 \/ 5; max-height: none;/);
+  assert.match(publicProfilePage, /@media \(max-width: 600px\)[\s\S]*?\.profile-media-grid-item\.is-video \{ aspect-ratio: 4 \/ 5; \}/);
   assert.match(publicProfilePage, /\.profile-media-feature > img \{ object-fit: cover;/);
   assert.match(publicProfilePage, /\.profile-media-feature > video \{ object-fit: cover; \}/);
 });

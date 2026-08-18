@@ -585,7 +585,8 @@ function PublicProfileStyles() {
         .club-deal-action { justify-items: stretch; }
         .deal-qr-frame { justify-items: center; }
         .deal-qr-frame img { width: 128px; }
-        .profile-media-feature, .profile-media-feature.is-photo, .profile-media-feature.is-video { aspect-ratio: 9 / 16; max-height: none; border-radius: 17px; }
+        .profile-media-feature, .profile-media-feature.is-photo, .profile-media-feature.is-video { aspect-ratio: 4 / 5; max-height: none; border-radius: 17px; }
+        .profile-media-grid-item.is-video { aspect-ratio: 4 / 5; }
         .profile-media-video-controls { left: 9px; right: 9px; bottom: 9px; grid-template-columns: 36px minmax(88px, 1fr) auto 36px 36px; gap: 3px; min-height: 42px; padding: 3px 4px; }
         .profile-media-feature-previous, .profile-media-feature-next { width: 28px; height: 38px; font-size: 20px; }
         .profile-media-viewer-previous, .profile-media-viewer-next { width: 40px; height: 50px; font-size: 30px; }
