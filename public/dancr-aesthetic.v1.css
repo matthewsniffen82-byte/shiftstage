@@ -3432,6 +3432,17 @@ body.dancr-button-system .public-profile-shell .profile-live-state {
   box-shadow: none !important;
 }
 
+/* Working Now owns the Emerald schedule signal, but nested travel actions
+ * keep their own neutral-glass brand treatment. */
+body.dancr-button-system #profileBackdrop .working-now-tile
+  .profile-uber-ride .action-icon {
+  border-color: transparent !important;
+  color: var(--dancr-color-brand-core) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
 body.dancr-button-system #profileBackdrop .profile-club-deal-tile,
 body.dancr-button-system .public-profile-shell .profile-working-card.has-club-deal,
 body.dancr-button-system .public-profile-shell .club-deal-card {
