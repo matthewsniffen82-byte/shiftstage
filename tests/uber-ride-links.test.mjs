@@ -214,7 +214,7 @@ test("venue travel actions keep compact labels and explicit address-unavailable 
   assert.match(liveShellSource, /\.home-venue-discovery-context-actions > :is\(\.feed-card-action, \.home-discovery-feed-directions\) > span:not\(\.action-icon\) \{[\s\S]*?width: auto;[\s\S]*?flex: 0 1 auto;[\s\S]*?text-align: center/);
   assert.match(sharedAesthetic, /\.home-venue-discovery-context-actions > \.is-inactive-demo \{[\s\S]*?opacity: 1 !important;[\s\S]*?pointer-events: auto !important;/);
   assert.match(sharedAesthetic, /\.home-venue-discovery-context-actions > \.is-travel-unavailable \{[\s\S]*?opacity: 1 !important;[\s\S]*?pointer-events: none !important;/);
-  assert.match(sharedAesthetic, /> \.home-discovery-feed-directions:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-info-medium\)[\s\S]*?var\(--dancr-color-info\) 10%/);
+  assert.match(sharedAesthetic, /> \.home-discovery-feed-directions:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-info\) 4%/);
   assert.match(sharedAesthetic, /> \.home-venue-discovery-uber:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?var\(--dancr-color-brand-primary\) 28%[\s\S]*?var\(--dancr-shadow-brand-control\)/);
 });
 
