@@ -3966,6 +3966,9 @@ body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-wo
 
 body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-working-now="true"])
   > [data-dancer-avatar-border] > :is(img, .tv-profile-photo-image) {
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   background-color: var(--dancr-color-avatar-ring-upcoming) !important;
 }
 
@@ -3995,6 +3998,9 @@ body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-d
 
 body.dancr-button-system [data-dancer-avatar][data-working-now="true"]
   > [data-dancer-avatar-border] > :is(img, .tv-profile-photo-image) {
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   background-color: var(--dancr-color-avatar-ring-live) !important;
 }
 

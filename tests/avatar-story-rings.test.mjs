@@ -91,7 +91,7 @@ test("upcoming avatars use a cyan ring without being promoted to Working Now", (
   );
   assert.match(
     wrapperRules,
-    /\[data-upcoming="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?background-color: var\(--dancr-color-avatar-ring-upcoming\) !important;/,
+    /\[data-upcoming="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?background-color: var\(--dancr-color-avatar-ring-upcoming\) !important;/,
   );
   assert.match(publicProfile, /data-upcoming=\{hasUpcomingShift \? "true" : undefined\}/);
   assert.match(tvFeed, /data-upcoming=\{video\.shift && !video\.shift\.isActive \? "true" : undefined\}/);
@@ -116,7 +116,7 @@ test("working-now avatars keep one complete live-teal ring with NOW reserved for
   );
   assert.match(
     wrapperRules,
-    /\[data-working-now="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?background-color: var\(--dancr-color-avatar-ring-live\) !important;/,
+    /\[data-working-now="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?background-color: var\(--dancr-color-avatar-ring-live\) !important;/,
   );
   assert.match(wrapperRules, /\[data-working-now-indicator\] \{/);
   assert.match(wrapperRules, /background: var\(--dancr-color-avatar-ring-live\) !important;/);
