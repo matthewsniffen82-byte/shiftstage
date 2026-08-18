@@ -143,6 +143,10 @@ test("full-profile photo and video stages use one stable portrait frame", () => 
   );
   assert.match(
     liveApp,
+    /@media \(max-width: 720px\) \{\s*#profileBackdrop \.modal-image \{\s*aspect-ratio: 4 \/ 5 !important;/,
+  );
+  assert.match(
+    liveApp,
     /#profileBackdrop \.modal-image\.has-custom-photo \{[\s\S]*?background-size: cover, cover !important;/,
   );
   assert.match(liveApp, /\.profile-modal \.modal-media-video-preview > video \{[\s\S]*?object-fit: cover;/);
