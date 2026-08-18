@@ -10,6 +10,7 @@ import {
   type PayoutProviderName,
   type ProviderAccountState,
 } from "./payout-provider";
+import { createBitsafeOnboarding } from "./bitsafe";
 import { requireVenueAccess } from "./venue-access";
 
 type DancrClient = SupabaseClient;
@@ -339,6 +340,15 @@ export async function createDancerConnectOnboarding(
   if (!settings.payoutsEnabled) {
     throw new Error("Payout setup will open after MyDancr's payout provider is approved and enabled.");
   }
+  if (settings.paymentProvider === "bitsafe") {
+    const callbackUrl = new URL("/api/bitsafe/callback", returnUrl).toString();
+    return createBitsafeOnboarding(client, {
+      dancerId: dancer.id,
+      userId,
+      returnUrl,
+      callbackUrl,
+    });
+  }
   let payoutAccount = await getDancerPayoutAccount(client, dancer.id, settings.paymentProvider);
   const provider = getPayoutProvider(settings.paymentProvider);
 
@@ -428,6 +438,21 @@ export async function processDancerPayouts(client: DancrClient) {
         p_provider_reference_id: transfer.providerReferenceId,
       });
       if (processingError) throw processingError;
+      if (providerName === "bitsafe") {
+        const { error: auditError } = await (client as any).from("financial_audit_events").insert({
+          actor_type: "system",
+          action: "bitsafe_payout_instruction_created",
+          target_type: "payout",
+          target_id: batch.id,
+          reason: "Awaiting approval and execution in the Yoursafe business portal.",
+          metadata: {
+            payment_provider: "bitsafe",
+            provider_reference_id: transfer.providerReferenceId,
+            automatic_paid_confirmation: false,
+          },
+        });
+        if (auditError) throw auditError;
+      }
       created += 1;
     } catch (error) {
       failed += 1;
@@ -607,6 +632,45 @@ export async function retryDancerPayout(client: DancrClient, adminUserId: string
   });
   if (error) throw error;
   return data;
+}
+
+export async function reconcileBitsafePayout(
+  client: DancrClient,
+  adminUserId: string,
+  payoutId: string,
+  reconciliationReference: string,
+  reason: string,
+  paidAt = new Date().toISOString(),
+) {
+  const { data: payout, error } = await (client as any).from("dancer_payout_batches")
+    .select("id, status, payment_provider, provider_reference_id")
+    .eq("id", payoutId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!payout || payout.payment_provider !== "bitsafe" || payout.status !== "processing") {
+    throw new Error("Only a processing Bitsafe payout can be reconciled.");
+  }
+  const providerReferenceId = String(payout.provider_reference_id || "");
+  if (!providerReferenceId.startsWith("bitsafe:")) throw new Error("Bitsafe payout reference is missing.");
+  const reconciled = await completeProviderPayout(client, providerReferenceId, paidAt, payout.id);
+  if (!reconciled) throw new Error("Bitsafe payout could not be reconciled.");
+  const { error: auditError } = await (client as any).from("financial_audit_events").insert({
+    actor_user_id: adminUserId,
+    actor_type: "admin",
+    action: "bitsafe_payout_reconciled",
+    target_type: "payout",
+    target_id: payout.id,
+    reason: reason.slice(0, 500),
+    metadata: {
+      payment_provider: "bitsafe",
+      provider_reference_id: providerReferenceId,
+      reconciliation_reference: reconciliationReference.slice(0, 160),
+      paid_at: paidAt,
+      source: "verified_yoursafe_payout_report",
+    },
+  });
+  if (auditError) throw auditError;
+  return reconciled;
 }
 
 export async function getVenueFinance(client: DancrClient, userId: string) {
@@ -816,6 +880,10 @@ async function upsertDancerPayoutAccount(client: DancrClient, dancerId: string, 
   }, { onConflict: "dancer_id,payment_provider" }).select("*").single();
   if (error) throw error;
   return data;
+}
+
+export async function syncBitsafePayoutAccount(client: DancrClient, dancerId: string, account: ProviderAccountState) {
+  return upsertDancerPayoutAccount(client, dancerId, "bitsafe", account);
 }
 
 async function getDatabasePayoutSettings(client: DancrClient) {

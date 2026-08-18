@@ -4054,6 +4054,13 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
     && payoutAccount?.verification_status === "verified";
   const currentMonth = new Date().toISOString().slice(0, 7);
 
+  useEffect(() => {
+    const result = new URLSearchParams(window.location.search).get("finance");
+    if (result === "connected") setStatus("Payout account connected and verified.");
+    if (result === "review") setStatus("Payout account connected. Bitsafe is still reviewing payout eligibility.");
+    if (result === "setup_error") setStatus("Payout setup could not be completed. Please try again.");
+  }, []);
+
   async function payoutAction(action: "connect_onboarding" | "cash_out") {
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
@@ -4104,6 +4111,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         <strong className={`deal-state ${payoutsEnabled ? "active" : ""}`}>{payoutsEnabled ? "Payouts available" : "Approval pending"}</strong>
       </div>
       <p>Qualifying Club Deal activity appears as pending first, then becomes available after the review period. Balances never include customer personal information.</p>
+      {settings.paymentProvider === "bitsafe" ? <p>Bitsafe securely handles identity, account details, and money movement. MyDancr stores only your non-personal payout account reference.</p> : null}
       <div className="deal-metrics earnings-balance-grid">
         <Metric label="Available balance" value={formatCents(Number(balances.availableCents || 0))} />
         <Metric label="Pending earnings" value={formatCents(Number(balances.pendingCents || 0))} />

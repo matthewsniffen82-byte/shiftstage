@@ -6,7 +6,7 @@ create table if not exists public.payout_settings (
   id text primary key default 'default' check (id = 'default'),
   payouts_enabled boolean not null default false,
   payment_provider text not null default 'stripe'
-    check (payment_provider in ('stripe', 'adyen', 'other')),
+    check (payment_provider in ('stripe', 'bitsafe', 'adyen', 'other')),
   earnings_hold_days integer not null default 7 check (earnings_hold_days between 0 and 90),
   minimum_payout_cents integer not null default 2000 check (minimum_payout_cents between 1 and 10000000),
   payout_mode text not null default 'manual_cashout'
@@ -24,7 +24,7 @@ alter table public.dancer_payout_accounts
   alter column stripe_account_id drop not null,
   add column if not exists id uuid not null default gen_random_uuid(),
   add column if not exists payment_provider text not null default 'stripe'
-    check (payment_provider in ('stripe', 'adyen', 'other')),
+    check (payment_provider in ('stripe', 'bitsafe', 'adyen', 'other')),
   add column if not exists provider_account_id text,
   add column if not exists onboarding_status text not null default 'not_started'
     check (onboarding_status in ('not_started', 'pending', 'complete', 'restricted', 'disabled')),
@@ -98,7 +98,7 @@ alter table public.commission_events
     check (earning_type in ('club_deal_redemption', 'referral', 'bottle_service', 'promotion', 'manual_adjustment', 'other')),
   add column if not exists gross_transaction_amount_cents bigint,
   add column if not exists payment_provider text
-    check (payment_provider is null or payment_provider in ('stripe', 'adyen', 'other')),
+    check (payment_provider is null or payment_provider in ('stripe', 'bitsafe', 'adyen', 'other')),
   add column if not exists pending_until timestamptz,
   add column if not exists available_at timestamptz,
   add column if not exists reversed_at timestamptz,
@@ -170,7 +170,7 @@ alter table public.dancer_payout_batches
   add constraint dancer_payout_batches_status_check
     check (status in ('requested', 'processing', 'paid', 'failed', 'canceled')),
   add column if not exists payment_provider text not null default 'stripe'
-    check (payment_provider in ('stripe', 'adyen', 'other')),
+    check (payment_provider in ('stripe', 'bitsafe', 'adyen', 'other')),
   add column if not exists provider_reference_id text,
   add column if not exists requested_at timestamptz not null default now(),
   add column if not exists processing_at timestamptz,
@@ -267,7 +267,7 @@ alter table public.payment_provider_webhook_events
   drop constraint if exists stripe_finance_webhook_events_pkey,
   add column if not exists id uuid not null default gen_random_uuid(),
   add column if not exists payment_provider text not null default 'stripe'
-    check (payment_provider in ('stripe', 'adyen', 'other')),
+    check (payment_provider in ('stripe', 'bitsafe', 'adyen', 'other')),
   add column if not exists processing_status text not null default 'processing'
     check (processing_status in ('processing', 'processed', 'failed')),
   add column if not exists failure_reason text,
@@ -339,7 +339,7 @@ set search_path = public
 as $$
 declare v_event_id uuid;
 begin
-  if p_payment_provider not in ('stripe', 'adyen', 'other')
+  if p_payment_provider not in ('stripe', 'bitsafe', 'adyen', 'other')
     or nullif(trim(coalesce(p_provider_event_id, '')), '') is null
     or nullif(trim(coalesce(p_event_type, '')), '') is null
   then
@@ -641,7 +641,7 @@ begin
   if char_length(trim(coalesce(p_request_key, ''))) < 12 then
     raise exception using errcode = '22023', message = 'A valid idempotency key is required.';
   end if;
-  if p_payment_provider not in ('stripe', 'adyen', 'other') then
+  if p_payment_provider not in ('stripe', 'bitsafe', 'adyen', 'other') then
     raise exception using errcode = '22023', message = 'Unsupported payout provider.';
   end if;
 
@@ -869,7 +869,7 @@ declare
   v_settings public.payout_settings%rowtype;
   v_account public.dancer_payout_accounts%rowtype;
 begin
-  if p_payment_provider not in ('stripe', 'adyen', 'other') then
+  if p_payment_provider not in ('stripe', 'bitsafe', 'adyen', 'other') then
     raise exception using errcode = '22023', message = 'Unsupported payout provider.';
   end if;
   if lower(p_currency) <> 'usd' then
@@ -969,7 +969,7 @@ begin
   if not exists (select 1 from public.app_users where id = p_admin_user_id and role = 'admin' and account_state = 'active') then
     raise exception using errcode = '42501', message = 'Active admin access required.';
   end if;
-  if p_payment_provider not in ('stripe', 'adyen', 'other') or p_payout_mode not in ('manual_cashout', 'scheduled', 'both')
+  if p_payment_provider not in ('stripe', 'bitsafe', 'adyen', 'other') or p_payout_mode not in ('manual_cashout', 'scheduled', 'both')
     or p_earnings_hold_days not between 0 and 90 or p_minimum_payout_cents not between 1 and 10000000
   then
     raise exception using errcode = '22023', message = 'Invalid payout settings.';

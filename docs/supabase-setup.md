@@ -92,6 +92,7 @@ The first required values are:
 The admin monitoring panel also checks:
 
 - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_DANCER_MONTHLY_PRICE_ID`
+- Bitsafe/Yoursafe payouts: `BITSAFE_CLIENT_ID`, `BITSAFE_CLIENT_SECRET`, `BITSAFE_API_USERNAME`, `BITSAFE_API_PASSWORD`
 - OneSignal: `NEXT_PUBLIC_ONESIGNAL_APP_ID`, `ONESIGNAL_REST_API_KEY`
 - Resend: `RESEND_API_KEY`, `EMAIL_FROM`
 

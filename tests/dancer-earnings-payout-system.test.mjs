@@ -4,8 +4,10 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const migration = read("supabase/migrations/202608170004_dancer_earnings_payout_system.sql");
+const bitsafeMigration = read("supabase/migrations/202608180001_bitsafe_payout_provider.sql");
 const finance = read("src/lib/dancr/finance.ts");
 const provider = read("src/lib/dancr/payout-provider.ts");
+const bitsafe = read("src/lib/dancr/bitsafe.ts");
 
 test("the existing QR commission table is evolved into a controlled immutable ledger", () => {
   assert.match(migration, /alter table public\.commission_events/);
@@ -56,7 +58,7 @@ test("cash out locks ledger rows and prevents concurrent or duplicate payment", 
 
 test("provider selection is abstract and live money movement has a server hard stop", () => {
   assert.match(provider, /export interface PayoutProvider/);
-  assert.match(provider, /"stripe", "adyen", "other"/);
+  assert.match(provider, /"stripe", "bitsafe", "adyen", "other"/);
   assert.match(provider, /process\.env\.PAYOUTS_ENABLED/);
   assert.match(provider, /isPayoutProviderConfigured/);
   assert.match(finance, /runtime\.enabledByEnvironment && database\.payouts_enabled/);
@@ -64,6 +66,44 @@ test("provider selection is abstract and live money movement has a server hard s
   assert.match(finance, /if \(!settings\.payoutsEnabled\)/);
   assert.match(migration, /unique \(dancer_id, payment_provider\)/);
   assert.match(finance, /onConflict: "dancer_id,payment_provider"/);
+});
+
+test("Bitsafe uses hosted Yoursafe identity and stores only a non-personal account alias", () => {
+  assert.match(bitsafe, /accounts\.yoursafe\.com/);
+  assert.match(bitsafe, /scope", "openid default"/);
+  assert.match(bitsafe, /RS256/);
+  assert.match(bitsafe, /claims\.nonce !== expectedNonce/);
+  assert.match(bitsafe, /claims\.iss !== discovery\.issuer/);
+  assert.match(bitsafe, /audience\.includes\(clientId\)/);
+  assert.match(bitsafe, /normalizeAliasToken/);
+  assert.match(bitsafeMigration, /state_hash text not null unique/);
+  assert.match(bitsafeMigration, /consume_payout_provider_oauth_state/);
+  assert.match(bitsafeMigration, /for update/);
+  assert.match(bitsafeMigration, /consumed_at is null/);
+  assert.doesNotMatch(bitsafeMigration, /access_token|id_token|bank_account|routing_number|debit_card/);
+});
+
+test("Bitsafe cash outs create idempotent internal payout instructions without bank data", () => {
+  assert.match(bitsafe, /api\.yoursafe\.com/);
+  assert.match(bitsafe, /mass-payment-api\/upload/);
+  assert.match(bitsafe, /transfer_method: "INTERNAL"/);
+  assert.match(bitsafe, /beneficiaryAliasToken = aliasToken\.slice\(0, -"\.yoursafe\.id"\.length\)/);
+  assert.match(bitsafe, /beneficiary_alias_token: beneficiaryAliasToken/);
+  assert.match(bitsafe, /input\.payoutId\.replaceAll\("-", ""\)\.slice\(0, 40\)/);
+  assert.match(bitsafe, /BITSAFE_API_USERNAME/);
+  assert.match(bitsafe, /BITSAFE_API_PASSWORD/);
+  assert.match(bitsafe, /duplicate unique identifier/);
+  assert.doesNotMatch(bitsafe, /beneficiary_account|aba_routing_code|beneficiary_iban/);
+});
+
+test("Bitsafe payouts remain processing until an audited report reconciliation", () => {
+  const adminRoute = read("app/api/admin/finance/route.ts");
+  assert.match(finance, /bitsafe_payout_instruction_created/);
+  assert.match(finance, /Awaiting approval and execution in the Yoursafe business portal/);
+  assert.match(finance, /Only a processing Bitsafe payout can be reconciled/);
+  assert.match(finance, /bitsafe_payout_reconciled/);
+  assert.match(finance, /verified_yoursafe_payout_report/);
+  assert.match(adminRoute, /reconcile_bitsafe_payout/);
 });
 
 test("webhooks are signature verified and idempotently recorded without secrets", () => {

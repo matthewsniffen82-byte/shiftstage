@@ -1,7 +1,8 @@
 import type Stripe from "stripe";
 import { getStripe } from "../stripe";
+import { createBitsafePayoutInstruction, getBitsafeAccountState } from "./bitsafe";
 
-export const PAYOUT_PROVIDERS = ["stripe", "adyen", "other"] as const;
+export const PAYOUT_PROVIDERS = ["stripe", "bitsafe", "adyen", "other"] as const;
 export const PAYOUT_MODES = ["manual_cashout", "scheduled", "both"] as const;
 
 export type PayoutProviderName = (typeof PAYOUT_PROVIDERS)[number];
@@ -58,12 +59,21 @@ export function getPayoutRuntimeConfig(): PayoutRuntimeConfig {
 
 export function getPayoutProvider(name: PayoutProviderName): PayoutProvider {
   if (name === "stripe") return stripePayoutProvider;
+  if (name === "bitsafe") return bitsafePayoutProvider;
   return unsupportedProvider(name);
 }
 
 export function isPayoutProviderConfigured(name: PayoutProviderName) {
   if (name === "stripe") {
     return Boolean(process.env.STRIPE_SECRET_KEY?.trim() && process.env.STRIPE_WEBHOOK_SECRET?.trim());
+  }
+  if (name === "bitsafe") {
+    return Boolean(
+      process.env.BITSAFE_CLIENT_ID?.trim()
+      && process.env.BITSAFE_CLIENT_SECRET?.trim()
+      && process.env.BITSAFE_API_USERNAME?.trim()
+      && process.env.BITSAFE_API_PASSWORD?.trim(),
+    );
   }
   return false;
 }
@@ -124,6 +134,22 @@ const stripePayoutProvider: PayoutProvider = {
       metadata: { payout_batch_id: input.payoutId, dancer_id: input.dancerId },
     }, { idempotencyKey: input.idempotencyKey });
     return { providerReferenceId: transfer.id };
+  },
+};
+
+const bitsafePayoutProvider: PayoutProvider = {
+  name: "bitsafe",
+  async createConnectedAccount() {
+    throw new Error("Complete the secure Bitsafe account connection to set up payouts.");
+  },
+  async createOnboardingLink() {
+    throw new Error("Bitsafe onboarding must be started through its secure account-connection flow.");
+  },
+  async retrieveConnectedAccount(providerAccountId) {
+    return getBitsafeAccountState(providerAccountId);
+  },
+  async initiatePayout(input) {
+    return createBitsafePayoutInstruction(input);
   },
 };
 

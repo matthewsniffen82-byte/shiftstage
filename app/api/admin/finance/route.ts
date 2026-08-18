@@ -5,6 +5,7 @@ import {
   getAdminFinanceOverview,
   manageDancerEarning,
   processDancerPayouts,
+  reconcileBitsafePayout,
   recordManualClubInvoicePayment,
   retryDancerPayout,
   updatePayoutSettings,
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     }
 
     if (body.action === "update_payout_settings") {
-      const paymentProvider = oneOf(body.paymentProvider, ["stripe", "adyen", "other"] as const, "Unsupported payout provider.");
+      const paymentProvider = oneOf(body.paymentProvider, ["stripe", "bitsafe", "adyen", "other"] as const, "Unsupported payout provider.");
       const payoutMode = oneOf(body.payoutMode, ["manual_cashout", "scheduled", "both"] as const, "Unsupported payout mode.");
       const earningsHoldDays = boundedInteger(body.earningsHoldDays, 0, 90, "Hold days must be between 0 and 90.");
       const minimumPayoutCents = boundedInteger(body.minimumPayoutCents, 1, 10_000_000, "Minimum payout is invalid.");
@@ -89,6 +90,17 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "Reason must be between 3 and 500 characters." }, { status: 400 });
       }
       await retryDancerPayout(admin, user.id, payoutId, reason);
+      return NextResponse.json({ ok: true, finance: await getAdminFinanceOverview(admin) });
+    }
+
+    if (body.action === "reconcile_bitsafe_payout") {
+      const payoutId = requiredText(body.payoutId, "Payout is required.");
+      const reconciliationReference = requiredText(body.reconciliationReference, "Yoursafe report reference is required.");
+      const reason = requiredText(body.reason, "A reconciliation reason is required.");
+      if (reconciliationReference.length > 160 || reason.length < 3 || reason.length > 500) {
+        return NextResponse.json({ ok: false, error: "Reconciliation details are invalid." }, { status: 400 });
+      }
+      await reconcileBitsafePayout(admin, user.id, payoutId, reconciliationReference, reason);
       return NextResponse.json({ ok: true, finance: await getAdminFinanceOverview(admin) });
     }
 
