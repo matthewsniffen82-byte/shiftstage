@@ -40091,8 +40091,14 @@
       return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
     }
 
-    function uberRideLinkMarkup({ venue, source, label, className = "", dancerId = "", city = selectedCity() }) {
+    function rideActionLabel(source, venueName) {
+      const safeVenueName = String(venueName || "this club").trim() || "this club";
+      return source === "dancer_profile" ? `Get a Ride to ${safeVenueName}` : "Get a Ride";
+    }
+
+    function uberRideLinkMarkup({ venue, source, className = "", dancerId = "", city = selectedCity() }) {
       const destination = publicVenueUberDestination(venue, city);
+      const label = rideActionLabel(source, venue?.name);
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
       if (isFictionalDemoTravelPreviewOnly(venue)) {
         return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" tabindex="-1" aria-disabled="true" aria-label="${escapeHtml(label)}. Preview only.">${actionButtonLabel("car", escapeHtml(label))}</button>`;
@@ -48271,7 +48277,6 @@
           ? uberRideLinkMarkup({
               venue: feedVenue,
               source: "tonight_feed",
-              label: "Get a Ride",
               className: "feed-card-action feed-uber-ride",
               dancerId: profile.id || "",
               city: citySelect.value
@@ -48407,7 +48412,6 @@
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "tonight_feed",
-        label: "Uber",
         className: "venue-card-uber feed-uber-ride"
       });
       return `
@@ -48475,7 +48479,6 @@
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "venue_page",
-        label: "Request Uber",
         className: "venue-detail-uber"
       });
       const quickStats = [
@@ -49164,7 +49167,6 @@
       return uberRideLinkMarkup({
         venue,
         source: "dancer_profile",
-        label: `Ride to ${venue.name}`,
         className: "profile-uber-ride",
         dancerId: profile.id || "",
         city
@@ -55037,7 +55039,6 @@
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "tonight_feed",
-        label: "Uber",
         className: "feed-card-action feed-uber-ride home-venue-discovery-uber"
       });
       const workingLabel = `${workingNow.length} working now`;
@@ -55101,7 +55102,6 @@
         ? uberRideLinkMarkup({
             venue,
             source: "tonight_feed",
-            label: "Get a Ride",
             className: "feed-card-action feed-uber-ride home-dancer-grid-uber",
             dancerId: profile.id || "",
             city

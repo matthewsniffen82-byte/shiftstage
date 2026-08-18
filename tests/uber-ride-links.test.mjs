@@ -162,10 +162,10 @@ const [componentSource, componentStyles, dancerPageSource, eventRouteSource, liv
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
-test("the reusable control uses the required source-specific labels", () => {
-  assert.match(componentSource, /source === "venue_page"[\s\S]*?"Request Uber"/);
-  assert.match(componentSource, /source === "dancer_profile"[\s\S]*?`Ride to \$\{venueName\}`/);
-  assert.match(componentSource, /: "Get a Ride"/);
+test("the reusable control uses one universal ride label with a destination-aware dancer CTA", () => {
+  assert.match(componentSource, /function rideActionLabel\(source: UberRideSource, venueName: string\)/);
+  assert.match(componentSource, /source === "dancer_profile" \? `Get a Ride to \$\{venueName\}` : "Get a Ride"/);
+  assert.doesNotMatch(componentSource, /"Request Uber"|`Ride to \$\{venueName\}`/);
   assert.match(componentSource, /target="_blank"/);
   assert.match(componentSource, /rel="noopener noreferrer"/);
 });
@@ -188,16 +188,19 @@ test("clicking the reusable control records the typed event and isolates card na
 test("eligible live-shell dancer and venue cards expose compact ride links without parent navigation", () => {
   assert.match(liveShellSource, /const fallback = "https:\/\/m\.uber\.com\/looking"/);
   assert.match(liveShellSource, /url\.searchParams\.set\("drop\[0\]", JSON\.stringify\(dropoff\)\)/);
-  assert.match(liveShellSource, /function homeDancerGridActionsMarkup[\s\S]*?source: "tonight_feed"[\s\S]*?label: "Get a Ride"/);
-  assert.match(liveShellSource, /function homeVenueDiscoveryFeedSlide[\s\S]*?source: "tonight_feed"[\s\S]*?label: "Uber"[\s\S]*?home-venue-discovery-uber/);
+  assert.match(liveShellSource, /function rideActionLabel\(source, venueName\)[\s\S]*?source === "dancer_profile" \? `Get a Ride to \$\{safeVenueName\}` : "Get a Ride"/);
+  assert.match(liveShellSource, /function homeDancerGridActionsMarkup[\s\S]*?source: "tonight_feed"[\s\S]*?home-dancer-grid-uber/);
+  assert.match(liveShellSource, /function homeVenueDiscoveryFeedSlide[\s\S]*?source: "tonight_feed"[\s\S]*?home-venue-discovery-uber/);
+  assert.doesNotMatch(liveShellSource, /label: "(?:Uber|Request Uber)"|label: `Ride to \$\{venue\.name\}`/);
   assert.match(liveShellSource, /document\.addEventListener\("click", \(event\) => \{[\s\S]*?\[data-uber-ride-link\][\s\S]*?event\.stopPropagation\(\)[\s\S]*?recordUberRideLinkClick\(link\)[\s\S]*?\}, true\)/);
 });
 
 test("venue and dancer profiles expose their required primary ride actions", () => {
-  assert.match(liveShellSource, /source: "venue_page"[\s\S]*?label: "Request Uber"[\s\S]*?venue-detail-uber/);
-  assert.match(liveShellSource, /function dancerProfileUberRideMarkup[\s\S]*?source: "dancer_profile"[\s\S]*?label: `Ride to \$\{venue\.name\}`/);
+  assert.match(liveShellSource, /source: "venue_page"[\s\S]*?className: "venue-detail-uber"/);
+  assert.match(liveShellSource, /function dancerProfileUberRideMarkup[\s\S]*?source: "dancer_profile"[\s\S]*?className: "profile-uber-ride"/);
   assert.match(componentStyles, /min-height: 44px/);
   assert.match(componentStyles, /\.venuePage[\s\S]*?width: 100%/);
+  assert.match(componentStyles, /\.dancerProfile[\s\S]*?width: 100%[\s\S]*?height: 48px/);
 });
 
 test("venue travel actions keep compact labels and explicit address-unavailable states", () => {

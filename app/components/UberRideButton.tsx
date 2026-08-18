@@ -33,11 +33,7 @@ export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps)
   if (venue.isActive === false || venue.isPublic === false) return null;
 
   const venueName = String(venue.name || "this club").trim() || "this club";
-  const label = source === "venue_page"
-    ? "Request Uber"
-    : source === "dancer_profile"
-      ? `Ride to ${venueName}`
-      : "Get a Ride";
+  const label = rideActionLabel(source, venueName);
 
   if (isFictionalVenueTravelPreviewOnly(venue)) {
     return (
@@ -83,6 +79,10 @@ export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps)
       <span>{label}</span>
     </a>
   );
+}
+
+function rideActionLabel(source: UberRideSource, venueName: string) {
+  return source === "dancer_profile" ? `Get a Ride to ${venueName}` : "Get a Ride";
 }
 
 function RideIcon() {
