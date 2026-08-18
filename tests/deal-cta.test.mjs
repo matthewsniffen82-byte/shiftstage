@@ -97,6 +97,21 @@ test("Club Deal checkout uses one concise four-step NFC flow across both public 
   assert.doesNotMatch(demoDeals, /terms: .*Cashier NFC confirmation is required/);
 });
 
+test("selected Club Deals replace preparation controls with one cashier instruction", () => {
+  const cashierInstruction = /At the cashier, unlock your phone, tap the registered MyDancr NFC sticker, then confirm redemption\./;
+
+  assert.match(dealCard, cashierInstruction);
+  assert.match(dealCard, /intentState !== "ready" \? \([\s\S]*?club-deal-redemption-steps/);
+  assert.match(dealCard, /dialogOpen && intentState !== "ready"/);
+  assert.match(dealCard, /intentState !== "ready" \? <small>Selecting does not redeem it\.<\/small> : null/);
+  assert.match(dealCard, /intentState === "ready" \? "Ready to Tap"/);
+
+  assert.match(liveApp, cashierInstruction);
+  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-steps,[\s\S]*?\.deal-pass-security,[\s\S]*?\.deal-pass-actions \{\s*display: none;/);
+  assert.match(liveApp, /primaryNote\.hidden = true/);
+  assert.match(liveApp, /selectButton\.textContent = "Ready to Tap"/);
+});
+
 test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {
   assert.match(liveApp, /width: min\(370px, calc\(100vw - 16px\)\)/);
   assert.match(liveApp, /max-height: calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)/);

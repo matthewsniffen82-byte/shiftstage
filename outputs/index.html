@@ -26220,16 +26220,17 @@
       text-align: center;
     }
 
-    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-step:first-child {
-      border-color: rgba(126, 234, 255, .28);
-      color: #e5fbff;
-      background: rgba(53, 216, 255, .06);
+    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-steps,
+    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-security,
+    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-actions {
+      display: none;
     }
 
-    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-step:first-child > span {
-      border-color: rgba(126, 234, 255, .46);
-      color: #071014;
-      background: #f7fbff;
+    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-how {
+      margin-bottom: 0;
+      padding: 9px 11px;
+      font-size: .72rem;
+      line-height: 1.3;
     }
 
     @media (max-width: 560px) {
@@ -45479,14 +45480,14 @@
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = `Selected${readyUntil ? ` until ${readyUntil}` : ""}. You may close this page—the NFC tap will reopen your selected deal. At the cashier, unlock this phone and tap the registered MyDancr NFC sticker at ${pass.venueName}.`;
-        selectButton.textContent = "Selected — Ready to Tap";
+        status.textContent = "At the cashier, unlock your phone, tap the registered MyDancr NFC sticker, then confirm redemption.";
+        selectButton.textContent = "Ready to Tap";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");
         selectButton.classList.add("is-ready");
         availabilityStatus.textContent = "Selected · Ready to tap";
         availabilityStatus.classList.add("is-ready");
-        primaryNote.textContent = "Redeem only after tapping the venue’s registered sticker.";
+        primaryNote.hidden = true;
         expiry.textContent = readyUntil ? `Ready until ${readyUntil}` : dealPassAvailabilityLabel(pass);
       } else {
         status.textContent = state === "preview" ? "" : override?.message || (state === "expired"
@@ -45498,6 +45499,7 @@
         selectButton.classList.remove("is-ready");
         availabilityStatus.textContent = "Available now · Not redeemed";
         availabilityStatus.classList.remove("is-ready");
+        primaryNote.hidden = false;
         primaryNote.textContent = "Selecting does not redeem it.";
         expiry.textContent = dealPassAvailabilityLabel(pass);
       }

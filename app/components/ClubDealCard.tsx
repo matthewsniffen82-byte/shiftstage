@@ -68,7 +68,7 @@ export function ClubDealCard({
     setStatus(selection?.expired
       ? "Your previous selection expired. Select this deal again before tapping NFC."
       : selection
-        ? readyStatus(venueName, selection.expiresAt)
+        ? readyStatus()
         : "");
   }, [activeDeal.id, dancerId, sourceType, venueId, venueName]);
 
@@ -143,7 +143,7 @@ export function ClubDealCard({
       }));
       setIntentState("ready");
       setIntentExpiresAt(expiresAt);
-      setStatus(readyStatus(venueName, expiresAt));
+      setStatus(readyStatus());
     } catch {
       setIntentState("error");
       setIntentExpiresAt(0);
@@ -248,18 +248,22 @@ export function ClubDealCard({
             <span>{dealAvailabilityLabel(activeDeal)}</span>
             <span>{intentState === "ready" && intentExpiresAt ? `Ready until ${formatNfcExpiry(intentExpiresAt)}` : "Selection lasts 12 hours"}</span>
           </div>
-          <div className="club-deal-redemption-steps" aria-label="How to redeem">
-            <div><span>1</span><strong>Press Use this deal</strong></div>
-            <div><span>2</span><strong>At cashier, unlock your phone</strong></div>
-            <div><span>3</span><strong>Tap the registered NFC sticker</strong></div>
-            <div><span>4</span><strong>Confirm redemption</strong></div>
-          </div>
-          <p className="club-deal-security-note">Only the venue’s registered sticker can redeem it.</p>
+          {intentState !== "ready" ? (
+            <>
+              <div className="club-deal-redemption-steps" aria-label="How to redeem">
+                <div><span>1</span><strong>Press Use this deal</strong></div>
+                <div><span>2</span><strong>At cashier, unlock your phone</strong></div>
+                <div><span>3</span><strong>Tap the registered NFC sticker</strong></div>
+                <div><span>4</span><strong>Confirm redemption</strong></div>
+              </div>
+              <p className="club-deal-security-note">Only the venue’s registered sticker can redeem it.</p>
+            </>
+          ) : null}
         </div>
       ) : null}
       <div className="club-deal-action">
         {status && intentState !== "preview" ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
-        {dialogOpen ? (
+        {dialogOpen && intentState !== "ready" ? (
           <div className="club-deal-share-actions">
             <button
               type="button"
@@ -282,9 +286,9 @@ export function ClubDealCard({
               disabled={intentState === "ready"}
               aria-pressed={intentState === "ready"}
             >
-              {intentState === "ready" ? "Selected — Ready to Tap" : intentState === "expired" || intentState === "error" ? "Try again" : "Use this deal"}
+              {intentState === "ready" ? "Ready to Tap" : intentState === "expired" || intentState === "error" ? "Try again" : "Use this deal"}
             </button>
-            <small>{intentState === "ready" ? "Redeem only after tapping the venue’s registered sticker." : "Selecting does not redeem it."}</small>
+            {intentState !== "ready" ? <small>Selecting does not redeem it.</small> : null}
           </div>
         ) : (
           <button
@@ -295,7 +299,7 @@ export function ClubDealCard({
             disabled={intentState === "ready"}
             aria-pressed={intentState === "ready"}
           >
-            {intentState === "ready" ? "Selected — Ready to Tap" : intentState === "expired" || intentState === "error" ? "Try again" : actionLabel}
+            {intentState === "ready" ? "Ready to Tap" : intentState === "expired" || intentState === "error" ? "Try again" : actionLabel}
           </button>
         )}
       </div>
@@ -475,8 +479,8 @@ async function copyDealLink(url: string) {
   if (!copied) throw new Error("Copy unavailable");
 }
 
-function readyStatus(venueName: string | undefined, expiresAt: number) {
-  return `Selected until ${formatNfcExpiry(expiresAt)}. You may close this page—the NFC tap will reopen your selected deal. At the cashier, unlock this phone and tap the registered MyDancr NFC sticker at ${venueName || "the club"}.`;
+function readyStatus() {
+  return "At the cashier, unlock your phone, tap the registered MyDancr NFC sticker, then confirm redemption.";
 }
 
 function formatNfcExpiry(value: number) {
