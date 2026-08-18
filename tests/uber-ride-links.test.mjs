@@ -203,6 +203,18 @@ test("venue and dancer profiles expose their required primary ride actions", () 
   assert.match(componentStyles, /\.dancerProfile[\s\S]*?width: 100%[\s\S]*?height: 48px/);
 });
 
+test("Get a Ride stays neutral glass at rest and reserves violet fill for interaction", () => {
+  assert.match(componentStyles, /\.button \{[\s\S]*?var\(--dancr-color-brand-primary-medium[\s\S]*?rgba\(17, 17, 24, 0\.82\)[\s\S]*?backdrop-filter: blur\(16px\)/);
+  assert.match(componentStyles, /\.button:is\(:hover, :focus-visible\)[\s\S]*?brand-primary[\s\S]*?16%/);
+  assert.match(componentStyles, /\.button:active[\s\S]*?brand-primary[\s\S]*?24%/);
+  assert.match(componentStyles, /\.icon \{[\s\S]*?var\(--dancr-color-brand-core/);
+  assert.doesNotMatch(componentStyles, /linear-gradient\(135deg, #6d28d9, #4c1d95\)/);
+  assert.match(liveShellSource, /\.uber-ride-link \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?rgba\(17,17,24,\.82\)[\s\S]*?backdrop-filter: blur\(16px\)/);
+  assert.match(liveShellSource, /\.uber-ride-link:is\(:hover, :focus-visible\)[\s\S]*?brand-primary\) 16%/);
+  assert.match(liveShellSource, /\.uber-ride-link:active[\s\S]*?brand-primary\) 24%/);
+  assert.doesNotMatch(liveShellSource, /linear-gradient\(135deg, #6d28d9, #4c1d95\)/);
+});
+
 test("venue travel actions keep compact labels and explicit address-unavailable states", () => {
   assert.match(liveShellSource, /function isFictionalDemoTravelPreviewOnly\(venue\)[\s\S]*?return isFictionalDemoVenue\(venue\)/);
   assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?isFictionalDemoTravelPreviewOnly\(venue\)[\s\S]*?data-demo-travel="directions"/);
@@ -218,7 +230,8 @@ test("venue travel actions keep compact labels and explicit address-unavailable 
   assert.match(sharedAesthetic, /\.home-venue-discovery-context-actions > \.is-inactive-demo \{[\s\S]*?opacity: 1 !important;[\s\S]*?pointer-events: auto !important;/);
   assert.match(sharedAesthetic, /\.home-venue-discovery-context-actions > \.is-travel-unavailable \{[\s\S]*?opacity: 1 !important;[\s\S]*?pointer-events: none !important;/);
   assert.match(sharedAesthetic, /> \.home-discovery-feed-directions:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-text-primary\)[\s\S]*?var\(--dancr-color-surface-raised\)/);
-  assert.match(sharedAesthetic, /> \.home-venue-discovery-uber:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?var\(--dancr-color-brand-primary\) 28%[\s\S]*?var\(--dancr-shadow-brand-control\)/);
+  assert.match(sharedAesthetic, /> \.home-venue-discovery-uber:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?var\(--dancr-color-surface-raised\) 82%[\s\S]*?backdrop-filter: blur\(16px\)/);
+  assert.match(sharedAesthetic, /> \.home-venue-discovery-uber:is\(\.is-inactive-demo, \.is-travel-unavailable\)[\s\S]*?\.action-icon \{[\s\S]*?var\(--dancr-color-brand-core\)[\s\S]*?filter: none/);
 });
 
 test("Uber ride analytics are first-party, constrained, and documented", () => {

@@ -5,15 +5,17 @@
   justify-content: center;
   gap: 9px;
   box-sizing: border-box;
-  border: 1px solid rgba(139, 92, 246, 0.72);
+  border: 1px solid var(--dancr-color-brand-primary-medium, rgba(124, 58, 237, 0.34));
   border-radius: 14px;
-  color: #fff;
+  color: var(--dancr-color-text-primary, #f8fafc);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 48%),
-    linear-gradient(135deg, #6d28d9, #4c1d95);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 52%),
+    linear-gradient(145deg, rgba(17, 17, 24, 0.82), rgba(5, 5, 7, 0.9));
+  -webkit-backdrop-filter: blur(16px) saturate(1.08);
+  backdrop-filter: blur(16px) saturate(1.08);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 10px 24px rgba(76, 29, 149, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 10px 24px rgba(0, 0, 0, 0.28);
   font: inherit;
   font-weight: 900;
   line-height: 1;
@@ -26,22 +28,25 @@
     transform 120ms ease;
 }
 
-.button:hover {
-  border-color: rgba(196, 181, 253, 0.92);
+.button:is(:hover, :focus-visible) {
+  border-color: var(--dancr-color-brand-primary-strong, rgba(124, 58, 237, 0.72));
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 48%),
-    linear-gradient(135deg, #7c3aed, #5b21b6);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 52%),
+    color-mix(in srgb, var(--dancr-color-brand-primary, #7c3aed) 16%, rgba(17, 17, 24, 0.88));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 12px 28px rgba(91, 33, 182, 0.34);
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 12px 26px rgba(0, 0, 0, 0.3);
 }
 
 .button:active {
   transform: translateY(1px) scale(0.99);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 52%),
+    color-mix(in srgb, var(--dancr-color-brand-primary, #7c3aed) 24%, rgba(17, 17, 24, 0.88));
 }
 
 .button:focus-visible {
-  outline: 3px solid #c4b5fd;
+  outline: 2px solid var(--dancr-color-brand-primary, #7c3aed);
   outline-offset: 3px;
 }
 
@@ -71,6 +76,7 @@
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  color: var(--dancr-color-brand-core, #f5f3ff);
 }
 
 .venuePage {
@@ -93,12 +99,12 @@
 
 .dancerProfile > span,
 .dancerProfile .icon {
-  color: #fff !important;
+  color: var(--dancr-color-brand-core, #f5f3ff) !important;
   opacity: 1;
 }
 
 .dancerProfile .icon {
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.18));
+  filter: none;
 }
 
 .tonightFeed {

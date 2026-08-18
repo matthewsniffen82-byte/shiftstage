@@ -37334,15 +37334,17 @@
           align-items: center;
           justify-content: center;
           gap: 7px;
-          border: 1px solid rgba(139, 92, 246, .72) !important;
+          border: 1px solid var(--dancr-color-brand-primary-medium) !important;
           border-radius: 14px;
-          color: #fff !important;
+          color: var(--dancr-color-text-primary) !important;
           background:
-            linear-gradient(180deg, rgba(255,255,255,.08), transparent 48%),
-            linear-gradient(135deg, #6d28d9, #4c1d95) !important;
+            linear-gradient(180deg, rgba(255,255,255,.08), transparent 52%),
+            linear-gradient(145deg, rgba(17,17,24,.82), rgba(5,5,7,.9)) !important;
+          -webkit-backdrop-filter: blur(16px) saturate(1.08);
+          backdrop-filter: blur(16px) saturate(1.08);
           box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.16),
-            0 10px 24px rgba(76,29,149,.28) !important;
+            inset 0 1px 0 rgba(255,255,255,.11),
+            0 10px 24px rgba(0,0,0,.28) !important;
           font-family: var(--font-ui);
           font-weight: 950;
           line-height: 1;
@@ -37352,22 +37354,25 @@
           transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .12s ease;
         }
 
-        .uber-ride-link:hover {
-          border-color: rgba(196, 181, 253, .92) !important;
+        .uber-ride-link:is(:hover, :focus-visible) {
+          border-color: var(--dancr-color-brand-primary-strong) !important;
           background:
-            linear-gradient(180deg, rgba(255,255,255,.12), transparent 48%),
-            linear-gradient(135deg, #7c3aed, #5b21b6) !important;
+            linear-gradient(180deg, rgba(255,255,255,.1), transparent 52%),
+            color-mix(in srgb, var(--dancr-color-brand-primary) 16%, rgba(17,17,24,.88)) !important;
           box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.2),
-            0 12px 28px rgba(91,33,182,.34) !important;
+            inset 0 1px 0 rgba(255,255,255,.14),
+            0 12px 26px rgba(0,0,0,.3) !important;
         }
 
         .uber-ride-link:active {
           transform: translateY(1px) scale(.99);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.11), transparent 52%),
+            color-mix(in srgb, var(--dancr-color-brand-primary) 24%, rgba(17,17,24,.88)) !important;
         }
 
         .uber-ride-link:focus-visible {
-          outline: 3px solid #c4b5fd !important;
+          outline: 2px solid var(--dancr-color-brand-primary) !important;
           outline-offset: 3px !important;
         }
 
@@ -37409,6 +37414,8 @@
           width: 20px;
           height: 20px;
           flex: 0 0 20px;
+          color: var(--dancr-color-brand-core) !important;
+          filter: none !important;
         }
 
         .venue-detail-uber {
@@ -37443,9 +37450,9 @@
         }
 
         #profileBackdrop .profile-uber-ride .action-icon {
-          color: #fff !important;
+          color: var(--dancr-color-brand-core) !important;
           opacity: 1 !important;
-          filter: drop-shadow(0 0 6px rgba(255,255,255,.18));
+          filter: none !important;
         }
 
         /* Compact the live profile essentials while keeping its tracked QR
