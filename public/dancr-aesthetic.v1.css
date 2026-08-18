@@ -3954,9 +3954,19 @@ body.dancr-button-system [data-dancer-avatar-border] > .tv-profile-photo-image {
 
 /* Upcoming is a useful schedule signal, but it is not a live state. Keep its
  * cyan identity ring crisp and glow-free so Working Now remains dominant. */
+body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-working-now="true"]) {
+  background-color: var(--dancr-color-avatar-ring-upcoming) !important;
+}
+
 body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-working-now="true"])
   > [data-dancer-avatar-border] {
   border-color: var(--dancr-color-avatar-ring-upcoming) !important;
+  background-color: var(--dancr-color-avatar-ring-upcoming) !important;
+}
+
+body.dancr-button-system [data-dancer-avatar][data-upcoming="true"]:not([data-working-now="true"])
+  > [data-dancer-avatar-border] > :is(img, .tv-profile-photo-image) {
+  background-color: var(--dancr-color-avatar-ring-upcoming) !important;
 }
 
 /* Working-now status replaces the neutral identity ring with live teal.
@@ -3969,6 +3979,7 @@ body.dancr-button-system [data-dancer-avatar] > [data-working-now-indicator] {
 body.dancr-button-system [data-dancer-avatar][data-working-now="true"] {
   overflow: visible !important;
   border-radius: 50% !important;
+  background-color: var(--dancr-color-avatar-ring-live) !important;
   box-shadow:
     0 0 0 1px var(--dancr-color-avatar-ring-live),
     0 0 11px var(--dancr-color-success-medium) !important;
@@ -3979,6 +3990,12 @@ body.dancr-button-system [data-dancer-avatar][data-working-now="true"] {
  * seen when only the parent halo communicates live status. */
 body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-dancer-avatar-border] {
   border-color: var(--dancr-color-avatar-ring-live) !important;
+  background-color: var(--dancr-color-avatar-ring-live) !important;
+}
+
+body.dancr-button-system [data-dancer-avatar][data-working-now="true"]
+  > [data-dancer-avatar-border] > :is(img, .tv-profile-photo-image) {
+  background-color: var(--dancr-color-avatar-ring-live) !important;
 }
 
 /* Venue lineup avatars move inside paint-contained cards. Keep their outer
@@ -4312,17 +4329,23 @@ body.dancr-button-system .home-tv-feed-feedback.is-neutral {
 
 body.dancr-button-system .home-tv-feed-schedule.is-now {
   border-color: var(--dancr-color-live-strong) !important;
-  color: var(--dancr-color-live) !important;
-  background-color: var(--dancr-color-live-surface-emphasis, #28744f) !important;
+  color: #b9f8d8 !important;
+  background-color: var(--dancr-color-live-surface-glass, rgba(20, 149, 93, 0.58)) !important;
   background-image: none !important;
-  box-shadow: none !important;
+  box-shadow: inset 0 1px 0 rgba(224, 255, 242, 0.14) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
   text-shadow: none !important;
 }
 
 body.dancr-button-system .home-tv-feed-schedule.is-upcoming {
-  border-color: var(--dancr-color-info-medium) !important;
-  color: var(--dancr-color-info) !important;
-  background-color: var(--dancr-color-info-soft) !important;
+  border-color: var(--dancr-color-info-strong) !important;
+  color: #c8f8ff !important;
+  background-color: var(--dancr-color-info-surface-glass, rgba(8, 145, 178, 0.46)) !important;
+  background-image: none !important;
+  box-shadow: inset 0 1px 0 rgba(224, 252, 255, 0.14) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+  backdrop-filter: blur(10px) saturate(120%) !important;
   text-shadow: none !important;
 }
 
