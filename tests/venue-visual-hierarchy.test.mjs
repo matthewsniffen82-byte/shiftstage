@@ -26,6 +26,8 @@ test("venue operating status uses posted hours in the selected city timezone", (
   assert.match(operatingStatus, /if \(end <= start\) \{[\s\S]*?end \+= 1440/);
   assert.match(operatingStatus, /state: isOpen \? "open" : "closed"/);
   assert.match(operatingStatus, /label: isOpen \? "Open now" : "Closed"/);
+  assert.match(operatingStatus, /hoursLabel\s*\n\s*\}/);
+  assert.doesNotMatch(operatingStatus, /Hours ·/);
   assert.match(operatingStatus, /state: "unknown"[\s\S]*?label: "Hours not posted"/);
 });
 
@@ -41,6 +43,7 @@ test("venue cards and venue detail render the same semantic operating state", ()
   assert.match(venueDetail, /venue-operating-summary[\s\S]*?venue-operating-status is-\$\{operatingStatus\.state\}/);
   assert.match(venueDetail, /venue-status-pill[\s\S]*?operatingStatus\.hoursLabel/);
   assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city\)/);
+  assert.match(venueSlide, /<span>Hours · \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
   assert.match(venueSlide, /home-venue-discovery-operating-status is-\$\{operatingStatus\.state\}/);
   assert.match(venueSlide, /home-venue-discovery-meta">\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/);
   assert.doesNotMatch(venueSlide, /workingNowMarkup|home-discovery-feed-status is-now/);

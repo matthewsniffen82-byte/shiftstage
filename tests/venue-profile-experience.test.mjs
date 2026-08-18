@@ -175,9 +175,9 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /:is\(\.venue-primary-actions, \.venue-secondary-actions\) \.action-icon \{[\s\S]*?width: 20px !important;[\s\S]*?min-width: 20px !important;[\s\S]*?flex: 0 0 20px !important;/);
   assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;[\s\S]*?pointer-events: auto !important;/);
-  assert.match(refinement, /\.venue-primary-actions > \.venue-address-directions \{[\s\S]*?border: 1px solid var\(--dancr-color-info-medium\) !important;[\s\S]*?color: var\(--dancr-color-info\) !important;/);
+  assert.match(refinement, /\.venue-primary-actions > \.venue-address-directions \{[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\) !important;[\s\S]*?color: var\(--dancr-color-text-primary\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;/);
   assert.match(refinement, /\.venue-primary-actions > \.venue-detail-uber \{[\s\S]*?border: 1px solid var\(--dancr-color-brand-primary-medium\) !important;[\s\S]*?var\(--dancr-color-brand-primary\) 28%/);
-  assert.match(refinement, /\.venue-primary-actions > \.venue-address-directions \.action-icon \{[\s\S]*?color: var\(--dancr-color-info\) !important;/);
+  assert.match(refinement, /\.venue-primary-actions > \.venue-address-directions \.action-icon \{[\s\S]*?color: var\(--dancr-color-text-primary\) !important;/);
   assert.match(refinement, /\.venue-primary-actions > \.venue-detail-uber \.action-icon \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
   assert.match(refinement, /\.venue-primary-actions > \.is-inactive-demo \{[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: default !important;[\s\S]*?pointer-events: auto !important;/);
   assert.match(refinement, /\.venue-primary-actions > \.is-travel-unavailable \{[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: default !important;[\s\S]*?pointer-events: none !important;/);

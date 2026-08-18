@@ -85,7 +85,7 @@ test("venue detail branding is neutral first with scoped brand and semantic acti
   );
   assert.match(
     venueDetailBranding,
-    /\.venue-address-directions, \.venue-directions-btn\)[\s\S]*?var\(--dancr-color-info\) 10%/,
+    /\.venue-address-directions, \.venue-directions-btn\)[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-text-primary\)[\s\S]*?var\(--dancr-color-surface-raised\)/,
   );
   assert.match(
     venueDetailBranding,
@@ -267,7 +267,7 @@ test("venue discovery keeps restrained brand actions while venue-detail outlines
   );
   assert.match(
     venueAccents,
-    /\.venue-address-directions,[\s\S]*?\.venue-directions-btn[\s\S]*?var\(--dancr-color-info\) 10%/,
+    /\.venue-address-directions,[\s\S]*?\.venue-directions-btn[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-text-primary\)[\s\S]*?var\(--dancr-color-surface-raised\)/,
   );
   assert.match(
     venueAccents,
@@ -361,7 +361,7 @@ test("venue scroll cards use the complete neutral-first brand and semantic hiera
   );
   assert.match(
     venueScrollBrand,
-    /\.home-discovery-feed-directions \{[\s\S]*?var\(--dancr-color-info\) 4%/,
+    /\.home-discovery-feed-directions \{[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-text-primary\)[\s\S]*?var\(--dancr-color-surface-raised\)/,
   );
   assert.match(
     aesthetic,
