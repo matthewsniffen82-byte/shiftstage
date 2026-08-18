@@ -17,7 +17,7 @@ test("Club Deals save without requiring customer authentication", () => {
 
 test("preview, NFC selection, and saving are separate intentional actions", () => {
   assert.match(liveSource, /data-select-deal-pass aria-pressed="false">Use this deal<\/button>/);
-  assert.match(liveSource, /Selecting does not redeem it\./);
+  assert.match(liveSource, /Selecting the deal does not redeem it\./);
   assert.match(liveSource, /data-save-deal-pass aria-pressed="false">Save for later<\/button>/);
   assert.match(
     liveSource,

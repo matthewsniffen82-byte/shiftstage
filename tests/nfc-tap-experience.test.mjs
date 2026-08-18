@@ -129,11 +129,13 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
 
 test("Club Deal checkout explains the complete NFC tap flow without requiring an open browser", () => {
   assert.match(dealCard, /Use this deal/);
-  assert.match(dealCard, /At cashier, unlock your phone/);
-  assert.match(dealCard, /Tap the registered NFC sticker/);
+  assert.match(dealCard, /Select this deal/);
+  assert.match(dealCard, /Go to the cashier/);
+  assert.match(dealCard, /Unlock and tap the MyDancr NFC sticker/);
   assert.match(dealCard, /Confirm redemption/);
-  assert.match(dealCard, /At the cashier, unlock your phone, tap the registered MyDancr NFC sticker, then confirm redemption\./);
-  assert.match(dealCard, /intentState === "ready" \? "Ready to Tap"/);
+  assert.match(dealCard, /After selecting, you can close MyDancr\. Selecting the deal does not redeem it\./);
+  assert.match(dealCard, /You can close MyDancr now\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. Your phone will open the confirmation page\./);
+  assert.match(dealCard, /intentState === "ready" \? "Deal selected ✓"/);
   assert.match(dealCard, /intentState !== "ready"/);
   assert.match(dealCard, /Only the venue’s registered sticker can redeem it/);
   assert.match(dealCard, /Saved for later on this device\. This does not select or redeem the deal\./);

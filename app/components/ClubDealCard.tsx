@@ -228,7 +228,7 @@ export function ClubDealCard({
         <h2>{activeDeal.dealTitle}</h2>
         {dialogOpen ? (
           <span className={`club-deal-availability-status ${intentState === "ready" ? "is-ready" : ""}`} role="status">
-            {intentState === "ready" ? "Selected · Ready to tap" : "Available now · Not redeemed"}
+            {intentState === "ready" ? "Selected · Ready at cashier" : "Available now · Not selected"}
           </span>
         ) : null}
         {displayDescription && !compact ? <p>{displayDescription}</p> : null}
@@ -251,11 +251,12 @@ export function ClubDealCard({
           {intentState !== "ready" ? (
             <>
               <div className="club-deal-redemption-steps" aria-label="How to redeem">
-                <div><span>1</span><strong>Press Use this deal</strong></div>
-                <div><span>2</span><strong>At cashier, unlock your phone</strong></div>
-                <div><span>3</span><strong>Tap the registered NFC sticker</strong></div>
+                <div><span>1</span><strong>Select this deal</strong></div>
+                <div><span>2</span><strong>Go to the cashier</strong></div>
+                <div><span>3</span><strong>Unlock and tap the MyDancr NFC sticker</strong></div>
                 <div><span>4</span><strong>Confirm redemption</strong></div>
               </div>
+              <p className="club-deal-preview-note">After selecting, you can close MyDancr. Selecting the deal does not redeem it.</p>
               <p className="club-deal-security-note">Only the venue’s registered sticker can redeem it.</p>
             </>
           ) : null}
@@ -286,9 +287,9 @@ export function ClubDealCard({
               disabled={intentState === "ready"}
               aria-pressed={intentState === "ready"}
             >
-              {intentState === "ready" ? "Ready to Tap" : intentState === "expired" || intentState === "error" ? "Try again" : "Use this deal"}
+              {intentState === "ready" ? "Deal selected ✓" : intentState === "expired" || intentState === "error" ? "Try again" : "Use this deal"}
             </button>
-            {intentState !== "ready" ? <small>Selecting does not redeem it.</small> : null}
+            {intentState !== "ready" ? <small>Select before you reach the cashier.</small> : null}
           </div>
         ) : (
           <button
@@ -299,7 +300,7 @@ export function ClubDealCard({
             disabled={intentState === "ready"}
             aria-pressed={intentState === "ready"}
           >
-            {intentState === "ready" ? "Ready to Tap" : intentState === "expired" || intentState === "error" ? "Try again" : actionLabel}
+            {intentState === "ready" ? "Deal selected ✓" : intentState === "expired" || intentState === "error" ? "Try again" : actionLabel}
           </button>
         )}
       </div>
@@ -480,7 +481,7 @@ async function copyDealLink(url: string) {
 }
 
 function readyStatus() {
-  return "At the cashier, unlock your phone, tap the registered MyDancr NFC sticker, then confirm redemption.";
+  return "You can close MyDancr now. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. Your phone will open the confirmation page.";
 }
 
 function formatNfcExpiry(value: number) {
@@ -539,6 +540,7 @@ function ClubDealInteractionStyles() {
       .club-deal-redemption-steps span { width:24px; height:24px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.14); border-radius:50%; color:#fff; }
       .club-deal-redemption-steps strong { display:grid; gap:3px; }
       .club-deal-redemption-steps small { color:rgba(255,255,255,.68); font-size:9px; font-weight:750; line-height:1.35; }
+      .club-deal-preview-note { margin:0; color:#d9f9ff; font-size:10px; font-weight:850; line-height:1.4; text-align:center; }
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child { border-color:rgba(126,234,255,.28); color:#e5fbff; background:rgba(53,216,255,.06); }
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child span { color:#071014; border-color:rgba(126,234,255,.46); background:#f7fbff; }
       .club-deal-security-note { margin:0; color:rgba(255,255,255,.76); font-size:10px; font-weight:850; line-height:1.4; text-align:center; }
@@ -590,6 +592,7 @@ function ClubDealInteractionStyles() {
         .club-deal-redemption-steps span { width:18px; height:18px; font-size:8px; }
         .club-deal-redemption-steps strong { gap:0; }
         .club-deal-redemption-steps small { font-size:8px; line-height:1.18; }
+        .club-deal-preview-note { font-size:8px; line-height:1.18; }
         .club-deal-security-note { font-size:8px; line-height:1.1; }
         .club-deal-dialog .club-deal-action { gap:6px; }
         .club-deal-share-actions { gap:6px; }

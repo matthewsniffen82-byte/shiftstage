@@ -80,11 +80,11 @@ test("customers explicitly select an exact offer and dancer token until the phys
 
 test("Club Deal checkout uses one concise four-step NFC flow across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /<strong>Press Use this deal<\/strong>/);
-    assert.match(source, /At cashier, unlock your phone/);
-    assert.match(source, /Tap the registered NFC sticker/);
+    assert.match(source, /<strong>Select this deal<\/strong>/);
+    assert.match(source, /Go to the cashier/);
+    assert.match(source, /Unlock and tap the MyDancr NFC sticker/);
     assert.match(source, /<strong>Confirm redemption<\/strong>/);
-    assert.match(source, /Selecting does not redeem it/);
+    assert.match(source, /After selecting, you can close MyDancr\. Selecting the deal does not redeem it\./);
     assert.match(source, /Save for later/);
     assert.match(source, /Tap cashier sticker/);
     assert.match(source, /Only the venue’s registered sticker can redeem it/);
@@ -98,18 +98,18 @@ test("Club Deal checkout uses one concise four-step NFC flow across both public 
 });
 
 test("selected Club Deals replace preparation controls with one cashier instruction", () => {
-  const cashierInstruction = /At the cashier, unlock your phone, tap the registered MyDancr NFC sticker, then confirm redemption\./;
+  const cashierInstruction = /You can close MyDancr now\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. Your phone will open the confirmation page\./;
 
   assert.match(dealCard, cashierInstruction);
   assert.match(dealCard, /intentState !== "ready" \? \([\s\S]*?club-deal-redemption-steps/);
   assert.match(dealCard, /dialogOpen && intentState !== "ready"/);
-  assert.match(dealCard, /intentState !== "ready" \? <small>Selecting does not redeem it\.<\/small> : null/);
-  assert.match(dealCard, /intentState === "ready" \? "Ready to Tap"/);
+  assert.match(dealCard, /intentState !== "ready" \? <small>Select before you reach the cashier\.<\/small> : null/);
+  assert.match(dealCard, /intentState === "ready" \? "Deal selected ✓"/);
 
   assert.match(liveApp, cashierInstruction);
   assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-steps,[\s\S]*?\.deal-pass-security,[\s\S]*?\.deal-pass-actions \{\s*display: none;/);
   assert.match(liveApp, /primaryNote\.hidden = true/);
-  assert.match(liveApp, /selectButton\.textContent = "Ready to Tap"/);
+  assert.match(liveApp, /selectButton\.textContent = "Deal selected ✓"/);
 });
 
 test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {

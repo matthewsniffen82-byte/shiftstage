@@ -26220,7 +26220,17 @@
       text-align: center;
     }
 
+    .deal-pass-preview-note {
+      margin: 0 0 7px;
+      color: #d9f9ff;
+      font-size: .66rem;
+      font-weight: 850;
+      line-height: 1.4;
+      text-align: center;
+    }
+
     .deal-pass-sheet[data-deal-state="ready"] .deal-pass-steps,
+    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-preview-note,
     .deal-pass-sheet[data-deal-state="ready"] .deal-pass-security,
     .deal-pass-sheet[data-deal-state="ready"] .deal-pass-actions {
       display: none;
@@ -26262,6 +26272,12 @@
         margin-bottom: 4px;
         font-size: .54rem;
         line-height: 1.1;
+      }
+
+      .deal-pass-preview-note {
+        margin-bottom: 4px;
+        font-size: .56rem;
+        line-height: 1.18;
       }
 
       .deal-pass-actions {
@@ -45347,7 +45363,7 @@
             <p class="deal-pass-kicker" id="dealPassKicker">Use at the cashier</p>
             <h3 class="deal-pass-title" id="dealPassTitle">Club Deal</h3>
             <p class="deal-pass-copy" id="dealPassCopy">Club offer</p>
-            <p class="deal-pass-availability-status" id="dealPassAvailabilityStatus" role="status">Available now · Not redeemed</p>
+            <p class="deal-pass-availability-status" id="dealPassAvailabilityStatus" role="status">Available now · Not selected</p>
             <div class="deal-pass-offer">
               <p class="deal-pass-description" id="dealPassDescription"></p>
               <div class="deal-pass-meta">
@@ -45360,11 +45376,12 @@
               <strong>Tap cashier sticker</strong>
             </div>
             <div class="deal-pass-steps" aria-label="How to redeem">
-              <div class="deal-pass-step"><span>1</span><strong>Press Use this deal</strong></div>
-              <div class="deal-pass-step"><span>2</span><strong>At cashier, unlock your phone</strong></div>
-              <div class="deal-pass-step"><span>3</span><strong>Tap the registered NFC sticker</strong></div>
+              <div class="deal-pass-step"><span>1</span><strong>Select this deal</strong></div>
+              <div class="deal-pass-step"><span>2</span><strong>Go to the cashier</strong></div>
+              <div class="deal-pass-step"><span>3</span><strong>Unlock and tap the MyDancr NFC sticker</strong></div>
               <div class="deal-pass-step"><span>4</span><strong>Confirm redemption</strong></div>
             </div>
+            <p class="deal-pass-preview-note">After selecting, you can close MyDancr. Selecting the deal does not redeem it.</p>
             <p class="deal-pass-security">Only the venue’s registered sticker can redeem it.</p>
             <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
             <div class="deal-pass-actions">
@@ -45373,7 +45390,7 @@
             </div>
             <div class="deal-pass-primary-dock">
               <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Use this deal</button>
-              <small data-deal-pass-primary-note>Selecting does not redeem it.</small>
+              <small data-deal-pass-primary-note>Select before you reach the cashier.</small>
             </div>
           </div>
         </div>
@@ -45538,12 +45555,12 @@
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = "At the cashier, unlock your phone, tap the registered MyDancr NFC sticker, then confirm redemption.";
-        selectButton.textContent = "Ready to Tap";
+        status.textContent = "You can close MyDancr now. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. Your phone will open the confirmation page.";
+        selectButton.textContent = "Deal selected ✓";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");
         selectButton.classList.add("is-ready");
-        availabilityStatus.textContent = "Selected · Ready to tap";
+        availabilityStatus.textContent = "Selected · Ready at cashier";
         availabilityStatus.classList.add("is-ready");
         primaryNote.hidden = true;
         expiry.textContent = readyUntil ? `Ready until ${readyUntil}` : dealPassAvailabilityLabel(pass);
@@ -45555,10 +45572,10 @@
         selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "false");
         selectButton.classList.remove("is-ready");
-        availabilityStatus.textContent = "Available now · Not redeemed";
+        availabilityStatus.textContent = "Available now · Not selected";
         availabilityStatus.classList.remove("is-ready");
         primaryNote.hidden = false;
-        primaryNote.textContent = "Selecting does not redeem it.";
+        primaryNote.textContent = "Select before you reach the cashier.";
         expiry.textContent = dealPassAvailabilityLabel(pass);
       }
       const isSaved = savedDealPasses.some((savedPass) => savedPass.id === pass.id);
