@@ -250,11 +250,11 @@ export function ClubDealCard({
           </div>
           <div className="club-deal-redemption-steps" aria-label="How to redeem">
             <div><span>1</span><strong>Press Use this deal</strong></div>
-            <div><span>2</span><strong>At the cashier, unlock your phone<small>The NFC tap will reopen your selected deal.</small></strong></div>
-            <div><span>3</span><strong>Tap the registered MyDancr NFC sticker</strong></div>
+            <div><span>2</span><strong>At cashier, unlock your phone</strong></div>
+            <div><span>3</span><strong>Tap the registered NFC sticker</strong></div>
             <div><span>4</span><strong>Confirm redemption</strong></div>
           </div>
-          <p className="club-deal-security-note">Only the venue’s registered NFC sticker can redeem this deal.</p>
+          <p className="club-deal-security-note">Only the venue’s registered sticker can redeem it.</p>
         </div>
       ) : null}
       <div className="club-deal-action">
@@ -581,15 +581,15 @@ function ClubDealInteractionStyles() {
         .club-deal-nfc-symbol { width:64px; height:64px; padding:5px; border-radius:15px; }
         .club-deal-nfc-symbol svg { width:46px; height:46px; padding:9px; }
         .club-deal-redemption-meta { gap:3px 9px; font-size:9px; }
-        .club-deal-redemption-steps { gap:5px; }
-        .club-deal-redemption-steps>div { grid-template-columns:20px minmax(0,1fr); gap:6px; padding:5px 7px; border-radius:10px; font-size:10px; line-height:1.15; }
-        .club-deal-redemption-steps span { width:20px; height:20px; font-size:9px; }
-        .club-deal-redemption-steps strong { gap:1px; }
+        .club-deal-redemption-steps { gap:3px; }
+        .club-deal-redemption-steps>div { grid-template-columns:18px minmax(0,1fr); gap:5px; padding:4px 6px; border-radius:8px; font-size:9px; line-height:1.1; }
+        .club-deal-redemption-steps span { width:18px; height:18px; font-size:8px; }
+        .club-deal-redemption-steps strong { gap:0; }
         .club-deal-redemption-steps small { font-size:8px; line-height:1.18; }
-        .club-deal-security-note { font-size:9px; line-height:1.2; }
+        .club-deal-security-note { font-size:8px; line-height:1.1; }
         .club-deal-dialog .club-deal-action { gap:6px; }
         .club-deal-share-actions { gap:6px; }
-        .club-deal-share-actions button { min-height:38px; font-size:11px; }
+        .club-deal-share-actions button { min-height:38px; font-size:10px; }
         .club-deal-primary-dock { width:min(370px,calc(100vw - 16px)); bottom:max(8px,env(safe-area-inset-bottom)); gap:3px; padding:7px; border-radius:16px; }
         .club-deal-primary-dock>small { font-size:8px; line-height:1.15; }
         .club-deal-dialog .club-deal-checkout-action { min-height:46px !important; }

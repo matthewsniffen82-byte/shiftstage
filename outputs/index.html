@@ -26232,6 +26232,47 @@
       background: #f7fbff;
     }
 
+    @media (max-width: 560px) {
+      .deal-pass-steps {
+        gap: 3px;
+        margin-bottom: 4px;
+      }
+
+      .deal-pass-step {
+        grid-template-columns: 18px minmax(0, 1fr);
+        gap: 5px;
+        padding: 4px 6px;
+        border-radius: 8px;
+        font-size: .59rem;
+        line-height: 1.1;
+      }
+
+      .deal-pass-step > span {
+        width: 18px;
+        height: 18px;
+        font-size: .53rem;
+      }
+
+      .deal-pass-step > strong {
+        gap: 0;
+      }
+
+      .deal-pass-security {
+        margin-bottom: 4px;
+        font-size: .54rem;
+        line-height: 1.1;
+      }
+
+      .deal-pass-actions {
+        gap: 5px;
+      }
+
+      .deal-pass-action {
+        min-height: 38px !important;
+        font-size: .7rem !important;
+      }
+    }
+
     .deal-pass-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -45261,11 +45302,11 @@
             </div>
             <div class="deal-pass-steps" aria-label="How to redeem">
               <div class="deal-pass-step"><span>1</span><strong>Press Use this deal</strong></div>
-              <div class="deal-pass-step"><span>2</span><strong>At the cashier, unlock your phone<small>The NFC tap will reopen your selected deal.</small></strong></div>
-              <div class="deal-pass-step"><span>3</span><strong>Tap the registered MyDancr NFC sticker</strong></div>
+              <div class="deal-pass-step"><span>2</span><strong>At cashier, unlock your phone</strong></div>
+              <div class="deal-pass-step"><span>3</span><strong>Tap the registered NFC sticker</strong></div>
               <div class="deal-pass-step"><span>4</span><strong>Confirm redemption</strong></div>
             </div>
-            <p class="deal-pass-security">Only the venue’s registered NFC sticker can redeem this deal.</p>
+            <p class="deal-pass-security">Only the venue’s registered sticker can redeem it.</p>
             <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
             <div class="deal-pass-actions">
               <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
