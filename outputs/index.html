@@ -33576,6 +33576,64 @@
           border-color: rgba(182,156,255,.72);
           background: rgba(102,65,183,.2);
         }
+        .home-discovery-loading {
+          grid-column: 1 / -1;
+          width: 100%;
+          min-height: 0;
+          display: grid;
+          grid-template-columns: 44px minmax(0, 1fr);
+          align-items: center;
+          gap: 14px;
+          padding: 16px 18px;
+          border: 1px solid rgba(255,255,255,.11);
+          border-radius: 18px;
+          color: #f6f3fb;
+          background: linear-gradient(145deg,rgba(13,13,19,.98),rgba(6,7,10,.98));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.035),0 12px 28px rgba(0,0,0,.24);
+        }
+        .home-discovery-loading-indicator {
+          position: relative;
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(139,92,246,.28);
+          border-radius: 14px;
+          color: #b69cff;
+          background: rgba(35,22,68,.34);
+        }
+        .home-discovery-loading-indicator::after {
+          content: "";
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(182,156,255,.24);
+          border-top-color: #b69cff;
+          border-radius: 50%;
+          animation: homeDiscoveryLoadingSpin .8s linear infinite;
+        }
+        .home-discovery-loading-copy {
+          min-width: 0;
+          display: grid;
+          gap: 4px;
+        }
+        .home-discovery-loading-copy strong {
+          color: #f6f3fb;
+          font-size: 15px;
+          font-weight: 900;
+          line-height: 1.2;
+        }
+        .home-discovery-loading-copy span {
+          color: #aaa4b5;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.4;
+        }
+        @keyframes homeDiscoveryLoadingSpin {
+          to { transform: rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .home-discovery-loading-indicator::after { animation: none; }
+        }
         body.overlay-open .home-feed-card .card-profile-destination {
           display: none !important;
         }
@@ -55277,6 +55335,27 @@
       `;
     }
 
+    function homeDiscoveryLoadingStateMarkup(city, tabName = activeTab) {
+      const safeCity = escapeHtml(city);
+      const title = tabName === "venues"
+        ? `Loading clubs in ${safeCity}`
+        : tabName === "tonight"
+          ? `Loading who is working in ${safeCity}`
+          : `Loading dancers in ${safeCity}`;
+      const detail = tabName === "venues"
+        ? "Getting the latest live club profiles."
+        : "Getting the latest approved profiles.";
+      return `
+        <section class="home-discovery-loading" role="status" aria-live="polite" aria-busy="true">
+          <span class="home-discovery-loading-indicator" aria-hidden="true"></span>
+          <span class="home-discovery-loading-copy">
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </span>
+        </section>
+      `;
+    }
+
     function nextHomeDiscoveryRadiusOption() {
       if (!distanceSelect) return null;
       const currentRadius = selectedRadiusMiles();
@@ -55352,7 +55431,8 @@
       viewAllBtn.hidden = true;
 
       if (options.loading && !items.length) {
-        renderHomeDiscoveryFeedMessage(`Loading live ${activeTab === "tonight" ? "appearances" : activeTab === "venues" ? "clubs" : "dancer profiles"} from ${city}…`);
+        homeDiscoveryFeedRenderKey = "";
+        results.innerHTML = homeDiscoveryLoadingStateMarkup(city, activeTab);
         return;
       }
       if (!items.length) {
@@ -55581,10 +55661,7 @@
         return;
       }
       if (loadingDiscovery && !items.length) {
-        const loadingLabel = activeTab === "venues"
-          ? `Loading live clubs from ${city}…`
-          : `Loading live profiles from ${city}…`;
-        results.innerHTML = `<div class="locked" role="status">${escapeHtml(loadingLabel)}</div>`;
+        results.innerHTML = homeDiscoveryLoadingStateMarkup(city, activeTab);
         return;
       }
       if (liveMarketState[city] === "error" && !items.length) {

@@ -413,12 +413,21 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   );
   assert.match(
     homeSource,
-    /renderHomeDiscoveryFeedMessage\(`Loading live \$\{activeTab === "tonight" \? "appearances" : activeTab === "venues" \? "clubs" : "dancer profiles"\} from \$\{city\}…`\);/,
+    /if \(options\.loading && !items\.length\) \{[\s\S]*?results\.innerHTML = homeDiscoveryLoadingStateMarkup\(city, activeTab\);/,
   );
   assert.match(
     homeSource,
-    /if \(loadingDiscovery && !items\.length\) \{[\s\S]*?`Loading live clubs from \$\{city\}…`[\s\S]*?role="status"[\s\S]*?return;[\s\S]*?if \(activeTab === "venues" && !items\.length\)/,
+    /if \(loadingDiscovery && !items\.length\) \{[\s\S]*?results\.innerHTML = homeDiscoveryLoadingStateMarkup\(city, activeTab\);[\s\S]*?return;[\s\S]*?if \(activeTab === "venues" && !items\.length\)/,
   );
+  assert.match(
+    homeSource,
+    /function homeDiscoveryLoadingStateMarkup\(city, tabName = activeTab\)[\s\S]*?Loading clubs in \$\{safeCity\}[\s\S]*?class="home-discovery-loading" role="status" aria-live="polite" aria-busy="true"/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-discovery-loading \{[\s\S]*?min-height: 0;[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\)[\s\S]*?padding: 16px 18px/,
+  );
+  assert.doesNotMatch(homeSource, /<div class="locked" role="status">\$\{escapeHtml\(loadingLabel\)\}<\/div>/);
   assert.match(
     homeSource,
     /const count = loading && \["tonight", "dancers", "venues"\]\.includes\(tabName\) \? "\.\.\."/,
