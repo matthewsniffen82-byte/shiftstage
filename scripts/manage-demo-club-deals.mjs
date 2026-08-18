@@ -107,7 +107,7 @@ async function applyDeals() {
         authenticated_venue_confirmation_required: true,
         cashier_nfc_required: true,
         attribution_policy: "locked_at_issue",
-        commission_policy: "monthly-tier-v1",
+        commission_policy: "dancer-profile-monthly-30-40-50-v1",
         demo_managed: true,
         managed_by: MANAGER_NAME,
         batch_version: BATCH_VERSION,

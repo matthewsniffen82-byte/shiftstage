@@ -25,7 +25,7 @@ test("managed Demo Mode deals satisfy the production publication contract", () =
   assert.match(manager, /payout_type: "flat"/);
   assert.match(manager, /payout_amount_cents: REFERRAL_COMMISSION_CENTS/);
   assert.match(manager, /authenticated_venue_confirmation_required: true/);
-  assert.match(manager, /commission_policy: "monthly-tier-v1"/);
+  assert.match(manager, /commission_policy: "dancer-profile-monthly-30-40-50-v1"/);
   assert.match(deals, /\.eq\("payout_type", "flat"\)/);
   assert.match(deals, /\.gt\("payout_amount_cents", 0\)/);
 });

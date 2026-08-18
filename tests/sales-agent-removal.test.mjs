@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 
-const [removalMigration, adminClient, financeService, apiErrors] = await Promise.all([
+const [removalMigration, currentTierMigration, adminClient, financeService, apiErrors] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608170003_remove_sales_agent_commissions.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608180002_set_dancer_profile_commission_scale.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/api.ts", import.meta.url), "utf8"),
@@ -19,11 +20,12 @@ test("the unused sales-agent program is removed without deleting nonempty ledger
 });
 
 test("verified NFC revenue is restored to the original dancer and MyDancr split", () => {
-  assert.match(removalMigration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
-  assert.match(removalMigration, /v_success_number >= 75 then 5000 when v_success_number >= 25 then 4000 else 3000/);
-  assert.match(removalMigration, /v_success_number, v_month, 'monthly-tier-v1'/);
+  assert.match(currentTierMigration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
+  assert.match(currentTierMigration, /v_success_number >= 25 then 5000[\s\S]*?v_success_number >= 10 then 4000[\s\S]*?else 3000/);
+  assert.match(currentTierMigration, /v_success_number, v_month, v_policy_version/);
+  assert.match(currentTierMigration, /v_policy_version constant text := 'dancer-profile-monthly-30-40-50-v1'/);
   assert.match(removalMigration, /dancer_commission_cents \+ platform_commission_cents = gross_commission_cents/);
-  assert.doesNotMatch(removalMigration, /insert into public\.agent_commission_events/);
+  assert.doesNotMatch(currentTierMigration, /insert into public\.agent_commission_events/);
 });
 
 test("agent dashboards, APIs, and finance totals are no longer part of the application", async () => {

@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, uncontractedDealsMigration, rejectionMigration, service, adminRoute, venueRoute, adminClient, dashboard, deals, dealRoute, dashboardRoute] = await Promise.all([
+const [migration, currentTierMigration, uncontractedDealsMigration, rejectionMigration, service, adminRoute, venueRoute, adminClient, dashboard, deals, dealRoute, dashboardRoute] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608150007_admin_controlled_referral_fees.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608180002_set_dancer_profile_commission_scale.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608160001_deactivate_uncontracted_referral_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608160002_atomic_referral_fee_rejections.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/referral-fees.ts", import.meta.url), "utf8"),
@@ -74,10 +75,10 @@ test("each verified individual NFC redemption snapshots the active venue term", 
 });
 
 test("dancer rewards stay separate and are derived after the venue fee is fixed", () => {
-  assert.match(migration, /v_share_bps := case when v_success_number >= 75 then 5000 when v_success_number >= 25 then 4000 else 3000 end/);
-  assert.match(migration, /v_dancer_cents := round\(v_gross_cents \* v_share_bps/);
-  assert.match(migration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
-  assert.match(migration, /if v_redemption\.source_type = 'dancer_profile' then[\s\S]*?insert into public\.commission_events/);
+  assert.match(currentTierMigration, /when v_success_number >= 25 then 5000[\s\S]*?when v_success_number >= 10 then 4000[\s\S]*?else 3000/);
+  assert.match(currentTierMigration, /v_dancer_cents := round\(v_gross_cents \* v_share_bps/);
+  assert.match(currentTierMigration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
+  assert.match(currentTierMigration, /if v_redemption\.source_type = 'dancer_profile' then[\s\S]*?insert into public\.commission_events/);
   const venuePanel = dashboard.match(/function VenueClubDealPanel[\s\S]*?(?=function upsertVenueDeal)/)?.[0] || "";
   assert.doesNotMatch(venuePanel, /Dancer 30%|MyDancr 70%|Dancer 40%|MyDancr 60%|Dancer 50%|MyDancr 50%/);
 });
