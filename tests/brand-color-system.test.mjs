@@ -136,7 +136,7 @@ test("Next pages and the live shell load tokens before shared component styling"
   assert.ok(buttonImport < aestheticImport);
 
   const tokenLink = liveShell.indexOf(
-    '<link href="/dancr-brand-tokens.v1.css?v=11" rel="stylesheet">',
+    '<link href="/dancr-brand-tokens.v1.css?v=12" rel="stylesheet">',
   );
   const buttonLink = liveShell.indexOf(
     '<link href="/dancr-button-system.v1.css" rel="stylesheet">',
@@ -191,7 +191,7 @@ test("form fields use neutral borders and a crisp tokenized focus ring", () => {
   );
   assert.match(
     liveShell,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=128" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=129" rel="stylesheet">/,
   );
 });
 

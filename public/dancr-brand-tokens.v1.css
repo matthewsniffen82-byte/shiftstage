@@ -63,7 +63,7 @@
   --dancr-color-info-soft: rgba(34, 211, 238, 0.1);
   --dancr-color-info-medium: rgba(34, 211, 238, 0.34);
   --dancr-color-info-strong: rgba(34, 211, 238, 0.72);
-  --dancr-color-info-surface-glass: rgba(8, 145, 178, 0.46);
+  --dancr-color-info-surface-glass: rgba(8, 145, 178, 0.66);
 
   --dancr-color-verification: #2563eb;
   --dancr-color-verification-foreground: #ffffff;
@@ -79,7 +79,7 @@
   --dancr-color-live-medium: rgba(77, 236, 157, 0.36);
   --dancr-color-live-strong: rgba(77, 236, 157, 0.78);
   --dancr-color-live-surface-emphasis: #28744f;
-  --dancr-color-live-surface-glass: rgba(20, 149, 93, 0.58);
+  --dancr-color-live-surface-glass: rgba(16, 185, 129, 0.74);
 
   --dancr-color-featured: #fbbf24;
   --dancr-color-featured-soft: rgba(251, 191, 36, 0.1);

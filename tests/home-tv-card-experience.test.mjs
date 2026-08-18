@@ -507,13 +507,13 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=128/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=129/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-schedule\.is-now \{[\s\S]*?background: var\(--dancr-color-live-surface-glass, rgba\(20,149,93,\.58\)\);/,
+    /\.home-tv-feed-schedule\.is-now \{[\s\S]*?background: var\(--dancr-color-live-surface-glass, rgba\(16,185,129,\.74\)\);/,
   );
   const brandedCards = aestheticSource.match(
     /\/\* Production TV-card branding keeps the moving media as the visual hero\.[\s\S]*?(?=\/\* Production venue-detail refinement)/,
@@ -574,27 +574,29 @@ test("production TV cards use the neutral-first brand palette without changing m
     /body\.dancr-button-system \.home-tv-feed-schedule\.is-now \{[\s\S]*?\n\}/,
   )?.[0] || "";
   assert.match(workingNowPill, /border-color: var\(--dancr-color-live-strong\) !important;/);
-  assert.match(workingNowPill, /color: #b9f8d8 !important;/);
+  assert.match(workingNowPill, /color: #d9ffea !important;/);
   assert.match(
     workingNowPill,
-    /background-color: var\(--dancr-color-live-surface-glass, rgba\(20, 149, 93, 0\.58\)\) !important;/,
+    /background-color: var\(--dancr-color-live-surface-glass, rgba\(16, 185, 129, 0\.74\)\) !important;/,
   );
   assert.match(workingNowPill, /background-image: none !important;/);
   assert.match(workingNowPill, /box-shadow: inset 0 1px 0 rgba\(224, 255, 242, 0\.14\) !important;/);
   assert.match(workingNowPill, /backdrop-filter: blur\(10px\) saturate\(120%\) !important;/);
   assert.doesNotMatch(workingNowPill, /brand-|beam-|gradient|glow/);
+  assert.doesNotMatch(workingNowPill, /(?:height|padding|border-radius):/);
   const upcomingPill = brandedCards.match(
     /body\.dancr-button-system \.home-tv-feed-schedule\.is-upcoming \{[\s\S]*?\n\}/,
   )?.[0] || "";
   assert.match(upcomingPill, /border-color: var\(--dancr-color-info-strong\) !important;/);
-  assert.match(upcomingPill, /color: #c8f8ff !important;/);
+  assert.match(upcomingPill, /color: #dcfbff !important;/);
   assert.match(
     upcomingPill,
-    /background-color: var\(--dancr-color-info-surface-glass, rgba\(8, 145, 178, 0\.46\)\) !important;/,
+    /background-color: var\(--dancr-color-info-surface-glass, rgba\(8, 145, 178, 0\.66\)\) !important;/,
   );
   assert.match(upcomingPill, /box-shadow: inset 0 1px 0 rgba\(224, 252, 255, 0\.14\) !important;/);
   assert.match(upcomingPill, /backdrop-filter: blur\(10px\) saturate\(120%\) !important;/);
   assert.doesNotMatch(upcomingPill, /brand-|beam-|gradient|glow/);
+  assert.doesNotMatch(upcomingPill, /(?:height|padding|border-radius):/);
   assert.match(brandedCards, /var\(--dancr-color-success\)/);
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-upcoming/);
   assert.match(brandedCards, /\.home-tv-feed-report-action\[aria-expanded="true"\]/);
