@@ -507,13 +507,13 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=130/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=131/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-schedule\.is-now \{[\s\S]*?background: var\(--dancr-color-live-surface-glass, rgba\(16,185,129,\.74\)\);/,
+    /\.home-tv-feed-schedule\.is-now \{[\s\S]*?background: var\(--dancr-color-live-surface-glass, rgba\(16,185,129,\.60\)\);/,
   );
   const brandedCards = aestheticSource.match(
     /\/\* Production TV-card branding keeps the moving media as the visual hero\.[\s\S]*?(?=\/\* Production venue-detail refinement)/,
@@ -577,7 +577,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(workingNowPill, /color: #d9ffea !important;/);
   assert.match(
     workingNowPill,
-    /background-color: var\(--dancr-color-live-surface-glass, rgba\(16, 185, 129, 0\.74\)\) !important;/,
+    /background-color: var\(--dancr-color-live-surface-glass, rgba\(16, 185, 129, 0\.60\)\) !important;/,
   );
   assert.match(workingNowPill, /background-image: none !important;/);
   assert.match(workingNowPill, /box-shadow: inset 0 1px 0 rgba\(224, 255, 242, 0\.14\) !important;/);
