@@ -103,6 +103,10 @@
   --dancr-shadow-brand-control:
     0 8px 18px rgba(5, 5, 7, 0.34),
     0 0 10px var(--dancr-color-brand-glow-soft);
+  --dancr-shadow-avatar-live:
+    0 0 0 1px var(--dancr-color-avatar-ring-live),
+    0 0 12px var(--dancr-color-success-strong),
+    0 0 22px var(--dancr-color-success-medium);
   --dancr-shadow-beam-active:
     0 0 0 2px var(--dancr-color-beam-violet-medium),
     0 0 10px var(--dancr-color-beam-glow-soft);

@@ -109,7 +109,8 @@ test("working-now avatars keep one complete live-teal ring with NOW reserved for
   )?.[0] || "";
 
   assert.match(wrapperRules, /\[data-dancer-avatar\]\[data-working-now="true"\] \{/);
-  assert.match(wrapperRules, /0 0 0 1px var\(--dancr-color-avatar-ring-live\)/);
+  assert.match(tokens, /--dancr-shadow-avatar-live:[\s\S]*?0 0 0 1px var\(--dancr-color-avatar-ring-live\),[\s\S]*?0 0 12px var\(--dancr-color-success-strong\),[\s\S]*?0 0 22px var\(--dancr-color-success-medium\);/);
+  assert.match(wrapperRules, /box-shadow: var\(--dancr-shadow-avatar-live\) !important;/);
   assert.match(
     wrapperRules,
     /\[data-dancer-avatar\]\[data-working-now="true"\] > \[data-dancer-avatar-border\] \{[\s\S]*?border-color: var\(--dancr-color-avatar-ring-live\) !important;[\s\S]*?background-color: var\(--dancr-color-avatar-ring-live\) !important;/,
@@ -153,8 +154,7 @@ test("venue-card lineup avatars use one stable circular paint layer while scroll
   assert.match(lineupBorderRule, /background-position: var\(--custom-photo-position, center\) !important;/);
   assert.match(lineupBorderRule, /background-size: cover !important;/);
   assert.ok(lineupLiveRule);
-  assert.match(lineupLiveRule, /0 0 0 1px var\(--dancr-color-avatar-ring-live\)/);
-  assert.match(lineupLiveRule, /0 0 11px var\(--dancr-color-success-medium\) !important;/);
+  assert.match(lineupLiveRule, /box-shadow: var\(--dancr-shadow-avatar-live\) !important;/);
   assert.doesNotMatch(
     `${lineupLayoutRule}\n${lineupBorderRule}\n${lineupLiveRule}`,
     /translateZ|backface-visibility|will-change|mask-image|clip-path/,
