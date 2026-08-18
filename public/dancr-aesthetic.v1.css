@@ -4641,17 +4641,42 @@ body.dancr-button-system > .app main.stack > section.stack
 
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide {
+  --venue-card-surface: color-mix(
+    in srgb,
+    var(--dancr-color-surface-raised) 90%,
+    var(--dancr-color-text-primary) 10%
+  );
+  --venue-card-base: color-mix(
+    in srgb,
+    var(--dancr-color-background) 92%,
+    var(--dancr-color-text-primary) 8%
+  );
+  --venue-card-edge: color-mix(
+    in srgb,
+    var(--dancr-color-border) 78%,
+    var(--dancr-color-text-secondary) 22%
+  );
+  --venue-card-text-secondary: color-mix(
+    in srgb,
+    var(--dancr-color-text-secondary) 88%,
+    var(--dancr-color-text-primary) 12%
+  );
+  --venue-card-text-muted: color-mix(
+    in srgb,
+    var(--dancr-color-text-muted) 78%,
+    var(--dancr-color-text-primary) 22%
+  );
   border-color: transparent !important;
   color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
       155deg,
-      var(--dancr-color-surface-raised),
-      var(--dancr-color-background) 72%
+      var(--venue-card-surface),
+      var(--venue-card-base) 72%
     ) padding-box,
     linear-gradient(
       145deg,
-      var(--dancr-color-border),
+      var(--venue-card-edge),
       var(--dancr-color-border-subtle)
     ) border-box !important;
   box-shadow:
@@ -4659,6 +4684,20 @@ body.dancr-button-system > .app main.stack > section.stack
     0 14px 28px var(--dancr-color-black-medium) !important;
   filter: none !important;
   -webkit-filter: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-art:not(.has-custom-photo) {
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.024) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.14), transparent 31%),
+    linear-gradient(
+      145deg,
+      var(--venue-card-surface) 0%,
+      var(--venue-card-base) 52%,
+      color-mix(in srgb, var(--venue-card-surface) 42%, var(--venue-card-base)) 100%
+    ) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
@@ -4686,9 +4725,9 @@ body.dancr-button-system > .app main.stack > section.stack
     180deg,
     color-mix(in srgb, var(--dancr-color-background) 6%, transparent) 0%,
     transparent 30%,
-    color-mix(in srgb, var(--dancr-color-background) 76%, transparent) 56%,
-    color-mix(in srgb, var(--dancr-color-background) 98%, transparent) 84%,
-    var(--dancr-color-background) 100%
+    color-mix(in srgb, var(--venue-card-base) 70%, transparent) 56%,
+    color-mix(in srgb, var(--venue-card-base) 96%, transparent) 84%,
+    var(--venue-card-base) 100%
   ) !important;
 }
 
@@ -4702,21 +4741,21 @@ body.dancr-button-system > .app main.stack > section.stack
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-location {
-  color: var(--dancr-color-text-secondary) !important;
+  color: var(--venue-card-text-secondary) !important;
   text-shadow: 0 1px 8px var(--dancr-color-black-strong) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-location svg {
-  color: var(--dancr-color-text-muted) !important;
+  color: var(--venue-card-text-muted) !important;
   filter: none !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-hours {
-  color: var(--dancr-color-text-muted) !important;
+  color: var(--venue-card-text-muted) !important;
   text-shadow: none !important;
 }
 
@@ -4724,7 +4763,7 @@ body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-discovery-feed-position {
   border-color: var(--dancr-color-border-subtle) !important;
-  color: var(--dancr-color-text-secondary) !important;
+  color: var(--venue-card-text-secondary) !important;
   background: var(--dancr-color-overlay) !important;
   box-shadow: none !important;
   text-shadow: none !important;
@@ -4735,7 +4774,7 @@ body.dancr-button-system > .app main.stack > section.stack
   .home-venue-discovery-action-rail
   .feed-card-action:not(.is-active):not([aria-pressed="true"]):not(.home-venue-discovery-rail-qr.is-available):not(.home-venue-discovery-profile-action) {
   border-color: var(--dancr-color-border-subtle) !important;
-  color: var(--dancr-color-text-secondary) !important;
+  color: var(--venue-card-text-secondary) !important;
   background: var(--dancr-color-surface-raised) !important;
   box-shadow: none !important;
   opacity: 1 !important;

@@ -28,7 +28,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=131" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=132" rel="stylesheet">/,
   );
 });
 
@@ -341,7 +341,11 @@ test("venue scroll cards use the complete neutral-first brand and semantic hiera
   );
   assert.match(
     venueScrollBrand,
-    /> #results\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?var\(--dancr-color-surface-raised\),[\s\S]*?var\(--dancr-color-background\) 72%[\s\S]*?var\(--dancr-color-border\),[\s\S]*?var\(--dancr-color-border-subtle\)/,
+    /> #results\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?--venue-card-surface:[\s\S]*?var\(--dancr-color-surface-raised\) 90%[\s\S]*?--venue-card-base:[\s\S]*?var\(--dancr-color-background\) 92%[\s\S]*?--venue-card-edge:[\s\S]*?var\(--dancr-color-border\) 78%[\s\S]*?var\(--venue-card-surface\),[\s\S]*?var\(--venue-card-base\) 72%[\s\S]*?var\(--venue-card-edge\),[\s\S]*?var\(--dancr-color-border-subtle\)/,
+  );
+  assert.match(
+    venueScrollBrand,
+    /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?var\(--venue-card-surface\) 0%[\s\S]*?var\(--venue-card-base\) 52%/,
   );
   assert.match(
     venueScrollBrand,
@@ -349,7 +353,11 @@ test("venue scroll cards use the complete neutral-first brand and semantic hiera
   );
   assert.match(
     venueScrollBrand,
-    /\.home-discovery-feed-shade \{[\s\S]*?var\(--dancr-color-background\) 76%[\s\S]*?var\(--dancr-color-background\) 98%/,
+    /\.home-discovery-feed-shade \{[\s\S]*?var\(--venue-card-base\) 70%[\s\S]*?var\(--venue-card-base\) 96%[\s\S]*?var\(--venue-card-base\) 100%/,
+  );
+  assert.match(
+    venueScrollBrand,
+    /\.home-venue-discovery-location \{[\s\S]*?var\(--venue-card-text-secondary\)[\s\S]*?\.home-venue-discovery-location svg \{[\s\S]*?var\(--venue-card-text-muted\)[\s\S]*?\.home-venue-discovery-hours \{[\s\S]*?var\(--venue-card-text-muted\)/,
   );
   assert.match(
     venueScrollBrand,
