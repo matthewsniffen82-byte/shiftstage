@@ -630,6 +630,22 @@ function FinanceManager({
   const metrics = (finance?.metrics || {}) as Record<string, unknown>;
   const invoices = Array.isArray(finance?.invoices) ? finance.invoices as Array<Record<string, unknown>> : [];
   const payouts = Array.isArray(finance?.payouts) ? finance.payouts as Array<Record<string, unknown>> : [];
+  const earnings = Array.isArray(finance?.earnings) ? finance.earnings as Array<Record<string, unknown>> : [];
+  const earningsByVenue = Array.isArray(finance?.earningsByVenue) ? finance.earningsByVenue as Array<Record<string, unknown>> : [];
+  const earningsByDancer = Array.isArray(finance?.earningsByDancer) ? finance.earningsByDancer as Array<Record<string, unknown>> : [];
+  const payoutSettings = (finance?.settings || {}) as Record<string, unknown>;
+  const [provider, setProvider] = useState("stripe");
+  const [payoutMode, setPayoutMode] = useState("manual_cashout");
+  const [holdDays, setHoldDays] = useState("7");
+  const [minimumPayout, setMinimumPayout] = useState("20.00");
+  const [payoutsEnabled, setPayoutsEnabled] = useState(false);
+  useEffect(() => {
+    setProvider(asText(payoutSettings.payment_provider) || "stripe");
+    setPayoutMode(asText(payoutSettings.payout_mode) || "manual_cashout");
+    setHoldDays(String(payoutSettings.earnings_hold_days ?? 7));
+    setMinimumPayout((Number(payoutSettings.minimum_payout_cents || 2000) / 100).toFixed(2));
+    setPayoutsEnabled(payoutSettings.payouts_enabled === true);
+  }, [payoutSettings.payment_provider, payoutSettings.payout_mode, payoutSettings.earnings_hold_days, payoutSettings.minimum_payout_cents, payoutSettings.payouts_enabled]);
   const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(asText(invoice.status)));
 
   async function runAction(action: "run_automation" | "process_payouts") {
@@ -688,6 +704,67 @@ function FinanceManager({
     }
   }
 
+  async function savePayoutSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const minimumPayoutCents = adminPayoutDollarsToCents(minimumPayout);
+    if (minimumPayoutCents === null) return setStatus("Enter a valid minimum payout between $0.01 and $100,000.00.");
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    setIsRunning(true);
+    setStatus("Saving audited payout settings...");
+    try {
+      const response = await fetch("/api/admin/finance", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "update_payout_settings", payoutsEnabled, paymentProvider: provider, payoutMode, earningsHoldDays: Number(holdDays), minimumPayoutCents }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save payout settings.");
+      onFinanceChange(data.finance);
+      setStatus("Payout settings saved and audited.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save payout settings.");
+    } finally { setIsRunning(false); }
+  }
+
+  async function manageEarning(earningId: string, earningAction: "hold" | "release" | "reverse") {
+    const reason = window.prompt(`Required audit reason to ${earningAction} this earning:`)?.trim();
+    if (!reason) return;
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    setIsRunning(true);
+    try {
+      const response = await fetch("/api/admin/finance", {
+        method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "manage_earning", earningId, earningAction, reason }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update earning.");
+      onFinanceChange(data.finance);
+      setStatus(`Earning ${earningAction} action recorded.`);
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to update earning."); }
+    finally { setIsRunning(false); }
+  }
+
+  async function retryPayout(payoutId: string) {
+    const reason = window.prompt("Required audit reason to retry this failed payout:")?.trim();
+    if (!reason) return;
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    setIsRunning(true);
+    try {
+      const response = await fetch("/api/admin/finance", {
+        method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "retry_payout", payoutId, reason }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to retry payout.");
+      onFinanceChange(data.finance);
+      setStatus("Safe payout retry reserved for processing.");
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to retry payout."); }
+    finally { setIsRunning(false); }
+  }
+
   return (
     <section className="operations-center" aria-labelledby="finance-operations-heading">
       <Panel title="QR finance operations">
@@ -697,8 +774,11 @@ function FinanceManager({
           <Metric label="Club receivables" value={formatAdminCents(Number(metrics.outstandingReceivablesCents || 0))} />
           <Metric label="Overdue" value={formatAdminCents(Number(metrics.overdueReceivablesCents || 0))} />
           <Metric label="Club payments received" value={formatAdminCents(Number(metrics.paidClubRevenueCents || 0))} />
-          <Metric label="Dancer payable" value={formatAdminCents(Number(metrics.dancerPayableCents || 0))} />
+          <Metric label="Dancer pending" value={formatAdminCents(Number(metrics.dancerPendingCents || 0))} />
+          <Metric label="Dancer available" value={formatAdminCents(Number(metrics.dancerAvailableCents || 0))} />
+          <Metric label="Payout processing" value={formatAdminCents(Number(metrics.dancerProcessingCents || 0))} />
           <Metric label="Dancer paid" value={formatAdminCents(Number(metrics.dancerPaidCents || 0))} />
+          <Metric label="Reversed earnings" value={formatAdminCents(Number(metrics.reversedEarningsCents || 0))} />
           <Metric label="MyDancr net revenue" value={formatAdminCents(Number(metrics.myDancrNetRevenueCents || 0))} />
           <Metric label="Open invoices" value={String(metrics.openInvoiceCount || 0)} />
           <Metric label="Failed payouts" value={String(metrics.failedPayoutCount || 0)} />
@@ -708,6 +788,50 @@ function FinanceManager({
           <button disabled={isRunning} type="button" onClick={() => runAction("process_payouts")}>Process payable dancers</button>
         </div>
         {status ? <p role="status">{status}</p> : null}
+      </Panel>
+
+      <Panel title="Payout controls" badge={payoutSettings.livePayoutsEnabled === true ? "Live enabled" : "Money movement off"}>
+        <form onSubmit={savePayoutSettings}>
+          <label>Provider<select value={provider} onChange={(event) => setProvider(event.target.value)}><option value="stripe">Stripe</option><option value="adyen">Adyen</option><option value="other">Other approved provider</option></select></label>
+          <label>Payout mode<select value={payoutMode} onChange={(event) => setPayoutMode(event.target.value)}><option value="manual_cashout">Manual cash out</option><option value="scheduled">Scheduled</option><option value="both">Both</option></select></label>
+          <label>Earnings hold days<input inputMode="numeric" min="0" max="90" value={holdDays} onChange={(event) => setHoldDays(event.target.value)} /></label>
+          <label>Minimum payout<input inputMode="decimal" min="0.01" max="100000" step="0.01" type="number" value={minimumPayout} onChange={(event) => setMinimumPayout(event.target.value)} /></label>
+          <label><input type="checkbox" checked={payoutsEnabled} onChange={(event) => setPayoutsEnabled(event.target.checked)} /> Enable payouts in admin</label>
+          <p>Live money movement also requires the server-only PAYOUTS_ENABLED flag. Admin settings cannot bypass that hard stop.</p>
+          {payoutSettings.providerConfigured !== true ? <p role="alert">The selected provider does not have a complete server-side payout and verified-webhook configuration.</p> : null}
+          <button disabled={isRunning} type="submit">Save payout settings</button>
+        </form>
+      </Panel>
+
+      <Panel title="Dancer earnings ledger" badge={`${earnings.length} inspected`}>
+        <div className="operations-layout">
+          <div className="operations-list"><strong>Earnings by venue</strong>{earningsByVenue.slice(0, 10).map((group) => <div key={asText(group.name)}><span><strong>{asText(group.name)}</strong><small>{String(group.count || 0)} entries</small></span><em>{formatAdminCents(Number(group.amountCents || 0))}</em></div>)}</div>
+          <div className="operations-list"><strong>Earnings by dancer</strong>{earningsByDancer.slice(0, 10).map((group) => <div key={asText(group.name)}><span><strong>{asText(group.name)}</strong><small>{String(group.count || 0)} entries</small></span><em>{formatAdminCents(Number(group.amountCents || 0))}</em></div>)}</div>
+        </div>
+        <div className="admin-list">
+          {earnings.slice(0, 100).map((earning) => (
+            <article key={asText(earning.id)}>
+              <strong>{asText(readFirst(earning.dancer_profiles)?.stage_name) || "Dancer"} · {formatAdminCents(Number(earning.amount_cents || 0))}</strong>
+              <p>{asText(readFirst(earning.venues)?.name) || "Venue"} · {asText(earning.earning_type).replaceAll("_", " ")} · {asText(earning.status)}</p>
+              <p>{formatDate(earning.created_at)}</p>
+              {earning.hold_reason ? <p>Held: {asText(earning.hold_reason)}</p> : null}
+              {earning.reversal_reason ? <p>Reversed: {asText(earning.reversal_reason)}</p> : null}
+              {earning.review_flag ? <p role="alert">Review flag: {asText(earning.review_flag)}</p> : null}
+              <details>
+                <summary>Inspect originating event</summary>
+                <p>Earning ID: <code>{asText(earning.id)}</code></p>
+                <p>Redemption ID: <code>{asText(earning.qr_redemption_id) || "Not applicable"}</code></p>
+                <p>Club Deal: {asText(readFirst(earning.club_deals)?.deal_title) || "Not applicable"}</p>
+                <p>Test record: {earning.is_test === true ? "Yes" : "No"}</p>
+              </details>
+              {["pending", "available"].includes(asText(earning.status)) ? <div className="admin-action-row">
+                {earning.held_at ? <button disabled={isRunning} type="button" onClick={() => manageEarning(asText(earning.id), "release")}>Release eligible</button> : <button disabled={isRunning} type="button" onClick={() => manageEarning(asText(earning.id), "hold")}>Hold</button>}
+                <button disabled={isRunning} type="button" onClick={() => manageEarning(asText(earning.id), "reverse")}>Reverse</button>
+              </div> : null}
+            </article>
+          ))}
+          {!earnings.length ? <p className="empty">No dancer earnings have been recorded.</p> : null}
+        </div>
       </Panel>
 
       <Panel title="Club invoices" badge={`${openInvoices.length} open`}>
@@ -762,6 +886,7 @@ function FinanceManager({
               <strong>{asText(readFirst(payout.dancer_profiles)?.stage_name) || "Dancer"} · {formatAdminCents(Number(payout.amount_cents || 0))}</strong>
               <p>{asText(payout.status)} · {formatDate(payout.paid_at || payout.created_at)}</p>
               {payout.failure_message ? <p role="alert">{asText(payout.failure_message)}</p> : null}
+              {payout.status === "failed" ? <button disabled={isRunning} type="button" onClick={() => retryPayout(asText(payout.id))}>Retry safely</button> : null}
             </article>
           ))}
           {!payouts.length ? <p className="empty">No dancer payout batches have been created yet.</p> : null}
@@ -1298,32 +1423,27 @@ function DealActivityManager({
     setMessage("Redemption voided.");
   }
 
-  async function settleBalance(
-    eventId: string,
-    action: "venue_payment_received" | "dancer_paid",
-  ) {
+  async function settleVenueBalance(eventId: string) {
     const token = readToken();
     if (!token) {
       setMessage("Admin sign in required.");
       return;
     }
-    const referenceKey = `${action}:${eventId}`;
+    const referenceKey = `venue_payment_received:${eventId}`;
     const externalReference = String(paymentReferences[referenceKey] || "").trim();
     if (externalReference.length < 3) {
       setMessage("Enter the real invoice, payment, or payout reference first.");
       return;
     }
 
-    setMessage(action === "venue_payment_received" ? "Recording venue payment..." : "Recording dancer payout...");
+    setMessage("Recording venue payment...");
     const response = await fetch("/api/admin/deals", {
       method: "PATCH",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       body: JSON.stringify({
-        action,
+        action: "venue_payment_received",
         externalReference,
-        ...(action === "venue_payment_received"
-          ? { revenueEventId: eventId }
-          : { commissionEventId: eventId }),
+        revenueEventId: eventId,
       }),
     });
     const data = await response.json();
@@ -1333,7 +1453,7 @@ function DealActivityManager({
     }
     await loadFiltered();
     setPaymentReferences((current) => ({ ...current, [referenceKey]: "" }));
-    setMessage(action === "venue_payment_received" ? "Venue payment recorded." : "Dancer payout recorded.");
+    setMessage("Venue payment recorded.");
   }
 
   return (
@@ -1373,10 +1493,12 @@ function DealActivityManager({
           Commission
           <select value={commissionStatus} onChange={(event) => setCommissionStatus(event.target.value)}>
             <option value="">All commissions</option>
-            <option value="payable">Payable</option>
+            <option value="pending">Pending</option>
+            <option value="available">Available</option>
+            <option value="payout_processing">Payout processing</option>
             <option value="paid">Paid</option>
-            <option value="rejected">Rejected</option>
-            <option value="voided">Voided</option>
+            <option value="reversed">Reversed</option>
+            <option value="failed">Failed</option>
           </select>
         </label>
         <label>
@@ -1396,11 +1518,9 @@ function DealActivityManager({
           const revenue = readFirst(item.deal_revenue_events);
           const commission = readFirst(item.commission_events);
           const revenueEventId = String(revenue?.id || "");
-          const commissionEventId = String(commission?.id || "");
           const revenueStatus = String(revenue?.status || "");
           const commissionState = String(commission?.status || "");
           const venueReferenceKey = `venue_payment_received:${revenueEventId}`;
-          const dancerReferenceKey = `dancer_paid:${commissionEventId}`;
           return (
             <div className="deal-activity-row" key={String(item.id)}>
               <strong>{previewDealName(item)}</strong>
@@ -1426,7 +1546,7 @@ function DealActivityManager({
                       />
                       <button
                         type="button"
-                        onClick={() => settleBalance(revenueEventId, "venue_payment_received")}
+                        onClick={() => settleVenueBalance(revenueEventId)}
                       >
                         Record venue payment
                       </button>
@@ -1439,20 +1559,7 @@ function DealActivityManager({
                   <strong>MyDancr → Dancer</strong>
                   <span>MyDancr owes dancer: {formatAdminCents(Number(commission.amount_cents || 0))}</span>
                   <span>Dancer payout: {commissionState.replaceAll("_", " ")}</span>
-                  {commissionState === "payable" ? (
-                    <div className="deal-settlement-action">
-                      <input
-                        aria-label="Dancer payout reference"
-                        placeholder="MyDancr payout reference"
-                        value={paymentReferences[dancerReferenceKey] || ""}
-                        onChange={(event) => setPaymentReferences((current) => ({
-                          ...current,
-                          [dancerReferenceKey]: event.target.value,
-                        }))}
-                      />
-                      <button type="button" onClick={() => settleBalance(commissionEventId, "dancer_paid")}>Record dancer payout</button>
-                    </div>
-                  ) : null}
+                  {commissionState === "available" ? <span>Eligible earnings are paid only through the audited Finance payout workflow.</span> : null}
                 </section>
               ) : null}
               {item.suspicious ? <span>Flagged suspicious</span> : null}
@@ -3192,6 +3299,13 @@ function adminDollarsToCents(value: string) {
   if (!/^\d{1,4}(?:\.\d{1,2})?$/.test(normalized)) return null;
   const cents = Math.round(Number(normalized) * 100);
   return cents >= 100 && cents <= 100_000 ? cents : null;
+}
+
+function adminPayoutDollarsToCents(value: string) {
+  const match = /^(\d{1,6})(?:\.(\d{1,2}))?$/.exec(value.trim());
+  if (!match) return null;
+  const cents = Number.parseInt(match[1], 10) * 100 + Number.parseInt((match[2] || "").padEnd(2, "0") || "0", 10);
+  return Number.isSafeInteger(cents) && cents >= 1 && cents <= 10_000_000 ? cents : null;
 }
 
 function currentAdminReferralTerm(terms: Array<Record<string, unknown>>) {

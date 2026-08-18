@@ -42,6 +42,7 @@ test("QR finance migration creates private receivables and payout ledgers", () =
 
 test("monthly club invoices, reminders, reconciliation, and dancer transfers use Stripe production APIs", () => {
   const service = read("src/lib/dancr/finance.ts");
+  const provider = read("src/lib/dancr/payout-provider.ts");
   assert.match(service, /createMonthlyClubInvoiceDrafts/);
   assert.match(service, /\.lt\("commission_month", currentMonth\)/);
   assert.match(service, /getStripe\(\)\.customers\.create/);
@@ -51,10 +52,10 @@ test("monthly club invoices, reminders, reconciliation, and dancer transfers use
   assert.match(service, /stripe\.invoices\.sendInvoice/);
   assert.match(service, /apply_club_invoice_payment/);
   assert.match(service, /club_invoice_reminders/);
-  assert.match(service, /stripe\.accounts\.create/);
-  assert.match(service, /stripe\.accountLinks\.create/);
-  assert.match(service, /getStripe\(\)\.transfers\.create/);
-  assert.match(service, /idempotencyKey: `mydancr-payout-batch-/);
+  assert.match(provider, /getStripe\(\)\.accounts\.create/);
+  assert.match(provider, /getStripe\(\)\.accountLinks\.create/);
+  assert.match(provider, /getStripe\(\)\.transfers\.create/);
+  assert.match(provider, /idempotencyKey: input\.idempotencyKey/);
   assert.match(service, /onboarding_complete/);
   assert.match(service, /pendingClubPaymentCents/);
 });
@@ -84,8 +85,8 @@ test("Stripe webhook idempotently reconciles invoices, payout accounts, and reve
     "unsigned webhook requests must fail before Stripe configuration is loaded",
   );
   assert.match(webhook, /constructEvent\(await request\.text\(\), signature, getServerEnv\("STRIPE_WEBHOOK_SECRET"\)\)/);
-  assert.match(webhook, /recordStripeFinanceWebhook/);
-  assert.match(webhook, /releaseStripeFinanceWebhookEvent/);
+  assert.match(webhook, /recordPaymentProviderWebhook/);
+  assert.match(webhook, /finishPaymentProviderWebhook/);
   assert.match(webhook, /invoice\.payment_failed/);
   assert.match(webhook, /syncStripeInvoice/);
   assert.match(webhook, /syncDancerConnectAccount/);
@@ -107,8 +108,8 @@ test("daily automation and every production finance dashboard are wired", () => 
   assert.match(adminUi, /Record bank, ACH, or check payment/);
   assert.match(dashboard, /Club invoices/);
   assert.match(dashboard, /MyDancr payouts/);
-  assert.match(dashboard, /Admin managed/);
-  assert.match(dashboard, /Venue billing is separate and never controls whether your reward is eligible for payout/);
+  assert.match(dashboard, /Available balance/);
+  assert.match(dashboard, /Real payout setup and money movement remain off until provider and legal approval/);
   assert.match(dashboard, /Download monthly statement/);
   assert.match(venueDashboard, /getVenueFinance/);
   assert.match(dancerDashboard, /getDancerFinance/);

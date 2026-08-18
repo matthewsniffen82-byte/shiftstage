@@ -4018,8 +4018,8 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
         <Metric label="Current dancer share" value={`${currentShare}%`} />
         <Metric label="Saved / shared intent" value={`${String(deals?.qrSaves || 0)} / ${String(deals?.qrShares || 0)}`} />
         <Metric label="Cashier opens" value={String(deals?.qrOpens || 0)} />
-        <Metric label="Payable / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
-        <Metric label="Rejected / voided" value={String(deals?.rejectedCommissions || 0)} />
+        <Metric label="Available / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
+        <Metric label="Reversed" value={String(deals?.rejectedCommissions || 0)} />
       </div>
       <div className="commission-tier-table">
         <strong>
@@ -4037,8 +4037,49 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
 
 function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
   const [status, setStatus] = useState("");
-  const payouts = Array.isArray(finance?.payouts) ? finance.payouts as Array<Record<string, unknown>> : [];
+  const [historyFilter, setHistoryFilter] = useState("all");
+  const [isWorking, setIsWorking] = useState(false);
+  const [localFinance, setLocalFinance] = useState(finance);
+  useEffect(() => setLocalFinance(finance), [finance]);
+  const currentFinance = localFinance || finance;
+  const payouts = Array.isArray(currentFinance?.payouts) ? currentFinance.payouts as Array<Record<string, unknown>> : [];
+  const earnings = Array.isArray(currentFinance?.earnings) ? currentFinance.earnings as Array<Record<string, unknown>> : [];
+  const balances = (currentFinance?.balances || {}) as Record<string, unknown>;
+  const payoutAccount = (currentFinance?.payoutAccount || null) as Record<string, unknown> | null;
+  const settings = (currentFinance?.settings || {}) as Record<string, unknown>;
+  const visibleEarnings = historyFilter === "all" ? earnings : earnings.filter((earning) => String(earning.status) === historyFilter);
+  const payoutsEnabled = settings.payoutsEnabled === true;
+  const setupComplete = payoutAccount?.onboarding_status === "complete"
+    && payoutAccount?.payout_eligibility === "eligible"
+    && payoutAccount?.verification_status === "verified";
   const currentMonth = new Date().toISOString().slice(0, 7);
+
+  async function payoutAction(action: "connect_onboarding" | "cash_out") {
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    setIsWorking(true);
+    setStatus(action === "cash_out" ? "Checking available earnings..." : "Opening secure payout setup...");
+    try {
+      const response = await fetch("/api/dancer/finance", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${session.accessToken}`,
+          "content-type": "application/json",
+          "idempotency-key": crypto.randomUUID(),
+        },
+        body: JSON.stringify({ action }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update payouts.");
+      if (data.onboarding?.url) window.location.assign(data.onboarding.url);
+      if (data.finance) setLocalFinance(data.finance);
+      if (action === "cash_out") setStatus("Cash-out request reserved. Status will update after verified provider confirmation.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update payouts.");
+    } finally {
+      setIsWorking(false);
+    }
+  }
 
   async function downloadStatement() {
     setStatus("Preparing statement...");
@@ -4054,34 +4095,76 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
   }
 
   return (
-    <article className="info-panel deal-panel" aria-labelledby="dancer-payout-heading">
+    <article className="info-panel deal-panel dancer-earnings-panel" aria-labelledby="dancer-payout-heading">
       <div className="venue-deal-heading">
         <div>
           <span className="eyebrow">MyDancr payouts</span>
           <h2 id="dancer-payout-heading">Dancer rewards</h2>
         </div>
-        <strong className="deal-state active">Admin managed</strong>
+        <strong className={`deal-state ${payoutsEnabled ? "active" : ""}`}>{payoutsEnabled ? "Payouts available" : "Approval pending"}</strong>
       </div>
-      <p>Each venue-confirmed referral creates a MyDancr-funded dancer reward. Venue billing is separate and never controls whether your reward is eligible for payout.</p>
-      <div className="deal-metrics">
-        <Metric label="Ready for MyDancr payout" value={formatCents(Number(finance?.payableCents || 0))} />
-        <Metric label="Paid" value={formatCents(Number(finance?.paidCents || 0))} />
+      <p>Qualifying Club Deal activity appears as pending first, then becomes available after the review period. Balances never include customer personal information.</p>
+      <div className="deal-metrics earnings-balance-grid">
+        <Metric label="Available balance" value={formatCents(Number(balances.availableCents || 0))} />
+        <Metric label="Pending earnings" value={formatCents(Number(balances.pendingCents || 0))} />
+        <Metric label="Payout processing" value={formatCents(Number(balances.processingCents || 0))} />
+        <Metric label="Lifetime earnings" value={formatCents(Number(balances.lifetimeCents || 0))} />
       </div>
+      <div className="earnings-actions">
+        <button disabled={isWorking || !payoutsEnabled} type="button" onClick={() => payoutAction("connect_onboarding")}>Set Up Payouts</button>
+        <button disabled={isWorking || !payoutsEnabled || Number(balances.availableCents || 0) < Number(settings.minimumPayoutCents || 0)} type="button" onClick={() => payoutAction(setupComplete ? "cash_out" : "connect_onboarding")}>
+          {setupComplete ? "Cash Out" : "Cash Out · Set up first"}
+        </button>
+      </div>
+      {!payoutsEnabled ? <p className="earnings-notice">Earnings tracking is active. Real payout setup and money movement remain off until provider and legal approval.</p> : null}
+      {payoutAccount?.last_error ? <p role="alert">{String(payoutAccount.last_error)}</p> : null}
+
+      <section className="earnings-history" aria-labelledby="earnings-history-heading">
+        <h3 id="earnings-history-heading">Earnings history</h3>
+        <div className="earnings-filters" role="group" aria-label="Filter earnings history">
+          {["all", "pending", "available", "paid"].map((filter) => (
+            <button className={historyFilter === filter ? "active" : ""} key={filter} type="button" onClick={() => setHistoryFilter(filter)}>
+              {filter[0].toUpperCase() + filter.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="commission-tier-table">
+          {visibleEarnings.slice(0, 50).map((earning) => (
+            <div key={String(earning.id)}>
+              <span>{dancerFinanceVenueName(earning.venues)} · {String(earning.earning_type || "earning").replaceAll("_", " ")}</span>
+              <b>{formatCents(Number(earning.amount_cents || 0))}</b>
+              <span>{formatFinanceDate(earning.created_at)} · {String(earning.status)}</span>
+            </div>
+          ))}
+          {!visibleEarnings.length ? <p>No earnings match this filter.</p> : null}
+        </div>
+      </section>
+
+      <h3>Payout history</h3>
       {payouts.length ? (
         <div className="commission-tier-table" aria-label="Recent dancer payouts">
-          {payouts.slice(0, 6).map((payout) => (
+          {payouts.slice(0, 50).map((payout) => (
             <div key={String(payout.id)}>
-              <span>{formatFinanceDate(payout.created_at)}</span>
+              <span>Requested {formatFinanceDate(payout.requested_at || payout.created_at)}</span>
               <b>{formatCents(Number(payout.amount_cents || 0))}</b>
-              <span>{String(payout.status)}</span>
+              <span>{String(payout.status)} · {String(payout.payment_provider || "provider")}</span>
+              {payout.processing_at ? <span>Processing {formatFinanceDate(payout.processing_at)}</span> : null}
+              {payout.paid_at ? <span>Paid {formatFinanceDate(payout.paid_at)}</span> : null}
+              {payout.provider_reference_id ? <span>Reference {String(payout.provider_reference_id)}</span> : null}
+              {payout.failure_message ? <span role="alert">{String(payout.failure_message)}</span> : null}
             </div>
           ))}
         </div>
-      ) : <p>No payout batches yet.</p>}
+      ) : <p>No payout requests yet.</p>}
       <button type="button" onClick={downloadStatement}>Download monthly statement</button>
       {status ? <p role="status">{status}</p> : null}
     </article>
   );
+}
+
+function dancerFinanceVenueName(value: unknown) {
+  const venue = Array.isArray(value) ? value[0] : value;
+  return venue && typeof venue === "object" && "name" in venue ? String((venue as { name?: unknown }).name || "Venue") : "Venue";
 }
 
 async function downloadDashboardFile(path: string, filename: string) {

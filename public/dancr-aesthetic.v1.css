@@ -6091,6 +6091,60 @@ body.dancr-button-system #dancerDashboard #setupChecklist .setup-step.open .step
   background: var(--dancr-color-surface-soft) !important;
 }
 
+.dancer-earnings-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.dancer-earnings-panel .earnings-balance-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.earnings-actions,
+.earnings-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.earnings-actions > button {
+  flex: 1 1 180px;
+}
+
+.earnings-notice {
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  color: rgba(232,229,239,.76);
+  background: rgba(255,255,255,.035);
+}
+
+.earnings-history {
+  display: grid;
+  gap: 12px;
+}
+
+.earnings-filters button {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  color: rgba(240,237,247,.72);
+  background: rgba(255,255,255,.035);
+}
+
+.earnings-filters button.active {
+  color: #fff;
+  border-color: rgba(139,92,246,.5);
+  background: rgba(139,92,246,.2);
+}
+
+@media (max-width: 680px) {
+  .dancer-earnings-panel .earnings-balance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Android media luminance recovery must remain the final media layer. The
  * mobile paint-stability rules in the legacy shell intentionally disable
  * filters on coarse pointers; their more-specific selector previously won

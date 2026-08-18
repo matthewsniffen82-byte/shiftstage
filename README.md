@@ -49,6 +49,11 @@ Required production environment variables:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `DANCR_ADMIN_SEED_KEY`
 - `STRIPE_SECRET_KEY`
+- `PAYOUTS_ENABLED` — server hard stop for real dancer money movement; defaults to `false`
+- `PAYOUT_PROVIDER` — provider adapter default (`stripe`, `adyen`, or `other`); the admin setting is authoritative
+- `EARNINGS_HOLD_DAYS` — fallback earnings review period before availability
+- `MINIMUM_PAYOUT_AMOUNT` — fallback minimum payout in cents (`2000` means $20.00)
+- `PAYOUT_MODE` — fallback mode (`manual_cashout`, `scheduled`, or `both`)
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_DANCER_MONTHLY_PRICE_ID`
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`

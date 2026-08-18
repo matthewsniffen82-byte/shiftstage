@@ -415,7 +415,7 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string) 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const currentMonthCommissions = (commissions || []).filter(
     (item: any) => String(item.commission_month || "").slice(0, 7) === currentMonth
-      && !["rejected", "voided"].includes(item.status),
+      && item.status !== "reversed",
   );
   const successfulRedemptionsThisMonth = currentMonthCommissions.reduce(
     (highest: number, item: any) => Math.max(highest, Number(item.successful_redemption_number || 0)),
@@ -436,15 +436,15 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string) 
     qrShares: (lifecycle || []).filter((item: any) => item.event_type === "shared").length,
     redeemed: (redemptions || []).filter((item: any) => item.status === "redeemed").length,
     expiredOrVoided: (redemptions || []).filter((item: any) => item.status === "expired" || item.status === "voided").length,
-    pendingCommissions: 0,
-    payableCommissions: (commissions || []).filter((item: any) => item.status === "payable").length,
+    pendingCommissions: (commissions || []).filter((item: any) => item.status === "pending").length,
+    payableCommissions: (commissions || []).filter((item: any) => item.status === "available").length,
     paidCommissions: (commissions || []).filter((item: any) => item.status === "paid").length,
-    rejectedCommissions: (commissions || []).filter((item: any) => item.status === "rejected" || item.status === "voided").length,
-    pendingCommissionCents: 0,
-    payableCommissionCents: commissionTotal(["payable"]),
+    rejectedCommissions: (commissions || []).filter((item: any) => item.status === "reversed").length,
+    pendingCommissionCents: commissionTotal(["pending"]),
+    payableCommissionCents: commissionTotal(["available"]),
     paidCommissionCents: commissionTotal(["paid"]),
-    earnedCommissionCents: commissionTotal(["payable", "paid"]),
-    totalCommissionCents: commissionTotal(["payable", "paid"]),
+    earnedCommissionCents: commissionTotal(["available", "payout_processing", "paid"]),
+    totalCommissionCents: commissionTotal(["pending", "available", "payout_processing", "paid"]),
     successfulRedemptionsThisMonth,
     currentDancerSharePercent,
     nextTierAt,

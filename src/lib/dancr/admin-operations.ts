@@ -245,7 +245,7 @@ function summarizeRevenue(
     settledCents: 0,
   });
   summary.payableCents = commissions
-    .filter((row) => row.status === "payable")
+    .filter((row) => row.status === "available")
     .reduce((total, row) => total + Number(row.amount_cents || 0), 0);
   return summary;
 }

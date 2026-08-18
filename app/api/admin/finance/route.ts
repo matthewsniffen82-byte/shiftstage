@@ -3,8 +3,11 @@ import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   getAdminFinanceOverview,
+  manageDancerEarning,
   processDancerPayouts,
   recordManualClubInvoicePayment,
+  retryDancerPayout,
+  updatePayoutSettings,
   runQrFinanceAutomation,
 } from "@/src/lib/dancr/finance";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -53,6 +56,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, finance: await getAdminFinanceOverview(admin) });
     }
 
+    if (body.action === "update_payout_settings") {
+      const paymentProvider = oneOf(body.paymentProvider, ["stripe", "adyen", "other"] as const, "Unsupported payout provider.");
+      const payoutMode = oneOf(body.payoutMode, ["manual_cashout", "scheduled", "both"] as const, "Unsupported payout mode.");
+      const earningsHoldDays = boundedInteger(body.earningsHoldDays, 0, 90, "Hold days must be between 0 and 90.");
+      const minimumPayoutCents = boundedInteger(body.minimumPayoutCents, 1, 10_000_000, "Minimum payout is invalid.");
+      await updatePayoutSettings(admin, user.id, {
+        payoutsEnabled: body.payoutsEnabled === true,
+        paymentProvider,
+        payoutMode,
+        earningsHoldDays,
+        minimumPayoutCents,
+      });
+      return NextResponse.json({ ok: true, finance: await getAdminFinanceOverview(admin) });
+    }
+
+    if (body.action === "manage_earning") {
+      const earningId = requiredText(body.earningId, "Earning is required.");
+      const earningAction = oneOf(body.earningAction, ["hold", "release", "reverse"] as const, "Unsupported earning action.");
+      const reason = requiredText(body.reason, "A financial audit reason is required.");
+      if (reason.length < 3 || reason.length > 500) {
+        return NextResponse.json({ ok: false, error: "Reason must be between 3 and 500 characters." }, { status: 400 });
+      }
+      await manageDancerEarning(admin, user.id, earningId, earningAction, reason);
+      return NextResponse.json({ ok: true, finance: await getAdminFinanceOverview(admin) });
+    }
+
+    if (body.action === "retry_payout") {
+      const payoutId = requiredText(body.payoutId, "Payout is required.");
+      const reason = requiredText(body.reason, "A retry reason is required.");
+      if (reason.length < 3 || reason.length > 500) {
+        return NextResponse.json({ ok: false, error: "Reason must be between 3 and 500 characters." }, { status: 400 });
+      }
+      await retryDancerPayout(admin, user.id, payoutId, reason);
+      return NextResponse.json({ ok: true, finance: await getAdminFinanceOverview(admin) });
+    }
+
     return NextResponse.json({ ok: false, error: "Unsupported finance action." }, { status: 400 });
   } catch (error) {
     return apiError(error, "Unable to update QR finance operations.");
@@ -62,4 +101,15 @@ export async function POST(request: Request) {
 function requiredText(value: unknown, message: string) {
   if (typeof value !== "string" || !value.trim()) throw new Error(message);
   return value.trim();
+}
+
+function boundedInteger(value: unknown, minimum: number, maximum: number, message: string) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < minimum || parsed > maximum) throw new Error(message);
+  return parsed;
+}
+
+function oneOf<const T extends readonly string[]>(value: unknown, allowed: T, message: string): T[number] {
+  if (typeof value !== "string" || !allowed.includes(value)) throw new Error(message);
+  return value as T[number];
 }

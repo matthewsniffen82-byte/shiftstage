@@ -3,7 +3,6 @@ import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   getAdminDealActivity,
-  settleDancerCommissionEvent,
   settleDealRevenueEvent,
   voidDealRedemption,
 } from "@/src/lib/dancr/deals";
@@ -41,9 +40,7 @@ export async function PATCH(request: Request) {
     await requireAdmin(client, user.id);
 
     const body = await request.json();
-    const settlementAction = body?.action === "venue_payment_received" || body?.action === "dancer_paid"
-      ? body.action
-      : null;
+    const settlementAction = body?.action === "venue_payment_received" ? body.action : null;
     if (settlementAction === "venue_payment_received") {
       const revenueEventId = typeof body?.revenueEventId === "string" ? body.revenueEventId.trim() : "";
       const externalReference = typeof body?.externalReference === "string" ? body.externalReference.trim() : "";
@@ -65,23 +62,6 @@ export async function PATCH(request: Request) {
         action: settlementAction,
       });
       return NextResponse.json({ ok: true, revenueEvent });
-    }
-
-    if (settlementAction === "dancer_paid") {
-      const commissionEventId = typeof body?.commissionEventId === "string" ? body.commissionEventId.trim() : "";
-      const externalReference = typeof body?.externalReference === "string" ? body.externalReference.trim() : "";
-      if (!commissionEventId || !externalReference) {
-        return NextResponse.json(
-          { ok: false, error: "Dancer commission and payout reference are required." },
-          { status: 400 },
-        );
-      }
-      const commissionEvent = await settleDancerCommissionEvent(client, commissionEventId, externalReference);
-      console.info("DANCER_COMMISSION_PAYOUT_RECORDED", {
-        adminUserId: user.id,
-        commissionEventId,
-      });
-      return NextResponse.json({ ok: true, commissionEvent });
     }
 
     const redemptionId = typeof body?.redemptionId === "string" ? body.redemptionId.trim() : "";

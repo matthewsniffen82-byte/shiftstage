@@ -1,6 +1,15 @@
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "../stripe";
+import {
+  getPayoutProvider,
+  getPayoutRuntimeConfig,
+  isPayoutProviderConfigured,
+  stripeAccountState,
+  type PayoutMode,
+  type PayoutProviderName,
+  type ProviderAccountState,
+} from "./payout-provider";
 import { requireVenueAccess } from "./venue-access";
 
 type DancrClient = SupabaseClient;
@@ -326,122 +335,166 @@ export async function createDancerConnectOnboarding(
   refreshUrl: string,
 ) {
   const dancer = await getDancerForUser(client, userId);
-  let payoutAccount = await getDancerPayoutAccount(client, dancer.id);
-  const stripe = getStripe();
+  const settings = await getEffectivePayoutSettings(client);
+  if (!settings.payoutsEnabled) {
+    throw new Error("Payout setup will open after MyDancr's payout provider is approved and enabled.");
+  }
+  let payoutAccount = await getDancerPayoutAccount(client, dancer.id, settings.paymentProvider);
+  const provider = getPayoutProvider(settings.paymentProvider);
 
   if (!payoutAccount) {
-    const account = await stripe.accounts.create({
-      type: "express",
-      country: "US",
-      email: dancer.email || undefined,
-      business_type: "individual",
-      capabilities: { transfers: { requested: true } },
-      metadata: { dancer_id: dancer.id, mydancr_user_id: userId },
-    }, { idempotencyKey: `mydancr-dancer-connect-${dancer.id}` });
-    payoutAccount = await upsertDancerPayoutAccount(client, dancer.id, account);
+    const account = await provider.createConnectedAccount({ dancerId: dancer.id, userId, email: dancer.email });
+    payoutAccount = await upsertDancerPayoutAccount(client, dancer.id, settings.paymentProvider, account);
   }
 
-  const accountLink = await stripe.accountLinks.create({
-    account: payoutAccount.stripe_account_id,
-    refresh_url: refreshUrl,
-    return_url: returnUrl,
-    type: "account_onboarding",
+  const providerAccountId = String(payoutAccount.provider_account_id || "");
+  if (!providerAccountId) throw new Error("Payout account setup is incomplete.");
+  const accountLink = await provider.createOnboardingLink({
+    providerAccountId,
+    refreshUrl,
+    returnUrl,
   });
-  return { url: accountLink.url, expiresAt: accountLink.expires_at };
+  return { url: accountLink.url, expiresAt: accountLink.expiresAt };
 }
 
 export async function syncDancerConnectAccount(client: DancrClient, account: Stripe.Account) {
   const dancerId = account.metadata?.dancer_id;
   if (!dancerId) return null;
-  return upsertDancerPayoutAccount(client, dancerId, account);
+  return upsertDancerPayoutAccount(client, dancerId, "stripe", stripeAccountState(account));
 }
 
 export async function refreshDancerConnectAccount(client: DancrClient, userId: string) {
   const dancer = await getDancerForUser(client, userId);
-  const payoutAccount = await getDancerPayoutAccount(client, dancer.id);
+  const settings = await getEffectivePayoutSettings(client);
+  if (!settings.payoutsEnabled) return null;
+  const payoutAccount = await getDancerPayoutAccount(client, dancer.id, settings.paymentProvider);
   if (!payoutAccount) return null;
-  const account = await getStripe().accounts.retrieve(payoutAccount.stripe_account_id);
-  return upsertDancerPayoutAccount(client, dancer.id, account);
+  const providerAccountId = String(payoutAccount.provider_account_id || "");
+  if (!providerAccountId) return null;
+  const account = await getPayoutProvider(settings.paymentProvider).retrieveConnectedAccount(providerAccountId);
+  return upsertDancerPayoutAccount(client, dancer.id, settings.paymentProvider, account);
 }
 
 export async function processDancerPayouts(client: DancrClient) {
-  const { data, error } = await (client as any)
-    .from("commission_events")
-    .select("id, dancer_id, amount_cents, currency")
-    .eq("status", "payable")
-    .is("payout_batch_id", null)
-    .order("payable_at", { ascending: true })
-    .limit(MAX_FINANCE_ROWS);
-  if (error) throw error;
-
-  const groups = new Map<string, Array<any>>();
-  for (const row of data || []) {
-    const key = `${row.dancer_id}:${row.currency || "usd"}`;
-    const rows = groups.get(key) || [];
-    rows.push(row);
-    groups.set(key, rows);
+  await (client as any).rpc("release_pending_dancer_earnings", { p_limit: MAX_FINANCE_ROWS });
+  const settings = await getEffectivePayoutSettings(client);
+  if (!settings.payoutsEnabled) {
+    return { created: 0, failed: 0, disabled: true, errors: [] as string[] };
   }
+
+  if (settings.payoutMode === "scheduled" || settings.payoutMode === "both") {
+    await createScheduledPayoutRequests(client, settings.minimumPayoutCents, settings.paymentProvider);
+  }
+
+  const { data: batches, error } = await (client as any).from("dancer_payout_batches")
+    .select("id, dancer_id, amount_cents, currency, payment_provider, provider_reference_id, request_key, status, metadata")
+    .in("status", ["requested", "processing"]).eq("is_test", false).order("requested_at", { ascending: true }).limit(250);
+  if (error) throw error;
 
   let created = 0;
   let failed = 0;
   const errors: string[] = [];
-  for (const rows of groups.values()) {
-    const dancerId = rows[0].dancer_id;
-    const currency = String(rows[0].currency || "usd");
-    const payoutAccount = await getDancerPayoutAccount(client, dancerId);
-    if (!payoutAccount?.payouts_enabled || !payoutAccount?.onboarding_complete) continue;
-
-    let batchId: string | null = null;
+  for (const batch of batches || []) {
+    const dispatchKey = `mydancr-payout-${batch.id}`;
+    const isDispatchRetry = batch.status === "processing" && batch.provider_reference_id === dispatchKey;
+    if (batch.status === "processing" && !isDispatchRetry) continue;
+    let dispatchStarted = isDispatchRetry;
     try {
-      const { data: createdBatch, error: batchError } = await (client as any).rpc("create_dancer_payout_batch", {
-        p_dancer_id: dancerId,
-        p_currency: currency,
-        p_commission_event_ids: rows.map((row) => row.id),
+      const providerName = String(batch.payment_provider || settings.paymentProvider) as PayoutProviderName;
+      const payoutAccount = await getDancerPayoutAccount(client, batch.dancer_id, providerName);
+      if (!payoutAccount || payoutAccount.payout_eligibility !== "eligible" || payoutAccount.verification_status !== "verified") {
+        throw new Error("The dancer payout account is not currently eligible for payouts.");
+      }
+      const providerAccountId = String(payoutAccount.provider_account_id || "");
+      if (!providerAccountId) throw new Error("The dancer payout account is missing its provider reference.");
+      if (!dispatchStarted) {
+        const { error: reserveError } = await (client as any).rpc("mark_dancer_payout_processing", {
+          p_payout_id: batch.id,
+          p_provider_reference_id: dispatchKey,
+        });
+        if (reserveError) throw reserveError;
+        dispatchStarted = true;
+      }
+      const transfer = await getPayoutProvider(providerName).initiatePayout({
+        payoutId: batch.id,
+        dancerId: batch.dancer_id,
+        providerAccountId,
+        amountCents: Number(batch.amount_cents),
+        currency: String(batch.currency || "usd"),
+        idempotencyKey: dispatchKey,
       });
-      if (batchError) throw batchError;
-      batchId = createdBatch;
-      const amount = rows.reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
-      const transfer = await getStripe().transfers.create({
-        amount,
-        currency,
-        destination: payoutAccount.stripe_account_id,
-        description: "MyDancr Club Deal commission payout",
-        metadata: { payout_batch_id: batchId, dancer_id: dancerId },
-      }, { idempotencyKey: `mydancr-payout-batch-${batchId}` });
-      const { error: completeError } = await (client as any).rpc("complete_dancer_payout_batch", {
-        p_batch_id: batchId,
-        p_transfer_id: transfer.id,
-        p_paid_at: new Date().toISOString(),
+      const { error: processingError } = await (client as any).rpc("mark_dancer_payout_processing", {
+        p_payout_id: batch.id,
+        p_provider_reference_id: transfer.providerReferenceId,
       });
-      if (completeError) throw completeError;
+      if (processingError) throw processingError;
       created += 1;
     } catch (error) {
       failed += 1;
       const message = financeError(error);
       errors.push(message);
-      if (batchId) {
+      if (dispatchStarted) {
+        const { error: reviewError } = await (client as any).rpc("flag_dancer_payout_dispatch_review", {
+          p_payout_id: batch.id,
+          p_failure_message: message,
+        });
+        if (reviewError) errors.push(`Unable to audit provider dispatch review: ${financeError(reviewError)}`);
+      } else {
         await (client as any).rpc("release_dancer_payout_batch", {
-          p_batch_id: batchId,
+          p_batch_id: batch.id,
           p_status: "failed",
           p_failure_message: message,
         });
       }
     }
   }
-  return { created, failed, errors };
+  return { created, failed, disabled: false, errors };
+}
+
+export async function requestDancerCashOut(client: DancrClient, userId: string, requestKey: string) {
+  const settings = await getEffectivePayoutSettings(client);
+  if (!settings.payoutsEnabled) throw new Error("Cash out is not live while payout approval is pending.");
+  if (settings.payoutMode !== "manual_cashout" && settings.payoutMode !== "both") {
+    throw new Error("Manual cash out is not currently enabled.");
+  }
+  const preview = await getDancerFinance(client, userId);
+  if (Number(preview.balances.availableCents || 0) < settings.minimumPayoutCents) {
+    throw new Error("Available earnings do not meet the minimum cash-out amount.");
+  }
+  const { data, error } = await (client as any).rpc("request_dancer_payout", {
+    p_user_id: userId,
+    p_request_key: requestKey,
+    p_payment_provider: settings.paymentProvider,
+    p_is_test: false,
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function reverseDancerPayoutTransfer(client: DancrClient, transferId: string, message: string) {
   const { data: batch, error } = await (client as any)
     .from("dancer_payout_batches")
-    .select("id")
-    .eq("stripe_transfer_id", transferId)
+    .select("id, status")
+    .eq("provider_reference_id", transferId)
     .maybeSingle();
   if (error) throw error;
   if (!batch) return null;
+  if (batch.status === "paid") {
+    const { error: recoveryError } = await (client as any).from("commission_events").update({
+      recovery_required: true,
+      review_flag: "paid_payout_reversed_by_provider",
+    }).eq("payout_batch_id", batch.id).eq("status", "paid");
+    if (recoveryError) throw recoveryError;
+    await (client as any).from("financial_audit_events").insert({
+      actor_type: "provider", action: "paid_payout_recovery_required", target_type: "payout",
+      target_id: batch.id, reason: message.slice(0, 500),
+      metadata: { provider_reference_id: transferId, automatic_debit_attempted: false },
+    });
+    return { id: batch.id, status: "paid", recoveryRequired: true };
+  }
   const { data, error: releaseError } = await (client as any).rpc("release_dancer_payout_batch", {
     p_batch_id: batch.id,
-    p_status: "reversed",
+    p_status: "failed",
     p_failure_message: message,
   });
   if (releaseError) throw releaseError;
@@ -450,19 +503,24 @@ export async function reverseDancerPayoutTransfer(client: DancrClient, transferI
 
 export async function getAdminFinanceOverview(client: DancrClient) {
   const now = new Date().toISOString();
-  const [invoicesResult, payoutsResult, revenueResult, commissionsResult] = await Promise.all([
+  const [invoicesResult, payoutsResult, revenueResult, commissionsResult, settingsResult, auditResult, dancerFinancialSummaryResult] = await Promise.all([
     (client as any).from("club_invoices")
       .select("id, venue_id, period_start, period_end, sequence, status, currency, amount_due_cents, amount_paid_cents, due_at, hosted_invoice_url, invoice_pdf_url, external_payment_reference, paid_at, reminder_count, last_error, venues(name)")
       .order("created_at", { ascending: false }).limit(200),
     (client as any).from("dancer_payout_batches")
-      .select("id, dancer_id, status, currency, amount_cents, stripe_transfer_id, failure_message, paid_at, created_at, dancer_profiles(stage_name)")
+      .select("id, dancer_id, status, currency, amount_cents, payment_provider, provider_reference_id, failure_message, requested_at, processing_at, paid_at, failed_at, is_test, created_at, dancer_profiles(stage_name)")
       .order("created_at", { ascending: false }).limit(200),
     (client as any).from("deal_revenue_events")
       .select("status, gross_commission_cents, dancer_commission_cents, platform_commission_cents").limit(MAX_FINANCE_ROWS),
     (client as any).from("commission_events")
-      .select("status, amount_cents").limit(MAX_FINANCE_ROWS),
+      .select("id, qr_redemption_id, dancer_id, venue_id, club_deal_id, earning_type, status, amount_cents, currency, created_at, pending_until, available_at, held_at, hold_reason, review_flag, reversal_reason, is_test, dancer_profiles(stage_name), venues(name), club_deals(deal_title)")
+      .order("created_at", { ascending: false }).limit(MAX_FINANCE_ROWS),
+    (client as any).from("payout_settings").select("*").eq("id", "default").single(),
+    (client as any).from("financial_audit_events").select("id, actor_type, action, target_type, target_id, reason, created_at")
+      .order("created_at", { ascending: false }).limit(100),
+    (client as any).rpc("get_admin_dancer_financial_summary"),
   ]);
-  for (const result of [invoicesResult, payoutsResult, revenueResult, commissionsResult]) {
+  for (const result of [invoicesResult, payoutsResult, revenueResult, commissionsResult, settingsResult, auditResult, dancerFinancialSummaryResult]) {
     if (result.error) throw result.error;
   }
   const invoices = invoicesResult.data || [];
@@ -473,22 +531,82 @@ export async function getAdminFinanceOverview(client: DancrClient) {
   const outstanding = invoices.filter((row: any) => ["open", "overdue"].includes(row.status));
   const overdue = outstanding.filter((row: any) => row.status === "overdue" || row.due_at < now);
   const paidInvoices = invoices.filter((row: any) => row.status === "paid");
-  const paidPayouts = payouts.filter((row: any) => row.status === "paid");
+  const dancerFinancialSummary = dancerFinancialSummaryResult.data || {};
+  const earningGroup = (relationship: string, fallback: string) => Array.from(commissions.reduce((groups: Map<string, { name: string; amountCents: number; count: number }>, row: any) => {
+    if (["reversed", "failed"].includes(String(row.status))) return groups;
+    const related = joined(row[relationship]);
+    const name = String(related?.stage_name || related?.name || fallback);
+    const current = groups.get(name) || { name, amountCents: 0, count: 0 };
+    current.amountCents += Number(row.amount_cents || 0);
+    current.count += 1;
+    groups.set(name, current);
+    return groups;
+  }, new Map()).values()).sort((a: any, b: any) => b.amountCents - a.amountCents);
+  const configuredProvider = String(settingsResult.data?.payment_provider || "stripe") as PayoutProviderName;
+  const providerConfigured = isPayoutProviderConfigured(configuredProvider);
   return {
     metrics: {
       outstandingReceivablesCents: sum(outstanding, "amount_due_cents") - sum(outstanding, "amount_paid_cents"),
       overdueReceivablesCents: sum(overdue, "amount_due_cents") - sum(overdue, "amount_paid_cents"),
       paidClubRevenueCents: sum(paidInvoices, "amount_paid_cents"),
-      dancerPayableCents: sum(commissions.filter((row: any) => row.status === "payable"), "amount_cents"),
-      dancerPaidCents: sum(paidPayouts, "amount_cents"),
+      dancerPendingCents: safeIntegerCents(dancerFinancialSummary.pending_cents),
+      dancerAvailableCents: safeIntegerCents(dancerFinancialSummary.available_cents),
+      dancerProcessingCents: safeIntegerCents(dancerFinancialSummary.processing_cents),
+      dancerPayableCents: safeIntegerCents(dancerFinancialSummary.available_cents),
+      dancerPaidCents: safeIntegerCents(dancerFinancialSummary.paid_cents),
+      reversedEarningsCents: safeIntegerCents(dancerFinancialSummary.reversed_cents),
       myDancrNetRevenueCents: sum(revenue.filter((row: any) => row.status === "settled"), "platform_commission_cents"),
       openInvoiceCount: outstanding.length,
       overdueInvoiceCount: overdue.length,
-      failedPayoutCount: payouts.filter((row: any) => row.status === "failed").length,
+      failedPayoutCount: safeIntegerCents(dancerFinancialSummary.failed_payout_count),
+      completedPayoutCount: safeIntegerCents(dancerFinancialSummary.completed_payout_count),
     },
     invoices,
     payouts,
+    earnings: commissions,
+    earningsByVenue: earningGroup("venues", "Venue"),
+    earningsByDancer: earningGroup("dancer_profiles", "Dancer"),
+    settings: {
+      ...settingsResult.data,
+      environmentEnabled: getPayoutRuntimeConfig().enabledByEnvironment,
+      providerConfigured,
+      livePayoutsEnabled: Boolean(settingsResult.data?.payouts_enabled && getPayoutRuntimeConfig().enabledByEnvironment && providerConfigured),
+    },
+    auditEvents: auditResult.data || [],
   };
+}
+
+export async function updatePayoutSettings(
+  client: DancrClient,
+  adminUserId: string,
+  input: { payoutsEnabled: boolean; paymentProvider: PayoutProviderName; earningsHoldDays: number; minimumPayoutCents: number; payoutMode: PayoutMode },
+) {
+  const { data, error } = await (client as any).rpc("admin_update_payout_settings", {
+    p_admin_user_id: adminUserId,
+    p_payouts_enabled: Boolean(input.payoutsEnabled),
+    p_payment_provider: input.paymentProvider,
+    p_earnings_hold_days: input.earningsHoldDays,
+    p_minimum_payout_cents: input.minimumPayoutCents,
+    p_payout_mode: input.payoutMode,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function manageDancerEarning(client: DancrClient, adminUserId: string, earningId: string, action: string, reason: string) {
+  const { data, error } = await (client as any).rpc("admin_manage_dancer_earning", {
+    p_admin_user_id: adminUserId, p_earning_id: earningId, p_action: action, p_reason: reason,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function retryDancerPayout(client: DancrClient, adminUserId: string, payoutId: string, reason: string) {
+  const { data, error } = await (client as any).rpc("admin_retry_dancer_payout", {
+    p_admin_user_id: adminUserId, p_failed_payout_id: payoutId, p_reason: reason,
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function getVenueFinance(client: DancrClient, userId: string) {
@@ -508,21 +626,42 @@ export async function getVenueFinance(client: DancrClient, userId: string) {
 
 export async function getDancerFinance(client: DancrClient, userId: string) {
   const dancer = await getDancerForUser(client, userId);
-  const [{ data: account, error: accountError }, { data: payouts, error: payoutError }, { data: commissions, error: commissionError }] = await Promise.all([
-    (client as any).from("dancer_payout_accounts").select("country, default_currency, details_submitted, charges_enabled, payouts_enabled, onboarding_complete, last_error, updated_at").eq("dancer_id", dancer.id).maybeSingle(),
-    (client as any).from("dancer_payout_batches").select("id, status, currency, amount_cents, external_reference, failure_message, paid_at, created_at").eq("dancer_id", dancer.id).order("created_at", { ascending: false }).limit(36),
-    (client as any).from("commission_events").select("status, amount_cents").eq("dancer_id", dancer.id).limit(MAX_FINANCE_ROWS),
+  await (client as any).rpc("release_pending_dancer_earnings", { p_limit: MAX_FINANCE_ROWS });
+  const settings = await getEffectivePayoutSettings(client);
+  const [
+    { data: account, error: accountError },
+    { data: payouts, error: payoutError },
+    { data: commissions, error: commissionError },
+    { data: balanceSummary, error: balanceError },
+  ] = await Promise.all([
+    (client as any).from("dancer_payout_accounts").select("payment_provider, country, default_currency, onboarding_status, payout_eligibility, verification_status, details_submitted, payouts_enabled, last_error, updated_at").eq("dancer_id", dancer.id).eq("payment_provider", settings.paymentProvider).maybeSingle(),
+    (client as any).from("dancer_payout_batches").select("id, status, currency, amount_cents, payment_provider, provider_reference_id, requested_at, processing_at, paid_at, failed_at, failure_message, is_test, created_at").eq("dancer_id", dancer.id).order("created_at", { ascending: false }).limit(100),
+    (client as any).from("commission_events").select("id, venue_id, earning_type, status, amount_cents, currency, created_at, pending_until, available_at, paid_at, held_at, is_test, venues(name)").eq("dancer_id", dancer.id).order("created_at", { ascending: false }).limit(MAX_FINANCE_ROWS),
+    (client as any).rpc("get_dancer_earnings_summary", { p_user_id: userId }),
   ]);
   if (accountError) throw accountError;
   if (payoutError) throw payoutError;
   if (commissionError) throw commissionError;
-  const total = (status: string) => (commissions || []).filter((row: any) => row.status === status).reduce((sum: number, row: any) => sum + Number(row.amount_cents || 0), 0);
+  if (balanceError) throw balanceError;
+  const pendingCents = safeIntegerCents(balanceSummary?.pending_cents);
+  const availableCents = safeIntegerCents(balanceSummary?.available_cents);
+  const processingCents = safeIntegerCents(balanceSummary?.processing_cents);
+  const lifetimeCents = safeIntegerCents(balanceSummary?.lifetime_cents);
+  const paidCents = safeIntegerCents(balanceSummary?.paid_cents);
   return {
     dancer: { id: dancer.id, stageName: dancer.stage_name },
     payoutAccount: account,
-    payableCents: total("payable"),
-    pendingClubPaymentCents: 0,
-    paidCents: total("paid"),
+    settings,
+    balances: {
+      pendingCents,
+      availableCents,
+      processingCents,
+      lifetimeCents,
+    },
+    payableCents: availableCents,
+    pendingClubPaymentCents: pendingCents,
+    paidCents,
+    earnings: commissions || [],
     payouts: payouts || [],
   };
 }
@@ -566,24 +705,49 @@ export function dancerStatementCsv(statement: Awaited<ReturnType<typeof getDance
   return csv([header, ...rows]);
 }
 
-export async function recordStripeFinanceWebhook(client: DancrClient, event: Stripe.Event) {
-  const object = event.data.object as { id?: string };
-  const { error } = await (client as any).from("stripe_finance_webhook_events").insert({
-    stripe_event_id: event.id,
-    event_type: event.type,
-    object_id: object?.id || null,
+export async function recordPaymentProviderWebhook(client: DancrClient, provider: PayoutProviderName, event: { id: string; type: string; objectId?: string | null }) {
+  const { data, error } = await (client as any).rpc("claim_payment_provider_webhook", {
+    p_payment_provider: provider,
+    p_provider_event_id: event.id,
+    p_event_type: event.type,
+    p_object_id: event.objectId || null,
   });
-  if (!error) return true;
-  if (String(error.code) === "23505") return false;
-  throw error;
+  if (error) throw error;
+  return data === true;
 }
 
-export async function releaseStripeFinanceWebhookEvent(client: DancrClient, eventId: string) {
-  const { error } = await (client as any)
-    .from("stripe_finance_webhook_events")
-    .delete()
-    .eq("stripe_event_id", eventId);
+export async function finishPaymentProviderWebhook(client: DancrClient, provider: PayoutProviderName, eventId: string, failureReason?: string) {
+  const { error } = await (client as any).from("payment_provider_webhook_events").update({
+    processing_status: failureReason ? "failed" : "processed",
+    failure_reason: failureReason ? failureReason.slice(0, 500) : null,
+    processed_at: new Date().toISOString(),
+  }).eq("payment_provider", provider).eq("provider_event_id", eventId).eq("processing_status", "processing");
   if (error) throw error;
+}
+
+export async function completeProviderPayout(
+  client: DancrClient,
+  providerReferenceId: string,
+  paidAt = new Date().toISOString(),
+  internalPayoutId?: string | null,
+) {
+  const query = (client as any).from("dancer_payout_batches")
+    .select("id").eq("provider_reference_id", providerReferenceId).maybeSingle();
+  let { data: payout, error } = await query;
+  if (error) throw error;
+  if (!payout && internalPayoutId) {
+    const fallback = await (client as any).from("dancer_payout_batches")
+      .select("id").eq("id", internalPayoutId).eq("status", "processing").maybeSingle();
+    payout = fallback.data;
+    error = fallback.error;
+  }
+  if (error) throw error;
+  if (!payout) return null;
+  const { data, error: completeError } = await (client as any).rpc("complete_dancer_payout_batch", {
+    p_batch_id: payout.id, p_transfer_id: providerReferenceId, p_paid_at: paidAt,
+  });
+  if (completeError) throw completeError;
+  return data;
 }
 
 async function getOrCreateFinanceAccountRow(client: DancrClient, venueId: string) {
@@ -623,29 +787,83 @@ async function getDancerForUser(client: DancrClient, userId: string) {
   return { ...dancer, email: user?.email || null };
 }
 
-async function getDancerPayoutAccount(client: DancrClient, dancerId: string) {
-  const { data, error } = await (client as any).from("dancer_payout_accounts").select("*").eq("dancer_id", dancerId).maybeSingle();
+async function getDancerPayoutAccount(client: DancrClient, dancerId: string, provider?: PayoutProviderName) {
+  let query = (client as any).from("dancer_payout_accounts").select("*").eq("dancer_id", dancerId);
+  if (provider) query = query.eq("payment_provider", provider);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data;
 }
 
-async function upsertDancerPayoutAccount(client: DancrClient, dancerId: string, account: Stripe.Account) {
-  const requirements = account.requirements?.currently_due || [];
-  const onboardingComplete = Boolean(account.details_submitted && account.payouts_enabled && requirements.length === 0);
+async function upsertDancerPayoutAccount(client: DancrClient, dancerId: string, provider: PayoutProviderName, account: ProviderAccountState) {
   const { data, error } = await (client as any).from("dancer_payout_accounts").upsert({
     dancer_id: dancerId,
-    stripe_account_id: account.id,
-    country: account.country || "US",
-    default_currency: account.default_currency || "usd",
-    details_submitted: Boolean(account.details_submitted),
-    charges_enabled: Boolean(account.charges_enabled),
-    payouts_enabled: Boolean(account.payouts_enabled),
-    onboarding_complete: onboardingComplete,
-    last_error: requirements.length ? `Stripe requires: ${requirements.join(", ")}` : null,
+    payment_provider: provider,
+    provider_account_id: account.providerAccountId,
+    stripe_account_id: provider === "stripe" ? account.providerAccountId : null,
+    country: account.country,
+    default_currency: account.currency,
+    onboarding_status: account.onboardingStatus,
+    payout_eligibility: account.payoutEligibility,
+    verification_status: account.verificationStatus,
+    details_submitted: account.detailsSubmitted,
+    charges_enabled: account.chargesEnabled,
+    payouts_enabled: account.payoutsEnabled,
+    onboarding_complete: account.onboardingStatus === "complete",
+    last_error: account.lastError,
+    provider_status: account.providerStatus,
     updated_at: new Date().toISOString(),
-  }, { onConflict: "dancer_id" }).select("*").single();
+  }, { onConflict: "dancer_id,payment_provider" }).select("*").single();
   if (error) throw error;
   return data;
+}
+
+async function getDatabasePayoutSettings(client: DancrClient) {
+  const { data, error } = await (client as any).from("payout_settings").select("*").eq("id", "default").single();
+  if (error) throw error;
+  return data;
+}
+
+async function getEffectivePayoutSettings(client: DancrClient) {
+  const database = await getDatabasePayoutSettings(client);
+  const runtime = getPayoutRuntimeConfig();
+  const paymentProvider = String(database.payment_provider || runtime.provider) as PayoutProviderName;
+  const providerConfigured = isPayoutProviderConfigured(paymentProvider);
+  return {
+    payoutsEnabled: Boolean(runtime.enabledByEnvironment && database.payouts_enabled && providerConfigured),
+    environmentEnabled: runtime.enabledByEnvironment,
+    databaseEnabled: Boolean(database.payouts_enabled),
+    providerConfigured,
+    paymentProvider,
+    earningsHoldDays: Number(database.earnings_hold_days ?? runtime.holdDays),
+    minimumPayoutCents: Number(database.minimum_payout_cents ?? runtime.minimumPayoutCents),
+    payoutMode: String(database.payout_mode || runtime.mode) as PayoutMode,
+  };
+}
+
+async function createScheduledPayoutRequests(client: DancrClient, minimumPayoutCents: number, provider: PayoutProviderName) {
+  const { data, error } = await (client as any).from("commission_events")
+    .select("id, dancer_id, amount_cents, currency").eq("status", "available").is("payout_batch_id", null)
+    .is("held_at", null).is("review_flag", null).order("created_at", { ascending: true }).limit(MAX_FINANCE_ROWS);
+  if (error) throw error;
+  const groups = new Map<string, any[]>();
+  for (const earning of data || []) {
+    const key = `${earning.dancer_id}:${earning.currency || "usd"}`;
+    groups.set(key, [...(groups.get(key) || []), earning]);
+  }
+  for (const earnings of groups.values()) {
+    const amount = earnings.reduce((total, earning) => total + Number(earning.amount_cents || 0), 0);
+    if (amount < minimumPayoutCents) continue;
+    const account = await getDancerPayoutAccount(client, earnings[0].dancer_id, provider);
+    if (!account || account.payout_eligibility !== "eligible" || account.verification_status !== "verified") continue;
+    const { error: batchError } = await (client as any).rpc("create_dancer_payout_batch", {
+      p_dancer_id: earnings[0].dancer_id,
+      p_currency: earnings[0].currency || "usd",
+      p_commission_event_ids: earnings.map((earning) => earning.id),
+      p_payment_provider: provider,
+    });
+    if (batchError && String(batchError.code) !== "23505") throw batchError;
+  }
 }
 
 async function captureFinanceStep(result: FinanceRunResult, action: () => Promise<void>) {
@@ -683,6 +901,16 @@ function financeError(error: unknown) {
   if (error instanceof Error) return error.message.slice(0, 500);
   if (error && typeof error === "object" && "message" in error) return String((error as any).message).slice(0, 500);
   return "Finance operation failed.";
+}
+
+function safeIntegerCents(value: unknown) {
+  const parsed = typeof value === "string" && /^\d+$/.test(value)
+    ? Number(value)
+    : Number(value ?? 0);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error("Financial amount exceeds the supported integer range.");
+  }
+  return parsed;
 }
 
 function cents(value: unknown) {

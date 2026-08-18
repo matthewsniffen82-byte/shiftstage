@@ -6,9 +6,10 @@ import {
   syncStripeSubscription,
 } from "@/src/lib/dancr/payments";
 import {
+  completeProviderPayout,
+  finishPaymentProviderWebhook,
   markStripeInvoiceFailure,
-  recordStripeFinanceWebhook,
-  releaseStripeFinanceWebhookEvent,
+  recordPaymentProviderWebhook,
   reverseDancerPayoutTransfer,
   syncDancerConnectAccount,
   syncStripeInvoice,
@@ -54,7 +55,10 @@ export async function POST(request: Request) {
     }
 
     if (isFinanceEvent(event.type)) {
-      const claimed = await recordStripeFinanceWebhook(admin, event);
+      const object = event.data.object as { id?: string };
+      const claimed = await recordPaymentProviderWebhook(admin, "stripe", {
+        id: event.id, type: event.type, objectId: object.id || null,
+      });
       if (!claimed) return NextResponse.json({ ok: true, received: true, duplicate: true });
       try {
         if (event.type.startsWith("invoice.")) {
@@ -70,12 +74,23 @@ export async function POST(request: Request) {
           await syncDancerConnectAccount(admin, event.data.object as Stripe.Account);
         }
 
+        if (event.type === "transfer.created") {
+          const transfer = event.data.object as Stripe.Transfer;
+          await completeProviderPayout(
+            admin,
+            transfer.id,
+            new Date(event.created * 1000).toISOString(),
+            transfer.metadata?.payout_batch_id || null,
+          );
+        }
+
         if (event.type === "transfer.reversed") {
           const transfer = event.data.object as Stripe.Transfer;
           await reverseDancerPayoutTransfer(admin, transfer.id, "Stripe reported that this payout transfer was reversed.");
         }
+        await finishPaymentProviderWebhook(admin, "stripe", event.id);
       } catch (error) {
-        await releaseStripeFinanceWebhookEvent(admin, event.id);
+        await finishPaymentProviderWebhook(admin, "stripe", event.id, error instanceof Error ? error.message : "Webhook processing failed.");
         throw error;
       }
     }
@@ -101,6 +116,7 @@ function isFinanceEvent(type: string) {
     "invoice.voided",
     "invoice.marked_uncollectible",
     "account.updated",
+    "transfer.created",
     "transfer.reversed",
   ].includes(type);
 }

@@ -17,7 +17,7 @@ export type LocationStatus = "self_reported" | "location_confirmed" | "club_conf
 export type DealSourceType = "club_page" | "dancer_profile";
 export type ClubDealOfferType = "admission" | "other";
 export type RedemptionStatus = "generated" | "redeemed" | "expired" | "voided";
-export type CommissionStatus = "pending_club_payment" | "payable" | "paid" | "rejected" | "voided";
+export type CommissionStatus = "pending" | "available" | "payout_processing" | "paid" | "reversed" | "failed";
 export type NotificationType =
   | "shift_posted"
   | "shift_updated"

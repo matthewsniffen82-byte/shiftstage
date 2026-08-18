@@ -5,6 +5,7 @@ import {
   createDancerConnectOnboarding,
   getDancerFinance,
   refreshDancerConnectAccount,
+  requestDancerCashOut,
 } from "@/src/lib/dancr/finance";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -31,17 +32,25 @@ export async function POST(request: Request) {
     const denied = await requireActiveDancer(client, user.id);
     if (denied) return denied;
     const body = await request.json().catch(() => ({}));
-    if (body.action !== "connect_onboarding") {
-      return NextResponse.json({ ok: false, error: "Unsupported payout action." }, { status: 400 });
+    if (body.action === "cash_out") {
+      const suppliedKey = request.headers.get("idempotency-key")?.trim();
+      const requestKey = suppliedKey && suppliedKey.length >= 12 && suppliedKey.length <= 160
+        ? `${user.id}:${suppliedKey}`
+        : `${user.id}:${crypto.randomUUID()}`;
+      const payout = await requestDancerCashOut(createAdminSupabaseClient(), user.id, requestKey);
+      return NextResponse.json({ ok: true, payout, finance: await getDancerFinance(createAdminSupabaseClient(), user.id) });
     }
-    const origin = configuredSiteOrigin(request);
-    const onboarding = await createDancerConnectOnboarding(
-      createAdminSupabaseClient(),
-      user.id,
-      `${origin}/dashboard?finance=connected`,
-      `${origin}/dashboard?finance=refresh`,
-    );
-    return NextResponse.json({ ok: true, onboarding });
+    if (body.action === "connect_onboarding") {
+      const origin = configuredSiteOrigin(request);
+      const onboarding = await createDancerConnectOnboarding(
+        createAdminSupabaseClient(),
+        user.id,
+        `${origin}/dashboard?finance=connected`,
+        `${origin}/dashboard?finance=refresh`,
+      );
+      return NextResponse.json({ ok: true, onboarding });
+    }
+    return NextResponse.json({ ok: false, error: "Unsupported payout action." }, { status: 400 });
   } catch (error) {
     return apiError(error, "Unable to start secure payout setup.");
   }

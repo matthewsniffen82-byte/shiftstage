@@ -7,6 +7,7 @@ const [
   separationMigration,
   fixedCommissionMigration,
   scaleCommissionMigration,
+  earningsMigration,
   policy,
   deals,
   generationRoute,
@@ -29,6 +30,7 @@ const [
   readFile(new URL("../supabase/migrations/202608080001_separate_venue_receivables_and_dancer_payouts.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608180001_fix_dancer_profile_commission_at_fifty_percent.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608180002_set_dancer_profile_commission_scale.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608170004_dancer_earnings_payout_system.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/commission-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
@@ -178,10 +180,10 @@ test("venue receivables and MyDancr-funded dancer payouts settle independently",
   assert.match(separationMigration, /drop policy if exists "Venue owners read own commission events"/);
   assert.match(separationMigration, /drop policy if exists "Venue owners read own deal revenue events"/);
   assert.match(adminRoute, /settleDealRevenueEvent/);
-  assert.match(adminRoute, /settleDancerCommissionEvent/);
-  assert.match(adminRoute, /commissionEventId/);
+  assert.doesNotMatch(adminRoute, /settleDancerCommissionEvent|commissionEventId|dancer_paid/);
   assert.match(adminClient, /Record venue payment/);
-  assert.match(adminClient, /Record dancer payout/);
+  assert.match(earningsMigration, /earnings cannot jump directly to paid/);
+  assert.match(adminClient, /audited Finance payout workflow/);
   assert.match(adminClient, /Venue invoice\/payment reference/);
   assert.match(adminClient, /MyDancr → Dancer/);
   assert.doesNotMatch(venueDashboard, /<Metric label="Dancer share"/);

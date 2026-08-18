@@ -124,7 +124,7 @@ async function getShiftCommissionRows(client: DancrClient, dancerId: string, sta
     .from("commission_events")
     .select("amount_cents")
     .eq("dancer_id", dancerId)
-    .in("status", ["pending_club_payment", "payable", "paid"])
+    .in("status", ["pending", "available", "payout_processing", "paid"])
     .gte("created_at", startedAt)
     .lte("created_at", endedAt);
   if (error) throw error;
