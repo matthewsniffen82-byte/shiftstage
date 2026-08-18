@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
-import { MyDancrPreviewBanner } from "./components/MyDancrPreviewBanner";
+import { RouteAwarePreviewBanner } from "./components/RouteAwarePreviewBanner";
 import "../public/dancr-brand-tokens.v1.css";
 import "../public/dancr-button-system.v1.css";
 import "../public/dancr-aesthetic.v1.css";
@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: androidDeviceClassScript }}
           id="dancr-android-device-classes"
         />
-        <MyDancrPreviewBanner />
+        <RouteAwarePreviewBanner />
         {children}
         <GlobalMobileBottomNav />
       </body>

@@ -2,15 +2,17 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [layout, homeRoute, banner, aesthetic] = await Promise.all([
+const [layout, homeRoute, banner, routeAwareBanner, aesthetic] = await Promise.all([
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/MyDancrPreviewBanner.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/components/RouteAwarePreviewBanner.tsx", import.meta.url), "utf8"),
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
 test("the root layout presents one persistent preview notice across the application", () => {
-  assert.equal((layout.match(/<MyDancrPreviewBanner \/>/g) || []).length, 1);
+  assert.equal((layout.match(/<RouteAwarePreviewBanner \/>/g) || []).length, 1);
+  assert.match(routeAwareBanner, /pathname\.startsWith\("\/age-verification"\)/);
   assert.match(banner, /DEMO MODE/);
   assert.match(banner, /All profiles, venues, schedules, offers, and activity shown are fictional demo content\./);
   assert.doesNotMatch(banner, /TEST\s+SITE|shown are test\s+data/);

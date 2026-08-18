@@ -826,6 +826,7 @@ export async function getAdminMonitoringStatus(client: DancrClient): Promise<Adm
       integrationStatus("OneSignal", ["NEXT_PUBLIC_ONESIGNAL_APP_ID", "ONESIGNAL_REST_API_KEY"]),
       integrationStatus("Resend", ["RESEND_API_KEY", "EMAIL_FROM"]),
       integrationStatus("Google Maps", ["NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"]),
+      integrationStatus("Yoti Age Verification", ["YOTI_AGE_API_KEY", "YOTI_AGE_SDK_ID", "YOTI_AGE_COOKIE_SECRET"]),
     ],
   };
 }
