@@ -33472,6 +33472,68 @@
           outline: 2px solid #7eeaff;
           outline-offset: 3px;
         }
+        .home-discovery-empty.is-club-empty {
+          grid-template-columns: 44px minmax(0, 1fr);
+          align-items: center;
+          gap: 12px 14px;
+          min-height: 0;
+          padding: 18px;
+          border-color: rgba(139,92,246,.3);
+          border-radius: 18px;
+          background:
+            radial-gradient(circle at 14% 10%,rgba(93,58,183,.16),transparent 38%),
+            linear-gradient(145deg,rgba(13,13,20,.98),rgba(6,7,11,.98));
+        }
+        .home-discovery-empty-icon {
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(139,92,246,.38);
+          border-radius: 14px;
+          color: #b69cff;
+          background: rgba(35,22,68,.42);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.05),0 0 20px rgba(111,66,193,.12);
+        }
+        .home-discovery-empty-icon svg {
+          width: 23px;
+          height: 23px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.8;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-discovery-empty-copy {
+          min-width: 0;
+          display: grid;
+          gap: 5px;
+        }
+        .home-discovery-empty-copy p {
+          max-width: 42ch;
+        }
+        .home-discovery-empty-actions {
+          grid-column: 1 / -1;
+          width: 100%;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .home-discovery-empty-actions .home-discovery-empty-action {
+          flex: 1 1 150px;
+          margin-top: 0;
+        }
+        .home-discovery-empty-action.is-secondary {
+          border-color: rgba(255,255,255,.16);
+          color: #eeebf5;
+          background: rgba(255,255,255,.055);
+          box-shadow: none;
+        }
+        .home-discovery-empty-action.is-secondary:hover,
+        .home-discovery-empty-action.is-secondary:focus-visible {
+          border-color: rgba(182,156,255,.72);
+          background: rgba(102,65,183,.2);
+        }
         body.overlay-open .home-feed-card .card-profile-destination {
           display: none !important;
         }
@@ -33486,6 +33548,9 @@
           .home-discovery-controls select,
           .home-discovery-controls .location-btn { min-height: 44px !important; font-size: clamp(15px, 4vw, 17px) !important; }
           .home-live-summary { grid-template-columns: max-content minmax(0, 1fr) max-content; }
+          .home-discovery-empty.is-club-empty { padding: 16px; }
+          .home-discovery-empty-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+          .home-discovery-empty-actions .home-discovery-empty-action { width: 100%; min-height: 44px; }
           .home-tv-launch { min-height: 70px; gap: 9px; margin-top: 8px; padding: 10px 11px; border-radius: 14px; }
           .home-tv-launch-icon { width: 40px; height: 40px; font-size: 14px; }
           .home-tv-launch-copy strong { font-size: clamp(13px, 3.8vw, 16px); }
@@ -55169,6 +55234,52 @@
       `;
     }
 
+    function nextHomeDiscoveryRadiusOption() {
+      if (!distanceSelect) return null;
+      const currentRadius = selectedRadiusMiles();
+      return [...distanceSelect.options]
+        .map((option) => ({ option, miles: Number.parseFloat(option.value) }))
+        .filter(({ miles }) => Number.isFinite(miles) && miles > currentRadius)
+        .sort((left, right) => left.miles - right.miles)[0]?.option || null;
+    }
+
+    function homeClubEmptyStateMarkup(city) {
+      const safeCity = escapeHtml(city);
+      const publicClubs = (markets[city]?.venues || []).filter((venue) => !venue?.hidden);
+      const hasPublicClubs = publicClubs.length > 0;
+      const selectedClub = selectedVenueFilter();
+      const nextRadius = nextHomeDiscoveryRadiusOption();
+      const hasExplicitFilters = selectedClub !== "all" || selectedRadiusMiles() !== 25;
+      const title = hasPublicClubs ? "No clubs match these filters" : `No clubs in ${safeCity} yet`;
+      const description = hasPublicClubs
+        ? `Expand your search radius or clear the current filters to see more club profiles near ${safeCity}.`
+        : `MyDancr is adding club profiles in ${safeCity}. Choose another city or check back soon.`;
+      const actions = hasPublicClubs
+        ? [
+            nextRadius
+              ? `<button class="home-discovery-empty-action" type="button" data-home-empty-action="expand-radius" data-radius-value="${escapeOptionValue(nextRadius.value)}">Expand radius</button>`
+              : "",
+            hasExplicitFilters
+              ? '<button class="home-discovery-empty-action is-secondary" type="button" data-home-empty-action="clear-filters">Clear filters</button>'
+              : "",
+            '<button class="home-discovery-empty-action is-secondary" type="button" data-home-empty-action="choose-city">Choose another city</button>'
+          ]
+        : ['<button class="home-discovery-empty-action" type="button" data-home-empty-action="choose-city">Choose another city</button>'];
+
+      return `
+        <section class="home-discovery-empty is-club-empty" aria-labelledby="homeClubsEmptyTitle">
+          <span class="home-discovery-empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 20V7l7-3 7 3v13"></path><path d="M3 20h18"></path><path d="M9 10h6M9 14h6"></path></svg>
+          </span>
+          <div class="home-discovery-empty-copy">
+            <strong id="homeClubsEmptyTitle">${title}</strong>
+            <p>${description}</p>
+          </div>
+          <div class="home-discovery-empty-actions">${actions.filter(Boolean).join("")}</div>
+        </section>
+      `;
+    }
+
     function homeDiscoveryFeedContentKey(city, items) {
       return JSON.stringify({
         city,
@@ -55202,12 +55313,15 @@
         return;
       }
       if (!items.length) {
+        if (activeTab === "venues") {
+          homeDiscoveryFeedRenderKey = "";
+          results.innerHTML = homeClubEmptyStateMarkup(city);
+          return;
+        }
         renderHomeDiscoveryFeedMessage(
           activeTab === "tonight"
             ? `No dancers are working now in ${city}.`
-            : activeTab === "venues"
-              ? `No clubs match your current filters in ${city}.`
-              : `No approved dancer profiles are available in ${city} yet.`
+            : `No approved dancer profiles are available in ${city} yet.`
         );
         return;
       }
@@ -55452,12 +55566,7 @@
         return;
       }
       if (activeTab === "venues" && !items.length) {
-        results.innerHTML = `
-          <section class="home-discovery-empty" aria-labelledby="homeVenuesEmptyTitle">
-            <strong id="homeVenuesEmptyTitle">No clubs match your current filters in ${escapeHtml(city)}.</strong>
-            <p>Increase the distance or choose All clubs to see active club profiles.</p>
-          </section>
-        `;
+        results.innerHTML = homeClubEmptyStateMarkup(city);
         return;
       }
       if (activeTab === "dancers") {
@@ -56937,6 +57046,40 @@
 
     results.addEventListener("click", async (event) => {
       if (!event.target.closest(".home-tv-feed-actions")) closeHomeTvFeedReportMenus();
+      const emptyStateAction = event.target.closest("[data-home-empty-action]");
+      if (emptyStateAction) {
+        event.preventDefault();
+        const action = emptyStateAction.dataset.homeEmptyAction;
+        if (action === "choose-city") {
+          if (citySelectButton && citySelectPanel) {
+            openCityPicker();
+          } else if (typeof citySelect?.showPicker === "function") {
+            citySelect.showPicker();
+          } else {
+            citySelect?.focus();
+          }
+          return;
+        }
+        if (action === "expand-radius") {
+          const radiusValue = emptyStateAction.dataset.radiusValue;
+          const optionExists = [...(distanceSelect?.options || [])].some((option) => option.value === radiusValue);
+          if (!distanceSelect || !radiusValue || !optionExists) return;
+          distanceSelect.value = radiusValue;
+          distanceSelect.dispatchEvent(new Event("change", { bubbles: true }));
+          return;
+        }
+        if (action === "clear-filters") {
+          if (distanceSelect) distanceSelect.value = "25 mi";
+          if (venueSelect) venueSelect.value = "all";
+          homeDiscoveryFeedOpen = false;
+          deactivateHomeDiscoveryFeed();
+          selectedVenueName = null;
+          populateVenueSelect();
+          render();
+          showToast("Club filters cleared");
+          return;
+        }
+      }
       const liveDiscoveryRetry = event.target.closest("[data-retry-live-discovery]");
       if (liveDiscoveryRetry) {
         event.preventDefault();

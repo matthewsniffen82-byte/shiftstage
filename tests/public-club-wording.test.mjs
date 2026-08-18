@@ -17,7 +17,8 @@ test("customer discovery consistently presents venues as clubs", () => {
   assert.match(liveShell, /id="venueSelectButtonText">All clubs</);
   assert.match(liveShell, /<span>Club search<\/span><strong id="venueSelectDialogTitle">Choose a club<\/strong>/);
   assert.match(liveShell, /venues: `Clubs in \$\{city\}`/);
-  assert.match(liveShell, /No clubs match your current filters/);
+  assert.match(liveShell, /No clubs in \$\{safeCity\} yet/);
+  assert.match(liveShell, /No clubs match these filters/);
   assert.match(liveShell, /venue-card-kicker">MyDancr club</);
   assert.match(liveShell, /Follow this club for updates/);
   assert.match(liveShell, /Your saved dancers and clubs are ready/);
