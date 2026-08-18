@@ -4003,7 +4003,7 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
   const payableCommissionCents = Number(deals?.payableCommissionCents || 0);
   const successfulThisMonth = Number(deals?.successfulRedemptionsThisMonth || 0);
   const currentShare = Number(deals?.currentDancerSharePercent || 30);
-  const nextTierAt = deals?.nextTierAt === null ? null : Number(deals?.nextTierAt || 25);
+  const nextTierAt = deals?.nextTierAt === null ? null : Number(deals?.nextTierAt || 10);
 
   return (
     <article className="info-panel deal-panel">
@@ -4025,11 +4025,11 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
         <strong>
           {nextTierAt === null
             ? "Top 50% dancer tier reached"
-            : `${String(deals?.redemptionsUntilNextTier || 0)} successful redemptions to the ${nextTierAt === 25 ? "40%" : "50%"} tier`}
+            : `${String(deals?.redemptionsUntilNextTier || 0)} successful redemptions to the ${nextTierAt === 10 ? "40%" : "50%"} tier`}
         </strong>
-        <div><span>1–24 monthly</span><b>30% dancer</b><b>70% MyDancr</b></div>
-        <div><span>25–74 monthly</span><b>40% dancer</b><b>60% MyDancr</b></div>
-        <div><span>75+ monthly</span><b>50% dancer</b><b>50% MyDancr</b></div>
+        <div><span>1–9 monthly</span><b>30% dancer</b><b>70% MyDancr</b></div>
+        <div><span>10–24 monthly</span><b>40% dancer</b><b>60% MyDancr</b></div>
+        <div><span>25+ monthly</span><b>50% dancer</b><b>50% MyDancr</b></div>
       </div>
     </article>
   );

@@ -5,6 +5,8 @@ import test from "node:test";
 const [
   migration,
   separationMigration,
+  fixedCommissionMigration,
+  scaleCommissionMigration,
   policy,
   deals,
   generationRoute,
@@ -25,6 +27,8 @@ const [
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202607300002_qr_revenue_lifecycle.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608080001_separate_venue_receivables_and_dancer_payouts.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608180001_fix_dancer_profile_commission_at_fifty_percent.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608180002_set_dancer_profile_commission_scale.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/commission-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
@@ -44,19 +48,25 @@ const [
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("the monthly commission tiers remain private to MyDancr and dancers", () => {
-  assert.match(policy, /minimumSuccessfulRedemptions: 1[\s\S]*?maximumSuccessfulRedemptions: 24[\s\S]*?dancerShareBps: 3000[\s\S]*?platformShareBps: 7000/);
-  assert.match(policy, /minimumSuccessfulRedemptions: 25[\s\S]*?maximumSuccessfulRedemptions: 74[\s\S]*?dancerShareBps: 4000[\s\S]*?platformShareBps: 6000/);
-  assert.match(policy, /minimumSuccessfulRedemptions: 75[\s\S]*?maximumSuccessfulRedemptions: null[\s\S]*?dancerShareBps: 5000[\s\S]*?platformShareBps: 5000/);
-  assert.match(migration, /when v_success_number >= 75 then 5000[\s\S]*?when v_success_number >= 25 then 4000[\s\S]*?else 3000/);
-  assert.match(migration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
+test("new dancer-profile commissions use the monthly 30, 40, and 50 percent scale", () => {
+  assert.match(policy, /QR_COMMISSION_POLICY_VERSION = "dancer-profile-monthly-30-40-50-v1"/);
+  assert.match(policy, /minimumSuccessfulRedemptions: 1[\s\S]*?maximumSuccessfulRedemptions: 9[\s\S]*?dancerShareBps: 3000[\s\S]*?platformShareBps: 7000/);
+  assert.match(policy, /minimumSuccessfulRedemptions: 10[\s\S]*?maximumSuccessfulRedemptions: 24[\s\S]*?dancerShareBps: 4000[\s\S]*?platformShareBps: 6000/);
+  assert.match(policy, /minimumSuccessfulRedemptions: 25[\s\S]*?maximumSuccessfulRedemptions: null[\s\S]*?dancerShareBps: 5000[\s\S]*?platformShareBps: 5000/);
+  assert.match(fixedCommissionMigration, /v_share_bps := 5000/);
+  assert.match(fixedCommissionMigration, /v_policy_version constant text := 'dancer-profile-fixed-50-v1'/);
+  assert.match(scaleCommissionMigration, /v_policy_version constant text := 'dancer-profile-monthly-30-40-50-v1'/);
+  assert.match(scaleCommissionMigration, /when v_success_number >= 25 then 5000[\s\S]*?when v_success_number >= 10 then 4000[\s\S]*?else 3000/);
+  assert.doesNotMatch(scaleCommissionMigration, /v_success_number >= 75/);
+  assert.match(scaleCommissionMigration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
+  assert.match(scaleCommissionMigration, /Existing ledger entries[\s\S]*?remain unchanged/);
   const venuePanel = venueDashboard.match(/function VenueClubDealPanel[\s\S]*?(?=function venueDealForm)/)?.[0] || "";
   assert.notEqual(venuePanel, "");
   assert.doesNotMatch(venuePanel, /Dancer 30%|MyDancr 70%|Dancer 40%|MyDancr 60%|Dancer 50%|MyDancr 50%/);
   assert.doesNotMatch(venuePanel, /Dancer share|MyDancr share|correct commission split/);
-  assert.match(venueDashboard, /1–24 monthly[\s\S]*?30% dancer[\s\S]*?70% MyDancr/);
-  assert.match(venueDashboard, /25–74 monthly[\s\S]*?40% dancer[\s\S]*?60% MyDancr/);
-  assert.match(venueDashboard, /75\+ monthly[\s\S]*?50% dancer[\s\S]*?50% MyDancr/);
+  assert.match(venueDashboard, /1–9 monthly[\s\S]*?30% dancer[\s\S]*?70% MyDancr/);
+  assert.match(venueDashboard, /10–24 monthly[\s\S]*?40% dancer[\s\S]*?60% MyDancr/);
+  assert.match(venueDashboard, /25\+ monthly[\s\S]*?50% dancer[\s\S]*?50% MyDancr/);
 });
 
 test("dancer attribution is locked to a verified shift when the cashier NFC tap is confirmed", () => {
@@ -122,20 +132,19 @@ test("only the active owning venue account can atomically create revenue and com
   assert.match(redemptionRoute, /account\.role !== "venue" \|\| account\.accountState !== "active"/);
   assert.match(redemptionRoute, /redeemDealToken\(client, token, request\)/);
   assert.match(scannerClient, /authorization: `Bearer \$\{venueAccessToken\}`/);
-  assert.match(migration, /create or replace function public\.confirm_deal_redemption/);
-  assert.match(migration, /for update/);
-  assert.match(migration, /venue\.owner_user_id = v_user_id/);
-  assert.match(migration, /account\.role = 'venue'[\s\S]*?account\.account_state = 'active'/);
-  assert.match(migration, /update public\.qr_redemptions[\s\S]*?insert into public\.deal_revenue_events[\s\S]*?insert into public\.commission_events/);
-  assert.match(migration, /pg_advisory_xact_lock\([\s\S]*?hashtext\(v_redemption\.dancer_id::text\)[\s\S]*?hashtext\(v_month::text\)/);
+  assert.match(scaleCommissionMigration, /create or replace function public\.confirm_deal_redemption_from_nfc/);
+  assert.match(scaleCommissionMigration, /where id = p_tag_id for update/);
+  assert.match(scaleCommissionMigration, /venue\.owner_user_id[\s\S]*?account\.role = 'venue'[\s\S]*?account\.account_state = 'active'/);
+  assert.match(scaleCommissionMigration, /update public\.qr_redemptions[\s\S]*?insert into public\.deal_revenue_events[\s\S]*?insert into public\.commission_events/);
+  assert.match(scaleCommissionMigration, /pg_advisory_xact_lock\(hashtext\(v_redemption\.dancer_id::text\), hashtext\(v_month::text\)\)/);
   assert.match(migration, /unique index if not exists deal_revenue_events_dancer_success_number_idx/);
   assert.match(migration, /grant execute on function public\.confirm_deal_redemption\(text, jsonb\) to authenticated/);
 });
 
-test("venue QR revenue goes entirely to MyDancr while dancer QR revenue enters the tier ledger", () => {
-  assert.match(migration, /if v_redemption\.source_type = 'dancer_profile' then[\s\S]*?v_share_bps := case/);
-  assert.match(migration, /else[\s\S]*?v_success_number := null;[\s\S]*?v_share_bps := 0;[\s\S]*?v_dancer_cents := 0;/);
-  assert.match(migration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
+test("venue QR revenue goes entirely to MyDancr while dancer-profile revenue uses the monthly scale", () => {
+  assert.match(scaleCommissionMigration, /if v_redemption\.source_type = 'dancer_profile' then[\s\S]*?v_share_bps := case/);
+  assert.match(scaleCommissionMigration, /else[\s\S]*?v_success_number := null;[\s\S]*?v_share_bps := 0;[\s\S]*?v_dancer_cents := 0;/);
+  assert.match(scaleCommissionMigration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
   assert.match(migration, /check \([\s\S]*?source_type = 'club_page' and dancer_id is null and dancer_share_bps = 0 and dancer_commission_cents = 0/);
   assert.match(migration, /successful_redemption_number[\s\S]*?commission_month[\s\S]*?policy_version/);
 });

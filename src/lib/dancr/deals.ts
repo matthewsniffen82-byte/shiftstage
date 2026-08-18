@@ -7,6 +7,10 @@ import { requireVenueAccess } from "./venue-access";
 import { getVenueReferralFeeState } from "./referral-fees";
 import { assertLiquorFreeClubDeal, isLiquorRelatedClubDeal } from "./deal-policy";
 import { clubDealOfferPresetForTitle } from "./club-deal-presets";
+import {
+  commissionTierForSuccessfulRedemption,
+  QR_COMMISSION_POLICY_VERSION,
+} from "./commission-policy";
 
 type DancrClient = SupabaseClient;
 
@@ -417,15 +421,12 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string) 
     (highest: number, item: any) => Math.max(highest, Number(item.successful_redemption_number || 0)),
     0,
   );
-  const currentDancerSharePercent = successfulRedemptionsThisMonth >= 75
-    ? 50
-    : successfulRedemptionsThisMonth >= 25
-      ? 40
-      : 30;
-  const nextTierAt = successfulRedemptionsThisMonth < 25
-    ? 25
-    : successfulRedemptionsThisMonth < 75
-      ? 75
+  const currentDancerSharePercent =
+    commissionTierForSuccessfulRedemption(successfulRedemptionsThisMonth).dancerShareBps / 100;
+  const nextTierAt = successfulRedemptionsThisMonth < 10
+    ? 10
+    : successfulRedemptionsThisMonth < 25
+      ? 25
       : null;
 
   return {
@@ -448,7 +449,7 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string) 
     currentDancerSharePercent,
     nextTierAt,
     redemptionsUntilNextTier: nextTierAt === null ? 0 : Math.max(0, nextTierAt - successfulRedemptionsThisMonth),
-    commissionPolicyVersion: "monthly-tier-v1",
+    commissionPolicyVersion: QR_COMMISSION_POLICY_VERSION,
     recentRedemptions: redemptions || [],
     recentCommissions: commissions || [],
   };
@@ -558,7 +559,7 @@ export async function updateVenueDealForAccount(
       one_per_guest: true,
       authenticated_venue_confirmation_required: true,
       attribution_policy: "locked_at_issue",
-      commission_policy: "monthly-tier-v1",
+      commission_policy: QR_COMMISSION_POLICY_VERSION,
     },
     payout_type: "flat",
     payout_amount_cents: referralFee?.feeCents || 0,

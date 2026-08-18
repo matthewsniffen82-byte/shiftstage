@@ -1,20 +1,20 @@
-export const QR_COMMISSION_POLICY_VERSION = "monthly-tier-v1";
+export const QR_COMMISSION_POLICY_VERSION = "dancer-profile-monthly-30-40-50-v1";
 
 export const QR_COMMISSION_TIERS = [
   {
     minimumSuccessfulRedemptions: 1,
-    maximumSuccessfulRedemptions: 24,
+    maximumSuccessfulRedemptions: 9,
     dancerShareBps: 3000,
     platformShareBps: 7000,
   },
   {
-    minimumSuccessfulRedemptions: 25,
-    maximumSuccessfulRedemptions: 74,
+    minimumSuccessfulRedemptions: 10,
+    maximumSuccessfulRedemptions: 24,
     dancerShareBps: 4000,
     platformShareBps: 6000,
   },
   {
-    minimumSuccessfulRedemptions: 75,
+    minimumSuccessfulRedemptions: 25,
     maximumSuccessfulRedemptions: null,
     dancerShareBps: 5000,
     platformShareBps: 5000,
@@ -23,8 +23,8 @@ export const QR_COMMISSION_TIERS = [
 
 export function commissionTierForSuccessfulRedemption(successfulRedemptionNumber: number) {
   const normalized = Math.max(1, Math.trunc(successfulRedemptionNumber));
-  if (normalized >= 75) return QR_COMMISSION_TIERS[2];
-  if (normalized >= 25) return QR_COMMISSION_TIERS[1];
+  if (normalized >= 25) return QR_COMMISSION_TIERS[2];
+  if (normalized >= 10) return QR_COMMISSION_TIERS[1];
   return QR_COMMISSION_TIERS[0];
 }
 
