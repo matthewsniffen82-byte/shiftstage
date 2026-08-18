@@ -4333,7 +4333,7 @@ body.dancr-button-system .home-tv-feed-feedback.is-neutral {
   text-shadow: none !important;
 }
 
-body.dancr-button-system .home-tv-feed-schedule.is-now {
+body.dancr-button-system .home-tv-feed .home-tv-feed-schedule.is-now {
   border-color: var(--dancr-color-live-strong) !important;
   color: #d9ffea !important;
   background-color: var(--dancr-color-live-surface-glass, rgba(16, 185, 129, 0.74)) !important;
@@ -4344,7 +4344,7 @@ body.dancr-button-system .home-tv-feed-schedule.is-now {
   text-shadow: none !important;
 }
 
-body.dancr-button-system .home-tv-feed-schedule.is-upcoming {
+body.dancr-button-system .home-tv-feed .home-tv-feed-schedule.is-upcoming {
   border-color: var(--dancr-color-info-strong) !important;
   color: #dcfbff !important;
   background-color: var(--dancr-color-info-surface-glass, rgba(8, 145, 178, 0.66)) !important;

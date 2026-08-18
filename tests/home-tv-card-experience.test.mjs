@@ -507,7 +507,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=129/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=130/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
@@ -571,7 +571,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(cityLabel, /filter: none !important;/);
   assert.doesNotMatch(cityLabel, /dancr-color-(?:brand|info|live|success|featured|danger)/);
   const workingNowPill = brandedCards.match(
-    /body\.dancr-button-system \.home-tv-feed-schedule\.is-now \{[\s\S]*?\n\}/,
+    /body\.dancr-button-system \.home-tv-feed \.home-tv-feed-schedule\.is-now \{[\s\S]*?\n\}/,
   )?.[0] || "";
   assert.match(workingNowPill, /border-color: var\(--dancr-color-live-strong\) !important;/);
   assert.match(workingNowPill, /color: #d9ffea !important;/);
@@ -585,7 +585,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.doesNotMatch(workingNowPill, /brand-|beam-|gradient|glow/);
   assert.doesNotMatch(workingNowPill, /(?:height|padding|border-radius):/);
   const upcomingPill = brandedCards.match(
-    /body\.dancr-button-system \.home-tv-feed-schedule\.is-upcoming \{[\s\S]*?\n\}/,
+    /body\.dancr-button-system \.home-tv-feed \.home-tv-feed-schedule\.is-upcoming \{[\s\S]*?\n\}/,
   )?.[0] || "";
   assert.match(upcomingPill, /border-color: var\(--dancr-color-info-strong\) !important;/);
   assert.match(upcomingPill, /color: #dcfbff !important;/);
