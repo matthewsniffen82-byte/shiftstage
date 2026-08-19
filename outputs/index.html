@@ -25797,9 +25797,15 @@
 
     #dealPassOverlay .deal-pass-sheet {
       min-height: min(720px, calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+      display: flex;
+      flex-direction: column;
       box-sizing: border-box;
       scroll-padding-bottom: 18px;
       padding-bottom: 18px;
+    }
+
+    #dealPassOverlay .deal-pass-sheet > * {
+      flex: 0 0 auto;
     }
 
     .deal-pass-close {
@@ -26310,9 +26316,14 @@
     }
 
     .deal-pass-actions {
+      width: 100%;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
+    }
+
+    #dealPassOverlay .deal-pass-sheet:not([data-deal-state="ready"]) .deal-pass-actions {
+      margin-top: auto;
     }
 
     .deal-pass-primary-dock {
@@ -26323,14 +26334,14 @@
       gap: 5px;
       box-sizing: border-box;
       margin-top: 10px;
-      padding: 10px;
-      border: 1px solid rgba(255, 255, 255, .12);
-      border-radius: 18px;
-      background: rgba(8, 9, 12, .96);
-      box-shadow: 0 16px 44px rgba(0, 0, 0, .58), inset 0 1px 0 rgba(255, 255, 255, .06);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
       transform: none;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
 
     .deal-pass-primary-dock > small {
@@ -26346,8 +26357,8 @@
         width: 100%;
         gap: 3px;
         margin-top: 8px;
-        padding: 7px;
-        border-radius: 16px;
+        padding: 0;
+        border-radius: 0;
       }
 
       .deal-pass-primary-dock .deal-pass-action.primary {
@@ -26368,7 +26379,7 @@
     .deal-pass-sheet[data-deal-state="ready"] .deal-pass-primary-dock {
       position: static;
       width: 100%;
-      margin-top: 10px;
+      margin-top: auto;
       transform: none;
     }
 
@@ -26380,7 +26391,7 @@
 
       .deal-pass-sheet[data-deal-state="ready"] .deal-pass-primary-dock {
         width: 100%;
-        margin-top: 8px;
+        margin-top: auto;
       }
     }
 
