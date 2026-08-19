@@ -26028,14 +26028,14 @@
 
       .deal-pass-availability-status {
         min-height: 24px;
-        margin-bottom: 7px;
+        margin-bottom: 9px;
         padding-inline: 9px;
         font-size: .6rem;
       }
 
       .deal-pass-offer {
         gap: 5px;
-        margin-bottom: 7px;
+        margin-bottom: 10px;
         padding: 9px 10px;
         border-radius: 14px;
       }
@@ -26065,7 +26065,7 @@
 
       .deal-pass-frame {
         width: 64px;
-        margin-bottom: 7px;
+        margin-bottom: 10px;
         padding: 5px 5px 4px;
         gap: 2px;
         border-radius: 15px;
@@ -26245,8 +26245,8 @@
 
     @media (max-width: 560px) {
       .deal-pass-steps {
-        gap: 3px;
-        margin-bottom: 4px;
+        gap: 4px;
+        margin-bottom: 6px;
       }
 
       .deal-pass-step {
@@ -26269,19 +26269,20 @@
       }
 
       .deal-pass-security {
-        margin-bottom: 4px;
+        margin-bottom: 8px;
         font-size: .54rem;
         line-height: 1.1;
       }
 
       .deal-pass-preview-note {
-        margin-bottom: 4px;
+        margin-bottom: 5px;
         font-size: .56rem;
         line-height: 1.18;
       }
 
       .deal-pass-actions {
         gap: 5px;
+        margin-top: 7px;
       }
 
       .deal-pass-action {
@@ -26339,6 +26340,30 @@
       .deal-pass-primary-dock > small {
         font-size: .52rem;
         line-height: 1.15;
+      }
+    }
+
+    .deal-pass-sheet[data-deal-state="ready"] {
+      scroll-padding-bottom: 18px;
+      padding-bottom: 18px;
+    }
+
+    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-primary-dock {
+      position: static;
+      width: 100%;
+      margin-top: 14px;
+      transform: none;
+    }
+
+    @media (max-width: 560px) {
+      .deal-pass-sheet[data-deal-state="ready"] {
+        scroll-padding-bottom: 14px;
+        padding-bottom: 14px;
+      }
+
+      .deal-pass-sheet[data-deal-state="ready"] .deal-pass-primary-dock {
+        width: 100%;
+        margin-top: 10px;
       }
     }
 

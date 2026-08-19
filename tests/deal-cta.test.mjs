@@ -110,6 +110,10 @@ test("selected Club Deals replace preparation controls with one cashier instruct
   assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-steps,[\s\S]*?\.deal-pass-security,[\s\S]*?\.deal-pass-actions \{\s*display: none;/);
   assert.match(liveApp, /primaryNote\.hidden = true/);
   assert.match(liveApp, /selectButton\.textContent = "Deal selected ✓"/);
+  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \{[\s\S]*?padding-bottom: 18px;/);
+  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?margin-top: 14px;[\s\S]*?transform: none;/);
+  assert.match(dealCard, /className="club-deal-dialog"[\s\S]*?data-deal-state=\{intentState\}/);
+  assert.match(dealCard, /\.club-deal-dialog\[data-deal-state="ready"\] \.club-deal-primary-dock \{ position:static; width:100%; margin-top:4px; transform:none; \}/);
 });
 
 test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {

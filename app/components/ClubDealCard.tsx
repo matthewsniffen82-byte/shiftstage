@@ -353,6 +353,7 @@ export function ClubDealCard({
         >
           <section
             className="club-deal-dialog"
+            data-deal-state={intentState}
             role="dialog"
             aria-modal="true"
             aria-label={`${venueName || "Club"} Club Deals`}
@@ -603,6 +604,17 @@ function ClubDealInteractionStyles() {
         .club-deal-sticky { position: fixed; z-index: 95; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 16px; color: #fff; background: var(--dancr-color-surface-translucent); box-shadow: 0 18px 50px rgba(0,0,0,.68); font: inherit; text-align: left; cursor: pointer; }
         .club-deal-sticky span { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
         .club-deal-sticky strong { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 12px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; white-space: nowrap; }
+      }
+      .club-deal-dialog[data-deal-state="ready"] { padding-bottom:20px; }
+      .club-deal-dialog[data-deal-state="ready"] .club-deal-primary-dock { position:static; width:100%; margin-top:4px; transform:none; }
+      @media (max-width: 760px) {
+        .club-deal-dialog { row-gap:8px; }
+        .club-deal-dialog .club-deal-redemption-steps { gap:4px; margin-block:2px 4px; }
+        .club-deal-dialog .club-deal-preview-note { margin-top:2px; }
+        .club-deal-dialog .club-deal-security-note { margin-bottom:4px; }
+        .club-deal-dialog .club-deal-share-actions { margin-top:4px; }
+        .club-deal-dialog[data-deal-state="ready"] { padding-bottom:14px; }
+        .club-deal-dialog[data-deal-state="ready"] .club-deal-primary-dock { width:100%; margin-top:6px; }
       }
     `}</style>
   );
