@@ -25920,13 +25920,13 @@
 
     .deal-pass-frame {
       width: 88px;
-      margin: 0 auto 13px;
+      margin: 0 auto 17px;
       padding: 8px 8px 7px;
       border-radius: 18px;
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       grid-auto-rows: max-content;
-      gap: 5px;
+      gap: 0;
       place-items: center;
       background: radial-gradient(circle at 45% 35%, rgba(133, 76, 255, .22), transparent 56%), rgba(9, 9, 13, .92);
       box-shadow:
@@ -25978,15 +25978,6 @@
       stroke-width: 1.9;
       stroke-linecap: round;
       stroke-linejoin: round;
-    }
-
-    .deal-pass-frame > strong {
-      justify-self: center;
-      color: rgba(255, 255, 255, .82);
-      font-size: .58rem;
-      font-weight: 950;
-      line-height: 1.15;
-      white-space: nowrap;
     }
 
     @media (max-width: 560px) {
@@ -26091,19 +26082,15 @@
 
       .deal-pass-frame {
         width: 64px;
-        margin-bottom: 10px;
+        margin-bottom: 14px;
         padding: 5px 5px 4px;
-        gap: 2px;
+        gap: 0;
         border-radius: 15px;
       }
 
       .deal-pass-frame .deal-pass-nfc-symbol {
         width: 46px;
         height: 46px;
-      }
-
-      .deal-pass-frame > strong {
-        font-size: .5rem;
       }
 
       .profile-qr-close {
@@ -26145,12 +26132,6 @@
       .deal-pass-step small {
         font-size: .53rem;
         line-height: 1.18;
-      }
-
-      .deal-pass-security {
-        margin-bottom: 6px;
-        font-size: .57rem;
-        line-height: 1.2;
       }
 
       .deal-pass-actions {
@@ -26237,17 +26218,8 @@
       line-height: 1.32;
     }
 
-    .deal-pass-security {
-      margin: 0 0 10px;
-      color: rgba(255, 255, 255, .78);
-      font-size: .66rem;
-      font-weight: 850;
-      line-height: 1.4;
-      text-align: center;
-    }
-
     .deal-pass-preview-note {
-      margin: 0 0 7px;
+      margin: 0 0 10px;
       color: #d9f9ff;
       font-size: .66rem;
       font-weight: 850;
@@ -26257,7 +26229,6 @@
 
     .deal-pass-sheet[data-deal-state="ready"] .deal-pass-steps,
     .deal-pass-sheet[data-deal-state="ready"] .deal-pass-preview-note,
-    .deal-pass-sheet[data-deal-state="ready"] .deal-pass-security,
     .deal-pass-sheet[data-deal-state="ready"] .deal-pass-actions {
       display: none;
     }
@@ -26294,14 +26265,8 @@
         gap: 0;
       }
 
-      .deal-pass-security {
-        margin-bottom: 8px;
-        font-size: .54rem;
-        line-height: 1.1;
-      }
-
       .deal-pass-preview-note {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
         font-size: .56rem;
         line-height: 1.18;
       }
@@ -26352,14 +26317,6 @@
       -webkit-backdrop-filter: none;
     }
 
-    .deal-pass-primary-dock > small {
-      color: rgba(255, 255, 255, .72);
-      font-size: .6rem;
-      font-weight: 800;
-      line-height: 1.3;
-      text-align: center;
-    }
-
     @media (max-width: 560px) {
       .deal-pass-primary-dock {
         width: 100%;
@@ -26373,10 +26330,6 @@
         min-height: 46px !important;
       }
 
-      .deal-pass-primary-dock > small {
-        font-size: .52rem;
-        line-height: 1.15;
-      }
     }
 
     .deal-pass-sheet[data-deal-state="ready"] {
@@ -45463,7 +45416,6 @@
             </div>
             <div class="deal-pass-frame">
               <div id="dealPassImage" class="deal-pass-nfc-symbol" role="img" aria-label="Tap cashier sticker">${clubDealQrSymbolMarkup("deal-pass-nfc-icon")}</div>
-              <strong>Tap cashier sticker</strong>
             </div>
             <div class="deal-pass-steps" aria-label="How to redeem">
               <div class="deal-pass-step"><span>1</span><strong>Tap &ldquo;Use this deal&rdquo; below</strong></div>
@@ -45471,8 +45423,7 @@
               <div class="deal-pass-step"><span>3</span><strong>Unlock and tap the MyDancr NFC sticker</strong></div>
               <div class="deal-pass-step"><span>4</span><strong>Confirm redemption</strong></div>
             </div>
-            <p class="deal-pass-preview-note">After selecting, you can close MyDancr. Selecting the deal does not redeem it.</p>
-            <p class="deal-pass-security">Only the venue’s registered sticker can redeem it.</p>
+            <p class="deal-pass-preview-note">After selecting, MyDancr does not need to stay open. Only this venue’s registered NFC sticker can complete redemption.</p>
             <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
             <div class="deal-pass-actions">
               <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
@@ -45480,7 +45431,6 @@
             </div>
             <div class="deal-pass-primary-dock">
               <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Use this deal</button>
-              <small data-deal-pass-primary-note>Select before you reach the cashier.</small>
             </div>
           </div>
         </div>
@@ -45633,7 +45583,6 @@
       const status = document.getElementById("dealPassHow");
       const expiry = document.getElementById("dealPassExpiry");
       const availabilityStatus = document.getElementById("dealPassAvailabilityStatus");
-      const primaryNote = overlay.querySelector("[data-deal-pass-primary-note]");
       const intent = pendingNfcDealIntentForPass(pass);
       const state = override?.state || (intent?.expired ? "expired" : intent ? "ready" : "preview");
       sheet.dataset.dealState = state;
@@ -45650,7 +45599,6 @@
         selectButton.classList.add("is-ready");
         availabilityStatus.textContent = "Selected · Ready at cashier";
         availabilityStatus.classList.add("is-ready");
-        primaryNote.hidden = true;
         expiry.textContent = readyUntil ? `Ready until ${readyUntil}` : dealPassAvailabilityLabel(pass);
       } else {
         status.textContent = state === "preview" ? "" : override?.message || (state === "expired"
@@ -45662,8 +45610,6 @@
         selectButton.classList.remove("is-ready");
         availabilityStatus.textContent = "Available now · Not selected";
         availabilityStatus.classList.remove("is-ready");
-        primaryNote.hidden = false;
-        primaryNote.textContent = "Select before you reach the cashier.";
         expiry.textContent = dealPassAvailabilityLabel(pass);
       }
       const isSaved = savedDealPasses.some((savedPass) => savedPass.id === pass.id);

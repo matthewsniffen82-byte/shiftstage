@@ -84,10 +84,11 @@ test("Club Deal checkout uses one concise four-step NFC flow across both public 
     assert.match(source, /Go to the cashier/);
     assert.match(source, /Unlock and tap the MyDancr NFC sticker/);
     assert.match(source, /<strong>Confirm redemption<\/strong>/);
-    assert.match(source, /After selecting, you can close MyDancr\. Selecting the deal does not redeem it\./);
+    assert.match(source, /After selecting, MyDancr does not need to stay open\. Only this venue’s registered NFC sticker can complete redemption\./);
     assert.match(source, /Save for later/);
-    assert.match(source, /Tap cashier sticker/);
-    assert.match(source, /Only the venue’s registered sticker can redeem it/);
+    assert.match(source, /aria-label="Tap cashier sticker"/);
+    assert.doesNotMatch(source, /<strong>Tap cashier sticker<\/strong>/);
+    assert.doesNotMatch(source, /Select before you reach the cashier\./);
   }
   assert.match(dealCard, /status && intentState !== "preview"/);
   assert.match(liveApp, /status\.hidden = state === "preview"/);
@@ -103,12 +104,12 @@ test("selected Club Deals replace preparation controls with one cashier instruct
   assert.match(dealCard, cashierInstruction);
   assert.match(dealCard, /intentState !== "ready" \? \([\s\S]*?club-deal-redemption-steps/);
   assert.match(dealCard, /dialogOpen && intentState !== "ready"/);
-  assert.match(dealCard, /intentState !== "ready" \? <small>Select before you reach the cashier\.<\/small> : null/);
+  assert.doesNotMatch(dealCard, /Select before you reach the cashier\./);
   assert.match(dealCard, /intentState === "ready" \? "Deal selected ✓"/);
 
   assert.match(liveApp, cashierInstruction);
-  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-steps,[\s\S]*?\.deal-pass-security,[\s\S]*?\.deal-pass-actions \{\s*display: none;/);
-  assert.match(liveApp, /primaryNote\.hidden = true/);
+  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-steps,[\s\S]*?\.deal-pass-preview-note,[\s\S]*?\.deal-pass-actions \{\s*display: none;/);
+  assert.doesNotMatch(liveApp, /data-deal-pass-primary-note|primaryNote/);
   assert.match(liveApp, /selectButton\.textContent = "Deal selected ✓"/);
   assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \{[\s\S]*?padding-bottom: 18px;/);
   assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?margin-top: auto;[\s\S]*?transform: none;/);
