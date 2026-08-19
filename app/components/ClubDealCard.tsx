@@ -490,7 +490,7 @@ async function copyDealLink(url: string) {
 }
 
 function readyStatus() {
-  return "You can close MyDancr now. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. Your phone will open the confirmation page.";
+  return "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. The confirmation page will open automatically.";
 }
 
 function formatNfcExpiry(value: number) {

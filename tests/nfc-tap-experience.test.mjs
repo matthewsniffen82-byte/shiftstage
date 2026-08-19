@@ -134,7 +134,7 @@ test("Club Deal checkout explains the complete NFC tap flow without requiring an
   assert.match(dealCard, /Unlock and tap the MyDancr NFC sticker/);
   assert.match(dealCard, /Confirm redemption/);
   assert.match(dealCard, /After selecting, you can close MyDancr\. Selecting the deal does not redeem it\./);
-  assert.match(dealCard, /You can close MyDancr now\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. Your phone will open the confirmation page\./);
+  assert.match(dealCard, /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. The confirmation page will open automatically\./);
   assert.match(dealCard, /intentState === "ready" \? "Deal selected ✓"/);
   assert.match(dealCard, /intentState !== "ready"/);
   assert.match(dealCard, /Only the venue’s registered sticker can redeem it/);

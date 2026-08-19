@@ -98,7 +98,7 @@ test("Club Deal checkout uses one concise four-step NFC flow across both public 
 });
 
 test("selected Club Deals replace preparation controls with one cashier instruction", () => {
-  const cashierInstruction = /You can close MyDancr now\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. Your phone will open the confirmation page\./;
+  const cashierInstruction = /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. The confirmation page will open automatically\./;
 
   assert.match(dealCard, cashierInstruction);
   assert.match(dealCard, /intentState !== "ready" \? \([\s\S]*?club-deal-redemption-steps/);

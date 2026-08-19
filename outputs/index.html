@@ -45643,7 +45643,7 @@
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = "You can close MyDancr now. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. Your phone will open the confirmation page.";
+        status.textContent = "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. The confirmation page will open automatically.";
         selectButton.textContent = "Deal selected ✓";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");
