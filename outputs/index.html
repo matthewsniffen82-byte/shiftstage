@@ -25795,6 +25795,13 @@
       text-align: center;
     }
 
+    #dealPassOverlay .deal-pass-sheet {
+      min-height: min(720px, calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+      box-sizing: border-box;
+      scroll-padding-bottom: 18px;
+      padding-bottom: 18px;
+    }
+
     .deal-pass-close {
       position: absolute;
       top: 12px;
@@ -25997,6 +26004,12 @@
         scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom));
         padding: 12px 12px calc(76px + env(safe-area-inset-bottom));
         border-radius: 20px;
+      }
+
+      #dealPassOverlay .deal-pass-sheet {
+        min-height: min(720px, calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+        scroll-padding-bottom: 14px;
+        padding-bottom: 14px;
       }
 
       .profile-qr-sheet {
@@ -26303,20 +26316,19 @@
     }
 
     .deal-pass-primary-dock {
-      position: fixed;
+      position: static;
       z-index: 13002;
-      left: 50%;
-      bottom: max(18px, env(safe-area-inset-bottom));
-      width: min(386px, calc(100vw - 52px));
+      width: 100%;
       display: grid;
       gap: 5px;
       box-sizing: border-box;
+      margin-top: 10px;
       padding: 10px;
       border: 1px solid rgba(255, 255, 255, .12);
       border-radius: 18px;
       background: rgba(8, 9, 12, .96);
       box-shadow: 0 16px 44px rgba(0, 0, 0, .58), inset 0 1px 0 rgba(255, 255, 255, .06);
-      transform: translateX(-50%);
+      transform: none;
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
     }
@@ -26331,9 +26343,9 @@
 
     @media (max-width: 560px) {
       .deal-pass-primary-dock {
-        bottom: max(8px, env(safe-area-inset-bottom));
-        width: min(370px, calc(100vw - 16px));
+        width: 100%;
         gap: 3px;
+        margin-top: 8px;
         padding: 7px;
         border-radius: 16px;
       }
@@ -26356,7 +26368,7 @@
     .deal-pass-sheet[data-deal-state="ready"] .deal-pass-primary-dock {
       position: static;
       width: 100%;
-      margin-top: 14px;
+      margin-top: 10px;
       transform: none;
     }
 
@@ -26368,7 +26380,7 @@
 
       .deal-pass-sheet[data-deal-state="ready"] .deal-pass-primary-dock {
         width: 100%;
-        margin-top: 10px;
+        margin-top: 8px;
       }
     }
 

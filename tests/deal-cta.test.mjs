@@ -111,7 +111,7 @@ test("selected Club Deals replace preparation controls with one cashier instruct
   assert.match(liveApp, /primaryNote\.hidden = true/);
   assert.match(liveApp, /selectButton\.textContent = "Deal selected ✓"/);
   assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \{[\s\S]*?padding-bottom: 18px;/);
-  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?margin-top: 14px;[\s\S]*?transform: none;/);
+  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?margin-top: 10px;[\s\S]*?transform: none;/);
   assert.match(dealCard, /className="club-deal-dialog"[\s\S]*?data-deal-state=\{intentState\}/);
   assert.match(dealCard, /\.club-deal-dialog\[data-deal-state="ready"\] \.club-deal-primary-dock \{ position:static; width:100%; margin-top:4px; transform:none; \}/);
 });
@@ -119,10 +119,19 @@ test("selected Club Deals replace preparation controls with one cashier instruct
 test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {
   assert.match(liveApp, /width: min\(370px, calc\(100vw - 16px\)\)/);
   assert.match(liveApp, /max-height: calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)/);
-  assert.match(liveApp, /padding: 12px 12px calc\(76px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?min-height: min\(720px, calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)\);[\s\S]*?scroll-padding-bottom: 14px;[\s\S]*?padding-bottom: 14px;/);
   assert.match(liveApp, /@media \(max-width: 560px\) \{[\s\S]*?\.deal-pass-step \{[\s\S]*?grid-template-columns: 18px minmax\(0, 1fr\);[\s\S]*?padding: 4px 6px;[\s\S]*?\.deal-pass-action \{[\s\S]*?min-height: 38px !important;/);
-  assert.match(dealCard, /\.club-deal-dialog \{ width:min\(370px,100%\); max-height:calc\(100dvh - 16px/);
-  assert.match(dealCard, /\.club-deal-primary-dock \{ width:min\(370px,calc\(100vw - 16px\)\); bottom:max\(8px,env\(safe-area-inset-bottom\)\)/);
+  assert.match(dealCard, /\.club-deal-dialog \{ width:min\(370px,100%\); min-height:min\(720px,calc\(100dvh - 16px/);
+  assert.match(dealCard, /\.club-deal-primary-dock \{ width:100%; gap:3px; margin-top:0;/);
+});
+
+test("Club Deal selection preserves card height and keeps the primary action beside the other actions", () => {
+  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?min-height: min\(720px,/);
+  assert.match(liveApp, /\.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?margin-top: 10px;[\s\S]*?transform: none;/);
+  assert.doesNotMatch(liveApp, /\.deal-pass-primary-dock \{[^}]*position: fixed;/);
+  assert.match(dealCard, /\.club-deal-dialog \{[^}]*min-height: min\(720px, 90dvh\);[^}]*align-content: start;[^}]*padding: 24px 20px 20px;/);
+  assert.match(dealCard, /\.club-deal-primary-dock \{ position:static;[^}]*width:100%;[^}]*margin-top:0;[^}]*transform:none;/);
+  assert.doesNotMatch(dealCard, /\.club-deal-primary-dock \{[^}]*position:fixed;/);
 });
 
 test("cashier NFC mark is explicitly centered and visually emphasized", () => {
