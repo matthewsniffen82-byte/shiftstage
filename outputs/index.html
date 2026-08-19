@@ -116,6 +116,11 @@
       overflow: hidden;
     }
 
+    body.overlay-open.deal-pass-overlay-open {
+      height: auto;
+      min-height: 100vh;
+    }
+
     body.account-surface-open .app > header,
     body.account-surface-open .app > main,
     body.account-surface-open #discoveryTabs {
@@ -26514,6 +26519,7 @@
       font: inherit;
       font-weight: 950;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     .deal-pass-action.primary {
@@ -45464,18 +45470,9 @@
       closeButton?.addEventListener("touchend", closeFromButton, { passive: false });
       const bindDealPassAction = (button, action) => {
         if (!button) return;
-        let suppressSyntheticClickUntil = 0;
-        button.addEventListener("pointerup", (event) => {
-          if (event.pointerType === "mouse") return;
-          suppressSyntheticClickUntil = Date.now() + 750;
-          event.preventDefault();
-          event.stopPropagation();
-          action(button);
-        }, { passive: false });
         button.addEventListener("click", (event) => {
           event.preventDefault();
           event.stopPropagation();
-          if (Date.now() < suppressSyntheticClickUntil) return;
           action(button);
         });
       };
@@ -49935,6 +49932,7 @@
     function syncOverlayScrollLock() {
       const profileFullViewOpen = profileBackdrop.classList.contains("show");
       const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .profile-tv-viewer.show, .deal-pass-overlay.show, .profile-qr-overlay.show, .account-required-popover:not([hidden])");
+      const dealPassOverlayOpen = !!document.querySelector(".deal-pass-overlay.show");
       const dashboardOverlayOpen = !!document.querySelector(
         "#customerDashboard.show, #dancerDashboard.show, #venueDashboard.show, #adminDashboard.show"
       );
@@ -49951,7 +49949,9 @@
         dashboardOverlayOpen ||
         accountCreationOverlayOpen ||
         authPage.classList.contains("show");
+      if (dealPassOverlayOpen) document.body.classList.add("deal-pass-overlay-open");
       document.body.classList.toggle("overlay-open", overlayOpen);
+      if (!dealPassOverlayOpen) document.body.classList.remove("deal-pass-overlay-open");
       document.body.classList.toggle("dashboard-overlay-open", dashboardOverlayOpen);
       document.body.classList.toggle("account-creation-overlay-open", accountCreationOverlayOpen);
       document.body.classList.toggle("customer-auth-overlay-open", customerAuthOverlayOpen);

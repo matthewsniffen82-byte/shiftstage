@@ -20,6 +20,26 @@ test("live Club Deal QR overlays restore the exact venue profile position", () =
   assert.match(liveSource, /if \(restorePosition\) restoreClubDealOverlayReturnContext\(\)/);
 });
 
+test("selecting a Club Deal keeps the venue-card document position locked in place", () => {
+  assert.match(
+    liveSource,
+    /body\.overlay-open\.deal-pass-overlay-open \{\s*height: auto;\s*min-height: 100vh;/,
+  );
+  assert.match(
+    liveSource,
+    /const dealPassOverlayOpen = !!document\.querySelector\("\.deal-pass-overlay\.show"\);/,
+  );
+  assert.match(
+    liveSource,
+    /if \(dealPassOverlayOpen\) document\.body\.classList\.add\("deal-pass-overlay-open"\);\s*document\.body\.classList\.toggle\("overlay-open", overlayOpen\);\s*if \(!dealPassOverlayOpen\) document\.body\.classList\.remove\("deal-pass-overlay-open"\);/,
+  );
+  const actionBinding = liveSource.match(
+    /const bindDealPassAction[\s\S]*?const currentPass/,
+  )?.[0] || "";
+  assert.match(actionBinding, /addEventListener\("click"/);
+  assert.doesNotMatch(actionBinding, /addEventListener\("pointerup"/);
+});
+
 test("multi-offer Club Deal flow preserves one return position through QR creation", () => {
   assert.match(liveSource, /openClubDealHub\(config, revenueTrigger\)/);
   assert.match(liveSource, /closeClubDealHub\(false\);\s*openDealPassOverlay\(pass\)/);

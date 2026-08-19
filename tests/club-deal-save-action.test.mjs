@@ -21,8 +21,12 @@ test("preview, NFC selection, and saving are separate intentional actions", () =
   assert.match(liveSource, /data-save-deal-pass aria-pressed="false">Save for later<\/button>/);
   assert.match(
     liveSource,
-    /const bindDealPassAction[\s\S]*?addEventListener\("pointerup"[\s\S]*?addEventListener\("click"/,
+    /const bindDealPassAction[\s\S]*?addEventListener\("click"[\s\S]*?event\.preventDefault\(\);[\s\S]*?event\.stopPropagation\(\);[\s\S]*?action\(button\);/,
   );
+  const actionBinding = liveSource.match(
+    /const bindDealPassAction[\s\S]*?const currentPass/,
+  )?.[0] || "";
+  assert.doesNotMatch(actionBinding, /addEventListener\("pointerup"/);
   assert.match(liveSource, /function selectDealPassForNfc[\s\S]*?localStorage\.setItem\("mydancrPendingNfcDealV2"/);
   assert.match(liveSource, /button\.textContent = persisted \? "Saved for later ✓ · Remove" : "Try saving again"/);
   assert.match(liveSource, /button\.classList\.toggle\("is-saved", persisted\)/);
