@@ -129,7 +129,7 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
 
 test("Club Deal checkout explains the complete NFC tap flow without requiring an open browser", () => {
   assert.match(dealCard, /Use this deal/);
-  assert.match(dealCard, /Select this deal/);
+  assert.match(dealCard, /Tap &ldquo;Use this deal&rdquo; below/);
   assert.match(dealCard, /Go to the cashier/);
   assert.match(dealCard, /Unlock and tap the MyDancr NFC sticker/);
   assert.match(dealCard, /Confirm redemption/);

@@ -80,7 +80,7 @@ test("customers explicitly select an exact offer and dancer token until the phys
 
 test("Club Deal checkout uses one concise four-step NFC flow across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /<strong>Select this deal<\/strong>/);
+    assert.match(source, /<strong>Tap &ldquo;Use this deal&rdquo; below<\/strong>/);
     assert.match(source, /Go to the cashier/);
     assert.match(source, /Unlock and tap the MyDancr NFC sticker/);
     assert.match(source, /<strong>Confirm redemption<\/strong>/);

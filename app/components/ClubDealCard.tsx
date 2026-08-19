@@ -251,7 +251,7 @@ export function ClubDealCard({
           {intentState !== "ready" ? (
             <>
               <div className="club-deal-redemption-steps" aria-label="How to redeem">
-                <div><span>1</span><strong>Select this deal</strong></div>
+                <div><span>1</span><strong>Tap &ldquo;Use this deal&rdquo; below</strong></div>
                 <div><span>2</span><strong>Go to the cashier</strong></div>
                 <div><span>3</span><strong>Unlock and tap the MyDancr NFC sticker</strong></div>
                 <div><span>4</span><strong>Confirm redemption</strong></div>
