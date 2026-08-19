@@ -119,14 +119,17 @@ test("selected Club Deals replace preparation controls with one cashier instruct
 test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {
   assert.match(liveApp, /width: min\(370px, calc\(100vw - 16px\)\)/);
   assert.match(liveApp, /max-height: calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)/);
-  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?min-height: min\(720px, calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)\);[\s\S]*?scroll-padding-bottom: 14px;[\s\S]*?padding-bottom: 14px;/);
+  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?height: var\(--deal-pass-stable-height, auto\);[\s\S]*?min-height: 0;[\s\S]*?scroll-padding-bottom: 14px;[\s\S]*?padding-bottom: 14px;/);
   assert.match(liveApp, /@media \(max-width: 560px\) \{[\s\S]*?\.deal-pass-step \{[\s\S]*?grid-template-columns: 18px minmax\(0, 1fr\);[\s\S]*?padding: 4px 6px;[\s\S]*?\.deal-pass-action \{[\s\S]*?min-height: 38px !important;/);
-  assert.match(dealCard, /\.club-deal-dialog \{ width:min\(370px,100%\); min-height:min\(720px,calc\(100dvh - 16px/);
+  assert.match(dealCard, /\.club-deal-dialog \{ width:min\(370px,100%\); height:var\(--club-deal-stable-height,auto\); min-height:0; max-height:calc\(100dvh - 16px/);
   assert.match(dealCard, /\.club-deal-primary-dock \{ width:100%; gap:3px; margin-top:0;/);
 });
 
 test("Club Deal selection preserves card height and aligns every bottom action", () => {
-  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?min-height: min\(720px,[\s\S]*?display: flex;[\s\S]*?flex-direction: column;/);
+  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?height: var\(--deal-pass-stable-height, auto\);[\s\S]*?min-height: 0;[\s\S]*?display: flex;[\s\S]*?flex-direction: column;/);
+  assert.match(liveApp, /const previewHeight = sheet\?\.dataset\.dealState !== "ready"[\s\S]*?getBoundingClientRect\(\)\.height[\s\S]*?setProperty\("--deal-pass-stable-height", `\$\{previewHeight\}px`\)/);
+  assert.match(liveApp, /removeProperty\("--deal-pass-stable-height"\)/);
+  assert.doesNotMatch(liveApp, /min-height: min\(720px/);
   assert.match(liveApp, /\.deal-pass-actions \{[\s\S]*?width: 100%;[\s\S]*?grid-template-columns: 1fr 1fr;/);
   assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{[\s\S]*?margin-top: 10px;/);
   assert.match(liveApp, /@media \(max-width: 560px\) \{\s*#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{\s*margin-top: 7px;/);
@@ -134,7 +137,10 @@ test("Club Deal selection preserves card height and aligns every bottom action",
   assert.match(liveApp, /\.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?transform: none;/);
   assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-primary-dock \{[\s\S]*?margin-top: auto;/);
   assert.doesNotMatch(liveApp, /\.deal-pass-primary-dock \{[^}]*position: fixed;/);
-  assert.match(dealCard, /\.club-deal-dialog \{[^}]*min-height: min\(720px, 90dvh\);[^}]*display: flex;[^}]*flex-direction: column;[^}]*padding: 24px 20px 20px;/);
+  assert.match(dealCard, /\.club-deal-dialog \{[^}]*height:var\(--club-deal-stable-height,auto\);[^}]*min-height:0;[^}]*display: flex;[^}]*flex-direction: column;[^}]*padding: 24px 20px 20px;/);
+  assert.match(dealCard, /ref=\{dialogRef\}/);
+  assert.match(dealCard, /getBoundingClientRect\(\)\.height[\s\S]*?setProperty\("--club-deal-stable-height", `\$\{previewHeight\}px`\)/);
+  assert.doesNotMatch(dealCard, /min-height:min\(720px/);
   assert.match(dealCard, /\.club-deal-dialog \.club-deal-action \{ display:grid; gap:10px; margin-top:10px; \}/);
   assert.match(dealCard, /\.club-deal-dialog\[data-deal-state="ready"\] \.club-deal-action \{ margin-top:auto; \}/);
   assert.doesNotMatch(dealCard, /\.club-deal-dialog \.club-deal-action \{[^}]*margin-top:auto;/);

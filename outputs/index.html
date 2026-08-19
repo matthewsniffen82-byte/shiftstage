@@ -25796,7 +25796,8 @@
     }
 
     #dealPassOverlay .deal-pass-sheet {
-      min-height: min(720px, calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+      height: var(--deal-pass-stable-height, auto);
+      min-height: 0;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
@@ -26013,7 +26014,8 @@
       }
 
       #dealPassOverlay .deal-pass-sheet {
-        min-height: min(720px, calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+        height: var(--deal-pass-stable-height, auto);
+        min-height: 0;
         scroll-padding-bottom: 14px;
         padding-bottom: 14px;
       }
@@ -45514,8 +45516,15 @@
         }
         button.disabled = true;
         button.textContent = "Preparing…";
+        const sheet = overlay.querySelector(".deal-pass-sheet");
+        const previewHeight = sheet?.dataset.dealState !== "ready"
+          ? Math.ceil(sheet.getBoundingClientRect().height)
+          : 0;
         const result = selectDealPassForNfc(pass);
         if (result.ok) {
+          if (sheet && previewHeight > 0) {
+            sheet.style.setProperty("--deal-pass-stable-height", `${previewHeight}px`);
+          }
           syncDealPassOverlayState(overlay, pass);
           showToast("Deal ready for the cashier NFC tap");
         } else {
@@ -45669,6 +45678,7 @@
         captureClubDealOverlayReturnContext(triggerButton);
       }
       const overlay = dealPassOverlay();
+      overlay.querySelector(".deal-pass-sheet")?.style.removeProperty("--deal-pass-stable-height");
       const presentation = dealPassPresentation(pass);
       overlay.hidden = false;
       overlay.dataset.dealPass = encodeDealPass(pass);
