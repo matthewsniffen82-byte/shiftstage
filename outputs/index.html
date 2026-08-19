@@ -26323,7 +26323,13 @@
     }
 
     #dealPassOverlay .deal-pass-sheet:not([data-deal-state="ready"]) .deal-pass-actions {
-      margin-top: auto;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 560px) {
+      #dealPassOverlay .deal-pass-sheet:not([data-deal-state="ready"]) .deal-pass-actions {
+        margin-top: 7px;
+      }
     }
 
     .deal-pass-primary-dock {

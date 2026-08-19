@@ -128,12 +128,16 @@ test("mobile Club Deal checkout fits the complete cashier flow into the phone vi
 test("Club Deal selection preserves card height and aligns every bottom action", () => {
   assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?min-height: min\(720px,[\s\S]*?display: flex;[\s\S]*?flex-direction: column;/);
   assert.match(liveApp, /\.deal-pass-actions \{[\s\S]*?width: 100%;[\s\S]*?grid-template-columns: 1fr 1fr;/);
-  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{[\s\S]*?margin-top: auto;/);
+  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{[\s\S]*?margin-top: 10px;/);
+  assert.match(liveApp, /@media \(max-width: 560px\) \{\s*#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{\s*margin-top: 7px;/);
+  assert.doesNotMatch(liveApp, /#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{[^}]*margin-top: auto;/);
   assert.match(liveApp, /\.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?transform: none;/);
   assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-primary-dock \{[\s\S]*?margin-top: auto;/);
   assert.doesNotMatch(liveApp, /\.deal-pass-primary-dock \{[^}]*position: fixed;/);
   assert.match(dealCard, /\.club-deal-dialog \{[^}]*min-height: min\(720px, 90dvh\);[^}]*display: flex;[^}]*flex-direction: column;[^}]*padding: 24px 20px 20px;/);
-  assert.match(dealCard, /\.club-deal-dialog \.club-deal-action \{ display:grid; gap:10px; margin-top:auto; \}/);
+  assert.match(dealCard, /\.club-deal-dialog \.club-deal-action \{ display:grid; gap:10px; margin-top:10px; \}/);
+  assert.match(dealCard, /\.club-deal-dialog\[data-deal-state="ready"\] \.club-deal-action \{ margin-top:auto; \}/);
+  assert.doesNotMatch(dealCard, /\.club-deal-dialog \.club-deal-action \{[^}]*margin-top:auto;/);
   assert.match(dealCard, /\.club-deal-primary-dock \{ position:static;[^}]*width:100%;[^}]*margin-top:0;[^}]*padding:0;[^}]*border:0;[^}]*background:transparent;[^}]*transform:none;/);
   assert.doesNotMatch(dealCard, /\.club-deal-primary-dock \{[^}]*position:fixed;/);
 });

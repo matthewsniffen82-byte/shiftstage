@@ -546,7 +546,8 @@ function ClubDealInteractionStyles() {
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child { border-color:rgba(126,234,255,.28); color:#e5fbff; background:rgba(53,216,255,.06); }
       .club-deal-redemption[data-state="ready"] .club-deal-redemption-steps>div:first-child span { color:#071014; border-color:rgba(126,234,255,.46); background:#f7fbff; }
       .club-deal-security-note { margin:0; color:rgba(255,255,255,.76); font-size:10px; font-weight:850; line-height:1.4; text-align:center; }
-      .club-deal-dialog .club-deal-action { display:grid; gap:10px; margin-top:auto; }
+      .club-deal-dialog .club-deal-action { display:grid; gap:10px; margin-top:10px; }
+      .club-deal-dialog[data-deal-state="ready"] .club-deal-action { margin-top:auto; }
       .club-deal-primary-dock { position:static; z-index:1702; width:100%; display:grid; gap:5px; box-sizing:border-box; margin-top:0; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; transform:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
       .club-deal-primary-dock>small { color:rgba(255,255,255,.72); font-size:9px; font-weight:800; line-height:1.3; text-align:center; }
       .club-deal-dialog .club-deal-checkout-action { min-height:52px !important; border:1px solid rgba(167,139,250,.92) !important; border-radius:16px !important; color:#fff !important; background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%) !important; box-shadow:0 14px 32px rgba(0,0,0,.32),0 0 26px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.22) !important; font:inherit; font-weight:950 !important; cursor:pointer; transition:filter 160ms ease,transform 160ms ease,box-shadow 160ms ease !important; }
@@ -596,7 +597,8 @@ function ClubDealInteractionStyles() {
         .club-deal-redemption-steps small { font-size:8px; line-height:1.18; }
         .club-deal-preview-note { font-size:8px; line-height:1.18; }
         .club-deal-security-note { font-size:8px; line-height:1.1; }
-        .club-deal-dialog .club-deal-action { gap:6px; }
+        .club-deal-dialog .club-deal-action { gap:6px; margin-top:7px; }
+        .club-deal-dialog[data-deal-state="ready"] .club-deal-action { margin-top:auto; }
         .club-deal-share-actions { gap:6px; }
         .club-deal-share-actions button { min-height:38px; font-size:10px; }
         .club-deal-primary-dock { width:100%; gap:3px; margin-top:0; padding:0; border-radius:0; }
