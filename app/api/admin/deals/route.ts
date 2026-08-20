@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
-  getAdminDealActivity,
   settleDealRevenueEvent,
   voidDealRedemption,
-} from "@/src/lib/dancr/deals";
+} from "@/src/lib/dancr/deal-admin-actions";
+import { getAdminDealActivity } from "@/src/lib/dancr/deals";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 

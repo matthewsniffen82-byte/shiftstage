@@ -10,6 +10,7 @@ const [
   earningsMigration,
   policy,
   deals,
+  dealAdminActions,
   generationRoute,
   cashierRedemption,
   eventRoute,
@@ -35,6 +36,7 @@ const [
   readFile(new URL("../supabase/migrations/202608170004_dancer_earnings_payout_system.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/commission-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/deal-admin-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/cashier-deal-redemption.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redemptions/[token]/events/route.ts", import.meta.url), "utf8"),
@@ -123,7 +125,7 @@ test("save, share, scan, and confirmation have durable lifecycle events without 
 
 test("venue cashier-tap totals use finalized revenue events across both attribution paths", () => {
   const venueMetrics = deals.match(
-    /export async function getVenueDealRevenueMetrics[\s\S]*?(?=\nexport async function settleDealRevenueEvent)/,
+    /export async function getVenueDealRevenueMetrics[\s\S]*?(?=\nexport async function getAdminDealActivity)/,
   )?.[0] || "";
   assert.notEqual(venueMetrics, "");
   assert.match(venueMetrics, /const activeRows = rows\.filter[\s\S]*?refunded[\s\S]*?voided/);
@@ -202,7 +204,7 @@ test("unused QR invalidation is atomic and cannot rewrite settled financial hist
   assert.match(migration, /if v_redemption\.status <> 'generated' then[\s\S]*?Financial reversals require a separate refund record/);
   assert.match(migration, /update public\.qr_redemptions[\s\S]*?insert into public\.qr_redemption_events/);
   assert.match(migration, /grant execute on function public\.void_generated_deal_redemption\(uuid, text\) to authenticated/);
-  assert.match(deals, /\.rpc\("void_generated_deal_redemption"/);
+  assert.match(dealAdminActions, /\.rpc\("void_generated_deal_redemption"/);
   assert.match(adminClient, /item\.status === "generated"[\s\S]*?Void unused QR/);
 });
 
