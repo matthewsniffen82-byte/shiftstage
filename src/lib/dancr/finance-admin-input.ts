@@ -47,6 +47,55 @@ export type ReconcileBitsafePayoutInput = {
   reason: string;
 };
 
+export type AdminFinanceCommand =
+  | { action: "run_automation" }
+  | { action: "process_payouts" }
+  | ({ action: "record_manual_payment" } & ManualPaymentInput)
+  | ({ action: "update_payout_settings" } & PayoutSettingsInput)
+  | ({ action: "manage_earning" } & ManageEarningInput)
+  | ({ action: "retry_payout" } & RetryPayoutInput)
+  | ({ action: "reconcile_bitsafe_payout" } & ReconcileBitsafePayoutInput);
+
+export function parseAdminFinanceCommand(input: unknown): ValidationResult<AdminFinanceCommand> {
+  const request = parseAdminFinanceBody(input);
+  if (!request.ok) return invalid(request.error);
+  const body = request.value;
+  const parsedAction = parseAdminFinanceAction(body);
+  if (!parsedAction.ok) return invalid(parsedAction.error);
+  const action = parsedAction.value;
+
+  if (action === "run_automation" || action === "process_payouts") {
+    return valid({ action });
+  }
+
+  if (action === "record_manual_payment") {
+    const parsed = parseManualPaymentInput(body);
+    return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
+  }
+
+  if (action === "update_payout_settings") {
+    const parsed = parsePayoutSettingsInput(body);
+    return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
+  }
+
+  if (action === "manage_earning") {
+    const parsed = parseManageEarningInput(body);
+    return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
+  }
+
+  if (action === "retry_payout") {
+    const parsed = parseRetryPayoutInput(body);
+    return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
+  }
+
+  if (action === "reconcile_bitsafe_payout") {
+    const parsed = parseReconcileBitsafePayoutInput(body);
+    return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
+  }
+
+  return unsupportedAction(action);
+}
+
 export function parseAdminFinanceBody(input: unknown): ValidationResult<Record<string, unknown>> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     return invalid("Invalid finance request.");
@@ -157,4 +206,9 @@ function oneOf<const T extends readonly string[]>(
 ): ValidationResult<T[number]> {
   if (typeof value !== "string" || !allowed.includes(value)) return invalid<T[number]>(message);
   return valid(value as T[number]);
+}
+
+function unsupportedAction(action: never): ValidationResult<AdminFinanceCommand> {
+  void action;
+  return invalid("Unsupported finance action.");
 }

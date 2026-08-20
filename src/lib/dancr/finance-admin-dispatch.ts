@@ -7,13 +7,7 @@ import {
   updatePayoutSettings,
 } from "./finance-admin-actions";
 import {
-  parseAdminFinanceAction,
-  parseAdminFinanceBody,
-  parseManageEarningInput,
-  parseManualPaymentInput,
-  parsePayoutSettingsInput,
-  parseReconcileBitsafePayoutInput,
-  parseRetryPayoutInput,
+  parseAdminFinanceCommand,
 } from "./finance-admin-input";
 import { runQrFinanceAutomation } from "./finance-automation";
 import { processDancerPayouts } from "./finance-payout-processing";
@@ -31,76 +25,63 @@ export async function dispatchAdminFinanceAction(
   adminUserId: string,
   input: unknown,
 ): Promise<AdminFinanceDispatchResult> {
-  const request = parseAdminFinanceBody(input);
-  if (!request.ok) return invalid(request.error);
-  const body = request.value;
-  const parsedAction = parseAdminFinanceAction(body);
-  if (!parsedAction.ok) return invalid(parsedAction.error);
-  const action = parsedAction.value;
+  const parsed = parseAdminFinanceCommand(input);
+  if (!parsed.ok) return invalid(parsed.error);
+  const command = parsed.value;
 
-  if (action === "run_automation") {
+  if (command.action === "run_automation") {
     const result = await runQrFinanceAutomation(client);
     return success({ result, finance: await getAdminFinanceOverview(client) });
   }
 
-  if (action === "process_payouts") {
+  if (command.action === "process_payouts") {
     const result = await processDancerPayouts(client);
     return success({ result, finance: await getAdminFinanceOverview(client) });
   }
 
-  if (action === "record_manual_payment") {
-    const parsed = parseManualPaymentInput(body);
-    if (!parsed.ok) return invalid(parsed.error);
+  if (command.action === "record_manual_payment") {
     await recordManualClubInvoicePayment(
       client,
-      parsed.value.invoiceId,
-      parsed.value.totalPaidCents,
-      parsed.value.reference,
+      command.invoiceId,
+      command.totalPaidCents,
+      command.reference,
     );
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  if (action === "update_payout_settings") {
-    const parsed = parsePayoutSettingsInput(body);
-    if (!parsed.ok) return invalid(parsed.error);
-    await updatePayoutSettings(client, adminUserId, parsed.value);
+  if (command.action === "update_payout_settings") {
+    await updatePayoutSettings(client, adminUserId, command);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  if (action === "manage_earning") {
-    const parsed = parseManageEarningInput(body);
-    if (!parsed.ok) return invalid(parsed.error);
+  if (command.action === "manage_earning") {
     await manageDancerEarning(
       client,
       adminUserId,
-      parsed.value.earningId,
-      parsed.value.earningAction,
-      parsed.value.reason,
+      command.earningId,
+      command.earningAction,
+      command.reason,
     );
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  if (action === "retry_payout") {
-    const parsed = parseRetryPayoutInput(body);
-    if (!parsed.ok) return invalid(parsed.error);
-    await retryDancerPayout(client, adminUserId, parsed.value.payoutId, parsed.value.reason);
+  if (command.action === "retry_payout") {
+    await retryDancerPayout(client, adminUserId, command.payoutId, command.reason);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  if (action === "reconcile_bitsafe_payout") {
-    const parsed = parseReconcileBitsafePayoutInput(body);
-    if (!parsed.ok) return invalid(parsed.error);
+  if (command.action === "reconcile_bitsafe_payout") {
     await reconcileBitsafePayout(
       client,
       adminUserId,
-      parsed.value.payoutId,
-      parsed.value.reconciliationReference,
-      parsed.value.reason,
+      command.payoutId,
+      command.reconciliationReference,
+      command.reason,
     );
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  return unsupportedAction(action);
+  return unsupportedCommand(command);
 }
 
 function success(body: Record<string, unknown>): AdminFinanceDispatchResult {
@@ -111,7 +92,7 @@ function invalid(error: string): AdminFinanceDispatchResult {
   return { status: 400, body: { ok: false, error } };
 }
 
-function unsupportedAction(action: never): AdminFinanceDispatchResult {
-  void action;
+function unsupportedCommand(command: never): AdminFinanceDispatchResult {
+  void command;
   return invalid("Unsupported finance action.");
 }

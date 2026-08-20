@@ -3,12 +3,65 @@ import test from "node:test";
 import {
   parseAdminFinanceAction,
   parseAdminFinanceBody,
+  parseAdminFinanceCommand,
   parseManageEarningInput,
   parseManualPaymentInput,
   parsePayoutSettingsInput,
   parseReconcileBitsafePayoutInput,
   parseRetryPayoutInput,
 } from "../src/lib/dancr/finance-admin-input.ts";
+
+test("finance command parsing validates and sanitizes the complete action payload", () => {
+  assert.deepEqual(parseAdminFinanceCommand({ action: "run_automation", ignored: "value" }), {
+    ok: true,
+    value: { action: "run_automation" },
+  });
+  assert.deepEqual(parseAdminFinanceCommand({ action: "process_payouts" }), {
+    ok: true,
+    value: { action: "process_payouts" },
+  });
+  assert.deepEqual(parseAdminFinanceCommand({
+    action: "record_manual_payment",
+    invoiceId: " invoice-1 ",
+    reference: " bank-reference ",
+    totalPaidCents: "1250",
+    ignored: "value",
+  }), {
+    ok: true,
+    value: {
+      action: "record_manual_payment",
+      invoiceId: "invoice-1",
+      reference: "bank-reference",
+      totalPaidCents: 1250,
+    },
+  });
+  assert.deepEqual(parseAdminFinanceCommand({
+    action: "retry_payout",
+    payoutId: " payout-1 ",
+    reason: " retry ",
+  }), {
+    ok: true,
+    value: { action: "retry_payout", payoutId: "payout-1", reason: "retry" },
+  });
+
+  assert.deepEqual(parseAdminFinanceCommand(null), {
+    ok: false,
+    error: "Invalid finance request.",
+  });
+  assert.deepEqual(parseAdminFinanceCommand({ action: "unsupported" }), {
+    ok: false,
+    error: "Unsupported finance action.",
+  });
+  assert.deepEqual(parseAdminFinanceCommand({
+    action: "record_manual_payment",
+    invoiceId: "invoice-1",
+    reference: "bank-reference",
+    totalPaidCents: 0,
+  }), {
+    ok: false,
+    error: "Payment total must be a positive whole number of cents.",
+  });
+});
 
 test("finance action parsing accepts only the seven supported production actions", () => {
   for (const action of [

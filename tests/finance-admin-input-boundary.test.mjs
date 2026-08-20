@@ -8,14 +8,14 @@ const [input, dispatch] = await Promise.all([
 ]);
 
 test("admin finance input rules use one dependency-free validation boundary", () => {
+  assert.match(input, /export function parseAdminFinanceCommand/);
   assert.match(input, /export function parseAdminFinanceBody/);
   assert.match(input, /export function parseAdminFinanceAction/);
-  assert.match(dispatch, /const request = parseAdminFinanceBody\(input\)/);
-  assert.match(dispatch, /if \(!request\.ok\) return invalid\(request\.error\)/);
-  assert.match(dispatch, /const body = request\.value/);
-  assert.match(dispatch, /const parsedAction = parseAdminFinanceAction\(body\)/);
-  assert.match(dispatch, /if \(!parsedAction\.ok\) return invalid\(parsedAction\.error\)/);
-  assert.match(dispatch, /const action = parsedAction\.value/);
+  assert.match(dispatch, /const parsed = parseAdminFinanceCommand\(input\)/);
+  assert.match(dispatch, /if \(!parsed\.ok\) return invalid\(parsed\.error\)/);
+  assert.match(dispatch, /const command = parsed\.value/);
+  assert.match(input, /const request = parseAdminFinanceBody\(input\)/);
+  assert.match(input, /const parsedAction = parseAdminFinanceAction\(body\)/);
   for (const parser of [
     "parseManualPaymentInput",
     "parsePayoutSettingsInput",
@@ -24,7 +24,8 @@ test("admin finance input rules use one dependency-free validation boundary", ()
     "parseReconcileBitsafePayoutInput",
   ]) {
     assert.match(input, new RegExp(`export function ${parser}`));
-    assert.match(dispatch, new RegExp(`${parser}\\(body\\)`));
+    assert.match(input, new RegExp(`${parser}\\(body\\)`));
+    assert.doesNotMatch(dispatch, new RegExp(parser));
   }
   assert.doesNotMatch(input, /SupabaseClient|\.from\(|\.rpc\(|finance-admin-actions|finance-reporting/);
   assert.doesNotMatch(dispatch, /function requiredText|function boundedInteger|function oneOf/);
@@ -48,13 +49,13 @@ test("typed parsers preserve trimming, numeric bounds, and audit text limits", (
   assert.match(input, /reconciliationReference\.value\.length > 160/);
 });
 
-test("explicit validation failures remain dispatcher-owned 400 responses", () => {
+test("explicit validation failures become one dispatcher-owned 400 response", () => {
   assert.match(input, /type ValidationResult<T>/);
   assert.match(input, /return \{ ok: false, error \}/);
   assert.doesNotMatch(input, /throw new Error/);
   assert.match(input, /return invalid<string>\(message\)/);
   assert.match(input, /return invalid<number>\(message\)/);
-  assert.equal((dispatch.match(/if \(!parsed\.ok\) return invalid\(parsed\.error\)/g) || []).length, 5);
+  assert.equal((dispatch.match(/if \(!parsed\.ok\) return invalid\(parsed\.error\)/g) || []).length, 1);
   assert.match(input, /return invalid\("Invalid finance request\."\)/);
   assert.match(dispatch, /return \{ status: 400, body: \{ ok: false, error \} \}/);
 });
