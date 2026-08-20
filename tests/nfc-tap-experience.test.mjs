@@ -143,9 +143,11 @@ test("Club Deal checkout explains the complete NFC tap flow without requiring an
   assert.match(dealCard, /Saved for later on this device\. This does not select or redeem the deal\./);
 });
 
-test("Club Deal checkout is the prominent violet action and confirms readiness in green", () => {
+test("Club Deal checkout keeps the Android violet on iOS and confirms readiness in green", () => {
   assert.match(dealCard, /className=\{`club-deal-checkout-action\$\{intentState === "ready" \? " is-ready" : ""\}`\}/);
   assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action \{[^}]*min-height:52px !important;[^}]*background:linear-gradient\(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%\) !important;[^}]*0 0 26px rgba\(124,58,237,\.42\)/);
+  assert.match(dealCard, /@media \(hover:hover\) and \(pointer:fine\) \{\s*\.club-deal-dialog \.club-deal-checkout-action:hover:not\(:disabled\)/);
+  assert.match(dealCard, /@supports \(-webkit-touch-callout:none\) \{\s*\.club-deal-dialog \.club-deal-checkout-action:not\(\.is-ready\) \{[^}]*background:#32009c !important;[^}]*filter:none !important;/);
   assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action\.is-ready:disabled \{[^}]*opacity:1 !important;[^}]*background:linear-gradient\(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%\) !important;[^}]*0 0 24px rgba\(34,197,94,\.34\)/);
   assert.match(dealCard, /\.club-deal-primary-dock \{ position:static;[^}]*width:100%;[^}]*margin-top:0;[^}]*transform:none;/);
 });

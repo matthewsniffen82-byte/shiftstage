@@ -835,6 +835,14 @@ test("Working Now dancer grid cards expose a functional cashier NFC Club Deal ac
   );
   assert.match(
     homeSource,
+    /@media \(hover: hover\) and \(pointer: fine\) \{\s*\.deal-pass-action\.primary:hover:not\(:disabled\)/,
+  );
+  assert.match(
+    homeSource,
+    /@supports \(-webkit-touch-callout: none\) \{\s*\.deal-pass-action\.primary:not\(\.is-ready\) \{[^}]*background: #32009c !important;[^}]*filter: none !important;/,
+  );
+  assert.match(
+    homeSource,
     /\.deal-pass-action\.primary\.is-ready \{[^}]*opacity: 1 !important;[^}]*background: linear-gradient\(135deg, #087443 0%, #0f9f5b 58%, #16a34a 100%\) !important;[^}]*0 0 24px rgba\(34, 197, 94, \.34\)/,
   );
   assert.match(

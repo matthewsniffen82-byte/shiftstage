@@ -553,11 +553,16 @@ function ClubDealInteractionStyles() {
       .club-deal-dialog .club-deal-action { display:grid; gap:10px; margin-top:10px; }
       .club-deal-dialog[data-deal-state="ready"] .club-deal-action { margin-top:auto; }
       .club-deal-primary-dock { position:static; z-index:1702; width:100%; display:grid; gap:5px; box-sizing:border-box; margin-top:0; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; transform:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
-      .club-deal-dialog .club-deal-checkout-action { min-height:52px !important; border:1px solid rgba(167,139,250,.92) !important; border-radius:16px !important; color:#fff !important; background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%) !important; box-shadow:0 14px 32px rgba(0,0,0,.32),0 0 26px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.22) !important; font:inherit; font-weight:950 !important; cursor:pointer; transition:filter 160ms ease,transform 160ms ease,box-shadow 160ms ease !important; }
-      .club-deal-dialog .club-deal-checkout-action:hover:not(:disabled) { filter:brightness(1.08); box-shadow:0 16px 34px rgba(0,0,0,.34),0 0 32px rgba(124,58,237,.52),inset 0 1px 0 rgba(255,255,255,.26) !important; }
+      .club-deal-dialog .club-deal-checkout-action { min-height:52px !important; border:1px solid rgba(167,139,250,.92) !important; border-radius:16px !important; color:#fff !important; background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%) !important; box-shadow:0 14px 32px rgba(0,0,0,.32),0 0 26px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.22) !important; -webkit-appearance:none; appearance:none; font:inherit; font-weight:950 !important; cursor:pointer; transition:filter 160ms ease,transform 160ms ease,box-shadow 160ms ease !important; }
+      @media (hover:hover) and (pointer:fine) {
+        .club-deal-dialog .club-deal-checkout-action:hover:not(:disabled) { filter:brightness(1.08); box-shadow:0 16px 34px rgba(0,0,0,.34),0 0 32px rgba(124,58,237,.52),inset 0 1px 0 rgba(255,255,255,.26) !important; }
+      }
       .club-deal-dialog .club-deal-checkout-action:active:not(:disabled) { transform:translateY(1px); filter:brightness(.96); box-shadow:0 9px 22px rgba(0,0,0,.34),0 0 18px rgba(124,58,237,.36),inset 0 2px 7px rgba(0,0,0,.22) !important; }
       .club-deal-dialog .club-deal-checkout-action:focus-visible { outline:2px solid #c4b5fd !important; outline-offset:3px !important; }
       .club-deal-dialog .club-deal-checkout-action.is-ready:disabled { opacity:1 !important; filter:none !important; color:#fff !important; border-color:rgba(74,222,128,.88) !important; background:linear-gradient(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%) !important; box-shadow:0 12px 28px rgba(0,0,0,.3),0 0 24px rgba(34,197,94,.34),inset 0 1px 0 rgba(255,255,255,.2) !important; cursor:default !important; }
+      @supports (-webkit-touch-callout:none) {
+        .club-deal-dialog .club-deal-checkout-action:not(.is-ready) { border-color:rgba(112,72,224,.88) !important; background:#32009c !important; box-shadow:0 14px 32px rgba(0,0,0,.32),0 0 18px rgba(60,12,158,.3),inset 0 1px 0 rgba(255,255,255,.14) !important; filter:none !important; }
+      }
       .club-deal-dialog .deal-nfc-status { padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:13px; color:rgba(245,245,255,.76); background:rgba(0,0,0,.22); text-align:center; }
       .club-deal-dialog .deal-nfc-status.ready { border-color:rgba(126,234,255,.28); color:#d9f9ff; background:rgba(53,216,255,.07); }
       .club-deal-dialog .deal-nfc-status.error,.club-deal-dialog .deal-nfc-status.expired { border-color:rgba(255,157,174,.28); color:#ffd5dd; background:rgba(255,99,132,.07); }
