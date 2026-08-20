@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dispatch, input, route] = await Promise.all([
+const [adminClient, dispatch, input, result, route] = await Promise.all([
+  readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance-admin-dispatch.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance-admin-input.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/finance-admin-result.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/finance/route.ts", import.meta.url), "utf8"),
 ]);
 
@@ -56,9 +58,16 @@ test("the dispatcher preserves validation limits and explicit client errors", ()
   assert.match(dispatch, /return \{ status: 400, body: \{ ok: false, error \} \}/);
 });
 
-test("successful writes still refresh the full admin finance overview", () => {
-  assert.match(dispatch, /return \{ status: 200, body: \{ ok: true, \.\.\.body \} \}/);
-  assert.equal((dispatch.match(/finance: await getAdminFinanceOverview\(client\)/g) || []).length, 10);
+test("successful writes refresh finance without letting a failed read misreport the mutation", () => {
+  assert.match(dispatch, /from "\.\/finance-admin-result"/);
+  assert.equal((dispatch.match(/successfulFinanceMutation\(\(\) => getAdminFinanceOverview\(client\)/g) || []).length, 10);
+  assert.match(result, /financeRefreshRequired: true/);
+  assert.match(result, /ADMIN_FINANCE_POST_WRITE_REFRESH_FAILED/);
+  assert.doesNotMatch(dispatch, /finance: await getAdminFinanceOverview\(client\)/);
+  assert.match(adminClient, /function applyFinanceMutationResponse/);
+  assert.match(adminClient, /data\.financeRefreshRequired === true/);
+  assert.match(adminClient, /finance && typeof finance === "object" && !Array\.isArray\(finance\)/);
+  assert.equal((adminClient.match(/applyFinanceMutationResponse\(data, onFinanceChange/g) || []).length, 6);
   assert.match(dispatch, /recordManualClubInvoicePayment\(client, command\)/);
   assert.match(dispatch, /updatePayoutSettings\(client, adminUserId, command\)/);
   assert.match(dispatch, /manageDancerEarning\(client, adminUserId, command\)/);

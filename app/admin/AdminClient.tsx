@@ -613,6 +613,20 @@ function AdminDashboardLoadingState() {
   );
 }
 
+function applyFinanceMutationResponse(
+  data: Record<string, unknown>,
+  onFinanceChange: (finance: Record<string, unknown>) => void,
+  successMessage: string,
+) {
+  const finance = data.finance;
+  if (finance && typeof finance === "object" && !Array.isArray(finance)) {
+    onFinanceChange(finance as Record<string, unknown>);
+  }
+  return data.financeRefreshRequired === true
+    ? `${successMessage} Refresh dashboard totals to display the latest balances.`
+    : successMessage;
+}
+
 function FinanceManager({
   finance,
   onFinanceChange,
@@ -665,9 +679,9 @@ function FinanceManager({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Finance operation failed.");
-      onFinanceChange(data.finance);
       const errors = Array.isArray(data.result?.errors) ? data.result.errors.length : 0;
-      const message = errors ? `Finance run completed with ${errors} item requiring attention.` : "Finance reconciliation completed.";
+      const baseMessage = errors ? `Finance run completed with ${errors} item requiring attention.` : "Finance reconciliation completed.";
+      const message = applyFinanceMutationResponse(data, onFinanceChange, baseMessage);
       setStatus(message);
       onActionConfirmed(message);
     } catch (error) {
@@ -695,12 +709,12 @@ function FinanceManager({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to record payment.");
-      onFinanceChange(data.finance);
+      const message = applyFinanceMutationResponse(data, onFinanceChange, "External club payment reconciled.");
       setInvoiceId("");
       setPaymentTotal("");
       setPaymentReference("");
-      setStatus("External club payment reconciled.");
-      onActionConfirmed("External club payment reconciled.");
+      setStatus(message);
+      onActionConfirmed(message);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to record payment.");
     } finally {
@@ -724,8 +738,7 @@ function FinanceManager({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save payout settings.");
-      onFinanceChange(data.finance);
-      setStatus("Payout settings saved and audited.");
+      setStatus(applyFinanceMutationResponse(data, onFinanceChange, "Payout settings saved and audited."));
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save payout settings.");
     } finally { setIsRunning(false); }
@@ -744,8 +757,7 @@ function FinanceManager({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update earning.");
-      onFinanceChange(data.finance);
-      setStatus(`Earning ${earningAction} action recorded.`);
+      setStatus(applyFinanceMutationResponse(data, onFinanceChange, `Earning ${earningAction} action recorded.`));
     } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to update earning."); }
     finally { setIsRunning(false); }
   }
@@ -763,8 +775,7 @@ function FinanceManager({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to retry payout.");
-      onFinanceChange(data.finance);
-      setStatus("Safe payout retry reserved for processing.");
+      setStatus(applyFinanceMutationResponse(data, onFinanceChange, "Safe payout retry reserved for processing."));
     } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to retry payout."); }
     finally { setIsRunning(false); }
   }
@@ -794,9 +805,9 @@ function FinanceManager({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update the NATS commission ledger.");
-      onFinanceChange(data.finance);
-      setStatus("NATS commission ledger updated.");
-      onActionConfirmed("NATS commission ledger updated.");
+      const message = applyFinanceMutationResponse(data, onFinanceChange, "NATS commission ledger updated.");
+      setStatus(message);
+      onActionConfirmed(message);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update the NATS commission ledger.");
     } finally {
