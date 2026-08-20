@@ -3,6 +3,95 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 type DancrClient = SupabaseClient<any, any, any>;
 type EndReason = "manual" | "automatic";
 
+export type DancerShiftUpdate = {
+  venue_id?: string;
+  timezone?: string;
+  status?: "posted" | "cancelled" | "draft";
+  shift_date?: string;
+  shift_source?: "scheduled";
+  starts_at?: string;
+  ends_at?: string;
+  broadcast_sent_at?: string;
+  broadcast_recipients?: number;
+};
+
+const DANCER_SHIFT_UPDATE_FIELDS = new Set<keyof DancerShiftUpdate>([
+  "venue_id",
+  "timezone",
+  "status",
+  "shift_date",
+  "shift_source",
+  "starts_at",
+  "ends_at",
+  "broadcast_sent_at",
+  "broadcast_recipients",
+]);
+
+export async function createScheduledDancerShift(
+  client: DancrClient,
+  input: {
+    dancerId: string;
+    venueId: string;
+    shiftDate: string;
+    startsAt: string;
+    endsAt: string;
+    timezone: string;
+  },
+) {
+  const { data, error } = await (client as any)
+    .from("shifts")
+    .insert({
+      dancer_id: input.dancerId,
+      venue_id: input.venueId,
+      shift_date: input.shiftDate,
+      shift_source: "scheduled",
+      starts_at: input.startsAt,
+      ends_at: input.endsAt,
+      timezone: input.timezone,
+      status: "posted",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateOwnedDancerShift(
+  client: DancrClient,
+  dancerId: string,
+  shiftId: string,
+  update: DancerShiftUpdate,
+) {
+  const entries = Object.entries(update);
+  if (!entries.length || entries.some(([field]) => !DANCER_SHIFT_UPDATE_FIELDS.has(field as keyof DancerShiftUpdate))) {
+    throw new Error("Invalid dancer shift update.");
+  }
+
+  const { data, error } = await (client as any)
+    .from("shifts")
+    .update(Object.fromEntries(entries))
+    .eq("id", shiftId)
+    .eq("dancer_id", dancerId)
+    .neq("shift_source", "demo_locked")
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Dancer shift update was not applied.");
+  return data;
+}
+
+export async function recordDancerShiftBroadcast(
+  client: DancrClient,
+  dancerId: string,
+  shiftId: string,
+  recipients: number,
+) {
+  return updateOwnedDancerShift(client, dancerId, shiftId, {
+    broadcast_sent_at: new Date().toISOString(),
+    broadcast_recipients: recipients,
+  });
+}
+
 export async function endDancerShift(
   client: DancrClient,
   dancerId: string,

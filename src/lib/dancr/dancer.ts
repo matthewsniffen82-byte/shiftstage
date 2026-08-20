@@ -14,13 +14,6 @@ export type DancerProfileInput = {
   city: string;
 };
 
-export type ShiftInput = {
-  dancerId: string;
-  venueId: string;
-  startsAt: string;
-  endsAt: string;
-};
-
 export type UploadDancerPhotoInput = {
   dancerId: string;
   file: Blob;
@@ -443,42 +436,6 @@ async function refreshOwnPhotoReviewStatus(client: DancrClient, userId: string, 
 
 export function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
   return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
-}
-
-export async function postShift(client: DancrClient, input: ShiftInput) {
-  const { data, error } = await client
-    .from("shifts")
-    .insert({
-      dancer_id: input.dancerId,
-      venue_id: input.venueId,
-      starts_at: input.startsAt,
-      ends_at: input.endsAt,
-      status: "posted",
-    })
-    .select("id")
-    .single();
-
-  if (error) throw error;
-  return data.id;
-}
-
-export async function updateShift(client: DancrClient, shiftId: string, input: Omit<ShiftInput, "dancerId">) {
-  const { error } = await client
-    .from("shifts")
-    .update({
-      venue_id: input.venueId,
-      starts_at: input.startsAt,
-      ends_at: input.endsAt,
-    })
-    .eq("id", shiftId);
-
-  if (error) throw error;
-}
-
-export async function cancelShift(client: DancrClient, shiftId: string) {
-  const { error } = await client.from("shifts").update({ status: "cancelled" }).eq("id", shiftId);
-
-  if (error) throw error;
 }
 
 export async function getDancerDashboardAnalytics(

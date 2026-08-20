@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deliverNotificationRows } from "@/src/lib/dancr/notification-delivery";
 import { getScheduleDateWindow, isValidScheduleDate, localDateInTimeZone } from "@/src/lib/dancr/schedule";
-import { reconcileExpiredDancerShifts } from "@/src/lib/dancr/shift-lifecycle";
+import {
+  createScheduledDancerShift,
+  type DancerShiftUpdate,
+  reconcileExpiredDancerShifts,
+  recordDancerShiftBroadcast,
+  updateOwnedDancerShift,
+} from "@/src/lib/dancr/shift-lifecycle";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -61,33 +67,17 @@ export async function POST(request: Request) {
     }
     const window = getScheduleDateWindow(shiftDate, timezone);
 
-    const { data, error } = await (client as any)
-      .from("shifts")
-      .insert({
-        dancer_id: dancer.id,
-        venue_id: body.venueId,
-        shift_date: shiftDate,
-        shift_source: "scheduled",
-        starts_at: window.startsAt,
-        ends_at: window.endsAt,
-        timezone,
-        status: "posted",
-      })
-      .select("id")
-      .single();
-
-    if (error) throw error;
+    const data = await createScheduledDancerShift(client as any, {
+      dancerId: dancer.id,
+      venueId: body.venueId,
+      shiftDate,
+      startsAt: window.startsAt,
+      endsAt: window.endsAt,
+      timezone,
+    });
 
     const broadcastRecipients = await broadcastShiftPosted(dancer, data.id, body.venueId, shiftDate);
-    const { error: updateError } = await (client as any)
-      .from("shifts")
-      .update({
-        broadcast_sent_at: new Date().toISOString(),
-        broadcast_recipients: broadcastRecipients,
-      })
-      .eq("id", data.id);
-
-    if (updateError) throw updateError;
+    await recordDancerShiftBroadcast(client as any, dancer.id, data.id, broadcastRecipients);
 
     return NextResponse.json({ ok: true, shiftId: data.id, broadcastRecipients });
   } catch (error) {
@@ -112,7 +102,7 @@ export async function PATCH(request: Request) {
         { status: 409 },
       );
     }
-    const update: Record<string, unknown> = {};
+    const update: DancerShiftUpdate = {};
     let nextTimezone = existingShift.timezone || "America/Los_Angeles";
     if (typeof body.venueId === "string") {
       const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
@@ -155,13 +145,7 @@ export async function PATCH(request: Request) {
     }
 
     const cancellingShift = update.status === "cancelled" && existingShift.status !== "cancelled";
-    const { error } = await (client as any)
-      .from("shifts")
-      .update(update)
-      .eq("id", body.shiftId)
-      .eq("dancer_id", dancer.id);
-
-    if (error) throw error;
+    await updateOwnedDancerShift(client as any, dancer.id, body.shiftId, update);
 
     const cancellationRecipients = cancellingShift
       ? await broadcastShiftCancelled(dancer, existingShift)

@@ -60,8 +60,10 @@ test("phone-location check-in is retired and cannot activate a dancer", () => {
 test("upcoming schedules accept only an approved venue and venue-local date", () => {
   assert.match(shiftsRoute, /requestedShiftDate/);
   assert.match(shiftsRoute, /getScheduleDateWindow/);
-  assert.match(shiftsRoute, /shift_date: shiftDate/);
-  assert.match(shiftsRoute, /shift_source: "scheduled"/);
+  assert.match(shiftsRoute, /createScheduledDancerShift/);
+  assert.match(lifecycle, /shift_date: input\.shiftDate/);
+  assert.match(lifecycle, /shift_source: "scheduled"/);
+  assert.match(lifecycle, /status: "posted"/);
   assert.doesNotMatch(shiftsRoute, /body\.workingStatus|body\.locationStatus|body\.checkedInAt/);
   assert.match(shiftsRoute, /Check out before editing or cancelling an active shift/);
   assert.match(shiftsRoute, /reconcileExpiredDancerShifts/);
