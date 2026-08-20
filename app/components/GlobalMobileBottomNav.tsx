@@ -317,9 +317,22 @@ export function GlobalMobileBottomNav() {
           display: none;
         }
 
+        @supports (-webkit-touch-callout: none) and (height: 100svh) and
+          (height: 100dvh) {
+          :root {
+            --dancr-mobile-nav-browser-clearance: min(
+              52px,
+              max(0px, calc(100dvh - 100svh))
+            );
+          }
+        }
+
         @media (max-width: 720px) {
           body {
-            padding-bottom: calc(94px + env(safe-area-inset-bottom)) !important;
+            padding-bottom: calc(
+              94px + env(safe-area-inset-bottom) +
+                var(--dancr-mobile-nav-browser-clearance, 0px)
+            ) !important;
           }
 
           .global-mobile-swipe-indicator {
@@ -329,7 +342,10 @@ export function GlobalMobileBottomNav() {
             position: fixed;
             z-index: 1499;
             left: 50%;
-            bottom: calc(91px + env(safe-area-inset-bottom));
+            bottom: calc(
+              91px + env(safe-area-inset-bottom) +
+                var(--dancr-mobile-nav-browser-clearance, 0px)
+            );
             min-height: 34px;
             display: inline-flex;
             align-items: center;
@@ -385,7 +401,10 @@ export function GlobalMobileBottomNav() {
             position: fixed;
             z-index: 1500;
             left: 50%;
-            bottom: calc(8px + env(safe-area-inset-bottom));
+            bottom: calc(
+              8px + env(safe-area-inset-bottom) +
+                var(--dancr-mobile-nav-browser-clearance, 0px)
+            );
             width: min(calc(100% - 16px), 700px);
             height: 72px;
             display: grid;

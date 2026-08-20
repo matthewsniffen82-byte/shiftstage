@@ -33709,9 +33709,14 @@
           .home-tv-launch-arrow { font-size: 27px; }
           .profile-tv-viewer-footer { grid-template-columns: minmax(0, 1fr); }
         }
+        @supports (-webkit-touch-callout: none) and (height: 100svh) and (height: 100dvh) {
+          :root {
+            --dancr-mobile-nav-browser-clearance: min(52px, max(0px, calc(100dvh - 100svh)));
+          }
+        }
         @media (max-width: 720px) {
           body {
-            padding-bottom: calc(94px + env(safe-area-inset-bottom));
+            padding-bottom: calc(94px + env(safe-area-inset-bottom) + var(--dancr-mobile-nav-browser-clearance, 0px));
           }
           header {
             z-index: 120 !important;
@@ -34041,7 +34046,7 @@
             position: fixed !important;
             z-index: 90;
             left: 50%;
-            bottom: calc(8px + env(safe-area-inset-bottom));
+            bottom: calc(8px + env(safe-area-inset-bottom) + var(--dancr-mobile-nav-browser-clearance, 0px));
             width: min(calc(100% - 16px), 700px) !important;
             height: 72px;
             min-height: 72px;

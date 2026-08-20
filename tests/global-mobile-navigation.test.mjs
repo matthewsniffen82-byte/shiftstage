@@ -54,11 +54,11 @@ test("mobile destinations use native navigation for the checked-in discovery she
 test("iPhone, Android, and Next pages share the Android floating glass dock", () => {
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.16\)[\s\S]*?rgba\(8, 8, 11, 0\.94\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 1px 0 rgba\(255, 255, 255, 0\.13\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\([\s\S]*?8px \+ env\(safe-area-inset-bottom\) \+[\s\S]*?var\(--dancr-mobile-nav-browser-clearance, 0px\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.16\)[\s\S]*?rgba\(8, 8, 11, 0\.94\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 1px 0 rgba\(255, 255, 255, 0\.13\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248,250,252,\.16\) !important[\s\S]*?rgba\(8,8,11,\.94\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?inset 0 1px 0 rgba\(255,255,255,\.13\)[\s\S]*?inset 0 0 0 1px rgba\(255,255,255,\.026\) !important[\s\S]*?backdrop-filter: none !important;/,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\) \+ var\(--dancr-mobile-nav-browser-clearance, 0px\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248,250,252,\.16\) !important[\s\S]*?rgba\(8,8,11,\.94\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?inset 0 1px 0 rgba\(255,255,255,\.13\)[\s\S]*?inset 0 0 0 1px rgba\(255,255,255,\.026\) !important[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     navigationSource,
@@ -80,6 +80,19 @@ test("iPhone, Android, and Next pages share the Android floating glass dock", ()
     homeSource,
     /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(18,18,23,.88\)[\s\S]*?rgba\(4,4,7,.82\)/,
   );
+});
+
+test("collapsed iPhone browser chrome keeps the dock above Safari's intercepted tap strip", () => {
+  for (const source of [navigationSource, homeSource]) {
+    assert.match(
+      source,
+      /@supports \(-webkit-touch-callout: none\) and \(height: 100svh\) and[\s\S]*?\(height: 100dvh\)[\s\S]*?--dancr-mobile-nav-browser-clearance: min\([\s\S]*?52px,[\s\S]*?max\(0px, calc\(100dvh - 100svh\)\)/,
+    );
+    assert.match(
+      source,
+      /padding-bottom: calc\([\s\S]*?94px \+ env\(safe-area-inset-bottom\) \+[\s\S]*?var\(--dancr-mobile-nav-browser-clearance, 0px\)/,
+    );
+  }
 });
 
 test("mobile destinations use prominent, consistent controls on every app surface", () => {

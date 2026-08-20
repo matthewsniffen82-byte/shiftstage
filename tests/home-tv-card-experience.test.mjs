@@ -273,7 +273,7 @@ test("mobile TV seek and utility controls stay inside the stable card that snaps
   assert.doesNotMatch(homeSource, /scrubber\.disabled = !duration|\.home-tv-feed-scrubber:disabled/);
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\) \+ var\(--dancr-mobile-nav-browser-clearance, 0px\)\);/,
   );
   assert.doesNotMatch(homeSource, /\.home-tv-feed-position|position\.textContent = `Video/);
   assert.doesNotMatch(homeSource, /\.home-tv-feed-video-controls \{/);

@@ -14,11 +14,11 @@ test("homepage navigation stays anchored to the CSS viewport in Samsung Browser"
   assert.match(homeSource, /const isSamsung = \/SamsungBrowser\/i\.test\(ua\)/);
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?body \{[\s\S]*?padding-bottom: calc\(94px \+ env\(safe-area-inset-bottom\)\)/,
+    /@media \(max-width: 720px\) \{[\s\S]*?body \{[\s\S]*?padding-bottom: calc\(94px \+ env\(safe-area-inset-bottom\) \+ var\(--dancr-mobile-nav-browser-clearance, 0px\)\)/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)/,
+    /#discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\) \+ var\(--dancr-mobile-nav-browser-clearance, 0px\)\)/,
   );
   assert.doesNotMatch(
     homeSource,
@@ -33,10 +33,14 @@ test("routed-page navigation uses the same viewport-safe bottom offset", () => {
   );
   assert.match(
     globalNavigation,
-    /body \{[\s\S]*?padding-bottom: calc\(94px \+ env\(safe-area-inset-bottom\)\) !important/,
+    /body \{[\s\S]*?padding-bottom: calc\([\s\S]*?94px \+ env\(safe-area-inset-bottom\) \+[\s\S]*?var\(--dancr-mobile-nav-browser-clearance, 0px\)[\s\S]*?\) !important/,
   );
   assert.match(
     globalNavigation,
-    /\.global-mobile-bottom-nav \{[\s\S]*?position: fixed;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?position: fixed;[\s\S]*?bottom: calc\([\s\S]*?8px \+ env\(safe-area-inset-bottom\) \+[\s\S]*?var\(--dancr-mobile-nav-browser-clearance, 0px\)[\s\S]*?\)/,
+  );
+  assert.match(
+    globalNavigation,
+    /@supports \(-webkit-touch-callout: none\)[\s\S]*?--dancr-mobile-nav-browser-clearance/,
   );
 });
