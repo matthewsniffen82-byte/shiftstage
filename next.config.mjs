@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: process.cwd(),
   env: {
     DANCR_VIDEO_MODERATION_MODE:
       process.env.DANCR_VIDEO_MODERATION_MODE || "ai",

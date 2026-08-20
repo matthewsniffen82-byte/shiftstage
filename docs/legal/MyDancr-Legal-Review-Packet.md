@@ -4,7 +4,7 @@ This packet combines a factual product map with draft public policies and bilate
 
 [CALLOUT:COUNSEL|Drafting status] This is a working draft for licensed counsel. It is not legal advice, is not a legal opinion, and is not approved for publication or user acceptance. Defined terms avoid blanks where possible, but the publishing entity, governing law, dispute procedure, addresses, tax treatment, payout schedule, retention schedule, and insurance requirements must be finalized by counsel.
 
-[CALLOUT:PRODUCT FACT|Named production providers] This packet assumes **Yoti** provides MyDancr’s identity and age-verification workflow and **Bitsafe/Yoursafe** provides dancer and authorized-agent commission payout accounts and transfers. “Bitsafe/Yoursafe” means the Bitsafe-branded or successor Yoursafe payment-account service operated by Yoursafe B.V., as applicable to the contracted integration. Provider terms, privacy notices, geographic availability, and legal entity must be verified against the signed production contracts before publication.
+[CALLOUT:PRODUCT FACT|Production providers] This packet assumes **Yoti** provides MyDancr’s identity and age-verification workflow. No commission payout provider is currently designated. MyDancr must select a legally and contractually approved payout provider before live payouts are enabled, and the provider’s terms, privacy notice, geographic availability, and legal entity must be verified against the signed production contract before publication.
 
 ## Packet contents
 
@@ -46,7 +46,7 @@ MyDancr is not a booking service for private performances, escorting, prostituti
 - **Separate ledgers:** the club’s obligation to MyDancr and MyDancr’s obligation to the dancer are independent. A club’s late payment does not, by itself, cancel an otherwise payable dancer reward.
 - **Agent compensation:** no person earns an agent commission merely by recruiting, referring, or claiming a relationship. Any agent program requires separate written authorization, an accepted Agent Order or rider, identity/tax verification, and event-based attribution. No multi-level or downline compensation is permitted.
 - **Identity verification:** Yoti is the assumed production verification provider for dancer age/identity and any risk-based club or agent checks. MyDancr remains responsible for deciding what is required, giving notice, reviewing the returned result, and providing a lawful alternative where required.
-- **Payouts:** dancer and authorized-agent commission payouts are processed through Bitsafe/Yoursafe. Payees must open and maintain an eligible Bitsafe/Yoursafe account, pass the provider’s KYC and compliance checks, and ensure that MyDancr and provider records match.
+- **Payouts:** live dancer and authorized-agent commission payouts remain disabled until MyDancr selects an approved payout provider. Once selected, payees must complete the provider’s secure onboarding, pass its KYC and compliance checks, and ensure that MyDancr and provider records match.
 - **Media:** uploads undergo technical validation and automated and/or human moderation. Public media must belong to the uploader, depict consenting adults, comply with platform rules, and remain within current duration/count limits.
 - **No direct messaging:** the current product does not offer customer-to-dancer direct messaging. Support messaging is between an account holder and MyDancr support.
 
@@ -57,7 +57,7 @@ MyDancr is not a booking service for private performances, escorting, prostituti
 3. Decide whether all customer accounts must be 21+ or whether 18+ accounts may browse clubs whose own entry age varies.
 4. Approve the exact Yoti product configuration for dancers, club owners/managers, and agents, including requested attributes, ID/selfie/liveness/face-match checks, biometric consent, U.S. state biometric notices, manual-review access, retention time-to-live, and fallback process.
 5. Confirm whether any uploaded media could fall within 18 U.S.C. §§ 2257/2257A and assign recordkeeping, labeling, custodian, inspection, and producer responsibilities.
-6. Approve the Bitsafe/Yoursafe business and sponsor-management configuration, beneficiary onboarding, payout cadence, minimum threshold, reserves/holds, rejected-payment procedure, inactivity treatment, fees, supported countries/currencies, sanctions screening, tax-document workflow, complaints path, and unclaimed-property handling.
+6. Select and approve a legally suitable payout provider and its business configuration, beneficiary onboarding, payout cadence, minimum threshold, reserves/holds, rejected-payment procedure, inactivity treatment, fees, supported countries/currencies, sanctions screening, tax-document workflow, complaints path, and unclaimed-property handling.
 7. Decide whether an agent program will launch. If yes, approve a separate Agent Agreement, commission schedule, non-solicitation/marketing standards, attribution duration, clawback rules, and licensing analysis.
 8. Approve the club referral-fee order form, invoice timing, payment processor, late fees, disputes, chargebacks, taxes, and collection procedure, and confirm the nonretroactive profile-originated dancer tiers—30% for monthly events 1–9, 40% for 10–24, and 50% for 25 and above—against tax, worker-classification, referral, and gaming/sweepstakes concerns.
 9. Choose governing law, venue, arbitration/class-action waiver, small-claims carveout, opt-out process, and consumer-law savings language.
@@ -162,11 +162,11 @@ The dancer’s share is determined by that event’s ordinal among the dancer’
 
 Club referral fees are set by an authorized administrator and require an active fee term before a deal can be published or redeemed. Clubs may request a change, but a request does not modify the effective rate until authorized. Club invoices aggregate verified receivables and preserve item-level redemption support.
 
-Payouts to dancers and, if launched, separately authorized agents are sent through Bitsafe/Yoursafe. MyDancr should store the Bitsafe/Yoursafe beneficiary or account identifier, onboarding state, eligibility state, last error, and transfer references, but not full payment-account credentials. Bitsafe/Yoursafe may collect identity, address, tax, sanctions, source-of-funds, payment-account, device, and transaction data under its own terms. Payees remain responsible for accurate matching information, maintaining an eligible account, and fees/taxes allocated to them in the applicable agreement.
+Payouts to dancers and, if launched, separately authorized agents must be sent through a separately approved payout provider. MyDancr should store only the provider beneficiary or account identifier, onboarding state, eligibility state, last error, and transfer references, but not full payment-account credentials. The selected provider may collect identity, address, tax, sanctions, source-of-funds, payment-account, device, and transaction data under its own terms. Payees remain responsible for accurate matching information, maintaining an eligible provider account, and fees or taxes allocated to them in the applicable agreement.
 
 ## 11. Agent referral model
 
-No agent program should be inferred from a club team role or customer referral. If activated, the agent model should use: an administrator-approved agent record; a written agreement and commission order; Yoti verification appropriate to the agent; verified business, sanctions, and tax status; Bitsafe/Yoursafe payout readiness; a defined club or transaction attribution; a start/end date; a fixed rate or formula; and an immutable commission event created only after the qualifying verified event.
+No agent program should be inferred from a club team role or customer referral. If activated, the agent model should use: an administrator-approved agent record; a written agreement and commission order; Yoti verification appropriate to the agent; verified business, sanctions, and tax status; approved-provider payout readiness; a defined club or transaction attribution; a start/end date; a fixed rate or formula; and an immutable commission event created only after the qualifying verified event.
 
 The model should prohibit commissions for recruiting other agents, impose no purchase or fee to participate, avoid earnings claims, and prevent self-dealing or duplicate attribution. Sponsor/upline language should not be used unless counsel has approved a lawful structure. If an agent helps onboard a club, the club must still independently accept its Club Agreement and fee order.
 
@@ -199,7 +199,7 @@ Some records cannot be deleted immediately: verified redemptions; invoices; payo
 - **Rideshare deep links:** destination and device/browser context sent when the user chooses the link; no implied partnership.
 - **Payment processor for club billing:** club billing and invoice payment data, as implemented at launch.
 - **Yoti:** identity and age-verification session, ID-document and extracted attribute checks, selfie/liveness and face match where configured, fraud signals, verification report, and configurable retention. Yoti ordinarily acts as a processor/service provider for the requesting organization’s IDV session, subject to its product terms and privacy notice.
-- **Bitsafe/Yoursafe:** beneficiary payment-account onboarding, KYC/AML, account status, payout execution, fees, reserves/holds, failures, transaction history, and compliance. The contracted legal entity, sponsor-management flow, supported countries, and price schedule must match production.
+- **Approved payout provider, once selected:** beneficiary payment-account onboarding, KYC/AML, account status, payout execution, fees, reserves/holds, failures, transaction history, and compliance. The contracted legal entity, onboarding flow, supported countries, and price schedule must match production.
 
 [CALLOUT:IMPLEMENTATION|Launch synchronization] Before publication, product and counsel must compare this map against production environment variables, processor contracts, database migrations, storage buckets, notification templates, analytics events, and all live pages. Provider names should appear in the privacy policy only when the processor is actually selected and under contract.
 
@@ -245,7 +245,7 @@ Attribution may record the club page, dancer profile, shift, deal, session, and 
 
 ## 7. Payments and payouts
 
-Customer use of a Club Deal does not authorize MyDancr to charge the customer unless a separate purchase flow clearly states a charge. Clubs may owe contractual referral fees and subscription or service charges. Under the current Dancer Commission Terms, a Profile-Originated Verified Redemption earns the attributed dancer 30%, 40%, or 50% of the applicable MyDancr gross referral fee according to whether it is the dancer’s 1st–9th, 10th–24th, or 25th-and-later qualifying event in the commission month; the detailed attribution, exclusions, correction, and payout rules control. Authorized agents may receive commissions only under a separate written order. Commission payouts use Bitsafe/Yoursafe and require a separate eligible payment account. Club billing may use a different payment processor. Each financial provider is subject to availability, eligibility, compliance review, and its own terms.
+Customer use of a Club Deal does not authorize MyDancr to charge the customer unless a separate purchase flow clearly states a charge. Clubs may owe contractual referral fees and subscription or service charges. Under the current Dancer Commission Terms, a Profile-Originated Verified Redemption earns the attributed dancer 30%, 40%, or 50% of the applicable MyDancr gross referral fee according to whether it is the dancer’s 1st–9th, 10th–24th, or 25th-and-later qualifying event in the commission month; the detailed attribution, exclusions, correction, and payout rules control. Authorized agents may receive commissions only under a separate written order. Live commission payouts require a separately approved payout provider and an eligible provider account. Club billing may use a different payment processor. Each financial provider is subject to availability, eligibility, compliance review, and its own terms.
 
 MyDancr may delay or withhold a payout during a reasonable investigation of fraud, sanctions, duplicate attribution, legal process, processor review, chargeback, mistake, or policy violation. MyDancr will not withhold an undisputed earned amount solely because a club is late paying an independent club invoice where the applicable commission terms state the reward is Company-funded.
 
@@ -255,7 +255,7 @@ The Acceptable Use and Prohibited Conduct Rules are incorporated. Without limita
 
 ## 9. Third-party services
 
-Links and integrations may lead to clubs, social networks, maps, rideshare providers, authentication/email/push providers, Yoti, Bitsafe/Yoursafe, and the club billing processor. Third parties control their own services, terms, availability, and data practices. A link or technical integration does not imply endorsement or partnership. The User is responsible for reviewing third-party terms.
+Links and integrations may lead to clubs, social networks, maps, rideshare providers, authentication/email/push providers, Yoti, an approved payout provider once selected, and the club billing processor. Third parties control their own services, terms, availability, and data practices. A link or technical integration does not imply endorsement or partnership. The User is responsible for reviewing third-party terms.
 
 ## 10. Changes and availability
 
@@ -309,7 +309,7 @@ The published Terms should include assignment, force majeure, waiver, severabili
 
 ## 1. Scope
 
-This Privacy Policy applies to personal information processed by MyDancr through the Service. Yoti processes identity-verification data for requested sessions under its product privacy notice and contract with MyDancr. Bitsafe/Yoursafe processes beneficiary and payment-account data under its own terms and privacy notice. This policy does not govern independent club practices, third-party social sites, maps, rideshare providers, or providers acting independently. The published version must identify the MyDancr controller/business legal entity and contact methods.
+This Privacy Policy applies to personal information processed by MyDancr through the Service. Yoti processes identity-verification data for requested sessions under its product privacy notice and contract with MyDancr. Any payout provider selected in the future will process beneficiary and payment-account data under its own terms and privacy notice. This policy does not govern independent club practices, third-party social sites, maps, rideshare providers, or providers acting independently. The published version must identify the MyDancr controller/business legal entity and contact methods.
 
 ## 2. Information collected
 
@@ -339,7 +339,7 @@ For an eligible dancer check-in, latitude, longitude, accuracy, reading time, di
 
 ### Finance, commission, tax, and payout data
 
-Club fee terms, invoices, invoice items, payment status/references, verified redemption data, gross referral fee, dancer share, platform share, policy version, commission status, payout batches/items, Bitsafe/Yoursafe beneficiary or account identifier, onboarding/eligibility state, failure reason, transfer reference, tax classification/documents or status, and agent order/attribution if an agent program is active. Full Bitsafe/Yoursafe credentials, ID images collected solely for payment-account KYC, and external bank/card credentials should remain with the provider rather than being copied into MyDancr’s ordinary database.
+Club fee terms, invoices, invoice items, payment status/references, verified redemption data, gross referral fee, dancer share, platform share, policy version, commission status, payout batches/items, provider beneficiary or account identifier, onboarding/eligibility state, failure reason, transfer reference, tax classification/documents or status, and agent order/attribution if an agent program is active. Full provider credentials, ID images collected solely for payment-account KYC, and external bank/card credentials should remain with the approved provider rather than being copied into MyDancr’s ordinary database.
 
 ### Support, reports, legal, and DMCA data
 
@@ -351,7 +351,7 @@ Session cookies, local storage, CSRF/security tokens, preference values, anonymo
 
 ## 3. Sources
 
-Information comes from the User; clubs and authorized team members; dancers; agents under contract; automated device/browser events; NFC tags; content moderation; Yoti verification reports; Bitsafe/Yoursafe payout and beneficiary status; the club billing processor; authentication, hosting, email, push, map, and support vendors; public sources used for club verification; other Users’ reports; and authorities where lawful.
+Information comes from the User; clubs and authorized team members; dancers; agents under contract; automated device/browser events; NFC tags; content moderation; Yoti verification reports; an approved payout provider once selected; the club billing processor; authentication, hosting, email, push, map, and support vendors; public sources used for club verification; other Users’ reports; and authorities where lawful.
 
 ## 4. Purposes
 
@@ -384,11 +384,11 @@ MyDancr directs an eligible dancer and, where required, a club representative or
 
 MyDancr should configure Yoti to return and retain only necessary attributes, set the shortest workable time-to-live, limit portal access, and document any downloaded report. Where biometric information is processed, MyDancr must present any required state-specific notice and consent and provide any legally required alternative. Yoti’s terms require public references to identify Yoti as the provider or use “powered by Yoti,” subject to the contracted brand rules.
 
-## 7. Bitsafe/Yoursafe commission payouts
+## 7. Commission payout provider
 
-To receive a payout, a dancer or authorized agent must establish and maintain an eligible Bitsafe/Yoursafe payment account. Bitsafe/Yoursafe may collect legal name, date of birth, address, business information, tax information, government identification, selfie/biometric verification, sanctions/KYC information, source-of-funds information, external account details, device/security data, and transaction data under its own terms and privacy policy. Its current privacy notice describes converting a face image to a facial template for KYC, not retaining the original facial image, and retaining the template for up to five years after account closure or last use where required by financial-sector and fraud-prevention obligations. MyDancr may exchange payee identifier, contact information, amount, currency, payment purpose, statement/reference, status, and compliance or failure results needed to execute and reconcile commissions. Bitsafe/Yoursafe approval, restrictions, reserves, fees, account closure, and supported payment methods are independently controlled by the provider.
+Live payouts remain disabled until MyDancr selects a legally and contractually approved payout provider. To receive a payout after activation, a dancer or authorized agent must establish and maintain an eligible provider account. The provider may collect legal name, date of birth, address, business information, tax information, government identification, identity-verification data, sanctions/KYC information, source-of-funds information, external account details, device/security data, and transaction data under its own terms and privacy policy. MyDancr may exchange payee identifier, contact information, amount, currency, payment purpose, statement/reference, status, and compliance or failure results needed to execute and reconcile commissions. Provider approval, restrictions, reserves, fees, account closure, and supported payment methods are independently controlled by that provider.
 
-The published policy should identify Yoursafe B.V. as the operator where that is the contracted legal entity, explain that Bitsafe may be a legacy or product name, and link to the exact production privacy notice and terms. MyDancr must update the notice and contract/vendor record before changing provider or sending materially different data.
+The published policy must identify the selected provider’s contracted legal entity and link to its exact production privacy notice and terms before any live payout data is sent. MyDancr must update the notice and contract/vendor record before changing providers or sending materially different data.
 
 ## 8. Choices and rights
 
@@ -428,7 +428,7 @@ The dancer is responsible for the dancer’s own relationship with each club, in
 
 ## 2. Eligibility and truthful identity
 
-The dancer represents that the dancer is at least 18, is the person operating the account, has legal capacity, and may lawfully work and publish the submitted content. The dancer must provide accurate identity and city information, complete the required Yoti session, and must not use another person’s documents, likeness, stage identity, or account. A stage name may be public; legal identity remains private except as required for Yoti verification, tax, Bitsafe/Yoursafe payout, safety, or law.
+The dancer represents that the dancer is at least 18, is the person operating the account, has legal capacity, and may lawfully work and publish the submitted content. The dancer must provide accurate identity and city information, complete the required Yoti session, and must not use another person’s documents, likeness, stage identity, or account. A stage name may be public; legal identity remains private except as required for Yoti verification, tax, an approved payout provider, safety, or law.
 
 The dancer must maintain all local work cards, entertainer licenses, permits, immigration/work authorization, and club requirements. A MyDancr badge or affiliation does not replace government or club verification.
 
@@ -462,7 +462,7 @@ The dancer earns a reward only from a Profile-Originated Verified Redemption: an
 
 For every Profile-Originated Verified Redemption, the dancer receives **30% for qualifying monthly events 1–9, 40% for events 10–24, and 50% for events 25 and above** of the applicable MyDancr gross referral fee. The percentage does not apply to the customer’s admission value, the deal’s face value, club revenue, tips, or any dancer service. Each event is priced using its ordinal at confirmation and is not retroactively repriced when a later event reaches a higher tier. The event must preserve the source profile, commission month, ordinal, policy version, 3,000-, 4,000-, or 5,000-basis-point share, gross referral fee, currency, club, deal, dancer, token, cashier confirmation, and timestamps. MyDancr may prospectively amend the compensation policy only through clear advance notice and renewed acceptance where required; accrued events keep their snapshot unless corrected for error, fraud, reversal, illegality, sanctions, or a genuine attribution dispute.
 
-The dancer must open and maintain an eligible Bitsafe/Yoursafe payment account, complete the provider’s KYC and tax/compliance checks, maintain information matching the MyDancr payee record, and remain eligible. The dancer authorizes MyDancr to send commission payout instructions and required transaction/payee data to Bitsafe/Yoursafe. Provider fees, foreign exchange, limits, supported countries, reserves, payment-method availability, compliance review, and holds may apply as disclosed. MyDancr does not control Bitsafe/Yoursafe’s independent approval or account decisions.
+After MyDancr selects and activates an approved payout provider, the dancer must open and maintain an eligible provider account, complete the provider’s KYC and tax/compliance checks, maintain information matching the MyDancr payee record, and remain eligible. The dancer authorizes MyDancr to send commission payout instructions and required transaction/payee data to that provider. Provider fees, foreign exchange, limits, supported countries, reserves, payment-method availability, compliance review, and holds may apply as disclosed. MyDancr does not control the provider’s independent approval or account decisions.
 
 MyDancr may hold a disputed amount during a documented investigation, offset an overpayment or fraudulent/reversed event as permitted by law, and require updated tax information. Undisputed earned dancer rewards are not conditioned solely on club invoice collection. The dancer is responsible for taxes and for seeking professional advice.
 
@@ -482,7 +482,7 @@ On termination, public access ends, but accrued undisputed obligations and legal
 
 ## 10. Dancer acknowledgments
 
-The dancer acknowledges the customer-facing limits of badges and status, the absence of guaranteed earnings, the role of club admission and independent club rules, Yoti’s verification role, Bitsafe/Yoursafe’s commission-payout role, the public nature of approved profile content, dynamic ranking signals, and the separate Content/Media, Acceptable Use, Verification, Commission, Moderation, Privacy, and Retention policies.
+The dancer acknowledges the customer-facing limits of badges and status, the absence of guaranteed earnings, the role of club admission and independent club rules, Yoti’s verification role, the future approved payout provider’s commission-payout role, the public nature of approved profile content, dynamic ranking signals, and the separate Content/Media, Acceptable Use, Verification, Commission, Moderation, Privacy, and Retention policies.
 
 ---PAGE---
 
@@ -648,7 +648,7 @@ All Users must be at least 18. A club may require 21 or another lawful higher ag
 
 ## 2. Risk-based verification
 
-Verification should be proportionate to role and action. Email confirmation is appropriate for basic account access but is not enough for a public dancer, club owner, authorized manager, payout recipient, or agent. High-risk roles require a configured Yoti check and/or other documented authority review. Bitsafe/Yoursafe separately controls payment-account KYC for payout recipients.
+Verification should be proportionate to role and action. Email confirmation is appropriate for basic account access but is not enough for a public dancer, club owner, authorized manager, payout recipient, or agent. High-risk roles require a configured Yoti check and/or other documented authority review. The selected approved payout provider will separately control payment-account KYC for payout recipients.
 
 ## 3. Dancer identity
 
@@ -674,7 +674,7 @@ NFC tags are scoped by type and club. Dressing-room tags support affiliation/pre
 
 ## 8. Payout and agent verification
 
-Payout recipients must complete Bitsafe/Yoursafe onboarding and any MyDancr tax, sanctions, identity, and account-matching checks. MyDancr may rely on Yoti for platform identity and on Bitsafe/Yoursafe for payment-account KYC, but must resolve mismatches before payout. An agent must also have a valid separate agreement and order. Bitsafe/Yoursafe approval does not itself authorize a MyDancr agent commission; MyDancr’s written authorization and qualifying events are still required.
+Payout recipients must complete the selected approved provider’s onboarding and any MyDancr tax, sanctions, identity, and account-matching checks. MyDancr may rely on Yoti for platform identity and on the selected provider for payment-account KYC, but must resolve mismatches before payout. An agent must also have a valid separate agreement and order. Provider approval does not itself authorize a MyDancr agent commission; MyDancr’s written authorization and qualifying events are still required.
 
 ## 9. Reverification and failure
 
@@ -762,7 +762,7 @@ The club may prospectively pause or end a deal subject to existing consumer obli
 
 ## 1. Overview
 
-These terms govern rewards for eligible dancers and, only if separately authorized, commissions for contracted agents. They do not govern club wages, tips, dancer services, customer purchases, or employment compensation. “Commission Event” means a server-created record that satisfies the applicable policy and attribution rules. “Profile-Originated Verified Redemption” means an allowed Club Deal redemption successfully confirmed by the correct club’s authorized cashier NFC tag where the immutable source captured before token issuance identifies an eligible dancer’s public profile—including a qualifying shift or deal surface presented within that profile—as the customer journey’s origin. “Bitsafe/Yoursafe” means the Bitsafe-branded or successor Yoursafe payment-account service operated by Yoursafe B.V., as applicable to MyDancr’s contracted payout integration.
+These terms govern rewards for eligible dancers and, only if separately authorized, commissions for contracted agents. They do not govern club wages, tips, dancer services, customer purchases, or employment compensation. “Commission Event” means a server-created record that satisfies the applicable policy and attribution rules. “Profile-Originated Verified Redemption” means an allowed Club Deal redemption successfully confirmed by the correct club’s authorized cashier NFC tag where the immutable source captured before token issuance identifies an eligible dancer’s public profile—including a qualifying shift or deal surface presented within that profile—as the customer journey’s origin. “Approved Payout Provider” means a legally suitable provider selected under a signed production contract after MyDancr’s business model and payout use case have been approved.
 
 ## 2. Qualifying dancer event
 
@@ -796,11 +796,11 @@ Agent compensation must arise from the written event specified in the order, suc
 
 The server’s contemporaneous records, accepted club order, event timestamps, and administrator audit control attribution. MyDancr may investigate duplicate claims, self-dealing, preexisting accounts, inactive periods, reassignment, and fraud. A payee must dispute a statement within the counsel-approved period and identify the specific event.
 
-## 7. Bitsafe/Yoursafe onboarding
+## 7. Payout-provider onboarding
 
-A payee must establish an eligible Bitsafe/Yoursafe payment account, complete its identity/KYC, sanctions, tax, and account-matching checks, and authorize required data exchange. MyDancr may store the beneficiary/account identifier, onboarding status, payout eligibility, transfer reference, and error status but should not store full external account credentials. Bitsafe/Yoursafe terms, country availability, account restrictions, reserves, limits, fees, inactivity charges, foreign exchange, payment methods, and review apply independently.
+A payee must establish an eligible account with the Approved Payout Provider, complete its identity/KYC, sanctions, tax, and account-matching checks, and authorize required data exchange. MyDancr may store the beneficiary/account identifier, onboarding status, payout eligibility, transfer reference, and error status but should not store full external account credentials. Provider terms, country availability, account restrictions, reserves, limits, fees, inactivity charges, foreign exchange, payment methods, and review apply independently.
 
-MyDancr will use Bitsafe/Yoursafe for commission payouts under this version. If the integration or provider becomes unavailable or legally unsuitable, MyDancr may change providers with reasonable notice and a transition period, subject to accrued-payment duties and applicable law. The payee may need to complete new onboarding before further payout.
+MyDancr will not enable live commission payouts until an Approved Payout Provider is selected and configured. If the selected integration later becomes unavailable or legally unsuitable, MyDancr may change providers with reasonable notice and a transition period, subject to accrued-payment duties and applicable law. The payee may need to complete new onboarding before further payout.
 
 ## 8. Statements, payout cycle, and minimums
 
@@ -891,7 +891,7 @@ MyDancr retains personal information only for a documented operational, contract
 - **Views, clicks, rankings, and analytics:** rolling product/analytics period, then aggregate or deidentify; delete direct identifiers when no longer needed.
 - **Club Deal tokens and attempts:** token life plus fraud/dispute period.
 - **Verified redemptions, invoices, commission, payout, and tax records:** statutory accounting/tax period plus open dispute, audit, chargeback, and legal-hold needs.
-- **Bitsafe/Yoursafe references:** beneficiary/account identifier, transfer reference, status, amount, currency, failure/hold reason, and reconciliation record through the approved finance/statutory period; never retain the provider password or unnecessary payment-account credentials. The provider independently retains regulated KYC and transaction data under its policy, including the facial-template period it identifies.
+- **Payout-provider references:** beneficiary/account identifier, transfer reference, status, amount, currency, failure/hold reason, and reconciliation record through the approved finance/statutory period; never retain the provider password or unnecessary payment-account credentials. The provider independently retains regulated KYC and transaction data under its policy.
 - **Support and account recovery:** case life plus quality, security, and dispute period; remove unnecessary identity evidence.
 - **Reports and moderation:** action/appeal period plus safety, repeat-abuse, and claim-defense needs.
 - **DMCA:** statutory, litigation, repeat-infringer, and defense period.
@@ -935,11 +935,11 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 1. Insert legal entity, addresses, effective dates, and contacts in every public document.
 2. Register and verify the DMCA agent; calendar renewal; match the public page.
 3. Execute and configure the Yoti organization/IDV agreement, data-processing terms, U.S. biometric addenda where applicable, requested-check template, time-to-live, portal access, incident process, and “powered by Yoti” disclosure.
-4. Execute and configure the Bitsafe/Yoursafe business/sponsor-management and payout arrangements; confirm Yoursafe B.V. legal identity, supported payee countries/currencies, KYC, funding, fees, reserves, transaction limits, complaints, data protection, and reconciliation.
-5. If agents launch, execute a separate Agent Agreement and order; implement role, authorization, attribution, statements, tax, Bitsafe/Yoursafe payout, suspension, and deletion before any commission is promised.
+4. Select, contract with, and configure an Approved Payout Provider; confirm its legal identity, supported payee countries/currencies, KYC, funding, fees, reserves, transaction limits, complaints, data protection, and reconciliation.
+5. If agents launch, execute a separate Agent Agreement and order; implement role, authorization, attribution, statements, tax, approved-provider payout, suspension, and deletion before any commission is promised.
 6. Approve club order form and fee term; display the effective fee to the authorized signer.
 7. Implement clickwrap acceptance with document version, timestamp, user/account, IP/user agent as appropriate, and downloadable copy.
-8. Separate customer Terms acceptance from Dancer, Club, Agent, Media, Club Deal, Yoti, and Bitsafe/Yoursafe payout acceptances/notices.
+8. Separate customer Terms acceptance from Dancer, Club, Agent, Media, Club Deal, Yoti, and approved-provider payout acceptances/notices.
 9. Train verification reviewers; restrict Yoti portal/report access; test deletion and reverification.
 10. Confirm media categories, 2257/2257A analysis, releases, music rights, and emergency reporting.
 11. Confirm every Club Deal category and enforce the alcohol/sexual-service prohibition at database and API boundaries.
@@ -947,7 +947,7 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 13. Validate first-time venue gate and later affiliation flows on real mobile devices.
 14. Validate NFC tag types, installation, rotation, compromise, offline/error, duplicate, expiry, and audit flows.
 15. Validate immutable dancer-profile source attribution, the 1–9/10–24/25+ monthly tier boundaries, nonretroactive event pricing, and independent club/dancer ledgers with test redemptions and reversals.
-16. Finalize Bitsafe/Yoursafe payout schedule, minimum, tax, failure, hold, reversal, fee, and unclaimed-property handling.
+16. Finalize the approved-provider payout schedule, minimum, tax, failure, hold, reversal, fee, and unclaimed-property handling.
 17. Map all production providers/subprocessors and execute privacy/security terms.
 18. Implement exact retention/deletion jobs and evidence; test storage cleanup and backup restore behavior.
 19. Configure marketing consent and opt-out; keep transactional/security notices separate.
@@ -958,10 +958,10 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 
 - **Visitor:** Terms and Privacy notice; no account acceptance, but clear browse/use notice.
 - **Customer:** Terms + Privacy; optional notification/marketing consent; Club Deal terms at selection/redemption.
-- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Verification + Yoti notice/consent where required + Bitsafe/Yoursafe Commission/Payout terms; renewed acceptance for material commission changes.
+- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Verification + Yoti notice/consent where required + approved-provider Commission/Payout terms; renewed acceptance for material commission changes.
 - **Club owner/authorized signer:** Terms + Privacy + Club Agreement + order/fee term + NFC/Deal terms + data/security obligations.
 - **Club manager/staff:** Terms + Privacy + Acceptable Use + team-role acknowledgment + NFC handling; no authority to accept owner-only commercial changes unless granted.
-- **Agent if launched:** Terms + Privacy + separate Agent Agreement/order + Acceptable Use + Yoti verification notice + Bitsafe/Yoursafe payout/tax terms + marketing standards.
+- **Agent if launched:** Terms + Privacy + separate Agent Agreement/order + Acceptable Use + Yoti verification notice + approved-provider payout/tax terms + marketing standards.
 - **Administrator/support:** workforce confidentiality, access, moderation, security, finance, privacy, incident, DMCA, and acceptable-use policies.
 
 ## Product counsel test scripts
@@ -974,7 +974,7 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 - Run dressing-room NFC Working Now start, expiry, cooldown, checkout, revoked tag, and wrong-club cases.
 - Publish allowed and prohibited Club Deals; verify API/database enforcement.
 - Select from club and dancer contexts; test cashier NFC, expiry, duplicate, screenshot, wrong club, revoked tag, anonymous and signed-in states.
-- Reconcile club invoice, profile-originated tier ordinals 1, 9, 10, 24, and 25, month reset, independent dancer payable, Bitsafe/Yoursafe success/failure, KYC hold, reserve, wrong/mismatched beneficiary, correction, fee, and statement.
+- Reconcile club invoice, profile-originated tier ordinals 1, 9, 10, 24, and 25, month reset, independent dancer payable, payout-provider success/failure, KYC hold, reserve, wrong/mismatched beneficiary, correction, fee, and statement.
 - If agents launch, test no-contract, expired order, duplicate claim, preexisting club, qualifying event, payout failure, and termination.
 - Exercise follow, going, favorite, notification opt-out, email classification, account recovery, reports, moderation, appeal, DMCA, deletion, legal hold, and vendor cleanup.
 
@@ -999,6 +999,3 @@ Counsel should confirm the applicability, current version, and jurisdictional sc
 - **Yoti Identity Verification privacy notice:** [https://www.yoti.com/privacy/identity-verification/](https://www.yoti.com/privacy/identity-verification/)
 - **Yoti organization terms:** [https://www.yoti.com/terms/organisations/](https://www.yoti.com/terms/organisations/)
 - **Yoti identity-verification product description:** [https://www.yoti.com/business/identity-verification/](https://www.yoti.com/business/identity-verification/)
-- **Bitsafe/Yoursafe payment-account terms:** [https://www.yoursafe.com/en/terms-and-conditions.html](https://www.yoursafe.com/en/terms-and-conditions.html)
-- **Bitsafe/Yoursafe privacy policy:** [https://www.yoursafe.com/en/privacy-policy.html](https://www.yoursafe.com/en/privacy-policy.html)
-- **Bitsafe/Yoursafe payment-account overview:** [https://help.yoursafe.support/hc/en-us/categories/360002248759-Bitsafe-Payments](https://help.yoursafe.support/hc/en-us/categories/360002248759-Bitsafe-Payments)

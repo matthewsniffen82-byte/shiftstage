@@ -35,8 +35,7 @@ test("provider dispatch preserves reservation and idempotency safeguards", () =>
 test("dispatch failures remain recoverable and financially audited", () => {
   assert.match(processing, /rpc\("flag_dancer_payout_dispatch_review"/);
   assert.match(processing, /rpc\("release_dancer_payout_batch"/);
-  assert.match(processing, /action: "bitsafe_payout_instruction_created"/);
-  assert.match(processing, /automatic_paid_confirmation: false/);
+  assert.doesNotMatch(processing, /bitsafe|yoursafe/i);
 });
 
 test("scheduled payout creation preserves eligible unheld ledger selection", () => {

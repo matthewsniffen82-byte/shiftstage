@@ -7,7 +7,6 @@ import {
   parseManageEarningInput,
   parseManualPaymentInput,
   parsePayoutSettingsInput,
-  parseReconcileBitsafePayoutInput,
   parseRetryPayoutInput,
 } from "../src/lib/dancr/finance-admin-input.ts";
 
@@ -67,7 +66,7 @@ test("finance command parsing validates and sanitizes the complete action payloa
   });
 });
 
-test("finance action parsing accepts only the seven supported production actions", () => {
+test("finance action parsing accepts only the six supported production actions", () => {
   for (const action of [
     "run_automation",
     "process_payouts",
@@ -75,7 +74,6 @@ test("finance action parsing accepts only the seven supported production actions
     "update_payout_settings",
     "manage_earning",
     "retry_payout",
-    "reconcile_bitsafe_payout",
   ]) {
     assert.deepEqual(parseAdminFinanceAction({ action }), { ok: true, value: action });
   }
@@ -155,7 +153,7 @@ test("manual payment parsing trims identifiers and preserves positive whole-cent
 });
 
 test("payout settings parsing preserves every provider, mode, and numeric boundary", () => {
-  for (const paymentProvider of ["stripe", "bitsafe", "adyen", "other"]) {
+  for (const paymentProvider of ["stripe", "adyen", "other"]) {
     for (const payoutMode of ["manual_cashout", "scheduled", "both"]) {
       assert.deepEqual(parsePayoutSettingsInput({
         payoutsEnabled: true,
@@ -178,7 +176,7 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
 
   assert.deepEqual(parsePayoutSettingsInput({
     payoutsEnabled: false,
-    paymentProvider: "bitsafe",
+    paymentProvider: "adyen",
     payoutMode: "scheduled",
     earningsHoldDays: 90,
     minimumPayoutCents: 1,
@@ -186,7 +184,7 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
     ok: true,
     value: {
       payoutsEnabled: false,
-      paymentProvider: "bitsafe",
+      paymentProvider: "adyen",
       payoutMode: "scheduled",
       earningsHoldDays: 90,
       minimumPayoutCents: 1,
@@ -194,11 +192,18 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
   });
   assert.deepEqual(parsePayoutSettingsInput({
     payoutsEnabled: "true",
-    paymentProvider: "bitsafe",
+    paymentProvider: "adyen",
     payoutMode: "scheduled",
     earningsHoldDays: 90,
     minimumPayoutCents: 1,
   }), { ok: false, error: "Payouts enabled must be true or false." });
+  assert.deepEqual(parsePayoutSettingsInput({
+    payoutsEnabled: true,
+    paymentProvider: "bitsafe",
+    payoutMode: "scheduled",
+    earningsHoldDays: 0,
+    minimumPayoutCents: 1,
+  }), { ok: false, error: "Unsupported payout provider." });
   assert.deepEqual(parsePayoutSettingsInput({
     payoutsEnabled: true,
     paymentProvider: "unsupported",
@@ -208,21 +213,21 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
   }), { ok: false, error: "Unsupported payout provider." });
   assert.deepEqual(parsePayoutSettingsInput({
     payoutsEnabled: true,
-    paymentProvider: "bitsafe",
+    paymentProvider: "adyen",
     payoutMode: "unsupported",
     earningsHoldDays: 0,
     minimumPayoutCents: 1,
   }), { ok: false, error: "Unsupported payout mode." });
   assert.deepEqual(parsePayoutSettingsInput({
     payoutsEnabled: true,
-    paymentProvider: "bitsafe",
+    paymentProvider: "adyen",
     payoutMode: "scheduled",
     earningsHoldDays: 91,
     minimumPayoutCents: 1,
   }), { ok: false, error: "Hold days must be between 0 and 90." });
   assert.deepEqual(parsePayoutSettingsInput({
     payoutsEnabled: true,
-    paymentProvider: "bitsafe",
+    paymentProvider: "adyen",
     payoutMode: "scheduled",
     earningsHoldDays: 0,
     minimumPayoutCents: 0,
@@ -230,7 +235,7 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
   for (const earningsHoldDays of [false, "", " ", "1e1", 1.5, Number.MAX_SAFE_INTEGER + 1]) {
     assert.deepEqual(parsePayoutSettingsInput({
       payoutsEnabled: true,
-      paymentProvider: "bitsafe",
+      paymentProvider: "adyen",
       payoutMode: "scheduled",
       earningsHoldDays,
       minimumPayoutCents: 1,
@@ -239,7 +244,7 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
   for (const minimumPayoutCents of [true, "", " ", "1e3", 1.5, Number.MAX_SAFE_INTEGER + 1]) {
     assert.deepEqual(parsePayoutSettingsInput({
       payoutsEnabled: true,
-      paymentProvider: "bitsafe",
+      paymentProvider: "adyen",
       payoutMode: "scheduled",
       earningsHoldDays: 0,
       minimumPayoutCents,
@@ -303,39 +308,4 @@ test("retry parsing preserves required payout and retry-reason contracts", () =>
     ok: false,
     error: "Payout is invalid.",
   });
-});
-
-test("Bitsafe reconciliation parsing preserves reference and reason boundaries", () => {
-  const reconciliationReference = "r".repeat(160);
-  assert.deepEqual(parseReconcileBitsafePayoutInput({
-    payoutId: `  ${PAYOUT_ID}  `,
-    reconciliationReference,
-    reason: "  paid report reviewed  ",
-  }), {
-    ok: true,
-    value: {
-      payoutId: PAYOUT_ID,
-      reconciliationReference,
-      reason: "paid report reviewed",
-    },
-  });
-  for (const input of [
-    { payoutId: PAYOUT_ID, reconciliationReference: "r".repeat(161), reason: "reviewed" },
-    { payoutId: PAYOUT_ID, reconciliationReference: "report", reason: "no" },
-    { payoutId: PAYOUT_ID, reconciliationReference: "report", reason: "r".repeat(501) },
-  ]) {
-    assert.deepEqual(parseReconcileBitsafePayoutInput(input), {
-      ok: false,
-      error: "Reconciliation details are invalid.",
-    });
-  }
-  assert.deepEqual(parseReconcileBitsafePayoutInput({ payoutId: PAYOUT_ID, reason: "reviewed" }), {
-    ok: false,
-    error: "Yoursafe report reference is required.",
-  });
-  assert.deepEqual(parseReconcileBitsafePayoutInput({
-    payoutId: "not-a-uuid",
-    reconciliationReference: "report",
-    reason: "reviewed",
-  }), { ok: false, error: "Payout is invalid." });
 });

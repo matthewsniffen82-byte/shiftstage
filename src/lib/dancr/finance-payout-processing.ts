@@ -69,21 +69,6 @@ export async function processDancerPayouts(client: DancrClient) {
         p_provider_reference_id: transfer.providerReferenceId,
       });
       if (processingError) throw processingError;
-      if (providerName === "bitsafe") {
-        const { error: auditError } = await (client as any).from("financial_audit_events").insert({
-          actor_type: "system",
-          action: "bitsafe_payout_instruction_created",
-          target_type: "payout",
-          target_id: batch.id,
-          reason: "Awaiting approval and execution in the Yoursafe business portal.",
-          metadata: {
-            payment_provider: "bitsafe",
-            provider_reference_id: transfer.providerReferenceId,
-            automatic_paid_confirmation: false,
-          },
-        });
-        if (auditError) throw auditError;
-      }
       created += 1;
     } catch (error) {
       failed += 1;

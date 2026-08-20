@@ -25,7 +25,6 @@ test("the dispatcher preserves every supported production finance action", () =>
     "update_payout_settings",
     "manage_earning",
     "retry_payout",
-    "reconcile_bitsafe_payout",
     "verify_nats_affiliate",
     "disable_nats_affiliate",
     "retry_nats_export",
@@ -53,21 +52,20 @@ test("the dispatcher preserves validation limits and explicit client errors", ()
   assert.match(input, /Payment reference must be 160 characters or fewer\./);
   assert.match(input, /boundedInteger\(body\.earningsHoldDays, 0, 90/);
   assert.match(input, /boundedInteger\(body\.minimumPayoutCents, 1, 10_000_000/);
-  assert.equal((input.match(/reason\.value\.length < 3 \|\| reason\.value\.length > 500/g) || []).length, 3);
-  assert.match(input, /reconciliationReference\.value\.length > 160/);
+  assert.equal((input.match(/reason\.value\.length < 3 \|\| reason\.value\.length > 500/g) || []).length, 2);
   assert.match(dispatch, /return \{ status: 400, body: \{ ok: false, error \} \}/);
 });
 
 test("successful writes still refresh the full admin finance overview", () => {
   assert.match(dispatch, /return \{ status: 200, body: \{ ok: true, \.\.\.body \} \}/);
-  assert.equal((dispatch.match(/finance: await getAdminFinanceOverview\(client\)/g) || []).length, 11);
+  assert.equal((dispatch.match(/finance: await getAdminFinanceOverview\(client\)/g) || []).length, 10);
   assert.match(dispatch, /recordManualClubInvoicePayment\(client, command\)/);
   assert.match(dispatch, /updatePayoutSettings\(client, adminUserId, command\)/);
   assert.match(dispatch, /manageDancerEarning\(client, adminUserId, command\)/);
   assert.match(dispatch, /retryDancerPayout\(client, adminUserId, command\)/);
-  assert.match(dispatch, /reconcileBitsafePayout\(client, adminUserId, command\)/);
   assert.match(dispatch, /verifyNatsAffiliateLink\(client, adminUserId, command\.dancerId, command\.reason\)/);
   assert.match(dispatch, /disableNatsAffiliateLink\(client, adminUserId, command\.dancerId, command\.reason\)/);
   assert.match(dispatch, /retryFailedNatsCommissionExport\(client, adminUserId, command\.exportId, command\.reason\)/);
   assert.match(dispatch, /reconcileNatsCommissionExport\(client, adminUserId, command\.exportId, command\.resolution, command\.reason\)/);
+  assert.doesNotMatch(dispatch, /bitsafe|yoursafe|reconcileBitsafe/i);
 });

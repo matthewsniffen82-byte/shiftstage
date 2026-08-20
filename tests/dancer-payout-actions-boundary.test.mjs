@@ -2,13 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [actions, store, finance, reporting, route, bitsafeCallback] = await Promise.all([
+const [actions, store, finance, reporting, route] = await Promise.all([
   readFile(new URL("../src/lib/dancr/dancer-payout-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/payout-account-store.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance-reporting.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/finance/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/bitsafe/callback/route.ts", import.meta.url), "utf8"),
 ]);
 
 test("dancer payout enrollment and cash-out writes use one dedicated action boundary", () => {
@@ -29,7 +28,6 @@ test("payout account state and effective settings have one shared persistence bo
     "getDancerForUser",
     "getDancerPayoutAccount",
     "upsertDancerPayoutAccount",
-    "syncBitsafePayoutAccount",
     "getEffectivePayoutSettings",
   ]) {
     assert.match(store, new RegExp(`export async function ${operation}`));
@@ -38,8 +36,6 @@ test("payout account state and effective settings have one shared persistence bo
   assert.match(reporting, /from "\.\/payout-account-store"/);
   assert.match(actions, /from "\.\/payout-account-store"/);
   assert.match(actions, /from "\.\/finance-reporting"/);
-  assert.match(bitsafeCallback, /from "@\/src\/lib\/dancr\/payout-account-store"/);
-  assert.doesNotMatch(bitsafeCallback, /from "@\/src\/lib\/dancr\/finance"/);
 });
 
 test("dancer cash-out retains payout guards, balance validation, and the production procedure", () => {
@@ -52,10 +48,9 @@ test("dancer cash-out retains payout guards, balance validation, and the product
   assert.match(actions, /p_is_test: false/);
 });
 
-test("dancer onboarding retains provider gating and Bitsafe callback handling", () => {
-  assert.match(actions, /settings\.paymentProvider === "bitsafe"/);
-  assert.match(actions, /new URL\("\/api\/bitsafe\/callback", returnUrl\)/);
+test("dancer onboarding retains provider gating without a Bitsafe-specific branch", () => {
   assert.match(actions, /provider\.createConnectedAccount/);
   assert.match(actions, /provider\.createOnboardingLink/);
   assert.match(actions, /retrieveConnectedAccount\(providerAccountId\)/);
+  assert.doesNotMatch(actions, /bitsafe/i);
 });

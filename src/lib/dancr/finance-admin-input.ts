@@ -14,7 +14,6 @@ const ADMIN_FINANCE_ACTIONS = [
   "update_payout_settings",
   "manage_earning",
   "retry_payout",
-  "reconcile_bitsafe_payout",
   "verify_nats_affiliate",
   "disable_nats_affiliate",
   "retry_nats_export",
@@ -48,12 +47,6 @@ export type RetryPayoutInput = {
   reason: string;
 };
 
-export type ReconcileBitsafePayoutInput = {
-  payoutId: string;
-  reconciliationReference: string;
-  reason: string;
-};
-
 export type NatsAffiliateInput = {
   dancerId: string;
   reason: string;
@@ -67,7 +60,6 @@ export type NatsExportInput = {
 export type ReconcileNatsExportInput = NatsExportInput & {
   resolution: "confirmed_exported" | "confirmed_not_exported";
 };
-
 export type AdminFinanceCommand =
   | { action: "run_automation" }
   | { action: "process_payouts" }
@@ -75,7 +67,6 @@ export type AdminFinanceCommand =
   | ({ action: "update_payout_settings" } & PayoutSettingsInput)
   | ({ action: "manage_earning" } & ManageEarningInput)
   | ({ action: "retry_payout" } & RetryPayoutInput)
-  | ({ action: "reconcile_bitsafe_payout" } & ReconcileBitsafePayoutInput)
   | ({ action: "verify_nats_affiliate" } & NatsAffiliateInput)
   | ({ action: "disable_nats_affiliate" } & NatsAffiliateInput)
   | ({ action: "retry_nats_export" } & NatsExportInput)
@@ -113,11 +104,6 @@ export function parseAdminFinanceCommand(input: unknown): ValidationResult<Admin
     return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
   }
 
-  if (action === "reconcile_bitsafe_payout") {
-    const parsed = parseReconcileBitsafePayoutInput(body);
-    return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
-  }
-
   if (action === "verify_nats_affiliate" || action === "disable_nats_affiliate") {
     const parsed = parseNatsAffiliateInput(body);
     return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
@@ -134,7 +120,6 @@ export function parseAdminFinanceCommand(input: unknown): ValidationResult<Admin
     const resolution = oneOf(body.resolution, ["confirmed_exported", "confirmed_not_exported"] as const, "NATS reconciliation resolution is invalid.");
     return resolution.ok ? valid({ action, ...parsed.value, resolution: resolution.value }) : invalid(resolution.error);
   }
-
   return unsupportedAction(action);
 }
 
@@ -170,7 +155,7 @@ export function parseManualPaymentInput(body: Record<string, unknown>): Validati
 export function parsePayoutSettingsInput(body: Record<string, unknown>): ValidationResult<PayoutSettingsInput> {
   const payoutsEnabled = requiredBoolean(body.payoutsEnabled, "Payouts enabled must be true or false.");
   if (!payoutsEnabled.ok) return payoutsEnabled;
-  const paymentProvider = oneOf(body.paymentProvider, ["stripe", "bitsafe", "adyen", "other"] as const, "Unsupported payout provider.");
+  const paymentProvider = oneOf(body.paymentProvider, ["stripe", "adyen", "other"] as const, "Unsupported payout provider.");
   if (!paymentProvider.ok) return paymentProvider;
   const payoutMode = oneOf(body.payoutMode, ["manual_cashout", "scheduled", "both"] as const, "Unsupported payout mode.");
   if (!payoutMode.ok) return payoutMode;
@@ -211,25 +196,6 @@ export function parseRetryPayoutInput(body: Record<string, unknown>): Validation
   return valid({ payoutId: payoutId.value, reason: reason.value });
 }
 
-export function parseReconcileBitsafePayoutInput(
-  body: Record<string, unknown>,
-): ValidationResult<ReconcileBitsafePayoutInput> {
-  const payoutId = requiredUuid(body.payoutId, "Payout is required.", "Payout is invalid.");
-  if (!payoutId.ok) return payoutId;
-  const reconciliationReference = requiredText(body.reconciliationReference, "Yoursafe report reference is required.");
-  if (!reconciliationReference.ok) return reconciliationReference;
-  const reason = requiredText(body.reason, "A reconciliation reason is required.");
-  if (!reason.ok) return reason;
-  if (reconciliationReference.value.length > 160 || reason.value.length < 3 || reason.value.length > 500) {
-    return invalid("Reconciliation details are invalid.");
-  }
-  return valid({
-    payoutId: payoutId.value,
-    reconciliationReference: reconciliationReference.value,
-    reason: reason.value,
-  });
-}
-
 export function parseNatsAffiliateInput(body: Record<string, unknown>): ValidationResult<NatsAffiliateInput> {
   const dancerId = requiredUuid(body.dancerId, "Dancer is required.", "Dancer is invalid.");
   if (!dancerId.ok) return dancerId;
@@ -251,7 +217,6 @@ function auditReason(value: unknown) {
     ? reason
     : invalid<string>("Reason must be between 3 and 500 characters.");
 }
-
 function valid<T>(value: T): ValidationResult<T> {
   return { ok: true, value };
 }

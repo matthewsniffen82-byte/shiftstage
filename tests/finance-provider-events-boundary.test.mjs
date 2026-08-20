@@ -2,18 +2,16 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [events, finance, invoices, route, adminActions] = await Promise.all([
+const [events, finance, invoices, route] = await Promise.all([
   readFile(new URL("../src/lib/dancr/finance-provider-events.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance-invoices.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/stripe/webhook/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../src/lib/dancr/finance-admin-actions.ts", import.meta.url), "utf8"),
 ]);
 
 test("provider finance events use one dedicated mutation boundary", () => {
   assert.match(route, /from "@\/src\/lib\/dancr\/finance-provider-events"/);
   assert.match(invoices, /from "\.\/finance-provider-events"/);
-  assert.match(adminActions, /from "\.\/finance-provider-events"/);
   for (const action of [
     "syncStripeInvoice",
     "markStripeInvoiceFailure",

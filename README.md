@@ -50,17 +50,13 @@ Required production environment variables:
 - `DANCR_ADMIN_SEED_KEY`
 - `STRIPE_SECRET_KEY`
 - `PAYOUTS_ENABLED` — server hard stop for real dancer money movement; defaults to `false`
-- `PAYOUT_PROVIDER` — provider adapter default (`stripe`, `bitsafe`, `adyen`, or `other`); the admin setting is authoritative
+- `PAYOUT_PROVIDER` — provider adapter default (`stripe`, `adyen`, or `other`); the admin setting is authoritative
 - `EARNINGS_HOLD_DAYS` — fallback earnings review period before availability
 - `MINIMUM_PAYOUT_AMOUNT` — fallback minimum payout in cents (`2000` means $20.00)
 - `PAYOUT_MODE` — fallback mode (`manual_cashout`, `scheduled`, or `both`)
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_DANCER_MONTHLY_PRICE_ID`
-- `BITSAFE_CLIENT_ID` and `BITSAFE_CLIENT_SECRET` — server-only Yoursafe ID credentials for hosted Bitsafe payout-account connection
-- `BITSAFE_API_USERNAME` and `BITSAFE_API_PASSWORD` — server-only Yoursafe Mass Payments API key parts
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-
-Bitsafe is integrated through its current Yoursafe services. Dancers authorize their payout account with hosted Yoursafe ID, and MyDancr stores only the non-personal `aliastoken`. Cash-outs create idempotent `INTERNAL` Mass Payments instructions. The official API currently requires approval in the Yoursafe Business portal and does not expose payout-status webhooks, so Bitsafe payouts remain `processing` until an authorized MyDancr admin verifies the executed payout report and records an audited reconciliation.
 
 ## Dancr Image Moderation
 

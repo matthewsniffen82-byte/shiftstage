@@ -29,14 +29,14 @@ test("validated admin finance values map to exact database parameters without fu
 
   assert.deepEqual(payoutSettingsRpcParameters(ADMIN_ID, {
     payoutsEnabled: false,
-    paymentProvider: "bitsafe",
+    paymentProvider: "adyen",
     payoutMode: "scheduled",
     earningsHoldDays: 14,
     minimumPayoutCents: 5000,
   }), {
     p_admin_user_id: ADMIN_ID,
     p_payouts_enabled: false,
-    p_payment_provider: "bitsafe",
+    p_payment_provider: "adyen",
     p_earnings_hold_days: 14,
     p_minimum_payout_cents: 5000,
     p_payout_mode: "scheduled",

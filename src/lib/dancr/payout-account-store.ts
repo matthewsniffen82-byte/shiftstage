@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getPayoutRuntimeConfig,
   isPayoutProviderConfigured,
+  PAYOUT_PROVIDERS,
   type PayoutMode,
   type PayoutProviderName,
   type ProviderAccountState,
@@ -54,22 +55,16 @@ export async function upsertDancerPayoutAccount(
   return data;
 }
 
-export async function syncBitsafePayoutAccount(
-  client: DancrClient,
-  dancerId: string,
-  account: ProviderAccountState,
-) {
-  return upsertDancerPayoutAccount(client, dancerId, "bitsafe", account);
-}
-
 export async function getEffectivePayoutSettings(client: DancrClient) {
   const { data: database, error } = await (client as any).from("payout_settings").select("*").eq("id", "default").single();
   if (error) throw error;
   const runtime = getPayoutRuntimeConfig();
-  const paymentProvider = String(database.payment_provider || runtime.provider) as PayoutProviderName;
-  const providerConfigured = isPayoutProviderConfigured(paymentProvider);
+  const configuredProvider = String(database.payment_provider || runtime.provider).trim().toLowerCase();
+  const providerSupported = PAYOUT_PROVIDERS.includes(configuredProvider as PayoutProviderName);
+  const paymentProvider = (providerSupported ? configuredProvider : runtime.provider) as PayoutProviderName;
+  const providerConfigured = providerSupported && isPayoutProviderConfigured(paymentProvider);
   return {
-    payoutsEnabled: Boolean(runtime.enabledByEnvironment && database.payouts_enabled && providerConfigured),
+    payoutsEnabled: Boolean(runtime.enabledByEnvironment && database.payouts_enabled && providerConfigured && providerSupported),
     environmentEnabled: runtime.enabledByEnvironment,
     databaseEnabled: Boolean(database.payouts_enabled),
     providerConfigured,

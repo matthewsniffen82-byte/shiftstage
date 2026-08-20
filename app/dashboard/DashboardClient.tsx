@@ -4066,7 +4066,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
   useEffect(() => {
     const result = new URLSearchParams(window.location.search).get("finance");
     if (result === "connected") setStatus("Payout account connected and verified.");
-    if (result === "review") setStatus("Payout account connected. Bitsafe is still reviewing payout eligibility.");
+    if (result === "review") setStatus("Payout account connected. The payout provider is reviewing eligibility.");
     if (result === "setup_error") setStatus("Payout setup could not be completed. Please try again.");
   }, []);
 
@@ -4147,7 +4147,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
       <p>{natsSelected
         ? "MyDancr validates each cashier NFC redemption and calculates your exact tiered commission. Eligible commissions are then sent to your verified NATS affiliate ledger without customer personal information."
         : "Qualifying Club Deal activity appears as pending first, then becomes available after the review period. Balances never include customer personal information."}</p>
-      {!natsSelected && settings.paymentProvider === "bitsafe" ? <p>Bitsafe securely handles identity, account details, and money movement. MyDancr stores only your non-personal payout account reference.</p> : null}
+      {!natsSelected ? <p>The approved payout provider securely handles identity, account details, and money movement. MyDancr stores only the provider account reference and status needed to manage payouts.</p> : null}
       <div className="deal-metrics earnings-balance-grid">
         <Metric label="Available balance" value={formatCents(Number(balances.availableCents || 0))} />
         <Metric label="Pending earnings" value={formatCents(Number(balances.pendingCents || 0))} />

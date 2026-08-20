@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   manageDancerEarning,
-  reconcileBitsafePayout,
   recordManualClubInvoicePayment,
   retryDancerPayout,
   updatePayoutSettings,
@@ -86,11 +85,6 @@ export async function dispatchAdminFinanceAction(
 
   if (command.action === "retry_payout") {
     await retryDancerPayout(client, adminUserId, command);
-    return success({ finance: await getAdminFinanceOverview(client) });
-  }
-
-  if (command.action === "reconcile_bitsafe_payout") {
-    await reconcileBitsafePayout(client, adminUserId, command);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 

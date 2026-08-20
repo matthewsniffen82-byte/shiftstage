@@ -769,30 +769,6 @@ function FinanceManager({
     finally { setIsRunning(false); }
   }
 
-  async function reconcileBitsafePayout(payoutId: string, providerReference: string) {
-    const reconciliationReference = window.prompt(
-      `Confirm this payout is shown as executed in the Yoursafe payout report. Enter the report or transfer reference for ${providerReference}:`,
-    )?.trim();
-    if (!reconciliationReference) return;
-    const reason = window.prompt("Required audit note for this payout reconciliation:", "Verified as executed in the Yoursafe payout report.")?.trim();
-    if (!reason) return;
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
-    setIsRunning(true);
-    try {
-      const response = await fetch("/api/admin/finance", {
-        method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ action: "reconcile_bitsafe_payout", payoutId, reconciliationReference, reason }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to reconcile Bitsafe payout.");
-      onFinanceChange(data.finance);
-      setStatus("Bitsafe payout reconciled from the verified Yoursafe report.");
-    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to reconcile Bitsafe payout."); }
-    finally { setIsRunning(false); }
-  }
-
   async function manageNats(action: "verify_nats_affiliate" | "disable_nats_affiliate" | "retry_nats_export" | "reconcile_nats_export", targetId: string, resolution?: "confirmed_exported" | "confirmed_not_exported") {
     const promptLabel = action === "verify_nats_affiliate"
       ? "Confirm you matched this login ID to the correct dancer in NATS. Enter an audit note:"
@@ -827,7 +803,6 @@ function FinanceManager({
       setIsRunning(false);
     }
   }
-
   return (
     <section className="operations-center" aria-labelledby="finance-operations-heading">
       <Panel title="QR finance operations">
@@ -894,14 +869,13 @@ function FinanceManager({
 
       <Panel title="Payout controls" badge={payoutSettings.livePayoutsEnabled === true ? "Live enabled" : "Money movement off"}>
         <form onSubmit={savePayoutSettings}>
-          <label>Provider<select value={provider} onChange={(event) => setProvider(event.target.value)}><option value="stripe">Stripe</option><option value="bitsafe">Bitsafe / Yoursafe</option><option value="adyen">Adyen</option><option value="other">Other approved provider</option></select></label>
+          <label>Provider<select value={provider} onChange={(event) => setProvider(event.target.value)}><option value="stripe">Stripe</option><option value="adyen">Adyen</option><option value="other">Other approved provider</option></select></label>
           <label>Payout mode<select value={payoutMode} onChange={(event) => setPayoutMode(event.target.value)}><option value="manual_cashout">Manual cash out</option><option value="scheduled">Scheduled</option><option value="both">Both</option></select></label>
           <label>Earnings hold days<input inputMode="numeric" min="0" max="90" value={holdDays} onChange={(event) => setHoldDays(event.target.value)} /></label>
           <label>Minimum payout<input inputMode="decimal" min="0.01" max="100000" step="0.01" type="number" value={minimumPayout} onChange={(event) => setMinimumPayout(event.target.value)} /></label>
           <label><input type="checkbox" checked={payoutsEnabled} onChange={(event) => setPayoutsEnabled(event.target.checked)} /> Enable payouts in admin</label>
           <p>Live money movement also requires the server-only PAYOUTS_ENABLED flag. Admin settings cannot bypass that hard stop.</p>
           {payoutSettings.providerConfigured !== true ? <p role="alert">The selected provider does not have complete server-side onboarding and payout credentials.</p> : null}
-          {provider === "bitsafe" ? <p>Bitsafe payout instructions remain processing until an authorized admin verifies execution in the Yoursafe payout report.</p> : null}
           <button disabled={isRunning} type="submit">Save payout settings</button>
         </form>
       </Panel>
@@ -991,7 +965,6 @@ function FinanceManager({
               {payout.provider_reference_id ? <p>Provider reference: <code>{asText(payout.provider_reference_id)}</code></p> : null}
               {payout.failure_message ? <p role="alert">{asText(payout.failure_message)}</p> : null}
               {payout.status === "failed" ? <button disabled={isRunning} type="button" onClick={() => retryPayout(asText(payout.id))}>Retry safely</button> : null}
-              {payout.status === "processing" && payout.payment_provider === "bitsafe" ? <button disabled={isRunning} type="button" onClick={() => reconcileBitsafePayout(asText(payout.id), asText(payout.provider_reference_id))}>Reconcile verified payout</button> : null}
             </article>
           ))}
           {!payouts.length ? <p className="empty">No dancer payout batches have been created yet.</p> : null}

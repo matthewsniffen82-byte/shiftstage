@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createBitsafeOnboarding } from "./bitsafe";
 import { getDancerFinance } from "./finance-reporting";
 import {
   getDancerForUser,
@@ -25,15 +24,6 @@ export async function createDancerConnectOnboarding(
   const settings = await getEffectivePayoutSettings(client);
   if (!settings.payoutsEnabled) {
     throw new Error("Payout setup will open after MyDancr's payout provider is approved and enabled.");
-  }
-  if (settings.paymentProvider === "bitsafe") {
-    const callbackUrl = new URL("/api/bitsafe/callback", returnUrl).toString();
-    return createBitsafeOnboarding(client, {
-      dancerId: dancer.id,
-      userId,
-      returnUrl,
-      callbackUrl,
-    });
   }
   let payoutAccount = await getDancerPayoutAccount(client, dancer.id, settings.paymentProvider);
   const provider = getPayoutProvider(settings.paymentProvider);
