@@ -3,10 +3,10 @@ import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import {
   createDancerConnectOnboarding,
-  getDancerFinance,
   refreshDancerConnectAccount,
   requestDancerCashOut,
-} from "@/src/lib/dancr/finance";
+} from "@/src/lib/dancr/dancer-payout-actions";
+import { getDancerFinance } from "@/src/lib/dancr/finance";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 

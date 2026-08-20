@@ -6,11 +6,15 @@ import {
   getPayoutRuntimeConfig,
   isPayoutProviderConfigured,
   stripeAccountState,
-  type PayoutMode,
   type PayoutProviderName,
   type ProviderAccountState,
 } from "./payout-provider";
-import { createBitsafeOnboarding } from "./bitsafe";
+import {
+  getDancerForUser,
+  getDancerPayoutAccount,
+  getEffectivePayoutSettings,
+  upsertDancerPayoutAccount,
+} from "./payout-account-store";
 import { requireVenueAccess } from "./venue-access";
 
 type DancrClient = SupabaseClient;
@@ -310,60 +314,10 @@ export async function sendClubInvoiceReminders(client: DancrClient, now = new Da
   return sent;
 }
 
-export async function createDancerConnectOnboarding(
-  client: DancrClient,
-  userId: string,
-  returnUrl: string,
-  refreshUrl: string,
-) {
-  const dancer = await getDancerForUser(client, userId);
-  const settings = await getEffectivePayoutSettings(client);
-  if (!settings.payoutsEnabled) {
-    throw new Error("Payout setup will open after MyDancr's payout provider is approved and enabled.");
-  }
-  if (settings.paymentProvider === "bitsafe") {
-    const callbackUrl = new URL("/api/bitsafe/callback", returnUrl).toString();
-    return createBitsafeOnboarding(client, {
-      dancerId: dancer.id,
-      userId,
-      returnUrl,
-      callbackUrl,
-    });
-  }
-  let payoutAccount = await getDancerPayoutAccount(client, dancer.id, settings.paymentProvider);
-  const provider = getPayoutProvider(settings.paymentProvider);
-
-  if (!payoutAccount) {
-    const account = await provider.createConnectedAccount({ dancerId: dancer.id, userId, email: dancer.email });
-    payoutAccount = await upsertDancerPayoutAccount(client, dancer.id, settings.paymentProvider, account);
-  }
-
-  const providerAccountId = String(payoutAccount.provider_account_id || "");
-  if (!providerAccountId) throw new Error("Payout account setup is incomplete.");
-  const accountLink = await provider.createOnboardingLink({
-    providerAccountId,
-    refreshUrl,
-    returnUrl,
-  });
-  return { url: accountLink.url, expiresAt: accountLink.expiresAt };
-}
-
 export async function syncDancerConnectAccount(client: DancrClient, account: Stripe.Account) {
   const dancerId = account.metadata?.dancer_id;
   if (!dancerId) return null;
   return upsertDancerPayoutAccount(client, dancerId, "stripe", stripeAccountState(account));
-}
-
-export async function refreshDancerConnectAccount(client: DancrClient, userId: string) {
-  const dancer = await getDancerForUser(client, userId);
-  const settings = await getEffectivePayoutSettings(client);
-  if (!settings.payoutsEnabled) return null;
-  const payoutAccount = await getDancerPayoutAccount(client, dancer.id, settings.paymentProvider);
-  if (!payoutAccount) return null;
-  const providerAccountId = String(payoutAccount.provider_account_id || "");
-  if (!providerAccountId) return null;
-  const account = await getPayoutProvider(settings.paymentProvider).retrieveConnectedAccount(providerAccountId);
-  return upsertDancerPayoutAccount(client, dancer.id, settings.paymentProvider, account);
 }
 
 export async function processDancerPayouts(client: DancrClient) {
@@ -455,26 +409,6 @@ export async function processDancerPayouts(client: DancrClient) {
     }
   }
   return { created, failed, disabled: false, errors };
-}
-
-export async function requestDancerCashOut(client: DancrClient, userId: string, requestKey: string) {
-  const settings = await getEffectivePayoutSettings(client);
-  if (!settings.payoutsEnabled) throw new Error("Cash out is not live while payout approval is pending.");
-  if (settings.payoutMode !== "manual_cashout" && settings.payoutMode !== "both") {
-    throw new Error("Manual cash out is not currently enabled.");
-  }
-  const preview = await getDancerFinance(client, userId);
-  if (Number(preview.balances.availableCents || 0) < settings.minimumPayoutCents) {
-    throw new Error("Available earnings do not meet the minimum cash-out amount.");
-  }
-  const { data, error } = await (client as any).rpc("request_dancer_payout", {
-    p_user_id: userId,
-    p_request_key: requestKey,
-    p_payment_provider: settings.paymentProvider,
-    p_is_test: false,
-  });
-  if (error) throw error;
-  return data;
 }
 
 export async function reverseDancerPayoutTransfer(client: DancrClient, transferId: string, message: string) {
@@ -751,71 +685,8 @@ async function ensureStripeVenueCustomer(client: DancrClient, venueId: string, v
   return data;
 }
 
-async function getDancerForUser(client: DancrClient, userId: string) {
-  const { data: dancer, error } = await (client as any).from("dancer_profiles").select("id, stage_name").eq("user_id", userId).maybeSingle();
-  if (error) throw error;
-  if (!dancer) throw new Error("Dancer profile not found.");
-  const { data: user, error: userError } = await (client as any).from("app_users").select("email").eq("id", userId).maybeSingle();
-  if (userError) throw userError;
-  return { ...dancer, email: user?.email || null };
-}
-
-async function getDancerPayoutAccount(client: DancrClient, dancerId: string, provider?: PayoutProviderName) {
-  let query = (client as any).from("dancer_payout_accounts").select("*").eq("dancer_id", dancerId);
-  if (provider) query = query.eq("payment_provider", provider);
-  const { data, error } = await query.maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-async function upsertDancerPayoutAccount(client: DancrClient, dancerId: string, provider: PayoutProviderName, account: ProviderAccountState) {
-  const { data, error } = await (client as any).from("dancer_payout_accounts").upsert({
-    dancer_id: dancerId,
-    payment_provider: provider,
-    provider_account_id: account.providerAccountId,
-    stripe_account_id: provider === "stripe" ? account.providerAccountId : null,
-    country: account.country,
-    default_currency: account.currency,
-    onboarding_status: account.onboardingStatus,
-    payout_eligibility: account.payoutEligibility,
-    verification_status: account.verificationStatus,
-    details_submitted: account.detailsSubmitted,
-    charges_enabled: account.chargesEnabled,
-    payouts_enabled: account.payoutsEnabled,
-    onboarding_complete: account.onboardingStatus === "complete",
-    last_error: account.lastError,
-    provider_status: account.providerStatus,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: "dancer_id,payment_provider" }).select("*").single();
-  if (error) throw error;
-  return data;
-}
-
 export async function syncBitsafePayoutAccount(client: DancrClient, dancerId: string, account: ProviderAccountState) {
   return upsertDancerPayoutAccount(client, dancerId, "bitsafe", account);
-}
-
-async function getDatabasePayoutSettings(client: DancrClient) {
-  const { data, error } = await (client as any).from("payout_settings").select("*").eq("id", "default").single();
-  if (error) throw error;
-  return data;
-}
-
-async function getEffectivePayoutSettings(client: DancrClient) {
-  const database = await getDatabasePayoutSettings(client);
-  const runtime = getPayoutRuntimeConfig();
-  const paymentProvider = String(database.payment_provider || runtime.provider) as PayoutProviderName;
-  const providerConfigured = isPayoutProviderConfigured(paymentProvider);
-  return {
-    payoutsEnabled: Boolean(runtime.enabledByEnvironment && database.payouts_enabled && providerConfigured),
-    environmentEnabled: runtime.enabledByEnvironment,
-    databaseEnabled: Boolean(database.payouts_enabled),
-    providerConfigured,
-    paymentProvider,
-    earningsHoldDays: Number(database.earnings_hold_days ?? runtime.holdDays),
-    minimumPayoutCents: Number(database.minimum_payout_cents ?? runtime.minimumPayoutCents),
-    payoutMode: String(database.payout_mode || runtime.mode) as PayoutMode,
-  };
 }
 
 async function createScheduledPayoutRequests(client: DancrClient, minimumPayoutCents: number, provider: PayoutProviderName) {

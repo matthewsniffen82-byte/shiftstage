@@ -7,6 +7,7 @@ const migration = read("supabase/migrations/202608170004_dancer_earnings_payout_
 const bitsafeMigration = read("supabase/migrations/202608180001_bitsafe_payout_provider.sql");
 const finance = read("src/lib/dancr/finance.ts");
 const financeAdminActions = read("src/lib/dancr/finance-admin-actions.ts");
+const payoutAccountStore = read("src/lib/dancr/payout-account-store.ts");
 const provider = read("src/lib/dancr/payout-provider.ts");
 const bitsafe = read("src/lib/dancr/bitsafe.ts");
 
@@ -62,11 +63,11 @@ test("provider selection is abstract and live money movement has a server hard s
   assert.match(provider, /"stripe", "bitsafe", "adyen", "other"/);
   assert.match(provider, /process\.env\.PAYOUTS_ENABLED/);
   assert.match(provider, /isPayoutProviderConfigured/);
-  assert.match(finance, /runtime\.enabledByEnvironment && database\.payouts_enabled/);
-  assert.match(finance, /database\.payouts_enabled && providerConfigured/);
+  assert.match(payoutAccountStore, /runtime\.enabledByEnvironment && database\.payouts_enabled/);
+  assert.match(payoutAccountStore, /database\.payouts_enabled && providerConfigured/);
   assert.match(finance, /if \(!settings\.payoutsEnabled\)/);
   assert.match(migration, /unique \(dancer_id, payment_provider\)/);
-  assert.match(finance, /onConflict: "dancer_id,payment_provider"/);
+  assert.match(payoutAccountStore, /onConflict: "dancer_id,payment_provider"/);
 });
 
 test("Bitsafe uses hosted Yoursafe identity and stores only a non-personal account alias", () => {

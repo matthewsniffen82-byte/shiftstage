@@ -43,6 +43,7 @@ test("QR finance migration creates private receivables and payout ledgers", () =
 test("monthly club invoices, reminders, reconciliation, and dancer transfers use Stripe production APIs", () => {
   const service = read("src/lib/dancr/finance.ts");
   const provider = read("src/lib/dancr/payout-provider.ts");
+  const payoutAccounts = read("src/lib/dancr/payout-account-store.ts");
   assert.match(service, /createMonthlyClubInvoiceDrafts/);
   assert.match(service, /\.lt\("commission_month", currentMonth\)/);
   assert.match(service, /getStripe\(\)\.customers\.create/);
@@ -56,7 +57,7 @@ test("monthly club invoices, reminders, reconciliation, and dancer transfers use
   assert.match(provider, /getStripe\(\)\.accountLinks\.create/);
   assert.match(provider, /getStripe\(\)\.transfers\.create/);
   assert.match(provider, /idempotencyKey: input\.idempotencyKey/);
-  assert.match(service, /onboarding_complete/);
+  assert.match(payoutAccounts, /onboarding_complete/);
   assert.match(service, /pendingClubPaymentCents/);
 });
 
