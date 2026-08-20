@@ -6,7 +6,7 @@ import {
   refreshDancerConnectAccount,
   requestDancerCashOut,
 } from "@/src/lib/dancr/dancer-payout-actions";
-import { getDancerFinance } from "@/src/lib/dancr/finance";
+import { getDancerFinance } from "@/src/lib/dancr/finance-reporting";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 

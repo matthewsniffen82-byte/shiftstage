@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createBitsafeOnboarding } from "./bitsafe";
-import { getDancerFinance } from "./finance";
+import { getDancerFinance } from "./finance-reporting";
 import {
   getDancerForUser,
   getDancerPayoutAccount,

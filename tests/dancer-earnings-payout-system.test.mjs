@@ -6,6 +6,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const migration = read("supabase/migrations/202608170004_dancer_earnings_payout_system.sql");
 const bitsafeMigration = read("supabase/migrations/202608180001_bitsafe_payout_provider.sql");
 const finance = read("src/lib/dancr/finance.ts");
+const financeReporting = read("src/lib/dancr/finance-reporting.ts");
 const financeAdminActions = read("src/lib/dancr/finance-admin-actions.ts");
 const financeProviderEvents = read("src/lib/dancr/finance-provider-events.ts");
 const financePayoutProcessing = read("src/lib/dancr/finance-payout-processing.ts");
@@ -54,8 +55,8 @@ test("cash out locks ledger rows and prevents concurrent or duplicate payment", 
   assert.match(financePayoutProcessing, /idempotencyKey: dispatchKey/);
   assert.match(financePayoutProcessing, /p_provider_reference_id: dispatchKey/);
   assert.match(financePayoutProcessing, /flag_dancer_payout_dispatch_review/);
-  assert.match(finance, /get_dancer_earnings_summary/);
-  assert.match(finance, /get_admin_dancer_financial_summary/);
+  assert.match(financeReporting, /get_dancer_earnings_summary/);
+  assert.match(financeReporting, /get_admin_dancer_financial_summary/);
   assert.match(financePayoutProcessing, /batch\.status === "processing" && !isDispatchRetry/);
   assert.match(migration, /reservation_released', false/);
 });

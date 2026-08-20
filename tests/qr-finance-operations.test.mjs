@@ -42,6 +42,7 @@ test("QR finance migration creates private receivables and payout ledgers", () =
 
 test("monthly club invoices, reminders, reconciliation, and dancer transfers use Stripe production APIs", () => {
   const service = read("src/lib/dancr/finance.ts");
+  const reporting = read("src/lib/dancr/finance-reporting.ts");
   const invoices = read("src/lib/dancr/finance-invoices.ts");
   const providerEvents = read("src/lib/dancr/finance-provider-events.ts");
   const provider = read("src/lib/dancr/payout-provider.ts");
@@ -60,7 +61,7 @@ test("monthly club invoices, reminders, reconciliation, and dancer transfers use
   assert.match(provider, /getStripe\(\)\.transfers\.create/);
   assert.match(provider, /idempotencyKey: input\.idempotencyKey/);
   assert.match(payoutAccounts, /onboarding_complete/);
-  assert.match(service, /pendingClubPaymentCents/);
+  assert.match(reporting, /pendingClubPaymentCents/);
 });
 
 test("finance APIs enforce role authorization and expose authenticated statements", () => {
@@ -122,6 +123,8 @@ test("QR finance work remains isolated from ride functionality", () => {
   const scoped = [
     read("src/lib/dancr/finance.ts"),
     read("src/lib/dancr/finance-payout-processing.ts"),
+    read("src/lib/dancr/finance-reporting.ts"),
+    read("src/lib/dancr/finance-statements.ts"),
     read("app/api/admin/finance/route.ts"),
     read("app/api/venue/finance/route.ts"),
     read("app/api/dancer/finance/route.ts"),

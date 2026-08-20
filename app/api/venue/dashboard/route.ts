@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
-import { getVenueFinance } from "@/src/lib/dancr/finance";
+import { getVenueFinance } from "@/src/lib/dancr/finance-reporting";
 import { getVenueDashboard, readVenueAnalyticsPeriod } from "@/src/lib/dancr/venue";
 import { canVenue, requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { getVenueDancerVerificationState } from "@/src/lib/dancr/venue-affiliations";

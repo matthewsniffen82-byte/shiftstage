@@ -1,6 +1,6 @@
 import { apiError } from "@/src/lib/api";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
-import { getVenueStatementRows, venueStatementCsv } from "@/src/lib/dancr/finance";
+import { getVenueStatementRows, venueStatementCsv } from "@/src/lib/dancr/finance-statements";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 

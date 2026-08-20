@@ -3,7 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getDancerDealMetrics } from "@/src/lib/dancr/deals";
 import { getOwnDancerDashboardAnalytics } from "@/src/lib/dancr/dancer";
-import { getDancerFinance } from "@/src/lib/dancr/finance";
+import { getDancerFinance } from "@/src/lib/dancr/finance-reporting";
 import { finalizePendingDancerNfcEnrollment, getDancerNfcDashboardState } from "@/src/lib/dancr/nfc";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
