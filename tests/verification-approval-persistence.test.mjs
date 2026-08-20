@@ -20,6 +20,7 @@ const [
   profileApproval,
   dancerBackend,
   environmentExample,
+  accountProvisioning,
 ] = await Promise.all([
   readFile(new URL("../app/api/dancer/verification-documents/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/admin.ts", import.meta.url), "utf8"),
@@ -38,6 +39,7 @@ const [
   readFile(new URL("../src/lib/dancr/profile-approval.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/dancer.ts", import.meta.url), "utf8"),
   readFile(new URL("../.env.example", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/account-provisioning.ts", import.meta.url), "utf8"),
 ]);
 
 test("new dancers stay private until NFC venue authorization while existing approved profiles remain live", () => {
@@ -45,8 +47,9 @@ test("new dancers stay private until NFC venue authorization while existing appr
   assert.match(profileApproval, /status: "draft"/);
   assert.match(profileApproval, /verification_status: "pending"/);
   assert.match(profileApproval, /is_public: false/);
-  assert.match(signupRoute, /initialDancerApprovalValues\(\)/);
-  assert.match(callbackRoute, /initialDancerApprovalValues\(\)/);
+  assert.match(signupRoute, /provisionAppAccount\(/);
+  assert.match(callbackRoute, /provisionAppAccount\(/);
+  assert.match(accountProvisioning, /initialDancerApprovalValues\(\)/);
   assert.match(profileRoute, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
   assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_onboarding_required/);

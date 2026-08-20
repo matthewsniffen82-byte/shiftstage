@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [callbackSource, liveAppSource, dancerDashboardSource, signupRouteSource, profileRouteSource, explicitIdentityMigration] = await Promise.all([
+const [callbackSource, liveAppSource, dancerDashboardSource, signupRouteSource, profileRouteSource, explicitIdentityMigration, accountProvisioningSource] = await Promise.all([
   readFile(new URL("../app/auth/callback/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/dancer/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608150005_require_explicit_dancer_identity.sql", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/account-provisioning.ts", import.meta.url), "utf8"),
 ]);
 
 test("confirmed dancer accounts pause on a dedicated confirmation page before profile setup", () => {
@@ -78,19 +79,17 @@ test("implicit Supabase email-confirmation tokens are transferred into the live 
 });
 
 test("unfinished dancer accounts stay private until explicit submission and first venue verification", () => {
-  const signupProfileInsert =
-    signupRouteSource.match(/\.from\("dancer_profiles"\)[\s\S]*?\.insert\(\{[\s\S]*?\n    \}\);/)?.[0] || "";
-  const callbackProfileInsert =
-    callbackSource.match(/admin\.from\("dancer_profiles"\)\.insert\(\{[\s\S]*?\n  \}\);/)?.[0] || "";
+  const profileInsert =
+    accountProvisioningSource.match(/\.from\("dancer_profiles"\)\.insert\(\{[\s\S]*?\n  \}\);/)?.[0] || "";
   const profileGet =
     profileRouteSource.match(/export async function GET[\s\S]*?async function loadPendingPhotoReviews/)?.[0] || "";
   const explicitSubmission =
     profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
 
-  for (const profileInsert of [signupProfileInsert, callbackProfileInsert]) {
-    assert.match(profileInsert, /initialDancerApprovalValues\(\)/);
-    assert.doesNotMatch(profileInsert, /automaticDancerApprovalValues/);
-  }
+  assert.match(profileInsert, /initialDancerApprovalValues\(\)/);
+  assert.doesNotMatch(profileInsert, /automaticDancerApprovalValues/);
+  assert.doesNotMatch(signupRouteSource, /\.from\("dancer_profiles"\)/);
+  assert.doesNotMatch(callbackSource, /\.from\("dancer_profiles"\)/);
   assert.doesNotMatch(profileGet, /automaticDancerApprovalValues|ensureAutomaticDancerApproval/);
   assert.match(explicitSubmission, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
 });
@@ -98,28 +97,32 @@ test("unfinished dancer accounts stay private until explicit submission and firs
 test("email callbacks preserve existing dancer approval and account state", () => {
   const accountResolver =
     callbackSource.match(/const existingRole = readCallbackRole\(account\?\.role\)[\s\S]*?account = await getAccountByUserId/)?.[0] || "";
-  const accountUpsert =
-    callbackSource.match(/admin\.from\("app_users"\)\.upsert\(\{[\s\S]*?\n  }\)/)?.[0] || "";
   const existingProfileBranch =
-    callbackSource.match(/if \(existingProfile\) \{[\s\S]*?\n  \}/)?.[0] || "";
+    accountProvisioningSource.match(/if \(existingProfile\) \{[\s\S]*?\n  \}/)?.[0] || "";
 
   assert.match(accountResolver, /const authoritativeRole = existingRole \|\| \(!account \? roleHint : null\)/);
-  assert.doesNotMatch(accountUpsert, /account_state/);
-  assert.match(existingProfileBranch, /EXISTING_DANCER_PROFILE_PRESERVED_DURING_EMAIL_CALLBACK/);
+  assert.match(callbackSource, /provisionAppAccount\(admin/);
+  assert.doesNotMatch(callbackSource, /\.from\("app_users"\)|\.from\("dancer_profiles"\)/);
+  assert.doesNotMatch(accountProvisioningSource, /account_state/);
+  assert.match(callbackSource, /EXISTING_DANCER_PROFILE_PRESERVED_DURING_EMAIL_CALLBACK/);
+  assert.match(existingProfileBranch, /input\.existingDancerLogEvent/);
   assert.doesNotMatch(existingProfileBranch, /\.update\(|status:\s*"draft"|is_public\s*:/);
 });
 
 test("new dancer confirmation never invents a stage name or city", () => {
-  const dancerProfileSync =
-    callbackSource.match(/async function ensureCallbackDancerProfile[\s\S]*?async function uniqueDancerSlug/)?.[0] || "";
+  const callbackProvisioning =
+    callbackSource.match(/async function ensureCallbackAccount[\s\S]*?function readCallbackRole/)?.[0] || "";
 
   assert.match(signupRouteSource, /const submittedStageName = ""/);
-  assert.match(signupRouteSource, /const stageName = ""/);
   assert.doesNotMatch(signupRouteSource, /dancerDisplayName\(email\)/);
-  assert.match(dancerProfileSync, /const stageName = ""/);
-  assert.match(dancerProfileSync, /const city = readMetadataText\(metadata\.city\)/);
-  assert.doesNotMatch(dancerProfileSync, /readMetadataText\(metadata\.city\) \|\| "Las Vegas"/);
-  assert.doesNotMatch(dancerProfileSync, /displayName \|\| "New Dancer"/);
+  assert.match(accountProvisioningSource, /stage_name: ""/);
+  assert.match(accountProvisioningSource, /city: input\.city/);
+  assert.match(accountProvisioningSource, /input\.role === "dancer" \? "Dancer" : input\.displayName/);
+  assert.match(
+    callbackProvisioning,
+    /city:\s*role === "customer"\s*\? readMetadataText\(metadata\.city\) \|\| "Las Vegas"\s*:\s*readMetadataText\(metadata\.city\)/,
+  );
+  assert.doesNotMatch(callbackProvisioning, /displayName \|\| "New Dancer"/);
   assert.match(callbackSource, /tokenRole === "dancer" \? "Dancer" : tokenEmail/);
 });
 

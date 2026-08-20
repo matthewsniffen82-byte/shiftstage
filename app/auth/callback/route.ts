@@ -1,5 +1,5 @@
+import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { initialDancerApprovalValues } from "@/src/lib/dancr/profile-approval";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -307,83 +307,16 @@ async function ensureCallbackAccount(admin: AdminClient, user: CallbackUser, rol
     ? "Dancer"
     : submittedDisplayName || displayNameFromEmail(email, role);
 
-  const { error: accountError } = await admin.from("app_users").upsert({
-    id: user.id,
+  await provisionAppAccount(admin, {
     role,
-    display_name: displayName,
+    userId: user.id,
     email,
+    displayName,
+    city: role === "customer"
+      ? readMetadataText(metadata.city) || "Las Vegas"
+      : readMetadataText(metadata.city),
+    existingDancerLogEvent: "EXISTING_DANCER_PROFILE_PRESERVED_DURING_EMAIL_CALLBACK",
   });
-  if (accountError) throw accountError;
-
-  if (role === "customer") {
-    const { error } = await admin.from("customer_profiles").upsert({
-      user_id: user.id,
-      city: readMetadataText(metadata.city) || "Las Vegas",
-    });
-    if (error) throw error;
-    return;
-  }
-
-  if (role === "dancer") {
-    await ensureCallbackDancerProfile(admin, user.id, metadata);
-  }
-}
-
-async function ensureCallbackDancerProfile(
-  admin: AdminClient,
-  userId: string,
-  metadata: Record<string, unknown>,
-) {
-  const stageName = "";
-  const city = readMetadataText(metadata.city);
-
-  const { data: existingProfile, error: existingProfileError } = await admin
-    .from("dancer_profiles")
-    .select("id, status, verification_status, is_public, disabled_at")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (existingProfileError) throw existingProfileError;
-
-  if (existingProfile) {
-    console.log("EXISTING_DANCER_PROFILE_PRESERVED_DURING_EMAIL_CALLBACK", {
-      dancerId: existingProfile.id,
-      status: existingProfile.status,
-      verificationStatus: existingProfile.verification_status,
-      isPublic: existingProfile.is_public,
-      disabledAt: existingProfile.disabled_at,
-    });
-    return;
-  }
-
-  const slug = await uniqueDancerSlug(admin, stageName, userId);
-  const { error } = await admin.from("dancer_profiles").insert({
-    user_id: userId,
-    real_name: null,
-    stage_name: stageName,
-    slug,
-    city,
-    ...initialDancerApprovalValues(),
-  });
-  if (error) throw error;
-}
-
-async function uniqueDancerSlug(admin: AdminClient, stageName: string, userId: string) {
-  const baseSlug = slugify(stageName) || `dancer-${userId.slice(0, 8)}`;
-  let candidate = baseSlug;
-  let suffix = 1;
-
-  while (true) {
-    const { data, error } = await admin
-      .from("dancer_profiles")
-      .select("user_id")
-      .eq("slug", candidate)
-      .maybeSingle();
-    if (error) throw error;
-    if (!data || data.user_id === userId) return candidate;
-
-    suffix += 1;
-    candidate = `${baseSlug}-${suffix}`;
-  }
 }
 
 function readCallbackRole(value: unknown): CallbackRole | null {
@@ -425,12 +358,4 @@ function readMetadataText(value: unknown) {
 function displayNameFromEmail(email: string, role: CallbackRole) {
   const fallback = role === "dancer" ? "Dancer" : role === "venue" ? "Venue" : "Customer";
   return email.split("@")[0]?.trim() || fallback;
-}
-
-function slugify(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }

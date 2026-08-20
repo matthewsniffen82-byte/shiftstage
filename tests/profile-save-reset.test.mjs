@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, imageModerationAdminSource, photoSlotSource, visibilityMigrationSource, approvalSource, accountAuthSource, adminSource, visibilityRouteSource, accountRouteSource] = await Promise.all([
+const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, imageModerationAdminSource, photoSlotSource, visibilityMigrationSource, approvalSource, accountAuthSource, adminSource, visibilityRouteSource, accountRouteSource, accountProvisioningSource] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
@@ -20,6 +20,7 @@ const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, ro
   readFile(new URL("../src/lib/dancr/admin.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/visibility/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/account/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/account-provisioning.ts", import.meta.url), "utf8"),
 ]);
 
 test("Hard Reset is a read-only database reload", () => {
@@ -256,10 +257,12 @@ test("confirmed profile saves stay visible on the save button until another edit
 });
 
 test("existing dancer signup cannot reset approval or visibility", () => {
-  const existingProfileBranch = authRouteSource.match(/if \(existingProfile\) \{[\s\S]*?\n  \}/)?.[0] || "";
-  assert.match(existingProfileBranch, /EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP/);
+  const existingProfileBranch = accountProvisioningSource.match(/if \(existingProfile\) \{[\s\S]*?\n  \}/)?.[0] || "";
+  assert.match(authRouteSource, /EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP/);
+  assert.match(existingProfileBranch, /input\.existingDancerLogEvent/);
   assert.doesNotMatch(existingProfileBranch, /\.update\(|status:\s*"draft"|is_public\s*:/);
-  assert.match(authRouteSource, /\.select\("\*"\)/);
+  assert.doesNotMatch(authRouteSource, /\.from\("dancer_profiles"\)/);
+  assert.match(accountProvisioningSource, /\.select\("id, status, verification_status, photo_review_status, is_public, approved_at, disabled_at"\)/);
 });
 
 test("save keeps non-deleted photos and releases deleted slots before upload", () => {

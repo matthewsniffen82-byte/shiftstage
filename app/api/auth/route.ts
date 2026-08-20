@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueForAccount } from "@/src/lib/dancr/venue";
 import {
@@ -8,7 +9,6 @@ import {
   resolveVenueSignupCode,
 } from "@/src/lib/dancr/venue-claims";
 import { redeemVenueTeamInvitation, resolveVenueTeamInvitation } from "@/src/lib/dancr/venue-team";
-import { initialDancerApprovalValues } from "@/src/lib/dancr/profile-approval";
 import {
   AccountRecoveryRateLimitError,
   enforceAccountRecoveryRateLimit,
@@ -104,7 +104,13 @@ export async function POST(request: Request) {
       if (error) throw error;
       if (!data.user) throw new Error("Unable to create admin account.");
 
-      await upsertAccount(role, data.user.id, email, displayName, "Las Vegas");
+      await provisionAppAccount(createAdminSupabaseClient(), {
+        role,
+        userId: data.user.id,
+        email,
+        displayName,
+        city: "Las Vegas",
+      });
 
       const { data: sessionData, error: sessionError } = await client.auth.signInWithPassword({ email, password });
       if (sessionError) throw sessionError;
@@ -151,7 +157,14 @@ export async function POST(request: Request) {
     if (error) throw error;
     if (!data.user) throw new Error("Unable to create account.");
 
-    await upsertAccount(role, data.user.id, email, displayName, city);
+    await provisionAppAccount(createAdminSupabaseClient(), {
+      role,
+      userId: data.user.id,
+      email,
+      displayName,
+      city,
+      existingDancerLogEvent: "EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP",
+    });
 
     if (role === "customer") {
       return NextResponse.json(await authResponse(data.user.id, role, null, true));
@@ -247,13 +260,13 @@ async function createVenueSignupAccount(input: {
     if (!data.user) throw new Error("Unable to create venue account.");
     createdUserId = data.user.id;
 
-    await upsertAccount(
-      "venue",
-      data.user.id,
-      input.email,
-      venue.name,
-      venue.city,
-    );
+    await provisionAppAccount(admin, {
+      role: "venue",
+      userId: data.user.id,
+      email: input.email,
+      displayName: venue.name,
+      city: venue.city,
+    });
 
     const { data: sessionData, error: sessionError } = await input.client.auth.signInWithPassword({
       email: input.email,
@@ -302,93 +315,6 @@ async function createVenueSignupAccount(input: {
       }
     }
     throw error;
-  }
-}
-
-async function upsertAccount(
-  role: AuthRole,
-  userId: string,
-  email: string,
-  displayName: string,
-  city: string,
-) {
-  const admin = createAdminSupabaseClient();
-  const { error: accountError } = await admin.from("app_users").upsert({
-    id: userId,
-    role,
-    display_name: displayName,
-    email,
-  });
-  if (accountError) throw accountError;
-
-  if (role === "customer") {
-    const { error } = await admin.from("customer_profiles").upsert({
-      user_id: userId,
-      city,
-    });
-    if (error) throw error;
-    return;
-  }
-
-  if (role === "venue") {
-    return;
-  }
-
-  if (role === "admin") {
-    return;
-  }
-
-  const stageName = "";
-  const { data: existingProfile, error: existingProfileError } = await admin
-    .from("dancer_profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (existingProfileError) throw existingProfileError;
-
-  if (existingProfile) {
-    console.log("EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP", {
-      dancerId: existingProfile.id,
-      status: existingProfile.status,
-      isPublic: existingProfile.is_public,
-      approvedAt: existingProfile.approved_at,
-      verificationStatus: existingProfile.verification_status,
-      photoReviewStatus: existingProfile.photo_review_status,
-    });
-    return;
-  }
-
-  const slug = await uniqueDancerSlug(admin, stageName, userId);
-
-  const { error } = await admin
-    .from("dancer_profiles")
-    .insert({
-      user_id: userId,
-      real_name: null,
-      stage_name: stageName,
-      slug,
-      city,
-      ...initialDancerApprovalValues(),
-    });
-  if (error) throw error;
-}
-
-async function uniqueDancerSlug(admin: ReturnType<typeof createAdminSupabaseClient>, stageName: string, userId: string) {
-  const baseSlug = slugify(stageName) || `dancer-${userId.slice(0, 8)}`;
-  let candidate = baseSlug;
-  let suffix = 1;
-
-  while (true) {
-    const { data, error } = await admin
-      .from("dancer_profiles")
-      .select("user_id")
-      .eq("slug", candidate)
-      .maybeSingle();
-    if (error) throw error;
-    if (!data || data.user_id === userId) return candidate;
-
-    suffix += 1;
-    candidate = `${baseSlug}-${suffix}`;
   }
 }
 
@@ -482,12 +408,4 @@ function authRateLimitMessage(error: unknown) {
   if (!/rate limit/i.test(message)) return "";
 
   return "Too many confirmation emails were sent. Please wait a few minutes, then try again, or use the newest confirmation email already in your inbox.";
-}
-
-function slugify(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
