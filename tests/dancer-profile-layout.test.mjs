@@ -9,6 +9,8 @@ const [
   profileActions,
   profileNavigationActions,
   bottomNavigation,
+  nfcIcon,
+  uberRideStyles,
 ] =
   await Promise.all([
     readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
@@ -30,6 +32,11 @@ const [
     ),
     readFile(
       new URL("../app/components/GlobalMobileBottomNav.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/components/NfcIcon.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/components/UberRideButton.module.css", import.meta.url),
       "utf8",
     ),
   ]);
@@ -134,7 +141,7 @@ test("active full-profile Club Deals render a compact cashier NFC action and use
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?Choose deal[\s\S]*?live offers[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?Open deal[\s\S]*?Cashier NFC/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?Choose deal[\s\S]*?live offers[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?View Club Deals[\s\S]*?Cashier NFC/,
   );
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
   assert.doesNotMatch(liveApp, /profile-club-deal-count/);
@@ -199,6 +206,40 @@ test("Working Now uses one full-width live club destination", () => {
   assert.match(
     liveApp,
     /#profileBackdrop \.profile-venue-destination\.is-live > \.venue-dot,[\s\S]*?color: #4DEC9D !important;[\s\S]*?background: rgba\(77, 236, 157, 0\.08\) !important;/,
+  );
+});
+
+test("Current Shift uses a quieter club row and secondary ride action", () => {
+  assert.match(
+    liveApp,
+    /Keep Current Shift compact:[\s\S]*?#profileBackdrop \.modal-grid > \.working-now-tile \{[\s\S]*?gap: 6px !important;[\s\S]*?padding: 10px 12px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.working-now-tile \.profile-venue-destination\.is-live \{[\s\S]*?min-height: 52px !important;[\s\S]*?border-color: rgba\(77, 236, 157, \.16\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-uber-ride \{[\s\S]*?border-color: rgba\(255, 255, 255, \.14\) !important;[\s\S]*?background: rgba\(255, 255, 255, \.045\) !important;[\s\S]*?background-image: none !important;/,
+  );
+  assert.match(
+    uberRideStyles,
+    /\.dancerProfile \{[\s\S]*?border-color: rgba\(255, 255, 255, 0\.14\);[\s\S]*?background: rgba\(255, 255, 255, 0\.045\);[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.045\);/,
+  );
+});
+
+test("NFC actions use one recognizable phone-and-tap symbol", () => {
+  assert.match(nfcIcon, /<rect x="3\.5" y="2\.5" width="10" height="19" rx="2" \/>/);
+  assert.match(nfcIcon, /M15\.5 8\.2a4\.4 4\.4 0 0 1 0 7\.6/);
+  assert.match(nfcIcon, /M18 5\.5a7\.5 7\.5 0 0 1 0 13/);
+  assert.doesNotMatch(nfcIcon, /M15\.1 6\.2v11\.6/);
+  assert.match(
+    liveApp,
+    /qr: '<svg viewBox="0 0 24 24"><rect x="3\.5" y="2\.5" width="10" height="19" rx="2"><\/rect>[\s\S]*?M18 5\.5a7\.5 7\.5 0 0 1 0 13/,
+  );
+  assert.match(
+    liveApp,
+    /function clubDealQrSymbolMarkup\(className = ""\)[\s\S]*?<rect x="3\.5" y="2\.5" width="10" height="19" rx="2"><\/rect>[\s\S]*?M18 5\.5a7\.5 7\.5 0 0 1 0 13/,
   );
 });
 
