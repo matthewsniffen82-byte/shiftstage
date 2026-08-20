@@ -11,7 +11,8 @@ const [actions, finance, route] = await Promise.all([
 test("manual admin finance writes use one dedicated action boundary", () => {
   assert.match(route, /from "@\/src\/lib\/dancr\/finance-admin-actions"/);
   assert.match(route, /await requireAdmin\(client, user\.id\)/);
-  assert.match(route, /from "@\/src\/lib\/dancr\/finance"/);
+  assert.match(route, /from "@\/src\/lib\/dancr\/finance-automation"/);
+  assert.match(route, /from "@\/src\/lib\/dancr\/finance-reporting"/);
   for (const action of [
     "recordManualClubInvoicePayment",
     "updatePayoutSettings",

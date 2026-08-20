@@ -122,6 +122,7 @@ test("daily automation and every production finance dashboard are wired", () => 
 test("QR finance work remains isolated from ride functionality", () => {
   const scoped = [
     read("src/lib/dancr/finance.ts"),
+    read("src/lib/dancr/finance-automation.ts"),
     read("src/lib/dancr/finance-payout-processing.ts"),
     read("src/lib/dancr/finance-reporting.ts"),
     read("src/lib/dancr/finance-statements.ts"),

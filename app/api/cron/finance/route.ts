@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runQrFinanceAutomation } from "@/src/lib/dancr/finance";
+import { runQrFinanceAutomation } from "@/src/lib/dancr/finance-automation";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";

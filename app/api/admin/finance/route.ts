@@ -8,7 +8,7 @@ import {
   retryDancerPayout,
   updatePayoutSettings,
 } from "@/src/lib/dancr/finance-admin-actions";
-import { runQrFinanceAutomation } from "@/src/lib/dancr/finance";
+import { runQrFinanceAutomation } from "@/src/lib/dancr/finance-automation";
 import { processDancerPayouts } from "@/src/lib/dancr/finance-payout-processing";
 import { getAdminFinanceOverview } from "@/src/lib/dancr/finance-reporting";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
