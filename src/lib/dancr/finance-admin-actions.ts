@@ -1,24 +1,27 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { PayoutMode, PayoutProviderName } from "./payout-provider";
+import type {
+  ManageEarningInput,
+  ManualPaymentInput,
+  PayoutSettingsInput,
+  ReconcileBitsafePayoutInput,
+  RetryPayoutInput,
+} from "./finance-admin-input";
+import {
+  manageEarningRpcParameters,
+  manualPaymentRpcParameters,
+  payoutSettingsRpcParameters,
+  retryPayoutRpcParameters,
+} from "./finance-admin-rpc-params";
 import { completeProviderPayout } from "./finance-provider-events";
 
 type DancrClient = SupabaseClient;
 
 export async function recordManualClubInvoicePayment(
   client: DancrClient,
-  invoiceId: string,
-  totalPaidCents: number,
-  reference: string,
+  input: ManualPaymentInput,
 ) {
-  const { data, error } = await (client as any).rpc("apply_club_invoice_payment", {
-    p_invoice_id: invoiceId,
-    p_total_paid_cents: Math.max(0, Math.trunc(totalPaidCents)),
-    p_payment_reference: reference.trim(),
-    p_paid_at: new Date().toISOString(),
-    p_stripe_invoice_id: null,
-    p_hosted_invoice_url: null,
-    p_invoice_pdf_url: null,
-  });
+  const parameters = manualPaymentRpcParameters(input, new Date().toISOString());
+  const { data, error } = await (client as any).rpc("apply_club_invoice_payment", parameters);
   if (error) throw error;
   return data;
 }
@@ -26,22 +29,10 @@ export async function recordManualClubInvoicePayment(
 export async function updatePayoutSettings(
   client: DancrClient,
   adminUserId: string,
-  input: {
-    payoutsEnabled: boolean;
-    paymentProvider: PayoutProviderName;
-    earningsHoldDays: number;
-    minimumPayoutCents: number;
-    payoutMode: PayoutMode;
-  },
+  input: PayoutSettingsInput,
 ) {
-  const { data, error } = await (client as any).rpc("admin_update_payout_settings", {
-    p_admin_user_id: adminUserId,
-    p_payouts_enabled: Boolean(input.payoutsEnabled),
-    p_payment_provider: input.paymentProvider,
-    p_earnings_hold_days: input.earningsHoldDays,
-    p_minimum_payout_cents: input.minimumPayoutCents,
-    p_payout_mode: input.payoutMode,
-  });
+  const parameters = payoutSettingsRpcParameters(adminUserId, input);
+  const { data, error } = await (client as any).rpc("admin_update_payout_settings", parameters);
   if (error) throw error;
   return data;
 }
@@ -49,16 +40,10 @@ export async function updatePayoutSettings(
 export async function manageDancerEarning(
   client: DancrClient,
   adminUserId: string,
-  earningId: string,
-  action: string,
-  reason: string,
+  input: ManageEarningInput,
 ) {
-  const { data, error } = await (client as any).rpc("admin_manage_dancer_earning", {
-    p_admin_user_id: adminUserId,
-    p_earning_id: earningId,
-    p_action: action,
-    p_reason: reason,
-  });
+  const parameters = manageEarningRpcParameters(adminUserId, input);
+  const { data, error } = await (client as any).rpc("admin_manage_dancer_earning", parameters);
   if (error) throw error;
   return data;
 }
@@ -66,14 +51,10 @@ export async function manageDancerEarning(
 export async function retryDancerPayout(
   client: DancrClient,
   adminUserId: string,
-  payoutId: string,
-  reason: string,
+  input: RetryPayoutInput,
 ) {
-  const { data, error } = await (client as any).rpc("admin_retry_dancer_payout", {
-    p_admin_user_id: adminUserId,
-    p_failed_payout_id: payoutId,
-    p_reason: reason,
-  });
+  const parameters = retryPayoutRpcParameters(adminUserId, input);
+  const { data, error } = await (client as any).rpc("admin_retry_dancer_payout", parameters);
   if (error) throw error;
   return data;
 }
@@ -81,14 +62,12 @@ export async function retryDancerPayout(
 export async function reconcileBitsafePayout(
   client: DancrClient,
   adminUserId: string,
-  payoutId: string,
-  reconciliationReference: string,
-  reason: string,
+  input: ReconcileBitsafePayoutInput,
   paidAt = new Date().toISOString(),
 ) {
   const { data: payout, error } = await (client as any).from("dancer_payout_batches")
     .select("id, status, payment_provider, provider_reference_id")
-    .eq("id", payoutId)
+    .eq("id", input.payoutId)
     .maybeSingle();
   if (error) throw error;
   if (!payout || payout.payment_provider !== "bitsafe" || payout.status !== "processing") {
@@ -104,11 +83,11 @@ export async function reconcileBitsafePayout(
     action: "bitsafe_payout_reconciled",
     target_type: "payout",
     target_id: payout.id,
-    reason: reason.slice(0, 500),
+    reason: input.reason,
     metadata: {
       payment_provider: "bitsafe",
       provider_reference_id: providerReferenceId,
-      reconciliation_reference: reconciliationReference.slice(0, 160),
+      reconciliation_reference: input.reconciliationReference,
       paid_at: paidAt,
       source: "verified_yoursafe_payout_report",
     },

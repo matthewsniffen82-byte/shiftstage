@@ -57,8 +57,9 @@ test("the dispatcher preserves validation limits and explicit client errors", ()
 test("successful writes still refresh the full admin finance overview", () => {
   assert.match(dispatch, /return \{ status: 200, body: \{ ok: true, \.\.\.body \} \}/);
   assert.equal((dispatch.match(/finance: await getAdminFinanceOverview\(client\)/g) || []).length, 7);
+  assert.match(dispatch, /recordManualClubInvoicePayment\(client, command\)/);
   assert.match(dispatch, /updatePayoutSettings\(client, adminUserId, command\)/);
-  assert.match(dispatch, /manageDancerEarning\(\s*client,\s*adminUserId/);
-  assert.match(dispatch, /retryDancerPayout\(client, adminUserId/);
-  assert.match(dispatch, /reconcileBitsafePayout\(\s*client,\s*adminUserId/);
+  assert.match(dispatch, /manageDancerEarning\(client, adminUserId, command\)/);
+  assert.match(dispatch, /retryDancerPayout\(client, adminUserId, command\)/);
+  assert.match(dispatch, /reconcileBitsafePayout\(client, adminUserId, command\)/);
 });

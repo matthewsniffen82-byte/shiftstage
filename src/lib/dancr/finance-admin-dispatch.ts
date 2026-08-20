@@ -40,12 +40,7 @@ export async function dispatchAdminFinanceAction(
   }
 
   if (command.action === "record_manual_payment") {
-    await recordManualClubInvoicePayment(
-      client,
-      command.invoiceId,
-      command.totalPaidCents,
-      command.reference,
-    );
+    await recordManualClubInvoicePayment(client, command);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
@@ -55,29 +50,17 @@ export async function dispatchAdminFinanceAction(
   }
 
   if (command.action === "manage_earning") {
-    await manageDancerEarning(
-      client,
-      adminUserId,
-      command.earningId,
-      command.earningAction,
-      command.reason,
-    );
+    await manageDancerEarning(client, adminUserId, command);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
   if (command.action === "retry_payout") {
-    await retryDancerPayout(client, adminUserId, command.payoutId, command.reason);
+    await retryDancerPayout(client, adminUserId, command);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
   if (command.action === "reconcile_bitsafe_payout") {
-    await reconcileBitsafePayout(
-      client,
-      adminUserId,
-      command.payoutId,
-      command.reconciliationReference,
-      command.reason,
-    );
+    await reconcileBitsafePayout(client, adminUserId, command);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
