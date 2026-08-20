@@ -2484,10 +2484,10 @@ body.dancr-button-system > .app main.stack > section.stack > .content-head.disco
   pointer-events: none;
 }
 
-/* TV keeps the compact discovery-title layout without carrying the decorative
- * hero beam beside the feed name. */
+/* Discovery titles stay clean and device-neutral. The compact heading already
+ * has a divider, so a second side beam reads as a stray violet bar on iPhone. */
 body.dancr-button-system > .app main.stack > section.stack
-  > .content-head.discovery-section-head.tv-section-head > h2::before {
+  > .content-head.discovery-section-head > h2::before {
   content: none !important;
   display: none !important;
   background: none !important;

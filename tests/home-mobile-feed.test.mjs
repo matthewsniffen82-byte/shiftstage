@@ -1083,8 +1083,8 @@ test("the consolidated discovery titles use one typography system and consistent
   );
   assert.match(
     aesthetic,
-    /\.content-head\.discovery-section-head\.tv-section-head > h2::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?background: none !important;[\s\S]*?box-shadow: none !important;/,
-    "the TV heading must not render the violet side beam",
+    /\.content-head\.discovery-section-head > h2::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?background: none !important;[\s\S]*?box-shadow: none !important;/,
+    "discovery headings must not render the violet side beam",
   );
   const dancerTitleStyle = homeSource.match(/#tabTitle\.dancers-city-title \{[\s\S]*?\n      \}/)?.[0] || "";
   assert.doesNotMatch(dancerTitleStyle, /font-size|font-family|font-weight|line-height|letter-spacing/);
