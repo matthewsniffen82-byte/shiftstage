@@ -37,15 +37,6 @@ export function automaticDancerApprovalValues(now = new Date().toISOString()) {
   };
 }
 
-export function pendingVenueApprovalValues() {
-  return {
-    status: "pending_review" as const,
-    verification_status: "pending" as const,
-    approved_at: null,
-    is_public: false,
-  };
-}
-
 export function effectiveDancerProfileStatus(
   profile: DancerApprovalState | null | undefined,
   accountState?: unknown,

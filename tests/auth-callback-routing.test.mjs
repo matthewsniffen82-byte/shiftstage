@@ -92,7 +92,7 @@ test("unfinished dancer accounts stay private until explicit submission and firs
     assert.doesNotMatch(profileInsert, /automaticDancerApprovalValues/);
   }
   assert.doesNotMatch(profileGet, /automaticDancerApprovalValues|ensureAutomaticDancerApproval/);
-  assert.match(explicitSubmission, /pendingVenueApprovalValues\(\)/);
+  assert.match(explicitSubmission, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
 });
 
 test("email callbacks preserve existing dancer approval and account state", () => {

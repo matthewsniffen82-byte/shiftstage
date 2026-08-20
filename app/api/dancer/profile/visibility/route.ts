@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { isCoreVerificationApproved } from "@/src/lib/dancr/profile-approval";
+import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -102,16 +103,14 @@ export async function PATCH(request: Request) {
       });
     }
 
-    const { data: updatedProfile, error: updateError } = await db
-      .from("dancer_profiles")
-      .update({ is_public: body.isPublic })
-      .eq("id", currentProfile.id)
-      .eq("user_id", user.id)
-      .select("id, is_public")
-      .maybeSingle();
+    const updatedProfile = await transitionDancerPublication(
+      db,
+      currentProfile.id,
+      body.isPublic ? "set_public" : "set_private",
+      { actorUserId: user.id },
+    );
 
-    if (updateError) throw updateError;
-    if (!updatedProfile || updatedProfile.is_public !== body.isPublic) {
+    if (updatedProfile.isPublic !== body.isPublic) {
       throw new Error("PROFILE_VISIBILITY_UPDATE_NOT_APPLIED");
     }
     const visibility = await verifyPublicVisibility(db, currentProfile.id, body.isPublic);
@@ -119,7 +118,7 @@ export async function PATCH(request: Request) {
     console.info("DANCER_PROFILE_VISIBILITY_UPDATED", {
       dancerId: updatedProfile.id,
       userId: user.id,
-      isPublic: updatedProfile.is_public,
+      isPublic: updatedProfile.isPublic,
       publicProfileVisible: visibility.publicProfileVisible,
     });
 
@@ -128,8 +127,8 @@ export async function PATCH(request: Request) {
       changed: true,
       profile: {
         id: updatedProfile.id,
-        is_public: updatedProfile.is_public,
-        isPublic: updatedProfile.is_public,
+        is_public: updatedProfile.isPublic,
+        isPublic: updatedProfile.isPublic,
       },
       visibility,
       session,

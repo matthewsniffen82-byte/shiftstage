@@ -112,7 +112,7 @@ test("profile setup rows stay readable and use restrained state cues", () => {
 test("profile submission stays private until NFC venue authorization and media review complete", () => {
   const serverSubmit =
     profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
-  assert.match(serverSubmit, /pendingVenueApprovalValues\(\)/);
+  assert.match(serverSubmit, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
   assert.match(serverSubmit, /profile\.identitySavedAt\?\.trim\(\)/);
   assert.match(liveAppSource, /data-submit-review/);
   assert.match(liveAppSource, /profile remains private until .*dressing-room.*profile\/media review are complete/i);

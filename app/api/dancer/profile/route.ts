@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
-import { pendingVenueApprovalValues } from "@/src/lib/dancr/profile-approval";
+import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
 import {
   PROFILE_AVATAR_CONTEXT,
   profilePhotoSlotFromUploadContext,
@@ -416,7 +416,6 @@ export async function PATCH(request: Request) {
         visibilityError.code = "PGRST204";
         throw visibilityError;
       }
-      update.is_public = body.isPublic;
     }
     const cleanProfilePayload = Object.fromEntries(
       Object.entries(update).filter(([, value]) => value !== undefined),
@@ -554,6 +553,17 @@ export async function PATCH(request: Request) {
       if (error) throw error;
       if (!updatedProfile?.id) throw new Error("PROFILE_UPDATE_NOT_APPLIED");
     }
+    if (typeof body.isPublic === "boolean") {
+      const visibilityState = await transitionDancerPublication(
+        adminDb,
+        profile.id,
+        body.isPublic ? "set_public" : "set_private",
+        { actorUserId: user.id },
+      );
+      if (visibilityState.isPublic !== body.isPublic) {
+        throw new Error("PROFILE_VISIBILITY_UPDATE_NOT_APPLIED");
+      }
+    }
 
     setSaveStage("update_primary_photo");
     setSaveStage("insert_new_photos");
@@ -571,7 +581,7 @@ export async function PATCH(request: Request) {
 
     setSaveStage("submit_for_review");
     if (body.submitForReview === true && profile.status !== "approved") {
-      await submitProfileForReview(adminDb, profile.id, {
+      await submitProfileForReview(adminDb, user.id, profile.id, {
         stageName: String(cleanProfilePayload.stage_name || profile.stage_name || ""),
         city: String(cleanProfilePayload.city || profile.city || ""),
         identitySavedAt: String(cleanProfilePayload.identity_saved_at || profile.identity_saved_at || ""),
@@ -825,6 +835,7 @@ async function markApprovedProfileContentPending(db: any, dancerId: string) {
 
 async function submitProfileForReview(
   db: any,
+  userId: string,
   dancerId: string,
   profile: { stageName?: string; city?: string; identitySavedAt?: string; status?: string },
 ) {
@@ -855,17 +866,13 @@ async function submitProfileForReview(
     throw new Error("At least one profile picture must pass moderation before submitting your profile.");
   }
 
-  const { data: submittedProfile, error } = await db
-    .from("dancer_profiles")
-    .update(pendingVenueApprovalValues())
-    .eq("id", dancerId)
-    .neq("status", "disabled")
-    .is("disabled_at", null)
-    .select("id, status")
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!submittedProfile?.id || submittedProfile.status !== "pending_review") {
+  const submittedProfile = await transitionDancerPublication(
+    db,
+    dancerId,
+    "submit_for_venue_review",
+    { actorUserId: userId },
+  );
+  if (submittedProfile.status !== "pending_review") {
     throw new Error("PROFILE_SUBMISSION_NOT_APPLIED");
   }
 }

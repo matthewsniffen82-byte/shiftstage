@@ -5,6 +5,7 @@ import {
 } from "./responsive-image";
 import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
 import { deliverNotificationRows } from "./notification-delivery";
+import { transitionDancerPublication } from "./profile-publication";
 import { getStripe } from "../stripe";
 
 type DancrClient = SupabaseClient;
@@ -963,26 +964,12 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   if (dancerError) throw dancerError;
   if (!dancer) throw new Error("Dancer profile not found.");
 
-  const statusUpdate = approved
-    ? {
-        status: "pending_review" as const,
-        verification_status: "pending" as const,
-        approved_at: null,
-        is_public: false,
-      }
-    : {
-        status: "rejected" as const,
-        verification_status: "rejected" as const,
-        approved_at: null,
-        is_public: false,
-      };
-
-  const { error: updateError } = await db
-    .from("dancer_profiles")
-    .update(statusUpdate)
-    .eq("id", input.dancerId);
-
-  if (updateError) throw updateError;
+  await transitionDancerPublication(
+    client,
+    input.dancerId,
+    approved ? "admin_accept" : "admin_reject",
+    { actorUserId: input.reviewerId },
+  );
 
   const reviewTypes = ["profile"];
   const reviewRows = reviewTypes.map((reviewType) => ({

@@ -319,7 +319,7 @@ test("profile approval stays synchronized with account and core verification sta
   assert.match(accountAuthSource, /status: "disabled" as const,[\s\S]*?disabled_at: new Date/);
   assert.doesNotMatch(adminSource, /VerifyMy|identity_provider|identity_verified_at/);
   assert.doesNotMatch(adminSource, /const statusUpdate = approved[\s\S]*?status: "approved"/);
-  assert.match(adminSource, /status: "rejected"/);
+  assert.match(adminSource, /approved \? "admin_accept" : "admin_reject"/);
   assert.match(visibilityRouteSource, /isCoreVerificationApproved\(currentProfile\)/);
   const accountGet = accountRouteSource.match(/export async function GET[\s\S]*?\n}\n\nexport async function PATCH/)?.[0] || "";
   assert.doesNotMatch(accountGet, /setAccountState|\.update\(/);

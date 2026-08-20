@@ -17,10 +17,9 @@ test("Step 2 completes only after the server confirms the submitted profile stat
 });
 
 test("profile submission uses the server-authorized client and verifies the persisted transition", () => {
-  assert.match(profileRoute, /await submitProfileForReview\(adminDb, profile\.id/);
-  assert.match(profileRoute, /\.update\(pendingVenueApprovalValues\(\)\)[\s\S]*?\.select\("id, status"\)[\s\S]*?\.maybeSingle\(\)/);
-  assert.match(profileRoute, /\.neq\("status", "disabled"\)/);
-  assert.doesNotMatch(profileRoute, /\.neq\("status", "rejected"\)/);
+  assert.match(profileRoute, /await submitProfileForReview\(adminDb, user\.id, profile\.id/);
+  assert.match(profileRoute, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"[\s\S]*?actorUserId: userId/);
+  assert.doesNotMatch(profileRoute, /\.update\(pendingVenueApprovalValues\(\)\)/);
   assert.match(profileRoute, /submittedProfile\.status !== "pending_review"/);
   assert.match(profileRoute, /PROFILE_SUBMISSION_NOT_APPLIED/);
 });

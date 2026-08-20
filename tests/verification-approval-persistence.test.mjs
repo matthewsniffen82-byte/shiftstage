@@ -47,7 +47,7 @@ test("new dancers stay private until NFC venue authorization while existing appr
   assert.match(profileApproval, /is_public: false/);
   assert.match(signupRoute, /initialDancerApprovalValues\(\)/);
   assert.match(callbackRoute, /initialDancerApprovalValues\(\)/);
-  assert.match(profileRoute, /pendingVenueApprovalValues\(\)/);
+  assert.match(profileRoute, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
   assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_onboarding_required/);
   assert.match(liveApp, /official MyDancr dressing-room NFC sticker/i);

@@ -15,8 +15,9 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /createAdminSupabaseClient\(\)/);
   assert.match(routeSource, /typeof body\.isPublic === "boolean"/);
   assert.match(routeSource, /\.eq\("user_id", user\.id\)/);
-  assert.match(routeSource, /\.update\(\{ is_public: body\.isPublic \}\)/);
-  assert.match(routeSource, /updatedProfile\.is_public !== body\.isPublic/);
+  assert.match(routeSource, /transitionDancerPublication\([\s\S]*?body\.isPublic \? "set_public" : "set_private"/);
+  assert.doesNotMatch(routeSource, /\.update\(\{ is_public: body\.isPublic \}\)/);
+  assert.match(routeSource, /updatedProfile\.isPublic !== body\.isPublic/);
   assert.match(routeSource, /coreApprovalComplete = isCoreVerificationApproved\(currentProfile\)/);
   assert.match(routeSource, /profileBlocked = profileStatus === "rejected" \|\| profileStatus === "disabled"/);
   assert.match(routeSource, /DANCER_PROFILE_VISIBILITY_UPDATED/);
