@@ -5875,7 +5875,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-close {
   position: absolute !important;
   top: 12px !important;
-  right: 12px !important;
+  right: 4px !important;
   width: 48px !important;
   min-height: 48px !important;
 }
