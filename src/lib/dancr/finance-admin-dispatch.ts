@@ -7,6 +7,7 @@ import {
   updatePayoutSettings,
 } from "./finance-admin-actions";
 import {
+  parseAdminFinanceBody,
   parseManageEarningInput,
   parseManualPaymentInput,
   parsePayoutSettingsInput,
@@ -29,7 +30,9 @@ export async function dispatchAdminFinanceAction(
   adminUserId: string,
   input: unknown,
 ): Promise<AdminFinanceDispatchResult> {
-  const body = input as Record<string, unknown>;
+  const request = parseAdminFinanceBody(input);
+  if (!request.ok) return invalid(request.error);
+  const body = request.value;
 
   if (body.action === "run_automation") {
     const result = await runQrFinanceAutomation(client);

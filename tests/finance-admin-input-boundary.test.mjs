@@ -8,6 +8,10 @@ const [input, dispatch] = await Promise.all([
 ]);
 
 test("admin finance input rules use one dependency-free validation boundary", () => {
+  assert.match(input, /export function parseAdminFinanceBody/);
+  assert.match(dispatch, /const request = parseAdminFinanceBody\(input\)/);
+  assert.match(dispatch, /if \(!request\.ok\) return invalid\(request\.error\)/);
+  assert.match(dispatch, /const body = request\.value/);
   for (const parser of [
     "parseManualPaymentInput",
     "parsePayoutSettingsInput",
@@ -43,5 +47,6 @@ test("explicit validation failures remain dispatcher-owned 400 responses", () =>
   assert.match(input, /type ValidationResult<T>/);
   assert.match(input, /return \{ ok: false, error \}/);
   assert.equal((dispatch.match(/if \(!parsed\.ok\) return invalid\(parsed\.error\)/g) || []).length, 5);
+  assert.match(input, /return invalid\("Invalid finance request\."\)/);
   assert.match(dispatch, /return \{ status: 400, body: \{ ok: false, error \} \}/);
 });

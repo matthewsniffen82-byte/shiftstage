@@ -33,6 +33,8 @@ test("the dispatcher preserves every supported production finance action", () =>
 });
 
 test("the dispatcher preserves validation limits and explicit client errors", () => {
+  assert.match(dispatch, /parseAdminFinanceBody\(input\)/);
+  assert.match(dispatch, /if \(!request\.ok\) return invalid\(request\.error\)/);
   assert.match(input, /totalPaidCents <= 0/);
   assert.match(input, /Payment total must be a positive whole number of cents\./);
   assert.match(input, /boundedInteger\(body\.earningsHoldDays, 0, 90/);

@@ -35,6 +35,13 @@ export type ReconcileBitsafePayoutInput = {
   reason: string;
 };
 
+export function parseAdminFinanceBody(input: unknown): ValidationResult<Record<string, unknown>> {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return invalid("Invalid finance request.");
+  }
+  return valid(input as Record<string, unknown>);
+}
+
 export function parseManualPaymentInput(body: Record<string, unknown>): ValidationResult<ManualPaymentInput> {
   const invoiceId = requiredText(body.invoiceId, "Invoice is required.");
   const reference = requiredText(body.reference, "Payment reference is required.");

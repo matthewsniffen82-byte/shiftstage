@@ -1,12 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  parseAdminFinanceBody,
   parseManageEarningInput,
   parseManualPaymentInput,
   parsePayoutSettingsInput,
   parseReconcileBitsafePayoutInput,
   parseRetryPayoutInput,
 } from "../src/lib/dancr/finance-admin-input.ts";
+
+test("finance request parsing rejects non-object JSON bodies without changing valid objects", () => {
+  const body = { action: "record_manual_payment", invoiceId: "invoice-1" };
+  assert.deepEqual(parseAdminFinanceBody(body), { ok: true, value: body });
+
+  for (const input of [null, [], "record_manual_payment", 42, true]) {
+    assert.deepEqual(parseAdminFinanceBody(input), {
+      ok: false,
+      error: "Invalid finance request.",
+    });
+  }
+});
 
 test("manual payment parsing trims identifiers and preserves positive whole-cent validation", () => {
   assert.deepEqual(parseManualPaymentInput({
