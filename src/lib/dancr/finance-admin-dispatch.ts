@@ -100,7 +100,7 @@ export async function dispatchAdminFinanceAction(
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  return invalid("Unsupported finance action.");
+  return unsupportedAction(action);
 }
 
 function success(body: Record<string, unknown>): AdminFinanceDispatchResult {
@@ -109,4 +109,9 @@ function success(body: Record<string, unknown>): AdminFinanceDispatchResult {
 
 function invalid(error: string): AdminFinanceDispatchResult {
   return { status: 400, body: { ok: false, error } };
+}
+
+function unsupportedAction(action: never): AdminFinanceDispatchResult {
+  void action;
+  return invalid("Unsupported finance action.");
 }

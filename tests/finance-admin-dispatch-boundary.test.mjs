@@ -32,6 +32,8 @@ test("the dispatcher preserves every supported production finance action", () =>
   }
   assert.doesNotMatch(dispatch, /body\.action ===/);
   assert.match(dispatch, /parseAdminFinanceAction\(body\)/);
+  assert.match(dispatch, /return unsupportedAction\(action\)/);
+  assert.match(dispatch, /function unsupportedAction\(action: never\)/);
   assert.match(dispatch, /return invalid\("Unsupported finance action\."\)/);
 });
 
