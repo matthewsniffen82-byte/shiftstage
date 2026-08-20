@@ -21,6 +21,7 @@ const [
   adminClient,
   liveApp,
   attribution,
+  redemptionAttribution,
   dancerPage,
   tvSource,
   tvClient,
@@ -44,6 +45,7 @@ const [
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-attribution.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/deal-redemption-attribution.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
@@ -75,11 +77,13 @@ test("dancer attribution is locked to a verified shift when the cashier NFC tap 
   assert.match(attribution, /createHmac\("sha256"/);
   assert.match(attribution, /timingSafeEqual/);
   assert.match(attribution, /dancerId[\s\S]*?venueId[\s\S]*?dealId[\s\S]*?shiftId[\s\S]*?expiresAt/);
-  assert.match(generationRoute, /verifyDancerDealAttributionToken\(attributionToken\)/);
-  assert.match(generationRoute, /attribution\.dancerId !== dancerId[\s\S]*?attribution\.venueId !== tag\.venueId[\s\S]*?attribution\.dealId !== dealId/);
-  assert.match(generationRoute, /verifiedCheckIn\.shiftId !== attribution\.shiftId/);
-  assert.match(generationRoute, /getVerifiedActiveCheckInAtVenue\(admin, dancerId, tag\.venueId\)/);
-  assert.match(generationRoute, /shiftId = verifiedCheckIn\.shiftId/);
+  assert.match(generationRoute, /resolveDealRedemptionAttribution\(admin/);
+  assert.doesNotMatch(generationRoute, /verifyDancerDealAttributionToken|getVerifiedActiveCheckInAtVenue/);
+  assert.match(redemptionAttribution, /verifyDancerDealAttributionToken\(attributionToken\)/);
+  assert.match(redemptionAttribution, /attribution\.dancerId !== dancerId[\s\S]*?attribution\.venueId !== input\.venueId[\s\S]*?attribution\.dealId !== input\.dealId/);
+  assert.match(redemptionAttribution, /verifiedCheckIn\.shiftId !== attribution\.shiftId/);
+  assert.match(redemptionAttribution, /getVerifiedActiveCheckInAtVenue\([\s\S]*?client[\s\S]*?dancerId[\s\S]*?input\.venueId/);
+  assert.match(redemptionAttribution, /shiftId: verifiedCheckIn\.shiftId/);
   assert.match(deals, /shift_id: input\.sourceType === "dancer_profile" \? input\.shiftId/);
   assert.match(deals, /attribution_locked_at: input\.sourceType === "dancer_profile"/);
   assert.match(migration, /shift_id uuid references public\.shifts/);

@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [deals, tapRoute, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
+const [deals, tapRoute, redemptionAttribution, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/deal-redemption-attribution.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/deals/pass/[token]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8"),
@@ -24,11 +25,13 @@ const [deals, tapRoute, dealCard, passPage, venuePage, venueDirectory, dancerPag
 
 test("dancer-attributed cashier taps require a verified current shift and preserve locked attribution", () => {
   assert.match(deals, /export async function getVerifiedActiveCheckInAtVenue/);
-  assert.match(tapRoute, /verifyDancerDealAttributionToken/);
-  assert.match(tapRoute, /attribution\.dancerId !== dancerId/);
-  assert.match(tapRoute, /attribution\.venueId !== tag\.venueId/);
-  assert.match(tapRoute, /attribution\.dealId !== dealId/);
-  assert.match(tapRoute, /verifiedCheckIn\.shiftId !== attribution\.shiftId/);
+  assert.match(tapRoute, /resolveDealRedemptionAttribution/);
+  assert.doesNotMatch(tapRoute, /verifyDancerDealAttributionToken|getVerifiedActiveCheckInAtVenue/);
+  assert.match(redemptionAttribution, /verifyDancerDealAttributionToken/);
+  assert.match(redemptionAttribution, /attribution\.dancerId !== dancerId/);
+  assert.match(redemptionAttribution, /attribution\.venueId !== input\.venueId/);
+  assert.match(redemptionAttribution, /attribution\.dealId !== input\.dealId/);
+  assert.match(redemptionAttribution, /verifiedCheckIn\.shiftId !== attribution\.shiftId/);
   assert.match(tapRoute, /campaignSource: "venue_nfc"/);
 });
 

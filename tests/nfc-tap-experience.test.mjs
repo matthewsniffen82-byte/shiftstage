@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [baseMigration, nfcCheckInMigration, submissionGateMigration, activationMigration, adminMigration, service, tapRoute, tagRoute, adminRoute, client, account, dashboardRoute, dealCard, retiredDealQr] = await Promise.all([
+const [baseMigration, nfcCheckInMigration, submissionGateMigration, activationMigration, adminMigration, service, tapRoute, redemptionAttribution, tagRoute, adminRoute, client, account, dashboardRoute, dealCard, retiredDealQr] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608090003_nfc_tap_experience.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608110002_dressing_room_nfc_checkins.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608140001_require_dancer_submission_before_nfc.sql", import.meta.url), "utf8"),
@@ -10,6 +10,7 @@ const [baseMigration, nfcCheckInMigration, submissionGateMigration, activationMi
   readFile(new URL("../supabase/migrations/202608090005_admin_nfc_provisioning.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/nfc.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/deal-redemption-attribution.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/nfc-tags/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/nfc-tags/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/nfc/[token]/NfcTapClient.tsx", import.meta.url), "utf8"),
@@ -119,8 +120,9 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
   assert.match(baseMigration, /confirm_deal_redemption_from_nfc/);
   assert.match(baseMigration, /previous\.redeemed_at >= v_now - interval '24 hours'/);
   assert.match(baseMigration, /'source', 'cashier_nfc_tap'/);
-  assert.match(tapRoute, /verifyDancerDealAttributionToken/);
-  assert.match(tapRoute, /getVerifiedActiveCheckInAtVenue/);
+  assert.match(tapRoute, /resolveDealRedemptionAttribution/);
+  assert.match(redemptionAttribution, /verifyDancerDealAttributionToken/);
+  assert.match(redemptionAttribution, /getVerifiedActiveCheckInAtVenue/);
   assert.match(dealCard, /mydancrPendingNfcDealV2/);
   assert.match(client, /readPendingDealIntent/);
   assert.match(client, /Redeem this Club Deal/);

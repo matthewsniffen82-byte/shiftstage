@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { resolveApiError } from "@/src/lib/api-error-policy";
-import { verifyDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
+import {
+  DealRedemptionAttributionError,
+  resolveDealRedemptionAttribution,
+} from "@/src/lib/dancr/deal-redemption-attribution";
 import {
   enforceDealGenerationRateLimit,
   getActiveClubDealByIdForVenue,
   getActiveClubDealsForVenue,
-  getVerifiedActiveCheckInAtVenue,
   issueAndConfirmDealRedemptionFromNfc,
 } from "@/src/lib/dancr/deals";
 import {
@@ -14,7 +16,6 @@ import {
   recordNfcTagScan,
   resolveNfcTag,
 } from "@/src/lib/dancr/nfc";
-import type { DealSourceType } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext, getBearerToken } from "@/src/lib/supabase/request";
 
@@ -112,21 +113,13 @@ export async function POST(request: Request, context: RouteContext) {
     const deal = await getActiveClubDealByIdForVenue(admin, tag.venueId, dealId);
     if (!deal) return NextResponse.json({ ok: false, error: "This Club Deal is no longer active." }, { status: 404 });
 
-    let shiftId: string | null = null;
-    if (sourceType === "dancer_profile") {
-      if (!dancerId || !UUID_PATTERN.test(dancerId) || !attributionToken) {
-        return NextResponse.json({ ok: false, error: "The dancer attribution is missing. Reopen the dancer profile." }, { status: 400 });
-      }
-      const attribution = verifyDancerDealAttributionToken(attributionToken);
-      if (!attribution || attribution.dancerId !== dancerId || attribution.venueId !== tag.venueId || attribution.dealId !== dealId) {
-        return NextResponse.json({ ok: false, error: "The dancer attribution expired. Reopen the dancer profile." }, { status: 400 });
-      }
-      const verifiedCheckIn = await getVerifiedActiveCheckInAtVenue(admin, dancerId, tag.venueId);
-      if (!verifiedCheckIn || verifiedCheckIn.shiftId !== attribution.shiftId) {
-        return NextResponse.json({ ok: false, error: "The dancer is no longer verified at this venue." }, { status: 409 });
-      }
-      shiftId = verifiedCheckIn.shiftId;
-    }
+    const attribution = await resolveDealRedemptionAttribution(admin, {
+      sourceType,
+      dancerId,
+      attributionToken,
+      venueId: tag.venueId,
+      dealId,
+    });
 
     const customerId = await optionalCustomerId(request, admin);
     const confirmation = await issueAndConfirmDealRedemptionFromNfc(admin, {
@@ -136,9 +129,9 @@ export async function POST(request: Request, context: RouteContext) {
       dealDescription: deal.dealDescription,
       dealTerms: deal.dealTerms,
       dealOfferType: deal.offerType,
-      sourceType: sourceType as DealSourceType,
-      dancerId,
-      shiftId,
+      sourceType: attribution.sourceType,
+      dancerId: attribution.dancerId,
+      shiftId: attribution.shiftId,
       customerId,
       sessionId,
       campaignSource: "venue_nfc",
@@ -161,15 +154,17 @@ export async function POST(request: Request, context: RouteContext) {
     });
   } catch (error) {
     const message = safeErrorMessage(error);
-    const status = /sign in|active dancer|different venue|inactive/i.test(message)
-      ? 403
-      : /already/i.test(message)
-        ? 409
-        : /not found|no longer active/i.test(message)
-          ? 404
-          : /invalid|valid|required|missing|expired|incomplete|choose|does not have|cannot include|expiration/i.test(message)
-            ? 400
-            : 500;
+    const status = error instanceof DealRedemptionAttributionError
+      ? error.status
+      : /sign in|active dancer|different venue|inactive/i.test(message)
+        ? 403
+        : /already/i.test(message)
+          ? 409
+          : /not found|no longer active/i.test(message)
+            ? 404
+            : /invalid|valid|required|missing|expired|incomplete|choose|does not have|cannot include|expiration/i.test(message)
+              ? 400
+              : 500;
     const resolved = resolveApiError(error, "Unable to complete this NFC tap.", status);
     console.error("NFC_TAP_FAILED", { message });
     return NextResponse.json(resolved.body, {
