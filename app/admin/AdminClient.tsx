@@ -634,6 +634,10 @@ function FinanceManager({
   const earningsByVenue = Array.isArray(finance?.earningsByVenue) ? finance.earningsByVenue as Array<Record<string, unknown>> : [];
   const earningsByDancer = Array.isArray(finance?.earningsByDancer) ? finance.earningsByDancer as Array<Record<string, unknown>> : [];
   const payoutSettings = (finance?.settings || {}) as Record<string, unknown>;
+  const nats = (finance?.nats || {}) as Record<string, unknown>;
+  const natsAccounts = Array.isArray(nats.accounts) ? nats.accounts as Array<Record<string, unknown>> : [];
+  const natsExports = Array.isArray(nats.exports) ? nats.exports as Array<Record<string, unknown>> : [];
+  const natsSelected = nats.selected === true;
   const [provider, setProvider] = useState("stripe");
   const [payoutMode, setPayoutMode] = useState("manual_cashout");
   const [holdDays, setHoldDays] = useState("7");
@@ -789,6 +793,41 @@ function FinanceManager({
     finally { setIsRunning(false); }
   }
 
+  async function manageNats(action: "verify_nats_affiliate" | "disable_nats_affiliate" | "retry_nats_export" | "reconcile_nats_export", targetId: string, resolution?: "confirmed_exported" | "confirmed_not_exported") {
+    const promptLabel = action === "verify_nats_affiliate"
+      ? "Confirm you matched this login ID to the correct dancer in NATS. Enter an audit note:"
+      : action === "reconcile_nats_export"
+        ? "Confirm you checked the affiliate's manual invoices in NATS. Enter an audit note:"
+        : "Enter the required audit reason:";
+    const reason = window.prompt(promptLabel)?.trim();
+    if (!reason) return;
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    setIsRunning(true);
+    setStatus("Updating the NATS commission ledger...");
+    try {
+      const response = await fetch("/api/admin/finance", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          action,
+          ...(action.includes("affiliate") ? { dancerId: targetId } : { exportId: targetId }),
+          ...(resolution ? { resolution } : {}),
+          reason,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update the NATS commission ledger.");
+      onFinanceChange(data.finance);
+      setStatus("NATS commission ledger updated.");
+      onActionConfirmed("NATS commission ledger updated.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update the NATS commission ledger.");
+    } finally {
+      setIsRunning(false);
+    }
+  }
+
   return (
     <section className="operations-center" aria-labelledby="finance-operations-heading">
       <Panel title="QR finance operations">
@@ -806,13 +845,52 @@ function FinanceManager({
           <Metric label="MyDancr net revenue" value={formatAdminCents(Number(metrics.myDancrNetRevenueCents || 0))} />
           <Metric label="Open invoices" value={String(metrics.openInvoiceCount || 0)} />
           <Metric label="Failed payouts" value={String(metrics.failedPayoutCount || 0)} />
+          <Metric label="NATS accounts to verify" value={String(metrics.natsPendingAccountCount || 0)} />
+          <Metric label="NATS exports queued" value={String(metrics.natsPendingExportCount || 0)} />
+          <Metric label="NATS reconciliation" value={String(metrics.natsReconciliationCount || 0)} />
+          <Metric label="Exported to NATS" value={formatAdminCents(Number(metrics.natsExportedCents || 0))} />
         </div>
         <div className="admin-action-row">
           <button disabled={isRunning} type="button" onClick={() => runAction("run_automation")}>Run full reconciliation</button>
-          <button disabled={isRunning} type="button" onClick={() => runAction("process_payouts")}>Process payable dancers</button>
+          <button disabled={isRunning} type="button" onClick={() => runAction(natsSelected ? "run_automation" : "process_payouts")}>{natsSelected ? "Sync NATS commissions" : "Process payable dancers"}</button>
         </div>
         {status ? <p role="status">{status}</p> : null}
       </Panel>
+
+      {natsSelected ? <Panel title="NATS affiliate settlement" badge={nats.configured === true ? "API ready" : "Credentials required"}>
+        <p>MyDancr remains authoritative for NFC validation and exact commission amounts. Verify every dancer login against the licensed NATS admin before activation.</p>
+        {nats.affiliatePortalUrl ? <p><a href={asText(nats.affiliatePortalUrl)} target="_blank" rel="noreferrer">Open NATS affiliate portal</a></p> : null}
+        <div className="admin-list">
+          {natsAccounts.map((account) => <article key={asText(account.dancer_id)}>
+            <strong>{asText(readFirst(account.dancer_profiles)?.stage_name) || "Dancer"} · login ID {String(account.login_id || "")}</strong>
+            <p>{asText(account.username) || "No username supplied"} · {asText(account.status)}</p>
+            <p>Requested {formatDate(account.requested_at)}</p>
+            {account.verification_note ? <p>Audit note: {asText(account.verification_note)}</p> : null}
+            <div className="admin-action-row">
+              {account.status === "requested" ? <button disabled={isRunning || nats.configured !== true} type="button" onClick={() => manageNats("verify_nats_affiliate", asText(account.dancer_id))}>Verify and activate</button> : null}
+              {account.status !== "disabled" ? <button disabled={isRunning} type="button" onClick={() => manageNats("disable_nats_affiliate", asText(account.dancer_id))}>Disable link</button> : null}
+            </div>
+          </article>)}
+          {!natsAccounts.length ? <p className="empty">No dancers have requested a NATS account link.</p> : null}
+        </div>
+
+        <h3>NATS commission exports</h3>
+        <div className="admin-list">
+          {natsExports.slice(0, 100).map((item) => <article key={asText(item.id)}>
+            <strong>{asText(readFirst(item.dancer_profiles)?.stage_name) || "Dancer"} · {formatAdminCents(Number(item.amount_cents || 0))}</strong>
+            <p>{asText(item.status).replaceAll("_", " ")} · attempt {String(item.attempt_count || 0)} · {formatDate(item.created_at)}</p>
+            {item.last_error ? <p role="alert">{asText(item.last_error)}</p> : null}
+            <div className="admin-action-row">
+              {item.status === "failed" ? <button disabled={isRunning || nats.configured !== true} type="button" onClick={() => manageNats("retry_nats_export", asText(item.id))}>Retry definite rejection</button> : null}
+              {item.status === "reconciliation_required" ? <>
+                <button disabled={isRunning} type="button" onClick={() => manageNats("reconcile_nats_export", asText(item.id), "confirmed_exported")}>Confirmed in NATS</button>
+                <button disabled={isRunning || nats.configured !== true} type="button" onClick={() => manageNats("reconcile_nats_export", asText(item.id), "confirmed_not_exported")}>Confirmed not exported</button>
+              </> : null}
+            </div>
+          </article>)}
+          {!natsExports.length ? <p className="empty">No NATS commission exports have been queued.</p> : null}
+        </div>
+      </Panel> : null}
 
       <Panel title="Payout controls" badge={payoutSettings.livePayoutsEnabled === true ? "Live enabled" : "Money movement off"}>
         <form onSubmit={savePayoutSettings}>

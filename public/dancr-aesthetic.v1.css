@@ -6116,8 +6116,33 @@ body.dancr-button-system #dancerDashboard #setupChecklist .setup-step.open .step
   gap: 8px;
 }
 
-.earnings-actions > button {
+.earnings-actions > button,
+.earnings-actions > .button-link {
   flex: 1 1 180px;
+}
+
+.earnings-actions > .button-link {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border: 1px solid rgba(139, 92, 246, .42);
+  border-radius: 14px;
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  background: linear-gradient(135deg, rgba(88, 28, 224, .94), rgba(52, 22, 150, .94));
+}
+
+.dancer-earnings-panel .account-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dancer-earnings-panel .account-form > button {
+  grid-column: 1 / -1;
 }
 
 .earnings-notice {
@@ -6151,6 +6176,10 @@ body.dancr-button-system #dancerDashboard #setupChecklist .setup-step.open .step
 @media (max-width: 680px) {
   .dancer-earnings-panel .earnings-balance-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dancer-earnings-panel .account-form {
+    grid-template-columns: 1fr;
   }
 }
 

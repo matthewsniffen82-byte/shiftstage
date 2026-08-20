@@ -26,6 +26,10 @@ test("the dispatcher preserves every supported production finance action", () =>
     "manage_earning",
     "retry_payout",
     "reconcile_bitsafe_payout",
+    "verify_nats_affiliate",
+    "disable_nats_affiliate",
+    "retry_nats_export",
+    "reconcile_nats_export",
   ]) {
     assert.match(input, new RegExp(`"${action}"`));
     assert.match(dispatch, new RegExp(`command\\.action === "${action}"`));
@@ -56,10 +60,14 @@ test("the dispatcher preserves validation limits and explicit client errors", ()
 
 test("successful writes still refresh the full admin finance overview", () => {
   assert.match(dispatch, /return \{ status: 200, body: \{ ok: true, \.\.\.body \} \}/);
-  assert.equal((dispatch.match(/finance: await getAdminFinanceOverview\(client\)/g) || []).length, 7);
+  assert.equal((dispatch.match(/finance: await getAdminFinanceOverview\(client\)/g) || []).length, 11);
   assert.match(dispatch, /recordManualClubInvoicePayment\(client, command\)/);
   assert.match(dispatch, /updatePayoutSettings\(client, adminUserId, command\)/);
   assert.match(dispatch, /manageDancerEarning\(client, adminUserId, command\)/);
   assert.match(dispatch, /retryDancerPayout\(client, adminUserId, command\)/);
   assert.match(dispatch, /reconcileBitsafePayout\(client, adminUserId, command\)/);
+  assert.match(dispatch, /verifyNatsAffiliateLink\(client, adminUserId, command\.dancerId, command\.reason\)/);
+  assert.match(dispatch, /disableNatsAffiliateLink\(client, adminUserId, command\.dancerId, command\.reason\)/);
+  assert.match(dispatch, /retryFailedNatsCommissionExport\(client, adminUserId, command\.exportId, command\.reason\)/);
+  assert.match(dispatch, /reconcileNatsCommissionExport\(client, adminUserId, command\.exportId, command\.resolution, command\.reason\)/);
 });

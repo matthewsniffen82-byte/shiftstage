@@ -12,6 +12,13 @@ import {
 import { runQrFinanceAutomation } from "./finance-automation";
 import { processDancerPayouts } from "./finance-payout-processing";
 import { getAdminFinanceOverview } from "./finance-reporting";
+import {
+  disableNatsAffiliateLink,
+  reconcileNatsCommissionExport,
+  retryFailedNatsCommissionExport,
+  verifyNatsAffiliateLink,
+} from "./nats-affiliate-actions";
+import { syncNatsCommissions } from "./nats-commission-sync";
 
 type DancrClient = SupabaseClient;
 
@@ -36,6 +43,29 @@ export async function dispatchAdminFinanceAction(
 
   if (command.action === "process_payouts") {
     const result = await processDancerPayouts(client);
+    return success({ result, finance: await getAdminFinanceOverview(client) });
+  }
+
+  if (command.action === "verify_nats_affiliate") {
+    await verifyNatsAffiliateLink(client, adminUserId, command.dancerId, command.reason);
+    const result = await syncNatsCommissions(client);
+    return success({ result, finance: await getAdminFinanceOverview(client) });
+  }
+
+  if (command.action === "disable_nats_affiliate") {
+    await disableNatsAffiliateLink(client, adminUserId, command.dancerId, command.reason);
+    return success({ finance: await getAdminFinanceOverview(client) });
+  }
+
+  if (command.action === "retry_nats_export") {
+    await retryFailedNatsCommissionExport(client, adminUserId, command.exportId, command.reason);
+    const result = await syncNatsCommissions(client);
+    return success({ result, finance: await getAdminFinanceOverview(client) });
+  }
+
+  if (command.action === "reconcile_nats_export") {
+    await reconcileNatsCommissionExport(client, adminUserId, command.exportId, command.resolution, command.reason);
+    const result = command.resolution === "confirmed_not_exported" ? await syncNatsCommissions(client) : null;
     return success({ result, finance: await getAdminFinanceOverview(client) });
   }
 

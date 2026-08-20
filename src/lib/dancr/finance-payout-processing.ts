@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDancerPayoutAccount, getEffectivePayoutSettings } from "./payout-account-store";
 import { getPayoutProvider, type PayoutProviderName } from "./payout-provider";
+import { getNatsRuntimeConfig } from "./nats";
 
 type DancrClient = SupabaseClient;
 
@@ -8,6 +9,15 @@ const MAX_FINANCE_ROWS = 5_000;
 
 export async function processDancerPayouts(client: DancrClient) {
   await (client as any).rpc("release_pending_dancer_earnings", { p_limit: MAX_FINANCE_ROWS });
+  if (getNatsRuntimeConfig().selected) {
+    return {
+      created: 0,
+      failed: 0,
+      disabled: true,
+      errors: [] as string[],
+      settlementProvider: "nats" as const,
+    };
+  }
   const settings = await getEffectivePayoutSettings(client);
   if (!settings.payoutsEnabled) {
     return { created: 0, failed: 0, disabled: true, errors: [] as string[] };

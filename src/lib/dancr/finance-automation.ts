@@ -6,6 +6,8 @@ import {
   sendClubInvoiceReminders,
 } from "./finance-invoices";
 import { processDancerPayouts } from "./finance-payout-processing";
+import { syncNatsCommissions } from "./nats-commission-sync";
+import { getNatsRuntimeConfig } from "./nats";
 
 type DancrClient = SupabaseClient;
 
@@ -20,6 +22,9 @@ type ClubInvoiceAutomationResult = {
 type DancerPayoutAutomationResult = {
   payoutsCreated: number;
   payoutsFailed: number;
+  natsExportsCreated: number;
+  natsExportsFailed: number;
+  natsReconciliationRequired: number;
   errors: string[];
 };
 
@@ -54,14 +59,25 @@ export async function runDancerPayoutAutomation(client: DancrClient): Promise<Da
   const result: DancerPayoutAutomationResult = {
     payoutsCreated: 0,
     payoutsFailed: 0,
+    natsExportsCreated: 0,
+    natsExportsFailed: 0,
+    natsReconciliationRequired: 0,
     errors: [],
   };
 
   await captureFinanceStep(result, async () => {
-    const payouts = await processDancerPayouts(client);
-    result.payoutsCreated = payouts.created;
-    result.payoutsFailed = payouts.failed;
-    result.errors.push(...payouts.errors);
+    if (getNatsRuntimeConfig().selected) {
+      const exports = await syncNatsCommissions(client);
+      result.natsExportsCreated = exports.exported;
+      result.natsExportsFailed = exports.failed;
+      result.natsReconciliationRequired = exports.reconciliationRequired;
+      result.errors.push(...exports.errors);
+    } else {
+      const payouts = await processDancerPayouts(client);
+      result.payoutsCreated = payouts.created;
+      result.payoutsFailed = payouts.failed;
+      result.errors.push(...payouts.errors);
+    }
   });
 
   return result;
@@ -77,6 +93,9 @@ export async function runQrFinanceAutomation(client: DancrClient): Promise<Finan
     remindersSent: invoices.remindersSent,
     payoutsCreated: payouts.payoutsCreated,
     payoutsFailed: payouts.payoutsFailed,
+    natsExportsCreated: payouts.natsExportsCreated,
+    natsExportsFailed: payouts.natsExportsFailed,
+    natsReconciliationRequired: payouts.natsReconciliationRequired,
     errors: [...invoices.errors, ...payouts.errors],
   };
 }

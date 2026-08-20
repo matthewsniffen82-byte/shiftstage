@@ -8,6 +8,7 @@ import {
   upsertDancerPayoutAccount,
 } from "./payout-account-store";
 import { getPayoutProvider } from "./payout-provider";
+import { getNatsRuntimeConfig } from "./nats";
 
 type DancrClient = SupabaseClient;
 
@@ -17,6 +18,9 @@ export async function createDancerConnectOnboarding(
   returnUrl: string,
   refreshUrl: string,
 ) {
+  if (getNatsRuntimeConfig().selected) {
+    throw new Error("Dancer commission accounts are managed through NATS while NATS settlement is selected.");
+  }
   const dancer = await getDancerForUser(client, userId);
   const settings = await getEffectivePayoutSettings(client);
   if (!settings.payoutsEnabled) {
@@ -50,6 +54,7 @@ export async function createDancerConnectOnboarding(
 }
 
 export async function refreshDancerConnectAccount(client: DancrClient, userId: string) {
+  if (getNatsRuntimeConfig().selected) return null;
   const dancer = await getDancerForUser(client, userId);
   const settings = await getEffectivePayoutSettings(client);
   if (!settings.payoutsEnabled) return null;
@@ -62,6 +67,9 @@ export async function refreshDancerConnectAccount(client: DancrClient, userId: s
 }
 
 export async function requestDancerCashOut(client: DancrClient, userId: string, requestKey: string) {
+  if (getNatsRuntimeConfig().selected) {
+    throw new Error("Cash-out requests are managed in your NATS affiliate account.");
+  }
   const settings = await getEffectivePayoutSettings(client);
   if (!settings.payoutsEnabled) throw new Error("Cash out is not live while payout approval is pending.");
   if (settings.payoutMode !== "manual_cashout" && settings.payoutMode !== "both") {

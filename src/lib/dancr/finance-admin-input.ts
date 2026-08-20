@@ -15,6 +15,10 @@ const ADMIN_FINANCE_ACTIONS = [
   "manage_earning",
   "retry_payout",
   "reconcile_bitsafe_payout",
+  "verify_nats_affiliate",
+  "disable_nats_affiliate",
+  "retry_nats_export",
+  "reconcile_nats_export",
 ] as const;
 
 export type AdminFinanceAction = (typeof ADMIN_FINANCE_ACTIONS)[number];
@@ -50,6 +54,20 @@ export type ReconcileBitsafePayoutInput = {
   reason: string;
 };
 
+export type NatsAffiliateInput = {
+  dancerId: string;
+  reason: string;
+};
+
+export type NatsExportInput = {
+  exportId: string;
+  reason: string;
+};
+
+export type ReconcileNatsExportInput = NatsExportInput & {
+  resolution: "confirmed_exported" | "confirmed_not_exported";
+};
+
 export type AdminFinanceCommand =
   | { action: "run_automation" }
   | { action: "process_payouts" }
@@ -57,7 +75,11 @@ export type AdminFinanceCommand =
   | ({ action: "update_payout_settings" } & PayoutSettingsInput)
   | ({ action: "manage_earning" } & ManageEarningInput)
   | ({ action: "retry_payout" } & RetryPayoutInput)
-  | ({ action: "reconcile_bitsafe_payout" } & ReconcileBitsafePayoutInput);
+  | ({ action: "reconcile_bitsafe_payout" } & ReconcileBitsafePayoutInput)
+  | ({ action: "verify_nats_affiliate" } & NatsAffiliateInput)
+  | ({ action: "disable_nats_affiliate" } & NatsAffiliateInput)
+  | ({ action: "retry_nats_export" } & NatsExportInput)
+  | ({ action: "reconcile_nats_export" } & ReconcileNatsExportInput);
 
 export function parseAdminFinanceCommand(input: unknown): ValidationResult<AdminFinanceCommand> {
   const request = parseAdminFinanceBody(input);
@@ -94,6 +116,23 @@ export function parseAdminFinanceCommand(input: unknown): ValidationResult<Admin
   if (action === "reconcile_bitsafe_payout") {
     const parsed = parseReconcileBitsafePayoutInput(body);
     return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
+  }
+
+  if (action === "verify_nats_affiliate" || action === "disable_nats_affiliate") {
+    const parsed = parseNatsAffiliateInput(body);
+    return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
+  }
+
+  if (action === "retry_nats_export") {
+    const parsed = parseNatsExportInput(body);
+    return parsed.ok ? valid({ action, ...parsed.value }) : invalid(parsed.error);
+  }
+
+  if (action === "reconcile_nats_export") {
+    const parsed = parseNatsExportInput(body);
+    if (!parsed.ok) return invalid(parsed.error);
+    const resolution = oneOf(body.resolution, ["confirmed_exported", "confirmed_not_exported"] as const, "NATS reconciliation resolution is invalid.");
+    return resolution.ok ? valid({ action, ...parsed.value, resolution: resolution.value }) : invalid(resolution.error);
   }
 
   return unsupportedAction(action);
@@ -189,6 +228,28 @@ export function parseReconcileBitsafePayoutInput(
     reconciliationReference: reconciliationReference.value,
     reason: reason.value,
   });
+}
+
+export function parseNatsAffiliateInput(body: Record<string, unknown>): ValidationResult<NatsAffiliateInput> {
+  const dancerId = requiredUuid(body.dancerId, "Dancer is required.", "Dancer is invalid.");
+  if (!dancerId.ok) return dancerId;
+  const reason = auditReason(body.reason);
+  return reason.ok ? valid({ dancerId: dancerId.value, reason: reason.value }) : invalid(reason.error);
+}
+
+export function parseNatsExportInput(body: Record<string, unknown>): ValidationResult<NatsExportInput> {
+  const exportId = requiredUuid(body.exportId, "NATS export is required.", "NATS export is invalid.");
+  if (!exportId.ok) return exportId;
+  const reason = auditReason(body.reason);
+  return reason.ok ? valid({ exportId: exportId.value, reason: reason.value }) : invalid(reason.error);
+}
+
+function auditReason(value: unknown) {
+  const reason = requiredText(value, "A financial audit reason is required.");
+  if (!reason.ok) return reason;
+  return reason.value.length >= 3 && reason.value.length <= 500
+    ? reason
+    : invalid<string>("Reason must be between 3 and 500 characters.");
 }
 
 function valid<T>(value: T): ValidationResult<T> {
