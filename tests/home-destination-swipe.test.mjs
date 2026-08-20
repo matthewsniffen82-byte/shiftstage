@@ -92,6 +92,18 @@ test("the current discovery content follows the finger and settles smoothly", ()
     homeSource,
     /prefers-reduced-motion: reduce[\s\S]*?\.content-head,[\s\S]*?#results[\s\S]*?transition: none/,
   );
+  assert.match(
+    homeSource,
+    /body\.home-destination-transitioning \.content-head,[\s\S]*?#results:not\(\.home-dancer-grid\)[\s\S]*?animation: homeDestinationEnter 220ms[\s\S]*?#results\.home-dancer-grid[\s\S]*?animation: homeDestinationFade 180ms/,
+  );
+  assert.match(
+    homeSource,
+    /function startHomeDestinationTransition\(direction\)[\s\S]*?prefers-reduced-motion: reduce[\s\S]*?direction > 0 \? 12 : -12[\s\S]*?home-destination-transitioning[\s\S]*?240/,
+  );
+  assert.match(
+    homeSource,
+    /function focusHomeResults\(\)[\s\S]*?homeResultsSmoothLandingPending[\s\S]*?alignHomeResultsTitle\("smooth"\)[\s\S]*?alignHomeResultsTitle\("auto"\)/,
+  );
 });
 
 test("buttons and swipe gestures share the same production destination activation path", () => {

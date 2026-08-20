@@ -133,7 +133,7 @@ test("all three destinations land at their title before the cards", () => {
   );
   assert.match(
     homeSource,
-    /function homeResultsDocumentTop\(element\) \{[\s\S]*?Number\(node\.offsetTop\)[\s\S]*?node = node\.offsetParent[\s\S]*?function alignHomeResultsTitle\(\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?getComputedStyle\(destinationStart\)\.top[\s\S]*?homeResultsDocumentTop\(destinationStart\) - landingTop[\s\S]*?window\.scrollTo\(\{ top: targetTop, left: 0, behavior: "auto" \}\)/,
+    /function homeResultsDocumentTop\(element\) \{[\s\S]*?Number\(node\.offsetTop\)[\s\S]*?node = node\.offsetParent[\s\S]*?function alignHomeResultsTitle\(behavior = "auto"\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?getComputedStyle\(destinationStart\)\.top[\s\S]*?homeResultsDocumentTop\(destinationStart\) - landingTop[\s\S]*?window\.scrollTo\(\{ top: targetTop, left: 0, behavior \}\)/,
   );
   assert.match(
     homeSource,

@@ -31554,11 +31554,35 @@
             transition: none;
             will-change: transform;
           }
+
+          body.home-destination-transitioning .content-head,
+          body.home-destination-transitioning #results:not(.home-dancer-grid) {
+            animation: homeDestinationEnter 220ms cubic-bezier(.22, .74, .26, 1) both;
+          }
+
+          body.home-destination-transitioning #results.home-dancer-grid {
+            animation: homeDestinationFade 180ms ease-out both;
+          }
+        }
+        @keyframes homeDestinationEnter {
+          from {
+            opacity: .84;
+            transform: translate3d(var(--home-destination-enter-offset, 0px), 0, 0);
+          }
+          to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+          }
+        }
+        @keyframes homeDestinationFade {
+          from { opacity: .84; }
+          to { opacity: 1; }
         }
         @media (max-width: 720px) and (prefers-reduced-motion: reduce) {
           .content-head,
           #results {
             transition: none;
+            animation: none !important;
           }
         }
         #results.home-tv-feed {
@@ -55594,6 +55618,8 @@
     let homeResultsFocusFrame = 0;
     let homeResultsFocusTimer = 0;
     let homeResultsFocusRun = 0;
+    let homeResultsSmoothLandingPending = false;
+    let homeDestinationTransitionTimer = 0;
 
     function homeResultsDocumentTop(element) {
       let top = 0;
@@ -55605,13 +55631,35 @@
       return top;
     }
 
-    function alignHomeResultsTitle() {
+    function alignHomeResultsTitle(behavior = "auto") {
       const destinationStart = tabTitle?.closest(".content-head") || tabTitle || results;
       if (!destinationStart.isConnected) return;
       const stickyTop = Number.parseFloat(window.getComputedStyle(destinationStart).top);
       const landingTop = Number.isFinite(stickyTop) ? stickyTop : 0;
       const targetTop = Math.max(0, homeResultsDocumentTop(destinationStart) - landingTop);
-      window.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
+      window.scrollTo({ top: targetTop, left: 0, behavior });
+    }
+
+    function clearHomeDestinationTransition() {
+      if (homeDestinationTransitionTimer) {
+        window.clearTimeout(homeDestinationTransitionTimer);
+        homeDestinationTransitionTimer = 0;
+      }
+      document.body.classList.remove("home-destination-transitioning");
+      document.body.style.removeProperty("--home-destination-enter-offset");
+    }
+
+    function startHomeDestinationTransition(direction) {
+      clearHomeDestinationTransition();
+      if (
+        window.innerWidth > 720 ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) return;
+      const offset = direction === 0 ? 0 : direction > 0 ? 12 : -12;
+      document.body.style.setProperty("--home-destination-enter-offset", `${offset}px`);
+      void results.offsetWidth;
+      document.body.classList.add("home-destination-transitioning");
+      homeDestinationTransitionTimer = window.setTimeout(clearHomeDestinationTransition, 240);
     }
 
     function cancelHomeResultsFocus({ releaseTvLanding = false } = {}) {
@@ -55630,6 +55678,24 @@
     function focusHomeResults() {
       cancelHomeResultsFocus();
       const focusRun = homeResultsFocusRun;
+      const smoothLanding =
+        homeResultsSmoothLandingPending &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      homeResultsSmoothLandingPending = false;
+      if (smoothLanding) {
+        alignHomeResultsTitle("smooth");
+        homeResultsFocusTimer = window.setTimeout(() => {
+          if (focusRun !== homeResultsFocusRun) return;
+          homeResultsFocusTimer = 0;
+          alignHomeResultsTitle("auto");
+          homeResultsFocusFrame = window.requestAnimationFrame(() => {
+            if (focusRun !== homeResultsFocusRun) return;
+            homeResultsFocusFrame = 0;
+            alignHomeResultsTitle("auto");
+          });
+        }, 240);
+        return;
+      }
       const settle = (remainingFrames) => {
         if (focusRun !== homeResultsFocusRun) return;
         alignHomeResultsTitle();
@@ -60274,6 +60340,9 @@
 
     function activateHomeDestination(nextTab, options = {}) {
       if (!homeDestinationOrder.includes(nextTab)) return false;
+      const previousDestinationIndex = homeDestinationOrder.indexOf(activeTab);
+      const nextDestinationIndex = homeDestinationOrder.indexOf(nextTab);
+      const transitionDirection = Math.sign(nextDestinationIndex - previousDestinationIndex);
       const leavingAnotherDestination = activeTab !== "dancers";
       if (nextTab === "dancers") {
         dancerDirectoryFilter = dancerDirectoryFilters.includes(options.dancerFilter)
@@ -60307,6 +60376,8 @@
       syncHomeDestinationLocation(nextTab);
       render();
       if (options.scroll !== false) {
+        homeResultsSmoothLandingPending = true;
+        startHomeDestinationTransition(transitionDirection);
         focusHomeResults();
       }
       return true;

@@ -20,7 +20,7 @@ test("venue discovery uses inline one-column cards with visible continuation", (
   );
   assert.match(
     homeSource,
-    /function homeResultsDocumentTop\(element\) \{[\s\S]*?node\.offsetParent[\s\S]*?function alignHomeResultsTitle\(\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?window\.scrollTo\(\{ top: targetTop, left: 0, behavior: "auto" \}\);[\s\S]*?function focusHomeResults\(\)/,
+    /function homeResultsDocumentTop\(element\) \{[\s\S]*?node\.offsetParent[\s\S]*?function alignHomeResultsTitle\(behavior = "auto"\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?window\.scrollTo\(\{ top: targetTop, left: 0, behavior \}\);[\s\S]*?function focusHomeResults\(\)/,
   );
   assert.match(
     homeSource,
