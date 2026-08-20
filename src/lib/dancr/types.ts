@@ -300,7 +300,7 @@ export type ShiftSummary = {
   startsAt: string;
   endsAt: string;
   shiftDate?: string | null;
-  shiftSource?: "scheduled" | "nfc_presence";
+  shiftSource?: "scheduled" | "nfc_presence" | "demo_locked";
   timezone?: string | null;
   status: ShiftStatus;
   locationStatus?: LocationStatus;

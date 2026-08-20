@@ -105,7 +105,10 @@ test("dancer attribution is locked to a verified shift when the cashier NFC tap 
   assert.match(discoveryRoute, /const dealAttributionTokens[\s\S]*?createDancerDealAttributionToken/);
   assert.match(tvSource, /const dealAttributionTokens[\s\S]*?createDancerDealAttributionToken/);
   assert.match(tvClient, /attributionToken=\{video\.dealAttributionToken\}/);
-  assert.match(liveApp, /attributionToken: profile\.dealAttributionToken/);
+  assert.match(
+    liveApp,
+    /attributionToken: dancerAttributed \? profile\.dealAttributionToken : ""/,
+  );
   assert.match(liveApp, /function selectDealPassForNfc[\s\S]*?attributionToken: pass\.sourceType === "dancer_profile" \? pass\.attributionToken \|\| null : null/);
 });
 
@@ -243,6 +246,13 @@ test("legacy uploaded QR images cannot masquerade as commission-bearing MyDancr 
     venueQrHelper,
     /externalQrUrl|data-external-venue-qr|data-venue-profile-qr|data-deal-pass/,
   );
-  assert.match(liveApp, /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?profile\.activeDeal\?\.id[\s\S]*?return null;/);
+  assert.match(
+    liveApp,
+    /function dancerProfileClubDealConfig\(profile\)[\s\S]*?profile\.activeDeal\?\.id[\s\S]*?sourceType: dancerAttributed \? "dancer_profile" : "club_page"/,
+  );
+  assert.match(
+    liveApp,
+    /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?dancerProfileClubDealConfig\(profile\)[\s\S]*?return null;/,
+  );
   assert.doesNotMatch(venueDashboard, /External marketing QR|Untracked external QR|Upload marketing QR/);
 });

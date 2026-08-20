@@ -809,11 +809,11 @@ test("mobile discovery cards use neutral edges while TV is completely borderless
 test("Working Now dancer grid cards expose a functional cashier NFC Club Deal action", () => {
   assert.match(
     homeSource,
-    /function homeDiscoveryFeedLiveQrData\(profile\) \{\s*if \(!isWorkingTonight\(profile\) \|\| !profile\.venueId\) return null;/,
+    /function dancerProfileClubDealConfig\(profile\)[\s\S]*?!isWorkingTonight\(profile\)[\s\S]*?!profile\.venueId[\s\S]*?!profile\.activeDeal\?\.id[\s\S]*?return null;/,
   );
   assert.match(
     homeSource,
-    /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?profile\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?return null;/,
+    /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?dancerProfileClubDealConfig\(profile\)[\s\S]*?data-club-deal-cta[\s\S]*?return null;/,
   );
   assert.match(
     homeSource,

@@ -45894,20 +45894,40 @@
       `;
     }
 
+    function dancerProfileClubDealConfig(profile) {
+      if (
+        !profile ||
+        !isWorkingTonight(profile) ||
+        !profile.venue ||
+        !profile.venueId ||
+        !profile.activeDeal?.id
+      ) return null;
+
+      const dancerAttributed = Boolean(profile.dealAttributionToken);
+      return {
+        deal: profile.activeDeal,
+        deals: profile.activeDeals,
+        venueId: profile.venueId,
+        venueSlug: profile.venueSlug,
+        venueName: profile.venue,
+        sourceType: dancerAttributed ? "dancer_profile" : "club_page",
+        dancerId: dancerAttributed ? profile.id : "",
+        dancerName: dancerAttributed ? profile.name : "",
+        attributionToken: dancerAttributed ? profile.dealAttributionToken : "",
+        dealAttributionTokens: dancerAttributed ? profile.dealAttributionTokens : {}
+      };
+    }
+
     function dancerClubDealState(profile) {
       const workingNow = Boolean(profile && isWorkingTonight(profile));
-      const available = Boolean(
-        workingNow &&
-        profile?.venue &&
-        profile?.venueId &&
-        profile?.activeDeal?.id &&
-        profile?.dealAttributionToken
-      );
+      const available = Boolean(dancerProfileClubDealConfig(profile));
       if (available) {
         return {
           key: "available",
           label: "Get Club Deal",
-          detail: "A tracked Club Deal is available during this verified check-in."
+          detail: profile?.dealAttributionToken
+            ? "A tracked Club Deal is available during this verified check-in."
+            : "This club has an active Club Deal available now."
         };
       }
       if (workingNow) {
@@ -45934,18 +45954,7 @@
     function profileDealTileMarkup(profile) {
       const state = dancerClubDealState(profile);
       if (state.key === "available") {
-        const config = {
-          deal: profile.activeDeal,
-          deals: profile.activeDeals,
-          venueId: profile.venueId,
-          venueSlug: profile.venueSlug,
-          venueName: profile.venue,
-          sourceType: "dancer_profile",
-          dancerId: profile.id,
-          dancerName: profile.name,
-          attributionToken: profile.dealAttributionToken,
-          dealAttributionTokens: profile.dealAttributionTokens
-        };
+        const config = dancerProfileClubDealConfig(profile);
         return `
           <div class="info-tile profile-qr-tile profile-club-deal-tile" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
             <div class="profile-club-deal-copy">
@@ -54959,19 +54968,8 @@
 
     function homeDiscoveryFeedLiveQrData(profile) {
       if (!isWorkingTonight(profile) || !profile.venueId) return null;
-      if (profile.activeDeal?.id && profile.dealAttributionToken) {
-        const config = {
-          deal: profile.activeDeal,
-          deals: profile.activeDeals,
-          venueId: profile.venueId,
-          venueSlug: profile.venueSlug,
-          venueName: profile.venue,
-          sourceType: "dancer_profile",
-          dancerId: profile.id,
-          dancerName: profile.name,
-          attributionToken: profile.dealAttributionToken,
-          dealAttributionTokens: profile.dealAttributionTokens
-        };
+      const config = dancerProfileClubDealConfig(profile);
+      if (config) {
         return {
           triggerAttribute: `data-club-deal-cta="${encodeDealPass(config)}"`,
           venueName: profile.venue,

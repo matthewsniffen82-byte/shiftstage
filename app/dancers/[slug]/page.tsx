@@ -80,7 +80,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
       : Promise.resolve(null),
   ]);
   const activeDeal = activeDeals[0] || null;
-  const dealAttributionTokens = activeShift
+  const dancerAttributionEligible = Boolean(
+    activeShift && activeShift.shiftSource !== "demo_locked",
+  );
+  const dealAttributionTokens = activeShift && dancerAttributionEligible
     ? Object.fromEntries(activeDeals.map((deal) => [deal.id, createDancerDealAttributionToken({
         dancerId: profile.id,
         venueId: activeShift.venueId,
@@ -89,6 +92,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
       })]))
     : {};
   const dealAttributionToken = activeDeal ? dealAttributionTokens[activeDeal.id] : null;
+  const dealSourceType = dancerAttributionEligible ? "dancer_profile" : "club_page";
 
   return (
     <DancerFollowStateProvider
@@ -235,11 +239,11 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 deals={activeDeals}
                 venueId={activeShift.venueId}
                 venueName={activeShift.venueName}
-                sourceType="dancer_profile"
-                dancerId={profile.id}
+                sourceType={dealSourceType}
+                dancerId={dancerAttributionEligible ? profile.id : null}
                 attributionToken={dealAttributionToken}
                 attributionTokens={dealAttributionTokens}
-                dancerNote
+                dancerNote={dancerAttributionEligible}
                 presentation="launcher"
                 ctaLabel="Club Deals"
                 sectionId="club-deal"

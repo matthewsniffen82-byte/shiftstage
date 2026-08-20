@@ -12,6 +12,7 @@ const [
   socialLinks,
   tvStrip,
   profileCarousel,
+  liveApp,
 ] = await Promise.all([
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(
@@ -37,6 +38,7 @@ const [
     new URL("../app/dancers/[slug]/DancerPhotoCarousel.tsx", import.meta.url),
     "utf8",
   ),
+  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
 test("the public dancer profile keeps a compact identity that scrolls with the whole profile", () => {
@@ -105,12 +107,65 @@ test("the mobile profile places schedule directly after media, before revenue an
   assert.match(profilePage, /Dressing-room NFC verified · active until/);
   assert.match(profilePage, /Club &amp; directions/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
-  assert.match(profilePage, /sourceType="dancer_profile"/);
+  assert.match(profilePage, /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/);
+  assert.match(profilePage, /sourceType=\{dealSourceType\}/);
   assert.match(profilePage, /presentation="launcher"/);
   assert.match(profilePage, /ctaLabel="Club Deals"/);
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
+});
+
+test("working-now profiles show the club's active deal without granting demo commission attribution", () => {
+  const configSource = liveApp.match(
+    /function dancerProfileClubDealConfig\(profile\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  const buildConfig = new Function(
+    "isWorkingTonight",
+    `${configSource}; return dancerProfileClubDealConfig;`,
+  )((profile) => profile?.workingNow === true);
+  const baseProfile = {
+    id: "dancer-1",
+    name: "Nova",
+    venue: "Nova Lounge",
+    venueId: "venue-1",
+    venueSlug: "nova-lounge",
+    workingNow: true,
+    activeDeal: { id: "deal-1", dealTitle: "Half-off admission" },
+    activeDeals: [{ id: "deal-1", dealTitle: "Half-off admission" }],
+    dealAttributionTokens: {},
+    dealAttributionToken: "",
+  };
+
+  assert.deepEqual(buildConfig(baseProfile), {
+    deal: baseProfile.activeDeal,
+    deals: baseProfile.activeDeals,
+    venueId: "venue-1",
+    venueSlug: "nova-lounge",
+    venueName: "Nova Lounge",
+    sourceType: "club_page",
+    dancerId: "",
+    dancerName: "",
+    attributionToken: "",
+    dealAttributionTokens: {},
+  });
+
+  const attributedProfile = {
+    ...baseProfile,
+    dealAttributionToken: "signed-token",
+    dealAttributionTokens: { "deal-1": "signed-token" },
+  };
+  assert.equal(buildConfig(attributedProfile).sourceType, "dancer_profile");
+  assert.equal(buildConfig(attributedProfile).dancerId, "dancer-1");
+  assert.equal(buildConfig(attributedProfile).attributionToken, "signed-token");
+  assert.equal(buildConfig({ ...baseProfile, workingNow: false }), null);
+  assert.equal(buildConfig({ ...baseProfile, activeDeal: null }), null);
+
+  assert.match(liveApp, /function dancerClubDealState\(profile\)[\s\S]*?const available = Boolean\(dancerProfileClubDealConfig\(profile\)\)/);
+  assert.match(liveApp, /function profileDealTileMarkup\(profile\)[\s\S]*?const config = dancerProfileClubDealConfig\(profile\)/);
+  assert.match(liveApp, /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?const config = dancerProfileClubDealConfig\(profile\)/);
+  assert.match(profilePage, /activeShift && activeShift\.shiftSource !== "demo_locked"/);
+  assert.match(profilePage, /dancerId=\{dancerAttributionEligible \? profile\.id : null\}/);
 });
 
 test("profile actions prioritize Going and demote reporting to a complete safety flow", () => {

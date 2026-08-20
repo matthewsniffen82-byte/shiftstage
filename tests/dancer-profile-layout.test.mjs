@@ -89,7 +89,11 @@ test("Working Now profiles mirror the upcoming schedule hierarchy and retain the
   assert.match(profilePage, /Dressing-room NFC verified · active until/);
   assert.match(profilePage, /Club &amp; directions/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
-  assert.match(profilePage, /sourceType="dancer_profile"/);
+  assert.match(
+    profilePage,
+    /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
+  );
+  assert.match(profilePage, /sourceType=\{dealSourceType\}/);
   assert.match(profilePage, /ctaLabel="Club Deals"/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
