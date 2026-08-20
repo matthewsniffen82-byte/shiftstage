@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { getRedemptionForScanner, redeemDealToken } from "@/src/lib/dancr/deals";
+import { redeemDealToken } from "@/src/lib/dancr/deal-redemption-actions";
+import { getRedemptionForScanner } from "@/src/lib/dancr/deals";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 

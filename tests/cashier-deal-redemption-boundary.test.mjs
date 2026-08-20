@@ -11,6 +11,7 @@ test("cashier NFC delegates financial redemption orchestration to one domain bou
   assert.match(route, /completeCashierDealRedemption\(admin/);
   assert.doesNotMatch(route, /enforceDealGenerationRateLimit|getActiveClubDealByIdForVenue|resolveDealRedemptionAttribution|issueAndConfirmDealRedemptionFromNfc/);
   assert.match(cashierRedemption, /export async function completeCashierDealRedemption/);
+  assert.match(cashierRedemption, /from "\.\/deal-redemption-actions"/);
 });
 
 test("cashier redemption validates and venue-scopes the selected active deal before attribution", () => {

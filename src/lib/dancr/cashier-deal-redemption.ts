@@ -2,9 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveDealRedemptionAttribution } from "./deal-redemption-attribution";
 import {
   enforceDealGenerationRateLimit,
-  getActiveClubDealByIdForVenue,
   issueAndConfirmDealRedemptionFromNfc,
-} from "./deals";
+} from "./deal-redemption-actions";
+import { getActiveClubDealByIdForVenue } from "./deals";
 import type { DealSourceType } from "./types";
 import { createRequestSupabaseContext, getBearerToken } from "../supabase/request";
 

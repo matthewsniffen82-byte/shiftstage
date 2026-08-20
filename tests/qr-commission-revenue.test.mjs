@@ -10,6 +10,7 @@ const [
   earningsMigration,
   policy,
   deals,
+  dealRedemptionActions,
   venueDealActions,
   dealAdminActions,
   generationRoute,
@@ -37,6 +38,7 @@ const [
   readFile(new URL("../supabase/migrations/202608170004_dancer_earnings_payout_system.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/commission-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/deal-redemption-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-deal-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-admin-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
@@ -91,8 +93,8 @@ test("dancer attribution is locked to a verified shift when the cashier NFC tap 
   assert.match(redemptionAttribution, /verifiedCheckIn\.shiftId !== attribution\.shiftId/);
   assert.match(redemptionAttribution, /getVerifiedActiveCheckInAtVenue\([\s\S]*?client[\s\S]*?dancerId[\s\S]*?input\.venueId/);
   assert.match(redemptionAttribution, /shiftId: verifiedCheckIn\.shiftId/);
-  assert.match(deals, /shift_id: input\.sourceType === "dancer_profile" \? input\.shiftId/);
-  assert.match(deals, /attribution_locked_at: input\.sourceType === "dancer_profile"/);
+  assert.match(dealRedemptionActions, /shift_id: input\.sourceType === "dancer_profile" \? input\.shiftId/);
+  assert.match(dealRedemptionActions, /attribution_locked_at: input\.sourceType === "dancer_profile"/);
   assert.match(migration, /shift_id uuid references public\.shifts/);
   assert.match(migration, /v_redemption\.source_type = 'dancer_profile'[\s\S]*?v_redemption\.shift_id is null/);
   assert.doesNotMatch(passPage, /dancerHasVerifiedActiveCheckInAtVenue|hasLiveDancerAttribution/);
@@ -118,8 +120,8 @@ test("save, share, scan, and confirmation have durable lifecycle events without 
   assert.match(liveApp, /recordRevenueDealLifecycle\(pass, "saved"\)/);
   assert.match(liveApp, /recordRevenueDealLifecycle\(pass, "shared"\)/);
   assert.match(migration, /insert into public\.deal_revenue_events[\s\S]*?v_redemption\.id/);
-  const lifecycleFunction = deals.match(
-    /export async function recordDealRedemptionEvent\([\s\S]*?(?=\nexport async function getDancerDealMetrics)/,
+  const lifecycleFunction = dealRedemptionActions.match(
+    /export async function recordDealRedemptionEvent\([\s\S]*?(?=\nfunction issuedDealSnapshot)/,
   )?.[0] || "";
   assert.match(lifecycleFunction, /eventType === "saved"/);
   assert.doesNotMatch(lifecycleFunction, /commission_events|deal_revenue_events/);

@@ -3,7 +3,7 @@ import { apiError } from "@/src/lib/api";
 import {
   recordDealRedemptionEvent,
   type DealLifecycleEventType,
-} from "@/src/lib/dancr/deals";
+} from "@/src/lib/dancr/deal-redemption-actions";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   createRequestSupabaseContext,

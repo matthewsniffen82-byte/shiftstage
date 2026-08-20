@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [deals, tapRoute, cashierRedemption, redemptionAttribution, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
+const [deals, dealRedemptionActions, tapRoute, cashierRedemption, redemptionAttribution, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/deal-redemption-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/cashier-deal-redemption.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-redemption-attribution.ts", import.meta.url), "utf8"),
@@ -44,13 +45,13 @@ test("Club Deal selection snapshots customer-facing terms before atomic NFC conf
   assert.match(cashierRedemption, /dealOfferType: deal\.offerType/);
   assert.match(cashierRedemption, /issueAndConfirmDealRedemptionFromNfc/);
   assert.doesNotMatch(tapRoute, /createDealRedemption|confirmRedemptionFromNfc|status: "voided"/);
-  assert.match(deals, /rpc\("issue_and_confirm_deal_redemption_from_nfc"/);
+  assert.match(dealRedemptionActions, /rpc\("issue_and_confirm_deal_redemption_from_nfc"/);
   assert.match(atomicNfcMigration, /insert into public\.qr_redemptions/);
   assert.match(atomicNfcMigration, /public\.confirm_deal_redemption_from_nfc/);
   assert.match(atomicNfcMigration, /grant execute[\s\S]*to service_role/);
   assert.match(tapRoute, /resolveApiError\(error, "Unable to complete this NFC tap\.", status\)/);
   assert.doesNotMatch(tapRoute, /NextResponse\.json\(\{ ok: false, error: message/);
-  assert.match(deals, /issuedDealSnapshot/);
+  assert.match(dealRedemptionActions, /issuedDealSnapshot/);
   assert.match(deals, /readIssuedDealSnapshot/);
   assert.match(deals, /dealSnapshot \? dealSnapshot\.dealTitle/);
   assert.match(deals, /dealSnapshot \? dealSnapshot\.dealTerms/);
