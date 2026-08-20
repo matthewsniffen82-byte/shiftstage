@@ -4,7 +4,7 @@ This packet combines a factual product map with draft public policies and bilate
 
 [CALLOUT:COUNSEL|Drafting status] This is a working draft for licensed counsel. It is not legal advice, is not a legal opinion, and is not approved for publication or user acceptance. Defined terms avoid blanks where possible, but the publishing entity, governing law, dispute procedure, addresses, tax treatment, payout schedule, retention schedule, and insurance requirements must be finalized by counsel.
 
-[CALLOUT:PRODUCT FACT|Production providers] This packet assumes **Yoti** provides MyDancr’s identity and age-verification workflow. No commission payout provider is currently designated. MyDancr must select a legally and contractually approved payout provider before live payouts are enabled, and the provider’s terms, privacy notice, geographic availability, and legal entity must be verified against the signed production contract before publication.
+[CALLOUT:PRODUCT FACT|Production providers] This packet does not assume a third-party identity or age-verification provider. MyDancr controls its documented verification and approval workflow. No commission payout provider is currently designated. MyDancr must select a legally and contractually approved payout provider before live payouts are enabled, and the provider’s terms, privacy notice, geographic availability, and legal entity must be verified against the signed production contract before publication.
 
 ## Packet contents
 
@@ -45,7 +45,7 @@ MyDancr is not a booking service for private performances, escorting, prostituti
 - **Dancer commission:** only an eligible Club Deal redemption whose immutable source originated from a dancer’s public profile and that is successfully confirmed by the correct authorized cashier NFC tag counts toward that dancer’s monthly tier. The dancer earns **30% on qualifying monthly redemptions 1–9, 40% on 10–24, and 50% on 25 and above**, calculated from the applicable MyDancr gross referral fee—not admission price, deal face value, club gross revenue, tips, or dancer-service compensation.
 - **Separate ledgers:** the club’s obligation to MyDancr and MyDancr’s obligation to the dancer are independent. A club’s late payment does not, by itself, cancel an otherwise payable dancer reward.
 - **Agent compensation:** no person earns an agent commission merely by recruiting, referring, or claiming a relationship. Any agent program requires separate written authorization, an accepted Agent Order or rider, identity/tax verification, and event-based attribution. No multi-level or downline compensation is permitted.
-- **Identity verification:** Yoti is the assumed production verification provider for dancer age/identity and any risk-based club or agent checks. MyDancr remains responsible for deciding what is required, giving notice, reviewing the returned result, and providing a lawful alternative where required.
+- **Identity verification:** MyDancr is responsible for defining and operating its dancer age/identity review and any risk-based club or agent checks, including required notices, decision criteria, access controls, retention, appeals, and any lawful alternative.
 - **Payouts:** live dancer and authorized-agent commission payouts remain disabled until MyDancr selects an approved payout provider. Once selected, payees must complete the provider’s secure onboarding, pass its KYC and compliance checks, and ensure that MyDancr and provider records match.
 - **Media:** uploads undergo technical validation and automated and/or human moderation. Public media must belong to the uploader, depict consenting adults, comply with platform rules, and remain within current duration/count limits.
 - **No direct messaging:** the current product does not offer customer-to-dancer direct messaging. Support messaging is between an account holder and MyDancr support.
@@ -55,7 +55,7 @@ MyDancr is not a booking service for private performances, escorting, prostituti
 1. Identify the exact operating legal entity, state of formation, principal address, support address, privacy request address, legal-notice address, and DMCA agent.
 2. Decide whether the public service is Nevada-only at launch or available in additional states, and prepare a state-by-state licensing and privacy addendum before expansion.
 3. Decide whether all customer accounts must be 21+ or whether 18+ accounts may browse clubs whose own entry age varies.
-4. Approve the exact Yoti product configuration for dancers, club owners/managers, and agents, including requested attributes, ID/selfie/liveness/face-match checks, biometric consent, U.S. state biometric notices, manual-review access, retention time-to-live, and fallback process.
+4. Approve the exact identity and age-verification workflow for dancers, club owners/managers, and agents, including requested evidence, reviewer access, consent and state-specific notices, retention, appeals, and fallback process.
 5. Confirm whether any uploaded media could fall within 18 U.S.C. §§ 2257/2257A and assign recordkeeping, labeling, custodian, inspection, and producer responsibilities.
 6. Select and approve a legally suitable payout provider and its business configuration, beneficiary onboarding, payout cadence, minimum threshold, reserves/holds, rejected-payment procedure, inactivity treatment, fees, supported countries/currencies, sanctions screening, tax-document workflow, complaints path, and unclaimed-property handling.
 7. Decide whether an agent program will launch. If yes, approve a separate Agent Agreement, commission schedule, non-solicitation/marketing standards, attribution duration, clawback rules, and licensing analysis.
@@ -108,9 +108,9 @@ Account recovery is a support workflow for signed-out users who no longer contro
 
 ## 4. Dancer onboarding and public eligibility
 
-The first-time dancer flow is staged: create the account; save stage name and city; complete the required Yoti age/identity session; upload and approve an avatar; upload the required profile photos; optionally add social links and videos; preview the complete customer-facing profile; submit; and complete first venue verification through an approved club touchpoint. The public preview should use the same rendering and approved content that a live profile will use, while clearly identifying its private preview state.
+The first-time dancer flow is staged: create the account; save stage name and city; complete the required MyDancr age/identity review; upload and approve an avatar; upload the required profile photos; optionally add social links and videos; preview the complete customer-facing profile; submit; and complete first venue verification through an approved club touchpoint. The public preview should use the same rendering and approved content that a live profile will use, while clearly identifying its private preview state.
 
-Public eligibility is the conjunction of several conditions, not a single status flag: active account, approved dancer status, a successful and current Yoti verification result accepted by MyDancr, public visibility enabled, no disablement, required approved media, and the required approved venue affiliation. Media still pending or rejected does not count toward approval. Deleting media must remove the active database record and associated public/storage reference, subject only to backup, legal-hold, and audit retention described later.
+Public eligibility is the conjunction of several conditions, not a single status flag: active account, approved dancer status, a successful and current identity/age decision accepted by MyDancr, public visibility enabled, no disablement, required approved media, and the required approved venue affiliation. Media still pending or rejected does not count toward approval. Deleting media must remove the active database record and associated public/storage reference, subject only to backup, legal-hold, and audit retention described later.
 
 After first approval, the dancer can request or establish additional affiliations through the controlled club verification flow. The dancer can post a shift only for an active club affiliation. This avoids self-assigning a club relationship.
 
@@ -166,7 +166,7 @@ Payouts to dancers and, if launched, separately authorized agents must be sent t
 
 ## 11. Agent referral model
 
-No agent program should be inferred from a club team role or customer referral. If activated, the agent model should use: an administrator-approved agent record; a written agreement and commission order; Yoti verification appropriate to the agent; verified business, sanctions, and tax status; approved-provider payout readiness; a defined club or transaction attribution; a start/end date; a fixed rate or formula; and an immutable commission event created only after the qualifying verified event.
+No agent program should be inferred from a club team role or customer referral. If activated, the agent model should use: an administrator-approved agent record; a written agreement and commission order; identity verification appropriate to the agent; verified business, sanctions, and tax status; approved-provider payout readiness; a defined club or transaction attribution; a start/end date; a fixed rate or formula; and an immutable commission event created only after the qualifying verified event.
 
 The model should prohibit commissions for recruiting other agents, impose no purchase or fee to participate, avoid earnings claims, and prevent self-dealing or duplicate attribution. Sponsor/upline language should not be used unless counsel has approved a lawful structure. If an agent helps onboard a club, the club must still independently accept its Club Agreement and fee order.
 
@@ -198,7 +198,6 @@ Some records cannot be deleted immediately: verified redemptions; invoices; payo
 - **Google Maps/directions services:** map or destination requests; direct links may expose data to Google under its terms.
 - **Rideshare deep links:** destination and device/browser context sent when the user chooses the link; no implied partnership.
 - **Payment processor for club billing:** club billing and invoice payment data, as implemented at launch.
-- **Yoti:** identity and age-verification session, ID-document and extracted attribute checks, selfie/liveness and face match where configured, fraud signals, verification report, and configurable retention. Yoti ordinarily acts as a processor/service provider for the requesting organization’s IDV session, subject to its product terms and privacy notice.
 - **Approved payout provider, once selected:** beneficiary payment-account onboarding, KYC/AML, account status, payout execution, fees, reserves/holds, failures, transaction history, and compliance. The contracted legal entity, onboarding flow, supported countries, and price schedule must match production.
 
 [CALLOUT:IMPLEMENTATION|Launch synchronization] Before publication, product and counsel must compare this map against production environment variables, processor contracts, database migrations, storage buckets, notification templates, analytics events, and all live pages. Provider names should appear in the privacy policy only when the processor is actually selected and under contract.
@@ -255,7 +254,7 @@ The Acceptable Use and Prohibited Conduct Rules are incorporated. Without limita
 
 ## 9. Third-party services
 
-Links and integrations may lead to clubs, social networks, maps, rideshare providers, authentication/email/push providers, Yoti, an approved payout provider once selected, and the club billing processor. Third parties control their own services, terms, availability, and data practices. A link or technical integration does not imply endorsement or partnership. The User is responsible for reviewing third-party terms.
+Links and integrations may lead to clubs, social networks, maps, rideshare providers, authentication/email/push providers, an approved payout provider once selected, and the club billing processor. Third parties control their own services, terms, availability, and data practices. A link or technical integration does not imply endorsement or partnership. The User is responsible for reviewing third-party terms.
 
 ## 10. Changes and availability
 
@@ -309,7 +308,7 @@ The published Terms should include assignment, force majeure, waiver, severabili
 
 ## 1. Scope
 
-This Privacy Policy applies to personal information processed by MyDancr through the Service. Yoti processes identity-verification data for requested sessions under its product privacy notice and contract with MyDancr. Any payout provider selected in the future will process beneficiary and payment-account data under its own terms and privacy notice. This policy does not govern independent club practices, third-party social sites, maps, rideshare providers, or providers acting independently. The published version must identify the MyDancr controller/business legal entity and contact methods.
+This Privacy Policy applies to personal information processed by MyDancr through the Service. Any payout provider selected in the future will process beneficiary and payment-account data under its own terms and privacy notice. This policy does not govern independent club practices, third-party social sites, maps, rideshare providers, or providers acting independently. The published version must identify the MyDancr controller/business legal entity and contact methods.
 
 ## 2. Information collected
 
@@ -319,7 +318,7 @@ Email address, authentication identifiers, role, display name, account state, ci
 
 ### Dancer profile and verification data
 
-Stage name, city, bio, avatar, profile photos, videos, social links, public slug, visibility, status, legal identity or verification readiness, club affiliations, verification events, work-card or license information if required, and consent/acceptance records. A Yoti session may process an identity document and available fields such as legal name, date of birth, address, document number/type, nationality, issue/expiry dates, gender where present, and document photo; selfie/liveness, biometric face match, document-authenticity, fraud, watchlist, or other configured checks; and a report returned to MyDancr. Legal identity and verification evidence are private and should not appear on the public profile.
+Stage name, city, bio, avatar, profile photos, videos, social links, public slug, visibility, status, legal identity or verification readiness, club affiliations, verification events, work-card or license information if required, and consent/acceptance records. Legal identity and verification evidence are private and should not appear on the public profile. MyDancr should collect only the evidence required by its approved review workflow and applicable law.
 
 ### Club and team data
 
@@ -351,7 +350,7 @@ Session cookies, local storage, CSRF/security tokens, preference values, anonymo
 
 ## 3. Sources
 
-Information comes from the User; clubs and authorized team members; dancers; agents under contract; automated device/browser events; NFC tags; content moderation; Yoti verification reports; an approved payout provider once selected; the club billing processor; authentication, hosting, email, push, map, and support vendors; public sources used for club verification; other Users’ reports; and authorities where lawful.
+Information comes from the User; clubs and authorized team members; dancers; agents under contract; automated device/browser events; NFC tags; content moderation; MyDancr verification records; an approved payout provider once selected; the club billing processor; authentication, hosting, email, push, map, and support vendors; public sources used for club verification; other Users’ reports; and authorities where lawful.
 
 ## 4. Purposes
 
@@ -378,11 +377,11 @@ MyDancr may disclose information in a merger, financing, acquisition, reorganiza
 
 MyDancr should state whether it “sells” or “shares” personal information under applicable state definitions only after a production vendor/data-use review. Contractual service-provider disclosure does not automatically answer that statutory question.
 
-## 6. Yoti identity and age verification
+## 6. MyDancr identity and age verification
 
-MyDancr directs an eligible dancer and, where required, a club representative or agent to a Yoti verification session. Depending on configuration, Yoti may collect an identity document, extracted attributes, a selfie, liveness and face-match data, fraud signals, and optional watchlist or address checks, then provide MyDancr with a report. Yoti states that it ordinarily acts as the service provider/processor for its client in a standard identity-verification session; MyDancr remains responsible for the verification purpose, lawful basis, notices, configuration, retention, access decisions, and response to rights requests concerning data MyDancr receives.
+MyDancr may require an eligible dancer and, where appropriate, a club representative or agent to provide evidence through the approved verification workflow. MyDancr remains responsible for the verification purpose, lawful basis, notices, requested evidence, retention, access decisions, appeals, and response to rights requests concerning verification data.
 
-MyDancr should configure Yoti to return and retain only necessary attributes, set the shortest workable time-to-live, limit portal access, and document any downloaded report. Where biometric information is processed, MyDancr must present any required state-specific notice and consent and provide any legally required alternative. Yoti’s terms require public references to identify Yoti as the provider or use “powered by Yoti,” subject to the contracted brand rules.
+MyDancr should collect and retain only necessary verification evidence, set the shortest workable retention period, limit reviewer access, and document every decision. Biometric processing should not be introduced without counsel-approved notices, consent, retention, deletion, security, and legally required alternative procedures.
 
 ## 7. Commission payout provider
 
@@ -428,13 +427,13 @@ The dancer is responsible for the dancer’s own relationship with each club, in
 
 ## 2. Eligibility and truthful identity
 
-The dancer represents that the dancer is at least 18, is the person operating the account, has legal capacity, and may lawfully work and publish the submitted content. The dancer must provide accurate identity and city information, complete the required Yoti session, and must not use another person’s documents, likeness, stage identity, or account. A stage name may be public; legal identity remains private except as required for Yoti verification, tax, an approved payout provider, safety, or law.
+The dancer represents that the dancer is at least 18, is the person operating the account, has legal capacity, and may lawfully work and publish the submitted content. The dancer must provide accurate identity and city information, complete the required MyDancr verification process, and must not use another person’s documents, likeness, stage identity, or account. A stage name may be public; legal identity remains private except as required for verification, tax, an approved payout provider, safety, or law.
 
 The dancer must maintain all local work cards, entertainer licenses, permits, immigration/work authorization, and club requirements. A MyDancr badge or affiliation does not replace government or club verification.
 
 ## 3. Initial approval and affiliations
 
-Before the profile becomes public, the dancer must complete the required Yoti age/identity check, complete required profile fields, obtain approval of required media, submit the profile, and complete first club verification through the approved flow. A Yoti result supports identity and age assurance but is not a guarantee; a club confirmation verifies only the represented affiliation. MyDancr may require additional review or decline publication.
+Before the profile becomes public, the dancer must complete the required MyDancr age/identity review, complete required profile fields, obtain approval of required media, submit the profile, and complete first club verification through the approved flow. A verification decision supports identity and age assurance but is not a guarantee; a club confirmation verifies only the represented affiliation. MyDancr may require additional review or decline publication.
 
 After approval, the dancer may add or change affiliations only through the approved process. The dancer may post a shift only for an active approved affiliation and may not claim a club where the dancer is not authorized to work. The dancer must promptly remove or update an inaccurate affiliation or schedule.
 
@@ -482,7 +481,7 @@ On termination, public access ends, but accrued undisputed obligations and legal
 
 ## 10. Dancer acknowledgments
 
-The dancer acknowledges the customer-facing limits of badges and status, the absence of guaranteed earnings, the role of club admission and independent club rules, Yoti’s verification role, the future approved payout provider’s commission-payout role, the public nature of approved profile content, dynamic ranking signals, and the separate Content/Media, Acceptable Use, Verification, Commission, Moderation, Privacy, and Retention policies.
+The dancer acknowledges the customer-facing limits of badges and status, the absence of guaranteed earnings, the role of club admission and independent club rules, MyDancr’s verification role, a future approved payout provider’s commission-payout role, the public nature of approved profile content, dynamic ranking signals, and the separate Content/Media, Acceptable Use, Verification, Commission, Moderation, Privacy, and Retention policies.
 
 ---PAGE---
 
@@ -648,13 +647,13 @@ All Users must be at least 18. A club may require 21 or another lawful higher ag
 
 ## 2. Risk-based verification
 
-Verification should be proportionate to role and action. Email confirmation is appropriate for basic account access but is not enough for a public dancer, club owner, authorized manager, payout recipient, or agent. High-risk roles require a configured Yoti check and/or other documented authority review. The selected approved payout provider will separately control payment-account KYC for payout recipients.
+Verification should be proportionate to role and action. Email confirmation is appropriate for basic account access but is not enough for a public dancer, club owner, authorized manager, payout recipient, or agent. High-risk roles require documented identity and/or authority review under MyDancr’s approved process. A selected approved payout provider will separately control payment-account KYC for payout recipients.
 
 ## 3. Dancer identity
 
-Before public approval, the dancer must complete a Yoti Identity Verification session configured to obtain the minimum necessary legal identity and date-of-birth result; complete document-authenticity, selfie/liveness, biometric face match, anti-spoofing or fraud checks selected by MyDancr; provide an avatar that can be compared to the person where appropriate; and meet media and venue gates. Public display uses stage name unless disclosure is legally required.
+Before public approval, the dancer must complete MyDancr’s approved identity and age review using the minimum evidence necessary; provide an avatar that can be compared to the person where appropriate; and meet media and venue gates. Public display uses stage name unless disclosure is legally required.
 
-Yoti evidence and reports must be encrypted and access-restricted and must not be exposed to clubs beyond the minimum confirmation interface. MyDancr should record the Yoti session/reference, check configuration, result, dates, and decision—not unnecessary document or selfie copies—unless counsel requires retention. Yoti portal time-to-live and deletion settings must match the approved retention schedule. Any biometric notice/consent and alternative method required by applicable U.S. state law must be presented before collection.
+Verification evidence and decisions must be encrypted, access-restricted, and not exposed to clubs beyond the minimum confirmation interface. MyDancr should record the evidence category, result, dates, reviewer, and decision—not unnecessary document or selfie copies—unless counsel requires retention. Retention and deletion settings must match the approved schedule. Any biometric notice, consent, and alternative method required by applicable U.S. state law must be presented before collection if biometric processing is later introduced.
 
 ## 4. Club authority
 
@@ -674,7 +673,7 @@ NFC tags are scoped by type and club. Dressing-room tags support affiliation/pre
 
 ## 8. Payout and agent verification
 
-Payout recipients must complete the selected approved provider’s onboarding and any MyDancr tax, sanctions, identity, and account-matching checks. MyDancr may rely on Yoti for platform identity and on the selected provider for payment-account KYC, but must resolve mismatches before payout. An agent must also have a valid separate agreement and order. Provider approval does not itself authorize a MyDancr agent commission; MyDancr’s written authorization and qualifying events are still required.
+Payout recipients must complete the selected approved provider’s onboarding and any MyDancr tax, sanctions, identity, and account-matching checks. MyDancr uses its approved platform identity review and may rely on the selected provider for payment-account KYC, but must resolve mismatches before payout. An agent must also have a valid separate agreement and order. Provider approval does not itself authorize a MyDancr agent commission; MyDancr’s written authorization and qualifying events are still required.
 
 ## 9. Reverification and failure
 
@@ -885,7 +884,7 @@ MyDancr retains personal information only for a documented operational, contract
 - **Authentication and active account:** life of account; security/session metadata for a short rolling period; deletion processing after authenticated request.
 - **Public profile fields and ordinary content:** while published plus a short removal/cache period; transformed/storage copies deleted through a verified cleanup job; backups expire on cycle.
 - **Rejected uploads:** short appeal and abuse-prevention period; longer restricted hash/decision where necessary to prevent reupload or address safety.
-- **Yoti identity and age evidence:** configure Yoti’s shortest workable time-to-live; retain in MyDancr primarily the session/reference, requested checks, result, decision, and dates; retain document/selfie/biometric material only when specifically justified by law and approved policy.
+- **Identity and age evidence:** retain only the evidence category, result, decision, reviewer, and dates for the shortest approved period; retain document, selfie, or biometric material only when specifically justified by law and approved policy.
 - **Affiliation and NFC presence:** active relationship plus a limited audit/fraud/dispute period; public status expires promptly.
 - **Precise geolocation:** shortest operational/fraud window feasible; retain derived pass/fail, distance, accuracy, and event evidence longer only if necessary.
 - **Views, clicks, rankings, and analytics:** rolling product/analytics period, then aggregate or deidentify; delete direct identifiers when no longer needed.
@@ -934,13 +933,13 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 
 1. Insert legal entity, addresses, effective dates, and contacts in every public document.
 2. Register and verify the DMCA agent; calendar renewal; match the public page.
-3. Execute and configure the Yoti organization/IDV agreement, data-processing terms, U.S. biometric addenda where applicable, requested-check template, time-to-live, portal access, incident process, and “powered by Yoti” disclosure.
+3. Document and approve the identity/age verification workflow, reviewer authority, requested evidence, notices and consent, retention/deletion, security, appeal, incident, and fallback procedures before launch.
 4. Select, contract with, and configure an Approved Payout Provider; confirm its legal identity, supported payee countries/currencies, KYC, funding, fees, reserves, transaction limits, complaints, data protection, and reconciliation.
 5. If agents launch, execute a separate Agent Agreement and order; implement role, authorization, attribution, statements, tax, approved-provider payout, suspension, and deletion before any commission is promised.
 6. Approve club order form and fee term; display the effective fee to the authorized signer.
 7. Implement clickwrap acceptance with document version, timestamp, user/account, IP/user agent as appropriate, and downloadable copy.
-8. Separate customer Terms acceptance from Dancer, Club, Agent, Media, Club Deal, Yoti, and approved-provider payout acceptances/notices.
-9. Train verification reviewers; restrict Yoti portal/report access; test deletion and reverification.
+8. Separate customer Terms acceptance from Dancer, Club, Agent, Media, Club Deal, Verification, and approved-provider payout acceptances/notices.
+9. Train verification reviewers; restrict verification-record access; test deletion and reverification.
 10. Confirm media categories, 2257/2257A analysis, releases, music rights, and emergency reporting.
 11. Confirm every Club Deal category and enforce the alcohol/sexual-service prohibition at database and API boundaries.
 12. Validate that only approved affiliated clubs appear for dancer shifts.
@@ -958,16 +957,16 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 
 - **Visitor:** Terms and Privacy notice; no account acceptance, but clear browse/use notice.
 - **Customer:** Terms + Privacy; optional notification/marketing consent; Club Deal terms at selection/redemption.
-- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Verification + Yoti notice/consent where required + approved-provider Commission/Payout terms; renewed acceptance for material commission changes.
+- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Verification notice/consent where required + approved-provider Commission/Payout terms; renewed acceptance for material commission changes.
 - **Club owner/authorized signer:** Terms + Privacy + Club Agreement + order/fee term + NFC/Deal terms + data/security obligations.
 - **Club manager/staff:** Terms + Privacy + Acceptable Use + team-role acknowledgment + NFC handling; no authority to accept owner-only commercial changes unless granted.
-- **Agent if launched:** Terms + Privacy + separate Agent Agreement/order + Acceptable Use + Yoti verification notice + approved-provider payout/tax terms + marketing standards.
+- **Agent if launched:** Terms + Privacy + separate Agent Agreement/order + Acceptable Use + identity-verification notice + approved-provider payout/tax terms + marketing standards.
 - **Administrator/support:** workforce confidentiality, access, moderation, security, finance, privacy, incident, DMCA, and acceptable-use policies.
 
 ## Product counsel test scripts
 
 - Create each account role; confirm copy and acceptance version.
-- Complete Yoti dancer onboarding with successful, failed, abandoned, manual-review, expired, mismatched, deleted, and reverification outcomes; then test approved, pending, rejected, deleted, and appealed media.
+- Complete dancer identity/age onboarding with successful, failed, abandoned, manual-review, expired, mismatched, deleted, and reverification outcomes; then test approved, pending, rejected, deleted, and appealed media.
 - Confirm deleted media stays deleted after reload and is removed from public/storage paths.
 - Preview a dancer profile and compare it to the live component, including videos and social links.
 - Complete first club verification and a later affiliation change; attempt an unauthorized shift.
@@ -996,6 +995,3 @@ Counsel should confirm the applicability, current version, and jurisdictional sc
 - **18 U.S.C. § 2257 — performer recordkeeping requirements:** [https://uscode.house.gov/view.xhtml?edition=prelim&num=0&req=granuleid%3AUSC-prelim-title18-section2257](https://uscode.house.gov/view.xhtml?edition=prelim&num=0&req=granuleid%3AUSC-prelim-title18-section2257)
 - **18 U.S.C. § 2421A — promotion or facilitation of prostitution and reckless disregard of sex trafficking:** [https://uscode.house.gov/view.xhtml?req=%28title%3A18+section%3A2421a+edition%3Aprelim%29](https://uscode.house.gov/view.xhtml?req=%28title%3A18+section%3A2421a+edition%3Aprelim%29)
 - **Clark County business-license category and fee schedule:** [https://www.clarkcountynv.gov/adobe/assets/urn%3Aaaid%3Aaem%3Aed9e0b17-c87d-46b8-9ee9-4e044cf84ac2/original/as/list-of-categories-and-fees.pdf](https://www.clarkcountynv.gov/adobe/assets/urn%3Aaaid%3Aaem%3Aed9e0b17-c87d-46b8-9ee9-4e044cf84ac2/original/as/list-of-categories-and-fees.pdf)
-- **Yoti Identity Verification privacy notice:** [https://www.yoti.com/privacy/identity-verification/](https://www.yoti.com/privacy/identity-verification/)
-- **Yoti organization terms:** [https://www.yoti.com/terms/organisations/](https://www.yoti.com/terms/organisations/)
-- **Yoti identity-verification product description:** [https://www.yoti.com/business/identity-verification/](https://www.yoti.com/business/identity-verification/)

@@ -525,7 +525,7 @@ def main() -> None:
 
     flow_rows = [
         ("Customer signs up", "Email, city, password/auth metadata", "Supabase Auth creates user; app assigns customer role and private profile", "Customer dashboard", "Confirmation, rate limit, row-level access"),
-        ("Dancer signs up", "Email, city, identity/profile fields", "Auth + draft dancer profile; staged onboarding; Yoti session required", "Private dancer workspace", "Email confirmation; Yoti reference/result; account state; audit"),
+        ("Dancer signs up", "Email, city, identity/profile fields", "Auth + draft dancer profile; staged onboarding; MyDancr identity/age review required", "Private dancer workspace", "Email confirmation; verification decision; account state; audit"),
         ("Dancer uploads media", "Image/video, metadata, moderation signals", "Signature/type/size checks; transform/watermark; automated and/or human moderation", "Approved public media or private review state", "Moderation record; storage path; rejection reason"),
         ("Dancer submits", "Profile, identity readiness, approved media", "Eligibility checks; first venue verification remains required", "Pending/approved state", "Approval review; notification"),
         ("Dressing-room NFC tap", "Tag token, dancer account, venue, device/IP audit", "Secure tag validation; affiliation/working session creation", "Venue affiliation + time-limited Working Now", "Tap event; expiry; cooldown; audit"),

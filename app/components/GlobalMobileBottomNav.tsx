@@ -276,8 +276,6 @@ export function GlobalMobileBottomNav() {
     };
   }, [city, pathname]);
 
-  if (pathname.startsWith("/age-verification")) return null;
-
   return (
     <>
       <div
