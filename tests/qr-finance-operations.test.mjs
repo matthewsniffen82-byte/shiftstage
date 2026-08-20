@@ -42,18 +42,19 @@ test("QR finance migration creates private receivables and payout ledgers", () =
 
 test("monthly club invoices, reminders, reconciliation, and dancer transfers use Stripe production APIs", () => {
   const service = read("src/lib/dancr/finance.ts");
+  const invoices = read("src/lib/dancr/finance-invoices.ts");
   const providerEvents = read("src/lib/dancr/finance-provider-events.ts");
   const provider = read("src/lib/dancr/payout-provider.ts");
   const payoutAccounts = read("src/lib/dancr/payout-account-store.ts");
   assert.match(service, /createMonthlyClubInvoiceDrafts/);
-  assert.match(service, /\.lt\("commission_month", currentMonth\)/);
-  assert.match(service, /getStripe\(\)\.customers\.create/);
-  assert.match(service, /stripe\.invoices\.create/);
-  assert.match(service, /stripe\.invoiceItems\.create/);
-  assert.match(service, /stripe\.invoices\.finalizeInvoice/);
-  assert.match(service, /stripe\.invoices\.sendInvoice/);
+  assert.match(invoices, /\.lt\("commission_month", currentMonth\)/);
+  assert.match(invoices, /getStripe\(\)\.customers\.create/);
+  assert.match(invoices, /stripe\.invoices\.create/);
+  assert.match(invoices, /stripe\.invoiceItems\.create/);
+  assert.match(invoices, /stripe\.invoices\.finalizeInvoice/);
+  assert.match(invoices, /stripe\.invoices\.sendInvoice/);
   assert.match(providerEvents, /apply_club_invoice_payment/);
-  assert.match(service, /club_invoice_reminders/);
+  assert.match(invoices, /club_invoice_reminders/);
   assert.match(provider, /getStripe\(\)\.accounts\.create/);
   assert.match(provider, /getStripe\(\)\.accountLinks\.create/);
   assert.match(provider, /getStripe\(\)\.transfers\.create/);
