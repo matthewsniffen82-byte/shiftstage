@@ -58,7 +58,7 @@ test("venue invitations are expiring, hashed, email-bound, and service-role rede
   assert.match(migration, /token_digest text not null unique/);
   assert.doesNotMatch(migration, /\btoken text\b/);
   assert.match(migration, /revoke all on function public\.redeem_venue_team_invitation[\s\S]*?grant execute[\s\S]*?service_role/);
-  assert.match(inviteRoute, /account\.role !== "venue"/);
+  assert.match(inviteRoute, /requireActiveVenueAccount/);
   assert.match(authRoute, /venueInvitationToken/);
   assert.match(authRoute, /redeemVenueTeamInvitation/);
   assert.match(teamRoute, /sendTransactionalEmail/);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { redeemVenueTeamInvitation, resolveVenueTeamInvitation } from "@/src/lib/dancr/venue-team";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -23,10 +23,7 @@ export async function POST(request: Request) {
     const { user, session } = await createRequestSupabaseContext(request);
     const body = await request.json();
     const admin = createAdminSupabaseClient();
-    const account = await getAccountByUserId(admin, user.id);
-    if (!account || account.role !== "venue" || account.accountState !== "active") {
-      return noStore({ ok: false, error: "Sign in with an active venue account." }, 403);
-    }
+    const account = await requireActiveVenueAccount(admin, user.id);
     const email = String(account.email || user.email || "").trim().toLowerCase();
     const result = await redeemVenueTeamInvitation(admin, {
       token: String(body?.token || ""),

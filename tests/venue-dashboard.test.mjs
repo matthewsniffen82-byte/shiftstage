@@ -144,7 +144,7 @@ test("venue Club Deal guidance stays concise with details available on demand", 
 });
 
 test("MyDancr supplies NFC stickers while venue owners receive read-only inventory", () => {
-  assert.match(nfcTagRoute, /requireActiveVenue/);
+  assert.match(nfcTagRoute, /requireActiveVenueAccount/);
   assert.match(nfcTagRoute, /MyDancr supplies and programs venue NFC stickers/);
   assert.match(nfcTagRoute, /Only MyDancr can activate, disable, or replace/);
   assert.doesNotMatch(nfcTagRoute, /createVenueNfcTag/);
@@ -193,7 +193,7 @@ test("legacy venue and deal QR write APIs return an explicit permanent replaceme
 
 test("venue dashboard data remains authenticated, owner-scoped, and backed by real analytics", () => {
   assert.match(venueDashboardRoute, /createRequestSupabaseContext/);
-  assert.match(venueDashboardRoute, /account\.role !== "venue"/);
+  assert.match(venueDashboardRoute, /requireActiveVenueAccount/);
   assert.match(venueDashboardRoute, /getVenueDashboard/);
   assert.match(dashboard, /analytics/);
   assert.match(dashboard, /Working now/);

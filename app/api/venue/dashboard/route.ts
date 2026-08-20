@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { getVenueFinance } from "@/src/lib/dancr/finance";
 import { getVenueDashboard, readVenueAnalyticsPeriod } from "@/src/lib/dancr/venue";
 import { canVenue, requireVenueAccess } from "@/src/lib/dancr/venue-access";
@@ -16,10 +16,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    const account = await getAccountByUserId(client, user.id);
-    if (!account || account.role !== "venue" || account.accountState !== "active") {
-      return NextResponse.json({ ok: false, error: "Active venue account required." }, { status: 403 });
-    }
+    await requireActiveVenueAccount(client, user.id);
 
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "view_dashboard").catch(() => null);

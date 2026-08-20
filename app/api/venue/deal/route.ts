@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import {
   deleteVenueDealForAccount,
   getVenueDealsForAccount,
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    await requireActiveVenue(client, user.id);
+    await requireActiveVenueAccount(client, user.id);
     const result = await getVenueDealsForAccount(createAdminSupabaseClient(), user.id);
     return NextResponse.json({ ok: true, deals: result?.deals || [] });
   } catch (error) {
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    await requireActiveVenue(client, user.id);
+    await requireActiveVenueAccount(client, user.id);
     const body = await request.json();
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_deals");
@@ -78,7 +78,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    await requireActiveVenue(client, user.id);
+    await requireActiveVenueAccount(client, user.id);
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_deals");
     const dealId = new URL(request.url).searchParams.get("dealId") || "";
@@ -90,15 +90,5 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: true, message: "Club Deal deleted." });
   } catch (error) {
     return apiError(error, "Unable to delete the venue Club Deal.", 400);
-  }
-}
-
-async function requireActiveVenue(
-  client: Parameters<typeof getAccountByUserId>[0],
-  userId: string,
-) {
-  const account = await getAccountByUserId(client, userId);
-  if (!account || account.role !== "venue" || account.accountState !== "active") {
-    throw new Error("Active venue account required.");
   }
 }

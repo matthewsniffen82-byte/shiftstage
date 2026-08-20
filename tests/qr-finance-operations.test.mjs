@@ -69,7 +69,7 @@ test("finance APIs enforce role authorization and expose authenticated statement
   assert.match(admin, /await requireAdmin\(client, user\.id\)/);
   assert.match(admin, /record_manual_payment/);
   assert.match(admin, /run_automation/);
-  assert.match(venue, /account\.role !== "venue" \|\| account\.accountState !== "active"/);
+  assert.match(venue, /requireActiveVenueAccount/);
   assert.match(dancer, /account\.role !== "dancer" \|\| account\.accountState !== "active"/);
   assert.match(dancer, /createDancerConnectOnboarding/);
   assert.match(venueStatement, /content-type": "text\/csv; charset=utf-8"/);

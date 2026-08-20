@@ -316,7 +316,7 @@ test("administrator moderation persists decisions and venue TV is schedule-deriv
   assert.match(tvSource, /export async function retrySubmittedMyDancrTvAutomatedModeration/);
   assert.match(tvSource, /RETRYABLE_VIDEO_MODERATION_REASON_CODES/);
   assert.match(tvSource, /event: "mydancr_tv\.admin_automated_review_restarted"/);
-  assert.match(venueApi, /requireActiveVenue/);
+  assert.match(venueApi, /requireActiveVenueAccount/);
   assert.match(venueApi, /getVenueMyDancrTvVideos/);
   assert.doesNotMatch(venueApi, /PATCH|updateVenueMyDancrTvVideo/);
   assert.doesNotMatch(venuePanel, /Confirm tag|Reject tag|Feature on venue page/);

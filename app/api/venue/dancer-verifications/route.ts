@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import {
   getVenueDancerVerificationState,
   revokeDancerVenueAffiliation,
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    await requireVenueAccount(client, user.id);
+    await requireActiveVenueAccount(client, user.id);
     await requireVenueAccess(createAdminSupabaseClient(), user.id, "view_roster");
     const token = new URL(request.url).searchParams.get("token");
     const state = await getVenueDancerVerificationState(createAdminSupabaseClient(), user.id, token);
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    await requireVenueAccount(client, user.id);
+    await requireActiveVenueAccount(client, user.id);
     return noStoreJson({
       ok: false,
       code: "dressing_room_nfc_required",
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    await requireVenueAccount(client, user.id);
+    await requireActiveVenueAccount(client, user.id);
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_roster");
     const body = await readBody(request);
@@ -70,14 +70,6 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return affiliationApiError(error, "Unable to remove dancer verification.");
   }
-}
-
-async function requireVenueAccount(client: any, userId: string) {
-  const account = await getAccountByUserId(client, userId);
-  if (!account || account.role !== "venue" || account.accountState !== "active") {
-    throw new VenueAffiliationUserError("Active venue manager account required.");
-  }
-  return account;
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicApiError } from "../api-error-policy";
 import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, Json, UserRole } from "./types";
 import { initialDancerApprovalValues } from "./profile-approval";
 import { transitionDancerPublication } from "./profile-publication";
@@ -150,6 +151,14 @@ export async function getAccountByUserId(client: DancrClient, userId: string): P
     email: data.email,
     accountState: data.account_state,
   };
+}
+
+export async function requireActiveVenueAccount(client: DancrClient, userId: string): Promise<DancrAccount> {
+  const account = await getAccountByUserId(client, userId);
+  if (!account || account.role !== "venue" || account.accountState !== "active") {
+    throw new PublicApiError("FORBIDDEN", "Active venue account required.", 403);
+  }
+  return account;
 }
 
 export async function setAccountState(

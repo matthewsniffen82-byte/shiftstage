@@ -58,7 +58,7 @@ test("venue cover uploads are validated, moderated, compensated, and permission-
 
 test("only active venue accounts can publish or remove a cover image", () => {
   assert.match(coverRoute, /createRequestSupabaseContext\(request\)/);
-  assert.match(coverRoute, /account\.accountState !== "active" \|\| account\.role !== "venue"/);
+  assert.match(coverRoute, /requireActiveVenueAccount/);
   assert.match(coverRoute, /requireVenueAccess\(admin, user\.id, "manage_profile"\)/);
   assert.match(coverRoute, /uploadVenueCoverImage\([\s\S]*?admin,[\s\S]*?user\.id/);
   assert.match(coverRoute, /deleteVenueCoverImage\(admin, user\.id\)/);
