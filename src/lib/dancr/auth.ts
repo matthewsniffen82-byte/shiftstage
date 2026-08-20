@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, Json, UserRole } from "./types";
-import { initialDancerApprovalValues, isCoreVerificationApproved } from "./profile-approval";
+import { initialDancerApprovalValues } from "./profile-approval";
+import { transitionDancerPublication } from "./profile-publication";
 
 type DancrClient = SupabaseClient;
 
@@ -151,7 +152,12 @@ export async function getAccountByUserId(client: DancrClient, userId: string): P
   };
 }
 
-export async function setAccountState(client: DancrClient, userId: string, accountState: AccountState) {
+export async function setAccountState(
+  client: DancrClient,
+  userId: string,
+  accountState: AccountState,
+  publicationClient: DancrClient = client,
+) {
   const update: Record<string, string | null> = {
     account_state: accountState,
   };
@@ -171,19 +177,21 @@ export async function setAccountState(client: DancrClient, userId: string, accou
   if (error) throw error;
 
   if (data.role === "dancer") {
-    const dancerUpdate =
-      accountState === "active"
-        ? await activeDancerProfileState(client, userId)
-        : {
-            status: "disabled" as const,
-            disabled_at: new Date().toISOString(),
-          };
-    const { error: dancerError } = await client
+    const { data: dancer, error: dancerError } = await publicationClient
       .from("dancer_profiles")
-      .update(dancerUpdate)
-      .eq("user_id", userId);
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
 
     if (dancerError) throw dancerError;
+    if (dancer?.id) {
+      await transitionDancerPublication(
+        publicationClient,
+        dancer.id,
+        accountState === "active" ? "reactivate" : "disable",
+        { actorUserId: userId },
+      );
+    }
   }
 
   return {
@@ -192,29 +200,6 @@ export async function setAccountState(client: DancrClient, userId: string, accou
     displayName: data.display_name,
     email: data.email,
     accountState: data.account_state,
-  };
-}
-
-async function activeDancerProfileState(client: DancrClient, userId: string) {
-  const { data, error }: any = await client
-    .from("dancer_profiles")
-    .select("status, verification_status, venue_approved_at")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  const currentStatus = String(data?.status || "").toLowerCase();
-  const status =
-    isCoreVerificationApproved(data)
-      ? "approved"
-      : currentStatus === "rejected"
-        ? "rejected"
-        : "pending_review";
-
-  return {
-    status,
-    disabled_at: null,
-    ...(status === "approved" ? { is_public: true } : {}),
   };
 }
 

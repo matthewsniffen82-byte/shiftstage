@@ -757,12 +757,7 @@ export async function updateContentReport(
   if (!report) throw new Error("Report not found.");
 
   if (action === "removed" && report.target_type === "dancer_profile" && report.target_id) {
-    const { error: dancerError } = await db
-      .from("dancer_profiles")
-      .update({ status: "disabled" })
-      .eq("id", report.target_id);
-
-    if (dancerError) throw dancerError;
+    await transitionDancerPublication(client, report.target_id, "disable", { actorUserId: adminId });
   }
 
   const { data, error } = await db

@@ -80,7 +80,7 @@ test("historical actor references cannot block permanent login deletion", () => 
 test("the account endpoint permanently removes the authenticated login", () => {
   assert.match(accountRoute, /export async function DELETE\(request: Request\)/);
   assert.match(accountRoute, /createRequestSupabaseContext\(request\)/);
-  assert.match(accountRoute, /setAccountState\(client, user\.id, "deleted"\)/);
+  assert.match(accountRoute, /setAccountState\(client, user\.id, "deleted", admin\)/);
   assert.match(accountRoute, /admin\.auth\.admin\.deleteUser\(user\.id\)/);
   assert.match(accountRoute, /return NextResponse\.json\(\{ ok: true, account \}\);/);
   assert.doesNotMatch(

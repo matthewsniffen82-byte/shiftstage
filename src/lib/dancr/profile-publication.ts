@@ -5,7 +5,9 @@ export type DancerPublicationTransition =
   | "admin_accept"
   | "admin_reject"
   | "set_public"
-  | "set_private";
+  | "set_private"
+  | "disable"
+  | "reactivate";
 
 export type DancerPublicationState = {
   id: string;
@@ -114,6 +116,34 @@ export async function transitionDancerPublication(
       throw new Error("Profile approval is required before reactivation.");
     }
     update = { is_public: makingPublic };
+  } else if (transition === "disable") {
+    if (!actorIsOwner && !actorIsAdmin) {
+      throw new Error("Only the dancer or an active admin can disable this profile.");
+    }
+    update = {
+      status: "disabled",
+      disabled_at: new Date().toISOString(),
+      is_public: false,
+    };
+  } else if (transition === "reactivate") {
+    if (!actorIsOwner && !actorIsAdmin) {
+      throw new Error("Only the dancer or an active admin can reactivate this profile.");
+    }
+    if (account.account_state !== "active") {
+      throw new Error("The dancer account must be active before reactivation.");
+    }
+
+    const status =
+      profile.verification_status === "rejected" || profile.status === "rejected"
+        ? "rejected"
+        : profile.verification_status === "approved" && profile.approved_at && profile.venue_approved_at
+          ? "approved"
+          : "pending_review";
+    update = {
+      status,
+      disabled_at: null,
+      is_public: status === "approved",
+    };
   } else {
     throw new Error("Unknown dancer publication transition.");
   }

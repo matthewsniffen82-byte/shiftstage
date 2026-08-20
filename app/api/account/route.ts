@@ -108,7 +108,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "Account state must be active or disabled." }, { status: 400 });
     }
 
-    const account = await setAccountState(client, user.id, accountState);
+    const account = await setAccountState(client, user.id, accountState, createAdminSupabaseClient());
     return NextResponse.json({ ok: true, account, session });
   } catch (error) {
     return apiError(error, "Unable to update account.");
@@ -118,8 +118,8 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    const account = await setAccountState(client, user.id, "deleted");
     const admin = createAdminSupabaseClient();
+    const account = await setAccountState(client, user.id, "deleted", admin);
     const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id);
 
     if (deleteUserError) {

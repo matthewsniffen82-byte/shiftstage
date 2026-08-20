@@ -313,10 +313,11 @@ test("the live entry point and visibility query support the production schema", 
 });
 
 test("profile approval stays synchronized with account and core verification state", () => {
-  assert.match(accountAuthSource, /accountState === "active"[\s\S]*?activeDancerProfileState/);
-  assert.match(accountAuthSource, /isCoreVerificationApproved\(data\)[\s\S]*?"approved"/);
-  assert.match(accountAuthSource, /status,[\s\S]*?disabled_at: null,[\s\S]*?status === "approved" \? \{ is_public: true \}/);
-  assert.match(accountAuthSource, /status: "disabled" as const,[\s\S]*?disabled_at: new Date/);
+  const accountStateWriter = accountAuthSource.match(/export async function setAccountState[\s\S]*?\n}\r?\n\r?\nexport async function getCustomerProfile/)?.[0] || "";
+  assert.match(accountAuthSource, /transitionDancerPublication/);
+  assert.match(accountStateWriter, /accountState === "active" \? "reactivate" : "disable"/);
+  assert.doesNotMatch(accountStateWriter, /activeDancerProfileState/);
+  assert.doesNotMatch(accountStateWriter, /\.from\("dancer_profiles"\)[\s\S]*?\.update\(/);
   assert.doesNotMatch(adminSource, /VerifyMy|identity_provider|identity_verified_at/);
   assert.doesNotMatch(adminSource, /const statusUpdate = approved[\s\S]*?status: "approved"/);
   assert.match(adminSource, /approved \? "admin_accept" : "admin_reject"/);
