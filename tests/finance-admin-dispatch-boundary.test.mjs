@@ -42,7 +42,8 @@ test("the dispatcher preserves every supported production finance action", () =>
 test("the dispatcher preserves validation limits and explicit client errors", () => {
   assert.match(input, /parseAdminFinanceBody\(input\)/);
   assert.match(dispatch, /if \(!parsed\.ok\) return invalid\(parsed\.error\)/);
-  assert.match(input, /totalPaidCents <= 0/);
+  assert.match(input, /Number\.isSafeInteger\(parsed\)/);
+  assert.match(input, /Number\.MAX_SAFE_INTEGER/);
   assert.match(input, /Payment total must be a positive whole number of cents\./);
   assert.match(input, /const UUID_PATTERN/);
   assert.match(input, /Payment reference must be 160 characters or fewer\./);

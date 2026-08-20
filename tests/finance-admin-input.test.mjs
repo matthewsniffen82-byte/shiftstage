@@ -114,7 +114,17 @@ test("manual payment parsing trims identifiers and preserves positive whole-cent
     },
   });
 
-  for (const totalPaidCents of [0, -1, 1.5, "not-a-number"]) {
+  for (const totalPaidCents of [
+    0,
+    -1,
+    1.5,
+    "not-a-number",
+    true,
+    "",
+    " ",
+    "1e3",
+    Number.MAX_SAFE_INTEGER + 1,
+  ]) {
     assert.deepEqual(parseManualPaymentInput({
       invoiceId: INVOICE_ID,
       reference: "reference",
@@ -166,37 +176,75 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
     }
   }
 
-  assert.equal(parsePayoutSettingsInput({
+  assert.deepEqual(parsePayoutSettingsInput({
+    payoutsEnabled: false,
+    paymentProvider: "bitsafe",
+    payoutMode: "scheduled",
+    earningsHoldDays: 90,
+    minimumPayoutCents: 1,
+  }), {
+    ok: true,
+    value: {
+      payoutsEnabled: false,
+      paymentProvider: "bitsafe",
+      payoutMode: "scheduled",
+      earningsHoldDays: 90,
+      minimumPayoutCents: 1,
+    },
+  });
+  assert.deepEqual(parsePayoutSettingsInput({
     payoutsEnabled: "true",
     paymentProvider: "bitsafe",
     payoutMode: "scheduled",
     earningsHoldDays: 90,
     minimumPayoutCents: 1,
-  }).value.payoutsEnabled, false);
+  }), { ok: false, error: "Payouts enabled must be true or false." });
   assert.deepEqual(parsePayoutSettingsInput({
+    payoutsEnabled: true,
     paymentProvider: "unsupported",
     payoutMode: "scheduled",
     earningsHoldDays: 0,
     minimumPayoutCents: 1,
   }), { ok: false, error: "Unsupported payout provider." });
   assert.deepEqual(parsePayoutSettingsInput({
+    payoutsEnabled: true,
     paymentProvider: "bitsafe",
     payoutMode: "unsupported",
     earningsHoldDays: 0,
     minimumPayoutCents: 1,
   }), { ok: false, error: "Unsupported payout mode." });
   assert.deepEqual(parsePayoutSettingsInput({
+    payoutsEnabled: true,
     paymentProvider: "bitsafe",
     payoutMode: "scheduled",
     earningsHoldDays: 91,
     minimumPayoutCents: 1,
   }), { ok: false, error: "Hold days must be between 0 and 90." });
   assert.deepEqual(parsePayoutSettingsInput({
+    payoutsEnabled: true,
     paymentProvider: "bitsafe",
     payoutMode: "scheduled",
     earningsHoldDays: 0,
     minimumPayoutCents: 0,
   }), { ok: false, error: "Minimum payout is invalid." });
+  for (const earningsHoldDays of [false, "", " ", "1e1", 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.deepEqual(parsePayoutSettingsInput({
+      payoutsEnabled: true,
+      paymentProvider: "bitsafe",
+      payoutMode: "scheduled",
+      earningsHoldDays,
+      minimumPayoutCents: 1,
+    }), { ok: false, error: "Hold days must be between 0 and 90." });
+  }
+  for (const minimumPayoutCents of [true, "", " ", "1e3", 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.deepEqual(parsePayoutSettingsInput({
+      payoutsEnabled: true,
+      paymentProvider: "bitsafe",
+      payoutMode: "scheduled",
+      earningsHoldDays: 0,
+      minimumPayoutCents,
+    }), { ok: false, error: "Minimum payout is invalid." });
+  }
 });
 
 test("earning management parsing preserves actions, trimming, and audit-reason limits", () => {

@@ -36,7 +36,8 @@ test("typed parsers preserve provider, payout mode, and earning action allowlist
   assert.match(input, /\["stripe", "bitsafe", "adyen", "other"\] as const/);
   assert.match(input, /\["manual_cashout", "scheduled", "both"\] as const/);
   assert.match(input, /\["hold", "release", "reverse"\] as const/);
-  assert.match(input, /payoutsEnabled: body\.payoutsEnabled === true/);
+  assert.match(input, /const payoutsEnabled = requiredBoolean\(body\.payoutsEnabled/);
+  assert.match(input, /payoutsEnabled: payoutsEnabled\.value/);
 });
 
 test("typed parsers preserve trimming, numeric bounds, and audit text limits", () => {
@@ -45,7 +46,10 @@ test("typed parsers preserve trimming, numeric bounds, and audit text limits", (
   assert.match(input, /if \(!UUID_PATTERN\.test\(text\.value\)\)/);
   assert.match(input, /typeof value !== "string" \|\| !value\.trim\(\)/);
   assert.match(input, /return valid\(value\.trim\(\)\)/);
+  assert.match(input, /typeof value === "string" && \/\^\(0\|\[1-9\]\\d\*\)\$\//);
+  assert.match(input, /Number\.isSafeInteger\(parsed\)/);
   assert.match(input, /parsed < minimum \|\| parsed > maximum/);
+  assert.match(input, /Number\.MAX_SAFE_INTEGER/);
   assert.match(input, /earningsHoldDays, 0, 90/);
   assert.match(input, /minimumPayoutCents, 1, 10_000_000/);
   assert.equal((input.match(/reason\.value\.length < 3 \|\| reason\.value\.length > 500/g) || []).length, 3);

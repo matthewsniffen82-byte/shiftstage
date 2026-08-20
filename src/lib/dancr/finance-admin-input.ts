@@ -118,14 +118,19 @@ export function parseManualPaymentInput(body: Record<string, unknown>): Validati
   if (reference.value.length > 160) {
     return invalid("Payment reference must be 160 characters or fewer.");
   }
-  const totalPaidCents = Number(body.totalPaidCents);
-  if (!Number.isInteger(totalPaidCents) || totalPaidCents <= 0) {
-    return invalid("Payment total must be a positive whole number of cents.");
-  }
-  return valid({ invoiceId: invoiceId.value, reference: reference.value, totalPaidCents });
+  const totalPaidCents = boundedInteger(
+    body.totalPaidCents,
+    1,
+    Number.MAX_SAFE_INTEGER,
+    "Payment total must be a positive whole number of cents.",
+  );
+  if (!totalPaidCents.ok) return totalPaidCents;
+  return valid({ invoiceId: invoiceId.value, reference: reference.value, totalPaidCents: totalPaidCents.value });
 }
 
 export function parsePayoutSettingsInput(body: Record<string, unknown>): ValidationResult<PayoutSettingsInput> {
+  const payoutsEnabled = requiredBoolean(body.payoutsEnabled, "Payouts enabled must be true or false.");
+  if (!payoutsEnabled.ok) return payoutsEnabled;
   const paymentProvider = oneOf(body.paymentProvider, ["stripe", "bitsafe", "adyen", "other"] as const, "Unsupported payout provider.");
   if (!paymentProvider.ok) return paymentProvider;
   const payoutMode = oneOf(body.payoutMode, ["manual_cashout", "scheduled", "both"] as const, "Unsupported payout mode.");
@@ -135,7 +140,7 @@ export function parsePayoutSettingsInput(body: Record<string, unknown>): Validat
   const minimumPayoutCents = boundedInteger(body.minimumPayoutCents, 1, 10_000_000, "Minimum payout is invalid.");
   if (!minimumPayoutCents.ok) return minimumPayoutCents;
   return valid({
-    payoutsEnabled: body.payoutsEnabled === true,
+    payoutsEnabled: payoutsEnabled.value,
     paymentProvider: paymentProvider.value,
     payoutMode: payoutMode.value,
     earningsHoldDays: earningsHoldDays.value,
@@ -206,9 +211,17 @@ function requiredUuid(value: unknown, requiredMessage: string, invalidMessage: s
   return text;
 }
 
+function requiredBoolean(value: unknown, message: string) {
+  return typeof value === "boolean" ? valid(value) : invalid<boolean>(message);
+}
+
 function boundedInteger(value: unknown, minimum: number, maximum: number, message: string) {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < minimum || parsed > maximum) return invalid<number>(message);
+  const parsed = typeof value === "number"
+    ? value
+    : typeof value === "string" && /^(0|[1-9]\d*)$/.test(value.trim())
+      ? Number(value.trim())
+      : Number.NaN;
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) return invalid<number>(message);
   return valid(parsed);
 }
 
