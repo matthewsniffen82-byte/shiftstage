@@ -2,22 +2,18 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { resolveApiError } from "@/src/lib/api-error-policy";
 import {
-  DealRedemptionAttributionError,
-  resolveDealRedemptionAttribution,
-} from "@/src/lib/dancr/deal-redemption-attribution";
-import {
-  enforceDealGenerationRateLimit,
-  getActiveClubDealByIdForVenue,
-  getActiveClubDealsForVenue,
-  issueAndConfirmDealRedemptionFromNfc,
-} from "@/src/lib/dancr/deals";
+  CashierDealRedemptionError,
+  completeCashierDealRedemption,
+} from "@/src/lib/dancr/cashier-deal-redemption";
+import { DealRedemptionAttributionError } from "@/src/lib/dancr/deal-redemption-attribution";
+import { getActiveClubDealsForVenue } from "@/src/lib/dancr/deals";
 import {
   registerDancerFromNfc,
   recordNfcTagScan,
   resolveNfcTag,
 } from "@/src/lib/dancr/nfc";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import { createRequestSupabaseContext, getBearerToken } from "@/src/lib/supabase/request";
+import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,55 +102,33 @@ export async function POST(request: Request, context: RouteContext) {
     const sourceType = body.sourceType === "dancer_profile" ? "dancer_profile" : "club_page";
     const dancerId = typeof body.dancerId === "string" ? body.dancerId.trim() : null;
     const attributionToken = typeof body.attributionToken === "string" ? body.attributionToken.trim() : "";
-    if (!UUID_PATTERN.test(dealId)) {
-      return NextResponse.json({ ok: false, error: "Choose an active Club Deal." }, { status: 400 });
-    }
-    await enforceDealGenerationRateLimit(admin, request, dealId);
-    const deal = await getActiveClubDealByIdForVenue(admin, tag.venueId, dealId);
-    if (!deal) return NextResponse.json({ ok: false, error: "This Club Deal is no longer active." }, { status: 404 });
-
-    const attribution = await resolveDealRedemptionAttribution(admin, {
+    const redemption = await completeCashierDealRedemption(admin, {
+      venueId: tag.venueId,
+      nfcTagId: tag.id,
+      dealId,
       sourceType,
       dancerId,
       attributionToken,
-      venueId: tag.venueId,
-      dealId,
-    });
-
-    const customerId = await optionalCustomerId(request, admin);
-    const confirmation = await issueAndConfirmDealRedemptionFromNfc(admin, {
-      clubDealId: deal.id,
-      venueId: tag.venueId,
-      dealTitle: deal.dealTitle,
-      dealDescription: deal.dealDescription,
-      dealTerms: deal.dealTerms,
-      dealOfferType: deal.offerType,
-      sourceType: attribution.sourceType,
-      dancerId: attribution.dancerId,
-      shiftId: attribution.shiftId,
-      customerId,
       sessionId,
-      campaignSource: "venue_nfc",
-      nfcTagId: tag.id,
       request,
     });
     console.info("CLUB_DEAL_NFC_REDEEMED", {
       venueId: tag.venueId,
       tagId: tag.id,
-      dealId: deal.id,
-      redemptionId: confirmation?.redemptionId,
-      sourceType,
+      dealId: redemption.deal.id,
+      redemptionId: redemption.confirmation?.redemptionId,
+      sourceType: redemption.sourceType,
     });
     return noStore({
       ok: true,
       action: "deal_redemption",
-      deal,
-      confirmation,
-      message: `${deal.dealTitle} redeemed at ${tag.venue.name}.`,
+      deal: redemption.deal,
+      confirmation: redemption.confirmation,
+      message: `${redemption.deal.dealTitle} redeemed at ${tag.venue.name}.`,
     });
   } catch (error) {
     const message = safeErrorMessage(error);
-    const status = error instanceof DealRedemptionAttributionError
+    const status = error instanceof CashierDealRedemptionError || error instanceof DealRedemptionAttributionError
       ? error.status
       : /sign in|active dancer|different venue|inactive/i.test(message)
         ? 403
@@ -185,18 +159,6 @@ function formatTapTime(value: unknown) {
     minute: "2-digit",
     timeZoneName: "short",
   }).format(parsed);
-}
-
-async function optionalCustomerId(request: Request, admin: ReturnType<typeof createAdminSupabaseClient>) {
-  if (!getBearerToken(request)) return null;
-  try {
-    const { user } = await createRequestSupabaseContext(request);
-    const { data, error } = await admin.from("app_users").select("role, account_state").eq("id", user.id).maybeSingle();
-    if (error) throw error;
-    return data?.role === "customer" && data?.account_state === "active" ? user.id : null;
-  } catch {
-    return null;
-  }
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {

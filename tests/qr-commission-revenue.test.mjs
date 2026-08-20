@@ -11,6 +11,7 @@ const [
   policy,
   deals,
   generationRoute,
+  cashierRedemption,
   eventRoute,
   redemptionRoute,
   scannerClient,
@@ -35,6 +36,7 @@ const [
   readFile(new URL("../src/lib/dancr/commission-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/cashier-deal-redemption.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redemptions/[token]/events/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redeem/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/deals/redeem/[token]/RedeemDealClient.tsx", import.meta.url), "utf8"),
@@ -77,7 +79,8 @@ test("dancer attribution is locked to a verified shift when the cashier NFC tap 
   assert.match(attribution, /createHmac\("sha256"/);
   assert.match(attribution, /timingSafeEqual/);
   assert.match(attribution, /dancerId[\s\S]*?venueId[\s\S]*?dealId[\s\S]*?shiftId[\s\S]*?expiresAt/);
-  assert.match(generationRoute, /resolveDealRedemptionAttribution\(admin/);
+  assert.match(generationRoute, /completeCashierDealRedemption\(admin/);
+  assert.match(cashierRedemption, /resolveDealRedemptionAttribution\(client/);
   assert.doesNotMatch(generationRoute, /verifyDancerDealAttributionToken|getVerifiedActiveCheckInAtVenue/);
   assert.match(redemptionAttribution, /verifyDancerDealAttributionToken\(attributionToken\)/);
   assert.match(redemptionAttribution, /attribution\.dancerId !== dancerId[\s\S]*?attribution\.venueId !== input\.venueId[\s\S]*?attribution\.dealId !== input\.dealId/);
@@ -89,7 +92,7 @@ test("dancer attribution is locked to a verified shift when the cashier NFC tap 
   assert.match(migration, /shift_id uuid references public\.shifts/);
   assert.match(migration, /v_redemption\.source_type = 'dancer_profile'[\s\S]*?v_redemption\.shift_id is null/);
   assert.doesNotMatch(passPage, /dancerHasVerifiedActiveCheckInAtVenue|hasLiveDancerAttribution/);
-  assert.match(generationRoute, /campaignSource: "venue_nfc"/);
+  assert.match(cashierRedemption, /campaignSource: "venue_nfc"/);
   assert.match(dancerPage, /createDancerDealAttributionToken/);
   assert.match(dancerPage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(dancerPage, /attributionTokens=\{dealAttributionTokens\}/);

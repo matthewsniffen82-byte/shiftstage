@@ -2,13 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [route, attribution] = await Promise.all([
+const [route, cashierRedemption, attribution] = await Promise.all([
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/cashier-deal-redemption.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-redemption-attribution.ts", import.meta.url), "utf8"),
 ]);
 
 test("cashier NFC delegates all dancer redemption attribution to one domain boundary", () => {
-  assert.match(route, /resolveDealRedemptionAttribution\(admin/);
+  assert.match(route, /completeCashierDealRedemption\(admin/);
+  assert.match(cashierRedemption, /resolveDealRedemptionAttribution\(client/);
   assert.doesNotMatch(route, /verifyDancerDealAttributionToken|getVerifiedActiveCheckInAtVenue/);
   assert.match(attribution, /export async function resolveDealRedemptionAttribution/);
   assert.match(attribution, /verifyDancerDealAttributionToken/);
@@ -23,8 +25,8 @@ test("club-page redemption strips dancer attribution before the financial RPC", 
   assert.match(clubPageBranch, /sourceType: "club_page"/);
   assert.match(clubPageBranch, /dancerId: null/);
   assert.match(clubPageBranch, /shiftId: null/);
-  assert.match(route, /dancerId: attribution\.dancerId/);
-  assert.match(route, /shiftId: attribution\.shiftId/);
+  assert.match(cashierRedemption, /dancerId: attribution\.dancerId/);
+  assert.match(cashierRedemption, /shiftId: attribution\.shiftId/);
 });
 
 test("dancer redemption requires an exact signed venue, deal, dancer, and current shift match", () => {

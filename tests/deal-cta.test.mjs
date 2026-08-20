@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [deals, tapRoute, redemptionAttribution, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
+const [deals, tapRoute, cashierRedemption, redemptionAttribution, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/cashier-deal-redemption.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-redemption-attribution.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/deals/pass/[token]/page.tsx", import.meta.url), "utf8"),
@@ -25,22 +26,23 @@ const [deals, tapRoute, redemptionAttribution, dealCard, passPage, venuePage, ve
 
 test("dancer-attributed cashier taps require a verified current shift and preserve locked attribution", () => {
   assert.match(deals, /export async function getVerifiedActiveCheckInAtVenue/);
-  assert.match(tapRoute, /resolveDealRedemptionAttribution/);
+  assert.match(tapRoute, /completeCashierDealRedemption/);
+  assert.match(cashierRedemption, /resolveDealRedemptionAttribution/);
   assert.doesNotMatch(tapRoute, /verifyDancerDealAttributionToken|getVerifiedActiveCheckInAtVenue/);
   assert.match(redemptionAttribution, /verifyDancerDealAttributionToken/);
   assert.match(redemptionAttribution, /attribution\.dancerId !== dancerId/);
   assert.match(redemptionAttribution, /attribution\.venueId !== input\.venueId/);
   assert.match(redemptionAttribution, /attribution\.dealId !== input\.dealId/);
   assert.match(redemptionAttribution, /verifiedCheckIn\.shiftId !== attribution\.shiftId/);
-  assert.match(tapRoute, /campaignSource: "venue_nfc"/);
+  assert.match(cashierRedemption, /campaignSource: "venue_nfc"/);
 });
 
 test("Club Deal selection snapshots customer-facing terms before atomic NFC confirmation", () => {
-  assert.match(tapRoute, /dealTitle: deal\.dealTitle/);
-  assert.match(tapRoute, /dealDescription: deal\.dealDescription/);
-  assert.match(tapRoute, /dealTerms: deal\.dealTerms/);
-  assert.match(tapRoute, /dealOfferType: deal\.offerType/);
-  assert.match(tapRoute, /issueAndConfirmDealRedemptionFromNfc/);
+  assert.match(cashierRedemption, /dealTitle: deal\.dealTitle/);
+  assert.match(cashierRedemption, /dealDescription: deal\.dealDescription/);
+  assert.match(cashierRedemption, /dealTerms: deal\.dealTerms/);
+  assert.match(cashierRedemption, /dealOfferType: deal\.offerType/);
+  assert.match(cashierRedemption, /issueAndConfirmDealRedemptionFromNfc/);
   assert.doesNotMatch(tapRoute, /createDealRedemption|confirmRedemptionFromNfc|status: "voided"/);
   assert.match(deals, /rpc\("issue_and_confirm_deal_redemption_from_nfc"/);
   assert.match(atomicNfcMigration, /insert into public\.qr_redemptions/);
