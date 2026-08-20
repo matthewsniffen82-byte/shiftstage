@@ -40,12 +40,16 @@ test("typed parsers preserve provider, payout mode, and earning action allowlist
 });
 
 test("typed parsers preserve trimming, numeric bounds, and audit text limits", () => {
+  assert.match(input, /const UUID_PATTERN/);
+  assert.equal((input.match(/requiredUuid\(body\.(?:invoiceId|earningId|payoutId)/g) || []).length, 4);
+  assert.match(input, /if \(!UUID_PATTERN\.test\(text\.value\)\)/);
   assert.match(input, /typeof value !== "string" \|\| !value\.trim\(\)/);
   assert.match(input, /return valid\(value\.trim\(\)\)/);
   assert.match(input, /parsed < minimum \|\| parsed > maximum/);
   assert.match(input, /earningsHoldDays, 0, 90/);
   assert.match(input, /minimumPayoutCents, 1, 10_000_000/);
   assert.equal((input.match(/reason\.value\.length < 3 \|\| reason\.value\.length > 500/g) || []).length, 3);
+  assert.match(input, /reference\.value\.length > 160/);
   assert.match(input, /reconciliationReference\.value\.length > 160/);
 });
 

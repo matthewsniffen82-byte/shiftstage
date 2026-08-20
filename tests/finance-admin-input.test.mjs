@@ -11,6 +11,10 @@ import {
   parseRetryPayoutInput,
 } from "../src/lib/dancr/finance-admin-input.ts";
 
+const INVOICE_ID = "11111111-1111-4111-8111-111111111111";
+const EARNING_ID = "22222222-2222-4222-8222-222222222222";
+const PAYOUT_ID = "33333333-3333-4333-8333-333333333333";
+
 test("finance command parsing validates and sanitizes the complete action payload", () => {
   assert.deepEqual(parseAdminFinanceCommand({ action: "run_automation", ignored: "value" }), {
     ok: true,
@@ -22,7 +26,7 @@ test("finance command parsing validates and sanitizes the complete action payloa
   });
   assert.deepEqual(parseAdminFinanceCommand({
     action: "record_manual_payment",
-    invoiceId: " invoice-1 ",
+    invoiceId: ` ${INVOICE_ID} `,
     reference: " bank-reference ",
     totalPaidCents: "1250",
     ignored: "value",
@@ -30,18 +34,18 @@ test("finance command parsing validates and sanitizes the complete action payloa
     ok: true,
     value: {
       action: "record_manual_payment",
-      invoiceId: "invoice-1",
+      invoiceId: INVOICE_ID,
       reference: "bank-reference",
       totalPaidCents: 1250,
     },
   });
   assert.deepEqual(parseAdminFinanceCommand({
     action: "retry_payout",
-    payoutId: " payout-1 ",
+    payoutId: ` ${PAYOUT_ID} `,
     reason: " retry ",
   }), {
     ok: true,
-    value: { action: "retry_payout", payoutId: "payout-1", reason: "retry" },
+    value: { action: "retry_payout", payoutId: PAYOUT_ID, reason: "retry" },
   });
 
   assert.deepEqual(parseAdminFinanceCommand(null), {
@@ -54,7 +58,7 @@ test("finance command parsing validates and sanitizes the complete action payloa
   });
   assert.deepEqual(parseAdminFinanceCommand({
     action: "record_manual_payment",
-    invoiceId: "invoice-1",
+    invoiceId: INVOICE_ID,
     reference: "bank-reference",
     totalPaidCents: 0,
   }), {
@@ -85,7 +89,7 @@ test("finance action parsing accepts only the seven supported production actions
 });
 
 test("finance request parsing rejects non-object JSON bodies without changing valid objects", () => {
-  const body = { action: "record_manual_payment", invoiceId: "invoice-1" };
+  const body = { action: "record_manual_payment", invoiceId: INVOICE_ID };
   assert.deepEqual(parseAdminFinanceBody(body), { ok: true, value: body });
 
   for (const input of [null, [], "record_manual_payment", 42, true]) {
@@ -98,13 +102,13 @@ test("finance request parsing rejects non-object JSON bodies without changing va
 
 test("manual payment parsing trims identifiers and preserves positive whole-cent validation", () => {
   assert.deepEqual(parseManualPaymentInput({
-    invoiceId: "  invoice-1  ",
+    invoiceId: `  ${INVOICE_ID}  `,
     reference: "  bank-reference  ",
     totalPaidCents: "1250",
   }), {
     ok: true,
     value: {
-      invoiceId: "invoice-1",
+      invoiceId: INVOICE_ID,
       reference: "bank-reference",
       totalPaidCents: 1250,
     },
@@ -112,7 +116,7 @@ test("manual payment parsing trims identifiers and preserves positive whole-cent
 
   for (const totalPaidCents of [0, -1, 1.5, "not-a-number"]) {
     assert.deepEqual(parseManualPaymentInput({
-      invoiceId: "invoice-1",
+      invoiceId: INVOICE_ID,
       reference: "reference",
       totalPaidCents,
     }), {
@@ -124,10 +128,20 @@ test("manual payment parsing trims identifiers and preserves positive whole-cent
     ok: false,
     error: "Invoice is required.",
   });
-  assert.deepEqual(parseManualPaymentInput({ invoiceId: "invoice-1", totalPaidCents: 100 }), {
+  assert.deepEqual(parseManualPaymentInput({ invoiceId: INVOICE_ID, totalPaidCents: 100 }), {
     ok: false,
     error: "Payment reference is required.",
   });
+  assert.deepEqual(parseManualPaymentInput({
+    invoiceId: "not-a-uuid",
+    reference: "reference",
+    totalPaidCents: 100,
+  }), { ok: false, error: "Invoice is invalid." });
+  assert.deepEqual(parseManualPaymentInput({
+    invoiceId: INVOICE_ID,
+    reference: "r".repeat(161),
+    totalPaidCents: 100,
+  }), { ok: false, error: "Payment reference must be 160 characters or fewer." });
 });
 
 test("payout settings parsing preserves every provider, mode, and numeric boundary", () => {
@@ -188,39 +202,44 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
 test("earning management parsing preserves actions, trimming, and audit-reason limits", () => {
   for (const earningAction of ["hold", "release", "reverse"]) {
     assert.deepEqual(parseManageEarningInput({
-      earningId: "  earning-1  ",
+      earningId: `  ${EARNING_ID}  `,
       earningAction,
       reason: "  reviewed  ",
     }), {
       ok: true,
-      value: { earningId: "earning-1", earningAction, reason: "reviewed" },
+      value: { earningId: EARNING_ID, earningAction, reason: "reviewed" },
     });
   }
   for (const reason of ["ab", "x".repeat(501)]) {
     assert.deepEqual(parseManageEarningInput({
-      earningId: "earning-1",
+      earningId: EARNING_ID,
       earningAction: "hold",
       reason,
     }), { ok: false, error: "Reason must be between 3 and 500 characters." });
   }
   assert.equal(parseManageEarningInput({
-    earningId: "earning-1",
+    earningId: EARNING_ID,
     earningAction: "hold",
     reason: "x".repeat(500),
   }).ok, true);
   assert.deepEqual(parseManageEarningInput({
-    earningId: "earning-1",
+    earningId: EARNING_ID,
     earningAction: "unsupported",
     reason: "reviewed",
   }), { ok: false, error: "Unsupported earning action." });
+  assert.deepEqual(parseManageEarningInput({
+    earningId: "not-a-uuid",
+    earningAction: "hold",
+    reason: "reviewed",
+  }), { ok: false, error: "Earning is invalid." });
 });
 
 test("retry parsing preserves required payout and retry-reason contracts", () => {
-  assert.deepEqual(parseRetryPayoutInput({ payoutId: "  payout-1 ", reason: " retry " }), {
+  assert.deepEqual(parseRetryPayoutInput({ payoutId: `  ${PAYOUT_ID} `, reason: " retry " }), {
     ok: true,
-    value: { payoutId: "payout-1", reason: "retry" },
+    value: { payoutId: PAYOUT_ID, reason: "retry" },
   });
-  assert.deepEqual(parseRetryPayoutInput({ payoutId: "payout-1", reason: "no" }), {
+  assert.deepEqual(parseRetryPayoutInput({ payoutId: PAYOUT_ID, reason: "no" }), {
     ok: false,
     error: "Reason must be between 3 and 500 characters.",
   });
@@ -228,38 +247,47 @@ test("retry parsing preserves required payout and retry-reason contracts", () =>
     ok: false,
     error: "Payout is required.",
   });
-  assert.deepEqual(parseRetryPayoutInput({ payoutId: "payout-1" }), {
+  assert.deepEqual(parseRetryPayoutInput({ payoutId: PAYOUT_ID }), {
     ok: false,
     error: "A retry reason is required.",
+  });
+  assert.deepEqual(parseRetryPayoutInput({ payoutId: "not-a-uuid", reason: "retry" }), {
+    ok: false,
+    error: "Payout is invalid.",
   });
 });
 
 test("Bitsafe reconciliation parsing preserves reference and reason boundaries", () => {
   const reconciliationReference = "r".repeat(160);
   assert.deepEqual(parseReconcileBitsafePayoutInput({
-    payoutId: "  payout-1  ",
+    payoutId: `  ${PAYOUT_ID}  `,
     reconciliationReference,
     reason: "  paid report reviewed  ",
   }), {
     ok: true,
     value: {
-      payoutId: "payout-1",
+      payoutId: PAYOUT_ID,
       reconciliationReference,
       reason: "paid report reviewed",
     },
   });
   for (const input of [
-    { payoutId: "payout-1", reconciliationReference: "r".repeat(161), reason: "reviewed" },
-    { payoutId: "payout-1", reconciliationReference: "report", reason: "no" },
-    { payoutId: "payout-1", reconciliationReference: "report", reason: "r".repeat(501) },
+    { payoutId: PAYOUT_ID, reconciliationReference: "r".repeat(161), reason: "reviewed" },
+    { payoutId: PAYOUT_ID, reconciliationReference: "report", reason: "no" },
+    { payoutId: PAYOUT_ID, reconciliationReference: "report", reason: "r".repeat(501) },
   ]) {
     assert.deepEqual(parseReconcileBitsafePayoutInput(input), {
       ok: false,
       error: "Reconciliation details are invalid.",
     });
   }
-  assert.deepEqual(parseReconcileBitsafePayoutInput({ payoutId: "payout-1", reason: "reviewed" }), {
+  assert.deepEqual(parseReconcileBitsafePayoutInput({ payoutId: PAYOUT_ID, reason: "reviewed" }), {
     ok: false,
     error: "Yoursafe report reference is required.",
   });
+  assert.deepEqual(parseReconcileBitsafePayoutInput({
+    payoutId: "not-a-uuid",
+    reconciliationReference: "report",
+    reason: "reviewed",
+  }), { ok: false, error: "Payout is invalid." });
 });

@@ -1,5 +1,8 @@
 import type { PayoutMode, PayoutProviderName } from "./payout-provider";
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 type ValidationResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
@@ -108,10 +111,13 @@ export function parseAdminFinanceAction(body: Record<string, unknown>): Validati
 }
 
 export function parseManualPaymentInput(body: Record<string, unknown>): ValidationResult<ManualPaymentInput> {
-  const invoiceId = requiredText(body.invoiceId, "Invoice is required.");
+  const invoiceId = requiredUuid(body.invoiceId, "Invoice is required.", "Invoice is invalid.");
   if (!invoiceId.ok) return invoiceId;
   const reference = requiredText(body.reference, "Payment reference is required.");
   if (!reference.ok) return reference;
+  if (reference.value.length > 160) {
+    return invalid("Payment reference must be 160 characters or fewer.");
+  }
   const totalPaidCents = Number(body.totalPaidCents);
   if (!Number.isInteger(totalPaidCents) || totalPaidCents <= 0) {
     return invalid("Payment total must be a positive whole number of cents.");
@@ -138,7 +144,7 @@ export function parsePayoutSettingsInput(body: Record<string, unknown>): Validat
 }
 
 export function parseManageEarningInput(body: Record<string, unknown>): ValidationResult<ManageEarningInput> {
-  const earningId = requiredText(body.earningId, "Earning is required.");
+  const earningId = requiredUuid(body.earningId, "Earning is required.", "Earning is invalid.");
   if (!earningId.ok) return earningId;
   const earningAction = oneOf(body.earningAction, ["hold", "release", "reverse"] as const, "Unsupported earning action.");
   if (!earningAction.ok) return earningAction;
@@ -151,7 +157,7 @@ export function parseManageEarningInput(body: Record<string, unknown>): Validati
 }
 
 export function parseRetryPayoutInput(body: Record<string, unknown>): ValidationResult<RetryPayoutInput> {
-  const payoutId = requiredText(body.payoutId, "Payout is required.");
+  const payoutId = requiredUuid(body.payoutId, "Payout is required.", "Payout is invalid.");
   if (!payoutId.ok) return payoutId;
   const reason = requiredText(body.reason, "A retry reason is required.");
   if (!reason.ok) return reason;
@@ -164,7 +170,7 @@ export function parseRetryPayoutInput(body: Record<string, unknown>): Validation
 export function parseReconcileBitsafePayoutInput(
   body: Record<string, unknown>,
 ): ValidationResult<ReconcileBitsafePayoutInput> {
-  const payoutId = requiredText(body.payoutId, "Payout is required.");
+  const payoutId = requiredUuid(body.payoutId, "Payout is required.", "Payout is invalid.");
   if (!payoutId.ok) return payoutId;
   const reconciliationReference = requiredText(body.reconciliationReference, "Yoursafe report reference is required.");
   if (!reconciliationReference.ok) return reconciliationReference;
@@ -191,6 +197,13 @@ function invalid<T>(error: string): ValidationResult<T> {
 function requiredText(value: unknown, message: string) {
   if (typeof value !== "string" || !value.trim()) return invalid<string>(message);
   return valid(value.trim());
+}
+
+function requiredUuid(value: unknown, requiredMessage: string, invalidMessage: string) {
+  const text = requiredText(value, requiredMessage);
+  if (!text.ok) return text;
+  if (!UUID_PATTERN.test(text.value)) return invalid<string>(invalidMessage);
+  return text;
 }
 
 function boundedInteger(value: unknown, minimum: number, maximum: number, message: string) {
