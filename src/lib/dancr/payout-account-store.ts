@@ -54,6 +54,14 @@ export async function upsertDancerPayoutAccount(
   return data;
 }
 
+export async function syncBitsafePayoutAccount(
+  client: DancrClient,
+  dancerId: string,
+  account: ProviderAccountState,
+) {
+  return upsertDancerPayoutAccount(client, dancerId, "bitsafe", account);
+}
+
 export async function getEffectivePayoutSettings(client: DancrClient) {
   const { data: database, error } = await (client as any).from("payout_settings").select("*").eq("id", "default").single();
   if (error) throw error;

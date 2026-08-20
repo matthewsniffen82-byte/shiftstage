@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { completeBitsafeOnboarding } from "@/src/lib/dancr/bitsafe";
-import { syncBitsafePayoutAccount } from "@/src/lib/dancr/finance";
+import { syncBitsafePayoutAccount } from "@/src/lib/dancr/payout-account-store";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";

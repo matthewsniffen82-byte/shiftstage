@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [actions, store, finance, route] = await Promise.all([
+const [actions, store, finance, route, bitsafeCallback] = await Promise.all([
   readFile(new URL("../src/lib/dancr/dancer-payout-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/payout-account-store.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/finance/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/bitsafe/callback/route.ts", import.meta.url), "utf8"),
 ]);
 
 test("dancer payout enrollment and cash-out writes use one dedicated action boundary", () => {
@@ -27,6 +28,7 @@ test("payout account state and effective settings have one shared persistence bo
     "getDancerForUser",
     "getDancerPayoutAccount",
     "upsertDancerPayoutAccount",
+    "syncBitsafePayoutAccount",
     "getEffectivePayoutSettings",
   ]) {
     assert.match(store, new RegExp(`export async function ${operation}`));
@@ -34,6 +36,8 @@ test("payout account state and effective settings have one shared persistence bo
   }
   assert.match(finance, /from "\.\/payout-account-store"/);
   assert.match(actions, /from "\.\/payout-account-store"/);
+  assert.match(bitsafeCallback, /from "@\/src\/lib\/dancr\/payout-account-store"/);
+  assert.doesNotMatch(bitsafeCallback, /from "@\/src\/lib\/dancr\/finance"/);
 });
 
 test("dancer cash-out retains payout guards, balance validation, and the production procedure", () => {

@@ -8,6 +8,7 @@ const bitsafeMigration = read("supabase/migrations/202608180001_bitsafe_payout_p
 const finance = read("src/lib/dancr/finance.ts");
 const financeAdminActions = read("src/lib/dancr/finance-admin-actions.ts");
 const financeProviderEvents = read("src/lib/dancr/finance-provider-events.ts");
+const financePayoutProcessing = read("src/lib/dancr/finance-payout-processing.ts");
 const payoutAccountStore = read("src/lib/dancr/payout-account-store.ts");
 const provider = read("src/lib/dancr/payout-provider.ts");
 const bitsafe = read("src/lib/dancr/bitsafe.ts");
@@ -49,13 +50,13 @@ test("cash out locks ledger rows and prevents concurrent or duplicate payment", 
   assert.match(migration, /where id = any\(v_earning_ids\)/);
   assert.match(read("supabase/migrations/202608040001_qr_finance_operations.sql"), /unique \(payout_batch_id, commission_event_id\)/);
   assert.match(migration, /Only a processing payout can be marked paid/);
-  assert.match(finance, /const dispatchKey = `mydancr-payout-\$\{batch\.id\}`/);
-  assert.match(finance, /idempotencyKey: dispatchKey/);
-  assert.match(finance, /p_provider_reference_id: dispatchKey/);
-  assert.match(finance, /flag_dancer_payout_dispatch_review/);
+  assert.match(financePayoutProcessing, /const dispatchKey = `mydancr-payout-\$\{batch\.id\}`/);
+  assert.match(financePayoutProcessing, /idempotencyKey: dispatchKey/);
+  assert.match(financePayoutProcessing, /p_provider_reference_id: dispatchKey/);
+  assert.match(financePayoutProcessing, /flag_dancer_payout_dispatch_review/);
   assert.match(finance, /get_dancer_earnings_summary/);
   assert.match(finance, /get_admin_dancer_financial_summary/);
-  assert.match(finance, /batch\.status === "processing" && !isDispatchRetry/);
+  assert.match(financePayoutProcessing, /batch\.status === "processing" && !isDispatchRetry/);
   assert.match(migration, /reservation_released', false/);
 });
 
@@ -66,7 +67,7 @@ test("provider selection is abstract and live money movement has a server hard s
   assert.match(provider, /isPayoutProviderConfigured/);
   assert.match(payoutAccountStore, /runtime\.enabledByEnvironment && database\.payouts_enabled/);
   assert.match(payoutAccountStore, /database\.payouts_enabled && providerConfigured/);
-  assert.match(finance, /if \(!settings\.payoutsEnabled\)/);
+  assert.match(financePayoutProcessing, /if \(!settings\.payoutsEnabled\)/);
   assert.match(migration, /unique \(dancer_id, payment_provider\)/);
   assert.match(payoutAccountStore, /onConflict: "dancer_id,payment_provider"/);
 });
@@ -101,8 +102,8 @@ test("Bitsafe cash outs create idempotent internal payout instructions without b
 
 test("Bitsafe payouts remain processing until an audited report reconciliation", () => {
   const adminRoute = read("app/api/admin/finance/route.ts");
-  assert.match(finance, /bitsafe_payout_instruction_created/);
-  assert.match(finance, /Awaiting approval and execution in the Yoursafe business portal/);
+  assert.match(financePayoutProcessing, /bitsafe_payout_instruction_created/);
+  assert.match(financePayoutProcessing, /Awaiting approval and execution in the Yoursafe business portal/);
   assert.match(financeAdminActions, /Only a processing Bitsafe payout can be reconciled/);
   assert.match(financeAdminActions, /bitsafe_payout_reconciled/);
   assert.match(financeAdminActions, /verified_yoursafe_payout_report/);

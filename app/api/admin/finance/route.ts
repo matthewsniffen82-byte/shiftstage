@@ -10,9 +10,9 @@ import {
 } from "@/src/lib/dancr/finance-admin-actions";
 import {
   getAdminFinanceOverview,
-  processDancerPayouts,
   runQrFinanceAutomation,
 } from "@/src/lib/dancr/finance";
+import { processDancerPayouts } from "@/src/lib/dancr/finance-payout-processing";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
