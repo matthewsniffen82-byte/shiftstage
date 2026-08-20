@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dispatch, route] = await Promise.all([
+const [dispatch, input, route] = await Promise.all([
   readFile(new URL("../src/lib/dancr/finance-admin-dispatch.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/finance-admin-input.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/finance/route.ts", import.meta.url), "utf8"),
 ]);
 
@@ -32,12 +33,12 @@ test("the dispatcher preserves every supported production finance action", () =>
 });
 
 test("the dispatcher preserves validation limits and explicit client errors", () => {
-  assert.match(dispatch, /totalPaidCents <= 0/);
-  assert.match(dispatch, /Payment total must be a positive whole number of cents\./);
-  assert.match(dispatch, /boundedInteger\(body\.earningsHoldDays, 0, 90/);
-  assert.match(dispatch, /boundedInteger\(body\.minimumPayoutCents, 1, 10_000_000/);
-  assert.equal((dispatch.match(/reason\.length < 3 \|\| reason\.length > 500/g) || []).length, 3);
-  assert.match(dispatch, /reconciliationReference\.length > 160/);
+  assert.match(input, /totalPaidCents <= 0/);
+  assert.match(input, /Payment total must be a positive whole number of cents\./);
+  assert.match(input, /boundedInteger\(body\.earningsHoldDays, 0, 90/);
+  assert.match(input, /boundedInteger\(body\.minimumPayoutCents, 1, 10_000_000/);
+  assert.equal((input.match(/reason\.length < 3 \|\| reason\.length > 500/g) || []).length, 3);
+  assert.match(input, /reconciliationReference\.length > 160/);
   assert.match(dispatch, /return \{ status: 400, body: \{ ok: false, error \} \}/);
 });
 
@@ -45,7 +46,7 @@ test("successful writes still refresh the full admin finance overview", () => {
   assert.match(dispatch, /return \{ status: 200, body: \{ ok: true, \.\.\.body \} \}/);
   assert.equal((dispatch.match(/finance: await getAdminFinanceOverview\(client\)/g) || []).length, 7);
   assert.match(dispatch, /updatePayoutSettings\(client, adminUserId/);
-  assert.match(dispatch, /manageDancerEarning\(client, adminUserId/);
+  assert.match(dispatch, /manageDancerEarning\(\s*client,\s*adminUserId/);
   assert.match(dispatch, /retryDancerPayout\(client, adminUserId/);
-  assert.match(dispatch, /reconcileBitsafePayout\(client, adminUserId/);
+  assert.match(dispatch, /reconcileBitsafePayout\(\s*client,\s*adminUserId/);
 });
