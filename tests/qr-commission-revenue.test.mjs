@@ -10,6 +10,7 @@ const [
   earningsMigration,
   policy,
   deals,
+  venueDealActions,
   dealAdminActions,
   generationRoute,
   cashierRedemption,
@@ -36,6 +37,7 @@ const [
   readFile(new URL("../supabase/migrations/202608170004_dancer_earnings_payout_system.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/commission-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/venue-deal-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-admin-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/cashier-deal-redemption.ts", import.meta.url), "utf8"),
@@ -164,8 +166,8 @@ test("venues publish offers against a MyDancr-controlled referral agreement", ()
   assert.match(deals, /\.eq\("payout_type", "flat"\)[\s\S]*?\.gt\("payout_amount_cents", 0\)/);
   assert.match(venueDealRoute, /updateVenueDealForAccount/);
   assert.doesNotMatch(venueDealRoute, /body\?\.referralCommissionCents/);
-  assert.match(deals, /getVenueReferralFeeState/);
-  assert.match(deals, /A MyDancr referral fee agreement is required before publishing/);
+  assert.match(venueDealActions, /getVenueReferralFeeState/);
+  assert.match(venueDealActions, /A MyDancr referral fee agreement is required before publishing/);
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
   assert.match(venueDashboard, /MyDancr referral fee/);

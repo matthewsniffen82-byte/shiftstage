@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, currentTierMigration, uncontractedDealsMigration, rejectionMigration, service, adminRoute, venueRoute, adminClient, dashboard, deals, dealRoute, dashboardRoute] = await Promise.all([
+const [migration, currentTierMigration, uncontractedDealsMigration, rejectionMigration, service, adminRoute, venueRoute, adminClient, dashboard, venueDealActions, dealRoute, dashboardRoute] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608150007_admin_controlled_referral_fees.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608180002_set_dancer_profile_commission_scale.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608160001_deactivate_uncontracted_referral_deals.sql", import.meta.url), "utf8"),
@@ -12,7 +12,7 @@ const [migration, currentTierMigration, uncontractedDealsMigration, rejectionMig
   readFile(new URL("../app/api/venue/referral-fee/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/venue-deal-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/dashboard/route.ts", import.meta.url), "utf8"),
 ]);
@@ -55,11 +55,11 @@ test("venues receive a read-only fee and can only request an admin-reviewed chan
 });
 
 test("deal publishing consumes the active agreement instead of venue-submitted money", () => {
-  assert.match(deals, /getVenueReferralFeeState\(client, owned\.venueId\)/);
-  assert.match(deals, /input\.isActive && !referralFee/);
-  assert.match(deals, /payout_amount_cents: referralFee\?\.feeCents \|\| 0/);
-  assert.match(deals, /currency: referralFee\?\.currency \|\| "usd"/);
-  assert.doesNotMatch(deals, /input\.referralCommissionCents/);
+  assert.match(venueDealActions, /getVenueReferralFeeState\(client, owned\.venueId\)/);
+  assert.match(venueDealActions, /input\.isActive && !referralFee/);
+  assert.match(venueDealActions, /payout_amount_cents: referralFee\?\.feeCents \|\| 0/);
+  assert.match(venueDealActions, /currency: referralFee\?\.currency \|\| "usd"/);
+  assert.doesNotMatch(venueDealActions, /input\.referralCommissionCents/);
   assert.match(uncontractedDealsMigration, /set is_active = false/);
   assert.match(uncontractedDealsMigration, /not exists[\s\S]*?venue_referral_fee_terms/);
 });

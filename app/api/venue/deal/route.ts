@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
+import { getVenueDealsForAccount } from "@/src/lib/dancr/deals";
 import {
   deleteVenueDealForAccount,
-  getVenueDealsForAccount,
   updateVenueDealForAccount,
-} from "@/src/lib/dancr/deals";
+} from "@/src/lib/dancr/venue-deal-actions";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
