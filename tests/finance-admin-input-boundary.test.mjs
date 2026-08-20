@@ -9,9 +9,13 @@ const [input, dispatch] = await Promise.all([
 
 test("admin finance input rules use one dependency-free validation boundary", () => {
   assert.match(input, /export function parseAdminFinanceBody/);
+  assert.match(input, /export function parseAdminFinanceAction/);
   assert.match(dispatch, /const request = parseAdminFinanceBody\(input\)/);
   assert.match(dispatch, /if \(!request\.ok\) return invalid\(request\.error\)/);
   assert.match(dispatch, /const body = request\.value/);
+  assert.match(dispatch, /const parsedAction = parseAdminFinanceAction\(body\)/);
+  assert.match(dispatch, /if \(!parsedAction\.ok\) return invalid\(parsedAction\.error\)/);
+  assert.match(dispatch, /const action = parsedAction\.value/);
   for (const parser of [
     "parseManualPaymentInput",
     "parsePayoutSettingsInput",
@@ -27,6 +31,7 @@ test("admin finance input rules use one dependency-free validation boundary", ()
 });
 
 test("typed parsers preserve provider, payout mode, and earning action allowlists", () => {
+  assert.match(input, /const ADMIN_FINANCE_ACTIONS = \[/);
   assert.match(input, /\["stripe", "bitsafe", "adyen", "other"\] as const/);
   assert.match(input, /\["manual_cashout", "scheduled", "both"\] as const/);
   assert.match(input, /\["hold", "release", "reverse"\] as const/);

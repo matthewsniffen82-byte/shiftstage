@@ -27,8 +27,11 @@ test("the dispatcher preserves every supported production finance action", () =>
     "retry_payout",
     "reconcile_bitsafe_payout",
   ]) {
-    assert.match(dispatch, new RegExp(`body\\.action === "${action}"`));
+    assert.match(input, new RegExp(`"${action}"`));
+    assert.match(dispatch, new RegExp(`action === "${action}"`));
   }
+  assert.doesNotMatch(dispatch, /body\.action ===/);
+  assert.match(dispatch, /parseAdminFinanceAction\(body\)/);
   assert.match(dispatch, /return invalid\("Unsupported finance action\."\)/);
 });
 

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  parseAdminFinanceAction,
   parseAdminFinanceBody,
   parseManageEarningInput,
   parseManualPaymentInput,
@@ -8,6 +9,27 @@ import {
   parseReconcileBitsafePayoutInput,
   parseRetryPayoutInput,
 } from "../src/lib/dancr/finance-admin-input.ts";
+
+test("finance action parsing accepts only the seven supported production actions", () => {
+  for (const action of [
+    "run_automation",
+    "process_payouts",
+    "record_manual_payment",
+    "update_payout_settings",
+    "manage_earning",
+    "retry_payout",
+    "reconcile_bitsafe_payout",
+  ]) {
+    assert.deepEqual(parseAdminFinanceAction({ action }), { ok: true, value: action });
+  }
+
+  for (const action of [undefined, null, 1, "unsupported"]) {
+    assert.deepEqual(parseAdminFinanceAction({ action }), {
+      ok: false,
+      error: "Unsupported finance action.",
+    });
+  }
+});
 
 test("finance request parsing rejects non-object JSON bodies without changing valid objects", () => {
   const body = { action: "record_manual_payment", invoiceId: "invoice-1" };

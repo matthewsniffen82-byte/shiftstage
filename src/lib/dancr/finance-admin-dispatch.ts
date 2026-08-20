@@ -7,6 +7,7 @@ import {
   updatePayoutSettings,
 } from "./finance-admin-actions";
 import {
+  parseAdminFinanceAction,
   parseAdminFinanceBody,
   parseManageEarningInput,
   parseManualPaymentInput,
@@ -33,18 +34,21 @@ export async function dispatchAdminFinanceAction(
   const request = parseAdminFinanceBody(input);
   if (!request.ok) return invalid(request.error);
   const body = request.value;
+  const parsedAction = parseAdminFinanceAction(body);
+  if (!parsedAction.ok) return invalid(parsedAction.error);
+  const action = parsedAction.value;
 
-  if (body.action === "run_automation") {
+  if (action === "run_automation") {
     const result = await runQrFinanceAutomation(client);
     return success({ result, finance: await getAdminFinanceOverview(client) });
   }
 
-  if (body.action === "process_payouts") {
+  if (action === "process_payouts") {
     const result = await processDancerPayouts(client);
     return success({ result, finance: await getAdminFinanceOverview(client) });
   }
 
-  if (body.action === "record_manual_payment") {
+  if (action === "record_manual_payment") {
     const parsed = parseManualPaymentInput(body);
     if (!parsed.ok) return invalid(parsed.error);
     await recordManualClubInvoicePayment(
@@ -56,14 +60,14 @@ export async function dispatchAdminFinanceAction(
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  if (body.action === "update_payout_settings") {
+  if (action === "update_payout_settings") {
     const parsed = parsePayoutSettingsInput(body);
     if (!parsed.ok) return invalid(parsed.error);
     await updatePayoutSettings(client, adminUserId, parsed.value);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  if (body.action === "manage_earning") {
+  if (action === "manage_earning") {
     const parsed = parseManageEarningInput(body);
     if (!parsed.ok) return invalid(parsed.error);
     await manageDancerEarning(
@@ -76,14 +80,14 @@ export async function dispatchAdminFinanceAction(
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  if (body.action === "retry_payout") {
+  if (action === "retry_payout") {
     const parsed = parseRetryPayoutInput(body);
     if (!parsed.ok) return invalid(parsed.error);
     await retryDancerPayout(client, adminUserId, parsed.value.payoutId, parsed.value.reason);
     return success({ finance: await getAdminFinanceOverview(client) });
   }
 
-  if (body.action === "reconcile_bitsafe_payout") {
+  if (action === "reconcile_bitsafe_payout") {
     const parsed = parseReconcileBitsafePayoutInput(body);
     if (!parsed.ok) return invalid(parsed.error);
     await reconcileBitsafePayout(

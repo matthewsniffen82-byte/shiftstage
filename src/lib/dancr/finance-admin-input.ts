@@ -4,6 +4,18 @@ type ValidationResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
 
+const ADMIN_FINANCE_ACTIONS = [
+  "run_automation",
+  "process_payouts",
+  "record_manual_payment",
+  "update_payout_settings",
+  "manage_earning",
+  "retry_payout",
+  "reconcile_bitsafe_payout",
+] as const;
+
+export type AdminFinanceAction = (typeof ADMIN_FINANCE_ACTIONS)[number];
+
 export type ManualPaymentInput = {
   invoiceId: string;
   reference: string;
@@ -40,6 +52,10 @@ export function parseAdminFinanceBody(input: unknown): ValidationResult<Record<s
     return invalid("Invalid finance request.");
   }
   return valid(input as Record<string, unknown>);
+}
+
+export function parseAdminFinanceAction(body: Record<string, unknown>): ValidationResult<AdminFinanceAction> {
+  return oneOf(body.action, ADMIN_FINANCE_ACTIONS, "Unsupported finance action.");
 }
 
 export function parseManualPaymentInput(body: Record<string, unknown>): ValidationResult<ManualPaymentInput> {
