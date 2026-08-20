@@ -17,6 +17,9 @@ test("dancer payout dispatch uses one dedicated processing boundary", () => {
 });
 
 test("processing remains disabled until every production payout gate is enabled", () => {
+  assert.match(processing, /from "\.\/finance-earning-lifecycle"/);
+  assert.match(processing, /await releasePendingDancerEarnings\(client\)/);
+  assert.doesNotMatch(processing, /rpc\("release_pending_dancer_earnings"/);
   assert.match(processing, /await getEffectivePayoutSettings\(client\)/);
   assert.match(processing, /if \(!settings\.payoutsEnabled\)/);
   assert.match(processing, /payoutAccount\.payout_eligibility !== "eligible"/);

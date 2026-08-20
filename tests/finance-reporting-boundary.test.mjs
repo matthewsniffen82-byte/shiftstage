@@ -35,7 +35,9 @@ test("admin reporting preserves receivable, payout, and ledger summaries", () =>
 test("role reporting preserves venue authorization and dancer balance safeguards", () => {
   assert.match(reporting, /requireVenueAccess\(client, userId, "view_finance"\)/);
   assert.match(reporting, /await getDancerForUser\(client, userId\)/);
-  assert.match(reporting, /rpc\("release_pending_dancer_earnings"/);
+  assert.match(reporting, /from "\.\/finance-earning-lifecycle"/);
+  assert.match(reporting, /await releasePendingDancerEarnings\(client\)/);
+  assert.doesNotMatch(reporting, /rpc\("release_pending_dancer_earnings"/);
   assert.match(reporting, /rpc\("get_dancer_earnings_summary"/);
   assert.match(reporting, /Number\.isSafeInteger\(parsed\)/);
   assert.match(reporting, /pendingClubPaymentCents: pendingCents/);

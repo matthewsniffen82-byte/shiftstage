@@ -8,6 +8,7 @@ import {
   getDancerForUser,
   getEffectivePayoutSettings,
 } from "./payout-account-store";
+import { releasePendingDancerEarnings } from "./finance-earning-lifecycle";
 import { requireVenueAccess } from "./venue-access";
 import { getNatsRuntimeConfig } from "./nats";
 
@@ -127,7 +128,7 @@ export async function getVenueFinance(client: DancrClient, userId: string) {
 
 export async function getDancerFinance(client: DancrClient, userId: string) {
   const dancer = await getDancerForUser(client, userId);
-  await (client as any).rpc("release_pending_dancer_earnings", { p_limit: MAX_FINANCE_ROWS });
+  await releasePendingDancerEarnings(client);
   const settings = await getEffectivePayoutSettings(client);
   const natsConfig = getNatsRuntimeConfig();
   const [

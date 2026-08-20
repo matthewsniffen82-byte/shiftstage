@@ -1,14 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { releasePendingDancerEarnings } from "./finance-earning-lifecycle";
 import { getDancerPayoutAccount, getEffectivePayoutSettings } from "./payout-account-store";
 import { getPayoutProvider, type PayoutProviderName } from "./payout-provider";
 import { getNatsRuntimeConfig } from "./nats";
 
 type DancrClient = SupabaseClient;
 
-const MAX_FINANCE_ROWS = 5_000;
+const MAX_PAYOUT_CANDIDATES = 5_000;
 
 export async function processDancerPayouts(client: DancrClient) {
-  await (client as any).rpc("release_pending_dancer_earnings", { p_limit: MAX_FINANCE_ROWS });
+  await releasePendingDancerEarnings(client);
   if (getNatsRuntimeConfig().selected) {
     return {
       created: 0,
@@ -95,7 +96,7 @@ export async function processDancerPayouts(client: DancrClient) {
 async function createScheduledPayoutRequests(client: DancrClient, minimumPayoutCents: number, provider: PayoutProviderName) {
   const { data, error } = await (client as any).from("commission_events")
     .select("id, dancer_id, amount_cents, currency").eq("status", "available").is("payout_batch_id", null)
-    .is("held_at", null).is("review_flag", null).order("created_at", { ascending: true }).limit(MAX_FINANCE_ROWS);
+    .is("held_at", null).is("review_flag", null).order("created_at", { ascending: true }).limit(MAX_PAYOUT_CANDIDATES);
   if (error) throw error;
   const groups = new Map<string, any[]>();
   for (const earning of data || []) {
