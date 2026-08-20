@@ -102,13 +102,13 @@ test("Bitsafe cash outs create idempotent internal payout instructions without b
 });
 
 test("Bitsafe payouts remain processing until an audited report reconciliation", () => {
-  const adminRoute = read("app/api/admin/finance/route.ts");
+  const adminDispatch = read("src/lib/dancr/finance-admin-dispatch.ts");
   assert.match(financePayoutProcessing, /bitsafe_payout_instruction_created/);
   assert.match(financePayoutProcessing, /Awaiting approval and execution in the Yoursafe business portal/);
   assert.match(financeAdminActions, /Only a processing Bitsafe payout can be reconciled/);
   assert.match(financeAdminActions, /bitsafe_payout_reconciled/);
   assert.match(financeAdminActions, /verified_yoursafe_payout_report/);
-  assert.match(adminRoute, /reconcile_bitsafe_payout/);
+  assert.match(adminDispatch, /reconcile_bitsafe_payout/);
 });
 
 test("webhooks are signature verified and idempotently recorded without secrets", () => {

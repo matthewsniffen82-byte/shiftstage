@@ -2,15 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [processing, finance, adminRoute] = await Promise.all([
+const [processing, finance, adminDispatch] = await Promise.all([
   readFile(new URL("../src/lib/dancr/finance-payout-processing.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/admin/finance/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/finance-admin-dispatch.ts", import.meta.url), "utf8"),
 ]);
 
 test("dancer payout dispatch uses one dedicated processing boundary", () => {
   assert.match(finance, /from "\.\/finance-payout-processing"/);
-  assert.match(adminRoute, /from "@\/src\/lib\/dancr\/finance-payout-processing"/);
+  assert.match(adminDispatch, /from "\.\/finance-payout-processing"/);
   assert.match(processing, /export async function processDancerPayouts/);
   assert.doesNotMatch(finance, /export async function processDancerPayouts/);
   assert.doesNotMatch(finance, /async function createScheduledPayoutRequests/);

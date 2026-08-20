@@ -66,13 +66,15 @@ test("monthly club invoices, reminders, reconciliation, and dancer transfers use
 
 test("finance APIs enforce role authorization and expose authenticated statements", () => {
   const admin = read("app/api/admin/finance/route.ts");
+  const adminDispatch = read("src/lib/dancr/finance-admin-dispatch.ts");
   const venue = read("app/api/venue/finance/route.ts");
   const dancer = read("app/api/dancer/finance/route.ts");
   const venueStatement = read("app/api/venue/finance/statement/route.ts");
   const dancerStatement = read("app/api/dancer/finance/statement/route.ts");
   assert.match(admin, /await requireAdmin\(client, user\.id\)/);
-  assert.match(admin, /record_manual_payment/);
-  assert.match(admin, /run_automation/);
+  assert.match(admin, /dispatchAdminFinanceAction/);
+  assert.match(adminDispatch, /record_manual_payment/);
+  assert.match(adminDispatch, /run_automation/);
   assert.match(venue, /requireActiveVenueAccount/);
   assert.match(dancer, /account\.role !== "dancer" \|\| account\.accountState !== "active"/);
   assert.match(dancer, /createDancerConnectOnboarding/);
@@ -122,6 +124,7 @@ test("daily automation and every production finance dashboard are wired", () => 
 test("QR finance work remains isolated from ride functionality", () => {
   const scoped = [
     read("src/lib/dancr/finance.ts"),
+    read("src/lib/dancr/finance-admin-dispatch.ts"),
     read("src/lib/dancr/finance-automation.ts"),
     read("src/lib/dancr/finance-payout-processing.ts"),
     read("src/lib/dancr/finance-reporting.ts"),

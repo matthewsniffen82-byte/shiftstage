@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [automation, finance, cronRoute, adminRoute] = await Promise.all([
+const [automation, finance, cronRoute, adminDispatch] = await Promise.all([
   readFile(new URL("../src/lib/dancr/finance-automation.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/cron/finance/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/admin/finance/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/finance-admin-dispatch.ts", import.meta.url), "utf8"),
 ]);
 
 function between(source, start, end) {
@@ -28,7 +28,7 @@ test("scheduled finance work uses one dedicated automation boundary", () => {
   }
   assert.match(finance, /from "\.\/finance-automation"/);
   assert.match(cronRoute, /from "@\/src\/lib\/dancr\/finance-automation"/);
-  assert.match(adminRoute, /from "@\/src\/lib\/dancr\/finance-automation"/);
+  assert.match(adminDispatch, /from "\.\/finance-automation"/);
 });
 
 test("club invoice automation remains an independently callable ordered task", () => {

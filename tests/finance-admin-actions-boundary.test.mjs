@@ -2,17 +2,19 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [actions, finance, route] = await Promise.all([
+const [actions, dispatch, finance, route] = await Promise.all([
   readFile(new URL("../src/lib/dancr/finance-admin-actions.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/finance-admin-dispatch.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/finance/route.ts", import.meta.url), "utf8"),
 ]);
 
 test("manual admin finance writes use one dedicated action boundary", () => {
-  assert.match(route, /from "@\/src\/lib\/dancr\/finance-admin-actions"/);
+  assert.match(dispatch, /from "\.\/finance-admin-actions"/);
+  assert.match(route, /from "@\/src\/lib\/dancr\/finance-admin-dispatch"/);
   assert.match(route, /await requireAdmin\(client, user\.id\)/);
-  assert.match(route, /from "@\/src\/lib\/dancr\/finance-automation"/);
-  assert.match(route, /from "@\/src\/lib\/dancr\/finance-reporting"/);
+  assert.match(dispatch, /from "\.\/finance-automation"/);
+  assert.match(dispatch, /from "\.\/finance-reporting"/);
   for (const action of [
     "recordManualClubInvoicePayment",
     "updatePayoutSettings",
