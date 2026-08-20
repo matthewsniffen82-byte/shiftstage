@@ -20,6 +20,7 @@ const MOBILE_SWIPE_BLOCKED_SELECTOR = [
   "[contenteditable]",
   "[role='slider']",
   "iframe",
+  ".global-mobile-bottom-nav",
   "[data-carousel-swipe-surface]",
   "[data-global-navigation-swipe='ignore']",
   ".public-media-thumbnails",

@@ -60,6 +60,14 @@ test("TV cards and full profiles allow destination swipes while galleries keep t
   );
 });
 
+test("bottom navigation taps are not captured by the destination swipe gesture", () => {
+  const swipeBlocker = homeSource.match(
+    /function homeDestinationSwipeBlocked\(target\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  assert.match(swipeBlocker, /#discoveryTabs/);
+  assert.match(swipeBlocker, /\.global-mobile-bottom-nav/);
+});
+
 test("global destination swiping still rejects vertical scrolling and browser-edge gestures", () => {
   assert.match(
     homeSource,

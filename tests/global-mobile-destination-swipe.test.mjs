@@ -38,10 +38,10 @@ test("global swiping locks horizontal intent early without interrupting vertical
   );
 });
 
-test("media carousels and form controls keep their own horizontal gestures", () => {
+test("navigation, media carousels, and form controls keep their own touch gestures", () => {
   assert.match(
     navigationSource,
-    /MOBILE_SWIPE_BLOCKED_SELECTOR[\s\S]*?"input"[\s\S]*?"\[role='slider'\]"[\s\S]*?"\[data-carousel-swipe-surface\]"[\s\S]*?"\.tv-video-viewer"[\s\S]*?"\.profile-tv-viewer"/,
+    /MOBILE_SWIPE_BLOCKED_SELECTOR[\s\S]*?"input"[\s\S]*?"\[role='slider'\]"[\s\S]*?"\.global-mobile-bottom-nav"[\s\S]*?"\[data-carousel-swipe-surface\]"[\s\S]*?"\.tv-video-viewer"[\s\S]*?"\.profile-tv-viewer"/,
   );
   assert.match(
     navigationSource,
