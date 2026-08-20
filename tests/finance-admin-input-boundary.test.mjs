@@ -35,17 +35,20 @@ test("typed parsers preserve provider, payout mode, and earning action allowlist
 
 test("typed parsers preserve trimming, numeric bounds, and audit text limits", () => {
   assert.match(input, /typeof value !== "string" \|\| !value\.trim\(\)/);
-  assert.match(input, /return value\.trim\(\)/);
+  assert.match(input, /return valid\(value\.trim\(\)\)/);
   assert.match(input, /parsed < minimum \|\| parsed > maximum/);
   assert.match(input, /earningsHoldDays, 0, 90/);
   assert.match(input, /minimumPayoutCents, 1, 10_000_000/);
-  assert.equal((input.match(/reason\.length < 3 \|\| reason\.length > 500/g) || []).length, 3);
-  assert.match(input, /reconciliationReference\.length > 160/);
+  assert.equal((input.match(/reason\.value\.length < 3 \|\| reason\.value\.length > 500/g) || []).length, 3);
+  assert.match(input, /reconciliationReference\.value\.length > 160/);
 });
 
 test("explicit validation failures remain dispatcher-owned 400 responses", () => {
   assert.match(input, /type ValidationResult<T>/);
   assert.match(input, /return \{ ok: false, error \}/);
+  assert.doesNotMatch(input, /throw new Error/);
+  assert.match(input, /return invalid<string>\(message\)/);
+  assert.match(input, /return invalid<number>\(message\)/);
   assert.equal((dispatch.match(/if \(!parsed\.ok\) return invalid\(parsed\.error\)/g) || []).length, 5);
   assert.match(input, /return invalid\("Invalid finance request\."\)/);
   assert.match(dispatch, /return \{ status: 400, body: \{ ok: false, error \} \}/);

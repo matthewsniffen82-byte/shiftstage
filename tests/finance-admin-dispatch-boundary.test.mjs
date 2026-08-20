@@ -39,8 +39,8 @@ test("the dispatcher preserves validation limits and explicit client errors", ()
   assert.match(input, /Payment total must be a positive whole number of cents\./);
   assert.match(input, /boundedInteger\(body\.earningsHoldDays, 0, 90/);
   assert.match(input, /boundedInteger\(body\.minimumPayoutCents, 1, 10_000_000/);
-  assert.equal((input.match(/reason\.length < 3 \|\| reason\.length > 500/g) || []).length, 3);
-  assert.match(input, /reconciliationReference\.length > 160/);
+  assert.equal((input.match(/reason\.value\.length < 3 \|\| reason\.value\.length > 500/g) || []).length, 3);
+  assert.match(input, /reconciliationReference\.value\.length > 160/);
   assert.match(dispatch, /return \{ status: 400, body: \{ ok: false, error \} \}/);
 });
 

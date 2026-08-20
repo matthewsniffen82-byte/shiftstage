@@ -45,14 +45,14 @@ test("manual payment parsing trims identifiers and preserves positive whole-cent
       error: "Payment total must be a positive whole number of cents.",
     });
   }
-  assert.throws(
-    () => parseManualPaymentInput({ reference: "reference", totalPaidCents: 100 }),
-    /Invoice is required\./,
-  );
-  assert.throws(
-    () => parseManualPaymentInput({ invoiceId: "invoice-1", totalPaidCents: 100 }),
-    /Payment reference is required\./,
-  );
+  assert.deepEqual(parseManualPaymentInput({ reference: "reference", totalPaidCents: 100 }), {
+    ok: false,
+    error: "Invoice is required.",
+  });
+  assert.deepEqual(parseManualPaymentInput({ invoiceId: "invoice-1", totalPaidCents: 100 }), {
+    ok: false,
+    error: "Payment reference is required.",
+  });
 });
 
 test("payout settings parsing preserves every provider, mode, and numeric boundary", () => {
@@ -84,30 +84,30 @@ test("payout settings parsing preserves every provider, mode, and numeric bounda
     earningsHoldDays: 90,
     minimumPayoutCents: 1,
   }).value.payoutsEnabled, false);
-  assert.throws(() => parsePayoutSettingsInput({
+  assert.deepEqual(parsePayoutSettingsInput({
     paymentProvider: "unsupported",
     payoutMode: "scheduled",
     earningsHoldDays: 0,
     minimumPayoutCents: 1,
-  }), /Unsupported payout provider\./);
-  assert.throws(() => parsePayoutSettingsInput({
+  }), { ok: false, error: "Unsupported payout provider." });
+  assert.deepEqual(parsePayoutSettingsInput({
     paymentProvider: "bitsafe",
     payoutMode: "unsupported",
     earningsHoldDays: 0,
     minimumPayoutCents: 1,
-  }), /Unsupported payout mode\./);
-  assert.throws(() => parsePayoutSettingsInput({
+  }), { ok: false, error: "Unsupported payout mode." });
+  assert.deepEqual(parsePayoutSettingsInput({
     paymentProvider: "bitsafe",
     payoutMode: "scheduled",
     earningsHoldDays: 91,
     minimumPayoutCents: 1,
-  }), /Hold days must be between 0 and 90\./);
-  assert.throws(() => parsePayoutSettingsInput({
+  }), { ok: false, error: "Hold days must be between 0 and 90." });
+  assert.deepEqual(parsePayoutSettingsInput({
     paymentProvider: "bitsafe",
     payoutMode: "scheduled",
     earningsHoldDays: 0,
     minimumPayoutCents: 0,
-  }), /Minimum payout is invalid\./);
+  }), { ok: false, error: "Minimum payout is invalid." });
 });
 
 test("earning management parsing preserves actions, trimming, and audit-reason limits", () => {
@@ -133,11 +133,11 @@ test("earning management parsing preserves actions, trimming, and audit-reason l
     earningAction: "hold",
     reason: "x".repeat(500),
   }).ok, true);
-  assert.throws(() => parseManageEarningInput({
+  assert.deepEqual(parseManageEarningInput({
     earningId: "earning-1",
     earningAction: "unsupported",
     reason: "reviewed",
-  }), /Unsupported earning action\./);
+  }), { ok: false, error: "Unsupported earning action." });
 });
 
 test("retry parsing preserves required payout and retry-reason contracts", () => {
@@ -149,8 +149,14 @@ test("retry parsing preserves required payout and retry-reason contracts", () =>
     ok: false,
     error: "Reason must be between 3 and 500 characters.",
   });
-  assert.throws(() => parseRetryPayoutInput({ reason: "retry" }), /Payout is required\./);
-  assert.throws(() => parseRetryPayoutInput({ payoutId: "payout-1" }), /A retry reason is required\./);
+  assert.deepEqual(parseRetryPayoutInput({ reason: "retry" }), {
+    ok: false,
+    error: "Payout is required.",
+  });
+  assert.deepEqual(parseRetryPayoutInput({ payoutId: "payout-1" }), {
+    ok: false,
+    error: "A retry reason is required.",
+  });
 });
 
 test("Bitsafe reconciliation parsing preserves reference and reason boundaries", () => {
@@ -177,8 +183,8 @@ test("Bitsafe reconciliation parsing preserves reference and reason boundaries",
       error: "Reconciliation details are invalid.",
     });
   }
-  assert.throws(
-    () => parseReconcileBitsafePayoutInput({ payoutId: "payout-1", reason: "reviewed" }),
-    /Yoursafe report reference is required\./,
-  );
+  assert.deepEqual(parseReconcileBitsafePayoutInput({ payoutId: "payout-1", reason: "reviewed" }), {
+    ok: false,
+    error: "Yoursafe report reference is required.",
+  });
 });
