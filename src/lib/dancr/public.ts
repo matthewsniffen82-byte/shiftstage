@@ -4,7 +4,6 @@ import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
 import { verifiedVenueLogoUrl } from "./venue-branding";
 import { isActiveNfcPresence } from "./shift-presence";
-import { ensureAutomaticPublicProfileConsistency } from "./profile-recovery";
 
 type DancrClient = SupabaseClient;
 
@@ -55,7 +54,6 @@ export async function getLiveDancerDiscovery(
 }
 
 async function getApprovedDancerRowsByCity(client: DancrClient, city: string): Promise<any[]> {
-  await ensureAutomaticPublicProfileConsistency(client);
   const cityName = city.trim();
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
@@ -129,7 +127,6 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
 }
 
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
-  await ensureAutomaticPublicProfileConsistency(client);
   const cityName = city.trim();
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
@@ -206,7 +203,6 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
 }
 
 export async function getDancerProfile(client: DancrClient, slug: string): Promise<DancerProfile | null> {
-  await ensureAutomaticPublicProfileConsistency(client);
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
     .select(

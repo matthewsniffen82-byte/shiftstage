@@ -19,10 +19,11 @@ test("automatic repair requires durable first-venue approval proof", () => {
   assert.match(recovery, /\.update\(automaticDancerApprovalValues\(\)\)/);
 });
 
-test("every public dancer and TV entry point runs the idempotent recovery before querying", () => {
-  assert.match(publicProfiles, /getApprovedDancerRowsByCity[\s\S]*?await ensureAutomaticPublicProfileConsistency\(client\)/);
-  assert.match(publicProfiles, /getTonightShifts[\s\S]*?await ensureAutomaticPublicProfileConsistency\(client\)/);
-  assert.match(publicProfiles, /getDancerProfile[\s\S]*?await ensureAutomaticPublicProfileConsistency\(client\)/);
-  assert.match(tv, /getPublicMyDancrTvVideoCount[\s\S]*?await ensureAutomaticPublicProfileConsistency\(admin\)/);
-  assert.match(tv, /getPublicMyDancrTvFeed[\s\S]*?await ensureAutomaticPublicProfileConsistency\(admin\)/);
+test("public dancer and TV entry points are read-only and never trigger profile recovery", () => {
+  assert.doesNotMatch(publicProfiles, /ensureAutomaticPublicProfileConsistency|profile-recovery/);
+  assert.doesNotMatch(tv, /ensureAutomaticPublicProfileConsistency|profile-recovery/);
+  assert.match(publicProfiles, /\.eq\("status", "approved"\)/);
+  assert.match(publicProfiles, /\.eq\("verification_status", "approved"\)/);
+  assert.match(tv, /\.eq\("dancer_profiles\.status", "approved"\)/);
+  assert.match(tv, /\.eq\("dancer_profiles\.verification_status", "approved"\)/);
 });

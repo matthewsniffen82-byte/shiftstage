@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [deals, tapRoute, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals] = await Promise.all([
+const [deals, tapRoute, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
@@ -19,6 +19,7 @@ const [deals, tapRoute, dealCard, passPage, venuePage, venueDirectory, dancerPag
   readFile(new URL("../app/api/venue/deal/qr/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-copy.ts", import.meta.url), "utf8"),
   readFile(new URL("../scripts/manage-demo-club-deals.mjs", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608190001_phase_zero_atomic_nfc_redemption.sql", import.meta.url), "utf8"),
 ]);
 
 test("dancer-attributed cashier taps require a verified current shift and preserve locked attribution", () => {
@@ -36,7 +37,14 @@ test("Club Deal selection snapshots customer-facing terms before atomic NFC conf
   assert.match(tapRoute, /dealDescription: deal\.dealDescription/);
   assert.match(tapRoute, /dealTerms: deal\.dealTerms/);
   assert.match(tapRoute, /dealOfferType: deal\.offerType/);
-  assert.match(tapRoute, /confirmRedemptionFromNfc/);
+  assert.match(tapRoute, /issueAndConfirmDealRedemptionFromNfc/);
+  assert.doesNotMatch(tapRoute, /createDealRedemption|confirmRedemptionFromNfc|status: "voided"/);
+  assert.match(deals, /rpc\("issue_and_confirm_deal_redemption_from_nfc"/);
+  assert.match(atomicNfcMigration, /insert into public\.qr_redemptions/);
+  assert.match(atomicNfcMigration, /public\.confirm_deal_redemption_from_nfc/);
+  assert.match(atomicNfcMigration, /grant execute[\s\S]*to service_role/);
+  assert.match(tapRoute, /resolveApiError\(error, "Unable to complete this NFC tap\.", status\)/);
+  assert.doesNotMatch(tapRoute, /NextResponse\.json\(\{ ok: false, error: message/);
   assert.match(deals, /issuedDealSnapshot/);
   assert.match(deals, /readIssuedDealSnapshot/);
   assert.match(deals, /dealSnapshot \? dealSnapshot\.dealTitle/);

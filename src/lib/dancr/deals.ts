@@ -227,6 +227,36 @@ export async function createDealRedemption(client: DancrClient, input: DealRedem
   };
 }
 
+export async function issueAndConfirmDealRedemptionFromNfc(
+  client: DancrClient,
+  input: DealRedemptionInput & { nfcTagId: string; sessionId: string },
+) {
+  const token = crypto.randomBytes(32).toString("base64url");
+  const expiresAt = new Date(Date.now() + 10 * 60 * 60 * 1000).toISOString();
+  const audit = readRequestAudit(input.request);
+  const { data, error } = await (client as any).rpc("issue_and_confirm_deal_redemption_from_nfc", {
+    p_redemption_token: token,
+    p_tag_id: input.nfcTagId,
+    p_session_id: input.sessionId,
+    p_venue_id: input.venueId,
+    p_club_deal_id: input.clubDealId,
+    p_source_type: input.sourceType,
+    p_dancer_id: input.sourceType === "dancer_profile" ? input.dancerId || null : null,
+    p_shift_id: input.sourceType === "dancer_profile" ? input.shiftId || null : null,
+    p_customer_id: input.customerId || null,
+    p_expires_at: expiresAt,
+    p_audit: {
+      ip_address: audit.ipAddress,
+      user_agent: audit.userAgent,
+      device_fingerprint: audit.deviceFingerprint,
+      campaign_source: input.campaignSource || null,
+      deal_snapshot: issuedDealSnapshot(input),
+    },
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function enforceDealGenerationRateLimit(
   client: DancrClient,
   request: Request,

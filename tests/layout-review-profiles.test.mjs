@@ -68,10 +68,8 @@ test("production builds populate profiles only behind one explicit environment g
     postbuildSource,
     /const scheduleSyncFlag = String\([\s\S]*?process\.env\.LAYOUT_REVIEW_SYNC_SCHEDULES \|\| ""[\s\S]*?\.trim\(\)/,
   );
-  assert.match(
-    postbuildSource,
-    /const shouldSyncDefaultUpcoming =[\s\S]*?process\.env\.VERCEL_ENV === "production"[\s\S]*?!populationFlag[\s\S]*?!dealSyncFlag[\s\S]*?!scheduleSyncFlag/,
-  );
+  assert.match(postbuildSource, /const shouldSyncUpcoming = Boolean\(upcomingSyncFlag\)/);
+  assert.doesNotMatch(postbuildSource, /shouldSyncDefaultUpcoming/);
   assert.match(
     postbuildSource,
     /if \(!populationFlag && !dealSyncFlag && !scheduleSyncFlag\) \{[\s\S]*?LAYOUT_REVIEW_POPULATION_SKIPPED[\s\S]*?process\.exit\(0\)/,

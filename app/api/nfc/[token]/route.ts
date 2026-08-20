@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { resolveApiError } from "@/src/lib/api-error-policy";
 import { verifyDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import {
-  createDealRedemption,
   enforceDealGenerationRateLimit,
   getActiveClubDealByIdForVenue,
   getActiveClubDealsForVenue,
   getVerifiedActiveCheckInAtVenue,
+  issueAndConfirmDealRedemptionFromNfc,
 } from "@/src/lib/dancr/deals";
 import {
   registerDancerFromNfc,
-  confirmRedemptionFromNfc,
   recordNfcTagScan,
   resolveNfcTag,
 } from "@/src/lib/dancr/nfc";
@@ -129,7 +129,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const customerId = await optionalCustomerId(request, admin);
-    const redemption = await createDealRedemption(admin, {
+    const confirmation = await issueAndConfirmDealRedemptionFromNfc(admin, {
       clubDealId: deal.id,
       venueId: tag.venueId,
       dealTitle: deal.dealTitle,
@@ -145,35 +145,20 @@ export async function POST(request: Request, context: RouteContext) {
       nfcTagId: tag.id,
       request,
     });
-    try {
-      const confirmation = await confirmRedemptionFromNfc(admin, {
-        tagId: tag.id,
-        redemptionToken: redemption.redemptionToken,
-        sessionId,
-        request,
-      });
-      console.info("CLUB_DEAL_NFC_REDEEMED", {
-        venueId: tag.venueId,
-        tagId: tag.id,
-        dealId: deal.id,
-        redemptionId: confirmation?.redemptionId,
-        sourceType,
-      });
-      return noStore({
-        ok: true,
-        action: "deal_redemption",
-        deal,
-        confirmation,
-        message: `${deal.dealTitle} redeemed at ${tag.venue.name}.`,
-      });
-    } catch (error) {
-      await (admin as any)
-        .from("qr_redemptions")
-        .update({ status: "voided", suspicious: false, voided_at: new Date().toISOString() })
-        .eq("id", redemption.id)
-        .eq("status", "generated");
-      throw error;
-    }
+    console.info("CLUB_DEAL_NFC_REDEEMED", {
+      venueId: tag.venueId,
+      tagId: tag.id,
+      dealId: deal.id,
+      redemptionId: confirmation?.redemptionId,
+      sourceType,
+    });
+    return noStore({
+      ok: true,
+      action: "deal_redemption",
+      deal,
+      confirmation,
+      message: `${deal.dealTitle} redeemed at ${tag.venue.name}.`,
+    });
   } catch (error) {
     const message = safeErrorMessage(error);
     const status = /sign in|active dancer|different venue|inactive/i.test(message)
@@ -182,9 +167,15 @@ export async function POST(request: Request, context: RouteContext) {
         ? 409
         : /not found|no longer active/i.test(message)
           ? 404
-          : 400;
+          : /invalid|valid|required|missing|expired|incomplete|choose|does not have|cannot include|expiration/i.test(message)
+            ? 400
+            : 500;
+    const resolved = resolveApiError(error, "Unable to complete this NFC tap.", status);
     console.error("NFC_TAP_FAILED", { message });
-    return NextResponse.json({ ok: false, error: message || "Unable to complete this NFC tap." }, { status });
+    return NextResponse.json(resolved.body, {
+      status: resolved.status,
+      headers: { "cache-control": "private, no-store, max-age=0" },
+    });
   }
 }
 

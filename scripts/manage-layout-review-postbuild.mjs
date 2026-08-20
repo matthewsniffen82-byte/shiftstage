@@ -9,13 +9,7 @@ const scheduleSyncFlag = String(
 ).trim();
 const upcomingSyncFlag = String(process.env.DEMO_UPCOMING_SYNC || "").trim();
 const DEFAULT_UPCOMING_SYNC_FLAG = "mydancr-three-upcoming-v1";
-const shouldSyncDefaultUpcoming =
-  process.env.VERCEL_ENV === "production" &&
-  !upcomingSyncFlag &&
-  !populationFlag &&
-  !dealSyncFlag &&
-  !scheduleSyncFlag;
-const shouldSyncUpcoming = Boolean(upcomingSyncFlag) || shouldSyncDefaultUpcoming;
+const shouldSyncUpcoming = Boolean(upcomingSyncFlag);
 
 if (shouldSyncUpcoming) {
   if (populationFlag || dealSyncFlag || scheduleSyncFlag) {

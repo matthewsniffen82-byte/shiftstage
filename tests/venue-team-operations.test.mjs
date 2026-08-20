@@ -15,6 +15,7 @@ const [
   nfcPanel,
   supportRoute,
   apiHelpers,
+  apiPolicy,
   migration,
 ] = await Promise.all([
   readFile(new URL("../src/lib/dancr/venue-access.ts", import.meta.url), "utf8"),
@@ -29,6 +30,7 @@ const [
   readFile(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/nfc-support/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/api.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/api-error-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608100001_venue_team_operations.sql", import.meta.url), "utf8"),
 ]);
 
@@ -42,7 +44,8 @@ test("venue team roles are least-privilege and every lookup is scoped to one act
   assert.match(access, /\.eq\("status", "active"\)/);
   assert.match(access, /\.eq\("venues\.is_active", true\)/);
   assert.match(team, /account:app_users!venue_team_members_user_id_fkey/);
-  assert.match(apiHelpers, /Your venue team role does not allow this action[\s\S]*?status: 403/);
+  assert.match(apiHelpers, /resolveApiError/);
+  assert.match(apiPolicy, /Your venue team role does not allow this action[\s\S]*?status: 403/);
   assert.match(migration, /venue_team_members_active_user_idx[\s\S]*?where status = 'active'/);
   assert.match(migration, /This account already belongs to another venue team/);
 });
