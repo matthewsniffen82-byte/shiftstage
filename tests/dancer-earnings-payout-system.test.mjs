@@ -6,6 +6,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const migration = read("supabase/migrations/202608170004_dancer_earnings_payout_system.sql");
 const bitsafeMigration = read("supabase/migrations/202608180001_bitsafe_payout_provider.sql");
 const finance = read("src/lib/dancr/finance.ts");
+const financeAdminActions = read("src/lib/dancr/finance-admin-actions.ts");
 const provider = read("src/lib/dancr/payout-provider.ts");
 const bitsafe = read("src/lib/dancr/bitsafe.ts");
 
@@ -100,9 +101,9 @@ test("Bitsafe payouts remain processing until an audited report reconciliation",
   const adminRoute = read("app/api/admin/finance/route.ts");
   assert.match(finance, /bitsafe_payout_instruction_created/);
   assert.match(finance, /Awaiting approval and execution in the Yoursafe business portal/);
-  assert.match(finance, /Only a processing Bitsafe payout can be reconciled/);
-  assert.match(finance, /bitsafe_payout_reconciled/);
-  assert.match(finance, /verified_yoursafe_payout_report/);
+  assert.match(financeAdminActions, /Only a processing Bitsafe payout can be reconciled/);
+  assert.match(financeAdminActions, /bitsafe_payout_reconciled/);
+  assert.match(financeAdminActions, /verified_yoursafe_payout_report/);
   assert.match(adminRoute, /reconcile_bitsafe_payout/);
 });
 
