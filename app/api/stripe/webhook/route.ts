@@ -13,7 +13,7 @@ import {
   reverseDancerPayoutTransfer,
   syncDancerConnectAccount,
   syncStripeInvoice,
-} from "@/src/lib/dancr/finance";
+} from "@/src/lib/dancr/finance-provider-events";
 import { getServerEnv } from "@/src/lib/env";
 import { getStripe } from "@/src/lib/stripe";
 import type Stripe from "stripe";

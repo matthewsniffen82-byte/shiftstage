@@ -7,6 +7,7 @@ const migration = read("supabase/migrations/202608170004_dancer_earnings_payout_
 const bitsafeMigration = read("supabase/migrations/202608180001_bitsafe_payout_provider.sql");
 const finance = read("src/lib/dancr/finance.ts");
 const financeAdminActions = read("src/lib/dancr/finance-admin-actions.ts");
+const financeProviderEvents = read("src/lib/dancr/finance-provider-events.ts");
 const payoutAccountStore = read("src/lib/dancr/payout-account-store.ts");
 const provider = read("src/lib/dancr/payout-provider.ts");
 const bitsafe = read("src/lib/dancr/bitsafe.ts");
@@ -34,7 +35,7 @@ test("hold release reversal and post-payment recovery preserve accounting histor
   assert.match(migration, /admin_manage_dancer_earning/);
   assert.match(migration, /A reversal reason is required/);
   assert.match(migration, /Paid earnings cannot be reversed or silently debited/);
-  assert.match(finance, /automatic_debit_attempted: false/);
+  assert.match(financeProviderEvents, /automatic_debit_attempted: false/);
 });
 
 test("cash out locks ledger rows and prevents concurrent or duplicate payment", () => {
@@ -119,7 +120,7 @@ test("webhooks are signature verified and idempotently recorded without secrets"
   assert.match(webhook, /recordPaymentProviderWebhook/);
   assert.match(webhook, /completeProviderPayout/);
   assert.match(webhook, /transfer\.metadata\?\.payout_batch_id/);
-  assert.match(finance, /rpc\("claim_payment_provider_webhook"/);
+  assert.match(financeProviderEvents, /rpc\("claim_payment_provider_webhook"/);
   assert.doesNotMatch(read("app/dashboard/DashboardClient.tsx"), /STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|bank_account|routing_number/);
 });
 

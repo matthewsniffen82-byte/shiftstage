@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PayoutMode, PayoutProviderName } from "./payout-provider";
-import { completeProviderPayout } from "./finance";
+import { completeProviderPayout } from "./finance-provider-events";
 
 type DancrClient = SupabaseClient;
 
