@@ -2,9 +2,9 @@
 
 This packet combines a factual product map with draft public policies and bilateral agreements for specialist counsel. It is deliberately written from the product’s actual roles, database concepts, verification gates, public/private surfaces, Club Deal attribution, NFC events, moderation workflow, and finance ledgers. Counsel should use the product map to test every promise in the operative drafts and should resolve the decision register before any document is published or accepted by users.
 
-[CALLOUT:COUNSEL|Drafting status] This is a working draft for licensed counsel. It is not legal advice, is not a legal opinion, and is not approved for publication or user acceptance. Defined terms avoid blanks where possible, but the publishing entity, governing law, dispute procedure, addresses, tax treatment, payout schedule, retention schedule, and insurance requirements must be finalized by counsel.
+[CALLOUT:COUNSEL|Drafting status] This is a working draft for licensed counsel. It is not legal advice, is not a legal opinion, and is not approved for publication or user acceptance. It records current product behavior, business-approved commercial positions, and identified implementation gaps so specialist counsel can refine the operative documents. The publishing entity, governing law, dispute procedure, addresses, tax treatment, settlement schedules, retention schedule, and insurance requirements must be finalized by counsel.
 
-[CALLOUT:PRODUCT FACT|Production providers] This packet does not assume a third-party identity or age-verification provider. MyDancr controls its documented verification and approval workflow. No commission payout provider is currently designated. MyDancr must select a legally and contractually approved payout provider before live payouts are enabled, and the provider’s terms, privacy notice, geographic availability, and legal entity must be verified against the signed production contract before publication.
+[CALLOUT:PRODUCT FACT|Production providers and settlement model] Yoti is the selected hosted age-verification service for the 18+ gate, subject to completion of production configuration and contract/privacy review. Too Much Media’s NATS affiliate platform is the selected dancer-commission settlement system: MyDancr calculates an eligible commission and exports the exact U.S.-dollar amount to the dancer’s verified NATS affiliate account. Clubs owe MyDancr negotiated, Club-Deal-specific referral fees and settle verified redemption statements once each week by ACH. Counsel must verify the contracting entities, account terms, geographic availability, KYC/tax allocation, privacy roles, settlement timing, fees, reserves, and operational responsibilities against the signed production contracts before publication.
 
 ## Packet contents
 
@@ -19,7 +19,7 @@ This packet combines a factual product map with draft public policies and bilate
 9. Draft Age, Identity, and Venue-Verification Policy.
 10. Draft DMCA and Takedown Policy.
 11. Draft Club Deal and NFC Redemption Terms.
-12. Draft Dancer Commission, Agent Referral, and Payout Terms.
+12. Draft Dancer Commission and Too Much Media/NATS Settlement Terms.
 13. Draft Moderation, Reporting, Suspension, and Appeals Policy.
 14. Draft Data-Retention and Account-Deletion Policy.
 15. Implementation checklist, acceptance matrix, and selected primary authorities.
@@ -32,7 +32,7 @@ MyDancr is a mobile-first discovery and promotion platform for lawful adult-ente
 
 MyDancr is not a booking service for private performances, escorting, prostitution, sexual services, dating, personal messaging, alcohol sales, employment placement, payment for dancer services, or transportation. Directions and rideshare links are convenience links. Club Deals are limited to lawful admission or line-access benefits and remain subject to the club’s capacity, age, dress-code, licensing, and house rules.
 
-[CALLOUT:HIGH RISK|Core boundary] Every public description, onboarding screen, sales script, agent script, moderation rule, and club workflow must preserve the line between lawful club promotion and arranging sexual services. The platform should not enable pricing, booking, messaging, negotiation, or payment for private or sexual services.
+[CALLOUT:HIGH RISK|Core boundary] Every public description, onboarding screen, sales or marketing script, moderation rule, and club workflow must preserve the line between lawful club promotion and arranging sexual services. The platform should not enable pricing, booking, messaging, negotiation, or payment for private or sexual services.
 
 ## Current drafting positions
 
@@ -40,33 +40,38 @@ MyDancr is not a booking service for private performances, escorting, prostituti
 - **Dancer public gate:** a first-time dancer’s profile remains private until required profile information and media are approved and an authorized club representative confirms a venue affiliation through the approved verification flow.
 - **Ongoing affiliations:** after initial approval, a dancer may seek additional or replacement club affiliations from the dancer workspace. Shifts may be posted only for clubs with an active approved affiliation.
 - **Working Now:** a production Working Now state is created by a time-limited, server-validated presence event, such as an approved dressing-room NFC tap. Demo-locked data cannot generate commissions.
-- **Club Deals:** only admission and line-access offers are permitted. Alcohol, drink, bottle-service, sexual-service, gambling, cash-equivalent, or unlawful offers are prohibited.
+- **Club Deals:** only admission and line-access offers are permitted. Alcohol, drink, bottle-service, sexual-service, gambling, cash-equivalent, or unlawful offers are prohibited. Each published Club Deal must have a negotiated Deal Order stating that offer’s referral fee and commercial terms; a different offer may have a different fee.
 - **Redemption:** a Club Deal becomes verified only after server confirmation tied to the correct club’s approved cashier NFC tag and the deal’s valid redemption token.
 - **Dancer commission:** only an eligible Club Deal redemption whose immutable source originated from a dancer’s public profile and that is successfully confirmed by the correct authorized cashier NFC tag counts toward that dancer’s monthly tier. The dancer earns **30% on qualifying monthly redemptions 1–9, 40% on 10–24, and 50% on 25 and above**, calculated from the applicable MyDancr gross referral fee—not admission price, deal face value, club gross revenue, tips, or dancer-service compensation.
 - **Separate ledgers:** the club’s obligation to MyDancr and MyDancr’s obligation to the dancer are independent. A club’s late payment does not, by itself, cancel an otherwise payable dancer reward.
-- **Agent compensation:** no person earns an agent commission merely by recruiting, referring, or claiming a relationship. Any agent program requires separate written authorization, an accepted Agent Order or rider, identity/tax verification, and event-based attribution. No multi-level or downline compensation is permitted.
-- **Identity verification:** MyDancr is responsible for defining and operating its dancer age/identity review and any risk-based club or agent checks, including required notices, decision criteria, access controls, retention, appeals, and any lawful alternative.
-- **Payouts:** live dancer and authorized-agent commission payouts remain disabled until MyDancr selects an approved payout provider. Once selected, payees must complete the provider’s secure onboarding, pass its KYC and compliance checks, and ensure that MyDancr and provider records match.
+- **No live agent commission program:** the current product does not promise or operate an agent commission program. A future program would require separate product work, counsel review, written terms, event attribution, tax/compliance controls, and renewed acceptance; no recruiting or downline compensation is permitted.
+- **Age and identity verification:** Yoti is selected for the hosted 18+ verification gate. MyDancr remains responsible for defining the eligibility decision, notice, fallback/manual review, appeal, access, retention, and security controls and for any separate club-authority or dancer-identity checks not performed by Yoti.
+- **Dancer commission settlement:** eligible dancer commissions are exported through the dancer’s verified NATS affiliate account on Too Much Media’s platform. MyDancr stores the minimum account linkage and immutable export/reconciliation record and does not process a second direct settlement while NATS is the active settlement provider.
+- **Club settlement:** each club receives itemized weekly statements for verified redemptions and pays MyDancr once each week by ACH under the applicable Deal Order. The ACH authorization or credit instructions, cutoff, holidays, returns, disputes, taxes, and suspension rules must be finalized in the club order.
 - **Media:** uploads undergo technical validation and automated and/or human moderation. Public media must belong to the uploader, depict consenting adults, comply with platform rules, and remain within current duration/count limits.
 - **No direct messaging:** the current product does not offer customer-to-dancer direct messaging. Support messaging is between an account holder and MyDancr support.
 
 ## Decisions counsel must finalize
 
 1. Identify the exact operating legal entity, state of formation, principal address, support address, privacy request address, legal-notice address, and DMCA agent.
-2. Decide whether the public service is Nevada-only at launch or available in additional states, and prepare a state-by-state licensing and privacy addendum before expansion.
+2. Treat Las Vegas/Nevada as the existing demo market and Arizona as the planned first pilot market. Before the Arizona pilot, select the exact city/county and prepare an Arizona state-and-local addendum covering adult-entertainment and club licensing, advertising and admission offers, privacy/security, tax, worker/referral issues, ACH authorization, and any municipal entertainer/work-card requirements.
 3. Decide whether all customer accounts must be 21+ or whether 18+ accounts may browse clubs whose own entry age varies.
-4. Approve the exact identity and age-verification workflow for dancers, club owners/managers, and agents, including requested evidence, reviewer access, consent and state-specific notices, retention, appeals, and fallback process.
-5. Confirm whether any uploaded media could fall within 18 U.S.C. §§ 2257/2257A and assign recordkeeping, labeling, custodian, inspection, and producer responsibilities.
-6. Select and approve a legally suitable payout provider and its business configuration, beneficiary onboarding, payout cadence, minimum threshold, reserves/holds, rejected-payment procedure, inactivity treatment, fees, supported countries/currencies, sanctions screening, tax-document workflow, complaints path, and unclaimed-property handling.
-7. Decide whether an agent program will launch. If yes, approve a separate Agent Agreement, commission schedule, non-solicitation/marketing standards, attribution duration, clawback rules, and licensing analysis.
-8. Approve the club referral-fee order form, invoice timing, payment processor, late fees, disputes, chargebacks, taxes, and collection procedure, and confirm the nonretroactive profile-originated dancer tiers—30% for monthly events 1–9, 40% for 10–24, and 50% for 25 and above—against tax, worker-classification, referral, and gaming/sweepstakes concerns.
+4. Approve the exact identity, age, and authority-verification workflow for dancers and club owners/managers, including requested evidence, reviewer access, consent and state-specific notices, retention, appeals, and fallback process.
+5. Review and approve the Yoti production configuration and contract, including privacy roles, hosted-session disclosures, minimum-data return, retention, failed/abandoned flow, false-positive/false-negative handling, manual fallback, accessibility, and appeal.
+6. Review and approve the Too Much Media/NATS production contract and business configuration, including the exact contracting entity, dancer affiliate onboarding, KYC/tax allocation, export and payment cadence, minimums, reserves/holds, rejected or ambiguous transactions, fees, supported countries/currencies, complaints, reconciliation, and unclaimed-property handling.
+7. Confirm that no agent commission program will launch under these drafts. Any later agent program requires a separate agreement, implementation, acceptance flow, and legal review before any promise or accrual.
+8. Approve the Deal Order template for negotiated offer-specific referral fees and weekly ACH settlement, including offer terms, fee formula, statement period, authorization/credit method, debit or due day, holidays, returns, disputes, taxes, late fees, suspension, and collection; also confirm the nonretroactive profile-originated dancer tiers—30% for monthly events 1–9, 40% for 10–24, and 50% for 25 and above—against tax, worker-classification, referral, and gaming/sweepstakes concerns.
 9. Choose governing law, venue, arbitration/class-action waiver, small-claims carveout, opt-out process, and consumer-law savings language.
-10. Approve warranty disclaimers, liability caps, indemnities, insurance minimums, and special allocation for clubs, dancers, agents, and the platform.
+10. Approve warranty disclaimers, liability caps, indemnities, insurance minimums, and special allocation for clubs, dancers, customers, and the platform.
 11. Approve exact retention periods by record class, including media, moderation evidence, NFC/device logs, geolocation, finance/tax records, DMCA, support, reports, account-recovery events, and backups.
-12. Confirm Nevada privacy requirements and whether CCPA/CPRA, other comprehensive state privacy laws, GDPR/UK GDPR, biometric laws, consumer-health-data laws, or employment/privacy laws apply.
+12. Confirm Nevada requirements for the existing demo market and Arizona state plus selected-city/county requirements for the pilot, including privacy/security and breach notice, biometric/age-assurance, consumer protection, employment/privacy, adult-entertainment licensing, and tax; evaluate other state and international regimes only before further expansion.
 13. Confirm communications compliance for push, email, and any future SMS, including consent, quiet hours, marketing classification, opt-out, and recordkeeping.
 14. Approve the appeal standard, response targets, emergency suspension authority, repeat-infringer rule, law-enforcement process, and preservation/legal-hold protocol.
-15. Determine worker-classification, agency, referral, tax, and local licensing consequences without implying that MyDancr employs dancers or controls club performance work.
+15. Determine worker-classification, referral, tax, ACH/NACHA, and local licensing consequences without implying that MyDancr employs dancers or controls club performance work.
+
+[CALLOUT:COUNSEL|Counsel direction on 18 U.S.C. §§ 2257/2257A] At counsel’s direction, this packet does not propose §2257/§2257A producer-recordkeeping, labeling, custodian, or inspection obligations for MyDancr, dancers, or clubs. MyDancr’s product rules continue to prohibit minors and actual sexually explicit conduct and to require adult identity/age verification, consent, ownership, moderation, and prompt safety escalation. Counsel should revisit this conclusion only if the accepted content categories or MyDancr’s production role materially change.
+
+[CALLOUT:COUNSEL|Arizona pilot] The planned first pilot outside the Las Vegas demo market is Arizona. The operative documents should identify the selected Arizona launch city/county only after the club pipeline and local licensing review are confirmed.
 
 ---PAGE---
 
@@ -94,11 +99,11 @@ A club account is created through an administrator-issued single-use access code
 
 ### Administrator and support
 
-Administrators review profiles, photos, videos, social links, clubs, claims, affiliations, Club Deals, reports, support escalations, DMCA cases, NFC lifecycle, finance events, and operational health. Elevated actions should be role-restricted and audited. Support agents can respond within the authorized support scope and must not request passwords, reset codes, unnecessary government identification, or payout credentials by ordinary email.
+Administrators review profiles, photos, videos, social links, clubs, claims, affiliations, Club Deals, reports, support escalations, DMCA cases, NFC lifecycle, finance events, and operational health. Elevated actions should be role-restricted and audited. Support agents can respond within the authorized support scope and must not request passwords, reset codes, unnecessary government identification, NATS credentials, or bank/ACH credentials by ordinary email.
 
-### Authorized agent
+### No current agent account or commission role
 
-An agent is not an ordinary customer, dancer, or club role. If MyDancr activates an agent program, an agent is a separately contracted business-development or referral participant with written authorization and a defined commission order. Agent compensation must be based on specified verified revenue events, not mere recruitment, account creation, or a downline. Agent personal, tax, and payout data remains private.
+The audited product does not operate an agent account or agent commission program. A club team member, referral source, recruiter, or person who assists with onboarding is not entitled to compensation through MyDancr. Any later agent role would require a separate product map, agreement, acceptance flow, attribution ledger, tax/compliance process, privacy disclosure, and counsel review before launch.
 
 ## 3. Authentication and account lifecycle
 
@@ -154,31 +159,31 @@ A customer may select a deal from a club page or from an eligible dancer-attribu
 
 Current fraud controls include a duplicate-use window of 24 hours per customer or anonymous session. NFC tags can be active, disabled, or revoked, and administrators can provision or rotate them. Redemptions and NFC taps retain device/IP or session audit information proportionate to fraud and security needs.
 
-## 10. Referral fees, commissions, club receivables, and payouts
+## 10. Referral fees, commissions, club receivables, and settlement
 
-MyDancr maintains two independent finance relationships. First, the club owes MyDancr the referral fee stated in its active club fee term for each eligible verified redemption. Second, MyDancr owes a dancer a reward for an eligible **Profile-Originated Verified Redemption**. A Profile-Originated Verified Redemption is a nonexpired, nonduplicate, nonfraudulent Club Deal redemption successfully confirmed by the correct club’s authorized cashier NFC tag where the immutable server attribution captured before token issuance identifies that dancer’s public profile—including an eligible shift or deal surface presented within that profile—as the originating source. The dancer reward is MyDancr-funded and is not legally conditioned on MyDancr first collecting the club invoice, subject to fraud, reversal, legal hold, or other expressly stated payout conditions.
+MyDancr maintains two independent finance relationships. First, the club owes MyDancr the referral fee stated in the accepted Deal Order for the specific Club Deal that produced each eligible verified redemption. Second, MyDancr owes a dancer a reward for an eligible **Profile-Originated Verified Redemption**. A Profile-Originated Verified Redemption is a nonexpired, nonduplicate, nonfraudulent Club Deal redemption successfully confirmed by the correct club’s authorized cashier NFC tag where the immutable server attribution captured before token issuance identifies that dancer’s public profile—including an eligible shift or deal surface presented within that profile—as the originating source. The dancer reward is MyDancr-funded and is not legally conditioned on MyDancr first collecting the club’s weekly ACH settlement, subject to fraud, reversal, legal hold, or other expressly stated settlement conditions.
 
-The dancer’s share is determined by that event’s ordinal among the dancer’s qualifying Profile-Originated Verified Redemptions for the commission month: **events 1–9 earn 30%; events 10–24 earn 40%; and events 25 and above earn 50% of the applicable MyDancr gross referral fee**. The commission month is the calendar month determined in the verified club’s configured local timezone. Tiers are incremental and nonretroactive: reaching a higher tier does not reprice earlier events. The applicable gross referral fee is the fee in the club’s effective fee term—not admission price, deal value, club revenue, tips, or compensation for dancer services. Each event snapshots its monthly ordinal, policy version, applicable gross fee, 3,000-, 4,000-, or 5,000-basis-point dancer share, currency, source profile, deal, club, dancer, shift/context, token, cashier confirmation, and audit data. A club-page-only redemption without dancer-profile attribution creates no dancer reward.
+The dancer’s share is determined by that event’s ordinal among the dancer’s qualifying Profile-Originated Verified Redemptions for the commission month: **events 1–9 earn 30%; events 10–24 earn 40%; and events 25 and above earn 50% of the applicable MyDancr gross referral fee**. The commission month is the calendar month determined in the verified club’s configured local timezone. Tiers are incremental and nonretroactive: reaching a higher tier does not reprice earlier events. The applicable gross referral fee is the negotiated fee for that specific Club Deal—not admission price, deal value, club revenue, tips, or compensation for dancer services. Each event snapshots its monthly ordinal, policy version, applicable gross fee, 3,000-, 4,000-, or 5,000-basis-point dancer share, currency, source profile, Deal Order/deal, club, dancer, shift/context, token, cashier confirmation, and audit data. A club-page-only redemption without dancer-profile attribution creates no dancer reward.
 
-Club referral fees are set by an authorized administrator and require an active fee term before a deal can be published or redeemed. Clubs may request a change, but a request does not modify the effective rate until authorized. Club invoices aggregate verified receivables and preserve item-level redemption support.
+Each Club Deal requires a mutually accepted written or electronic Deal Order stating the exact offer, eligibility, dates/hours, restrictions, per-redemption referral fee or other approved fee formula, currency, weekly settlement terms, and effective dates. A club may negotiate different economics for different deals. A proposed change does not affect an issued or verified redemption unless MyDancr and the club prospectively accept an amended Deal Order. Weekly statements aggregate verified receivables by deal and preserve item-level redemption support. The club pays MyDancr once each week by ACH under the accepted Deal Order.
 
-Payouts to dancers and, if launched, separately authorized agents must be sent through a separately approved payout provider. MyDancr should store only the provider beneficiary or account identifier, onboarding state, eligibility state, last error, and transfer references, but not full payment-account credentials. The selected provider may collect identity, address, tax, sanctions, source-of-funds, payment-account, device, and transaction data under its own terms. Payees remain responsible for accurate matching information, maintaining an eligible provider account, and fees or taxes allocated to them in the applicable agreement.
+Too Much Media’s NATS affiliate platform is the selected dancer-commission settlement system. An eligible dancer must provide and maintain a verified NATS affiliate account. MyDancr exports the exact eligible U.S.-dollar commission amount to that account and stores the minimum linkage, immutable export ledger, state, attempt, error, reconciliation, reversal, and provider reference needed to prevent duplicate settlement and resolve ambiguous outcomes. Too Much Media/NATS may separately collect identity, address, tax, sanctions, payment-account, device, and transaction data under its own terms. MyDancr should not copy full external payment credentials into its ordinary database. No live agent commission program is included in this packet.
 
-## 11. Agent referral model
+[CALLOUT:IMPLEMENTATION|Finance-model gap] Production code already supports NATS affiliate-account linkage and a durable commission-export ledger, but the club side still models a venue-level referral-fee term and monthly Stripe-oriented invoicing. Before the revised commercial terms are accepted, engineering must implement Deal-Order-specific fee snapshots, weekly itemized statements, the selected ACH debit or credit workflow, returns/retries and reconciliation, and matching tests. The legal drafts below describe the business-approved target model; this callout prevents that target from being mistaken for completed production behavior.
 
-No agent program should be inferred from a club team role or customer referral. If activated, the agent model should use: an administrator-approved agent record; a written agreement and commission order; identity verification appropriate to the agent; verified business, sanctions, and tax status; approved-provider payout readiness; a defined club or transaction attribution; a start/end date; a fixed rate or formula; and an immutable commission event created only after the qualifying verified event.
+## 11. No agent referral program
 
-The model should prohibit commissions for recruiting other agents, impose no purchase or fee to participate, avoid earnings claims, and prevent self-dealing or duplicate attribution. Sponsor/upline language should not be used unless counsel has approved a lawful structure. If an agent helps onboard a club, the club must still independently accept its Club Agreement and fee order.
+No agent program, commission, or payment should be inferred from a club team role, customer referral, introduction, demo, or onboarding assistance. Any future agent model is outside this packet and must not launch without separate counsel-approved terms and completed product, attribution, tax, privacy, and settlement controls. Recruiting another agent or building a downline is prohibited.
 
 ## 12. Notifications and communications
 
 In-app notifications cover shift postings/updates/cancellations, ranking milestones, approval state, weekly summaries, support messages, video moderation, DMCA, affiliation state, and club-claim state. Optional push is delivered through OneSignal; transactional email is delivered through Resend or Postmark; Supabase may deliver authentication email. Customer preferences include followed dancers/clubs, working tonight, new shifts, schedules, club changes, and cancellations.
 
-Marketing and transactional messages must be classified separately. Marketing email needs compliant sender identity, postal address, and opt-out. Push and any future SMS require appropriate consent, preferences, revocation, and records. Security, account, legal, payout, and support messages may be sent despite marketing opt-out when necessary for the service relationship.
+Marketing and transactional messages must be classified separately. Marketing email needs compliant sender identity, postal address, and opt-out. Push and any future SMS require appropriate consent, preferences, revocation, and records. Security, account, legal, commission-settlement, ACH, and support messages may be sent despite marketing opt-out when necessary for the service relationship.
 
 ## 13. Reporting, support, moderation, and DMCA
 
-Users can report profiles, clubs, videos, offers, and other supported targets. A report record includes reporter/account or contact context, category, description, target, state, timestamps, and administrative actions. Support uses threads and messages, may use AI-assisted drafting or triage, and escalates to administrators. AI support should not make legal, safety, payout, or approval decisions without authorized review.
+Users can report profiles, clubs, videos, offers, and other supported targets. A report record includes reporter/account or contact context, category, description, target, state, timestamps, and administrative actions. Support uses threads and messages, may use AI-assisted drafting or triage, and escalates to administrators. AI support should not make legal, safety, financial-settlement, or approval decisions without authorized review.
 
 DMCA intake collects claimant identity/contact, copyrighted work, location of material, good-faith statement, accuracy/perjury statement, and signature. Counter-notice collects the required statements, consent to jurisdiction, service-of-process acceptance, and signature. Administrative actions include restriction/removal, forwarding, restoration, strikes, and repeat-infringer enforcement. A public designated-agent page is maintained and must match the Copyright Office registration.
 
@@ -186,7 +191,7 @@ DMCA intake collects claimant identity/contact, copyrighted work, location of ma
 
 An authenticated deletion request marks the account deleted and removes the authentication user. Related profile and ordinary content records may cascade or be cleaned up. Public access should cease promptly. Storage objects must be included in deletion jobs rather than relying only on database cascade. Backups expire on their normal cycle.
 
-Some records cannot be deleted immediately: verified redemptions; invoices; payout and tax records; security/fraud events; moderation and consent evidence; DMCA notices/counters/strikes; support and legal correspondence; club agreements and fee terms; agent orders; and records subject to a legal hold. These retained records should be minimized, access-restricted, and used only for the applicable legal, accounting, security, or dispute purpose.
+Some records cannot be deleted immediately: verified redemptions; Deal Orders; weekly statements and ACH records; commission, NATS export, and tax records; security/fraud events; moderation and consent evidence; DMCA notices/counters/strikes; support and legal correspondence; club agreements; and records subject to a legal hold. These retained records should be minimized, access-restricted, and used only for the applicable legal, accounting, security, or dispute purpose.
 
 ## 15. Primary systems and external providers
 
@@ -197,10 +202,11 @@ Some records cannot be deleted immediately: verified redemptions; invoices; payo
 - **Resend or Postmark:** transactional email address, message metadata, delivery state, and limited content.
 - **Google Maps/directions services:** map or destination requests; direct links may expose data to Google under its terms.
 - **Rideshare deep links:** destination and device/browser context sent when the user chooses the link; no implied partnership.
-- **Payment processor for club billing:** club billing and invoice payment data, as implemented at launch.
-- **Approved payout provider, once selected:** beneficiary payment-account onboarding, KYC/AML, account status, payout execution, fees, reserves/holds, failures, transaction history, and compliance. The contracted legal entity, onboarding flow, supported countries, and price schedule must match production.
+- **Yoti:** hosted 18+ verification session and privacy-minimized pass/fail result, subject to production contract and configuration review. MyDancr’s planned audit record excludes date of birth, exact age, identity-document images, and biometric media.
+- **ACH processor and banking partners for club settlement:** club legal/account identifiers, authorization or payment instructions, weekly statement amount, status, return code, trace/reference, and reconciliation data. The actual processor and allocation of authorization, notices, retries, fees, and security duties must match the signed production setup.
+- **Too Much Media/NATS:** dancer affiliate-account linkage, account status, exact commission export, provider transaction/reference, processing status, failure or reconciliation state, and any KYC/tax/payment data processed independently under Too Much Media/NATS terms. The contracted entity and production configuration must match the signed agreement.
 
-[CALLOUT:IMPLEMENTATION|Launch synchronization] Before publication, product and counsel must compare this map against production environment variables, processor contracts, database migrations, storage buckets, notification templates, analytics events, and all live pages. Provider names should appear in the privacy policy only when the processor is actually selected and under contract.
+[CALLOUT:IMPLEMENTATION|Launch synchronization] Before publication, product and counsel must compare this map against production environment variables, processor contracts, database migrations, storage buckets, notification templates, analytics events, and all live pages. Yoti, the selected ACH processor/bank setup, and Too Much Media/NATS must not be presented as active beyond the contract and production configuration actually in force.
 
 [[FLOW_MATRIX]]
 
@@ -208,13 +214,13 @@ Some records cannot be deleted immediately: verified redemptions; invoices; payo
 
 ## 1. Scope and acceptance
 
-These Terms of Service govern access to MyDancr’s websites, mobile web experience, accounts, public pages, profiles, media feeds, Club Deals, NFC functions, notifications, support, and related services (collectively, the **Service**). “Company,” “MyDancr,” “we,” “us,” or “our” means the legal entity identified in the published version and acceptance record. “User” means any visitor or account holder. Separate Dancer, Club, Agent, Media, Deal, Payout, and other terms apply when a User uses those features. If separate terms conflict with these Terms, the more specific terms govern that feature.
+These Terms of Service govern access to MyDancr’s websites, mobile web experience, accounts, public pages, profiles, media feeds, Club Deals, NFC functions, notifications, support, and related services (collectively, the **Service**). “Company,” “MyDancr,” “we,” “us,” or “our” means the legal entity identified in the published version and acceptance record. “User” means any visitor or account holder. Separate Dancer, Club, Media, Deal, Verification, Commission Settlement, Deal Order, ACH, and other terms apply when a User uses those features. If separate terms conflict with these Terms, the more specific terms govern that feature.
 
 By creating an account, clicking acceptance, uploading content, activating an NFC function, selecting or redeeming a Club Deal, or otherwise using the Service, the User accepts the version presented at that time. Material updates will be presented through reasonable notice and, where required, renewed acceptance.
 
 ## 2. Eligibility
 
-A User must be at least 18 years old and legally capable of entering a contract. A club may require a higher age for entry, and nothing in the Service overrides alcohol, gaming, adult-entertainment, employment, work-card, or local licensing laws. Dancers, club representatives, and agents must satisfy the additional verification and authority requirements in their agreements. The Service is unavailable to suspended users, sanctioned persons, or anyone barred by law.
+A User must be at least 18 years old and legally capable of entering a contract. A club may require a higher age for entry, and nothing in the Service overrides alcohol, gaming, adult-entertainment, employment, work-card, or local licensing laws. Dancers and club representatives must satisfy the additional verification and authority requirements in their agreements. The Service is unavailable to suspended users, sanctioned persons, or anyone barred by law.
 
 The User represents that signup and account information is accurate, current, and not misleading. Accounts may not be sold, rented, shared outside an authorized club team, or used to impersonate another person or business.
 
@@ -240,13 +246,13 @@ MyDancr may transform, crop, transcode, resize, watermark, moderate, classify, r
 
 Club Deals are conditional club offers, not cash, stored value, reservations, tickets, or guaranteed admission. The club controls admission and must honor a valid deal subject to disclosed limits, capacity, age, dress code, safety, hours, and law. A deal is verified only through the authorized server and cashier NFC flow. Screenshots, copied tokens, expired links, or unconfirmed selections are invalid.
 
-Attribution may record the club page, dancer profile, shift, deal, session, and NFC confirmation that led to a verified redemption. MyDancr may use this attribution to invoice clubs and calculate rewards. Users may not manipulate source attribution, create duplicate redemptions, simulate taps, or interfere with tags.
+Attribution may record the club page, dancer profile, shift, deal, session, and NFC confirmation that led to a verified redemption. MyDancr may use this attribution to create weekly club statements, reconcile ACH, and calculate dancer commissions. Users may not manipulate source attribution, create duplicate redemptions, simulate taps, or interfere with tags.
 
-## 7. Payments and payouts
+## 7. Club payments and dancer commission settlement
 
-Customer use of a Club Deal does not authorize MyDancr to charge the customer unless a separate purchase flow clearly states a charge. Clubs may owe contractual referral fees and subscription or service charges. Under the current Dancer Commission Terms, a Profile-Originated Verified Redemption earns the attributed dancer 30%, 40%, or 50% of the applicable MyDancr gross referral fee according to whether it is the dancer’s 1st–9th, 10th–24th, or 25th-and-later qualifying event in the commission month; the detailed attribution, exclusions, correction, and payout rules control. Authorized agents may receive commissions only under a separate written order. Live commission payouts require a separately approved payout provider and an eligible provider account. Club billing may use a different payment processor. Each financial provider is subject to availability, eligibility, compliance review, and its own terms.
+Customer use of a Club Deal does not authorize MyDancr to charge the customer unless a separate purchase flow clearly states a charge. A club owes the negotiated referral fee for each eligible verified redemption under the Deal Order governing that specific Club Deal and pays MyDancr once each week by ACH. Under the Dancer Commission Terms, a Profile-Originated Verified Redemption earns the attributed dancer 30%, 40%, or 50% of that deal’s applicable MyDancr gross referral fee according to whether it is the dancer’s 1st–9th, 10th–24th, or 25th-and-later qualifying event in the commission month. Eligible dancer commissions are exported to the dancer’s verified NATS affiliate account through Too Much Media’s platform. The detailed attribution, exclusions, correction, settlement, and third-party-account rules control. No live agent commission program is promised by these Terms.
 
-MyDancr may delay or withhold a payout during a reasonable investigation of fraud, sanctions, duplicate attribution, legal process, processor review, chargeback, mistake, or policy violation. MyDancr will not withhold an undisputed earned amount solely because a club is late paying an independent club invoice where the applicable commission terms state the reward is Company-funded.
+MyDancr may delay or hold a commission export during a reasonable investigation of fraud, sanctions, duplicate attribution, legal process, provider review, ACH return, mistake, or policy violation. MyDancr will not hold an undisputed earned amount solely because a club is late on its independent weekly ACH obligation where the applicable commission terms state the reward is Company-funded.
 
 ## 8. Acceptable use
 
@@ -254,7 +260,7 @@ The Acceptable Use and Prohibited Conduct Rules are incorporated. Without limita
 
 ## 9. Third-party services
 
-Links and integrations may lead to clubs, social networks, maps, rideshare providers, authentication/email/push providers, an approved payout provider once selected, and the club billing processor. Third parties control their own services, terms, availability, and data practices. A link or technical integration does not imply endorsement or partnership. The User is responsible for reviewing third-party terms.
+Links and integrations may lead to clubs, social networks, maps, rideshare providers, authentication/email/push providers, Yoti, Too Much Media/NATS, and the ACH processor or banking partners used for club settlement. Third parties control their own services, terms, availability, and data practices. A link or technical integration does not imply endorsement or partnership. The User is responsible for reviewing applicable third-party terms.
 
 ## 10. Changes and availability
 
@@ -270,7 +276,7 @@ MyDancr’s software, design, marks, graphics, rankings, documentation, and non-
 
 ## 13. Privacy
 
-The Privacy Policy explains collection, use, disclosure, retention, rights, and choices. Users must not collect, export, or misuse another person’s data from the Service. Clubs and agents that separately determine a purpose for personal information are responsible for their own privacy compliance.
+The Privacy Policy explains collection, use, disclosure, retention, rights, and choices. Users must not collect, export, or misuse another person’s data from the Service. Clubs that separately determine a purpose for personal information are responsible for their own privacy compliance.
 
 ## 14. Disclaimers
 
@@ -280,13 +286,13 @@ Nothing in these Terms excludes a warranty or remedy that cannot lawfully be exc
 
 ## 15. Limitation of liability
 
-The published version should contain counsel-approved exclusions and a liability cap appropriate to consumer law and the separate commercial agreements. It should distinguish direct platform claims from interactions at clubs, user content, transportation, third-party services, lost profits, and unauthorized conduct. Any cap should preserve nonwaivable rights and address whether club and agent agreements use a different negotiated cap.
+The published version should contain counsel-approved exclusions and a liability cap appropriate to consumer law and the separate commercial agreements. It should distinguish direct platform claims from interactions at clubs, user content, transportation, third-party services, lost profits, and unauthorized conduct. Any cap should preserve nonwaivable rights and address whether club agreements use a different negotiated cap.
 
 [CALLOUT:COUNSEL|Liability clause required] Insert the final dollar or fee-based cap, exclusions, exceptions, and state-specific savings language only after insurance, entity, and launch-jurisdiction review. Do not publish a generic copied cap.
 
 ## 16. Indemnity
 
-Dancers, clubs, and agents should indemnify Company for third-party claims arising from their content, authority, agreements, unlawful conduct, licensing failures, offers, marketing statements, tax obligations, or breach, subject to counsel-approved procedure and applicable law. Consumer indemnity should be narrowed to lawful scope and should not shift Company’s own negligence or statutory obligations.
+Dancers and clubs should indemnify Company for third-party claims arising from their content, authority, agreements, unlawful conduct, licensing failures, offers, marketing statements, tax obligations, or breach, subject to counsel-approved procedure and applicable law. Consumer indemnity should be narrowed to lawful scope and should not shift Company’s own negligence or statutory obligations.
 
 ## 17. Termination
 
@@ -294,7 +300,7 @@ The User may stop using the Service and may disable or request deletion of an ac
 
 ## 18. Governing law and disputes
 
-The final Terms must identify governing law, judicial venue or arbitration administrator/rules, class and jury waivers if used, small-claims rights, consumer-law savings, notice address, and any opt-out period. Commercial Club and Agent Agreements may use different negotiated dispute terms.
+The final Terms must identify governing law, judicial venue or arbitration administrator/rules, class and jury waivers if used, small-claims rights, consumer-law savings, notice address, and any opt-out period. Commercial Club Agreements may use different negotiated dispute terms.
 
 [CALLOUT:DECISION|Do not publish yet] Dispute provisions materially affect user rights and enforceability. Counsel must draft them for MyDancr’s entity, states served, acceptance UI, and consumer/commercial segmentation.
 
@@ -308,7 +314,7 @@ The published Terms should include assignment, force majeure, waiver, severabili
 
 ## 1. Scope
 
-This Privacy Policy applies to personal information processed by MyDancr through the Service. Any payout provider selected in the future will process beneficiary and payment-account data under its own terms and privacy notice. This policy does not govern independent club practices, third-party social sites, maps, rideshare providers, or providers acting independently. The published version must identify the MyDancr controller/business legal entity and contact methods.
+This Privacy Policy applies to personal information processed by MyDancr through the Service. Yoti processes hosted age-verification data, Too Much Media/NATS processes dancer affiliate and commission-settlement data, and the selected ACH processor or banking partners process club payment data under the applicable contracts, notices, and independent terms. This policy does not govern independent club practices, third-party social sites, maps, rideshare providers, or a provider acting independently. The published version must identify the MyDancr controller/business legal entity, contact methods, actual production providers, and each provider’s privacy role.
 
 ## 2. Information collected
 
@@ -322,7 +328,7 @@ Stage name, city, bio, avatar, profile photos, videos, social links, public slug
 
 ### Club and team data
 
-Club name, address, location coordinates, contact information, hours, website, public media, offers, team members, owner/manager/staff role, access code/invitation/claim data, authority evidence, NFC tag assignments, fee terms, invoices, and activity logs.
+Club name, address, location coordinates, contact information, hours, website, public media, offers, team members, owner/manager/staff role, access code/invitation/claim data, authority evidence, NFC tag assignments, Deal Orders, offer-specific fee terms, weekly statements, ACH authorization/payment status and references, and activity logs.
 
 ### Customer preferences and activity
 
@@ -336,9 +342,9 @@ Original uploads, transformed versions, thumbnails, technical metadata, duration
 
 For an eligible dancer check-in, latitude, longitude, accuracy, reading time, distance result, club, and verification expiry. For NFC and security events: tag/token digest, timestamp, club, browser session, device fingerprint or attributes, IP address, user agent, and audit payload. Public users do not receive raw dancer location.
 
-### Finance, commission, tax, and payout data
+### Finance, commission, tax, and settlement data
 
-Club fee terms, invoices, invoice items, payment status/references, verified redemption data, gross referral fee, dancer share, platform share, policy version, commission status, payout batches/items, provider beneficiary or account identifier, onboarding/eligibility state, failure reason, transfer reference, tax classification/documents or status, and agent order/attribution if an agent program is active. Full provider credentials, ID images collected solely for payment-account KYC, and external bank/card credentials should remain with the approved provider rather than being copied into MyDancr’s ordinary database.
+Deal Orders, deal-specific fee snapshots, weekly club statements and items, ACH authorization/payment status, returns and trace/reconciliation references, verified redemption data, gross referral fee, dancer share, platform share, policy version, commission status, NATS affiliate login/account linkage and verification state, immutable commission-export events, attempt/error/reconciliation state, provider transaction/reference, tax classification/documents or status, and reversals. Full Yoti evidence, NATS or ACH credentials, external bank credentials, and identity images collected solely by a provider should remain with that provider rather than being copied into MyDancr’s ordinary database.
 
 ### Support, reports, legal, and DMCA data
 
@@ -350,7 +356,7 @@ Session cookies, local storage, CSRF/security tokens, preference values, anonymo
 
 ## 3. Sources
 
-Information comes from the User; clubs and authorized team members; dancers; agents under contract; automated device/browser events; NFC tags; content moderation; MyDancr verification records; an approved payout provider once selected; the club billing processor; authentication, hosting, email, push, map, and support vendors; public sources used for club verification; other Users’ reports; and authorities where lawful.
+Information comes from the User; clubs and authorized team members; dancers; automated device/browser events; NFC tags; content moderation; MyDancr verification records; Yoti; Too Much Media/NATS; the selected ACH processor or banking partners; authentication, hosting, email, push, map, and support vendors; public sources used for club verification; other Users’ reports; and authorities where lawful.
 
 ## 4. Purposes
 
@@ -361,7 +367,7 @@ Information comes from the User; clubs and authorized team members; dancers; age
 - Personalize city results, follows, saved content, notifications, and rankings.
 - Provide directions and user-requested external links.
 - Create, validate, and prevent abuse of Club Deal redemptions and NFC tags.
-- Invoice clubs, calculate commissions, process payouts, reconcile failures, and meet tax/accounting duties.
+- Create weekly club statements, reconcile ACH, calculate commissions, export eligible dancer commissions to NATS, reconcile failures, and meet tax/accounting duties.
 - Provide support, recovery, appeals, legal notices, and DMCA processes.
 - Prevent fraud, exploitation, trafficking, minors’ access, security attacks, and prohibited conduct.
 - Enforce agreements, protect rights and safety, defend claims, and comply with law.
@@ -369,31 +375,31 @@ Information comes from the User; clubs and authorized team members; dancers; age
 
 ## 5. Disclosures
 
-MyDancr may disclose data to vendors acting under contract for hosting/database/storage/authentication, content moderation, push, email, maps, support, security, club payment processing, payout processing, and professional services. The minimum data necessary should be disclosed for the function.
+MyDancr may disclose data to vendors acting under contract for hosting/database/storage/authentication, content moderation, push, email, maps, support, security, Yoti age verification, Too Much Media/NATS commission settlement, club ACH processing/banking, and professional services. The minimum data necessary should be disclosed for the function.
 
-Public profile data is disclosed to visitors. A club receives information necessary to review its dancer affiliations, team, offers, verified redemptions, and invoices, but not private dancer payout rates or customer contact details unless separately authorized by law and product design. A dancer receives the dancer’s own profile, activity, affiliations, commissions, and payouts, but not customer identity. An agent receives only the agent’s authorized attribution and compensation records, not unrelated club, dancer, or customer data.
+Public profile data is disclosed to visitors. A club receives information necessary to review its dancer affiliations, team, offers, Deal Orders, verified redemptions, weekly statements, and ACH status, but not private dancer commission records or customer contact details unless separately authorized by law and product design. A dancer receives the dancer’s own profile, activity, affiliations, commissions, NATS linkage, and export status, but not customer identity.
 
 MyDancr may disclose information in a merger, financing, acquisition, reorganization, or asset transfer subject to appropriate protections; to professional advisers; to authorities or parties when reasonably necessary for law, safety, fraud, trafficking, child protection, rights, or legal claims; and with the User’s direction or consent.
 
 MyDancr should state whether it “sells” or “shares” personal information under applicable state definitions only after a production vendor/data-use review. Contractual service-provider disclosure does not automatically answer that statutory question.
 
-## 6. MyDancr identity and age verification
+## 6. Yoti age verification and MyDancr eligibility decisions
 
-MyDancr may require an eligible dancer and, where appropriate, a club representative or agent to provide evidence through the approved verification workflow. MyDancr remains responsible for the verification purpose, lawful basis, notices, requested evidence, retention, access decisions, appeals, and response to rights requests concerning verification data.
+MyDancr uses a hosted Yoti flow for the 18+ age-verification gate and plans to retain a privacy-minimized pass/fail audit rather than date of birth, exact age, identity-document images, or biometric media. MyDancr remains responsible for the verification purpose, lawful basis, notices, product eligibility decision, fallback/manual path, appeal, access decision, retention of its own audit, and response to rights requests concerning data MyDancr controls. Yoti separately governs the information it processes under its production terms and privacy notice.
 
-MyDancr should collect and retain only necessary verification evidence, set the shortest workable retention period, limit reviewer access, and document every decision. Biometric processing should not be introduced without counsel-approved notices, consent, retention, deletion, security, and legally required alternative procedures.
+Any separate dancer-identity, club-authority, work-card, or fraud review must collect only necessary evidence, use the shortest workable retention period, limit reviewer access, and document the decision. MyDancr should not receive or retain Yoti biometric media or identity-document images unless counsel approves a materially different production flow with the required notices, consent, retention, deletion, security, and alternatives.
 
-## 7. Commission payout provider
+## 7. Too Much Media/NATS dancer-commission settlement
 
-Live payouts remain disabled until MyDancr selects a legally and contractually approved payout provider. To receive a payout after activation, a dancer or authorized agent must establish and maintain an eligible provider account. The provider may collect legal name, date of birth, address, business information, tax information, government identification, identity-verification data, sanctions/KYC information, source-of-funds information, external account details, device/security data, and transaction data under its own terms and privacy policy. MyDancr may exchange payee identifier, contact information, amount, currency, payment purpose, statement/reference, status, and compliance or failure results needed to execute and reconcile commissions. Provider approval, restrictions, reserves, fees, account closure, and supported payment methods are independently controlled by that provider.
+Too Much Media’s NATS affiliate platform is the selected dancer-commission settlement system. To receive settlement, a dancer must establish and maintain an eligible NATS affiliate account and provide the NATS login/account identifier required to link it to the MyDancr dancer record. MyDancr may exchange that identifier, exact commission amount, currency, transaction purpose/reference, and the minimum status or failure data needed to export and reconcile the commission. Too Much Media/NATS may collect legal name, date of birth, address, business and tax information, government identification, sanctions/KYC data, payment-account details, device/security data, and transaction data under its own terms and privacy policy. Its approval, account restrictions, reserves, fees, closure, and supported payment methods are independently controlled by Too Much Media/NATS.
 
-The published policy must identify the selected provider’s contracted legal entity and link to its exact production privacy notice and terms before any live payout data is sent. MyDancr must update the notice and contract/vendor record before changing providers or sending materially different data.
+MyDancr maintains a private, durable, reversal-aware NATS export ledger so an ambiguous response is reconciled rather than automatically duplicated. The published policy must identify the contracted Too Much Media entity and link to the exact production terms/privacy notice before live data is sent. MyDancr must update the notice, contract/vendor record, and user acceptance before changing the commission-settlement provider or sending materially different data.
 
 ## 8. Choices and rights
 
 Users can edit supported profile and preference fields, control marketing and optional notifications, unfollow, remove content subject to legal retention, disable visibility where supported, and request access, correction, deletion, or appeal through the designated address. Nevada consumers may submit a verified request regarding covered-information sale as applicable. Residents of other states or countries may have additional rights.
 
-Identity verification may be required before fulfilling a request. MyDancr should not provide data that would disclose another person’s information, undermine security/fraud systems, or violate legal retention. Authorized-agent requests require proof of authority. Appeals and response deadlines must follow applicable law.
+Identity verification may be required before fulfilling a request. MyDancr should not provide data that would disclose another person’s information, undermine security/fraud systems, or violate legal retention. Privacy-rights requests submitted by an authorized representative require proof of authority. Appeals and response deadlines must follow applicable law.
 
 ## 9. Retention
 
@@ -427,7 +433,7 @@ The dancer is responsible for the dancer’s own relationship with each club, in
 
 ## 2. Eligibility and truthful identity
 
-The dancer represents that the dancer is at least 18, is the person operating the account, has legal capacity, and may lawfully work and publish the submitted content. The dancer must provide accurate identity and city information, complete the required MyDancr verification process, and must not use another person’s documents, likeness, stage identity, or account. A stage name may be public; legal identity remains private except as required for verification, tax, an approved payout provider, safety, or law.
+The dancer represents that the dancer is at least 18, is the person operating the account, has legal capacity, and may lawfully work and publish the submitted content. The dancer must provide accurate identity and city information, complete the required Yoti/MyDancr verification process, and must not use another person’s documents, likeness, stage identity, or account. A stage name may be public; legal identity remains private except as required for verification, tax, Too Much Media/NATS settlement, safety, or law.
 
 The dancer must maintain all local work cards, entertainer licenses, permits, immigration/work authorization, and club requirements. A MyDancr badge or affiliation does not replace government or club verification.
 
@@ -455,17 +461,17 @@ Supported social links may be displayed as “Social links” or equivalent neut
 
 MyDancr does not monitor all off-platform conduct, but conduct connected to the Service may support enforcement when it creates safety, fraud, trafficking, impersonation, or legal risk.
 
-## 7. Commissions and payout
+## 7. Commissions and Too Much Media/NATS settlement
 
 The dancer earns a reward only from a Profile-Originated Verified Redemption: an eligible Club Deal redemption that the server validly attributes to a customer journey originating from that dancer’s public profile, including an eligible shift or deal surface presented within the profile, and that the correct club’s authorized cashier NFC tag successfully confirms. A profile view, social click, follow, unverified selection, screenshot, failed or duplicate NFC event, demo record, ordinary club attendance, or club-page-only redemption without dancer-profile attribution does not earn commission.
 
 For every Profile-Originated Verified Redemption, the dancer receives **30% for qualifying monthly events 1–9, 40% for events 10–24, and 50% for events 25 and above** of the applicable MyDancr gross referral fee. The percentage does not apply to the customer’s admission value, the deal’s face value, club revenue, tips, or any dancer service. Each event is priced using its ordinal at confirmation and is not retroactively repriced when a later event reaches a higher tier. The event must preserve the source profile, commission month, ordinal, policy version, 3,000-, 4,000-, or 5,000-basis-point share, gross referral fee, currency, club, deal, dancer, token, cashier confirmation, and timestamps. MyDancr may prospectively amend the compensation policy only through clear advance notice and renewed acceptance where required; accrued events keep their snapshot unless corrected for error, fraud, reversal, illegality, sanctions, or a genuine attribution dispute.
 
-After MyDancr selects and activates an approved payout provider, the dancer must open and maintain an eligible provider account, complete the provider’s KYC and tax/compliance checks, maintain information matching the MyDancr payee record, and remain eligible. The dancer authorizes MyDancr to send commission payout instructions and required transaction/payee data to that provider. Provider fees, foreign exchange, limits, supported countries, reserves, payment-method availability, compliance review, and holds may apply as disclosed. MyDancr does not control the provider’s independent approval or account decisions.
+The dancer must open and maintain an eligible NATS affiliate account on Too Much Media’s platform, complete Too Much Media/NATS onboarding and any KYC, tax, sanctions, or payment-account requirements, provide the correct NATS account identifier, and keep the account eligible. The dancer authorizes MyDancr to export the exact eligible commission amount and necessary transaction/reference data to the linked NATS account. Provider fees, foreign exchange, limits, supported countries, reserves, payment-method availability, compliance review, and holds may apply under Too Much Media/NATS terms. MyDancr does not control its independent approval or account decisions and does not process a duplicate direct settlement while NATS is the active settlement provider.
 
-MyDancr may hold a disputed amount during a documented investigation, offset an overpayment or fraudulent/reversed event as permitted by law, and require updated tax information. Undisputed earned dancer rewards are not conditioned solely on club invoice collection. The dancer is responsible for taxes and for seeking professional advice.
+MyDancr may hold a disputed amount during a documented investigation, offset an overpayment or fraudulent/reversed event as permitted by law, and require updated tax information. Undisputed earned dancer rewards are not conditioned solely on the club’s weekly ACH settlement. The dancer is responsible for taxes and for seeking professional advice.
 
-[CALLOUT:COUNSEL|Payout schedule] Add the approved payout frequency, minimum, reserve/hold period, statement dispute deadline, returned-payment process, inactivity/unclaimed-property rule, fee allocation, tax forms, and final-payment timing before launch.
+[CALLOUT:COUNSEL|NATS settlement schedule] Align the public commission schedule with the signed Too Much Media/NATS configuration, including export cadence, minimum, reserve/hold period, statement dispute deadline, rejected or ambiguous export handling, inactivity/unclaimed-property allocation, fees, tax forms, and final-settlement timing.
 
 ## 8. Independent activity and safety
 
@@ -475,13 +481,13 @@ The dancer should use club security and emergency services for immediate safety.
 
 ## 9. Enforcement and termination
 
-MyDancr may pause onboarding, restrict media, remove an affiliation, stop a Working Now state, suspend payouts, or disable the profile for verification failure, inaccurate schedules, tag abuse, prohibited content, fraud, sanctions, legal process, safety, or breach. Ordinary appeals follow the enforcement policy. Immediate restriction may precede notice where necessary.
+MyDancr may pause onboarding, restrict media, remove an affiliation, stop a Working Now state, hold NATS exports, or disable the profile for verification failure, inaccurate schedules, tag abuse, prohibited content, fraud, sanctions, legal process, safety, or breach. Ordinary appeals follow the enforcement policy. Immediate restriction may precede notice where necessary.
 
 On termination, public access ends, but accrued undisputed obligations and legally required records survive. The license ends for ordinary future promotion after removal, but continues as necessary for existing shared materials, technical backups, evidence, legal compliance, and defense of claims.
 
 ## 10. Dancer acknowledgments
 
-The dancer acknowledges the customer-facing limits of badges and status, the absence of guaranteed earnings, the role of club admission and independent club rules, MyDancr’s verification role, a future approved payout provider’s commission-payout role, the public nature of approved profile content, dynamic ranking signals, and the separate Content/Media, Acceptable Use, Verification, Commission, Moderation, Privacy, and Retention policies.
+The dancer acknowledges the customer-facing limits of badges and status, the absence of guaranteed earnings, the role of club admission and independent club rules, Yoti’s hosted age-verification role, MyDancr’s eligibility and commission-calculation roles, Too Much Media/NATS’s commission-settlement role, the public nature of approved profile content, dynamic ranking signals, and the separate Content/Media, Acceptable Use, Verification, Commission, Moderation, Privacy, and Retention policies.
 
 ---PAGE---
 
@@ -497,13 +503,13 @@ The club and MyDancr are independent contractors. MyDancr does not operate the c
 
 ## 3. Public club information
 
-The club authorizes MyDancr to display approved club name, address, location, hours, directions, website/phone, public media, roster/affiliations, schedules, Club Deals, and other submitted information. The club must keep it accurate and must have rights to submitted marks and media. MyDancr may standardize presentation and remove inaccurate or noncompliant content.
+The club authorizes MyDancr to display approved club name, address, location, hours, directions, website/phone, public media, roster/affiliations, schedules, Club Deals, and other submitted information. The club must keep it accurate and must have rights to submitted marks and media. MyDancr may standardize presentation and remove inaccurate or noncompliant content. Under the business-approved listing model, a verified club receives a promoted public club page and roster placement only while it is NFC-enabled and has at least one active approved Club Deal; expiration or suspension of the last active deal may pause public promotion without erasing private affiliation, audit, or settlement records.
 
 ## 4. Dancer affiliation verification
 
 Only an authorized club representative may confirm a dancer affiliation. The representative must reasonably compare the dancer, stage name, and avatar presented through the secure workflow and must not approve a person the representative cannot identify as legitimately affiliated. Confirmation does not transfer the club’s legal verification, licensing, employment, or safety duties to MyDancr.
 
-The club must promptly end an affiliation that is no longer accurate and respond to disputes. It may not use affiliation review to retaliate unlawfully, misrepresent employment, obtain private payout information, or control unrelated dancer content.
+The club must promptly end an affiliation that is no longer accurate and respond to disputes. It may not use affiliation review to retaliate unlawfully, misrepresent employment, obtain private dancer commission/NATS information, or control unrelated dancer content.
 
 ## 5. NFC tags
 
@@ -513,15 +519,15 @@ The club authorizes collection of tap, device/IP, tag, venue, timing, and fraud 
 
 ## 6. Club Deals
 
-The club may publish only approved admission or line-access offers. Each deal must be truthful, available on disclosed terms, and honored when valid, subject only to clearly disclosed capacity, age, dress code, hours, safety, and house rules. The club may not publish alcohol, drink, bottle-service, sexual-service, cash, gambling, controlled-substance, or unlawful offers.
+The club may publish only approved admission or line-access offers. Each deal must be truthful, available on disclosed terms, and honored when valid, subject only to clearly disclosed capacity, age, dress code, hours, safety, and house rules. The club may not publish alcohol, drink, bottle-service, sexual-service, cash, gambling, controlled-substance, or unlawful offers. Before publication, the club and MyDancr must accept a Deal Order for that specific offer; approval of one offer or fee does not automatically govern another.
 
 The club is the offeror and bears responsibility for consumer disclosures, fulfillment, staff training, and lawful refusal. MyDancr may review or remove a deal but does not become the offeror.
 
-## 7. Referral fees and invoices
+## 7. Negotiated referral fees and weekly ACH settlement
 
-For each eligible server-verified redemption, the club owes the referral fee in the active fee term/order. A requested fee change is ineffective until accepted by authorized MyDancr personnel. When the locked source qualifies as a dancer’s public profile, MyDancr separately credits that dancer the applicable 30%, 40%, or 50% monthly tier share of the MyDancr gross referral fee under the Dancer Commission Terms. That credit does not reduce, offset, or condition the club’s referral-fee obligation. Invoice items identify supporting redemptions without exposing unnecessary dancer payout-account information. Club payment duties are separate from MyDancr’s dancer rewards.
+For each eligible server-verified redemption, the club owes the referral fee in the Deal Order governing that specific Club Deal. The order must identify the offer, fee or formula, currency, effective dates, weekly statement period, ACH method, and material restrictions. Different Club Deals may carry different negotiated referral fees. A requested change is ineffective until prospectively accepted by authorized representatives of MyDancr and the club. When the locked source qualifies as a dancer’s public profile, MyDancr separately credits that dancer the applicable 30%, 40%, or 50% monthly tier share of that deal’s MyDancr gross referral fee under the Dancer Commission Terms. That credit does not reduce, offset, or condition the club’s referral-fee obligation.
 
-The club must review statements and raise a specific good-faith dispute within the approved period. Undisputed amounts remain due. The final order should state invoice cycle, due date, payment method, taxes, late fee/interest within lawful limits, failed-payment costs, and suspension rights.
+MyDancr provides an itemized weekly statement identifying supporting verified redemptions without exposing dancer settlement-account information. The club pays MyDancr once each week by ACH, using the authorized debit or credit method stated in the Deal Order. The club must review the statement and raise a specific good-faith dispute within the approved period; undisputed amounts remain due. The final order must state the weekly cutoff and timezone, statement delivery, ACH authorization or instructions, debit/due day, weekends/holidays, returns and retries, taxes, lawful late charges, failed-payment costs, reconciliation, record retention, and suspension rights.
 
 ## 8. Team and security
 
@@ -533,7 +539,7 @@ The club will maintain all adult-entertainment, cabaret, liquor, fire, occupancy
 
 ## 10. Data and confidentiality
 
-The club may use MyDancr data only to operate authorized club features. It may not build customer lists from anonymous signals, export dancer/customer data, sell data, scrape, reidentify, or use payout/engagement information for discriminatory or retaliatory purposes. Confidential information includes security architecture, tag credentials, fee terms where designated, nonpublic user data, and incident information.
+The club may use MyDancr data only to operate authorized club features. It may not build customer lists from anonymous signals, export dancer/customer data, sell data, scrape, reidentify, or use commission/engagement information for discriminatory or retaliatory purposes. Confidential information includes security architecture, tag credentials, fee terms where designated, nonpublic user data, and incident information.
 
 ## 11. Suspension and termination
 
@@ -543,7 +549,7 @@ MyDancr may suspend club publishing, deals, tags, team access, or account access
 
 The final Club Agreement should include negotiated confidentiality, security cooperation, insurance, audit of redemption disputes, warranties, mutual or allocated indemnities, liability cap, term/renewal, termination, governing law, notices, assignment, force majeure, and order-form precedence.
 
-[CALLOUT:COUNSEL|Club order form] Attach a venue-specific order containing legal operator, DBA, licensed premises, authorized signer, subscription/services, referral fee, currency, invoice cycle, due date, tax handling, processor, term, renewal, and special compliance conditions.
+[CALLOUT:COUNSEL|Deal Order and ACH authorization] Use a venue master agreement plus a Deal Order for each published Club Deal. Each order should identify legal operator, DBA, licensed premises, authorized signer, exact offer and restrictions, offer-specific referral fee/formula, currency, weekly statement period, ACH debit authorization or credit instructions, debit/due day, return/retry procedure, tax handling, term, renewal, priority over conflicting deal copy, and special compliance conditions.
 
 ---PAGE---
 
@@ -585,9 +591,9 @@ The submitter must not assume that music playing in a club, a social-platform li
 
 The submitter must disclose materially synthetic or altered depictions and must not use AI to impersonate a real person, falsify club presence, evade moderation, or depict a minor or nonconsensual intimate content. The final policy should state whether MyDancr uses Content to train proprietary models; absent a clear opt-in and approved notice, this draft does not grant a training right.
 
-## 9. 2257/2257A review
+## 9. Adult-only, consent, and content-boundary controls
 
-MyDancr’s current intended public policy excludes actual sexually explicit conduct. If any production or publication could fall within 18 U.S.C. §§ 2257 or 2257A, counsel must determine producer status, records, labels, custodian, inspections, and downstream obligations before accepting that category. A generic “18+” checkbox is not a substitute.
+At counsel’s direction, this license does not impose proposed 18 U.S.C. §§ 2257/2257A producer-recordkeeping, labeling, custodian, or inspection duties. Independently of that conclusion, every depicted person must be an adult and must have consented; the uploader must own or control the necessary rights; actual sexually explicit conduct is outside the accepted content categories; and MyDancr may require age/identity, consent, ownership, moderation, or provenance evidence reasonably necessary to enforce those narrower rules. Counsel should re-review the allocation only if MyDancr materially changes its accepted content or production role.
 
 ## 10. Removal and preservation
 
@@ -627,7 +633,7 @@ Users may not copy, move, rewrite, obscure, damage, replace, emulate, relay, or 
 
 ## 8. Finance and referral integrity
 
-Users may not create sham redemptions, self-deal, collude, recycle sessions, falsify invoices/payout accounts/tax data, redirect attribution, claim an unauthorized agent relationship, make deceptive earnings claims, recruit a downline, charge participation fees, or use payouts for unlawful activity. Mistaken payments must be reported and returned as permitted by law.
+Users may not create sham redemptions, self-deal, collude, recycle sessions, falsify weekly statements, ACH records, NATS accounts, or tax data, redirect attribution, claim an unauthorized commission relationship, make deceptive earnings claims, recruit a downline, charge participation fees, or use settlement flows for unlawful activity. Mistaken payments must be reported and returned as permitted by law.
 
 ## 9. Conduct in and around clubs
 
@@ -635,7 +641,7 @@ MyDancr does not control club conduct, but Users may not use the Service in conn
 
 ## 10. Enforcement
 
-Violations may result in content restriction, warning, feature limitation, removal of affiliation/status, voided redemptions, tag revocation, payout hold, suspension, termination, evidence preservation, and referral to providers or authorities. MyDancr may consider severity, intent, history, harm, cooperation, and risk. Appeals do not require reinstatement during an active safety or fraud risk.
+Violations may result in content restriction, warning, feature limitation, removal of affiliation/status, voided redemptions, tag revocation, commission-export hold, suspension, termination, evidence preservation, and referral to providers or authorities. MyDancr may consider severity, intent, history, harm, cooperation, and risk. Appeals do not require reinstatement during an active safety or fraud risk.
 
 ---PAGE---
 
@@ -647,7 +653,7 @@ All Users must be at least 18. A club may require 21 or another lawful higher ag
 
 ## 2. Risk-based verification
 
-Verification should be proportionate to role and action. Email confirmation is appropriate for basic account access but is not enough for a public dancer, club owner, authorized manager, payout recipient, or agent. High-risk roles require documented identity and/or authority review under MyDancr’s approved process. A selected approved payout provider will separately control payment-account KYC for payout recipients.
+Verification should be proportionate to role and action. Email confirmation is appropriate for basic account access but is not enough for a public dancer, club owner, authorized manager, or commission recipient. Public dancers must complete the hosted Yoti 18+ gate plus any MyDancr identity/eligibility and initial club-affiliation controls required by the approved workflow. High-risk club roles require documented identity and/or authority review. Too Much Media/NATS separately controls its affiliate-account, KYC, tax, sanctions, and payment-account requirements.
 
 ## 3. Dancer identity
 
@@ -671,17 +677,17 @@ An approved dancer may add or switch affiliations through the dashboard, but the
 
 NFC tags are scoped by type and club. Dressing-room tags support affiliation/presence; cashier tags support deal verification. Tokens are secret or hashed, tags have lifecycle states, and server confirmation is required. Tags should be installed in controlled areas and rotated on compromise.
 
-## 8. Payout and agent verification
+## 8. NATS affiliate-account verification
 
-Payout recipients must complete the selected approved provider’s onboarding and any MyDancr tax, sanctions, identity, and account-matching checks. MyDancr uses its approved platform identity review and may rely on the selected provider for payment-account KYC, but must resolve mismatches before payout. An agent must also have a valid separate agreement and order. Provider approval does not itself authorize a MyDancr agent commission; MyDancr’s written authorization and qualifying events are still required.
+Dancers receiving commissions must complete Too Much Media/NATS onboarding and any required KYC, sanctions, tax, payment-account, and account-matching checks. MyDancr must verify the dancer-to-NATS account linkage and resolve a mismatch before exporting commission. Too Much Media/NATS approval does not itself create a MyDancr commission; only a qualifying Profile-Originated Verified Redemption calculated under the accepted Dancer Commission Terms does so.
 
 ## 9. Reverification and failure
 
-MyDancr may reverify after material account changes, suspicious activity, expired documents, affiliation disputes, payout failures, sanctions alerts, security incidents, or legal requirements. Failure or refusal may restrict the relevant feature. A User may appeal a mistaken result but cannot require MyDancr to accept unverifiable evidence.
+MyDancr may reverify after material account changes, suspicious activity, expired documents, affiliation disputes, NATS or ACH failures, sanctions alerts, security incidents, or legal requirements. Failure or refusal may restrict the relevant feature. A User may appeal a mistaken result but cannot require MyDancr to accept unverifiable evidence.
 
 ## 10. Data minimization
 
-Verification should collect the minimum evidence necessary, separate public stage identity from legal identity, limit retention, log access, prohibit ordinary email transmission of documents, and avoid exposing government identifiers to clubs, dancers, customers, or agents.
+Verification should collect the minimum evidence necessary, separate public stage identity from legal identity, limit retention, log access, prohibit ordinary email transmission of documents, and avoid exposing government identifiers to clubs, dancers, or customers.
 
 ---PAGE---
 
@@ -749,7 +755,7 @@ The club must train staff, place the tag in the approved cashier location, maint
 
 ## 7. Errors, outages, and disputes
 
-If a server or tag outage prevents confirmation, no unverified screen should automatically create a commission or invoice. The user or club may contact support with the deal, club, time, and reference. MyDancr may verify logs, correct a technical error, or deny a claim lacking reliable evidence. Screenshots are not final proof.
+If a server or tag outage prevents confirmation, no unverified screen should automatically create a commission event or weekly statement item. The user or club may contact support with the deal, club, time, and reference. MyDancr may verify logs, correct a technical error, or deny a claim lacking reliable evidence. Screenshots are not final proof.
 
 ## 8. Expiry and changes
 
@@ -757,11 +763,11 @@ The club may prospectively pause or end a deal subject to existing consumer obli
 
 ---PAGE---
 
-# Part XI — Draft Dancer Commission, Agent Referral, and Payout Terms
+# Part XI — Draft Dancer Commission and Too Much Media/NATS Settlement Terms
 
 ## 1. Overview
 
-These terms govern rewards for eligible dancers and, only if separately authorized, commissions for contracted agents. They do not govern club wages, tips, dancer services, customer purchases, or employment compensation. “Commission Event” means a server-created record that satisfies the applicable policy and attribution rules. “Profile-Originated Verified Redemption” means an allowed Club Deal redemption successfully confirmed by the correct club’s authorized cashier NFC tag where the immutable source captured before token issuance identifies an eligible dancer’s public profile—including a qualifying shift or deal surface presented within that profile—as the customer journey’s origin. “Approved Payout Provider” means a legally suitable provider selected under a signed production contract after MyDancr’s business model and payout use case have been approved.
+These terms govern rewards for eligible dancers. They do not govern club wages, tips, dancer services, customer purchases, or employment compensation, and they do not create an agent commission program. “Commission Event” means a server-created record that satisfies the applicable policy and attribution rules. “Profile-Originated Verified Redemption” means an allowed Club Deal redemption successfully confirmed by the correct club’s authorized cashier NFC tag where the immutable source captured before token issuance identifies an eligible dancer’s public profile—including a qualifying shift or deal surface presented within that profile—as the customer journey’s origin. “NATS Affiliate Account” means the dancer’s eligible, verified affiliate account on Too Much Media’s NATS platform. “NATS Export” means MyDancr’s transaction or import event transmitting the exact eligible commission amount and reference to that account for settlement.
 
 ## 2. Qualifying dancer event
 
@@ -777,35 +783,33 @@ The attributed dancer’s share of the applicable MyDancr gross referral fee is 
 - **10th–24th qualifying event:** 40% dancer share; 60% retained by MyDancr.
 - **25th and each later qualifying event:** 50% dancer share; 50% retained by MyDancr.
 
-The commission month is the calendar month determined in the verified club’s configured local timezone. Tiers apply incrementally, not retroactively: an event is priced at the tier reached when the authorized cashier NFC confirmation occurs, and a later tier does not reprice prior events. The gross referral fee is the fee in the club’s effective term, not admission price, deal value, club revenue, tip, or dancer compensation. The event stores the source profile, commission month, ordinal, policy version, 3,000-, 4,000-, or 5,000-basis-point share, gross fee, currency, club, deal, dancer, shift/context, token, cashier confirmation, timestamps, and calculation snapshot.
+The commission month is the calendar month determined in the verified club’s configured local timezone. Tiers apply incrementally, not retroactively: an event is priced at the tier reached when the authorized cashier NFC confirmation occurs, and a later tier does not reprice prior events. The gross referral fee is the negotiated fee for the specific Club Deal in its accepted Deal Order, not admission price, deal value, club revenue, tip, or dancer compensation. The event stores the source profile, commission month, ordinal, policy version, 3,000-, 4,000-, or 5,000-basis-point share, gross fee, currency, Deal Order/deal, club, dancer, shift/context, token, cashier confirmation, timestamps, and calculation snapshot.
 
 A future change to a percentage, threshold, commission-month rule, or qualifying source applies only prospectively after clear notice and renewed acceptance where required; it must not silently alter an accrued event.
 
 ## 4. Separate club receivable
 
-The club’s referral-fee obligation and MyDancr’s dancer reward are separate. The club invoice can be pending while the dancer reward is payable. MyDancr may not deny an otherwise valid reward solely because the club has not paid, but may correct or hold an event for fraud, duplication, mistake, reversal, illegality, sanctions, or a genuine attribution dispute.
+The club’s referral-fee obligation and MyDancr’s dancer reward are separate. A weekly club ACH settlement can be pending while the dancer reward is eligible for NATS export. MyDancr may not deny an otherwise valid reward solely because the club has not paid, but may correct or hold an event for fraud, duplication, mistake, reversal, illegality, sanctions, or a genuine attribution dispute.
 
-## 5. Authorized agent commission
+## 5. No agent commission under these terms
 
-No agent commission exists unless MyDancr and the agent have signed a separate Agent Agreement or order that identifies the agent, qualifying event, attributed club or portfolio, rate/formula, currency, effective dates, attribution tail if any, exclusions, and payout conditions. An introduction, email, demo, account signup, recruiting claim, or club team role does not create a commission.
-
-Agent compensation must arise from the written event specified in the order, such as collected platform revenue from a contracted club. Unless the order expressly and lawfully states otherwise, agent commission is not calculated from dancer rewards and does not reduce them. No commission is paid for recruiting another agent or for a downline.
+An introduction, email, demo, account signup, recruiting claim, or club team role does not create an agent commission. MyDancr currently operates no agent commission program. A later program would require a separate counsel-approved agreement, product implementation, event attribution, tax/compliance process, acceptance flow, and publication; it may not be inferred from these dancer terms and may not reduce an accrued dancer commission.
 
 ## 6. Attribution conflicts
 
 The server’s contemporaneous records, accepted club order, event timestamps, and administrator audit control attribution. MyDancr may investigate duplicate claims, self-dealing, preexisting accounts, inactive periods, reassignment, and fraud. A payee must dispute a statement within the counsel-approved period and identify the specific event.
 
-## 7. Payout-provider onboarding
+## 7. NATS affiliate onboarding and export
 
-A payee must establish an eligible account with the Approved Payout Provider, complete its identity/KYC, sanctions, tax, and account-matching checks, and authorize required data exchange. MyDancr may store the beneficiary/account identifier, onboarding status, payout eligibility, transfer reference, and error status but should not store full external account credentials. Provider terms, country availability, account restrictions, reserves, limits, fees, inactivity charges, foreign exchange, payment methods, and review apply independently.
+A dancer must establish and maintain an eligible NATS Affiliate Account, complete Too Much Media/NATS identity/KYC, sanctions, tax, payment-account, and account-matching checks, provide the correct NATS account identifier, and authorize the data exchange required for settlement. MyDancr may store the NATS login/account identifier, linkage and verification state, export eligibility, exact exported amount, immutable ledger state, attempt/error/reconciliation state, reversal, and provider transaction/reference but should not store full external account credentials.
 
-MyDancr will not enable live commission payouts until an Approved Payout Provider is selected and configured. If the selected integration later becomes unavailable or legally unsuitable, MyDancr may change providers with reasonable notice and a transition period, subject to accrued-payment duties and applicable law. The payee may need to complete new onboarding before further payout.
+MyDancr exports each eligible commission through NATS while NATS is the selected settlement system. A successfully exported event must not also be paid directly by MyDancr. A timeout or ambiguous provider response enters reconciliation-required status rather than being automatically retried and potentially duplicated. If the integration becomes unavailable or legally unsuitable, MyDancr may pause exports and change providers with reasonable notice and a transition plan, subject to accrued-payment duties and applicable law.
 
-## 8. Statements, payout cycle, and minimums
+## 8. Statements, export cycle, and settlement timing
 
-The dashboard or statement shows pending, payable, paid, failed, reversed, or held status and available references. The final version must state payout frequency, cutoff timezone, minimum balance, fee allocation, returned-payment handling, and final payout. Amounts below the minimum may roll forward unless law requires otherwise.
+The dashboard or statement should distinguish accrued, eligible, waiting for affiliate linkage, pending export, processing, exported, failed, reconciliation required, reversed, held, and canceled status and show available references. The final version must state MyDancr’s export frequency and cutoff, Too Much Media/NATS settlement timing, minimum balance, fee allocation, rejected-payment handling, and final settlement. Amounts below the minimum may roll forward only as disclosed and as permitted by law.
 
-[CALLOUT:COUNSEL|Commercial schedule] Approve an attached Payout Schedule. It should be operationally achievable and should address weekends/holidays, provider delay, KYC failure, inactive accounts, death/incapacity, unclaimed property, tax holds, currency conversion, and record disputes.
+[CALLOUT:COUNSEL|Commission settlement schedule] Approve an attached schedule that matches the signed Too Much Media/NATS configuration and addresses export cutoff, weekends/holidays, provider delay, ambiguous response, KYC failure, inactive or mismatched accounts, death/incapacity, unclaimed property, tax holds, currency conversion, fees, and record disputes.
 
 ## 9. Holds, corrections, reversals, and offsets
 
@@ -813,7 +817,7 @@ MyDancr may place a proportionate hold during a documented investigation of dupl
 
 ## 10. Taxes and classification
 
-Payees are responsible for taxes, business registration, and professional advice. MyDancr may request tax forms, report payments, and withhold where required. A commission does not create employment, club agency, franchise, partnership, or authority to bind MyDancr. Agents may not make unapproved promises or earnings claims.
+Dancers are responsible for taxes, business registration, and professional advice. MyDancr or Too Much Media/NATS may request tax forms, report payments, and withhold where required. A commission does not create employment, club agency, franchise, partnership, or authority to bind MyDancr.
 
 ## 11. No transfer and survival
 
@@ -825,7 +829,7 @@ Commission rights may not be sold, pledged, assigned, or redirected except with 
 
 ## 1. Scope and principles
 
-MyDancr moderates to protect adults, consent, lawful club promotion, rights, finance integrity, and system safety. Decisions may involve automated tools and trained reviewers. MyDancr prioritizes imminent harm, minors, trafficking, nonconsensual content, credible threats, account takeover, payout fraud, and tag compromise.
+MyDancr moderates to protect adults, consent, lawful club promotion, rights, finance integrity, and system safety. Decisions may involve automated tools and trained reviewers. MyDancr prioritizes imminent harm, minors, trafficking, nonconsensual content, credible threats, account takeover, commission/ACH fraud, and tag compromise.
 
 ## 2. Content states
 
@@ -841,7 +845,7 @@ A reporter should identify the target, category, and enough facts to investigate
 
 ## 5. Review and action
 
-Reviewers may approve, restrict, remove, request information, disable features, suspend accounts, revoke affiliations/tags, void events, hold payouts, or escalate. The record should include issue, evidence, rule, action, reviewer, timestamp, notice, and appeal. Access must be least-privilege, especially for identity, intimate media, location, and payout data.
+Reviewers may approve, restrict, remove, request information, disable features, suspend accounts, revoke affiliations/tags, void events, hold commission exports, or escalate. The record should include issue, evidence, rule, action, reviewer, timestamp, notice, and appeal. Access must be least-privilege, especially for identity, intimate media, location, NATS, and ACH data.
 
 ## 6. Notice
 
@@ -861,7 +865,7 @@ Affiliation disputes should compare club authority, dancer account, verification
 
 ## 10. Finance disputes
 
-Commission disputes use immutable redemption, tag, source, club, shift, policy-version, and payout records. MyDancr may separate undisputed amounts. Clubs cannot see private dancer payout terms; dancers and agents cannot see unrelated club billing or other payees.
+Commission disputes use immutable redemption, tag, source, club, shift, Deal Order, policy-version, NATS export, and settlement records. MyDancr may separate undisputed amounts. Clubs cannot see private dancer commission-settlement terms; dancers cannot see unrelated club ACH or other dancers’ records.
 
 ## 11. Repeat violations and termination
 
@@ -889,15 +893,15 @@ MyDancr retains personal information only for a documented operational, contract
 - **Precise geolocation:** shortest operational/fraud window feasible; retain derived pass/fail, distance, accuracy, and event evidence longer only if necessary.
 - **Views, clicks, rankings, and analytics:** rolling product/analytics period, then aggregate or deidentify; delete direct identifiers when no longer needed.
 - **Club Deal tokens and attempts:** token life plus fraud/dispute period.
-- **Verified redemptions, invoices, commission, payout, and tax records:** statutory accounting/tax period plus open dispute, audit, chargeback, and legal-hold needs.
-- **Payout-provider references:** beneficiary/account identifier, transfer reference, status, amount, currency, failure/hold reason, and reconciliation record through the approved finance/statutory period; never retain the provider password or unnecessary payment-account credentials. The provider independently retains regulated KYC and transaction data under its policy.
+- **Verified redemptions, Deal Orders, weekly statements, ACH, commissions, NATS exports/settlement, and tax records:** statutory accounting/tax period plus open dispute, audit, return/reversal, and legal-hold needs.
+- **Too Much Media/NATS references:** affiliate login/account identifier, export reference, status, amount, currency, failure/hold reason, reversal, and reconciliation record through the approved finance/statutory period; never retain the NATS password or unnecessary payment-account credentials. Too Much Media/NATS independently retains regulated KYC and transaction data under its policy.
 - **Support and account recovery:** case life plus quality, security, and dispute period; remove unnecessary identity evidence.
 - **Reports and moderation:** action/appeal period plus safety, repeat-abuse, and claim-defense needs.
 - **DMCA:** statutory, litigation, repeat-infringer, and defense period.
-- **Club/agent agreements and fee/commission orders:** agreement life plus limitation, tax, audit, and dispute period.
+- **Club agreements, Deal Orders, and commission records:** agreement life plus limitation, tax, audit, and dispute period.
 - **Administrative and security logs:** risk-based rolling period; longer for material incidents or legal hold.
 
-[CALLOUT:COUNSEL|Exact periods required] Convert every “short,” “limited,” “rolling,” and “statutory” period above into an approved number of days/years and confirm backup architecture, tax law, limitation periods, DMCA, performer-record duties, fraud models, and state privacy requirements.
+[CALLOUT:COUNSEL|Exact periods required] Convert every “short,” “limited,” “rolling,” and “statutory” period above into an approved number of days/years and confirm backup architecture, tax law, limitation periods, DMCA, consent/verification evidence, fraud models, and state privacy requirements.
 
 ## 3. Account deletion process
 
@@ -907,11 +911,11 @@ Deletion is not complete merely because a database row cascades. The process mus
 
 ## 4. Exceptions
 
-MyDancr may retain minimum records required for unpaid/paid invoices and commissions, taxes, fraud/security, chargebacks, DMCA, reports, consent/release evidence, legal claims, sanctions, and legal holds. Retained data is not used for ordinary promotion and should be segregated or access-restricted.
+MyDancr may retain minimum records required for Deal Orders, weekly statements, ACH, commissions, NATS exports/settlement, taxes, fraud/security, returns/reversals, DMCA, reports, consent/release evidence, legal claims, sanctions, and legal holds. Retained data is not used for ordinary promotion and should be segregated or access-restricted.
 
-## 5. Club, dancer, and agent records
+## 5. Club and dancer records
 
-Deleting a User account does not delete another legal entity’s records or rewrite historical events. A dancer’s public profile can be removed while a club invoice and dancer payout event retain a pseudonymous or internal reference. A club account deletion does not erase consumer redemption support or an accepted fee term. Agent termination does not erase earned/paid statements or tax records.
+Deleting a User account does not delete another legal entity’s records or rewrite historical events. A dancer’s public profile can be removed while a weekly club statement, verified redemption, dancer commission event, and NATS export retain a pseudonymous or internal reference. A club account deletion does not erase consumer redemption support, an accepted Deal Order, or ACH reconciliation records.
 
 ## 6. Backups and vendors
 
@@ -933,34 +937,35 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 
 1. Insert legal entity, addresses, effective dates, and contacts in every public document.
 2. Register and verify the DMCA agent; calendar renewal; match the public page.
-3. Document and approve the identity/age verification workflow, reviewer authority, requested evidence, notices and consent, retention/deletion, security, appeal, incident, and fallback procedures before launch.
-4. Select, contract with, and configure an Approved Payout Provider; confirm its legal identity, supported payee countries/currencies, KYC, funding, fees, reserves, transaction limits, complaints, data protection, and reconciliation.
-5. If agents launch, execute a separate Agent Agreement and order; implement role, authorization, attribution, statements, tax, approved-provider payout, suspension, and deletion before any commission is promised.
-6. Approve club order form and fee term; display the effective fee to the authorized signer.
-7. Implement clickwrap acceptance with document version, timestamp, user/account, IP/user agent as appropriate, and downloadable copy.
-8. Separate customer Terms acceptance from Dancer, Club, Agent, Media, Club Deal, Verification, and approved-provider payout acceptances/notices.
-9. Train verification reviewers; restrict verification-record access; test deletion and reverification.
-10. Confirm media categories, 2257/2257A analysis, releases, music rights, and emergency reporting.
-11. Confirm every Club Deal category and enforce the alcohol/sexual-service prohibition at database and API boundaries.
-12. Validate that only approved affiliated clubs appear for dancer shifts.
-13. Validate first-time venue gate and later affiliation flows on real mobile devices.
-14. Validate NFC tag types, installation, rotation, compromise, offline/error, duplicate, expiry, and audit flows.
-15. Validate immutable dancer-profile source attribution, the 1–9/10–24/25+ monthly tier boundaries, nonretroactive event pricing, and independent club/dancer ledgers with test redemptions and reversals.
-16. Finalize the approved-provider payout schedule, minimum, tax, failure, hold, reversal, fee, and unclaimed-property handling.
-17. Map all production providers/subprocessors and execute privacy/security terms.
-18. Implement exact retention/deletion jobs and evidence; test storage cleanup and backup restore behavior.
-19. Configure marketing consent and opt-out; keep transactional/security notices separate.
-20. Adopt incident response, law-enforcement, trafficking/minor, and emergency escalation playbooks.
-21. Complete state/local licensing and privacy review before each city launch.
+3. Complete Yoti production contracting and configuration; document MyDancr’s 18+ eligibility, notice, minimal-result storage, fallback/manual review, appeal, retention/deletion, security, and incident procedures.
+4. Contract with and configure the exact Too Much Media/NATS entity; verify supported dancer countries/currencies, affiliate onboarding, KYC/tax allocation, fees, reserves, limits, complaints, privacy, export cadence, failure and reconciliation behavior.
+5. Keep agent commissions disabled. Treat any future agent program as a separately scoped product and legal launch.
+6. Approve the club master agreement, offer-specific Deal Order, and weekly ACH authorization/instructions; display each deal’s effective referral fee to the authorized signer.
+7. Implement Deal-Order-specific fee snapshots, weekly itemized statements, ACH debit or credit processing, returns/retries, trace references, disputes, and reconciliation before accepting the revised club commercial terms.
+8. Implement clickwrap acceptance with document version, timestamp, user/account, IP/user agent as appropriate, and downloadable copy.
+9. Separate customer Terms acceptance from Dancer, Club, Media, Club Deal, Verification, NATS Commission Settlement, Deal Order, and ACH acceptances/notices.
+10. Train verification reviewers; restrict verification-record access; test deletion and reverification.
+11. Apply counsel’s direction not to impose proposed §2257/§2257A duties; confirm adult-only, consent, ownership, accepted-content boundaries, releases where required, music rights, and emergency reporting.
+12. Confirm every Club Deal category and enforce the alcohol/sexual-service prohibition at database and API boundaries.
+13. Validate that only approved affiliated clubs appear for dancer shifts.
+14. Validate first-time venue gate and later affiliation flows on real mobile devices.
+15. Validate NFC tag types, installation, rotation, compromise, offline/error, duplicate, expiry, and audit flows.
+16. Validate immutable dancer-profile source attribution, Deal-Order fee snapshot, the 1–9/10–24/25+ monthly tier boundaries, nonretroactive event pricing, independent club/dancer ledgers, and NATS export/reconciliation with test redemptions and reversals.
+17. Finalize the NATS commission-export and settlement schedule, minimum, tax, failure, hold, reversal, fee, and unclaimed-property handling.
+18. Map all production providers/subprocessors and execute privacy/security terms.
+19. Implement exact retention/deletion jobs and evidence; test storage cleanup and backup restore behavior.
+20. Configure marketing consent and opt-out; keep transactional/security notices separate.
+21. Adopt incident response, law-enforcement, trafficking/minor, and emergency escalation playbooks.
+22. Select the Arizona pilot city/county and complete Arizona state and local adult-entertainment, club, privacy/security, tax, worker/referral, advertising, and ACH review before onboarding pilot clubs.
 
 ## Acceptance matrix
 
 - **Visitor:** Terms and Privacy notice; no account acceptance, but clear browse/use notice.
 - **Customer:** Terms + Privacy; optional notification/marketing consent; Club Deal terms at selection/redemption.
-- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Verification notice/consent where required + approved-provider Commission/Payout terms; renewed acceptance for material commission changes.
-- **Club owner/authorized signer:** Terms + Privacy + Club Agreement + order/fee term + NFC/Deal terms + data/security obligations.
+- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Yoti/MyDancr Verification notice/consent where required + Too Much Media/NATS Commission Settlement terms; renewed acceptance for material commission changes.
+- **Club owner/authorized signer:** Terms + Privacy + Club Agreement + each offer-specific Deal Order + weekly ACH authorization/instructions + NFC/Deal terms + data/security obligations.
 - **Club manager/staff:** Terms + Privacy + Acceptable Use + team-role acknowledgment + NFC handling; no authority to accept owner-only commercial changes unless granted.
-- **Agent if launched:** Terms + Privacy + separate Agent Agreement/order + Acceptable Use + identity-verification notice + approved-provider payout/tax terms + marketing standards.
+- **Agent:** no active role or commission acceptance in this packet; a future program requires a separate launch package.
 - **Administrator/support:** workforce confidentiality, access, moderation, security, finance, privacy, incident, DMCA, and acceptable-use policies.
 
 ## Product counsel test scripts
@@ -973,13 +978,13 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 - Run dressing-room NFC Working Now start, expiry, cooldown, checkout, revoked tag, and wrong-club cases.
 - Publish allowed and prohibited Club Deals; verify API/database enforcement.
 - Select from club and dancer contexts; test cashier NFC, expiry, duplicate, screenshot, wrong club, revoked tag, anonymous and signed-in states.
-- Reconcile club invoice, profile-originated tier ordinals 1, 9, 10, 24, and 25, month reset, independent dancer payable, payout-provider success/failure, KYC hold, reserve, wrong/mismatched beneficiary, correction, fee, and statement.
-- If agents launch, test no-contract, expired order, duplicate claim, preexisting club, qualifying event, payout failure, and termination.
+- Reconcile a weekly club statement and ACH payment/return; verify distinct Deal Orders and fee snapshots; test profile-originated tier ordinals 1, 9, 10, 24, and 25, month reset, independent dancer commission, NATS linkage, export success/failure/timeout, reconciliation-required state, KYC hold, reserve, mismatched account, reversal, correction, fee, and statement.
+- Confirm no agent account, commission accrual, settlement, or recruiting/downline promise is active.
 - Exercise follow, going, favorite, notification opt-out, email classification, account recovery, reports, moderation, appeal, DMCA, deletion, legal hold, and vendor cleanup.
 
 # Closing attorney review note
 
-The strongest legal posture will come from keeping product behavior narrower than promotional language: public club discovery, approved adult promotional media, venue-confirmed affiliations, limited schedules, admission/line-access Club Deals, verified NFC events, transparent referral attribution, provider-processed payouts, and auditable safety/enforcement. Any later messaging, booking, paid content, customer payments, alcohol offers, private-services marketplace, or multi-level agent program would materially change this packet and should not launch through an informal feature update.
+The strongest legal posture will come from keeping product behavior narrower than promotional language: public club discovery, approved adult promotional media, venue-confirmed affiliations, limited schedules, negotiated admission/line-access Club Deals, verified NFC events, transparent referral attribution, weekly club ACH settlement, Too Much Media/NATS dancer-commission settlement, and auditable safety/enforcement. The first planned pilot outside the Las Vegas demo market is Arizona and requires a selected-city/county addendum before launch. Any later messaging, booking, paid content, customer payments, alcohol offers, private-services marketplace, or agent commission program would materially change this packet and should not launch through an informal feature update.
 
 ---PAGE---
 
@@ -992,6 +997,10 @@ Counsel should confirm the applicability, current version, and jurisdictional sc
 - **FTC — Disclosures 101 for Social Media Influencers:** [https://www.ftc.gov/business-guidance/resources/disclosures-101-social-media-influencers](https://www.ftc.gov/business-guidance/resources/disclosures-101-social-media-influencers)
 - **FTC — CAN-SPAM Act compliance guide:** [https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business](https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business)
 - **FCC — TCPA unlawful-text-message small entity compliance guide:** [https://docs.fcc.gov/public/attachments/DA-24-859A1.pdf](https://docs.fcc.gov/public/attachments/DA-24-859A1.pdf)
-- **18 U.S.C. § 2257 — performer recordkeeping requirements:** [https://uscode.house.gov/view.xhtml?edition=prelim&num=0&req=granuleid%3AUSC-prelim-title18-section2257](https://uscode.house.gov/view.xhtml?edition=prelim&num=0&req=granuleid%3AUSC-prelim-title18-section2257)
+- **Too Much Media — NATS affiliate-management platform:** [https://www.toomuchmedia.com/](https://www.toomuchmedia.com/)
+- **Too Much Media — NATS documentation:** [https://docs.toomuchmedia.com/](https://docs.toomuchmedia.com/)
+- **Yoti — privacy information:** [https://www.yoti.com/privacy/](https://www.yoti.com/privacy/)
+- **Nacha — ACH Rules resources:** [https://www.nacha.org/rules](https://www.nacha.org/rules)
+- **Arizona Revised Statutes § 18-552 — security-system and breach-notification duties:** [https://www.azleg.gov/ars/18/00552.htm](https://www.azleg.gov/ars/18/00552.htm)
 - **18 U.S.C. § 2421A — promotion or facilitation of prostitution and reckless disregard of sex trafficking:** [https://uscode.house.gov/view.xhtml?req=%28title%3A18+section%3A2421a+edition%3Aprelim%29](https://uscode.house.gov/view.xhtml?req=%28title%3A18+section%3A2421a+edition%3Aprelim%29)
 - **Clark County business-license category and fee schedule:** [https://www.clarkcountynv.gov/adobe/assets/urn%3Aaaid%3Aaem%3Aed9e0b17-c87d-46b8-9ee9-4e044cf84ac2/original/as/list-of-categories-and-fees.pdf](https://www.clarkcountynv.gov/adobe/assets/urn%3Aaaid%3Aaem%3Aed9e0b17-c87d-46b8-9ee9-4e044cf84ac2/original/as/list-of-categories-and-fees.pdf)

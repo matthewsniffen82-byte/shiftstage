@@ -253,7 +253,7 @@ def add_cover(doc: Document) -> None:
     values = [
         ("Prepared for", "Specialist adult-entertainment counsel"),
         ("Product", "MyDancr · mobile-first web application"),
-        ("Review date", "August 18, 2026"),
+        ("Review date", "August 21, 2026"),
         ("Status", "Attorney review draft · not approved for publication"),
     ]
     for row, (label, value) in zip(meta.rows, values):
@@ -525,19 +525,19 @@ def main() -> None:
 
     flow_rows = [
         ("Customer signs up", "Email, city, password/auth metadata", "Supabase Auth creates user; app assigns customer role and private profile", "Customer dashboard", "Confirmation, rate limit, row-level access"),
-        ("Dancer signs up", "Email, city, identity/profile fields", "Auth + draft dancer profile; staged onboarding; MyDancr identity/age review required", "Private dancer workspace", "Email confirmation; verification decision; account state; audit"),
+        ("Dancer signs up", "Email, city, identity/profile fields", "Auth + draft dancer profile; staged onboarding; hosted Yoti 18+ gate and MyDancr eligibility review required", "Private dancer workspace", "Email confirmation; privacy-minimized verification decision; account state; audit"),
         ("Dancer uploads media", "Image/video, metadata, moderation signals", "Signature/type/size checks; transform/watermark; automated and/or human moderation", "Approved public media or private review state", "Moderation record; storage path; rejection reason"),
         ("Dancer submits", "Profile, identity readiness, approved media", "Eligibility checks; first venue verification remains required", "Pending/approved state", "Approval review; notification"),
         ("Dressing-room NFC tap", "Tag token, dancer account, venue, device/IP audit", "Secure tag validation; affiliation/working session creation", "Venue affiliation + time-limited Working Now", "Tap event; expiry; cooldown; audit"),
         ("Dancer posts shift", "Approved affiliated club, date/time", "Server restricts venue to active approved affiliation", "Public upcoming schedule", "Shift record; notification; analytics"),
         ("Customer discovers", "City/filter, coarse session/device data", "Public eligibility and ranking queries", "Dancer/club/TV results", "View and ranking events"),
         ("Customer follows/saves", "Account or anonymous session token", "Relationship/preference record", "Personalized dashboard/notifications", "Follow, favorite, going, saved-deal records"),
-        ("Club publishes deal", "Admission/line-access terms, active fee term", "Authorization and deal-policy validation", "Public Club Deal", "Deal record; club/admin activity"),
+        ("Club publishes deal", "Admission/line-access terms + accepted offer-specific Deal Order", "Authorization, deal-policy, fee, dates, and active-deal validation", "Public Club Deal", "Deal Order + fee snapshot + deal + club/admin activity"),
         ("Customer selects deal", "Deal, source page, attributed dancer/shift when eligible", "Signed redemption token is created and attribution locked", "Cashier redemption screen", "Redemption + attribution audit"),
         ("Cashier NFC tap", "Cashier tag, token, session/device/IP", "Venue/deal/status/expiry/duplicate checks; server confirmation", "Verified redemption", "NFC tap, redemption event, fraud indicators"),
-        ("Commission accrues", "Profile-originated verified redemption + club referral fee", "Monthly event 1–9: 30%; 10–24: 40%; 25+: 50%", "Club receivable; independent dancer payable", "Immutable source + monthly ordinal + 3,000/4,000/5,000 bp + policy version"),
-        ("Payout scheduled", "Payee identity, approved-provider beneficiary ID, amount, tax/compliance state", "Approved provider executes, holds, or rejects transfer", "Dancer or authorized agent payment account", "Batch/item/reference/status; no provider password or full credentials in app DB"),
-        ("Club pays invoice", "Invoice, verified redemptions, payment reference", "Club receivable reconciliation", "Settled club invoice", "Invoice/item/payment records; separate from dancer reward"),
+        ("Commission accrues", "Profile-originated verified redemption + that deal’s negotiated referral fee", "Monthly event 1–9: 30%; 10–24: 40%; 25+: 50%", "Independent dancer commission eligible for NATS export", "Immutable source + Deal Order/fee + monthly ordinal + 3,000/4,000/5,000 bp + policy version"),
+        ("Commission exported", "Verified NATS affiliate ID + exact eligible USD amount", "Durable NATS outbox exports once; ambiguous responses require reconciliation", "Too Much Media/NATS affiliate ledger", "Linkage + attempt/status + provider reference + reversal; no external account credentials in app DB"),
+        ("Club settles weekly", "Weekly itemized statement + accepted ACH authorization/instructions", "ACH debit or credit, return/retry, and receivable reconciliation", "MyDancr club receivable settled", "Statement/item + ACH trace/status/return; separate from dancer commission"),
         ("Notification event", "Recipient, event type, preference, channel", "In-app plus optional push/email delivery", "Account holder", "Notification/delivery status; opt-out preference"),
         ("Report/support request", "Target, category, description, attachments/contact", "Triage, moderation, escalation, response", "Admin/support queue and reporter updates", "Case/thread/messages/actions"),
         ("DMCA notice", "Claimant, work, location, statements, signature", "Completeness review; removal/counter-notice/restore workflow", "Claimant, uploader, administrator", "DMCA case, counter, strike, actions"),
@@ -549,7 +549,7 @@ def main() -> None:
     doc.core_properties.title = "MyDancr Legal Review Packet"
     doc.core_properties.subject = "Factual product map and draft agreements/policies for attorney review"
     doc.core_properties.author = "MyDancr product team"
-    doc.core_properties.keywords = "MyDancr, legal review, terms, privacy, dancer, club, NFC, commissions, payouts"
+    doc.core_properties.keywords = "MyDancr, legal review, Arizona pilot, terms, privacy, dancer, club, NFC, Club Deals, ACH, NATS, commissions"
     doc.core_properties.comments = "Attorney review draft; not approved for publication"
     doc.save(output_path)
     print(output_path)
