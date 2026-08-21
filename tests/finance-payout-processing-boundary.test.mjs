@@ -36,8 +36,11 @@ test("provider dispatch preserves reservation and idempotency safeguards", () =>
 });
 
 test("dispatch failures remain recoverable and financially audited", () => {
+  assert.match(processing, /from "\.\/finance-payout-recovery"/);
   assert.match(processing, /rpc\("flag_dancer_payout_dispatch_review"/);
-  assert.match(processing, /rpc\("release_dancer_payout_batch"/);
+  assert.match(processing, /await releaseFailedDancerPayoutBatch\(client, batch\.id, message\)/);
+  assert.match(processing, /Unable to release failed payout batch for retry/);
+  assert.doesNotMatch(processing, /rpc\("release_dancer_payout_batch"/);
   assert.doesNotMatch(processing, /bitsafe|yoursafe/i);
 });
 

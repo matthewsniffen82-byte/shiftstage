@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { releasePendingDancerEarnings } from "./finance-earning-lifecycle";
+import { releaseFailedDancerPayoutBatch } from "./finance-payout-recovery";
 import { getDancerPayoutAccount, getEffectivePayoutSettings } from "./payout-account-store";
 import { getPayoutProvider, type PayoutProviderName } from "./payout-provider";
 import { getNatsRuntimeConfig } from "./nats";
@@ -82,11 +83,11 @@ export async function processDancerPayouts(client: DancrClient) {
         });
         if (reviewError) errors.push(`Unable to audit provider dispatch review: ${financeError(reviewError)}`);
       } else {
-        await (client as any).rpc("release_dancer_payout_batch", {
-          p_batch_id: batch.id,
-          p_status: "failed",
-          p_failure_message: message,
-        });
+        try {
+          await releaseFailedDancerPayoutBatch(client, batch.id, message);
+        } catch (releaseError) {
+          errors.push(`Unable to release failed payout batch for retry: ${financeError(releaseError)}`);
+        }
       }
     }
   }
