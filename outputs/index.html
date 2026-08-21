@@ -33733,14 +33733,9 @@
           .home-tv-launch-arrow { font-size: 27px; }
           .profile-tv-viewer-footer { grid-template-columns: minmax(0, 1fr); }
         }
-        @supports (-webkit-touch-callout: none) and (height: 100svh) and (height: 100dvh) {
-          :root {
-            --dancr-mobile-nav-browser-clearance: min(52px, max(0px, calc(100dvh - 100svh)));
-          }
-        }
         @media (max-width: 720px) {
           body {
-            padding-bottom: calc(94px + env(safe-area-inset-bottom) + var(--dancr-mobile-nav-browser-clearance, 0px));
+            padding-bottom: calc(94px + env(safe-area-inset-bottom));
           }
           header {
             z-index: 120 !important;
@@ -34070,7 +34065,7 @@
             position: fixed !important;
             z-index: 90;
             left: 50%;
-            bottom: calc(8px + env(safe-area-inset-bottom) + var(--dancr-mobile-nav-browser-clearance, 0px));
+            bottom: calc(8px + env(safe-area-inset-bottom));
             width: min(calc(100% - 16px), 700px) !important;
             height: 72px;
             min-height: 72px;
@@ -34102,16 +34097,6 @@
               background:
                 linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04) 42%,rgba(255,255,255,.015)),
                 linear-gradient(135deg,rgba(18,18,23,.88),rgba(4,4,7,.82)) !important;
-            }
-          }
-          @supports (-webkit-touch-callout: none) and (height: 100svh) and (height: 100dvh) {
-            #discoveryTabs {
-              bottom: 0 !important;
-              height: calc(80px + env(safe-area-inset-bottom) + var(--dancr-mobile-nav-browser-clearance, 0px)) !important;
-              min-height: calc(80px + env(safe-area-inset-bottom) + var(--dancr-mobile-nav-browser-clearance, 0px)) !important;
-              align-items: start !important;
-              padding: 3px 4px calc(11px + env(safe-area-inset-bottom) + var(--dancr-mobile-nav-browser-clearance, 0px)) !important;
-              border-radius: 25px 25px 0 0 !important;
             }
           }
           #discoveryTabs.is-introducing {
@@ -60403,6 +60388,65 @@
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => activateHomeDestination(tab.dataset.tab || ""));
     });
+
+    function installIphoneBottomNavigationTouch() {
+      const isIphoneWebKit =
+        /iP(?:hone|ad|od)/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (!discoveryTabs || !isIphoneWebKit) return;
+
+      const MAX_MOVEMENT_PX = 10;
+      const MAX_DURATION_MS = 900;
+      let target = null;
+      let startX = 0;
+      let startY = 0;
+      let startedAt = 0;
+
+      function resetTap() {
+        target = null;
+        startX = 0;
+        startY = 0;
+        startedAt = 0;
+      }
+
+      function destinationFor(element) {
+        if (!(element instanceof Element)) return "";
+        const button = element.closest(".tab, #homeBottomTv");
+        if (!button || !discoveryTabs.contains(button)) return "";
+        return button.id === "homeBottomTv" ? "tv" : button.dataset.tab || "";
+      }
+
+      discoveryTabs.addEventListener("touchstart", (event) => {
+        resetTap();
+        if (event.touches.length !== 1) return;
+        const destination = destinationFor(event.target);
+        if (!homeDestinationOrder.includes(destination)) return;
+        const touch = event.touches[0];
+        target = destination;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startedAt = Date.now();
+      }, { passive: true });
+
+      discoveryTabs.addEventListener("touchend", (event) => {
+        if (!target || event.changedTouches.length !== 1) {
+          resetTap();
+          return;
+        }
+        const destination = target;
+        const touch = event.changedTouches[0];
+        const moved = Math.hypot(touch.clientX - startX, touch.clientY - startY);
+        const elapsed = Date.now() - startedAt;
+        resetTap();
+        if (moved > MAX_MOVEMENT_PX || elapsed > MAX_DURATION_MS) return;
+        if (event.cancelable) event.preventDefault();
+        activateHomeDestination(destination);
+      }, { passive: false });
+
+      discoveryTabs.addEventListener("touchcancel", resetTap, { passive: true });
+    }
+
+    installIphoneBottomNavigationTouch();
 
     const homeDestinationSwipe = {
       startX: 0,

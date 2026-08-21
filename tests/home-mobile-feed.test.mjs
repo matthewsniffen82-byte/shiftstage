@@ -198,7 +198,7 @@ test("mobile discovery keeps the active title and destination dock visible while
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\) \+ var\(--dancr-mobile-nav-browser-clearance, 0px\)\);/,
+    /#discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
   );
   assert.doesNotMatch(
     homeSource,

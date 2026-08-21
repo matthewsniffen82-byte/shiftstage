@@ -13,6 +13,8 @@ const MOBILE_SWIPE_FLICK_DISTANCE_PX = 22;
 const MOBILE_SWIPE_FLICK_VELOCITY_PX_MS = 0.32;
 const MOBILE_SWIPE_MAX_DURATION_MS = 1400;
 const MOBILE_SWIPE_HORIZONTAL_RATIO = 1.08;
+const MOBILE_NAV_TAP_MAX_MOVEMENT_PX = 10;
+const MOBILE_NAV_TAP_MAX_DURATION_MS = 900;
 const MOBILE_SWIPE_BLOCKED_SELECTOR = [
   "input",
   "select",
@@ -101,6 +103,77 @@ export function GlobalMobileBottomNav() {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(timer);
       navigationElement?.classList.remove("is-introducing");
+    };
+  }, []);
+
+  useEffect(() => {
+    const navigationElement = navigation.current;
+    const isIphoneWebKit =
+      /iP(?:hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (!navigationElement || !isIphoneWebKit) return;
+
+    let target: HTMLAnchorElement | null = null;
+    let startX = 0;
+    let startY = 0;
+    let startedAt = 0;
+
+    const resetTap = () => {
+      target = null;
+      startX = 0;
+      startY = 0;
+      startedAt = 0;
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      resetTap();
+      if (event.touches.length !== 1) return;
+      const candidate =
+        event.target instanceof Element
+          ? event.target.closest<HTMLAnchorElement>("a[href]")
+          : null;
+      if (!candidate || !navigationElement.contains(candidate)) return;
+      const touch = event.touches[0];
+      target = candidate;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startedAt = performance.now();
+    };
+
+    const onTouchEnd = (event: TouchEvent) => {
+      if (!target || event.changedTouches.length !== 1) {
+        resetTap();
+        return;
+      }
+      const destination = target.href;
+      const touch = event.changedTouches[0];
+      const moved = Math.hypot(touch.clientX - startX, touch.clientY - startY);
+      const elapsed = performance.now() - startedAt;
+      resetTap();
+      if (
+        moved > MOBILE_NAV_TAP_MAX_MOVEMENT_PX ||
+        elapsed > MOBILE_NAV_TAP_MAX_DURATION_MS
+      ) {
+        return;
+      }
+      if (event.cancelable) event.preventDefault();
+      window.location.assign(destination);
+    };
+
+    navigationElement.addEventListener("touchstart", onTouchStart, {
+      passive: true,
+    });
+    navigationElement.addEventListener("touchend", onTouchEnd, {
+      passive: false,
+    });
+    navigationElement.addEventListener("touchcancel", resetTap, {
+      passive: true,
+    });
+
+    return () => {
+      navigationElement.removeEventListener("touchstart", onTouchStart);
+      navigationElement.removeEventListener("touchend", onTouchEnd);
+      navigationElement.removeEventListener("touchcancel", resetTap);
     };
   }, []);
 
@@ -315,23 +388,9 @@ export function GlobalMobileBottomNav() {
           display: none;
         }
 
-        @supports (-webkit-touch-callout: none) and (height: 100svh) and
-          (height: 100dvh) {
-          :root {
-            --dancr-mobile-nav-browser-clearance: min(
-              52px,
-              max(0px, calc(100dvh - 100svh))
-            );
-          }
-
-        }
-
         @media (max-width: 720px) {
           body {
-            padding-bottom: calc(
-              94px + env(safe-area-inset-bottom) +
-                var(--dancr-mobile-nav-browser-clearance, 0px)
-            ) !important;
+            padding-bottom: calc(94px + env(safe-area-inset-bottom)) !important;
           }
 
           .global-mobile-swipe-indicator {
@@ -341,10 +400,7 @@ export function GlobalMobileBottomNav() {
             position: fixed;
             z-index: 1499;
             left: 50%;
-            bottom: calc(
-              91px + env(safe-area-inset-bottom) +
-                var(--dancr-mobile-nav-browser-clearance, 0px)
-            );
+            bottom: calc(91px + env(safe-area-inset-bottom));
             min-height: 34px;
             display: inline-flex;
             align-items: center;
@@ -400,10 +456,7 @@ export function GlobalMobileBottomNav() {
             position: fixed;
             z-index: 1500;
             left: 50%;
-            bottom: calc(
-              8px + env(safe-area-inset-bottom) +
-                var(--dancr-mobile-nav-browser-clearance, 0px)
-            );
+            bottom: calc(8px + env(safe-area-inset-bottom));
             width: min(calc(100% - 16px), 700px);
             height: 72px;
             display: grid;
@@ -449,24 +502,6 @@ export function GlobalMobileBottomNav() {
                   rgba(18, 18, 23, 0.88),
                   rgba(4, 4, 7, 0.82)
                 );
-            }
-          }
-
-          @supports (-webkit-touch-callout: none) and (height: 100svh) and
-            (height: 100dvh) {
-            .global-mobile-bottom-nav {
-              bottom: 0;
-              height: calc(
-                80px + env(safe-area-inset-bottom) +
-                  var(--dancr-mobile-nav-browser-clearance, 0px)
-              );
-              align-items: start;
-              padding: 3px 4px
-                calc(
-                  11px + env(safe-area-inset-bottom) +
-                    var(--dancr-mobile-nav-browser-clearance, 0px)
-                );
-              border-radius: 25px 25px 0 0;
             }
           }
 
