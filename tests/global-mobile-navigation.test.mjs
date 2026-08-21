@@ -95,6 +95,26 @@ test("collapsed iPhone browser chrome keeps the dock above Safari's intercepted 
   }
 });
 
+test("iPhone keeps one-tap-safe controls without showing an empty gap below the dock", () => {
+  assert.match(
+    navigationSource,
+    /className="global-mobile-bottom-nav-fill"/,
+  );
+  assert.match(homeSource, /id="discoveryTabsFill" aria-hidden="true"/);
+
+  for (const [source, selector] of [
+    [navigationSource, String.raw`\.global-mobile-bottom-nav-fill`],
+    [homeSource, "#discoveryTabsFill"],
+  ]) {
+    assert.match(
+      source,
+      new RegExp(
+        `${selector} \\{[\\s\\S]*?bottom: 0;[\\s\\S]*?height: calc\\([\\s\\S]*?26px \\+ env\\(safe-area-inset-bottom\\) \\+[\\s\\S]*?var\\(--dancr-mobile-nav-browser-clearance, 0px\\)[\\s\\S]*?background: linear-gradient\\([\\s\\S]*?rgba\\(8, ?8, ?11, ?(?:0\\.94|\\.94)\\)[\\s\\S]*?pointer-events: none;`,
+      ),
+    );
+  }
+});
+
 test("mobile destinations use prominent, consistent controls on every app surface", () => {
   assert.match(
     navigationSource,

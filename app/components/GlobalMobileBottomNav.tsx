@@ -310,8 +310,13 @@ export function GlobalMobileBottomNav() {
           );
         })}
       </nav>
+      <div
+        aria-hidden="true"
+        className="global-mobile-bottom-nav-fill"
+      />
       <style jsx global>{`
-        .global-mobile-bottom-nav {
+        .global-mobile-bottom-nav,
+        .global-mobile-bottom-nav-fill {
           display: none;
         }
 
@@ -322,6 +327,33 @@ export function GlobalMobileBottomNav() {
               52px,
               max(0px, calc(100dvh - 100svh))
             );
+          }
+
+          @media (max-width: 720px) {
+            .global-mobile-bottom-nav-fill {
+              position: fixed;
+              z-index: 1498;
+              left: 50%;
+              bottom: 0;
+              width: min(calc(100% - 18px), 698px);
+              height: calc(
+                26px + env(safe-area-inset-bottom) +
+                  var(--dancr-mobile-nav-browser-clearance, 0px)
+              );
+              display: block;
+              border-right: 1px solid rgba(248, 250, 252, 0.1);
+              border-bottom: 1px solid rgba(248, 250, 252, 0.1);
+              border-left: 1px solid rgba(248, 250, 252, 0.1);
+              border-radius: 0 0 24px 24px;
+              background: linear-gradient(
+                180deg,
+                rgba(8, 8, 11, 0.94),
+                rgba(5, 5, 8, 0.98)
+              );
+              box-shadow: 0 18px 46px rgba(0, 0, 0, 0.46);
+              pointer-events: none;
+              transform: translateX(-50%);
+            }
           }
         }
 
