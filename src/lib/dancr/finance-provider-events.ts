@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { writeFinancialAuditEvent } from "./finance-audit-log";
 import { upsertDancerPayoutAccount } from "./payout-account-store";
 import { stripeAccountState, type PayoutProviderName } from "./payout-provider";
 
@@ -86,7 +87,7 @@ export async function reverseDancerPayoutTransfer(client: DancrClient, transferI
       review_flag: "paid_payout_reversed_by_provider",
     }).eq("payout_batch_id", batch.id).eq("status", "paid");
     if (recoveryError) throw recoveryError;
-    await (client as any).from("financial_audit_events").insert({
+    await writeFinancialAuditEvent(client, {
       actor_type: "provider", action: "paid_payout_recovery_required", target_type: "payout",
       target_id: batch.id, reason: message.slice(0, 500),
       metadata: { provider_reference_id: transferId, automatic_debit_attempted: false },

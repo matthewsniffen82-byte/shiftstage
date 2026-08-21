@@ -43,9 +43,12 @@ test("provider webhooks remain idempotently claimed and explicitly finalized", (
 });
 
 test("payout completion and reversal preserve ledger and recovery controls", () => {
+  assert.match(events, /from "\.\/finance-audit-log"/);
   assert.match(events, /rpc\("complete_dancer_payout_batch"/);
   assert.match(events, /eq\("id", internalPayoutId\)\.eq\("status", "processing"\)/);
   assert.match(events, /review_flag: "paid_payout_reversed_by_provider"/);
   assert.match(events, /automatic_debit_attempted: false/);
+  assert.match(events, /await writeFinancialAuditEvent\(client, \{/);
+  assert.doesNotMatch(events, /from\("financial_audit_events"\)/);
   assert.match(events, /rpc\("release_dancer_payout_batch"/);
 });
