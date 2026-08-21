@@ -45521,7 +45521,7 @@
               <div class="deal-pass-step"><span>1</span><strong>Tap &ldquo;Use this deal&rdquo; below</strong></div>
               <div class="deal-pass-step"><span>2</span><strong>Go to the cashier</strong></div>
               <div class="deal-pass-step"><span>3</span><strong>Unlock and tap the MyDancr NFC sticker</strong></div>
-              <div class="deal-pass-step"><span>4</span><strong>Confirm redemption</strong></div>
+              <div class="deal-pass-step"><span>4</span><strong>Redemption completes automatically</strong></div>
             </div>
             <p class="deal-pass-preview-note">After selecting, MyDancr does not need to stay open. Only this venue’s registered NFC sticker can complete redemption.</p>
             <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
@@ -45692,7 +45692,7 @@
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. The confirmation page will open automatically.";
+        status.textContent = "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. MyDancr opens and completes the redemption automatically.";
         selectButton.textContent = "Deal selected ✓";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");

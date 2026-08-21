@@ -260,7 +260,7 @@ export function ClubDealCard({
                 <div><span>1</span><strong>Tap &ldquo;Use this deal&rdquo; below</strong></div>
                 <div><span>2</span><strong>Go to the cashier</strong></div>
                 <div><span>3</span><strong>Unlock and tap the MyDancr NFC sticker</strong></div>
-                <div><span>4</span><strong>Confirm redemption</strong></div>
+                <div><span>4</span><strong>Redemption completes automatically</strong></div>
               </div>
               <p className="club-deal-preview-note">After selecting, MyDancr does not need to stay open. Only this venue’s registered NFC sticker can complete redemption.</p>
             </>
@@ -487,7 +487,7 @@ async function copyDealLink(url: string) {
 }
 
 function readyStatus() {
-  return "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. The confirmation page will open automatically.";
+  return "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. MyDancr opens and completes the redemption automatically.";
 }
 
 function formatNfcExpiry(value: number) {

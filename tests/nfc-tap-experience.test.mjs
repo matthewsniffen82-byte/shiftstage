@@ -125,7 +125,10 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
   assert.match(redemptionAttribution, /getVerifiedActiveCheckInAtVenue/);
   assert.match(dealCard, /mydancrPendingNfcDealV2/);
   assert.match(client, /readPendingDealIntent/);
-  assert.match(client, /Redeem this Club Deal/);
+  assert.match(client, /shouldSubmitCashierTap/);
+  assert.match(client, /pendingIntent\.dealId === selectedDealId/);
+  assert.match(client, /This registered cashier tap is completing the redemption automatically/);
+  assert.doesNotMatch(client, /Redeem this Club Deal/);
   assert.match(retiredDealQr, /status: 410/);
 });
 
@@ -134,9 +137,9 @@ test("Club Deal checkout explains the complete NFC tap flow without requiring an
   assert.match(dealCard, /Tap &ldquo;Use this deal&rdquo; below/);
   assert.match(dealCard, /Go to the cashier/);
   assert.match(dealCard, /Unlock and tap the MyDancr NFC sticker/);
-  assert.match(dealCard, /Confirm redemption/);
+  assert.match(dealCard, /Redemption completes automatically/);
   assert.match(dealCard, /After selecting, MyDancr does not need to stay open\. Only this venue’s registered NFC sticker can complete redemption\./);
-  assert.match(dealCard, /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. The confirmation page will open automatically\./);
+  assert.match(dealCard, /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. MyDancr opens and completes the redemption automatically\./);
   assert.match(dealCard, /intentState === "ready" \? "Deal selected ✓"/);
   assert.match(dealCard, /intentState !== "ready"/);
   assert.doesNotMatch(dealCard, /<strong>Tap cashier sticker<\/strong>|Select before you reach the cashier\./);

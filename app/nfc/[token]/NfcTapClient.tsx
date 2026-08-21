@@ -56,18 +56,20 @@ export function NfcTapClient({ token }: { token: string }) {
         if (!response.ok || !data.ok) throw new Error(data.error || "This NFC tag is unavailable.");
         if (cancelled) return;
         setState(data);
-        const preferred = data.deals?.some((deal: ClubDeal) => deal.id === pendingIntent?.dealId)
-          ? pendingIntent?.dealId
-          : data.deals?.[0]?.id || "";
+        const pendingDealId = pendingIntent && pendingIntent.venueId === data.venue.id ? pendingIntent.dealId : "";
+        const preferred = pendingDealId
+          && data.deals?.some((deal: ClubDeal) => deal.id === pendingDealId)
+          ? pendingDealId
+          : "";
         setSelectedDealId(preferred || "");
         setPhase("ready");
         const preferredDeal = data.deals?.find((deal: ClubDeal) => deal.id === preferred);
         setStatus(data.tag.type === "dressing_room"
           ? "Sign in as a dancer to start one six-hour Working Now session."
           : pendingIntent?.venueId === data.venue.id && preferredDeal
-            ? `${preferredDeal.dealTitle} is selected on this device. Confirm it at this cashier NFC sticker.`
+            ? `${preferredDeal.dealTitle} is selected. This registered cashier tap is completing the redemption automatically.`
           : data.deals?.length
-            ? "Choose the offer being used at this register."
+            ? "No deal was selected. Open this club’s deal page, choose “Use this deal,” then tap this sticker again."
             : "This club has no active Club Deals right now.");
       })
       .catch((reason) => {
@@ -78,7 +80,7 @@ export function NfcTapClient({ token }: { token: string }) {
         }
       });
     return () => { cancelled = true; };
-  }, [pendingIntent?.dealId, pendingIntent?.venueId, token]);
+  }, [pendingIntent, token]);
 
   const submitTap = useCallback(async () => {
     if (!state || isSubmitting) return;
@@ -153,19 +155,20 @@ export function NfcTapClient({ token }: { token: string }) {
   }, [isSubmitting, pendingIntent, selectedDealId, state, token]);
 
   useEffect(() => {
-    if (
-      autoSubmittedRef.current
-      || !state
-      || state.tag.type !== "dressing_room"
-      || auth.role !== "dancer"
-      || !auth.accessToken
-      || complete
-    ) return;
+    if (autoSubmittedRef.current || !state || complete) return;
+    const shouldSubmitDancerTap = state.tag.type === "dressing_room"
+      && auth.role === "dancer"
+      && Boolean(auth.accessToken);
+    const shouldSubmitCashierTap = state.tag.type === "cashier"
+      && pendingIntent?.venueId === state.venue.id
+      && pendingIntent.dealId === selectedDealId
+      && state.deals.some((deal) => deal.id === selectedDealId);
+    if (!shouldSubmitDancerTap && !shouldSubmitCashierTap) return;
     autoSubmittedRef.current = true;
     void submitTap();
-  }, [auth.accessToken, auth.role, complete, state, submitTap]);
+  }, [auth.accessToken, auth.role, complete, pendingIntent, selectedDealId, state, submitTap]);
 
-  const activeDeal = state?.deals.find((deal) => deal.id === selectedDealId) || state?.deals[0] || null;
+  const activeDeal = state?.deals.find((deal) => deal.id === selectedDealId) || null;
   const activeDealDescription = customerFacingDealDescription(activeDeal?.dealDescription);
   const activeDealTerms = customerFacingDealTerms(activeDeal?.dealTerms);
   const dancerNeedsSignIn = state?.tag.type === "dressing_room" && (auth.role !== "dancer" || !auth.accessToken);
@@ -195,14 +198,6 @@ export function NfcTapClient({ token }: { token: string }) {
         {state?.tag.type === "cashier" && !complete ? (
           <div className="nfc-deals">
             <strong>Club Deal at the register</strong>
-            {state.deals.length > 1 ? (
-              <label>
-                Offer
-                <select value={selectedDealId} onChange={(event) => setSelectedDealId(event.target.value)}>
-                  {state.deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.dealTitle}</option>)}
-                </select>
-              </label>
-            ) : null}
             {activeDeal ? (
               <article>
                 <span>{dealTypeLabel(activeDeal.offerType)}</span>
@@ -210,7 +205,7 @@ export function NfcTapClient({ token }: { token: string }) {
                 {activeDealDescription ? <p>{activeDealDescription}</p> : null}
                 {activeDealTerms ? <small>{activeDealTerms}</small> : null}
               </article>
-            ) : null}
+            ) : <p>Select a current Club Deal before tapping this cashier sticker.</p>}
           </div>
         ) : null}
 
@@ -227,7 +222,7 @@ export function NfcTapClient({ token }: { token: string }) {
                 Create dancer account
               </Link>
             </>
-          ) : state.tag.type === "cashier" && !activeDeal ? null : (
+          ) : state.tag.type === "cashier" && phase !== "error" ? null : (
             <button className="nfc-primary" type="button" onClick={submitTap} disabled={isSubmitting}>
               {isSubmitting
                 ? "Confirming…"
@@ -235,7 +230,7 @@ export function NfcTapClient({ token }: { token: string }) {
                   ? "Try again"
                 : state.tag.type === "dressing_room"
                   ? "Confirm Working Now"
-                  : "Redeem this Club Deal"}
+                  : "Try again"}
             </button>
           )
         ) : null}
@@ -291,6 +286,7 @@ function readPendingDealIntent(): PendingDealIntent | null {
     const value = JSON.parse(window.localStorage.getItem(DEAL_INTENT_KEY) || "null");
     if (!value || typeof value !== "object" || Date.now() - Number(value.savedAt || 0) > 12 * 60 * 60 * 1000) return null;
     if (typeof value.venueId !== "string" || typeof value.dealId !== "string") return null;
+    if (Number(value.expiresAt || 0) > 0 && Date.now() >= Number(value.expiresAt)) return null;
     return value as PendingDealIntent;
   } catch {
     return null;

@@ -92,12 +92,12 @@ test("customers explicitly select an exact offer and dancer token until the phys
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
 });
 
-test("Club Deal checkout uses one concise four-step NFC flow across both public experiences", () => {
+test("Club Deal checkout uses one concise automatic NFC flow across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
     assert.match(source, /<strong>Tap &ldquo;Use this deal&rdquo; below<\/strong>/);
     assert.match(source, /Go to the cashier/);
     assert.match(source, /Unlock and tap the MyDancr NFC sticker/);
-    assert.match(source, /<strong>Confirm redemption<\/strong>/);
+    assert.match(source, /<strong>Redemption completes automatically<\/strong>/);
     assert.match(source, /After selecting, MyDancr does not need to stay open\. Only this venue’s registered NFC sticker can complete redemption\./);
     assert.match(source, /Save for later/);
     assert.match(source, /aria-label="Tap cashier sticker"/);
@@ -113,7 +113,7 @@ test("Club Deal checkout uses one concise four-step NFC flow across both public 
 });
 
 test("selected Club Deals replace preparation controls with one cashier instruction", () => {
-  const cashierInstruction = /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. The confirmation page will open automatically\./;
+  const cashierInstruction = /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. MyDancr opens and completes the redemption automatically\./;
 
   assert.match(dealCard, cashierInstruction);
   assert.match(dealCard, /intentState !== "ready" \? \([\s\S]*?club-deal-redemption-steps/);
