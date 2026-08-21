@@ -310,13 +310,8 @@ export function GlobalMobileBottomNav() {
           );
         })}
       </nav>
-      <div
-        aria-hidden="true"
-        className="global-mobile-bottom-nav-fill"
-      />
       <style jsx global>{`
-        .global-mobile-bottom-nav,
-        .global-mobile-bottom-nav-fill {
+        .global-mobile-bottom-nav {
           display: none;
         }
 
@@ -329,32 +324,6 @@ export function GlobalMobileBottomNav() {
             );
           }
 
-          @media (max-width: 720px) {
-            .global-mobile-bottom-nav-fill {
-              position: fixed;
-              z-index: 1498;
-              left: 50%;
-              bottom: 0;
-              width: min(calc(100% - 18px), 698px);
-              height: calc(
-                26px + env(safe-area-inset-bottom) +
-                  var(--dancr-mobile-nav-browser-clearance, 0px)
-              );
-              display: block;
-              border-right: 1px solid rgba(248, 250, 252, 0.1);
-              border-bottom: 1px solid rgba(248, 250, 252, 0.1);
-              border-left: 1px solid rgba(248, 250, 252, 0.1);
-              border-radius: 0 0 24px 24px;
-              background: linear-gradient(
-                180deg,
-                rgba(8, 8, 11, 0.94),
-                rgba(5, 5, 8, 0.98)
-              );
-              box-shadow: 0 18px 46px rgba(0, 0, 0, 0.46);
-              pointer-events: none;
-              transform: translateX(-50%);
-            }
-          }
         }
 
         @media (max-width: 720px) {
@@ -480,6 +449,24 @@ export function GlobalMobileBottomNav() {
                   rgba(18, 18, 23, 0.88),
                   rgba(4, 4, 7, 0.82)
                 );
+            }
+          }
+
+          @supports (-webkit-touch-callout: none) and (height: 100svh) and
+            (height: 100dvh) {
+            .global-mobile-bottom-nav {
+              bottom: 0;
+              height: calc(
+                80px + env(safe-area-inset-bottom) +
+                  var(--dancr-mobile-nav-browser-clearance, 0px)
+              );
+              align-items: start;
+              padding: 3px 4px
+                calc(
+                  11px + env(safe-area-inset-bottom) +
+                    var(--dancr-mobile-nav-browser-clearance, 0px)
+                );
+              border-radius: 25px 25px 0 0;
             }
           }
 

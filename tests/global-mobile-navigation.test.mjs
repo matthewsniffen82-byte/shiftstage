@@ -51,7 +51,7 @@ test("mobile destinations use native navigation for the checked-in discovery she
   );
 });
 
-test("iPhone, Android, and Next pages share the Android floating glass dock", () => {
+test("Android and default mobile pages keep the compact floating glass dock", () => {
   assert.match(
     navigationSource,
     /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\([\s\S]*?8px \+ env\(safe-area-inset-bottom\) \+[\s\S]*?var\(--dancr-mobile-nav-browser-clearance, 0px\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.16\)[\s\S]*?rgba\(8, 8, 11, 0\.94\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 1px 0 rgba\(255, 255, 255, 0\.13\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
@@ -95,24 +95,18 @@ test("collapsed iPhone browser chrome keeps the dock above Safari's intercepted 
   }
 });
 
-test("iPhone keeps one-tap-safe controls without showing an empty gap below the dock", () => {
+test("iPhone extends the one-tap-safe dock itself to the screen edge", () => {
+  assert.doesNotMatch(navigationSource, /global-mobile-bottom-nav-fill/);
+  assert.doesNotMatch(homeSource, /discoveryTabsFill/);
+
   assert.match(
     navigationSource,
-    /className="global-mobile-bottom-nav-fill"/,
+    /@supports \(-webkit-touch-callout: none\) and \(height: 100svh\) and[\s\S]*?\.global-mobile-bottom-nav \{[\s\S]*?bottom: 0;[\s\S]*?height: calc\([\s\S]*?80px \+ env\(safe-area-inset-bottom\) \+[\s\S]*?var\(--dancr-mobile-nav-browser-clearance, 0px\)[\s\S]*?align-items: start;[\s\S]*?padding: 3px 4px[\s\S]*?11px \+ env\(safe-area-inset-bottom\) \+[\s\S]*?border-radius: 25px 25px 0 0;/,
   );
-  assert.match(homeSource, /id="discoveryTabsFill" aria-hidden="true"/);
-
-  for (const [source, selector] of [
-    [navigationSource, String.raw`\.global-mobile-bottom-nav-fill`],
-    [homeSource, "#discoveryTabsFill"],
-  ]) {
-    assert.match(
-      source,
-      new RegExp(
-        `${selector} \\{[\\s\\S]*?bottom: 0;[\\s\\S]*?height: calc\\([\\s\\S]*?26px \\+ env\\(safe-area-inset-bottom\\) \\+[\\s\\S]*?var\\(--dancr-mobile-nav-browser-clearance, 0px\\)[\\s\\S]*?background: linear-gradient\\([\\s\\S]*?rgba\\(8, ?8, ?11, ?(?:0\\.94|\\.94)\\)[\\s\\S]*?pointer-events: none;`,
-      ),
-    );
-  }
+  assert.match(
+    homeSource,
+    /@supports \(-webkit-touch-callout: none\) and \(height: 100svh\) and \(height: 100dvh\) \{[\s\S]*?#discoveryTabs \{[\s\S]*?bottom: 0 !important;[\s\S]*?height: calc\(80px \+ env\(safe-area-inset-bottom\) \+ var\(--dancr-mobile-nav-browser-clearance, 0px\)\) !important;[\s\S]*?align-items: start !important;[\s\S]*?padding: 3px 4px calc\(11px \+ env\(safe-area-inset-bottom\) \+ var\(--dancr-mobile-nav-browser-clearance, 0px\)\) !important;[\s\S]*?border-radius: 25px 25px 0 0 !important;/,
+  );
 });
 
 test("mobile destinations use prominent, consistent controls on every app surface", () => {
