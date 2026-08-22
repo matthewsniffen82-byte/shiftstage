@@ -76,3 +76,14 @@ export function persistRefreshedBrowserAuthSession(session: unknown) {
       : current.expiresAt,
   });
 }
+
+export function clearBrowserAuthSession() {
+  if (typeof window === "undefined") return false;
+
+  try {
+    window.localStorage.removeItem(BROWSER_AUTH_SESSION_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}

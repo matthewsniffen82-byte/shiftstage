@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   BROWSER_AUTH_SESSION_KEY,
+  clearBrowserAuthSession,
   persistBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
   readBrowserAccessToken,
@@ -21,6 +22,7 @@ const [
   venueClaimSource,
   venueInvitationSource,
   dmcaCounterSource,
+  accountSource,
 ] = await Promise.all([
   readFile(new URL("../src/lib/dancr/browser-session.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/PublicProfileHeader.tsx", import.meta.url), "utf8"),
@@ -33,6 +35,7 @@ const [
   readFile(new URL("../app/venues/[slug]/claim/VenueClaimForm.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/venue-team/invite/[token]/VenueTeamInviteClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dmca/counter/[id]/DmcaCounterForm.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
 ]);
 
 test("the browser auth boundary safely reads sessions and enforces optional account roles", () => {
@@ -45,6 +48,9 @@ test("the browser auth boundary safely reads sessions and enforces optional acco
       },
       setItem(key, value) {
         stored.set(key, String(value));
+      },
+      removeItem(key) {
+        stored.delete(key);
       },
     },
   };
@@ -94,9 +100,20 @@ test("the browser auth boundary safely reads sessions and enforces optional acco
     });
     assert.equal(persistBrowserAuthSession({ account: { role: "venue" } }), false);
     assert.equal(persistRefreshedBrowserAuthSession([]), false);
+    assert.equal(clearBrowserAuthSession(), true);
+    assert.equal(readBrowserAuthSession(), null);
   } finally {
     globalThis.window = previousWindow;
   }
+});
+
+test("the standalone account surface uses the canonical session lifecycle", () => {
+  assert.match(accountSource, /readBrowserAuthSession\(\)/);
+  assert.match(accountSource, /persistBrowserAuthSession\(session\)/);
+  assert.match(accountSource, /clearBrowserAuthSession\(\)/);
+  assert.doesNotMatch(accountSource, /dancrAuthSessionV1/);
+  assert.doesNotMatch(accountSource, /const SESSION_KEY/);
+  assert.doesNotMatch(accountSource, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
 });
 
 test("public profile, venue, directions, and TV clients share one authenticated-session reader", () => {

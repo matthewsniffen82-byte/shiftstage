@@ -34,7 +34,7 @@ test("an active admin session is explained and safely replaced by dancer login",
   );
   assert.match(accountClient, /existingSessionRole === "admin"/);
   assert.match(accountClient, /Signing in here will safely switch it to your dancer account/);
-  assert.match(accountClient, /window\.localStorage\.setItem\(SESSION_KEY, JSON\.stringify\(session\)\)/);
+  assert.match(accountClient, /persistBrowserAuthSession\(session\)/);
   assert.match(accountClient, /Signing in\.\.\./);
   assert.match(accountClient, /Signed in\. Opening your dancer dashboard\.\.\./);
 });

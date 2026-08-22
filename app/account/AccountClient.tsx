@@ -3,22 +3,18 @@
 import { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  clearBrowserAuthSession,
+  persistBrowserAuthSession,
+  readBrowserAuthSession,
+  type BrowserAuthSession,
+  type BrowserSessionRole,
+} from "@/src/lib/dancr/browser-session";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 type AuthRole = "customer" | "dancer";
 type AuthMode = "login" | "signup";
 type RecoveryView = "password" | "email" | null;
-
-type AuthSession = {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt?: number;
-  account?: {
-    role?: "customer" | "dancer" | "admin";
-    displayName?: string | null;
-  } | null;
-};
-type SessionRole = NonNullable<AuthSession["account"]>["role"];
 
 type DancerSignupCity = {
   value: string;
@@ -29,8 +25,6 @@ type NfcAccountContext = {
   tag: { type: "dressing_room" | "cashier"; label: string };
   venue: { name: string; city: string; state: string };
 };
-
-const SESSION_KEY = "dancrAuthSessionV1";
 
 export default function AccountClient() {
   const router = useRouter();
@@ -65,7 +59,7 @@ export default function AccountClient() {
   const [recoveryStatus, setRecoveryStatus] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [existingSessionRole, setExistingSessionRole] = useState<SessionRole | null>(null);
+  const [existingSessionRole, setExistingSessionRole] = useState<BrowserSessionRole | null>(null);
   const [nfcAccountContext, setNfcAccountContext] = useState<NfcAccountContext | null>(null);
   const [nfcContextStatus, setNfcContextStatus] = useState<"idle" | "loading" | "ready" | "error">(isNfcAuth ? "loading" : "idle");
   const customerBenefitsRef = useRef<HTMLElement | null>(null);
@@ -144,12 +138,9 @@ export default function AccountClient() {
   }, []);
 
   useEffect(() => {
-    try {
-      const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null") as AuthSession | null;
-      setExistingSessionRole(session?.accessToken ? session.account?.role || null : null);
-    } catch {
-      setExistingSessionRole(null);
-    }
+    const session = readBrowserAuthSession();
+    const hasAccessToken = typeof session?.accessToken === "string" && Boolean(session.accessToken);
+    setExistingSessionRole(hasAccessToken ? session.account?.role || null : null);
   }, []);
 
   useEffect(() => {
@@ -317,7 +308,7 @@ export default function AccountClient() {
             ? `Confirmation email sent to ${email}. After confirmation, Mydancr will open the homepage signed in.`
             : `Confirmation email sent to ${email}. Check your email or spam folder, then tap Confirm email to open your three-step dancer profile setup.`,
         );
-        window.localStorage.removeItem(SESSION_KEY);
+        clearBrowserAuthSession();
         return;
       }
 
@@ -326,13 +317,15 @@ export default function AccountClient() {
         return;
       }
 
-      const session: AuthSession = {
+      const session: BrowserAuthSession = {
         accessToken: data.session.accessToken,
         refreshToken: data.session.refreshToken,
         expiresAt: data.session.expiresAt,
         account: data.account,
       };
-      window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      if (!persistBrowserAuthSession(session)) {
+        throw new Error("Unable to save your sign-in in this browser.");
+      }
       setExistingSessionRole(data.account?.role || role);
       setStatus(role === "dancer" ? "Signed in. Opening your dancer dashboard..." : "Signed in. Opening your dashboard...");
       const requestedReturnTo = searchParams.get("return_to") || "";
