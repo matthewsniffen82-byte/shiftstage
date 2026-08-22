@@ -208,7 +208,7 @@ test("venue follows are empty and unavailable until a real customer session is a
     /response\.status === 401 \|\| response\.status === 403[\s\S]*?setToken\(""\);\s+setFollowing\(false\);\s+setNotificationsEnabled\(false\);/,
   );
   assert.match(venueActionsSource, /if \(!requireCustomer\(\) \|\| isSaving\) return;/);
-  assert.match(venueActionsSource, /session\?\.account\?\.role === "customer"/);
+  assert.match(venueActionsSource, /readBrowserAccessToken\("customer"\)/);
 
   assert.match(
     venueFollowsRouteSource,

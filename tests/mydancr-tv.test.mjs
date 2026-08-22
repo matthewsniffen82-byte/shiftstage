@@ -140,7 +140,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /fetch\("\/api\/notifications"[\s\S]*?authorization: `Bearer \$\{nextSession\.accessToken\}`/);
   assert.match(feedClient, /className=\{notificationsOpen \? "tv-notification-button active" : "tv-notification-button"\}/);
   assert.match(feedClient, /className="tv-notification-panel"[\s\S]*?No notifications yet\.[\s\S]*?Clear notifications/);
-  assert.match(feedClient, /function dashboardHref\(role: SessionRole \| undefined\)[\s\S]*?"\/dashboard\/dancer"[\s\S]*?"\/dashboard\/venue"[\s\S]*?"\/admin"[\s\S]*?"\/dashboard\/customer"/);
+  assert.match(feedClient, /function dashboardHref\(role: BrowserSessionRole \| undefined\)[\s\S]*?"\/dashboard\/dancer"[\s\S]*?"\/dashboard\/venue"[\s\S]*?"\/admin"[\s\S]*?"\/dashboard\/customer"/);
   assert.match(feedClient, /\.tv-global-logo \{[\s\S]*?aspect-ratio: 331 \/ 103/);
   assert.match(feedClient, /\.tv-global-topbar \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto/);
   assert.match(feedClient, /\.tv-header h1 \{[\s\S]*?font-size: clamp\(30px, 4\.2vw, 48px\)/);

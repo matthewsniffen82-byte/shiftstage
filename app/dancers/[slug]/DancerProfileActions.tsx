@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 
 type ShiftAction = {
   id: string;
@@ -36,8 +37,6 @@ const REPORT_REASONS = [
   "Spam or prohibited promotion",
   "Other safety concern",
 ] as const;
-
-const SESSION_KEY = "dancrAuthSessionV1";
 
 type DancerFollowState = {
   followerCount: number;
@@ -158,7 +157,7 @@ export function DancerProfileActions({
     let active = true;
     setSavedLoaded(false);
     setStatus("");
-    const accessToken = readToken();
+    const accessToken = readBrowserAccessToken("customer");
     setToken(accessToken);
     if (!accessToken) {
       if (!actionShiftId) {
@@ -636,17 +635,6 @@ function readConfirmedNotificationCount(data: { notificationCount?: unknown }) {
     );
   }
   return count;
-}
-
-function readToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return session?.account?.role === "customer" && typeof session?.accessToken === "string"
-      ? session.accessToken
-      : "";
-  } catch {
-    return "";
-  }
 }
 
 function accountActionMessage(action: AccountAction) {

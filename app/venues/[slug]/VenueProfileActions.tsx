@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 
 type SavedVenueFollow = {
   venueId?: string;
@@ -26,7 +25,7 @@ export function VenueProfileActions({
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    const accessToken = readCustomerToken();
+    const accessToken = readBrowserAccessToken("customer");
     setToken(accessToken);
     setSessionLoaded(true);
     if (!accessToken) {
@@ -233,16 +232,4 @@ export function VenueProfileActions({
       ) : null}
     </>
   );
-}
-
-function readCustomerToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return session?.account?.role === "customer" &&
-      typeof session?.accessToken === "string"
-      ? session.accessToken
-      : "";
-  } catch {
-    return "";
-  }
 }

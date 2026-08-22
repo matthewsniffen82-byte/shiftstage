@@ -8,17 +8,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-const SESSION_KEY = "dancrAuthSessionV1";
-
-type SessionRole = "customer" | "dancer" | "venue" | "admin";
-
-type AuthSession = {
-  accessToken?: string;
-  account?: {
-    role?: SessionRole;
-  } | null;
-};
+import {
+  readBrowserAuthSession,
+  type BrowserAuthSession,
+  type BrowserSessionRole,
+} from "@/src/lib/dancr/browser-session";
 
 type HeaderNotification = {
   id: string;
@@ -34,7 +28,7 @@ export function PublicProfileHeader({
   city: string;
   closeControl: ReactNode;
 }) {
-  const [session, setSession] = useState<AuthSession | null>(null);
+  const [session, setSession] = useState<BrowserAuthSession | null>(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -50,7 +44,7 @@ export function PublicProfileHeader({
   );
 
   useEffect(() => {
-    const nextSession = readSession();
+    const nextSession = readBrowserAuthSession();
     setSession(nextSession);
     setSessionLoaded(true);
     if (!nextSession?.accessToken || !nextSession.account?.role) return;
@@ -246,14 +240,6 @@ export function PublicProfileHeader({
   );
 }
 
-function readSession(): AuthSession | null {
-  try {
-    return JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-  } catch {
-    return null;
-  }
-}
-
 function normalizeNotifications(value: unknown): HeaderNotification[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
@@ -279,7 +265,7 @@ function normalizeNotifications(value: unknown): HeaderNotification[] {
   });
 }
 
-function dashboardHref(role: SessionRole) {
+function dashboardHref(role: BrowserSessionRole) {
   if (role === "dancer") return "/dashboard/dancer";
   if (role === "venue") return "/dashboard/venue";
   if (role === "admin") return "/admin";

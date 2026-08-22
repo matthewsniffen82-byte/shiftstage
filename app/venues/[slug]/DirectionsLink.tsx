@@ -1,5 +1,7 @@
 "use client";
 
+import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
+
 type DirectionsLinkProps = {
   venueId: string;
   address: string;
@@ -7,7 +9,7 @@ type DirectionsLinkProps = {
 
 export function DirectionsLink({ venueId, address }: DirectionsLinkProps) {
   function recordDirectionRequest() {
-    const token = readToken();
+    const token = readBrowserAccessToken();
     if (token) {
       fetch("/api/customer/directions", {
         method: "POST",
@@ -47,13 +49,4 @@ export function DirectionsLink({ venueId, address }: DirectionsLinkProps) {
       Get directions
     </a>
   );
-}
-
-function readToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem("dancrAuthSessionV1") || "null");
-    return typeof session?.accessToken === "string" ? session.accessToken : "";
-  } catch {
-    return "";
-  }
 }

@@ -10,11 +10,16 @@ import {
 } from "react";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
 import NfcIcon from "@/app/components/NfcIcon";
+import {
+  readBrowserAccessToken,
+  readBrowserAuthSession,
+  type BrowserAuthSession,
+  type BrowserSessionRole,
+} from "@/src/lib/dancr/browser-session";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 
-const SESSION_KEY = "dancrAuthSessionV1";
 const VIEWER_SESSION_KEY = "mydancrTvViewerSessionV1";
 const FILTERS = [
   { value: "for-you", label: "For You" },
@@ -23,13 +28,6 @@ const FILTERS = [
 ] as const;
 
 type TvSource = "tv_feed" | "shared_link";
-type SessionRole = "customer" | "dancer" | "venue" | "admin";
-type TvAuthSession = {
-  accessToken?: string;
-  account?: {
-    role?: SessionRole;
-  } | null;
-};
 type TvNotification = {
   id: string;
   title: string;
@@ -67,7 +65,7 @@ export default function TvFeedClient({
   const [autoplayBlockedVideoId, setAutoplayBlockedVideoId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const [session, setSession] = useState<TvAuthSession | null>(null);
+  const [session, setSession] = useState<BrowserAuthSession | null>(null);
   const [notifications, setNotifications] = useState<TvNotification[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
@@ -86,7 +84,7 @@ export default function TvFeedClient({
   mutedRef.current = muted;
 
   const trackEvent = useCallback((videoId: string, eventType: string) => {
-    const token = readAnyToken();
+    const token = readBrowserAccessToken();
     fetch(`/api/public/tv/${videoId}/events`, {
       method: "POST",
       headers: {
@@ -175,7 +173,7 @@ export default function TvFeedClient({
     setIsLoading(true);
     setStatus("");
     try {
-      const token = readCustomerToken();
+      const token = readBrowserAccessToken("customer");
       const params = new URLSearchParams({
         city: nextCity,
         filter: nextFilter,
@@ -219,7 +217,7 @@ export default function TvFeedClient({
   }, [initialDancerId, initialVenueId]);
 
   useEffect(() => {
-    const nextSession = readSession();
+    const nextSession = readBrowserAuthSession();
     setSession(nextSession);
     const role = nextSession?.account?.role;
     if (
@@ -785,15 +783,6 @@ function TvClubDealUnavailable({ video }: { video: MyDancrTvVideo }) {
   );
 }
 
-function readSession(): TvAuthSession | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-  } catch {
-    return null;
-  }
-}
-
 function normalizeNotifications(value: unknown): TvNotification[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
@@ -813,7 +802,7 @@ function normalizeNotifications(value: unknown): TvNotification[] {
   });
 }
 
-function dashboardHref(role: SessionRole | undefined) {
+function dashboardHref(role: BrowserSessionRole | undefined) {
   if (role === "dancer") return "/dashboard/dancer";
   if (role === "venue") return "/dashboard/venue";
   if (role === "admin") return "/admin";
@@ -897,18 +886,6 @@ function dancerInitials(value: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() || "")
     .join("") || "D";
-}
-
-function readCustomerToken() {
-  const session = readSession();
-  return session?.account?.role === "customer" && typeof session?.accessToken === "string"
-    ? session.accessToken
-    : "";
-}
-
-function readAnyToken() {
-  const session = readSession();
-  return typeof session?.accessToken === "string" ? session.accessToken : "";
 }
 
 function readViewerSessionId() {
