@@ -6,7 +6,7 @@ import {
   sendClubInvoiceReminders,
 } from "./finance-invoices";
 import { processDancerPayouts } from "./finance-payout-processing";
-import { syncNatsCommissions } from "./nats-commission-sync";
+import { syncNatsAgentCommissions, syncNatsCommissions } from "./nats-commission-sync";
 import { getNatsRuntimeConfig } from "./nats";
 
 type DancrClient = SupabaseClient;
@@ -67,11 +67,14 @@ export async function runDancerPayoutAutomation(client: DancrClient): Promise<Da
 
   await captureFinanceStep(result, async () => {
     if (getNatsRuntimeConfig().selected) {
-      const exports = await syncNatsCommissions(client);
-      result.natsExportsCreated = exports.exported;
-      result.natsExportsFailed = exports.failed;
-      result.natsReconciliationRequired = exports.reconciliationRequired;
-      result.errors.push(...exports.errors);
+      const [dancerExports, agentExports] = await Promise.all([
+        syncNatsCommissions(client),
+        syncNatsAgentCommissions(client),
+      ]);
+      result.natsExportsCreated = dancerExports.exported + agentExports.exported;
+      result.natsExportsFailed = dancerExports.failed + agentExports.failed;
+      result.natsReconciliationRequired = dancerExports.reconciliationRequired + agentExports.reconciliationRequired;
+      result.errors.push(...dancerExports.errors, ...agentExports.errors);
     } else {
       const payouts = await processDancerPayouts(client);
       result.payoutsCreated = payouts.created;

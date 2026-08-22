@@ -8,6 +8,7 @@ import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
 import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
 import AdminPilotAnalytics from "./AdminPilotAnalytics";
+import AdminSalesAgentPanel from "./AdminSalesAgentPanel";
 import AdminTvPanel from "./AdminTvPanel";
 import {
   clearAdminSession,
@@ -453,6 +454,7 @@ export default function AdminClient() {
                 onFinanceChange={(finance) => setState((current) => ({ ...current, finance }))}
                 onActionConfirmed={confirmAdminAction}
               />
+              <AdminSalesAgentPanel onActionConfirmed={confirmAdminAction} />
             </>
           ) : null}
           <section className="admin-grid">

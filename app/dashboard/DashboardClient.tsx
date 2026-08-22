@@ -130,6 +130,7 @@ type LoadState = {
   nfc?: Record<string, unknown> | null;
   venueAccess?: { role?: string; permissions?: string[] } | null;
   referralFee?: Record<string, unknown> | null;
+  agentAccess?: { active?: boolean } | null;
   refreshedAt?: string | null;
   error?: string;
 };
@@ -200,16 +201,29 @@ export default function DashboardClient({
       try {
         let account;
         let panels;
+        let agentAccess;
         if (storedSessionIsFresh(session)) {
+          const agentAccessPromise = readOptionalJson(
+            "/api/agent/commissions?access=1",
+            initialAuthHeaders,
+            { access: { active: false } },
+          );
           [account, panels] = await Promise.all([
             readJson("/api/account", initialAuthHeaders),
             loadDashboardPanels(initialAuthHeaders),
           ]);
+          agentAccess = await agentAccessPromise;
         } else {
           account = await readJson("/api/account", initialAuthHeaders);
           const refreshedHeaders = dashboardAuthHeaders(readSession());
           if (!refreshedHeaders) throw new Error("Your sign-in could not be refreshed. Sign in again to continue.");
+          const agentAccessPromise = readOptionalJson(
+            "/api/agent/commissions?access=1",
+            refreshedHeaders,
+            { access: { active: false } },
+          );
           panels = await loadDashboardPanels(refreshedHeaders);
+          agentAccess = await agentAccessPromise;
         }
         const [profile, secondary, support, reviews, weeklyReport, rankingEvents] = panels;
 
@@ -234,6 +248,7 @@ export default function DashboardClient({
             nfc: secondary.nfc || null,
             venueAccess: secondary.venueAccess || null,
             referralFee: secondary.referralFee || null,
+            agentAccess: agentAccess?.access || null,
             refreshedAt: secondary.refreshedAt || null,
           });
           setIsLoading(false);
@@ -409,6 +424,7 @@ export default function DashboardClient({
         <DashboardLoadingState role={role} />
       ) : !isLoading && !state.error ? (
         <section className={`dashboard-grid ${role}-dashboard-grid`}>
+          {state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
           {role === "customer" ? (
             <>
               <CustomerDashboardTabs />
@@ -531,6 +547,13 @@ export default function DashboardClient({
       ) : null}
     </main>
   );
+}
+
+function AgentDashboardShortcut() {
+  return <Link className="agent-dashboard-shortcut" href="/dashboard/agent">
+    <span><small>Venue sales</small><strong>Open sales agent commissions</strong></span>
+    <b>View NATS settlement →</b>
+  </Link>;
 }
 
 function VenueClaimStatePanel({ claim }: { claim: Record<string, unknown> }) {
@@ -6936,6 +6959,12 @@ function DashboardStyles() {
       h2 { margin: 0; font-size: 22px; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mydancr-dashboard-gap); }
+      .agent-dashboard-shortcut { grid-column: 1 / -1; min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 18px; border: 1px solid rgba(126,234,255,.24); border-radius: var(--mydancr-dashboard-radius); color: #fff; background: linear-gradient(115deg, rgba(18,105,125,.18), rgba(48,22,91,.18)); text-decoration: none; }
+      .agent-dashboard-shortcut span { display: grid; gap: 4px; }
+      .agent-dashboard-shortcut small { color: #7eeaff; font-size: 11px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+      .agent-dashboard-shortcut strong { font-size: 18px; }
+      .agent-dashboard-shortcut b { color: #d9d2e9; font-size: 13px; white-space: nowrap; }
+      .agent-dashboard-shortcut:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
       .venue-dashboard-grid { grid-template-columns: 1fr; }
       .dashboard-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
       .venue-dashboard-loading { display: grid; gap: var(--mydancr-dashboard-gap); }
