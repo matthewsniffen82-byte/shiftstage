@@ -36,7 +36,8 @@ test("venue dashboard session recovery rotates and persists authentication witho
   assert.match(dashboard, /persistResponseSession/);
   assert.match(nfcTagRoute, /session: authContext\.session \|\| null/);
   assert.match(nfcPanel, /persistRefreshedSession\(tagData\.session\)/);
-  assert.match(nfcPanel, /dancrAuthSessionV1/);
+  assert.match(nfcPanel, /persistRefreshedDashboardSession as persistRefreshedSession/);
+  assert.doesNotMatch(nfcPanel, /dancrAuthSessionV1/);
 });
 
 test("the routed venue dashboard is isolated, closable, and restores the original full workspace identity", () => {

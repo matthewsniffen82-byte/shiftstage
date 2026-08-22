@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import {
+  currentDashboardAuthHeaders as authHeaders,
+  persistRefreshedDashboardSession as persistRefreshedSession,
+} from "./dashboard-session";
 
 type Access = { role: "owner" | "manager" | "staff"; permissions: string[] };
 type Member = { id: string; role: "manager" | "staff"; status: string; displayName: string; email: string; joinedAt: string };
@@ -172,23 +174,6 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       `}</style>
     </article>
   );
-}
-
-function authHeaders() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    if (!session?.accessToken) return null;
-    return { authorization: `Bearer ${String(session.accessToken)}`, ...(session.refreshToken ? { "x-dancr-refresh-token": String(session.refreshToken) } : {}) };
-  } catch { return null; }
-}
-
-function persistRefreshedSession(session: unknown) {
-  if (!session || typeof session !== "object") return;
-  try {
-    const current = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null") || {};
-    const next = session as Record<string, unknown>;
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify({ ...current, accessToken: typeof next.accessToken === "string" ? next.accessToken : current.accessToken, refreshToken: typeof next.refreshToken === "string" ? next.refreshToken : current.refreshToken, expiresAt: typeof next.expiresAt === "number" ? next.expiresAt : current.expiresAt }));
-  } catch { /* Current request remains authenticated when storage is unavailable. */ }
 }
 
 function formatDate(value: string) {

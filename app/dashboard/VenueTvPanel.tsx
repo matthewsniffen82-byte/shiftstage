@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { readDashboardAccessToken } from "./dashboard-session";
 
 type VenueTvVideo = {
   id: string;
@@ -25,7 +24,7 @@ export default function VenueTvPanel() {
   }, []);
 
   async function loadVideos() {
-    const token = readToken();
+    const token = readDashboardAccessToken("venue");
     if (!token) {
       setStatus("Venue sign in required.");
       setIsLoading(false);
@@ -81,17 +80,6 @@ export default function VenueTvPanel() {
       </div>
     </article>
   );
-}
-
-function readToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return session?.account?.role === "venue" && typeof session?.accessToken === "string"
-      ? session.accessToken
-      : "";
-  } catch {
-    return "";
-  }
 }
 
 function formatDate(value: string) {

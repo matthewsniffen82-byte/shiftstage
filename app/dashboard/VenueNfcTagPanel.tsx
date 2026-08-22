@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import {
+  currentDashboardAuthHeaders as authHeaders,
+  persistRefreshedDashboardSession as persistRefreshedSession,
+} from "./dashboard-session";
 
 type NfcTag = {
   id: string;
@@ -279,35 +281,6 @@ export default function VenueNfcTagPanel({
       `}</style>
     </article>
   );
-}
-
-function authHeaders() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    if (!session?.accessToken) return null;
-    return {
-      authorization: `Bearer ${String(session.accessToken)}`,
-      ...(session.refreshToken ? { "x-dancr-refresh-token": String(session.refreshToken) } : {}),
-    };
-  } catch {
-    return null;
-  }
-}
-
-function persistRefreshedSession(session: unknown) {
-  if (!session || typeof session !== "object") return;
-  try {
-    const current = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null") || {};
-    const next = session as Record<string, unknown>;
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify({
-      ...current,
-      accessToken: typeof next.accessToken === "string" ? next.accessToken : current.accessToken,
-      refreshToken: typeof next.refreshToken === "string" ? next.refreshToken : current.refreshToken,
-      expiresAt: typeof next.expiresAt === "number" ? next.expiresAt : current.expiresAt,
-    }));
-  } catch {
-    // A storage-restricted browser can continue with the current in-memory request.
-  }
 }
 
 function formatDate(value: string) {

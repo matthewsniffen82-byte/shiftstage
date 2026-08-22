@@ -1,10 +1,19 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import {
+  DASHBOARD_SESSION_KEY,
+  currentDashboardAuthHeaders,
+  persistRefreshedDashboardSession,
+  readDashboardAccessToken,
+} from "../app/dashboard/dashboard-session.ts";
 
-const [dashboard, dashboardSession, customerRoute, dancerRoute, venueRoute, liveShell] = await Promise.all([
+const [dashboard, dashboardSession, venueTvPanel, venueTeamPanel, venueNfcPanel, customerRoute, dancerRoute, venueRoute, liveShell] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/dashboard-session.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/VenueTvPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/VenueTeamPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/customer/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/dancer/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/venue/page.tsx", import.meta.url), "utf8"),
@@ -77,4 +86,59 @@ test("dashboard session persistence and optional panel failures have one typed b
   assert.match(dashboardSession, /export async function readOptionalJson/);
   assert.match(dashboardSession, /console\.warn\("Dashboard panel did not load"/);
   assert.doesNotMatch(dashboard, /function readSession\(|function dashboardAuthHeaders\(|async function readOptionalJson/);
+});
+
+test("venue dashboard subpanels use the shared session boundary and preserve token rotation", () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, value); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "venue-access",
+      refreshToken: "venue-refresh",
+      expiresAt: 12345,
+      account: { role: "venue", displayName: "Venue Owner" },
+    }));
+    assert.equal(readDashboardAccessToken("venue"), "venue-access");
+    assert.equal(readDashboardAccessToken("dancer"), "");
+    assert.deepEqual(currentDashboardAuthHeaders(), {
+      authorization: "Bearer venue-access",
+      "x-dancr-refresh-token": "venue-refresh",
+    });
+    assert.deepEqual(currentDashboardAuthHeaders("venue"), {
+      authorization: "Bearer venue-access",
+      "x-dancr-refresh-token": "venue-refresh",
+    });
+    assert.equal(currentDashboardAuthHeaders("dancer"), null);
+
+    persistRefreshedDashboardSession({
+      accessToken: "rotated-venue-access",
+      refreshToken: "rotated-venue-refresh",
+      expiresAt: 67890,
+    });
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "rotated-venue-access",
+      refreshToken: "rotated-venue-refresh",
+      expiresAt: 67890,
+      account: { role: "venue", displayName: "Venue Owner" },
+    });
+  } finally {
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(venueTvPanel, /readDashboardAccessToken\("venue"\)/);
+  assert.match(venueTeamPanel, /currentDashboardAuthHeaders as authHeaders/);
+  assert.match(venueTeamPanel, /persistRefreshedDashboardSession as persistRefreshedSession/);
+  assert.match(venueNfcPanel, /currentDashboardAuthHeaders as authHeaders/);
+  assert.match(venueNfcPanel, /persistRefreshedDashboardSession as persistRefreshedSession/);
+  for (const panel of [venueTvPanel, venueTeamPanel, venueNfcPanel]) {
+    assert.doesNotMatch(panel, /const SESSION_KEY|localStorage\.getItem\(SESSION_KEY\)|function readToken\(|function authHeaders\(|function persistRefreshedSession\(/);
+  }
 });

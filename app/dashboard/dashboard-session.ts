@@ -62,6 +62,34 @@ export function dashboardAuthHeaders(session: StoredDashboardSession | null): Re
   };
 }
 
+export function readDashboardAccessToken(expectedRole?: string) {
+  const session = readSession();
+  if (expectedRole && session?.account?.role !== expectedRole) return "";
+  return typeof session?.accessToken === "string" ? session.accessToken : "";
+}
+
+export function currentDashboardAuthHeaders(expectedRole?: string): Record<string, string> | null {
+  const session = readSession();
+  if (expectedRole && session?.account?.role !== expectedRole) return null;
+  return dashboardAuthHeaders(session);
+}
+
+export function persistRefreshedDashboardSession(session: unknown) {
+  if (typeof window === "undefined" || !session || typeof session !== "object") return;
+  try {
+    const current = readSession() || {};
+    const next = session as StoredDashboardSession;
+    window.localStorage.setItem(DASHBOARD_SESSION_KEY, JSON.stringify({
+      ...current,
+      accessToken: typeof next.accessToken === "string" ? next.accessToken : current.accessToken,
+      refreshToken: typeof next.refreshToken === "string" ? next.refreshToken : current.refreshToken,
+      expiresAt: typeof next.expiresAt === "number" ? next.expiresAt : current.expiresAt,
+    }));
+  } catch {
+    // The completed request remains valid if browser storage is unavailable.
+  }
+}
+
 export function dashboardLoadErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : "Unable to load dashboard.";
   if (/sign in required/i.test(message)) {
