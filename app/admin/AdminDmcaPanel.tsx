@@ -1,8 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { readAdminAccessToken as readToken } from "./admin-session";
 
 type Agent = {
   legalName?: string;
@@ -284,15 +283,6 @@ export default function AdminDmcaPanel() {
       </div>
     </div>
   );
-}
-
-function readToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return typeof session?.accessToken === "string" ? session.accessToken : "";
-  } catch {
-    return "";
-  }
 }
 
 function label(value: string) {

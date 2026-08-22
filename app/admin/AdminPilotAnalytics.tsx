@@ -2,8 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { AdminPilotAnalytics } from "@/src/lib/dancr/pilot-analytics";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { readAdminAccessToken as readAdminToken } from "./admin-session";
 
 type VenueRecord = Record<string, unknown>;
 
@@ -344,16 +343,6 @@ function localDate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
-
-function readAdminToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    if (session?.account?.role !== "admin") return "";
-    return typeof session?.accessToken === "string" ? session.accessToken : "";
-  } catch {
-    return "";
-  }
 }
 
 async function pilotJson(path: string, init: RequestInit = {}) {

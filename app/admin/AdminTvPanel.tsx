@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { readAdminAccessToken as readToken } from "./admin-session";
 
 type AdminTvVideo = {
   id: string;
@@ -319,17 +318,6 @@ export default function AdminTvPanel() {
       </div>
     </div>
   );
-}
-
-function readToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return session?.account?.role === "admin" && typeof session?.accessToken === "string"
-      ? session.accessToken
-      : "";
-  } catch {
-    return "";
-  }
 }
 
 function readableReason(value: string) {

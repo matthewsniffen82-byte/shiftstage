@@ -5,15 +5,21 @@ import {
   ADMIN_SESSION_KEY,
   AdminDataRequestError,
   clearAdminSession,
+  adminAuthHeaders,
   isAdminAuthenticationError,
   persistAdminSession,
+  persistRefreshedAdminSession,
   readAdminAccessToken,
   readAdminJson,
 } from "../app/admin/admin-session.ts";
 
-const [adminSource, adminSession, dealMigration] = await Promise.all([
+const [adminSource, adminSession, nfcPanel, dmcaPanel, pilotPanel, tvPanel, dealMigration] = await Promise.all([
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/admin-session.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminNfcInventoryPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminDmcaPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminPilotAnalytics.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminTvPanel.tsx", import.meta.url), "utf8"),
   readFile(
     new URL("../supabase/migrations/202606280002_club_deal_qr_attribution.sql", import.meta.url),
     "utf8",
@@ -64,10 +70,27 @@ test("the admin session boundary stores only the canonical session and rejects n
       { role: "admin", displayName: "Platform Admin" },
     );
     assert.equal(readAdminAccessToken(), "admin-access");
+    assert.deepEqual(adminAuthHeaders(), {
+      authorization: "Bearer admin-access",
+      "x-dancr-refresh-token": "admin-refresh",
+    });
     assert.deepEqual(JSON.parse(stored.get(ADMIN_SESSION_KEY)), {
       accessToken: "admin-access",
       refreshToken: "admin-refresh",
       expiresAt: 12345,
+      account: { role: "admin", displayName: "Platform Admin" },
+    });
+
+    persistRefreshedAdminSession({
+      accessToken: "rotated-admin-access",
+      refreshToken: "rotated-admin-refresh",
+      expiresAt: 67890,
+    });
+    assert.equal(readAdminAccessToken(), "rotated-admin-access");
+    assert.deepEqual(JSON.parse(stored.get(ADMIN_SESSION_KEY)), {
+      accessToken: "rotated-admin-access",
+      refreshToken: "rotated-admin-refresh",
+      expiresAt: 67890,
       account: { role: "admin", displayName: "Platform Admin" },
     });
 
@@ -96,6 +119,17 @@ test("the admin request boundary classifies authorization failures by HTTP statu
     );
   } finally {
     globalThis.fetch = previousFetch;
+  }
+});
+
+test("every routed admin subpanel consumes the canonical role-aware session boundary", () => {
+  assert.match(nfcPanel, /adminAuthHeaders as authHeaders/);
+  assert.match(nfcPanel, /persistRefreshedAdminSession as persistRefreshedSession/);
+  assert.match(dmcaPanel, /readAdminAccessToken as readToken/);
+  assert.match(pilotPanel, /readAdminAccessToken as readAdminToken/);
+  assert.match(tvPanel, /readAdminAccessToken as readToken/);
+  for (const panel of [nfcPanel, dmcaPanel, pilotPanel, tvPanel]) {
+    assert.doesNotMatch(panel, /const SESSION_KEY|localStorage\.getItem\(SESSION_KEY\)|function readToken\(|function readAdminToken\(|function authHeaders\(/);
   }
 });
 

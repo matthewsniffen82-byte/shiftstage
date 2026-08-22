@@ -31,14 +31,45 @@ export function clearAdminSession() {
   window.localStorage.removeItem(ADMIN_SESSION_KEY);
 }
 
-export function readAdminAccessToken() {
-  if (typeof window === "undefined") return "";
+export function readAdminSession(): StoredAdminSession | null {
+  if (typeof window === "undefined") return null;
   try {
     const session = JSON.parse(window.localStorage.getItem(ADMIN_SESSION_KEY) || "null");
-    if (!session || typeof session !== "object" || session.account?.role !== "admin") return "";
-    return typeof session.accessToken === "string" ? session.accessToken : "";
+    if (!session || typeof session !== "object" || session.account?.role !== "admin") return null;
+    return session as StoredAdminSession;
   } catch {
-    return "";
+    return null;
+  }
+}
+
+export function readAdminAccessToken() {
+  const session = readAdminSession();
+  return typeof session?.accessToken === "string" ? session.accessToken : "";
+}
+
+export function adminAuthHeaders(): Record<string, string> | null {
+  const session = readAdminSession();
+  if (!session?.accessToken) return null;
+  return {
+    authorization: `Bearer ${session.accessToken}`,
+    ...(session.refreshToken ? { "x-dancr-refresh-token": String(session.refreshToken) } : {}),
+  };
+}
+
+export function persistRefreshedAdminSession(session: unknown) {
+  if (typeof window === "undefined" || !session || typeof session !== "object") return;
+  try {
+    const current = readAdminSession();
+    if (!current) return;
+    const next = session as StoredAdminSession;
+    window.localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({
+      ...current,
+      accessToken: typeof next.accessToken === "string" ? next.accessToken : current.accessToken,
+      refreshToken: typeof next.refreshToken === "string" ? next.refreshToken : current.refreshToken,
+      expiresAt: typeof next.expiresAt === "number" ? next.expiresAt : current.expiresAt,
+    }));
+  } catch {
+    // The completed request remains valid if browser storage is unavailable.
   }
 }
 
