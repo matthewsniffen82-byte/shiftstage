@@ -279,7 +279,7 @@ def callout(kind: str, title: str, text: str, styles: dict[str, ParagraphStyle],
 def flow_table(styles: dict[str, ParagraphStyle], width: float) -> Table:
     rows = [
         ("Customer signs up", "Email, city, auth metadata", "Supabase Auth + customer role", "Customer dashboard", "Confirmation, rate limit, RLS"),
-        ("Dancer signs up", "Email, city, profile fields", "Auth + hosted Yoti 18+ gate + MyDancr eligibility", "Private dancer workspace", "Minimal verification decision + audit"),
+        ("Dancer signs up", "Email, city, eligibility/profile fields", "Auth + contractual eligibility + staged media/affiliation onboarding", "Private dancer workspace", "Acceptance version + account state + audit"),
         ("Dancer uploads media", "Image/video + technical metadata", "Validation, transform/watermark, automated/human moderation", "Approved public media or private review", "Storage + moderation decision"),
         ("Dancer submits", "Profile + approved media", "Eligibility checks; first club verification remains required", "Pending/approved state", "Approval audit + notice"),
         ("Dressing-room NFC", "Tag, dancer, club, device/IP", "Secure tag + affiliation/presence validation", "Affiliation + time-limited Working Now", "Tap, expiry, cooldown, audit"),

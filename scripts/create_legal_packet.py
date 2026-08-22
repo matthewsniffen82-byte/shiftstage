@@ -525,9 +525,9 @@ def main() -> None:
 
     flow_rows = [
         ("Customer signs up", "Email, city, password/auth metadata", "Supabase Auth creates user; app assigns customer role and private profile", "Customer dashboard", "Confirmation, rate limit, row-level access"),
-        ("Dancer signs up", "Email, city, identity/profile fields", "Auth + draft dancer profile; staged onboarding; hosted Yoti 18+ gate and MyDancr eligibility review required", "Private dancer workspace", "Email confirmation; privacy-minimized verification decision; account state; audit"),
+        ("Dancer signs up", "Email, city, eligibility/profile fields", "Auth + draft dancer profile; contractual eligibility; staged media and club-affiliation onboarding", "Private dancer workspace", "Email confirmation; acceptance version; account state; audit"),
         ("Dancer uploads media", "Image/video, metadata, moderation signals", "Signature/type/size checks; transform/watermark; automated and/or human moderation", "Approved public media or private review state", "Moderation record; storage path; rejection reason"),
-        ("Dancer submits", "Profile, identity readiness, approved media", "Eligibility checks; first venue verification remains required", "Pending/approved state", "Approval review; notification"),
+        ("Dancer submits", "Profile, accepted eligibility, approved media", "Account/media checks; first venue affiliation remains required", "Pending/approved state", "Approval review; notification"),
         ("Dressing-room NFC tap", "Tag token, dancer account, venue, device/IP audit", "Secure tag validation; affiliation/working session creation", "Venue affiliation + time-limited Working Now", "Tap event; expiry; cooldown; audit"),
         ("Dancer posts shift", "Approved affiliated club, date/time", "Server restricts venue to active approved affiliation", "Public upcoming schedule", "Shift record; notification; analytics"),
         ("Customer discovers", "City/filter, coarse session/device data", "Public eligibility and ranking queries", "Dancer/club/TV results", "View and ranking events"),

@@ -4,7 +4,7 @@ This packet combines a factual product map with draft public policies and bilate
 
 [CALLOUT:COUNSEL|Drafting status] This is a working draft for licensed counsel. It is not legal advice, is not a legal opinion, and is not approved for publication or user acceptance. It records current product behavior, business-approved commercial positions, and identified implementation gaps so specialist counsel can refine the operative documents. The publishing entity, governing law, dispute procedure, addresses, tax treatment, settlement schedules, retention schedule, and insurance requirements must be finalized by counsel.
 
-[CALLOUT:PRODUCT FACT|Production providers and settlement model] Yoti is the selected hosted age-verification service for the 18+ gate, subject to completion of production configuration and contract/privacy review. Too Much Media’s NATS affiliate platform is the selected dancer-commission settlement system: MyDancr calculates an eligible commission and exports the exact U.S.-dollar amount to the dancer’s verified NATS affiliate account. Clubs owe MyDancr negotiated, Club-Deal-specific referral fees and settle verified redemption statements once each week by ACH. Counsel must verify the contracting entities, account terms, geographic availability, KYC/tax allocation, privacy roles, settlement timing, fees, reserves, and operational responsibilities against the signed production contracts before publication.
+[CALLOUT:PRODUCT FACT|Production providers and settlement model] The current model has no separate age-verification service. Too Much Media’s NATS affiliate platform is the selected dancer-commission settlement system: MyDancr calculates an eligible commission and exports the exact U.S.-dollar amount to the dancer’s verified NATS affiliate account. Clubs owe MyDancr negotiated, Club-Deal-specific referral fees and settle verified redemption statements once each week by ACH. Counsel must verify the contracting entities, account terms, geographic availability, KYC/tax allocation, privacy roles, settlement timing, fees, reserves, and operational responsibilities against the signed production contracts before publication.
 
 ## Packet contents
 
@@ -16,7 +16,7 @@ This packet combines a factual product map with draft public policies and bilate
 6. Draft Club Agreement.
 7. Draft Content and Media Consent/License.
 8. Draft Acceptable Use and Prohibited Conduct Rules.
-9. Draft Age, Identity, and Venue-Verification Policy.
+9. Draft Account Eligibility and Venue-Verification Policy.
 10. Draft DMCA and Takedown Policy.
 11. Draft Club Deal and NFC Redemption Terms.
 12. Draft Dancer Commission and Too Much Media/NATS Settlement Terms.
@@ -45,31 +45,30 @@ MyDancr is not a booking service for private performances, escorting, prostituti
 - **Dancer commission:** only an eligible Club Deal redemption whose immutable source originated from a dancer’s public profile and that is successfully confirmed by the correct authorized cashier NFC tag counts toward that dancer’s monthly tier. The dancer earns **30% on qualifying monthly redemptions 1–9, 40% on 10–24, and 50% on 25 and above**, calculated from the applicable MyDancr gross referral fee—not admission price, deal face value, club gross revenue, tips, or dancer-service compensation.
 - **Separate ledgers:** the club’s obligation to MyDancr and MyDancr’s obligation to the dancer are independent. A club’s late payment does not, by itself, cancel an otherwise payable dancer reward.
 - **No live agent commission program:** the current product does not promise or operate an agent commission program. A future program would require separate product work, counsel review, written terms, event attribution, tax/compliance controls, and renewed acceptance; no recruiting or downline compensation is permitted.
-- **Age and identity verification:** Yoti is selected for the hosted 18+ verification gate. MyDancr remains responsible for defining the eligibility decision, notice, fallback/manual review, appeal, access, retention, and security controls and for any separate club-authority or dancer-identity checks not performed by Yoti.
+- **Account eligibility and club verification:** the current no-nudity model does not use a separate age-verification vendor or require routine document, selfie, biometric, or date-of-birth collection by MyDancr. Users make contractual eligibility representations; public dancer profiles still require approved media and an authorized club’s confirmation of a legitimate affiliation. Clubs remain responsible for admission-age checks, work eligibility, licensing, and venue compliance.
 - **Dancer commission settlement:** eligible dancer commissions are exported through the dancer’s verified NATS affiliate account on Too Much Media’s platform. MyDancr stores the minimum account linkage and immutable export/reconciliation record and does not process a second direct settlement while NATS is the active settlement provider.
 - **Club settlement:** each club receives itemized weekly statements for verified redemptions and pays MyDancr once each week by ACH under the applicable Deal Order. The ACH authorization or credit instructions, cutoff, holidays, returns, disputes, taxes, and suspension rules must be finalized in the club order.
-- **Media:** uploads undergo technical validation and automated and/or human moderation. Public media must belong to the uploader, depict consenting adults, comply with platform rules, and remain within current duration/count limits.
+- **Media:** uploads undergo technical validation and automated and/or human moderation. Nudity and actual sexually explicit conduct are prohibited. Public media must belong to the uploader, depict consenting adults, comply with platform rules, and remain within current duration/count limits.
 - **No direct messaging:** the current product does not offer customer-to-dancer direct messaging. Support messaging is between an account holder and MyDancr support.
 
 ## Decisions counsel must finalize
 
 1. Identify the exact operating legal entity, state of formation, principal address, support address, privacy request address, legal-notice address, and DMCA agent.
 2. Treat Las Vegas/Nevada as the existing demo market and Arizona as the planned first pilot market. Before the Arizona pilot, select the exact city/county and prepare an Arizona state-and-local addendum covering adult-entertainment and club licensing, advertising and admission offers, privacy/security, tax, worker/referral issues, ACH authorization, and any municipal entertainer/work-card requirements.
-3. Decide whether all customer accounts must be 21+ or whether 18+ accounts may browse clubs whose own entry age varies.
-4. Approve the exact identity, age, and authority-verification workflow for dancers and club owners/managers, including requested evidence, reviewer access, consent and state-specific notices, retention, appeals, and fallback process.
-5. Review and approve the Yoti production configuration and contract, including privacy roles, hosted-session disclosures, minimum-data return, retention, failed/abandoned flow, false-positive/false-negative handling, manual fallback, accessibility, and appeal.
-6. Review and approve the Too Much Media/NATS production contract and business configuration, including the exact contracting entity, dancer affiliate onboarding, KYC/tax allocation, export and payment cadence, minimums, reserves/holds, rejected or ambiguous transactions, fees, supported countries/currencies, complaints, reconciliation, and unclaimed-property handling.
-7. Confirm that no agent commission program will launch under these drafts. Any later agent program requires a separate agreement, implementation, acceptance flow, and legal review before any promise or accrual.
-8. Approve the Deal Order template for negotiated offer-specific referral fees and weekly ACH settlement, including offer terms, fee formula, statement period, authorization/credit method, debit or due day, holidays, returns, disputes, taxes, late fees, suspension, and collection; also confirm the nonretroactive profile-originated dancer tiers—30% for monthly events 1–9, 40% for 10–24, and 50% for 25 and above—against tax, worker-classification, referral, and gaming/sweepstakes concerns.
-9. Choose governing law, venue, arbitration/class-action waiver, small-claims carveout, opt-out process, and consumer-law savings language.
-10. Approve warranty disclaimers, liability caps, indemnities, insurance minimums, and special allocation for clubs, dancers, customers, and the platform.
-11. Approve exact retention periods by record class, including media, moderation evidence, NFC/device logs, geolocation, finance/tax records, DMCA, support, reports, account-recovery events, and backups.
-12. Confirm Nevada requirements for the existing demo market and Arizona state plus selected-city/county requirements for the pilot, including privacy/security and breach notice, biometric/age-assurance, consumer protection, employment/privacy, adult-entertainment licensing, and tax; evaluate other state and international regimes only before further expansion.
-13. Confirm communications compliance for push, email, and any future SMS, including consent, quiet hours, marketing classification, opt-out, and recordkeeping.
-14. Approve the appeal standard, response targets, emergency suspension authority, repeat-infringer rule, law-enforcement process, and preservation/legal-hold protocol.
-15. Determine worker-classification, referral, tax, ACH/NACHA, and local licensing consequences without implying that MyDancr employs dancers or controls club performance work.
+3. Confirm the contractual account-eligibility representation and whether customers must be 18+, 21+, or may browse without an age representation while clubs enforce their own lawful admission rules.
+4. Approve the club-authority and dancer-affiliation workflow, including any limited evidence required for suspicious accounts, reviewer access, retention, appeals, and fallback. The current model does not include routine MyDancr age verification, identity-document collection, or selfie/biometric matching.
+5. Review and approve the Too Much Media/NATS production contract and business configuration, including the exact contracting entity, dancer affiliate onboarding, KYC/tax allocation, export and payment cadence, minimums, reserves/holds, rejected or ambiguous transactions, fees, supported countries/currencies, complaints, reconciliation, and unclaimed-property handling.
+6. Confirm that no agent commission program will launch under these drafts. Any later agent program requires a separate agreement, implementation, acceptance flow, and legal review before any promise or accrual.
+7. Approve the Deal Order template for negotiated offer-specific referral fees and weekly ACH settlement, including offer terms, fee formula, statement period, authorization/credit method, debit or due day, holidays, returns, disputes, taxes, late fees, suspension, and collection; also confirm the nonretroactive profile-originated dancer tiers—30% for monthly events 1–9, 40% for 10–24, and 50% for 25 and above—against tax, worker-classification, referral, and gaming/sweepstakes concerns.
+8. Choose governing law, venue, arbitration/class-action waiver, small-claims carveout, opt-out process, and consumer-law savings language.
+9. Approve warranty disclaimers, liability caps, indemnities, insurance minimums, and special allocation for clubs, dancers, customers, and the platform.
+10. Approve exact retention periods by record class, including media, moderation evidence, NFC/device logs, geolocation, finance/tax records, DMCA, support, reports, account-recovery events, and backups.
+11. Confirm Nevada requirements for the existing demo market and Arizona state plus selected-city/county requirements for the pilot, including privacy/security and breach notice, consumer protection, employment/privacy, adult-entertainment licensing, and tax; evaluate other state and international regimes only before further expansion.
+12. Confirm communications compliance for push, email, and any future SMS, including consent, quiet hours, marketing classification, opt-out, and recordkeeping.
+13. Approve the appeal standard, response targets, emergency suspension authority, repeat-infringer rule, law-enforcement process, and preservation/legal-hold protocol.
+14. Determine worker-classification, referral, tax, ACH/NACHA, and local licensing consequences without implying that MyDancr employs dancers or controls club performance work.
 
-[CALLOUT:COUNSEL|Counsel direction on 18 U.S.C. §§ 2257/2257A] At counsel’s direction, this packet does not propose §2257/§2257A producer-recordkeeping, labeling, custodian, or inspection obligations for MyDancr, dancers, or clubs. MyDancr’s product rules continue to prohibit minors and actual sexually explicit conduct and to require adult identity/age verification, consent, ownership, moderation, and prompt safety escalation. Counsel should revisit this conclusion only if the accepted content categories or MyDancr’s production role materially change.
+[CALLOUT:COUNSEL|Counsel direction on content and verification] At counsel’s direction, this packet does not propose §2257/§2257A producer-recordkeeping, labeling, custodian, or inspection obligations and does not assume a separate age-verification service because nudity and actual sexually explicit conduct are prohibited. MyDancr continues to require truthful eligibility representations, consenting-adult content, ownership, moderation, venue-confirmed dancer affiliations, and prompt safety escalation. Counsel should revisit this conclusion if accepted content categories, applicable law, or MyDancr’s production role materially changes.
 
 [CALLOUT:COUNSEL|Arizona pilot] The planned first pilot outside the Las Vegas demo market is Arizona. The operative documents should identify the selected Arizona launch city/county only after the club pipeline and local licensing review are confirmed.
 
@@ -113,9 +112,9 @@ Account recovery is a support workflow for signed-out users who no longer contro
 
 ## 4. Dancer onboarding and public eligibility
 
-The first-time dancer flow is staged: create the account; save stage name and city; complete the required MyDancr age/identity review; upload and approve an avatar; upload the required profile photos; optionally add social links and videos; preview the complete customer-facing profile; submit; and complete first venue verification through an approved club touchpoint. The public preview should use the same rendering and approved content that a live profile will use, while clearly identifying its private preview state.
+The first-time dancer flow is staged: create the account; make the required eligibility and truthful-account representations; save stage name and city; upload and approve an avatar; upload the required profile photos; optionally add social links and videos; preview the complete customer-facing profile; submit; and complete first venue verification through an approved club touchpoint. The public preview should use the same rendering and approved content that a live profile will use, while clearly identifying its private preview state.
 
-Public eligibility is the conjunction of several conditions, not a single status flag: active account, approved dancer status, a successful and current identity/age decision accepted by MyDancr, public visibility enabled, no disablement, required approved media, and the required approved venue affiliation. Media still pending or rejected does not count toward approval. Deleting media must remove the active database record and associated public/storage reference, subject only to backup, legal-hold, and audit retention described later.
+Public eligibility is the conjunction of several conditions, not a single status flag: active account, accepted eligibility representations, approved dancer status, public visibility enabled, no disablement, required approved media, and the required approved venue affiliation. MyDancr does not require routine age-document, selfie, biometric, or date-of-birth verification in the current no-nudity model. Media still pending or rejected does not count toward approval. Deleting media must remove the active database record and associated public/storage reference, subject only to backup, legal-hold, and audit retention described later.
 
 After first approval, the dancer can request or establish additional affiliations through the controlled club verification flow. The dancer can post a shift only for an active club affiliation. This avoids self-assigning a club relationship.
 
@@ -202,11 +201,11 @@ Some records cannot be deleted immediately: verified redemptions; Deal Orders; w
 - **Resend or Postmark:** transactional email address, message metadata, delivery state, and limited content.
 - **Google Maps/directions services:** map or destination requests; direct links may expose data to Google under its terms.
 - **Rideshare deep links:** destination and device/browser context sent when the user chooses the link; no implied partnership.
-- **Yoti:** hosted 18+ verification session and privacy-minimized pass/fail result, subject to production contract and configuration review. MyDancr’s planned audit record excludes date of birth, exact age, identity-document images, and biometric media.
+- **Account eligibility:** contractual eligibility and truthful-account representations stored with the accepted agreement version. The current model has no separate age-verification integration and no routine MyDancr collection of date of birth, exact age, identity-document images, selfies, or biometric media.
 - **ACH processor and banking partners for club settlement:** club legal/account identifiers, authorization or payment instructions, weekly statement amount, status, return code, trace/reference, and reconciliation data. The actual processor and allocation of authorization, notices, retries, fees, and security duties must match the signed production setup.
 - **Too Much Media/NATS:** dancer affiliate-account linkage, account status, exact commission export, provider transaction/reference, processing status, failure or reconciliation state, and any KYC/tax/payment data processed independently under Too Much Media/NATS terms. The contracted entity and production configuration must match the signed agreement.
 
-[CALLOUT:IMPLEMENTATION|Launch synchronization] Before publication, product and counsel must compare this map against production environment variables, processor contracts, database migrations, storage buckets, notification templates, analytics events, and all live pages. Yoti, the selected ACH processor/bank setup, and Too Much Media/NATS must not be presented as active beyond the contract and production configuration actually in force.
+[CALLOUT:IMPLEMENTATION|Launch synchronization] Before publication, product and counsel must compare this map against production environment variables, processor contracts, database migrations, storage buckets, notification templates, analytics events, and all live pages. No retired or unapproved provider may appear in public copy, acceptance records, provider disclosures, configuration, or live flows. The selected ACH processor/bank setup and Too Much Media/NATS must not be presented as active beyond the contract and production configuration actually in force.
 
 [[FLOW_MATRIX]]
 
@@ -260,7 +259,7 @@ The Acceptable Use and Prohibited Conduct Rules are incorporated. Without limita
 
 ## 9. Third-party services
 
-Links and integrations may lead to clubs, social networks, maps, rideshare providers, authentication/email/push providers, Yoti, Too Much Media/NATS, and the ACH processor or banking partners used for club settlement. Third parties control their own services, terms, availability, and data practices. A link or technical integration does not imply endorsement or partnership. The User is responsible for reviewing applicable third-party terms.
+Links and integrations may lead to clubs, social networks, maps, rideshare providers, authentication/email/push providers, Too Much Media/NATS, and the ACH processor or banking partners used for club settlement. Third parties control their own services, terms, availability, and data practices. A link or technical integration does not imply endorsement or partnership. The User is responsible for reviewing applicable third-party terms.
 
 ## 10. Changes and availability
 
@@ -314,7 +313,7 @@ The published Terms should include assignment, force majeure, waiver, severabili
 
 ## 1. Scope
 
-This Privacy Policy applies to personal information processed by MyDancr through the Service. Yoti processes hosted age-verification data, Too Much Media/NATS processes dancer affiliate and commission-settlement data, and the selected ACH processor or banking partners process club payment data under the applicable contracts, notices, and independent terms. This policy does not govern independent club practices, third-party social sites, maps, rideshare providers, or a provider acting independently. The published version must identify the MyDancr controller/business legal entity, contact methods, actual production providers, and each provider’s privacy role.
+This Privacy Policy applies to personal information processed by MyDancr through the Service. MyDancr does not use a separate age-verification provider in the current model. Too Much Media/NATS processes dancer affiliate and commission-settlement data, and the selected ACH processor or banking partners process club payment data under the applicable contracts, notices, and independent terms. This policy does not govern independent club practices, third-party social sites, maps, rideshare providers, or a provider acting independently. The published version must identify the MyDancr controller/business legal entity, contact methods, actual production providers, and each provider’s privacy role.
 
 ## 2. Information collected
 
@@ -324,7 +323,7 @@ Email address, authentication identifiers, role, display name, account state, ci
 
 ### Dancer profile and verification data
 
-Stage name, city, bio, avatar, profile photos, videos, social links, public slug, visibility, status, legal identity or verification readiness, club affiliations, verification events, work-card or license information if required, and consent/acceptance records. Legal identity and verification evidence are private and should not appear on the public profile. MyDancr should collect only the evidence required by its approved review workflow and applicable law.
+Stage name, city, bio, avatar, profile photos, videos, social links, public slug, visibility, status, club affiliations, verification events, work-card or license information if required, and consent/acceptance records. MyDancr does not routinely collect age or identity documents, selfies, biometric media, or date of birth in the current no-nudity model. Any limited evidence later required for fraud, club authority, account recovery, or law must remain private and be collected only under an approved workflow.
 
 ### Club and team data
 
@@ -344,7 +343,7 @@ For an eligible dancer check-in, latitude, longitude, accuracy, reading time, di
 
 ### Finance, commission, tax, and settlement data
 
-Deal Orders, deal-specific fee snapshots, weekly club statements and items, ACH authorization/payment status, returns and trace/reconciliation references, verified redemption data, gross referral fee, dancer share, platform share, policy version, commission status, NATS affiliate login/account linkage and verification state, immutable commission-export events, attempt/error/reconciliation state, provider transaction/reference, tax classification/documents or status, and reversals. Full Yoti evidence, NATS or ACH credentials, external bank credentials, and identity images collected solely by a provider should remain with that provider rather than being copied into MyDancr’s ordinary database.
+Deal Orders, deal-specific fee snapshots, weekly club statements and items, ACH authorization/payment status, returns and trace/reconciliation references, verified redemption data, gross referral fee, dancer share, platform share, policy version, commission status, NATS affiliate login/account linkage and verification state, immutable commission-export events, attempt/error/reconciliation state, provider transaction/reference, tax classification/documents or status, and reversals. NATS or ACH credentials, external bank credentials, and identity images collected solely by a finance provider should remain with that provider rather than being copied into MyDancr’s ordinary database.
 
 ### Support, reports, legal, and DMCA data
 
@@ -356,13 +355,13 @@ Session cookies, local storage, CSRF/security tokens, preference values, anonymo
 
 ## 3. Sources
 
-Information comes from the User; clubs and authorized team members; dancers; automated device/browser events; NFC tags; content moderation; MyDancr verification records; Yoti; Too Much Media/NATS; the selected ACH processor or banking partners; authentication, hosting, email, push, map, and support vendors; public sources used for club verification; other Users’ reports; and authorities where lawful.
+Information comes from the User; clubs and authorized team members; dancers; automated device/browser events; NFC tags; content moderation; MyDancr eligibility, affiliation, and account-integrity records; Too Much Media/NATS; the selected ACH processor or banking partners; authentication, hosting, email, push, map, and support vendors; public sources used for club verification; other Users’ reports; and authorities where lawful.
 
 ## 4. Purposes
 
 - Create, authenticate, secure, recover, and administer accounts.
 - Render public dancer, club, schedule, deal, and video experiences.
-- Verify identity readiness, club authority, dancer affiliation, and time-limited presence.
+- Verify account eligibility representations, club authority, dancer affiliation, and time-limited presence.
 - Process uploads, transformations, moderation, publication, reporting, and takedown.
 - Personalize city results, follows, saved content, notifications, and rankings.
 - Provide directions and user-requested external links.
@@ -375,7 +374,7 @@ Information comes from the User; clubs and authorized team members; dancers; aut
 
 ## 5. Disclosures
 
-MyDancr may disclose data to vendors acting under contract for hosting/database/storage/authentication, content moderation, push, email, maps, support, security, Yoti age verification, Too Much Media/NATS commission settlement, club ACH processing/banking, and professional services. The minimum data necessary should be disclosed for the function.
+MyDancr may disclose data to vendors acting under contract for hosting/database/storage/authentication, content moderation, push, email, maps, support, security, Too Much Media/NATS commission settlement, club ACH processing/banking, and professional services. The minimum data necessary should be disclosed for the function. No separate age-verification provider receives account data under the current model.
 
 Public profile data is disclosed to visitors. A club receives information necessary to review its dancer affiliations, team, offers, Deal Orders, verified redemptions, weekly statements, and ACH status, but not private dancer commission records or customer contact details unless separately authorized by law and product design. A dancer receives the dancer’s own profile, activity, affiliations, commissions, NATS linkage, and export status, but not customer identity.
 
@@ -383,11 +382,11 @@ MyDancr may disclose information in a merger, financing, acquisition, reorganiza
 
 MyDancr should state whether it “sells” or “shares” personal information under applicable state definitions only after a production vendor/data-use review. Contractual service-provider disclosure does not automatically answer that statutory question.
 
-## 6. Yoti age verification and MyDancr eligibility decisions
+## 6. Account eligibility, club authority, and affiliation decisions
 
-MyDancr uses a hosted Yoti flow for the 18+ age-verification gate and plans to retain a privacy-minimized pass/fail audit rather than date of birth, exact age, identity-document images, or biometric media. MyDancr remains responsible for the verification purpose, lawful basis, notices, product eligibility decision, fallback/manual path, appeal, access decision, retention of its own audit, and response to rights requests concerning data MyDancr controls. Yoti separately governs the information it processes under its production terms and privacy notice.
+The current no-nudity model does not use a separate age-verification service. MyDancr records the User’s contractual eligibility and truthful-account representations and applies account-state, approved-media, club-authority, venue-affiliation, and safety rules relevant to the requested feature. MyDancr does not routinely collect date of birth, exact age, government identification, selfies, or biometric media.
 
-Any separate dancer-identity, club-authority, work-card, or fraud review must collect only necessary evidence, use the shortest workable retention period, limit reviewer access, and document the decision. MyDancr should not receive or retain Yoti biometric media or identity-document images unless counsel approves a materially different production flow with the required notices, consent, retention, deletion, security, and alternatives.
+Any limited evidence later required for suspected fraud, account recovery, club authority, work-card compliance, or a specific legal obligation must be necessary and proportionate, use the shortest workable retention period, limit reviewer access, and document the decision. Introducing document, selfie, biometric, or vendor-based verification requires a separately approved product and legal change with appropriate notices, security, alternatives, retention, and deletion controls.
 
 ## 7. Too Much Media/NATS dancer-commission settlement
 
@@ -433,13 +432,13 @@ The dancer is responsible for the dancer’s own relationship with each club, in
 
 ## 2. Eligibility and truthful identity
 
-The dancer represents that the dancer is at least 18, is the person operating the account, has legal capacity, and may lawfully work and publish the submitted content. The dancer must provide accurate identity and city information, complete the required Yoti/MyDancr verification process, and must not use another person’s documents, likeness, stage identity, or account. A stage name may be public; legal identity remains private except as required for verification, tax, Too Much Media/NATS settlement, safety, or law.
+The dancer represents that the dancer is at least 18, is the person operating the account, has legal capacity, and may lawfully work and publish the submitted content. The dancer must provide accurate stage identity and city information and must not use another person’s documents, likeness, stage identity, or account. MyDancr does not require a routine age-document or biometric verification flow in the current no-nudity model. A stage name may be public; any legal identity collected independently by a club, Too Much Media/NATS, tax authority, or other provider is governed by that relationship and applicable law.
 
 The dancer must maintain all local work cards, entertainer licenses, permits, immigration/work authorization, and club requirements. A MyDancr badge or affiliation does not replace government or club verification.
 
 ## 3. Initial approval and affiliations
 
-Before the profile becomes public, the dancer must complete the required MyDancr age/identity review, complete required profile fields, obtain approval of required media, submit the profile, and complete first club verification through the approved flow. A verification decision supports identity and age assurance but is not a guarantee; a club confirmation verifies only the represented affiliation. MyDancr may require additional review or decline publication.
+Before the profile becomes public, the dancer must make the required eligibility and truthful-account representations, complete required profile fields, obtain approval of required media, submit the profile, and complete first club verification through the approved flow. Club confirmation verifies only the represented affiliation and is not a general identity, age, employment, licensing, or safety guarantee. MyDancr may require limited additional review for suspected fraud, impersonation, safety concerns, or a specific legal obligation, or may decline publication.
 
 After approval, the dancer may add or change affiliations only through the approved process. The dancer may post a shift only for an active approved affiliation and may not claim a club where the dancer is not authorized to work. The dancer must promptly remove or update an inaccurate affiliation or schedule.
 
@@ -451,7 +450,7 @@ Working Now is time-limited and does not promise that the dancer remains continu
 
 ## 5. Profile and media obligations
 
-The dancer grants the Content and Media License and represents that each upload depicts consenting adults, is owned or properly licensed, is not misleading, and complies with club, privacy, intellectual-property, and safety rules. The dancer must obtain releases from every recognizable person and location owner where required. The dancer must not upload hidden-camera, nonconsensual, trafficked, minor, infringing, or illegal content.
+The dancer grants the Content and Media License and represents that each upload depicts consenting adults, is owned or properly licensed, is not misleading, contains no nudity or actual sexually explicit conduct, and complies with club, privacy, intellectual-property, and safety rules. The dancer must obtain releases from every recognizable person and location owner where required. The dancer must not upload hidden-camera, nonconsensual, trafficked, minor, infringing, or illegal content.
 
 The dancer understands that media may be automatically and/or manually reviewed, transformed, watermarked, resized, transcoded, rejected, or later removed. Approval is not a legal clearance. The dancer remains responsible for rights and records.
 
@@ -487,7 +486,7 @@ On termination, public access ends, but accrued undisputed obligations and legal
 
 ## 10. Dancer acknowledgments
 
-The dancer acknowledges the customer-facing limits of badges and status, the absence of guaranteed earnings, the role of club admission and independent club rules, Yoti’s hosted age-verification role, MyDancr’s eligibility and commission-calculation roles, Too Much Media/NATS’s commission-settlement role, the public nature of approved profile content, dynamic ranking signals, and the separate Content/Media, Acceptable Use, Verification, Commission, Moderation, Privacy, and Retention policies.
+The dancer acknowledges the customer-facing limits of badges and status, the absence of guaranteed earnings, the role of club admission and independent club rules, MyDancr’s account-eligibility, affiliation, media-approval, and commission-calculation roles, Too Much Media/NATS’s commission-settlement role, the absence of a separate age-verification service, the public nature of approved profile content, dynamic ranking signals, and the separate Content/Media, Acceptable Use, Account/Club Verification, Commission, Moderation, Privacy, and Retention policies.
 
 ---PAGE---
 
@@ -563,7 +562,7 @@ The final Club Agreement should include negotiated confidentiality, security coo
 
 The submitter retains ownership of original Content. The submitter represents and warrants that the submitter owns or has sufficient written rights, permissions, model releases, location/property releases, music/sound rights, trademark permissions, and privacy/publicity consents for MyDancr’s uses. Every depicted person must be an adult and must have knowingly consented to creation and distribution in the intended context.
 
-The submitter must preserve underlying releases and age/identity records for the period required by law and provide reasonable evidence to MyDancr or authorities where legally necessary. MyDancr’s approval is not a substitute for those records.
+The submitter must preserve underlying permissions, releases, and rights records for the period required by law and provide reasonable evidence to MyDancr or authorities where legally necessary. This clause does not impose a separate age-verification or §2257/§2257A recordkeeping program. MyDancr’s approval is not a substitute for records independently required by applicable law.
 
 ## 3. License to MyDancr
 
@@ -577,7 +576,7 @@ The dancer authorizes use of the approved stage name, likeness, appearance, perf
 
 ## 5. Moderation and technical processing
 
-The submitter consents to automated and human analysis for safety, nudity/sexual-content classification, age-risk, violence, drugs, text, logos, fraud, and policy compliance; to secure transmission to contracted moderation providers; and to administrative review. Decisions can be wrong. The submitter may use the appeal process but may not demand publication.
+The submitter consents to automated and human analysis for safety, nudity/sexual-content classification, apparent-minor risk, violence, drugs, text, logos, fraud, and policy compliance; to secure transmission to contracted moderation providers; and to administrative review. Decisions can be wrong. This moderation is content screening, not identity or age verification. The submitter may use the appeal process but may not demand publication.
 
 ## 6. Prohibited content
 
@@ -591,9 +590,9 @@ The submitter must not assume that music playing in a club, a social-platform li
 
 The submitter must disclose materially synthetic or altered depictions and must not use AI to impersonate a real person, falsify club presence, evade moderation, or depict a minor or nonconsensual intimate content. The final policy should state whether MyDancr uses Content to train proprietary models; absent a clear opt-in and approved notice, this draft does not grant a training right.
 
-## 9. Adult-only, consent, and content-boundary controls
+## 9. No-nudity, consenting-adult, and content-boundary controls
 
-At counsel’s direction, this license does not impose proposed 18 U.S.C. §§ 2257/2257A producer-recordkeeping, labeling, custodian, or inspection duties. Independently of that conclusion, every depicted person must be an adult and must have consented; the uploader must own or control the necessary rights; actual sexually explicit conduct is outside the accepted content categories; and MyDancr may require age/identity, consent, ownership, moderation, or provenance evidence reasonably necessary to enforce those narrower rules. Counsel should re-review the allocation only if MyDancr materially changes its accepted content or production role.
+At counsel’s direction, this license does not impose proposed 18 U.S.C. §§ 2257/2257A producer-recordkeeping, labeling, custodian, or inspection duties and does not require a separate vendor age-verification process. Nudity and actual sexually explicit conduct are outside the accepted content categories; every depicted person must be an adult and must have consented; and the uploader must own or control the necessary rights. MyDancr may require consent, ownership, moderation, or provenance evidence reasonably necessary to enforce those narrower rules. Counsel should re-review the allocation if MyDancr materially changes its accepted content, production role, or applicable jurisdiction.
 
 ## 10. Removal and preservation
 
@@ -605,7 +604,7 @@ MyDancr may remove or preserve Content for policy, safety, rights, legal process
 
 ## 1. Safety and adults only
 
-Users may not access or use the Service if under 18; depict, identify, target, groom, solicit, exploit, or endanger a minor; misstate age; evade age or identity controls; upload child sexual abuse material; or fail to report a suspected minor or exploitation concern through available safety channels.
+Users may not access or use the Service if under 18; depict, identify, target, groom, solicit, exploit, or endanger a minor; misstate eligibility; upload child sexual abuse material; or fail to report a suspected minor or exploitation concern through available safety channels. MyDancr does not use a routine vendor age-verification gate in the current no-nudity model, but it may restrict a suspicious account or content while investigating.
 
 ## 2. No prostitution, trafficking, or sexual-service facilitation
 
@@ -621,7 +620,7 @@ Users may not impersonate; create duplicate accounts to evade enforcement; falsi
 
 ## 5. Content rules
 
-Users may not submit infringing, unlawful, exploitative, deceptive, hateful, threatening, graphically violent, self-harm-promoting, drug-selling, weapon-selling, malware, spam, or fraudulent content. Content must not include actual sexual conduct or other categories barred by the current media standard.
+Users may not submit infringing, unlawful, exploitative, deceptive, hateful, threatening, graphically violent, self-harm-promoting, drug-selling, weapon-selling, malware, spam, or fraudulent content. Content must not include nudity, actual sexual conduct, or other categories barred by the current media standard.
 
 ## 6. Club Deal rules
 
@@ -645,21 +644,21 @@ Violations may result in content restriction, warning, feature limitation, remov
 
 ---PAGE---
 
-# Part VIII — Draft Age, Identity, and Venue-Verification Policy
+# Part VIII — Draft Account Eligibility and Venue-Verification Policy
 
-## 1. Adult eligibility
+## 1. Contractual eligibility
 
-All Users must be at least 18. A club may require 21 or another lawful higher age for entry. Dancers must also meet the legal age and licensing requirements for work at the specific club and jurisdiction. The Service must not imply that account eligibility equals club eligibility.
+Users must make the eligibility representations stated in the Terms. A club may require 21 or another lawful age for entry, and dancers must independently satisfy the legal age, work-card, licensing, and venue requirements applicable to their work. MyDancr does not use a routine age-verification vendor in the current no-nudity model. The Service must not imply that account access or a public profile equals eligibility for club entry or work.
 
-## 2. Risk-based verification
+## 2. Role-based controls
 
-Verification should be proportionate to role and action. Email confirmation is appropriate for basic account access but is not enough for a public dancer, club owner, authorized manager, or commission recipient. Public dancers must complete the hosted Yoti 18+ gate plus any MyDancr identity/eligibility and initial club-affiliation controls required by the approved workflow. High-risk club roles require documented identity and/or authority review. Too Much Media/NATS separately controls its affiliate-account, KYC, tax, sanctions, and payment-account requirements.
+Controls should be proportionate to role and action. Email confirmation and accepted eligibility representations support ordinary account access. A public dancer must also complete the required profile/media workflow and initial club-affiliation confirmation. Club owners and authorized managers must establish authority for the club role. Too Much Media/NATS separately controls its affiliate-account, KYC, tax, sanctions, and payment-account requirements for commission settlement.
 
-## 3. Dancer identity
+## 3. Dancer account and stage identity
 
-Before public approval, the dancer must complete MyDancr’s approved identity and age review using the minimum evidence necessary; provide an avatar that can be compared to the person where appropriate; and meet media and venue gates. Public display uses stage name unless disclosure is legally required.
+Before public approval, the dancer must provide truthful account and stage information, accept the eligibility representations, provide the required avatar and profile media, and complete the venue gate. Public display uses the stage name. MyDancr does not routinely collect government identification, date of birth, age evidence, selfies, or biometric media.
 
-Verification evidence and decisions must be encrypted, access-restricted, and not exposed to clubs beyond the minimum confirmation interface. MyDancr should record the evidence category, result, dates, reviewer, and decision—not unnecessary document or selfie copies—unless counsel requires retention. Retention and deletion settings must match the approved schedule. Any biometric notice, consent, and alternative method required by applicable U.S. state law must be presented before collection if biometric processing is later introduced.
+If suspected fraud, impersonation, account recovery, club authority, or a specific legal requirement later justifies limited evidence, it must be encrypted, access-restricted, and not exposed beyond the minimum necessary decision interface. MyDancr should record only the evidence category, result, dates, reviewer, and decision unless counsel requires more. Introducing biometric processing or a separate age/identity vendor is outside the current model and requires a separately approved product, privacy, consent, retention, security, and accessibility review before collection.
 
 ## 4. Club authority
 
@@ -667,7 +666,7 @@ A club owner or manager must establish authority through an administrator-issued
 
 ## 5. Initial venue gate
 
-A first-time dancer’s profile remains private until an authorized club confirms a legitimate affiliation using the secure verification flow. The club should compare the stage name and avatar and attest to authority and accuracy. MyDancr then applies the remaining eligibility rules. Venue confirmation alone does not approve rejected media or an incomplete identity.
+A first-time dancer’s profile remains private until an authorized club confirms a legitimate affiliation using the secure verification flow. The club should compare the stage name and avatar and attest to authority and affiliation accuracy. MyDancr then applies the remaining account, media, visibility, and safety rules. Venue confirmation is not a general identity or age certification and does not approve rejected media or an incomplete profile.
 
 ## 6. Later affiliations and shifts
 
@@ -681,13 +680,13 @@ NFC tags are scoped by type and club. Dressing-room tags support affiliation/pre
 
 Dancers receiving commissions must complete Too Much Media/NATS onboarding and any required KYC, sanctions, tax, payment-account, and account-matching checks. MyDancr must verify the dancer-to-NATS account linkage and resolve a mismatch before exporting commission. Too Much Media/NATS approval does not itself create a MyDancr commission; only a qualifying Profile-Originated Verified Redemption calculated under the accepted Dancer Commission Terms does so.
 
-## 9. Reverification and failure
+## 9. Review, restriction, and failure
 
-MyDancr may reverify after material account changes, suspicious activity, expired documents, affiliation disputes, NATS or ACH failures, sanctions alerts, security incidents, or legal requirements. Failure or refusal may restrict the relevant feature. A User may appeal a mistaken result but cannot require MyDancr to accept unverifiable evidence.
+MyDancr may review or restrict the relevant feature after material account changes, suspicious activity, affiliation disputes, NATS or ACH failures, sanctions alerts, security incidents, or a specific legal requirement. Failure to establish club authority, a legitimate affiliation, account control, or finance-provider eligibility may restrict only the affected role or feature where practical. A User may appeal a mistaken result but cannot require MyDancr to accept unreliable evidence.
 
 ## 10. Data minimization
 
-Verification should collect the minimum evidence necessary, separate public stage identity from legal identity, limit retention, log access, prohibit ordinary email transmission of documents, and avoid exposing government identifiers to clubs, dancers, or customers.
+MyDancr should collect the minimum account, authority, affiliation, and finance-linkage data necessary; separate public stage identity from any legal or provider identity; limit retention; log privileged access; prohibit ordinary email transmission of sensitive documents; and avoid exposing government identifiers to clubs, dancers, or customers. A separate age-verification provider is not part of this model.
 
 ---PAGE---
 
@@ -888,7 +887,7 @@ MyDancr retains personal information only for a documented operational, contract
 - **Authentication and active account:** life of account; security/session metadata for a short rolling period; deletion processing after authenticated request.
 - **Public profile fields and ordinary content:** while published plus a short removal/cache period; transformed/storage copies deleted through a verified cleanup job; backups expire on cycle.
 - **Rejected uploads:** short appeal and abuse-prevention period; longer restricted hash/decision where necessary to prevent reupload or address safety.
-- **Identity and age evidence:** retain only the evidence category, result, decision, reviewer, and dates for the shortest approved period; retain document, selfie, or biometric material only when specifically justified by law and approved policy.
+- **Eligibility, authority, and affiliation records:** retain accepted eligibility representations, club-authority decisions, dancer-affiliation events, and any narrowly justified fraud/account-recovery evidence for the shortest approved operational, dispute, or legal period. The current model does not routinely collect age documents, date of birth, selfies, or biometric material.
 - **Affiliation and NFC presence:** active relationship plus a limited audit/fraud/dispute period; public status expires promptly.
 - **Precise geolocation:** shortest operational/fraud window feasible; retain derived pass/fail, distance, accuracy, and event evidence longer only if necessary.
 - **Views, clicks, rankings, and analytics:** rolling product/analytics period, then aggregate or deidentify; delete direct identifiers when no longer needed.
@@ -901,7 +900,7 @@ MyDancr retains personal information only for a documented operational, contract
 - **Club agreements, Deal Orders, and commission records:** agreement life plus limitation, tax, audit, and dispute period.
 - **Administrative and security logs:** risk-based rolling period; longer for material incidents or legal hold.
 
-[CALLOUT:COUNSEL|Exact periods required] Convert every “short,” “limited,” “rolling,” and “statutory” period above into an approved number of days/years and confirm backup architecture, tax law, limitation periods, DMCA, consent/verification evidence, fraud models, and state privacy requirements.
+[CALLOUT:COUNSEL|Exact periods required] Convert every “short,” “limited,” “rolling,” and “statutory” period above into an approved number of days/years and confirm backup architecture, tax law, limitation periods, DMCA, consent/eligibility evidence, fraud models, and state privacy requirements.
 
 ## 3. Account deletion process
 
@@ -937,15 +936,15 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 
 1. Insert legal entity, addresses, effective dates, and contacts in every public document.
 2. Register and verify the DMCA agent; calendar renewal; match the public page.
-3. Complete Yoti production contracting and configuration; document MyDancr’s 18+ eligibility, notice, minimal-result storage, fallback/manual review, appeal, retention/deletion, security, and incident procedures.
+3. Remove retired or unapproved providers from disclosures, configuration, acceptance copy, data maps, and live product dependencies; document that no routine vendor age-verification flow exists in the current no-nudity model.
 4. Contract with and configure the exact Too Much Media/NATS entity; verify supported dancer countries/currencies, affiliate onboarding, KYC/tax allocation, fees, reserves, limits, complaints, privacy, export cadence, failure and reconciliation behavior.
 5. Keep agent commissions disabled. Treat any future agent program as a separately scoped product and legal launch.
 6. Approve the club master agreement, offer-specific Deal Order, and weekly ACH authorization/instructions; display each deal’s effective referral fee to the authorized signer.
 7. Implement Deal-Order-specific fee snapshots, weekly itemized statements, ACH debit or credit processing, returns/retries, trace references, disputes, and reconciliation before accepting the revised club commercial terms.
 8. Implement clickwrap acceptance with document version, timestamp, user/account, IP/user agent as appropriate, and downloadable copy.
-9. Separate customer Terms acceptance from Dancer, Club, Media, Club Deal, Verification, NATS Commission Settlement, Deal Order, and ACH acceptances/notices.
-10. Train verification reviewers; restrict verification-record access; test deletion and reverification.
-11. Apply counsel’s direction not to impose proposed §2257/§2257A duties; confirm adult-only, consent, ownership, accepted-content boundaries, releases where required, music rights, and emergency reporting.
+9. Separate customer Terms acceptance from Dancer, Club, Media, Club Deal, Account/Club Verification, NATS Commission Settlement, Deal Order, and ACH acceptances/notices.
+10. Train club-authority, affiliation, moderation, fraud, and support reviewers; restrict sensitive-record access; test deletion and review outcomes.
+11. Apply counsel’s direction not to impose proposed §2257/§2257A duties or a separate age-verification vendor under the current no-nudity model; confirm consenting-adult representations, ownership, accepted-content boundaries, releases where required, music rights, and emergency reporting.
 12. Confirm every Club Deal category and enforce the alcohol/sexual-service prohibition at database and API boundaries.
 13. Validate that only approved affiliated clubs appear for dancer shifts.
 14. Validate first-time venue gate and later affiliation flows on real mobile devices.
@@ -962,7 +961,7 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 
 - **Visitor:** Terms and Privacy notice; no account acceptance, but clear browse/use notice.
 - **Customer:** Terms + Privacy; optional notification/marketing consent; Club Deal terms at selection/redemption.
-- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Yoti/MyDancr Verification notice/consent where required + Too Much Media/NATS Commission Settlement terms; renewed acceptance for material commission changes.
+- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Account Eligibility/Club Verification terms + Too Much Media/NATS Commission Settlement terms; renewed acceptance for material commission changes. No separate age-verification-provider acceptance is part of the current model.
 - **Club owner/authorized signer:** Terms + Privacy + Club Agreement + each offer-specific Deal Order + weekly ACH authorization/instructions + NFC/Deal terms + data/security obligations.
 - **Club manager/staff:** Terms + Privacy + Acceptable Use + team-role acknowledgment + NFC handling; no authority to accept owner-only commercial changes unless granted.
 - **Agent:** no active role or commission acceptance in this packet; a future program requires a separate launch package.
@@ -971,7 +970,7 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 ## Product counsel test scripts
 
 - Create each account role; confirm copy and acceptance version.
-- Complete dancer identity/age onboarding with successful, failed, abandoned, manual-review, expired, mismatched, deleted, and reverification outcomes; then test approved, pending, rejected, deleted, and appealed media.
+- Complete dancer account-eligibility, truthful-account, profile/media, and initial club-affiliation flows; test incomplete, duplicate, suspicious, wrong-club, revoked, rejected, deleted, and appealed outcomes without invoking a separate age-verification provider, routine ID-document collection, or biometric processing.
 - Confirm deleted media stays deleted after reload and is removed from public/storage paths.
 - Preview a dancer profile and compare it to the live component, including videos and social links.
 - Complete first club verification and a later affiliation change; attempt an unauthorized shift.
@@ -999,7 +998,6 @@ Counsel should confirm the applicability, current version, and jurisdictional sc
 - **FCC — TCPA unlawful-text-message small entity compliance guide:** [https://docs.fcc.gov/public/attachments/DA-24-859A1.pdf](https://docs.fcc.gov/public/attachments/DA-24-859A1.pdf)
 - **Too Much Media — NATS affiliate-management platform:** [https://www.toomuchmedia.com/](https://www.toomuchmedia.com/)
 - **Too Much Media — NATS documentation:** [https://docs.toomuchmedia.com/](https://docs.toomuchmedia.com/)
-- **Yoti — privacy information:** [https://www.yoti.com/privacy/](https://www.yoti.com/privacy/)
 - **Nacha — ACH Rules resources:** [https://www.nacha.org/rules](https://www.nacha.org/rules)
 - **Arizona Revised Statutes § 18-552 — security-system and breach-notification duties:** [https://www.azleg.gov/ars/18/00552.htm](https://www.azleg.gov/ars/18/00552.htm)
 - **18 U.S.C. § 2421A — promotion or facilitation of prostitution and reckless disregard of sex trafficking:** [https://uscode.house.gov/view.xhtml?req=%28title%3A18+section%3A2421a+edition%3Aprelim%29](https://uscode.house.gov/view.xhtml?req=%28title%3A18+section%3A2421a+edition%3Aprelim%29)
