@@ -9,6 +9,13 @@ import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
 import AdminPilotAnalytics from "./AdminPilotAnalytics";
 import AdminTvPanel from "./AdminTvPanel";
+import {
+  clearAdminSession,
+  isAdminAuthenticationError,
+  persistAdminSession,
+  readAdminAccessToken as readToken,
+  readAdminJson as readJson,
+} from "./admin-session";
 
 type AdminState = {
   monitoring?: Record<string, unknown> | null;
@@ -34,7 +41,6 @@ type AdminActionNotice = {
   message: string;
 };
 
-const SESSION_KEY = "dancrAuthSessionV1";
 const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
 type AdminWorkspace = "overview" | "approvals" | "finance" | "activity" | "accounts" | "system" | "pilot";
 
@@ -101,15 +107,7 @@ export default function AdminClient() {
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
       if (!data.session?.accessToken) throw new Error("Admin sign in requires a live session.");
 
-      window.localStorage.setItem(
-        SESSION_KEY,
-        JSON.stringify({
-          accessToken: data.session.accessToken,
-          refreshToken: data.session.refreshToken,
-          expiresAt: data.session.expiresAt,
-          account: data.account,
-        }),
-      );
+      persistAdminSession(data.session, data.account);
       await loadAdmin();
     } catch (error) {
       setState({
@@ -162,7 +160,7 @@ export default function AdminClient() {
 
   function signOut() {
     setIsSigningOut(true);
-    window.localStorage.removeItem(SESSION_KEY);
+    clearAdminSession();
     window.sessionStorage.removeItem(OPEN_APPROVALS_SESSION_KEY);
     openApprovalIdsRef.current = {};
     setOpenApprovalIds({});
@@ -231,7 +229,7 @@ export default function AdminClient() {
       );
 
       if (authenticationFailure?.status === "rejected") {
-        window.localStorage.removeItem(SESSION_KEY);
+        clearAdminSession();
         setState({
           authRequired: true,
           error: authenticationFailure.reason instanceof Error
@@ -3451,16 +3449,6 @@ function persistOpenApprovals(openApprovalIds: Record<string, boolean>) {
   }
 }
 
-function readToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    if (session?.account?.role !== "admin") return "";
-    return typeof session?.accessToken === "string" ? session.accessToken : "";
-  } catch {
-    return "";
-  }
-}
-
 async function copyAdminText(value: string) {
   if (!value) throw new Error("Nothing to copy.");
   if (navigator.clipboard?.writeText) {
@@ -3478,26 +3466,6 @@ async function copyAdminText(value: string) {
   const copied = document.execCommand("copy");
   field.remove();
   if (!copied) throw new Error("Unable to copy.");
-}
-
-async function readJson(path: string, headers: Record<string, string>) {
-  const response = await fetch(path, { headers });
-  const data = await response.json().catch(() => null);
-  if (!response.ok || !data?.ok) {
-    throw new AdminDataRequestError(data?.error || "Unable to load admin data.", response.status);
-  }
-  return data;
-}
-
-class AdminDataRequestError extends Error {
-  constructor(message: string, readonly status: number) {
-    super(message);
-    this.name = "AdminDataRequestError";
-  }
-}
-
-function isAdminAuthenticationError(error: unknown) {
-  return error instanceof AdminDataRequestError && (error.status === 401 || error.status === 403);
 }
 
 function labelize(value: string) {

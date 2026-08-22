@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [liveShell, accountClient, adminClient] = await Promise.all([
+const [liveShell, accountClient, adminClient, adminSession] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/admin-session.ts", import.meta.url), "utf8"),
 ]);
 
 test("the unified login exposes persistent progress, role routing, and error feedback", () => {
@@ -46,6 +47,7 @@ test("both admin dashboards provide a real session logout", () => {
   assert.match(liveShell, /adminLogoutBtn"\)\.addEventListener\("click", logoutAdminAccount\)/);
 
   assert.match(adminClient, /className="admin-logout"[^>]*onClick=\{signOut\}/);
-  assert.match(adminClient, /function signOut\(\) \{[\s\S]*?window\.localStorage\.removeItem\(SESSION_KEY\)/);
+  assert.match(adminClient, /function signOut\(\) \{[\s\S]*?clearAdminSession\(\)/);
+  assert.match(adminSession, /window\.localStorage\.removeItem\(ADMIN_SESSION_KEY\)/);
   assert.match(adminClient, /setState\(\{ authRequired: true, error: "Admin session ended\. Sign in to continue\." \}\)/);
 });
