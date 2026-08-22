@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 
 type DmcaCase = {
   id: string;
@@ -28,7 +27,7 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadCase = useCallback(async () => {
-    const token = readToken();
+    const token = readBrowserAccessToken();
     if (!token) {
       setIsError(true);
       setStatus("Sign in to the uploader account on MyDancr, then reopen this page.");
@@ -56,7 +55,7 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const token = readToken();
+    const token = readBrowserAccessToken();
     if (!token) {
       setIsError(true);
       setStatus("Sign in to the uploader account before submitting a counter-notice.");
@@ -212,15 +211,6 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
       ) : null}
     </section>
   );
-}
-
-function readToken() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return typeof session?.accessToken === "string" ? session.accessToken : "";
-  } catch {
-    return "";
-  }
 }
 
 function label(value: string) {

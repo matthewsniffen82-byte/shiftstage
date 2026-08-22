@@ -36,3 +36,43 @@ export function readBrowserAccessToken(expectedRole?: BrowserSessionRole) {
   if (expectedRole && session?.account?.role !== expectedRole) return "";
   return typeof session?.accessToken === "string" ? session.accessToken : "";
 }
+
+export function persistBrowserAuthSession(session: unknown) {
+  if (
+    typeof window === "undefined" ||
+    !session ||
+    typeof session !== "object" ||
+    Array.isArray(session)
+  ) {
+    return false;
+  }
+
+  const next = session as BrowserAuthSession;
+  if (typeof next.accessToken !== "string" || !next.accessToken) return false;
+
+  try {
+    window.localStorage.setItem(BROWSER_AUTH_SESSION_KEY, JSON.stringify(next));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function persistRefreshedBrowserAuthSession(session: unknown) {
+  if (!session || typeof session !== "object" || Array.isArray(session)) return false;
+
+  const next = session as BrowserAuthSession;
+  if (typeof next.accessToken !== "string" || !next.accessToken) return false;
+  const current = readBrowserAuthSession() || {};
+
+  return persistBrowserAuthSession({
+    ...current,
+    accessToken: next.accessToken,
+    refreshToken: typeof next.refreshToken === "string"
+      ? next.refreshToken
+      : current.refreshToken,
+    expiresAt: typeof next.expiresAt === "number"
+      ? next.expiresAt
+      : current.expiresAt,
+  });
+}

@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   BROWSER_AUTH_SESSION_KEY,
+  persistBrowserAuthSession,
+  persistRefreshedBrowserAuthSession,
   readBrowserAccessToken,
   readBrowserAuthSession,
 } from "../src/lib/dancr/browser-session.ts";
@@ -14,6 +16,11 @@ const [
   venueActionsSource,
   directionsSource,
   tvSource,
+  nfcSource,
+  dealRedemptionSource,
+  venueClaimSource,
+  venueInvitationSource,
+  dmcaCounterSource,
 ] = await Promise.all([
   readFile(new URL("../src/lib/dancr/browser-session.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/components/PublicProfileHeader.tsx", import.meta.url), "utf8"),
@@ -21,6 +28,11 @@ const [
   readFile(new URL("../app/venues/[slug]/VenueProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/venues/[slug]/DirectionsLink.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/nfc/[token]/NfcTapClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/deals/redeem/[token]/RedeemDealClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/venues/[slug]/claim/VenueClaimForm.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/venue-team/invite/[token]/VenueTeamInviteClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dmca/counter/[id]/DmcaCounterForm.tsx", import.meta.url), "utf8"),
 ]);
 
 test("the browser auth boundary safely reads sessions and enforces optional account roles", () => {
@@ -62,6 +74,26 @@ test("the browser auth boundary safely reads sessions and enforces optional acco
       account: { role: "customer" },
     }));
     assert.equal(readBrowserAccessToken("customer"), "");
+
+    assert.equal(persistBrowserAuthSession({
+      accessToken: "venue-access",
+      refreshToken: "venue-refresh",
+      expiresAt: 100,
+      account: { role: "venue", email: "venue@example.com" },
+    }), true);
+    assert.equal(readBrowserAccessToken("venue"), "venue-access");
+    assert.equal(persistRefreshedBrowserAuthSession({
+      accessToken: "rotated-access",
+      expiresAt: 200,
+    }), true);
+    assert.deepEqual(readBrowserAuthSession(), {
+      accessToken: "rotated-access",
+      refreshToken: "venue-refresh",
+      expiresAt: 200,
+      account: { role: "venue", email: "venue@example.com" },
+    });
+    assert.equal(persistBrowserAuthSession({ account: { role: "venue" } }), false);
+    assert.equal(persistRefreshedBrowserAuthSession([]), false);
   } finally {
     globalThis.window = previousWindow;
   }
@@ -96,4 +128,35 @@ test("public profile, venue, directions, and TV clients share one authenticated-
   assert.match(tvSource, /function readViewerSessionId\(\)/);
   assert.match(tvSource, /window\.localStorage\.getItem\(VIEWER_SESSION_KEY\)/);
   assert.match(tvSource, /window\.localStorage\.setItem\(VIEWER_SESSION_KEY, id\)/);
+});
+
+test("standalone NFC, redemption, venue access, and DMCA clients use the same session boundary", () => {
+  for (const source of [
+    nfcSource,
+    dealRedemptionSource,
+    venueClaimSource,
+    venueInvitationSource,
+    dmcaCounterSource,
+  ]) {
+    assert.match(source, /from "@\/src\/lib\/dancr\/browser-session"/);
+    assert.doesNotMatch(source, /dancrAuthSessionV1/);
+    assert.doesNotMatch(source, /const SESSION_KEY/);
+  }
+
+  assert.match(nfcSource, /readBrowserAuthSession\(\)/);
+  assert.match(nfcSource, /persistRefreshedBrowserAuthSession\(data\.session\)/);
+  assert.doesNotMatch(nfcSource, /function readAuthSession\(|function persistRefreshedSession\(/);
+  assert.match(nfcSource, /const TAP_SESSION_KEY = "mydancrNfcTapSessionV1"/);
+  assert.match(nfcSource, /const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2"/);
+
+  assert.match(dealRedemptionSource, /readBrowserAccessToken\("venue"\)/);
+  assert.doesNotMatch(dealRedemptionSource, /function readVenueSession\(/);
+  assert.match(dealRedemptionSource, /const DEAL_SESSION_KEY = "mydancrDealSessionV1"/);
+
+  assert.match(venueClaimSource, /readBrowserAuthSession\(\)/);
+  assert.match(venueClaimSource, /persistBrowserAuthSession\(nextSession\)/);
+  assert.doesNotMatch(venueClaimSource, /function readSession\(/);
+  assert.match(venueInvitationSource, /persistBrowserAuthSession\(\{/);
+  assert.match(dmcaCounterSource, /readBrowserAccessToken\(\)/);
+  assert.doesNotMatch(dmcaCounterSource, /function readToken\(/);
 });

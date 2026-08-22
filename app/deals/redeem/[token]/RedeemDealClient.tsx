@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 
-const SESSION_KEY = "dancrAuthSessionV1";
 const DEAL_SESSION_KEY = "mydancrDealSessionV1";
 
 type RedeemDealClientProps = {
@@ -19,11 +19,11 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
   const [venueAccessToken, setVenueAccessToken] = useState("");
 
   useEffect(() => {
-    const venueSession = readVenueSession();
-    setVenueAccessToken(venueSession.accessToken);
+    const accessToken = readBrowserAccessToken("venue");
+    setVenueAccessToken(accessToken);
     const headers: Record<string, string> = { "content-type": "application/json" };
-    if (venueSession.accessToken) {
-      headers.authorization = `Bearer ${venueSession.accessToken}`;
+    if (accessToken) {
+      headers.authorization = `Bearer ${accessToken}`;
     }
     fetch(`/api/deals/redemptions/${encodeURIComponent(token)}/events`, {
       method: "POST",
@@ -111,19 +111,6 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
       {status ? <em>{status}</em> : null}
     </article>
   );
-}
-
-function readVenueSession() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return {
-      accessToken: session?.account?.role === "venue" && typeof session?.accessToken === "string"
-        ? session.accessToken
-        : "",
-    };
-  } catch {
-    return { accessToken: "" };
-  }
 }
 
 function readDealSessionId() {

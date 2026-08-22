@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { persistBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 
 type Invitation = {
   email: string;
@@ -57,12 +56,15 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
       if (!response.ok || !data.ok || !data.session?.accessToken) {
         throw new Error(data.error || "Unable to accept this invitation.");
       }
-      window.localStorage.setItem(SESSION_KEY, JSON.stringify({
+      const sessionSaved = persistBrowserAuthSession({
         accessToken: data.session.accessToken,
         refreshToken: data.session.refreshToken,
         expiresAt: data.session.expiresAt,
         account: data.account || null,
-      }));
+      });
+      if (!sessionSaved) {
+        throw new Error("Unable to save your venue session in this browser.");
+      }
       window.location.assign("/dashboard/venue");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to accept this invitation.");

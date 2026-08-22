@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import {
+  persistBrowserAuthSession,
+  readBrowserAuthSession,
+  type BrowserAuthSession,
+} from "@/src/lib/dancr/browser-session";
 import styles from "./VenueClaim.module.css";
-
-const SESSION_KEY = "dancrAuthSessionV1";
 
 type Venue = {
   id: string;
@@ -23,22 +26,15 @@ type Claim = {
   venue?: { name?: string; slug?: string } | null;
 };
 
-type StoredSession = {
-  accessToken?: string;
-  refreshToken?: string;
-  expiresAt?: number;
-  account?: { role?: string; email?: string; displayName?: string; accountState?: string };
-};
-
 export default function VenueClaimForm({ venue }: { venue: Venue }) {
-  const [session, setSession] = useState<StoredSession | null>(null);
+  const [session, setSession] = useState<BrowserAuthSession | null>(null);
   const [claim, setClaim] = useState<Claim | null>(null);
   const [isLoadingClaim, setIsLoadingClaim] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    const stored = readSession();
+    const stored = readBrowserAuthSession();
     const venueSession = stored?.account?.role === "venue" ? stored : null;
     setSession(venueSession);
     if (!venueSession?.accessToken) {
@@ -88,7 +84,9 @@ export default function VenueClaimForm({ venue }: { venue: Venue }) {
 
       if (data.session?.accessToken) {
         const nextSession = { ...data.session, account: data.account };
-        window.localStorage.setItem(SESSION_KEY, JSON.stringify(nextSession));
+        if (!persistBrowserAuthSession(nextSession)) {
+          throw new Error("Your claim was submitted, but the venue session could not be saved in this browser.");
+        }
         setSession(nextSession);
       }
       setClaim(data.claim);
@@ -222,13 +220,4 @@ export default function VenueClaimForm({ venue }: { venue: Venue }) {
       {status ? <p className={styles.status} role="status">{status}</p> : null}
     </form>
   );
-}
-
-function readSession(): StoredSession | null {
-  try {
-    const value = window.localStorage.getItem(SESSION_KEY);
-    return value ? JSON.parse(value) : null;
-  } catch {
-    return null;
-  }
 }

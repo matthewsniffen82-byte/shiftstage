@@ -4,9 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ClubDeal } from "@/src/lib/dancr/types";
 import NfcIcon from "@/app/components/NfcIcon";
+import {
+  persistRefreshedBrowserAuthSession,
+  readBrowserAuthSession,
+} from "@/src/lib/dancr/browser-session";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 
-const SESSION_KEY = "dancrAuthSessionV1";
 const TAP_SESSION_KEY = "mydancrNfcTapSessionV1";
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 
@@ -42,7 +45,7 @@ export function NfcTapClient({ token }: { token: string }) {
   const redirectTimerRef = useRef<number | null>(null);
   const pendingIntent = useMemo(() => readPendingDealIntent(), []);
 
-  useEffect(() => setAuth(readAuthSession()), []);
+  useEffect(() => setAuth(readNfcAuthSession()), []);
 
   useEffect(() => () => {
     if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);
@@ -89,7 +92,7 @@ export function NfcTapClient({ token }: { token: string }) {
     setStatus("Verifying this tap with MyDancr…");
     setPhase("redeeming");
     try {
-      const auth = readAuthSession();
+      const auth = readNfcAuthSession();
       const headers: Record<string, string> = { "content-type": "application/json" };
       if (auth.accessToken) headers.authorization = `Bearer ${auth.accessToken}`;
       if (auth.refreshToken) headers["x-dancr-refresh-token"] = auth.refreshToken;
@@ -110,7 +113,7 @@ export function NfcTapClient({ token }: { token: string }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to complete this NFC tap.");
-      persistRefreshedSession(data.session);
+      persistRefreshedBrowserAuthSession(data.session);
       if (state.tag.type === "cashier") clearPendingDealIntent();
       let completedDancerTap = state.tag.type === "dressing_room"
         && data.affiliation?.enrollmentStatus === "completed";
@@ -256,17 +259,13 @@ export function NfcTapClient({ token }: { token: string }) {
   );
 }
 
-function readAuthSession() {
-  try {
-    const value = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return {
-      role: typeof value?.account?.role === "string" ? value.account.role : "",
-      accessToken: typeof value?.accessToken === "string" ? value.accessToken : "",
-      refreshToken: typeof value?.refreshToken === "string" ? value.refreshToken : "",
-    };
-  } catch {
-    return { role: "", accessToken: "", refreshToken: "" };
-  }
+function readNfcAuthSession() {
+  const value = readBrowserAuthSession();
+  return {
+    role: value?.account?.role || "",
+    accessToken: typeof value?.accessToken === "string" ? value.accessToken : "",
+    refreshToken: typeof value?.refreshToken === "string" ? value.refreshToken : "",
+  };
 }
 
 function readOrCreateTapSessionId() {
@@ -295,21 +294,6 @@ function readPendingDealIntent(): PendingDealIntent | null {
 
 function clearPendingDealIntent() {
   try { window.localStorage.removeItem(DEAL_INTENT_KEY); } catch { /* storage is optional */ }
-}
-
-function persistRefreshedSession(session: unknown) {
-  if (!session || typeof session !== "object") return;
-  const value = session as { accessToken?: unknown; refreshToken?: unknown; expiresAt?: unknown };
-  if (typeof value.accessToken !== "string" || !value.accessToken) return;
-  try {
-    const current = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify({
-      ...current,
-      accessToken: value.accessToken,
-      refreshToken: typeof value.refreshToken === "string" ? value.refreshToken : current?.refreshToken,
-      expiresAt: typeof value.expiresAt === "number" ? value.expiresAt : current?.expiresAt,
-    }));
-  } catch { /* a future sign-in can restore storage */ }
 }
 
 function dealTypeLabel(value: ClubDeal["offerType"]) {
