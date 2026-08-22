@@ -2,22 +2,19 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [adminService, adminClient, liveApp] = await Promise.all([
-  readFile(new URL("../src/lib/dancr/admin.ts", import.meta.url), "utf8"),
+const [adminRoute, adminClient, liveApp, signupMigration] = await Promise.all([
+  readFile(new URL("../app/api/admin/venues/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
 ]);
 
-test("admin-created venues are active immediately without a verification decision", () => {
-  assert.match(
-    adminService,
-    /if \(creating\) \{[\s\S]*?row\.is_active = true;/,
-  );
-  assert.doesNotMatch(
-    adminService,
-    /if \(creating\) \{[\s\S]*?row\.is_active = input\.isActive !== false;/,
-  );
-  assert.match(adminClient, /setStatus\("Venue created and active\."\)/);
+test("administrators cannot manually create or publish a venue", () => {
+  assert.match(adminRoute, /New venues must submit the venue request form/);
+  assert.match(adminRoute, /Only the connected venue manager can publish a completed private venue workspace/);
+  assert.match(adminClient, /New venues are created only by approving a submitted venue request/);
+  assert.doesNotMatch(adminClient, /Venue created and active/);
+  assert.match(signupMigration, /insert into public\.venues[\s\S]*?false,[\s\S]*?null/);
 });
 
 test("venue management exposes active and hidden states without a venue verification queue", () => {

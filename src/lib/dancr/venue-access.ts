@@ -78,7 +78,6 @@ export async function getVenueAccess(client: DancrClient, userId: string): Promi
     .from("venues")
     .select(VENUE_ACCESS_COLUMNS)
     .eq("owner_user_id", userId)
-    .eq("is_active", true)
     .maybeSingle();
   if (ownerError) throw ownerError;
   if (ownedVenue) return mapVenueAccess(ownedVenue, "owner");
@@ -88,7 +87,6 @@ export async function getVenueAccess(client: DancrClient, userId: string): Promi
     .select(`role, status, venues!inner(${VENUE_ACCESS_COLUMNS})`)
     .eq("user_id", userId)
     .eq("status", "active")
-    .eq("venues.is_active", true)
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();

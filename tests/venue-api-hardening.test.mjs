@@ -32,9 +32,11 @@ const expectedRoutes = [
   "deal/route.ts",
   "finance/route.ts",
   "finance/statement/route.ts",
+  "logo-image/route.ts",
   "nfc-support/route.ts",
   "nfc-tags/route.ts",
   "profile/route.ts",
+  "publication/route.ts",
   "qr-code/route.ts",
   "referral-fee/route.ts",
   "signup-requests/route.ts",
@@ -44,6 +46,7 @@ const expectedRoutes = [
 ];
 
 const retiredRoutes = new Set([
+  "claims/route.ts",
   "deal/qr/route.ts",
   "qr-code/route.ts",
 ]);
@@ -77,7 +80,12 @@ test("retired venue APIs stay inert and cannot reach authentication or database 
   for (const relativePath of retiredRoutes) {
     const source = routeSources.get(relativePath) || "";
     assert.match(source, /status: 410/, relativePath);
-    assert.match(source, /replacement: "\/api\/venue\/nfc-tags"/, relativePath);
+    if (relativePath === "claims/route.ts") {
+      assert.match(source, /Venue claiming is retired/, relativePath);
+      assert.match(source, /signupUrl: "\/\?venueSignup=1"/, relativePath);
+    } else {
+      assert.match(source, /replacement: "\/api\/venue\/nfc-tags"/, relativePath);
+    }
     assert.doesNotMatch(source, /createRequestSupabaseContext|createAdminSupabaseClient|\.from\(/, relativePath);
   }
 });

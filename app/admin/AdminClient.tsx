@@ -2022,7 +2022,6 @@ function VenueSignupRequestQueue({
   onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
   onActionConfirmed: (message: string) => void;
 }) {
-  const [venueByRequest, setVenueByRequest] = useState<Record<string, string>>({});
   const [notesByRequest, setNotesByRequest] = useState<Record<string, string>>({});
   const [statusByRequest, setStatusByRequest] = useState<Record<string, string>>({});
   const [busyRequestId, setBusyRequestId] = useState("");
@@ -2032,17 +2031,6 @@ function VenueSignupRequestQueue({
     code: string;
     emailDelivered: boolean;
   } | null>(null);
-  const availableVenues = venues.filter((venue) => venue.is_active !== false && !asText(venue.owner_user_id || venue.ownerUserId));
-
-  function suggestedVenueId(request: Record<string, unknown>) {
-    const requestedName = asText(request.venueName).toLowerCase();
-    const requestedCity = asText(request.city).toLowerCase();
-    return asText(availableVenues.find((venue) => (
-      asText(venue.name).toLowerCase() === requestedName
-      && asText(venue.city).toLowerCase() === requestedCity
-    ))?.id);
-  }
-
   async function reviewRequest(request: Record<string, unknown>, decision: "approved" | "rejected") {
     const requestId = asText(request.id);
     const token = readToken();
@@ -2057,7 +2045,6 @@ function VenueSignupRequestQueue({
     }
     if (decision === "rejected" && !window.confirm(`Reject ${asText(request.venueName) || "this venue"}'s access request?`)) return;
 
-    const existingVenueId = venueByRequest[requestId] ?? suggestedVenueId(request) ?? "";
     setBusyRequestId(requestId);
     setStatusByRequest((current) => ({
       ...current,
@@ -2071,7 +2058,6 @@ function VenueSignupRequestQueue({
         body: JSON.stringify({
           requestId,
           decision,
-          existingVenueId: existingVenueId || null,
           notes: notes || null,
         }),
       });
@@ -2157,8 +2143,6 @@ function VenueSignupRequestQueue({
       <div className="venue-request-list">
         {requests.map((request) => {
           const requestId = asText(request.id);
-          const suggestedId = suggestedVenueId(request);
-          const selectedVenueId = venueByRequest[requestId] ?? suggestedId ?? "";
           const isBusy = busyRequestId === requestId;
           return (
             <details className="venue-request-row" key={requestId}>
@@ -2179,26 +2163,10 @@ function VenueSignupRequestQueue({
                   {request.message ? <div><dt>Request note</dt><dd>{asText(request.message)}</dd></div> : null}
                   <div><dt>Submitted</dt><dd>{formatDate(request.submittedAt)}</dd></div>
                 </dl>
-                <label>
-                  Venue listing to connect
-                  <select
-                    value={selectedVenueId}
-                    onChange={(event) => setVenueByRequest((current) => ({ ...current, [requestId]: event.target.value }))}
-                    disabled={isBusy}
-                  >
-                    <option value="">Create a new venue listing</option>
-                    {availableVenues.map((venue) => (
-                      <option key={asText(venue.id)} value={asText(venue.id)}>
-                        {asText(venue.name)} — {[asText(venue.city), asText(venue.state)].filter(Boolean).join(", ")}
-                      </option>
-                    ))}
-                  </select>
-                  <small>
-                    {selectedVenueId
-                      ? "Approval connects this request to the selected existing listing."
-                      : "Approval creates a live listing from the submitted public venue details."}
-                  </small>
-                </label>
+                <div className="venue-request-private-workspace">
+                  <strong>Approval creates a private venue workspace</strong>
+                  <small>The venue manager receives a one-time signup code, completes the page and Club Deals, previews it, and publishes it when ready.</small>
+                </div>
                 <label>
                   Review notes
                   <textarea
@@ -2240,16 +2208,9 @@ function VenueManager({
   onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
   onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
 }) {
-  const [name, setName] = useState("");
-  const [city, setCity] = useState("Las Vegas");
-  const [state, setState] = useState("NV");
-  const [address, setAddress] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [status, setStatus] = useState("");
   const [statusByVenue, setStatusByVenue] = useState<Record<string, string>>({});
-  const [revealedCodes, setRevealedCodes] = useState<Record<string, string>>({});
   const [busyVenueId, setBusyVenueId] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const visibleVenues = normalizedSearch
@@ -2269,39 +2230,7 @@ function VenueManager({
     ));
   }
 
-  async function createVenue(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const token = readToken();
-    if (!token) {
-      setStatus("Admin sign in required.");
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      setStatus("");
-      const response = await fetch("/api/admin/venues", {
-        method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ name, city, state, address, timezone: "America/Los_Angeles" }),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.error || "Unable to create venue.");
-      }
-
-      onVenuesChange([data.venue, ...venues]);
-      setName("");
-      setAddress("");
-      setStatus("Venue created and active.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to create venue.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function toggleVenue(venue: Record<string, unknown>) {
+  async function hideVenue(venue: Record<string, unknown>) {
     const venueId = asText(venue.id);
     const token = readToken();
     if (!token) {
@@ -2309,14 +2238,13 @@ function VenueManager({
       return;
     }
 
-    const nextActive = venue.is_active === false;
     try {
       setBusyVenueId(venueId);
-      setVenueStatus(venueId, "Saving venue status...");
+      setVenueStatus(venueId, "Removing venue from public discovery...");
       const response = await fetch("/api/admin/venues", {
         method: "PATCH",
         headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ venueId, isActive: nextActive }),
+        body: JSON.stringify({ venueId, isActive: false }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.ok) {
@@ -2324,56 +2252,9 @@ function VenueManager({
       }
 
       onVenuesChange(venues.map((item) => (String(item.id) === venueId ? { ...item, ...data.venue } : item)));
-      setVenueStatus(venueId, nextActive ? "Venue activated. Access codes are now available." : "Venue hidden.");
+      setVenueStatus(venueId, "Venue hidden. Its connected manager can publish again after reviewing the workspace.");
     } catch (error) {
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue.");
-    } finally {
-      setBusyVenueId("");
-    }
-  }
-
-  async function issueAccessCode(venue: Record<string, unknown>, replacesActiveCode: boolean) {
-    const venueId = asText(venue.id);
-    const token = readToken();
-    if (!token) {
-      setVenueStatus(venueId, "Admin sign in required.");
-      return;
-    }
-    if (venue.is_active === false) {
-      setVenueStatus(venueId, "Activate this venue before creating an access code.");
-      return;
-    }
-    if (asText(venue.owner_user_id || venue.ownerUserId)) {
-      setVenueStatus(venueId, "This venue already has a connected manager.");
-      return;
-    }
-    if (replacesActiveCode && !window.confirm("Replace the active access code? The current code will stop working immediately.")) {
-      return;
-    }
-
-    try {
-      setBusyVenueId(venueId);
-      setVenueStatus(venueId, replacesActiveCode ? "Replacing access code..." : "Creating access code...");
-      const response = await fetch("/api/admin/venue-claim-codes", {
-        method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ action: "issue", venueId, expiresInDays: 7 }),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok || !data?.claimCode || !asText(data.code)) {
-        throw new Error(data?.error || "Unable to create venue access code.");
-      }
-
-      const nextClaimCodes = claimCodes.map((claimCode) => (
-        asText(claimCode.venueId) === venueId && asText(claimCode.status) === "active"
-          ? { ...claimCode, status: "revoked", revokedAt: new Date().toISOString() }
-          : claimCode
-      ));
-      onClaimCodesChange([data.claimCode, ...nextClaimCodes]);
-      setRevealedCodes((current) => ({ ...current, [venueId]: asText(data.code) }));
-      setVenueStatus(venueId, "Access code created. Copy it now; for security it cannot be retrieved later.");
-    } catch (error) {
-      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to create venue access code.");
     } finally {
       setBusyVenueId("");
     }
@@ -2403,11 +2284,6 @@ function VenueManager({
       onClaimCodesChange(claimCodes.map((item) => (
         asText(item.id) === asText(data.claimCode.id) ? data.claimCode : item
       )));
-      setRevealedCodes((current) => {
-        const next = { ...current };
-        delete next[venueId];
-        return next;
-      });
       setVenueStatus(venueId, "Access code revoked.");
     } catch (error) {
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to revoke venue access code.");
@@ -2416,48 +2292,9 @@ function VenueManager({
     }
   }
 
-  async function copyAccessCode(venueId: string) {
-    try {
-      await copyAdminText(revealedCodes[venueId] || "");
-      setVenueStatus(venueId, "Access code copied.");
-    } catch {
-      setVenueStatus(venueId, "Unable to copy automatically. Select and copy the code manually.");
-    }
-  }
-
   return (
     <div className="venue-manager">
-      <details className="venue-create-panel">
-        <summary>
-          <span>
-            <strong>Create a venue</strong>
-            <small>Add a new venue, then create its manager access code.</small>
-          </span>
-          <span className="venue-disclosure" aria-hidden="true">⌄</span>
-        </summary>
-        <form onSubmit={createVenue}>
-          <label>
-            Name
-            <input value={name} onChange={(event) => setName(event.target.value)} required />
-          </label>
-          <label>
-            City
-            <input value={city} onChange={(event) => setCity(event.target.value)} required />
-          </label>
-          <label>
-            State
-            <input value={state} onChange={(event) => setState(event.target.value)} />
-          </label>
-          <label>
-            Address
-            <input value={address} onChange={(event) => setAddress(event.target.value)} />
-          </label>
-          <button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving..." : "Create venue"}
-          </button>
-        </form>
-        {status ? <p role="status" aria-live="polite">{status}</p> : null}
-      </details>
+      <p className="admin-info-note">New venues are created only by approving a submitted venue request. Approval creates a private workspace and a one-time manager access code.</p>
       <label className="venue-search">
         Find venue
         <input
@@ -2478,7 +2315,6 @@ function VenueManager({
           const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
           const isActive = venue.is_active !== false;
           const isBusy = busyVenueId === venueId;
-          const revealedCode = revealedCodes[venueId];
           return (
             <details className="venue-admin-row" key={venueId}>
               <summary>
@@ -2495,9 +2331,7 @@ function VenueManager({
               </summary>
               <div className="venue-admin-actions">
                 <small>{asText(venue.address) || "No address submitted"}</small>
-                <button type="button" disabled={isBusy} onClick={() => toggleVenue(venue)}>
-                  {isActive ? "Hide venue" : "Activate venue"}
-                </button>
+                {isActive ? <button type="button" disabled={isBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace</span>}
               </div>
               <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>
                 <span className="eyebrow">Manager access</span>
@@ -2506,39 +2340,25 @@ function VenueManager({
                     <strong>Venue account connected</strong>
                     <p>A verified manager already controls this venue. Access codes are disabled.</p>
                   </div>
-                ) : !isActive ? (
-                  <div className="venue-access-state inactive">
-                    <strong>Venue is inactive</strong>
-                    <p>Activate this venue before creating a manager access code.</p>
-                  </div>
-                ) : (
+                ) : activeCode ? (
                   <>
                     <div className="venue-access-state">
-                      <strong>{activeCode ? "Active one-time access code" : "No active access code"}</strong>
+                      <strong>Active one-time access code</strong>
                       <p>
-                        {activeCode
-                          ? `Expires ${formatDate(activeCode.expiresAt)}. The code can be used once to create this venue's manager account.`
-                          : "Create a one-time code for the venue manager. It expires in 7 days and is only displayed once."}
+                        {`Created from the approved venue request and expires ${formatDate(activeCode.expiresAt)}. The code can be used once to create this venue's manager account.`}
                       </p>
                     </div>
-                    {revealedCode ? (
-                      <div className="venue-access-secret">
-                        <span>Copy now</span>
-                        <code>{revealedCode}</code>
-                        <button type="button" disabled={isBusy} onClick={() => copyAccessCode(venueId)}>Copy access code</button>
-                      </div>
-                    ) : null}
                     <div className="venue-access-actions">
-                      <button type="button" disabled={isBusy} onClick={() => issueAccessCode(venue, Boolean(activeCode))}>
-                        {isBusy ? "Saving..." : activeCode ? "Replace access code" : "Create access code"}
+                      <button className="secondary" type="button" disabled={isBusy} onClick={() => revokeAccessCode(venueId, activeCode)}>
+                        Revoke access code
                       </button>
-                      {activeCode ? (
-                        <button className="secondary" type="button" disabled={isBusy} onClick={() => revokeAccessCode(venueId, activeCode)}>
-                          Revoke access code
-                        </button>
-                      ) : null}
                     </div>
                   </>
+                ) : (
+                  <div className="venue-access-state inactive">
+                    <strong>No active access code</strong>
+                    <p>Review the original venue request. New codes are issued only through the approved request workflow.</p>
+                  </div>
                 )}
               </section>
               {statusByVenue[venueId] ? <p className="venue-status" role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
@@ -3906,6 +3726,7 @@ function AdminStyles() {
       .venue-request-issued p { color: #c4ead6; font-size: 13px; line-height: 1.45; }
       .venue-request-issued code { user-select: all; color: #fff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: clamp(18px,5vw,24px); font-weight: 900; letter-spacing: .08em; overflow-wrap: anywhere; }
       .venue-manager { display: grid; gap: 14px; }
+      .admin-info-note { margin: 0; padding: 12px 14px; border: 1px solid rgba(148,229,255,.22); border-radius: 10px; color: #d5f8ff !important; background: rgba(148,229,255,.055); line-height: 1.5; }
       .venue-manager form { display: grid; gap: 10px; padding-top: 12px; }
       .venue-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .venue-manager input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }

@@ -163,7 +163,9 @@ test("verified logo identity flows through every public venue response", () => {
   assert.match(types, /logoImageUrl\?: string \| null/);
   for (const source of [discoveryRoute, venuesRoute, publicService]) {
     assert.match(source, /verifiedVenueLogoUrl/);
-    assert.match(source, /logoImageUrl: verifiedVenueLogoUrl\(/);
+    assert.match(source, /venue-logo-images/);
+    assert.match(source, /logo_storage_path/);
+    assert.match(source, /verifiedVenueLogoUrl\(/);
   }
   assert.match(liveApp, /logoImageUrl: item\.logoImageUrl \|\| ""/);
 });

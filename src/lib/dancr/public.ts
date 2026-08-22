@@ -322,7 +322,7 @@ async function getApprovedDancerPhotos(client: DancrClient, dancerId: string) {
 export async function getVenueProfile(client: DancrClient, slug: string): Promise<VenueSummary | null> {
   const { data, error } = await client
     .from("venues")
-    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, qr_code_storage_path, qr_code_label, owner_user_id")
+    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, qr_code_storage_path, qr_code_label, owner_user_id")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -341,7 +341,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     longitude: data.longitude,
     hoursLabel: formatVenueHours(data.opens_at, data.closes_at),
     ...venueCoverImageFields(client, data.cover_image_storage_path),
-    logoImageUrl: verifiedVenueLogoUrl(data.slug),
+    logoImageUrl: responsivePublicImage(client, "venue-logo-images", data.logo_storage_path)?.imageUrl || verifiedVenueLogoUrl(data.slug),
     qrCodeUrl: venueQrCodeUrl(client, data.qr_code_storage_path),
     qrCodeLabel: data.qr_code_label || null,
   };

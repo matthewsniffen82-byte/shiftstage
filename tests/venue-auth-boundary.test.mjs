@@ -3,15 +3,16 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const venueRoutePaths = [
-  "../app/api/venue/claims/route.ts",
   "../app/api/venue/cover-image/route.ts",
   "../app/api/venue/dancer-verifications/route.ts",
   "../app/api/venue/dashboard/route.ts",
   "../app/api/venue/deal/route.ts",
   "../app/api/venue/finance/route.ts",
   "../app/api/venue/finance/statement/route.ts",
+  "../app/api/venue/logo-image/route.ts",
   "../app/api/venue/nfc-tags/route.ts",
   "../app/api/venue/profile/route.ts",
+  "../app/api/venue/publication/route.ts",
   "../app/api/venue/team/invitations/route.ts",
   "../app/api/venue/tv/videos/route.ts",
 ];

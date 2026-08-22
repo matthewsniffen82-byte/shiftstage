@@ -34,7 +34,7 @@ const [
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
-test("venue ownership claims are private, rate-limited, and reviewable only by administrators", () => {
+test("legacy venue ownership claim records remain private and read-only for administrators", () => {
   assert.match(migration, /create table if not exists public\.venue_ownership_claims/);
   assert.match(migration, /where status = 'pending'/);
   assert.match(migration, /alter table public\.venue_ownership_claims enable row level security/);
@@ -48,7 +48,8 @@ test("venue ownership claims are private, rate-limited, and reviewable only by a
   assert.match(claimService, /createSignedUrl\(row\.proof_storage_path, 15 \* 60\)/);
   assert.match(claimService, /email_confirmed_at/);
   assert.match(adminRoute, /requireAdmin\(client, user\.id\)/);
-  assert.match(adminRoute, /body\?\.status === "approved" \|\| body\?\.status === "rejected"/);
+  assert.match(adminRoute, /Venue ownership claims are retired/);
+  assert.match(adminRoute, /status: 410/);
 });
 
 test("claim approval atomically assigns the existing venue and records the decision", () => {
@@ -63,17 +64,17 @@ test("claim approval atomically assigns the existing venue and records the decis
   assert.match(claimService, /proof_storage_path: null, proof_cleared_at/);
 });
 
-test("an existing venue is connected directly instead of duplicated during venue signup", () => {
+test("approved request codes connect only their new private workspace during venue signup", () => {
   assert.match(authRoute, /resolveVenueSignupCode\(admin, input\.venueCode\)/);
   assert.match(authRoute, /redeemVenueSignupCode\(admin, \{/);
   assert.doesNotMatch(authRoute, /assertNewVenueAvailable|ensureVenueForAccount/);
   assert.doesNotMatch(venueService, /uniqueVenueSlug/);
   assert.match(claimRoute, /status: 410/);
-  assert.match(claimRoute, /redeemed directly during venue sign up/);
+  assert.match(claimRoute, /Venue claiming is retired/);
   assert.match(claimPage, /redirect\("\/\?venueSignup=1"\)/);
 });
 
-test("venue claims require a one-time venue-specific code issued by an administrator", () => {
+test("legacy claim-code storage remains auditable while manual issuance is retired", () => {
   assert.match(claimCodeMigration, /create table if not exists public\.venue_claim_codes/);
   assert.match(claimCodeMigration, /code_digest text not null unique/);
   assert.match(claimCodeMigration, /venue_claim_codes_one_unconsumed_idx/);
@@ -98,26 +99,21 @@ test("venue claims require a one-time venue-specific code issued by an administr
   assert.match(signupCodeMigration, /set used_at = now\(\), used_by = p_user_id/);
   assert.match(signupCodeMigration, /grant execute on function public\.redeem_venue_signup_code[\s\S]*to service_role/);
   assert.match(adminCodeRoute, /requireAdmin\(client, user\.id\)/);
-  assert.match(adminCodeRoute, /action === "issue" \|\| body\?\.action === "revoke"/);
+  assert.match(adminCodeRoute, /action === "issue"/);
+  assert.match(adminCodeRoute, /status: 410/);
+  assert.match(adminCodeRoute, /approved venue request receives its private workspace/);
+  assert.match(adminCodeRoute, /action === "revoke"/);
+  assert.match(adminCodeRoute, /revokeVenueClaimCode/);
 });
 
-test("venue access stays in signup and never appears as a claim action on public venue pages", () => {
+test("venue access stays in request-first signup and no claim UI remains public or in the dashboard", () => {
   assert.doesNotMatch(publicVenueSource, /isClaimable/);
   assert.doesNotMatch(liveApp, /Have a venue code|Claim this venue|venue-card-claim|venue-detail-claim/);
   assert.match(liveApp, /id="venueSignupCode"/);
   assert.match(liveApp, /It can connect only the venue assigned to that code/);
   assert.match(liveApp, /handleVenueAccessDeepLink/);
-  assert.match(liveApp, /reviewLiveAdminVenueClaim/);
-  assert.match(liveApp, /issueLiveAdminVenueClaimCode/);
-  assert.match(liveApp, /revokeLiveAdminVenueClaimCode/);
-  assert.match(liveApp, /Venue access code copied/);
-  assert.match(claimForm, /name="claimCode"/);
-  assert.match(claimForm, /autoComplete="one-time-code"/);
-  assert.match(claimForm, /name="proofFile"/);
-  assert.match(claimForm, /accept="application\/pdf,image\/jpeg,image\/png,image\/webp"/);
-  assert.match(claimForm, /className=\{styles\.attestation\}/);
-  assert.match(claimForm, /Submit updated proof/);
-  assert.match(claimForm, /Official business email/);
-  assert.match(dashboard, /function VenueClaimStatePanel/);
-  assert.match(dashboard, /Venue management will unlock here after approval/);
+  assert.doesNotMatch(liveApp, /reviewLiveAdminVenueClaim|issueLiveAdminVenueClaimCode|revokeLiveAdminVenueClaimCode/);
+  assert.doesNotMatch(dashboard, /function VenueClaimStatePanel|Venue management will unlock here after approval/);
+  assert.match(claimRoute, /Venue claiming is retired/);
+  assert.match(claimPage, /redirect\("\/\?venueSignup=1"\)/);
 });

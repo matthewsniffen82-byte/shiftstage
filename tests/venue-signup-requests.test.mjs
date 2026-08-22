@@ -4,6 +4,7 @@ import test from "node:test";
 
 const [
   migration,
+  onboardingMigration,
   requestService,
   publicRoute,
   adminRoute,
@@ -11,6 +12,7 @@ const [
   liveApp,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220001_venue_signup_requests.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-signup-requests.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/signup-requests/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/venue-signup-requests/route.ts", import.meta.url), "utf8"),
@@ -33,17 +35,19 @@ test("public venue signup requests are private, validated, deduplicated, and rat
   assert.doesNotMatch(publicRoute, /contactEmail|contactPhone/);
 });
 
-test("admin approval atomically connects or creates a venue and issues one private code", () => {
-  assert.match(migration, /create or replace function public\.review_venue_signup_request/);
-  assert.match(migration, /from public\.venue_signup_requests[\s\S]*for update/);
-  assert.match(migration, /if p_existing_venue_id is not null/);
-  assert.match(migration, /insert into public\.venues/);
-  assert.match(migration, /update public\.venue_claim_codes[\s\S]*set revoked_at/);
-  assert.match(migration, /insert into public\.venue_claim_codes/);
-  assert.match(migration, /insert into public\.admin_actions/);
-  assert.match(migration, /grant execute on function public\.review_venue_signup_request[\s\S]*to service_role/);
+test("admin approval always creates a private venue workspace and issues one request-bound code", () => {
+  assert.match(onboardingMigration, /create or replace function public\.review_venue_signup_request/);
+  assert.match(onboardingMigration, /from public\.venue_signup_requests[\s\S]*for update/);
+  assert.match(onboardingMigration, /if p_existing_venue_id is not null then[\s\S]*Existing venue claims are not supported/);
+  assert.match(onboardingMigration, /insert into public\.venues/);
+  assert.match(onboardingMigration, /is_active[\s\S]*false/);
+  assert.match(onboardingMigration, /published_at[\s\S]*null/);
+  assert.match(onboardingMigration, /insert into public\.venue_claim_codes/);
+  assert.match(onboardingMigration, /insert into public\.admin_actions/);
+  assert.match(onboardingMigration, /grant execute on function public\.review_venue_signup_request[\s\S]*to service_role/);
   assert.match(requestService, /createVenueSignupCredential\(\)/);
   assert.match(requestService, /rpc\("review_venue_signup_request"/);
+  assert.match(requestService, /p_existing_venue_id: null/);
   assert.match(requestService, /sendTransactionalEmail/);
   assert.match(requestService, /Do not forward this code/);
   assert.match(adminRoute, /requireAdmin\(client, user\.id\)/g);
@@ -67,5 +71,6 @@ test("administrators receive a review queue with explicit approval and rejection
   assert.match(adminClient, /Reject request/);
   assert.match(adminClient, /Copy private access code/);
   assert.match(adminClient, /Email delivery was unavailable/);
-  assert.match(adminClient, /existingVenueId: existingVenueId \|\| null/);
+  assert.match(adminClient, /Approval creates a private venue workspace/i);
+  assert.doesNotMatch(adminClient, /existingVenueId/);
 });

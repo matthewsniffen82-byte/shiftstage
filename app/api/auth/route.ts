@@ -4,7 +4,6 @@ import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueForAccount } from "@/src/lib/dancr/venue";
 import {
-  hasVenueOwnershipClaim,
   redeemVenueSignupCode,
   resolveVenueSignupCode,
 } from "@/src/lib/dancr/venue-claims";
@@ -202,11 +201,8 @@ async function authResponse(
     throw new Error("Account role does not match this login.");
   }
   if (account.role === "venue") {
-    const [venue, hasLegacyClaim] = await Promise.all([
-      getVenueForAccount(admin, userId),
-      hasVenueOwnershipClaim(admin, userId),
-    ]);
-    if (!venue && !hasLegacyClaim) {
+    const venue = await getVenueForAccount(admin, userId);
+    if (!venue) {
       throw new Error("No venue is connected to this account. Use your venue access code during sign up.");
     }
   }

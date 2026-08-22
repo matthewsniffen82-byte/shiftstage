@@ -47,7 +47,6 @@ export async function POST(request: Request) {
       requestId: typeof body?.requestId === "string" ? body.requestId : "",
       adminId: user.id,
       decision,
-      existingVenueId: typeof body?.existingVenueId === "string" ? body.existingVenueId : null,
       notes: typeof body?.notes === "string" ? body.notes : null,
     });
 

@@ -136,13 +136,11 @@ export async function reviewVenueSignupRequest(
     requestId: string;
     adminId: string;
     decision: "approved" | "rejected";
-    existingVenueId?: string | null;
     notes?: string | null;
   },
 ) {
   const requestId = requiredText(input.requestId, "Venue signup request is required.", 1, 80);
   const adminId = requiredText(input.adminId, "Admin account is required.", 1, 80);
-  const existingVenueId = optionalText(input.existingVenueId, 80);
   const notes = optionalText(input.notes, 2000);
 
   if (input.decision === "rejected" && !notes) {
@@ -157,7 +155,7 @@ export async function reviewVenueSignupRequest(
     p_request_id: requestId,
     p_admin_id: adminId,
     p_decision: input.decision,
-    p_existing_venue_id: existingVenueId,
+    p_existing_venue_id: null,
     p_review_notes: notes,
     p_code_digest: credential?.digest || null,
     p_code_expires_at: expiresAt,
@@ -264,24 +262,26 @@ async function deliverVenueAccessCode(input: {
   const text = [
     `Hi ${input.request.contactName},`,
     "",
-    `Your request to manage ${input.venue.name} on MyDancr was approved.`,
+    `Your request to join MyDancr as ${input.venue.name} was approved.`,
     "",
     `Private one-time access code: ${input.code}`,
     `Expires: ${expiration} Pacific Time`,
     "",
     `Open ${baseUrl}, choose Create account, then Venue, and paste this code.`,
     "Do not forward this code. It can be used once and only for the approved venue.",
+    "After sign up, complete the private venue page in your dashboard and publish it when it is ready for customers.",
     "",
     "MyDancr",
   ].join("\n");
   const html = `
     <p>Hi ${escapeHtml(input.request.contactName)},</p>
-    <p>Your request to manage <strong>${escapeHtml(input.venue.name)}</strong> on MyDancr was approved.</p>
+    <p>Your request to join MyDancr as <strong>${escapeHtml(input.venue.name)}</strong> was approved.</p>
     <p>Private one-time access code:</p>
     <p style="font-family:monospace;font-size:18px;font-weight:700;letter-spacing:.04em">${escapeHtml(input.code)}</p>
     <p>Expires ${escapeHtml(expiration)} Pacific Time.</p>
     <p><a href="${escapeHtml(baseUrl)}">Open MyDancr</a>, choose <strong>Create account</strong>, then <strong>Venue</strong>, and paste this code.</p>
     <p>Do not forward this code. It can be used once and only for the approved venue.</p>
+    <p>After sign up, complete the private venue page in your dashboard and publish it when it is ready for customers.</p>
   `;
 
   return sendTransactionalEmail({

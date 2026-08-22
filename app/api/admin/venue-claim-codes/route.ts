@@ -3,7 +3,6 @@ import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   getAdminVenueClaimCodes,
-  issueVenueClaimCode,
   revokeVenueClaimCode,
   VenueClaimUserError,
 } from "@/src/lib/dancr/venue-claims";
@@ -35,18 +34,10 @@ export async function POST(request: Request) {
     }
 
     if (action === "issue") {
-      const venueId = typeof body?.venueId === "string" ? body.venueId.trim() : "";
-      const expiresInDays = Number(body?.expiresInDays ?? 7);
-      const result = await issueVenueClaimCode(createAdminSupabaseClient(), {
-        venueId,
-        adminId: user.id,
-        expiresInDays,
-      });
       return NextResponse.json({
-        ok: true,
-        ...result,
-        message: "One-time venue signup access code created. Copy it now; it cannot be retrieved later.",
-      }, { status: 201 });
+        ok: false,
+        error: "Venue access codes are created only when an approved venue request receives its private workspace.",
+      }, { status: 410 });
     }
 
     const codeId = typeof body?.codeId === "string" ? body.codeId.trim() : "";

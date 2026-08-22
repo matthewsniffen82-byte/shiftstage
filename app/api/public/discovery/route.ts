@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       client
         .from("venues")
         .select(
-          "id, slug, name, city, state, address, phone, website, latitude, longitude, opens_at, closes_at, cover_image_storage_path, qr_code_storage_path, qr_code_label, owner_user_id",
+          "id, slug, name, city, state, address, phone, website, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, qr_code_storage_path, qr_code_label, owner_user_id",
         )
         .eq("is_active", true)
         .eq("city", city)
@@ -55,6 +55,7 @@ export async function GET(request: Request) {
         "venue-cover-images",
         venue.cover_image_storage_path,
       );
+      const logoImage = responsivePublicImage(client, "venue-logo-images", venue.logo_storage_path);
       return {
         id: venue.id,
         slug: venue.slug,
@@ -71,7 +72,7 @@ export async function GET(request: Request) {
         coverImageSrcSet: coverImage?.imageSrcSet || null,
         coverImageWidth: coverImage?.imageWidth || null,
         coverImageHeight: coverImage?.imageHeight || null,
-        logoImageUrl: verifiedVenueLogoUrl(venue.slug),
+        logoImageUrl: logoImage?.imageUrl || verifiedVenueLogoUrl(venue.slug),
         qrCodeUrl: venue.qr_code_storage_path
           ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
           : null,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { createAdminVenue, getAdminVenues, requireAdmin, updateAdminVenue } from "@/src/lib/dancr/admin";
-import { getAdminVenueClaimCodes, getAdminVenueOwnershipClaims } from "@/src/lib/dancr/venue-claims";
+import { getAdminVenues, requireAdmin, updateAdminVenue } from "@/src/lib/dancr/admin";
+import { getAdminVenueClaimCodes } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -15,13 +15,12 @@ export async function GET(request: Request) {
 
     const city = new URL(request.url).searchParams.get("city");
     const admin = createAdminSupabaseClient();
-    const [venues, claims, claimCodes] = await Promise.all([
+    const [venues, claimCodes] = await Promise.all([
       getAdminVenues(admin, city),
-      getAdminVenueOwnershipClaims(admin),
       getAdminVenueClaimCodes(admin),
     ]);
 
-    return NextResponse.json({ ok: true, venues, claims, claimCodes });
+    return NextResponse.json({ ok: true, venues, claimCodes });
   } catch (error) {
     return apiError(error, "Unable to load admin venues.");
   }
@@ -31,9 +30,10 @@ export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-
-    const venue = await createAdminVenue(createAdminSupabaseClient(), user.id, await request.json());
-    return NextResponse.json({ ok: true, venue });
+    return NextResponse.json({
+      ok: false,
+      error: "New venues must submit the venue request form. Approve the request to create its private workspace and one-time access code.",
+    }, { status: 410 });
   } catch (error) {
     return apiError(error, "Unable to create venue.");
   }
@@ -49,6 +49,12 @@ export async function PATCH(request: Request) {
 
     if (!venueId) {
       return NextResponse.json({ ok: false, error: "Missing venueId." }, { status: 400 });
+    }
+    if (body?.isActive === true) {
+      return NextResponse.json({
+        ok: false,
+        error: "Only the connected venue manager can publish a completed private venue workspace.",
+      }, { status: 400 });
     }
 
     const venue = await updateAdminVenue(createAdminSupabaseClient(), user.id, venueId, body);

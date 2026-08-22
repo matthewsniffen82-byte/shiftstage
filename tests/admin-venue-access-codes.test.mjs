@@ -8,41 +8,43 @@ const [adminClient, venueRoute, accessCodeRoute] = await Promise.all([
   readFile(new URL("../app/api/admin/venue-claim-codes/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("the routed admin dashboard loads and retains production venue access-code state", () => {
+test("the routed admin dashboard loads request-bound venue access-code state", () => {
   assert.match(adminClient, /venueClaimCodes\?: Array<Record<string, unknown>>/);
   assert.match(adminClient, /venueClaimCodes: data\.claimCodes \|\| \[\]/);
   assert.match(adminClient, /claimCodes=\{state\.venueClaimCodes \|\| \[\]\}/);
   assert.match(venueRoute, /getAdminVenueClaimCodes\(admin\)/);
-  assert.match(venueRoute, /return NextResponse\.json\(\{ ok: true, venues, claims, claimCodes \}\)/);
+  assert.match(venueRoute, /return NextResponse\.json\(\{ ok: true, venues, claimCodes \}\)/);
 });
 
-test("administrators can create, reveal once, copy, replace, and revoke a venue access code", () => {
+test("approval reveals a request-bound code once and administrators can revoke it", () => {
+  assert.match(adminClient, /Approval creates a private venue workspace/);
+  assert.match(adminClient, /Approve & send access/);
+  assert.match(adminClient, /Copy private access code/);
   assert.match(adminClient, /fetch\("\/api\/admin\/venue-claim-codes"/);
-  assert.match(adminClient, /JSON\.stringify\(\{ action: "issue", venueId, expiresInDays: 7 \}\)/);
   assert.match(adminClient, /JSON\.stringify\(\{ action: "revoke", codeId: asText\(claimCode\.id\) \}\)/);
-  assert.match(adminClient, /Copy it now; for security it cannot be retrieved later/);
-  assert.match(adminClient, /copyAdminText\(revealedCodes\[venueId\] \|\| ""\)/);
-  assert.match(adminClient, /Replace access code/);
   assert.match(adminClient, /Revoke access code/);
   assert.match(accessCodeRoute, /requireAdmin\(client, user\.id\)/);
-  assert.match(accessCodeRoute, /action === "issue" \|\| body\?\.action === "revoke"/);
+  assert.match(accessCodeRoute, /Venue access codes are created only when an approved venue request/);
+  assert.match(accessCodeRoute, /if \(action === "issue"\)/);
+  assert.doesNotMatch(adminClient, /Replace access code/);
 });
 
-test("venue access controls communicate connected, inactive, and expiring states", () => {
+test("venue access controls communicate connected, private, and expiring states", () => {
   assert.match(adminClient, /venue\.owner_user_id \|\| venue\.ownerUserId/);
   assert.match(adminClient, /Venue account connected/);
-  assert.match(adminClient, /Activate this venue before creating a manager access code/);
-  assert.match(adminClient, /Expires \$\{formatDate\(activeCode\.expiresAt\)\}/);
+  assert.match(adminClient, /Private workspace/);
+  assert.match(adminClient, /expires \$\{formatDate\(activeCode\.expiresAt\)\}/);
+  assert.match(adminClient, /New codes are issued only through the approved request workflow/);
   assert.doesNotMatch(adminClient, /venues\.slice\(0, 6\)/);
   assert.match(adminClient, /type="search"/);
   assert.match(adminClient, /No venues match this search/);
 });
 
-test("admin panels, venue creation, and individual venue controls are collapsible", () => {
+test("admin panels and individual venue controls remain collapsible without manual venue creation", () => {
   assert.match(adminClient, /<details className=\{title === "Support Inbox"/);
   assert.match(adminClient, /<summary className="admin-panel-head">/);
   assert.match(adminClient, /className="admin-panel-body"/);
-  assert.match(adminClient, /<details className="venue-create-panel">/);
   assert.match(adminClient, /<details className="venue-admin-row" key=\{venueId\}>/);
   assert.match(adminClient, /\.admin-panel\[open\] \.admin-panel-chevron/);
+  assert.doesNotMatch(adminClient, /<details className="venue-create-panel">/);
 });

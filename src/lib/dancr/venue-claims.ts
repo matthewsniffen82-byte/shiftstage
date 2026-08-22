@@ -70,9 +70,20 @@ export async function resolveVenueSignupCode(client: DancrClient, rawCode: strin
     || data.revoked_at
     || new Date(data.expires_at).getTime() <= Date.now()
     || !venue
-    || venue.is_active === false
     || venue.owner_user_id
   ) {
+    throw new VenueClaimUserError("This venue access code is invalid or no longer active.");
+  }
+
+  const { data: request, error: requestError } = await (client as any)
+    .from("venue_signup_requests")
+    .select("id")
+    .eq("status", "approved")
+    .eq("matched_venue_id", venue.id)
+    .eq("access_code_id", data.id)
+    .maybeSingle();
+  if (requestError) throw requestError;
+  if (!request) {
     throw new VenueClaimUserError("This venue access code is invalid or no longer active.");
   }
 

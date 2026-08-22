@@ -111,6 +111,13 @@ export type VenueOwnerProfile = {
   opensAt: string | null;
   closesAt: string | null;
   isActive: boolean;
+  publishedAt: string | null;
+  logoStoragePath: string | null;
+  logoImageUrl: string | null;
+  logoImageSrcSet: string | null;
+  logoImageWidth: number | null;
+  logoImageHeight: number | null;
+  logoUpdatedAt: string | null;
   coverImageStoragePath: string | null;
   coverImageUrl: string | null;
   coverImageSrcSet: string | null;

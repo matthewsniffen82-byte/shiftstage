@@ -34,7 +34,7 @@ const [
   readFile(new URL("../supabase/migrations/202608100001_venue_team_operations.sql", import.meta.url), "utf8"),
 ]);
 
-test("venue team roles are least-privilege and every lookup is scoped to one active venue", () => {
+test("venue team roles are least-privilege and private workspace access remains venue-scoped", () => {
   assert.match(access, /export type VenueTeamRole = "owner" \| "manager" \| "staff"/);
   assert.match(access, /manager: \[[\s\S]*?"manage_profile"[\s\S]*?"manage_deals"[\s\S]*?"manage_roster"/);
   const staffPermissions = access.match(/staff: \[([\s\S]*?)\],/)?.[1] || "";
@@ -42,7 +42,7 @@ test("venue team roles are least-privilege and every lookup is scoped to one act
   assert.match(staffPermissions, /"view_nfc"/);
   assert.doesNotMatch(staffPermissions, /manage_/);
   assert.match(access, /\.eq\("status", "active"\)/);
-  assert.match(access, /\.eq\("venues\.is_active", true\)/);
+  assert.doesNotMatch(access, /\.eq\("venues\.is_active", true\)/);
   assert.match(team, /account:app_users!venue_team_members_user_id_fkey/);
   assert.match(apiHelpers, /resolveApiError/);
   assert.match(apiPolicy, /Your venue team role does not allow this action[\s\S]*?status: 403/);
@@ -70,7 +70,7 @@ test("venue dashboard live operations refresh real data and expose honest workin
   assert.match(dashboard, /document\.addEventListener\("visibilitychange", refreshWhenVisible\)/);
   assert.match(dashboard, /\/api\/venue\/dashboard\?period=\$\{analyticsPeriod\}/);
   assert.match(dashboard, /\["tonight", "7d", "30d"\]/);
-  assert.match(dashboard, /hasLiveActivity \? "LIVE" : "NO LIVE ACTIVITY"/);
+  assert.match(dashboard, /isPublished \? "LIVE" : "PRIVATE DRAFT"/);
   assert.match(dashboard, /NFC verified/);
   assert.match(dashboard, /Check-in active until/);
   assert.doesNotMatch(dashboard, /Scheduled until/);

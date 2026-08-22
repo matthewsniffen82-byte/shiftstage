@@ -29,49 +29,7 @@ type DancrClient = SupabaseClient;
 
 const QR_BUCKET = "venue-qr-codes";
 const COVER_BUCKET = "venue-cover-images";
-
-export async function ensureVenueForAccount(
-  client: DancrClient,
-  input: { userId: string; name: string; city: string },
-): Promise<VenueOwnerProfile> {
-  const existing = await getVenueForAccount(client, input.userId);
-  if (existing) return existing;
-
-  const baseSlug = slugify(input.name) || `venue-${input.userId.slice(0, 8)}`;
-  await assertNewVenueAvailable(client, input.name);
-  const { data, error } = await client
-    .from("venues")
-    .insert({
-      owner_user_id: input.userId,
-      name: requiredText(input.name, "Venue name", 2, 120),
-      slug: baseSlug,
-      city: requiredText(input.city, "City", 2, 100),
-      timezone: "America/Los_Angeles",
-      is_active: true,
-    })
-    .select(VENUE_OWNER_COLUMNS)
-    .single();
-
-  if (error) throw error;
-  return toVenueOwnerProfile(client, data);
-}
-
-export async function assertNewVenueAvailable(client: DancrClient, name: string) {
-  const baseSlug = slugify(requiredText(name, "Venue name", 2, 120));
-  const { data: listedVenue, error: listedVenueError } = await client
-    .from("venues")
-    .select("id, name, owner_user_id")
-    .eq("slug", baseSlug)
-    .maybeSingle();
-  if (listedVenueError) throw listedVenueError;
-  if (listedVenue) {
-    throw new Error(
-      listedVenue.owner_user_id
-        ? `${listedVenue.name} is already managed. Contact MyDancr support if venue access needs to change.`
-        : `${listedVenue.name} is already listed. Use the private venue access code during venue sign up.`,
-    );
-  }
-}
+const LOGO_BUCKET = "venue-logo-images";
 
 export async function getVenueForAccount(client: DancrClient, userId: string): Promise<VenueOwnerProfile | null> {
   const access = await getVenueAccess(client, userId);
@@ -96,6 +54,8 @@ export async function updateVenueForAccount(
     address?: string | null;
     phone?: string | null;
     website?: string | null;
+    opensAt?: string | null;
+    closesAt?: string | null;
     qrCodeLabel?: string | null;
   },
 ): Promise<VenueOwnerProfile> {
@@ -108,6 +68,8 @@ export async function updateVenueForAccount(
   if (input.address !== undefined) update.address = optionalText(input.address, "Address", 240);
   if (input.phone !== undefined) update.phone = optionalText(input.phone, "Phone", 40);
   if (input.website !== undefined) update.website = optionalUrl(input.website);
+  if (input.opensAt !== undefined) update.opens_at = optionalTime(input.opensAt, "Opening time");
+  if (input.closesAt !== undefined) update.closes_at = optionalTime(input.closesAt, "Closing time");
   if (input.qrCodeLabel !== undefined) update.qr_code_label = optionalText(input.qrCodeLabel, "QR label", 100);
 
   if (!Object.keys(update).length) return venue;
@@ -325,6 +287,166 @@ export async function deleteVenueCoverImage(
   return toVenueOwnerProfile(client, data);
 }
 
+export async function uploadVenueLogoImage(
+  client: DancrClient,
+  userId: string,
+  file: Blob,
+): Promise<VenueOwnerProfile> {
+  const access = await requireVenueAccess(client, userId, "manage_profile");
+  const venue = await requireVenueForAccount(client, userId);
+  const image = await validateAndPrepareDancrImage(file);
+  if (image.width < 512 || image.height < 512) {
+    throw new Error("Venue logo must be at least 512 by 512 pixels.");
+  }
+  const ratio = image.width / image.height;
+  if (ratio < 0.5 || ratio > 2) {
+    throw new Error("Choose a square or moderately rectangular venue logo.");
+  }
+
+  const tempPath = `${userId}/venue-logo/${venue.id}/${Date.now()}-${image.storageFileName}`;
+  let finalPath = "";
+  let finalUploaded = false;
+  try {
+    const { error: tempUploadError } = await client.storage
+      .from(MODERATION_TEMP_BUCKET)
+      .upload(tempPath, image.buffer, {
+        contentType: image.contentType,
+        cacheControl: "300",
+        upsert: false,
+      });
+    if (tempUploadError) throw tempUploadError;
+
+    const evaluation = evaluateDancrImageModeration(
+      await moderateImageWithOpenAI(client, tempPath),
+    );
+    if (evaluation.decision !== "approved") {
+      throw new Error(
+        evaluation.decision === "rejected"
+          ? "This image does not meet the venue logo safety requirements."
+          : "This logo could not be published automatically. Choose a different image.",
+      );
+    }
+
+    const uploadedImage = await uploadResponsiveImage(
+      client,
+      LOGO_BUCKET,
+      venue.id,
+      image,
+      "31536000",
+      { archiveOriginal: true, watermark: false },
+    );
+    finalPath = uploadedImage.storagePath;
+    finalUploaded = true;
+
+    const { data, error } = await client
+      .from("venues")
+      .update({
+        logo_storage_path: finalPath,
+        logo_updated_at: new Date().toISOString(),
+      })
+      .eq("id", access.venueId)
+      .select(VENUE_OWNER_COLUMNS)
+      .single();
+    if (error) throw error;
+
+    if (venue.logoStoragePath && venue.logoStoragePath !== finalPath) {
+      await removeResponsiveImage(client, LOGO_BUCKET, venue.logoStoragePath).catch(() => null);
+      await removeArchivedOriginalMedia(client, LOGO_BUCKET, venue.logoStoragePath).catch(() => null);
+    }
+    console.info("VENUE_LOGO_PUBLISHED", { venueId: venue.id });
+    return toVenueOwnerProfile(client, data);
+  } catch (error) {
+    if (finalUploaded) {
+      await removeResponsiveImage(client, LOGO_BUCKET, finalPath).catch(() => null);
+      await removeArchivedOriginalMedia(client, LOGO_BUCKET, finalPath).catch(() => null);
+    }
+    throw error;
+  } finally {
+    await client.storage.from(MODERATION_TEMP_BUCKET).remove([tempPath]).catch(() => null);
+  }
+}
+
+export async function deleteVenueLogoImage(
+  client: DancrClient,
+  userId: string,
+): Promise<VenueOwnerProfile> {
+  const access = await requireVenueAccess(client, userId, "manage_profile");
+  const venue = await requireVenueForAccount(client, userId);
+  const { data, error } = await client
+    .from("venues")
+    .update({ logo_storage_path: null, logo_updated_at: null })
+    .eq("id", access.venueId)
+    .select(VENUE_OWNER_COLUMNS)
+    .single();
+  if (error) throw error;
+  if (venue.logoStoragePath) {
+    await removeResponsiveImage(client, LOGO_BUCKET, venue.logoStoragePath).catch(() => null);
+    await removeArchivedOriginalMedia(client, LOGO_BUCKET, venue.logoStoragePath).catch(() => null);
+  }
+  console.info("VENUE_LOGO_REMOVED", { venueId: venue.id });
+  return toVenueOwnerProfile(client, data);
+}
+
+export type VenuePublicationState = {
+  isPublished: boolean;
+  isReady: boolean;
+  completedCount: number;
+  totalCount: number;
+  requirements: Array<{ key: string; label: string; complete: boolean }>;
+};
+
+export function getVenuePublicationState(
+  profile: VenueOwnerProfile,
+  deals: ClubDeal[],
+): VenuePublicationState {
+  const requirements = [
+    { key: "details", label: "Venue name, public address, city, and state", complete: Boolean(profile.name && profile.address && profile.city && profile.state) },
+    { key: "contact", label: "Public phone number", complete: Boolean(profile.phone) },
+    { key: "hours", label: "Opening and closing hours", complete: Boolean(profile.opensAt && profile.closesAt) },
+    { key: "logo", label: "Venue logo", complete: Boolean(profile.logoImageUrl) },
+    { key: "cover", label: "Discovery cover image", complete: Boolean(profile.coverImageUrl) },
+    { key: "deal", label: "At least one active Club Deal", complete: deals.some((deal) => deal.isActive) },
+  ];
+  const completedCount = requirements.filter((requirement) => requirement.complete).length;
+  return {
+    isPublished: profile.isActive,
+    isReady: completedCount === requirements.length,
+    completedCount,
+    totalCount: requirements.length,
+    requirements,
+  };
+}
+
+export async function publishVenueForAccount(
+  client: DancrClient,
+  userId: string,
+): Promise<{ profile: VenueOwnerProfile; publication: VenuePublicationState }> {
+  const access = await requireVenueAccess(client, userId, "manage_profile");
+  const profile = await requireVenueForAccount(client, userId);
+  const dealState = await getVenueDealsForAccount(client, userId);
+  const deals = dealState?.deals || [];
+  const publication = getVenuePublicationState(profile, deals);
+  if (!publication.isReady) {
+    const missing = publication.requirements.filter((requirement) => !requirement.complete).map((requirement) => requirement.label);
+    throw new Error(`Complete venue setup before publishing: ${missing.join(", ")}.`);
+  }
+
+  const publishedAt = new Date().toISOString();
+  const { data, error } = await client
+    .from("venues")
+    .update({ is_active: true, published_at: publishedAt })
+    .eq("id", access.venueId)
+    .select(VENUE_OWNER_COLUMNS)
+    .single();
+  if (error) throw error;
+  const publishedProfile = toVenueOwnerProfile(client, data);
+  console.info("VENUE_SELF_PUBLISHED", { venueId: access.venueId, userId });
+  return {
+    profile: publishedProfile,
+    publication: getVenuePublicationState(publishedProfile, deals),
+  };
+}
+
 export async function getVenueDashboard(
   client: DancrClient,
   userId: string,
@@ -335,6 +457,7 @@ export async function getVenueDashboard(
   workingNow: VenueDashboardDancer[];
   deal: ClubDeal | null;
   deals: ClubDeal[];
+  publication: VenuePublicationState;
   dealRevenue: Awaited<ReturnType<typeof getVenueDealRevenueMetrics>> | null;
 }> {
   const access = await requireVenueAccess(client, userId, "view_dashboard");
@@ -412,6 +535,7 @@ export async function getVenueDashboard(
     workingNow,
     deal: venueDeal?.deals[0] || null,
     deals: venueDeal?.deals || [],
+    publication: getVenuePublicationState(profile, venueDeal?.deals || []),
     dealRevenue,
   };
 }
@@ -423,7 +547,7 @@ export function readVenueAnalyticsPeriod(value: string | null | undefined): Venu
 }
 
 const VENUE_OWNER_COLUMNS =
-  "id, owner_user_id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
+  "id, owner_user_id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, logo_storage_path, logo_updated_at, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
 
 async function requireVenueForAccount(client: DancrClient, userId: string) {
   const venue = await getVenueForAccount(client, userId);
@@ -437,6 +561,7 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     COVER_BUCKET,
     row.cover_image_storage_path,
   );
+  const logoImage = responsivePublicImage(client, LOGO_BUCKET, row.logo_storage_path);
   return {
     id: row.id,
     ownerUserId: row.owner_user_id,
@@ -451,6 +576,13 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     opensAt: row.opens_at || null,
     closesAt: row.closes_at || null,
     isActive: row.is_active !== false,
+    publishedAt: row.published_at || null,
+    logoStoragePath: row.logo_storage_path || null,
+    logoImageUrl: logoImage?.imageUrl || null,
+    logoImageSrcSet: logoImage?.imageSrcSet || null,
+    logoImageWidth: logoImage?.imageWidth || null,
+    logoImageHeight: logoImage?.imageHeight || null,
+    logoUpdatedAt: row.logo_updated_at || null,
     coverImageStoragePath: row.cover_image_storage_path || null,
     coverImageUrl: coverImage?.imageUrl || null,
     coverImageSrcSet: coverImage?.imageSrcSet || null,
@@ -646,10 +778,11 @@ function optionalUrl(value: string | null | undefined) {
   return url.toString();
 }
 
-function slugify(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+function optionalTime(value: string | null | undefined, label: string) {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text) return null;
+  if (!/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(text)) {
+    throw new Error(`${label} must be a valid 24-hour time.`);
+  }
+  return text.length === 5 ? `${text}:00` : text;
 }
