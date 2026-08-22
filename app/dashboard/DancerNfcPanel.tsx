@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import NfcIcon from "../components/NfcIcon";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { currentDashboardAuthHeaders } from "./dashboard-session";
 
 type VenueSummary = { id?: string; name?: string; slug?: string; city?: string; state?: string | null };
 type Affiliation = {
@@ -47,7 +46,7 @@ export default function DancerNfcPanel({
   const pendingEnrollment = enrollment?.status === "pending";
 
   async function refresh() {
-    const auth = authHeaders();
+    const auth = currentDashboardAuthHeaders("dancer");
     if (!auth) return setStatus("Sign in required.");
     setPendingId("refresh");
     setStatus("");
@@ -70,7 +69,7 @@ export default function DancerNfcPanel({
     if (!affiliation.id) return;
     const venueName = affiliation.venue?.name || "this venue";
     if (!window.confirm(`Remove NFC access for ${venueName}? You will need to tap its dressing-room sticker again before going Working Now there.`)) return;
-    const auth = authHeaders();
+    const auth = currentDashboardAuthHeaders("dancer");
     if (!auth) return setStatus("Sign in required.");
     setPendingId(affiliation.id);
     setStatus("");
@@ -137,19 +136,6 @@ export default function DancerNfcPanel({
       <style>{DANCER_NFC_STYLE}</style>
     </article>
   );
-}
-
-function authHeaders() {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    if (!session?.accessToken) return null;
-    return {
-      authorization: `Bearer ${String(session.accessToken)}`,
-      ...(session.refreshToken ? { "x-dancr-refresh-token": String(session.refreshToken) } : {}),
-    };
-  } catch {
-    return null;
-  }
 }
 
 function formatDate(value: string) {

@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
-
-const SESSION_KEY = "dancrAuthSessionV1";
+import { currentDashboardAuthHeaders } from "./dashboard-session";
 const MAX_VIDEO_DURATION_SECONDS = 30;
 
 type Workspace = {
@@ -70,8 +69,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   }, []);
 
   async function loadWorkspace() {
-    const session = readSession();
-    if (!session?.accessToken) {
+    const auth = currentDashboardAuthHeaders("dancer");
+    if (!auth) {
       setStatus("Sign in as a dancer to manage MyDancr TV.");
       setIsLoading(false);
       return;
@@ -79,7 +78,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     setIsLoading(true);
     try {
       const response = await fetch("/api/dancer/tv/videos", {
-        headers: authHeaders(session),
+        headers: auth,
         cache: "no-store",
       });
       const data = await response.json();
@@ -140,8 +139,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   }
 
   async function uploadVideoBatch(batch: QueuedVideo[]) {
-    const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in as a dancer to upload.");
+    const auth = currentDashboardAuthHeaders("dancer");
+    if (!auth) return setStatus("Sign in as a dancer to upload.");
     if (atVideoLimit) return setStatus(`You can upload up to ${maxVideos} profile videos. Remove one before adding another.`);
     if (!batch.length) return setStatus("Choose up to five MP4, WebM, or MOV videos, or record a new video first.");
     if (!consentConfirmed || !rightsConfirmed) {
@@ -163,7 +162,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           updateQueuedVideo(item.id, { stage: "uploading", progress: 30 });
           const response = await fetch("/api/dancer/tv/videos", {
             method: "POST",
-            headers: { ...authHeaders(session), "content-type": "application/json" },
+            headers: { ...auth, "content-type": "application/json" },
             body: JSON.stringify({
               mimeType: item.file.type,
               fileSize: item.file.size,
@@ -192,7 +191,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           setStatus(`Running safety review for video ${index + 1} of ${batch.length}...`);
           const submitResponse = await fetch(`/api/dancer/tv/videos/${preparedVideoId}`, {
             method: "PATCH",
-            headers: { ...authHeaders(session), "content-type": "application/json" },
+            headers: { ...auth, "content-type": "application/json" },
             body: JSON.stringify({ action: "submit" }),
           });
           const submitted = await submitResponse.json();
@@ -205,7 +204,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           if (preparedVideoId) {
             await fetch(`/api/dancer/tv/videos/${preparedVideoId}`, {
               method: "DELETE",
-              headers: authHeaders(session),
+              headers: auth,
             }).catch(() => undefined);
           }
           failedItems.push({
@@ -237,14 +236,14 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
   async function removeVideo(videoId: string) {
     if (!window.confirm("Remove this video from MyDancr TV?")) return;
-    const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
+    const auth = currentDashboardAuthHeaders("dancer");
+    if (!auth) return setStatus("Sign in required.");
     setRemovingId(videoId);
     setStatus("");
     try {
       const response = await fetch(`/api/dancer/tv/videos/${videoId}`, {
         method: "DELETE",
-        headers: authHeaders(session),
+        headers: auth,
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove video.");
@@ -442,21 +441,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   return embedded
     ? <article className="info-panel tv-studio-embedded">{content}</article>
     : <main className="tv-studio-page">{content}</main>;
-}
-
-function readSession() {
-  try {
-    return JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-  } catch {
-    return null;
-  }
-}
-
-function authHeaders(session: any) {
-  return {
-    authorization: `Bearer ${session.accessToken}`,
-    ...(session.refreshToken ? { "x-dancr-refresh-token": session.refreshToken } : {}),
-  };
 }
 
 async function readVideoMetadata(file: File) {

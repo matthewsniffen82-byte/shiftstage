@@ -8,12 +8,15 @@ import {
   readDashboardAccessToken,
 } from "../app/dashboard/dashboard-session.ts";
 
-const [dashboard, dashboardSession, venueTvPanel, venueTeamPanel, venueNfcPanel, customerRoute, dancerRoute, venueRoute, liveShell] = await Promise.all([
+const [dashboard, dashboardSession, venueTvPanel, venueTeamPanel, venueNfcPanel, dancerTvStudio, dancerNfcPanel, dancerShiftManager, customerRoute, dancerRoute, venueRoute, liveShell] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/dashboard-session.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/VenueTvPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/VenueTeamPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerShiftManager.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/customer/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/dancer/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/venue/page.tsx", import.meta.url), "utf8"),
@@ -140,5 +143,14 @@ test("venue dashboard subpanels use the shared session boundary and preserve tok
   assert.match(venueNfcPanel, /persistRefreshedDashboardSession as persistRefreshedSession/);
   for (const panel of [venueTvPanel, venueTeamPanel, venueNfcPanel]) {
     assert.doesNotMatch(panel, /const SESSION_KEY|localStorage\.getItem\(SESSION_KEY\)|function readToken\(|function authHeaders\(|function persistRefreshedSession\(/);
+  }
+});
+
+test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
+  assert.match(dancerTvStudio, /currentDashboardAuthHeaders\("dancer"\)/);
+  assert.match(dancerNfcPanel, /currentDashboardAuthHeaders\("dancer"\)/);
+  assert.match(dancerShiftManager, /readDashboardAccessToken\("dancer"\)/);
+  for (const panel of [dancerTvStudio, dancerNfcPanel, dancerShiftManager]) {
+    assert.doesNotMatch(panel, /const SESSION_KEY|dancrAuthSessionV1|localStorage\.getItem\(|function readSession\(|function readDashboardSession\(|function authHeaders\(/);
   }
 });

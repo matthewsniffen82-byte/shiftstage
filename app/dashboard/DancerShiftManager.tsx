@@ -8,6 +8,7 @@ import {
   nfcNextTapAllowedAt,
   nfcPresenceMinutesRemaining,
 } from "@/src/lib/dancr/shift-presence";
+import { readDashboardAccessToken } from "./dashboard-session";
 
 type VenueOption = { id: string; name: string; timezone?: string };
 type ShiftRow = Record<string, any>;
@@ -25,11 +26,11 @@ export default function DancerShiftManager() {
   const [editDate, setEditDate] = useState("");
 
   const load = useCallback(async () => {
-    const session = readDashboardSession();
-    if (!session?.accessToken) throw new Error("Sign in required.");
+    const token = readDashboardAccessToken("dancer");
+    if (!token) throw new Error("Sign in required.");
     const response = await fetch("/api/dancer/shifts", {
       cache: "no-store",
-      headers: { authorization: `Bearer ${session.accessToken}` },
+      headers: { authorization: `Bearer ${token}` },
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load shifts.");
@@ -93,8 +94,8 @@ export default function DancerShiftManager() {
   }
 
   async function saveRequest(url: string, method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, success: string) {
-    const session = readDashboardSession();
-    if (!session?.accessToken) {
+    const token = readDashboardAccessToken("dancer");
+    if (!token) {
       setStatus("Sign in required.");
       return;
     }
@@ -103,7 +104,7 @@ export default function DancerShiftManager() {
     try {
       const response = await fetch(url, {
         method,
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
         body: JSON.stringify(body),
       });
       const data = await response.json();
@@ -225,16 +226,6 @@ export default function DancerShiftManager() {
       </div>
     </article>
   );
-}
-
-function readDashboardSession(): { accessToken?: string } | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem("dancrAuthSessionV1") || "null");
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch {
-    return null;
-  }
 }
 
 function venueName(shift: ShiftRow) {
