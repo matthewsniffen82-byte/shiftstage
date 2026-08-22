@@ -428,6 +428,8 @@ The published policy will state effective and updated dates, material-change not
 
 This Dancer Agreement supplements the Terms for a person who creates a dancer account, submits a public professional profile, uses venue verification, posts shifts, uploads media, or receives commissions. It governs only the relationship with MyDancr. It does not create employment, partnership, agency, fiduciary duty, franchise, joint venture, or club engagement.
 
+The dancer accepts this agreement and the linked dancer policies electronically during onboarding through an affirmative clickwrap action, such as selecting an initially unchecked agreement control and pressing “Agree and continue.” No paper contract or wet signature is contemplated. Before acceptance, MyDancr should make each incorporated document available to open and download. MyDancr should preserve the dancer account, document name and version, acceptance timestamp, and appropriate technical evidence such as IP address and user agent, and should require renewed electronic acceptance when a material change legally requires it.
+
 The dancer is responsible for the dancer’s own relationship with each club, including classification, pay, tips, fees, scheduling, taxes, licensing, work cards, safety, and conduct. MyDancr does not direct the dancer’s performance work, set service prices, collect payment for dancer services, or guarantee customers, shifts, income, or admission.
 
 ## 2. Eligibility and truthful identity
@@ -961,7 +963,7 @@ Where retention of trends is useful, MyDancr should aggregate or deidentify so i
 
 - **Visitor:** Terms and Privacy notice; no account acceptance, but clear browse/use notice.
 - **Customer:** Terms + Privacy; optional notification/marketing consent; Club Deal terms at selection/redemption.
-- **Dancer:** Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Account Eligibility/Club Verification terms + Too Much Media/NATS Commission Settlement terms; renewed acceptance for material commission changes. No separate age-verification-provider acceptance is part of the current model.
+- **Dancer:** affirmative electronic clickwrap acceptance of the Terms + Privacy + Dancer Agreement + Content/Media License + Acceptable Use + Account Eligibility/Club Verification terms + Too Much Media/NATS Commission Settlement terms; no paper or wet-signature contract; renewed clickwrap acceptance for material commission changes. No separate age-verification-provider acceptance is part of the current model.
 - **Club owner/authorized signer:** Terms + Privacy + Club Agreement + each offer-specific Deal Order + weekly ACH authorization/instructions + NFC/Deal terms + data/security obligations.
 - **Club manager/staff:** Terms + Privacy + Acceptable Use + team-role acknowledgment + NFC handling; no authority to accept owner-only commercial changes unless granted.
 - **Agent:** no active role or commission acceptance in this packet; a future program requires a separate launch package.
