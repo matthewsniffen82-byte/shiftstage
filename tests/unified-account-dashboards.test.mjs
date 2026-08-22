@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   DASHBOARD_SESSION_KEY,
+  clearDashboardSession,
   currentDashboardAuthHeaders,
+  persistDashboardSession,
   persistRefreshedDashboardSession,
   readDashboardAccessToken,
 } from "../app/dashboard/dashboard-session.ts";
@@ -86,6 +88,8 @@ test("dashboard session persistence and optional panel failures have one typed b
   assert.match(dashboardSession, /from "\.\.\/\.\.\/src\/lib\/dancr\/browser-session\.ts"/);
   assert.match(dashboardSession, /return readBrowserAuthSession\(\) as StoredDashboardSession \| null/);
   assert.match(dashboardSession, /persistBrowserAuthSession\(\{ \.\.\.current, \.\.\.data\.session \}\)/);
+  assert.match(dashboardSession, /return persistBrowserAuthSession\(session\)/);
+  assert.match(dashboardSession, /return clearBrowserAuthSession\(\)/);
   assert.match(dashboardSession, /persistRefreshedBrowserAuthSession\(session\)/);
   assert.doesNotMatch(dashboardSession, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
   assert.match(dashboardSession, /function dashboardAuthHeaders\(session: StoredDashboardSession \| null\)/);
@@ -125,6 +129,14 @@ test("venue dashboard subpanels use the shared session boundary and preserve tok
     });
     assert.equal(currentDashboardAuthHeaders("dancer"), null);
 
+    assert.equal(persistDashboardSession({
+      accessToken: "replacement-venue-access",
+      refreshToken: "replacement-venue-refresh",
+      expiresAt: 23456,
+      account: { role: "venue", displayName: "Replacement Venue" },
+    }), true);
+    assert.equal(readDashboardAccessToken("venue"), "replacement-venue-access");
+
     persistRefreshedDashboardSession({
       accessToken: "rotated-venue-access",
       refreshToken: "rotated-venue-refresh",
@@ -134,8 +146,10 @@ test("venue dashboard subpanels use the shared session boundary and preserve tok
       accessToken: "rotated-venue-access",
       refreshToken: "rotated-venue-refresh",
       expiresAt: 67890,
-      account: { role: "venue", displayName: "Venue Owner" },
+      account: { role: "venue", displayName: "Replacement Venue" },
     });
+    assert.equal(clearDashboardSession(), true);
+    assert.equal(stored.has(DASHBOARD_SESSION_KEY), false);
   } finally {
     globalThis.window = previousWindow;
   }
@@ -148,6 +162,12 @@ test("venue dashboard subpanels use the shared session boundary and preserve tok
   for (const panel of [venueTvPanel, venueTeamPanel, venueNfcPanel]) {
     assert.doesNotMatch(panel, /const SESSION_KEY|localStorage\.getItem\(SESSION_KEY\)|function readToken\(|function authHeaders\(|function persistRefreshedSession\(/);
   }
+});
+
+test("the routed dashboard never mutates the browser auth session directly", () => {
+  assert.match(dashboard, /clearDashboardSession\(\)/);
+  assert.match(dashboard, /persistDashboardSession\(\{ \.\.\.data\.session, account: data\.account \}\)/);
+  assert.doesNotMatch(dashboard, /window\.localStorage\.(?:setItem|removeItem)\(SESSION_KEY/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {

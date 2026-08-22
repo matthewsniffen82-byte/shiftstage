@@ -23,8 +23,10 @@ import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
 import {
   DASHBOARD_SESSION_KEY as SESSION_KEY,
+  clearDashboardSession,
   dashboardAuthHeaders,
   dashboardLoadErrorMessage,
+  persistDashboardSession,
   persistResponseSession,
   readJson,
   readOptionalJson,
@@ -934,7 +936,7 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
 
     setIsWorking(true);
     setStatus("");
-    window.localStorage.removeItem(SESSION_KEY);
+    clearDashboardSession();
     try {
       const response = await fetch("/api/account", {
         method: "DELETE",
@@ -951,7 +953,7 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
   }
 
   function signOut() {
-    window.localStorage.removeItem(SESSION_KEY);
+    clearDashboardSession();
     window.location.href = "/";
   }
 
@@ -6837,10 +6839,9 @@ function DashboardSignInRecovery({
         throw new Error(`Use a ${role} account to open this dashboard.`);
       }
 
-      window.localStorage.setItem(
-        SESSION_KEY,
-        JSON.stringify({ ...data.session, account: data.account }),
-      );
+      if (!persistDashboardSession({ ...data.session, account: data.account })) {
+        throw new Error("Unable to save your dashboard session in this browser.");
+      }
       setStatus(`Signed in. Opening your ${role} dashboard...`);
       onSignedIn();
     } catch (error) {

@@ -42,7 +42,7 @@ test("the global deletion control requires confirmation and calls the authentica
 test("the standalone dashboard clears the session and replaces browser history after deletion", () => {
   assert.match(
     dashboardClient,
-    /async function deleteAccount\(\)[\s\S]*?window\.localStorage\.removeItem\(SESSION_KEY\);[\s\S]*?method: "DELETE"[\s\S]*?finally \{\s*window\.location\.replace\("\/"\);/,
+    /async function deleteAccount\(\)[\s\S]*?clearDashboardSession\(\);[\s\S]*?method: "DELETE"[\s\S]*?finally \{\s*window\.location\.replace\("\/"\);/,
   );
   assert.match(
     dashboardClient,

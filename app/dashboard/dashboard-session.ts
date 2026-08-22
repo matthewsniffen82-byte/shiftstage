@@ -1,5 +1,6 @@
 import {
   BROWSER_AUTH_SESSION_KEY,
+  clearBrowserAuthSession,
   persistBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
   readBrowserAuthSession,
@@ -53,6 +54,14 @@ export function persistResponseSession(data: { session?: StoredDashboardSession 
   if (!data?.session?.accessToken) return;
   const current = readSession() || {};
   persistBrowserAuthSession({ ...current, ...data.session });
+}
+
+export function persistDashboardSession(session: StoredDashboardSession) {
+  return persistBrowserAuthSession(session);
+}
+
+export function clearDashboardSession() {
+  return clearBrowserAuthSession();
 }
 
 export function dashboardAuthHeaders(session: StoredDashboardSession | null): Record<string, string> | null {
