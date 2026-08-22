@@ -23,6 +23,7 @@ type AdminState = {
   dancers?: Array<Record<string, unknown>>;
   venues?: Array<Record<string, unknown>>;
   venueClaimCodes?: Array<Record<string, unknown>>;
+  venueSignupRequests?: Array<Record<string, unknown>>;
   subscriptions?: unknown[];
   reports?: Array<Record<string, unknown>>;
   deals?: Array<Record<string, unknown>>;
@@ -208,6 +209,11 @@ export default function AdminClient() {
           }),
         },
         {
+          label: "Venue signup requests",
+          path: "/api/admin/venue-signup-requests",
+          apply: (data) => ({ venueSignupRequests: data.requests || [] }),
+        },
+        {
           label: "Subscriptions",
           path: "/api/admin/subscriptions",
           apply: (data) => ({ subscriptions: data.subscriptions || [] }),
@@ -249,6 +255,7 @@ export default function AdminClient() {
         dancers: [],
         venues: [],
         venueClaimCodes: [],
+        venueSignupRequests: [],
         subscriptions: [],
         deals: [],
         supportThreads: [],
@@ -530,6 +537,15 @@ export default function AdminClient() {
           </Panel> : null}
           {workspace === "accounts" ? <Panel title="Venues">
             <Metric label="Managed venues" value={String(state.venues?.length || 0)} />
+            <VenueSignupRequestQueue
+              requests={state.venueSignupRequests || []}
+              venues={state.venues || []}
+              onRequestsChange={(venueSignupRequests) => setState((current) => ({ ...current, venueSignupRequests }))}
+              onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
+              onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
+              claimCodes={state.venueClaimCodes || []}
+              onActionConfirmed={confirmAdminAction}
+            />
             <VenueManager
               venues={state.venues || []}
               claimCodes={state.venueClaimCodes || []}
@@ -1984,6 +2000,230 @@ function ReportManager({
         );
       })}
     </div>
+  );
+}
+
+function VenueSignupRequestQueue({
+  requests,
+  venues,
+  claimCodes,
+  onRequestsChange,
+  onVenuesChange,
+  onClaimCodesChange,
+  onActionConfirmed,
+}: {
+  requests: Array<Record<string, unknown>>;
+  venues: Array<Record<string, unknown>>;
+  claimCodes: Array<Record<string, unknown>>;
+  onRequestsChange: (requests: Array<Record<string, unknown>>) => void;
+  onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
+  onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
+  onActionConfirmed: (message: string) => void;
+}) {
+  const [venueByRequest, setVenueByRequest] = useState<Record<string, string>>({});
+  const [notesByRequest, setNotesByRequest] = useState<Record<string, string>>({});
+  const [statusByRequest, setStatusByRequest] = useState<Record<string, string>>({});
+  const [busyRequestId, setBusyRequestId] = useState("");
+  const [issuedAccess, setIssuedAccess] = useState<{
+    requestId: string;
+    venueName: string;
+    code: string;
+    emailDelivered: boolean;
+  } | null>(null);
+  const availableVenues = venues.filter((venue) => venue.is_active !== false && !asText(venue.owner_user_id || venue.ownerUserId));
+
+  function suggestedVenueId(request: Record<string, unknown>) {
+    const requestedName = asText(request.venueName).toLowerCase();
+    const requestedCity = asText(request.city).toLowerCase();
+    return asText(availableVenues.find((venue) => (
+      asText(venue.name).toLowerCase() === requestedName
+      && asText(venue.city).toLowerCase() === requestedCity
+    ))?.id);
+  }
+
+  async function reviewRequest(request: Record<string, unknown>, decision: "approved" | "rejected") {
+    const requestId = asText(request.id);
+    const token = readToken();
+    if (!token) {
+      setStatusByRequest((current) => ({ ...current, [requestId]: "Admin sign in required." }));
+      return;
+    }
+    const notes = notesByRequest[requestId]?.trim() || "";
+    if (decision === "rejected" && !notes) {
+      setStatusByRequest((current) => ({ ...current, [requestId]: "Add a reason before rejecting this request." }));
+      return;
+    }
+    if (decision === "rejected" && !window.confirm(`Reject ${asText(request.venueName) || "this venue"}'s access request?`)) return;
+
+    const existingVenueId = venueByRequest[requestId] ?? suggestedVenueId(request) ?? "";
+    setBusyRequestId(requestId);
+    setStatusByRequest((current) => ({
+      ...current,
+      [requestId]: decision === "approved" ? "Approving venue and creating private access..." : "Rejecting request...",
+    }));
+
+    try {
+      const response = await fetch("/api/admin/venue-signup-requests", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          requestId,
+          decision,
+          existingVenueId: existingVenueId || null,
+          notes: notes || null,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || "Unable to review the venue request.");
+      }
+
+      onRequestsChange(requests.filter((item) => asText(item.id) !== requestId));
+      if (decision === "approved" && data.venue?.id) {
+        const venueId = asText(data.venue.id);
+        const normalizedVenue = {
+          ...data.venue,
+          is_active: data.venue.isActive !== false,
+          owner_user_id: null,
+        };
+        onVenuesChange(
+          venues.some((venue) => asText(venue.id) === venueId)
+            ? venues.map((venue) => asText(venue.id) === venueId ? { ...venue, ...normalizedVenue } : venue)
+            : [normalizedVenue, ...venues],
+        );
+        if (data.claimCode?.id) {
+          onClaimCodesChange([
+            data.claimCode,
+            ...claimCodes.map((claimCode) => (
+              asText(claimCode.venueId) === venueId && asText(claimCode.status) === "active"
+                ? { ...claimCode, status: "revoked", revokedAt: new Date().toISOString() }
+                : claimCode
+            )),
+          ]);
+        }
+        setIssuedAccess({
+          requestId,
+          venueName: asText(data.venue.name) || asText(request.venueName),
+          code: asText(data.accessCode),
+          emailDelivered: data.emailDelivery?.delivered === true,
+        });
+      }
+      onActionConfirmed(data.message || (decision === "approved" ? "Venue request approved." : "Venue request rejected."));
+    } catch (error) {
+      setStatusByRequest((current) => ({
+        ...current,
+        [requestId]: error instanceof Error ? error.message : "Unable to review the venue request.",
+      }));
+    } finally {
+      setBusyRequestId("");
+    }
+  }
+
+  async function copyIssuedAccessCode() {
+    if (!issuedAccess?.code) return;
+    try {
+      await copyAdminText(issuedAccess.code);
+      onActionConfirmed("Private venue access code copied.");
+    } catch {
+      onActionConfirmed("Select and copy the private access code manually.");
+    }
+  }
+
+  return (
+    <section className="venue-request-queue" aria-labelledby="venue-request-queue-title">
+      <div className="venue-request-queue-head">
+        <span>
+          <strong id="venue-request-queue-title">Venue signup requests</strong>
+          <small>Verify the business before issuing manager access.</small>
+        </span>
+        <em>{requests.length} pending</em>
+      </div>
+      {issuedAccess ? (
+        <div className="venue-request-issued" role="status" aria-live="polite">
+          <span className="eyebrow">Approved — copy once</span>
+          <strong>{issuedAccess.venueName}</strong>
+          <p>
+            {issuedAccess.emailDelivered
+              ? "The private code was emailed to the business contact. Copy it only if a secure backup delivery is needed."
+              : "Email delivery was unavailable. Copy this code now and send it to the verified contact through a secure channel."}
+          </p>
+          <code>{issuedAccess.code}</code>
+          <button type="button" onClick={copyIssuedAccessCode}>Copy private access code</button>
+          <button className="secondary" type="button" onClick={() => setIssuedAccess(null)}>Done</button>
+        </div>
+      ) : null}
+      <div className="venue-request-list">
+        {requests.map((request) => {
+          const requestId = asText(request.id);
+          const suggestedId = suggestedVenueId(request);
+          const selectedVenueId = venueByRequest[requestId] ?? suggestedId ?? "";
+          const isBusy = busyRequestId === requestId;
+          return (
+            <details className="venue-request-row" key={requestId}>
+              <summary>
+                <span>
+                  <strong>{asText(request.venueName) || "Venue request"}</strong>
+                  <small>{[asText(request.city), asText(request.state)].filter(Boolean).join(", ")} · {asText(request.contactName)}</small>
+                </span>
+                <span className="venue-disclosure" aria-hidden="true">⌄</span>
+              </summary>
+              <div className="venue-request-details">
+                <dl>
+                  <div><dt>Public address</dt><dd>{[asText(request.streetAddress), asText(request.city), asText(request.state), asText(request.postalCode)].filter(Boolean).join(", ")}</dd></div>
+                  <div><dt>Contact</dt><dd>{asText(request.contactName)} · {asText(request.contactTitle)}</dd></div>
+                  <div><dt>Business email</dt><dd><a href={`mailto:${asText(request.contactEmail)}`}>{asText(request.contactEmail)}</a></dd></div>
+                  <div><dt>Business phone</dt><dd><a href={`tel:${asText(request.contactPhone)}`}>{asText(request.contactPhone)}</a></dd></div>
+                  {request.website ? <div><dt>Website</dt><dd><a href={asText(request.website)} target="_blank" rel="noopener noreferrer">Open website</a></dd></div> : null}
+                  {request.message ? <div><dt>Request note</dt><dd>{asText(request.message)}</dd></div> : null}
+                  <div><dt>Submitted</dt><dd>{formatDate(request.submittedAt)}</dd></div>
+                </dl>
+                <label>
+                  Venue listing to connect
+                  <select
+                    value={selectedVenueId}
+                    onChange={(event) => setVenueByRequest((current) => ({ ...current, [requestId]: event.target.value }))}
+                    disabled={isBusy}
+                  >
+                    <option value="">Create a new venue listing</option>
+                    {availableVenues.map((venue) => (
+                      <option key={asText(venue.id)} value={asText(venue.id)}>
+                        {asText(venue.name)} — {[asText(venue.city), asText(venue.state)].filter(Boolean).join(", ")}
+                      </option>
+                    ))}
+                  </select>
+                  <small>
+                    {selectedVenueId
+                      ? "Approval connects this request to the selected existing listing."
+                      : "Approval creates a live listing from the submitted public venue details."}
+                  </small>
+                </label>
+                <label>
+                  Review notes
+                  <textarea
+                    rows={3}
+                    maxLength={2000}
+                    value={notesByRequest[requestId] || ""}
+                    onChange={(event) => setNotesByRequest((current) => ({ ...current, [requestId]: event.target.value }))}
+                    placeholder="Required when rejecting; optional internal note when approving"
+                    disabled={isBusy}
+                  />
+                </label>
+                <div className="venue-request-actions">
+                  <button type="button" disabled={isBusy} onClick={() => reviewRequest(request, "approved")}>
+                    {isBusy ? "Working..." : "Approve & send access"}
+                  </button>
+                  <button className="secondary" type="button" disabled={isBusy} onClick={() => reviewRequest(request, "rejected")}>
+                    Reject request
+                  </button>
+                </div>
+                {statusByRequest[requestId] ? <p role="status" aria-live="polite">{statusByRequest[requestId]}</p> : null}
+              </div>
+            </details>
+          );
+        })}
+        {!requests.length ? <p className="empty">No venue signup requests are waiting for review.</p> : null}
+      </div>
+    </section>
   );
 }
 
@@ -3630,6 +3870,39 @@ function AdminStyles() {
       .submission-json { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 10px; background: rgba(255,255,255,.035); }
       .submission-json summary { cursor: pointer; color: #94e5ff; font-weight: 900; }
       .submission-json pre { max-height: 260px; overflow: auto; color: #d8cfeb; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .venue-request-queue { display: grid; gap: 12px; padding: 14px; border: 1px solid rgba(148,229,255,.18); border-radius: 11px; background: linear-gradient(145deg, rgba(148,229,255,.045), rgba(139,92,246,.035)); }
+      .venue-request-queue-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .venue-request-queue-head > span { display: grid; gap: 3px; }
+      .venue-request-queue-head strong { color: #fff; font-size: 16px; }
+      .venue-request-queue-head small { color: #a99fba; }
+      .venue-request-queue-head em { flex: 0 0 auto; padding: 6px 9px; border: 1px solid rgba(148,229,255,.24); border-radius: 999px; color: #94e5ff; background: rgba(148,229,255,.07); font-size: 11px; font-style: normal; font-weight: 950; }
+      .venue-request-list { display: grid; gap: 8px; }
+      .venue-request-row { border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: #09090e; overflow: hidden; }
+      .venue-request-row > summary { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 12px; cursor: pointer; list-style: none; }
+      .venue-request-row > summary::-webkit-details-marker { display: none; }
+      .venue-request-row > summary > span:first-child { display: grid; gap: 3px; }
+      .venue-request-row > summary strong { color: #fff; overflow-wrap: anywhere; }
+      .venue-request-row > summary small { color: #a99fba; overflow-wrap: anywhere; }
+      .venue-request-row[open] > summary .venue-disclosure { transform: rotate(180deg); }
+      .venue-request-details { display: grid; gap: 12px; padding: 0 12px 12px; border-top: 1px solid rgba(255,255,255,.07); }
+      .venue-request-details dl { display: grid; gap: 8px; margin: 12px 0 0; }
+      .venue-request-details dl > div { display: grid; grid-template-columns: 118px minmax(0,1fr); gap: 10px; }
+      .venue-request-details dt { color: #857a98; font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+      .venue-request-details dd { margin: 0; color: #d8cfeb; font-size: 13px; overflow-wrap: anywhere; }
+      .venue-request-details a { color: #94e5ff; }
+      .venue-request-details label { display: grid; gap: 7px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
+      .venue-request-details label small { color: #857a98; font-weight: 700; line-height: 1.4; }
+      .venue-request-details select, .venue-request-details textarea { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: #15151c; font: inherit; }
+      .venue-request-details textarea { min-height: 76px; resize: vertical; }
+      .venue-request-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+      .venue-request-actions button, .venue-request-issued button { min-height: 42px; padding: 0 12px; color: #090911; background: #f7f2ff; }
+      .venue-request-actions button.secondary, .venue-request-issued button.secondary { color: #f7f2ff; border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.06); }
+      .venue-request-actions button:disabled { cursor: wait; opacity: .62; }
+      .venue-request-details > p { color: #94e5ff; font-size: 13px; }
+      .venue-request-issued { display: grid; gap: 9px; padding: 13px; border: 1px solid rgba(50,255,164,.35); border-radius: 10px; background: rgba(50,255,164,.07); }
+      .venue-request-issued strong { color: #fff; }
+      .venue-request-issued p { color: #c4ead6; font-size: 13px; line-height: 1.45; }
+      .venue-request-issued code { user-select: all; color: #fff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: clamp(18px,5vw,24px); font-weight: 900; letter-spacing: .08em; overflow-wrap: anywhere; }
       .venue-manager { display: grid; gap: 14px; }
       .venue-manager form { display: grid; gap: 10px; padding-top: 12px; }
       .venue-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
@@ -3839,7 +4112,9 @@ function AdminStyles() {
         .nav-links { justify-content: flex-start; }
         .approval-summary { display: grid; grid-template-columns: 1fr; }
         .approval-actions, .report-row div, .content-review-actions, .venue-access-actions { display: grid; grid-template-columns: 1fr; }
-        .approval-row button, .report-row button, .venue-manager button, .deal-activity-row button { width: 100%; }
+        .approval-row button, .report-row button, .venue-manager button, .venue-request-actions button, .venue-request-issued button, .deal-activity-row button { width: 100%; }
+        .venue-request-details dl > div { grid-template-columns: 1fr; gap: 2px; }
+        .venue-request-actions { grid-template-columns: 1fr; }
         .deal-settlement-action { grid-template-columns: 1fr; }
         .referral-fee-form, .referral-fee-current, .referral-fee-history article { grid-template-columns: 1fr; }
         .referral-fee-form label.wide, .referral-fee-current small, .referral-fee-history p, .referral-fee-history small { grid-column: 1; }

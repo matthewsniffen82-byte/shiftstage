@@ -3892,6 +3892,175 @@
       gap: 10px;
     }
 
+    .venue-request-entry {
+      display: grid;
+      gap: 6px;
+      padding: 12px 2px 2px;
+      text-align: center;
+    }
+
+    .venue-request-entry span {
+      color: #aaa2b9;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.4;
+    }
+
+    .venue-request-entry button,
+    .venue-request-back {
+      min-height: 46px;
+      border: 1px solid rgba(139,92,246,.4);
+      border-radius: 13px;
+      color: #fff;
+      background: rgba(139,92,246,.12);
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .venue-request-form[hidden] {
+      display: none !important;
+    }
+
+    .venue-request-intro {
+      display: grid;
+      gap: 5px;
+      padding: 13px 14px;
+      border: 1px solid rgba(53,216,255,.23);
+      border-radius: 15px;
+      background: linear-gradient(135deg, rgba(8,29,37,.84), rgba(18,13,29,.84));
+    }
+
+    .venue-request-intro strong {
+      color: #fff;
+      font-size: 15px;
+    }
+
+    .venue-request-intro span {
+      color: #b7adc6;
+      font-size: 12px;
+      font-weight: 720;
+      line-height: 1.45;
+    }
+
+    .venue-request-section {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+      background: rgba(8,8,13,.72);
+    }
+
+    .venue-request-section-head {
+      display: grid;
+      gap: 3px;
+    }
+
+    .venue-request-section-head span {
+      color: #7eeaff;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .venue-request-section-head strong {
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .venue-request-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .venue-request-grid .field.wide {
+      grid-column: 1 / -1;
+    }
+
+    .venue-request-form input,
+    .venue-request-form textarea {
+      width: 100%;
+      min-height: 46px;
+      padding: 11px 12px;
+      border: 1px solid rgba(150,139,173,.24);
+      border-radius: 12px;
+      color: var(--text);
+      background: rgba(12,12,18,.88);
+      box-shadow: inset 0 0 16px rgba(0,0,0,.28);
+      font: inherit;
+      outline: 0;
+    }
+
+    .venue-request-form input:focus,
+    .venue-request-form textarea:focus {
+      border-color: rgba(53,216,255,.68);
+      box-shadow: 0 0 0 3px rgba(53,216,255,.12), inset 0 0 16px rgba(0,0,0,.28);
+    }
+
+    .venue-request-form textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .venue-request-consent {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      align-items: start;
+      gap: 9px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 13px;
+      color: #d9d1e6;
+      background: rgba(255,255,255,.035);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.45;
+    }
+
+    .venue-request-consent input {
+      width: 20px;
+      min-height: 20px;
+      margin: 1px 0 0;
+      accent-color: #8b5cf6;
+    }
+
+    .venue-request-honeypot {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+    }
+
+    .venue-request-submit.is-submitted {
+      border-color: rgba(35,222,140,.5);
+      color: #06150e;
+      background: #38e39d;
+      box-shadow: 0 0 22px rgba(56,227,157,.22);
+    }
+
+    .venue-request-privacy {
+      color: #8f859f;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    @media (max-width: 520px) {
+      .venue-request-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .venue-request-grid .field.wide {
+        grid-column: auto;
+      }
+    }
+
     @media (max-width: 380px) {
       .venue-code-input {
         font-size: 11px;
@@ -38135,7 +38304,7 @@
             </button>
             <button class="role-option account-option auth-account-choice" id="venueSignupBtn" type="button">
               <span class="auth-account-choice-number" aria-hidden="true">3</span>
-              <span><strong>Venue</strong><small>Manage an existing venue with its private access code.</small></span>
+              <span><strong>Venue</strong><small>Request manager access or connect an approved venue with its private code.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
           </div>
@@ -38201,6 +38370,10 @@
               </div>
               <div class="rule-note auth-status" id="venueCodeStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
             </section>
+            <div class="venue-request-entry" id="venueRequestEntry">
+              <span>Don’t have a private access code yet?</span>
+              <button id="venueRequestOpenBtn" type="button">Request venue access</button>
+            </div>
             <div class="venue-account-fields" id="venueAccountFields">
               <div class="venue-signup-step-head" id="venueAccountStepHeading" hidden>
                 <span>Step 2 of 2</span>
@@ -38223,6 +38396,89 @@
             <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
             <button class="auth-back-to-types" id="venueBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+          </form>
+          <form class="auth-form venue-request-form" id="venueRequestForm" data-auth-view="venue-request" novalidate hidden>
+            <div class="venue-auth-mode-copy">
+              <strong>Request a verified venue account</strong>
+              <span>Submit the public venue and authorized business-contact details. MyDancr reviews every request before issuing a private signup code.</span>
+            </div>
+            <div class="venue-request-intro">
+              <strong>This does not create an account yet.</strong>
+              <span>After approval, the business contact receives a one-time code that connects the venue’s manager account to the correct public venue.</span>
+            </div>
+            <section class="venue-request-section" aria-labelledby="venueRequestVenueHeading">
+              <div class="venue-request-section-head">
+                <span>Venue</span>
+                <strong id="venueRequestVenueHeading">Public business details</strong>
+              </div>
+              <div class="venue-request-grid">
+                <div class="field wide">
+                  <label for="venueRequestName">Venue name</label>
+                  <input id="venueRequestName" name="venueName" type="text" autocomplete="organization" minlength="2" maxlength="160" required>
+                </div>
+                <div class="field wide">
+                  <label for="venueRequestAddress">Public street address</label>
+                  <input id="venueRequestAddress" name="streetAddress" type="text" autocomplete="street-address" minlength="5" maxlength="240" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestCity">City</label>
+                  <input id="venueRequestCity" name="city" type="text" autocomplete="address-level2" minlength="2" maxlength="120" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestState">State</label>
+                  <input id="venueRequestState" name="state" type="text" autocomplete="address-level1" minlength="2" maxlength="40" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestPostalCode">ZIP code</label>
+                  <input id="venueRequestPostalCode" name="postalCode" type="text" inputmode="numeric" autocomplete="postal-code" minlength="3" maxlength="16" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestWebsite">Venue website <span aria-hidden="true">·</span> optional</label>
+                  <input id="venueRequestWebsite" name="website" type="url" inputmode="url" autocomplete="url" maxlength="320" placeholder="https://">
+                </div>
+              </div>
+            </section>
+            <section class="venue-request-section" aria-labelledby="venueRequestContactHeading">
+              <div class="venue-request-section-head">
+                <span>Authorized contact</span>
+                <strong id="venueRequestContactHeading">Who MyDancr should verify</strong>
+              </div>
+              <div class="venue-request-grid">
+                <div class="field">
+                  <label for="venueRequestContactName">Full name</label>
+                  <input id="venueRequestContactName" name="contactName" type="text" autocomplete="name" minlength="2" maxlength="160" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestContactTitle">Position at venue</label>
+                  <input id="venueRequestContactTitle" name="contactTitle" type="text" autocomplete="organization-title" minlength="2" maxlength="120" placeholder="Owner, general manager…" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestContactEmail">Business email</label>
+                  <input id="venueRequestContactEmail" name="contactEmail" type="email" autocomplete="email" maxlength="320" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestContactPhone">Business phone</label>
+                  <input id="venueRequestContactPhone" name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" minlength="7" maxlength="40" required>
+                </div>
+                <div class="field wide">
+                  <label for="venueRequestMessage">Anything the review team should know <span aria-hidden="true">·</span> optional</label>
+                  <textarea id="venueRequestMessage" name="message" maxlength="1500"></textarea>
+                </div>
+              </div>
+            </section>
+            <label class="venue-request-honeypot" aria-hidden="true">
+              Company fax
+              <input id="venueRequestCompanyFax" name="companyFax" type="text" tabindex="-1" autocomplete="off">
+            </label>
+            <label class="venue-request-consent">
+              <input id="venueRequestAuthorization" name="authorizedToRepresentVenue" type="checkbox" required>
+              <span>I confirm that I am authorized to request manager access for this venue and that the business details above are accurate.</span>
+            </label>
+            <button class="action-btn venue-request-submit" id="venueRequestSubmit" type="submit">Send venue request</button>
+            <div class="venue-request-privacy">MyDancr uses these details only to verify the business and contact you about venue access.</div>
+            <button class="venue-request-back" id="venueRequestBackBtn" type="button">← I already have an access code</button>
+            <button class="auth-back-to-types" id="venueRequestBackToTypes" type="button">← Back to account types</button>
+            <div class="rule-note auth-status" id="venueRequestStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
           <section class="recovery-popover" id="passwordRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle" hidden>
             <div class="recovery-popover-surface" id="passwordRecoverySurface">
@@ -50024,6 +50280,9 @@
       const venueAuthOverlayOpen =
         authPage.classList.contains("show") &&
         !document.getElementById("venueLoginForm").hidden;
+      const venueRequestOverlayOpen =
+        authPage.classList.contains("show") &&
+        !document.getElementById("venueRequestForm").hidden;
       const accountSurfaceOpen =
         dashboardOverlayOpen ||
         accountCreationOverlayOpen ||
@@ -50036,6 +50295,7 @@
       document.body.classList.toggle("customer-auth-overlay-open", customerAuthOverlayOpen);
       document.body.classList.toggle("dancer-auth-overlay-open", false);
       document.body.classList.toggle("venue-auth-overlay-open", venueAuthOverlayOpen);
+      if (venueRequestOverlayOpen) document.body.classList.add("venue-auth-overlay-open");
       document.body.classList.toggle("account-surface-open", accountSurfaceOpen);
       document.body.classList.toggle("profile-full-view-open", profileFullViewOpen);
       syncProfileDestinationNavigation();
@@ -50095,6 +50355,15 @@
         const signupSubmit = document.getElementById("venueJoinNowBtn");
         if (signupSubmit) signupSubmit.textContent = "Create venue account";
         setVenueAuthStatus("");
+        const requestForm = document.getElementById("venueRequestForm");
+        if (requestForm) requestForm.reset();
+        const requestSubmit = document.getElementById("venueRequestSubmit");
+        if (requestSubmit) {
+          requestSubmit.disabled = false;
+          requestSubmit.classList.remove("is-submitted");
+          requestSubmit.textContent = "Send venue request";
+        }
+        setVenueRequestStatus("");
       }
 
       document.querySelectorAll("[data-password-toggle]").forEach((button) => {
@@ -50115,6 +50384,13 @@
 
     function setVenueCodeStatus(message = "") {
       const status = document.getElementById("venueCodeStatus");
+      if (!status) return;
+      status.textContent = message;
+      status.hidden = !message;
+    }
+
+    function setVenueRequestStatus(message = "") {
+      const status = document.getElementById("venueRequestStatus");
       if (!status) return;
       status.textContent = message;
       status.hidden = !message;
@@ -50238,6 +50514,7 @@
       document.getElementById("authOverview").hidden = !isCreate;
       document.getElementById("authForm").hidden = isCreate;
       document.getElementById("venueLoginForm").hidden = true;
+      document.getElementById("venueRequestForm").hidden = true;
       if (!isCreate) {
         setCustomerAuthMode("login");
         setCustomerAuthStatus("");
@@ -50256,6 +50533,7 @@
       document.getElementById("authOverview").hidden = true;
       document.getElementById("authForm").hidden = false;
       document.getElementById("venueLoginForm").hidden = true;
+      document.getElementById("venueRequestForm").hidden = true;
       setCustomerAuthMode("signup");
       setCustomerAuthStatus("");
       syncOverlayScrollLock();
@@ -50276,8 +50554,28 @@
       document.getElementById("authOverview").hidden = true;
       document.getElementById("authForm").hidden = true;
       document.getElementById("venueLoginForm").hidden = false;
+      document.getElementById("venueRequestForm").hidden = true;
       setVenueAuthMode("signup");
       syncOverlayScrollLock();
+    }
+
+    function openVenueRequest() {
+      authEntryMode = "create";
+      closeRecoveryPopover(passwordRecoveryCard, false);
+      closeRecoveryPopover(loginRecoveryCard, false);
+      clearAuthFields("venue");
+      document.getElementById("authSignInTab").classList.remove("active");
+      document.getElementById("authCreateTab").classList.add("active");
+      document.getElementById("authSignInTab").setAttribute("aria-selected", "false");
+      document.getElementById("authCreateTab").setAttribute("aria-selected", "true");
+      document.getElementById("authPageTitle").textContent = "Request venue access";
+      document.querySelector(".auth-selected-role").hidden = true;
+      document.getElementById("authOverview").hidden = true;
+      document.getElementById("authForm").hidden = true;
+      document.getElementById("venueLoginForm").hidden = true;
+      document.getElementById("venueRequestForm").hidden = false;
+      syncOverlayScrollLock();
+      setTimeout(() => document.getElementById("venueRequestName")?.focus({ preventScroll: true }), 60);
     }
 
     function openAuthRole(role = "customer") {
@@ -58876,6 +59174,9 @@
     document.getElementById("customerBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
     document.getElementById("venueBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
     document.getElementById("venueSignupBtn").addEventListener("click", openVenueSignup);
+    document.getElementById("venueRequestOpenBtn").addEventListener("click", openVenueRequest);
+    document.getElementById("venueRequestBackBtn").addEventListener("click", openVenueSignup);
+    document.getElementById("venueRequestBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
 
     document.getElementById("customerForgotPasswordBtn").addEventListener("click", () => {
       openPasswordRecovery({
@@ -59134,6 +59435,63 @@
     document.getElementById("venueLoginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       await submitVenueSignup(document.getElementById("venueJoinNowBtn"));
+    });
+
+    document.getElementById("venueRequestForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!form.reportValidity()) return;
+
+      const submit = document.getElementById("venueRequestSubmit");
+      const defaultLabel = "Send venue request";
+      submit.disabled = true;
+      submit.classList.remove("is-submitted");
+      submit.setAttribute("aria-busy", "true");
+      submit.textContent = "Sending request…";
+      setVenueRequestStatus("");
+
+      try {
+        const response = await fetch("/api/venue/signup-requests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            venueName: document.getElementById("venueRequestName").value.trim(),
+            streetAddress: document.getElementById("venueRequestAddress").value.trim(),
+            city: document.getElementById("venueRequestCity").value.trim(),
+            state: document.getElementById("venueRequestState").value.trim(),
+            postalCode: document.getElementById("venueRequestPostalCode").value.trim(),
+            website: document.getElementById("venueRequestWebsite").value.trim(),
+            contactName: document.getElementById("venueRequestContactName").value.trim(),
+            contactTitle: document.getElementById("venueRequestContactTitle").value.trim(),
+            contactEmail: document.getElementById("venueRequestContactEmail").value.trim(),
+            contactPhone: document.getElementById("venueRequestContactPhone").value.trim(),
+            message: document.getElementById("venueRequestMessage").value.trim(),
+            companyFax: document.getElementById("venueRequestCompanyFax").value,
+            authorizedToRepresentVenue: document.getElementById("venueRequestAuthorization").checked
+          })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || payload?.message || "Unable to submit the venue request.");
+        }
+
+        form.reset();
+        submit.classList.add("is-submitted");
+        submit.textContent = "✓ Request received";
+        setVenueRequestStatus(
+          `${payload?.message || "Request received. MyDancr will review the venue."} After approval, use the private code from the email to create the venue account.`
+        );
+        showToast("Venue request received");
+      } catch (error) {
+        submit.disabled = false;
+        submit.textContent = defaultLabel;
+        const message = error?.message || "Unable to submit the venue request.";
+        setVenueRequestStatus(message);
+        showToast(message);
+      } finally {
+        submit.removeAttribute("aria-busy");
+      }
     });
 
     document.getElementById("openDancerSignup").addEventListener("click", () => {
@@ -61013,7 +61371,8 @@
       const url = new URL(window.location.href);
       const legacySignup = url.searchParams.get("venueSignup") === "1";
       const venueAccessRequested = url.searchParams.get("venueAccess") === "1";
-      if (!legacySignup && !venueAccessRequested) return false;
+      const venueRequestRequested = url.searchParams.get("venueRequest") === "1";
+      if (!legacySignup && !venueAccessRequested && !venueRequestRequested) return false;
 
       const mode = legacySignup || url.searchParams.get("venueMode") === "signup" ? "signup" : "login";
       const requestedReturnTo = String(url.searchParams.get("return_to") || "");
@@ -61022,12 +61381,17 @@
         : "";
       url.searchParams.delete("venueSignup");
       url.searchParams.delete("venueAccess");
+      url.searchParams.delete("venueRequest");
       url.searchParams.delete("venueMode");
       url.searchParams.delete("return_to");
       window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
 
       pendingVenueAuthReturnTo = safeReturnTo;
-      if (mode === "signup") {
+      if (venueRequestRequested) {
+        openAuthPage();
+        openVenueRequest();
+        showToast("Submit the venue and authorized business-contact details for review.");
+      } else if (mode === "signup") {
         openAuthPage();
         openVenueSignup();
         showToast("Enter the private access code from MyDancr to create your venue account.");

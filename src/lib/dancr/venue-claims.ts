@@ -137,12 +137,12 @@ export async function issueVenueClaimCode(
     throw new VenueClaimUserError("Venue access codes must expire in 1 to 30 days.");
   }
 
-  const code = createVenueClaimCodeValue();
+  const { code, digest } = createVenueSignupCredential();
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await (client as any).rpc("issue_venue_claim_code", {
     p_venue_id: venueId,
     p_admin_id: input.adminId,
-    p_code_digest: hashVenueClaimCode(code),
+    p_code_digest: digest,
     p_expires_at: expiresAt,
   });
   if (error) {
@@ -434,6 +434,11 @@ export function hashVenueClaimRequestIp(requestIp: string) {
     || process.env.SUPABASE_SERVICE_ROLE_KEY
     || "dancr-venue-claim-rate-limit";
   return createHmac("sha256", secret).update(requestIp || "unknown").digest("hex");
+}
+
+export function createVenueSignupCredential() {
+  const code = createVenueClaimCodeValue();
+  return { code, digest: hashVenueClaimCode(code) };
 }
 
 export async function validateVenueClaimProof(file: File) {

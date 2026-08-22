@@ -37,6 +37,7 @@ const expectedRoutes = [
   "profile/route.ts",
   "qr-code/route.ts",
   "referral-fee/route.ts",
+  "signup-requests/route.ts",
   "team/invitations/route.ts",
   "team/route.ts",
   "tv/videos/route.ts",
@@ -48,6 +49,7 @@ const retiredRoutes = new Set([
 ]);
 const reviewedPublicRoutes = new Set([
   "access-code/preview/route.ts",
+  "signup-requests/route.ts",
   "team/invitations/route.ts",
 ]);
 
@@ -89,6 +91,14 @@ test("the public venue entry points remain narrowly scoped and abuse resistant",
   assert.match(preview, /slug: access\.venue\.slug/);
   assert.doesNotMatch(preview, /token: access\.|code: access\./);
   assert.match(preview, /apiError\(/);
+
+  const signupRequests = routeSources.get("signup-requests/route.ts") || "";
+  assert.match(signupRequests, /body\?\.companyFax/);
+  assert.match(signupRequests, /createVenueSignupRequest\(/);
+  assert.match(signupRequests, /requestIp\(request\)/);
+  assert.match(signupRequests, /status: 201/);
+  assert.match(signupRequests, /apiError\(/);
+  assert.doesNotMatch(signupRequests, /contact_email|request_ip_hash|accessCode/);
 
   const invitations = routeSources.get("team/invitations/route.ts") || "";
   assert.match(invitations, /resolveVenueTeamInvitation/);
