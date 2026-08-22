@@ -104,16 +104,34 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /input\[type="file"\] \{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%;/);
 });
 
-test("step one guides dancers through required work before optional profile enhancements", () => {
-  assert.match(dashboard, /Required for approval/);
+test("step one is a live customer-profile builder backed by the real editors", () => {
+  assert.match(dashboard, /Live profile builder/);
   assert.match(dashboard, /Finish your public profile/);
+  assert.match(dashboard, /This is the same structure customers will see/);
+  assert.match(dashboard, /aria-label="Edit profile avatar"/);
+  assert.match(dashboard, /aria-label="Edit stage name and city"/);
+  assert.match(dashboard, /dancer-profile-builder-feature/);
+  assert.match(dashboard, /Array\.from\(\{ length: MAX_DANCER_PROFILE_PHOTOS \}/);
+  assert.match(dashboard, /Array\.from\(\{ length: 5 \}, \(_, index\) => videos\[index\]/);
+  assert.match(dashboard, /openEditorSection\(builderMediaMode\)/);
+  assert.match(dashboard, /openEditorSection\("socials"\)/);
   assert.match(dashboard, /Stage name & city/);
-  assert.match(dashboard, /\{completeCount\} of 3 complete/);
-  assert.match(dashboard, /Social links & videos/);
-  assert.match(dashboard, /Optional — add now or any time after approval/);
+  assert.match(dashboard, /\{completeCount\} of 3 required/);
+  assert.match(dashboard, /label: "Social links"/);
+  assert.match(dashboard, /label: "Profile videos"/);
+  assert.match(dashboard, /socialContent=\{socialContent\}/);
+  assert.match(dashboard, /videoContent=\{videoContent\}/);
+  assert.match(dashboard, /videos=\{profileVideos\}/);
   assert.match(dashboard, /Continue to preview/);
   assert.match(dashboard, /disabled=\{!profileReady\}/);
   assert.match(dashboard, /continueToPreview: \(\) => openStep\("dancer-onboarding-preview"\)/);
+});
+
+test("profile video uploads immediately update the live onboarding preview", () => {
+  assert.match(dancerStudio, /onVideosChange\?: \(videos: DancerTvStudioVideoSummary\[\]\) => void/);
+  assert.match(dancerStudio, /onVideosChange\?\.\(workspace\.videos\)/);
+  assert.match(dashboard, /const \[profileVideos, setProfileVideos\] = useState<DancerTvStudioVideoSummary\[\]>\(\[\]\)/);
+  assert.match(dashboard, /<DancerTvStudio embedded onVideosChange=\{handleProfileVideosChange\} \/>/);
 });
 
 test("step one required items are accessible accordions that advance to the next unfinished item", () => {
