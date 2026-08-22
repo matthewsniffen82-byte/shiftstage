@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboard, customerRoute, dancerRoute, venueRoute, liveShell] = await Promise.all([
+const [dashboard, dashboardSession, customerRoute, dancerRoute, venueRoute, liveShell] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/dashboard-session.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/customer/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/dancer/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/venue/page.tsx", import.meta.url), "utf8"),
@@ -55,8 +56,9 @@ test("normal account navigation cannot reopen a legacy dashboard variant", () =>
 });
 
 test("fresh confirmation sessions load the dashboard account and panels in parallel", () => {
-  assert.match(dashboard, /function storedSessionIsFresh\(session: StoredSession \| null\)/);
-  assert.match(dashboard, /expiresAt > Math\.floor\(Date\.now\(\) \/ 1000\) \+ 120/);
+  assert.match(dashboard, /from "\.\/dashboard-session"/);
+  assert.match(dashboardSession, /function storedSessionIsFresh\(session: StoredDashboardSession \| null\)/);
+  assert.match(dashboardSession, /expiresAt > Math\.floor\(Date\.now\(\) \/ 1000\) \+ 120/);
   assert.match(
     dashboard,
     /if \(storedSessionIsFresh\(session\)\) \{[\s\S]*?\[account, panels\] = await Promise\.all\(\[[\s\S]*?readJson\("\/api\/account", initialAuthHeaders\)[\s\S]*?loadDashboardPanels\(initialAuthHeaders\)/,
@@ -65,4 +67,14 @@ test("fresh confirmation sessions load the dashboard account and panels in paral
     dashboard,
     /else \{[\s\S]*?account = await readJson\("\/api\/account", initialAuthHeaders\)[\s\S]*?const refreshedHeaders = dashboardAuthHeaders\(readSession\(\)\)[\s\S]*?panels = await loadDashboardPanels\(refreshedHeaders\)/,
   );
+});
+
+test("dashboard session persistence and optional panel failures have one typed boundary", () => {
+  assert.match(dashboardSession, /export const DASHBOARD_SESSION_KEY = "dancrAuthSessionV1"/);
+  assert.match(dashboardSession, /typeof window === "undefined"/);
+  assert.match(dashboardSession, /function dashboardAuthHeaders\(session: StoredDashboardSession \| null\)/);
+  assert.match(dashboardSession, /function persistResponseSession/);
+  assert.match(dashboardSession, /export async function readOptionalJson/);
+  assert.match(dashboardSession, /console\.warn\("Dashboard panel did not load"/);
+  assert.doesNotMatch(dashboard, /function readSession\(|function dashboardAuthHeaders\(|async function readOptionalJson/);
 });

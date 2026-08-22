@@ -21,6 +21,18 @@ import DancerShiftManager from "./DancerShiftManager";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
+import {
+  DASHBOARD_SESSION_KEY as SESSION_KEY,
+  dashboardAuthHeaders,
+  dashboardLoadErrorMessage,
+  persistResponseSession,
+  readJson,
+  readOptionalJson,
+  readSession,
+  storedSessionAccount,
+  storedSessionIsFresh,
+  type DashboardSessionAccount,
+} from "./dashboard-session";
 
 type DashboardRole = "customer" | "dancer" | "venue";
 type CustomerDashboardSection = "offers" | "saved";
@@ -99,7 +111,7 @@ type CustomerSavedState = {
 };
 
 type LoadState = {
-  account?: { displayName?: string | null; email?: string | null; role?: string; accountState?: string } | null;
+  account?: DashboardSessionAccount | null;
   profile?: Record<string, unknown> | null;
   claim?: Record<string, unknown> | null;
   saved?: CustomerSavedState | null;
@@ -121,8 +133,6 @@ type LoadState = {
   refreshedAt?: string | null;
   error?: string;
 };
-
-const SESSION_KEY = "dancrAuthSessionV1";
 
 export default function DashboardClient({
   role,
@@ -6687,84 +6697,6 @@ function DashboardSignInRecovery({
       {status ? <p className="venue-sign-in-status" role="status">{status}</p> : null}
     </form>
   );
-}
-
-type StoredSession = {
-  accessToken?: string;
-  refreshToken?: string;
-  expiresAt?: number;
-  account?: LoadState["account"];
-  [key: string]: unknown;
-};
-
-function readSession(): StoredSession | null {
-  try {
-    return JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-  } catch {
-    return null;
-  }
-}
-
-function storedSessionAccount(session: StoredSession | null): NonNullable<LoadState["account"]> | null {
-  const account = session?.account;
-  if (!account || typeof account !== "object") return null;
-
-  const displayName = typeof account.displayName === "string" ? account.displayName.trim() : "";
-  const email = typeof account.email === "string" ? account.email : null;
-  const role = typeof account.role === "string" ? account.role : undefined;
-  const accountState = typeof account.accountState === "string" ? account.accountState : undefined;
-  if (!displayName && !email && !role && !accountState) return null;
-
-  return {
-    displayName: displayName || null,
-    email,
-    role,
-    accountState,
-  };
-}
-
-function storedSessionIsFresh(session: StoredSession | null) {
-  const expiresAt = Number(session?.expiresAt);
-  return Number.isFinite(expiresAt) && expiresAt > Math.floor(Date.now() / 1000) + 120;
-}
-
-function persistResponseSession(data: { session?: StoredSession } | null | undefined) {
-  if (!data?.session?.accessToken) return;
-  const current = readSession() || {};
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify({ ...current, ...data.session }));
-}
-
-function dashboardAuthHeaders(session: StoredSession | null): Record<string, string> | null {
-  if (!session?.accessToken) return null;
-  return {
-    authorization: `Bearer ${session.accessToken}`,
-    ...(session.refreshToken ? { "x-dancr-refresh-token": String(session.refreshToken) } : {}),
-  };
-}
-
-function dashboardLoadErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unable to load dashboard.";
-  if (/sign in required/i.test(message)) {
-    return "Your sign-in expired. Sign in again to continue.";
-  }
-  return message;
-}
-
-async function readJson(path: string, headers: Record<string, string>) {
-  const response = await fetch(path, { headers, cache: "no-store" });
-  const data = await response.json();
-  if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dashboard.");
-  persistResponseSession(data);
-  return data;
-}
-
-async function readOptionalJson<T>(path: string, headers: Record<string, string>, fallback: T): Promise<T | any> {
-  try {
-    return await readJson(path, headers);
-  } catch (error) {
-    console.warn("Dashboard panel did not load", { path, message: error instanceof Error ? error.message : "Request failed" });
-    return fallback;
-  }
 }
 
 function checkInErrorMessage(data: any) {

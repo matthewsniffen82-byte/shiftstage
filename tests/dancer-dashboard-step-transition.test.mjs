@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboardClient, nfcPanel, profileRoute, profileLiveNotification] = await Promise.all([
+const [dashboardClient, dashboardSession, nfcPanel, profileRoute, profileLiveNotification] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/dashboard-session.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608140002_dancer_profile_live_notification.sql", import.meta.url), "utf8"),
@@ -29,7 +30,7 @@ test("NFC status refresh propagates profile authorization to the dashboard", () 
   assert.match(nfcPanel, /await onAuthorizationChange\?\.\(\)/);
   assert.match(dashboardClient, /onAuthorizationChange=\{refreshDancerProfile\}/);
   assert.match(dashboardClient, /fetch\("\/api\/dancer\/profile", \{[\s\S]*?cache: "no-store"/);
-  assert.match(dashboardClient, /fetch\(path, \{ headers, cache: "no-store" \}\)/);
+  assert.match(dashboardSession, /fetch\(path, \{ headers, cache: "no-store" \}\)/);
 });
 
 test("dashboard activation finalizes before the post-tap profile snapshot loads", () => {
