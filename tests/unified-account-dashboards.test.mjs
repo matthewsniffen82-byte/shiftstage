@@ -82,8 +82,12 @@ test("fresh confirmation sessions load the dashboard account and panels in paral
 });
 
 test("dashboard session persistence and optional panel failures have one typed boundary", () => {
-  assert.match(dashboardSession, /export const DASHBOARD_SESSION_KEY = "dancrAuthSessionV1"/);
-  assert.match(dashboardSession, /typeof window === "undefined"/);
+  assert.match(dashboardSession, /export const DASHBOARD_SESSION_KEY = BROWSER_AUTH_SESSION_KEY/);
+  assert.match(dashboardSession, /from "\.\.\/\.\.\/src\/lib\/dancr\/browser-session\.ts"/);
+  assert.match(dashboardSession, /return readBrowserAuthSession\(\) as StoredDashboardSession \| null/);
+  assert.match(dashboardSession, /persistBrowserAuthSession\(\{ \.\.\.current, \.\.\.data\.session \}\)/);
+  assert.match(dashboardSession, /persistRefreshedBrowserAuthSession\(session\)/);
+  assert.doesNotMatch(dashboardSession, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
   assert.match(dashboardSession, /function dashboardAuthHeaders\(session: StoredDashboardSession \| null\)/);
   assert.match(dashboardSession, /function persistResponseSession/);
   assert.match(dashboardSession, /export async function readOptionalJson/);

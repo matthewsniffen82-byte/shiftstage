@@ -1,5 +1,6 @@
 import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { BROWSER_AUTH_SESSION_KEY } from "@/src/lib/dancr/browser-session";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -116,6 +117,7 @@ function callbackHtml(
   const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
   const redirectJson = JSON.stringify(redirectPath);
   const dancerConfirmationJson = JSON.stringify(showDancerConfirmation);
+  const sessionKeyJson = JSON.stringify(BROWSER_AUTH_SESSION_KEY);
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -159,6 +161,7 @@ function callbackHtml(
     </main>
     <script>
       const serverSession = ${sessionJson};
+      const sessionStorageKey = ${sessionKeyJson};
       const redirectTo = ${redirectJson};
       const showDancerConfirmation = ${dancerConfirmationJson};
       const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
@@ -208,7 +211,7 @@ function callbackHtml(
       const session = serverSession && serverSession.accessToken ? serverSession : fragmentSession;
       if (session && session.accessToken) {
         try {
-          localStorage.setItem("dancrAuthSessionV1", JSON.stringify(session));
+          localStorage.setItem(sessionStorageKey, JSON.stringify(session));
         } catch (error) {}
       }
       const fragment = fragmentAccessToken ? window.location.hash : "";

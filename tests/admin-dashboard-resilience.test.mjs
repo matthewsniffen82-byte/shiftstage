@@ -39,13 +39,16 @@ test("admin authentication is separate from optional dashboard section failures"
 
 test("stored sessions must belong to an admin before admin APIs receive their token", () => {
   assert.match(adminSource, /readAdminAccessToken as readToken/);
-  assert.match(adminSession, /session\.account\?\.role !== "admin"/);
-  assert.match(adminSession, /window\.localStorage\.removeItem\(ADMIN_SESSION_KEY\)/);
+  assert.match(adminSession, /session\?\.account\?\.role !== "admin"/);
+  assert.match(adminSession, /clearBrowserAuthSession\(\)/);
 });
 
 test("admin session persistence and authenticated JSON errors have one typed boundary", () => {
-  assert.match(adminSession, /export const ADMIN_SESSION_KEY = "dancrAuthSessionV1"/);
-  assert.match(adminSession, /typeof window === "undefined"/);
+  assert.match(adminSession, /export const ADMIN_SESSION_KEY = BROWSER_AUTH_SESSION_KEY/);
+  assert.match(adminSession, /from "\.\.\/\.\.\/src\/lib\/dancr\/browser-session\.ts"/);
+  assert.match(adminSession, /persistBrowserAuthSession\(\{/);
+  assert.match(adminSession, /persistRefreshedBrowserAuthSession\(session\)/);
+  assert.doesNotMatch(adminSession, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
   assert.match(adminSession, /export function persistAdminSession/);
   assert.match(adminSession, /export async function readAdminJson/);
   assert.match(adminSession, /throw new AdminDataRequestError/);

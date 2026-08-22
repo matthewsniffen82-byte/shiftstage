@@ -1,3 +1,10 @@
+import {
+  BROWSER_AUTH_SESSION_KEY,
+  persistBrowserAuthSession,
+  persistRefreshedBrowserAuthSession,
+  readBrowserAuthSession,
+} from "../../src/lib/dancr/browser-session.ts";
+
 export type DashboardSessionAccount = {
   displayName?: string | null;
   email?: string | null;
@@ -13,16 +20,10 @@ export type StoredDashboardSession = {
   [key: string]: unknown;
 };
 
-export const DASHBOARD_SESSION_KEY = "dancrAuthSessionV1";
+export const DASHBOARD_SESSION_KEY = BROWSER_AUTH_SESSION_KEY;
 
 export function readSession(): StoredDashboardSession | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(DASHBOARD_SESSION_KEY) || "null");
-    return parsed && typeof parsed === "object" ? parsed as StoredDashboardSession : null;
-  } catch {
-    return null;
-  }
+  return readBrowserAuthSession() as StoredDashboardSession | null;
 }
 
 export function storedSessionAccount(session: StoredDashboardSession | null): DashboardSessionAccount | null {
@@ -49,9 +50,9 @@ export function storedSessionIsFresh(session: StoredDashboardSession | null) {
 }
 
 export function persistResponseSession(data: { session?: StoredDashboardSession } | null | undefined) {
-  if (typeof window === "undefined" || !data?.session?.accessToken) return;
+  if (!data?.session?.accessToken) return;
   const current = readSession() || {};
-  window.localStorage.setItem(DASHBOARD_SESSION_KEY, JSON.stringify({ ...current, ...data.session }));
+  persistBrowserAuthSession({ ...current, ...data.session });
 }
 
 export function dashboardAuthHeaders(session: StoredDashboardSession | null): Record<string, string> | null {
@@ -75,19 +76,7 @@ export function currentDashboardAuthHeaders(expectedRole?: string): Record<strin
 }
 
 export function persistRefreshedDashboardSession(session: unknown) {
-  if (typeof window === "undefined" || !session || typeof session !== "object") return;
-  try {
-    const current = readSession() || {};
-    const next = session as StoredDashboardSession;
-    window.localStorage.setItem(DASHBOARD_SESSION_KEY, JSON.stringify({
-      ...current,
-      accessToken: typeof next.accessToken === "string" ? next.accessToken : current.accessToken,
-      refreshToken: typeof next.refreshToken === "string" ? next.refreshToken : current.refreshToken,
-      expiresAt: typeof next.expiresAt === "number" ? next.expiresAt : current.expiresAt,
-    }));
-  } catch {
-    // The completed request remains valid if browser storage is unavailable.
-  }
+  persistRefreshedBrowserAuthSession(session);
 }
 
 export function dashboardLoadErrorMessage(error: unknown) {

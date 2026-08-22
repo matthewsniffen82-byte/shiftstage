@@ -48,6 +48,6 @@ test("both admin dashboards provide a real session logout", () => {
 
   assert.match(adminClient, /className="admin-logout"[^>]*onClick=\{signOut\}/);
   assert.match(adminClient, /function signOut\(\) \{[\s\S]*?clearAdminSession\(\)/);
-  assert.match(adminSession, /window\.localStorage\.removeItem\(ADMIN_SESSION_KEY\)/);
+  assert.match(adminSession, /clearBrowserAuthSession\(\)/);
   assert.match(adminClient, /setState\(\{ authRequired: true, error: "Admin session ended\. Sign in to continue\." \}\)/);
 });

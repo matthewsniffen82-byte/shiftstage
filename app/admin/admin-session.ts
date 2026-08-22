@@ -1,3 +1,11 @@
+import {
+  BROWSER_AUTH_SESSION_KEY,
+  clearBrowserAuthSession,
+  persistBrowserAuthSession,
+  persistRefreshedBrowserAuthSession,
+  readBrowserAuthSession,
+} from "../../src/lib/dancr/browser-session.ts";
+
 export type AdminSessionAccount = {
   role?: string;
   [key: string]: unknown;
@@ -11,35 +19,25 @@ export type StoredAdminSession = {
   [key: string]: unknown;
 };
 
-export const ADMIN_SESSION_KEY = "dancrAuthSessionV1";
+export const ADMIN_SESSION_KEY = BROWSER_AUTH_SESSION_KEY;
 
 export function persistAdminSession(session: StoredAdminSession, account: AdminSessionAccount | null | undefined) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    ADMIN_SESSION_KEY,
-    JSON.stringify({
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
-      expiresAt: session.expiresAt,
-      account,
-    }),
-  );
+  persistBrowserAuthSession({
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+    expiresAt: session.expiresAt,
+    account,
+  });
 }
 
 export function clearAdminSession() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(ADMIN_SESSION_KEY);
+  clearBrowserAuthSession();
 }
 
 export function readAdminSession(): StoredAdminSession | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const session = JSON.parse(window.localStorage.getItem(ADMIN_SESSION_KEY) || "null");
-    if (!session || typeof session !== "object" || session.account?.role !== "admin") return null;
-    return session as StoredAdminSession;
-  } catch {
-    return null;
-  }
+  const session = readBrowserAuthSession();
+  if (session?.account?.role !== "admin") return null;
+  return session as StoredAdminSession;
 }
 
 export function readAdminAccessToken() {
@@ -57,20 +55,8 @@ export function adminAuthHeaders(): Record<string, string> | null {
 }
 
 export function persistRefreshedAdminSession(session: unknown) {
-  if (typeof window === "undefined" || !session || typeof session !== "object") return;
-  try {
-    const current = readAdminSession();
-    if (!current) return;
-    const next = session as StoredAdminSession;
-    window.localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({
-      ...current,
-      accessToken: typeof next.accessToken === "string" ? next.accessToken : current.accessToken,
-      refreshToken: typeof next.refreshToken === "string" ? next.refreshToken : current.refreshToken,
-      expiresAt: typeof next.expiresAt === "number" ? next.expiresAt : current.expiresAt,
-    }));
-  } catch {
-    // The completed request remains valid if browser storage is unavailable.
-  }
+  if (!readAdminSession()) return;
+  persistRefreshedBrowserAuthSession(session);
 }
 
 export class AdminDataRequestError extends Error {

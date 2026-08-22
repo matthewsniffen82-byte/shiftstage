@@ -66,7 +66,9 @@ test("implicit Supabase email-confirmation tokens are transferred into the live 
 
   assert.match(callbackPage, /fragmentParams\.get\("access_token"\)/);
   assert.match(callbackPage, /const fragmentSession = fragmentAccessToken/);
-  assert.match(callbackPage, /try \{\s*localStorage\.setItem\("dancrAuthSessionV1", JSON\.stringify\(session\)\)/);
+  assert.match(callbackSource, /import \{ BROWSER_AUTH_SESSION_KEY \} from "@\/src\/lib\/dancr\/browser-session"/);
+  assert.match(callbackPage, /const sessionStorageKey = \$\{sessionKeyJson\}/);
+  assert.match(callbackPage, /try \{\s*localStorage\.setItem\(sessionStorageKey, JSON\.stringify\(session\)\)/);
   assert.match(callbackPage, /const destination = redirectUrl\.pathname \+ redirectUrl\.search \+ fragment/);
   assert.match(callbackPage, /continueLink\.href = destination/);
   assert.match(callbackPage, /window\.location\.replace\(destination\)/);
