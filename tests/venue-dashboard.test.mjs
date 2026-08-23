@@ -84,13 +84,23 @@ test("working-now actions are neutral when empty and emerald only for a live ros
 });
 
 test("venue deal saves use the real API and immediately replace cards and counts from the response", () => {
-  assert.match(dashboard, /fetch\("\/api\/venue\/deal"/);
+  assert.match(dashboard, /requestDashboardJson\("\/api\/venue\/deal"/);
   assert.match(dashboard, /setDeals\(nextDeals\)/);
   assert.match(dashboard, /onDealsChange\(nextDeals\)/);
   assert.match(dashboard, /setEditingId/);
   assert.match(dashboard, /Changes saved\. This deal is live across MyDancr/);
   assert.match(venueDealRoute, /updateVenueDealForAccount/);
   assert.match(venueDealRoute, /ok: true,[\s\S]*deal,[\s\S]*deals/);
+});
+
+test("venue deal and referral-fee writes share the venue role-aware refresh boundary", () => {
+  const venueDealActions = dashboard.match(/async function saveDeal[\s\S]*?const liveDeals = deals\.filter/)?.[0] || "";
+  assert.match(venueDealActions, /requestDashboardJson\("\/api\/venue\/deal"/);
+  assert.match(venueDealActions, /requestDashboardJson\(`\/api\/venue\/deal\?dealId=/);
+  assert.match(venueDealActions, /requestDashboardJson\("\/api\/venue\/referral-fee"/);
+  assert.equal((venueDealActions.match(/expectedRole: "venue"/g) || []).length, 3);
+  assert.doesNotMatch(venueDealActions, /authorization: `Bearer/);
+  assert.doesNotMatch(venueDealActions, /fetch\((?:"|`)\/api\/venue\/(?:deal|referral-fee)/);
 });
 
 test("venue managers can publish only the two supported admission offers", () => {

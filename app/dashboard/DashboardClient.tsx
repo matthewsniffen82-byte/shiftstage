@@ -2447,11 +2447,6 @@ function VenueClubDealPanel({
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const action = submitter?.value || "save";
     const nextIsActive = action === "publish" ? true : action === "draft" || action === "unpublish" ? false : form.isActive;
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return;
-    }
 
     const dealTitle = form.dealTitle.trim();
     if (dealTitle.length < 3) {
@@ -2473,12 +2468,9 @@ function VenueClubDealPanel({
     setIsSaving(true);
     setStatus("");
     try {
-      const response = await fetch("/api/venue/deal", {
+      const data = await requestDashboardJson("/api/venue/deal", {
         method: "PATCH",
-        headers: {
-          authorization: `Bearer ${session.accessToken}`,
-          "content-type": "application/json",
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           dealId: editingId || null,
           dealTitle,
@@ -2488,11 +2480,9 @@ function VenueClubDealPanel({
           offerType: "admission",
           sortOrder: Number(form.sortOrder),
         }),
+        expectedRole: "venue",
+        fallbackMessage: "Unable to update the tracked Club Deal.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || "Unable to update the tracked Club Deal.");
-      }
       const nextDeals = Array.isArray(data.deals)
         ? data.deals
         : upsertVenueDeal(deals, data.deal);
@@ -2517,17 +2507,14 @@ function VenueClubDealPanel({
 
   async function deleteDeal() {
     if (!editingId || isSaving) return;
-    const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
     setIsSaving(true);
     setStatus("");
     try {
-      const response = await fetch(`/api/venue/deal?dealId=${encodeURIComponent(editingId)}`, {
+      const data = await requestDashboardJson(`/api/venue/deal?dealId=${encodeURIComponent(editingId)}`, {
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}` },
+        expectedRole: "venue",
+        fallbackMessage: "Unable to delete this Club Deal.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete this Club Deal.");
       const nextDeals = deals.filter((deal) => String(deal.id) !== editingId);
       const nextEditingId = String(nextDeals[0]?.id || "");
       setDeals(nextDeals);
@@ -2553,18 +2540,16 @@ function VenueClubDealPanel({
       setFeeRequestStatus("Add a short reason for the requested change.");
       return;
     }
-    const session = readSession();
-    if (!session?.accessToken) return setFeeRequestStatus("Sign in required.");
     setIsRequestingFee(true);
     setFeeRequestStatus("");
     try {
-      const response = await fetch("/api/venue/referral-fee", {
+      const data = await requestDashboardJson("/api/venue/referral-fee", {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ requestedFeeCents, reason: feeRequestReason }),
+        expectedRole: "venue",
+        fallbackMessage: "Unable to request a fee change.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to request a fee change.");
       onReferralFeeChange(data.referralFee);
       setRequestedFee("");
       setFeeRequestReason("");
