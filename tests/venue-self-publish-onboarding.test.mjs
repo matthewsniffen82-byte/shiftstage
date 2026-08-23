@@ -108,3 +108,18 @@ test("the venue dashboard clearly presents private setup, preview, and explicit 
   assert.match(documentation, /private venue workspace and one-time venue signup code/);
   assert.match(documentation, /Venue accounts receive access only to their own venue dashboard; they never receive MyDancr administrator access/);
 });
+
+test("venue identity and publication actions share the role-aware refresh boundary", () => {
+  const venueIdentityActions = dashboard.match(/async function saveProfile[\s\S]*?function openVenueSection/)?.[0] || "";
+  for (const path of [
+    "/api/venue/profile",
+    "/api/venue/cover-image",
+    "/api/venue/logo-image",
+    "/api/venue/publication",
+  ]) {
+    assert.match(venueIdentityActions, new RegExp(`requestDashboardJson\\("${path.replaceAll("/", "\\/")}"`));
+  }
+  assert.equal((venueIdentityActions.match(/expectedRole: "venue"/g) || []).length, 6);
+  assert.doesNotMatch(venueIdentityActions, /authorization: `Bearer/);
+  assert.doesNotMatch(venueIdentityActions, /fetch\("\/api\/venue\/(?:profile|cover-image|logo-image|publication)/);
+});

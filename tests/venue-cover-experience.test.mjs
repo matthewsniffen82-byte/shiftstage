@@ -66,8 +66,8 @@ test("only active venue accounts can publish or remove a cover image", () => {
 });
 
 test("the venue dashboard publishes and removes real moderated cover media", () => {
-  assert.match(dashboard, /fetch\("\/api\/venue\/cover-image", \{[\s\S]*?method: "POST"/);
-  assert.match(dashboard, /fetch\("\/api\/venue\/cover-image", \{[\s\S]*?method: "DELETE"/);
+  assert.match(dashboard, /requestDashboardJson\("\/api\/venue\/cover-image", \{[\s\S]*?method: "POST"/);
+  assert.match(dashboard, /requestDashboardJson\("\/api\/venue\/cover-image", \{[\s\S]*?method: "DELETE"/);
   assert.match(dashboard, /Checking and publishing venue image/);
   assert.match(dashboard, /after the safety check/);
   assert.match(dashboard, /accept="image\/jpeg,image\/png,image\/webp,image\/heic,image\/heif/);

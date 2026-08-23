@@ -1826,18 +1826,16 @@ function VenuePanel({
 
   async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const session = readSession();
-    if (!session?.accessToken) return setProfileStatus("Sign in required.");
     setIsSaving(true);
     setProfileStatus("");
     try {
-      const response = await fetch("/api/venue/profile", {
+      const data = await requestDashboardJson("/api/venue/profile", {
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(form),
+        expectedRole: "venue",
+        fallbackMessage: "Unable to save venue profile.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save venue profile.");
       onProfileChange(data.profile);
       setProfileStatus("Venue page details saved.");
     } catch (error) {
@@ -1849,23 +1847,18 @@ function VenuePanel({
 
   async function uploadCover(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const session = readSession();
-    if (!session?.accessToken) return setCoverStatus("Sign in required.");
     if (!coverFile) return setCoverStatus("Choose a venue image first.");
     setIsPublishingCover(true);
     setCoverStatus("Checking and publishing venue image...");
     try {
       const body = new FormData();
       body.set("file", coverFile);
-      const response = await fetch("/api/venue/cover-image", {
+      const data = await requestDashboardJson("/api/venue/cover-image", {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}` },
         body,
+        expectedRole: "venue",
+        fallbackMessage: "Unable to publish venue image.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || "Unable to publish venue image.");
-      }
       onProfileChange(data.profile);
       setCoverFile(null);
       if (coverFileInputRef.current) coverFileInputRef.current.value = "";
@@ -1878,19 +1871,14 @@ function VenuePanel({
   }
 
   async function removeCover() {
-    const session = readSession();
-    if (!session?.accessToken) return setCoverStatus("Sign in required.");
     setIsPublishingCover(true);
     setCoverStatus("");
     try {
-      const response = await fetch("/api/venue/cover-image", {
+      const data = await requestDashboardJson("/api/venue/cover-image", {
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}` },
+        expectedRole: "venue",
+        fallbackMessage: "Unable to remove venue image.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || "Unable to remove venue image.");
-      }
       onProfileChange(data.profile);
       setCoverFile(null);
       if (coverFileInputRef.current) coverFileInputRef.current.value = "";
@@ -1904,21 +1892,18 @@ function VenuePanel({
 
   async function uploadLogo(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const session = readSession();
-    if (!session?.accessToken) return setLogoStatus("Sign in required.");
     if (!logoFile) return setLogoStatus("Choose a venue logo first.");
     setIsPublishingLogo(true);
     setLogoStatus("Checking and uploading venue logo...");
     try {
       const body = new FormData();
       body.set("file", logoFile);
-      const response = await fetch("/api/venue/logo-image", {
+      const data = await requestDashboardJson("/api/venue/logo-image", {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}` },
         body,
+        expectedRole: "venue",
+        fallbackMessage: "Unable to upload venue logo.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to upload venue logo.");
       onProfileChange(data.profile);
       setLogoFile(null);
       if (logoFileInputRef.current) logoFileInputRef.current.value = "";
@@ -1931,17 +1916,14 @@ function VenuePanel({
   }
 
   async function removeLogo() {
-    const session = readSession();
-    if (!session?.accessToken) return setLogoStatus("Sign in required.");
     setIsPublishingLogo(true);
     setLogoStatus("");
     try {
-      const response = await fetch("/api/venue/logo-image", {
+      const data = await requestDashboardJson("/api/venue/logo-image", {
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}` },
+        expectedRole: "venue",
+        fallbackMessage: "Unable to remove venue logo.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove venue logo.");
       onProfileChange(data.profile);
       setLogoFile(null);
       if (logoFileInputRef.current) logoFileInputRef.current.value = "";
@@ -1954,17 +1936,14 @@ function VenuePanel({
   }
 
   async function publishVenue() {
-    const session = readSession();
-    if (!session?.accessToken) return setPublicationStatus("Sign in required.");
     setIsPublishingVenue(true);
     setPublicationStatus("Publishing venue...");
     try {
-      const response = await fetch("/api/venue/publication", {
+      const data = await requestDashboardJson("/api/venue/publication", {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}` },
+        expectedRole: "venue",
+        fallbackMessage: "Unable to publish venue.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to publish venue.");
       onProfileChange(data.profile);
       onPublicationChange(data.publication);
       setPublicationStatus(data.message || "Venue published.");
