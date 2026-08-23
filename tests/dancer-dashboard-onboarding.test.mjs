@@ -154,6 +154,20 @@ test("optional payout onboarding keeps NATS guidance concise", () => {
   assert.doesNotMatch(dashboard, /NATS enrollment is safely paused/);
 });
 
+test("approved dancers who skipped NATS get a visible signup call to action", () => {
+  const callout = dashboard.match(/function DancerNatsSignupCallout\([\s\S]*?(?=\nfunction DancerPanel)/)?.[0] || "";
+  assert.match(callout, /\["requested", "active"\]\.includes\(accountStatus\)/);
+  assert.doesNotMatch(callout, /platform\.selected !== true \|\|/);
+  assert.match(callout, /Get NATS to receive payouts/);
+  assert.match(callout, /portalUrl \|\| supportRequestUrl/);
+  assert.match(callout, /mailto:support@mydancr\.com\?subject=NATS%20payout%20setup/);
+  assert.match(callout, /I already have NATS/);
+  assert.match(callout, /openDancerPayoutLinking/);
+  assert.match(dashboard, /<DancerNatsSignupCallout finance=\{finance\} \/>[\s\S]*?id="dancer-performance"/);
+  assert.match(dashboard, /id="dancer-payout-detail"/);
+  assert.match(dashboard, /\.dancer-nats-signup-callout \{ grid-column: 1 \/ -1;[\s\S]*?\.dancer-nats-signup-actions > a, \.dancer-nats-signup-actions > button/);
+});
+
 test("step one required items are accessible accordions that preserve the active editor", () => {
   assert.match(dashboard, /const \[expandedId, setExpandedId\] = useState<string \| null>\(null\)/);
   assert.doesNotMatch(dashboard, /setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);

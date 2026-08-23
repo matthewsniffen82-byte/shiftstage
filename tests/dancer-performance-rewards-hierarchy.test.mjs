@@ -15,7 +15,7 @@ test("reward areas are collapsed and grouped under clear summaries", () => {
   for (const title of ["Club Deal rewards", "Earnings & payouts", "Weekly results"]) {
     assert.match(dashboard, new RegExp(`title="${title}"`));
   }
-  assert.match(dashboard, /<details className="dancer-performance-detail">/);
+  assert.match(dashboard, /<details className="dancer-performance-detail" id=\{id\}>/);
   assert.doesNotMatch(dashboard, /<details className="dancer-performance-detail" open/);
 });
 

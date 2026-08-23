@@ -3923,22 +3923,37 @@ function DancerOnboardingProfileMediaWorkspace({
   );
 }
 
-function DancerPayoutSetupNotice({ finance }: { finance?: LoadState["finance"] }) {
+function openDancerPayoutLinking() {
+  const performanceSection = document.getElementById("dancer-performance") as HTMLDetailsElement | null;
+  const payoutSection = document.getElementById("dancer-payout-detail") as HTMLDetailsElement | null;
+  if (performanceSection) performanceSection.open = true;
+  if (payoutSection) payoutSection.open = true;
+  window.requestAnimationFrame(() => {
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    (payoutSection || performanceSection)?.scrollIntoView({ behavior, block: "start" });
+  });
+}
+
+function DancerNatsSignupCallout({ finance }: { finance?: LoadState["finance"] }) {
   const platform = (finance?.commissionPlatform || {}) as Record<string, unknown>;
   const account = (finance?.natsAffiliateAccount || null) as Record<string, unknown> | null;
-  if (platform.selected !== true || account?.status === "active") return null;
-  const requested = account?.status === "requested";
+  const accountStatus = String(account?.status || "").toLowerCase();
+  if (["requested", "active"].includes(accountStatus)) return null;
   const portalUrl = typeof platform.affiliatePortalUrl === "string" ? platform.affiliatePortalUrl : "";
+  const supportRequestUrl = "mailto:support@mydancr.com?subject=NATS%20payout%20setup";
   return (
-    <aside className="dancer-payout-setup-notice" aria-labelledby="dancer-payout-setup-notice-heading">
-      <span>
-        <span className="eyebrow">Dancer commissions</span>
-        <strong id="dancer-payout-setup-notice-heading">{requested ? "Payout verification pending" : "Complete payout setup"}</strong>
-        <small>{requested
-          ? "Club Deal commissions keep accruing while MyDancr verifies your NATS affiliate account. Payout remains held until verification finishes."
-          : "Club Deal commissions accrue automatically, but payout stays held until your NATS affiliate and tax setup is verified."}</small>
+    <aside className="dancer-nats-signup-callout" aria-labelledby="dancer-nats-signup-heading">
+      <span className="dancer-nats-signup-copy">
+        <span className="eyebrow">Commission payouts</span>
+        <strong id="dancer-nats-signup-heading">Get NATS to receive payouts</strong>
+        <small>Create a NATS affiliate account, then link it to MyDancr. Your verified Club Deal commissions keep accruing until setup is complete.</small>
       </span>
-      {portalUrl ? <a href={portalUrl} rel="noreferrer" target="_blank">{requested ? "Open NATS account" : "Set up payouts"}</a> : <b>Setup connection pending</b>}
+      <span className="dancer-nats-signup-actions">
+        <a href={portalUrl || supportRequestUrl} rel={portalUrl ? "noreferrer" : undefined} target={portalUrl ? "_blank" : undefined}>Get NATS</a>
+        {platform.selected === true
+          ? <button onClick={openDancerPayoutLinking} type="button">I already have NATS</button>
+          : <a className="secondary" href={`${supportRequestUrl}&body=I%20already%20have%20a%20NATS%20affiliate%20account%20and%20need%20to%20link%20it%20to%20MyDancr.`}>I already have NATS</a>}
+      </span>
     </aside>
   );
 }
@@ -4089,7 +4104,6 @@ function DancerPanel({
         nfc={nfc}
         profile={profile}
       />
-      <DancerPayoutSetupNotice finance={finance} />
       {!isApproved ? (
         <DancerOnboardingCommand
           draftIdentity={draftIdentity}
@@ -4148,6 +4162,7 @@ function DancerPanel({
           <DancerShiftManager />
         </DashboardSection>
       ) : null}
+      {isApproved ? <DancerNatsSignupCallout finance={finance} /> : null}
       {isApproved ? (
         <DashboardSection
           description="See your reach, rewards, payouts, and weekly progress."
@@ -4168,6 +4183,7 @@ function DancerPanel({
               <DancerPerformanceDetail
                 badge={formatCents(Number(((finance?.balances || {}) as Record<string, unknown>).availableCents || 0))}
                 description="Balances, payout setup, and history."
+                id="dancer-payout-detail"
                 title="Earnings & payouts"
               >
                 <DancerPayoutPanel finance={finance} />
@@ -4392,15 +4408,17 @@ function DancerPerformanceDetail({
   badge,
   children,
   description,
+  id,
   title,
 }: {
   badge: string;
   children: ReactNode;
   description: string;
+  id?: string;
   title: string;
 }) {
   return (
-    <details className="dancer-performance-detail">
+    <details className="dancer-performance-detail" id={id}>
       <summary>
         <span>
           <strong>{title}</strong>
@@ -7351,6 +7369,18 @@ function DashboardStyles() {
       .visibility-status { margin: 0; }
       .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-verification-panel { grid-column: span 3; }
       .dancer-performance-workspace { display: grid; gap: 14px; }
+      .dancer-nats-signup-callout { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 17px 18px; border: 1px solid rgba(148,229,255,.26); border-radius: var(--mydancr-dashboard-radius); background: linear-gradient(145deg,rgba(12,33,42,.68),#09090d 72%); box-shadow: inset 3px 0 0 rgba(148,229,255,.58); }
+      .dancer-nats-signup-copy { min-width: 0; display: grid; gap: 5px; }
+      .dancer-nats-signup-copy .eyebrow { color: #94e5ff; }
+      .dancer-nats-signup-copy > strong { color: #fff; font-size: clamp(18px,2.8vw,22px); line-height: 1.08; }
+      .dancer-nats-signup-copy > small { max-width: 68ch; color: var(--mydancr-dashboard-muted); font-size: 12px; font-weight: 720; line-height: 1.4; }
+      .dancer-nats-signup-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+      .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; font: inherit; font-size: 13px; font-weight: 950; text-align: center; text-decoration: none; white-space: nowrap; }
+      .dancer-nats-signup-actions > a { border-color: rgba(126,234,255,.48); color: #fff; background: linear-gradient(135deg,#6d28d9,#0b94c9); box-shadow: 0 8px 22px rgba(61,27,143,.24); }
+      .dancer-nats-signup-actions > a.secondary { border-color: rgba(255,255,255,.14); color: #f8f7fb; background: #17171d; box-shadow: none; }
+      .dancer-nats-signup-actions > button { color: #f8f7fb; background: #17171d; cursor: pointer; }
+      .dancer-nats-signup-actions > b { color: var(--mydancr-dashboard-muted); background: rgba(255,255,255,.035); }
+      .dancer-nats-signup-actions > a:focus-visible, .dancer-nats-signup-actions > button:focus-visible { outline: 2px solid #94e5ff; outline-offset: 3px; }
       .dancer-performance-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; background: var(--mydancr-dashboard-panel-raised); }
       .dancer-performance-summary .metric { min-height: 76px; padding: 13px 15px; border-top: 0; border-left: 1px solid var(--mydancr-dashboard-border); }
       .dancer-performance-summary .metric:first-child { border-left: 0; }
@@ -8200,6 +8230,7 @@ function DashboardStyles() {
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-logo-panel, .venue-logo-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-logo-panel > img, .venue-logo-empty, .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-logo-panel > img, .venue-logo-empty { justify-self: start; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
