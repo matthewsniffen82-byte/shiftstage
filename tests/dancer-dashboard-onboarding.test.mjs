@@ -159,7 +159,8 @@ test("approved dancer dashboard sections arrive collapsed with a clear tool hier
   assert.match(dashboard, /description="Share your profile and manage billing\."\s+emphasis="utility"\s+id="dancer-sharing-billing"/);
   assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
   assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);
-  assert.match(dashboard, /\.dashboard-shell-dancer \{ padding-bottom: max\(190px, calc\(env\(safe-area-inset-bottom\) \+ 166px\)\)/);
+  assert.match(dashboard, /\.dashboard-section-utility \.venue-dashboard-section-copy > span:last-child \{ color: rgba\(218,218,226,\.72\); font-size: 12px; \}/);
+  assert.match(dashboard, /\.dashboard-shell-dancer \{ padding-bottom: max\(40px, calc\(env\(safe-area-inset-bottom\) \+ 24px\)\)/);
 });
 
 test("step one shows clear save, photo-count, and automatic-check states", () => {
