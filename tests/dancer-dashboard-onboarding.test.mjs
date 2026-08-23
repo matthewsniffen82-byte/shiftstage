@@ -171,6 +171,12 @@ test("photo and video uploaders auto-upload multiple phone files with independen
   assert.match(dashboard, /stage: "failed", progress: 0/);
   assert.match(dashboard, /savePhotoArrangement/);
   assert.match(dashboard, />Make main<\/button>/);
+  assert.match(dashboard, /className="photo-main-action primary-action"/);
+  assert.match(dashboard, /const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 1/);
+  assert.match(dashboard, /const canMoveLater = isApprovedGalleryPhoto && photoIndex < photos\.length - 1/);
+  assert.match(dashboard, /className="photo-order-action"[\s\S]*?title="Move earlier"/);
+  assert.match(dashboard, /className="photo-card-remove-action"/);
+  assert.doesNotMatch(dashboard, /disabled=\{isArranging \|\| photos\.findIndex/);
   assert.match(dashboard, /for \(let index = 0; index < batch\.length; index \+= 1\)/);
   assert.match(dashboard, /DANCER_PHOTOS_KEEP_OPEN_EVENT/);
   assert.doesNotMatch(dashboard, /Choose the original camera photo for maximum detail/);

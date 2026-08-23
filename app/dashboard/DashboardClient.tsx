@@ -6652,29 +6652,34 @@ function DancerPhotoPanel({
         </div>
       ) : null}
       <div className="photo-review-list">
-        {photos.map((photo) => (
-          <div className={`photo-review-card is-${photo.status}`} key={photo.id}>
-            {photo.imageUrl ? <div className="photo-preview" style={{ backgroundImage: `url(${photo.imageUrl})` }} /> : <div className="photo-preview empty">Review</div>}
-            <span>
-              <strong>{photo.label}</strong>
-              <small>{photoStatusLabel(photo.status)}</small>
-              <em>{photo.note}</em>
-              <span className="photo-card-actions">
-                {photo.status === "approved" && !photo.isPrimary ? <button disabled={isArranging} type="button" onClick={() => makePhotoPrimary(photo.id)}>Make main</button> : null}
-                {photo.status === "approved" && !photo.isPrimary ? <button aria-label={`Move ${photo.label} earlier`} disabled={isArranging || photos.findIndex((item) => item.id === photo.id) <= 1} type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>Earlier</button> : null}
-                {photo.status === "approved" && !photo.isPrimary ? <button aria-label={`Move ${photo.label} later`} disabled={isArranging || photos.findIndex((item) => item.id === photo.id) === photos.length - 1} type="button" onClick={() => moveGalleryPhoto(photo.id, 1)}>Later</button> : null}
-                <button
-                  className="photo-delete-button"
-                  type="button"
-                  disabled={deletingPhotoIds.has(photo.id) || isArranging}
-                  onClick={() => deletePhoto(photo)}
-                >
-                  {deletingPhotoIds.has(photo.id) ? "Deleting..." : "Delete"}
-                </button>
+        {photos.map((photo, photoIndex) => {
+          const isApprovedGalleryPhoto = photo.status === "approved" && !photo.isPrimary;
+          const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 1;
+          const canMoveLater = isApprovedGalleryPhoto && photoIndex < photos.length - 1;
+          return (
+            <div className={`photo-review-card is-${photo.status}`} key={photo.id}>
+              {photo.imageUrl ? <div className="photo-preview" style={{ backgroundImage: `url(${photo.imageUrl})` }} /> : <div className="photo-preview empty">Review</div>}
+              <span>
+                <strong>{photo.label}</strong>
+                <small>{photoStatusLabel(photo.status)}</small>
+                <em>{photo.note}</em>
+                <span className="photo-card-actions">
+                  {isApprovedGalleryPhoto ? <button className="photo-main-action primary-action" disabled={isArranging} type="button" onClick={() => makePhotoPrimary(photo.id)}>Make main</button> : null}
+                  {canMoveEarlier ? <button aria-label={`Move ${photo.label} earlier`} className="photo-order-action" disabled={isArranging} title="Move earlier" type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>↑</button> : null}
+                  {canMoveLater ? <button aria-label={`Move ${photo.label} later`} className="photo-order-action" disabled={isArranging} title="Move later" type="button" onClick={() => moveGalleryPhoto(photo.id, 1)}>↓</button> : null}
+                  <button
+                    className="photo-card-remove-action"
+                    type="button"
+                    disabled={deletingPhotoIds.has(photo.id) || isArranging}
+                    onClick={() => deletePhoto(photo)}
+                  >
+                    {deletingPhotoIds.has(photo.id) ? "Deleting..." : "Delete"}
+                  </button>
+                </span>
               </span>
-            </span>
-          </div>
-        ))}
+            </div>
+          );
+        })}
         {!photos.length ? <p>No profile photos uploaded yet.</p> : null}
       </div>
     </article>
@@ -7254,9 +7259,15 @@ function DashboardStyles() {
       .photo-review-card small { color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; letter-spacing: .08em; }
       .photo-review-card em { color: #cfc5de; font-size: 13px; font-style: normal; line-height: 1.35; }
       .photo-review-card progress { width: 100%; height: 7px; accent-color: #7eeaff; }
-      .photo-queue-actions, .photo-card-actions { display: flex !important; flex-wrap: wrap; gap: 6px !important; }
-      .photo-card-actions button, .photo-retry-button { min-height: 34px; padding: 0 9px; border: 1px solid rgba(34,211,238,.28); border-radius: 8px; color: #b5f1ff; background: rgba(34,211,238,.08); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
+      .photo-queue-actions, .photo-card-actions { display: flex !important; flex-wrap: wrap; gap: 7px !important; }
+      .photo-card-actions { align-items: center; margin-top: 5px; }
+      .photo-card-actions button, .photo-retry-button { min-height: 44px; padding: 0 11px; border: 1px solid rgba(34,211,238,.28); border-radius: 999px; color: #b5f1ff; background: rgba(34,211,238,.08); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
       .photo-card-actions button:disabled, .photo-retry-button:disabled { opacity: .5; cursor: wait; }
+      .photo-card-actions .photo-main-action { flex: 1 1 auto; min-width: 86px; min-height: 44px !important; padding: 0 13px !important; border-radius: 999px !important; font-size: 11px !important; white-space: nowrap; }
+      .photo-card-actions .photo-order-action { width: 44px; min-width: 44px; max-width: 44px; min-height: 44px !important; padding: 0 !important; border-color: rgba(126,234,255,.2) !important; border-radius: 50% !important; color: #d5f8ff !important; background: rgba(126,234,255,.07) !important; box-shadow: none !important; font-size: 17px !important; }
+      .photo-card-actions .photo-order-action:hover { border-color: rgba(126,234,255,.48) !important; background: rgba(126,234,255,.13) !important; }
+      .photo-card-actions .photo-card-remove-action { flex: 0 0 auto; min-height: 44px !important; padding: 0 12px !important; border-color: rgba(255,104,124,.34) !important; border-radius: 999px !important; color: #ffbdc7 !important; background: rgba(255,104,124,.08) !important; box-shadow: none !important; font-size: 11px !important; }
+      .photo-card-actions .photo-card-remove-action:hover { border-color: rgba(255,104,124,.62) !important; color: #ffe0e5 !important; background: rgba(255,104,124,.15) !important; }
       .photo-delete-button { width: fit-content; min-height: 36px; margin-top: 4px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,104,124,.38); background: rgba(255,104,124,.14); color: #ffd6dc; font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
       .photo-delete-button:disabled { opacity: .62; cursor: wait; }
       .photo-preview { width: 96px; aspect-ratio: 3 / 4; display: grid; place-items: center; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; }
