@@ -104,8 +104,12 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, />Retry<\/button>/);
   assert.doesNotMatch(dancerStudio, /type="submit"/);
-  assert.match(dancerStudio, /\.tv-video-source-grid label \{ min-width: 0;/);
-  assert.match(dancerStudio, /input\[type="file"\] \{ box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%;/);
+  assert.match(dancerStudio, /aria-label="Choose profile videos from your library"/);
+  assert.match(dancerStudio, /aria-label="Record a new profile video"/);
+  assert.match(dancerStudio, />Video library<\/strong>/);
+  assert.match(dancerStudio, />Record video<\/strong>/);
+  assert.match(dancerStudio, /\.tv-video-source-action \{ position: relative; min-width: 0; min-height: 74px;/);
+  assert.match(dancerStudio, /\.tv-video-source-input \{ position: absolute; inset: 0;[\s\S]*?opacity: 0;/);
 });
 
 test("step one guides dancers through required work before optional profile enhancements", () => {

@@ -58,6 +58,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const maxVideos = workspace?.maxVideos || 5;
   const currentVideoCount = workspace?.videos.length || 0;
   const atVideoLimit = currentVideoCount >= maxVideos;
+  const videoSourcesDisabled = isSubmitting || !consentConfirmed || !rightsConfirmed;
 
   useEffect(() => {
     loadWorkspace();
@@ -335,12 +336,13 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
           </label>
           <div className="tv-video-source-grid">
-            <label className="tv-file-picker">
-              Choose profile videos
+            <label className={`tv-video-source-action${videoSourcesDisabled ? " is-disabled" : ""}`}>
               <input
                 ref={libraryInputRef}
                 accept="video/mp4,video/webm,video/quicktime,.mov"
-                disabled={isSubmitting || !consentConfirmed || !rightsConfirmed}
+                aria-label="Choose profile videos from your library"
+                className="tv-video-source-input"
+                disabled={videoSourcesDisabled}
                 multiple
                 type="file"
                 onChange={(event) => {
@@ -348,22 +350,37 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                   event.target.value = "";
                 }}
               />
-              <small>Select several vertical or square videos at once.</small>
+              <span className="tv-video-source-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z" /><path d="m10 9 5 3-5 3z" /></svg>
+              </span>
+              <span className="tv-video-source-copy">
+                <strong>Video library</strong>
+                <small>Choose one or several videos</small>
+              </span>
+              <span className="tv-video-source-cta" aria-hidden="true">Choose</span>
             </label>
-            <label className="tv-file-picker">
-              Record a video
+            <label className={`tv-video-source-action${videoSourcesDisabled ? " is-disabled" : ""}`}>
               <input
                 ref={cameraInputRef}
                 accept="video/*"
+                aria-label="Record a new profile video"
                 capture="environment"
-                disabled={isSubmitting || !consentConfirmed || !rightsConfirmed}
+                className="tv-video-source-input"
+                disabled={videoSourcesDisabled}
                 type="file"
                 onChange={(event) => {
                   queueVideoFiles(Array.from(event.target.files || []), "camera");
                   event.target.value = "";
                 }}
               />
-              <small>Open your phone camera and upload the recording automatically.</small>
+              <span className="tv-video-source-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h11v10H4z" /><path d="m15 10 5-2v8l-5-2z" /></svg>
+              </span>
+              <span className="tv-video-source-copy">
+                <strong>Record video</strong>
+                <small>Open your camera now</small>
+              </span>
+              <span className="tv-video-source-cta" aria-hidden="true">Open</span>
             </label>
           </div>
           <small className="tv-upload-requirements">
@@ -514,9 +531,18 @@ function DancerTvStudioStyles() {
       .tv-upload-permissions { display: grid; gap: 4px; }
       .tv-upload-permissions strong { color: #fff; font-size: 14px; }
       .tv-video-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .tv-video-source-grid label { min-width: 0; display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
-      .tv-upload-form input[type="file"] { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 10px 12px; font: inherit; overflow: hidden; }
-      .tv-upload-form input[type="file"]:disabled { opacity: .45; cursor: not-allowed; }
+      .tv-video-source-action { position: relative; min-width: 0; min-height: 74px; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); cursor: pointer; }
+      .tv-video-source-action:hover { border-color: rgba(126,234,255,.42); background: linear-gradient(145deg,rgba(124,58,237,.2),rgba(34,199,255,.09)); }
+      .tv-video-source-action:focus-within { outline: 2px solid #7eeaff; outline-offset: 2px; }
+      .tv-video-source-action.is-disabled { opacity: .5; cursor: not-allowed; }
+      .tv-video-source-input { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+      .tv-video-source-input:disabled { cursor: not-allowed; }
+      .tv-video-source-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; color: #8beafa; background: rgba(34,199,255,.09); }
+      .tv-video-source-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-video-source-copy { min-width: 0; display: grid; gap: 2px; }
+      .tv-video-source-copy strong { color: #fff; font-size: 13px; }
+      .tv-video-source-copy small { color: #aaa2b4; font-size: 10px; line-height: 1.3; }
+      .tv-video-source-cta { padding: 5px 7px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #b8effa; background: rgba(34,199,255,.07); font-size: 9px; font-weight: 950; text-transform: uppercase; }
       .tv-upload-form small { color: #9f94b3; font-size: 11px; font-weight: 700; }
       .tv-upload-requirements { display: block; }
       .tv-upload-queue { display: grid; gap: 10px; }
