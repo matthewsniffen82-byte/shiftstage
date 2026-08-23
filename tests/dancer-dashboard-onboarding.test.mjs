@@ -69,12 +69,12 @@ test("draft identity and social form values survive refreshes without bypassing 
   assert.match(dashboard, /draftDirtyRef\.current/);
 });
 
-test("onboarding restores only unfinished steps and exposes accessible collapsible controls", () => {
+test("onboarding arrives fully collapsed and exposes accessible controls", () => {
   assert.match(dashboard, /mydancr:dancer-onboarding-step/);
-  assert.match(dashboard, /if \(!profile\?\.id \|\| didRestoreStepRef\.current\) return/);
-  assert.match(dashboard, /const restoredStep = steps\.find\(\(step\) => step\.id === restored\)/);
-  assert.match(dashboard, /restoredStep && !restoredStep\.locked && !restoredStep\.complete/);
-  assert.match(dashboard, /if \(restoredStep\?\.complete\) window\.localStorage\.removeItem\(storageKey\)/);
+  assert.match(dashboard, /const visibleExpandedStepId = expandedStepId \|\| ""/);
+  assert.match(dashboard, /if \(!profile\?\.id\) return;\s*window\.localStorage\.removeItem\(storageKey\)/);
+  assert.doesNotMatch(dashboard, /const restoredStep = steps\.find/);
+  assert.doesNotMatch(dashboard, /didRestoreStepRef/);
   assert.match(dashboard, /scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/);
   assert.match(dashboard, /aria-current=\{step\.id === firstIncomplete\.id \? "step"/);
   assert.match(dashboard, /aria-controls=\{panelId\}/);
@@ -140,15 +140,19 @@ test("optional payout onboarding keeps NATS guidance concise", () => {
 });
 
 test("step one required items are accessible accordions that preserve the active editor", () => {
-  assert.match(dashboard, /useState<string \| null>\(\(\) => profile\?\.id \? firstIncompleteId : null\)/);
-  assert.match(dashboard, /if \(!profile\?\.id\) return;[\s\S]*?setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);
-  assert.match(dashboard, /setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);
+  assert.match(dashboard, /const \[expandedId, setExpandedId\] = useState<string \| null>\(null\)/);
+  assert.doesNotMatch(dashboard, /setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);
   assert.doesNotMatch(dashboard, /setExpandedId\(firstIncompleteId\)/);
   assert.match(dashboard, /aria-controls=\{panelId\}/);
   assert.match(dashboard, /aria-expanded=\{open\}/);
   assert.match(dashboard, /hidden=\{!open\}/);
   assert.match(dashboard, /dancerStepOneStateLabel/);
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
+});
+
+test("approved dancer dashboard sections arrive collapsed", () => {
+  assert.doesNotMatch(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+defaultOpen[\s\S]{0,500}?id="dancer-overview"/);
+  assert.match(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+description="Approval, venue authorization, public visibility/);
 });
 
 test("step one shows clear save, photo-count, and automatic-check states", () => {

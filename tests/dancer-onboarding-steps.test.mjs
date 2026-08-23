@@ -267,3 +267,10 @@ test("normal dancer login reloads database progress instead of a fresh-confirmat
   assert.match(loginHandler, /freshDancerVerificationLockedToProfile = false/);
   assert.match(loginHandler, /await hydrateDancerApprovalProgress\(\)/);
 });
+
+test("the legacy dancer dashboard also resets to a collapsed arrival state", () => {
+  const opener = liveAppSource.match(/function openDancerDashboard\(\)[\s\S]*?\n    function closeDancerDashboard/)?.[0] || "";
+  assert.match(opener, /setupChecklistExpanded = false;/);
+  assert.match(opener, /activeSetupStep = "";/);
+  assert.ok(opener.indexOf("setupChecklistExpanded = false") < opener.indexOf("renderDancerSetup()"));
+});

@@ -3096,7 +3096,6 @@ function DancerOnboardingCommand({
   const [previewMediaError, setPreviewMediaError] = useState("");
   const [previewVideos, setPreviewVideos] = useState<DancerPreviewVideo[]>([]);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
-  const didRestoreStepRef = useRef(false);
   const previewCloseRef = useRef<HTMLButtonElement>(null);
   const previewOverlayRef = useRef<HTMLDivElement>(null);
   const previewTriggerRef = useRef<HTMLButtonElement>(null);
@@ -3168,7 +3167,7 @@ function DancerOnboardingCommand({
     },
   ], [isVenueApproved, natsAccountStatus, payoutSkipped, payoutStepComplete, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
-  const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
+  const visibleExpandedStepId = expandedStepId || "";
   const previewImage = avatarUrl || approvedPhotos[0]?.imageUrl || "";
   const previewName = draftIdentity.stageName.trim() || persistedStageName || "Your stage name";
   const previewCity = draftIdentity.city.trim() || persistedCity || "Choose your city";
@@ -3184,14 +3183,9 @@ function DancerOnboardingCommand({
   }, [payoutSkipKey]);
 
   useEffect(() => {
-    if (!profile?.id || didRestoreStepRef.current) return;
-    didRestoreStepRef.current = true;
-    const restored = window.localStorage.getItem(storageKey);
-    const restoredStep = steps.find((step) => step.id === restored);
-    const targetId = restoredStep && !restoredStep.locked && !restoredStep.complete ? restoredStep.id : firstIncomplete.id;
-    if (restoredStep?.complete) window.localStorage.removeItem(storageKey);
-    setExpandedStepId(targetId);
-  }, [firstIncomplete.id, profile?.id, steps, storageKey]);
+    if (!profile?.id) return;
+    window.localStorage.removeItem(storageKey);
+  }, [profile?.id, storageKey]);
 
   useEffect(() => {
     const keepPhotosOpen = () => {
@@ -3740,14 +3734,8 @@ function DancerOnboardingProfileMediaWorkspace({
       content: photoContent,
     },
   ];
-  const firstIncompleteId = requiredItems.find((item) => item.state !== "complete")?.id || null;
-  const [expandedId, setExpandedId] = useState<string | null>(() => profile?.id ? firstIncompleteId : null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const completeCount = requiredItems.filter((item) => item.state === "complete").length;
-
-  useEffect(() => {
-    if (!profile?.id) return;
-    setExpandedId((current) => current ?? firstIncompleteId);
-  }, [firstIncompleteId, profile?.id]);
 
   useEffect(() => {
     const keepPhotosOpen = () => setExpandedId("photos");
@@ -3837,7 +3825,7 @@ function DancerOnboardingProfileMediaWorkspace({
       <footer className={`dancer-step-one-footer ${profileReady ? "is-ready" : ""}`.trim()}>
         <span>
           <strong>{profileReady ? "Step 1 complete" : `${completeCount} of 3 required items complete`}</strong>
-          <small>{profileReady ? "Your saved profile is ready to preview." : "Finish the open required item to continue."}</small>
+          <small>{profileReady ? "Your saved profile is ready to preview." : "Open a required item to continue."}</small>
         </span>
         <button className="dancer-onboarding-primary" disabled={!profileReady} onClick={continueToPreview} type="button">
           Continue to preview
@@ -4021,7 +4009,6 @@ function DancerPanel({
       ) : null}
       {isApproved ? (
         <DashboardSection
-          defaultOpen
           description="Approval, venue authorization, public visibility, and the current state of your profile."
           eyebrow="Dancer workspace"
           id="dancer-overview"

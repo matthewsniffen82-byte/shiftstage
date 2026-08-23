@@ -51025,10 +51025,8 @@
       syncSignedInAccountControl("dancer");
       applyStoredDancerProfileDraft();
       updateDancerDashboardName();
-      if (!dancerSetup.approval) {
-        setupChecklistExpanded = true;
-        activeSetupStep = nextIncompleteStep() || "profile";
-      }
+      setupChecklistExpanded = false;
+      activeSetupStep = "";
       renderDancerSetup();
       renderAccountControls();
       dancerDashboard.classList.add("show");
