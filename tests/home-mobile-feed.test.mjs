@@ -994,7 +994,7 @@ test("legal and support actions stay out of the mobile discovery scroll", () => 
   );
   assert.match(
     homeSource,
-    /dashboardBtn\.hidden = !loggedIn;[\s\S]*?dashboardBtn\.textContent = loggedIn \? `\$\{role\} dashboard` : "Dashboard";[\s\S]*?dashboardBtn\.setAttribute\("aria-label", loggedIn \? `Open \$\{role\.toLowerCase\(\)\} dashboard` : "Open dashboard"\);[\s\S]*?sessionMenuEnd\.hidden = !loggedIn;/,
+    /dashboardBtn\.hidden = !loggedIn;[\s\S]*?dashboardBtn\.textContent = loggedIn \? `\$\{role\} dashboard` : "Dashboard";[\s\S]*?dashboardBtn\.setAttribute\("aria-label", loggedIn \? `Open \$\{role\.toLowerCase\(\)\} dashboard` : "Open dashboard"\);[\s\S]*?adminBtn\.hidden = loggedIn && sessionRole !== "admin";[\s\S]*?sessionMenuEnd\.hidden = !loggedIn;/,
   );
 });
 
