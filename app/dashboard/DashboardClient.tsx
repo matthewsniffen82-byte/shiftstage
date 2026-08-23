@@ -7498,6 +7498,7 @@ function DashboardStyles() {
       .photo-delete-button { width: fit-content; min-height: 36px; margin-top: 4px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,104,124,.38); background: rgba(255,104,124,.14); color: #ffd6dc; font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
       .photo-delete-button:disabled { opacity: .62; cursor: wait; }
       .photo-preview { width: 96px; aspect-ratio: 3 / 4; display: grid; place-items: center; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; }
+      .photo-preview:not(.empty) { filter: brightness(1.14) contrast(1.03); }
       .review-list { display: grid; gap: 10px; }
       .review-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .review-row span { color: #94e5ff; font-size: 13px; font-weight: 850; text-transform: capitalize; }
