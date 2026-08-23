@@ -27,10 +27,12 @@ type NfcState = {
 };
 
 export default function DancerNfcPanel({
+  compactAuthorized = false,
   initialAffiliations = [],
   initialNfcState,
   onAuthorizationChange,
 }: {
+  compactAuthorized?: boolean;
   initialAffiliations?: Array<Record<string, unknown>>;
   initialNfcState?: Record<string, unknown> | null;
   onAuthorizationChange?: () => void | Promise<void>;
@@ -90,6 +92,49 @@ export default function DancerNfcPanel({
     }
   }
 
+  const affiliationRoster = activeAffiliations.length ? (
+    <div className="dancer-nfc-roster" aria-label="NFC-authorized venues">
+      {activeAffiliations.map((affiliation) => (
+        <section key={affiliation.id || affiliation.venue?.id}>
+          <span>
+            <strong>{affiliation.venue?.name || "Venue"}</strong>
+            <small>NFC-authorized{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small>
+          </span>
+          <button type="button" disabled={Boolean(pendingId)} onClick={() => removeAffiliation(affiliation)}>Remove</button>
+        </section>
+      ))}
+    </div>
+  ) : null;
+
+  if (compactAuthorized && authorized) {
+    const venueCount = activeAffiliations.length;
+    return (
+      <details className="info-panel dancer-nfc-panel-compact" id="dancer-venue-verification">
+        <summary>
+          <span className="dancer-nfc-compact-icon"><NfcIcon /></span>
+          <span className="dancer-nfc-compact-copy">
+            <strong>Venue access</strong>
+            <small>{venueCount ? `${venueCount} NFC-authorized club${venueCount === 1 ? "" : "s"}` : "Dressing-room NFC authorized"}</small>
+          </span>
+          <span className="dancer-nfc-compact-action">Manage</span>
+        </summary>
+        <div className="dancer-nfc-compact-body">
+          <p>Tap an authorized club&apos;s official dressing-room sticker each time you arrive to appear in Working Now for six hours.</p>
+          {affiliationRoster}
+          <div className="dancer-nfc-notes">
+            <span>Retaps never extend a Working Now session, and no phone location is collected.</span>
+            <span>A six-hour cooldown follows each session.</span>
+          </div>
+          <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
+            {pendingId === "refresh" ? "Refreshing…" : "Refresh NFC status"}
+          </button>
+          {status ? <p className="dancer-nfc-status" role="status">{status}</p> : null}
+        </div>
+        <style>{DANCER_NFC_STYLE}</style>
+      </details>
+    );
+  }
+
   return (
     <article className={`info-panel dancer-nfc-panel ${authorized ? "is-authorized" : ""}`} id="dancer-venue-verification">
       <div className="dancer-nfc-icon"><NfcIcon /></div>
@@ -107,19 +152,7 @@ export default function DancerNfcPanel({
           <p>At the club, unlock your signed-in phone and tap its official MyDancr dressing-room sticker. When setup is complete, the first eligible tap approves your profile, connects that venue, and starts one six-hour Working Now session.</p>
         )}
 
-        {activeAffiliations.length ? (
-          <div className="dancer-nfc-roster" aria-label="NFC-authorized venues">
-            {activeAffiliations.map((affiliation) => (
-              <section key={affiliation.id || affiliation.venue?.id}>
-                <span>
-                  <strong>{affiliation.venue?.name || "Venue"}</strong>
-                  <small>NFC-authorized{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small>
-                </span>
-                <button type="button" disabled={Boolean(pendingId)} onClick={() => removeAffiliation(affiliation)}>Remove</button>
-              </section>
-            ))}
-          </div>
-        ) : null}
+        {affiliationRoster}
 
         <div className="dancer-nfc-notes">
           <span>Each eligible tap starts one six-hour Working Now session; retaps never extend it and no phone location is collected.</span>
@@ -153,5 +186,6 @@ const DANCER_NFC_STYLE = [
   ".dancer-nfc-panel p,.dancer-nfc-panel small,.dancer-nfc-notes{color:#b9accd;line-height:1.45}.dancer-nfc-roster{display:grid;gap:7px;margin:14px 0}.dancer-nfc-roster section{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid rgba(69,255,165,.18);border-radius:11px;background:rgba(34,201,129,.06)}",
   ".dancer-nfc-roster span{display:grid;gap:2px}.dancer-nfc-roster small{font-size:11px}.dancer-nfc-roster button,.dancer-nfc-refresh{min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.15);border-radius:9px;color:#fff;background:rgba(255,255,255,.06);font:inherit;font-weight:800;cursor:pointer}",
   ".dancer-nfc-notes{display:grid;gap:6px;margin:12px 0;font-size:12px}.dancer-nfc-notes span{padding-left:15px;position:relative}.dancer-nfc-notes span:before{content:'✓';position:absolute;left:0;color:#5fffb5}.dancer-nfc-status{font-size:12px}.dancer-nfc-refresh{margin:0 0 10px}.dancer-nfc-panel small{display:block}",
+  ".dashboard-shell .dancer-nfc-panel-compact{padding:0!important}.dancer-nfc-panel-compact>summary{box-sizing:border-box;min-height:68px;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;padding:10px 12px;cursor:pointer;list-style:none}.dancer-nfc-panel-compact>summary::-webkit-details-marker{display:none}.dancer-nfc-panel-compact>summary:focus-visible{outline:2px solid #8b5cf6;outline-offset:-3px}.dancer-nfc-compact-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;color:#70ffc1;background:rgba(34,201,129,.11)}.dancer-nfc-compact-icon svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.7}.dancer-nfc-compact-copy{min-width:0;display:grid;gap:3px}.dancer-nfc-compact-copy strong{color:#fff;font-size:16px}.dancer-nfc-compact-copy small{color:#b9accd;font-size:11px}.dancer-nfc-compact-action{padding:6px 9px;border:1px solid rgba(69,255,165,.24);border-radius:999px;color:#70ffc1;font-size:10px;font-weight:900}.dancer-nfc-panel-compact[open] .dancer-nfc-compact-action{color:#fff}.dancer-nfc-compact-body{display:grid;gap:10px;padding:0 12px 12px;border-top:1px solid rgba(255,255,255,.08)}.dancer-nfc-compact-body>p{margin:12px 0 0;color:#b9accd;line-height:1.45}",
   "@media(max-width:620px){.dancer-nfc-panel{grid-template-columns:1fr}.dancer-nfc-icon{width:54px;height:54px}.dancer-nfc-icon svg{width:32px;height:32px}.dancer-nfc-heading{align-items:flex-start;flex-direction:column}.dancer-nfc-roster section{align-items:flex-start}}",
 ].join("");

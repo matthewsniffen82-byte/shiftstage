@@ -163,6 +163,17 @@ test("approved dancer dashboard sections arrive collapsed with a clear tool hier
   assert.match(dashboard, /\.dashboard-shell-dancer \{ padding-bottom: max\(40px, calc\(env\(safe-area-inset-bottom\) \+ 24px\)\)/);
 });
 
+test("expanded profile status stays visible and uses compact non-repeating controls", () => {
+  assert.match(dashboard, /onToggle=\{alignOpenedDashboardSection\}/);
+  assert.match(dashboard, /scroll-margin-top: calc\(var\(--mydancr-preview-banner-offset, 0px\) \+ 12px\)/);
+  assert.match(dashboard, /section\.scrollIntoView\(\{ behavior: reduceMotion \? "auto" : "smooth", block: "start" \}\)/);
+  assert.match(dashboard, /className="dancer-status-metrics" aria-label="Current profile status"/);
+  assert.doesNotMatch(dashboard, /<InfoPanel title="Profile">/);
+  assert.match(dashboard, /\.dancer-status-metrics \{ display: grid; grid-template-columns: repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(dashboard, /\.dancer-status-metrics \{ grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(dashboard, /<DancerNfcPanel\s+compactAuthorized/);
+});
+
 test("step one shows clear save, photo-count, and automatic-check states", () => {
   assert.match(dashboard, /Unsaved changes/);
   assert.match(dashboard, /dancer-form-save-state/);
