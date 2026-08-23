@@ -66,20 +66,18 @@ test("the live venue request form submits the verified business contact for revi
   assert.match(liveApp, /url\.searchParams\.get\("venueRequest"\) === "1"/);
 });
 
-test("club owners can find a direct request-first entry point throughout discovery", () => {
+test("club listing is available only through venue account creation", () => {
   assert.match(clubJoinPage, /searchParams: Promise<\{ agent\?: string \| string\[\] \}>/);
   assert.match(clubJoinPage, /`\/\?venueRequest=1&agent=\$\{encodeURIComponent\(referral\.slice\(0, 128\)\)\}`/);
   assert.match(clubJoinPage, /"\/\?venueRequest=1"/);
-  assert.match(liveApp, /class="utility-menu-item utility-menu-club-join" href="\/clubs\/join">List Your Club</);
-  assert.match(liveApp, /id="clubListDirectoryCta" href="\/clubs\/join" hidden>List Your Club</);
-  assert.match(liveApp, /Own or manage a club\?/);
-  assert.match(liveApp, /href="\/clubs\/join">List it on MyDancr</);
+  assert.doesNotMatch(liveApp, /utility-menu-club-join/);
+  assert.doesNotMatch(liveApp, /href="\/clubs\/join"/);
+  assert.doesNotMatch(liveApp, /clubListDirectoryCta|club-list-directory-cta|club-join-footer/);
   assert.match(liveApp, /<strong>Request to list your club<\/strong>/);
   assert.match(liveApp, /After approval, MyDancr sends a private code so you can build and publish your club page/);
   assert.match(liveApp, /id="venueRequestBackBtn"[^>]*>Already approved\? Enter your access code</);
   assert.match(liveApp, /id="venueSignupBtn"[\s\S]*?<strong>Club<\/strong>/);
   assert.match(liveApp, /getElementById\("venueSignupBtn"\)\.addEventListener\("click", openVenueRequest\)/);
-  assert.match(liveApp, /clubListDirectoryCta\.hidden = activeTab !== "venues" \|\| venueProfileOpen/);
 });
 
 test("administrators receive a review queue with explicit approval and rejection actions", () => {

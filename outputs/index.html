@@ -382,25 +382,6 @@
       background: rgba(52,34,78,.92);
     }
 
-    .utility-menu-club-join {
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: #fff;
-      text-decoration: none;
-      border-color: rgba(139,92,246,.72);
-      background: linear-gradient(135deg, rgba(91,33,218,.88), rgba(57,20,143,.9));
-      box-shadow: 0 0 18px rgba(109,40,217,.2), inset 0 1px 0 rgba(255,255,255,.1);
-    }
-
-    .utility-menu-club-join::after {
-      content: "\203A";
-      color: #ddd1ff;
-      font-size: 22px;
-      line-height: 1;
-    }
-
     .utility-menu-dashboard {
       min-height: 44px;
       display: flex;
@@ -792,91 +773,6 @@
       margin-top: 4px;
       padding: 2px 0 1px;
       scroll-margin-top: calc(14px + env(safe-area-inset-top));
-    }
-
-    .club-list-directory-cta {
-      min-height: 34px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-      padding: 0 12px;
-      color: #fff;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 900;
-      white-space: nowrap;
-      border: 1px solid rgba(139,92,246,.72);
-      border-radius: 999px;
-      background: linear-gradient(135deg, rgba(91,33,218,.94), rgba(62,22,157,.94));
-      box-shadow: 0 0 18px rgba(109,40,217,.24), inset 0 1px 0 rgba(255,255,255,.12);
-      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
-    }
-
-    .club-list-directory-cta[hidden] { display: none !important; }
-
-    .club-list-directory-cta:hover,
-    .club-list-directory-cta:focus-visible {
-      transform: translateY(-1px);
-      border-color: rgba(196,181,253,.95);
-      outline: 0;
-      box-shadow: 0 0 0 3px rgba(124,58,237,.2), 0 0 24px rgba(124,58,237,.34);
-    }
-
-    .club-list-directory-cta:active { transform: translateY(0); }
-
-    .club-join-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-top: 14px;
-      padding: 16px 18px;
-      border: 1px solid rgba(139,92,246,.24);
-      border-radius: 18px;
-      background: linear-gradient(135deg, rgba(12,10,18,.94), rgba(25,16,43,.88));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 16px 36px rgba(0,0,0,.24);
-    }
-
-    .club-join-footer-copy {
-      display: grid;
-      gap: 3px;
-    }
-
-    .club-join-footer-copy strong {
-      color: #fff;
-      font-size: 15px;
-      line-height: 1.15;
-    }
-
-    .club-join-footer-copy span {
-      color: rgba(226,226,237,.66);
-      font-size: 12px;
-      line-height: 1.35;
-    }
-
-    .club-join-footer-link {
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-      padding: 0 16px;
-      color: #fff;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 900;
-      border: 1px solid rgba(139,92,246,.72);
-      border-radius: 14px;
-      background: linear-gradient(135deg, #5b21da, #3e169d);
-      box-shadow: 0 0 20px rgba(109,40,217,.22), inset 0 1px 0 rgba(255,255,255,.12);
-    }
-
-    .club-join-footer-link:hover,
-    .club-join-footer-link:focus-visible {
-      outline: 0;
-      border-color: rgba(196,181,253,.96);
-      box-shadow: 0 0 0 3px rgba(124,58,237,.2), 0 0 24px rgba(124,58,237,.32);
     }
 
     .count {
@@ -31603,7 +31499,6 @@
             <button class="menu-btn dashboard-menu" id="accountBtn" type="button" aria-haspopup="true" aria-expanded="false">Login / Join</button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
               <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
-              <a class="utility-menu-item utility-menu-club-join" href="/clubs/join">List Your Club</a>
               <nav class="utility-menu-legal" aria-label="Legal and support">
                 <span class="utility-menu-section-label">Legal &amp; support</span>
                 <button class="utility-menu-item" data-legal-page="termsPage" type="button">Terms</button>
@@ -37636,22 +37531,6 @@
             font-size: 11px !important;
           }
 
-          .content-head.discovery-section-head .club-list-directory-cta:not([hidden]) {
-            width: 100%;
-            min-height: 44px;
-            order: 3;
-            font-size: 13px;
-            border-radius: 14px;
-          }
-
-          .club-join-footer {
-            align-items: stretch;
-            flex-direction: column;
-            padding: 15px;
-          }
-
-          .club-join-footer-link { width: 100%; }
-
           .content-head.discovery-section-head + #results.home-dancer-grid > .home-dancer-grid-heading:first-child {
             margin-top: 0;
             padding: 7px 0 2px;
@@ -38273,7 +38152,6 @@
         <div class="content-head discovery-sticky-head">
           <h2 id="tabTitle">Working Now in Las Vegas</h2>
           <div class="count" id="tabCount">0 results</div>
-          <a class="club-list-directory-cta" id="clubListDirectoryCta" href="/clubs/join" hidden>List Your Club</a>
         </div>
         <div class="list" id="results"></div>
         <button
@@ -38291,14 +38169,6 @@
         </button>
         <button class="view-all" id="viewAllBtn" hidden>View All</button>
       </section>
-
-      <aside class="club-join-footer" aria-label="List a club on MyDancr">
-        <span class="club-join-footer-copy">
-          <strong>Own or manage a club?</strong>
-          <span>Request approval to build and publish your club page.</span>
-        </span>
-        <a class="club-join-footer-link" href="/clubs/join">List it on MyDancr</a>
-      </aside>
 
     </main>
 
@@ -39968,7 +39838,6 @@
     let modalVideoControlsHideTimer = 0;
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
-    const clubListDirectoryCta = document.getElementById("clubListDirectoryCta");
     const cityCoordinates = {
       "Las Vegas": { latitude: 36.1699, longitude: -115.1398 },
       Miami: { latitude: 25.7617, longitude: -80.1918 },
@@ -55916,7 +55785,6 @@
             '<button class="home-discovery-empty-action is-secondary" type="button" data-home-empty-action="choose-city">Choose another city</button>'
           ]
         : [
-            '<a class="home-discovery-empty-action" href="/clubs/join">List Your Club</a>',
             '<button class="home-discovery-empty-action is-secondary" type="button" data-home-empty-action="choose-city">Choose another city</button>'
           ];
 
@@ -56180,9 +56048,6 @@
       const venueProfileOpen = Boolean(selectedVenue);
       document.body.classList.toggle("venue-full-view-open", venueProfileOpen);
       results.classList.toggle("venue-profile-overlay", venueProfileOpen);
-      if (clubListDirectoryCta) {
-        clubListDirectoryCta.hidden = activeTab !== "venues" || venueProfileOpen;
-      }
       const keepDancerCityOnOneLine =
         !selectedVenue && activeTab === "dancers" && venueFilter === "all";
       const usesDiscoverySectionHeader =
