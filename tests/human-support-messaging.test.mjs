@@ -54,7 +54,7 @@ test("live support interfaces use the production API and the venue dashboard exp
   assert.match(dashboardSource, /role === "venue"[\s\S]*?<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} \/>/);
   assert.match(dashboardSource, /const \[sendConfirmation, setSendConfirmation\] = useState\(false\)/);
   assert.match(dashboardSource, /setStatus\("Message sent to admin\."\);[\s\S]*?setSendConfirmation\(true\)/);
-  assert.match(dashboardSource, /sendConfirmation \? "✓ Sent to admin" : "Send to admin"/);
+  assert.match(dashboardSource, /sendConfirmation \? "✓ Message sent" : "Send message"/);
   assert.doesNotMatch(liveAppSource, /Dancr Support AI|AI answers|AI replied/);
   assert.doesNotMatch(liveAppSource, /supportStorageKey|readStoredSupportThreads|writeStoredSupportThreads|localSupportThread/);
 });

@@ -481,11 +481,11 @@ export default function DashboardClient({
                 title={effectiveDancerProfileStatus(state.profile, state.account?.accountState) === "approved" ? "Account & support" : "Help & account"}
               >
                 <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
-                  <InfoPanel title="Account">
-                    <Metric label="Status" value={String(state.account?.accountState || "active")} />
-                    <Metric label="Email" value={String(state.account?.email || "Private")} />
-                    <Metric label="Role" value={String(state.account?.role || role)} />
-                  </InfoPanel>
+                  <AccountSummaryPanel
+                    accountState={String(state.account?.accountState || "active")}
+                    email={String(state.account?.email || "Private")}
+                    role={String(state.account?.role || role)}
+                  />
                   <NotificationPanel />
                   <SupportInboxPanel initialThreads={state.supportThreads || []} />
                   <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
@@ -569,6 +569,40 @@ function openDashboardSection(event: MouseEvent<HTMLAnchorElement>, id: string) 
   section?.focus({ preventScroll: true });
 }
 
+function AccountSummaryPanel({
+  accountState,
+  email,
+  role,
+}: {
+  accountState: string;
+  email: string;
+  role: string;
+}) {
+  const statusLabel = accountState.replaceAll("_", " ");
+  const roleLabel = role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}` : "Dancer";
+
+  return (
+    <article className="info-panel account-summary-panel">
+      <div className="account-summary-heading">
+        <h2>Account</h2>
+        <span className={accountState === "active" ? "account-status-pill is-active" : "account-status-pill"}>
+          {statusLabel}
+        </span>
+      </div>
+      <dl className="account-summary-list">
+        <div>
+          <dt>Email</dt>
+          <dd>{email}</dd>
+        </div>
+        <div>
+          <dt>Role</dt>
+          <dd>{roleLabel}</dd>
+        </div>
+      </dl>
+    </article>
+  );
+}
+
 function NotificationPanel({
   saved,
   customerMode = false,
@@ -642,13 +676,12 @@ function NotificationPanel({
           {customerMode ? <span>Updates that matter</span> : null}
           <h2>{customerMode ? "Alerts" : "Notifications"}</h2>
         </div>
-        {customerMode ? <strong>{unreadCount}</strong> : null}
-      </div>
-      <div className="notification-head">
-        <Metric label="Unread" value={String(unreadCount)} />
-        <button type="button" onClick={markAllRead} disabled={!unreadCount}>
-          Mark all read
-        </button>
+        <div className="notification-toolbar">
+          <span className="notification-unread-pill">{unreadCount} unread</span>
+          <button className="notification-mark-read-button" type="button" onClick={markAllRead} disabled={!unreadCount}>
+            Mark all read
+          </button>
+        </div>
       </div>
       <div className="notification-list">
         {notifications.slice(0, customerMode ? 10 : 6).map((notification) => {
@@ -687,15 +720,15 @@ function NotificationPanel({
         })}
         {!notifications.length ? (
           <div className="customer-empty-state compact">
-            <strong>No alerts yet</strong>
-            <p>Follow dancers and clubs to receive schedule and venue updates here.</p>
+            <strong>{customerMode ? "No alerts yet" : "No notifications yet"}</strong>
+            <p>{customerMode ? "Follow dancers and clubs to receive schedule and venue updates here." : "Account and profile updates will appear here."}</p>
             {customerMode ? <Link href={homeDiscoveryHref("dancers")}>Browse dancers</Link> : null}
           </div>
         ) : null}
       </div>
       {notifications.length ? (
         <button className="notification-clear-button" type="button" onClick={clearNotifications}>
-          Clear notifications
+          Clear all
         </button>
       ) : null}
       {status ? <p role="status">{status}</p> : null}
@@ -771,18 +804,21 @@ function SupportInboxPanel({
 
   return (
     <article className="info-panel support-panel" id={panelId}>
-      <h2>Contact Admin</h2>
+      <div className="support-panel-heading">
+        <h2>Help &amp; support</h2>
+        <p>Send a private message to the MyDancr team.</p>
+      </div>
       <form onSubmit={startThread}>
         <label>
           Subject
-          <input value={subject} onChange={(event) => { setSubject(event.target.value); setSendConfirmation(false); }} placeholder="What do you need help with?" required />
+          <input value={subject} onChange={(event) => { setSubject(event.target.value); setSendConfirmation(false); }} placeholder="How can we help?" required />
         </label>
         <label>
           Message
-          <textarea value={message} onChange={(event) => { setMessage(event.target.value); setSendConfirmation(false); }} rows={4} placeholder="Write your message to admin" required />
+          <textarea value={message} onChange={(event) => { setMessage(event.target.value); setSendConfirmation(false); }} rows={4} placeholder="Add the details" required />
         </label>
         <button className={sendConfirmation ? "support-send-button is-sent" : "support-send-button"} type="submit" disabled={isSending}>
-          {isSending ? "Sending..." : sendConfirmation ? "✓ Sent to admin" : "Send to admin"}
+          {isSending ? "Sending..." : sendConfirmation ? "✓ Message sent" : "Send message"}
         </button>
       </form>
       <div className="support-thread-list">
@@ -821,7 +857,7 @@ function SupportInboxPanel({
             </details>
           );
         })}
-        {!threads.length ? <p>No admin messages yet.</p> : null}
+        {!threads.length ? <p>No support conversations yet.</p> : null}
       </div>
       {status ? <p>{status}</p> : null}
     </article>
@@ -890,17 +926,28 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
 
   return (
     <article className="info-panel account-controls-panel">
-      <h2>Account Controls</h2>
+      <div className="account-controls-heading">
+        <h2>Account &amp; security</h2>
+        <p>Manage this session and your account access.</p>
+      </div>
       <div className="account-actions">
-        <button type="button" onClick={() => updateAccount(state === "disabled" ? "active" : "disabled")} disabled={isWorking}>
-          {state === "disabled" ? "Reactivate" : "Disable account"}
-        </button>
-        <button type="button" onClick={signOut}>
-          Sign out
-        </button>
-        <button className="danger-button" type="button" onClick={deleteAccount} disabled={isWorking}>
-          Delete account
-        </button>
+        <div className="account-action-row">
+          <span><strong>Sign out</strong><small>End this session on this device.</small></span>
+          <button className="account-action-button" type="button" onClick={signOut}>Sign out</button>
+        </div>
+        <div className="account-action-row">
+          <span>
+            <strong>{state === "disabled" ? "Reactivate account" : "Disable account"}</strong>
+            <small>{state === "disabled" ? "Restore access to your account." : "Pause access without deleting your account."}</small>
+          </span>
+          <button className="account-action-button" type="button" onClick={() => updateAccount(state === "disabled" ? "active" : "disabled")} disabled={isWorking}>
+            {state === "disabled" ? "Reactivate" : "Disable"}
+          </button>
+        </div>
+        <div className="account-action-row account-danger-row">
+          <span><strong>Delete account</strong><small>Permanently delete this account.</small></span>
+          <button className="account-action-button danger-button" type="button" onClick={deleteAccount} disabled={isWorking}>Delete</button>
+        </div>
         {status ? <p role="status" aria-live="polite">{status}</p> : null}
       </div>
     </article>
@@ -7379,17 +7426,37 @@ function DashboardStyles() {
       .billing-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
       .billing-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
       .billing-actions p { color: #94e5ff; font-size: 14px; }
-      .account-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-      .account-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
-      .account-actions .danger-button { color: #fff; background: rgba(239,68,68,.34); border: 1px solid rgba(248,113,113,.28); }
-      .account-actions p { color: #94e5ff; font-size: 14px; }
-      .notification-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
-      .notification-head button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
-      .notification-head button:disabled, .notification-clear-button:disabled { opacity: .55; cursor: not-allowed; }
-      .notification-title-row { display: flex !important; align-items: center; justify-content: space-between; gap: 12px !important; }
+      .account-summary-panel { align-content: start; }
+      .account-summary-heading { display: flex !important; align-items: center; justify-content: space-between; gap: 12px !important; }
+      .account-summary-heading h2, .support-panel-heading h2, .account-controls-heading h2 { margin: 0; }
+      .account-status-pill { width: fit-content; min-height: 30px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #d7d1df; background: rgba(255,255,255,.045); font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+      .account-status-pill.is-active { border-color: rgba(52,211,153,.3); color: #86efac; background: rgba(6,78,59,.2); }
+      .account-summary-list { display: grid; margin: 0; border-top: 1px solid rgba(255,255,255,.08); }
+      .account-summary-list > div { min-width: 0; min-height: 52px; display: grid; grid-template-columns: 72px minmax(0,1fr); align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
+      .account-summary-list > div:last-child { border-bottom: 0; }
+      .account-summary-list dt { color: #9f96ac; font-size: 12px; font-weight: 850; }
+      .account-summary-list dd { min-width: 0; margin: 0; color: #f8f7fb; font-size: 15px; font-weight: 850; overflow-wrap: anywhere; }
+      .account-controls-heading, .support-panel-heading { display: grid !important; gap: 5px !important; }
+      .account-controls-heading p, .support-panel-heading p { margin: 0; color: #a9a1b3; font-size: 13px; line-height: 1.45; }
+      .account-actions { display: grid !important; gap: 0 !important; }
+      .account-action-row { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 13px 0; border-top: 1px solid rgba(255,255,255,.08); }
+      .account-action-row > span { min-width: 0; display: grid; gap: 3px; }
+      .account-action-row strong { color: #f8f7fb; font-size: 14px; }
+      .account-action-row small { color: #9f96ac; font-size: 12px; line-height: 1.4; }
+      .account-action-button { min-width: 88px; min-height: 40px; border: 1px solid rgba(255,255,255,.13); border-radius: 10px; color: #f8f7fb; background: rgba(255,255,255,.055); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; padding: 0 13px; }
+      .account-action-button:hover { border-color: rgba(196,181,253,.4); background: rgba(124,58,237,.12); }
+      .account-action-button:disabled { opacity: .55; cursor: wait; }
+      .account-danger-row { margin-top: 4px; padding: 12px; border: 1px solid rgba(248,113,113,.2); border-radius: 12px; background: rgba(127,29,29,.08); }
+      .account-actions .danger-button { color: #fecaca; background: rgba(127,29,29,.22); border-color: rgba(248,113,113,.28); }
+      .account-actions p { margin: 10px 0 0; color: #94e5ff; font-size: 14px; }
+      .notification-title-row { display: flex !important; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px !important; }
       .notification-title-row > div { display: grid; gap: 4px; }
+      .notification-toolbar { display: flex !important; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px !important; }
+      .notification-unread-pill { min-height: 32px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #9eeeff; background: rgba(126,234,255,.065); font-size: 11px; font-weight: 900; }
+      .notification-mark-read-button { min-height: 36px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #f5f3f8; background: rgba(255,255,255,.045); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; padding: 0 12px; }
+      .notification-mark-read-button:disabled, .notification-clear-button:disabled { opacity: .45; cursor: not-allowed; }
       .notification-list { display: grid; gap: 10px; }
-      .notification-row { text-align: left; display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; text-decoration: none; }
+      .notification-row { text-align: left; display: grid; gap: 4px; padding: 12px; border-radius: 12px; border: 1px solid rgba(126,234,255,.12); background: rgba(255,255,255,.035); color: #fff; cursor: pointer; text-decoration: none; }
       .notification-row:hover { border-color: rgba(126,234,255,.25); background: rgba(126,234,255,.06); }
       .notification-row.read { opacity: .58; }
       .notification-row span { color: #b9accd; }
@@ -7397,14 +7464,15 @@ function DashboardStyles() {
       .notification-row-meta b { letter-spacing: .08em; text-transform: uppercase; }
       .notification-row-meta time { color: #a99fba; font-variant-numeric: tabular-nums; }
       .notification-row em { color: #7eeaff; font-size: 11px; font-style: normal; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
-      .notification-clear-button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 14px; }
-      .notification-panel p { color: #94e5ff; font-size: 14px; }
-      .support-panel form, .support-thread { display: grid; gap: 10px; }
+      .notification-clear-button { min-height: 38px; justify-self: end; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #c9c3d1; background: transparent; font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; padding: 0 13px; }
+      .notification-panel > p { margin: 0; color: #94e5ff; font-size: 13px; }
+      .support-panel form, .support-thread { display: grid; gap: 12px; }
       .support-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
-      .support-panel input, .support-panel textarea { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .support-panel input { min-height: 42px; }
+      .support-panel input, .support-panel textarea { border-radius: 12px; border: 1px solid rgba(255,255,255,.13); background: rgba(255,255,255,.045); color: #fff; padding: 11px 13px; font: inherit; }
+      .support-panel input { min-height: 46px; }
       .support-panel textarea { resize: vertical; }
-      .support-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .support-panel button { min-height: 44px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #f8f7fb; background: rgba(255,255,255,.06); font: inherit; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .support-panel .support-send-button { border-color: rgba(196,181,253,.5); background: linear-gradient(135deg, #6d28d9, #4c1d95); box-shadow: 0 10px 24px rgba(76,29,149,.2); }
       .support-panel button:disabled { opacity: .62; cursor: wait; }
       .support-panel .support-send-button.is-sent { border: 1px solid var(--dancr-color-success-medium); color: #a7f3d0; background: var(--dancr-color-success-soft); box-shadow: inset 0 0 0 1px var(--dancr-color-success-soft), 0 0 18px var(--dancr-color-success-soft); }
       .support-thread-list { display: grid; gap: 10px; }
@@ -8025,6 +8093,7 @@ function DashboardStyles() {
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-logo-panel, .venue-logo-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-logo-panel > img, .venue-logo-empty, .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-logo-panel > img, .venue-logo-empty { justify-self: start; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
+      @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dashboard-shell-dancer .dashboard-section-summary > summary { min-height: 62px; padding: 12px 14px; } .dashboard-shell-dancer .dashboard-section-primary > summary { min-height: 74px; padding: 14px; } .dashboard-shell-dancer .dashboard-section-secondary > summary { min-height: 68px; padding: 13px 14px; } .dashboard-shell-dancer .dashboard-section-utility > summary { min-height: 60px; padding: 11px 14px; } .dancer-status-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .dashboard-shell-dancer .dancer-status-metrics .metric { min-height: 64px; padding: 9px 10px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-dashboard-profile-preview { grid-template-columns: 42px minmax(0,1fr); gap: 9px 11px; padding: 13px; } .dancer-dashboard-profile-preview-icon { width: 40px; height: 40px; } .dancer-dashboard-profile-preview-button { grid-column: 1 / -1; width: 100%; min-height: 46px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
