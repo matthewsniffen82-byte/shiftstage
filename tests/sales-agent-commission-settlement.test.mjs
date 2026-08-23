@@ -2,15 +2,20 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [migration, salesAgentService, agentSync, financeAutomation, adminRoute, agentRoute, adminPanel, agentDashboard] = await Promise.all([
+const [migration, referralMigration, salesAgentService, venueSignupService, agentSync, financeAutomation, adminRoute, agentRoute, adminPanel, adminDashboard, agentDashboard, liveApp, clubJoinPage] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220003_agent_commission_nats_settlement.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608220004_agent_referral_onboarding.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/sales-agents.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/venue-signup-requests.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/nats-commission-sync.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance-automation.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/sales-agents/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/agent/commissions/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminSalesAgentPanel.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/agent/AgentDashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../app/clubs/join/page.tsx", import.meta.url), "utf8"),
 ]);
 
 test("verified cashier NFC revenue creates the fixed agent allocation without changing dancer tiers", () => {
@@ -63,4 +68,50 @@ test("admin and agent surfaces require authenticated server boundaries and expos
   assert.match(salesAgentService, /function getPublicNatsRuntimeConfig/);
   const publicConfig = salesAgentService.match(/function getPublicNatsRuntimeConfig\(\)[\s\S]*?\n}/)?.[0] || "";
   assert.doesNotMatch(publicConfig, /apiKey|apiUsername|baseUrl/);
+});
+
+test("each approved agent receives an unguessable club referral link", () => {
+  assert.match(referralMigration, /add column if not exists referral_code text/);
+  assert.match(referralMigration, /encode\(gen_random_bytes\(18\), 'hex'\)/);
+  assert.match(referralMigration, /sales_agents_referral_code_check/);
+  assert.match(referralMigration, /sales_agents_referral_code_idx/);
+  assert.match(salesAgentService, /referralUrl: `\$\{publicAppUrl\(\)\}\/clubs\/join\?agent=\$\{encodeURIComponent\(agent\.referral_code\)\}`/);
+  assert.match(agentDashboard, /Share club link/);
+  assert.match(agentDashboard, /Copy link/);
+  assert.match(agentDashboard, /navigator\.share/);
+  assert.match(clubJoinPage, /venueRequest=1&agent=/);
+});
+
+test("agent referral attribution is private, verified, and atomic with venue approval", () => {
+  assert.match(referralMigration, /add column if not exists referring_agent_id uuid/);
+  assert.match(referralMigration, /references public\.sales_agents\(id\) on delete restrict/);
+  assert.match(referralMigration, /create trigger venue_signup_requests_attribute_agent/);
+  assert.match(referralMigration, /after update of status on public\.venue_signup_requests/);
+  assert.match(referralMigration, /new\.status = 'approved'/);
+  assert.match(referralMigration, /insert into public\.venue_sales_attributions/);
+  assert.match(referralMigration, /'verified-venue-request:' \|\| new\.id::text/);
+  assert.doesNotMatch(referralMigration, /insert into public\.agent_commission_events/);
+  assert.match(venueSignupService, /resolveReferringAgent/);
+  assert.match(venueSignupService, /\.eq\("status", "active"\)/);
+  assert.match(venueSignupService, /Confirm the referring agent before approving/);
+  assert.match(adminDashboard, /confirmAgentReferral:/);
+  assert.match(adminDashboard, /Confirm agent & approve/);
+});
+
+test("the real club request carries the agent token without exposing commission data", () => {
+  assert.match(liveApp, /let pendingVenueAgentReferralCode = ""/);
+  assert.match(liveApp, /agentReferralCode: pendingVenueAgentReferralCode \|\| null/);
+  assert.match(liveApp, /url\.searchParams\.get\("agent"\)/);
+  assert.match(liveApp, /url\.searchParams\.delete\("agent"\)/);
+  assert.doesNotMatch(liveApp, /agentCommissionCents: pendingVenueAgentReferralCode/);
+});
+
+test("agent dashboard reports the referral pipeline, immutable agreements, and real commission states", () => {
+  assert.match(salesAgentService, /from\("venue_signup_requests"\)/);
+  assert.match(salesAgentService, /pendingReferralCount/);
+  assert.match(salesAgentService, /liveReferredVenueCount/);
+  assert.match(agentDashboard, /Clubs you introduced/);
+  assert.match(agentDashboard, /Confirmed club attribution/);
+  assert.match(agentDashboard, /Commission ledger/);
+  assert.match(agentDashboard, /Download statement/);
 });

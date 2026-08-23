@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       adminId: user.id,
       decision,
       notes: typeof body?.notes === "string" ? body.notes : null,
+      confirmAgentReferral: body?.confirmAgentReferral === true,
     });
 
     const emailDelivered = result.emailDelivery?.delivered === true;

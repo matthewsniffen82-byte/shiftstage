@@ -40098,6 +40098,7 @@
     let verifiedVenueSignupCode = "";
     let verifiedVenueSignupPreview = null;
     let pendingVenueAuthReturnTo = "";
+    let pendingVenueAgentReferralCode = "";
     let adminAuthMode = "login";
     let adminApprovedDancerSearch = "";
     let adminDisapprovedDancerSearch = "";
@@ -50751,6 +50752,7 @@
 
     function closeAuthPage() {
       pendingVenueAuthReturnTo = "";
+      pendingVenueAgentReferralCode = "";
       clearAuthFields("all");
       closeRecoveryPopover(passwordRecoveryCard, false);
       closeRecoveryPopover(loginRecoveryCard, false);
@@ -59556,7 +59558,8 @@
             contactPhone: document.getElementById("venueRequestContactPhone").value.trim(),
             message: document.getElementById("venueRequestMessage").value.trim(),
             companyFax: document.getElementById("venueRequestCompanyFax").value,
-            authorizedToRepresentVenue: document.getElementById("venueRequestAuthorization").checked
+            authorizedToRepresentVenue: document.getElementById("venueRequestAuthorization").checked,
+            agentReferralCode: pendingVenueAgentReferralCode || null
           })
         });
         const payload = await response.json().catch(() => ({}));
@@ -59565,6 +59568,7 @@
         }
 
         form.reset();
+        pendingVenueAgentReferralCode = "";
         submit.classList.add("is-submitted");
         submit.textContent = "✓ Request received";
         setVenueRequestStatus(
@@ -61473,6 +61477,7 @@
       const legacySignup = url.searchParams.get("venueSignup") === "1";
       const venueAccessRequested = url.searchParams.get("venueAccess") === "1";
       const venueRequestRequested = url.searchParams.get("venueRequest") === "1";
+      const agentReferralCode = String(url.searchParams.get("agent") || "").trim().toLowerCase();
       if (!legacySignup && !venueAccessRequested && !venueRequestRequested) return false;
 
       const mode = legacySignup || url.searchParams.get("venueMode") === "signup" ? "signup" : "login";
@@ -61483,11 +61488,13 @@
       url.searchParams.delete("venueSignup");
       url.searchParams.delete("venueAccess");
       url.searchParams.delete("venueRequest");
+      url.searchParams.delete("agent");
       url.searchParams.delete("venueMode");
       url.searchParams.delete("return_to");
       window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
 
       pendingVenueAuthReturnTo = safeReturnTo;
+      pendingVenueAgentReferralCode = venueRequestRequested ? agentReferralCode : "";
       if (venueRequestRequested) {
         openAuthPage();
         openVenueRequest();

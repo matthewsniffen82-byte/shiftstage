@@ -26,6 +26,12 @@ const REQUEST_COLUMNS = `
   status,
   matched_venue_id,
   access_code_id,
+  referring_agent_id,
+  referring_agent:sales_agents!venue_signup_requests_referring_agent_id_fkey(
+    id,
+    status,
+    account:app_users!sales_agents_user_id_fkey(display_name, email)
+  ),
   reviewed_by,
   review_notes,
   submitted_at,
@@ -48,6 +54,7 @@ export type VenueSignupRequestInput = {
   contactPhone?: unknown;
   message?: unknown;
   authorizedToRepresentVenue?: unknown;
+  agentReferralCode?: unknown;
 };
 
 export async function createVenueSignupRequest(
@@ -56,6 +63,7 @@ export async function createVenueSignupRequest(
   requestIp: string,
 ) {
   const normalized = normalizeVenueSignupRequest(input);
+  const referringAgentId = await resolveReferringAgent(client, input.agentReferralCode);
   const requestIpHash = hashVenueClaimRequestIp(requestIp);
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const db = client as any;
@@ -99,6 +107,7 @@ export async function createVenueSignupRequest(
       contact_phone: normalized.contactPhone,
       message: normalized.message,
       request_ip_hash: requestIpHash,
+      referring_agent_id: referringAgentId,
     })
     .select(REQUEST_COLUMNS)
     .single();
@@ -137,6 +146,7 @@ export async function reviewVenueSignupRequest(
     adminId: string;
     decision: "approved" | "rejected";
     notes?: string | null;
+    confirmAgentReferral?: boolean;
   },
 ) {
   const requestId = requiredText(input.requestId, "Venue signup request is required.", 1, 80);
@@ -145,6 +155,17 @@ export async function reviewVenueSignupRequest(
 
   if (input.decision === "rejected" && !notes) {
     throw new VenueSignupRequestUserError("Add a reason before rejecting this venue request.");
+  }
+
+  const { data: pendingRequest, error: pendingRequestError } = await (client as any)
+    .from("venue_signup_requests")
+    .select("id, referring_agent_id")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (pendingRequestError) throw pendingRequestError;
+  if (!pendingRequest) throw new VenueSignupRequestUserError("Venue signup request not found.");
+  if (input.decision === "approved" && pendingRequest.referring_agent_id && input.confirmAgentReferral !== true) {
+    throw new VenueSignupRequestUserError("Confirm the referring agent before approving this venue request.");
   }
 
   const credential = input.decision === "approved" ? createVenueSignupCredential() : null;
@@ -309,12 +330,40 @@ function mapVenueSignupRequest(row: any) {
     status: String(row.status || "pending"),
     matchedVenueId: row.matched_venue_id ? String(row.matched_venue_id) : null,
     accessCodeId: row.access_code_id ? String(row.access_code_id) : null,
+    referringAgentId: row.referring_agent_id ? String(row.referring_agent_id) : null,
+    referringAgentName: agentAccountLabel(row.referring_agent),
     reviewedBy: row.reviewed_by ? String(row.reviewed_by) : null,
     reviewNotes: row.review_notes ? String(row.review_notes) : null,
     submittedAt: row.submitted_at ? String(row.submitted_at) : null,
     reviewedAt: row.reviewed_at ? String(row.reviewed_at) : null,
     updatedAt: row.updated_at ? String(row.updated_at) : null,
   };
+}
+
+async function resolveReferringAgent(client: DancrClient, value: unknown) {
+  if (value === undefined || value === null || value === "") return null;
+  const code = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!/^[0-9a-f]{36}$/.test(code)) {
+    throw new VenueSignupRequestUserError("This agent referral link is invalid or no longer active.");
+  }
+  const { data, error } = await (client as any)
+    .from("sales_agents")
+    .select("id")
+    .eq("referral_code", code)
+    .eq("status", "active")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.id) {
+    throw new VenueSignupRequestUserError("This agent referral link is invalid or no longer active.");
+  }
+  return String(data.id);
+}
+
+function agentAccountLabel(value: any) {
+  const agent = Array.isArray(value) ? value[0] || null : value || null;
+  const account = Array.isArray(agent?.account) ? agent.account[0] || null : agent?.account || null;
+  if (!account) return null;
+  return String(account.display_name || account.email || "Sales agent");
 }
 
 function mapApprovedVenue(row: any) {

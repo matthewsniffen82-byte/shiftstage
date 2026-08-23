@@ -544,8 +544,8 @@ export default function DashboardClient({
 
 function AgentDashboardShortcut() {
   return <Link className="agent-dashboard-shortcut" href="/dashboard/agent">
-    <span><small>Venue sales</small><strong>Open sales agent commissions</strong></span>
-    <b>View NATS settlement →</b>
+    <span><small>Venue partnerships</small><strong>Club referrals & commissions</strong></span>
+    <b>Open agent dashboard →</b>
   </Link>;
 }
 function CustomerDashboardTabs() {

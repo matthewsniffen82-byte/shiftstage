@@ -67,7 +67,9 @@ test("the live venue request form submits the verified business contact for revi
 });
 
 test("club owners can find a direct request-first entry point throughout discovery", () => {
-  assert.match(clubJoinPage, /redirect\("\/\?venueRequest=1"\)/);
+  assert.match(clubJoinPage, /searchParams: Promise<\{ agent\?: string \| string\[\] \}>/);
+  assert.match(clubJoinPage, /`\/\?venueRequest=1&agent=\$\{encodeURIComponent\(referral\.slice\(0, 128\)\)\}`/);
+  assert.match(clubJoinPage, /"\/\?venueRequest=1"/);
   assert.match(liveApp, /class="utility-menu-item utility-menu-club-join" href="\/clubs\/join">List Your Club</);
   assert.match(liveApp, /id="clubListDirectoryCta" href="\/clubs\/join" hidden>List Your Club</);
   assert.match(liveApp, /Own or manage a club\?/);

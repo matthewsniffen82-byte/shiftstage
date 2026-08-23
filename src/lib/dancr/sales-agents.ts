@@ -79,7 +79,7 @@ export async function assignAdminVenueSalesAgent(client: DancrClient, input: {
 export async function getAdminSalesAgentProgram(client: DancrClient) {
   const [agentsResult, usersResult, venuesResult, attributionsResult, commissionsResult,
     natsAccountsResult, natsExportsResult] = await Promise.all([
-    (client as any).from("sales_agents").select("id, user_id, sponsor_agent_id, status, commission_depth_limit, created_at, updated_at").order("created_at").limit(500),
+    (client as any).from("sales_agents").select("id, user_id, sponsor_agent_id, status, commission_depth_limit, referral_code, created_at, updated_at").order("created_at").limit(500),
     (client as any).from("app_users").select("id, display_name, email, role, account_state").eq("account_state", "active").order("display_name").limit(1000),
     (client as any).from("venues").select("id, name, city, state, is_active").eq("is_active", true).order("name").limit(1000),
     (client as any).from("venue_sales_attributions").select("id, venue_id, signing_agent_id, sponsor_level_1_agent_id, sponsor_level_2_agent_id, sponsor_level_3_agent_id, sponsor_level_4_agent_id, sponsor_level_5_agent_id, agreement_reference, effective_from, superseded_at, created_at").order("effective_from", { ascending: false }).limit(1000),
@@ -123,31 +123,39 @@ export async function getAdminSalesAgentProgram(client: DancrClient) {
 
 export async function getAgentCommissionDashboard(client: DancrClient, userId: string) {
   const { data: agent, error: agentError } = await (client as any).from("sales_agents")
-    .select("id, user_id, status, commission_depth_limit").eq("user_id", userId).maybeSingle();
+    .select("id, user_id, status, commission_depth_limit, referral_code").eq("user_id", userId).maybeSingle();
   if (agentError) throw agentError;
   if (!agent || agent.status !== "active") throw new Error("Active sales agent access required.");
-  const [accountResult, commissionsResult, attributionsResult, natsAccountResult, natsExportsResult] = await Promise.all([
+  const [accountResult, commissionsResult, attributionsResult, referralRequestsResult, natsAccountResult, natsExportsResult] = await Promise.all([
     (client as any).from("app_users").select("display_name, email").eq("id", userId).maybeSingle(),
     (client as any).from("agent_commission_events").select("id, venue_id, sponsor_level, share_bps, amount_cents, currency, status, commission_month, venue_payment_received_at, payable_at, paid_at, payout_reference, created_at, venues(name)").eq("recipient_agent_id", agent.id).order("created_at", { ascending: false }).limit(5000),
-    (client as any).from("venue_sales_attributions").select("id, venue_id, agreement_reference, effective_from, superseded_at, venues(name)").eq("signing_agent_id", agent.id).order("effective_from", { ascending: false }).limit(500),
+    (client as any).from("venue_sales_attributions").select("id, venue_id, agreement_reference, effective_from, superseded_at, venues(name, city, state, is_active, published_at)").eq("signing_agent_id", agent.id).order("effective_from", { ascending: false }).limit(500),
+    (client as any).from("venue_signup_requests").select("id, venue_name, city, state, status, matched_venue_id, submitted_at, reviewed_at, venue:venues!venue_signup_requests_matched_venue_id_fkey(name, slug, is_active, published_at)").eq("referring_agent_id", agent.id).order("submitted_at", { ascending: false }).limit(500),
     (client as any).from("nats_agent_affiliate_accounts").select("agent_id, login_id, username, status, requested_at, activated_at, last_error").eq("agent_id", agent.id).maybeSingle(),
     (client as any).from("nats_agent_commission_exports").select("id, agent_commission_event_id, amount_cents, currency, status, attempt_count, exported_at, last_error, created_at").eq("agent_id", agent.id).order("created_at", { ascending: false }).limit(500),
   ]);
-  for (const result of [accountResult, commissionsResult, attributionsResult, natsAccountResult, natsExportsResult]) {
+  for (const result of [accountResult, commissionsResult, attributionsResult, referralRequestsResult, natsAccountResult, natsExportsResult]) {
     if (result.error) throw result.error;
   }
   const rows = commissionsResult.data || [];
   const total = (status: string) => rows.filter((row: any) => row.status === status)
     .reduce((sum: number, row: any) => sum + Number(row.amount_cents || 0), 0);
+  const referrals = referralRequestsResult.data || [];
+  const activeAttributions = (attributionsResult.data || []).filter((row: any) => !row.superseded_at);
   return {
     agent: { id: agent.id, displayName: accountResult.data?.display_name || accountResult.data?.email || "Sales agent",
       email: accountResult.data?.email || null, commissionDepthLimit: agent.commission_depth_limit,
       designation: agent.commission_depth_limit === 5 ? "Founding Agent" : "Sales Agent" },
+    referralUrl: `${publicAppUrl()}/clubs/join?agent=${encodeURIComponent(agent.referral_code)}`,
     policy: AGENT_COMMISSION_POLICY, nats: getPublicNatsRuntimeConfig(), natsAccount: natsAccountResult.data,
     natsExports: natsExportsResult.data || [],
     metrics: { pendingVenuePaymentCents: total("pending_venue_payment"), payableCents: total("payable"),
-      paidCents: total("paid"), signedVenueCount: (attributionsResult.data || []).filter((row: any) => !row.superseded_at).length },
-    commissions: rows, signedVenues: attributionsResult.data || [],
+      paidCents: total("paid"), signedVenueCount: activeAttributions.length,
+      referredVenueCount: referrals.length,
+      pendingReferralCount: referrals.filter((row: any) => row.status === "pending").length,
+      approvedReferralCount: referrals.filter((row: any) => row.status === "approved").length,
+      liveReferredVenueCount: referrals.filter((row: any) => firstJoined(row.venue)?.is_active === true).length },
+    commissions: rows, signedVenues: attributionsResult.data || [], referralRequests: referrals,
   };
 }
 
@@ -169,3 +177,8 @@ function csvCell(value: unknown) {
 }
 
 function firstJoined(value: any) { return Array.isArray(value) ? value[0] || null : value || null; }
+
+function publicAppUrl() {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.DANCR_PUBLIC_URL || "https://mydancr.com";
+  return configured.replace(/\/$/, "");
+}

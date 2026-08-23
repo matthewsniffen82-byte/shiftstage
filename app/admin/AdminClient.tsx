@@ -2059,6 +2059,7 @@ function VenueSignupRequestQueue({
           requestId,
           decision,
           notes: notes || null,
+          confirmAgentReferral: decision === "approved" && Boolean(asText(request.referringAgentId)),
         }),
       });
       const data = await response.json().catch(() => null);
@@ -2149,7 +2150,7 @@ function VenueSignupRequestQueue({
               <summary>
                 <span>
                   <strong>{asText(request.venueName) || "Venue request"}</strong>
-                  <small>{[asText(request.city), asText(request.state)].filter(Boolean).join(", ")} · {asText(request.contactName)}</small>
+                  <small>{[asText(request.city), asText(request.state)].filter(Boolean).join(", ")} · {asText(request.contactName)}{request.referringAgentId ? ` · Referred by ${asText(request.referringAgentName) || "sales agent"}` : ""}</small>
                 </span>
                 <span className="venue-disclosure" aria-hidden="true">⌄</span>
               </summary>
@@ -2161,11 +2162,14 @@ function VenueSignupRequestQueue({
                   <div><dt>Business phone</dt><dd><a href={`tel:${asText(request.contactPhone)}`}>{asText(request.contactPhone)}</a></dd></div>
                   {request.website ? <div><dt>Website</dt><dd><a href={asText(request.website)} target="_blank" rel="noopener noreferrer">Open website</a></dd></div> : null}
                   {request.message ? <div><dt>Request note</dt><dd>{asText(request.message)}</dd></div> : null}
+                  {request.referringAgentId ? <div><dt>Agent referral</dt><dd>{asText(request.referringAgentName) || "Active sales agent"} · confirm this relationship before approval</dd></div> : null}
                   <div><dt>Submitted</dt><dd>{formatDate(request.submittedAt)}</dd></div>
                 </dl>
                 <div className="venue-request-private-workspace">
-                  <strong>Approval creates a private venue workspace</strong>
-                  <small>The venue manager receives a one-time signup code, completes the page and Club Deals, previews it, and publishes it when ready.</small>
+                  <strong>{request.referringAgentId ? "Approval confirms the agent referral" : "Approval creates a private venue workspace"}</strong>
+                  <small>{request.referringAgentId
+                    ? `Confirm that ${asText(request.referringAgentName) || "the listed sales agent"} introduced this club. Approval creates an immutable commission attribution and the private venue workspace.`
+                    : "The venue manager receives a one-time signup code, completes the page and Club Deals, previews it, and publishes it when ready."}</small>
                 </div>
                 <label>
                   Review notes
@@ -2180,7 +2184,7 @@ function VenueSignupRequestQueue({
                 </label>
                 <div className="venue-request-actions">
                   <button type="button" disabled={isBusy} onClick={() => reviewRequest(request, "approved")}>
-                    {isBusy ? "Working..." : "Approve & send access"}
+                    {isBusy ? "Working..." : request.referringAgentId ? "Confirm agent & approve" : "Approve & send access"}
                   </button>
                   <button className="secondary" type="button" disabled={isBusy} onClick={() => reviewRequest(request, "rejected")}>
                     Reject request
