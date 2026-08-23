@@ -47,7 +47,7 @@ test("admin UI provides the complete mobile operations workspace", () => {
   assert.match(client, /Revenue & deal health/);
   assert.match(client, /Growth & engagement/);
   assert.match(client, /Recent admin activity/);
-  assert.match(client, /Dancers, customers, venues & admins/);
+  assert.match(client, /Dancers, guests, venues & admins/);
   assert.match(client, /Platform health/);
   assert.match(client, /admin-workspace-nav/);
   assert.match(client, /@media \(max-width: 680px\)/);

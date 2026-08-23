@@ -21,7 +21,7 @@ test("the phone editor uses a full-width, compact schedule and Club Deal hierarc
 });
 
 test("editor guidance and unavailable profile QR messaging stay concise", () => {
-  assert.match(liveApp, /This is how your next shift appears to customers\./);
+  assert.match(liveApp, /This is how your next shift appears to guests\./);
   assert.match(liveApp, /Available when dancer is working/);
   assert.doesNotMatch(liveApp, /Unlocks after you verify you're working and the venue has an active offer\./);
   assert.match(liveApp, /This is the dancer's next posted shift\. Follow or turn on notifications for schedule updates\./);

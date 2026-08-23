@@ -324,7 +324,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       {workspace?.profileEligible && !workspace.profileVisible ? (
         <div className="tv-studio-incognito">
           <strong>Incognito is on</strong>
-          <p>Your approved videos remain saved but are hidden from customers until you turn your profile back on.</p>
+          <p>Your approved videos remain saved but are hidden from guests until you turn your profile back on.</p>
         </div>
       ) : null}
 

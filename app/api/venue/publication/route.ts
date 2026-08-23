@@ -24,12 +24,12 @@ export async function POST(request: Request) {
       action: "profile.venue_published",
       targetType: "venue",
       targetId: result.profile.id,
-      summary: "The completed venue page was published to customers.",
+      summary: "The completed venue page was published to guests.",
     });
     return NextResponse.json({
       ok: true,
       ...result,
-      message: "Venue published. Customers can now find it on MyDancr.",
+      message: "Venue published. Guests can now find it on MyDancr.",
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return apiError(error, "Unable to publish venue.", 400);

@@ -192,8 +192,8 @@ test("expanded profile status stays visible and uses compact non-repeating contr
 test("profile visibility is one compact control and NFC management stays behind Manage", () => {
   assert.match(dashboard, /<h2>Profile visibility<\/h2>/);
   assert.match(dashboard, /className="visibility-state"[\s\S]*?"Public" : "Incognito"[\s\S]*?aria-hidden="true">·[\s\S]*?"Visible" : "Hidden"/);
-  assert.match(dashboard, /Customers can find your approved profile across MyDancr\./);
-  assert.match(dashboard, /Your profile is hidden from customers; your dashboard and tools stay available\./);
+  assert.match(dashboard, /Guests can find your approved profile across MyDancr\./);
+  assert.match(dashboard, /Your profile is hidden from guests; your dashboard and tools stay available\./);
   assert.match(dashboard, /className="visibility-toggle"[\s\S]*?"Go incognito" : "Make profile public"/);
   assert.match(dashboard, /\.visibility-panel button\.visibility-toggle \{ width: fit-content; min-height: 44px;[^}]*border-radius: 999px; font-size: 11px;/);
   assert.doesNotMatch(dashboard, /Profile is live\. Press Go incognito/);
@@ -279,7 +279,7 @@ test("photo and video uploaders auto-upload multiple phone files with independen
 });
 
 test("the full profile preview renders approved media and restores the dashboard position", () => {
-  assert.match(dashboard, /Customer profile preview/);
+  assert.match(dashboard, /Guest profile preview/);
   assert.match(dashboard, /draftIdentity\.stageName/);
   assert.match(dashboard, /draftIdentity\.city/);
   assert.match(dashboard, /pending_avatar_review/);
@@ -299,7 +299,7 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /Avatar moderation is in progress/);
 });
 
-test("approved dancers preview their customer view from inside Profile & media", () => {
+test("approved dancers preview their guest view from inside Profile & media", () => {
   const profileMediaWorkspace = dashboard.match(/const profileMediaWorkspace = \([\s\S]*?\n  \);/)?.[0] || "";
 
   assert.match(dashboard, /const isPublic = isApproved && profile\?\.is_public !== false && profile\?\.isPublic !== false/);
@@ -310,7 +310,7 @@ test("approved dancers preview their customer view from inside Profile & media",
   assert.ok(profileMediaWorkspace.indexOf("dancer-profile-media-preview") < profileMediaWorkspace.indexOf("{identityContent}"));
   assert.doesNotMatch(dashboard, /dancer-dashboard-profile-preview/);
   assert.match(dashboard, /Public profile preview/);
-  assert.match(dashboard, /This is how your approved profile appears to customers/);
+  assert.match(dashboard, /This is how your approved profile appears to guests/);
   assert.match(dashboard, /\.dancer-profile-media-preview-button \{[^}]*min-height: 44px/);
   assert.match(dashboard, /\.dancer-profile-media-preview-button \{ grid-column: 1 \/ -1; width: 100%; min-height: 46px/);
 });

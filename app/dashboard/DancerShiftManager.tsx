@@ -114,7 +114,7 @@ export default function DancerShiftManager() {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to end Working Now.");
       setWorkingNowStatusKind("success");
-      setWorkingNowStatus("Working Now ended. Customers no longer see you in Working Now.");
+      setWorkingNowStatus("Working Now ended. Guests no longer see you in Working Now.");
       try {
         await load();
       } catch {
@@ -190,7 +190,7 @@ export default function DancerShiftManager() {
               <div className="shift-end-confirmation" role="alertdialog" aria-labelledby="shift-end-confirmation-heading" aria-describedby="shift-end-confirmation-description">
                 <span>
                   <strong id="shift-end-confirmation-heading">End Working Now?</strong>
-                  <small id="shift-end-confirmation-description">Customers will stop seeing you in Working Now immediately. Your tap cooldown will still apply.</small>
+                  <small id="shift-end-confirmation-description">Guests will stop seeing you in Working Now immediately. Your tap cooldown will still apply.</small>
                 </span>
                 <div>
                   <button autoFocus className="shift-end-cancel" type="button" disabled={saving} onClick={() => setEndConfirmationOpen(false)}>Keep working</button>
@@ -247,7 +247,7 @@ export default function DancerShiftManager() {
 
       <div className="shift-list-head">
         <strong>Upcoming dates</strong>
-        <small>These tell customers where you plan to be. Tap the dressing-room NFC tag when you arrive to appear in Now.</small>
+        <small>These tell guests where you plan to be. Tap the dressing-room NFC tag when you arrive to appear in Now.</small>
       </div>
       <div className="shift-list">
         {postedDates.map((shift) => (

@@ -196,7 +196,7 @@ export default function VenueNfcTagPanel({
       </div>
       <div className="venue-nfc-flow" aria-label="NFC workflow">
         <section><b>1</b><span><strong>Dressing room</strong><small>Dancer taps → venue access is authorized → Working Now starts for six hours. Retaps cannot extend it, and a six-hour cooldown follows.</small></span></section>
-        <section><b>2</b><span><strong>Cashier</strong><small>Customer opens a selected Club Deal → taps the cashier sticker → redemption and attribution are recorded.</small></span></section>
+        <section><b>2</b><span><strong>Cashier</strong><small>Guest opens a selected Club Deal → taps the cashier sticker → redemption and attribution are recorded.</small></span></section>
       </div>
       <section className="nfc-supply-note" aria-label="NFC sticker support">
         <strong>Installation only</strong>

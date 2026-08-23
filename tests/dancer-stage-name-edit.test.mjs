@@ -10,7 +10,7 @@ const [liveApp, profileRoute, dashboard] = await Promise.all([
 
 test("the full-screen dancer Edit Profile experience exposes the public stage name", () => {
   assert.match(liveApp, /id="approvedVisualStageName" data-approved-stage-name-input/);
-  assert.match(liveApp, /This is the public name customers see on dancer cards, MyDancr TV, schedules, and your full profile\./);
+  assert.match(liveApp, /This is the public name guests see on dancer cards, MyDancr TV, schedules, and your full profile\./);
   assert.match(liveApp, /data-approved-stage-name-preview/);
   assert.match(liveApp, /\["profileStageName", "approvedControlStageName"\][\s\S]*?approvedStageNameInput\.value/);
   assert.match(liveApp, /validateDancerStageName\(approvedProfileFieldValue\("profileStageName", "approvedControlStageName"\)\)/);

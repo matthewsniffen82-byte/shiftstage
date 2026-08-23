@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const { client, user } = await createRequestSupabaseContext(request);
     const account = await getOwnAccount(client, user.id);
     if (!isSupportUserRole(account.role)) {
-      return NextResponse.json({ ok: false, error: "Support messaging is available for customer, dancer, and venue accounts." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Support messaging is available for guest, dancer, and venue accounts." }, { status: 403 });
     }
     const threads = await listOwnSupportThreads(client, user.id);
     return NextResponse.json({ ok: true, threads });
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const { client, user } = await createRequestSupabaseContext(request);
     const account = await getOwnAccount(client, user.id);
     if (!isSupportUserRole(account.role)) {
-      return NextResponse.json({ ok: false, error: "Support messaging is available for customer, dancer, and venue accounts." }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "Support messaging is available for guest, dancer, and venue accounts." }, { status: 403 });
     }
 
     const body = await request.json();

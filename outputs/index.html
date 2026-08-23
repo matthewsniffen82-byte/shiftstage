@@ -38231,7 +38231,7 @@
         </div>
         <div class="auth-card">
           <h3>Private by default</h3>
-          <p>Customer profiles are not public. Dancr has no private messaging, no public follows, and no public going list.</p>
+          <p>Guest profiles are not public. Dancr has no private messaging, no public follows, and no public going list.</p>
         </div>
       </div>
     </section>
@@ -38316,12 +38316,12 @@
           </div>
           <div class="auth-form-head auth-selected-role">
             <strong id="authRoleTitle">One sign-in for every account</strong>
-            <span id="authRoleSubtitle">Use the email and password for your customer, dancer, or venue account.</span>
+            <span id="authRoleSubtitle">Use the email and password for your guest, dancer, or venue account.</span>
           </div>
           <div class="role-options auth-role-grid" id="authOverview" aria-label="Choose account type" hidden>
             <button class="role-option account-option auth-account-choice" id="customerSignupBtn" type="button">
               <span class="auth-account-choice-number" aria-hidden="true">1</span>
-              <span><strong>Customer</strong><small>Save dancers, clubs, Club Deals, and alerts privately.</small></span>
+              <span><strong>Guest</strong><small>Save dancers, clubs, Club Deals, and alerts privately.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
             <button class="role-option account-option auth-account-choice" id="openDancerSignup" type="button">
@@ -38366,7 +38366,7 @@
                 </button>
               </div>
             </div>
-            <div class="rule-note auth-signup-note" id="customerSignupNote" hidden>Your customer account is private. We’ll email you a confirmation link after you create it.</div>
+            <div class="rule-note auth-signup-note" id="customerSignupNote" hidden>Your guest account is private. We’ll email you a confirmation link after you create it.</div>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
@@ -38537,7 +38537,7 @@
                 <div class="field">
                   <label for="loginRecoveryRole">Account type</label>
                   <select id="loginRecoveryRole" required>
-                    <option value="customer">Customer</option>
+                    <option value="customer">Guest</option>
                     <option value="dancer">Dancer</option>
                     <option value="venue">Venue</option>
                   </select>
@@ -38676,14 +38676,14 @@
                 <span class="dancer-live-pill" id="dancerDashboardVisibilityPill">Public</span>
                 <div>
                   <strong id="dancerDashboardOverviewTitle">Your profile is live</strong>
-                  <span id="dancerDashboardOverviewCopy">Keep your next shift current so customers know where to find you.</span>
+                  <span id="dancerDashboardOverviewCopy">Keep your next shift current so guests know where to find you.</span>
                 </div>
               </div>
               <section class="dancer-next-shift" aria-labelledby="dancerDashboardShiftTitle">
                 <div class="dancer-next-shift-copy">
                   <span class="eyebrow" id="dancerDashboardShiftKicker">Next shift</span>
                   <h3 id="dancerDashboardShiftTitle">No shift posted</h3>
-                  <p id="dancerDashboardShiftDetail">Post your schedule so customers can find you at the right venue.</p>
+                  <p id="dancerDashboardShiftDetail">Post your schedule so guests can find you at the right venue.</p>
                 </div>
                 <button class="dancer-shift-primary" id="dancerDashboardShiftAction" type="button" data-dancer-control-action="dashboard-primary" data-dashboard-shift-action="post-schedule">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"></path></svg>
@@ -38692,7 +38692,7 @@
                 <div class="approved-tool-dropdown" id="approvedScheduleDropdown" hidden>
                   <div class="approved-tool-dropdown-head">
                     <strong>Post schedule</strong>
-                    <span>Add or update the shift customers see on your public profile and venue page.</span>
+                    <span>Add or update the shift guests see on your public profile and venue page.</span>
                   </div>
                   <div class="approved-tool-dropdown-actions">
                     <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse post schedule</button>
@@ -38707,7 +38707,7 @@
                 </button>
                 <button type="button" data-dancer-control-action="preview-profile">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
-                  <span><strong>Preview profile</strong><small>Customer view</small></span>
+                  <span><strong>Preview profile</strong><small>Guest view</small></span>
                 </button>
                 <button type="button" data-dancer-control-action="share-profile">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"></circle><circle cx="6" cy="12" r="2"></circle><circle cx="18" cy="19" r="2"></circle><path d="m8 11 8-5M8 13l8 5"></path></svg>
@@ -38759,24 +38759,24 @@
           <summary>
             <span class="dashboard-collapse-title">
               <strong>Dancer analytics</strong>
-              <span id="dancerAnalyticsSummary">Expand to view profile traffic, rank movement, social clicks, notifications, and customer intent.</span>
+              <span id="dancerAnalyticsSummary">Expand to view profile traffic, rank movement, social clicks, notifications, and guest intent.</span>
             </span>
           </summary>
           <div class="dancer-analytics-body">
             <div class="approved-analytics dancer-impact-card" id="dancerAnalyticsPreviewCard">
               <span class="eyebrow">Monthly impact</span>
-              <div class="value-message" id="dancerValueMessage">Posting your schedule brings customers, followers, and direction requests.</div>
+              <div class="value-message" id="dancerValueMessage">Posting your schedule brings guests, followers, and direction requests.</div>
             </div>
             <div class="approved-analytics">
               <h3>Current rank</h3>
               <div class="metric-grid compact-metrics" id="dancerRankMetrics" aria-label="Dancer ranking metrics"></div>
             </div>
             <div class="approved-analytics">
-              <h3>Discovery and customer intent</h3>
-              <div class="metric-grid" id="dancerValueMetrics" aria-label="Discovery and customer intent"></div>
+              <h3>Discovery and guest intent</h3>
+              <div class="metric-grid" id="dancerValueMetrics" aria-label="Discovery and guest intent"></div>
             </div>
             <div class="approved-analytics dancer-impact-card">
-              <h3>Estimated customer impact</h3>
+              <h3>Estimated guest impact</h3>
               <p class="dancer-impact-number" id="dancerCustomerImpact">Locked</p>
               <p class="dancer-impact-subcopy" id="dancerCustomerImpactDetail">Direction requests and Going Now signals unlock after approval.</p>
             </div>
@@ -38813,7 +38813,7 @@
         <details class="auth-card dashboard-collapse approved-analytics" id="dancerCommissionSection">
           <summary><span class="dashboard-collapse-title"><strong>NFC commissions</strong><span>Expand to see commissions earned from cashier NFC redemptions attributed to your profile.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
           <div class="dashboard-collapse-body">
-            <p class="value-message" id="dancerCommissionSummary">NFC commissions appear after customers choose your attributed deal and tap the club cashier sticker.</p>
+            <p class="value-message" id="dancerCommissionSummary">NFC commissions appear after guests choose your attributed deal and tap the club cashier sticker.</p>
             <div class="metric-grid" id="dancerCommissionMetrics" aria-label="NFC commission metrics"></div>
             <div class="rank-notification-list" id="dancerCommissionActivity">Commission activity will appear here.</div>
           </div>
@@ -38869,7 +38869,7 @@
                   <div class="control-card-head">
                     <span class="eyebrow">Public profile</span>
                     <strong>Edit profile details</strong>
-                    <p>Stage name is what customers see on profile cards. Real name stays private for verification.</p>
+                    <p>Stage name is what guests see on profile cards. Real name stays private for verification.</p>
                   </div>
                   <div class="control-field-grid" id="approvedProfileEditFields">
                     <label>
@@ -38918,7 +38918,7 @@
                   <div class="control-card-head">
                     <span class="eyebrow">Photos</span>
                     <strong>Manage profile pictures</strong>
-                    <p>Update the main card photo and gallery photos customers see in full profile view. For maximum detail, choose the original camera image—not a screenshot or social-media copy—ideally at least 2,000 pixels on its longest edge.</p>
+                    <p>Update the main card photo and gallery photos guests see in full profile view. For maximum detail, choose the original camera image—not a screenshot or social-media copy—ideally at least 2,000 pixels on its longest edge.</p>
                   </div>
                   <div class="control-action-row">
                     <button type="button" data-dancer-control-action="main-photo">Main photo</button>
@@ -38965,7 +38965,7 @@
                 <section class="dancer-control-card dancer-control-card-wide">
                   <div class="control-card-head">
                     <span class="eyebrow">Share profile</span>
-                    <strong>Send customers to your profile</strong>
+                    <strong>Send guests to your profile</strong>
                     <p>Share the public profile directly or copy its link. No account is needed to view it.</p>
                   </div>
                   <div class="control-action-row">
@@ -39000,7 +39000,7 @@
               A secure dressing-room NFC tap starts one six-hour Working Now session. A six-hour cooldown follows, and retaps cannot extend the session. No phone location is collected.
             </div>
             <div class="rule-note">
-              <strong>Tracked Club Deal:</strong> During a verified check-in, customers can create a unique dancer-attributed MyDancr QR. Saving or sharing keeps your credit attached until that QR expires.
+              <strong>Tracked Club Deal:</strong> During a verified check-in, guests can create a unique dancer-attributed MyDancr QR. Saving or sharing keeps your credit attached until that QR expires.
             </div>
             <div class="field">
               <label for="shiftRepeat">Repeat option</label>
@@ -39017,11 +39017,11 @@
             </div>
           <button class="action-btn post-shift-submit" type="submit" disabled>Post another shift + notify followers</button>
           </form>
-          <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only customers.</div>
+          <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only guests.</div>
           <div class="schedule-broadcast-note">
             <span class="eyebrow">Schedule broadcast</span>
             <strong>Broadcast confirmation appears here after posting.</strong>
-            <p>Dancr shows how many followers and notify-only customers received the shift alert, so dancers can see the value immediately.</p>
+            <p>Dancr shows how many followers and notify-only guests received the shift alert, so dancers can see the value immediately.</p>
           </div>
           <div class="dancer-management-stack">
             <section class="info-tile dancer-manager-card">
@@ -39036,14 +39036,14 @@
               <div class="manager-head">
                 <span class="eyebrow">Public profile</span>
                 <h4>Edit profile</h4>
-                <p>Your real name stays private. Stage name is what customers see.</p>
+                <p>Your real name stays private. Stage name is what guests see.</p>
               </div>
               <form class="auth-form public-profile-form" id="publicProfileForm">
                 <div class="profile-edit-grid">
                   <div class="field">
                     <label for="profileStageName">Stage name</label>
                     <input id="profileStageName" type="text" minlength="2" maxlength="40" autocomplete="nickname">
-                    <div class="field-note"><strong>Shown publicly:</strong> Customers see this name on profile cards, schedules, search, and your full profile.</div>
+                    <div class="field-note"><strong>Shown publicly:</strong> Guests see this name on profile cards, schedules, search, and your full profile.</div>
                   </div>
                   <div class="field">
                     <label for="profileCity">City</label>
@@ -39119,16 +39119,16 @@
           <div id="dancerVenueVerificationStatus" role="status" aria-live="polite">Loading venue affiliations…</div>
         </section>
         <details class="auth-card dashboard-collapse approved-analytics dancer-visibility-section" id="dancerVisibilitySection">
-          <summary><span class="dashboard-collapse-title"><strong>Profile visibility</strong><span id="dancerVisibilitySummary">Visible to customers</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Profile visibility</strong><span id="dancerVisibilitySummary">Visible to guests</span></span></summary>
           <div class="dashboard-collapse-body">
             <div class="dancer-visibility-control">
               <div>
                 <strong id="dancerVisibilityTitle">Your profile is live</strong>
-                <p class="dancer-incognito-status show" id="dancerIncognitoStatus" role="status" aria-live="polite">Customers can discover your profile, schedules, and venue directions.</p>
+                <p class="dancer-incognito-status show" id="dancerIncognitoStatus" role="status" aria-live="polite">Guests can discover your profile, schedules, and venue directions.</p>
               </div>
               <button type="button" data-dancer-control-action="toggle-incognito" id="dancerIncognitoToggle">
                 <strong>Go incognito</strong>
-                <span>Hide profile from customers</span>
+                <span>Hide profile from guests</span>
               </button>
             </div>
           </div>
@@ -39214,7 +39214,7 @@
           <div>
             <span class="eyebrow">Live venue tools</span>
             <h3>Manage your public venue page, physical NFC access, and live performance.</h3>
-            <p>The dressing-room sticker authorizes dancer venue access and checks in a current posted shift. The cashier sticker completes the exact Club Deal a customer selected in MyDancr.</p>
+            <p>The dressing-room sticker authorizes dancer venue access and checks in a current posted shift. The cashier sticker completes the exact Club Deal a guest selected in MyDancr.</p>
           </div>
           <div class="customer-summary-actions">
             <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
@@ -39247,7 +39247,7 @@
           <form class="auth-card auth-form" id="venueProfileForm">
             <div class="auth-form-head">
               <strong>Public venue page</strong>
-              <span>Keep customer-facing venue details accurate.</span>
+              <span>Keep guest-facing venue details accurate.</span>
             </div>
             <div class="field">
               <label for="venueProfileNameInput">Venue name</label>
@@ -39276,7 +39276,7 @@
             </div>
             <div class="field">
               <label for="venueQrLabelInput">QR label</label>
-              <input id="venueQrLabelInput" type="text" maxlength="100" placeholder="What customers should know">
+              <input id="venueQrLabelInput" type="text" maxlength="100" placeholder="What guests should know">
             </div>
             <div class="venue-offer-qr" id="venueQrPreview">
               <img id="venueQrImage" alt="Published venue QR code" hidden>
@@ -39415,7 +39415,7 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
-          <summary><span class="dashboard-collapse-title"><strong>Support inbox</strong><span>Expand to read and reply to dancer, customer, venue, or visitor messages.</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Support inbox</strong><span>Expand to read and reply to dancer, guest, venue, or visitor messages.</span></span></summary>
           <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminSupportInbox"></div>
           </div>
@@ -39471,7 +39471,7 @@
       <div class="page-inner">
         <div class="page-head">
           <div>
-            <span class="eyebrow">Customer dashboard</span>
+            <span class="eyebrow">Guest dashboard</span>
             <h2 id="dashboardCity">Las Vegas</h2>
           </div>
           <button class="close-btn" id="dashboardClose" aria-label="Close dashboard">
@@ -39532,7 +39532,7 @@
         <div class="saved-deal-list" id="dashSavedDealsList"></div>
         <div class="auth-card customer-notification-card" data-dashboard-section="notifications">
           <h3 class="section-title">Notification settings</h3>
-          <p class="customer-card-copy">Choose which dancer and club alerts Dancr sends you. Your customer activity stays private.</p>
+          <p class="customer-card-copy">Choose which dancer and club alerts Dancr sends you. Your guest activity stays private.</p>
           <div class="toggle-list" id="notificationSettings"></div>
           <div class="section-title-row">
             <h3 class="section-title">Notification center</h3>
@@ -39555,7 +39555,7 @@
           <div class="account-control-head">
             <div>
               <span class="eyebrow">Account controls</span>
-              <h3>Customer account</h3>
+              <h3>Guest account</h3>
             </div>
             <span class="account-control-status" data-account-status>Active</span>
           </div>
@@ -39679,9 +39679,9 @@
         <button class="close-btn admin-preview-close" id="accountRequiredClose" type="button" aria-label="Close account prompt">
           <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
         </button>
-        <p class="account-required-eyebrow">Free customer account</p>
+        <p class="account-required-eyebrow">Free guest account</p>
         <h3 id="accountRequiredTitle">Create an account to continue</h3>
-        <p class="account-required-message" id="accountRequiredMessage">Create a free customer account to use this profile action.</p>
+        <p class="account-required-message" id="accountRequiredMessage">Create a free guest account to use this profile action.</p>
         <div class="account-required-actions">
           <a id="accountRequiredCreateLink" href="/account?role=customer&amp;mode=signup">Create a free account</a>
           <a class="secondary-link" id="accountRequiredSignInLink" href="/account?role=customer">Already have an account? Sign in</a>
@@ -40021,8 +40021,8 @@
     const accountControlCopy = {
       customer: {
         active: "Your private follows, club alerts, and going signals stay active.",
-        disabled: "Your customer account is paused. Alerts are off, but follows and notification settings are saved.",
-        deleted: "This customer account was permanently deleted."
+        disabled: "Your guest account is paused. Alerts are off, but follows and notification settings are saved.",
+        deleted: "This guest account was permanently deleted."
       },
       dancer: {
         active: "Your public profile, schedule posting, analytics, and follower alerts stay active.",
@@ -40330,11 +40330,11 @@
     function profileActionAccountMessage(actionButton) {
       const actionId = actionButton?.id || "";
       if (actionButton?.dataset?.accountAction === "venue-follow") {
-        return "Create a free customer account to follow this club and receive club alerts.";
+        return "Create a free guest account to follow this club and receive club alerts.";
       }
-      if (actionId === "followBtn") return "Create a free customer account to follow this dancer and save the profile.";
-      if (actionId === "notifyBtn") return "Create a free customer account to turn on dancer notifications.";
-      return "Create a free customer account to use this profile action.";
+      if (actionId === "followBtn") return "Create a free guest account to follow this dancer and save the profile.";
+      if (actionId === "notifyBtn") return "Create a free guest account to turn on dancer notifications.";
+      return "Create a free guest account to use this profile action.";
     }
 
     function openAccountRequiredPrompt(actionButton) {
@@ -41783,7 +41783,7 @@
       try {
         const data = await patchAuthenticatedJson("/api/account", { accountState });
         if (data?.account) applyLiveAccountState(data.account);
-        showToast(accountState === "disabled" ? `${role === "dancer" ? "Dancer account" : "Customer account"} paused` : `${role === "dancer" ? "Dancer account" : "Customer account"} reactivated`);
+        showToast(accountState === "disabled" ? `${role === "dancer" ? "Dancer account" : "Guest account"} paused` : `${role === "dancer" ? "Dancer account" : "Guest account"} reactivated`);
       } catch (error) {
         rollback?.();
         showToast(error.message || "Could not update account");
@@ -41814,7 +41814,7 @@
     function accountRoleLabel(role) {
       if (role === "dancer") return "Dancer account";
       if (role === "venue") return "Venue account";
-      return "Customer account";
+      return "Guest account";
     }
 
     function finalizeDeletedAccount(role) {
@@ -42424,7 +42424,7 @@
         await loadLiveCustomerProfile();
       } catch (error) {
         loaded = false;
-        showToast(error.message || "Could not load customer profile");
+        showToast(error.message || "Could not load guest profile");
       }
       if (!(await loadLiveCustomerSaved())) loaded = false;
       liveCustomerDashboardState = loaded ? "ready" : "error";
@@ -42443,7 +42443,7 @@
       if (!isCustomerSession()) return;
       patchAuthenticatedJson("/api/customer/profile", update).then((data) => {
         if (data?.profile) liveCustomerProfile = data.profile;
-      }).catch((error) => showToast(error.message || "Could not save customer profile"));
+      }).catch((error) => showToast(error.message || "Could not save guest profile"));
     }
 
     function notificationClearStorageKey() {
@@ -42933,7 +42933,7 @@
     function supportThreadMarkup(thread, isAdmin = false) {
       const messages = Array.isArray(thread.messages) ? thread.messages : [];
       const userLabel = thread.userName || thread.userEmail || thread.userRole || "User";
-      const roleLabel = thread.userRole ? `${thread.userRole} account` : "account";
+      const roleLabel = thread.userRole ? `${thread.userRole === "customer" ? "guest" : thread.userRole} account` : "account";
       const statusLabel = thread.status === "answered" ? "Admin replied" : "Awaiting admin reply";
       return `
         <details class="support-thread" data-support-thread="${displayText(thread.id)}" ${!isAdmin && messages.length <= 2 ? "open" : ""}>
@@ -43842,7 +43842,7 @@
     function shiftNotificationMessage(profile, city = selectedCity(), dateValue = "") {
       const counts = shiftRecipientCounts(profile, city);
       const shiftType = isTonightDate(dateValue, city) ? "Now shift" : "Upcoming shift";
-      return `${shiftType} sent to ${counts.total.toLocaleString()} customers: ${counts.followers.toLocaleString()} followers + ${counts.notifyOnly.toLocaleString()} notify-only customers.`;
+      return `${shiftType} sent to ${counts.total.toLocaleString()} guests: ${counts.followers.toLocaleString()} followers + ${counts.notifyOnly.toLocaleString()} notify-only guests.`;
     }
 
     function compactNumber(value) {
@@ -46467,7 +46467,7 @@
               </a>
             `).join("")}
           </div>
-          <div class="share-note">${mode === "dancer" ? "Promote your verified schedule on connected social channels." : "Share this verified schedule. Customer profiles stay private."}</div>
+          <div class="share-note">${mode === "dancer" ? "Promote your verified schedule on connected social channels." : "Share this verified schedule. Guest profiles stay private."}</div>
         </div>
       `;
     }
@@ -46556,7 +46556,7 @@
       const result = document.getElementById("shiftPostResult");
       if (result && lastPostedShift) {
         result.hidden = false;
-        result.textContent = lastPostedShift.noticeText || "Schedule sent to followers and notify-only customers.";
+        result.textContent = lastPostedShift.noticeText || "Schedule sent to followers and notify-only guests.";
       } else if (result && affiliationStateLoaded && !approvedVenues.length) {
         result.hidden = false;
         result.textContent = "A venue manager must approve your affiliation before you can post a shift there.";
@@ -47704,7 +47704,7 @@
                       Stage name
                       <input id="approvedVisualStageName" data-approved-stage-name-input type="text" value="${escapeHtml(editableStageName)}" minlength="2" maxlength="40" autocomplete="nickname" spellcheck="false" aria-describedby="approvedVisualStageNameHelp">
                     </label>
-                    <small id="approvedVisualStageNameHelp">This is the public name customers see on dancer cards, MyDancr TV, schedules, and your full profile.</small>
+                    <small id="approvedVisualStageNameHelp">This is the public name guests see on dancer cards, MyDancr TV, schedules, and your full profile.</small>
                   </div>
                   <div class="approved-avatar-copy">
                     <strong id="approvedAvatarEditorTitle">Face avatar</strong>
@@ -49517,7 +49517,7 @@
             <div class="schedule-stack">
               ${profileVenueDestinationMarkup(profile)}
             </div>
-            <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to customers." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
+            <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to guests." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
             ${rideMarkup}
           </div>
           ${shiftNotesMarkup(profile)}
@@ -49527,7 +49527,7 @@
           <div class="info-tile profile-schedule-card schedule-empty">
           <strong>Schedule</strong>
           <div class="profile-schedule-primary">No shift posted</div>
-          <p class="profile-schedule-explanation">${isEditorPreview ? "Post a shift from your dashboard to show customers when and where you're working." : "This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update."}</p>
+          <p class="profile-schedule-explanation">${isEditorPreview ? "Post a shift from your dashboard to show guests when and where you're working." : "This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update."}</p>
         </div>
       `;
     }
@@ -49607,7 +49607,7 @@
         : `<button class="action-btn going-btn is-unavailable" id="goingBtn" type="button" disabled aria-disabled="true">${profileActionButtonMarkup("clock", goingCopy.idle)}<small class="profile-action-requirement">No shift posted</small></button>`;
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
-        <div class="modal-actions" aria-label="Customer actions">
+        <div class="modal-actions" aria-label="Guest actions">
           ${goingButton}
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
@@ -50360,7 +50360,7 @@
         clearValue("customerEmail");
         clearValue("customerPassword");
         clearValue("customerConfirmPassword");
-        stopConfirmationResendCooldown(document.getElementById("authSubmit"), authMode === "signup" ? "Create customer account" : "Sign in");
+        stopConfirmationResendCooldown(document.getElementById("authSubmit"), authMode === "signup" ? "Create guest account" : "Sign in");
         setCustomerAuthStatus("");
       }
 
@@ -50534,7 +50534,7 @@
       document.getElementById("authRoleTitle").textContent = isCreate ? "What are you joining as?" : "One sign-in for every account";
       document.getElementById("authRoleSubtitle").textContent = isCreate
         ? "Pick the account that matches how you use MyDancr."
-        : "Use the email and password for your customer, dancer, or venue account.";
+        : "Use the email and password for your guest, dancer, or venue account.";
       document.querySelector(".auth-selected-role").hidden = false;
       document.getElementById("authOverview").hidden = !isCreate;
       document.getElementById("authForm").hidden = isCreate;
@@ -50553,7 +50553,7 @@
       document.getElementById("authCreateTab").classList.add("active");
       document.getElementById("authSignInTab").setAttribute("aria-selected", "false");
       document.getElementById("authCreateTab").setAttribute("aria-selected", "true");
-      document.getElementById("authPageTitle").textContent = "Create customer account";
+      document.getElementById("authPageTitle").textContent = "Create guest account";
       document.querySelector(".auth-selected-role").hidden = true;
       document.getElementById("authOverview").hidden = true;
       document.getElementById("authForm").hidden = false;
@@ -50684,7 +50684,7 @@
     function updateAccountHeader() {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
       const sessionRole = authSession?.account?.role;
-      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Customer";
+      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Guest";
       dashboardBtn.hidden = !loggedIn;
       dashboardBtn.textContent = loggedIn ? `${role} dashboard` : "Dashboard";
       dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");
@@ -50766,7 +50766,7 @@
       const customerFormHead = document.querySelector(".customer-form-head");
       if (customerFormHead) customerFormHead.hidden = !isSignup;
       const label = document.getElementById("customerAuthModeLabel");
-      if (label) label.textContent = isSignup ? "Create your private customer account" : "Sign in";
+      if (label) label.textContent = isSignup ? "Create your private guest account" : "Sign in";
       const formHead = document.getElementById("customerAuthModeDescription");
       if (formHead) formHead.textContent = isSignup
         ? "Enter your email and a secure password. We’ll send one confirmation link."
@@ -50785,7 +50785,7 @@
       if (forgotLoginButton) forgotLoginButton.hidden = mode !== "login";
       const submit = document.getElementById("authSubmit");
       if (!confirmationResendTimers.has(submit)) {
-        submit.textContent = isSignup ? "Create customer account" : "Sign in";
+        submit.textContent = isSignup ? "Create guest account" : "Sign in";
         submit.disabled = false;
       }
       if (!isSignup) stopConfirmationResendCooldown(submit, "Sign in");
@@ -51558,7 +51558,7 @@
       dashboardFollowedExpanded = false;
       dashboardVenuesExpanded = false;
       updateAccountHeader();
-      showToast("Customer dashboard");
+      showToast("Guest dashboard");
       openDashboard();
     }
 
@@ -51579,7 +51579,7 @@
       updateAccountHeader();
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "tonight"));
       render();
-      showToast("Browsing as a customer");
+      showToast("Browsing as a guest");
     }
 
     function openCustomerSignupDemo() {
@@ -51592,10 +51592,10 @@
       updateAccountHeader();
       openAuthPage();
       openCustomerSignup();
-      showToast("Customer sign up");
+      showToast("Guest sign up");
     }
 
-    function startCustomerDashboardSession(message = "Customer dashboard") {
+    function startCustomerDashboardSession(message = "Guest dashboard") {
       resetAccountControl("customer");
       isCustomerLoggedIn = true;
       isDancerLoggedIn = false;
@@ -52908,15 +52908,15 @@
       const label = button.querySelector("strong");
       const helper = button.querySelector("span");
       if (label) label.textContent = isHidden ? "Turn profile back on" : "Go incognito";
-      if (helper) helper.textContent = isHidden ? "Incognito on · Profile hidden" : "Hide profile from customers";
+      if (helper) helper.textContent = isHidden ? "Incognito on · Profile hidden" : "Hide profile from guests";
       if (title) title.textContent = isHidden ? "Your profile is hidden" : "Your profile is live";
-      if (summary) summary.textContent = isHidden ? "Incognito · Hidden from customers" : "Visible to customers";
+      if (summary) summary.textContent = isHidden ? "Incognito · Hidden from guests" : "Visible to guests";
       if (status) {
         status.classList.toggle("show", approved);
         status.classList.toggle("is-incognito", isHidden);
         status.textContent = isHidden
-          ? "Customers cannot discover your profile, schedule, or venue details. Turn it back on whenever you are ready."
-          : "Customers can discover your profile, schedules, and venue directions.";
+          ? "Guests cannot discover your profile, schedule, or venue details. Turn it back on whenever you are ready."
+          : "Guests can discover your profile, schedules, and venue directions.";
       }
     }
 
@@ -53016,8 +53016,8 @@
       if (overviewCopy) overviewCopy.textContent = optionalProfileFixes
         ? "Open Edit profile to replace or remove the item flagged for changes."
         : isHidden
-          ? "Your tools remain available while customers cannot see your profile."
-          : "Keep your next shift current so customers know where to find you.";
+          ? "Your tools remain available while guests cannot see your profile."
+          : "Keep your next shift current so guests know where to find you.";
 
       const views = liveMetricNumber(dashboardMetrics?.profileViews30, 0);
       const followers = liveMetricNumber(dashboardMetrics?.followers, 0);
@@ -53269,7 +53269,7 @@
         : optionalProfileFixes
           ? "Your required verification is approved. Only pictures and/or social links need fixes. You can replace them and submit again, or leave them blank."
         : approved
-          ? "Your public profile is live. Keep your schedule current, share your profile, and track the customers Dancr sends you."
+          ? "Your public profile is live. Keep your schedule current, share your profile, and track the guests Dancr sends you."
         : reviewSubmitted
           ? "Your profile is private and ready. Set up commission payouts now or do it later, then tap the club's official dressing-room NFC sticker."
           : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
@@ -53292,7 +53292,7 @@
       document.getElementById("dancerSubscriptionStatus").textContent = billingSummary.label;
       const profileIncognito = Boolean(approved && dancerProfileIsHidden(activeProfile));
       document.getElementById("dancerPublicStatus").textContent = approved
-        ? (profileIncognito ? "Incognito" : "Visible to customers")
+        ? (profileIncognito ? "Incognito" : "Visible to guests")
         : "Profile setup required";
       document.getElementById("dancerSubscriptionDetail").textContent = billingSummary.detail;
       const billingButton = document.getElementById("billingPortalBtn");
@@ -53304,7 +53304,7 @@
       document.getElementById("dancerPublicDetail").textContent = approved
         ? (profileIncognito
           ? "Your approved tools stay available. Press Reactivate profile any time to show your profile on Dancr again."
-          : "Customers can discover this profile, follow it, view schedules, and request venue directions.")
+          : "Guests can discover this profile, follow it, view schedules, and request venue directions.")
         : "Complete and save your stage name and city to finish your public profile setup.";
       syncDancerIncognitoToggle(activeProfile, approved);
       renderDancerDailyOverview(activeProfile, approved, dashboardMetrics, optionalProfileFixes);
@@ -53319,7 +53319,7 @@
           approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or leave that social/photo blank.";
         } else if (approved) {
           approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
-          approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
+          approvalStatusSecondary.textContent = "Keep your schedule updated so guests can find you when you are working.";
         } else if (reviewSubmitted) {
           approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dressing-room NFC sticker at the venue where you work.";
           approvalStatusSecondary.textContent = "The dressing-room tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
@@ -53374,7 +53374,7 @@
 
         document.getElementById("dancerValueMessage").innerHTML = hasTrafficData
           ? `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${dashboardMetrics.venue}</strong> this month.`
-          : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after customers interact with your profile.";
+          : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after guests interact with your profile.";
         document.getElementById("dancerRankMetrics").innerHTML = [
           metricCardMarkup(rankLabel(dashboardMetrics.currentRank), `${city} rank`),
           metricCardMarkup(rankMovementText(dashboardMetrics.rankChangeYesterday), "Rank change this week"),
@@ -53391,11 +53391,11 @@
         ].join("");
         document.getElementById("dancerCustomerImpact").innerHTML = `${compactNumber(highIntentActions)} <span>actions</span>`;
         document.getElementById("dancerCustomerImpactDetail").textContent = highIntentActions
-          ? `Dancr generated ${compactNumber(highIntentActions)} high-intent customer actions for you this month.`
-          : "No high-intent customer actions yet. Direction requests and Going Now clicks will appear here.";
+          ? `Dancr generated ${compactNumber(highIntentActions)} high-intent guest actions for you this month.`
+          : "No high-intent guest actions yet. Direction requests and Going Now clicks will appear here.";
         document.getElementById("dancerWeeklySummary").textContent = liveDancerWeeklyReport
           ? `Monday report: ${weeklyRankText}, ${compactNumber(weeklyFollowers)} new followers, ${compactNumber(weeklyViews)} profile views, and ${compactNumber(weeklyGoing)} Going Now signals.`
-          : "No weekly report data yet. Once customer activity starts, this will show real weekly rank, follower, profile view, social click, and notification data.";
+          : "No weekly report data yet. Once guest activity starts, this will show real weekly rank, follower, profile view, social click, and notification data.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = [
           metricCardMarkup(weeklyRankText, "Previous rank -> current rank"),
           metricCardMarkup(compactNumber(weeklyFollowers), "New followers"),
@@ -53420,7 +53420,7 @@
         document.getElementById("dancerCommissionSummary").textContent =
           qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
             ? `Cashier NFC taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
-            : "NFC commission tracking is ready. Earnings appear when customers choose your attributed deal and tap the cashier sticker.";
+            : "NFC commission tracking is ready. Earnings appear when guests choose your attributed deal and tap the cashier sticker.";
         document.getElementById("dancerCommissionMetrics").innerHTML = [
           metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
           metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
@@ -53429,7 +53429,7 @@
         ].join("");
         document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
           ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No NFC commission activity yet</strong><p>When customers choose your attributed deal and tap the cashier NFC sticker, the commission and venue will show here.</p></span></article>`;
+          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No NFC commission activity yet</strong><p>When guests choose your attributed deal and tap the cashier NFC sticker, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = totalSocialClicks
           ? `${bestSocial.name} is your top-performing link this month.`
           : "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
@@ -53464,7 +53464,7 @@
           : `<article class="rank-event stable"><span class="rank-event-icon">!</span><span><strong>No ranking milestones yet</strong><p>Real ranking alerts will appear after your profile earns Top 10, moves up 3+ spots, or reaches #1.</p></span></article>`;
       } else if (approved) {
         document.getElementById("dancerValueMessage").textContent =
-          "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after customers interact with your profile.";
+          "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after guests interact with your profile.";
         document.getElementById("dancerRankMetrics").innerHTML = [
           metricCardMarkup("No rank yet", `${city} rank`),
           metricCardMarkup("No change", "Rank change this week"),
@@ -53480,8 +53480,8 @@
           metricCardMarkup("0", "Favorites added")
         ].join("");
         document.getElementById("dancerCustomerImpact").innerHTML = `0 <span>actions</span>`;
-        document.getElementById("dancerCustomerImpactDetail").textContent = "No high-intent customer actions yet.";
-        document.getElementById("dancerWeeklySummary").textContent = "No weekly report data yet. Once customer activity starts, this will show real weekly profile and ranking activity.";
+        document.getElementById("dancerCustomerImpactDetail").textContent = "No high-intent guest actions yet.";
+        document.getElementById("dancerWeeklySummary").textContent = "No weekly report data yet. Once guest activity starts, this will show real weekly profile and ranking activity.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = [
           metricCardMarkup("No rank yet", "Previous rank -> current rank"),
           metricCardMarkup("0", "New followers"),
@@ -53504,7 +53504,7 @@
         document.getElementById("dancerCommissionSummary").textContent =
           qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
             ? `Cashier NFC taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
-            : "Club Deal commission tracking is ready. Earnings appear here when customers select your attributed deal and tap the cashier NFC sticker.";
+            : "Club Deal commission tracking is ready. Earnings appear here when guests select your attributed deal and tap the cashier NFC sticker.";
         document.getElementById("dancerCommissionMetrics").innerHTML = [
           metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
           metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
@@ -53513,7 +53513,7 @@
         ].join("");
         document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
           ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No Club Deal commission activity yet</strong><p>When customers select your attributed deal and redeem it with the cashier NFC sticker, the commission and venue will show here.</p></span></article>`;
+          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No Club Deal commission activity yet</strong><p>When guests select your attributed deal and redeem it with the cashier NFC sticker, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
         document.getElementById("dancerSocialMetrics").innerHTML = [
           metricCardMarkup("0", "Total social clicks"),
@@ -53541,7 +53541,7 @@
           `<article class="rank-event stable"><span class="rank-event-icon">!</span><span><strong>No ranking milestones yet</strong><p>Real ranking alerts will appear after your profile earns Top 10, moves up 3+ spots, or reaches #1.</p></span></article>`;
       } else {
         document.getElementById("dancerValueMessage").textContent =
-          "Analytics unlock after approval. Dancr tracks profile views, schedule views, follower growth, social clicks, ranking movement, notifications, favorites, Going Now clicks, and club direction requests so you can see what brings customers to you.";
+          "Analytics unlock after approval. Dancr tracks profile views, schedule views, follower growth, social clicks, ranking movement, notifications, favorites, Going Now clicks, and club direction requests so you can see what brings guests to you.";
         document.getElementById("dancerRankMetrics").innerHTML = lockedMetricCards([
           "Current city rank",
           "Rank change this week",
@@ -53557,7 +53557,7 @@
           "Favorites added"
         ]);
         document.getElementById("dancerCustomerImpact").textContent = "Locked";
-        document.getElementById("dancerCustomerImpactDetail").textContent = "High-intent customer actions unlock after approval.";
+        document.getElementById("dancerCustomerImpactDetail").textContent = "High-intent guest actions unlock after approval.";
         document.getElementById("dancerWeeklySummary").textContent =
           "Your weekly report unlocks after approval and tracks rank movement, followers, profile views, Going Now signals, social clicks, and notification opens.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = lockedMetricCards([
@@ -53568,7 +53568,7 @@
           "Social clicks",
           "Notification opens"
         ]);
-        document.getElementById("dancerClubSummary").textContent = "Club traffic unlocks after approval so you can see where Dancr sends customers.";
+        document.getElementById("dancerClubSummary").textContent = "Club traffic unlocks after approval so you can see where Dancr sends guests.";
         document.getElementById("dancerClubMetrics").innerHTML = lockedMetricCards([
           "Strongest venue",
           "Club page clicks",
@@ -53651,7 +53651,7 @@
         <section class="setup-profile-editor-section">
           <div class="setup-profile-editor-head">
             <strong>Profile identity</strong>
-            <p>Start with your avatar, then add the public name and city customers will see.</p>
+            <p>Start with your avatar, then add the public name and city guests will see.</p>
           </div>
           <form class="auth-form" id="setupProfileForm" data-setup-form="profile">
             <div class="field">
@@ -53662,7 +53662,7 @@
             <div class="field">
               <label for="setupStageName">Stage name</label>
               <input id="setupStageName" data-setup-profile-field="stageName" type="text" value="${escapeHtml(document.getElementById("dancerStageName").value || "")}" minlength="2" maxlength="40" autocomplete="nickname">
-              <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
+              <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name guests see on Dancr profiles, schedules, and search results.</div>
             </div>
             <div class="field">
               <label for="setupCity">City</label>
@@ -59210,7 +59210,7 @@
       submit.disabled = true;
       submit.setAttribute("aria-busy", "true");
       submit.textContent = authMode === "signup" ? "Creating account…" : "Signing in…";
-      setCustomerAuthStatus(authMode === "signup" ? "Creating your private customer account…" : "Signing in securely…");
+      setCustomerAuthStatus(authMode === "signup" ? "Creating your private guest account…" : "Signing in securely…");
       try {
         if (authMode === "signup") {
           const password = document.getElementById("customerPassword").value;
@@ -59262,10 +59262,10 @@
         updateAccountHeader();
         maybeShowAccountTooltip("customer");
         closeAuthPage();
-        showToast(authMode === "signup" ? "Customer account created" : "Logged in");
+        showToast(authMode === "signup" ? "Guest account created" : "Logged in");
         openUnifiedDashboard("customer");
       } catch (error) {
-        const message = friendlyAuthErrorMessage(error.message, authMode === "signup" ? "Customer signup failed" : "Sign in failed");
+        const message = friendlyAuthErrorMessage(error.message, authMode === "signup" ? "Guest signup failed" : "Sign in failed");
         setCustomerAuthStatus(message);
         showToast(message);
       } finally {
@@ -59679,7 +59679,7 @@
           return;
         }
         const nextPublic = dancerProfileIsHidden(profile);
-        if (!nextPublic && !window.confirm("Go incognito? Your profile, posted schedule, and venue details will be hidden from customers until you turn the profile back on.")) {
+        if (!nextPublic && !window.confirm("Go incognito? Your profile, posted schedule, and venue details will be hidden from guests until you turn the profile back on.")) {
           return;
         }
         if (trigger) {
@@ -59706,8 +59706,8 @@
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
           setResult(savedPublic
-            ? "Your profile is back on and visible to customers."
-            : "Incognito is on. Your profile was verified hidden from customers. You can turn it back on at any time.");
+            ? "Your profile is back on and visible to guests."
+            : "Incognito is on. Your profile was verified hidden from guests. You can turn it back on at any time.");
           showToast(savedPublic ? "Profile is back on" : "Profile hidden · Incognito on");
         } catch (error) {
           setResult(error.message || "Could not update profile visibility.");
@@ -59735,7 +59735,7 @@
 
       if (action === "show-qr") {
         openQrOverlay(profileName, city, null);
-        setResult("QR code opened. Customers can scan it without an account.");
+        setResult("QR code opened. Guests can scan it without an account.");
         return;
       }
 

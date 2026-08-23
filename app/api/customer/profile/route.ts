@@ -13,12 +13,12 @@ export async function GET(request: Request) {
     const profile = await getCustomerProfile(client, user.id);
 
     if (!profile) {
-      return NextResponse.json({ ok: false, error: "Customer profile not found." }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "Guest profile not found." }, { status: 404 });
     }
 
     return NextResponse.json({ ok: true, profile, session });
   } catch (error) {
-    return apiError(error, "Unable to load customer profile.");
+    return apiError(error, "Unable to load guest profile.");
   }
 }
 
@@ -44,13 +44,13 @@ export async function PATCH(request: Request) {
     }
 
     if (!Object.keys(update).length) {
-      return NextResponse.json({ ok: false, error: "No customer profile updates provided." }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "No guest profile updates provided." }, { status: 400 });
     }
 
     const profile = await updateCustomerProfile(client, user.id, update);
     return NextResponse.json({ ok: true, profile, session });
   } catch (error) {
-    return apiError(error, "Unable to update customer profile.");
+    return apiError(error, "Unable to update guest profile.");
   }
 }
 

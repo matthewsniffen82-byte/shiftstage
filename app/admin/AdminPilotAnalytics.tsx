@@ -196,7 +196,7 @@ export default function AdminPilotAnalytics({
               primary
               label="Verified arrivals"
               value={analytics.totals.verifiedArrivals.toLocaleString()}
-              detail="Unique customer/session cashier NFC taps per service night"
+              detail="Unique guest/session cashier NFC taps per service night"
             />
             <PilotKpi
               label="Attributable door share"
@@ -225,7 +225,7 @@ export default function AdminPilotAnalytics({
 
           <div className="pilot-layout">
             <article className="pilot-card pilot-funnel-card">
-              <header><span className="eyebrow">Customer journey</span><h3>Discovery to the door</h3></header>
+              <header><span className="eyebrow">Guest journey</span><h3>Discovery to the door</h3></header>
               <PilotFunnelRow label="Unique venue visitors" value={analytics.totals.venueVisitors} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} />
               <PilotFunnelRow label="Unique nightly deal selections" value={analytics.totals.dealSelections} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} />
               <PilotFunnelRow label="Verified cashier NFC arrivals" value={analytics.totals.verifiedArrivals} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} verified />
@@ -294,13 +294,13 @@ export default function AdminPilotAnalytics({
             <article className="pilot-card pilot-methodology">
               <header><span className="eyebrow">Measurement rules</span><h3>What counts as proof</h3></header>
               <ol>
-                <li><strong>Verified arrival:</strong> the first successful cashier NFC redemption for a customer or anonymous session on a service night.</li>
+                <li><strong>Verified arrival:</strong> the first successful cashier NFC redemption for a guest or anonymous session on a service night.</li>
                 <li><strong>Attribution:</strong> the deal selection preserves whether discovery came through a dancer/TV experience or the club experience.</li>
-                <li><strong>Deduplication:</strong> repeat taps by the same customer/session on the same service night count once.</li>
+                <li><strong>Deduplication:</strong> repeat taps by the same guest/session on the same service night count once.</li>
                 <li><strong>Exclusions:</strong> suspicious and voided redemptions do not count. Review test or staff activity in Deal Activity and mark it suspicious.</li>
                 <li><strong>Door share:</strong> verified arrivals divided only by venue door totals entered for matching service nights.</li>
               </ol>
-              <p className="pilot-method-note">This proves attributable arrivals, not customer spend. Revenue attribution requires a POS integration or a cashier-entered transaction amount.</p>
+              <p className="pilot-method-note">This proves attributable arrivals, not guest spend. Revenue attribution requires a POS integration or a cashier-entered transaction amount.</p>
             </article>
           </div>
         </>

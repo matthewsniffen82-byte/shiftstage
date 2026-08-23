@@ -96,7 +96,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   )?.[0] || "";
   assert.match(
     liveApp,
-    /<div class="modal-actions" aria-label="Customer actions">\s*\$\{goingButton\}/,
+    /<div class="modal-actions" aria-label="Guest actions">\s*\$\{goingButton\}/,
   );
   assert.match(
     liveApp,

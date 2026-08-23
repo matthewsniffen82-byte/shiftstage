@@ -148,7 +148,7 @@ test("venue Club Deal guidance stays concise with details available on demand", 
   const venueDealPanel = dashboard.match(/function VenueClubDealPanel\([\s\S]*?(?=\nfunction upsertVenueDeal)/)?.[0] || "";
   assert.match(venueDealPanel, /no reprogramming required/);
   assert.match(venueDealPanel, /<summary>How Club Deals work<\/summary>/);
-  assert.match(venueDealPanel, /Customers select a deal and tap your MyDancr cashier sticker/);
+  assert.match(venueDealPanel, /Guests select a deal and tap your MyDancr cashier sticker/);
   assert.match(venueDealPanel, /Sticker status is managed in Assigned NFC access/);
   assert.doesNotMatch(venueDealPanel, /Venue staff must confirm redemption while signed in/);
   assert.doesNotMatch(venueDealPanel, /Only a server-verified active tag creates/);

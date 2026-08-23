@@ -49,13 +49,15 @@ test("recovery telemetry stores hashes only and is inaccessible to public roles"
 });
 
 test("the unified public sign-in has an account-aware forgotten-email form", () => {
+  assert.match(accountPage, /onClick=\{\(\) => chooseRole\("customer"\)\}[\s\S]*?>\s*Guest\s*<\/button>/);
+  assert.match(accountPage, /aria-label="Guest signup benefits"/);
   assert.match(accountPage, /Find your sign-in email/);
   assert.match(accountPage, /fetch\("\/api\/account-recovery"/);
   assert.match(accountPage, /Stage name/);
   assert.match(accountPage, /Email where support can reach you/);
   assert.match(accountPage, /Never send a password, reset code, government ID, or payment information/);
   assert.match(liveApp, /id="customerForgotLoginBtn"/);
-  assert.match(liveApp, /id="loginRecoveryRole"[\s\S]*?<option value="customer">Customer<\/option>[\s\S]*?<option value="dancer">Dancer<\/option>[\s\S]*?<option value="venue">Venue<\/option>/);
+  assert.match(liveApp, /id="loginRecoveryRole"[\s\S]*?<option value="customer">Guest<\/option>[\s\S]*?<option value="dancer">Dancer<\/option>[\s\S]*?<option value="venue">Venue<\/option>/);
   assert.match(liveApp, /id="loginRecoveryForm"/);
   assert.match(liveApp, /fetch\("\/api\/account-recovery"/);
   assert.match(liveApp, /body\.customer-auth-overlay-open \.discovery-sticky-head/);

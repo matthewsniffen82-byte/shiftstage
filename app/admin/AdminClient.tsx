@@ -1118,7 +1118,7 @@ function ReferralFeeManager({
             </select>
           </label>
           <label>
-            Fee per verified customer
+            Fee per verified guest
             <input required inputMode="decimal" placeholder="20.00" value={fee} onChange={(event) => setFee(event.target.value)} />
           </label>
           <label>
@@ -1139,7 +1139,7 @@ function ReferralFeeManager({
         {selectedVenue ? (
           <div className="referral-fee-current">
             <strong>{asText(selectedVenue.name)}</strong>
-            <span>{currentTerm ? `${formatAdminCents(Number(currentTerm.feeCents || 0))} per verified customer` : "No active agreement"}</span>
+            <span>{currentTerm ? `${formatAdminCents(Number(currentTerm.feeCents || 0))} per verified guest` : "No active agreement"}</span>
             <small>{currentTerm ? `Effective ${formatDate(currentTerm.effectiveFrom)} · ${asText(currentTerm.agreementReference)}` : "Club Deals cannot be published until an agreement is recorded."}</small>
           </div>
         ) : null}
@@ -1384,7 +1384,7 @@ function AccountOverview({ operations }: { operations: AdminOperationsCenter | n
     <section className="workspace-lead">
       <header>
         <span className="eyebrow">Account directory</span>
-        <h2>Dancers, customers, venues & admins</h2>
+        <h2>Dancers, guests, venues & admins</h2>
         <p>Search the latest production accounts, then use the full dancer and venue records below for operational changes.</p>
       </header>
       <label className="admin-search">
@@ -1934,7 +1934,7 @@ function AdminSupportInbox({
             <textarea
               value={replyByThread[threadId] || ""}
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
-              placeholder="Reply to this customer, dancer, or venue"
+              placeholder="Reply to this guest, dancer, or venue"
             />
             <button type="button" onClick={() => reply(threadId)}>
               Reply to account

@@ -98,12 +98,12 @@ test("only self-published venues reach public discovery and use their uploaded l
 });
 
 test("the venue dashboard clearly presents private setup, preview, and explicit publishing", () => {
-  assert.match(dashboard, /Complete, preview, and publish the customer-facing venue page from this private workspace/);
+  assert.match(dashboard, /Complete, preview, and publish the guest-facing venue page from this private workspace/);
   assert.match(dashboard, /Nothing appears publicly until you publish/);
   assert.match(dashboard, /Preview private venue page/);
   assert.match(dashboard, /Publish venue/);
   assert.match(dashboard, /Upload logo/);
-  assert.match(dashboard, /This is a private preview\. Customers cannot see it until the venue is published/);
+  assert.match(dashboard, /This is a private preview\. Guests cannot see it until the venue is published/);
   assert.match(documentation, /request-first venue onboarding model/);
   assert.match(documentation, /private venue workspace and one-time venue signup code/);
   assert.match(documentation, /Venue accounts receive access only to their own venue dashboard; they never receive MyDancr administrator access/);

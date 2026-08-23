@@ -66,7 +66,7 @@ test("normal account navigation cannot reopen a legacy dashboard variant", () =>
     liveShell,
     /dashboardBtn\.addEventListener\("click", \(\) => \{\s*closeUtilityMenu\(\);\s*openUnifiedDashboard\(activeDashboardType\);\s*\}\);/,
   );
-  assert.match(liveShell, /showToast\(authMode === "signup" \? "Customer account created" : "Logged in"\);\s*openUnifiedDashboard\("customer"\);/);
+  assert.match(liveShell, /showToast\(authMode === "signup" \? "Guest account created" : "Logged in"\);\s*openUnifiedDashboard\("customer"\);/);
   assert.match(liveShell, /await hydrateDancerApprovalProgress\(\);\s*openUnifiedDashboard\("dancer"\);/);
   assert.match(liveShell, /const opened = openUnifiedDashboard\("venue"\);/);
 });

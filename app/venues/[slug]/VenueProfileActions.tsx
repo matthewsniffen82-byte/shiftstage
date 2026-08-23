@@ -218,9 +218,9 @@ export function VenueProfileActions({
             >
               ×
             </button>
-            <span>Free customer account</span>
+            <span>Free guest account</span>
             <h2 id="venue-account-gate-title">Save this club</h2>
-            <p>Use a customer account to follow clubs and receive schedule alerts.</p>
+            <p>Use a guest account to follow clubs and receive schedule alerts.</p>
             <div>
               <Link href="/account?role=customer&mode=signup">Create a free account</Link>
               <Link className="secondary" href="/account?role=customer">

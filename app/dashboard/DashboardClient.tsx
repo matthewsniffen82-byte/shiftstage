@@ -369,7 +369,7 @@ export default function DashboardClient({
   const title = useMemo(() => {
     if (role === "dancer") return "Complete your profile";
     if (role === "venue") return "Venue dashboard";
-    return "Customer dashboard";
+    return "Guest dashboard";
   }, [role]);
 
   const accountDisplayName = String(state.account?.displayName || "").trim();
@@ -382,7 +382,7 @@ export default function DashboardClient({
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
   const dashboardEyebrow =
-    role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
+    role === "customer" ? "Guest dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
   const dashboardHeading = isLoading
     ? (role === "dancer" ? profileDisplayName || title : resolvedDisplayName || title)
     : displayName;
@@ -435,7 +435,7 @@ export default function DashboardClient({
               <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={isLoading} />
               <DashboardSection
                 description="Schedule changes, saved-profile updates, Club Deal activity, and support replies."
-                eyebrow="Customer workspace"
+                eyebrow="Guest workspace"
                 id="customer-alerts"
                 title="Alerts"
               >
@@ -443,7 +443,7 @@ export default function DashboardClient({
               </DashboardSection>
               <DashboardSection
                 description="Preferences, support messages, password controls, and account status."
-                eyebrow="Customer workspace"
+                eyebrow="Guest workspace"
                 id="customer-settings"
                 title="Account & settings"
               >
@@ -550,7 +550,7 @@ function AgentDashboardShortcut() {
 }
 function CustomerDashboardTabs() {
   return (
-    <nav className="customer-dashboard-tabs" aria-label="Customer dashboard sections">
+    <nav className="customer-dashboard-tabs" aria-label="Guest dashboard sections">
       <a href="#customer-tonight" onClick={(event) => openDashboardSection(event, "customer-tonight")}>Tonight</a>
       <a href="#customer-saved" onClick={(event) => openDashboardSection(event, "customer-saved")}>Saved</a>
       <a href="#customer-offers" onClick={(event) => openDashboardSection(event, "customer-offers")}>Deals</a>
@@ -1104,7 +1104,7 @@ function CustomerPanel({
       <DashboardSection
         defaultOpen
         description="The shifts you marked Going, with the dancer, venue, and directions together."
-        eyebrow="Customer workspace"
+        eyebrow="Guest workspace"
         id="customer-tonight"
         title="Your Night"
       >
@@ -1118,7 +1118,7 @@ function CustomerPanel({
       </DashboardSection>
       <DashboardSection
         description="Followed dancers, favorites, and clubs with live distance and alert controls."
-        eyebrow="Customer workspace"
+        eyebrow="Guest workspace"
         id="customer-saved"
         title="Saved"
       >
@@ -1138,7 +1138,7 @@ function CustomerPanel({
       </DashboardSection>
       <DashboardSection
         description="Active cashier passes and the complete history of your Club Deal activity."
-        eyebrow="Customer workspace"
+        eyebrow="Guest workspace"
         id="customer-offers"
         title="Club Deals"
       >
@@ -2057,7 +2057,7 @@ function VenuePanel({
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : "PRIVATE DRAFT"}</span>
           <div>
             <h2 id="venue-command-heading">{isPublished ? `Tonight at ${venueName}` : `Set up ${venueName}`}</h2>
-            <p>{isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "Complete, preview, and publish the customer-facing venue page from this private workspace."}</p>
+            <p>{isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "Complete, preview, and publish the guest-facing venue page from this private workspace."}</p>
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
@@ -2079,7 +2079,7 @@ function VenuePanel({
         <div>
           <span className="eyebrow">{isPublished ? "Public venue" : "Private setup"}</span>
           <h2 id="venue-publication-heading">{isPublished ? "Your venue is live on MyDancr" : "Finish your venue page before publishing"}</h2>
-          <p>{isPublished ? "Customers can find this venue, its current Club Deals, and affiliated dancers." : `${setupCompletedCount} of ${setupRequirements.length} publishing requirements complete. Nothing appears publicly until you publish.`}</p>
+          <p>{isPublished ? "Guests can find this venue, its current Club Deals, and affiliated dancers." : `${setupCompletedCount} of ${setupRequirements.length} publishing requirements complete. Nothing appears publicly until you publish.`}</p>
         </div>
         <ul>
           {setupRequirements.map((requirement) => (
@@ -2117,7 +2117,7 @@ function VenuePanel({
         {isPublished && venueSlug ? (
           <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>
             <VenueDashboardActionIcon name="profile" />
-            <span><strong>View venue</strong><small>Live customer page</small></span>
+            <span><strong>View venue</strong><small>Live guest page</small></span>
           </Link>
         ) : (
           <a href="#venue-public-profile" onClick={(event) => openVenueSection(event, "venue-public-profile")}>
@@ -2196,7 +2196,7 @@ function VenuePanel({
       </DashboardSection>
 
       <DashboardSection
-        description="Customer reach, intent, live activity, and NFC Deal visibility."
+        description="Guest reach, intent, live activity, and NFC Deal visibility."
         eyebrow="Live performance"
         id="venue-overview"
         title="Analytics & performance"
@@ -2214,7 +2214,7 @@ function VenuePanel({
             <Metric label="Venue followers" value={String(analytics?.totalFollowers || 0)} />
             <Metric label="New followers" value={String(analytics?.followersGained || 0)} />
           </InfoPanel>
-          <InfoPanel title="Customer intent">
+          <InfoPanel title="Guest intent">
             <VenueAnalyticsMetric label="Direction requests" value={Number(analytics?.directions || 0)} change={readOptionalNumber(analytics?.directionsChangePercent)} />
             <Metric label="View → directions" value={formatPercent(analytics?.directionConversionPercent)} />
             <Metric label="Going signals" value={String(analytics?.goingSignals || 0)} />
@@ -2231,8 +2231,8 @@ function VenuePanel({
       </DashboardSection>
 
       <DashboardSection
-        description="Build and preview the real customer-facing page. It stays private until every requirement is complete and you publish it."
-        eyebrow="Customer experience"
+        description="Build and preview the real guest-facing page. It stays private until every requirement is complete and you publish it."
+        eyebrow="Guest experience"
         id="venue-public-profile"
         title="Public venue profile"
       >
@@ -2264,7 +2264,7 @@ function VenuePanel({
           <article className="info-panel venue-logo-panel">
             <div>
               <h2>Venue logo</h2>
-              <p>Upload the venue’s official logo for customer cards and the full venue page.</p>
+              <p>Upload the venue’s official logo for guest cards and the full venue page.</p>
               <small>Use the original high-resolution square or rectangular image, at least 512 × 512 pixels.</small>
             </div>
             {profile?.logoImageUrl ? (
@@ -2396,7 +2396,7 @@ function VenueDraftPreview({
     <div className="venue-draft-preview-overlay" role="dialog" aria-modal="true" aria-labelledby="venue-draft-preview-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <article className="venue-draft-preview-card">
         <header>
-          <span><small>PRIVATE PREVIEW</small><strong id="venue-draft-preview-title">Customer venue page</strong></span>
+          <span><small>PRIVATE PREVIEW</small><strong id="venue-draft-preview-title">Guest venue page</strong></span>
           <button type="button" aria-label="Close venue preview" onClick={onClose}>×</button>
         </header>
         <div className="venue-draft-preview-hero" style={profile.coverImageUrl ? { backgroundImage: `linear-gradient(180deg, rgba(3,3,7,.1), rgba(3,3,7,.92)), url(${String(profile.coverImageUrl)})` } : undefined}>
@@ -2413,7 +2413,7 @@ function VenueDraftPreview({
           <h3>{activeDeal ? String(activeDeal.dealTitle || "Active Club Deal") : "No active Club Deal yet"}</h3>
           <p>{activeDeal ? String(activeDeal.dealDescription || "") : "Publish an active Club Deal before making this venue public."}</p>
         </section>
-        <p className="venue-draft-preview-note">This is a private preview. Customers cannot see it until the venue is published.</p>
+        <p className="venue-draft-preview-note">This is a private preview. Guests cannot see it until the venue is published.</p>
       </article>
     </div>
   );
@@ -2727,7 +2727,7 @@ function VenueClubDealPanel({
           </div>
           <form onSubmit={saveDeal}>
         <fieldset className="venue-deal-builder-step">
-          <legend><span>1</span><span><strong>Offer</strong><small>What customers receive</small></span></legend>
+          <legend><span>1</span><span><strong>Offer</strong><small>What guests receive</small></span></legend>
           <div className="venue-deal-step-grid">
             <label className="deal-wide-field">
               Deal offered
@@ -2753,7 +2753,7 @@ function VenueClubDealPanel({
         </fieldset>
 
         <fieldset className="venue-deal-builder-step">
-          <legend><span>2</span><span><strong>Rules</strong><small>What customers need to know</small></span></legend>
+          <legend><span>2</span><span><strong>Rules</strong><small>What guests need to know</small></span></legend>
           <div className="venue-deal-step-grid one-column">
             <label>
               Conditions (optional)
@@ -2764,7 +2764,7 @@ function VenueClubDealPanel({
                 onChange={(event) => updateDealForm("dealTerms", event.target.value)}
               />
             </label>
-            <p className="venue-deal-rule-note">Add only the conditions customers need to see before redeeming.</p>
+            <p className="venue-deal-rule-note">Add only the conditions guests need to see before redeeming.</p>
           </div>
         </fieldset>
 
@@ -2773,7 +2773,7 @@ function VenueClubDealPanel({
           <div className="venue-deal-step-grid">
             <section className="venue-referral-agreement" aria-label="MyDancr referral fee agreement">
               <span>MyDancr referral fee</span>
-              <strong>{currentReferralFee ? `${formatCents(Number(currentReferralFee.feeCents || 0))} per verified customer` : "Agreement required"}</strong>
+              <strong>{currentReferralFee ? `${formatCents(Number(currentReferralFee.feeCents || 0))} per verified guest` : "Agreement required"}</strong>
               <small>
                 {currentReferralFee
                   ? `MyDancr-controlled agreement · effective ${formatDashboardDate(String(currentReferralFee.effectiveFrom || ""))}`
@@ -2802,7 +2802,7 @@ function VenueClubDealPanel({
           {showFeeRequest && !pendingFeeRequest ? (
             <div className="venue-referral-request-panel">
               <label>
-                Requested fee per verified customer
+                Requested fee per verified guest
                 <span className="currency-input"><span>$</span><input inputMode="decimal" placeholder="20.00" value={requestedFee} onChange={(event) => setRequestedFee(event.target.value)} /></span>
               </label>
               <label>
@@ -2822,7 +2822,7 @@ function VenueClubDealPanel({
           <dl className="venue-deal-review">
             <div><dt>Offer</dt><dd>{form.dealTitle.trim() || "Enter a deal title above"}</dd></div>
             <div><dt>Type</dt><dd>{dealTypeLabel(form.offerType)}</dd></div>
-            <div><dt>Referral fee</dt><dd>{currentReferralFee ? `${formatCents(Number(currentReferralFee.feeCents || 0))} per verified customer` : "Agreement required"}</dd></div>
+            <div><dt>Referral fee</dt><dd>{currentReferralFee ? `${formatCents(Number(currentReferralFee.feeCents || 0))} per verified guest` : "Agreement required"}</dd></div>
             <div><dt>Status</dt><dd>{form.isActive ? "Live" : "Draft"}</dd></div>
           </dl>
           {form.isActive ? (
@@ -2871,7 +2871,7 @@ function VenueClubDealPanel({
                 <span aria-hidden="true">{form.isActive ? "✓" : "•"}</span>
                 <div>
                   <strong>{form.isActive ? "Live on MyDancr" : "Draft — not live"}</strong>
-                  <small>{form.isActive ? "Available wherever your Club Deals appear." : "Publish this deal when it is ready for customers."}</small>
+                  <small>{form.isActive ? "Available wherever your Club Deals appear." : "Publish this deal when it is ready for guests."}</small>
                 </div>
               </div>
             </section>
@@ -2883,7 +2883,7 @@ function VenueClubDealPanel({
         <section>
           <span className="eyebrow">Cashier sticker</span>
           <h3 id="venue-deal-nfc-heading">{liveCount ? "Ready for redemption" : "Waiting for a live deal"}</h3>
-          <p>{liveCount ? "Customers can redeem a live deal with any active cashier sticker assigned to your venue." : "Publish a deal to make it available at the cashier."}</p>
+          <p>{liveCount ? "Guests can redeem a live deal with any active cashier sticker assigned to your venue." : "Publish a deal to make it available at the cashier."}</p>
           <small>Sticker status is managed in Assigned NFC access.</small>
         </section>
       </section>
@@ -2894,7 +2894,7 @@ function VenueClubDealPanel({
             Publish a deal and MyDancr shows it on your venue page and eligible Working Now dancer profiles.
           </p>
           <p>
-            Customers select a deal and tap your MyDancr cashier sticker. MyDancr records the confirmed redemption, attribution, and referral fee.
+            Guests select a deal and tap your MyDancr cashier sticker. MyDancr records the confirmed redemption, attribution, and referral fee.
           </p>
         </div>
       </details>
@@ -3315,8 +3315,8 @@ function DancerProfilePreview({
             <section className="profile-schedule-section dancer-profile-preview-status" aria-labelledby="dancer-profile-preview-status-heading">
               <div className="profile-section-heading">
                 <div>
-                  <span className="eyebrow">{isApproved ? "Customer view" : "Private preview"}</span>
-                  <h2 id="dancer-profile-preview-status-heading">{isApproved ? "Public profile preview" : "Customer profile preview"}</h2>
+                  <span className="eyebrow">{isApproved ? "Guest view" : "Private preview"}</span>
+                  <h2 id="dancer-profile-preview-status-heading">{isApproved ? "Public profile preview" : "Guest profile preview"}</h2>
                 </div>
                 <span>{approvedPhotos.length} photos · {videos.length} videos</span>
               </div>
@@ -3331,8 +3331,8 @@ function DancerProfilePreview({
                   : "Saved social links will appear here. "}
                 {isApproved
                   ? isPublic
-                    ? "This is how your approved profile appears to customers."
-                    : "Your approved profile is currently hidden from customers while you are incognito."
+                    ? "This is how your approved profile appears to guests."
+                    : "Your approved profile is currently hidden from guests while you are incognito."
                   : "Your profile stays private until every setup step is complete."}
               </p>
             </section>
@@ -3615,8 +3615,8 @@ function DancerOnboardingCommand({
                 }) : null}
                 {step.id === "dancer-onboarding-preview" ? (
                   <div className="dancer-onboarding-preview-workspace">
-                    <article className="dancer-onboarding-preview" aria-label="Customer profile preview">
-                      <span className="eyebrow">Customer view</span>
+                    <article className="dancer-onboarding-preview" aria-label="Guest profile preview">
+                      <span className="eyebrow">Guest view</span>
                       <div className="dancer-onboarding-preview-card">
                         <span className="dancer-onboarding-preview-avatar">
                           {previewImage ? <img src={previewImage} alt="" /> : previewName.slice(0, 1).toUpperCase()}
@@ -3803,7 +3803,7 @@ function DancerOnboardingProfileMediaWorkspace({
     {
       id: "identity",
       label: "Stage name & city",
-      detail: identityState === "complete" ? `${persistedStageName} · ${persistedCity}` : "Save the name and city customers will see.",
+      detail: identityState === "complete" ? `${persistedStageName} · ${persistedCity}` : "Save the name and city guests will see.",
       state: identityState,
       content: identityContent,
     },
@@ -4051,9 +4051,9 @@ function DancerPanel({
           <svg viewBox="0 0 24 24"><path d="M2.8 12s3.2-5.5 9.2-5.5 9.2 5.5 9.2 5.5-3.2 5.5-9.2 5.5S2.8 12 2.8 12Z" /><circle cx="12" cy="12" r="2.6" /></svg>
         </span>
         <span className="dancer-profile-media-preview-copy">
-          <span className="eyebrow">Customer view</span>
+          <span className="eyebrow">Guest view</span>
           <strong id="dancer-profile-media-preview-heading">Preview your profile</strong>
-          <small>See your approved photos, videos, and socials exactly as customers do.</small>
+          <small>See your approved photos, videos, and socials exactly as guests do.</small>
         </span>
         <DancerProfilePreview
           buttonClassName="dancer-profile-media-preview-button"
@@ -4258,7 +4258,7 @@ function DancerActivationConfirmation({
         <h2 id="dancer-activation-title">Your profile is live</h2>
         <p>
           {venueName ? `Approved through ${venueName}. ` : "Your dressing-room tap was approved. "}
-          Customers can now discover your profile on MyDancr.
+          Guests can now discover your profile on MyDancr.
         </p>
         <div className="dancer-activation-actions">
           {slug ? <Link href={`/dancers/${encodeURIComponent(slug)}`} onClick={acknowledgeCompletion}>View live profile</Link> : null}
@@ -4320,8 +4320,8 @@ function DancerVisibilityPanel({
       setIsPublic(savedPublic);
       setStatus(
         savedPublic
-          ? "Your profile is back on and visible to customers."
-          : "Incognito is on. Your profile was verified hidden from customers. You can turn it back on at any time.",
+          ? "Your profile is back on and visible to guests."
+          : "Incognito is on. Your profile was verified hidden from guests. You can turn it back on at any time.",
       );
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update profile visibility.");
@@ -4339,7 +4339,7 @@ function DancerVisibilityPanel({
           <span aria-hidden="true">·</span>
           <b>{isPublic ? "Visible" : "Hidden"}</b>
         </div>
-        <p>{isPublic ? "Customers can find your approved profile across MyDancr." : "Your profile is hidden from customers; your dashboard and tools stay available."}</p>
+        <p>{isPublic ? "Guests can find your approved profile across MyDancr." : "Your profile is hidden from guests; your dashboard and tools stay available."}</p>
       </div>
       <button className="visibility-toggle" type="button" onClick={toggleVisibility} disabled={isSaving}>
         {isSaving ? "Verifying..." : isPublic ? "Go incognito" : "Make profile public"}
@@ -4453,7 +4453,7 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
       </details>
       <details className="dancer-performance-explainer">
         <summary>How Club Deal rewards work</summary>
-        <p>Your dancer credit follows a verified check-in to the customer&apos;s cashier NFC tap. Successful, server-confirmed redemptions earn commission.</p>
+        <p>Your dancer credit follows a verified check-in to the guest&apos;s cashier NFC tap. Successful, server-confirmed redemptions earn commission.</p>
       </details>
     </article>
   );
@@ -4606,7 +4606,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
             ? "MyDancr validates cashier NFC redemptions, calculates your tiered commission, and sends eligible rewards to your verified NATS affiliate ledger."
             : "Qualifying Club Deal activity starts as pending and becomes available after review."}</p>
           <p>{natsSelected
-            ? "No customer personal information is included."
+            ? "No guest personal information is included."
             : "The approved payout provider securely handles identity, account details, and money movement. MyDancr stores only the provider account reference and payout status."}</p>
         </div>
       </details>
@@ -5848,7 +5848,7 @@ function DancerShiftPanel() {
 
       setShifts((current) => current.filter((shift) => String(shift.id) !== shiftId));
       if (editingShiftId === shiftId) stopEditingShift();
-      setStatus(`Shift cancelled. ${data.cancellationRecipients || 0} customers notified.`);
+      setStatus(`Shift cancelled. ${data.cancellationRecipients || 0} guests notified.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to cancel shift.");
     } finally {

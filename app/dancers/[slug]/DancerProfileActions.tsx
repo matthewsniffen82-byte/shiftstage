@@ -431,7 +431,7 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
+      <div className="live-actions" aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
           className={`profile-action-primary profile-action-public profile-action-going${isGoing ? " is-going" : ""}${actionShift ? "" : " profile-action-unavailable"}`}
           type="button"
@@ -524,7 +524,7 @@ export function DancerProfileActions({
             >
               ×
             </button>
-            <span>Free customer account</span>
+            <span>Free guest account</span>
             <h2 id="profile-account-gate-title">Create an account to continue</h2>
             <p id="profile-account-gate-message">{accountActionMessage(accountRequiredAction)}</p>
             <div>
@@ -638,6 +638,6 @@ function readConfirmedNotificationCount(data: { notificationCount?: unknown }) {
 }
 
 function accountActionMessage(action: AccountAction) {
-  if (action === "follow") return "Create a free customer account to follow this dancer and save the profile.";
-  return "Create a free customer account to turn on dancer notifications.";
+  if (action === "follow") return "Create a free guest account to follow this dancer and save the profile.";
+  return "Create a free guest account to turn on dancer notifications.";
 }

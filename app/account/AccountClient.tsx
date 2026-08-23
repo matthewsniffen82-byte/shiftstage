@@ -234,7 +234,7 @@ export default function AccountClient() {
 
     setIsSubmitting(true);
     if (mode === "login") {
-      setStatus(role === "dancer" ? "Signing in to your dancer account..." : "Signing in to your customer account...");
+      setStatus(role === "dancer" ? "Signing in to your dancer account..." : "Signing in to your guest account...");
     }
 
     const payload: Record<string, string> = { mode, role, email, password };
@@ -440,7 +440,7 @@ export default function AccountClient() {
               ) : (
                 <div className="segmented" aria-label="Account type">
                   <button className={role === "customer" ? "active" : ""} type="button" onClick={() => chooseRole("customer")}>
-                    Customer
+                    Guest
                   </button>
                   <button className={role === "dancer" ? "active" : ""} type="button" onClick={() => chooseRole("dancer")}>
                     Dancer
@@ -467,7 +467,7 @@ export default function AccountClient() {
 
           {mode === "signup" && role === "customer" ? (
             <>
-              <section ref={customerBenefitsRef} className="signup-benefits" aria-label="Customer signup benefits">
+              <section ref={customerBenefitsRef} className="signup-benefits" aria-label="Guest signup benefits">
                 <span className="eyebrow">Why join</span>
                 <h2>Create your private Mydancr dashboard</h2>
                 <button className="continue-signup" type="button" onClick={scrollCustomerFieldsToTop}>
@@ -481,7 +481,7 @@ export default function AccountClient() {
                   </div>
                   <div className="customer-benefit-tile">
                     <strong>Private follows</strong>
-                    <span>Follow dancers and venues without a public customer profile.</span>
+                    <span>Follow dancers and venues without a public guest profile.</span>
                   </div>
                   <div className="customer-benefit-tile">
                     <strong>Working now alerts</strong>

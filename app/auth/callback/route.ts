@@ -359,6 +359,6 @@ function readMetadataText(value: unknown) {
 }
 
 function displayNameFromEmail(email: string, role: CallbackRole) {
-  const fallback = role === "dancer" ? "Dancer" : role === "venue" ? "Venue" : "Customer";
+  const fallback = role === "dancer" ? "Dancer" : role === "venue" ? "Venue" : "Guest";
   return email.split("@")[0]?.trim() || fallback;
 }

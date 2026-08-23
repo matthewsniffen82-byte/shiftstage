@@ -365,7 +365,7 @@ function adminAuthEmail(username: string) {
 }
 
 function customerDisplayName(email: string) {
-  return email.split("@")[0]?.trim() || "Customer";
+  return email.split("@")[0]?.trim() || "Guest";
 }
 
 function safeEmailRedirectTo(value: unknown) {
