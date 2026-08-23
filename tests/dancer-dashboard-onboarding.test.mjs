@@ -273,7 +273,7 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /String\(video\?\.status \|\| ""\)\.toLowerCase\(\) !== "approved"/);
   assert.match(dashboard, /videos=\{videos\}/);
   assert.match(dashboard, /const socialLinks = dancerPreviewSocialLinks\(profile\)/);
-  assert.match(dashboard, /<SocialLinks[\s\S]*heading="Social links"[\s\S]*links=\{socialLinks\}[\s\S]*showConnectLabel=\{false\}[\s\S]*trackClicks=\{false\}/);
+  assert.match(dashboard, /<SocialLinks[\s\S]*heading="Socials"[\s\S]*links=\{socialLinks\}[\s\S]*showConnectLabel=\{false\}[\s\S]*trackClicks=\{false\}/);
   assert.match(dashboard, /aria-label="Close profile preview"/);
   assert.match(dashboard, /scrollRef\.current = window\.scrollY/);
   assert.match(dashboard, /window\.scrollTo\(\{ top: scrollY, behavior: "auto" \}\)/);

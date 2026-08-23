@@ -260,8 +260,9 @@ test("inline profile TV has complete play, sound, progress, and duration control
   assert.match(profilePage, /\.profile-media-feature\.is-video \{ aspect-ratio: 9 \/ 16;/);
 });
 
-test("official social icons stay centered without publishing handles", () => {
-  assert.match(socialLinks, /heading = "Official socials"/);
+test("social icons use one simple Socials heading without publishing handles", () => {
+  assert.match(socialLinks, /heading = "Socials"/);
+  assert.match(socialLinks, /showConnectLabel = false/);
   assert.match(socialLinks, /<h2 id="profile-social-heading">\{heading\}<\/h2>/);
   assert.match(socialLinks, /rel="noopener noreferrer"/);
   assert.match(socialLinks, /opens in a new tab/);

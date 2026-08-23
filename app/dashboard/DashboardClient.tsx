@@ -3305,7 +3305,7 @@ function DancerProfilePreview({
               <section className="profile-social-section" aria-labelledby="profile-social-heading">
                 <SocialLinks
                   dancerId={String(profile?.id || "private-preview")}
-                  heading="Social links"
+                  heading="Socials"
                   links={socialLinks}
                   showConnectLabel={false}
                   trackClicks={false}

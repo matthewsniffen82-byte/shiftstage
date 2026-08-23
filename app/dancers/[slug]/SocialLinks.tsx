@@ -25,7 +25,7 @@ const platformLabels: Record<SocialPlatform, string> = {
   onlyfans: "OnlyFans",
 };
 
-export function SocialLinks({ dancerId, heading = "Official socials", links, showConnectLabel = true, trackClicks = true }: SocialLinksProps) {
+export function SocialLinks({ dancerId, heading = "Socials", links, showConnectLabel = false, trackClicks = true }: SocialLinksProps) {
   if (!links.length) return null;
 
   function recordClick(platform: SocialPlatform) {
