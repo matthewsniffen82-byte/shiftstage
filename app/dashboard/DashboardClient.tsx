@@ -3184,12 +3184,14 @@ function DancerOnboardingCommand({
   }, [payoutSkipKey]);
 
   useEffect(() => {
-    if (didRestoreStepRef.current) return;
+    if (!profile?.id || didRestoreStepRef.current) return;
     didRestoreStepRef.current = true;
     const restored = window.localStorage.getItem(storageKey);
-    const targetId = steps.some((step) => step.id === restored && !step.locked) ? String(restored) : firstIncomplete.id;
+    const restoredStep = steps.find((step) => step.id === restored);
+    const targetId = restoredStep && !restoredStep.locked && !restoredStep.complete ? restoredStep.id : firstIncomplete.id;
+    if (restoredStep?.complete) window.localStorage.removeItem(storageKey);
     setExpandedStepId(targetId);
-  }, [firstIncomplete.id, steps, storageKey]);
+  }, [firstIncomplete.id, profile?.id, steps, storageKey]);
 
   useEffect(() => {
     const keepPhotosOpen = () => {
@@ -3742,12 +3744,13 @@ function DancerOnboardingProfileMediaWorkspace({
     },
   ];
   const firstIncompleteId = requiredItems.find((item) => item.state !== "complete")?.id || null;
-  const [expandedId, setExpandedId] = useState<string | null>(firstIncompleteId);
+  const [expandedId, setExpandedId] = useState<string | null>(() => profile?.id ? firstIncompleteId : null);
   const completeCount = requiredItems.filter((item) => item.state === "complete").length;
 
   useEffect(() => {
+    if (!profile?.id) return;
     setExpandedId((current) => current ?? firstIncompleteId);
-  }, [firstIncompleteId]);
+  }, [firstIncompleteId, profile?.id]);
 
   useEffect(() => {
     const keepPhotosOpen = () => setExpandedId("photos");

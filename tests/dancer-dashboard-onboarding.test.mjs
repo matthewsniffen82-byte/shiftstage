@@ -69,8 +69,12 @@ test("draft identity and social form values survive refreshes without bypassing 
   assert.match(dashboard, /draftDirtyRef\.current/);
 });
 
-test("onboarding restores one accordion step and exposes accessible collapsible controls", () => {
+test("onboarding restores only unfinished steps and exposes accessible collapsible controls", () => {
   assert.match(dashboard, /mydancr:dancer-onboarding-step/);
+  assert.match(dashboard, /if \(!profile\?\.id \|\| didRestoreStepRef\.current\) return/);
+  assert.match(dashboard, /const restoredStep = steps\.find\(\(step\) => step\.id === restored\)/);
+  assert.match(dashboard, /restoredStep && !restoredStep\.locked && !restoredStep\.complete/);
+  assert.match(dashboard, /if \(restoredStep\?\.complete\) window\.localStorage\.removeItem\(storageKey\)/);
   assert.match(dashboard, /scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/);
   assert.match(dashboard, /aria-current=\{step\.id === firstIncomplete\.id \? "step"/);
   assert.match(dashboard, /aria-controls=\{panelId\}/);
@@ -117,6 +121,8 @@ test("step one guides dancers through required work before optional profile enha
 });
 
 test("step one required items are accessible accordions that preserve the active editor", () => {
+  assert.match(dashboard, /useState<string \| null>\(\(\) => profile\?\.id \? firstIncompleteId : null\)/);
+  assert.match(dashboard, /if \(!profile\?\.id\) return;[\s\S]*?setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);
   assert.match(dashboard, /setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);
   assert.doesNotMatch(dashboard, /setExpandedId\(firstIncompleteId\)/);
   assert.match(dashboard, /aria-controls=\{panelId\}/);
