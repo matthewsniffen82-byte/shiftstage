@@ -19,7 +19,7 @@ type Workspace = {
   videos: ManagedVideo[];
 };
 
-export type DancerTvStudioVideoSummary = {
+type ManagedVideo = {
   id: string;
   videoUrl: string;
   status: string;
@@ -32,8 +32,6 @@ export type DancerTvStudioVideoSummary = {
   metrics?: Record<string, number>;
 };
 
-type ManagedVideo = DancerTvStudioVideoSummary;
-
 type QueuedVideo = {
   id: string;
   file: File;
@@ -44,13 +42,7 @@ type QueuedVideo = {
   error?: string;
 };
 
-export default function DancerTvStudio({
-  embedded = false,
-  onVideosChange,
-}: {
-  embedded?: boolean;
-  onVideosChange?: (videos: DancerTvStudioVideoSummary[]) => void;
-}) {
+export default function DancerTvStudio({ embedded = false }: { embedded?: boolean }) {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [queuedVideos, setQueuedVideos] = useState<QueuedVideo[]>([]);
   const [uploadingQueueItemId, setUploadingQueueItemId] = useState("");
@@ -70,10 +62,6 @@ export default function DancerTvStudio({
   useEffect(() => {
     loadWorkspace();
   }, []);
-
-  useEffect(() => {
-    if (workspace) onVideosChange?.(workspace.videos);
-  }, [onVideosChange, workspace]);
 
   useEffect(() => () => {
     queuedPreviewUrlsRef.current.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));

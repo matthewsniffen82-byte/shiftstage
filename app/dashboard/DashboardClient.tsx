@@ -16,7 +16,7 @@ import {
   defaultClubDealOfferPreset,
 } from "@/src/lib/dancr/club-deal-presets";
 import DancerNfcPanel from "./DancerNfcPanel";
-import DancerTvStudio, { type DancerTvStudioVideoSummary } from "./DancerTvStudio";
+import DancerTvStudio from "./DancerTvStudio";
 import DancerShiftManager from "./DancerShiftManager";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
@@ -3671,23 +3671,19 @@ function DancerOnboardingProfileMediaWorkspace({
   continueToPreview,
   draftIdentity,
   identityContent,
+  optionalContent,
   photoContent,
   profile,
   profileReady,
-  socialContent,
-  videoContent,
-  videos,
 }: {
   avatarContent: ReactNode;
   continueToPreview: () => void;
   draftIdentity: DancerIdentityDraft;
   identityContent: ReactNode;
+  optionalContent: ReactNode;
   photoContent: ReactNode;
   profile?: LoadState["profile"];
   profileReady: boolean;
-  socialContent: ReactNode;
-  videoContent: ReactNode;
-  videos: DancerTvStudioVideoSummary[];
 }) {
   const persistedStageName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
@@ -3747,38 +3743,8 @@ function DancerOnboardingProfileMediaWorkspace({
   ];
   const firstIncompleteId = requiredItems.find((item) => item.state !== "complete")?.id || null;
   const [expandedId, setExpandedId] = useState<string | null>(firstIncompleteId);
-  const [builderMediaMode, setBuilderMediaMode] = useState<"photos" | "videos">("photos");
   const previousIncompleteIdRef = useRef(firstIncompleteId);
   const completeCount = requiredItems.filter((item) => item.state === "complete").length;
-  const builderName = draftIdentity.stageName.trim() || persistedStageName || "Add stage name";
-  const builderCity = draftIdentity.city.trim() || persistedCity || "Choose city";
-  const builderPhotoSlots = Array.from({ length: MAX_DANCER_PROFILE_PHOTOS }, (_, index) => photos[index] || null);
-  const builderVideoSlots = Array.from({ length: 5 }, (_, index) => videos[index] || null);
-  const builderMediaSlots = builderMediaMode === "photos" ? builderPhotoSlots : builderVideoSlots;
-  const builderFeature = builderMediaSlots[0];
-  const savedSocialLinks = dancerPreviewSocialLinks(profile);
-  const savedSocialPlatforms = new Set(savedSocialLinks.map((link) => link.platform));
-  const socialSlots: Array<{ platform: SocialPlatform; label: string; shortLabel: string }> = [
-    { platform: "instagram", label: "Instagram", shortLabel: "IG" },
-    { platform: "tiktok", label: "TikTok", shortLabel: "TT" },
-    { platform: "snapchat", label: "Snapchat", shortLabel: "SC" },
-    { platform: "x", label: "X", shortLabel: "X" },
-    { platform: "onlyfans", label: "OnlyFans", shortLabel: "OF" },
-  ];
-  const optionalItems = [
-    {
-      id: "socials",
-      label: "Social links",
-      detail: savedSocialLinks.length ? `${savedSocialLinks.length} saved` : "Optional — connect the accounts customers can visit.",
-      content: socialContent,
-    },
-    {
-      id: "videos",
-      label: "Profile videos",
-      detail: videos.length ? `${videos.length} of 5 video slots used` : "Optional — add vertical or square videos.",
-      content: videoContent,
-    },
-  ];
 
   useEffect(() => {
     if (previousIncompleteIdRef.current === firstIncompleteId) return;
@@ -3796,142 +3762,21 @@ function DancerOnboardingProfileMediaWorkspace({
     setExpandedId((current) => current === id ? null : id);
   }
 
-  function openEditorSection(id: "identity" | "avatar" | "photos" | "socials" | "videos") {
-    setExpandedId(id);
-    window.requestAnimationFrame(() => {
-      document.getElementById(`dancer-step-one-${id}-section`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      document.getElementById(`dancer-step-one-${id}-button`)?.focus({ preventScroll: true });
-    });
-  }
-
   return (
     <div className="dancer-step-one-workspace">
-      <section className="dancer-profile-builder" aria-labelledby="dancer-profile-builder-heading">
-        <div className="dancer-profile-builder-head">
-          <span>
-            <span className="eyebrow">Live profile builder</span>
-            <h3 id="dancer-profile-builder-heading">Finish your public profile</h3>
-            <p>Tap any visible profile item to add or edit it. This is the same structure customers will see.</p>
-          </span>
-          <b>{completeCount} of 3 required</b>
-        </div>
-
-        <div className="dancer-profile-builder-canvas">
-          <header className="dancer-profile-builder-titlebar">
-            <button
-              aria-label="Edit profile avatar"
-              className={`dancer-profile-builder-avatar${avatarUrl ? " has-photo" : ""}`}
-              onClick={() => openEditorSection("avatar")}
-              type="button"
-            >
-              {avatarUrl ? <img alt="" src={avatarUrl} /> : <span aria-hidden="true">+</span>}
-              <small>{avatarUrl ? "Edit" : "Add"}</small>
-            </button>
-            <button
-              aria-label="Edit stage name and city"
-              className="dancer-profile-builder-identity"
-              onClick={() => openEditorSection("identity")}
-              type="button"
-            >
-              <strong>{builderName}</strong>
-              <span>{builderCity}</span>
-              <small>Edit identity</small>
-            </button>
-            <span className="dancer-profile-builder-draft">Editing</span>
-          </header>
-
-          <section className="dancer-profile-builder-media" aria-label="Profile media builder">
-            <div className="dancer-profile-builder-media-tabs" role="tablist" aria-label="Profile media type">
-              <button
-                aria-selected={builderMediaMode === "photos"}
-                className={builderMediaMode === "photos" ? "is-active" : ""}
-                onClick={() => setBuilderMediaMode("photos")}
-                role="tab"
-                type="button"
-              >
-                Photos <span>{photos.length}/5</span>
-              </button>
-              <button
-                aria-selected={builderMediaMode === "videos"}
-                className={builderMediaMode === "videos" ? "is-active" : ""}
-                onClick={() => setBuilderMediaMode("videos")}
-                role="tab"
-                type="button"
-              >
-                Videos <span>{videos.length}/5</span>
-              </button>
-            </div>
-
-            <button
-              aria-label={builderFeature ? `Edit ${builderMediaMode}` : `Add ${builderMediaMode}`}
-              className={`dancer-profile-builder-feature${builderFeature ? " has-media" : " is-empty"}`}
-              onClick={() => openEditorSection(builderMediaMode)}
-              type="button"
-            >
-              {builderMediaMode === "photos" && builderFeature && "imageUrl" in builderFeature ? (
-                <img alt="" src={builderFeature.imageUrl} />
-              ) : null}
-              {builderMediaMode === "videos" && builderFeature && "videoUrl" in builderFeature ? (
-                <video aria-hidden="true" muted playsInline preload="metadata" src={builderFeature.videoUrl} />
-              ) : null}
-              {!builderFeature ? (
-                <span className="dancer-profile-builder-empty-media" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d={builderMediaMode === "photos" ? "M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" : "M5 4.5h14v15H5zM10 9l5 3-5 3z"} /></svg>
-                  <strong>Add your first {builderMediaMode === "photos" ? "photo" : "video"}</strong>
-                </span>
-              ) : null}
-              <span className="dancer-profile-builder-edit-cue">{builderFeature ? "Edit media" : "Add media"}</span>
-            </button>
-
-            <div className="dancer-profile-builder-thumbnails" aria-label={`${builderMediaMode} slots`}>
-              {builderMediaSlots.map((media, index) => (
-                <button
-                  aria-label={media ? `Edit ${builderMediaMode} slot ${index + 1}` : `Add ${builderMediaMode.slice(0, -1)} ${index + 1}`}
-                  className={media ? "has-media" : "is-empty"}
-                  key={`${builderMediaMode}-${index}`}
-                  onClick={() => openEditorSection(builderMediaMode)}
-                  type="button"
-                >
-                  {builderMediaMode === "photos" && media && "imageUrl" in media ? <img alt="" src={media.imageUrl} /> : null}
-                  {builderMediaMode === "videos" && media && "videoUrl" in media ? <video aria-hidden="true" muted playsInline preload="metadata" src={media.videoUrl} /> : null}
-                  {!media ? <span aria-hidden="true">+</span> : null}
-                  <small>{index === 0 ? "Main" : index + 1}</small>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="dancer-profile-builder-socials" aria-labelledby="dancer-profile-builder-socials-heading">
-            <div>
-              <span className="eyebrow">Social links</span>
-              <h4 id="dancer-profile-builder-socials-heading">Connect with me</h4>
-            </div>
-            <div className="dancer-profile-builder-social-slots">
-              {socialSlots.map((slot) => {
-                const saved = savedSocialPlatforms.has(slot.platform);
-                return (
-                  <button
-                    aria-label={`${saved ? "Edit" : "Add"} ${slot.label}`}
-                    className={saved ? "has-value" : "is-empty"}
-                    key={slot.platform}
-                    onClick={() => openEditorSection("socials")}
-                    type="button"
-                  >
-                    <strong>{slot.shortLabel}</strong>
-                    <small>{saved ? "Saved" : "+ Add"}</small>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </div>
-
+      <section className="dancer-step-one-summary" aria-labelledby="dancer-step-one-summary-heading">
+        <span>
+          <span className="eyebrow">Required for approval</span>
+          <h3 id="dancer-step-one-summary-heading">Finish your public profile</h3>
+          <p>Complete the three required items below. Social links and videos can be added now or later.</p>
+        </span>
+        <b>{completeCount} of 3 complete</b>
         <div className="dancer-step-one-checklist" aria-label="Required profile items">
           {requiredItems.map((item) => (
             <button
               className={`is-${item.state}`}
               key={`checklist-${item.id}`}
-              onClick={() => openEditorSection(item.id as "identity" | "avatar" | "photos")}
+              onClick={() => setExpandedId(item.id)}
               type="button"
             >
               <span aria-hidden="true">{item.state === "complete" ? "✓" : "•"}</span>
@@ -3947,12 +3792,11 @@ function DancerOnboardingProfileMediaWorkspace({
           const open = expandedId === item.id;
           const panelId = `dancer-step-one-${item.id}-panel`;
           return (
-            <section className={`dancer-step-one-section is-${item.state} ${open ? "is-open" : ""}`.trim()} id={`dancer-step-one-${item.id}-section`} key={item.id}>
+            <section className={`dancer-step-one-section is-${item.state} ${open ? "is-open" : ""}`.trim()} key={item.id}>
               <button
                 aria-controls={panelId}
                 aria-expanded={open}
                 className="dancer-step-one-section-button"
-                id={`dancer-step-one-${item.id}-button`}
                 onClick={() => toggleSection(item.id)}
                 type="button"
               >
@@ -3971,33 +3815,26 @@ function DancerOnboardingProfileMediaWorkspace({
           );
         })}
 
-        {optionalItems.map((item) => {
-          const open = expandedId === item.id;
-          const panelId = `dancer-step-one-${item.id}-panel`;
-          return (
-            <section className={`dancer-step-one-section is-optional ${open ? "is-open" : ""}`.trim()} id={`dancer-step-one-${item.id}-section`} key={item.id}>
-              <button
-                aria-controls={panelId}
-                aria-expanded={open}
-                className="dancer-step-one-section-button"
-                id={`dancer-step-one-${item.id}-button`}
-                onClick={() => toggleSection(item.id)}
-                type="button"
-              >
-                <span className="dancer-step-one-section-marker" aria-hidden="true">+</span>
-                <span>
-                  <strong>{item.label}</strong>
-                  <small>{item.detail}</small>
-                </span>
-                <em>Optional</em>
-                <i aria-hidden="true">{open ? "−" : "+"}</i>
-              </button>
-              <div className="dancer-step-one-section-panel dancer-step-one-optional-panel" hidden={!open} id={panelId}>
-                {item.content}
-              </div>
-            </section>
-          );
-        })}
+        <section className={`dancer-step-one-section is-optional ${expandedId === "optional" ? "is-open" : ""}`.trim()}>
+          <button
+            aria-controls="dancer-step-one-optional-panel"
+            aria-expanded={expandedId === "optional"}
+            className="dancer-step-one-section-button"
+            onClick={() => toggleSection("optional")}
+            type="button"
+          >
+            <span className="dancer-step-one-section-marker" aria-hidden="true">+</span>
+            <span>
+              <strong>Social links & videos</strong>
+              <small>Optional — add now or any time after approval.</small>
+            </span>
+            <em>Optional</em>
+            <i aria-hidden="true">{expandedId === "optional" ? "−" : "+"}</i>
+          </button>
+          <div className="dancer-step-one-section-panel dancer-step-one-optional-panel" hidden={expandedId !== "optional"} id="dancer-step-one-optional-panel">
+            {optionalContent}
+          </div>
+        </section>
       </div>
 
       <footer className={`dancer-step-one-footer ${profileReady ? "is-ready" : ""}`.trim()}>
@@ -4064,7 +3901,6 @@ function DancerPanel({
     || affiliations.some((item) => item.status === "active");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
-  const [profileVideos, setProfileVideos] = useState<DancerTvStudioVideoSummary[]>([]);
   const [draftIdentity, setDraftIdentity] = useState(() => ({
     stageName: persistedDancerStageName(profile),
     city: String(profile?.city || ""),
@@ -4133,10 +3969,7 @@ function DancerPanel({
       onProfileChange={onProfileChange}
     />
   );
-  const handleProfileVideosChange = useCallback((videos: DancerTvStudioVideoSummary[]) => {
-    setProfileVideos(videos);
-  }, []);
-  const videoContent = <DancerTvStudio embedded onVideosChange={handleProfileVideosChange} />;
+  const videoContent = <DancerTvStudio embedded />;
   const profileMediaWorkspace = (
     <div className="venue-dashboard-inner-grid dancer-onboarding-profile-workspace">
       {identityContent}
@@ -4180,12 +4013,10 @@ function DancerPanel({
               continueToPreview={continueToPreview}
               draftIdentity={draftIdentity}
               identityContent={identityContent}
+              optionalContent={<>{socialContent}{videoContent}</>}
               photoContent={photoContent}
               profile={profile}
               profileReady={profileReady}
-              socialContent={socialContent}
-              videoContent={videoContent}
-              videos={profileVideos}
             />
           )}
           venueVerificationContent={<DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />}
@@ -7802,51 +7633,11 @@ function DashboardStyles() {
       .dancer-onboarding-step-panel[hidden] { display: none; }
       .dancer-onboarding-step-panel .dancer-onboarding-profile-workspace { margin: 0; }
       .dancer-step-one-workspace { min-width: 0; display: grid; gap: 12px; }
-      .dancer-profile-builder { min-width: 0; display: grid; gap: 12px; padding: 14px; border: 1px solid rgba(126,234,255,.17); border-radius: 16px; background: linear-gradient(145deg,rgba(17,17,24,.96),rgba(7,7,11,.98)); }
-      .dancer-profile-builder-head { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; }
-      .dancer-profile-builder-head > span { min-width: 0; display: grid; gap: 5px; }
-      .dancer-profile-builder-head h3 { color: #fff; font-size: clamp(20px,4vw,26px); }
-      .dancer-profile-builder-head p { max-width: 60ch; color: var(--mydancr-dashboard-muted); font-size: 12px; line-height: 1.45; }
-      .dancer-profile-builder-head > b { padding: 6px 9px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #d8d5df; background: rgba(255,255,255,.04); font-size: 10px; white-space: nowrap; }
-      .dancer-profile-builder-canvas { width: min(100%,620px); min-width: 0; display: grid; justify-self: center; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; color: #f7f2ff; background: #050507; box-shadow: 0 24px 58px rgba(0,0,0,.38); }
-      .dancer-profile-builder-titlebar { min-width: 0; display: grid; grid-template-columns: 54px minmax(0,1fr) auto; align-items: center; gap: 11px; padding: 12px; background: rgba(8,8,12,.98); }
-      .dancer-profile-builder-avatar { position: relative; width: 52px; height: 52px; min-height: 52px; display: grid; place-items: center; overflow: hidden; padding: 0; border: 1px dashed rgba(126,234,255,.48); border-radius: 50%; color: #fff; background: linear-gradient(145deg,rgba(124,58,237,.5),rgba(34,199,255,.22)); font: inherit; font-size: 23px; font-weight: 950; cursor: pointer; }
-      .dancer-profile-builder-avatar.has-photo { border-style: solid; }
-      .dancer-profile-builder-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-      .dancer-profile-builder-avatar small { position: absolute; z-index: 1; right: -1px; bottom: -1px; min-width: 25px; height: 17px; display: grid; place-items: center; padding: 0 4px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(6,6,10,.9); font-size: 7px; font-weight: 950; text-transform: uppercase; }
-      .dancer-profile-builder-identity { min-width: 0; min-height: 48px; display: grid; align-content: center; justify-items: start; gap: 3px; padding: 3px 6px; border: 0; color: #fff; background: transparent; font: inherit; text-align: left; cursor: pointer; }
-      .dancer-profile-builder-identity strong { max-width: 100%; overflow: hidden; font-size: clamp(19px,4vw,25px); line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
-      .dancer-profile-builder-identity > span { color: #c6bdd3; font-size: 11px; font-weight: 800; }
-      .dancer-profile-builder-identity small { color: #7eeaff; font-size: 8px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
-      .dancer-profile-builder-draft { align-self: start; padding: 6px 8px; border: 1px solid rgba(126,234,255,.25); border-radius: 999px; color: #a9effb; background: rgba(34,199,255,.06); font-size: 8px; font-weight: 950; letter-spacing: .06em; text-transform: uppercase; }
-      .dancer-profile-builder-media { min-width: 0; display: grid; gap: 9px; padding: 0 12px 13px; }
-      .dancer-profile-builder-media-tabs { width: fit-content; display: grid; grid-template-columns: repeat(2,minmax(92px,1fr)); justify-self: center; gap: 5px; padding: 8px 0 0; }
-      .dancer-profile-builder-media-tabs button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; color: #a49dac; background: rgba(255,255,255,.035); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
-      .dancer-profile-builder-media-tabs button.is-active { border-color: rgba(126,234,255,.35); color: #fff; background: linear-gradient(135deg,rgba(109,40,217,.55),rgba(11,148,201,.24)); box-shadow: 0 0 20px rgba(124,58,237,.12); }
-      .dancer-profile-builder-media-tabs button span { color: #bfefff; font-size: 9px; }
-      .dancer-profile-builder-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; min-height: 0; display: grid; place-items: center; overflow: hidden; padding: 0; border: 1px dashed rgba(126,234,255,.32); border-radius: 18px; color: #fff; background: radial-gradient(circle at 50% 34%,rgba(124,58,237,.15),transparent 48%),#08080c; cursor: pointer; }
-      .dancer-profile-builder-feature.has-media { border-style: solid; border-color: rgba(255,255,255,.12); }
-      .dancer-profile-builder-feature > img, .dancer-profile-builder-feature > video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-      .dancer-profile-builder-empty-media { display: grid; place-items: center; gap: 10px; color: #d9d5df; }
-      .dancer-profile-builder-empty-media svg { width: 46px; height: 46px; fill: none; stroke: #7eeaff; stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
-      .dancer-profile-builder-empty-media strong { font-size: 13px; }
-      .dancer-profile-builder-edit-cue { position: absolute; z-index: 2; right: 11px; bottom: 11px; min-height: 31px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(5,5,9,.78); backdrop-filter: blur(12px); font-size: 9px; font-weight: 950; }
-      .dancer-profile-builder-thumbnails { min-width: 0; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
-      .dancer-profile-builder-thumbnails button { position: relative; min-width: 0; aspect-ratio: 3 / 4; display: grid; place-items: center; overflow: hidden; padding: 0; border: 1px dashed rgba(255,255,255,.18); border-radius: 10px; color: #a7a1ad; background: rgba(255,255,255,.035); font: inherit; cursor: pointer; }
-      .dancer-profile-builder-thumbnails button.has-media { border-style: solid; border-color: rgba(255,255,255,.13); }
-      .dancer-profile-builder-thumbnails img, .dancer-profile-builder-thumbnails video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-      .dancer-profile-builder-thumbnails button > span { font-size: 22px; font-weight: 500; }
-      .dancer-profile-builder-thumbnails small { position: absolute; z-index: 1; right: 4px; bottom: 4px; min-width: 18px; height: 17px; display: grid; place-items: center; padding: 0 4px; border-radius: 999px; color: #fff; background: rgba(4,4,8,.8); font-size: 7px; font-weight: 950; }
-      .dancer-profile-builder-socials { min-width: 0; display: grid; gap: 10px; padding: 15px 12px 17px; border-top: 1px solid rgba(255,255,255,.08); text-align: center; }
-      .dancer-profile-builder-socials > div:first-child { display: grid; gap: 3px; }
-      .dancer-profile-builder-socials h4 { margin: 0; color: #fff; font-size: 17px; }
-      .dancer-profile-builder-social-slots { min-width: 0; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
-      .dancer-profile-builder-social-slots button { min-width: 0; min-height: 58px; display: grid; place-items: center; align-content: center; gap: 3px; padding: 5px 2px; border: 1px dashed rgba(255,255,255,.18); border-radius: 999px; color: #aba5b2; background: rgba(255,255,255,.03); font: inherit; cursor: pointer; }
-      .dancer-profile-builder-social-slots button.has-value { border-style: solid; border-color: rgba(126,234,255,.28); color: #fff; background: linear-gradient(145deg,rgba(124,58,237,.16),rgba(34,199,255,.07)); }
-      .dancer-profile-builder-social-slots strong { font-size: 10px; }
-      .dancer-profile-builder-social-slots small { max-width: 100%; overflow: hidden; color: #8fe9fa; font-size: 7px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
-      .dancer-profile-builder button:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
-      body.dancr-button-system .dancer-profile-builder button { box-shadow: none; }
+      .dancer-step-one-summary { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; padding: 14px; border: 1px solid rgba(126,234,255,.17); border-radius: 14px; background: linear-gradient(145deg,rgba(17,17,24,.96),rgba(7,7,11,.98)); }
+      .dancer-step-one-summary > span { min-width: 0; display: grid; gap: 5px; }
+      .dancer-step-one-summary h3 { color: #fff; font-size: clamp(20px,4vw,26px); }
+      .dancer-step-one-summary p { color: var(--mydancr-dashboard-muted); font-size: 12px; line-height: 1.45; }
+      .dancer-step-one-summary > b { padding: 6px 9px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #d8d5df; background: rgba(255,255,255,.04); font-size: 10px; white-space: nowrap; }
       .dancer-step-one-checklist { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; }
       .dancer-step-one-checklist button { min-width: 0; min-height: 54px; display: grid; grid-template-columns: 22px minmax(0,1fr); align-items: center; gap: 2px 7px; padding: 8px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; color: #f7f5fa; background: rgba(255,255,255,.035); font: inherit; text-align: left; cursor: pointer; }
       .dancer-step-one-checklist button > span { width: 20px; height: 20px; grid-row: 1 / span 2; display: grid; place-items: center; border-radius: 50%; color: #aaa5b1; background: rgba(255,255,255,.07); font-size: 11px; font-weight: 950; }
@@ -8070,8 +7861,7 @@ function DashboardStyles() {
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
-      @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
-      @media (max-width: 620px) { .dancer-profile-builder { padding: 10px; } .dancer-profile-builder-head { grid-template-columns: 1fr; } .dancer-profile-builder-head > b { width: fit-content; } .dancer-profile-builder-canvas { border-radius: 16px; } .dancer-profile-builder-titlebar { grid-template-columns: 48px minmax(0,1fr) auto; gap: 8px; padding: 10px; } .dancer-profile-builder-avatar { width: 46px; height: 46px; min-height: 46px; } .dancer-profile-builder-draft { padding: 5px 6px; font-size: 7px; } .dancer-profile-builder-media { padding: 0 8px 10px; } .dancer-profile-builder-media-tabs { grid-template-columns: repeat(2,minmax(86px,1fr)); } .dancer-profile-builder-feature { aspect-ratio: 4 / 5; border-radius: 15px; } .dancer-profile-builder-thumbnails { gap: 5px; } .dancer-profile-builder-thumbnails button { border-radius: 8px; } .dancer-profile-builder-socials { padding: 13px 9px 15px; } .dancer-profile-builder-social-slots { gap: 5px; } .dancer-profile-builder-social-slots button { min-height: 54px; } }
+      @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }
