@@ -3743,13 +3743,10 @@ function DancerOnboardingProfileMediaWorkspace({
   ];
   const firstIncompleteId = requiredItems.find((item) => item.state !== "complete")?.id || null;
   const [expandedId, setExpandedId] = useState<string | null>(firstIncompleteId);
-  const previousIncompleteIdRef = useRef(firstIncompleteId);
   const completeCount = requiredItems.filter((item) => item.state === "complete").length;
 
   useEffect(() => {
-    if (previousIncompleteIdRef.current === firstIncompleteId) return;
-    previousIncompleteIdRef.current = firstIncompleteId;
-    setExpandedId(firstIncompleteId);
+    setExpandedId((current) => current ?? firstIncompleteId);
   }, [firstIncompleteId]);
 
   useEffect(() => {
@@ -6273,6 +6270,7 @@ function DancerPhotoPanel({
   }, []);
 
   function queuePhotos(files: File[], source: DancerPhotoQueueItem["source"]) {
+    window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
     const replacingPrimary = isPrimary && photos.some((photo) => photo.isPrimary) ? 1 : 0;
     const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length + replacingPrimary - queuedPhotos.length);
     const selectedFiles = files.slice(0, availableProfileSlots);
@@ -6451,6 +6449,7 @@ function DancerPhotoPanel({
     } finally {
       setUploadingQueueItemId("");
       setIsUploading(false);
+      window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
     }
   }
 
@@ -6556,19 +6555,35 @@ function DancerPhotoPanel({
     }
   }
 
+  const remainingPhotoSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - queuedPhotos.length);
+  const hasMainPhoto = photos.some((photo) => photo.isPrimary);
+
   return (
     <article className="info-panel upload-panel">
       <h2>Photos</h2>
       <div className="dancer-photo-upload-form">
-        <label className="check-row">
-          <input checked={isPrimary} disabled={isUploading} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
-          Make the first selected photo my main photo
-        </label>
+        <div className="photo-upload-heading">
+          <span>
+            <strong>Add profile photos</strong>
+            <small>Choose from your phone or take a new photo. Upload starts automatically.</small>
+          </span>
+          <b>{remainingPhotoSlots} {remainingPhotoSlots === 1 ? "spot" : "spots"} open</b>
+        </div>
+        {hasMainPhoto ? (
+          <label className="photo-primary-choice">
+            <input checked={isPrimary} disabled={isUploading} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
+            <span>
+              <strong>Replace my main photo</strong>
+              <small>The next photo you choose will become your main photo.</small>
+            </span>
+          </label>
+        ) : null}
         <div className="photo-source-grid">
-          <label>
-            Choose profile photos
+          <label className={`photo-source-action${isUploading ? " is-disabled" : ""}`}>
             <input
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+              aria-label="Choose profile photos from your library"
+              className="photo-source-input"
               disabled={isUploading}
               multiple
               ref={galleryPhotoInputRef}
@@ -6578,13 +6593,21 @@ function DancerPhotoPanel({
                 event.target.value = "";
               }}
             />
-            <small>Select several photos at once. Upload begins automatically.</small>
+            <span className="photo-source-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" /><circle cx="16.5" cy="9" r="1" /></svg>
+            </span>
+            <span className="photo-source-copy">
+              <strong>Photo library</strong>
+              <small>Choose one or several photos</small>
+            </span>
+            <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
-          <label>
-            Take a photo
+          <label className={`photo-source-action${isUploading ? " is-disabled" : ""}`}>
             <input
               accept="image/*"
+              aria-label="Take a new profile photo"
               capture="environment"
+              className="photo-source-input"
               disabled={isUploading}
               ref={cameraPhotoInputRef}
               type="file"
@@ -6593,11 +6616,21 @@ function DancerPhotoPanel({
                 event.target.value = "";
               }}
             />
-            <small>Open your phone camera and upload the new photo automatically.</small>
+            <span className="photo-source-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 8h3l1.5-2h5L16 8h3v10H5z" /><circle cx="12" cy="13" r="3" /></svg>
+            </span>
+            <span className="photo-source-copy">
+              <strong>Camera</strong>
+              <small>Take a new photo now</small>
+            </span>
+            <span className="photo-source-cta" aria-hidden="true">Open</span>
           </label>
         </div>
-        <small className="photo-slot-summary">{queuedPhotos.length} selected · {Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - queuedPhotos.length)} slots remaining</small>
-        {status ? <p role="status" aria-live="polite">{status}</p> : null}
+        <div className="photo-slot-summary">
+          <strong>{photos.length} of {MAX_DANCER_PROFILE_PHOTOS} on your profile</strong>
+          <span>{queuedPhotos.length ? `${queuedPhotos.length} uploading now` : remainingPhotoSlots ? `${remainingPhotoSlots} more available` : "All photo spots are filled"}</span>
+        </div>
+        {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       {queuedPhotos.length ? (
         <div className="photo-upload-queue" aria-label="Photos ready to upload">
@@ -7180,12 +7213,35 @@ function DashboardStyles() {
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
       .dancer-photo-upload-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+      .photo-upload-heading { min-width: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      .photo-upload-heading > span { min-width: 0; display: grid; gap: 3px; }
+      .photo-upload-heading strong { color: #fff; font-size: 15px; }
+      .photo-upload-heading small { color: #aca4b7; font-size: 12px; line-height: 1.4; }
+      .photo-upload-heading > b { flex: 0 0 auto; padding: 5px 8px; border: 1px solid rgba(126,234,255,.22); border-radius: 999px; color: #b7effa; background: rgba(34,199,255,.07); font-size: 10px; white-space: nowrap; }
+      .photo-primary-choice { min-width: 0; display: flex !important; align-items: center; gap: 9px !important; padding: 9px 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; color: #f4eff9; background: rgba(255,255,255,.035); cursor: pointer; }
+      .photo-primary-choice input { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; accent-color: #22c7ff; }
+      .photo-primary-choice > span { min-width: 0; display: grid; gap: 2px; }
+      .photo-primary-choice strong { font-size: 12px; }
+      .photo-primary-choice small { color: #a69daf; font-size: 10px; line-height: 1.35; }
       .photo-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .photo-source-grid label { min-width: 0; display: grid; align-content: start; gap: 7px; }
-      .photo-source-grid small { color: #94a3b8; font-size: 12px; line-height: 1.4; }
+      .photo-source-action { position: relative; min-width: 0; min-height: 74px; display: grid !important; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px !important; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); cursor: pointer; }
+      .photo-source-action:hover { border-color: rgba(126,234,255,.42); background: linear-gradient(145deg,rgba(124,58,237,.2),rgba(34,199,255,.09)); }
+      .photo-source-action:focus-within { outline: 2px solid #7eeaff; outline-offset: 2px; }
+      .photo-source-action.is-disabled { opacity: .58; cursor: wait; }
+      .photo-source-input { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; min-height: 0 !important; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+      .photo-source-input:disabled { cursor: wait; }
+      .photo-source-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; color: #8beafa; background: rgba(34,199,255,.09); }
+      .photo-source-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+      .photo-source-copy { min-width: 0; display: grid; gap: 2px; }
+      .photo-source-copy strong { color: #fff; font-size: 13px; }
+      .photo-source-copy small { color: #aaa2b4; font-size: 10px; line-height: 1.3; }
+      .photo-source-cta { padding: 5px 7px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #b8effa; background: rgba(34,199,255,.07); font-size: 9px; font-weight: 950; text-transform: uppercase; }
       .photo-upload-queue { display: grid; gap: 10px; margin-top: 12px; }
       .photo-review-card.is-uploading { border-color: rgba(34,211,238,.58); box-shadow: inset 3px 0 0 rgba(34,211,238,.88); }
-      .photo-slot-summary { color: #94e5ff; font-size: 12px; font-weight: 850; }
+      .photo-slot-summary { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #b9eff8; font-size: 11px; }
+      .photo-slot-summary strong { color: #e7faff; font-size: 11px; }
+      .photo-slot-summary span { color: #9a91a4; }
+      .photo-upload-status { margin: 0; padding: 8px 10px; border-radius: 9px; color: #c9f5fc; background: rgba(34,199,255,.07); font-size: 11px; line-height: 1.4; }
       .photo-review-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
       .photo-review-card { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .photo-review-list .photo-review-card { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 310px; }
@@ -7862,6 +7918,7 @@ function DashboardStyles() {
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
       @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
+      @media (max-width: 620px) { .photo-upload-heading { align-items: flex-start; } .photo-source-action { min-height: 70px; } .photo-slot-summary { align-items: flex-start; flex-direction: column; gap: 2px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-review-list .photo-review-card { grid-template-columns: 92px minmax(0,1fr); align-items: start; min-height: 0; gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 92px; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }

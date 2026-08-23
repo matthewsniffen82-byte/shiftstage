@@ -116,9 +116,9 @@ test("step one guides dancers through required work before optional profile enha
   assert.match(dashboard, /continueToPreview: \(\) => openStep\("dancer-onboarding-preview"\)/);
 });
 
-test("step one required items are accessible accordions that advance to the next unfinished item", () => {
-  assert.match(dashboard, /const previousIncompleteIdRef = useRef\(firstIncompleteId\)/);
-  assert.match(dashboard, /setExpandedId\(firstIncompleteId\)/);
+test("step one required items are accessible accordions that preserve the active editor", () => {
+  assert.match(dashboard, /setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);
+  assert.doesNotMatch(dashboard, /setExpandedId\(firstIncompleteId\)/);
   assert.match(dashboard, /aria-controls=\{panelId\}/);
   assert.match(dashboard, /aria-expanded=\{open\}/);
   assert.match(dashboard, /hidden=\{!open\}/);
@@ -152,6 +152,11 @@ test("embedded video management uses a contained mobile stack", () => {
 test("a completed profile photo upload clears the native filename from onboarding", () => {
   assert.match(dashboard, /const galleryPhotoInputRef = useRef<HTMLInputElement>\(null\)/);
   assert.match(dashboard, /multiple[\s\S]*?ref=\{galleryPhotoInputRef\}[\s\S]*?type="file"/);
+  assert.match(dashboard, /aria-label="Choose profile photos from your library"/);
+  assert.match(dashboard, /className="photo-source-input"/);
+  assert.match(dashboard, /Photo library/);
+  assert.match(dashboard, /Take a new photo now/);
+  assert.match(dashboard, /\.photo-source-input \{ position: absolute; inset: 0;[\s\S]*?opacity: 0;/);
   assert.match(dashboard, /event\.target\.value = ""/);
   assert.match(dashboard, /if \(galleryPhotoInputRef\.current\) galleryPhotoInputRef\.current\.value = ""/);
   assert.match(dashboard, /if \(cameraPhotoInputRef\.current\) cameraPhotoInputRef\.current\.value = ""/);
