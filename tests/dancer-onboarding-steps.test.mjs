@@ -30,7 +30,7 @@ test("every earlier setup step must be saved before a later step opens", () => {
   assert.match(gate, /function firstUnsavedSetupRequirement/);
   assert.match(gate, /if \(index < 0\) return false/);
   assert.match(gate, /firstUnsavedSetupRequirement\(step\) === null/);
-  assert.match(gate, /slice\(0, index\)\.find\(\(requiredStep\) => !isSavedSetupStepComplete\(requiredStep\)\)/);
+  assert.match(gate, /slice\(0, index\)\.find\(\(requiredStep\) => requiredStep !== "payout" && !isSavedSetupStepComplete\(requiredStep\)\)/);
   assert.match(liveAppSource, /Complete and save Step/);
 });
 
@@ -79,13 +79,13 @@ test("collapsed setup pills fill their rounded shell with the matching state col
   );
 });
 
-test("Step 3 venue affiliation is completed by the official dressing-room NFC tap", () => {
+test("Step 4 venue affiliation is completed by the official dressing-room NFC tap", () => {
   const order = liveAppSource.match(/function setupOrder\(\) \{[\s\S]*?\n    }/)?.[0] || "";
   const completion = liveAppSource.match(/function completeSetupStep[\s\S]*?\n    }/)?.[0] || "";
-  assert.match(order, /\["profile", "review", "approval"\]/);
+  assert.match(order, /\["profile", "review", "payout", "approval"\]/);
   assert.match(completion, /dressing-room NFC sticker/i);
   assert.match(liveAppSource, /Authorize venue access/);
-  assert.match(liveAppSource, /Step 3 · Dressing-room tap/);
+  assert.match(liveAppSource, /Step 4 · Dressing-room tap/);
   assert.match(liveAppSource, /official MyDancr dressing-room NFC sticker/i);
   assert.match(liveAppSource, /Manage where you work/);
 });
@@ -128,7 +128,7 @@ test("real setup steps advance only after their production save succeeds", () =>
   assert.ok(profileSubmitStart >= 0, "profile save handler must exist");
   assert.ok(profileSubmit.indexOf('await patchAuthenticatedJson("/api/dancer/profile"') < profileSubmit.indexOf('completeSetupStep("profile"'));
   assert.ok(photoSubmit.indexOf("await uploadApprovedDancerPhoto") < photoSubmit.indexOf("dancerSetup.photos = dancerProfileMediaModerationComplete"));
-  assert.match(liveAppSource, /return \["profile", "review", "approval"\]/);
+  assert.match(liveAppSource, /return \["profile", "review", "payout", "approval"\]/);
   assert.doesNotMatch(liveAppSource, /\/api\/dancer\/identity-verification/);
 });
 
@@ -224,7 +224,7 @@ test("one approved profile photo unlocks submission while optional media reviews
   assert.match(photoEligibility, /decision === "rejected" \|\| status === "rejected"/);
 });
 
-test("all three production steps render inside the Profile Setup box", () => {
+test("all four production steps render inside the Profile Setup box", () => {
   const boxStart = liveAppSource.indexOf('<div class="approval-command" id="dancerApprovalCommand">');
   const summary = liveAppSource.indexOf('class="approval-command-summary" data-setup-checklist-toggle', boxStart);
   const checklist = liveAppSource.indexOf('id="setupChecklistWrap" class="setup-panel setup-panel-inline"', summary);
@@ -232,7 +232,7 @@ test("all three production steps render inside the Profile Setup box", () => {
 
   assert.ok(boxStart >= 0, "Profile Setup box must exist");
   assert.ok(summary > boxStart, "Profile Setup must have a dedicated toggle header");
-  assert.ok(checklist > summary, "the three-step checklist must be nested after the Profile Setup header");
+  assert.ok(checklist > summary, "the four-step checklist must be nested after the Profile Setup header");
   assert.ok(statusRow > checklist, "the checklist must remain inside the box before dashboard status cards");
   assert.doesNotMatch(
     liveAppSource.slice(summary, statusRow),
@@ -240,9 +240,25 @@ test("all three production steps render inside the Profile Setup box", () => {
   );
   assert.match(liveAppSource, /setupStepMarkup\("profile", "Create profile and add media"/);
   assert.match(liveAppSource, /setupStepMarkup\("review", "Preview and submit"/);
+  assert.match(liveAppSource, /setupStepMarkup\("payout", "Set up commission payouts \(optional\)"/);
   assert.match(liveAppSource, /setupStepMarkup\("approval", "Confirm venue affiliation"/);
   assert.match(liveAppSource, /Upload clear face photo/);
   assert.match(liveAppSource, /approvedProfileVideoManagerMarkup\(\)/);
+});
+
+test("optional NATS payout setup is offered before NFC without blocking activation", () => {
+  const setupOrderSource = liveAppSource.match(/function setupOrder\(\) \{[\s\S]*?\n    }/)?.[0] || "";
+  const setupGate = liveAppSource.match(/function firstUnsavedSetupRequirement[\s\S]*?\n    }/)?.[0] || "";
+  const payoutMarkup = liveAppSource.match(/function dancerPayoutSetupBodyMarkup[\s\S]*?\n    function renderDancerPayoutSetupNotice/)?.[0] || "";
+
+  assert.match(setupOrderSource, /"review", "payout", "approval"/);
+  assert.match(setupGate, /requiredStep !== "payout"/);
+  assert.match(payoutMarkup, /commissions accrue/i);
+  assert.match(payoutMarkup, /payout stays on hold/i);
+  assert.match(payoutMarkup, /never blocks/i);
+  assert.match(payoutMarkup, /data-dancer-payout-skip>Do this later/);
+  assert.match(liveAppSource, /data-dancer-payout-submit/);
+  assert.match(liveAppSource, /request_nats_link/);
 });
 
 test("normal dancer login reloads database progress instead of a fresh-confirmation lock", () => {

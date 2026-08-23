@@ -5129,6 +5129,27 @@
       gap: 10px;
     }
 
+    .dancer-payout-setup-notice {
+      display: grid;
+      gap: 12px;
+      border-color: rgba(52, 211, 153, .3);
+      background: linear-gradient(145deg, rgba(7, 36, 27, .88), rgba(11, 11, 16, .96));
+    }
+
+    .dancer-payout-setup-notice[hidden] { display: none !important; }
+
+    .dancer-payout-setup-notice > div:first-child { display: grid; gap: 5px; }
+    .dancer-payout-setup-notice strong { color: #fff; font-size: 18px; }
+    .dancer-payout-setup-notice p { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .dancer-payout-setup-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    .dancer-payout-setup-actions > :only-child { grid-column: 1 / -1; }
+    .dancer-payout-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+
+    @media (max-width: 620px) {
+      .dancer-payout-setup-actions,
+      .dancer-payout-fields { grid-template-columns: 1fr; }
+    }
+
     .customer-summary {
       display: grid;
       gap: 12px;
@@ -38865,6 +38886,7 @@
             <p id="dancerPublicDetail">Your dancer account is free. Complete profile setup, photos, and verification so Dancr can review your profile and unlock public discovery.</p>
           </details>
         </div>
+        <aside class="auth-card dancer-payout-setup-notice" id="dancerPayoutSetupNotice" aria-live="polite" hidden></aside>
         <details class="auth-card dashboard-collapse dancer-analytics-section" id="dancerAnalyticsSection">
           <summary>
             <span class="dashboard-collapse-title">
@@ -40111,6 +40133,7 @@
       profile: false,
       photos: false,
       review: false,
+      payout: false,
       approval: false,
       shift: false
     };
@@ -40161,6 +40184,7 @@
     let liveDancerDeals = null;
     let liveDancerWeeklyReport = null;
     let liveDancerBilling = null;
+    let liveDancerFinance = null;
     let liveDancerRankingEvents = [];
     let liveDancerReviews = [];
     let liveAdminSubscriptions = [];
@@ -43268,6 +43292,18 @@
       }
     }
 
+    async function loadLiveDancerFinance(options = {}) {
+      if (!isDancerSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/finance");
+        liveDancerFinance = data.finance || null;
+        renderDancerSetupWhenEditorIdle();
+      } catch (error) {
+        liveDancerFinance = null;
+        reportOptionalDancerLoadError(error, "Could not load payout setup", options);
+      }
+    }
+
     async function loadLiveDancerRankingEvents(options = {}) {
       if (!isDancerSession()) return;
       try {
@@ -44126,7 +44162,7 @@
     function reviewStepLabel(step) {
       if (step === "profile") return "Step 1 profile";
       if (step === "photos") return "Step 2 photos";
-      return "Step 3 venue NFC";
+      return "Step 4 venue NFC";
     }
 
     function hasRejectedDancerReviews() {
@@ -50834,6 +50870,7 @@
       liveDancerDeals = null;
       liveDancerWeeklyReport = null;
       liveDancerBilling = null;
+      liveDancerFinance = null;
       liveDancerRankingEvents = [];
       liveDancerReviews = [];
       liveCustomerProfile = null;
@@ -51009,6 +51046,7 @@
       loadLiveDancerDeals();
       loadLiveDancerWeeklyReport();
       loadLiveDancerBilling();
+      loadLiveDancerFinance();
       loadLiveDancerRankingEvents();
       loadLiveDancerReviews();
       loadLiveNotifications();
@@ -51074,7 +51112,7 @@
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 3 · Dressing-room tap" : "Venue access";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 4 · Dressing-room tap" : "Venue access";
       document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
         ? "At the club, tap its official MyDancr dressing-room NFC sticker. The tap authorizes venue access; MyDancr reviews profile content separately."
@@ -51704,8 +51742,29 @@
       openUnifiedDashboard("customer");
     }
 
+    function dancerPayoutSetupStorageKey() {
+      const userKey = authSession?.user?.id || normalizeAccountEmail(authSession?.account?.email) || "dancer";
+      return `mydancr:dancer-payout-setup-later:${userKey}`;
+    }
+
+    function dancerPayoutSetupSkipped() {
+      try {
+        return localStorage.getItem(dancerPayoutSetupStorageKey()) === "true";
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function dancerNatsAccountStatus() {
+      return String(liveDancerFinance?.natsAffiliateAccount?.status || "").toLowerCase();
+    }
+
+    function dancerPayoutStepComplete() {
+      return ["requested", "active"].includes(dancerNatsAccountStatus()) || dancerPayoutSetupSkipped();
+    }
+
     function setupOrder() {
-      return ["profile", "review", "approval"];
+      return ["profile", "review", "payout", "approval"];
     }
 
     function isSavedSetupStepComplete(step) {
@@ -51714,19 +51773,21 @@
         const avatarSaved = Boolean(profile?.avatarStoragePath || profile?.avatar_storage_path);
         return Boolean(dancerSetup.profile && dancerSetup.photos && avatarSaved);
       }
+      if (step === "payout") return dancerPayoutStepComplete();
       return Boolean(dancerSetup[step]);
     }
 
     function firstUnsavedSetupRequirement(step) {
       const index = setupOrder().indexOf(step);
       if (index < 0) return null;
-      return setupOrder().slice(0, index).find((requiredStep) => !isSavedSetupStepComplete(requiredStep)) || null;
+      return setupOrder().slice(0, index).find((requiredStep) => requiredStep !== "payout" && !isSavedSetupStepComplete(requiredStep)) || null;
     }
 
     function setupStepDisplayName(step) {
       const labels = {
         profile: "profile and media",
         review: "preview and submission",
+        payout: "optional commission payouts",
         approval: "venue affiliation"
       };
       return labels[step] || "previous step";
@@ -51739,7 +51800,7 @@
     }
 
     function nextIncompleteStep() {
-      return setupOrder().find((step) => !dancerSetup[step]) || null;
+      return setupOrder().find((step) => !isSavedSetupStepComplete(step)) || null;
     }
 
     function completeSetupStep(step, options = {}) {
@@ -52687,15 +52748,15 @@
             ? { ...review, status: "pending", notes: "Resubmitted by dancer.", reviewedAt: null }
             : review
         ));
-        activeSetupStep = "approval";
-        profileSubmitNotice = "Profile submitted. At the club, tap its official dressing-room NFC sticker when you are ready.";
+        activeSetupStep = "payout";
+        profileSubmitNotice = "Profile submitted. Set up commission payouts now or choose Do this later, then continue to the official dressing-room tap.";
         profileSubmitNoticeTone = "success";
         renderDancerSetup();
-        showToast("Profile saved. Venue affiliation is the final step.");
+        showToast("Profile saved. Payout setup is optional before the club tap.");
         void loadDancerVenueVerification();
       } catch (error) {
         const message = error.message || "Could not submit for review";
-        activeSetupStep = "approval";
+        activeSetupStep = "review";
         profileSubmitNotice = message;
         profileSubmitNoticeTone = "error";
         renderDancerSetup();
@@ -52934,8 +52995,9 @@
         ? `Complete and save Step ${setupOrder().indexOf(missingStep) + 1} ${setupStepDisplayName(missingStep)} first.`
         : "";
       const bodyId = `setup-step-${step}-body`;
+      const payoutStatus = step === "payout" ? dancerNatsAccountStatus() : "";
       const statusText = markerComplete
-        ? (step === "approval" ? "Approved" : "Saved")
+        ? (step === "approval" ? "Approved" : step === "payout" ? (payoutStatus === "active" ? "Linked" : payoutStatus === "requested" ? "Pending" : "Later") : "Saved")
         : (submittedForReview ? "Files saved" : "");
       const statusLabel = markerComplete
         ? statusText
@@ -53179,15 +53241,116 @@
       `;
     }
 
+    function dancerPayoutSetupBodyMarkup() {
+      const platform = liveDancerFinance?.commissionPlatform || {};
+      const accountStatus = dancerNatsAccountStatus();
+      const selected = platform.selected === true;
+      const configured = platform.configured === true;
+      const portalUrl = String(platform.affiliatePortalUrl || "");
+      const accountState = accountStatus === "active"
+        ? '<div class="rule-note success"><strong>✓ NATS account linked</strong><span>Your verified account is ready for dancer commissions.</span></div>'
+        : accountStatus === "requested"
+          ? '<div class="rule-note"><strong>Verification pending</strong><span>Your commissions keep accruing while MyDancr verifies the affiliate account.</span></div>'
+          : "";
+      const link = portalUrl
+        ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">Create or open NATS account</a>`
+        : "";
+      const form = selected && !["requested", "active"].includes(accountStatus)
+        ? `<div class="dancer-payout-fields">
+            <div class="field"><label for="setupNatsLoginId">NATS affiliate login ID</label><input id="setupNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div>
+            <div class="field"><label for="setupNatsUsername">NATS username <span>optional</span></label><input id="setupNatsUsername" maxlength="80" autocapitalize="none"></div>
+          </div>
+          <button class="action-btn" type="button" data-dancer-payout-submit ${configured ? "" : "disabled"}>Submit payout account</button>`
+        : "";
+      const availability = !selected
+        ? '<div class="rule-note">NATS enrollment is not active yet. MyDancr will still record eligible commissions, and you can continue to the club tap now.</div>'
+        : !configured
+          ? '<div class="rule-note">NATS enrollment is safely paused until the licensed connection is activated. Continue now and return later.</div>'
+          : "";
+      return `
+        <section class="setup-profile-editor-section">
+          <div class="setup-profile-editor-head">
+            <strong>Set up dancer commission payouts</strong>
+            <p>Recommended before your first club tap, but never required for approval or Working Now.</p>
+          </div>
+          <div class="rule-note">Verified Club Deal commissions accrue even if you skip this step. Payout stays on hold until your NATS affiliate account and required tax details are verified.</div>
+          ${accountState}${link}${form}${availability}
+          <div class="dancer-payout-setup-actions">
+            ${["requested", "active"].includes(accountStatus) ? '<button class="action-btn" type="button" data-dancer-payout-continue>Continue to club tap</button>' : ""}
+            <button class="action-btn secondary" type="button" data-dancer-payout-skip>Do this later</button>
+          </div>
+          <div class="rule-note" id="dancerPayoutSetupStatus" role="status" aria-live="polite">Payout setup never blocks NFC authorization, profile approval, check-in, or Working Now.</div>
+        </section>`;
+    }
+
+    function renderDancerPayoutSetupNotice(approved) {
+      const notice = document.getElementById("dancerPayoutSetupNotice");
+      if (!notice) return;
+      const platform = liveDancerFinance?.commissionPlatform || {};
+      const accountStatus = dancerNatsAccountStatus();
+      const visible = Boolean(approved && platform.selected === true && accountStatus !== "active");
+      notice.hidden = !visible;
+      if (!visible) {
+        notice.innerHTML = "";
+        return;
+      }
+      const requested = accountStatus === "requested";
+      const portalUrl = String(platform.affiliatePortalUrl || "");
+      notice.innerHTML = `
+        <div><span class="eyebrow">Dancer commissions</span><strong>${requested ? "Payout verification pending" : "Complete payout setup"}</strong><p>${requested ? "Commissions keep accruing while MyDancr verifies your NATS account." : "Commissions accrue automatically, but payout stays held until your NATS affiliate and tax setup is verified."}</p></div>
+        ${!requested ? `<div class="dancer-payout-fields"><div class="field"><label for="noticeNatsLoginId">NATS affiliate login ID</label><input id="noticeNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div><div class="field"><label for="noticeNatsUsername">NATS username <span>optional</span></label><input id="noticeNatsUsername" maxlength="80" autocapitalize="none"></div></div>` : ""}
+        <div class="dancer-payout-setup-actions">
+          ${portalUrl ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">${requested ? "Open NATS account" : "Set up payouts"}</a>` : ""}
+          ${!requested ? `<button class="action-btn" type="button" data-dancer-payout-submit ${platform.configured === true ? "" : "disabled"}>Submit payout account</button>` : ""}
+        </div>`;
+    }
+
+    function continueDancerOnboardingToNfc(message) {
+      setupChecklistExpanded = true;
+      activeSetupStep = "approval";
+      renderDancerSetup();
+      showToast(message);
+      scrollToSetupStep("approval");
+    }
+
+    function skipDancerPayoutSetup() {
+      try { localStorage.setItem(dancerPayoutSetupStorageKey(), "true"); } catch (error) {}
+      dancerSetup.payout = true;
+      continueDancerOnboardingToNfc("Payout setup saved for later. Club verification remains available.");
+    }
+
+    async function submitDancerNatsAccount(button) {
+      const loginId = document.getElementById("setupNatsLoginId")?.value || document.getElementById("noticeNatsLoginId")?.value || "";
+      const username = document.getElementById("setupNatsUsername")?.value || document.getElementById("noticeNatsUsername")?.value || "";
+      const status = document.getElementById("dancerPayoutSetupStatus");
+      const original = button.textContent;
+      button.disabled = true;
+      button.textContent = "Submitting…";
+      if (status) status.textContent = "Submitting your NATS affiliate account for verification…";
+      try {
+        const data = await postAuthenticatedJson("/api/dancer/finance", { action: "request_nats_link", loginId, username });
+        liveDancerFinance = data.finance || liveDancerFinance;
+        try { localStorage.removeItem(dancerPayoutSetupStorageKey()); } catch (error) {}
+        dancerSetup.payout = true;
+        continueDancerOnboardingToNfc("NATS account submitted. You can complete the club tap now.");
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = original;
+        if (status) status.textContent = error.message || "Unable to submit the payout account.";
+        showToast(error.message || "Unable to submit the payout account");
+      }
+    }
+
     function renderDancerSetup() {
       keepAvatarOriginSetupStepOpen();
       dancerSetupRefreshPending = false;
       const steps = setupOrder();
-      const completedSteps = steps.filter((step) => dancerSetup[step]).length;
+      const completedSteps = steps.filter((step) => isSavedSetupStepComplete(step)).length;
       const nextStep = nextIncompleteStep();
       const nextLabels = {
         profile: "Create profile and add media",
         review: "Preview and submit",
+        payout: "Commission payouts (optional)",
         approval: "Venue affiliation"
       };
       const dancerName = activeDancerName();
@@ -53201,6 +53364,7 @@
       const approvalStateLabel = rejected ? "Rejected" : optionalProfileFixes ? "Approved with fixes needed" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(null, liveDancerAnalytics, activeProfile, city);
+      renderDancerPayoutSetupNotice(approved);
       renderNotificationCenters();
       renderSupportInbox("dancer");
       dancerDashboard.classList.toggle("is-approved", approved);
@@ -53242,7 +53406,7 @@
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the customers Dancr sends you."
         : reviewSubmitted
-          ? "Your profile is private and ready. At the club, tap its official dressing-room NFC sticker."
+          ? "Your profile is private and ready. Set up commission payouts now or do it later, then tap the club's official dressing-room NFC sticker."
           : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
@@ -53252,7 +53416,7 @@
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
-          ? "Waiting for dressing-room tap"
+          ? (dancerPayoutStepComplete() ? "Waiting for dressing-room tap" : "Payout setup optional")
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
@@ -53695,11 +53859,12 @@
       `;
       const approvalBody = `
         <div class="info-tile"><strong>Authorize venue access</strong><div class="meta">At the club, tap its official MyDancr dressing-room NFC sticker.</div></div>
-        <div class="rule-note">The manager confirms only that you work there. MyDancr handles profile and media moderation separately before your profile goes live.</div>
+        <div class="rule-note">This Step 4 tap approves the submitted profile and authorizes the venue. Payout setup is optional and never blocks this tap, check-in, or Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create profile and add media", profileBody),
         setupStepMarkup("review", "Preview and submit", reviewBody),
+        setupStepMarkup("payout", "Set up commission payouts (optional)", dancerPayoutSetupBodyMarkup()),
         setupStepMarkup("approval", "Confirm venue affiliation", approvalBody)
       ].join("");
       if (!approvedProfileVideoWorkspace && !approvedProfileVideoLoading && approvedProfileVideoStatusTone !== "error") void loadApprovedProfileVideos();
@@ -60196,6 +60361,19 @@
       const submitReviewButton = event.target.closest("[data-submit-review]");
       if (submitReviewButton) {
         submitDancerProfileForReview(submitReviewButton);
+        return;
+      }
+      const payoutSubmitButton = event.target.closest("[data-dancer-payout-submit]");
+      if (payoutSubmitButton) {
+        submitDancerNatsAccount(payoutSubmitButton);
+        return;
+      }
+      if (event.target.closest("[data-dancer-payout-skip]")) {
+        skipDancerPayoutSetup();
+        return;
+      }
+      if (event.target.closest("[data-dancer-payout-continue]")) {
+        continueDancerOnboardingToNfc("Payout setup recorded. Continue with the official club tap.");
         return;
       }
       const previewProfileButton = event.target.closest("[data-preview-profile]");

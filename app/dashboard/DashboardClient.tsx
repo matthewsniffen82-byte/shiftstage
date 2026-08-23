@@ -3068,6 +3068,7 @@ const DANCER_PREVIEW_SOCIAL_PLATFORMS = new Set<SocialPlatform>(["instagram", "t
 function DancerOnboardingCommand({
   draftIdentity,
   effectiveStatus,
+  finance,
   isVenueApproved,
   onProfileChange,
   profile,
@@ -3076,6 +3077,7 @@ function DancerOnboardingCommand({
 }: {
   draftIdentity: DancerIdentityDraft;
   effectiveStatus: string;
+  finance?: LoadState["finance"];
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
@@ -3086,6 +3088,11 @@ function DancerOnboardingCommand({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isPreviewMediaLoading, setIsPreviewMediaLoading] = useState(false);
+  const [isPayoutWorking, setIsPayoutWorking] = useState(false);
+  const [payoutSkipped, setPayoutSkipped] = useState(false);
+  const [payoutStatus, setPayoutStatus] = useState("");
+  const [natsLoginId, setNatsLoginId] = useState("");
+  const [natsUsername, setNatsUsername] = useState("");
   const [previewMediaError, setPreviewMediaError] = useState("");
   const [previewVideos, setPreviewVideos] = useState<DancerPreviewVideo[]>([]);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
@@ -3109,6 +3116,15 @@ function DancerOnboardingCommand({
     && approvedPhotos.length,
   );
   const submitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
+  const commissionPlatform = (finance?.commissionPlatform || {}) as Record<string, unknown>;
+  const natsAffiliateAccount = (finance?.natsAffiliateAccount || null) as Record<string, unknown> | null;
+  const natsSelected = commissionPlatform.selected === true;
+  const natsConfigured = commissionPlatform.configured === true;
+  const natsPortalUrl = typeof commissionPlatform.affiliatePortalUrl === "string" ? commissionPlatform.affiliatePortalUrl : "";
+  const natsAccountStatus = String(natsAffiliateAccount?.status || "");
+  const payoutSubmitted = natsAccountStatus === "requested" || natsAccountStatus === "active";
+  const payoutStepComplete = payoutSubmitted || payoutSkipped;
+  const payoutSkipKey = `mydancr:dancer-payout-setup-later:${String(profile?.id || "profile")}`;
   const setupDetail = profileReady
     ? "Identity, avatar, and at least one profile picture are approved. Other media can finish review separately."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
@@ -3128,13 +3144,29 @@ function DancerOnboardingCommand({
       locked: !profileReady && !submitted,
     },
     {
+      id: "dancer-onboarding-payouts",
+      label: "Commission payouts (optional)",
+      complete: payoutStepComplete,
+      detail: natsAccountStatus === "active"
+        ? "Your verified NATS affiliate account is ready for dancer commissions."
+        : natsAccountStatus === "requested"
+          ? "Your NATS affiliate account is awaiting verification."
+          : payoutSkipped
+            ? "Skipped for now. Commissions can accrue, but payout stays on hold until setup is complete."
+            : submitted
+              ? "Recommended before your first club tap, but it never blocks approval or Working Now."
+              : "Submit your profile before starting optional payout setup.",
+      locked: !submitted,
+      optional: true,
+    },
+    {
       id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
       detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room NFC sticker." : "Complete the profile preview step to unlock club verification.",
       locked: !submitted && !isVenueApproved,
     },
-  ], [isVenueApproved, profileReady, setupDetail, submitted]);
+  ], [isVenueApproved, natsAccountStatus, payoutSkipped, payoutStepComplete, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
   const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
   const previewImage = avatarUrl || approvedPhotos[0]?.imageUrl || "";
@@ -3146,6 +3178,10 @@ function DancerOnboardingCommand({
   }));
   const previewSocialLinks = dancerPreviewSocialLinks(profile);
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
+
+  useEffect(() => {
+    setPayoutSkipped(window.localStorage.getItem(payoutSkipKey) === "true");
+  }, [payoutSkipKey]);
 
   useEffect(() => {
     if (didRestoreStepRef.current) return;
@@ -3314,17 +3350,57 @@ function DancerOnboardingCommand({
         throw new Error("Club verification was not unlocked. Please try again.");
       }
       onProfileChange?.(data.profile);
-      window.localStorage.setItem(storageKey, "dancer-onboarding-nfc");
-      setExpandedStepId("dancer-onboarding-nfc");
-      setStatus("Club verification is ready. Tap the official dressing-room NFC sticker at the club.");
+      window.localStorage.setItem(storageKey, "dancer-onboarding-payouts");
+      setExpandedStepId("dancer-onboarding-payouts");
+      setStatus("Profile submitted. Set up commission payouts now or choose Do this later, then continue to the club tap.");
       window.requestAnimationFrame(() => {
-        document.getElementById("dancer-onboarding-nfc")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        document.getElementById("dancer-onboarding-nfc-button")?.focus({ preventScroll: true });
+        document.getElementById("dancer-onboarding-payouts")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById("dancer-onboarding-payouts-button")?.focus({ preventScroll: true });
       });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to submit profile.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  function continueToNfc(message: string) {
+    window.localStorage.setItem(storageKey, "dancer-onboarding-nfc");
+    setExpandedStepId("dancer-onboarding-nfc");
+    setPayoutStatus(message);
+    window.requestAnimationFrame(() => {
+      document.getElementById("dancer-onboarding-nfc")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("dancer-onboarding-nfc-button")?.focus({ preventScroll: true });
+    });
+  }
+
+  function skipPayoutSetup() {
+    window.localStorage.setItem(payoutSkipKey, "true");
+    setPayoutSkipped(true);
+    continueToNfc("Payout setup saved for later. Club verification and Working Now remain available.");
+  }
+
+  async function requestOnboardingNatsLink(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) return setPayoutStatus("Sign in again to set up payouts.");
+    setIsPayoutWorking(true);
+    setPayoutStatus("Submitting your NATS affiliate account for verification...");
+    try {
+      const response = await fetch("/api/dancer/finance", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to link the NATS account.");
+      window.localStorage.removeItem(payoutSkipKey);
+      setPayoutSkipped(false);
+      continueToNfc("NATS account submitted for verification. You can complete the club tap now.");
+    } catch (error) {
+      setPayoutStatus(error instanceof Error ? error.message : "Unable to link the NATS account.");
+    } finally {
+      setIsPayoutWorking(false);
     }
   }
 
@@ -3334,14 +3410,18 @@ function DancerOnboardingCommand({
         <span>
           <span className="eyebrow">Setup checklist</span>
           <h2 id="dancer-onboarding-heading">Profile setup</h2>
-          <p>Complete these steps in order, preview the customer-facing profile, then authorize your first venue at the club.</p>
+          <p>Complete your profile, choose whether to set up payouts now, then authorize your first venue at the club.</p>
         </span>
-        <b>{steps.filter((step) => step.complete).length} of 3 complete</b>
+        <b>{steps.filter((step) => step.complete).length} of 4 complete</b>
       </div>
       <ol className="dancer-onboarding-steps" aria-label="Dancer profile approval progress">
         {steps.map((step, index) => {
           const open = visibleExpandedStepId === step.id;
-          const stateLabel = step.complete ? "Complete" : step.locked ? "Locked" : step.id === firstIncomplete.id ? "Current" : "Ready";
+          const stateLabel = step.id === "dancer-onboarding-payouts" && payoutSkipped
+            ? "Later"
+            : step.id === "dancer-onboarding-payouts" && natsAccountStatus === "requested"
+              ? "Pending"
+              : step.complete ? "Complete" : step.locked ? "Locked" : step.id === firstIncomplete.id ? "Current" : step.optional ? "Optional" : "Ready";
           const panelId = `${step.id}-panel`;
           return (
             <li
@@ -3404,7 +3484,7 @@ function DancerOnboardingCommand({
                     {submitted ? (
                       <div className="dancer-onboarding-complete-note" role="status">
                         <strong>✓ Step 2 complete</strong>
-                        <span>Your profile is ready for club verification. Complete the dressing-room tap when you are at the club.</span>
+                        <span>Your profile is ready. Set up commission payouts now or continue without them, then complete the dressing-room tap at the club.</span>
                       </div>
                     ) : (
                       <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
@@ -3414,6 +3494,33 @@ function DancerOnboardingCommand({
                     <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
                       {status || "Confirms your completed profile, then opens club verification."}
                     </p>
+                  </div>
+                ) : null}
+                {step.id === "dancer-onboarding-payouts" ? (
+                  <div className="dancer-onboarding-payout-workspace">
+                    <article className="dancer-onboarding-payout-card">
+                      <span className="eyebrow">Recommended · never required for activation</span>
+                      <h3>Set up dancer commission payouts</h3>
+                      <p>Verified Club Deal commissions accrue to your MyDancr ledger even if you continue without setup. Payouts stay on hold until your NATS affiliate account and required tax details are verified.</p>
+                      <p>This choice never blocks your dressing-room NFC tap, profile approval, venue check-in, or Working Now status.</p>
+                      {natsAccountStatus === "active" ? <strong className="dancer-onboarding-payout-state is-active">✓ NATS account linked</strong> : null}
+                      {natsAccountStatus === "requested" ? <strong className="dancer-onboarding-payout-state">Verification pending</strong> : null}
+                      {natsPortalUrl ? <a className="dancer-onboarding-preview-open" href={natsPortalUrl} rel="noreferrer" target="_blank">Create or open NATS account</a> : null}
+                      {natsSelected && !payoutSubmitted ? (
+                        <form className="account-form dancer-onboarding-payout-form" onSubmit={requestOnboardingNatsLink}>
+                          <label>NATS affiliate login ID<input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
+                          <label>NATS username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
+                          <button disabled={isPayoutWorking || !natsConfigured} type="submit">{isPayoutWorking ? "Submitting..." : "Submit payout account"}</button>
+                        </form>
+                      ) : null}
+                      {!natsSelected ? <p className="earnings-notice">NATS enrollment is not active yet. Your commissions will still be recorded, and you can continue to the club tap now.</p> : null}
+                      {natsSelected && !natsConfigured ? <p className="earnings-notice">NATS enrollment is safely paused until the licensed connection is activated. You can continue and return later.</p> : null}
+                    </article>
+                    <div className="dancer-onboarding-payout-actions">
+                      {payoutSubmitted ? <button className="dancer-onboarding-primary" type="button" onClick={() => continueToNfc("Payout setup recorded. Continue with the official club tap.")}>Continue to club tap</button> : null}
+                      <button className="dancer-onboarding-secondary" type="button" onClick={skipPayoutSetup}>Do this later</button>
+                    </div>
+                    <p className="dancer-onboarding-announcement" role="status" aria-live="polite">{payoutStatus}</p>
                   </div>
                 ) : null}
                 {step.id === "dancer-onboarding-nfc" ? venueVerificationContent : null}
@@ -3906,6 +4013,26 @@ function DancerOnboardingProfileMediaWorkspace({
   );
 }
 
+function DancerPayoutSetupNotice({ finance }: { finance?: LoadState["finance"] }) {
+  const platform = (finance?.commissionPlatform || {}) as Record<string, unknown>;
+  const account = (finance?.natsAffiliateAccount || null) as Record<string, unknown> | null;
+  if (platform.selected !== true || account?.status === "active") return null;
+  const requested = account?.status === "requested";
+  const portalUrl = typeof platform.affiliatePortalUrl === "string" ? platform.affiliatePortalUrl : "";
+  return (
+    <aside className="dancer-payout-setup-notice" aria-labelledby="dancer-payout-setup-notice-heading">
+      <span>
+        <span className="eyebrow">Dancer commissions</span>
+        <strong id="dancer-payout-setup-notice-heading">{requested ? "Payout verification pending" : "Complete payout setup"}</strong>
+        <small>{requested
+          ? "Club Deal commissions keep accruing while MyDancr verifies your NATS affiliate account. Payout remains held until verification finishes."
+          : "Club Deal commissions accrue automatically, but payout stays held until your NATS affiliate and tax setup is verified."}</small>
+      </span>
+      {portalUrl ? <a href={portalUrl} rel="noreferrer" target="_blank">{requested ? "Open NATS account" : "Set up payouts"}</a> : <b>Setup connection pending</b>}
+    </aside>
+  );
+}
+
 function DancerPanel({
   accountState,
   affiliations,
@@ -4038,10 +4165,12 @@ function DancerPanel({
         nfc={nfc}
         profile={profile}
       />
+      <DancerPayoutSetupNotice finance={finance} />
       {!isApproved ? (
         <DancerOnboardingCommand
           draftIdentity={draftIdentity}
           effectiveStatus={effectiveStatus}
+          finance={finance}
           isVenueApproved={isVenueApproved}
           onProfileChange={onProfileChange}
           profile={profile}
@@ -5188,7 +5317,7 @@ function DancerVenueVerificationPanel() {
 
   return (
     <article className="info-panel venue-verification-panel" id="dancer-venue-verification">
-      <span className="eyebrow">{onboardingRequired ? "Step 3 · Venue verification" : "Venue affiliation"}</span>
+      <span className="eyebrow">{onboardingRequired ? "Step 4 · Dressing-room tap" : "Venue affiliation"}</span>
       <h2>{onboardingRequired ? "Verify your first venue" : "Manage where you work"}</h2>
       <p>{onboardingRequired
         ? "Your first verified venue manager scan approves your profile, makes it live, and activates that club affiliation."
@@ -7640,6 +7769,11 @@ function DashboardStyles() {
       .dashboard-shell-dancer .dashboard-head { min-height: 0; padding: 20px 22px; border-color: var(--mydancr-dashboard-border); border-radius: 22px; background: #07070a; box-shadow: 0 20px 48px rgba(0,0,0,.34); }
       .dashboard-shell-dancer .dashboard-head h1 { overflow: visible; font-size: clamp(29px,5vw,42px); text-overflow: clip; white-space: normal; }
       .dancer-onboarding-command { grid-column: 1 / -1; display: grid; gap: 18px; padding: clamp(16px,3vw,24px); border: 1px solid var(--mydancr-dashboard-border); border-radius: 20px; background: linear-gradient(145deg, #111116, #09090d 72%); box-shadow: 0 22px 54px rgba(0,0,0,.32); scroll-margin-top: 18px; }
+      .dancer-payout-setup-notice { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 16px; border:1px solid rgba(76,223,166,.25); border-radius:17px; background:linear-gradient(135deg,rgba(7,36,27,.86),rgba(12,13,18,.96)); }
+      .dancer-payout-setup-notice > span { min-width:0; display:grid; gap:4px; }
+      .dancer-payout-setup-notice strong { color:#fff; font-size:16px; }
+      .dancer-payout-setup-notice small { color:var(--mydancr-dashboard-muted); font-size:11px; line-height:1.4; }
+      .dancer-payout-setup-notice a,.dancer-payout-setup-notice > b { flex:0 0 auto; padding:10px 12px; border:1px solid rgba(76,223,166,.35); border-radius:11px; color:#70efbd; background:rgba(25,140,101,.12); font-size:11px; font-weight:900; text-decoration:none; }
       .dancer-onboarding-command-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
       .dancer-onboarding-command-head > span { display: grid; gap: 7px; }
       .dancer-onboarding-command-head h2 { color: #f8f7fb; font-size: clamp(25px,4vw,34px); letter-spacing: -.025em; }
@@ -7857,6 +7991,16 @@ function DashboardStyles() {
       .dancer-onboarding-primary:disabled { opacity: .58; cursor: wait; }
       .dancer-onboarding-steps button:focus-visible, .dancer-onboarding-primary:focus-visible, .dancer-avatar-panel button:focus-visible, .dancer-avatar-panel input:focus-visible { outline: 2px solid #7eeaff; outline-offset: -3px; }
       .dancer-onboarding-announcement { min-height: 20px; color: #bfefff; font-size: 12px; font-weight: 760; line-height: 1.4; }
+      .dancer-onboarding-payout-workspace { display:grid; gap:12px; }
+      .dancer-onboarding-payout-card { display:grid; gap:11px; padding:15px; border:1px solid rgba(76,223,166,.22); border-radius:16px; background:linear-gradient(145deg,rgba(8,30,24,.72),#0d0d12 76%); }
+      .dancer-onboarding-payout-card h3 { margin:0; color:#fff; font-size:20px; }
+      .dancer-onboarding-payout-card p { margin:0; color:var(--mydancr-dashboard-muted); font-size:12px; line-height:1.5; }
+      .dancer-onboarding-payout-state { width:fit-content; padding:7px 9px; border:1px solid rgba(126,234,255,.28); border-radius:999px; color:#bfefff; background:rgba(21,126,155,.11); font-size:10px; text-transform:uppercase; }
+      .dancer-onboarding-payout-state.is-active { border-color:rgba(76,223,166,.36); color:#70efbd; background:rgba(25,140,101,.12); }
+      .dancer-onboarding-payout-form { margin-top:2px; }
+      .dancer-onboarding-payout-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .dancer-onboarding-payout-actions > :only-child { grid-column:1 / -1; }
+      .dancer-onboarding-secondary { min-height:52px; border:1px solid rgba(255,255,255,.14); border-radius:14px; color:#f4f2f7; background:#24242c; font:inherit; font-weight:900; cursor:pointer; }
       .dancer-avatar-panel { grid-column: span 3; display: grid; gap: 13px; }
       .dancer-avatar-editor { display: grid; grid-template-columns: 78px minmax(0,1fr); align-items: center; gap: 14px; }
       .dancer-avatar-preview { width: 74px; height: 74px; font-size: 26px; }
@@ -7925,6 +8069,7 @@ function DashboardStyles() {
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
+      @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
       @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 620px) { .dancer-profile-builder { padding: 10px; } .dancer-profile-builder-head { grid-template-columns: 1fr; } .dancer-profile-builder-head > b { width: fit-content; } .dancer-profile-builder-canvas { border-radius: 16px; } .dancer-profile-builder-titlebar { grid-template-columns: 48px minmax(0,1fr) auto; gap: 8px; padding: 10px; } .dancer-profile-builder-avatar { width: 46px; height: 46px; min-height: 46px; } .dancer-profile-builder-draft { padding: 5px 6px; font-size: 7px; } .dancer-profile-builder-media { padding: 0 8px 10px; } .dancer-profile-builder-media-tabs { grid-template-columns: repeat(2,minmax(86px,1fr)); } .dancer-profile-builder-feature { aspect-ratio: 4 / 5; border-radius: 15px; } .dancer-profile-builder-thumbnails { gap: 5px; } .dancer-profile-builder-thumbnails button { border-radius: 8px; } .dancer-profile-builder-socials { padding: 13px 9px 15px; } .dancer-profile-builder-social-slots { gap: 5px; } .dancer-profile-builder-social-slots button { min-height: 54px; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

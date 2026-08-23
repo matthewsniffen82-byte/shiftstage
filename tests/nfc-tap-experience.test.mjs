@@ -66,7 +66,7 @@ test("new and existing dancers use the same submitted-profile NFC flow without m
   assert.match(client, /window\.location\.replace\("\/dashboard\/dancer\?nfc=complete"\)/);
 });
 
-test("Step 3 eligibility matches the submitted onboarding requirements", () => {
+test("Step 4 eligibility matches the submitted onboarding requirements", () => {
   assert.match(activationMigration, /create or replace function public\.approve_dancer_venue_affiliation_from_nfc/);
   assert.match(activationMigration, /create or replace function public\.register_dancer_nfc_enrollment/);
   assert.match(activationMigration, /dancer\.status = 'pending_review'/);
@@ -89,7 +89,7 @@ test("failed NFC taps always provide a clear mobile escape route", () => {
   assert.match(client, /<a className="nfc-exit"[\s\S]*?aria-label=\{exitLabel\}/);
   assert.match(client, /phase === "error" && !complete[\s\S]*?\{exitLabel\}/);
   assert.match(client, /phase === "error"[\s\S]*?"Try again"/);
-  assert.match(client, /Profile activation was not completed\. Step 3 remains open/);
+  assert.match(client, /Profile activation was not completed\. Step 4 remains open/);
   assert.match(client, /\.nfc-exit\{[\s\S]*?width:48px;height:48px[\s\S]*?border-radius:50%/);
 });
 
