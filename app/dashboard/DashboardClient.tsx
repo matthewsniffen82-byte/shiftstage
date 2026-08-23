@@ -4046,6 +4046,23 @@ function DancerPanel({
   const videoContent = <DancerTvStudio embedded />;
   const profileMediaWorkspace = (
     <div className="venue-dashboard-inner-grid dancer-onboarding-profile-workspace">
+      <article className="dancer-profile-media-preview" aria-labelledby="dancer-profile-media-preview-heading">
+        <span className="dancer-profile-media-preview-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M2.8 12s3.2-5.5 9.2-5.5 9.2 5.5 9.2 5.5-3.2 5.5-9.2 5.5S2.8 12 2.8 12Z" /><circle cx="12" cy="12" r="2.6" /></svg>
+        </span>
+        <span className="dancer-profile-media-preview-copy">
+          <span className="eyebrow">Customer view</span>
+          <strong id="dancer-profile-media-preview-heading">Preview your profile</strong>
+          <small>See your approved photos, videos, and socials exactly as customers do.</small>
+        </span>
+        <DancerProfilePreview
+          buttonClassName="dancer-profile-media-preview-button"
+          buttonLabel="Preview profile"
+          isApproved
+          isPublic={isPublic}
+          profile={profile}
+        />
+      </article>
       {identityContent}
       {avatarContent}
       {socialContent}
@@ -4095,25 +4112,6 @@ function DancerPanel({
           )}
           venueVerificationContent={<DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />}
         />
-      ) : null}
-      {isApproved ? (
-        <aside className="dancer-dashboard-profile-preview" aria-labelledby="dancer-dashboard-profile-preview-heading">
-          <span className="dancer-dashboard-profile-preview-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M2.8 12s3.2-5.5 9.2-5.5 9.2 5.5 9.2 5.5-3.2 5.5-9.2 5.5S2.8 12 2.8 12Z" /><circle cx="12" cy="12" r="2.6" /></svg>
-          </span>
-          <span className="dancer-dashboard-profile-preview-copy">
-            <span className="eyebrow">Customer view</span>
-            <strong id="dancer-dashboard-profile-preview-heading">Preview your profile</strong>
-            <small>See your approved photos, videos, and social links exactly as customers do.</small>
-          </span>
-          <DancerProfilePreview
-            buttonClassName="dancer-dashboard-profile-preview-button"
-            buttonLabel="Preview profile"
-            isApproved
-            isPublic={isPublic}
-            profile={profile}
-          />
-        </aside>
       ) : null}
       {isApproved ? (
         <DashboardSection
@@ -7825,16 +7823,16 @@ function DashboardStyles() {
       .dancer-payout-setup-notice strong { color:#fff; font-size:16px; }
       .dancer-payout-setup-notice small { color:var(--mydancr-dashboard-muted); font-size:11px; line-height:1.4; }
       .dancer-payout-setup-notice a,.dancer-payout-setup-notice > b { flex:0 0 auto; padding:10px 12px; border:1px solid rgba(76,223,166,.35); border-radius:11px; color:#70efbd; background:rgba(25,140,101,.12); font-size:11px; font-weight:900; text-decoration:none; }
-      .dancer-dashboard-profile-preview { grid-column: 1 / -1; min-width: 0; display: grid; grid-template-columns: 46px minmax(0,1fr) auto; align-items: center; gap: 13px; padding: 14px 15px; border: 1px solid rgba(126,234,255,.24); border-radius: 18px; background: radial-gradient(circle at 0 50%,rgba(34,199,255,.09),transparent 18rem),linear-gradient(135deg,rgba(21,13,39,.96),rgba(8,9,14,.98)); box-shadow: inset 3px 0 0 rgba(139,92,246,.82),0 16px 36px rgba(0,0,0,.25); }
-      .dancer-dashboard-profile-preview-icon { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.28); border-radius: 50%; color: #8fe9fa; background: linear-gradient(145deg,rgba(124,58,237,.28),rgba(34,199,255,.1)); }
-      .dancer-dashboard-profile-preview-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-      .dancer-dashboard-profile-preview-copy { min-width: 0; display: grid; gap: 3px; }
-      .dancer-dashboard-profile-preview-copy .eyebrow { color: #8fe9fa; }
-      .dancer-dashboard-profile-preview-copy strong { color: #fff; font-size: 17px; line-height: 1.15; }
-      .dancer-dashboard-profile-preview-copy small { max-width: 58ch; color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
-      .dancer-dashboard-profile-preview-button { min-width: 132px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(126,234,255,.42); border-radius: 999px; color: #fff; background: linear-gradient(135deg,#6d28d9,#0b94c9); box-shadow: 0 10px 24px rgba(61,27,143,.28),inset 0 1px 0 rgba(255,255,255,.14); font: inherit; font-size: 11px; font-weight: 950; cursor: pointer; white-space: nowrap; }
-      .dancer-dashboard-profile-preview-button:hover { border-color: rgba(126,234,255,.7); filter: brightness(1.08); }
-      .dancer-dashboard-profile-preview-button:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .dancer-profile-media-preview { grid-column: 1 / -1; min-width: 0; display: grid; grid-template-columns: 46px minmax(0,1fr) auto; align-items: center; gap: 13px; padding: 14px 15px; border: 1px solid rgba(126,234,255,.24); border-radius: 18px; background: radial-gradient(circle at 0 50%,rgba(34,199,255,.09),transparent 18rem),linear-gradient(135deg,rgba(21,13,39,.96),rgba(8,9,14,.98)); box-shadow: inset 3px 0 0 rgba(139,92,246,.82),0 16px 36px rgba(0,0,0,.25); }
+      .dancer-profile-media-preview-icon { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.28); border-radius: 50%; color: #8fe9fa; background: linear-gradient(145deg,rgba(124,58,237,.28),rgba(34,199,255,.1)); }
+      .dancer-profile-media-preview-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+      .dancer-profile-media-preview-copy { min-width: 0; display: grid; gap: 3px; }
+      .dancer-profile-media-preview-copy .eyebrow { color: #8fe9fa; }
+      .dancer-profile-media-preview-copy strong { color: #fff; font-size: 17px; line-height: 1.15; }
+      .dancer-profile-media-preview-copy small { max-width: 58ch; color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
+      .dancer-profile-media-preview-button { min-width: 132px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(126,234,255,.42); border-radius: 999px; color: #fff; background: linear-gradient(135deg,#6d28d9,#0b94c9); box-shadow: 0 10px 24px rgba(61,27,143,.28),inset 0 1px 0 rgba(255,255,255,.14); font: inherit; font-size: 11px; font-weight: 950; cursor: pointer; white-space: nowrap; }
+      .dancer-profile-media-preview-button:hover { border-color: rgba(126,234,255,.7); filter: brightness(1.08); }
+      .dancer-profile-media-preview-button:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
       .dancer-onboarding-command-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
       .dancer-onboarding-command-head > span { display: grid; gap: 7px; }
       .dancer-onboarding-command-head h2 { color: #f8f7fb; font-size: clamp(25px,4vw,34px); letter-spacing: -.025em; }
@@ -8095,7 +8093,7 @@ function DashboardStyles() {
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
-      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dashboard-shell-dancer .dashboard-section-summary > summary { min-height: 62px; padding: 12px 14px; } .dashboard-shell-dancer .dashboard-section-primary > summary { min-height: 74px; padding: 14px; } .dashboard-shell-dancer .dashboard-section-secondary > summary { min-height: 68px; padding: 13px 14px; } .dashboard-shell-dancer .dashboard-section-utility > summary { min-height: 60px; padding: 11px 14px; } .dancer-status-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .dashboard-shell-dancer .dancer-status-metrics .metric { min-height: 64px; padding: 9px 10px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-dashboard-profile-preview { grid-template-columns: 42px minmax(0,1fr); gap: 9px 11px; padding: 13px; } .dancer-dashboard-profile-preview-icon { width: 40px; height: 40px; } .dancer-dashboard-profile-preview-button { grid-column: 1 / -1; width: 100%; min-height: 46px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
+      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dashboard-shell-dancer .dashboard-section-summary > summary { min-height: 62px; padding: 12px 14px; } .dashboard-shell-dancer .dashboard-section-primary > summary { min-height: 74px; padding: 14px; } .dashboard-shell-dancer .dashboard-section-secondary > summary { min-height: 68px; padding: 13px 14px; } .dashboard-shell-dancer .dashboard-section-utility > summary { min-height: 60px; padding: 11px 14px; } .dancer-status-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .dashboard-shell-dancer .dancer-status-metrics .metric { min-height: 64px; padding: 9px 10px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-profile-media-preview { grid-template-columns: 42px minmax(0,1fr); gap: 9px 11px; padding: 13px; } .dancer-profile-media-preview-icon { width: 40px; height: 40px; } .dancer-profile-media-preview-button { grid-column: 1 / -1; width: 100%; min-height: 46px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
       @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 620px) { .photo-upload-heading { align-items: flex-start; } .photo-source-action { min-height: 70px; } .photo-slot-summary { align-items: flex-start; flex-direction: column; gap: 2px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-review-list .photo-review-card { grid-template-columns: 92px minmax(0,1fr); align-items: start; min-height: 0; gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 92px; } }

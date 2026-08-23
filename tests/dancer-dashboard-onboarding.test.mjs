@@ -283,15 +283,20 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /Avatar moderation is in progress/);
 });
 
-test("approved dancers always have a customer-view profile preview on the collapsed dashboard", () => {
+test("approved dancers preview their customer view from inside Profile & media", () => {
+  const profileMediaWorkspace = dashboard.match(/const profileMediaWorkspace = \([\s\S]*?\n  \);/)?.[0] || "";
+
   assert.match(dashboard, /const isPublic = isApproved && profile\?\.is_public !== false && profile\?\.isPublic !== false/);
-  assert.match(dashboard, /\{isApproved \? \(\s*<aside className="dancer-dashboard-profile-preview"/);
-  assert.match(dashboard, /id="dancer-dashboard-profile-preview-heading">Preview your profile/);
-  assert.match(dashboard, /buttonLabel="Preview profile"[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
+  assert.match(dashboard, /id="dancer-profile-media"[\s\S]*?\{profileMediaWorkspace\}/);
+  assert.match(profileMediaWorkspace, /<article className="dancer-profile-media-preview"/);
+  assert.match(profileMediaWorkspace, /id="dancer-profile-media-preview-heading">Preview your profile/);
+  assert.match(profileMediaWorkspace, /buttonLabel="Preview profile"[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
+  assert.ok(profileMediaWorkspace.indexOf("dancer-profile-media-preview") < profileMediaWorkspace.indexOf("{identityContent}"));
+  assert.doesNotMatch(dashboard, /dancer-dashboard-profile-preview/);
   assert.match(dashboard, /Public profile preview/);
   assert.match(dashboard, /This is how your approved profile appears to customers/);
-  assert.match(dashboard, /\.dancer-dashboard-profile-preview-button \{[^}]*min-height: 44px/);
-  assert.match(dashboard, /\.dancer-dashboard-profile-preview-button \{ grid-column: 1 \/ -1; width: 100%; min-height: 46px/);
+  assert.match(dashboard, /\.dancer-profile-media-preview-button \{[^}]*min-height: 44px/);
+  assert.match(dashboard, /\.dancer-profile-media-preview-button \{ grid-column: 1 \/ -1; width: 100%; min-height: 46px/);
 });
 
 test("the mobile full-profile preview leaves room for its media thumbnails above navigation", () => {
