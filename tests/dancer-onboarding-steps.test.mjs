@@ -246,14 +246,16 @@ test("all four production steps render inside the Profile Setup box", () => {
   assert.match(liveAppSource, /approvedProfileVideoManagerMarkup\(\)/);
 });
 
-test("optional NATS payout setup is offered before NFC without blocking activation", () => {
+test("optional payout setup is offered before NFC without blocking activation", () => {
   const setupOrderSource = liveAppSource.match(/function setupOrder\(\) \{[\s\S]*?\n    }/)?.[0] || "";
   const setupGate = liveAppSource.match(/function firstUnsavedSetupRequirement[\s\S]*?\n    }/)?.[0] || "";
   const payoutMarkup = liveAppSource.match(/function dancerPayoutSetupBodyMarkup[\s\S]*?\n    function renderDancerPayoutSetupNotice/)?.[0] || "";
 
   assert.match(setupOrderSource, /"review", "payout", "approval"/);
   assert.match(setupGate, /requiredStep !== "payout"/);
-  assert.match(payoutMarkup, /Connect NATS to receive verified Club Deal commissions/i);
+  assert.match(payoutMarkup, /Connect a payout account to receive your verified Club Deal commissions/i);
+  assert.match(payoutMarkup, /Payouts are managed through NATS/i);
+  assert.doesNotMatch(payoutMarkup, /Connect NATS|NATS linked|Open NATS/i);
   assert.doesNotMatch(payoutMarkup, /never blocks|payout stays on hold|not active yet|safely paused|tax details/i);
   assert.match(payoutMarkup, /data-dancer-payout-skip>Do this later/);
   assert.match(liveAppSource, /data-dancer-payout-submit/);

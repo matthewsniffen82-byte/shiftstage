@@ -68,8 +68,9 @@ test("selecting NATS disables MyDancr direct payouts and exposes verified accoun
   assert.match(dancerRoute, /body\.action === "request_nats_link"/);
   assert.match(dancerRoute, /requireActiveDancer\(client, user\.id\)/);
   assert.match(dancerRoute, /requestNatsAffiliateLink\(createAdminSupabaseClient\(\), user\.id/);
-  assert.match(dancerDashboard, /Submit NATS account for verification/);
-  assert.match(dancerDashboard, /NATS export history/);
+  assert.match(dancerDashboard, /Submit payout account for verification/);
+  assert.match(dancerDashboard, />Payout history<\/button>/);
+  assert.match(dancerDashboard, /Payouts are managed through NATS/);
   assert.match(adminDashboard, /Verify and activate/);
   assert.match(adminDashboard, /Confirmed in NATS/);
   assert.match(adminDashboard, /Confirmed not exported/);

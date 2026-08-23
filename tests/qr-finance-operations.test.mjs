@@ -113,7 +113,7 @@ test("daily automation and every production finance dashboard are wired", () => 
   assert.match(adminUi, /Run full reconciliation/);
   assert.match(adminUi, /Record bank, ACH, or check payment/);
   assert.match(dashboard, /Club invoices/);
-  assert.match(dashboard, /MyDancr payouts/);
+  assert.match(dashboard, /Commission payouts/);
   assert.match(dashboard, /Available balance/);
   assert.match(dashboard, /Real payout setup and money movement remain off until provider and legal approval/);
   assert.match(dashboard, /Download monthly statement/);

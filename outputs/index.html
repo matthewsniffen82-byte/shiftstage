@@ -53116,17 +53116,17 @@
       const configured = platform.configured === true;
       const portalUrl = String(platform.affiliatePortalUrl || "");
       const accountState = accountStatus === "active"
-        ? '<div class="rule-note success"><strong>✓ NATS linked</strong></div>'
+        ? '<div class="rule-note success"><strong>✓ Payout account connected</strong></div>'
         : accountStatus === "requested"
           ? '<div class="rule-note"><strong>Verification pending</strong></div>'
           : "";
       const link = portalUrl
-        ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">Open NATS</a>`
+        ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">Open payout account</a>`
         : "";
       const form = selected && !["requested", "active"].includes(accountStatus)
         ? `<div class="dancer-payout-fields">
-            <div class="field"><label for="setupNatsLoginId">NATS affiliate login ID</label><input id="setupNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div>
-            <div class="field"><label for="setupNatsUsername">NATS username <span>optional</span></label><input id="setupNatsUsername" maxlength="80" autocapitalize="none"></div>
+            <div class="field"><label for="setupNatsLoginId">Payout account login ID <span>from NATS</span></label><input id="setupNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div>
+            <div class="field"><label for="setupNatsUsername">Payout account username <span>optional</span></label><input id="setupNatsUsername" maxlength="80" autocapitalize="none"></div>
           </div>
           <button class="action-btn" type="button" data-dancer-payout-submit ${configured ? "" : "disabled"}>Submit payout account</button>`
         : "";
@@ -53134,7 +53134,7 @@
         <section class="setup-profile-editor-section">
           <div class="setup-profile-editor-head">
             <strong>Commission payouts</strong>
-            <p>Connect NATS to receive verified Club Deal commissions.</p>
+            <p>Connect a payout account to receive your verified Club Deal commissions. Payouts are managed through NATS.</p>
           </div>
           ${accountState}${link}${form}
           <div class="dancer-payout-setup-actions">
@@ -53159,10 +53159,10 @@
       const requested = accountStatus === "requested";
       const portalUrl = String(platform.affiliatePortalUrl || "");
       notice.innerHTML = `
-        <div><span class="eyebrow">Dancer commissions</span><strong>${requested ? "Payout verification pending" : "Complete payout setup"}</strong><p>${requested ? "Commissions keep accruing while MyDancr verifies your NATS account." : "Commissions accrue automatically, but payout stays held until your NATS affiliate and tax setup is verified."}</p></div>
-        ${!requested ? `<div class="dancer-payout-fields"><div class="field"><label for="noticeNatsLoginId">NATS affiliate login ID</label><input id="noticeNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div><div class="field"><label for="noticeNatsUsername">NATS username <span>optional</span></label><input id="noticeNatsUsername" maxlength="80" autocapitalize="none"></div></div>` : ""}
+        <div><span class="eyebrow">Dancer commissions</span><strong>${requested ? "Payout verification pending" : "Complete payout setup"}</strong><p>${requested ? "Commissions keep accruing while MyDancr verifies your payout account." : "Commissions accrue automatically, but payout stays held until your payout account and tax setup are verified."}</p></div>
+        ${!requested ? `<div class="dancer-payout-fields"><div class="field"><label for="noticeNatsLoginId">Payout account login ID <span>from NATS</span></label><input id="noticeNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div><div class="field"><label for="noticeNatsUsername">Payout account username <span>optional</span></label><input id="noticeNatsUsername" maxlength="80" autocapitalize="none"></div></div>` : ""}
         <div class="dancer-payout-setup-actions">
-          ${portalUrl ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">${requested ? "Open NATS account" : "Set up payouts"}</a>` : ""}
+          ${portalUrl ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">${requested ? "Open payout account" : "Set up payouts"}</a>` : ""}
           ${!requested ? `<button class="action-btn" type="button" data-dancer-payout-submit ${platform.configured === true ? "" : "disabled"}>Submit payout account</button>` : ""}
         </div>`;
     }
@@ -53190,14 +53190,14 @@
       button.textContent = "Submitting…";
       if (status) {
         status.hidden = false;
-        status.textContent = "Submitting your NATS affiliate account for verification…";
+        status.textContent = "Submitting your payout account for verification…";
       }
       try {
         const data = await postAuthenticatedJson("/api/dancer/finance", { action: "request_nats_link", loginId, username });
         liveDancerFinance = data.finance || liveDancerFinance;
         try { localStorage.removeItem(dancerPayoutSetupStorageKey()); } catch (error) {}
         dancerSetup.payout = true;
-        continueDancerOnboardingToNfc("NATS account submitted. You can complete the club tap now.");
+        continueDancerOnboardingToNfc("Payout account submitted. You can complete the club tap now.");
       } catch (error) {
         button.disabled = false;
         button.textContent = original;

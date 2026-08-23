@@ -36,12 +36,12 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     if (body.action === "request_nats_link") {
       if (!getNatsRuntimeConfig().selected) {
-        return NextResponse.json({ ok: false, error: "NATS commission settlement is not currently selected." }, { status: 409 });
+        return NextResponse.json({ ok: false, error: "Payout account setup is not currently available." }, { status: 409 });
       }
       const loginId = parseNatsLoginId(body.loginId);
       const username = parseNatsUsername(body.username);
       if (loginId === null || username === undefined) {
-        return NextResponse.json({ ok: false, error: "Enter a valid NATS affiliate login ID and optional username." }, { status: 400 });
+        return NextResponse.json({ ok: false, error: "Enter a valid payout account login ID and optional username." }, { status: 400 });
       }
       const account = await requestNatsAffiliateLink(createAdminSupabaseClient(), user.id, { loginId, username });
       return NextResponse.json({ ok: true, account, finance: await getDancerFinance(createAdminSupabaseClient(), user.id) });

@@ -145,23 +145,28 @@ test("step one guides dancers through required work before optional profile enha
   assert.match(dashboard, /continueToPreview: \(\) => openStep\("dancer-onboarding-preview"\)/);
 });
 
-test("optional payout onboarding keeps NATS guidance concise", () => {
+test("optional payout onboarding uses plain language and names the provider only in setup", () => {
   assert.match(dashboard, /<span className="eyebrow">Optional<\/span>[\s\S]*?<h3>Commission payouts<\/h3>/);
-  assert.match(dashboard, /Connect your NATS account to receive verified Club Deal commissions\./);
+  assert.match(dashboard, /Connect a payout account to receive your verified Club Deal commissions\. Payouts are managed through NATS\./);
+  assert.match(dashboard, /Payout account login ID <span>from NATS<\/span>/);
+  assert.doesNotMatch(dashboard, /Connect your NATS account|NATS account linked|Create or open NATS account/);
   assert.doesNotMatch(dashboard, /Recommended · never required for activation/);
   assert.doesNotMatch(dashboard, /This choice never blocks your dressing-room NFC tap/);
   assert.doesNotMatch(dashboard, /NATS enrollment is not active yet/);
   assert.doesNotMatch(dashboard, /NATS enrollment is safely paused/);
 });
 
-test("approved dancers who skipped NATS get a visible signup call to action", () => {
+test("approved dancers who skipped payout setup get a plain-language call to action", () => {
   const callout = dashboard.match(/function DancerNatsSignupCallout\([\s\S]*?(?=\nfunction DancerPanel)/)?.[0] || "";
   assert.match(callout, /\["requested", "active"\]\.includes\(accountStatus\)/);
   assert.doesNotMatch(callout, /platform\.selected !== true \|\|/);
-  assert.match(callout, /Get NATS to receive payouts/);
+  assert.match(callout, /Set up your payouts/);
+  assert.match(callout, /Connect a payout account to receive your Club Deal commissions/);
   assert.match(callout, /portalUrl \|\| supportRequestUrl/);
-  assert.match(callout, /mailto:support@mydancr\.com\?subject=NATS%20payout%20setup/);
-  assert.match(callout, /I already have NATS/);
+  assert.match(callout, /mailto:support@mydancr\.com\?subject=Commission%20payout%20account%20setup/);
+  assert.match(callout, /Start payout setup/);
+  assert.match(callout, /I already have an account/);
+  assert.doesNotMatch(callout, />Get NATS<|>I already have NATS<|Get NATS to receive payouts/);
   assert.match(callout, /openDancerPayoutLinking/);
   assert.match(dashboard, /<DancerNatsSignupCallout finance=\{finance\} \/>[\s\S]*?id="dancer-performance"/);
   assert.match(dashboard, /id="dancer-payout-detail"/);

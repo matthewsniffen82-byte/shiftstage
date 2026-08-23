@@ -3417,13 +3417,13 @@ function DancerOnboardingCommand({
       label: "Commission payouts (optional)",
       complete: payoutStepComplete,
       detail: natsAccountStatus === "active"
-        ? "NATS is linked."
+        ? "Your payout account is connected."
         : natsAccountStatus === "requested"
-          ? "NATS verification is pending."
+          ? "Payout account verification is pending."
           : payoutSkipped
             ? "Set up later from Earnings."
             : submitted
-              ? "Connect NATS now or set it up later."
+              ? "Connect your payout account now or set it up later."
               : "Submit your profile before starting optional payout setup.",
       locked: !submitted,
       optional: true,
@@ -3541,7 +3541,7 @@ function DancerOnboardingCommand({
     const session = readSession();
     if (!session?.accessToken) return setPayoutStatus("Sign in again to set up payouts.");
     setIsPayoutWorking(true);
-    setPayoutStatus("Submitting your NATS affiliate account for verification...");
+    setPayoutStatus("Submitting your payout account for verification...");
     try {
       const response = await fetch("/api/dancer/finance", {
         method: "POST",
@@ -3549,12 +3549,12 @@ function DancerOnboardingCommand({
         body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
       });
       const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to link the NATS account.");
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to link the payout account.");
       window.localStorage.removeItem(payoutSkipKey);
       setPayoutSkipped(false);
-      continueToNfc("NATS account submitted for verification. You can complete the club tap now.");
+      continueToNfc("Payout account submitted for verification. You can complete the club tap now.");
     } catch (error) {
-      setPayoutStatus(error instanceof Error ? error.message : "Unable to link the NATS account.");
+      setPayoutStatus(error instanceof Error ? error.message : "Unable to link the payout account.");
     } finally {
       setIsPayoutWorking(false);
     }
@@ -3656,14 +3656,14 @@ function DancerOnboardingCommand({
                     <article className="dancer-onboarding-payout-card">
                       <span className="eyebrow">Optional</span>
                       <h3>Commission payouts</h3>
-                      <p>Connect your NATS account to receive verified Club Deal commissions.</p>
-                      {natsAccountStatus === "active" ? <strong className="dancer-onboarding-payout-state is-active">✓ NATS account linked</strong> : null}
+                      <p>Connect a payout account to receive your verified Club Deal commissions. Payouts are managed through NATS.</p>
+                      {natsAccountStatus === "active" ? <strong className="dancer-onboarding-payout-state is-active">✓ Payout account connected</strong> : null}
                       {natsAccountStatus === "requested" ? <strong className="dancer-onboarding-payout-state">Verification pending</strong> : null}
-                      {natsPortalUrl ? <a className="dancer-onboarding-preview-open" href={natsPortalUrl} rel="noreferrer" target="_blank">Create or open NATS account</a> : null}
+                      {natsPortalUrl ? <a className="dancer-onboarding-preview-open" href={natsPortalUrl} rel="noreferrer" target="_blank">Create or open payout account</a> : null}
                       {natsSelected && !payoutSubmitted ? (
                         <form className="account-form dancer-onboarding-payout-form" onSubmit={requestOnboardingNatsLink}>
-                          <label>NATS affiliate login ID<input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
-                          <label>NATS username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
+                          <label>Payout account login ID <span>from NATS</span><input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
+                          <label>Payout account username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
                           <button disabled={isPayoutWorking || !natsConfigured} type="submit">{isPayoutWorking ? "Submitting..." : "Submit payout account"}</button>
                         </form>
                       ) : null}
@@ -3940,19 +3940,19 @@ function DancerNatsSignupCallout({ finance }: { finance?: LoadState["finance"] }
   const accountStatus = String(account?.status || "").toLowerCase();
   if (["requested", "active"].includes(accountStatus)) return null;
   const portalUrl = typeof platform.affiliatePortalUrl === "string" ? platform.affiliatePortalUrl : "";
-  const supportRequestUrl = "mailto:support@mydancr.com?subject=NATS%20payout%20setup";
+  const supportRequestUrl = "mailto:support@mydancr.com?subject=Commission%20payout%20account%20setup";
   return (
     <aside className="dancer-nats-signup-callout" aria-labelledby="dancer-nats-signup-heading">
       <span className="dancer-nats-signup-copy">
         <span className="eyebrow">Commission payouts</span>
-        <strong id="dancer-nats-signup-heading">Get NATS to receive payouts</strong>
-        <small>Create a NATS affiliate account, then link it to MyDancr. Your verified Club Deal commissions keep accruing until setup is complete.</small>
+        <strong id="dancer-nats-signup-heading">Set up your payouts</strong>
+        <small>Connect a payout account to receive your Club Deal commissions. You can finish this anytime.</small>
       </span>
       <span className="dancer-nats-signup-actions">
-        <a href={portalUrl || supportRequestUrl} rel={portalUrl ? "noreferrer" : undefined} target={portalUrl ? "_blank" : undefined}>Get NATS</a>
+        <a href={portalUrl || supportRequestUrl} rel={portalUrl ? "noreferrer" : undefined} target={portalUrl ? "_blank" : undefined}>Start payout setup</a>
         {platform.selected === true
-          ? <button onClick={openDancerPayoutLinking} type="button">I already have NATS</button>
-          : <a className="secondary" href={`${supportRequestUrl}&body=I%20already%20have%20a%20NATS%20affiliate%20account%20and%20need%20to%20link%20it%20to%20MyDancr.`}>I already have NATS</a>}
+          ? <button onClick={openDancerPayoutLinking} type="button">I already have an account</button>
+          : <a className="secondary" href={`${supportRequestUrl}&body=I%20already%20have%20a%20payout%20account%20and%20need%20to%20link%20it%20to%20MyDancr.`}>I already have an account</a>}
       </span>
     </aside>
   );
@@ -4545,7 +4545,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
     setIsWorking(true);
-    setStatus("Submitting your NATS affiliate account for verification...");
+    setStatus("Submitting your payout account for verification...");
     try {
       const response = await fetch("/api/dancer/finance", {
         method: "POST",
@@ -4553,11 +4553,11 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
       });
       const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to link the NATS account.");
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to link the payout account.");
       if (data.finance) setLocalFinance(data.finance);
-      setStatus("NATS account submitted. MyDancr will activate it after matching the affiliate record.");
+      setStatus("Payout account submitted. MyDancr will activate it after matching the provider record.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to link the NATS account.");
+      setStatus(error instanceof Error ? error.message : "Unable to link the payout account.");
     } finally {
       setIsWorking(false);
     }
@@ -4580,11 +4580,11 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
     <article className="info-panel deal-panel dancer-earnings-panel" aria-labelledby="dancer-payout-heading">
       <div className="venue-deal-heading">
         <div>
-          <span className="eyebrow">{natsSelected ? "NATS commission account" : "MyDancr payouts"}</span>
+          <span className="eyebrow">Commission payouts</span>
           <h2 id="dancer-payout-heading">Payout account</h2>
         </div>
         <strong className={`deal-state ${(natsSelected ? natsActive : payoutsEnabled) ? "active" : ""}`}>
-          {natsSelected ? (natsActive ? "NATS linked" : natsAffiliateAccount?.status === "requested" ? "Verification pending" : "Setup required") : payoutsEnabled ? "Payouts available" : "Approval pending"}
+          {natsSelected ? (natsActive ? "Account connected" : natsAffiliateAccount?.status === "requested" ? "Verification pending" : "Setup required") : payoutsEnabled ? "Payouts available" : "Approval pending"}
         </strong>
       </div>
       <div className="deal-metrics earnings-balance-grid">
@@ -4595,13 +4595,13 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
       </div>
       {natsSelected ? (
         <>
-          {natsPortalUrl ? <div className="earnings-actions"><a className="button-link" href={natsPortalUrl} target="_blank" rel="noreferrer">{natsActive ? "Open NATS earnings" : "Create or open NATS account"}</a></div> : null}
+          {natsPortalUrl ? <div className="earnings-actions"><a className="button-link" href={natsPortalUrl} target="_blank" rel="noreferrer">{natsActive ? "Open payout account" : "Create or open payout account"}</a></div> : null}
           {!natsActive ? <form className="account-form" onSubmit={requestNatsLink}>
-            <label>NATS affiliate login ID<input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
-            <label>NATS username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
-            <button disabled={isWorking || !natsConfigured} type="submit">Submit NATS account for verification</button>
+            <label>Payout account login ID <span>from NATS</span><input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
+            <label>Payout account username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
+            <button disabled={isWorking || !natsConfigured} type="submit">Submit payout account for verification</button>
           </form> : null}
-          {!natsConfigured ? <p className="earnings-notice">NATS has been selected, but exports remain safely paused until the licensed NATS URL and API credentials are installed.</p> : null}
+          {!natsConfigured ? <p className="earnings-notice">Payout setup is temporarily unavailable. Your verified commissions will continue to accrue.</p> : null}
           {natsAffiliateAccount?.last_error ? <p role="alert">{String(natsAffiliateAccount.last_error)}</p> : null}
         </>
       ) : (
@@ -4621,7 +4621,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         <summary>How payouts work</summary>
         <div className="dancer-performance-explainer-copy">
           <p>{natsSelected
-            ? "MyDancr validates cashier NFC redemptions, calculates your tiered commission, and sends eligible rewards to your verified NATS affiliate ledger."
+            ? "MyDancr validates cashier NFC redemptions, calculates your tiered commission, and sends eligible rewards to your verified payout account. Payouts are managed through NATS."
             : "Qualifying Club Deal activity starts as pending and becomes available after review."}</p>
           <p>{natsSelected
             ? "No guest personal information is included."
@@ -4632,7 +4632,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
       <section className="earnings-history" aria-label="Rewards history">
         <div className="earnings-history-tabs" role="tablist" aria-label="Rewards history views">
           <button aria-selected={historyView === "earnings"} className={historyView === "earnings" ? "active" : ""} role="tab" type="button" onClick={() => setHistoryView("earnings")}>Earnings history</button>
-          <button aria-selected={historyView === "payouts"} className={historyView === "payouts" ? "active" : ""} role="tab" type="button" onClick={() => setHistoryView("payouts")}>{natsSelected ? "NATS export history" : "Payout history"}</button>
+          <button aria-selected={historyView === "payouts"} className={historyView === "payouts" ? "active" : ""} role="tab" type="button" onClick={() => setHistoryView("payouts")}>Payout history</button>
         </div>
         {historyView === "earnings" ? (
           <>
@@ -4655,14 +4655,14 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
             </div>
           </>
         ) : natsSelected ? (
-          natsExports.length ? <div className="commission-tier-table" aria-label="Recent NATS commission exports">
+          natsExports.length ? <div className="commission-tier-table" aria-label="Recent payout transfers">
             {natsExports.slice(0, 50).map((item) => <div key={String(item.id)}>
               <span>Commission {formatFinanceDate(item.created_at)}</span>
               <b>{formatCents(Number(item.amount_cents || 0))}</b>
               <span>{String(item.status || "pending").replaceAll("_", " ")}</span>
               {item.last_error ? <span role="alert">{String(item.last_error)}</span> : null}
             </div>)}
-          </div> : <p>No NATS commission exports yet.</p>
+          </div> : <p>No payout transfers yet.</p>
         ) : payouts.length ? (
           <div className="commission-tier-table" aria-label="Recent dancer payouts">
             {payouts.slice(0, 50).map((payout) => (
