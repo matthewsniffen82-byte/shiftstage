@@ -31,6 +31,7 @@ import {
   readJson,
   readOptionalJson,
   readSession,
+  requestDashboardJson,
   storedSessionAccount,
   storedSessionIsFresh,
   type DashboardSessionAccount,
@@ -581,74 +582,55 @@ function NotificationPanel({
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    const session = readSession();
-    if (!session?.accessToken) return;
-
-    fetch("/api/notifications", { headers: { authorization: `Bearer ${session.accessToken}` } })
-      .then((response) => response.json())
+    requestDashboardJson("/api/notifications", { fallbackMessage: "Unable to load notifications." })
       .then((data) => {
-        if (data.ok) setNotifications(data.notifications || []);
-        else setStatus(data.error || "Unable to load notifications.");
+        setNotifications(data.notifications || []);
       })
-      .catch(() => setStatus("Unable to load notifications."));
+      .catch((error) => setStatus(error instanceof Error ? error.message : "Unable to load notifications."));
   }, []);
 
   async function markAllRead() {
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return;
+    try {
+      const data = await requestDashboardJson("/api/notifications", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ all: true }),
+        fallbackMessage: "Unable to update notifications.",
+      });
+      setNotifications((current) => current.map((item) => ({ ...item, readAt: data.readAt })));
+      setStatus(`${data.count || 0} marked read.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update notifications.");
     }
-
-    const response = await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
-      body: JSON.stringify({ all: true }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setStatus(data.error || "Unable to update notifications.");
-      return;
-    }
-    setNotifications((current) => current.map((item) => ({ ...item, readAt: data.readAt })));
-    setStatus(`${data.count || 0} marked read.`);
   }
 
   async function markRead(notificationId: string) {
-    const session = readSession();
-    if (!session?.accessToken) return;
-
-    const response = await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
-      body: JSON.stringify({ notificationId }),
-    });
-    const data = await response.json();
-    if (response.ok && data.ok) {
+    try {
+      const data = await requestDashboardJson("/api/notifications", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ notificationId }),
+        fallbackMessage: "Unable to update notification.",
+      });
       setNotifications((current) =>
         current.map((item) => (String(item.id) === notificationId ? { ...item, readAt: data.notification.readAt } : item)),
       );
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update notification.");
     }
   }
 
   async function clearNotifications() {
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return;
+    try {
+      const data = await requestDashboardJson("/api/notifications", {
+        method: "DELETE",
+        fallbackMessage: "Unable to clear notifications.",
+      });
+      setNotifications([]);
+      setStatus(`${data.count || 0} notifications cleared.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to clear notifications.");
     }
-
-    const response = await fetch("/api/notifications", {
-      method: "DELETE",
-      headers: { authorization: `Bearer ${session.accessToken}` },
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setStatus(data.error || "Unable to clear notifications.");
-      return;
-    }
-    setNotifications([]);
-    setStatus(`${data.count || 0} notifications cleared.`);
   }
 
   const unreadCount = notifications.filter((item) => !item.readAt).length;
@@ -741,19 +723,12 @@ function SupportInboxPanel({
   }, [initialThreads]);
 
   async function sendMessage(payload: { message: string; subject?: string; threadId?: string }) {
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return null;
-    }
-
-    const response = await fetch("/api/support", {
+    const data = await requestDashboardJson("/api/support", {
       method: "POST",
-      headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
+      fallbackMessage: "Unable to send message.",
     });
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to send message.");
     return data.thread;
   }
 
@@ -863,22 +838,15 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
   }, [accountState]);
 
   async function updateAccount(nextState: "active" | "disabled") {
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return;
-    }
-
     setIsWorking(true);
     setStatus("");
     try {
-      const response = await fetch("/api/account", {
+      const data = await requestDashboardJson("/api/account", {
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ accountState: nextState }),
+        fallbackMessage: "Unable to update account.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update account.");
       setState(data.account?.accountState || nextState);
       setStatus(nextState === "disabled" ? "Account disabled." : "Account reactivated.");
     } catch (error) {
@@ -891,7 +859,8 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
   async function deleteAccount() {
     if (!window.confirm("Delete this Dancr account? This cannot be undone.")) return;
     const session = readSession();
-    if (!session?.accessToken) {
+    const authHeaders = dashboardAuthHeaders(session);
+    if (!authHeaders) {
       setStatus("Sign in required.");
       return;
     }
@@ -902,7 +871,7 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
     try {
       const response = await fetch("/api/account", {
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}` },
+        headers: authHeaders,
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete account.");
@@ -960,21 +929,16 @@ function CustomerPanel({
     apply: (current: CustomerSavedState) => CustomerSavedState,
     successMessage: string,
   ) {
-    const session = readSession();
-    if (!session?.accessToken) {
-      setActionStatus("Sign in required.");
-      return;
-    }
     setPendingAction(actionKey);
     setActionStatus("");
     try {
-      const response = await fetch(path, {
+      await requestDashboardJson(path, {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
+        expectedRole: "customer",
+        fallbackMessage: "Unable to update your dashboard.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update your dashboard.");
       onSavedChange(apply);
       setActionStatus(successMessage);
     } catch (error) {
@@ -1044,21 +1008,20 @@ function CustomerPanel({
     if (isFictionalVenueTravelPreviewOnly(venue)) return;
 
     const venueId = String(venue.id || "");
-    const session = readSession();
-    if (!venueId || !session?.accessToken) {
-      setActionStatus(session?.accessToken ? "Venue directions are unavailable." : "Sign in required.");
+    if (!venueId) {
+      setActionStatus("Venue directions are unavailable.");
       return;
     }
     setPendingAction(`directions-${venueId}`);
     setActionStatus("");
     try {
-      const response = await fetch("/api/customer/directions", {
+      await requestDashboardJson("/api/customer/directions", {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, dancerIds: dancerId ? [dancerId] : [] }),
+        expectedRole: "customer",
+        fallbackMessage: "Unable to open directions.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to open directions.");
       window.location.assign(customerDirectionsHref(venue));
     } catch (error) {
       setActionStatus(error instanceof Error ? error.message : "Unable to open directions.");

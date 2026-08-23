@@ -96,6 +96,47 @@ export function dashboardLoadErrorMessage(error: unknown) {
   return message;
 }
 
+export type DashboardJsonRequestOptions = Omit<RequestInit, "headers"> & {
+  expectedRole?: string;
+  fallbackMessage?: string;
+  headers?: Record<string, string>;
+};
+
+export class DashboardDataRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "DashboardDataRequestError";
+    this.status = status;
+  }
+}
+
+export async function requestDashboardJson(
+  path: string,
+  options: DashboardJsonRequestOptions = {},
+) {
+  const {
+    expectedRole,
+    fallbackMessage = "Unable to update dashboard.",
+    headers: requestHeaders,
+    ...requestInit
+  } = options;
+  const authHeaders = currentDashboardAuthHeaders(expectedRole);
+  if (!authHeaders) throw new DashboardDataRequestError("Sign in required.", 401);
+
+  const response = await fetch(path, {
+    ...requestInit,
+    headers: { ...requestHeaders, ...authHeaders },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.ok) {
+    throw new DashboardDataRequestError(data?.error || fallbackMessage, response.status);
+  }
+  persistResponseSession(data);
+  return data;
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();

@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
+  DashboardDataRequestError,
   DASHBOARD_SESSION_KEY,
   clearDashboardSession,
   currentDashboardAuthHeaders,
   persistDashboardSession,
   persistRefreshedDashboardSession,
   readDashboardAccessToken,
+  requestDashboardJson,
 } from "../app/dashboard/dashboard-session.ts";
 
 const [dashboard, dashboardSession, venueTvPanel, venueTeamPanel, venueNfcPanel, dancerTvStudio, dancerNfcPanel, dancerShiftManager, customerRoute, dancerRoute, venueRoute, liveShell] = await Promise.all([
@@ -168,6 +170,90 @@ test("the routed dashboard never mutates the browser auth session directly", () 
   assert.match(dashboard, /clearDashboardSession\(\)/);
   assert.match(dashboard, /persistDashboardSession\(\{ \.\.\.data\.session, account: data\.account \}\)/);
   assert.doesNotMatch(dashboard, /window\.localStorage\.(?:setItem|removeItem)\(SESSION_KEY/);
+});
+
+test("shared dashboard JSON requests are role-aware and preserve refreshed sessions", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  let capturedRequest = null;
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequest = { path, options };
+    return new Response(JSON.stringify({
+      ok: true,
+      value: "saved",
+      session: { accessToken: "rotated-customer-access", expiresAt: 99999 },
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "customer-access",
+      refreshToken: "customer-refresh",
+      expiresAt: 12345,
+      account: { role: "customer", displayName: "Customer" },
+    }));
+    const data = await requestDashboardJson("/api/customer/example", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ enabled: true }),
+      expectedRole: "customer",
+      fallbackMessage: "Unable to save customer action.",
+    });
+    assert.equal(data.value, "saved");
+    assert.deepEqual(capturedRequest, {
+      path: "/api/customer/example",
+      options: {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer customer-access",
+          "x-dancr-refresh-token": "customer-refresh",
+        },
+        body: JSON.stringify({ enabled: true }),
+      },
+    });
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "rotated-customer-access",
+      refreshToken: "customer-refresh",
+      expiresAt: 99999,
+      account: { role: "customer", displayName: "Customer" },
+    });
+    await assert.rejects(
+      requestDashboardJson("/api/venue/example", { expectedRole: "venue" }),
+      (error) => error instanceof DashboardDataRequestError
+        && error.status === 401
+        && error.message === "Sign in required.",
+    );
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /class DashboardDataRequestError extends Error/);
+  assert.match(dashboardSession, /const authHeaders = currentDashboardAuthHeaders\(expectedRole\)/);
+  assert.match(dashboardSession, /headers: \{ \.\.\.requestHeaders, \.\.\.authHeaders \}/);
+  assert.match(dashboardSession, /persistResponseSession\(data\)/);
+});
+
+test("shared dashboard panels use the refresh-aware request boundary", () => {
+  const notificationPanel = dashboard.match(/function NotificationPanel[\s\S]*?function SupportInboxPanel/)?.[0] || "";
+  const supportPanel = dashboard.match(/function SupportInboxPanel[\s\S]*?function AccountControlsPanel/)?.[0] || "";
+  const customerActions = dashboard.match(/async function runCustomerAction[\s\S]*?function requestLocation/)?.[0] || "";
+  assert.match(notificationPanel, /requestDashboardJson\("\/api\/notifications"/);
+  assert.doesNotMatch(notificationPanel, /authorization: `Bearer/);
+  assert.match(supportPanel, /requestDashboardJson\("\/api\/support"/);
+  assert.doesNotMatch(supportPanel, /authorization: `Bearer/);
+  assert.match(customerActions, /requestDashboardJson\(path/);
+  assert.match(customerActions, /requestDashboardJson\("\/api\/customer\/directions"/);
+  assert.doesNotMatch(customerActions, /authorization: `Bearer/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
