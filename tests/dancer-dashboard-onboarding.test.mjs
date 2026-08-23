@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboard, dancerStudio, dancerRoute, avatarRoute, venueRoute, dashboardRoute, nfcTapRoute] = await Promise.all([
+const [dashboard, dancerStudio, dancerNfcPanel, dancerRoute, avatarRoute, venueRoute, dashboardRoute, nfcTapRoute] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/venue-verification/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/avatar/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/dancer-verifications/route.ts", import.meta.url), "utf8"),
@@ -172,6 +173,23 @@ test("expanded profile status stays visible and uses compact non-repeating contr
   assert.match(dashboard, /\.dancer-status-metrics \{ display: grid; grid-template-columns: repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(dashboard, /\.dancer-status-metrics \{ grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(dashboard, /<DancerNfcPanel\s+compactAuthorized/);
+});
+
+test("profile visibility is one compact control and NFC management stays behind Manage", () => {
+  assert.match(dashboard, /<h2>Profile visibility<\/h2>/);
+  assert.match(dashboard, /className="visibility-state"[\s\S]*?"Public" : "Incognito"[\s\S]*?aria-hidden="true">·[\s\S]*?"Visible" : "Hidden"/);
+  assert.match(dashboard, /Customers can find your approved profile across MyDancr\./);
+  assert.match(dashboard, /Your profile is hidden from customers; your dashboard and tools stay available\./);
+  assert.match(dashboard, /className="visibility-toggle"[\s\S]*?"Go incognito" : "Make profile public"/);
+  assert.match(dashboard, /\.visibility-panel button\.visibility-toggle \{ width: fit-content; min-height: 44px;[^}]*border-radius: 999px; font-size: 11px;/);
+  assert.doesNotMatch(dashboard, /Profile is live\. Press Go incognito/);
+  assert.doesNotMatch(dashboard, /<Metric label="Public profile"/);
+
+  const compactNfc = dancerNfcPanel.match(/if \(compactAuthorized && authorized\) \{[\s\S]*?(?=\n  return \(\n    <article)/)?.[0] || "";
+  const manageSummary = compactNfc.match(/<summary>[\s\S]*?<\/summary>/)?.[0] || "";
+  assert.match(manageSummary, /dancer-nfc-compact-action">Manage/);
+  assert.doesNotMatch(manageSummary, /Remove|Refresh NFC status/);
+  assert.match(compactNfc, /dancer-nfc-compact-body[\s\S]*?affiliationRoster[\s\S]*?Refresh NFC status/);
 });
 
 test("step one shows clear save, photo-count, and automatic-check states", () => {

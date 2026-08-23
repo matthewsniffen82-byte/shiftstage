@@ -4276,19 +4276,19 @@ function DancerVisibilityPanel({
 
   return (
     <article className={`info-panel visibility-panel ${isPublic ? "" : "is-incognito"}`}>
-      <h2>Incognito</h2>
+      <h2>Profile visibility</h2>
       <div className="visibility-copy">
-        <Metric label="Public profile" value={isPublic ? "Visible" : "Hidden"} />
-        <p>{isPublic ? "Your approved profile can appear in search, venue pages, and your public link." : "Incognito is on. Your profile is hidden from customers while your dashboard and approved tools remain available."}</p>
+        <div className="visibility-state" aria-label={`Profile visibility: ${isPublic ? "Public, visible" : "Incognito, hidden"}`}>
+          <strong>{isPublic ? "Public" : "Incognito"}</strong>
+          <span aria-hidden="true">·</span>
+          <b>{isPublic ? "Visible" : "Hidden"}</b>
+        </div>
+        <p>{isPublic ? "Customers can find your approved profile across MyDancr." : "Your profile is hidden from customers; your dashboard and tools stay available."}</p>
       </div>
-      <button type="button" onClick={toggleVisibility} disabled={isSaving}>
-        {isSaving ? "Verifying..." : isPublic ? "Go incognito" : "Turn profile back on"}
+      <button className="visibility-toggle" type="button" onClick={toggleVisibility} disabled={isSaving}>
+        {isSaving ? "Verifying..." : isPublic ? "Go incognito" : "Make profile public"}
       </button>
-      <p className="visibility-status" role="status" aria-live="polite">
-        {status || (isPublic
-          ? "Profile is live. Press Go incognito to hide it from customers."
-          : "Profile hidden. Press Turn profile back on whenever you want customers to see it again.")}
-      </p>
+      {status ? <p className="visibility-status" role="status" aria-live="polite">{status}</p> : null}
     </article>
   );
 }
@@ -7245,7 +7245,15 @@ function DashboardStyles() {
       .visibility-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #22c7ff); font: inherit; font-weight: 950; cursor: pointer; }
       .visibility-panel button:disabled { opacity: .62; cursor: wait; }
       .visibility-panel.is-incognito { border-color: rgba(148,229,255,.34); box-shadow: inset 0 0 0 1px rgba(148,229,255,.08); }
-      .visibility-copy { display: grid; gap: 10px; }
+      .visibility-copy { display: grid; gap: 8px; }
+      .visibility-state { width: fit-content; min-height: 34px; display: inline-flex; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #fff; background: rgba(255,255,255,.045); }
+      .visibility-state strong { font-size: 13px; }
+      .visibility-state span { color: rgba(255,255,255,.38); }
+      .visibility-state b { color: #70efbd; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+      .visibility-panel.is-incognito .visibility-state b { color: #b7effa; }
+      .visibility-copy p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.45; }
+      .visibility-panel button.visibility-toggle { width: fit-content; min-height: 44px; padding: 0 13px; border-radius: 999px; font-size: 11px; }
+      .visibility-status { margin: 0; }
       .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-verification-panel { grid-column: span 3; }
       .impact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
       .event-list { display: grid; gap: 10px; }
