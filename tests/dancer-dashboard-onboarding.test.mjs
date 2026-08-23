@@ -71,6 +71,13 @@ test("draft identity and social form values survive refreshes without bypassing 
 });
 
 test("onboarding arrives fully collapsed and exposes accessible controls", () => {
+  const panelStart = dashboard.indexOf("function DancerPanel(");
+  const panelEnd = dashboard.indexOf("function DancerVisibilityPanel(", panelStart);
+  const panel = dashboard.slice(panelStart, panelEnd);
+
+  assert.ok(panelStart >= 0 && panelEnd > panelStart, "dancer dashboard panel should be present");
+  assert.doesNotMatch(panel, /<DashboardSection\s+defaultOpen/);
+  assert.match(dashboard, /const \[expandedStepId, setExpandedStepId\] = useState<string \| null>\(null\)/);
   assert.match(dashboard, /mydancr:dancer-onboarding-step/);
   assert.match(dashboard, /const visibleExpandedStepId = expandedStepId \|\| ""/);
   assert.match(dashboard, /if \(!profile\?\.id\) return;\s*window\.localStorage\.removeItem\(storageKey\)/);
@@ -192,7 +199,7 @@ test("profile visibility is one compact control and NFC management stays behind 
   assert.doesNotMatch(dashboard, /Profile is live\. Press Go incognito/);
   assert.doesNotMatch(dashboard, /<Metric label="Public profile"/);
 
-  const compactNfc = dancerNfcPanel.match(/if \(compactAuthorized && authorized\) \{[\s\S]*?(?=\n  return \(\n    <article)/)?.[0] || "";
+  const compactNfc = dancerNfcPanel.match(/if \(compactAuthorized && authorized\) \{[\s\S]*?(?=\r?\n  return \(\r?\n    <article)/)?.[0] || "";
   const manageSummary = compactNfc.match(/<summary>[\s\S]*?<\/summary>/)?.[0] || "";
   assert.match(manageSummary, /dancer-nfc-compact-action">Manage/);
   assert.doesNotMatch(manageSummary, /Remove|Refresh NFC status/);

@@ -50686,6 +50686,8 @@
       const sessionRole = authSession?.account?.role;
       const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Customer";
       dashboardBtn.hidden = !loggedIn;
+      dashboardBtn.textContent = loggedIn ? `${role} dashboard` : "Dashboard";
+      dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");
       sessionMenuEnd.hidden = !loggedIn;
       deleteAccountBtn.hidden = !loggedIn || !["customer", "dancer", "venue"].includes(sessionRole);
       deleteAccountBtn.dataset.accountRole = sessionRole || "";
