@@ -270,7 +270,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         <div className="tv-studio-embedded-head">
           <div>
             <h2>Profile videos</h2>
-            <p>Upload vertical or square videos for moderation. Approved videos appear on your profile and MyDancr TV after your profile is approved.</p>
+            <p>Vertical or square videos • Up to 5 • Approval required</p>
           </div>
           {workspace ? <strong aria-label={`${currentVideoCount} of ${maxVideos} profile video slots used`}>{currentVideoCount}/{maxVideos}</strong> : null}
         </div>
@@ -324,8 +324,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       {workspace && !atVideoLimit ? (
         <section className="tv-upload-form" aria-label="Add profile videos">
           <div className="tv-upload-permissions">
-            <strong>Confirm permissions once, then choose videos</strong>
-            <small>Every selected video uploads automatically. One failed file will not stop the others.</small>
+            <strong>Confirm permissions</strong>
           </div>
           <label className="tv-check">
             <input checked={consentConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />

@@ -98,7 +98,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);
   assert.match(dashboard, /DancerPhotoPanel/);
   assert.match(dashboard, /DancerTvStudio embedded/);
-  assert.match(dancerStudio, /embedded \? \([\s\S]*?<h2>Profile videos<\/h2>[\s\S]*?approved videos appear on your profile and MyDancr TV/i);
+  assert.match(dancerStudio, /embedded \? \([\s\S]*?<h2>Profile videos<\/h2>[\s\S]*?Vertical or square videos • Up to 5 • Approval required/);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
   assert.match(dancerStudio, /Upload started automatically/);
@@ -109,6 +109,8 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /aria-label="Record a new profile video"/);
   assert.match(dancerStudio, />Video library<\/strong>/);
   assert.match(dancerStudio, />Record video<\/strong>/);
+  assert.match(dancerStudio, />Confirm permissions<\/strong>/);
+  assert.doesNotMatch(dancerStudio, /Confirm permissions once, then choose videos|Every selected video uploads automatically/);
   assert.match(dancerStudio, /\.tv-video-source-action \{ position: relative; min-width: 0; min-height: 74px;/);
   assert.match(dancerStudio, /\.tv-video-source-input \{ position: absolute; inset: 0;[\s\S]*?opacity: 0;/);
   assert.match(dashboard, /\.photo-source-grid \{[^}]*grid-auto-rows: 1fr;/);
@@ -226,6 +228,7 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /className="photo-source-input"/);
   assert.match(dashboard, /Photo library/);
   assert.match(dashboard, /Take a new photo now/);
+  assert.doesNotMatch(dashboard, /Choose from your phone or take a new photo\. Upload starts automatically\./);
   assert.match(dashboard, /\.photo-source-input \{ position: absolute; inset: 0;[\s\S]*?opacity: 0;/);
   assert.match(dashboard, /event\.target\.value = ""/);
   assert.match(dashboard, /if \(galleryPhotoInputRef\.current\) galleryPhotoInputRef\.current\.value = ""/);

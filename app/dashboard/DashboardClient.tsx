@@ -6712,7 +6712,6 @@ function DancerPhotoPanel({
         <div className="photo-upload-heading">
           <span>
             <strong>Add profile photos</strong>
-            <small>Choose from your phone or take a new photo. Upload starts automatically.</small>
           </span>
           <b>{remainingPhotoSlots} {remainingPhotoSlots === 1 ? "spot" : "spots"} open</b>
         </div>
