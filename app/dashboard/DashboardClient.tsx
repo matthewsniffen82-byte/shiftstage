@@ -403,7 +403,7 @@ export default function DashboardClient({
             <span className="eyebrow">{dashboardEyebrow}</span>
             <div className="dashboard-head-title-row">
               <h1>{dashboardHeading}</h1>
-              {dancerProfileIsLive ? <span className="dashboard-live-status"><i aria-hidden="true" /> Live</span> : null}
+              {dancerProfileIsLive ? <span className="dashboard-live-status"><i aria-hidden="true" /> Public</span> : null}
             </div>
             {dashboardDescription ? <p>{dashboardDescription}</p> : null}
           </div>

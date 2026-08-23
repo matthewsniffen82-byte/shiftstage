@@ -38799,7 +38799,7 @@
             </div>
             <div class="dancer-daily-center" id="dancerApprovedTopTools" aria-label="Dancer daily controls" hidden>
               <div class="dancer-live-heading">
-                <span class="dancer-live-pill" id="dancerDashboardVisibilityPill">Live</span>
+                <span class="dancer-live-pill" id="dancerDashboardVisibilityPill">Public</span>
                 <div>
                   <strong id="dancerDashboardOverviewTitle">Your profile is live</strong>
                   <span id="dancerDashboardOverviewCopy">Keep your next shift current so customers know where to find you.</span>
@@ -53131,7 +53131,7 @@
       const overviewTitle = document.getElementById("dancerDashboardOverviewTitle");
       const overviewCopy = document.getElementById("dancerDashboardOverviewCopy");
       if (visibilityPill) {
-        visibilityPill.textContent = optionalProfileFixes ? "Action needed" : isHidden ? "Incognito" : "Live";
+        visibilityPill.textContent = optionalProfileFixes ? "Action needed" : isHidden ? "Incognito" : "Public";
         visibilityPill.classList.toggle("is-incognito", isHidden || optionalProfileFixes);
       }
       if (overviewTitle) overviewTitle.textContent = optionalProfileFixes

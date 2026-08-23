@@ -18,6 +18,8 @@ test("approved dancer dashboard leads with a real daily control center", () => {
   assert.match(page, /\.dancer-quick-actions \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/s);
   assert.match(page, /\.dancer-quick-actions > \[data-dancer-control-action="share-profile"\] \{\s*grid-column: 1 \/ -1;/);
   assert.match(page, /function renderDancerDailyOverview\(/);
+  assert.match(page, /dancerDashboardVisibilityPill[^\n]*>Public<\/span>/);
+  assert.match(page, /visibilityPill\.textContent = optionalProfileFixes \? "Action needed" : isHidden \? "Incognito" : "Public"/);
   assert.match(page, /handleShiftVerificationAction\("nfc-ready", trigger\)/);
 });
 
