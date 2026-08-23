@@ -150,9 +150,16 @@ test("step one required items are accessible accordions that preserve the active
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
 });
 
-test("approved dancer dashboard sections arrive collapsed", () => {
+test("approved dancer dashboard sections arrive collapsed with a clear tool hierarchy", () => {
   assert.doesNotMatch(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+defaultOpen[\s\S]{0,500}?id="dancer-overview"/);
-  assert.match(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+description="Approval, venue authorization, public visibility/);
+  assert.match(dashboard, /description="Approval, venue access, and public visibility\."\s+emphasis="summary"\s+id="dancer-overview"/);
+  assert.match(dashboard, /description="Edit your identity, avatar, photos, links, and videos\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
+  assert.match(dashboard, /description="Post and manage shifts shown on your profile\."\s+emphasis="primary"\s+id="dancer-schedule"/);
+  assert.match(dashboard, /description="Views, Club Deals, payouts, ranking, and weekly results\."\s+emphasis="secondary"\s+id="dancer-performance"/);
+  assert.match(dashboard, /description="Share your profile and manage billing\."\s+emphasis="utility"\s+id="dancer-sharing-billing"/);
+  assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
+  assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);
+  assert.match(dashboard, /\.dashboard-shell-dancer \{ padding-bottom: max\(190px, calc\(env\(safe-area-inset-bottom\) \+ 166px\)\)/);
 });
 
 test("step one shows clear save, photo-count, and automatic-check states", () => {

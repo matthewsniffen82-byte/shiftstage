@@ -37,7 +37,7 @@ test("customer, dancer, and venue use the same routed dashboard client", () => {
 });
 
 test("every role keeps its real tools on one page inside shared collapsible sections", () => {
-  assert.match(dashboard, /function DashboardSection[\s\S]*?<details className="dashboard-section venue-dashboard-section"/);
+  assert.match(dashboard, /function DashboardSection[\s\S]*?<details className=\{`dashboard-section venue-dashboard-section dashboard-section-\$\{emphasis\}`\}/);
   for (const id of [
     "customer-tonight",
     "customer-saved",
