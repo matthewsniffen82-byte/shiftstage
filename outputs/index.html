@@ -382,6 +382,25 @@
       background: rgba(52,34,78,.92);
     }
 
+    .utility-menu-club-join {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+      text-decoration: none;
+      border-color: rgba(139,92,246,.72);
+      background: linear-gradient(135deg, rgba(91,33,218,.88), rgba(57,20,143,.9));
+      box-shadow: 0 0 18px rgba(109,40,217,.2), inset 0 1px 0 rgba(255,255,255,.1);
+    }
+
+    .utility-menu-club-join::after {
+      content: "\203A";
+      color: #ddd1ff;
+      font-size: 22px;
+      line-height: 1;
+    }
+
     .utility-menu-dashboard {
       min-height: 44px;
       display: flex;
@@ -773,6 +792,91 @@
       margin-top: 4px;
       padding: 2px 0 1px;
       scroll-margin-top: calc(14px + env(safe-area-inset-top));
+    }
+
+    .club-list-directory-cta {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      padding: 0 12px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+      border: 1px solid rgba(139,92,246,.72);
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(91,33,218,.94), rgba(62,22,157,.94));
+      box-shadow: 0 0 18px rgba(109,40,217,.24), inset 0 1px 0 rgba(255,255,255,.12);
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .club-list-directory-cta[hidden] { display: none !important; }
+
+    .club-list-directory-cta:hover,
+    .club-list-directory-cta:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(196,181,253,.95);
+      outline: 0;
+      box-shadow: 0 0 0 3px rgba(124,58,237,.2), 0 0 24px rgba(124,58,237,.34);
+    }
+
+    .club-list-directory-cta:active { transform: translateY(0); }
+
+    .club-join-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 14px;
+      padding: 16px 18px;
+      border: 1px solid rgba(139,92,246,.24);
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(12,10,18,.94), rgba(25,16,43,.88));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 16px 36px rgba(0,0,0,.24);
+    }
+
+    .club-join-footer-copy {
+      display: grid;
+      gap: 3px;
+    }
+
+    .club-join-footer-copy strong {
+      color: #fff;
+      font-size: 15px;
+      line-height: 1.15;
+    }
+
+    .club-join-footer-copy span {
+      color: rgba(226,226,237,.66);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .club-join-footer-link {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      padding: 0 16px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 900;
+      border: 1px solid rgba(139,92,246,.72);
+      border-radius: 14px;
+      background: linear-gradient(135deg, #5b21da, #3e169d);
+      box-shadow: 0 0 20px rgba(109,40,217,.22), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+
+    .club-join-footer-link:hover,
+    .club-join-footer-link:focus-visible {
+      outline: 0;
+      border-color: rgba(196,181,253,.96);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.2), 0 0 24px rgba(124,58,237,.32);
     }
 
     .count {
@@ -31474,6 +31578,7 @@
             <button class="menu-btn dashboard-menu" id="accountBtn" type="button" aria-haspopup="true" aria-expanded="false">Login / Join</button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
               <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
+              <a class="utility-menu-item utility-menu-club-join" href="/clubs/join">List Your Club</a>
               <nav class="utility-menu-legal" aria-label="Legal and support">
                 <span class="utility-menu-section-label">Legal &amp; support</span>
                 <button class="utility-menu-item" data-legal-page="termsPage" type="button">Terms</button>
@@ -33742,6 +33847,7 @@
           border: 1px solid rgba(126,234,255,.66);
           border-radius: 12px;
           color: #fff;
+          text-decoration: none;
           background: linear-gradient(135deg,rgba(16,179,224,.94),rgba(105,62,222,.94));
           box-shadow: 0 8px 20px rgba(72,78,224,.2);
           font: inherit;
@@ -37483,6 +37589,7 @@
         /* One compact discovery-heading hierarchy shared by Android and iPhone. */
         @media (max-width: 720px) {
           .content-head.discovery-section-head {
+            flex-wrap: wrap;
             gap: 8px !important;
             margin-top: 4px !important;
             padding: 2px 0 13px !important;
@@ -37503,6 +37610,22 @@
             padding: 0 9px !important;
             font-size: 11px !important;
           }
+
+          .content-head.discovery-section-head .club-list-directory-cta:not([hidden]) {
+            width: 100%;
+            min-height: 44px;
+            order: 3;
+            font-size: 13px;
+            border-radius: 14px;
+          }
+
+          .club-join-footer {
+            align-items: stretch;
+            flex-direction: column;
+            padding: 15px;
+          }
+
+          .club-join-footer-link { width: 100%; }
 
           .content-head.discovery-section-head + #results.home-dancer-grid > .home-dancer-grid-heading:first-child {
             margin-top: 0;
@@ -38125,6 +38248,7 @@
         <div class="content-head discovery-sticky-head">
           <h2 id="tabTitle">Working Now in Las Vegas</h2>
           <div class="count" id="tabCount">0 results</div>
+          <a class="club-list-directory-cta" id="clubListDirectoryCta" href="/clubs/join" hidden>List Your Club</a>
         </div>
         <div class="list" id="results"></div>
         <button
@@ -38142,6 +38266,14 @@
         </button>
         <button class="view-all" id="viewAllBtn" hidden>View All</button>
       </section>
+
+      <aside class="club-join-footer" aria-label="List a club on MyDancr">
+        <span class="club-join-footer-copy">
+          <strong>Own or manage a club?</strong>
+          <span>Request approval to build and publish your club page.</span>
+        </span>
+        <a class="club-join-footer-link" href="/clubs/join">List it on MyDancr</a>
+      </aside>
 
     </main>
 
@@ -38304,7 +38436,7 @@
             </button>
             <button class="role-option account-option auth-account-choice" id="venueSignupBtn" type="button">
               <span class="auth-account-choice-number" aria-hidden="true">3</span>
-              <span><strong>Venue</strong><small>Request manager access or connect an approved venue with its private code.</small></span>
+              <span><strong>Club</strong><small>Request approval to list your club, build its page, and publish it on MyDancr.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
           </div>
@@ -38371,8 +38503,8 @@
               <div class="rule-note auth-status" id="venueCodeStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
             </section>
             <div class="venue-request-entry" id="venueRequestEntry">
-              <span>Don’t have a private access code yet?</span>
-              <button id="venueRequestOpenBtn" type="button">Request venue access</button>
+              <span>Need approval before you receive a private access code?</span>
+              <button id="venueRequestOpenBtn" type="button">Request to list your club</button>
             </div>
             <div class="venue-account-fields" id="venueAccountFields">
               <div class="venue-signup-step-head" id="venueAccountStepHeading" hidden>
@@ -38399,21 +38531,21 @@
           </form>
           <form class="auth-form venue-request-form" id="venueRequestForm" data-auth-view="venue-request" novalidate hidden>
             <div class="venue-auth-mode-copy">
-              <strong>Request a verified venue account</strong>
-              <span>Submit the public venue and authorized business-contact details. MyDancr reviews every request before issuing a private signup code.</span>
+              <strong>Request to list your club</strong>
+              <span>Submit your club details. After approval, MyDancr sends a private code so you can build and publish your club page.</span>
             </div>
             <div class="venue-request-intro">
-              <strong>This does not create an account yet.</strong>
-              <span>After approval, the business contact receives a one-time code that connects the venue’s manager account to the correct public venue.</span>
+              <strong>Approval comes before account setup.</strong>
+              <span>Your club stays private until an approved manager finishes the page and chooses to publish it.</span>
             </div>
             <section class="venue-request-section" aria-labelledby="venueRequestVenueHeading">
               <div class="venue-request-section-head">
-                <span>Venue</span>
+                <span>Club</span>
                 <strong id="venueRequestVenueHeading">Public business details</strong>
               </div>
               <div class="venue-request-grid">
                 <div class="field wide">
-                  <label for="venueRequestName">Venue name</label>
+                  <label for="venueRequestName">Club name</label>
                   <input id="venueRequestName" name="venueName" type="text" autocomplete="organization" minlength="2" maxlength="160" required>
                 </div>
                 <div class="field wide">
@@ -38433,7 +38565,7 @@
                   <input id="venueRequestPostalCode" name="postalCode" type="text" inputmode="numeric" autocomplete="postal-code" minlength="3" maxlength="16" required>
                 </div>
                 <div class="field">
-                  <label for="venueRequestWebsite">Venue website <span aria-hidden="true">·</span> optional</label>
+                  <label for="venueRequestWebsite">Club website <span aria-hidden="true">·</span> optional</label>
                   <input id="venueRequestWebsite" name="website" type="url" inputmode="url" autocomplete="url" maxlength="320" placeholder="https://">
                 </div>
               </div>
@@ -38449,7 +38581,7 @@
                   <input id="venueRequestContactName" name="contactName" type="text" autocomplete="name" minlength="2" maxlength="160" required>
                 </div>
                 <div class="field">
-                  <label for="venueRequestContactTitle">Position at venue</label>
+                  <label for="venueRequestContactTitle">Position at club</label>
                   <input id="venueRequestContactTitle" name="contactTitle" type="text" autocomplete="organization-title" minlength="2" maxlength="120" placeholder="Owner, general manager…" required>
                 </div>
                 <div class="field">
@@ -38472,11 +38604,11 @@
             </label>
             <label class="venue-request-consent">
               <input id="venueRequestAuthorization" name="authorizedToRepresentVenue" type="checkbox" required>
-              <span>I confirm that I am authorized to request manager access for this venue and that the business details above are accurate.</span>
+              <span>I confirm that I am authorized to request manager access for this club and that the business details above are accurate.</span>
             </label>
-            <button class="action-btn venue-request-submit" id="venueRequestSubmit" type="submit">Send venue request</button>
-            <div class="venue-request-privacy">MyDancr uses these details only to verify the business and contact you about venue access.</div>
-            <button class="venue-request-back" id="venueRequestBackBtn" type="button">← I already have an access code</button>
+            <button class="action-btn venue-request-submit" id="venueRequestSubmit" type="submit">Send club request</button>
+            <div class="venue-request-privacy">MyDancr uses these details only to verify the business and contact you about club access.</div>
+            <button class="venue-request-back" id="venueRequestBackBtn" type="button">Already approved? Enter your access code</button>
             <button class="auth-back-to-types" id="venueRequestBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueRequestStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
@@ -39816,6 +39948,7 @@
     let modalVideoControlsHideTimer = 0;
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
+    const clubListDirectoryCta = document.getElementById("clubListDirectoryCta");
     const cityCoordinates = {
       "Las Vegas": { latitude: 36.1699, longitude: -115.1398 },
       Miami: { latitude: 25.7617, longitude: -80.1918 },
@@ -50350,7 +50483,7 @@
         if (requestSubmit) {
           requestSubmit.disabled = false;
           requestSubmit.classList.remove("is-submitted");
-          requestSubmit.textContent = "Send venue request";
+          requestSubmit.textContent = "Send club request";
         }
         setVenueRequestStatus("");
       }
@@ -50557,7 +50690,7 @@
       document.getElementById("authCreateTab").classList.add("active");
       document.getElementById("authSignInTab").setAttribute("aria-selected", "false");
       document.getElementById("authCreateTab").setAttribute("aria-selected", "true");
-      document.getElementById("authPageTitle").textContent = "Request venue access";
+      document.getElementById("authPageTitle").textContent = "List your club";
       document.querySelector(".auth-selected-role").hidden = true;
       document.getElementById("authOverview").hidden = true;
       document.getElementById("authForm").hidden = true;
@@ -55624,7 +55757,10 @@
               : "",
             '<button class="home-discovery-empty-action is-secondary" type="button" data-home-empty-action="choose-city">Choose another city</button>'
           ]
-        : ['<button class="home-discovery-empty-action" type="button" data-home-empty-action="choose-city">Choose another city</button>'];
+        : [
+            '<a class="home-discovery-empty-action" href="/clubs/join">List Your Club</a>',
+            '<button class="home-discovery-empty-action is-secondary" type="button" data-home-empty-action="choose-city">Choose another city</button>'
+          ];
 
       return `
         <section class="home-discovery-empty is-club-empty" aria-labelledby="homeClubsEmptyTitle">
@@ -55886,6 +56022,9 @@
       const venueProfileOpen = Boolean(selectedVenue);
       document.body.classList.toggle("venue-full-view-open", venueProfileOpen);
       results.classList.toggle("venue-profile-overlay", venueProfileOpen);
+      if (clubListDirectoryCta) {
+        clubListDirectoryCta.hidden = activeTab !== "venues" || venueProfileOpen;
+      }
       const keepDancerCityOnOneLine =
         !selectedVenue && activeTab === "dancers" && venueFilter === "all";
       const usesDiscoverySectionHeader =
@@ -58957,7 +59096,7 @@
 
     document.getElementById("customerBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
     document.getElementById("venueBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
-    document.getElementById("venueSignupBtn").addEventListener("click", openVenueSignup);
+    document.getElementById("venueSignupBtn").addEventListener("click", openVenueRequest);
     document.getElementById("venueRequestOpenBtn").addEventListener("click", openVenueRequest);
     document.getElementById("venueRequestBackBtn").addEventListener("click", openVenueSignup);
     document.getElementById("venueRequestBackToTypes").addEventListener("click", () => setAuthEntryMode("create"));
@@ -59227,7 +59366,7 @@
       if (!form.reportValidity()) return;
 
       const submit = document.getElementById("venueRequestSubmit");
-      const defaultLabel = "Send venue request";
+      const defaultLabel = "Send club request";
       submit.disabled = true;
       submit.classList.remove("is-submitted");
       submit.setAttribute("aria-busy", "true");
@@ -59257,20 +59396,20 @@
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(payload?.error || payload?.message || "Unable to submit the venue request.");
+          throw new Error(payload?.error || payload?.message || "Unable to submit the club request.");
         }
 
         form.reset();
         submit.classList.add("is-submitted");
         submit.textContent = "✓ Request received";
         setVenueRequestStatus(
-          `${payload?.message || "Request received. MyDancr will review the venue."} After approval, use the private code from the email to create the venue account.`
+          `${payload?.message || "Request received. MyDancr will review the club."} After approval, use the private code from the email to create the club manager account.`
         );
-        showToast("Venue request received");
+        showToast("Club request received");
       } catch (error) {
         submit.disabled = false;
         submit.textContent = defaultLabel;
-        const message = error?.message || "Unable to submit the venue request.";
+        const message = error?.message || "Unable to submit the club request.";
         setVenueRequestStatus(message);
         showToast(message);
       } finally {
@@ -61174,7 +61313,7 @@
       if (venueRequestRequested) {
         openAuthPage();
         openVenueRequest();
-        showToast("Submit the venue and authorized business-contact details for review.");
+        showToast("Submit the club and authorized business-contact details for review.");
       } else if (mode === "signup") {
         openAuthPage();
         openVenueSignup();

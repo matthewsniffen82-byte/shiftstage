@@ -82,7 +82,7 @@ test("retired venue APIs stay inert and cannot reach authentication or database 
     assert.match(source, /status: 410/, relativePath);
     if (relativePath === "claims/route.ts") {
       assert.match(source, /Venue claiming is retired/, relativePath);
-      assert.match(source, /signupUrl: "\/\?venueSignup=1"/, relativePath);
+      assert.match(source, /signupUrl: "\/clubs\/join"/, relativePath);
     } else {
       assert.match(source, /replacement: "\/api\/venue\/nfc-tags"/, relativePath);
     }

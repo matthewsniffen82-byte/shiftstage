@@ -71,7 +71,7 @@ test("approved request codes connect only their new private workspace during ven
   assert.doesNotMatch(venueService, /uniqueVenueSlug/);
   assert.match(claimRoute, /status: 410/);
   assert.match(claimRoute, /Venue claiming is retired/);
-  assert.match(claimPage, /redirect\("\/\?venueSignup=1"\)/);
+  assert.match(claimPage, /redirect\("\/clubs\/join"\)/);
 });
 
 test("legacy claim-code storage remains auditable while manual issuance is retired", () => {
@@ -115,5 +115,5 @@ test("venue access stays in request-first signup and no claim UI remains public 
   assert.doesNotMatch(liveApp, /reviewLiveAdminVenueClaim|issueLiveAdminVenueClaimCode|revokeLiveAdminVenueClaimCode/);
   assert.doesNotMatch(dashboard, /function VenueClaimStatePanel|Venue management will unlock here after approval/);
   assert.match(claimRoute, /Venue claiming is retired/);
-  assert.match(claimPage, /redirect\("\/\?venueSignup=1"\)/);
+  assert.match(claimPage, /redirect\("\/clubs\/join"\)/);
 });

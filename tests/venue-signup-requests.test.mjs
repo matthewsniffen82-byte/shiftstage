@@ -10,6 +10,7 @@ const [
   adminRoute,
   adminClient,
   liveApp,
+  clubJoinPage,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220001_venue_signup_requests.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
@@ -18,6 +19,7 @@ const [
   readFile(new URL("../app/api/admin/venue-signup-requests/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../app/clubs/join/page.tsx", import.meta.url), "utf8"),
 ]);
 
 test("public venue signup requests are private, validated, deduplicated, and rate limited", () => {
@@ -54,7 +56,7 @@ test("admin approval always creates a private venue workspace and issues one req
 });
 
 test("the live venue request form submits the verified business contact for review", () => {
-  assert.match(liveApp, /id="venueRequestOpenBtn"[^>]*>Request venue access</);
+  assert.match(liveApp, /id="venueRequestOpenBtn"[^>]*>Request to list your club</);
   assert.match(liveApp, /id="venueRequestForm"/);
   assert.match(liveApp, /id="venueRequestAuthorization"[\s\S]*type="checkbox" required/);
   assert.match(liveApp, /fetch\("\/api\/venue\/signup-requests"/);
@@ -62,6 +64,20 @@ test("the live venue request form submits the verified business contact for revi
   assert.match(liveApp, /submit\.textContent = "✓ Request received"/);
   assert.match(liveApp, /function openVenueRequest\(\)/);
   assert.match(liveApp, /url\.searchParams\.get\("venueRequest"\) === "1"/);
+});
+
+test("club owners can find a direct request-first entry point throughout discovery", () => {
+  assert.match(clubJoinPage, /redirect\("\/\?venueRequest=1"\)/);
+  assert.match(liveApp, /class="utility-menu-item utility-menu-club-join" href="\/clubs\/join">List Your Club</);
+  assert.match(liveApp, /id="clubListDirectoryCta" href="\/clubs\/join" hidden>List Your Club</);
+  assert.match(liveApp, /Own or manage a club\?/);
+  assert.match(liveApp, /href="\/clubs\/join">List it on MyDancr</);
+  assert.match(liveApp, /<strong>Request to list your club<\/strong>/);
+  assert.match(liveApp, /After approval, MyDancr sends a private code so you can build and publish your club page/);
+  assert.match(liveApp, /id="venueRequestBackBtn"[^>]*>Already approved\? Enter your access code</);
+  assert.match(liveApp, /id="venueSignupBtn"[\s\S]*?<strong>Club<\/strong>/);
+  assert.match(liveApp, /getElementById\("venueSignupBtn"\)\.addEventListener\("click", openVenueRequest\)/);
+  assert.match(liveApp, /clubListDirectoryCta\.hidden = activeTab !== "venues" \|\| venueProfileOpen/);
 });
 
 test("administrators receive a review queue with explicit approval and rejection actions", () => {
