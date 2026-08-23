@@ -115,6 +115,11 @@ test("server-confirmed NFC presence remains visible and can be ended without sho
   assert.match(shiftManager, /Working Now at \{venueName\(activeShift\)\}/);
   assert.match(shiftManager, /Active until \{formatTime\(activeShift\.location_verification_expires_at\)\}/);
   assert.match(shiftManager, /End Working Now/);
+  assert.match(shiftManager, /role="alertdialog"[\s\S]*?End Working Now\?[\s\S]*?Keep working[\s\S]*?Yes, end now/);
+  assert.match(shiftManager, /Customers will stop seeing you in Working Now immediately/);
+  assert.match(shiftManager, /setWorkingNowStatus\("Working Now ended\. Customers no longer see you in Working Now\."\)/);
+  assert.match(shiftManager, /shift-checkin-status\$\{workingNowStatusKind/);
+  assert.match(shiftManager, /role="status" aria-live="polite"/);
   assert.match(checkInRoute, /endDancerShift\(admin, dancer\.id, shift, "manual"\)/);
   assert.match(liveShell, /✓ Working Now/);
   assert.match(liveShell, /End Working Now/);

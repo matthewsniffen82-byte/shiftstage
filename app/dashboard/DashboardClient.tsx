@@ -7280,6 +7280,15 @@ function DashboardStyles() {
       .shift-checkin-card .shift-checkin-status { grid-column: 1 / -1; display: block; padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 8px; color: #94e5ff; background: rgba(148,229,255,.08); font-weight: 850; }
       .shift-checkin-card .shift-checkin-status.is-error { border-color: var(--dancr-color-danger-medium); color: #fecaca; background: var(--dancr-color-danger-soft); }
       .shift-checkin-card .shift-checkin-status.is-success { border-color: var(--dancr-color-success-medium); color: #a7f3d0; background: var(--dancr-color-success-soft); }
+      .shift-checkin-card button.shift-demo-managed:disabled { border: 1px solid rgba(255,255,255,.12); color: #b7b1c0; background: rgba(255,255,255,.055); box-shadow: none; cursor: default; filter: none; opacity: 1; }
+      .shift-end-confirmation { grid-column: 1 / -1; display: grid !important; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid rgba(245,158,11,.34); border-radius: 10px; background: rgba(120,53,15,.18); }
+      .shift-end-confirmation > span { min-width: 0; display: grid; gap: 4px; }
+      .shift-end-confirmation > span strong { font-size: 15px; }
+      .shift-end-confirmation > span small { color: #e7d7be; }
+      .shift-end-confirmation > div { display: grid; grid-template-columns: repeat(2,minmax(112px,1fr)); gap: 8px; }
+      .shift-end-confirmation button { min-height: 44px; padding: 0 13px; }
+      .shift-end-confirmation button.shift-end-cancel { border: 1px solid rgba(255,255,255,.14); color: #fff; background: rgba(255,255,255,.07); }
+      .shift-end-confirmation button.shift-end-confirm { border: 1px solid var(--dancr-color-danger-medium); color: #fee2e2; background: var(--dancr-color-danger-soft); }
       .shift-list-head { display: grid; gap: 4px; padding-top: 4px; }
       .shift-list-head strong { color: #fff; font-size: 18px; }
       .shift-list-head small { color: #b9accd; line-height: 1.45; }
@@ -8013,6 +8022,7 @@ function DashboardStyles() {
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
       @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 620px) { .photo-upload-heading { align-items: flex-start; } .photo-source-action { min-height: 70px; } .photo-slot-summary { align-items: flex-start; flex-direction: column; gap: 2px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-review-list .photo-review-card { grid-template-columns: 92px minmax(0,1fr); align-items: start; min-height: 0; gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 92px; } }
+      @media (max-width: 620px) { .shift-end-confirmation { grid-template-columns: 1fr; } .shift-end-confirmation > div { grid-template-columns: 1fr; } }
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }

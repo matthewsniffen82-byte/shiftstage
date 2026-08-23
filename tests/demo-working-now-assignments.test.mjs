@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [migration, manager, deals, discovery, publicService, types, shiftRoute, checkInRoute] = await Promise.all([
+const [migration, manager, deals, discovery, publicService, types, shiftRoute, checkInRoute, shiftManager] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608120001_demo_locked_working_now.sql", import.meta.url), "utf8"),
   readFile(new URL("../scripts/manage-demo-working-now.mjs", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
@@ -11,6 +11,7 @@ const [migration, manager, deals, discovery, publicService, types, shiftRoute, c
   readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/shifts/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/shifts/check-in/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerShiftManager.tsx", import.meta.url), "utf8"),
 ]);
 
 test("Demo Mode has a distinct locked Working Now shift source", () => {
@@ -51,4 +52,7 @@ test("dancers cannot edit, end, or delete centrally managed demo assignments", (
   assert.match(shiftRoute, /existingShift\.shift_source === "demo_locked"/);
   assert.equal((checkInRoute.match(/shift\.shift_source === "demo_locked"/g) || []).length, 2);
   assert.match(checkInRoute, /demo_assignment_locked/);
+  assert.match(shiftManager, /const demoManagedActiveShift = activeShift\?\.shift_source === "demo_locked"/);
+  assert.match(shiftManager, /demoManagedActiveShift \? \([\s\S]*?Demo managed/);
+  assert.match(shiftManager, /This fictional Demo Mode assignment is kept active automatically and cannot be ended from the dancer dashboard/);
 });

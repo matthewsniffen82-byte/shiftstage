@@ -21,6 +21,9 @@ export default function DancerShiftManager() {
   const [status, setStatus] = useState("");
   const [tapReady, setTapReady] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [endConfirmationOpen, setEndConfirmationOpen] = useState(false);
+  const [workingNowStatus, setWorkingNowStatus] = useState("");
+  const [workingNowStatusKind, setWorkingNowStatusKind] = useState<"" | "error" | "success">("");
   const [editingId, setEditingId] = useState("");
   const [editVenueId, setEditVenueId] = useState("");
   const [editDate, setEditDate] = useState("");
@@ -50,6 +53,7 @@ export default function DancerShiftManager() {
     () => shifts.find((shift) => isActiveNfcPresence(shift)) || null,
     [shifts],
   );
+  const demoManagedActiveShift = activeShift?.shift_source === "demo_locked";
   const latestNfcShift = useMemo(
     () => shifts
       .filter((shift) => Boolean(shift.nfc_last_tapped_at || shift.nfcLastTappedAt))
@@ -90,7 +94,38 @@ export default function DancerShiftManager() {
 
   async function endWorkingNow() {
     if (!activeShift?.id) return;
-    await saveRequest("/api/dancer/shifts/check-in", "DELETE", { shiftId: activeShift.id }, "Working Now ended.");
+    const token = readDashboardAccessToken("dancer");
+    if (!token) {
+      setWorkingNowStatusKind("error");
+      setWorkingNowStatus("Sign in again before ending Working Now.");
+      return;
+    }
+
+    setEndConfirmationOpen(false);
+    setSaving(true);
+    setWorkingNowStatusKind("");
+    setWorkingNowStatus("Ending Working Now...");
+    try {
+      const response = await fetch("/api/dancer/shifts/check-in", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ shiftId: activeShift.id }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to end Working Now.");
+      setWorkingNowStatusKind("success");
+      setWorkingNowStatus("Working Now ended. Customers no longer see you in Working Now.");
+      try {
+        await load();
+      } catch {
+        setWorkingNowStatus("Working Now ended. Refresh the dashboard to update the schedule card.");
+      }
+    } catch (error) {
+      setWorkingNowStatusKind("error");
+      setWorkingNowStatus(error instanceof Error ? error.message : "Unable to end Working Now.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveRequest(url: string, method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, success: string) {
@@ -135,9 +170,34 @@ export default function DancerShiftManager() {
                 </small>
               ) : null}
             </span>
-            <button type="button" disabled={saving} onClick={() => void endWorkingNow()}>
-              {saving ? "Ending..." : "End Working Now"}
-            </button>
+            {demoManagedActiveShift ? (
+              <button className="shift-demo-managed" type="button" disabled>Demo managed</button>
+            ) : (
+              <button type="button" disabled={saving} onClick={() => {
+                setWorkingNowStatus("");
+                setWorkingNowStatusKind("");
+                setEndConfirmationOpen(true);
+              }}>
+                {saving ? "Ending..." : "End Working Now"}
+              </button>
+            )}
+            {demoManagedActiveShift ? (
+              <small className="shift-checkin-status" role="status">
+                This fictional Demo Mode assignment is kept active automatically and cannot be ended from the dancer dashboard.
+              </small>
+            ) : null}
+            {endConfirmationOpen ? (
+              <div className="shift-end-confirmation" role="alertdialog" aria-labelledby="shift-end-confirmation-heading" aria-describedby="shift-end-confirmation-description">
+                <span>
+                  <strong id="shift-end-confirmation-heading">End Working Now?</strong>
+                  <small id="shift-end-confirmation-description">Customers will stop seeing you in Working Now immediately. Your tap cooldown will still apply.</small>
+                </span>
+                <div>
+                  <button autoFocus className="shift-end-cancel" type="button" disabled={saving} onClick={() => setEndConfirmationOpen(false)}>Keep working</button>
+                  <button className="shift-end-confirm" type="button" disabled={saving} onClick={() => void endWorkingNow()}>Yes, end now</button>
+                </div>
+              </div>
+            ) : null}
           </>
         ) : (
           <>
@@ -160,6 +220,11 @@ export default function DancerShiftManager() {
             ) : null}
           </>
         )}
+        {workingNowStatus ? (
+          <small className={`shift-checkin-status${workingNowStatusKind ? ` is-${workingNowStatusKind}` : ""}`} role="status" aria-live="polite">
+            {workingNowStatusKind === "success" ? "✓ " : workingNowStatusKind === "error" ? "Unable to end: " : ""}{workingNowStatus}
+          </small>
+        ) : null}
       </section>
 
       <form onSubmit={postDate}>
