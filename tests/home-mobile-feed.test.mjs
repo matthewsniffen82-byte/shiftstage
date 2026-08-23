@@ -294,7 +294,7 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
 });
 
-test("Dancers reuses unchanged grid cards and keeps responsive compact photos stable during touch scrolling", () => {
+test("Dancers reuses unchanged grid cards and starts every displayed compact photo together", () => {
   const contentKey = homeSource.match(
     /function homeDancerGridContentKey\(city, markup\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/,
   )?.[0] || "";
@@ -328,16 +328,10 @@ test("Dancers reuses unchanged grid cards and keeps responsive compact photos st
   );
   assert.match(
     homeSource,
-    /compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="lazy" decoding="async" draggable="false"/,
+    /compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="eager" decoding="async" draggable="false"/,
   );
-  assert.match(
-    homeSource,
-    /const HOME_DANCER_GRID_EAGER_PHOTO_LIMIT = 18;[\s\S]*?const HOME_DANCER_GRID_HIGH_PRIORITY_PHOTO_LIMIT = 3;[\s\S]*?function prioritizeHomeDancerGridPhotos\(container\) \{[\s\S]*?querySelectorAll\?\.\("img\.home-dancer-grid-photo"\)[\s\S]*?shouldEagerLoad \? "eager" : "lazy"[\s\S]*?"fetchpriority"[\s\S]*?HOME_DANCER_GRID_HIGH_PRIORITY_PHOTO_LIMIT \? "high" : "auto"/,
-  );
-  assert.match(
-    renderer,
-    /results\.innerHTML = gridMarkup;[\s\S]*?prioritizeHomeDancerGridPhotos\(results\);/,
-  );
+  assert.doesNotMatch(homeSource, /HOME_DANCER_GRID_EAGER_PHOTO_LIMIT|prioritizeHomeDancerGridPhotos/);
+  assert.match(renderer, /results\.innerHTML = gridMarkup;/);
   assert.match(
     homeSource,
     /#results\.home-dancer-grid\.home-dancer-three-column img\.home-dancer-grid-photo \{[\s\S]*?display: block !important;[\s\S]*?object-fit: cover;[\s\S]*?object-position: center top;[\s\S]*?radial-gradient\(circle at 70% 18%, rgba\(255,255,255,\.055\), transparent 34%\)[\s\S]*?linear-gradient\(145deg,#111118,#07070b\) !important;/,

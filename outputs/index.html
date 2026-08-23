@@ -55509,7 +55509,7 @@
       const nativePhotoAttrs = nativeResponsivePhotoAttrs(photoUrl, photoSrcSet);
       const photoMarkup = photoUrl
         ? compactDirectory && nativePhotoAttrs
-          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="lazy" decoding="async" draggable="false" alt="" aria-hidden="true">`
+          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="eager" decoding="async" draggable="false" alt="" aria-hidden="true">`
           : `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();
@@ -55613,21 +55613,6 @@
       });
     }
 
-    const HOME_DANCER_GRID_EAGER_PHOTO_LIMIT = 18;
-    const HOME_DANCER_GRID_HIGH_PRIORITY_PHOTO_LIMIT = 3;
-
-    function prioritizeHomeDancerGridPhotos(container) {
-      const photos = Array.from(container?.querySelectorAll?.("img.home-dancer-grid-photo") || []);
-      photos.forEach((photo, index) => {
-        const shouldEagerLoad = index < HOME_DANCER_GRID_EAGER_PHOTO_LIMIT;
-        photo.setAttribute("loading", shouldEagerLoad ? "eager" : "lazy");
-        photo.setAttribute(
-          "fetchpriority",
-          index < HOME_DANCER_GRID_HIGH_PRIORITY_PHOTO_LIMIT ? "high" : "auto"
-        );
-      });
-    }
-
     function renderHomeDancerGrid(city, profiles) {
       const sections = dancerDirectorySections(profiles, city);
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
@@ -55653,7 +55638,6 @@
       }
       homeDancerGridRenderKey = nextRenderKey;
       results.innerHTML = gridMarkup;
-      prioritizeHomeDancerGridPhotos(results);
     }
 
     function homeDiscoveryFeedSlide(profile, index, total, tab) {
