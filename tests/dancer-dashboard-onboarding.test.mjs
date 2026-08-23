@@ -156,7 +156,7 @@ test("approved dancer dashboard sections arrive collapsed with a clear tool hier
   assert.match(dashboard, /description="Approval, venue access, and public visibility\."\s+emphasis="summary"\s+id="dancer-overview"/);
   assert.match(dashboard, /description="Edit your identity, avatar, photos, links, and videos\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
   assert.match(dashboard, /description="Post and manage shifts shown on your profile\."\s+emphasis="primary"\s+id="dancer-schedule"/);
-  assert.match(dashboard, /description="Views, Club Deals, payouts, ranking, and weekly results\."\s+emphasis="secondary"\s+id="dancer-performance"/);
+  assert.match(dashboard, /description="See your reach, rewards, payouts, and weekly progress\."\s+emphasis="secondary"\s+id="dancer-performance"/);
   assert.match(dashboard, /description="Share your profile and manage billing\."\s+emphasis="utility"\s+id="dancer-sharing-billing"/);
   assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
   assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);

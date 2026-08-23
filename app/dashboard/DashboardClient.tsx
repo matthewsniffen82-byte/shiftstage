@@ -4150,22 +4150,36 @@ function DancerPanel({
       ) : null}
       {isApproved ? (
         <DashboardSection
-          description="Views, Club Deals, payouts, ranking, and weekly results."
+          description="See your reach, rewards, payouts, and weekly progress."
           emphasis="secondary"
           id="dancer-performance"
           title="Performance & rewards"
         >
-          <div className="venue-dashboard-inner-grid">
-            <>
-          <InfoPanel title="Last 30 days">
-            <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
-            <Metric label="Profile views" value={String(analytics?.profileViews30Days || 0)} />
-            <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
-          </InfoPanel>
-          <DancerDealPanel deals={deals} />
-          <DancerPayoutPanel finance={finance} />
-          <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
-            </>
+          <div className="dancer-performance-workspace">
+            <DancerPerformanceSummary analytics={analytics} deals={deals} finance={finance} />
+            <div className="dancer-performance-details">
+              <DancerPerformanceDetail
+                badge={`${String(deals?.successfulRedemptionsThisMonth || 0)} this month`}
+                description="Commissions, tier progress, and verified activity."
+                title="Club Deal rewards"
+              >
+                <DancerDealPanel deals={deals} />
+              </DancerPerformanceDetail>
+              <DancerPerformanceDetail
+                badge={formatCents(Number(((finance?.balances || {}) as Record<string, unknown>).availableCents || 0))}
+                description="Balances, payout setup, and history."
+                title="Earnings & payouts"
+              >
+                <DancerPayoutPanel finance={finance} />
+              </DancerPerformanceDetail>
+              <DancerPerformanceDetail
+                badge={formatRankMove(weeklyReport)}
+                description="Follower growth and ranking milestones."
+                title="Weekly results"
+              >
+                <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
+              </DancerPerformanceDetail>
+            </div>
           </div>
         </DashboardSection>
       ) : null}
@@ -4356,6 +4370,53 @@ function DancerLockedAnalyticsPanel() {
   );
 }
 
+function DancerPerformanceSummary({
+  analytics,
+  deals,
+  finance,
+}: {
+  analytics?: LoadState["analytics"];
+  deals?: LoadState["deals"];
+  finance?: LoadState["finance"];
+}) {
+  const balances = (finance?.balances || {}) as Record<string, unknown>;
+
+  return (
+    <section className="dancer-performance-summary" aria-label="Performance and rewards summary">
+      <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
+      <Metric label="30-day views" value={String(analytics?.profileViews30Days || 0)} />
+      <Metric label="Successful Club Deals" value={String(deals?.successfulRedemptionsThisMonth || 0)} />
+      <Metric label="Available rewards" value={formatCents(Number(balances.availableCents || 0))} />
+    </section>
+  );
+}
+
+function DancerPerformanceDetail({
+  badge,
+  children,
+  description,
+  title,
+}: {
+  badge: string;
+  children: ReactNode;
+  description: string;
+  title: string;
+}) {
+  return (
+    <details className="dancer-performance-detail">
+      <summary>
+        <span>
+          <strong>{title}</strong>
+          <small>{description}</small>
+        </span>
+        <b>{badge}</b>
+        <i aria-hidden="true">+</i>
+      </summary>
+      <div className="dancer-performance-detail-body">{children}</div>
+    </details>
+  );
+}
+
 function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
   const earnedCommissionCents = Number(deals?.earnedCommissionCents || 0);
   const payableCommissionCents = Number(deals?.payableCommissionCents || 0);
@@ -4364,31 +4425,39 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
   const nextTierAt = deals?.nextTierAt === null ? null : Number(deals?.nextTierAt || 10);
 
   return (
-    <article className="info-panel deal-panel">
-      <h2>Club Deal commissions</h2>
-      <p>
-        Your dancer credit is carried from your profile during a verified check-in to the customer&apos;s cashier NFC tap. Successful server-confirmed redemptions earn commission.
-      </p>
+    <article className="info-panel deal-panel" aria-label="Club Deal reward details">
       <div className="deal-metrics">
         <Metric label="MyDancr rewards earned" value={formatCents(earnedCommissionCents)} />
         <Metric label="Ready for MyDancr payout" value={formatCents(payableCommissionCents)} />
         <Metric label="Successful this month" value={String(successfulThisMonth)} />
         <Metric label="Current dancer share" value={`${currentShare}%`} />
-        <Metric label="Saved / shared intent" value={`${String(deals?.qrSaves || 0)} / ${String(deals?.qrShares || 0)}`} />
-        <Metric label="Cashier opens" value={String(deals?.qrOpens || 0)} />
-        <Metric label="Available / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
-        <Metric label="Reversed" value={String(deals?.rejectedCommissions || 0)} />
       </div>
-      <div className="commission-tier-table">
-        <strong>
-          {nextTierAt === null
-            ? "Top 50% dancer tier reached"
-            : `${String(deals?.redemptionsUntilNextTier || 0)} successful redemptions to the ${nextTierAt === 10 ? "40%" : "50%"} tier`}
-        </strong>
-        <div><span>1–9 monthly</span><b>30% dancer</b><b>70% MyDancr</b></div>
-        <div><span>10–24 monthly</span><b>40% dancer</b><b>60% MyDancr</b></div>
-        <div><span>25+ monthly</span><b>50% dancer</b><b>50% MyDancr</b></div>
-      </div>
+      <p className="dancer-performance-progress">
+        {nextTierAt === null
+          ? "Top 50% dancer tier reached"
+          : `${String(deals?.redemptionsUntilNextTier || 0)} more successful redemptions to unlock the ${nextTierAt === 10 ? "40%" : "50%"} tier.`}
+      </p>
+      <details className="dancer-performance-explainer">
+        <summary>More Club Deal activity</summary>
+        <div className="deal-metrics">
+          <Metric label="Saved / shared intent" value={`${String(deals?.qrSaves || 0)} / ${String(deals?.qrShares || 0)}`} />
+          <Metric label="Cashier opens" value={String(deals?.qrOpens || 0)} />
+          <Metric label="Available / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
+          <Metric label="Reversed" value={String(deals?.rejectedCommissions || 0)} />
+        </div>
+      </details>
+      <details className="dancer-performance-explainer">
+        <summary>View commission tiers</summary>
+        <div className="commission-tier-table">
+          <div><span>1–9 monthly</span><b>30% dancer</b><b>70% MyDancr</b></div>
+          <div><span>10–24 monthly</span><b>40% dancer</b><b>60% MyDancr</b></div>
+          <div><span>25+ monthly</span><b>50% dancer</b><b>50% MyDancr</b></div>
+        </div>
+      </details>
+      <details className="dancer-performance-explainer">
+        <summary>How Club Deal rewards work</summary>
+        <p>Your dancer credit follows a verified check-in to the customer&apos;s cashier NFC tap. Successful, server-confirmed redemptions earn commission.</p>
+      </details>
     </article>
   );
 }
@@ -4396,6 +4465,7 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
 function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
   const [status, setStatus] = useState("");
   const [historyFilter, setHistoryFilter] = useState("all");
+  const [historyView, setHistoryView] = useState<"earnings" | "payouts">("earnings");
   const [isWorking, setIsWorking] = useState(false);
   const [localFinance, setLocalFinance] = useState(finance);
   useEffect(() => setLocalFinance(finance), [finance]);
@@ -4496,16 +4566,12 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
       <div className="venue-deal-heading">
         <div>
           <span className="eyebrow">{natsSelected ? "NATS commission account" : "MyDancr payouts"}</span>
-          <h2 id="dancer-payout-heading">Dancer rewards</h2>
+          <h2 id="dancer-payout-heading">Payout account</h2>
         </div>
         <strong className={`deal-state ${(natsSelected ? natsActive : payoutsEnabled) ? "active" : ""}`}>
           {natsSelected ? (natsActive ? "NATS linked" : natsAffiliateAccount?.status === "requested" ? "Verification pending" : "Setup required") : payoutsEnabled ? "Payouts available" : "Approval pending"}
         </strong>
       </div>
-      <p>{natsSelected
-        ? "MyDancr validates each cashier NFC redemption and calculates your exact tiered commission. Eligible commissions are then sent to your verified NATS affiliate ledger without customer personal information."
-        : "Qualifying Club Deal activity appears as pending first, then becomes available after the review period. Balances never include customer personal information."}</p>
-      {!natsSelected ? <p>The approved payout provider securely handles identity, account details, and money movement. MyDancr stores only the provider account reference and status needed to manage payouts.</p> : null}
       <div className="deal-metrics earnings-balance-grid">
         <Metric label="Available balance" value={formatCents(Number(balances.availableCents || 0))} />
         <Metric label="Pending earnings" value={formatCents(Number(balances.pendingCents || 0))} />
@@ -4536,53 +4602,69 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         </>
       )}
 
-      <section className="earnings-history" aria-labelledby="earnings-history-heading">
-        <h3 id="earnings-history-heading">Earnings history</h3>
-        <div className="earnings-filters" role="group" aria-label="Filter earnings history">
-          {["all", "pending", "available", "paid"].map((filter) => (
-            <button className={historyFilter === filter ? "active" : ""} key={filter} type="button" onClick={() => setHistoryFilter(filter)}>
-              {filter[0].toUpperCase() + filter.slice(1)}
-            </button>
-          ))}
+      <details className="dancer-performance-explainer">
+        <summary>How payouts work</summary>
+        <div className="dancer-performance-explainer-copy">
+          <p>{natsSelected
+            ? "MyDancr validates cashier NFC redemptions, calculates your tiered commission, and sends eligible rewards to your verified NATS affiliate ledger."
+            : "Qualifying Club Deal activity starts as pending and becomes available after review."}</p>
+          <p>{natsSelected
+            ? "No customer personal information is included."
+            : "The approved payout provider securely handles identity, account details, and money movement. MyDancr stores only the provider account reference and payout status."}</p>
         </div>
-        <div className="commission-tier-table">
-          {visibleEarnings.slice(0, 50).map((earning) => (
-            <div key={String(earning.id)}>
-              <span>{dancerFinanceVenueName(earning.venues)} · {String(earning.earning_type || "earning").replaceAll("_", " ")}</span>
-              <b>{formatCents(Number(earning.amount_cents || 0))}</b>
-              <span>{formatFinanceDate(earning.created_at)} · {String(earning.status)}</span>
-            </div>
-          ))}
-          {!visibleEarnings.length ? <p>No earnings match this filter.</p> : null}
-        </div>
-      </section>
+      </details>
 
-      <h3>{natsSelected ? "NATS export history" : "Payout history"}</h3>
-      {natsSelected ? (
-        natsExports.length ? <div className="commission-tier-table" aria-label="Recent NATS commission exports">
-          {natsExports.slice(0, 50).map((item) => <div key={String(item.id)}>
-            <span>Commission {formatFinanceDate(item.created_at)}</span>
-            <b>{formatCents(Number(item.amount_cents || 0))}</b>
-            <span>{String(item.status || "pending").replaceAll("_", " ")}</span>
-            {item.last_error ? <span role="alert">{String(item.last_error)}</span> : null}
-          </div>)}
-        </div> : <p>No NATS commission exports yet.</p>
-      ) : payouts.length ? (
-        <div className="commission-tier-table" aria-label="Recent dancer payouts">
-          {payouts.slice(0, 50).map((payout) => (
-            <div key={String(payout.id)}>
-              <span>Requested {formatFinanceDate(payout.requested_at || payout.created_at)}</span>
-              <b>{formatCents(Number(payout.amount_cents || 0))}</b>
-              <span>{String(payout.status)} · {String(payout.payment_provider || "provider")}</span>
-              {payout.processing_at ? <span>Processing {formatFinanceDate(payout.processing_at)}</span> : null}
-              {payout.paid_at ? <span>Paid {formatFinanceDate(payout.paid_at)}</span> : null}
-              {payout.provider_reference_id ? <span>Reference {String(payout.provider_reference_id)}</span> : null}
-              {payout.failure_message ? <span role="alert">{String(payout.failure_message)}</span> : null}
-            </div>
-          ))}
+      <section className="earnings-history" aria-label="Rewards history">
+        <div className="earnings-history-tabs" role="tablist" aria-label="Rewards history views">
+          <button aria-selected={historyView === "earnings"} className={historyView === "earnings" ? "active" : ""} role="tab" type="button" onClick={() => setHistoryView("earnings")}>Earnings history</button>
+          <button aria-selected={historyView === "payouts"} className={historyView === "payouts" ? "active" : ""} role="tab" type="button" onClick={() => setHistoryView("payouts")}>{natsSelected ? "NATS export history" : "Payout history"}</button>
         </div>
-      ) : <p>No payout requests yet.</p>}
-      <button type="button" onClick={downloadStatement}>Download monthly statement</button>
+        {historyView === "earnings" ? (
+          <>
+            <div className="earnings-filters" role="group" aria-label="Filter earnings history">
+              {["all", "pending", "available", "paid"].map((filter) => (
+                <button className={historyFilter === filter ? "active" : ""} key={filter} type="button" onClick={() => setHistoryFilter(filter)}>
+                  {filter[0].toUpperCase() + filter.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div className="commission-tier-table">
+              {visibleEarnings.slice(0, 50).map((earning) => (
+                <div key={String(earning.id)}>
+                  <span>{dancerFinanceVenueName(earning.venues)} · {String(earning.earning_type || "earning").replaceAll("_", " ")}</span>
+                  <b>{formatCents(Number(earning.amount_cents || 0))}</b>
+                  <span>{formatFinanceDate(earning.created_at)} · {String(earning.status)}</span>
+                </div>
+              ))}
+              {!visibleEarnings.length ? <p>No earnings match this filter.</p> : null}
+            </div>
+          </>
+        ) : natsSelected ? (
+          natsExports.length ? <div className="commission-tier-table" aria-label="Recent NATS commission exports">
+            {natsExports.slice(0, 50).map((item) => <div key={String(item.id)}>
+              <span>Commission {formatFinanceDate(item.created_at)}</span>
+              <b>{formatCents(Number(item.amount_cents || 0))}</b>
+              <span>{String(item.status || "pending").replaceAll("_", " ")}</span>
+              {item.last_error ? <span role="alert">{String(item.last_error)}</span> : null}
+            </div>)}
+          </div> : <p>No NATS commission exports yet.</p>
+        ) : payouts.length ? (
+          <div className="commission-tier-table" aria-label="Recent dancer payouts">
+            {payouts.slice(0, 50).map((payout) => (
+              <div key={String(payout.id)}>
+                <span>Requested {formatFinanceDate(payout.requested_at || payout.created_at)}</span>
+                <b>{formatCents(Number(payout.amount_cents || 0))}</b>
+                <span>{String(payout.status)} · {String(payout.payment_provider || "provider")}</span>
+                {payout.processing_at ? <span>Processing {formatFinanceDate(payout.processing_at)}</span> : null}
+                {payout.paid_at ? <span>Paid {formatFinanceDate(payout.paid_at)}</span> : null}
+                {payout.provider_reference_id ? <span>Reference {String(payout.provider_reference_id)}</span> : null}
+                {payout.failure_message ? <span role="alert">{String(payout.failure_message)}</span> : null}
+              </div>
+            ))}
+          </div>
+        ) : <p>No payout requests yet.</p>}
+        <button className="earnings-statement-button" type="button" onClick={downloadStatement}>Download monthly statement</button>
+      </section>
       {status ? <p role="status">{status}</p> : null}
     </article>
   );
@@ -6066,13 +6148,13 @@ function DancerImpactPanel({
   report?: LoadState["weeklyReport"];
 }) {
   return (
-    <article className="info-panel impact-panel">
-      <h2>Weekly Impact</h2>
-      <div className="impact-grid">
-        <Metric label="Rank" value={formatRankMove(report)} />
-        <Metric label="Weekly views" value={String(report?.profileViews || 0)} />
-        <Metric label="New followers" value={String(report?.followersGained || 0)} />
-        <Metric label="Going signals" value={String(report?.goingSignals || 0)} />
+    <article className="info-panel impact-panel" aria-label="Weekly result details">
+      <div className="weekly-result-summary">
+        <span>
+          <strong>{String(report?.followersGained || 0)} new followers</strong>
+          <small>This week</small>
+        </span>
+        <b>{String(report?.profileViews || 0)} views · {String(report?.goingSignals || 0)} Going signals</b>
       </div>
       <div className="event-list">
         {(events || []).slice(0, 5).map((event) => (
@@ -7300,6 +7382,44 @@ function DashboardStyles() {
       .visibility-panel button.visibility-toggle { width: fit-content; min-height: 44px; padding: 0 13px; border-radius: 999px; font-size: 11px; }
       .visibility-status { margin: 0; }
       .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-verification-panel { grid-column: span 3; }
+      .dancer-performance-workspace { display: grid; gap: 14px; }
+      .dancer-performance-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; background: var(--mydancr-dashboard-panel-raised); }
+      .dancer-performance-summary .metric { min-height: 76px; padding: 13px 15px; border-top: 0; border-left: 1px solid var(--mydancr-dashboard-border); }
+      .dancer-performance-summary .metric:first-child { border-left: 0; }
+      .dancer-performance-details { display: grid; gap: 10px; }
+      .dancer-performance-detail { overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; background: var(--mydancr-dashboard-panel-raised); }
+      .dancer-performance-detail > summary { min-height: 78px; display: grid; grid-template-columns: minmax(0, 1fr) auto 38px; align-items: center; gap: 12px; padding: 14px 16px; list-style: none; cursor: pointer; }
+      .dancer-performance-detail > summary::-webkit-details-marker, .dancer-performance-explainer > summary::-webkit-details-marker { display: none; }
+      .dancer-performance-detail > summary > span { min-width: 0; display: grid; gap: 4px; }
+      .dancer-performance-detail > summary strong { color: #fff; font-size: 18px; }
+      .dancer-performance-detail > summary small { color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.35; }
+      .dancer-performance-detail > summary > b { width: fit-content; padding: 6px 9px; border: 1px solid rgba(50,255,164,.22); border-radius: 999px; color: #78ffc0; background: rgba(50,255,164,.06); font-size: 11px; white-space: nowrap; }
+      .dancer-performance-detail > summary > i { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid rgba(124,58,237,.48); border-radius: 50%; color: #fff; background: rgba(82,35,214,.2); font-size: 24px; font-style: normal; line-height: 1; transition: transform .18s ease; }
+      .dancer-performance-detail[open] > summary > i { transform: rotate(45deg); }
+      .dancer-performance-detail > summary:focus-visible, .dancer-performance-explainer > summary:focus-visible, .earnings-history-tabs button:focus-visible { outline: 2px solid #94e5ff; outline-offset: -3px; }
+      .dancer-performance-detail-body { padding: 16px; border-top: 1px solid var(--mydancr-dashboard-border); }
+      .dancer-performance-detail-body > .info-panel { grid-column: auto; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .dancer-performance-progress { margin: 0; padding: 11px 13px; border: 1px solid rgba(50,255,164,.2); border-radius: 10px; color: #dfffee !important; background: rgba(50,255,164,.06); font-weight: 850; }
+      .dancer-performance-explainer { overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: rgba(255,255,255,.025); }
+      .dancer-performance-explainer > summary { min-height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 13px; color: #f7f2ff; font-size: 13px; font-weight: 900; list-style: none; cursor: pointer; }
+      .dancer-performance-explainer > summary::after { content: "+"; color: #94e5ff; font-size: 20px; line-height: 1; }
+      .dancer-performance-explainer[open] > summary::after { content: "−"; }
+      .dancer-performance-explainer > .deal-metrics, .dancer-performance-explainer > .commission-tier-table, .dancer-performance-explainer > .dancer-performance-explainer-copy { margin: 0 12px 12px; }
+      .dancer-performance-explainer > p { margin: 0; padding: 0 13px 13px; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.5; }
+      .dancer-performance-explainer-copy { display: grid; gap: 8px; }
+      .dancer-performance-explainer-copy p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.5; }
+      .earnings-history { display: grid; gap: 12px; }
+      .earnings-history-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 5px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: rgba(255,255,255,.025); }
+      .earnings-history-tabs button { min-height: 40px; border: 0; border-radius: 7px; color: var(--mydancr-dashboard-muted); background: transparent; font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+      .earnings-history-tabs button.active { color: #fff; background: rgba(82,35,214,.48); box-shadow: inset 0 0 0 1px rgba(124,58,237,.5); }
+      .earnings-filters { display: flex !important; flex-wrap: wrap; gap: 6px !important; }
+      .earnings-filters button { min-height: 34px; padding: 0 10px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 999px; color: var(--mydancr-dashboard-muted); background: rgba(255,255,255,.03); font: inherit; font-size: 11px; font-weight: 850; cursor: pointer; }
+      .earnings-filters button.active { border-color: rgba(148,229,255,.38); color: #fff; background: rgba(148,229,255,.1); }
+      .earnings-statement-button { width: fit-content; min-height: 40px; padding: 0 12px; }
+      .weekly-result-summary { display: flex !important; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: rgba(255,255,255,.03); }
+      .weekly-result-summary > span { display: grid; gap: 3px; }
+      .weekly-result-summary strong { color: #fff; font-size: 17px; }
+      .weekly-result-summary small, .weekly-result-summary b { color: var(--mydancr-dashboard-muted); font-size: 12px; }
       .impact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
       .event-list { display: grid; gap: 10px; }
       .event-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
@@ -8088,6 +8208,18 @@ function DashboardStyles() {
       .dashboard-shell-venue .commission-tier-table > strong { color: #d7d5dd; }
       .dashboard-shell-venue .commission-tier-table > strong { background: rgba(255,255,255,.04); }
       @media (max-width: 720px) { .venue-deal-control-card { grid-template-columns: 1fr; } .venue-deal-control-actions { justify-content: flex-start; } .venue-deal-control-actions > button, .venue-deal-control-actions > a { flex: 1 1 140px; } }
+      @media (max-width: 680px) {
+        .dancer-performance-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .dancer-performance-summary .metric { min-height: 70px; padding: 11px 12px; }
+        .dancer-performance-summary .metric:nth-child(odd) { border-left: 0; }
+        .dancer-performance-summary .metric:nth-child(n + 3) { border-top: 1px solid var(--mydancr-dashboard-border); }
+        .dancer-performance-detail > summary { grid-template-columns: minmax(0, 1fr) 36px; min-height: 76px; padding: 13px 14px; }
+        .dancer-performance-detail > summary > b { grid-column: 1; grid-row: 2; }
+        .dancer-performance-detail > summary > i { grid-column: 2; grid-row: 1 / span 2; }
+        .dancer-performance-detail-body { padding: 13px; }
+        .weekly-result-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
+        .earnings-history-tabs button { padding: 5px 8px; }
+      }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-logo-panel, .venue-logo-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-logo-panel > img, .venue-logo-empty, .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-logo-panel > img, .venue-logo-empty { justify-self: start; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
