@@ -250,19 +250,30 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /draftIdentity\.city/);
   assert.match(dashboard, /pending_avatar_review/);
   assert.match(dashboard, /approvedPhotos\.length/);
-  assert.match(dashboard, /const previewPhotos = approvedPhotos\.map/);
+  assert.match(dashboard, /const photos = approvedPhotos\.map/);
   assert.match(dashboard, /readJson\("\/api\/dancer\/tv\/videos", headers\)/);
   assert.match(dashboard, /String\(video\?\.status \|\| ""\)\.toLowerCase\(\) !== "approved"/);
-  assert.match(dashboard, /videos=\{previewVideos\}/);
-  assert.match(dashboard, /const previewSocialLinks = dancerPreviewSocialLinks\(profile\)/);
-  assert.match(dashboard, /<SocialLinks[\s\S]*heading="Social links"[\s\S]*links=\{previewSocialLinks\}[\s\S]*showConnectLabel=\{false\}[\s\S]*trackClicks=\{false\}/);
+  assert.match(dashboard, /videos=\{videos\}/);
+  assert.match(dashboard, /const socialLinks = dancerPreviewSocialLinks\(profile\)/);
+  assert.match(dashboard, /<SocialLinks[\s\S]*heading="Social links"[\s\S]*links=\{socialLinks\}[\s\S]*showConnectLabel=\{false\}[\s\S]*trackClicks=\{false\}/);
   assert.match(dashboard, /aria-label="Close profile preview"/);
-  assert.match(dashboard, /previewScrollRef\.current = window\.scrollY/);
+  assert.match(dashboard, /scrollRef\.current = window\.scrollY/);
   assert.match(dashboard, /window\.scrollTo\(\{ top: scrollY, behavior: "auto" \}\)/);
   assert.match(dashboard, /event\.key === "Escape"/);
   assert.match(dashboard, /event\.key !== "Tab"/);
-  assert.match(dashboard, /previewOverlayRef\.current\?\.querySelectorAll<HTMLElement>/);
+  assert.match(dashboard, /overlayRef\.current\?\.querySelectorAll<HTMLElement>/);
   assert.match(dashboard, /Avatar moderation is in progress/);
+});
+
+test("approved dancers always have a customer-view profile preview on the collapsed dashboard", () => {
+  assert.match(dashboard, /const isPublic = isApproved && profile\?\.is_public !== false && profile\?\.isPublic !== false/);
+  assert.match(dashboard, /\{isApproved \? \(\s*<aside className="dancer-dashboard-profile-preview"/);
+  assert.match(dashboard, /id="dancer-dashboard-profile-preview-heading">Preview your profile/);
+  assert.match(dashboard, /buttonLabel="Preview profile"[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
+  assert.match(dashboard, /Public profile preview/);
+  assert.match(dashboard, /This is how your approved profile appears to customers/);
+  assert.match(dashboard, /\.dancer-dashboard-profile-preview-button \{[^}]*min-height: 44px/);
+  assert.match(dashboard, /\.dancer-dashboard-profile-preview-button \{ grid-column: 1 \/ -1; width: 100%; min-height: 46px/);
 });
 
 test("the mobile full-profile preview leaves room for its media thumbnails above navigation", () => {
