@@ -4796,12 +4796,14 @@ function DancerSetupPanel({
           </select>
           <small>{cityOptionsStatus === "error" ? "The live city list could not be loaded. Try again before saving." : "Choose from active MyDancr venue markets."}</small>
         </label>
-        <button type="submit" disabled={saveStatus === "saving" || cityOptionsStatus !== "ready"}>
-          {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save profile"}
-        </button>
-        <button type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
-          {isResetting ? "Reloading..." : "Reload saved profile"}
-        </button>
+        <div className="dancer-profile-form-actions">
+          <button className="dancer-profile-save-action primary-action" type="submit" disabled={saveStatus === "saving" || cityOptionsStatus !== "ready"}>
+            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save profile"}
+          </button>
+          <button aria-label="Reload saved profile" className="dancer-profile-reload-action" type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
+            {isResetting ? "Reloading..." : "Reload saved"}
+          </button>
+        </div>
         <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
           {status || (saveStatus === "saving" ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : persistedStageNameAndCity(profile) ? "Saved" : "Add and save your stage name and city.")}
         </p>
@@ -7750,6 +7752,11 @@ function DashboardStyles() {
       .dancer-step-one-optional-panel .socials-panel label { gap: 5px; }
       .dancer-step-one-optional-panel .socials-panel input { height: 46px; min-height: 46px; max-height: 46px; padding: 0 11px; }
       .dancer-step-one-optional-panel .socials-panel button[type="submit"] { min-height: 46px; }
+      .dancer-profile-form-actions { display: flex; align-items: center; gap: 8px; }
+      .dancer-profile-form-actions button { min-height: 44px !important; padding: 0 14px !important; border-radius: 999px !important; font-size: 11px !important; white-space: nowrap; }
+      .dancer-profile-form-actions .dancer-profile-save-action { flex: 1 1 auto; }
+      .dancer-profile-form-actions .dancer-profile-reload-action { flex: 0 1 auto; border-color: rgba(126,234,255,.2) !important; color: #d5f8ff !important; background: rgba(126,234,255,.07) !important; box-shadow: none !important; }
+      .dancer-profile-form-actions .dancer-profile-reload-action:hover { border-color: rgba(126,234,255,.48) !important; background: rgba(126,234,255,.13) !important; }
       .dancer-form-save-state { grid-column: 1 / -1; min-height: 18px; margin: 0; color: #70efbd !important; font-size: 11px !important; }
       .dancer-form-save-state.is-unsaved { color: #f2ce83 !important; }
       .dancer-step-one-footer { display: grid; grid-template-columns: minmax(0,1fr) minmax(180px,240px); align-items: center; gap: 12px; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: #0c0c11; }

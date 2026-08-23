@@ -135,6 +135,10 @@ test("step one required items are accessible accordions that preserve the active
 test("step one shows clear save, photo-count, and automatic-check states", () => {
   assert.match(dashboard, /Unsaved changes/);
   assert.match(dashboard, /dancer-form-save-state/);
+  assert.match(dashboard, /className="dancer-profile-form-actions"/);
+  assert.match(dashboard, /className="dancer-profile-save-action primary-action"/);
+  assert.match(dashboard, /aria-label="Reload saved profile" className="dancer-profile-reload-action"/);
+  assert.match(dashboard, /\.dancer-profile-form-actions button \{ min-height: 44px !important;[\s\S]*?border-radius: 999px !important;/);
   assert.match(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\} photos/);
   assert.match(dashboard, /pendingPhotos\.length \? `\$\{pendingPhotos\.length\} checking`/);
   assert.match(dashboard, /We are checking this photo\. This page updates automatically/);
