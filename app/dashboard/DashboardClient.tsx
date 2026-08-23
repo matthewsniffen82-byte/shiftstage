@@ -4185,15 +4185,12 @@ function DancerPanel({
       ) : null}
       {isApproved ? (
         <DashboardSection
-          description="Share your profile and manage billing."
+          description="Copy your public link or open your live profile."
           emphasis="utility"
           id="dancer-sharing-billing"
-          title="Sharing & billing"
+          title="Share profile"
         >
-          <div className="venue-dashboard-inner-grid">
-            <DancerSharePanel profile={profile} />
-            <DancerBillingPanel />
-          </div>
+          <DancerSharePanel profile={profile} />
         </DashboardSection>
       ) : null}
     </>
@@ -5701,39 +5698,6 @@ function formatVerificationDate(value: unknown) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
 }
 
-function DancerBillingPanel() {
-  const [billing, setBilling] = useState<Record<string, any> | null>(null);
-  const [status, setStatus] = useState("");
-
-  useEffect(() => {
-    const session = readSession();
-    if (!session?.accessToken) return;
-
-    fetch("/api/dancer/billing", { headers: { authorization: `Bearer ${session.accessToken}` } })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.ok) setBilling(data.billing);
-        else setStatus(data.error || "Unable to load billing.");
-      })
-      .catch(() => setStatus("Unable to load billing."));
-  }, []);
-
-  return (
-    <article className="info-panel billing-panel">
-      <h2>Billing</h2>
-      <div className="billing-grid">
-        <Metric label="Profile" value={String(billing?.dancerStatus || "pending")} />
-        <Metric label="Subscription" value="FREE" />
-        <Metric label="Monthly cost" value="$0" />
-      </div>
-      <div className="billing-actions">
-        <p>Dancer profiles are free. No payment authorization is required.</p>
-        {status ? <p>{status}</p> : null}
-      </div>
-    </article>
-  );
-}
-
 function DancerShiftPanel() {
   const [venues, setVenues] = useState<Array<{ id: string; name: string }>>([]);
   const [shifts, setShifts] = useState<Array<Record<string, any>>>([]);
@@ -6207,23 +6171,28 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
   }
 
   return (
-    <article className="info-panel share-panel">
-      <h2>Share Profile</h2>
+    <article className="info-panel share-panel" aria-labelledby="dancer-share-heading">
+      <div className="share-panel-head">
+        <div>
+          <h2 id="dancer-share-heading">Your public profile</h2>
+        </div>
+        <strong className="share-free-badge">Free · $0/month</strong>
+      </div>
       {slug ? (
         <div className="share-grid">
-          <div>
-            <label>
-              Public link
-              <input readOnly value={shareUrl} />
-            </label>
-            <div className="share-actions">
-              <button type="button" onClick={copyLink}>
-                Copy link
-              </button>
-              <Link href={`/dancers/${slug}`}>Open profile</Link>
-            </div>
-            {status ? <p>{status}</p> : null}
+          <div className="share-link-row">
+            <span>
+              <small>Your profile link</small>
+              <strong>/dancers/{slug}</strong>
+            </span>
           </div>
+          <div className="share-actions">
+            <button type="button" onClick={copyLink}>
+              {status === "Profile link copied." ? "Copied" : "Copy link"}
+            </button>
+            <Link href={`/dancers/${slug}`}>Open profile</Link>
+          </div>
+          {status ? <p className="share-status" role="status" aria-live="polite">{status}</p> : null}
         </div>
       ) : (
         <p>Save your stage name first to create a public profile link.</p>
@@ -7432,12 +7401,21 @@ function DashboardStyles() {
       .locked-analytics-panel small { color: #b9accd; font-size: 14px; line-height: 1.55; }
       .locked-preview-list { display: grid; gap: 8px; margin-top: 2px; }
       .locked-preview-list span { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); color: rgba(247,242,255,.72); font-size: 13px; font-weight: 850; }
-      .share-grid { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; align-items: center; }
+      .share-panel-head { display: flex !important; align-items: center; justify-content: space-between; gap: 14px; }
+      .share-panel-head > div { display: grid; gap: 5px; }
+      .share-free-badge { width: fit-content; padding: 6px 9px; border: 1px solid rgba(50,255,164,.22); border-radius: 999px; color: #78ffc0; background: rgba(50,255,164,.06); font-size: 11px; white-space: nowrap; }
+      .share-grid { display: grid; gap: 10px; }
+      .share-link-row { min-width: 0; padding: 12px 13px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: var(--mydancr-dashboard-panel-raised); }
+      .share-link-row > span { min-width: 0; display: grid; gap: 4px; }
+      .share-link-row small { color: var(--mydancr-dashboard-muted); font-size: 12px; }
+      .share-link-row strong { overflow: hidden; color: #fff; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
       .share-grid img, .qr-placeholder { width: 180px; height: 180px; border-radius: 8px; background: #f7f2ff; }
       .qr-placeholder { display: grid; place-items: center; color: #050507; font-weight: 950; }
-      .share-grid > div { display: grid; gap: 12px; }
-      .share-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-      .share-actions a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 8px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); font-weight: 900; }
+      .share-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px !important; }
+      .share-panel .share-actions button, .share-actions a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 13px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 900; text-decoration: none; }
+      .share-panel .share-actions button { border: 1px solid rgba(124,58,237,.5); color: #fff; background: rgba(82,35,214,.56); }
+      .share-actions a { border: 1px solid rgba(255,255,255,.12); color: #fff; background: rgba(255,255,255,.06); }
+      .share-status { margin: 0; color: #78ffc0 !important; font-size: 12px !important; }
       .socials-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }

@@ -157,7 +157,7 @@ test("approved dancer dashboard sections arrive collapsed with a clear tool hier
   assert.match(dashboard, /description="Edit your identity, avatar, photos, links, and videos\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
   assert.match(dashboard, /description="Post and manage shifts shown on your profile\."\s+emphasis="primary"\s+id="dancer-schedule"/);
   assert.match(dashboard, /description="See your reach, rewards, payouts, and weekly progress\."\s+emphasis="secondary"\s+id="dancer-performance"/);
-  assert.match(dashboard, /description="Share your profile and manage billing\."\s+emphasis="utility"\s+id="dancer-sharing-billing"/);
+  assert.match(dashboard, /description="Copy your public link or open your live profile\."\s+emphasis="utility"\s+id="dancer-sharing-billing"\s+title="Share profile"/);
   assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
   assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);
   assert.match(dashboard, /\.dashboard-section-utility \.venue-dashboard-section-copy > span:last-child \{ color: rgba\(218,218,226,\.72\); font-size: 12px; \}/);
