@@ -530,8 +530,8 @@ function DancerTvStudioStyles() {
       .tv-upload-permissions, .tv-video-source-grid, .tv-upload-requirements, .tv-upload-queue { min-width: 0; max-width: 100%; grid-column: 1 / -1; }
       .tv-upload-permissions { display: grid; gap: 4px; }
       .tv-upload-permissions strong { color: #fff; font-size: 14px; }
-      .tv-video-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .tv-video-source-action { position: relative; min-width: 0; min-height: 74px; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); cursor: pointer; }
+      .tv-video-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 10px; }
+      .tv-video-source-action { position: relative; min-width: 0; min-height: 74px; height: 100%; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); box-sizing: border-box; cursor: pointer; }
       .tv-video-source-action:hover { border-color: rgba(126,234,255,.42); background: linear-gradient(145deg,rgba(124,58,237,.2),rgba(34,199,255,.09)); }
       .tv-video-source-action:focus-within { outline: 2px solid #7eeaff; outline-offset: 2px; }
       .tv-video-source-action.is-disabled { opacity: .5; cursor: not-allowed; }
@@ -542,7 +542,7 @@ function DancerTvStudioStyles() {
       .tv-video-source-copy { min-width: 0; display: grid; gap: 2px; }
       .tv-video-source-copy strong { color: #fff; font-size: 13px; }
       .tv-video-source-copy small { color: #aaa2b4; font-size: 10px; line-height: 1.3; }
-      .tv-video-source-cta { padding: 5px 7px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #b8effa; background: rgba(34,199,255,.07); font-size: 9px; font-weight: 950; text-transform: uppercase; }
+      .tv-video-source-cta { min-width: 60px; display: grid; place-items: center; padding: 5px 7px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #b8effa; background: rgba(34,199,255,.07); box-sizing: border-box; font-size: 9px; font-weight: 950; text-transform: uppercase; }
       .tv-upload-form small { color: #9f94b3; font-size: 11px; font-weight: 700; }
       .tv-upload-requirements { display: block; }
       .tv-upload-queue { display: grid; gap: 10px; }

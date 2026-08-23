@@ -7233,8 +7233,8 @@ function DashboardStyles() {
       .photo-primary-choice > span { min-width: 0; display: grid; gap: 2px; }
       .photo-primary-choice strong { font-size: 12px; }
       .photo-primary-choice small { color: #a69daf; font-size: 10px; line-height: 1.35; }
-      .photo-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .photo-source-action { position: relative; min-width: 0; min-height: 74px; display: grid !important; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px !important; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); cursor: pointer; }
+      .photo-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 10px; }
+      .photo-source-action { position: relative; min-width: 0; min-height: 74px; height: 100%; display: grid !important; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px !important; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); box-sizing: border-box; cursor: pointer; }
       .photo-source-action:hover { border-color: rgba(126,234,255,.42); background: linear-gradient(145deg,rgba(124,58,237,.2),rgba(34,199,255,.09)); }
       .photo-source-action:focus-within { outline: 2px solid #7eeaff; outline-offset: 2px; }
       .photo-source-action.is-disabled { opacity: .58; cursor: wait; }
@@ -7245,7 +7245,7 @@ function DashboardStyles() {
       .photo-source-copy { min-width: 0; display: grid; gap: 2px; }
       .photo-source-copy strong { color: #fff; font-size: 13px; }
       .photo-source-copy small { color: #aaa2b4; font-size: 10px; line-height: 1.3; }
-      .photo-source-cta { padding: 5px 7px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #b8effa; background: rgba(34,199,255,.07); font-size: 9px; font-weight: 950; text-transform: uppercase; }
+      .photo-source-cta { min-width: 60px; display: grid; place-items: center; padding: 5px 7px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #b8effa; background: rgba(34,199,255,.07); box-sizing: border-box; font-size: 9px; font-weight: 950; text-transform: uppercase; }
       .photo-upload-queue { display: grid; gap: 10px; margin-top: 12px; }
       .photo-review-card.is-uploading { border-color: rgba(34,211,238,.58); box-shadow: inset 3px 0 0 rgba(34,211,238,.88); }
       .photo-slot-summary { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #b9eff8; font-size: 11px; }
