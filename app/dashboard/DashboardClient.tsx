@@ -3148,13 +3148,13 @@ function DancerOnboardingCommand({
       label: "Commission payouts (optional)",
       complete: payoutStepComplete,
       detail: natsAccountStatus === "active"
-        ? "Your verified NATS affiliate account is ready for dancer commissions."
+        ? "NATS is linked."
         : natsAccountStatus === "requested"
-          ? "Your NATS affiliate account is awaiting verification."
+          ? "NATS verification is pending."
           : payoutSkipped
-            ? "Skipped for now. Commissions can accrue, but payout stays on hold until setup is complete."
+            ? "Set up later from Earnings."
             : submitted
-              ? "Recommended before your first club tap, but it never blocks approval or Working Now."
+              ? "Connect NATS now or set it up later."
               : "Submit your profile before starting optional payout setup.",
       locked: !submitted,
       optional: true,
@@ -3354,7 +3354,7 @@ function DancerOnboardingCommand({
       onProfileChange?.(data.profile);
       window.localStorage.setItem(storageKey, "dancer-onboarding-payouts");
       setExpandedStepId("dancer-onboarding-payouts");
-      setStatus("Profile submitted. Set up commission payouts now or choose Do this later, then continue to the club tap.");
+      setStatus("Profile submitted. Choose whether to set up payouts, then continue to the club tap.");
       window.requestAnimationFrame(() => {
         document.getElementById("dancer-onboarding-payouts")?.scrollIntoView({ behavior: "smooth", block: "start" });
         document.getElementById("dancer-onboarding-payouts-button")?.focus({ preventScroll: true });
@@ -3379,7 +3379,7 @@ function DancerOnboardingCommand({
   function skipPayoutSetup() {
     window.localStorage.setItem(payoutSkipKey, "true");
     setPayoutSkipped(true);
-    continueToNfc("Payout setup saved for later. Club verification and Working Now remain available.");
+    continueToNfc("Payout setup saved for later.");
   }
 
   async function requestOnboardingNatsLink(event: FormEvent<HTMLFormElement>) {
@@ -3486,7 +3486,7 @@ function DancerOnboardingCommand({
                     {submitted ? (
                       <div className="dancer-onboarding-complete-note" role="status">
                         <strong>✓ Step 2 complete</strong>
-                        <span>Your profile is ready. Set up commission payouts now or continue without them, then complete the dressing-room tap at the club.</span>
+                        <span>Your profile is ready. Set up payouts now or later, then complete the dressing-room tap.</span>
                       </div>
                     ) : (
                       <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
@@ -3501,10 +3501,9 @@ function DancerOnboardingCommand({
                 {step.id === "dancer-onboarding-payouts" ? (
                   <div className="dancer-onboarding-payout-workspace">
                     <article className="dancer-onboarding-payout-card">
-                      <span className="eyebrow">Recommended · never required for activation</span>
-                      <h3>Set up dancer commission payouts</h3>
-                      <p>Verified Club Deal commissions accrue to your MyDancr ledger even if you continue without setup. Payouts stay on hold until your NATS affiliate account and required tax details are verified.</p>
-                      <p>This choice never blocks your dressing-room NFC tap, profile approval, venue check-in, or Working Now status.</p>
+                      <span className="eyebrow">Optional</span>
+                      <h3>Commission payouts</h3>
+                      <p>Connect your NATS account to receive verified Club Deal commissions.</p>
                       {natsAccountStatus === "active" ? <strong className="dancer-onboarding-payout-state is-active">✓ NATS account linked</strong> : null}
                       {natsAccountStatus === "requested" ? <strong className="dancer-onboarding-payout-state">Verification pending</strong> : null}
                       {natsPortalUrl ? <a className="dancer-onboarding-preview-open" href={natsPortalUrl} rel="noreferrer" target="_blank">Create or open NATS account</a> : null}
@@ -3515,14 +3514,12 @@ function DancerOnboardingCommand({
                           <button disabled={isPayoutWorking || !natsConfigured} type="submit">{isPayoutWorking ? "Submitting..." : "Submit payout account"}</button>
                         </form>
                       ) : null}
-                      {!natsSelected ? <p className="earnings-notice">NATS enrollment is not active yet. Your commissions will still be recorded, and you can continue to the club tap now.</p> : null}
-                      {natsSelected && !natsConfigured ? <p className="earnings-notice">NATS enrollment is safely paused until the licensed connection is activated. You can continue and return later.</p> : null}
                     </article>
                     <div className="dancer-onboarding-payout-actions">
                       {payoutSubmitted ? <button className="dancer-onboarding-primary" type="button" onClick={() => continueToNfc("Payout setup recorded. Continue with the official club tap.")}>Continue to club tap</button> : null}
                       <button className="dancer-onboarding-secondary" type="button" onClick={skipPayoutSetup}>Do this later</button>
                     </div>
-                    <p className="dancer-onboarding-announcement" role="status" aria-live="polite">{payoutStatus}</p>
+                    {payoutStatus ? <p className="dancer-onboarding-announcement" role="status" aria-live="polite">{payoutStatus}</p> : null}
                   </div>
                 ) : null}
                 {step.id === "dancer-onboarding-nfc" ? venueVerificationContent : null}

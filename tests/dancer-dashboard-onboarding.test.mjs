@@ -130,6 +130,15 @@ test("step one guides dancers through required work before optional profile enha
   assert.match(dashboard, /continueToPreview: \(\) => openStep\("dancer-onboarding-preview"\)/);
 });
 
+test("optional payout onboarding keeps NATS guidance concise", () => {
+  assert.match(dashboard, /<span className="eyebrow">Optional<\/span>[\s\S]*?<h3>Commission payouts<\/h3>/);
+  assert.match(dashboard, /Connect your NATS account to receive verified Club Deal commissions\./);
+  assert.doesNotMatch(dashboard, /Recommended · never required for activation/);
+  assert.doesNotMatch(dashboard, /This choice never blocks your dressing-room NFC tap/);
+  assert.doesNotMatch(dashboard, /NATS enrollment is not active yet/);
+  assert.doesNotMatch(dashboard, /NATS enrollment is safely paused/);
+});
+
 test("step one required items are accessible accordions that preserve the active editor", () => {
   assert.match(dashboard, /useState<string \| null>\(\(\) => profile\?\.id \? firstIncompleteId : null\)/);
   assert.match(dashboard, /if \(!profile\?\.id\) return;[\s\S]*?setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);

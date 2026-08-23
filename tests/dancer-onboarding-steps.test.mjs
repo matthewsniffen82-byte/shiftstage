@@ -253,9 +253,8 @@ test("optional NATS payout setup is offered before NFC without blocking activati
 
   assert.match(setupOrderSource, /"review", "payout", "approval"/);
   assert.match(setupGate, /requiredStep !== "payout"/);
-  assert.match(payoutMarkup, /commissions accrue/i);
-  assert.match(payoutMarkup, /payout stays on hold/i);
-  assert.match(payoutMarkup, /never blocks/i);
+  assert.match(payoutMarkup, /Connect NATS to receive verified Club Deal commissions/i);
+  assert.doesNotMatch(payoutMarkup, /never blocks|payout stays on hold|not active yet|safely paused|tax details/i);
   assert.match(payoutMarkup, /data-dancer-payout-skip>Do this later/);
   assert.match(liveAppSource, /data-dancer-payout-submit/);
   assert.match(liveAppSource, /request_nats_link/);

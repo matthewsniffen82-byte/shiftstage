@@ -52743,7 +52743,7 @@
             : review
         ));
         activeSetupStep = "payout";
-        profileSubmitNotice = "Profile submitted. Set up commission payouts now or choose Do this later, then continue to the official dressing-room tap.";
+        profileSubmitNotice = "Profile submitted. Choose whether to set up payouts, then continue to the dressing-room tap.";
         profileSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Profile saved. Payout setup is optional before the club tap.");
@@ -53242,12 +53242,12 @@
       const configured = platform.configured === true;
       const portalUrl = String(platform.affiliatePortalUrl || "");
       const accountState = accountStatus === "active"
-        ? '<div class="rule-note success"><strong>✓ NATS account linked</strong><span>Your verified account is ready for dancer commissions.</span></div>'
+        ? '<div class="rule-note success"><strong>✓ NATS linked</strong></div>'
         : accountStatus === "requested"
-          ? '<div class="rule-note"><strong>Verification pending</strong><span>Your commissions keep accruing while MyDancr verifies the affiliate account.</span></div>'
+          ? '<div class="rule-note"><strong>Verification pending</strong></div>'
           : "";
       const link = portalUrl
-        ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">Create or open NATS account</a>`
+        ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">Open NATS</a>`
         : "";
       const form = selected && !["requested", "active"].includes(accountStatus)
         ? `<div class="dancer-payout-fields">
@@ -53256,24 +53256,18 @@
           </div>
           <button class="action-btn" type="button" data-dancer-payout-submit ${configured ? "" : "disabled"}>Submit payout account</button>`
         : "";
-      const availability = !selected
-        ? '<div class="rule-note">NATS enrollment is not active yet. MyDancr will still record eligible commissions, and you can continue to the club tap now.</div>'
-        : !configured
-          ? '<div class="rule-note">NATS enrollment is safely paused until the licensed connection is activated. Continue now and return later.</div>'
-          : "";
       return `
         <section class="setup-profile-editor-section">
           <div class="setup-profile-editor-head">
-            <strong>Set up dancer commission payouts</strong>
-            <p>Recommended before your first club tap, but never required for approval or Working Now.</p>
+            <strong>Commission payouts</strong>
+            <p>Connect NATS to receive verified Club Deal commissions.</p>
           </div>
-          <div class="rule-note">Verified Club Deal commissions accrue even if you skip this step. Payout stays on hold until your NATS affiliate account and required tax details are verified.</div>
-          ${accountState}${link}${form}${availability}
+          ${accountState}${link}${form}
           <div class="dancer-payout-setup-actions">
             ${["requested", "active"].includes(accountStatus) ? '<button class="action-btn" type="button" data-dancer-payout-continue>Continue to club tap</button>' : ""}
             <button class="action-btn secondary" type="button" data-dancer-payout-skip>Do this later</button>
           </div>
-          <div class="rule-note" id="dancerPayoutSetupStatus" role="status" aria-live="polite">Payout setup never blocks NFC authorization, profile approval, check-in, or Working Now.</div>
+          <div class="rule-note" id="dancerPayoutSetupStatus" role="status" aria-live="polite" hidden></div>
         </section>`;
     }
 
@@ -53310,7 +53304,7 @@
     function skipDancerPayoutSetup() {
       try { localStorage.setItem(dancerPayoutSetupStorageKey(), "true"); } catch (error) {}
       dancerSetup.payout = true;
-      continueDancerOnboardingToNfc("Payout setup saved for later. Club verification remains available.");
+      continueDancerOnboardingToNfc("Payout setup saved for later.");
     }
 
     async function submitDancerNatsAccount(button) {
@@ -53320,7 +53314,10 @@
       const original = button.textContent;
       button.disabled = true;
       button.textContent = "Submitting…";
-      if (status) status.textContent = "Submitting your NATS affiliate account for verification…";
+      if (status) {
+        status.hidden = false;
+        status.textContent = "Submitting your NATS affiliate account for verification…";
+      }
       try {
         const data = await postAuthenticatedJson("/api/dancer/finance", { action: "request_nats_link", loginId, username });
         liveDancerFinance = data.finance || liveDancerFinance;
