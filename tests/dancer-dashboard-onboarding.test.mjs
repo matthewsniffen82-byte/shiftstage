@@ -109,10 +109,15 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /aria-label="Record a new profile video"/);
   assert.match(dancerStudio, />Video library<\/strong>/);
   assert.match(dancerStudio, />Record video<\/strong>/);
-  assert.match(dancerStudio, />Confirm permissions<\/strong>/);
+  assert.match(dancerStudio, />Confirm permissions to enable uploads<\/strong>/);
   assert.doesNotMatch(dancerStudio, /Confirm permissions once, then choose videos|Every selected video uploads automatically/);
   assert.match(dancerStudio, /\.tv-video-source-action \{ position: relative; min-width: 0; min-height: 74px;/);
-  assert.match(dancerStudio, /\.tv-video-source-input \{ position: absolute; inset: 0;[\s\S]*?opacity: 0;/);
+  assert.match(dancerStudio, /function openVideoSource\(input: HTMLInputElement \| null\)[\s\S]*?Check both permission boxes first\.[\s\S]*?input\?\.click\(\)/);
+  assert.match(dancerStudio, /<button[\s\S]*?aria-label="Choose profile videos from your library"[\s\S]*?onClick=\{\(\) => openVideoSource\(libraryInputRef\.current\)\}/);
+  assert.match(dancerStudio, /<button[\s\S]*?aria-label="Record a new profile video"[\s\S]*?onClick=\{\(\) => openVideoSource\(cameraInputRef\.current\)\}/);
+  assert.doesNotMatch(dancerStudio, /<label className=\{`tv-video-source-action/);
+  assert.match(dancerStudio, /\.tv-video-source-input \{ position: fixed; width: 1px; height: 1px;[\s\S]*?pointer-events: none;/);
+  assert.match(dancerStudio, /-webkit-tap-highlight-color: transparent/);
   assert.match(dashboard, /\.photo-source-grid \{[^}]*grid-auto-rows: 1fr;/);
   assert.match(dashboard, /\.photo-source-action \{[^}]*height: 100%;[^}]*box-sizing: border-box;/);
   assert.match(dashboard, /\.photo-source-cta \{ min-width: 60px; display: grid; place-items: center;/);

@@ -54,11 +54,13 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const [removingId, setRemovingId] = useState("");
   const libraryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const consentInputRef = useRef<HTMLInputElement>(null);
+  const rightsInputRef = useRef<HTMLInputElement>(null);
   const queuedPreviewUrlsRef = useRef<Set<string>>(new Set());
   const maxVideos = workspace?.maxVideos || 5;
   const currentVideoCount = workspace?.videos.length || 0;
   const atVideoLimit = currentVideoCount >= maxVideos;
-  const videoSourcesDisabled = isSubmitting || !consentConfirmed || !rightsConfirmed;
+  const videoPermissionsConfirmed = consentConfirmed && rightsConfirmed;
 
   useEffect(() => {
     loadWorkspace();
@@ -124,6 +126,18 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     setStatus(`${additions.length} ${additions.length === 1 ? "video" : "videos"} selected. Upload started automatically${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
     const uploadable = additions.filter((item) => !item.error);
     if (uploadable.length) void uploadVideoBatch(uploadable);
+  }
+
+  function openVideoSource(input: HTMLInputElement | null) {
+    if (isSubmitting) return;
+    if (!videoPermissionsConfirmed) {
+      setStatus("Check both permission boxes first.");
+      const missingPermission = !consentConfirmed ? consentInputRef.current : rightsInputRef.current;
+      window.requestAnimationFrame(() => missingPermission?.focus());
+      return;
+    }
+    setStatus("");
+    input?.click();
   }
 
   function updateQueuedVideo(id: string, changes: Partial<QueuedVideo>) {
@@ -324,31 +338,38 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       {workspace && !atVideoLimit ? (
         <section className="tv-upload-form" aria-label="Add profile videos">
           <div className="tv-upload-permissions">
-            <strong>Confirm permissions</strong>
+            <strong>Confirm permissions to enable uploads</strong>
           </div>
           <label className="tv-check">
-            <input checked={consentConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
+            <input ref={consentInputRef} checked={consentConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
             <span>I have permission from every identifiable person shown.</span>
           </label>
           <label className="tv-check">
-            <input checked={rightsConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setRightsConfirmed(event.target.checked)} />
+            <input ref={rightsInputRef} checked={rightsConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setRightsConfirmed(event.target.checked)} />
             <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
           </label>
           <div className="tv-video-source-grid">
-            <label className={`tv-video-source-action${videoSourcesDisabled ? " is-disabled" : ""}`}>
-              <input
-                ref={libraryInputRef}
-                accept="video/mp4,video/webm,video/quicktime,.mov"
-                aria-label="Choose profile videos from your library"
-                className="tv-video-source-input"
-                disabled={videoSourcesDisabled}
-                multiple
-                type="file"
-                onChange={(event) => {
-                  queueVideoFiles(Array.from(event.target.files || []), "library");
-                  event.target.value = "";
-                }}
-              />
+            <input
+              ref={libraryInputRef}
+              accept="video/mp4,video/webm,video/quicktime,.mov"
+              className="tv-video-source-input"
+              disabled={isSubmitting}
+              multiple
+              tabIndex={-1}
+              type="file"
+              onChange={(event) => {
+                queueVideoFiles(Array.from(event.target.files || []), "library");
+                event.target.value = "";
+              }}
+            />
+            <button
+              aria-disabled={!videoPermissionsConfirmed || isSubmitting}
+              aria-label="Choose profile videos from your library"
+              className={`tv-video-source-action${!videoPermissionsConfirmed ? " is-awaiting-permissions" : ""}`}
+              disabled={isSubmitting}
+              type="button"
+              onClick={() => openVideoSource(libraryInputRef.current)}
+            >
               <span className="tv-video-source-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z" /><path d="m10 9 5 3-5 3z" /></svg>
               </span>
@@ -357,21 +378,28 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                 <small>Choose one or several videos</small>
               </span>
               <span className="tv-video-source-cta" aria-hidden="true">Choose</span>
-            </label>
-            <label className={`tv-video-source-action${videoSourcesDisabled ? " is-disabled" : ""}`}>
-              <input
-                ref={cameraInputRef}
-                accept="video/*"
-                aria-label="Record a new profile video"
-                capture="environment"
-                className="tv-video-source-input"
-                disabled={videoSourcesDisabled}
-                type="file"
-                onChange={(event) => {
-                  queueVideoFiles(Array.from(event.target.files || []), "camera");
-                  event.target.value = "";
-                }}
-              />
+            </button>
+            <input
+              ref={cameraInputRef}
+              accept="video/*"
+              capture="environment"
+              className="tv-video-source-input"
+              disabled={isSubmitting}
+              tabIndex={-1}
+              type="file"
+              onChange={(event) => {
+                queueVideoFiles(Array.from(event.target.files || []), "camera");
+                event.target.value = "";
+              }}
+            />
+            <button
+              aria-disabled={!videoPermissionsConfirmed || isSubmitting}
+              aria-label="Record a new profile video"
+              className={`tv-video-source-action${!videoPermissionsConfirmed ? " is-awaiting-permissions" : ""}`}
+              disabled={isSubmitting}
+              type="button"
+              onClick={() => openVideoSource(cameraInputRef.current)}
+            >
               <span className="tv-video-source-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M4 7h11v10H4z" /><path d="m15 10 5-2v8l-5-2z" /></svg>
               </span>
@@ -380,7 +408,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                 <small>Open your camera now</small>
               </span>
               <span className="tv-video-source-cta" aria-hidden="true">Open</span>
-            </label>
+            </button>
           </div>
           <small className="tv-upload-requirements">
             Vertical or square MP4/WebM/MOV · 1–30 seconds each · 75 MB maximum each · {queuedVideos.length} selected · {Math.max(0, maxVideos - currentVideoCount - queuedVideos.length)} slots remaining
@@ -530,12 +558,12 @@ function DancerTvStudioStyles() {
       .tv-upload-permissions { display: grid; gap: 4px; }
       .tv-upload-permissions strong { color: #fff; font-size: 14px; }
       .tv-video-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 10px; }
-      .tv-video-source-action { position: relative; min-width: 0; min-height: 74px; height: 100%; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); box-sizing: border-box; cursor: pointer; }
+      .tv-video-source-action { position: relative; min-width: 0; min-height: 74px; height: 100%; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); box-sizing: border-box; cursor: pointer; appearance: none; -webkit-tap-highlight-color: transparent; text-align: left; font: inherit; }
       .tv-video-source-action:hover { border-color: rgba(126,234,255,.42); background: linear-gradient(145deg,rgba(124,58,237,.2),rgba(34,199,255,.09)); }
-      .tv-video-source-action:focus-within { outline: 2px solid #7eeaff; outline-offset: 2px; }
-      .tv-video-source-action.is-disabled { opacity: .5; cursor: not-allowed; }
-      .tv-video-source-input { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
-      .tv-video-source-input:disabled { cursor: not-allowed; }
+      .tv-video-source-action:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
+      .tv-video-source-action.is-awaiting-permissions { opacity: .72; }
+      .tv-video-source-action:disabled { opacity: .5; cursor: progress; }
+      .tv-video-source-input { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); opacity: 0; pointer-events: none; }
       .tv-video-source-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; color: #8beafa; background: rgba(34,199,255,.09); }
       .tv-video-source-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
       .tv-video-source-copy { min-width: 0; display: grid; gap: 2px; }
