@@ -20,6 +20,14 @@ test("the top navigation exposes a profile QR only to signed-in dancers", () => 
   assert.doesNotMatch(quickActions, /showProfileQr = isCustomerSession|showProfileQr = isVenueSession/);
 });
 
+test("the asymmetric profile QR artwork is optically centered in its quick-action button", () => {
+  assert.match(
+    liveApp,
+    /header #dancerProfileQrQuickBtn \.action-icon \{\s*transform: translate\(-1px, 1px\);\s*\}/,
+  );
+  assert.doesNotMatch(liveApp, /header \.customer-quick-btn \.action-icon \{[^}]*translate\(/);
+});
+
 test("the dancer header QR uses the current approved public profile and remains separate from Club Deals", () => {
   const opener =
     liveApp.match(/async function openOwnDancerProfileQr\(triggerButton\) \{[\s\S]*?\n    \}/)?.[0] || "";
