@@ -38719,13 +38719,7 @@
           <form class="auth-form" id="dancerSignupForm">
             <input id="dancerStageName" type="hidden" value="">
             <input id="dancerLegalName" type="hidden" value="">
-            <div class="field">
-              <label for="dancerCity">City</label>
-              <select id="dancerCity" required disabled>
-                <option value="" selected>Loading available cities…</option>
-              </select>
-              <div class="field-note" id="dancerCityNote">Cities are loaded from active MyDancr venue markets.</div>
-            </div>
+            <input id="dancerCity" type="hidden" value="">
             <div class="field">
               <label for="dancerEmail">Email</label>
               <input id="dancerEmail" type="email" value="" autocomplete="email" required>
@@ -38741,7 +38735,7 @@
               <div class="field-note">Use 8 or more characters.</div>
             </div>
             <div class="rule-note">Free account. Your profile becomes public after setup and verification.</div>
-            <button class="action-btn" type="submit" disabled>Create dancer account</button>
+            <button class="action-btn" type="submit">Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>
         </div>
@@ -40909,9 +40903,8 @@
       }
 
       if (role === "dancer") {
-        const dancerCityValue = document.getElementById("dancerCity")?.value?.trim() || "";
         state.email = document.getElementById("dancerEmail")?.value || "";
-        state.dancerCity = dancerCityValue;
+        state.dancerCity = "";
         state.resumeTarget = "dancer_verification";
         state.setupStep = "profile";
         state.authIntent = "signup";
@@ -41006,9 +40999,9 @@
       const dancerEmail = document.getElementById("dancerEmail");
       const dancerCity = document.getElementById("dancerCity");
       if (dancerEmail && state.email) dancerEmail.value = state.email;
-      const confirmedCity = state.dancerCity || state.city || "";
+      const confirmedCity = state.dancerCity || "";
       if (confirmedCity) pendingDancerSignupCity = confirmedCity;
-      if (dancerCity && !dancerCity.value.trim()) syncDancerSignupCitySelect(confirmedCity);
+      if (dancerCity && !dancerCity.value.trim()) dancerCity.value = confirmedCity;
       if (freshVerification) {
         activeSetupStep = "profile";
       }
@@ -43714,9 +43707,9 @@
     }
 
     function syncDancerSignupCitySelect(preferredCity = "") {
-      const select = document.getElementById("dancerCity");
+      const select = document.getElementById("setupCity");
       if (!select) return;
-      const requestedCity = String(preferredCity || select.value || pendingDancerSignupCity || "").trim();
+      const requestedCity = String(preferredCity || select.value || document.getElementById("dancerCity")?.value || pendingDancerSignupCity || "").trim();
       const matchingCity = dancerSignupCities.find((city) => city.value.toLocaleLowerCase("en-US") === requestedCity.toLocaleLowerCase("en-US"));
       select.innerHTML = dancerSignupCityOptionsMarkup(matchingCity?.value || "");
       select.disabled = dancerSignupCitiesState !== "ready";
@@ -43725,14 +43718,14 @@
         pendingDancerSignupCity = matchingCity.value;
       }
 
-      const note = document.getElementById("dancerCityNote");
+      const note = document.getElementById("setupCityNote");
       if (note) {
         note.textContent = dancerSignupCitiesState === "error"
-          ? "Dancer signup is temporarily unavailable because the live city list could not be loaded. Please try again."
-          : "Cities are loaded from active MyDancr venue markets.";
+          ? "The live city list could not be loaded. Try again before saving your profile."
+          : "Choose from active MyDancr venue markets.";
       }
-      const submit = document.querySelector('#dancerSignupForm button[type="submit"]');
-      if (submit && !confirmationResendTimers.has(submit)) submit.disabled = dancerSignupCitiesState !== "ready";
+      const submit = document.querySelector("[data-setup-profile-save]");
+      if (submit) submit.disabled = dancerSignupCitiesState !== "ready";
     }
 
     async function loadDancerSignupCities(options = {}) {
@@ -50652,7 +50645,7 @@
       setDancerSignupStatus("");
       const submit = document.querySelector('#dancerSignupForm button[type="submit"]');
       stopConfirmationResendCooldown(submit, "Create dancer account", false);
-      if (submit) submit.disabled = dancerSignupCitiesState !== "ready";
+      if (submit) submit.disabled = false;
     }
 
     function setAuthEntryMode(mode) {
@@ -50790,7 +50783,6 @@
     function openDancerSignupPage() {
       closeAuthPage();
       clearDancerSignupFields();
-      void loadDancerSignupCities();
       dancerSignupPage.classList.add("show");
       dancerSignupPage.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
@@ -53806,7 +53798,7 @@
               <select id="setupCity" data-setup-profile-field="city" required ${dancerSignupCitiesState === "ready" ? "" : "disabled"}>
                 ${dancerSignupCityOptionsMarkup(document.getElementById("dancerCity")?.value || pendingDancerSignupCity)}
               </select>
-              <div class="field-note">Choose from active MyDancr venue markets.</div>
+              <div class="field-note" id="setupCityNote">${dancerSignupCitiesState === "error" ? "The live city list could not be loaded. Try again before saving your profile." : "Choose from active MyDancr venue markets."}</div>
             </div>
           </form>
         </section>
@@ -53845,7 +53837,7 @@
             <div class="rule-note">Enter a username or full profile URL. MyDancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
           </div>
           <div class="setup-profile-editor-actions">
-            <button class="action-btn" type="submit" form="setupProfileForm" data-setup-profile-save>Save profile</button>
+            <button class="action-btn" type="submit" form="setupProfileForm" data-setup-profile-save ${dancerSignupCitiesState === "ready" ? "" : "disabled"}>Save profile</button>
             <div class="rule-note" id="setupProfileSaveStatus" role="status" aria-live="polite" hidden></div>
           </div>
         </section>
@@ -59601,18 +59593,12 @@
       submit.textContent = "Creating account…";
       setDancerSignupStatus("");
       try {
-        const cityField = document.getElementById("dancerCity");
-        if (dancerSignupCitiesState !== "ready" || !cityField.value.trim()) {
-          throw new Error("Select an available city before creating your dancer account.");
-        }
-        const signupCity = cityField.value.trim();
         const email = document.getElementById("dancerEmail").value.trim();
         const result = await requestAuth({
           mode: "signup",
           role: "dancer",
           email,
           password: document.getElementById("dancerPassword").value,
-          city: signupCity,
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
@@ -59641,8 +59627,6 @@
           updateAccountHeader();
           maybeShowAccountTooltip("dancer");
           closeDancerSignupPage();
-          pendingDancerSignupCity = signupCity;
-          syncDancerSignupCitySelect(signupCity);
           openUnifiedDashboard("dancer", "dancer-profile-media");
         }
       } catch (error) {
@@ -59654,7 +59638,7 @@
         if (confirmationSent) {
           startConfirmationResendCooldown(submit);
         } else {
-          submit.disabled = dancerSignupCitiesState !== "ready";
+          submit.disabled = false;
           submit.textContent = originalText;
         }
       }

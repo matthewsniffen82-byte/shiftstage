@@ -16,11 +16,6 @@ type AuthRole = "customer" | "dancer";
 type AuthMode = "login" | "signup";
 type RecoveryView = "password" | "email" | null;
 
-type DancerSignupCity = {
-  value: string;
-  label: string;
-};
-
 type NfcAccountContext = {
   tag: { type: "dressing_room" | "cashier"; label: string };
   venue: { name: string; city: string; state: string };
@@ -42,10 +37,7 @@ export default function AccountClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [city, setCity] = useState(initialRole === "dancer" ? "" : "Las Vegas");
-  const [dancerSignupCities, setDancerSignupCities] = useState<DancerSignupCity[]>([]);
-  const [dancerSignupCitiesStatus, setDancerSignupCitiesStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
-  const [dancerSignupCitiesLoadAttempt, setDancerSignupCitiesLoadAttempt] = useState(0);
+  const [city, setCity] = useState("Las Vegas");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -160,44 +152,6 @@ export default function AccountClient() {
   }, [isCustomerSignup, scrollCustomerBenefitsToTop]);
 
   useEffect(() => {
-    if (!isDancerSignup) return;
-
-    let cancelled = false;
-    setDancerSignupCitiesStatus("loading");
-
-    async function loadDancerSignupCities() {
-      try {
-        const response = await fetch("/api/public/cities", {
-          headers: { accept: "application/json" },
-          cache: "no-store",
-        });
-        const data = await response.json() as { ok?: boolean; cities?: DancerSignupCity[]; error?: string };
-        if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load available cities.");
-
-        const cities = Array.isArray(data.cities)
-          ? data.cities.filter((option) => Boolean(option?.value && option?.label))
-          : [];
-        if (!cities.length) throw new Error("No cities are currently available for dancer signup.");
-        if (cancelled) return;
-
-        setDancerSignupCities(cities);
-        setCity((current) => cities.find((option) => option.value.toLocaleLowerCase("en-US") === current.toLocaleLowerCase("en-US"))?.value || "");
-        setDancerSignupCitiesStatus("ready");
-      } catch {
-        if (cancelled) return;
-        setDancerSignupCities([]);
-        setCity("");
-        setDancerSignupCitiesStatus("error");
-      }
-    }
-
-    void loadDancerSignupCities();
-    return () => {
-      cancelled = true;
-    };
-  }, [dancerSignupCitiesLoadAttempt, isDancerSignup]);
-
-  useEffect(() => {
     if (!recoveryView) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeRecovery();
@@ -206,11 +160,11 @@ export default function AccountClient() {
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [closeRecovery, recoveryView]);
 
-  function clearFields(nextRole: AuthRole = role) {
+  function clearFields() {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-    setCity(nextRole === "dancer" ? "" : "Las Vegas");
+    setCity("Las Vegas");
     setStatus("");
     setShowPassword(false);
     setShowConfirmPassword(false);
@@ -261,7 +215,7 @@ export default function AccountClient() {
 
   function chooseRole(nextRole: AuthRole) {
     setRole(nextRole);
-    clearFields(nextRole);
+    clearFields();
   }
 
   function chooseMode(nextMode: AuthMode) {
@@ -283,7 +237,8 @@ export default function AccountClient() {
       setStatus(role === "dancer" ? "Signing in to your dancer account..." : "Signing in to your customer account...");
     }
 
-    const payload: Record<string, string> = { mode, role, email, password, city };
+    const payload: Record<string, string> = { mode, role, email, password };
+    if (mode === "signup" && role === "customer") payload.city = city;
     if (mode === "signup" && typeof window !== "undefined") {
       const requestedReturnTo = searchParams.get("return_to") || "";
       const safeReturnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
@@ -549,7 +504,7 @@ export default function AccountClient() {
                 <h2>Create your dancer login first</h2>
                 <p>{venueNfcToken
                   ? "Your dressing-room tap is saved through account creation. Confirm your email, finish profile setup and media review, then MyDancr approves your eligible profile and activates that venue automatically."
-                  : "Confirm your email, then create your profile with stage name, city, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. At a club, tap its official MyDancr dressing-room sticker to approve your eligible profile, authorize that venue, and check in."}</p>
+                  : "Confirm your email, then choose your city during onboarding and create your profile with a stage name, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. At a club, tap its official MyDancr dressing-room sticker to approve your eligible profile, authorize that venue, and check in."}</p>
               </section>
             </>
           ) : null}
@@ -623,41 +578,7 @@ export default function AccountClient() {
               <input value={city} onChange={(event) => setCity(event.target.value)} required />
             </label>
           ) : null}
-          {isDancerSignup ? (
-            <div className="dancer-city-field">
-              <label>
-                City
-                <select
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
-                  required
-                  disabled={dancerSignupCitiesStatus !== "ready"}
-                  aria-describedby="dancer-signup-city-note"
-                >
-                  <option value="" disabled>
-                    {dancerSignupCitiesStatus === "loading"
-                      ? "Loading available cities..."
-                      : dancerSignupCitiesStatus === "error"
-                        ? "Cities temporarily unavailable"
-                        : "Select a city"}
-                  </option>
-                  {dancerSignupCities.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-                <small id="dancer-signup-city-note" className={dancerSignupCitiesStatus === "error" ? "field-error" : "field-note"}>
-                  {dancerSignupCitiesStatus === "error"
-                    ? "Dancer signup is temporarily unavailable because the live city list could not be loaded."
-                    : "Cities are loaded from active MyDancr venue markets."}
-                </small>
-              </label>
-              {dancerSignupCitiesStatus === "error" ? (
-                <button className="city-retry" type="button" onClick={() => setDancerSignupCitiesLoadAttempt((attempt) => attempt + 1)}>Retry city list</button>
-              ) : null}
-            </div>
-          ) : null}
-
-          <button className="submit" type="submit" disabled={isSubmitting || (isDancerSignup && dancerSignupCitiesStatus !== "ready")}>
+          <button className="submit" type="submit" disabled={isSubmitting}>
             {isSubmitting ? (mode === "login" ? "Signing in..." : "Creating account...") : mode === "login" ? "Sign in" : "Create account"}
           </button>
           {status ? <p className="status" role="status" aria-live="polite" aria-atomic="true">{status}</p> : null}
@@ -763,11 +684,6 @@ function AccountStyles() {
       label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       input, select { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
       select option { color: #fff; background: #111118; }
-      .field-note, .field-error { font-size: 12px; line-height: 1.4; font-weight: 700; }
-      .field-note { color: #94a3b8; }
-      .field-error { color: #ef4444; }
-      .dancer-city-field { display: grid; gap: 8px; }
-      .city-retry { justify-self: start; min-height: 36px; padding: 0 12px; border: 1px solid rgba(124,58,237,.48); border-radius: 8px; color: #fff; background: rgba(124,58,237,.16); font-weight: 850; cursor: pointer; }
       input[type="file"] { min-height: auto; padding: 10px 12px; color: #cfc5de; }
       .password-control { position: relative; display: flex; align-items: center; }
       .password-control input { width: 100%; padding-right: 46px; }

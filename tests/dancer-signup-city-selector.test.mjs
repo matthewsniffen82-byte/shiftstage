@@ -12,7 +12,7 @@ const [cityLibrary, cityRoute, authRoute, profileRoute, accountClient, dashboard
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
-test("available dancer signup cities come from active production venues", () => {
+test("available dancer onboarding cities come from active production venues", () => {
   assert.match(cityLibrary, /\.from\("venues"\)[\s\S]*?\.select\("city, state"\)[\s\S]*?\.eq\("is_active", true\)/);
   assert.match(cityLibrary, /new Map<string, DancerSignupCity>/);
   assert.match(cityLibrary, /cities\.values\(\)/);
@@ -20,29 +20,29 @@ test("available dancer signup cities come from active production venues", () => 
   assert.match(cityRoute, /cache-control/);
 });
 
-test("dancer account creation and profile saves reject cities outside the live list", () => {
-  assert.match(authRoute, /role === "dancer"[\s\S]*?requireDancerSignupCity\(createAdminSupabaseClient\(\), body\.city\)/);
+test("dancer account creation defers city selection while profile saves validate it", () => {
+  assert.match(authRoute, /const city = role === "dancer" \? "" : readOptional\(body\.city\) \|\| "Las Vegas"/);
+  assert.doesNotMatch(authRoute, /requireDancerSignupCity/);
   assert.match(profileRoute, /update\.city = await requireDancerSignupCity\(createAdminSupabaseClient\(\), body\.city\)/);
   assert.match(profileRoute, /error instanceof DancerSignupCityInputError\) throw new ProfileInputError\(error\.message\)/);
 });
 
-test("the live dancer signup and setup flows use the database city dropdown", () => {
-  assert.match(liveShell, /<select id="dancerCity" required disabled>/);
-  assert.doesNotMatch(liveShell, /<input id="dancerCity" type="hidden"/);
+test("the live shell keeps city out of signup and presents it during onboarding", () => {
+  assert.match(liveShell, /<input id="dancerCity" type="hidden" value="">/);
+  assert.doesNotMatch(liveShell, /<select id="dancerCity"/);
   assert.match(liveShell, /fetchJson\("\/api\/public\/cities"\)/);
   assert.match(liveShell, /function dancerSignupCityOptionsMarkup/);
   assert.match(liveShell, /<select id="setupCity" data-setup-profile-field="city" required/);
-  assert.match(liveShell, /const confirmedCity = state\.dancerCity \|\| state\.city \|\| ""/);
-  assert.match(liveShell, /Select an available city before creating your dancer account/);
+  assert.match(liveShell, /const confirmedCity = state\.dancerCity \|\| ""/);
+  assert.doesNotMatch(liveShell, /Select an available city before creating your dancer account/);
+  assert.match(liveShell, /password: document\.getElementById\("dancerPassword"\)\.value,\s*emailRedirectTo: saveAuthResume\("dancer"\)/);
 });
 
-test("the Next account and dashboard surfaces use the same production city source", () => {
-  assert.match(accountClient, /fetch\("\/api\/public\/cities"/);
-  assert.match(accountClient, /\[dancerSignupCitiesLoadAttempt, isDancerSignup\]/);
-  assert.doesNotMatch(accountClient, /\[dancerSignupCitiesStatus, isDancerSignup\]/);
-  assert.match(accountClient, /setDancerSignupCitiesLoadAttempt\(\(attempt\) => attempt \+ 1\)/);
-  assert.match(accountClient, /isDancerSignup \? \([\s\S]*?<select[\s\S]*?dancerSignupCities\.map/);
-  assert.match(accountClient, /Cities are loaded from active MyDancr venue markets/);
+test("the Next account defers city to the dashboard onboarding selector", () => {
+  assert.doesNotMatch(accountClient, /fetch\("\/api\/public\/cities"|dancerSignupCities|dancer-signup-city-note/);
+  assert.match(accountClient, /choose your city during onboarding/);
+  assert.match(accountClient, /if \(mode === "signup" && role === "customer"\) payload\.city = city/);
   assert.match(dashboardClient, /fetch\("\/api\/public\/cities"/);
   assert.match(dashboardClient, /<select value=\{city\}[\s\S]*?cityOptions\.map/);
+  assert.match(dashboardClient, /Add and save your stage name and city/);
 });
