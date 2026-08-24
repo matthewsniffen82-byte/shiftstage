@@ -67,9 +67,13 @@ test("the primary venue dashboard opens the shared routed workspace immediately"
 test("venue operations prioritize tonight, Club Deals, phone-tap stickers, and then reporting", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
   assert.match(venuePanel, /Tonight/);
-  assert.match(venuePanel, /title="Deals & billing"/);
+  assert.match(venuePanel, /title="Current Club Deals"/);
+  assert.match(venuePanel, /venue-current-deals-link[\s\S]*?openVenueSection\(event, "venue-club-deals"\)/);
+  assert.match(venuePanel, /View \$\{activeDealCount\} current Club/);
   assert.match(venuePanel, /VenueNfcTagPanel/);
   assert.match(venuePanel, /Analytics & performance/);
+  assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf('title="Working now"'));
+  assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf("VenueNfcTagPanel"));
   assert.ok(venuePanel.indexOf("Tonight") < venuePanel.indexOf("Analytics & performance"));
 });
 
@@ -109,11 +113,13 @@ test("venue dashboards expose the complete MyDancr-managed contract ledger", () 
   const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
   assert.match(venueDealPanel, /MyDancr managed/);
   assert.match(venueDealPanel, /Your Club Deals/);
-  assert.match(venueDealPanel, /MyDancr publishes deals based on your venue agreement/);
+  assert.match(venueDealPanel, /official offers currently attached to your venue/);
+  assert.match(venueDealPanel, /Live deals appear first and are marked in green/);
+  assert.match(venueDealPanel, /displayedDeals = \[\.\.\.liveDeals/);
   assert.match(venueDealPanel, /Fee per confirmed guest/);
   assert.match(venueDealPanel, /Agreement ID/);
   assert.match(venueDealPanel, /Redemption status/);
-  assert.match(venueDealPanel, /deals\.map/);
+  assert.match(venueDealPanel, /displayedDeals\.map/);
   assert.match(venueDealPanel, /Guest terms/);
   assert.match(venueDealPanel, /Fee per guest/);
   assert.doesNotMatch(venueDealPanel, /Display order/);
@@ -132,7 +138,7 @@ test("venue publication status hides internal requirements while retaining the r
   assert.match(venuePanel, /Ready to review/);
   assert.match(venuePanel, /Changes in progress/);
   assert.match(dashboard, /id="venue-deal-contract-ledger"/);
-  assert.match(venuePanel, /View your MyDancr-managed deals, agreed fees, and monthly activity/);
+  assert.match(venuePanel, /Review every live or inactive deal, guest terms, agreed fees, and monthly activity/);
 });
 
 test("MyDancr supplies NFC stickers while venue owners receive read-only inventory", () => {

@@ -181,7 +181,7 @@ test("MyDancr publishes offers against a signed referral agreement for venue vis
   assert.match(migration, /is_active = false/);
   const venueLedger = venueDashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
   assert.match(venueLedger, /Fee per confirmed guest/);
-  assert.match(venueLedger, /MyDancr publishes deals based on your venue agreement/);
+  assert.match(venueLedger, /official offers currently attached to your venue/);
   assert.match(venueLedger, /Redemption status/);
   assert.doesNotMatch(venueLedger, /Request fee change|Publish Club Deal/);
   assert.doesNotMatch(venueDashboard, /Monthly successful dancer QR redemptions/);

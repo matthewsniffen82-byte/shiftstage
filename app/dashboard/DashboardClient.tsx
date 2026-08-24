@@ -2087,7 +2087,7 @@ function VenuePanel({
 
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
-          ["tonight", "Tonight", `${workingNow.length} working now`],
+          ["tonight", "Tonight", `${workingNow.length} working · ${activeDealCount} live ${activeDealCount === 1 ? "deal" : "deals"}`],
           ["venue", "Venue page", venuePageTabStatus],
           ["business", "Business", "Analytics & team"],
         ] as const).map(([workspace, label, summary]) => (
@@ -2118,9 +2118,14 @@ function VenuePanel({
           <span className="eyebrow">Tonight at a glance</span>
           <strong>{liveDealSummary}</strong>
           <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
-          <a className={`primary-link venue-working-now-link${workingNow.length ? " is-live" : ""}`} href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
-            {workingNow.length ? `View ${workingNow.length} working now` : "Open working-now roster"}
-          </a>
+          <div className="venue-command-links">
+            <a className="primary-link venue-current-deals-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
+              {activeDealCount ? `View ${activeDealCount} current Club ${activeDealCount === 1 ? "Deal" : "Deals"}` : "View Club Deal status"}
+            </a>
+            <a className={`primary-link venue-working-now-link${workingNow.length ? " is-live" : ""}`} href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
+              {workingNow.length ? `View ${workingNow.length} working now` : "Open working-now roster"}
+            </a>
+          </div>
           {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
       </section>
 
@@ -2191,6 +2196,26 @@ function VenuePanel({
       </section>
 
       <DashboardSection
+        badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
+        description="Review every live or inactive deal, guest terms, agreed fees, and monthly activity."
+        eyebrow="Current offers"
+        hidden={activeWorkspace !== "tonight"}
+        id="venue-club-deals"
+        title="Current Club Deals"
+      >
+        <VenueDealReadOnlyPanel
+          deals={dashboardDeals}
+          dealRequests={dealRequests}
+          finance={finance}
+          referralFee={referralFee}
+          revenue={dealRevenue}
+          venueSlug={venueSlug}
+          canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
+          onDealRequestsChange={onDealRequestsChange}
+        />
+      </DashboardSection>
+
+      <DashboardSection
         badge={`${workingNow.length} active`}
         description="Review dancers verified by this venue's official check-in sticker and open their live profiles."
         eyebrow="Floor status"
@@ -2227,26 +2252,6 @@ function VenuePanel({
           initialAffiliations={activeAffiliations}
           canManageRoster={canManageRoster}
           canRequestSupport={canRequestNfcSupport}
-        />
-      </DashboardSection>
-
-      <DashboardSection
-        badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
-        description="View your MyDancr-managed deals, agreed fees, and monthly activity."
-        eyebrow="Club Deals"
-        hidden={activeWorkspace !== "tonight"}
-        id="venue-club-deals"
-        title="Deals & billing"
-      >
-        <VenueDealReadOnlyPanel
-          deals={dashboardDeals}
-          dealRequests={dealRequests}
-          finance={finance}
-          referralFee={referralFee}
-          revenue={dealRevenue}
-          venueSlug={venueSlug}
-          canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
-          onDealRequestsChange={onDealRequestsChange}
         />
       </DashboardSection>
 
@@ -7138,6 +7143,7 @@ function VenueDealReadOnlyPanel({
   const [requestStatus, setRequestStatus] = useState("");
   const [isRequesting, setIsRequesting] = useState(false);
   const liveDeals = deals.filter((deal) => deal.isActive === true);
+  const displayedDeals = [...liveDeals, ...deals.filter((deal) => deal.isActive !== true)];
   const currentFee = referralFee?.current && typeof referralFee.current === "object"
     ? referralFee.current as Record<string, unknown>
     : null;
@@ -7174,9 +7180,9 @@ function VenueDealReadOnlyPanel({
     <article className="info-panel venue-deal-readonly" id="venue-deal-contract-ledger" tabIndex={-1}>
       <header className="venue-deal-readonly-heading">
         <div>
-          <span className="eyebrow">MyDancr managed</span>
+          <span className="eyebrow">Current Club Deals · MyDancr managed</span>
           <h2>Your Club Deals</h2>
-          <p>MyDancr publishes deals based on your venue agreement. Request changes anytime.</p>
+          <p>These are the official offers currently attached to your venue. Live deals appear first and are marked in green. Request changes anytime.</p>
         </div>
         <strong className={liveDeals.length ? "deal-state active" : "deal-state"}>
           {liveDeals.length ? `${liveDeals.length} live` : "No live deals"}
@@ -7202,7 +7208,7 @@ function VenueDealReadOnlyPanel({
       </section>
 
       <div className="venue-contract-deal-list" aria-label="All Club Deals">
-        {deals.map((deal) => (
+        {displayedDeals.map((deal) => (
           <section className={deal.isActive === true ? "is-live" : ""} key={String(deal.id)}>
             <div className="venue-contract-deal-title">
               <span>{deal.isActive === true ? "Live Club Deal" : "Not published"}</span>
@@ -7566,7 +7572,10 @@ function DashboardStyles() {
       .venue-refresh-control button:disabled { opacity: .6; cursor: wait; }
       .venue-command-primary { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(255,255,255,.13); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel-raised); }
       .venue-command-primary > strong { color: #f8f7fb; font-size: clamp(21px, 4vw, 27px); line-height: 1.08; }
-      .venue-command-primary .venue-working-now-link { width: 100%; max-width: 100%; min-height: 52px; box-sizing: border-box; margin-top: 5px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; color: #f8fafc; background: #111118; box-shadow: none; }
+      .venue-command-links { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 5px; }
+      .venue-command-primary .venue-current-deals-link, .venue-command-primary .venue-working-now-link { width: 100%; max-width: 100%; min-height: 52px; box-sizing: border-box; border-radius: 14px; }
+      .venue-command-primary .venue-current-deals-link { border: 1px solid rgba(196,181,253,.58); color: #f8fafc; background: #7c3aed; box-shadow: 0 0 18px rgba(124,58,237,.2); }
+      .venue-command-primary .venue-working-now-link { border: 1px solid var(--mydancr-dashboard-border); color: #f8fafc; background: #111118; box-shadow: none; }
       .venue-command-primary .venue-working-now-link.is-live { border-color: rgba(16,185,129,.58); color: #d1fae5; background: rgba(6,78,59,.34); box-shadow: 0 0 18px rgba(16,185,129,.12); }
       .venue-publication-panel { display: grid; gap: 14px; padding: 18px; border: 1px solid rgba(139,92,246,.32); border-radius: var(--mydancr-dashboard-radius); background: linear-gradient(145deg, rgba(31,19,53,.72), rgba(11,11,16,.98) 64%); box-shadow: inset 3px 0 0 rgba(139,92,246,.72); }
       .venue-publication-panel.is-published { border-color: rgba(16,185,129,.34); background: linear-gradient(145deg, rgba(6,78,59,.18), rgba(11,11,16,.98) 64%); box-shadow: inset 3px 0 0 rgba(16,185,129,.72); }
@@ -8579,7 +8588,7 @@ function DashboardStyles() {
         .earnings-history-tabs button { padding: 5px 8px; }
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
