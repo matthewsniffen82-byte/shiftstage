@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, liquorMigration, supportedOfferMigration, dealPolicy, deals, venueDealActions, presets, venueDealRoute, adminDealRoute, adminClient, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
+const [migration, liquorMigration, supportedOfferMigration, freeAdmissionMigration, dealPolicy, deals, venueDealActions, presets, venueDealRoute, adminDealRoute, adminClient, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608080001_multi_offer_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608160004_prohibit_liquor_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608170001_standardize_active_club_deals.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608240004_free_admission_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-deal-actions.ts", import.meta.url), "utf8"),
@@ -37,13 +38,14 @@ test("MyDancr admins can publish a prioritized collection of non-alcohol Club De
   assert.equal((venueDealRoute.match(/status: 403/g) || []).length, 2);
 });
 
-test("new and currently active Club Deals are limited to half-off admission or line skip", () => {
+test("new and currently active Club Deals are limited to the approved admission catalog", () => {
   const adminManager = adminClient.match(/function AdminClubDealManager\([\s\S]*?(?=\nfunction ReferralFeeManager)/)?.[0] || "";
   assert.match(presets, /title: "Half-off admission"/);
   assert.match(presets, /title: "Skip the line"/);
-  assert.equal((presets.match(/title: "/g) || []).length, 2);
+  assert.match(presets, /title: "Free admission"/);
+  assert.equal((presets.match(/title: "/g) || []).length, 3);
   assert.match(venueDealActions, /clubDealOfferPresetForTitle\(input\.dealTitle\)/);
-  assert.match(venueDealActions, /Choose Half-off admission or Skip the line/);
+  assert.match(venueDealActions, /Choose an approved admission offer/);
   assert.match(venueDealActions, /const offerType: ClubDealOfferType = "admission"/);
   assert.match(venueDealActions, /booking_url: null/);
   assert.match(adminManager, /Deal offered/);
@@ -55,6 +57,9 @@ test("new and currently active Club Deals are limited to half-off admission or l
   assert.match(supportedOfferMigration, /deal_title in \('Half-off admission', 'Skip the line'\)/);
   assert.match(supportedOfferMigration, /offer_type = 'admission'/);
   assert.match(supportedOfferMigration, /booking_url is null/);
+  assert.match(freeAdmissionMigration, /deal_title in \('Half-off admission', 'Skip the line', 'Free admission'\)/);
+  assert.match(freeAdmissionMigration, /offer_type = 'admission'/);
+  assert.match(freeAdmissionMigration, /booking_url is null/);
 });
 
 test("admins manage multiple deals while venue accounts see every campaign read-only", () => {

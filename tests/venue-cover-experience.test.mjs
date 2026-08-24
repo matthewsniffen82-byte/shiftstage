@@ -70,10 +70,12 @@ test("the admin prepares media and the venue reviews it in the finished preview"
   assert.match(adminClient, /removeVenueImage/);
   assert.match(dashboard, /canPreviewVenuePage \? <button type="button" onClick=\{openVenueCardPreview\}>Preview venue<\/button>/);
   assert.doesNotMatch(dashboard, /Venue review copy · managed by MyDancr|venue-cover-panel/);
-  assert.match(dashboard, /profile\?\.coverImageUrl/);
+  assert.match(dashboard, /className="venue-card-preview-art"/);
+  assert.match(dashboard, /profile\?\.logoImageUrl/);
+  assert.doesNotMatch(dashboard, /profile\?\.coverImageUrl/);
 });
 
-test("approved cover media flows through discovery and the canonical live venue experience", () => {
+test("approved cover media remains available to the canonical live venue experience", () => {
   assert.match(discoveryRoute, /cover_image_storage_path/);
   assert.match(discoveryRoute, /responsivePublicImage\([\s\S]*?"venue-cover-images"[\s\S]*?coverImageUrl:/);
   assert.match(publicVenuesRoute, /responsivePublicImage\([\s\S]*?"venue-cover-images"[\s\S]*?coverImageUrl:/);
@@ -91,22 +93,29 @@ test("approved cover media flows through discovery and the canonical live venue 
   );
 });
 
-test("venue discovery uses approved venue covers with a branded artwork fallback", () => {
+test("venue cards use only official logos or branded monograms", () => {
   const visualHelper =
     homeSource.match(/function venueVisualAttrs\(venue\) \{[\s\S]*?(?=\n    function venueLineupMarkup)/)?.[0] || "";
+  const venueCardRenderer =
+    homeSource.match(/function venueCard\(venue\) \{[\s\S]*?(?=\n    function venueDancers)/)?.[0] || "";
+  const venueSlide =
+    homeSource.match(/function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/)?.[0] || "";
+
   assert.match(visualHelper, /customPhotoAttrs\(venueCoverUrl, venue\.coverImageSrcSet\)/);
   assert.doesNotMatch(visualHelper, /publicProfilePhotoUrl|featuredProfile|has-lineup-photo/);
   assert.match(
     visualHelper,
     /const hasVenueCover = Boolean\(attrs\.style\)[\s\S]*?const sourceClass = hasVenueCover \? " has-venue-cover" : " is-venue-artwork"/,
   );
-  assert.match(homeSource, /home-venue-discovery-art\$\{visual\.attrs\.className\}/);
+  assert.match(venueCardRenderer, /venueLogoMarkup\(venue, "venue-card-logo"\)/);
+  assert.match(venueCardRenderer, /class="venue-art is-venue-logo-artwork\$\{logoMarkup \? " has-venue-logo" : ""\}"/);
+  assert.match(venueCardRenderer, /logoMarkup \|\| `<span class="venue-card-mark">/);
+  assert.doesNotMatch(venueCardRenderer, /venueVisualAttrs|coverImageUrl|customPhotoAttrs|visual\.attrs/);
+  assert.match(venueSlide, /venueLogoMarkup\(venue, "home-venue-discovery-logo"\)/);
+  assert.match(venueSlide, /class="home-venue-discovery-art is-venue-logo-artwork\$\{logoMarkup \? " has-venue-logo" : ""\}"/);
+  assert.match(venueSlide, /logoMarkup \|\| `<span class="home-venue-discovery-monogram">/);
+  assert.doesNotMatch(venueSlide, /venueVisualAttrs|coverImageUrl|customPhotoAttrs|visual\.attrs/);
   assert.match(homeSource, /home-venue-discovery-lineup/);
-  assert.match(
-    homeSource,
-    /#results\.venue-card-grid \.venue-card \.venue-art\.has-custom-photo[\s\S]*?var\(--custom-photo\) !important/,
-  );
-  assert.match(homeSource, /\.home-venue-discovery-art\.has-custom-photo[\s\S]*?var\(--custom-photo\)/);
   assert.match(homeSource, /\.home-venue-discovery-art\.is-venue-artwork \{[\s\S]*?repeating-linear-gradient\(115deg[\s\S]*?radial-gradient\(circle at 50% 36%[\s\S]*?linear-gradient\(145deg, #1d1e22/);
   assert.match(homeSource, /\.home-venue-discovery-monogram \{[\s\S]*?width: 112px;[\s\S]*?height: 112px;/);
   assert.doesNotMatch(homeSource, /\.home-venue-discovery-art\.has-lineup-photo/);

@@ -2903,7 +2903,6 @@ function VenueManager({
             { label: "Public phone", complete: Boolean(asText(venue.phone)) },
             { label: "Venue hours", complete: Boolean(asText(venue.opens_at) && asText(venue.closes_at)) },
             { label: "Venue logo", complete: Boolean(asText(venue.logo_image_url)) },
-            { label: "Discovery cover", complete: Boolean(asText(venue.cover_image_url)) },
             { label: "Active Club Deal", complete: Number(venue.active_deal_count || 0) > 0 },
           ];
           const isReady = requirements.every((requirement) => requirement.complete);
@@ -2963,7 +2962,7 @@ function VenueManager({
                         const file = new FormData(event.currentTarget).get("file");
                         void uploadVenueImage(venue, kind, file instanceof File ? file : null);
                       }}>
-                        <strong>{kind === "logo" ? "Official logo" : "Discovery cover"}</strong>
+                        <strong>{kind === "logo" ? "Official logo" : "Venue detail cover (optional)"}</strong>
                         <small>{kind === "logo" ? "Use the original high-resolution logo file." : "Use the original camera image for the clearest venue page."}</small>
                         {imageUrl ? <img src={imageUrl} alt={`${asText(venue.name)} ${kind}`} /> : <span>No {kind} uploaded</span>}
                         {!isActive ? <input accept="image/*,.heic,.heif" name="file" type="file" required /> : null}

@@ -11,6 +11,12 @@ export const CLUB_DEAL_OFFER_PRESETS = Object.freeze([
     description: "Use the venue's designated priority admission line after cashier confirmation.",
     terms: "One redemption per guest. Priority access does not guarantee immediate admission and remains subject to venue capacity, age requirements, dress code, and house rules.",
   }),
+  Object.freeze({
+    key: "free_admission",
+    title: "Free admission",
+    description: "Receive one complimentary general-admission entry after cashier confirmation.",
+    terms: "One redemption per guest. Offer applies to standard general admission only and remains subject to venue capacity, age requirements, dress code, and house rules.",
+  }),
 ]);
 
 export type ClubDealOfferPreset = (typeof CLUB_DEAL_OFFER_PRESETS)[number];

@@ -2039,6 +2039,8 @@ function VenuePanel({
   const venueSlug = String(profile?.slug || "");
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
+  const venueReviewDeal = dashboardDeals.find((venueDeal) => venueDeal.isActive === true) || dashboardDeals[0];
+  const venueReviewReferralFee = referralFee?.current as Record<string, unknown> | null | undefined;
   const venueCardPreviewDeal = dashboardDeals.find((venueDeal) => venueDeal.isActive === true);
   const venueCardPreviewHours = formatVenuePreviewHours(profile?.opensAt, profile?.closesAt);
   const venueCardPreviewLocation = [profile?.city, profile?.state].map((value) => String(value || "").trim()).filter(Boolean).join(", ") || "Location not added";
@@ -2171,6 +2173,20 @@ function VenuePanel({
             ) : null}
             {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link> : null}
           </div>
+        ) : null}
+        {isAwaitingVenueReview && venueReviewDeal ? (
+          <section className="venue-review-commercial-terms" aria-label="Club Deal approval terms">
+            <div className="venue-review-commercial-heading">
+              <span className="eyebrow">Included in this approval</span>
+              <strong>Club Deal and MyDancr fee</strong>
+              <small>These are read-only. Request a correction before approving if they do not match the agreement.</small>
+            </div>
+            <dl>
+              <div><dt>Customer offer</dt><dd>{String(venueReviewDeal.dealTitle || "Club Deal")}</dd></div>
+              <div><dt>MyDancr fee</dt><dd>{venueReviewReferralFee ? `${formatCents(Number(venueReviewReferralFee.feeCents || 0))} per confirmed customer` : "Agreement pending"}</dd></div>
+              <div><dt>Guest terms</dt><dd>{String(venueReviewDeal.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</dd></div>
+            </dl>
+          </section>
         ) : null}
         {isAwaitingVenueReview ? (
           <div className="venue-review-request">
@@ -2377,10 +2393,7 @@ function VenuePanel({
               </button>
             </header>
             <article className="venue-card-preview-card" aria-label={`${venueName} venue card preview`}>
-              <div
-                className={`venue-card-preview-art${profile?.coverImageUrl ? " has-cover" : ""}`}
-                style={profile?.coverImageUrl ? { backgroundImage: `linear-gradient(180deg, rgba(4,4,8,.08), rgba(4,4,8,.66)), url("${String(profile.coverImageUrl).replace(/"/g, "\\\"")}")` } : undefined}
-              >
+              <div className="venue-card-preview-art">
                 <span className="venue-card-preview-kicker">MyDancr club</span>
                 {profile?.logoImageUrl ? (
                   <span className="venue-card-preview-logo-shell" aria-hidden="true">
@@ -7589,6 +7602,14 @@ function DashboardStyles() {
       .venue-publication-actions > button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
       .venue-publication-panel > p[role="status"] { padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 9px; color: #baf5ff; background: rgba(148,229,255,.07); font-weight: 850; }
       .venue-review-request { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(251,191,36,.25); border-radius: 10px; background: rgba(251,191,36,.045); }
+      .venue-review-commercial-terms { display: grid; gap: 13px; padding: 14px; border: 1px solid rgba(255,255,255,.13); border-radius: 13px; background: rgba(8,8,12,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
+      .venue-review-commercial-heading { min-width: 0; display: grid; gap: 5px; }
+      .venue-review-commercial-heading strong { color: #f8fafc; font-size: 17px; line-height: 1.15; }
+      .venue-review-commercial-heading small { color: #9ca3af; font-size: 11px; line-height: 1.4; }
+      .venue-review-commercial-terms dl { min-width: 0; display: grid; gap: 8px; margin: 0; }
+      .venue-review-commercial-terms dl > div { min-width: 0; display: grid; grid-template-columns: minmax(108px,.42fr) minmax(0,1fr); gap: 11px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; background: rgba(255,255,255,.025); }
+      .venue-review-commercial-terms dt { color: #8f879a; font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+      .venue-review-commercial-terms dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: #f8fafc; font-size: 12px; font-weight: 800; line-height: 1.35; }
       .venue-review-request label { color: #f8fafc; font-size: 12px; font-weight: 900; }
       .venue-review-request textarea { width: 100%; min-height: 88px; box-sizing: border-box; resize: vertical; padding: 10px 11px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #f8fafc; background: #111118; font: inherit; }
       .venue-review-request textarea:focus { border-color: #7c3aed; outline: 2px solid rgba(124,58,237,.22); outline-offset: 1px; }
@@ -7604,7 +7625,6 @@ function DashboardStyles() {
       .venue-card-preview-close:focus-visible { border-color: #a78bfa; outline: 3px solid rgba(167,139,250,.24); outline-offset: 2px; }
       .venue-card-preview-card { position: relative; min-width: 0; min-height: 164px; display: grid; grid-template-columns: minmax(120px,158px) minmax(0,1fr); overflow: hidden; border: 1px solid rgba(124,58,237,.38); border-radius: 19px; background: linear-gradient(135deg,rgba(17,17,24,.98),rgba(8,8,13,.99)); box-shadow: 0 20px 54px rgba(0,0,0,.56),0 0 24px rgba(124,58,237,.1),inset 0 1px 0 rgba(255,255,255,.035); }
       .venue-card-preview-art { position: relative; min-height: 164px; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 52% 50%,rgba(53,216,255,.2),transparent 0 23%),radial-gradient(circle at 56% 50%,rgba(168,85,247,.22),transparent 0 44%),linear-gradient(135deg,rgba(13,12,20,.98),rgba(4,4,7,.98)); background-position: center; background-size: cover; }
-      .venue-card-preview-art.has-cover::after { position: absolute; inset: 0; content: ""; pointer-events: none; background: linear-gradient(180deg,rgba(3,3,6,.04),rgba(3,3,6,.3)); }
       .venue-card-preview-kicker { position: absolute; z-index: 2; top: 11px; left: 11px; padding: 5px 7px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f3efff; background: rgba(6,6,10,.62); backdrop-filter: blur(8px); font-size: 8px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .venue-card-preview-mark, .venue-card-preview-logo-shell { position: relative; z-index: 2; width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 18px; color: #f3eaff; background: rgba(10,10,16,.78); box-shadow: 0 12px 30px rgba(0,0,0,.44),0 0 24px rgba(124,58,237,.2); font-size: 17px; font-weight: 900; letter-spacing: .06em; }
       .venue-card-preview-logo-shell img { width: 100%; height: 100%; display: block; object-fit: contain; background: rgba(255,255,255,.96); }

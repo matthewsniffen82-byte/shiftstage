@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, service, venueRoute, adminRoute, dashboardRoute, dashboard, adminClient, access, profileRoute] = await Promise.all([
+const [migration, freeAdmissionMigration, service, venueRoute, adminRoute, dashboardRoute, dashboard, adminClient, access, profileRoute] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608230001_venue_club_deal_requests.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608240004_free_admission_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-deal-requests.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal-requests/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/deals/route.ts", import.meta.url), "utf8"),
@@ -17,6 +18,8 @@ const [migration, service, venueRoute, adminRoute, dashboardRoute, dashboard, ad
 test("venue Club Deal requests are durable, venue-scoped, audited records", () => {
   assert.match(migration, /create table if not exists public\.venue_club_deal_requests/);
   assert.match(migration, /offer_key in \('half_off_admission', 'skip_the_line'\)/);
+  assert.match(freeAdmissionMigration, /offer_key in \('half_off_admission', 'skip_the_line', 'free_admission'\)/);
+  assert.match(freeAdmissionMigration, /offer_title in \('Half-off admission', 'Skip the line', 'Free admission'\)/);
   assert.match(migration, /status in \('pending', 'under_review', 'approved', 'rejected', 'withdrawn'\)/);
   assert.match(migration, /Venue teams read own Club Deal requests/);
   assert.match(migration, /Admins manage venue Club Deal requests/);

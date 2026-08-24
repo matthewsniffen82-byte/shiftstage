@@ -7,6 +7,7 @@ import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
 import { deliverNotificationRows } from "./notification-delivery";
 import { transitionDancerPublication } from "./profile-publication";
 import { getActiveClubDealListsForVenues, getActiveClubDealsForVenue } from "./deals";
+import { getVenueReferralFeeState } from "./referral-fees";
 import { getVenueById, getVenuePublicationState } from "./venue";
 import { getStripe } from "../stripe";
 
@@ -695,6 +696,7 @@ export async function transitionAdminManagedVenuePage(
 ) {
   const profile = await getVenueById(client, venueId);
   const deals = await getActiveClubDealsForVenue(client, venueId);
+  const referralFee = (await getVenueReferralFeeState(client, venueId)).current;
   const publication = getVenuePublicationState(profile, deals);
 
   if (!publication.isReady) {
@@ -726,8 +728,15 @@ export async function transitionAdminManagedVenuePage(
       recipient_id: profile.ownerUserId,
       notification_type: "approval_status" as const,
       title: "Your venue page is ready to review",
-      body: `${profile.name} is ready for your approval. Open the venue dashboard to preview the exact page, request changes, or approve it to make it live.`,
-      payload: { venueId, venueSlug: profile.slug, event: "venue_page_review" },
+      body: `${profile.name} is ready for your approval. The package includes ${deals[0]?.dealTitle || "the recorded Club Deal"} and a MyDancr fee of ${formatAdminFee(referralFee?.feeCents || 0)} per confirmed customer. Open the venue dashboard to review the exact page and commercial terms, request changes, or approve it to make it live.`,
+      payload: {
+        venueId,
+        venueSlug: profile.slug,
+        event: "venue_page_review",
+        dealId: deals[0]?.id || null,
+        dealTitle: deals[0]?.dealTitle || null,
+        referralFeeCents: referralFee?.feeCents || null,
+      },
     };
     const { error: notificationError } = await (client as any).from("notifications").insert(notificationRow);
     if (notificationError) throw notificationError;
@@ -763,6 +772,15 @@ export async function transitionAdminManagedVenuePage(
   }
   await logAdminAction(client, { adminId, targetType: "venue", targetId: venueId, action: "publish_approved_venue_page", notes: profile.name });
   return data;
+}
+
+function formatAdminFee(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value / 100);
 }
 
 export async function resetManagedVenuePageReview(

@@ -136,7 +136,7 @@ export async function updateVenueDealForAccount(
 
   const offerPreset = clubDealOfferPresetForTitle(input.dealTitle);
   if (!offerPreset) {
-    throw new Error("Choose Half-off admission or Skip the line for this Club Deal.");
+    throw new Error("Choose an approved admission offer for this Club Deal.");
   }
   const dealTitle = offerPreset.title;
   const dealDescription = offerPreset.description;
@@ -225,7 +225,7 @@ async function getAdminVenueDeal(client: DancrClient, venueId: string, dealId: s
 
 function validatedDealFields(input: VenueDealInput) {
   const offerPreset = clubDealOfferPresetForTitle(input.dealTitle);
-  if (!offerPreset) throw new Error("Choose Half-off admission or Skip the line for this Club Deal.");
+  if (!offerPreset) throw new Error("Choose an approved admission offer for this Club Deal.");
   const dealTitle = offerPreset.title;
   const dealDescription = offerPreset.description;
   const dealTerms = optionalDealText(input.dealTerms, "Deal terms", 1200) || offerPreset.terms;

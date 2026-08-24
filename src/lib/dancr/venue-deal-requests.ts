@@ -38,7 +38,7 @@ export async function createVenueClubDealRequest(
   const venueId = requiredUuid(input.venueId, "Venue is required.");
   const requestedByUserId = requiredUuid(input.requestedByUserId, "Venue user is required.");
   const preset = CLUB_DEAL_OFFER_PRESETS.find((candidate) => candidate.key === input.offerKey);
-  if (!preset) throw new Error("Choose Half-off admission or Skip the line.");
+  if (!preset) throw new Error("Choose an approved admission offer.");
   const requestNotes = optionalText(input.requestNotes, "Request notes", 1000);
 
   const { count, error: countError } = await (client as any)

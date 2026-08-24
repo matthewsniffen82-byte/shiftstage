@@ -44,7 +44,7 @@ const fictionalNames = {
   "treasures-las-vegas": "Aurora Room",
 };
 
-const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic, migration, addressMigration, travelMigration, allVenueAddressMigration, generator, uberButton] =
+const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic, migration, addressMigration, travelMigration, allVenueAddressMigration, verifiedVenueAddressMigration, generator, uberButton] =
   await Promise.all([
     readFile(new URL("../src/lib/dancr/venue-branding.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
@@ -57,6 +57,7 @@ const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aes
     readFile(new URL("../supabase/migrations/202608110004_fictional_las_vegas_venue_addresses.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/202608150001_enable_selected_demo_venue_travel.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/202608180005_standardize_all_venue_addresses.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/202608240005_allow_verified_venue_addresses.sql", import.meta.url), "utf8"),
     readFile(new URL("../scripts/generate-fictional-venue-logos.mjs", import.meta.url), "utf8"),
     readFile(new URL("../app/components/UberRideButton.tsx", import.meta.url), "utf8"),
   ]);
@@ -147,7 +148,7 @@ test("fictional Vegas venue travel stays visibly active but preview-only for eve
   assert.match(uberButton, /isFictionalVenueTravelPreviewOnly\(venue\)[\s\S]*?aria-disabled="true"[\s\S]*?event\.preventDefault\(\)[\s\S]*?event\.stopPropagation\(\)[\s\S]*?tabIndex=\{-1\}/);
 });
 
-test("the latest production migration gives every venue the MyDancr placeholder address", () => {
+test("demo venues keep placeholders while managed venue pages can use verified addresses", () => {
   assert.match(allVenueAddressMigration, /create or replace function public\.mydancr_placeholder_venue_address/);
   assert.match(allVenueAddressMigration, /'0000 MyDancr Ave'/);
   assert.match(allVenueAddressMigration, /btrim\(venue_state\) \|\| ' 55555'/);
@@ -157,6 +158,9 @@ test("the latest production migration gives every venue the MyDancr placeholder 
   assert.match(allVenueAddressMigration, /revoke execute on function public\.enforce_mydancr_placeholder_venue_address\(\) from public, anon, authenticated/);
   assert.match(allVenueAddressMigration, /Every venue must use the MyDancr placeholder street address and 55555 ZIP code/);
   assert.doesNotMatch(allVenueAddressMigration, /where venue\.slug\s+(?:in|=)/);
+  assert.match(verifiedVenueAddressMigration, /drop trigger if exists venues_enforce_mydancr_placeholder_address on public\.venues/);
+  assert.match(verifiedVenueAddressMigration, /drop function if exists public\.enforce_mydancr_placeholder_venue_address\(\)/);
+  assert.match(verifiedVenueAddressMigration, /Public venue address maintained by MyDancr and confirmed through the managed venue-page approval workflow/);
 });
 
 test("verified logo identity flows through every public venue response", () => {

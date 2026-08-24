@@ -49129,7 +49129,6 @@
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.name);
       const venueHref = venueExperienceHref(venue, city);
-      const visual = venueVisualAttrs(venue);
       const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
       const workingNow = venueDancers(city, venue.name)
         .filter((profile) => isWorkingTonight(profile, city))
@@ -49151,7 +49150,7 @@
       return `
         <article class="card venue venue-card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
-            <div class="venue-art${visual.attrs.className}"${visual.attrs.style}>
+            <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}">
               <span class="venue-card-kicker">MyDancr club</span>
               ${logoMarkup || `<span class="venue-card-mark">${escapeHtml(initials)}</span>`}
             </div>
@@ -55826,7 +55825,6 @@
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.name);
       const initials = venueInitials(venue.name);
-      const visual = venueVisualAttrs(venue);
       const logoMarkup = venueLogoMarkup(venue, "home-venue-discovery-logo");
       const localProfiles = venueDancers(city, venue.name);
       const workingNow = localProfiles
@@ -55852,12 +55850,12 @@
       });
       const workingLabel = `${workingNow.length} working now`;
       const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
-      const visualLabel = visual.source === "venue_cover"
-        ? `${safeName} venue cover`
-        : `${safeName} venue artwork`;
+      const visualLabel = logoMarkup
+        ? `${safeName} logo`
+        : `${safeName} monogram`;
       return `
         <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
-          <div class="home-venue-discovery-art${visual.attrs.className}${logoMarkup ? " has-venue-logo" : ""}"${visual.attrs.style} role="img" aria-label="${visualLabel}">
+          <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}" role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>

@@ -91,7 +91,7 @@ test("Android's final media layer outranks the coarse-pointer filter reset", () 
 test("Android venue logos paint above the card shade without changing other platforms", () => {
   assert.match(
     homeSource,
-    /home-venue-discovery-art\$\{visual\.attrs\.className\}\$\{logoMarkup \? " has-venue-logo" : ""\}/,
+    /home-venue-discovery-art is-venue-logo-artwork\$\{logoMarkup \? " has-venue-logo" : ""\}/,
   );
   const androidMediaLayer = aestheticSource.match(
     /Android media luminance recovery must remain the final media layer[\s\S]*$/,

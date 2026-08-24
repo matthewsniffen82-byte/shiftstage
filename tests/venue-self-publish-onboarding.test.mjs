@@ -77,6 +77,10 @@ test("only MyDancr can prepare and send a page before venue-controlled publicati
   assert.match(adminService, /Complete the MyDancr venue page first/);
   assert.match(adminService, /The connected venue manager must approve this exact page/);
   assert.match(adminService, /approve it to make it live/);
+  assert.match(adminService, /getVenueReferralFeeState\(client, venueId\)/);
+  assert.match(adminService, /The package includes \$\{deals\[0\]\?\.dealTitle/);
+  assert.match(adminService, /a MyDancr fee of \$\{formatAdminFee\(referralFee\?\.feeCents \|\| 0\)\} per confirmed customer/);
+  assert.match(adminService, /referralFeeCents: referralFee\?\.feeCents \|\| null/);
 });
 
 test("admins can prepare all page fields and official venue images", () => {
@@ -87,6 +91,9 @@ test("admins can prepare all page fields and official venue images", () => {
   assert.match(adminMediaRoute, /uploadVenueLogoImageByAdmin/);
   assert.match(adminMediaRoute, /uploadVenueCoverImageByAdmin/);
   assert.match(venueService, /MyDancr manages venue page images/);
+  const publicationRequirements = venueService.match(/export function getVenuePublicationState[\s\S]*?(?=export async function reviewVenuePageForAccount)/)?.[0] || "";
+  assert.match(publicationRequirements, /key: "logo"/);
+  assert.doesNotMatch(publicationRequirements, /key: "cover"/);
 });
 
 test("the venue dashboard presents a read-only review and approval experience", () => {
@@ -98,6 +105,11 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /Approve this exact venue page and make it live on MyDancr/);
   assert.match(dashboard, /Request changes/);
   assert.match(dashboard, /Making venue live/);
+  assert.match(dashboard, /Included in this approval/);
+  assert.match(dashboard, /Club Deal and MyDancr fee/);
+  assert.match(dashboard, /Customer offer/);
+  assert.match(dashboard, /per confirmed customer/);
+  assert.match(dashboard, /These are read-only\. Request a correction before approving/);
   assert.match(dashboard, /readOnly/);
   assert.doesNotMatch(dashboard, /const setupRequirements/);
   assert.doesNotMatch(dashboard, /setupCompletedCount/);

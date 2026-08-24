@@ -425,7 +425,6 @@ export function getVenuePublicationState(
     { key: "contact", label: "Public phone number", complete: Boolean(profile.phone) },
     { key: "hours", label: "Opening and closing hours", complete: Boolean(profile.opensAt && profile.closesAt) },
     { key: "logo", label: "Venue logo", complete: Boolean(profile.logoImageUrl) },
-    { key: "cover", label: "Discovery cover image", complete: Boolean(profile.coverImageUrl) },
     { key: "deal", label: "At least one active Club Deal", complete: deals.some((deal) => deal.isActive) },
   ];
   const completedCount = requirements.filter((requirement) => requirement.complete).length;

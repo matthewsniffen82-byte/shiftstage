@@ -20,7 +20,7 @@ test("MyDancr prepares venue images without exposing construction panels to the 
   assert.match(adminClient, /accept="image\/\*,\.heic,\.heif"/);
   assert.match(adminClient, /uploadVenueImage/);
   assert.match(adminClient, /Official logo/);
-  assert.match(adminClient, /Discovery cover/);
+  assert.match(adminClient, /Venue detail cover \(optional\)/);
   assert.match(adminMediaRoute, /requireAdmin/);
 });
 
