@@ -153,6 +153,14 @@ export function requestDancerProfileVisibilityJson(options: DashboardJsonRequest
   });
 }
 
+export function requestDancerFinanceJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/finance", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update payouts.",
+  });
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();

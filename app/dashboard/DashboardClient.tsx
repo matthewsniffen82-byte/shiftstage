@@ -30,6 +30,7 @@ import {
   readJson,
   readOptionalJson,
   readSession,
+  requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
   requestDashboardJson,
@@ -3544,13 +3545,12 @@ function DancerOnboardingCommand({
     setIsPayoutWorking(true);
     setPayoutStatus("Submitting your payout account for verification...");
     try {
-      const response = await fetch("/api/dancer/finance", {
+      await requestDancerFinanceJson({
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
+        fallbackMessage: "Unable to link the payout account.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to link the payout account.");
       window.localStorage.removeItem(payoutSkipKey);
       setPayoutSkipped(false);
       continueToNfc("Payout account submitted for verification. You can complete the club tap now.");
@@ -4510,17 +4510,15 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
     setIsWorking(true);
     setStatus(action === "cash_out" ? "Checking available earnings..." : "Opening secure payout setup...");
     try {
-      const response = await fetch("/api/dancer/finance", {
+      const data = await requestDancerFinanceJson({
         method: "POST",
         headers: {
-          authorization: `Bearer ${session.accessToken}`,
           "content-type": "application/json",
           "idempotency-key": crypto.randomUUID(),
         },
         body: JSON.stringify({ action }),
+        fallbackMessage: "Unable to update payouts.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update payouts.");
       if (data.onboarding?.url) window.location.assign(data.onboarding.url);
       if (data.finance) setLocalFinance(data.finance);
       if (action === "cash_out") setStatus("Cash-out request reserved. Status will update after verified provider confirmation.");
@@ -4538,13 +4536,12 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
     setIsWorking(true);
     setStatus("Submitting your payout account for verification...");
     try {
-      const response = await fetch("/api/dancer/finance", {
+      const data = await requestDancerFinanceJson({
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
+        fallbackMessage: "Unable to link the payout account.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to link the payout account.");
       if (data.finance) setLocalFinance(data.finance);
       setStatus("Payout account submitted. MyDancr will activate it after matching the provider record.");
     } catch (error) {

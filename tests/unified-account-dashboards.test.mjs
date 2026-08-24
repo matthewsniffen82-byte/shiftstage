@@ -9,6 +9,7 @@ import {
   persistDashboardSession,
   persistRefreshedDashboardSession,
   readDashboardAccessToken,
+  requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
   requestDashboardJson,
@@ -323,6 +324,63 @@ test("dancer profile requests use one role-aware dashboard boundary", async () =
   assert.match(dashboardSession, /function requestDancerProfileVisibilityJson/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/profile"/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/profile\/visibility"/);
+});
+
+test("dancer payout actions use the refresh-aware role boundary", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  let capturedRequest = null;
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequest = { path, options };
+    return new Response(JSON.stringify({ ok: true, finance: { available: 25 } }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "dancer-access",
+      refreshToken: "dancer-refresh",
+      account: { role: "dancer" },
+    }));
+    const data = await requestDancerFinanceJson({
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": "dancer-finance-request",
+      },
+      body: JSON.stringify({ action: "cash_out" }),
+    });
+    assert.equal(data.finance.available, 25);
+    assert.deepEqual(capturedRequest, {
+      path: "/api/dancer/finance",
+      options: {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": "dancer-finance-request",
+          authorization: "Bearer dancer-access",
+          "x-dancr-refresh-token": "dancer-refresh",
+        },
+        body: JSON.stringify({ action: "cash_out" }),
+      },
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestDancerFinanceJson/);
+  assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/finance"/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
