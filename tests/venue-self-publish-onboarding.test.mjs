@@ -14,7 +14,6 @@ const [
   publicDiscoveryRoute,
   publicService,
   dashboard,
-  liveApp,
   documentation,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
@@ -28,7 +27,6 @@ const [
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../docs/venue-onboarding.md", import.meta.url), "utf8"),
 ]);
 
@@ -109,7 +107,7 @@ test("the venue dashboard previews its customer-facing venue card without leavin
   assert.match(dashboard, /event\.key === "Escape"[\s\S]*?setIsVenueCardPreviewOpen\(false\)/);
   assert.doesNotMatch(dashboard, /venue_preview=1/);
   assert.match(dashboard, /Publish venue/);
-  assert.match(dashboard, /Upload logo/);
+  assert.match(dashboard, /Save logo/);
   assert.match(documentation, /request-first venue onboarding model/);
   assert.match(documentation, /private venue workspace and one-time venue signup code/);
   assert.match(documentation, /Venue accounts receive access only to their own venue dashboard; they never receive MyDancr administrator access/);
@@ -128,8 +126,8 @@ test("each venue publishing requirement opens the control that completes it", ()
     assert.match(dashboard, new RegExp(`targetId: "${target}"`));
   }
   assert.match(dashboard, /id=\{`venue-profile-\$\{key\}`\}/);
-  assert.match(dashboard, /id="venue-logo-upload"/);
-  assert.match(dashboard, /id="venue-cover-upload"/);
+  assert.match(dashboard, /inputId="venue-logo-upload"/);
+  assert.match(dashboard, /inputId="venue-cover-upload"/);
   assert.match(dashboard, /id="venue-deal-contract-ledger"/);
   assert.match(dashboard, /onClick=\{\(event\) => openVenueSetupRequirement\(event, requirement\.sectionId, requirement\.targetId\)\}/);
 });

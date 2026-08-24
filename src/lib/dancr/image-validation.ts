@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "crypto";
+import sharp from "sharp";
 
 export const MAX_DANCR_IMAGE_BYTES = 10 * 1024 * 1024;
 export const MAX_DANCR_RAW_UPLOAD_BYTES = 25 * 1024 * 1024;
@@ -20,36 +21,65 @@ export async function validateAndPrepareDancrImage(file: Blob): Promise<Validate
     throw new Error("Photo must be 25 MB or smaller.");
   }
 
-  let original = Buffer.from(await file.arrayBuffer());
+  const original = Buffer.from(await file.arrayBuffer());
   const isHeic = isHeicImage(original);
-  if (!isHeic && original.length > MAX_DANCR_IMAGE_BYTES) {
-    throw new Error("Photo must be 10 MB or smaller.");
-  }
-
-  if (isHeic) {
-    original = await convertHeicToJpeg(original);
-  }
-
   const detected = detectImage(original);
-  if (!detected) {
-    throw new Error("Photo must be a valid JPEG, PNG, or WebP image.");
-  }
+  if (!isHeic && !detected) throw new Error("Photo must be a valid JPEG, PNG, WebP, HEIC, or HEIF image.");
 
-  if (detected.width > MAX_DANCR_IMAGE_DIMENSION || detected.height > MAX_DANCR_IMAGE_DIMENSION) {
-    throw new Error(`Photo dimensions must be ${MAX_DANCR_IMAGE_DIMENSION} x ${MAX_DANCR_IMAGE_DIMENSION} or smaller.`);
+  const preferredFormat = isHeic ? "jpeg" : detected?.extension || "jpeg";
+  let prepared = await normalizeImage(original, preferredFormat, isHeic);
+  if (prepared.buffer.length > MAX_DANCR_IMAGE_BYTES) {
+    prepared = await normalizeImage(original, "webp", isHeic, 90);
   }
+  if (prepared.buffer.length > MAX_DANCR_IMAGE_BYTES) throw new Error("Photo could not be optimized below 10 MB. Choose a smaller image.");
 
-  const buffer = stripImageMetadata(original, detected.contentType);
-  if (buffer.length > MAX_DANCR_IMAGE_BYTES) {
-    throw new Error("Photo must be 10 MB or smaller after conversion.");
-  }
+  const normalized = detectImage(prepared.buffer);
+  if (!normalized) throw new Error("Unable to read the prepared photo.");
 
   return {
-    ...detected,
-    buffer,
-    sha256: createHash("sha256").update(buffer).digest("hex"),
-    storageFileName: `${randomUUID()}.${detected.extension}`,
+    ...normalized,
+    buffer: prepared.buffer,
+    sha256: createHash("sha256").update(prepared.buffer).digest("hex"),
+    storageFileName: `${randomUUID()}.${normalized.extension}`,
   };
+}
+
+async function normalizeImage(
+  buffer: Buffer,
+  format: ValidatedDancrImage["extension"] | "jpeg",
+  isHeic: boolean,
+  quality = DANCR_HEIC_JPEG_QUALITY,
+) {
+  try {
+    const pipeline = sharp(buffer, { failOn: "error", limitInputPixels: false })
+      .rotate()
+      .resize({
+        width: MAX_DANCR_IMAGE_DIMENSION,
+        height: MAX_DANCR_IMAGE_DIMENSION,
+        fit: "inside",
+        withoutEnlargement: true,
+      });
+
+    if (format === "png") {
+      return { buffer: await pipeline.png({ compressionLevel: 9 }).toBuffer() };
+    }
+    if (format === "webp") {
+      return { buffer: await pipeline.webp({ effort: 6, quality }).toBuffer() };
+    }
+    return {
+      buffer: await pipeline.jpeg({
+        chromaSubsampling: "4:4:4",
+        mozjpeg: true,
+        quality: DANCR_HEIC_JPEG_QUALITY,
+      }).toBuffer(),
+    };
+  } catch (error) {
+    if (isHeic) {
+      throw new Error("Unable to prepare this HEIC/HEIF photo. Please choose another photo or export it as JPEG.");
+    }
+    const message = error instanceof Error ? error.message : String(error || "");
+    throw new Error(message ? `Unable to prepare this photo: ${message}` : "Unable to prepare this photo.");
+  }
 }
 
 function detectImage(buffer: Buffer): Omit<ValidatedDancrImage, "buffer" | "sha256" | "storageFileName"> | null {
@@ -64,34 +94,6 @@ function isHeicImage(buffer: Buffer) {
   if (buffer.length < 12 || buffer.toString("ascii", 4, 8) !== "ftyp") return false;
   const brand = buffer.toString("ascii", 8, 12).toLowerCase();
   return ["heic", "heix", "hevc", "hevx", "mif1", "msf1"].includes(brand);
-}
-
-async function convertHeicToJpeg(buffer: Buffer) {
-  try {
-    const importer = new Function("specifier", "return import(specifier)");
-    const mod = await importer("sharp");
-    const sharp = mod.default || mod;
-    return await sharp(buffer, { limitInputPixels: false })
-      .rotate()
-      .resize({
-        width: MAX_DANCR_IMAGE_DIMENSION,
-        height: MAX_DANCR_IMAGE_DIMENSION,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .jpeg({
-        chromaSubsampling: "4:4:4",
-        mozjpeg: true,
-        quality: DANCR_HEIC_JPEG_QUALITY,
-      })
-      .toBuffer();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error || "");
-    if (message.includes("Cannot find package") || message.includes("Cannot find module")) {
-      throw new Error("HEIC/HEIF photo conversion is not installed. Run npm install before uploading iPhone gallery photos.");
-    }
-    throw new Error("Unable to convert this HEIC/HEIF photo. Please choose another photo or export it as JPEG.");
-  }
 }
 
 function detectJpeg(buffer: Buffer) {
@@ -149,65 +151,4 @@ function detectWebp(buffer: Buffer) {
   return null;
 }
 
-function stripImageMetadata(buffer: Buffer, contentType: ValidatedDancrImage["contentType"]) {
-  if (contentType === "image/jpeg") return stripJpegMetadata(buffer);
-  if (contentType === "image/png") return stripPngMetadata(buffer);
-  if (contentType === "image/webp") return stripWebpMetadata(buffer);
-  return buffer;
-}
-
-function stripJpegMetadata(buffer: Buffer) {
-  const chunks = [buffer.subarray(0, 2)];
-  let offset = 2;
-  while (offset + 4 <= buffer.length) {
-    if (buffer[offset] !== 0xff) break;
-    const marker = buffer[offset + 1];
-    if (marker === 0xda) {
-      chunks.push(buffer.subarray(offset));
-      break;
-    }
-    const length = buffer.readUInt16BE(offset + 2);
-    if (length < 2 || offset + 2 + length > buffer.length) break;
-    const segment = buffer.subarray(offset, offset + 2 + length);
-    const isMetadata = marker === 0xe1 || marker === 0xfe || marker === 0xed || marker === 0xe2;
-    if (!isMetadata) chunks.push(segment);
-    offset += 2 + length;
-  }
-  return Buffer.concat(chunks);
-}
-
-function stripPngMetadata(buffer: Buffer) {
-  const chunks = [buffer.subarray(0, 8)];
-  let offset = 8;
-  while (offset + 12 <= buffer.length) {
-    const length = buffer.readUInt32BE(offset);
-    const type = buffer.toString("ascii", offset + 4, offset + 8);
-    const end = offset + 12 + length;
-    if (end > buffer.length) break;
-    const first = type.charCodeAt(0);
-    const isCritical = first >= 65 && first <= 90;
-    if (isCritical) chunks.push(buffer.subarray(offset, end));
-    offset = end;
-    if (type === "IEND") break;
-  }
-  return Buffer.concat(chunks);
-}
-
-function stripWebpMetadata(buffer: Buffer) {
-  const chunks: Buffer[] = [];
-  let offset = 12;
-  while (offset + 8 <= buffer.length) {
-    const type = buffer.toString("ascii", offset, offset + 4);
-    const length = buffer.readUInt32LE(offset + 4);
-    const end = offset + 8 + length + (length % 2);
-    if (end > buffer.length) break;
-    if (!["EXIF", "XMP ", "ICCP"].includes(type)) chunks.push(buffer.subarray(offset, end));
-    offset = end;
-  }
-  const body = Buffer.concat(chunks);
-  const header = Buffer.alloc(12);
-  header.write("RIFF", 0, "ascii");
-  header.writeUInt32LE(body.length + 4, 4);
-  header.write("WEBP", 8, "ascii");
-  return Buffer.concat([header, body]);
-}
+// All returned dimensions come from the normalized, metadata-free output.
