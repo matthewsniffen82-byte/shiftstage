@@ -5137,11 +5137,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sta
   isolation: isolate;
 }
 
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-status-grid.without-hours {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-grid::after {
   content: "";
   position: absolute;
