@@ -2449,11 +2449,11 @@ function VenuePanel({
 
       <DashboardSection
         badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
-        description="Review the Club Deals, contract fee, cashier NFC readiness, performance, and settlement information managed by MyDancr."
-        eyebrow="Contract revenue"
+        description="View your MyDancr-managed deals, agreed fees, and monthly activity."
+        eyebrow="Club Deals"
         hidden={activeWorkspace !== "tonight"}
         id="venue-club-deals"
-        title="Club Deals"
+        title="Deals & billing"
       >
         <VenueDealReadOnlyPanel
           deals={dashboardDeals}
@@ -7363,8 +7363,8 @@ function VenueDealReadOnlyPanel({
       <header className="venue-deal-readonly-heading">
         <div>
           <span className="eyebrow">MyDancr managed</span>
-          <h2>Contract Club Deals</h2>
-          <p>MyDancr creates and publishes these offers from your signed venue agreement. Venue accounts have complete visibility without controls that can change contract terms.</p>
+          <h2>Your Club Deals</h2>
+          <p>MyDancr publishes deals based on your venue agreement. Request changes anytime.</p>
         </div>
         <strong className={liveDeals.length ? "deal-state active" : "deal-state"}>
           {liveDeals.length ? `${liveDeals.length} live` : "No live deals"}
@@ -7373,23 +7373,23 @@ function VenueDealReadOnlyPanel({
 
       <section className="venue-contract-summary" aria-label="Current MyDancr agreement">
         <div>
-          <span>Referral fee</span>
-          <strong>{currentFee ? `${formatCents(Number(currentFee.feeCents || 0))} per verified guest` : "Agreement pending"}</strong>
+          <span>Fee per confirmed guest</span>
+          <strong>{currentFee ? `${formatCents(Number(currentFee.feeCents || 0))} per confirmed guest` : "Agreement pending"}</strong>
           <small>{currentFee ? `Effective ${formatDashboardDate(String(currentFee.effectiveFrom || ""))}` : "MyDancr records this after the venue agreement is signed."}</small>
         </div>
         <div>
-          <span>Agreement reference</span>
+          <span>Agreement ID</span>
           <strong>{currentFee ? String(currentFee.agreementReference || "Recorded by MyDancr") : "Not recorded"}</strong>
           <small>{scheduledFees.length ? `${scheduledFees.length} scheduled fee update${scheduledFees.length === 1 ? "" : "s"}` : "No scheduled fee changes"}</small>
         </div>
         <div>
-          <span>Cashier NFC</span>
-          <strong>{liveDeals.length ? "Deal redemption enabled" : "Waiting for a live deal"}</strong>
-          <small>MyDancr assigns and programs stickers; assigned hardware remains visible in NFC access.</small>
+          <span>Redemption status</span>
+          <strong>{liveDeals.length ? "Enabled" : "Not active"}</strong>
+          <small>MyDancr manages the official cashier NFC stickers.</small>
         </div>
       </section>
 
-      <div className="venue-contract-deal-list" aria-label="All contract Club Deals">
+      <div className="venue-contract-deal-list" aria-label="All Club Deals">
         {deals.map((deal) => (
           <section className={deal.isActive === true ? "is-live" : ""} key={String(deal.id)}>
             <div className="venue-contract-deal-title">
@@ -7399,9 +7399,8 @@ function VenueDealReadOnlyPanel({
             <p>{String(deal.dealDescription || "No public description recorded.")}</p>
             <dl>
               <div><dt>Offer type</dt><dd>{dealTypeLabel(String(deal.offerType || "admission"))}</dd></div>
-              <div><dt>Contract fee</dt><dd>{Number(deal.payoutAmountCents || 0) > 0 ? `${formatCents(Number(deal.payoutAmountCents || 0))} per verified guest` : "Pending"}</dd></div>
-              <div><dt>Display order</dt><dd>{String(Number(deal.sortOrder || 0))}</dd></div>
-              <div><dt>Cashier status</dt><dd>{deal.isActive === true ? "Enabled" : "Not enabled"}</dd></div>
+              <div><dt>Fee per guest</dt><dd>{Number(deal.payoutAmountCents || 0) > 0 ? `${formatCents(Number(deal.payoutAmountCents || 0))} per confirmed guest` : "Pending"}</dd></div>
+              <div><dt>Redemption status</dt><dd>{deal.isActive === true ? "Enabled" : "Not active"}</dd></div>
             </dl>
             <div className="venue-contract-deal-terms">
               <span>Guest terms</span>
@@ -7412,7 +7411,7 @@ function VenueDealReadOnlyPanel({
         {!deals.length ? (
           <section className="venue-contract-empty">
             <strong>MyDancr has not published a Club Deal yet.</strong>
-            <p>After the deal order and referral fee are recorded, the offer and its full terms will appear here automatically.</p>
+            <p>After the deal and agreed fee are recorded, the offer and its terms will appear here automatically.</p>
           </section>
         ) : null}
       </div>
@@ -7421,9 +7420,9 @@ function VenueDealReadOnlyPanel({
 
       <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading">
         <div>
-          <span className="eyebrow">Contract request</span>
-          <h3 id="venue-deal-request-heading">Want another Club Deal?</h3>
-          <p>Request an approved admission offer at any time. MyDancr will review the request, confirm the contract and referral fee, then publish it here.</p>
+          <span className="eyebrow">Deal request</span>
+          <h3 id="venue-deal-request-heading">Request another deal</h3>
+          <p>Send the offer details. MyDancr reviews the terms and publishes approved deals.</p>
         </div>
         {canRequestDeals ? (
           <button type="button" onClick={() => setIsRequestOpen((current) => !current)}>
@@ -7439,11 +7438,11 @@ function VenueDealReadOnlyPanel({
               </select>
             </label>
             <label>
-              Contract notes (optional)
+              Notes (optional)
               <textarea
                 maxLength={1000}
                 onChange={(event) => setRequestNotes(event.target.value)}
-                placeholder="Proposed dates, hours, exclusions, or campaign details for MyDancr to review"
+                placeholder="Dates, hours, exclusions, or other details"
                 rows={4}
                 value={requestNotes}
               />
@@ -7474,7 +7473,7 @@ function VenueDealReadOnlyPanel({
         <div>
           {feeHistory.map((term) => (
             <section key={String(term.id)}>
-              <strong>{formatCents(Number(term.feeCents || 0))} per verified guest</strong>
+              <strong>{formatCents(Number(term.feeCents || 0))} per confirmed guest</strong>
               <span>{String(term.agreementReference || "MyDancr agreement")}</span>
               <small>{formatDashboardDate(String(term.effectiveFrom || ""))}{term.effectiveUntil ? ` – ${formatDashboardDate(String(term.effectiveUntil))}` : " onward"}</small>
             </section>
@@ -7484,16 +7483,14 @@ function VenueDealReadOnlyPanel({
       </details>
 
       <details className="venue-deal-performance" open>
-        <summary><span><strong>Performance & invoices</strong><small>Redemptions, referral fees, and settlement</small></span></summary>
+        <summary><span><strong>Monthly activity & billing</strong><small>Confirmed redemptions, fees, and invoices</small></span></summary>
         <div className="venue-deal-performance-body">
           <div className="deal-metrics venue-deal-metrics">
-            <Metric label="Confirmed cashier taps this month" value={String(revenue?.confirmedCashierTapsThisMonth || 0)} />
-            <Metric label="Dancer attributed" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
-            <Metric label="Direct venue" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
-            <Metric label="MyDancr referral fees" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
-            <Metric label="Outstanding to MyDancr" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
-            <Metric label="Redemption intents" value={String(revenue?.passesIssuedThisMonth || 0)} />
-            <Metric label="Saved / opened" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
+            <Metric label="Confirmed redemptions" value={String(revenue?.confirmedCashierTapsThisMonth || 0)} />
+            <Metric label="From dancer profiles" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
+            <Metric label="Direct visits" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
+            <Metric label="Fees this month" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
+            <Metric label="Amount due" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
           </div>
           <VenueFinanceSummary finance={finance} />
         </div>

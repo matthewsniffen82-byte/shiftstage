@@ -66,8 +66,8 @@ test("admins manage multiple deals while venue accounts see every campaign read-
   assert.match(adminManager, /onClick=\{\(\) => editDeal\(deal\)\}/);
   assert.match(adminManager, /Delete unpublished deal/);
   assert.match(venueLedger, /deals\.map/);
-  assert.match(venueLedger, /MyDancr creates and publishes these offers/);
-  assert.match(venueLedger, /Venue accounts have complete visibility without controls/);
+  assert.match(venueLedger, /MyDancr publishes deals based on your venue agreement/);
+  assert.match(venueLedger, /Request changes anytime/);
   assert.doesNotMatch(venueLedger, /Publish contract deal|Delete unpublished deal/);
 });
 

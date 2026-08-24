@@ -48,8 +48,8 @@ test("venues receive the complete fee agreement as read-only contract informatio
   assert.match(venueRoute, /status: 403/);
   assert.match(dashboardRoute, /getVenueReferralFeeState/);
   const venueLedger = dashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
-  assert.match(venueLedger, /Referral fee/);
-  assert.match(venueLedger, /Agreement reference/);
+  assert.match(venueLedger, /Fee per confirmed guest/);
+  assert.match(venueLedger, /Agreement ID/);
   assert.match(venueLedger, /Agreement history/);
   assert.doesNotMatch(venueLedger, /Request fee change|awaiting MyDancr review/);
   assert.doesNotMatch(dealRoute, /body\?\.referralCommissionCents/);

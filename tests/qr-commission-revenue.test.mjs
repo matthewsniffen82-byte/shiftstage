@@ -140,7 +140,7 @@ test("venue cashier-tap totals use finalized revenue events across both attribut
   assert.doesNotMatch(venueMetrics, /postedVenueQrScansThisMonth|campaign_source === "venue_qr"/);
   assert.match(
     venueDashboard,
-    /label="Confirmed cashier taps this month"[\s\S]*?revenue\?\.confirmedCashierTapsThisMonth/,
+    /label="Confirmed redemptions"[\s\S]*?revenue\?\.confirmedCashierTapsThisMonth/,
   );
   assert.doesNotMatch(venueDashboard, /revenue\?\.postedVenueQrScansThisMonth/);
 });
@@ -180,9 +180,9 @@ test("MyDancr publishes offers against a signed referral agreement for venue vis
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
   const venueLedger = venueDashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
-  assert.match(venueLedger, /Referral fee/);
-  assert.match(venueLedger, /MyDancr creates and publishes these offers/);
-  assert.match(venueLedger, /Cashier NFC/);
+  assert.match(venueLedger, /Fee per confirmed guest/);
+  assert.match(venueLedger, /MyDancr publishes deals based on your venue agreement/);
+  assert.match(venueLedger, /Redemption status/);
   assert.doesNotMatch(venueLedger, /Request fee change|Publish Club Deal/);
   assert.doesNotMatch(venueDashboard, /Monthly successful dancer QR redemptions/);
 });
