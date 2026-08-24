@@ -145,6 +145,14 @@ export function requestDancerProfileJson(options: DashboardJsonRequestOptions = 
   });
 }
 
+export function requestCustomerProfileJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/customer/profile", {
+    ...options,
+    expectedRole: "customer",
+    fallbackMessage: options.fallbackMessage || "Unable to update customer profile.",
+  });
+}
+
 export function requestDancerProfileVisibilityJson(options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson("/api/dancer/profile/visibility", {
     ...options,

@@ -9,6 +9,7 @@ import {
   persistDashboardSession,
   persistRefreshedDashboardSession,
   readDashboardAccessToken,
+  requestCustomerProfileJson,
   requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
@@ -531,6 +532,80 @@ test("dancer schedule actions use refresh-aware role boundaries", async () => {
   assert.match(shiftPanel, /requestDancerShiftCheckInJson/);
   assert.doesNotMatch(shiftPanel, /fetch\("\/api\/dancer\/shifts/);
   assert.doesNotMatch(shiftPanel, /authorization: `Bearer/);
+});
+
+test("customer preference saves use the refresh-aware customer boundary", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  let capturedRequest = null;
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequest = { path, options };
+    return new Response(JSON.stringify({
+      ok: true,
+      profile: { city: "Las Vegas", notificationSettings: { workingTonight: true } },
+      session: { accessToken: "rotated-customer-access", expiresAt: 99999 },
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "customer-access",
+      refreshToken: "customer-refresh",
+      account: { role: "customer" },
+    }));
+    const data = await requestCustomerProfileJson({
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        city: "Las Vegas",
+        notificationSettings: { workingTonight: true },
+      }),
+      fallbackMessage: "Unable to save preferences.",
+    });
+
+    assert.equal(data.profile.city, "Las Vegas");
+    assert.deepEqual(capturedRequest, {
+      path: "/api/customer/profile",
+      options: {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer customer-access",
+          "x-dancr-refresh-token": "customer-refresh",
+        },
+        body: JSON.stringify({
+          city: "Las Vegas",
+          notificationSettings: { workingTonight: true },
+        }),
+      },
+    });
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "rotated-customer-access",
+      refreshToken: "customer-refresh",
+      expiresAt: 99999,
+      account: { role: "customer" },
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  const preferencesPanel = dashboard.match(/function CustomerPreferencesPanel[\s\S]*?function readSetting/)?.[0] || "";
+  assert.match(dashboardSession, /function requestCustomerProfileJson/);
+  assert.match(preferencesPanel, /requestCustomerProfileJson/);
+  assert.doesNotMatch(preferencesPanel, /fetch\("\/api\/customer\/profile"/);
+  assert.doesNotMatch(preferencesPanel, /authorization: `Bearer/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {

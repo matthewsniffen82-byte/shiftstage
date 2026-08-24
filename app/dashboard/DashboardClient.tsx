@@ -30,6 +30,7 @@ import {
   readJson,
   readOptionalJson,
   readSession,
+  requestCustomerProfileJson,
   requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
@@ -3030,13 +3031,12 @@ function CustomerPreferencesPanel({
     setIsSaving(true);
     setStatus("");
     try {
-      const response = await fetch("/api/customer/profile", {
+      const data = await requestCustomerProfileJson({
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ city, notificationSettings: settings }),
+        fallbackMessage: "Unable to save preferences.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save preferences.");
       onProfileChange?.(data.profile);
       setStatus("Preferences saved.");
     } catch (error) {
