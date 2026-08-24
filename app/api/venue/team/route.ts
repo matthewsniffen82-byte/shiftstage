@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
+import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import {
   createVenueTeamInvitation,
   getVenueTeamState,
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
       role: body?.role,
       expiresInDays: 7,
     });
-    const invitationUrl = new URL(`/venue-team/invite/${encodeURIComponent(result.token)}`, safeOrigin(request)).toString();
+    const invitationUrl = new URL(`/venue-team/invite/${encodeURIComponent(result.token)}`, publicAppUrl()).toString();
     let delivery: { delivered: boolean; reason?: string } = {
       delivered: false,
       reason: "Email delivery was unavailable.",
@@ -109,13 +110,6 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to revoke venue team invitation.", 400);
   }
-}
-
-function safeOrigin(request: Request) {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
-  if (configured) return configured.replace(/\/+$/, "");
-  const vercelUrl = process.env.VERCEL_URL;
-  return vercelUrl ? `https://${vercelUrl.replace(/\/+$/, "")}` : new URL(request.url).origin;
 }
 
 function noStore(body: Record<string, unknown>, status = 200) {

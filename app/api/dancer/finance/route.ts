@@ -9,6 +9,7 @@ import {
 import { getDancerFinance } from "@/src/lib/dancr/finance-reporting";
 import { requestNatsAffiliateLink } from "@/src/lib/dancr/nats-affiliate-actions";
 import { getNatsRuntimeConfig } from "@/src/lib/dancr/nats";
+import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, payout, finance: await getDancerFinance(createAdminSupabaseClient(), user.id) });
     }
     if (body.action === "connect_onboarding") {
-      const origin = configuredSiteOrigin(request);
+      const origin = publicAppUrl();
       const onboarding = await createDancerConnectOnboarding(
         createAdminSupabaseClient(),
         user.id,
@@ -92,9 +93,4 @@ async function requireActiveDancer(client: Parameters<typeof getAccountByUserId>
     return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
   }
   return null;
-}
-
-function configuredSiteOrigin(request: Request) {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  return (configured || new URL(request.url).origin).replace(/\/$/, "");
 }

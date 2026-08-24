@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId, setAccountState } from "@/src/lib/dancr/auth";
 import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
+import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import type { AccountState } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -39,7 +40,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, error: "Enter a valid email address." }, { status: 400 });
       }
 
-      const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://www.mydancr.com";
+      const origin = publicAppUrl();
       const emailRedirectTo = `${origin}/auth/callback?role=customer&return_to=${encodeURIComponent("/dashboard/customer")}`;
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo });
 

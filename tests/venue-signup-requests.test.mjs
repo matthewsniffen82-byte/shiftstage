@@ -56,6 +56,8 @@ test("admin approval always creates a private venue workspace and issues one req
   assert.match(requestService, /p_existing_venue_id: null/);
   assert.match(requestService, /sendTransactionalEmail/);
   assert.match(requestService, /Do not forward this code/);
+  assert.match(requestService, /new URL\("\/\?venueAccess=1&venueMode=signup", baseUrl\)/);
+  assert.match(requestService, /Continue venue setup on MyDancr/);
   assert.match(adminRoute, /requireAdmin\(client, user\.id\)/g);
 });
 

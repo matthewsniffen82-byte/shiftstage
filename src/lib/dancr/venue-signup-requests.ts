@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendTransactionalEmail } from "./notification-delivery";
+import { publicAppUrl } from "./public-app-url";
 import {
   createVenueSignupCredential,
   hashVenueClaimRequestIp,
@@ -277,6 +278,7 @@ async function deliverVenueAccessCode(input: {
   expiresAt: string;
 }) {
   const baseUrl = publicAppUrl();
+  const signupUrl = new URL("/?venueAccess=1&venueMode=signup", baseUrl).toString();
   const expiration = input.expiresAt
     ? new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeStyle: "short", timeZone: "America/Los_Angeles" }).format(new Date(input.expiresAt))
     : "seven days";
@@ -288,7 +290,7 @@ async function deliverVenueAccessCode(input: {
     `Private one-time access code: ${input.code}`,
     `Expires: ${expiration} Pacific Time`,
     "",
-    `Open ${baseUrl}, choose Create account, then Venue, and paste this code.`,
+    `Open ${signupUrl} and paste this code to create the club manager account.`,
     "Do not forward this code. It can be used once and only for the approved venue.",
     "After sign up, complete the private venue page in your dashboard and publish it when it is ready for customers.",
     "",
@@ -300,7 +302,7 @@ async function deliverVenueAccessCode(input: {
     <p>Private one-time access code:</p>
     <p style="font-family:monospace;font-size:18px;font-weight:700;letter-spacing:.04em">${escapeHtml(input.code)}</p>
     <p>Expires ${escapeHtml(expiration)} Pacific Time.</p>
-    <p><a href="${escapeHtml(baseUrl)}">Open MyDancr</a>, choose <strong>Create account</strong>, then <strong>Venue</strong>, and paste this code.</p>
+    <p><a href="${escapeHtml(signupUrl)}">Continue venue setup on MyDancr</a>, then paste this code to create the club manager account.</p>
     <p>Do not forward this code. It can be used once and only for the approved venue.</p>
     <p>After sign up, complete the private venue page in your dashboard and publish it when it is ready for customers.</p>
   `;
@@ -416,9 +418,4 @@ function escapeHtml(value: string) {
     "'": "&#39;",
     '"': "&quot;",
   })[character] || character);
-}
-
-function publicAppUrl() {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.DANCR_PUBLIC_URL || "https://mydancr.com";
-  return configured.replace(/\/$/, "");
 }

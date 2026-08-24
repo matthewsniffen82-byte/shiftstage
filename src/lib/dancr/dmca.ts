@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendTransactionalEmail } from "./notification-delivery";
+import { publicAppUrl } from "./public-app-url";
 
 type DancrClient = SupabaseClient;
 
@@ -449,7 +450,7 @@ export async function applyDmcaAdminAction(
           uploaderError,
         });
       } else if (uploader?.email) {
-        const counterUrl = `${publicSiteUrl()}/dmca/counter/${encodeURIComponent(caseId)}`;
+        const counterUrl = `${publicAppUrl()}/dmca/counter/${encodeURIComponent(caseId)}`;
         await sendTransactionalEmail({
           to: uploader.email,
           subject: `MyDancr copyright notice ${caseId}`,
@@ -778,10 +779,6 @@ function addBusinessDays(date: Date, days: number) {
     if (weekday !== 0 && weekday !== 6) remaining -= 1;
   }
   return result;
-}
-
-function publicSiteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://www.mydancr.com").replace(/\/+$/, "");
 }
 
 function counterNoticeEmail(input: {

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { publicAppUrl } from "./public-app-url";
 import type { Json, NotificationType } from "./types";
 
 type DancrClient = SupabaseClient;
@@ -151,7 +152,7 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
 
 function notificationActionUrl(row: NotificationDeliveryRow) {
   const payload = (row.payload || {}) as Record<string, unknown>;
-  const baseUrl = appBaseUrl();
+  const baseUrl = publicAppUrl();
   if (!baseUrl) return "";
 
   if (row.notification_type === "dmca_status" && payload.caseId) {
@@ -175,13 +176,6 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   if (payload.targetId) params.set("dancr_target_id", String(payload.targetId));
   if (payload.label) params.set("dancr_label", String(payload.label));
   return `${baseUrl}/?${params.toString()}`;
-}
-
-function appBaseUrl() {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
-  if (configured) return configured.replace(/\/+$/, "");
-  const vercelUrl = process.env.VERCEL_URL;
-  return vercelUrl ? `https://${vercelUrl.replace(/\/+$/, "")}` : "";
 }
 
 function escapeHtml(value: unknown) {

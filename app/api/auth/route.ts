@@ -8,11 +8,11 @@ import {
   resolveVenueSignupCode,
 } from "@/src/lib/dancr/venue-claims";
 import { redeemVenueTeamInvitation, resolveVenueTeamInvitation } from "@/src/lib/dancr/venue-team";
+import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import {
   AccountRecoveryRateLimitError,
   enforceAccountRecoveryRateLimit,
 } from "@/src/lib/dancr/account-recovery";
-import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -369,7 +369,7 @@ function customerDisplayName(email: string) {
 }
 
 function safeEmailRedirectTo(value: unknown) {
-  const fallback = `${getPublicEnv().siteUrl.replace(/\/$/, "")}/auth/callback`;
+  const fallback = `${publicAppUrl()}/auth/callback`;
   const text = readOptional(value);
   if (!text) return fallback;
 
@@ -389,8 +389,6 @@ function allowedAuthRedirectOrigins(configuredOrigin: string) {
     configuredOrigin,
     "https://mydancr.com",
     "https://www.mydancr.com",
-    "https://stackeddbets.com",
-    "https://www.stackeddbets.com",
     "https://shiftstage.vercel.app",
   ]);
 }

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getNatsRuntimeConfig } from "./nats";
+import { publicAppUrl } from "./public-app-url";
 
 type DancrClient = SupabaseClient;
 
@@ -177,8 +178,3 @@ function csvCell(value: unknown) {
 }
 
 function firstJoined(value: any) { return Array.isArray(value) ? value[0] || null : value || null; }
-
-function publicAppUrl() {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.DANCR_PUBLIC_URL || "https://mydancr.com";
-  return configured.replace(/\/$/, "");
-}
