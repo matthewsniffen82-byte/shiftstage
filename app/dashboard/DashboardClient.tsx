@@ -4208,22 +4208,26 @@ function openDancerPayoutLinking() {
   });
 }
 
-function DancerNatsSignupCallout({ finance }: { finance?: LoadState["finance"] }) {
-  const platform = (finance?.commissionPlatform || {}) as Record<string, unknown>;
+function dancerNeedsCommissionPayoutSetup(finance?: LoadState["finance"]) {
   const account = (finance?.natsAffiliateAccount || null) as Record<string, unknown> | null;
   const accountStatus = String(account?.status || "").toLowerCase();
-  if (["requested", "active"].includes(accountStatus)) return null;
+  return !["requested", "active"].includes(accountStatus);
+}
+
+function DancerNatsSignupCallout({ finance }: { finance?: LoadState["finance"] }) {
+  const platform = (finance?.commissionPlatform || {}) as Record<string, unknown>;
+  if (!dancerNeedsCommissionPayoutSetup(finance)) return null;
   const portalUrl = typeof platform.affiliatePortalUrl === "string" ? platform.affiliatePortalUrl : "";
   const supportRequestUrl = "mailto:support@mydancr.com?subject=Commission%20payout%20account%20setup";
   return (
     <aside className="dancer-nats-signup-callout" aria-labelledby="dancer-nats-signup-heading">
       <span className="dancer-nats-signup-copy">
-        <span className="eyebrow">Commission payouts</span>
-        <strong id="dancer-nats-signup-heading">Set up your payouts</strong>
-        <small>Connect a payout account to receive your Club Deal commissions. You can finish this anytime.</small>
+        <span className="eyebrow">Club Deal commissions</span>
+        <strong id="dancer-nats-signup-heading">Get paid your commissions</strong>
+        <small>Sign up for a commission payout account to receive the Club Deal commissions you earn.</small>
       </span>
       <span className="dancer-nats-signup-actions">
-        <a href={portalUrl || supportRequestUrl} rel={portalUrl ? "noreferrer" : undefined} target={portalUrl ? "_blank" : undefined}>Start payout setup</a>
+        <a href={portalUrl || supportRequestUrl} rel={portalUrl ? "noreferrer" : undefined} target={portalUrl ? "_blank" : undefined}>Sign up for commission payouts</a>
         {platform.selected === true
           ? <button onClick={openDancerPayoutLinking} type="button">I already have an account</button>
           : <a className="secondary" href={`${supportRequestUrl}&body=I%20already%20have%20a%20payout%20account%20and%20need%20to%20link%20it%20to%20MyDancr.`}>I already have an account</a>}
@@ -4260,6 +4264,7 @@ function DancerPanel({
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
   const isApproved = effectiveStatus === "approved";
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
+  const needsCommissionPayoutSetup = dancerNeedsCommissionPayoutSetup(finance);
   const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
     || affiliations.some((item) => item.status === "active");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
@@ -4353,11 +4358,12 @@ function DancerPanel({
       {socialContent}
       {photoContent}
       {videoContent}
+      <DancerSharePanel profile={profile} />
     </div>
   );
   const profileMediaSection = (
     <DashboardSection
-      description="Edit your identity, avatar, photos, links, and videos."
+      description="Edit your identity, media, socials, and share your profile."
       emphasis="primary"
       id="dancer-profile-media"
       title="Profile & media"
@@ -4432,15 +4438,16 @@ function DancerPanel({
           <DancerShiftManager />
         </DashboardSection>
       ) : null}
-      {isApproved ? <DancerNatsSignupCallout finance={finance} /> : null}
       {isApproved ? (
         <DashboardSection
+          badge={needsCommissionPayoutSetup ? "Payout setup needed" : undefined}
           description="See your reach, rewards, payouts, and weekly progress."
           emphasis="secondary"
           id="dancer-performance"
           title="Performance & rewards"
         >
           <div className="dancer-performance-workspace">
+            <DancerNatsSignupCallout finance={finance} />
             <DancerPerformanceSummary analytics={analytics} deals={deals} finance={finance} />
             <div className="dancer-performance-details">
               <DancerPerformanceDetail
@@ -4467,16 +4474,6 @@ function DancerPanel({
               </DancerPerformanceDetail>
             </div>
           </div>
-        </DashboardSection>
-      ) : null}
-      {isApproved ? (
-        <DashboardSection
-          description="Copy your public link or open your live profile."
-          emphasis="utility"
-          id="dancer-sharing-billing"
-          title="Share profile"
-        >
-          <DancerSharePanel profile={profile} />
         </DashboardSection>
       ) : null}
     </>
@@ -8710,6 +8707,7 @@ function DashboardStyles() {
       .dashboard-shell-venue .venue-dashboard-shortcuts > a.is-live small { color: #a7f3d0; }
       .dashboard-shell .venue-dashboard-section[open] > summary { background: rgba(255,255,255,.022); }
       .dashboard-shell .venue-dashboard-section-badge { border-color: rgba(255,255,255,.13); color: #d7d5dd; background: rgba(255,255,255,.045); }
+      .dashboard-shell-dancer #dancer-performance .venue-dashboard-section-badge { border-color: rgba(245,158,11,.42); color: #fde68a; background: rgba(245,158,11,.12); box-shadow: 0 0 16px rgba(245,158,11,.08); }
       .dashboard-shell .venue-dashboard-section-body > .info-panel,
       .dashboard-shell .venue-dashboard-inner-grid > .info-panel { border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
       .dashboard-shell-venue .venue-working-list span { color: #76f0c8; }

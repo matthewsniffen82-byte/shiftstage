@@ -57,7 +57,6 @@ test("every role keeps its real tools on one page inside shared collapsible sect
     "dancer-profile-media",
     "dancer-schedule",
     "dancer-performance",
-    "dancer-sharing-billing",
     "dancer-account",
     "venue-account",
   ]) {

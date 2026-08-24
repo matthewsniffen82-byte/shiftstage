@@ -158,20 +158,22 @@ test("optional payout onboarding uses plain language and names the provider only
 });
 
 test("approved dancers who skipped payout setup get a plain-language call to action", () => {
+  const setupState = dashboard.match(/function dancerNeedsCommissionPayoutSetup\([\s\S]*?(?=\nfunction DancerNatsSignupCallout)/)?.[0] || "";
   const callout = dashboard.match(/function DancerNatsSignupCallout\([\s\S]*?(?=\nfunction DancerPanel)/)?.[0] || "";
-  assert.match(callout, /\["requested", "active"\]\.includes\(accountStatus\)/);
+  assert.match(setupState, /\["requested", "active"\]\.includes\(accountStatus\)/);
   assert.doesNotMatch(callout, /platform\.selected !== true \|\|/);
-  assert.match(callout, /Set up your payouts/);
-  assert.match(callout, /Connect a payout account to receive your Club Deal commissions/);
+  assert.match(callout, /Get paid your commissions/);
+  assert.match(callout, /Sign up for a commission payout account to receive the Club Deal commissions you earn/);
   assert.match(callout, /portalUrl \|\| supportRequestUrl/);
   assert.match(callout, /mailto:support@mydancr\.com\?subject=Commission%20payout%20account%20setup/);
-  assert.match(callout, /Start payout setup/);
+  assert.match(callout, /Sign up for commission payouts/);
   assert.match(callout, /I already have an account/);
   assert.doesNotMatch(callout, />Get NATS<|>I already have NATS<|Get NATS to receive payouts/);
   assert.match(callout, /openDancerPayoutLinking/);
-  assert.match(dashboard, /<DancerNatsSignupCallout finance=\{finance\} \/>[\s\S]*?id="dancer-performance"/);
+  assert.match(dashboard, /badge=\{needsCommissionPayoutSetup \? "Payout setup needed" : undefined\}[\s\S]*?id="dancer-performance"[\s\S]*?<DancerNatsSignupCallout finance=\{finance\} \/>/);
   assert.match(dashboard, /id="dancer-payout-detail"/);
   assert.match(dashboard, /\.dancer-nats-signup-callout \{ grid-column: 1 \/ -1;[\s\S]*?\.dancer-nats-signup-actions > a, \.dancer-nats-signup-actions > button/);
+  assert.match(dashboard, /#dancer-performance \.venue-dashboard-section-badge \{[^}]*color: #fde68a/);
 });
 
 test("step one required items are accessible accordions that preserve the active editor", () => {
@@ -188,10 +190,10 @@ test("step one required items are accessible accordions that preserve the active
 test("approved dancer dashboard sections arrive collapsed with a clear tool hierarchy", () => {
   assert.doesNotMatch(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+defaultOpen[\s\S]{0,500}?id="dancer-overview"/);
   assert.match(dashboard, /description="Approval, venue access, and public visibility\."\s+emphasis="summary"\s+id="dancer-overview"/);
-  assert.match(dashboard, /description="Edit your identity, avatar, photos, links, and videos\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
+  assert.match(dashboard, /description="Edit your identity, media, socials, and share your profile\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
   assert.match(dashboard, /description="Post and manage shifts shown on your profile\."\s+emphasis="primary"\s+id="dancer-schedule"/);
   assert.match(dashboard, /description="See your reach, rewards, payouts, and weekly progress\."\s+emphasis="secondary"\s+id="dancer-performance"/);
-  assert.match(dashboard, /description="Copy your public link or open your live profile\."\s+emphasis="utility"\s+id="dancer-sharing-billing"\s+title="Share profile"/);
+  assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
   assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
   assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);
   assert.match(dashboard, /\.dashboard-section-utility \.venue-dashboard-section-copy > span:last-child \{ color: rgba\(218,218,226,\.72\); font-size: 12px; \}/);
@@ -327,6 +329,7 @@ test("approved dancers preview their guest view from inside Profile & media", ()
   assert.match(profileMediaWorkspace, /<article className="dancer-profile-media-preview"/);
   assert.match(profileMediaWorkspace, /id="dancer-profile-media-preview-heading">Preview your profile/);
   assert.match(profileMediaWorkspace, /buttonLabel="Preview profile"[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
+  assert.match(profileMediaWorkspace, /<DancerSharePanel profile=\{profile\} \/>/);
   assert.ok(profileMediaWorkspace.indexOf("dancer-profile-media-preview") < profileMediaWorkspace.indexOf("{identityContent}"));
   assert.doesNotMatch(dashboard, /dancer-dashboard-profile-preview/);
   assert.match(dashboard, /Public profile preview/);
@@ -345,7 +348,7 @@ test("the mobile full-profile preview leaves room for its media thumbnails above
 test("pre-approval tools remain hidden while help and account recovery stay available", () => {
   assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-schedule"/);
   assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-performance"/);
-  assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-sharing-billing"/);
+  assert.match(dashboard, /\{isApproved \? profileMediaSection : null\}/);
   assert.match(dashboard, /"Help & account"/);
   assert.match(dashboard, /DashboardSignInRecovery/);
   assert.match(dashboard, /body: JSON\.stringify\(\{ mode: "login", role/);
