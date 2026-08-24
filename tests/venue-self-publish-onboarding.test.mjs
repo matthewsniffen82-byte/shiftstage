@@ -5,6 +5,7 @@ import test from "node:test";
 const [
   signupMigration,
   reviewMigration,
+  approvalPublicationMigration,
   venueService,
   venueAccess,
   publicationRoute,
@@ -21,6 +22,7 @@ const [
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608240001_admin_managed_venue_page_review.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608240002_venue_approval_publishes_page.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-access.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/publication/route.ts", import.meta.url), "utf8"),
@@ -48,48 +50,54 @@ test("the database stores the complete managed page review state", () => {
   }
   assert.match(reviewMigration, /page_reviewed_by_user_id uuid references public\.app_users/);
   assert.match(reviewMigration, /True only after the connected venue approves/);
+  assert.match(approvalPublicationMigration, /approval publishes that exact reviewed version/);
+  assert.match(approvalPublicationMigration, /page_review_status = 'published'/);
 });
 
-test("private venue owners keep access but can only approve or request corrections", () => {
+test("private venue owners keep read-only access and approval publishes the completed page", () => {
   const ownedVenueQuery = venueAccess.match(/const \{ data: ownedVenue[\s\S]*?if \(ownerError\)/)?.[0] || "";
   assert.match(ownedVenueQuery, /\.eq\("owner_user_id", userId\)/);
   assert.doesNotMatch(ownedVenueQuery, /\.eq\("is_active", true\)/);
   assert.match(venueService, /export async function reviewVenuePageForAccount/);
   assert.match(venueService, /profile\.pageReviewStatus !== "venue_review"/);
-  assert.match(venueService, /"venue_approved" : "changes_requested"/);
+  assert.match(venueService, /is_active: approved/);
+  assert.match(venueService, /published_at: approved \? reviewedAt : null/);
+  assert.match(venueService, /page_review_status: approved \? "published" : "changes_requested"/);
   assert.match(venueService, /Describe the requested changes in at least 10 characters/);
   assert.doesNotMatch(venueService, /export async function publishVenueForAccount/);
   assert.match(publicationRoute, /decision === "approved" \|\| body\?\.decision === "changes_requested"/);
-  assert.doesNotMatch(publicationRoute, /is_active: true/);
+  assert.match(publicationRoute, /Page approved and published\. Your venue is now live on MyDancr\./);
 });
 
-test("only MyDancr can send review and publish after venue approval", () => {
+test("only MyDancr can prepare and send a page before venue-controlled publication", () => {
   assert.match(adminVenueRoute, /body\?\.action === "send_for_review" \|\| body\?\.action === "publish"/);
   assert.match(adminVenueRoute, /transitionAdminManagedVenuePage/);
   assert.match(adminService, /profile\.pageReviewStatus !== "venue_approved"/);
   assert.match(adminService, /update\(\{ is_active: true, published_at: now, page_review_status: "published"/);
   assert.match(adminService, /Complete the MyDancr venue page first/);
   assert.match(adminService, /The connected venue manager must approve this exact page/);
+  assert.match(adminService, /approve it to make it live/);
 });
 
 test("admins can prepare all page fields and official venue images", () => {
   assert.match(adminClient, /saveVenuePage/);
   assert.match(adminClient, /uploadVenueImage/);
   assert.match(adminClient, /Send page for venue approval/);
-  assert.match(adminClient, /Publish approved page/);
+  assert.doesNotMatch(adminClient, /Publish approved page/);
   assert.match(adminMediaRoute, /uploadVenueLogoImageByAdmin/);
   assert.match(adminMediaRoute, /uploadVenueCoverImageByAdmin/);
   assert.match(venueService, /MyDancr manages venue page images/);
 });
 
 test("the venue dashboard presents a read-only review and approval experience", () => {
-  assert.match(dashboard, /MyDancr prepares the venue page\. Your team reviews it before MyDancr publishes it/);
+  assert.match(dashboard, /MyDancr prepares the venue page\. Your team reviews it and approves it to make it live/);
   assert.match(dashboard, /Ready to review/);
   assert.match(dashboard, /Changes in progress/);
   assert.match(dashboard, /canPreviewVenuePage \? <button type="button" onClick=\{openVenueCardPreview\}>Preview venue<\/button>/);
-  assert.match(dashboard, /Approve page/);
+  assert.match(dashboard, /Approve & make live/);
+  assert.match(dashboard, /Approve this exact venue page and make it live on MyDancr/);
   assert.match(dashboard, /Request changes/);
-  assert.match(dashboard, /Your approval is recorded\. A MyDancr administrator will complete the final check/);
+  assert.match(dashboard, /Making venue live/);
   assert.match(dashboard, /readOnly/);
   assert.doesNotMatch(dashboard, /const setupRequirements/);
   assert.doesNotMatch(dashboard, /setupCompletedCount/);
@@ -102,7 +110,8 @@ test("manager access email and documentation describe the managed workflow", () 
   assert.match(signupService, /MyDancr will prepare the private venue page/);
   assert.match(documentation, /MyDancr prepares the private page/);
   assert.match(documentation, /venue previews the page and either approves/);
-  assert.match(documentation, /Venue approval records consent but never activates a listing/);
+  assert.match(documentation, /Approval publishes that exact completed page immediately/);
+  assert.match(documentation, /approved review atomically marks that exact page published/);
 });
 
 test("public discovery remains restricted to administratively published venues", () => {

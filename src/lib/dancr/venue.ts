@@ -464,13 +464,16 @@ export async function reviewVenuePageForAccount(
   }
 
   const reviewedAt = new Date().toISOString();
+  const approved = input.decision === "approved";
   const { data, error } = await client
     .from("venues")
     .update({
-      page_review_status: input.decision === "approved" ? "venue_approved" : "changes_requested",
+      is_active: approved,
+      published_at: approved ? reviewedAt : null,
+      page_review_status: approved ? "published" : "changes_requested",
       page_reviewed_at: reviewedAt,
       page_reviewed_by_user_id: userId,
-      page_review_notes: input.decision === "approved" ? null : notes,
+      page_review_notes: approved ? null : notes,
     })
     .eq("id", access.venueId)
     .eq("page_review_status", "venue_review")
@@ -478,7 +481,7 @@ export async function reviewVenuePageForAccount(
     .single();
   if (error) throw error;
   const reviewedProfile = toVenueOwnerProfile(client, data);
-  console.info(input.decision === "approved" ? "VENUE_PAGE_APPROVED" : "VENUE_PAGE_CHANGES_REQUESTED", {
+  console.info(approved ? "VENUE_PAGE_APPROVED_AND_PUBLISHED" : "VENUE_PAGE_CHANGES_REQUESTED", {
     venueId: access.venueId,
     userId,
   });

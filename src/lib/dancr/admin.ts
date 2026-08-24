@@ -726,7 +726,7 @@ export async function transitionAdminManagedVenuePage(
       recipient_id: profile.ownerUserId,
       notification_type: "approval_status" as const,
       title: "Your venue page is ready to review",
-      body: `${profile.name} is ready for your approval. Open the venue dashboard to preview the page or request changes.`,
+      body: `${profile.name} is ready for your approval. Open the venue dashboard to preview the exact page, request changes, or approve it to make it live.`,
       payload: { venueId, venueSlug: profile.slug, event: "venue_page_review" },
     };
     const { error: notificationError } = await (client as any).from("notifications").insert(notificationRow);

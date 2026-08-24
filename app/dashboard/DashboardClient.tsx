@@ -1899,8 +1899,9 @@ function VenuePanel({
   }
 
   async function submitVenueReview(decision: "approved" | "changes_requested") {
+    if (decision === "approved" && !window.confirm("Approve this exact venue page and make it live on MyDancr?")) return;
     setIsPublishingVenue(true);
-    setPublicationStatus(decision === "approved" ? "Approving venue page..." : "Sending change request...");
+    setPublicationStatus(decision === "approved" ? "Approving and publishing venue page..." : "Sending change request...");
     try {
       const data = await requestDashboardJson("/api/venue/publication", {
         method: "POST",
@@ -1978,7 +1979,7 @@ function VenuePanel({
   const isPublished = profile?.isActive === true;
   const pageReviewStatus = String(profile?.pageReviewStatus || (isPublished ? "published" : "admin_draft"));
   const isAwaitingVenueReview = !isPublished && pageReviewStatus === "venue_review";
-  const canPreviewVenuePage = isAwaitingVenueReview || pageReviewStatus === "venue_approved";
+  const canPreviewVenuePage = isAwaitingVenueReview;
   const venuePageTabStatus = isPublished
     ? "Live page"
     : pageReviewStatus === "venue_review"
@@ -1996,7 +1997,7 @@ function VenuePanel({
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : "PRIVATE DRAFT"}</span>
           <div>
           <h2 id="venue-command-heading">{isPublished ? `Tonight at ${venueName}` : `Private page for ${venueName}`}</h2>
-            <p>{isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "MyDancr prepares the venue page. Your team reviews it before MyDancr publishes it."}</p>
+            <p>{isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
@@ -2061,7 +2062,7 @@ function VenuePanel({
                 : pageReviewStatus === "changes_requested"
                   ? "MyDancr is working on your changes"
                   : pageReviewStatus === "venue_approved"
-                    ? "Approved and waiting for publication"
+                    ? "Approved page ready to finish"
                     : "MyDancr is preparing your venue page"}
           </h2>
           <p>
@@ -2072,7 +2073,7 @@ function VenuePanel({
                 : pageReviewStatus === "changes_requested"
                   ? "Your requested changes were sent. MyDancr will update the page and return it for another review."
                   : pageReviewStatus === "venue_approved"
-                    ? "Your approval is recorded. A MyDancr administrator will complete the final check and publish the page."
+                    ? "This page was approved under the previous workflow. MyDancr is completing its publication."
                     : "MyDancr is completing your private venue page. You will be notified when it is ready to review."}
           </p>
         </div>
@@ -2081,7 +2082,7 @@ function VenuePanel({
             {canPreviewVenuePage ? <button type="button" onClick={openVenueCardPreview}>Preview venue</button> : null}
             {isAwaitingVenueReview ? (
               <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
-                {isPublishingVenue ? "Saving review..." : "Approve page"}
+                {isPublishingVenue ? "Making venue live..." : "Approve & make live"}
               </button>
             ) : null}
             {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link> : null}

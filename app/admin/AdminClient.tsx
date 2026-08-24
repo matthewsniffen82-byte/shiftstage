@@ -2804,22 +2804,22 @@ function VenueManager({
     }
   }
 
-  async function transitionVenuePage(venue: Record<string, unknown>, action: "send_for_review" | "publish") {
+  async function sendVenuePageForReview(venue: Record<string, unknown>) {
     const venueId = asText(venue.id);
     const token = readToken();
     if (!token) return setVenueStatus(venueId, "Admin sign in required.");
     try {
       setBusyVenueId(venueId);
-      setVenueStatus(venueId, action === "send_for_review" ? "Sending private page to the venue..." : "Publishing approved venue page...");
+      setVenueStatus(venueId, "Sending private page to the venue...");
       const response = await fetch("/api/admin/venues", {
         method: "PATCH",
         headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ venueId, action }),
+        body: JSON.stringify({ venueId, action: "send_for_review" }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || "Unable to update venue page workflow.");
       mergeVenue(venueId, data.venue);
-      setVenueStatus(venueId, action === "send_for_review" ? "Review sent to the connected venue account." : "Venue page published to MyDancr.");
+      setVenueStatus(venueId, "Review sent. The venue can now approve the exact page and make it live.");
     } catch (error) {
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue page workflow.");
     } finally {
@@ -2899,7 +2899,7 @@ function VenueManager({
 
   return (
     <div className="venue-manager">
-      <p className="admin-info-note">Approve a submitted request to create its private workspace. MyDancr then prepares the full venue page, sends it to the connected venue manager for approval, and performs the final publication.</p>
+      <p className="admin-info-note">Approve a submitted request to create its private workspace. MyDancr then builds the full venue page and sends the exact page to the connected venue manager. The manager can request changes or approve it to make it live.</p>
       <label className="venue-search">
         Find venue
         <input
@@ -3001,9 +3001,8 @@ function VenueManager({
                 </ul>
                 <div className="venue-page-workflow-actions">
                   {!isActive && reviewStatus !== "venue_approved" ? (
-                    <button type="button" disabled={isBusy || !isReady || !connectedManager} onClick={() => void transitionVenuePage(venue, "send_for_review")}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send page for venue approval"}</button>
+                    <button type="button" disabled={isBusy || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send page for venue approval"}</button>
                   ) : null}
-                  {!isActive && reviewStatus === "venue_approved" ? <button type="button" disabled={isBusy || !isReady} onClick={() => void transitionVenuePage(venue, "publish")}>Publish approved page</button> : null}
                   {!isReady ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
                 </div>
               </section>

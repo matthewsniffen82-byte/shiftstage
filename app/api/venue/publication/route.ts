@@ -31,18 +31,18 @@ export async function POST(request: Request) {
       venueId: access.venueId,
       actorUserId: user.id,
       actorRole: access.role,
-      action: decision === "approved" ? "profile.venue_page_approved" : "profile.venue_page_changes_requested",
+      action: decision === "approved" ? "profile.venue_page_approved_and_published" : "profile.venue_page_changes_requested",
       targetType: "venue",
       targetId: result.profile.id,
       summary: decision === "approved"
-        ? "The venue approved its private MyDancr page for final publication."
+        ? "The venue approved its private MyDancr page and published it."
         : "The venue requested changes to its private MyDancr page.",
     });
     return NextResponse.json({
       ok: true,
       ...result,
       message: decision === "approved"
-        ? "Page approved. MyDancr will complete the final publication check."
+        ? "Page approved and published. Your venue is now live on MyDancr."
         : "Change request sent to MyDancr.",
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

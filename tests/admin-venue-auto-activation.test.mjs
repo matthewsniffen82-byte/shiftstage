@@ -9,12 +9,12 @@ const [adminRoute, adminClient, liveApp, signupMigration] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
 ]);
 
-test("administrators cannot manually create a venue and publish only after venue approval", () => {
+test("administrators build the venue page but cannot bypass venue-controlled publication", () => {
   assert.match(adminRoute, /New venues must submit the venue request form/);
   assert.match(adminRoute, /transitionAdminManagedVenuePage/);
   assert.match(adminClient, /Approve a submitted request to create its private workspace/);
   assert.match(adminClient, /Send page for venue approval/);
-  assert.match(adminClient, /Publish approved page/);
+  assert.doesNotMatch(adminClient, /Publish approved page/);
   assert.doesNotMatch(adminClient, /Venue created and active/);
   assert.match(signupMigration, /insert into public\.venues[\s\S]*?false,[\s\S]*?null/);
 });
