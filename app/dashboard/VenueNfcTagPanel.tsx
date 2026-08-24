@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  currentDashboardAuthHeaders as authHeaders,
-  persistRefreshedDashboardSession as persistRefreshedSession,
+  readDashboardAccessToken,
+  requestVenueDancerVerificationsJson,
+  requestVenueNfcSupportJson,
+  requestVenueNfcTagsJson,
 } from "./dashboard-session";
 
 type NfcTag = {
@@ -54,21 +56,17 @@ export default function VenueNfcTagPanel({
   const [supportNotes, setSupportNotes] = useState("");
 
   const load = useCallback(async () => {
-    const auth = authHeaders();
-    if (!auth) {
+    if (!readDashboardAccessToken("venue")) {
       setIsLoading(false);
       return setStatus("Sign in required.");
     }
     setIsLoading(true);
     try {
-      const [tagResponse, rosterResponse] = await Promise.all([
-        fetch("/api/venue/nfc-tags", { headers: auth, cache: "no-store" }),
-        fetch("/api/venue/dancer-verifications", { headers: auth, cache: "no-store" }),
-      ]);
-      const [tagData, rosterData] = await Promise.all([tagResponse.json(), rosterResponse.json()]);
-      if (!tagResponse.ok || !tagData.ok) throw new Error(tagData.error || "Unable to load assigned NFC stickers.");
-      if (!rosterResponse.ok || !rosterData.ok) throw new Error(rosterData.error || "Unable to load the verified dancer roster.");
-      persistRefreshedSession(tagData.session);
+      const tagData = await requestVenueNfcTagsJson({ cache: "no-store" });
+      const rosterData = await requestVenueDancerVerificationsJson("", {
+        cache: "no-store",
+        fallbackMessage: "Unable to load the verified dancer roster.",
+      });
       setTags(tagData.tags || []);
       setAffiliations(rosterData.affiliations || []);
       setStatus(tagData.tags?.length
@@ -98,12 +96,12 @@ export default function VenueNfcTagPanel({
     const startedAt = Date.now();
     let cancelled = false;
     async function checkTap() {
-      const auth = authHeaders();
-      if (!auth) return;
+      if (!readDashboardAccessToken("venue")) return;
       try {
-        const response = await fetch("/api/venue/nfc-tags", { headers: auth, cache: "no-store" });
-        const data = await response.json();
-        if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check NFC activity.");
+        const data = await requestVenueNfcTagsJson({
+          cache: "no-store",
+          fallbackMessage: "Unable to check NFC activity.",
+        });
         const nextTags = (data.tags || []) as NfcTag[];
         if (!cancelled) setTags(nextTags);
         const tested = nextTags.find((tag) => tag.id === testingTagId);
@@ -136,17 +134,15 @@ export default function VenueNfcTagPanel({
   async function removeAccess(affiliation: DancerAffiliation) {
     const dancerName = affiliation.dancer?.stageName || "this dancer";
     if (!window.confirm(`Remove ${dancerName} from this venue's NFC-authorized roster? They must tap the dressing-room sticker again before they can check in here.`)) return;
-    const auth = authHeaders();
-    if (!auth) return setStatus("Sign in required.");
+    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     setIsSaving(true);
     try {
-      const response = await fetch("/api/venue/dancer-verifications", {
+      await requestVenueDancerVerificationsJson("", {
         method: "DELETE",
-        headers: { ...auth, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ affiliationId: affiliation.id, reason: "Venue removed NFC access." }),
+        fallbackMessage: "Unable to remove NFC access.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove NFC access.");
       setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
       setStatus(`${dancerName} was removed. A new dressing-room tap restores access.`);
     } catch (error) {
@@ -163,18 +159,15 @@ export default function VenueNfcTagPanel({
   }
 
   async function sendSupportRequest() {
-    const auth = authHeaders();
-    if (!auth) return setStatus("Sign in required.");
+    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     if (!supportTagId) return setStatus("Choose an assigned NFC sticker.");
     setIsSaving(true);
     try {
-      const response = await fetch("/api/venue/nfc-support", {
+      const data = await requestVenueNfcSupportJson({
         method: "POST",
-        headers: { ...auth, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ tagId: supportTagId, requestType: supportType, notes: supportNotes }),
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to request NFC support.");
       setStatus(data.message || "NFC support request sent.");
       setSupportTagId("");
       setSupportNotes("");

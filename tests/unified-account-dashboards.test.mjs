@@ -21,6 +21,8 @@ import {
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestVenueDancerVerificationsJson,
+  requestVenueNfcSupportJson,
+  requestVenueNfcTagsJson,
   requestVenueTeamJson,
   requestVenueTvVideosJson,
 } from "../app/dashboard/dashboard-session.ts";
@@ -170,10 +172,11 @@ test("venue dashboard subpanels use the shared session boundary and preserve tok
 
   assert.match(venueTvPanel, /readDashboardAccessToken\("venue"\)/);
   assert.match(venueTeamPanel, /requestVenueTeamJson/);
-  assert.match(venueNfcPanel, /currentDashboardAuthHeaders as authHeaders/);
-  assert.match(venueNfcPanel, /persistRefreshedDashboardSession as persistRefreshedSession/);
+  assert.match(venueNfcPanel, /requestVenueNfcTagsJson/);
+  assert.match(venueNfcPanel, /requestVenueDancerVerificationsJson/);
+  assert.match(venueNfcPanel, /requestVenueNfcSupportJson/);
   for (const panel of [venueTvPanel, venueTeamPanel, venueNfcPanel]) {
-    assert.doesNotMatch(panel, /const SESSION_KEY|localStorage\.getItem\(SESSION_KEY\)|function readToken\(|function authHeaders\(|function persistRefreshedSession\(/);
+    assert.doesNotMatch(panel, /const SESSION_KEY|localStorage\.getItem\(SESSION_KEY\)|function readToken\(|function authHeaders\(|function persistRefreshedSession\(|currentDashboardAuthHeaders|persistRefreshedDashboardSession/);
   }
 });
 
@@ -1021,6 +1024,121 @@ test("venue team actions use one refresh-aware venue boundary", async () => {
   assert.match(venueTeamPanel, /requestVenueTeamJson/);
   assert.doesNotMatch(venueTeamPanel, /fetch\(/);
   assert.doesNotMatch(venueTeamPanel, /currentDashboardAuthHeaders|persistRefreshedDashboardSession/);
+});
+
+test("venue NFC operations use refresh-aware venue boundaries", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    return new Response(JSON.stringify({
+      ok: true,
+      tags: [],
+      affiliations: [],
+      message: "NFC support request sent.",
+      session: { accessToken: "rotated-venue-access", expiresAt: 99999 },
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "venue-access",
+      refreshToken: "venue-refresh",
+      account: { role: "venue" },
+    }));
+    await requestVenueNfcTagsJson({ cache: "no-store" });
+    await requestVenueDancerVerificationsJson("", {
+      cache: "no-store",
+      fallbackMessage: "Unable to load the verified dancer roster.",
+    });
+    await requestVenueDancerVerificationsJson("", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ affiliationId: "affiliation-id", reason: "Venue removed NFC access." }),
+      fallbackMessage: "Unable to remove NFC access.",
+    });
+    await requestVenueNfcSupportJson({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ tagId: "tag-id", requestType: "damaged", notes: "Needs replacement." }),
+    });
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/venue/nfc-tags",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/venue/dancer-verifications",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer rotated-venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/venue/dancer-verifications",
+        options: {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+          body: JSON.stringify({ affiliationId: "affiliation-id", reason: "Venue removed NFC access." }),
+        },
+      },
+      {
+        path: "/api/venue/nfc-support",
+        options: {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+          body: JSON.stringify({ tagId: "tag-id", requestType: "damaged", notes: "Needs replacement." }),
+        },
+      },
+    ]);
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "rotated-venue-access",
+      refreshToken: "venue-refresh",
+      expiresAt: 99999,
+      account: { role: "venue" },
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestVenueNfcTagsJson/);
+  assert.match(dashboardSession, /function requestVenueNfcSupportJson/);
+  assert.match(venueNfcPanel, /requestVenueNfcTagsJson/);
+  assert.match(venueNfcPanel, /requestVenueDancerVerificationsJson/);
+  assert.match(venueNfcPanel, /requestVenueNfcSupportJson/);
+  assert.doesNotMatch(venueNfcPanel, /fetch\(/);
+  assert.doesNotMatch(venueNfcPanel, /currentDashboardAuthHeaders|persistRefreshedDashboardSession/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
