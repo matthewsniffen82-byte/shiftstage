@@ -21,6 +21,7 @@ import {
   persistAdminSession,
   readAdminAccessToken as readToken,
   readAdminJson as readJson,
+  requestAdminJson,
 } from "./admin-session";
 
 type AdminState = {
@@ -902,18 +903,15 @@ function FinanceManager({
   const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(asText(invoice.status)));
 
   async function runAction(action: "run_automation" | "process_payouts") {
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     setIsRunning(true);
     setStatus(action === "run_automation" ? "Reconciling club invoices and dancer payouts..." : "Processing payable dancer commissions...");
     try {
-      const response = await fetch("/api/admin/finance", {
+      const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action }),
+        fallbackMessage: "Finance operation failed.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Finance operation failed.");
       const errors = Array.isArray(data.result?.errors) ? data.result.errors.length : 0;
       const baseMessage = errors ? `Finance run completed with ${errors} item requiring attention.` : "Finance reconciliation completed.";
       const message = applyFinanceMutationResponse(data, onFinanceChange, baseMessage);
@@ -928,8 +926,6 @@ function FinanceManager({
 
   async function recordPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     const totalPaidCents = Math.round(Number(paymentTotal) * 100);
     if (!invoiceId || !Number.isInteger(totalPaidCents) || totalPaidCents <= 0 || !paymentReference.trim()) {
       return setStatus("Choose an invoice and enter the cumulative paid total plus a bank or check reference.");
@@ -937,13 +933,12 @@ function FinanceManager({
     setIsRunning(true);
     setStatus("Reconciling external payment...");
     try {
-      const response = await fetch("/api/admin/finance", {
+      const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "record_manual_payment", invoiceId, totalPaidCents, reference: paymentReference.trim() }),
+        fallbackMessage: "Unable to record payment.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to record payment.");
       const message = applyFinanceMutationResponse(data, onFinanceChange, "External club payment reconciled.");
       setInvoiceId("");
       setPaymentTotal("");
@@ -961,18 +956,15 @@ function FinanceManager({
     event.preventDefault();
     const minimumPayoutCents = adminPayoutDollarsToCents(minimumPayout);
     if (minimumPayoutCents === null) return setStatus("Enter a valid minimum payout between $0.01 and $100,000.00.");
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     setIsRunning(true);
     setStatus("Saving audited payout settings...");
     try {
-      const response = await fetch("/api/admin/finance", {
+      const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "update_payout_settings", payoutsEnabled, paymentProvider: provider, payoutMode, earningsHoldDays: Number(holdDays), minimumPayoutCents }),
+        fallbackMessage: "Unable to save payout settings.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save payout settings.");
       setStatus(applyFinanceMutationResponse(data, onFinanceChange, "Payout settings saved and audited."));
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save payout settings.");
@@ -982,16 +974,13 @@ function FinanceManager({
   async function manageEarning(earningId: string, earningAction: "hold" | "release" | "reverse") {
     const reason = window.prompt(`Required audit reason to ${earningAction} this earning:`)?.trim();
     if (!reason) return;
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     setIsRunning(true);
     try {
-      const response = await fetch("/api/admin/finance", {
-        method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      const data = await requestAdminJson("/api/admin/finance", {
+        method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "manage_earning", earningId, earningAction, reason }),
+        fallbackMessage: "Unable to update earning.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update earning.");
       setStatus(applyFinanceMutationResponse(data, onFinanceChange, `Earning ${earningAction} action recorded.`));
     } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to update earning."); }
     finally { setIsRunning(false); }
@@ -1000,16 +989,13 @@ function FinanceManager({
   async function retryPayout(payoutId: string) {
     const reason = window.prompt("Required audit reason to retry this failed payout:")?.trim();
     if (!reason) return;
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     setIsRunning(true);
     try {
-      const response = await fetch("/api/admin/finance", {
-        method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      const data = await requestAdminJson("/api/admin/finance", {
+        method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "retry_payout", payoutId, reason }),
+        fallbackMessage: "Unable to retry payout.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to retry payout.");
       setStatus(applyFinanceMutationResponse(data, onFinanceChange, "Safe payout retry reserved for processing."));
     } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to retry payout."); }
     finally { setIsRunning(false); }
@@ -1023,23 +1009,20 @@ function FinanceManager({
         : "Enter the required audit reason:";
     const reason = window.prompt(promptLabel)?.trim();
     if (!reason) return;
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     setIsRunning(true);
     setStatus("Updating the NATS commission ledger...");
     try {
-      const response = await fetch("/api/admin/finance", {
+      const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action,
           ...(action.includes("affiliate") ? { dancerId: targetId } : { exportId: targetId }),
           ...(resolution ? { resolution } : {}),
           reason,
         }),
+        fallbackMessage: "Unable to update the NATS commission ledger.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update the NATS commission ledger.");
       const message = applyFinanceMutationResponse(data, onFinanceChange, "NATS commission ledger updated.");
       setStatus(message);
       onActionConfirmed(message);

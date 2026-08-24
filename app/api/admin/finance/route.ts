@@ -12,10 +12,10 @@ export const maxDuration = 60;
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const finance = await getAdminFinanceOverview(createAdminSupabaseClient());
-    return NextResponse.json({ ok: true, finance });
+    return NextResponse.json({ ok: true, finance, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load QR finance operations.");
   }
@@ -23,12 +23,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json().catch(() => ({}));
     const admin = createAdminSupabaseClient();
     const result = await dispatchAdminFinanceAction(admin, user.id, body);
-    return NextResponse.json(result.body, { status: result.status });
+    return NextResponse.json({ ...result.body, session: session || null }, { status: result.status });
   } catch (error) {
     return apiError(error, "Unable to update QR finance operations.");
   }

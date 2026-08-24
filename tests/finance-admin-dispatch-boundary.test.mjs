@@ -12,11 +12,20 @@ const [adminClient, dispatch, input, result, route] = await Promise.all([
 
 test("admin finance transport authenticates before delegating one parsed request", () => {
   assert.match(route, /await requireAdmin\(client, user\.id\)/);
+  assert.equal((route.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
   assert.match(route, /const body = await request\.json\(\)\.catch\(\(\) => \(\{\}\)\)/);
   assert.match(route, /dispatchAdminFinanceAction\(admin, user\.id, body\)/);
-  assert.match(route, /NextResponse\.json\(result\.body, \{ status: result\.status \}\)/);
+  assert.match(route, /NextResponse\.json\(\{ \.\.\.result\.body, session: session \|\| null \}, \{ status: result\.status \}\)/);
   assert.doesNotMatch(route, /body\.action ===/);
   assert.doesNotMatch(route, /recordManualClubInvoicePayment|processDancerPayouts|runQrFinanceAutomation/);
+});
+
+test("admin finance mutations use the refresh-aware role-isolated request boundary", () => {
+  assert.match(adminClient, /requestAdminJson,/);
+  assert.equal((adminClient.match(/requestAdminJson\("\/api\/admin\/finance"/g) || []).length, 6);
+  assert.doesNotMatch(adminClient, /fetch\("\/api\/admin\/finance"/);
+  assert.doesNotMatch(adminClient, /authorization: `Bearer \$\{token\}`[^\n]*[\s\S]{0,140}record_manual_payment/);
+  assert.match(route, /NextResponse\.json\(\{ ok: true, finance, session: session \|\| null \}\)/);
 });
 
 test("the dispatcher preserves every supported production finance action", () => {
