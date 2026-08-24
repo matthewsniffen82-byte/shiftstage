@@ -132,6 +132,17 @@ test("venue dashboards expose the complete MyDancr-managed contract ledger", () 
   assert.doesNotMatch(venueDealPanel, /Publish Club Deal|Pause Deal|Request fee change|Edit live deal/);
 });
 
+test("Club Deal previews never open an unpublished public venue URL", () => {
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
+  assert.match(venuePanel, /isVenuePublished=\{isPublished\}/);
+  assert.match(venueDealPanel, /liveDeals\.length && isVenuePublished && venueSlug/);
+  assert.match(venueDealPanel, /href=\{`\/\?city=\$\{encodeURIComponent\(venueCity/);
+  assert.match(venueDealPanel, /live preview becomes available after MyDancr publishes the venue page/);
+  assert.doesNotMatch(venueDealPanel, /openVenueCardPreview|Preview venue card/);
+  assert.doesNotMatch(venueDealPanel, /href=\{`\/venues\//);
+});
+
 test("venue publication status hides internal requirements while retaining the read-only deal record", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
   assert.doesNotMatch(venuePanel, /setupRequirements|setupCompletedCount|venue-publication-requirement-label|venue-readonly-fields|VenueMediaPreview/);

@@ -2207,8 +2207,10 @@ function VenuePanel({
           deals={dashboardDeals}
           dealRequests={dealRequests}
           finance={finance}
+          isVenuePublished={isPublished}
           referralFee={referralFee}
           revenue={dealRevenue}
+          venueCity={venueCity}
           venueSlug={venueSlug}
           canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
           onDealRequestsChange={onDealRequestsChange}
@@ -7049,8 +7051,10 @@ function VenueDealReadOnlyPanel({
   deals,
   dealRequests,
   finance,
+  isVenuePublished,
   referralFee,
   revenue,
+  venueCity,
   venueSlug,
   canRequestDeals,
   onDealRequestsChange,
@@ -7058,8 +7062,10 @@ function VenueDealReadOnlyPanel({
   deals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
   finance?: LoadState["finance"];
+  isVenuePublished: boolean;
   referralFee?: LoadState["referralFee"];
   revenue?: LoadState["dealRevenue"];
+  venueCity: string;
   venueSlug: string;
   canRequestDeals: boolean;
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
@@ -7161,7 +7167,16 @@ function VenueDealReadOnlyPanel({
         ) : null}
       </div>
 
-      {venueSlug && liveDeals.length ? <Link className="venue-contract-preview" href={`/venues/${encodeURIComponent(venueSlug)}`}>Preview live Club Deals</Link> : null}
+      {liveDeals.length && isVenuePublished && venueSlug ? (
+        <Link
+          className="venue-contract-preview"
+          href={`/?city=${encodeURIComponent(venueCity || "Las Vegas")}&venue=${encodeURIComponent(venueSlug)}`}
+        >
+          Open live Club Deals
+        </Link>
+      ) : liveDeals.length ? (
+        <p className="venue-contract-preview-note">The Club Deal is recorded. The live preview becomes available after MyDancr publishes the venue page.</p>
+      ) : null}
 
       <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading">
         <div>
@@ -7990,6 +8005,7 @@ function DashboardStyles() {
       .venue-contract-deal-terms { display: grid; gap: 5px; padding-top: 10px; border-top: 1px solid var(--mydancr-dashboard-border); }
       .venue-contract-empty { min-height: 130px; place-content: center; }
       .venue-contract-preview { width: fit-content; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border: 1px solid rgba(124,58,237,.54); border-radius: 9px; color: #f8fafc; background: #7c3aed; font-weight: 900; text-decoration: none; box-shadow: 0 0 16px rgba(124,58,237,.18); }
+      .venue-contract-preview-note { width: min(100%, 620px); margin: 0; padding: 12px 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; color: var(--dancr-color-text-secondary); background: var(--mydancr-dashboard-panel-raised); line-height: 1.45; }
       .venue-deal-request-center { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; padding: 15px; border: 1px solid rgba(124,58,237,.4); border-radius: 12px; background: #0d0d12; }
       .venue-deal-request-center > div:first-child { display: grid; gap: 5px; }
       .venue-deal-request-center h3, .venue-deal-request-center p { margin: 0; }
