@@ -9,6 +9,8 @@ import {
   persistDashboardSession,
   persistRefreshedDashboardSession,
   readDashboardAccessToken,
+  requestDancerProfileJson,
+  requestDancerProfileVisibilityJson,
   requestDashboardJson,
 } from "../app/dashboard/dashboard-session.ts";
 
@@ -254,6 +256,73 @@ test("shared dashboard panels use the refresh-aware request boundary", () => {
   assert.match(customerActions, /requestDashboardJson\(path/);
   assert.match(customerActions, /requestDashboardJson\("\/api\/customer\/directions"/);
   assert.doesNotMatch(customerActions, /authorization: `Bearer/);
+});
+
+test("dancer profile requests use one role-aware dashboard boundary", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    return new Response(JSON.stringify({ ok: true, profile: { id: "dancer-profile" } }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "dancer-access",
+      refreshToken: "dancer-refresh",
+      account: { role: "dancer" },
+    }));
+    await requestDancerProfileJson({ cache: "no-store" });
+    await requestDancerProfileVisibilityJson({
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ isPublic: false }),
+    });
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/dancer/profile",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/dancer/profile/visibility",
+        options: {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: JSON.stringify({ isPublic: false }),
+        },
+      },
+    ]);
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestDancerProfileJson/);
+  assert.match(dashboardSession, /function requestDancerProfileVisibilityJson/);
+  assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/profile"/);
+  assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/profile\/visibility"/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {

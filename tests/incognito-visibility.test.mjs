@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [routeSource, dashboardSource, mobileAppSource, migrationSource, supabaseHealthSource] = await Promise.all([
+const [routeSource, dashboardSource, dashboardSessionSource, mobileAppSource, migrationSource, supabaseHealthSource] = await Promise.all([
   readFile(new URL("../app/api/dancer/profile/visibility/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/dashboard-session.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202607220001_incognito_visibility_hardening.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/api/health/supabase/route.ts", import.meta.url), "utf8"),
@@ -31,9 +32,10 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /visibility,/);
   assert.match(routeSource, /session,/);
   assert.match(supabaseHealthSource, /dancer_profiles\?select=id,is_public&limit=1/);
-  assert.match(dashboardSource, /fetch\("\/api\/dancer\/profile\/visibility"/);
-  assert.match(dashboardSource, /"x-dancr-refresh-token": session\.refreshToken/);
-  assert.match(dashboardSource, /persistResponseSession\(data\)/);
+  assert.match(dashboardSource, /requestDancerProfileVisibilityJson\(/);
+  assert.match(dashboardSessionSource, /requestDashboardJson\("\/api\/dancer\/profile\/visibility"/);
+  assert.match(dashboardSessionSource, /"x-dancr-refresh-token"/);
+  assert.match(dashboardSessionSource, /persistResponseSession\(data\)/);
   assert.match(dashboardSource, /data\.visibility\?\.publicProfileVisible !== nextPublic/);
   assert.doesNotMatch(
     dashboardSource.match(/async function toggleVisibility\(\)[\s\S]*?\n  }/)?.[0] || "",

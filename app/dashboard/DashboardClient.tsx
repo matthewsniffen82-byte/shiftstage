@@ -27,10 +27,11 @@ import {
   dashboardAuthHeaders,
   dashboardLoadErrorMessage,
   persistDashboardSession,
-  persistResponseSession,
   readJson,
   readOptionalJson,
   readSession,
+  requestDancerProfileJson,
+  requestDancerProfileVisibilityJson,
   requestDashboardJson,
   storedSessionAccount,
   storedSessionIsFresh,
@@ -3494,13 +3495,13 @@ function DancerOnboardingCommand({
     setIsSubmitting(true);
     setStatus("Preparing your profile for club verification...");
     try {
-      const response = await fetch("/api/dancer/profile", {
+      const data = await requestDancerProfileJson({
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ submitForReview: true }),
+        fallbackMessage: "Unable to submit profile.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to submit profile.");
+      if (!data.profile) throw new Error("Unable to submit profile.");
       const confirmedStatus = effectiveDancerProfileStatus(data.profile);
       if (confirmedStatus !== "pending_review" && confirmedStatus !== "approved") {
         throw new Error("Club verification was not unlocked. Please try again.");
@@ -4002,12 +4003,11 @@ function DancerPanel({
       const session = readSession();
       if (!session?.accessToken) return;
       try {
-        const response = await fetch("/api/dancer/profile", {
-          headers: { authorization: `Bearer ${session.accessToken}` },
+        const data = await requestDancerProfileJson({
           cache: "no-store",
+          fallbackMessage: "Unable to refresh dancer profile.",
         });
-        const data = await response.json();
-        if (!cancelled && response.ok && data.ok && data.profile) onProfileChange?.(data.profile);
+        if (!cancelled && data.profile) onProfileChange?.(data.profile);
       } catch {
         // The visible dashboard remains usable and the next interval retries quietly.
       }
@@ -4022,14 +4022,11 @@ function DancerPanel({
   const refreshDancerProfile = useCallback(async () => {
     const session = readSession();
     if (!session?.accessToken) return;
-    const response = await fetch("/api/dancer/profile", {
-      headers: { authorization: `Bearer ${session.accessToken}` },
+    const data = await requestDancerProfileJson({
       cache: "no-store",
+      fallbackMessage: "Unable to refresh dancer profile.",
     });
-    const data = await response.json();
-    if (!response.ok || !data.ok || !data.profile) {
-      throw new Error(data.error || "Unable to refresh dancer profile.");
-    }
+    if (!data.profile) throw new Error("Unable to refresh dancer profile.");
     onProfileChange?.(data.profile);
   }, [onProfileChange]);
 
@@ -4315,18 +4312,12 @@ function DancerVisibilityPanel({
     setIsSaving(true);
     setStatus(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from the site...");
     try {
-      const response = await fetch("/api/dancer/profile/visibility", {
+      const data = await requestDancerProfileVisibilityJson({
         method: "PATCH",
-        headers: {
-          authorization: `Bearer ${session.accessToken}`,
-          "content-type": "application/json",
-          ...(session.refreshToken ? { "x-dancr-refresh-token": session.refreshToken } : {}),
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ isPublic: nextPublic }),
+        fallbackMessage: "Unable to update profile visibility.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update profile visibility.");
-      persistResponseSession(data);
       const savedPublic = data.profile?.is_public === true || data.profile?.isPublic === true;
       if (savedPublic !== nextPublic) throw new Error("Profile visibility did not save. Try again.");
       if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== nextPublic) {
@@ -4846,13 +4837,12 @@ function DancerSetupPanel({
     setIsResetting(true);
     setStatus("Reloading the latest saved profile...");
     try {
-      const response = await fetch("/api/dancer/profile", {
+      const data = await requestDancerProfileJson({
         method: "GET",
-        headers: { authorization: `Bearer ${session.accessToken}` },
         cache: "no-store",
+        fallbackMessage: "Unable to reload the saved profile.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to reload the saved profile.");
+      if (!data.profile) throw new Error("Unable to reload the saved profile.");
 
       console.log("PUBLIC_PROFILE_STATE_AFTER_RESET", {
         dancerId: data.profile.id || null,
@@ -4912,13 +4902,12 @@ function DancerSetupPanel({
         deletedPhotoIds: idsToDelete,
         deletedPhotoStoragePathCount: storagePathsToDelete.length,
       });
-      const response = await fetch("/api/dancer/profile", {
+      const data = await requestDancerProfileJson({
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
+        fallbackMessage: "Unable to save profile.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save profile.");
 
       const refreshedPhotoRows = [
         ...(Array.isArray(data.profile?.dancer_photos) ? data.profile.dancer_photos : []),
@@ -5027,13 +5016,12 @@ function DancerAvatarPanel({
     if (nextFile) void uploadAvatar(nextFile);
   }
 
-  async function refreshProfile(accessToken: string) {
-    const response = await fetch("/api/dancer/profile", {
-      headers: { authorization: `Bearer ${accessToken}` },
+  async function refreshProfile() {
+    const data = await requestDancerProfileJson({
       cache: "no-store",
+      fallbackMessage: "Unable to refresh your avatar.",
     });
-    const data = await response.json();
-    if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to refresh your avatar.");
+    if (!data.profile) throw new Error("Unable to refresh your avatar.");
     onProfileChange?.(data.profile);
     return data.profile as Record<string, unknown>;
   }
@@ -5059,7 +5047,7 @@ function DancerAvatarPanel({
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || data.error || "Unable to upload avatar.");
       setUploadProgress(85);
-      await refreshProfile(session.accessToken);
+      await refreshProfile();
       setFile(null);
       setPreviewUrl((current) => {
         if (current) URL.revokeObjectURL(current);
@@ -5090,7 +5078,7 @@ function DancerAvatarPanel({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove avatar.");
-      await refreshProfile(session.accessToken);
+      await refreshProfile();
       setStatus("Avatar removed.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to remove avatar.");
@@ -6273,9 +6261,9 @@ function DancerSocialPanel({
     setIsSaving(true);
     setStatus("");
     try {
-      const response = await fetch("/api/dancer/profile", {
+      const data = await requestDancerProfileJson({
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           socials: SOCIAL_PLATFORMS.map((platform) => {
             const value = (socials[platform.key] || "").trim();
@@ -6287,9 +6275,8 @@ function DancerSocialPanel({
             };
           }),
         }),
+        fallbackMessage: "Unable to save socials.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save socials.");
       if (data.profile) onProfileChange?.(data.profile);
       draftDirtyRef.current = false;
       window.localStorage.removeItem(draftKey);
@@ -6481,18 +6468,17 @@ function DancerPhotoPanel({
     }));
   }
 
-  async function persistQueuedPhotoDeletions(accessToken: string) {
+  async function persistQueuedPhotoDeletions() {
     const idsToDelete = [...deletedPhotoIdsRef.current];
     if (!idsToDelete.length) return;
 
     setStatus("Saving deleted photos before upload...");
-    const response = await fetch("/api/dancer/profile", {
+    const data = await requestDancerProfileJson({
       method: "PATCH",
-      headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ deletedPhotoIds: idsToDelete }),
+      fallbackMessage: "Unable to save deleted photos before upload.",
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Unable to save deleted photos before upload.");
 
     const confirmedIds = new Set((data.deletedPhotoIds || []).map((id: unknown) => String(id)));
     const unconfirmedIds = idsToDelete.filter((id) => !confirmedIds.has(id));
@@ -6522,7 +6508,7 @@ function DancerPhotoPanel({
     let acceptedCount = 0;
     let rejectedCount = 0;
     try {
-      await persistQueuedPhotoDeletions(session.accessToken);
+      await persistQueuedPhotoDeletions();
       for (let index = 0; index < batch.length; index += 1) {
         const item = batch[index];
         const makePrimary = item.makePrimary;
@@ -6585,12 +6571,11 @@ function DancerPhotoPanel({
       }
 
       if (acceptedCount) {
-        const refreshResponse = await fetch("/api/dancer/profile", {
-          headers: { authorization: `Bearer ${session.accessToken}` },
+        const refreshData = await requestDancerProfileJson({
           cache: "no-store",
+          fallbackMessage: "Unable to refresh uploaded photos.",
         });
-        const refreshData = await refreshResponse.json();
-        if (refreshResponse.ok && refreshData.ok && refreshData.profile) {
+        if (refreshData.profile) {
           const refreshedPhotos = preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(refreshData.profile), workingPhotos);
           workingPhotos = relabelPhotoItems(mergePhotoItems(refreshedPhotos, workingPhotos.filter((photo) => photo.status === "pending")));
           setPhotos(workingPhotos);
@@ -6635,16 +6620,16 @@ function DancerPhotoPanel({
     setIsArranging(true);
     setStatus("Saving photo order...");
     try {
-      const response = await fetch("/api/dancer/profile", {
+      const data = await requestDancerProfileJson({
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           mainPhotoUrl: arranged[0]?.imageUrl || "",
           galleryPhotoUrls: arranged.slice(1).map((photo) => photo.imageUrl),
         }),
+        fallbackMessage: "Unable to save photo order.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to save photo order.");
+      if (!data.profile) throw new Error("Unable to save photo order.");
       const refreshedPhotos = relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile));
       setPhotos(refreshedPhotos);
       onProfileChange?.(data.profile);
@@ -6696,12 +6681,11 @@ function DancerPhotoPanel({
       setStatus("Photo deleted permanently.");
       window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
 
-      const refreshResponse = await fetch("/api/dancer/profile", {
-        headers: { authorization: `Bearer ${session.accessToken}` },
+      const refreshData = await requestDancerProfileJson({
         cache: "no-store",
+        fallbackMessage: "Unable to verify the deleted photo.",
       });
-      const refreshData = await refreshResponse.json();
-      if (refreshResponse.ok && refreshData.ok && refreshData.profile) {
+      if (refreshData.profile) {
         const refreshedPhotos = dancerPhotoItemsFromProfile(refreshData.profile);
         if (refreshedPhotos.some((item) => item.id === photo.id)) {
           throw new Error("The photo could not be permanently deleted. Please try again.");

@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [accountClient, authRoute, dashboardPage, dashboard, venueDealRoute, nfcTagRoute, nfcPanel, nfcService, adminNfcRoute, adminNfcPanel, nfcProvisioningMigration, retiredVenueQr, retiredDealQr, venueDashboardRoute, liveApp] = await Promise.all([
+const [accountClient, authRoute, dashboardPage, dashboard, dashboardSession, venueDealRoute, nfcTagRoute, nfcPanel, nfcService, adminNfcRoute, adminNfcPanel, nfcProvisioningMigration, retiredVenueQr, retiredDealQr, venueDashboardRoute, liveApp] = await Promise.all([
   readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/venue/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/dashboard-session.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/nfc-tags/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8"),
@@ -32,8 +33,8 @@ test("venue signup remains code-gated and connects exactly the venue assigned to
 });
 
 test("venue dashboard session recovery rotates and persists authentication without a forced logout", () => {
-  assert.match(dashboard, /x-dancr-refresh-token/);
-  assert.match(dashboard, /persistResponseSession/);
+  assert.match(dashboardSession, /x-dancr-refresh-token/);
+  assert.match(dashboardSession, /persistResponseSession/);
   assert.match(nfcTagRoute, /session: authContext\.session \|\| null/);
   assert.match(nfcPanel, /persistRefreshedSession\(tagData\.session\)/);
   assert.match(nfcPanel, /persistRefreshedDashboardSession as persistRefreshedSession/);

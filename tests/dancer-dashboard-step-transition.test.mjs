@@ -29,7 +29,8 @@ test("NFC status refresh propagates profile authorization to the dashboard", () 
   assert.match(nfcPanel, /onAuthorizationChange\?: \(\) => void \| Promise<void>/);
   assert.match(nfcPanel, /await onAuthorizationChange\?\.\(\)/);
   assert.match(dashboardClient, /onAuthorizationChange=\{refreshDancerProfile\}/);
-  assert.match(dashboardClient, /fetch\("\/api\/dancer\/profile", \{[\s\S]*?cache: "no-store"/);
+  assert.match(dashboardClient, /requestDancerProfileJson\(\{[\s\S]*?cache: "no-store"/);
+  assert.match(dashboardSession, /requestDashboardJson\("\/api\/dancer\/profile"/);
   assert.match(dashboardSession, /fetch\(path, \{ headers, cache: "no-store" \}\)/);
 });
 

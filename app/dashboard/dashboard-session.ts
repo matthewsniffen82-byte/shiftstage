@@ -137,6 +137,22 @@ export async function requestDashboardJson(
   return data;
 }
 
+export function requestDancerProfileJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/profile", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update dancer profile.",
+  });
+}
+
+export function requestDancerProfileVisibilityJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/profile/visibility", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update profile visibility.",
+  });
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();

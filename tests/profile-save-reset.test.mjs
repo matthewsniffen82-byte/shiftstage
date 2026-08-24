@@ -26,7 +26,7 @@ const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, ro
 test("Hard Reset is a read-only database reload", () => {
   const resetHandler = dashboardSource.match(/async function hardResetProfile\(\)[\s\S]*?\n  async function saveProfile/)?.[0] || "";
   const dancerPanel = dashboardSource.match(/function DancerPanel\([\s\S]*?\nfunction DancerVisibilityPanel/)?.[0] || "";
-  assert.match(resetHandler, /fetch\("\/api\/dancer\/profile"/);
+  assert.match(resetHandler, /requestDancerProfileJson\(\{/);
   assert.match(resetHandler, /method: "GET"/);
   assert.doesNotMatch(resetHandler, /method: "PATCH"|\.update\(|\.insert\(|\.upsert\(|\.delete\(/);
   assert.match(resetHandler, /onProfileChange\?\.\(data\.profile\)/);
@@ -208,7 +208,7 @@ test("routed dashboard photo deletion is immediate, authenticated, and refresh-p
   assert.match(photoPanel, /async function deletePhoto\(photo: DancerPhotoItem\)/);
   assert.match(photoPanel, /fetch\("\/api\/dancer\/photos", \{[\s\S]*?method: "DELETE"/);
   assert.match(photoPanel, /body: JSON\.stringify\(\{ photoId: photo\.id \}\)/);
-  assert.match(photoPanel, /fetch\("\/api\/dancer\/profile", \{[\s\S]*?cache: "no-store"/);
+  assert.match(photoPanel, /requestDancerProfileJson\(\{[\s\S]*?cache: "no-store"/);
   assert.match(photoPanel, /current\.filter\(\(item\) => item\.id !== photo\.id\)/);
   assert.match(photoPanel, /Photo deleted permanently\./);
   assert.doesNotMatch(photoPanel, /Select Save Profile to permanently delete it/);
@@ -273,7 +273,7 @@ test("save keeps non-deleted photos and releases deleted slots before upload", (
   assert.match(profileRouteSource, /if \(submittedPhotoUrls\.length\) \{[\s\S]*?removeSupersededPendingPhotoRows/);
   assert.match(profileRouteSource, /NON_DELETED_PHOTO_MISSING_AFTER_SAVE/);
   assert.match(dashboardSource, /async function persistQueuedPhotoDeletions/);
-  assert.match(dashboardSource, /await persistQueuedPhotoDeletions\(session\.accessToken\);[\s\S]*?fetch\("\/api\/dancer\/photos"/);
+  assert.match(dashboardSource, /await persistQueuedPhotoDeletions\(\);[\s\S]*?fetch\("\/api\/dancer\/photos"/);
   assert.match(dashboardSource, /review\.previewUrl/);
 });
 
