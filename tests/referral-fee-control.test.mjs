@@ -30,6 +30,10 @@ test("MyDancr owns effective-dated venue fee agreements with immutable history",
 
 test("only an active MyDancr admin can atomically set, schedule, and audit a fee", () => {
   assert.match(adminRoute, /requireAdmin\(client, user\.id\)/);
+  assert.equal((adminRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
+  assert.equal((adminRoute.match(/session: session \|\| null/g) || []).length, 3);
+  assert.equal((adminClient.match(/requestAdminJson\("\/api\/admin\/referral-fees"/g) || []).length, 2);
+  assert.doesNotMatch(adminClient, /fetch\("\/api\/admin\/referral-fees"/);
   assert.match(service, /set_admin_venue_referral_fee/);
   assert.match(migration, /account\.role = 'admin'/);
   assert.match(migration, /account\.account_state = 'active'/);

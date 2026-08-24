@@ -1497,8 +1497,6 @@ function ReferralFeeManager({
 
   async function saveAgreement(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     const feeCents = adminDollarsToCents(fee);
     if (!venueId || feeCents === null || !agreementReference.trim() || !effectiveFrom) {
       return setStatus("Choose a venue and enter a valid fee, effective date, and agreement reference.");
@@ -1506,9 +1504,9 @@ function ReferralFeeManager({
     setIsSaving(true);
     setStatus(reviewRequestId ? "Approving fee request and recording agreement…" : "Recording referral fee agreement…");
     try {
-      const response = await fetch("/api/admin/referral-fees", {
+      const data = await requestAdminJson("/api/admin/referral-fees", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: reviewRequestId ? "approve_request" : "set_fee",
           requestId: reviewRequestId || null,
@@ -1518,9 +1516,8 @@ function ReferralFeeManager({
           agreementReference,
           decisionNote,
         }),
+        fallbackMessage: "Unable to save the referral fee agreement.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save the referral fee agreement.");
       onReferralFeesChange(data.referralFees);
       const message = reviewRequestId ? "Venue fee request approved and agreement recorded." : "Referral fee agreement recorded.";
       setStatus(message);
@@ -1535,21 +1532,18 @@ function ReferralFeeManager({
   }
 
   async function rejectRequest(request: Record<string, unknown>) {
-    const token = readToken();
     const requestId = asText(request.id);
     const note = (requestNotes[requestId] || "").trim();
-    if (!token) return setStatus("Admin sign in required.");
     if (note.length < 3) return setStatus("Add a decision note before rejecting a fee request.");
     setIsSaving(true);
     setStatus("Rejecting fee request…");
     try {
-      const response = await fetch("/api/admin/referral-fees", {
+      const data = await requestAdminJson("/api/admin/referral-fees", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "reject_request", requestId, decisionNote: note }),
+        fallbackMessage: "Unable to reject the fee request.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to reject the fee request.");
       onReferralFeesChange(data.referralFees);
       setStatus("Venue fee request rejected with an audit note.");
       onActionConfirmed("Venue fee request rejected.");

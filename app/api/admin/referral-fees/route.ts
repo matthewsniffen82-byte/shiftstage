@@ -14,11 +14,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     return NextResponse.json({
       ok: true,
       referralFees: await getAdminReferralFeeState(createAdminSupabaseClient()),
+      session: session || null,
     });
   } catch (error) {
     return apiError(error, "Unable to load referral fee agreements.");
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json().catch(() => ({}));
     const admin = createAdminSupabaseClient();
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
         decisionNote: body.decisionNote,
         requestId: body.action === "approve_request" ? body.requestId : null,
       });
-      return NextResponse.json({ ok: true, referralFees: result.state });
+      return NextResponse.json({ ok: true, referralFees: result.state, session: session || null });
     }
 
     if (body.action === "reject_request") {
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
         body.requestId,
         body.decisionNote,
       );
-      return NextResponse.json({ ok: true, referralFees: result.state });
+      return NextResponse.json({ ok: true, referralFees: result.state, session: session || null });
     }
 
     return NextResponse.json({ ok: false, error: "Unsupported referral fee action." }, { status: 400 });
