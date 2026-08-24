@@ -35,7 +35,7 @@ test("dancer profile overlays restore the exact dashboard surface that opened th
   assert.match(restore, /context\.focusTarget\.focus\(\{ preventScroll: true \}\)/);
 });
 
-test("venue profiles suspend and restore customer or venue dashboards instead of navigating away", () => {
+test("venue profiles restore dashboard surfaces while venue preview opens the canonical guest renderer", () => {
   const openVenue =
     liveApp.match(/function openVenueFromName[\s\S]*?\n    function focusVenueProfileStart/)?.[0] || "";
   const closeVenue =
@@ -50,9 +50,10 @@ test("venue profiles suspend and restore customer or venue dashboards instead of
   assert.match(openVenue, /suspendProfileReturnSurface\(venueProfileReturnContext\)/);
   assert.match(closeVenue, /restoreProfileReturnContext\(returnContext\)/);
 
-  assert.match(venuePreview, /returnTo: "venue-dashboard"/);
-  assert.match(venuePreview, /openVenueFromName\(profile\.slug \|\| profile\.name/);
-  assert.doesNotMatch(venuePreview, /window\.location\.(href|assign|replace)/);
+  assert.match(venuePreview, /new URL\("\/outputs\/index\.html", window\.location\.origin\)/);
+  assert.match(venuePreview, /searchParams\.set\("venue_preview", "1"\)/);
+  assert.match(venuePreview, /window\.location\.assign\(previewUrl\.toString\(\)\)/);
+  assert.match(closeVenue, /get\("venue_preview"\) === "1"[\s\S]*?window\.location\.assign\("\/dashboard\/venue"\)/);
 
   assert.match(customerProfileOpen, /returnTo: "customer-dashboard"/);
   assert.doesNotMatch(customerProfileOpen, /closeDashboard\(\)/);

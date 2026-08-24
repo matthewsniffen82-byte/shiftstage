@@ -1871,7 +1871,6 @@ function VenuePanel({
   const [isPublishingCover, setIsPublishingCover] = useState(false);
   const [isPublishingLogo, setIsPublishingLogo] = useState(false);
   const [isPublishingVenue, setIsPublishingVenue] = useState(false);
-  const [showVenuePreview, setShowVenuePreview] = useState(false);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -2047,6 +2046,9 @@ function VenuePanel({
   const venueName = String(profile?.name || "Your venue");
   const venueCity = String(profile?.city || "your city");
   const venueSlug = String(profile?.slug || "");
+  const venuePreviewHref = venueSlug
+    ? `/outputs/index.html?city=${encodeURIComponent(venueCity)}&venue=${encodeURIComponent(venueSlug)}&venue_preview=1`
+    : "";
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
   const upcomingShiftCount = Number(analytics?.upcomingShiftCount || 0);
@@ -2120,7 +2122,7 @@ function VenuePanel({
           ))}
         </ul>
         <div className="venue-publication-actions">
-          <button type="button" onClick={() => setShowVenuePreview(true)}>Preview venue</button>
+          {venuePreviewHref ? <Link href={venuePreviewHref}>Preview venue</Link> : <button type="button" disabled>Preview venue</button>}
           {!isPublished && canManageProfile ? (
             <button className="primary" type="button" disabled={!isReadyToPublish || isPublishingVenue} onClick={publishVenue}>
               {isPublishingVenue ? "Publishing..." : "Publish venue"}
@@ -2294,7 +2296,7 @@ function VenuePanel({
                 <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
                   Open live venue page
                 </Link>
-              ) : <button type="button" onClick={() => setShowVenuePreview(true)}>Preview private venue page</button>}
+              ) : venuePreviewHref ? <Link href={venuePreviewHref}>Preview private venue page</Link> : null}
               {profileStatus ? <p role="status">{profileStatus}</p> : null}
             </form>
           </article>
@@ -2393,68 +2395,7 @@ function VenuePanel({
         </DashboardSection>
       ) : null}
 
-      {showVenuePreview ? (
-        <VenueDraftPreview
-          activeDeal={dashboardDeals.find((venueDeal) => venueDeal.isActive === true) || null}
-          onClose={() => setShowVenuePreview(false)}
-          profile={profile || {}}
-        />
-      ) : null}
-
     </>
-  );
-}
-
-function VenueDraftPreview({
-  activeDeal,
-  onClose,
-  profile,
-}: {
-  activeDeal: Record<string, unknown> | null;
-  onClose: () => void;
-  profile: Record<string, unknown>;
-}) {
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [onClose]);
-
-  const venueName = String(profile.name || "Venue preview");
-  const location = [profile.city, profile.state].filter(Boolean).map(String).join(", ");
-  const hours = profile.opensAt && profile.closesAt
-    ? `${String(profile.opensAt).slice(0, 5)} – ${String(profile.closesAt).slice(0, 5)}`
-    : "Hours not posted";
-
-  return (
-    <div className="venue-draft-preview-overlay" role="dialog" aria-modal="true" aria-labelledby="venue-draft-preview-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <article className="venue-draft-preview-card">
-        <header>
-          <span><small>PRIVATE PREVIEW</small><strong id="venue-draft-preview-title">Guest venue page</strong></span>
-          <button type="button" aria-label="Close venue preview" onClick={onClose}>×</button>
-        </header>
-        <div className="venue-draft-preview-hero" style={profile.coverImageUrl ? { backgroundImage: `linear-gradient(180deg, rgba(3,3,7,.1), rgba(3,3,7,.92)), url(${String(profile.coverImageUrl)})` } : undefined}>
-          {profile.logoImageUrl ? <img src={String(profile.logoImageUrl)} alt="" /> : <span aria-hidden="true">{venueName.slice(0, 2).toUpperCase()}</span>}
-          <div><h2>{venueName}</h2><p>{location || "Location not complete"}</p></div>
-        </div>
-        <dl>
-          <div><dt>Address</dt><dd>{String(profile.address || "Address not complete")}</dd></div>
-          <div><dt>Hours</dt><dd>{hours}</dd></div>
-          <div><dt>Phone</dt><dd>{String(profile.phone || "Phone not complete")}</dd></div>
-        </dl>
-        <section className={activeDeal ? "has-deal" : ""}>
-          <small>CLUB DEAL</small>
-          <h3>{activeDeal ? String(activeDeal.dealTitle || "Active Club Deal") : "No active Club Deal yet"}</h3>
-          <p>{activeDeal ? String(activeDeal.dealDescription || "") : "Publish an active Club Deal before making this venue public."}</p>
-        </section>
-        <p className="venue-draft-preview-note">This is a private preview. Guests cannot see it until the venue is published.</p>
-      </article>
-    </div>
   );
 }
 
@@ -7710,30 +7651,6 @@ function DashboardStyles() {
       .venue-cover-panel > img { grid-column: 2; grid-row: 1 / span 3; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 1px solid rgba(126,234,255,.22); border-radius: 12px; background: #050507; box-shadow: 0 18px 42px rgba(0,0,0,.36); }
       .venue-cover-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: end; gap: 10px; }
       .venue-cover-panel > p[role="status"] { color: #94e5ff; font-size: 14px; }
-      .venue-draft-preview-overlay { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left)); overflow-y: auto; background: rgba(0,0,0,.82); backdrop-filter: blur(14px); }
-      .venue-draft-preview-card { width: min(100%,580px); max-height: calc(100dvh - 32px); display: grid; gap: 14px; overflow-y: auto; box-sizing: border-box; padding: 16px; border: 1px solid rgba(196,181,253,.4); border-radius: 22px; background: #08080d; box-shadow: 0 28px 80px rgba(0,0,0,.72); }
-      .venue-draft-preview-card > header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-      .venue-draft-preview-card > header > span { display: grid; gap: 3px; }
-      .venue-draft-preview-card > header small { color: #a78bfa; font-size: 10px; font-weight: 950; letter-spacing: .14em; }
-      .venue-draft-preview-card > header strong { color: #f8fafc; font-size: 20px; }
-      .venue-draft-preview-card > header button { width: 44px; height: 44px; display: grid; place-items: center; flex: 0 0 44px; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; color: #f8fafc; background: #1b1b24; font-size: 28px; cursor: pointer; }
-      .venue-draft-preview-card > header button:focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; }
-      .venue-draft-preview-hero { min-height: 300px; display: grid; align-content: end; grid-template-columns: 76px minmax(0,1fr); gap: 14px; padding: 18px; box-sizing: border-box; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; background: linear-gradient(180deg,#141420,#07070b); background-position: center; background-size: cover; }
-      .venue-draft-preview-hero > img, .venue-draft-preview-hero > span { width: 76px; height: 76px; display: grid; place-items: center; box-sizing: border-box; object-fit: contain; padding: 6px; border: 1px solid rgba(255,255,255,.18); border-radius: 16px; color: #fff; background: rgba(7,7,11,.86); font-weight: 950; }
-      .venue-draft-preview-hero > div { min-width: 0; align-self: end; display: grid; gap: 4px; }
-      .venue-draft-preview-hero h2 { margin: 0; color: #fff; font-size: clamp(26px,7vw,38px); line-height: 1; }
-      .venue-draft-preview-hero p { margin: 0; color: #d8cfeb; font-weight: 800; }
-      .venue-draft-preview-card > dl { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; overflow: hidden; margin: 0; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; background: rgba(255,255,255,.1); }
-      .venue-draft-preview-card > dl > div { min-width: 0; display: grid; gap: 5px; padding: 12px; background: #101016; }
-      .venue-draft-preview-card dt { color: #9d92ad; font-size: 10px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
-      .venue-draft-preview-card dd { margin: 0; color: #f8fafc; font-size: 13px; font-weight: 850; overflow-wrap: anywhere; }
-      .venue-draft-preview-card > section { display: grid; gap: 6px; padding: 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; background: #101016; }
-      .venue-draft-preview-card > section.has-deal { border-color: rgba(16,185,129,.34); background: rgba(6,78,59,.14); }
-      .venue-draft-preview-card > section small { color: #6ee7b7; font-size: 10px; font-weight: 950; letter-spacing: .12em; }
-      .venue-draft-preview-card > section h3, .venue-draft-preview-card > section p { margin: 0; }
-      .venue-draft-preview-card > section h3 { color: #fff; font-size: 19px; }
-      .venue-draft-preview-card > section p, .venue-draft-preview-note { color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.45; }
-      .venue-draft-preview-note { margin: 0; text-align: center; }
       .venue-working-list { display: grid; gap: 9px; }
       .venue-working-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); color: #fff; background: rgba(255,255,255,.04); text-decoration: none; }
       .venue-working-list a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
@@ -8266,11 +8183,6 @@ function DashboardStyles() {
         .venue-publication-actions { display: grid; grid-template-columns: 1fr; }
         .venue-publication-actions > button, .venue-publication-actions > a { width: 100%; min-height: 48px; }
         .venue-logo-panel > img, .venue-logo-empty { width: 132px; height: 132px; }
-        .venue-draft-preview-overlay { place-items: start center; padding: max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left)); }
-        .venue-draft-preview-card { max-height: calc(100dvh - 20px); padding: 12px; border-radius: 18px; }
-        .venue-draft-preview-hero { min-height: 260px; grid-template-columns: 62px minmax(0,1fr); padding: 14px; }
-        .venue-draft-preview-hero > img, .venue-draft-preview-hero > span { width: 62px; height: 62px; }
-        .venue-draft-preview-card > dl { grid-template-columns: 1fr; }
         .venue-dashboard-shortcuts { gap: 10px; }
         .venue-dashboard-shortcuts > a { min-height: 78px; padding: 13px; }
         .venue-tonight-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }

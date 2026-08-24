@@ -14,6 +14,7 @@ const [
   publicDiscoveryRoute,
   publicService,
   dashboard,
+  liveApp,
   documentation,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
@@ -27,6 +28,7 @@ const [
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../docs/venue-onboarding.md", import.meta.url), "utf8"),
 ]);
 
@@ -101,9 +103,13 @@ test("the venue dashboard clearly presents private setup, preview, and explicit 
   assert.match(dashboard, /Complete, preview, and publish the guest-facing venue page from this private workspace/);
   assert.match(dashboard, /Nothing appears publicly until you publish/);
   assert.match(dashboard, /Preview private venue page/);
+  assert.match(dashboard, /venuePreviewHref[\s\S]*?\/outputs\/index\.html\?city=\$\{encodeURIComponent\(venueCity\)\}&venue=\$\{encodeURIComponent\(venueSlug\)\}&venue_preview=1/);
+  assert.doesNotMatch(dashboard, /function VenueDraftPreview/);
   assert.match(dashboard, /Publish venue/);
   assert.match(dashboard, /Upload logo/);
-  assert.match(dashboard, /This is a private preview\. Guests cannot see it until the venue is published/);
+  assert.match(liveApp, /async function applyVenueDashboardPreview[\s\S]*?getAuthenticatedJson\("\/api\/venue\/dashboard"\)/);
+  assert.match(liveApp, /venue\.isDashboardPreview[\s\S]*?This is the exact guest page customers will see after you publish/);
+  assert.match(liveApp, /venue\.id && !venue\.isDashboardPreview/);
   assert.match(documentation, /request-first venue onboarding model/);
   assert.match(documentation, /private venue workspace and one-time venue signup code/);
   assert.match(documentation, /Venue accounts receive access only to their own venue dashboard; they never receive MyDancr administrator access/);
