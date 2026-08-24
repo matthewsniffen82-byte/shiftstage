@@ -64,11 +64,12 @@ test("only a MyDancr administrator can publish or remove a cover image", () => {
   assert.match(adminMediaRoute, /deleteVenueCoverImageByAdmin/);
 });
 
-test("the admin prepares media and the venue dashboard reviews it read-only", () => {
+test("the admin prepares media and the venue reviews it in the finished preview", () => {
   assert.match(adminClient, /Checking and uploading venue \$\{kind\}/);
   assert.match(adminClient, /accept="image\/\*,\.heic,\.heif"/);
   assert.match(adminClient, /removeVenueImage/);
-  assert.match(dashboard, /Venue review copy · managed by MyDancr/);
+  assert.match(dashboard, /canPreviewVenuePage \? <button type="button" onClick=\{openVenueCardPreview\}>Preview venue<\/button>/);
+  assert.doesNotMatch(dashboard, /Venue review copy · managed by MyDancr|venue-cover-panel/);
   assert.match(dashboard, /profile\?\.coverImageUrl/);
 });
 

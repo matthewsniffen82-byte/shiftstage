@@ -54,9 +54,9 @@ test("MyDancr admins receive, review, link, and publish requested deals", () => 
   assert.match(manager, /Publish contract deal/);
 });
 
-test("venue owner permissions survive partial dashboard loads so time controls stay enabled", () => {
+test("venue owner permissions survive partial dashboard loads without exposing page controls", () => {
   assert.match(profileRoute, /venueAccess/);
   assert.match(dashboard, /secondary\.venueAccess \|\| profile\.venueAccess/);
   assert.match(dashboard, /venueRole === "owner" \|\| venueRole === "manager"/);
-  assert.match(dashboard, /type=\{key === "opensAt" \|\| key === "closesAt" \? "time"/);
+  assert.doesNotMatch(dashboard, /venue-readonly-fields|type=\{key === "opensAt"/);
 });

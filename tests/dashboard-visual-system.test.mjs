@@ -86,7 +86,7 @@ test("venue dashboard uses one state-aware three-destination workspace", () => {
   assert.match(venuePanel, /initialVenueWorkspace\(profile\?\.isActive === true\)/);
   assert.match(routedDashboards, /return isPublished \? "tonight" : "venue";/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?id="venue-working-now"/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?id="venue-public-profile"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?id="venue-tv"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?id="venue-overview"/);
   assert.match(venuePanel, /className=\{`primary-link venue-working-now-link\$\{workingNow\.length \? " is-live" : ""\}`\} href="#venue-working-now"[\s\S]*?Open working-now roster/);
   assert.match(

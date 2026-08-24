@@ -78,9 +78,9 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Tonight"[\s\S]*?\["venue", "Venue page"[\s\S]*?\["business", "Business"/);
   assert.match(venuePanel, /function moveVenueWorkspaceFocus[\s\S]*?"ArrowLeft"[\s\S]*?"ArrowRight"[\s\S]*?"Home"[\s\S]*?"End"/);
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
-  assert.match(dashboard, /function venueWorkspaceForSection[\s\S]*?"venue-working-now"[\s\S]*?"venue-public-profile"[\s\S]*?"venue-overview"/);
+  assert.match(dashboard, /function venueWorkspaceForSection[\s\S]*?"venue-working-now"[\s\S]*?"venue-tv"[\s\S]*?"venue-overview"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?title="Working now"/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="Public venue profile"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="MyDancr TV"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?title="Analytics & performance"/);
   assert.match(venuePanel, /title="Account & support"/);
   assert.doesNotMatch(venuePanel, /venue-dashboard-shortcuts/);
@@ -128,7 +128,7 @@ test("venue dashboards expose the complete MyDancr-managed contract ledger", () 
 
 test("venue publication status hides internal requirements while retaining the read-only deal record", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
-  assert.doesNotMatch(venuePanel, /setupRequirements|setupCompletedCount|venue-publication-requirement-label/);
+  assert.doesNotMatch(venuePanel, /setupRequirements|setupCompletedCount|venue-publication-requirement-label|venue-readonly-fields|VenueMediaPreview/);
   assert.match(venuePanel, /Ready to review/);
   assert.match(venuePanel, /Changes in progress/);
   assert.match(dashboard, /id="venue-deal-contract-ledger"/);

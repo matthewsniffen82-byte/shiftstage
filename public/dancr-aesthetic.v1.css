@@ -778,7 +778,6 @@ body.dancr-button-system .page-panel :is(
   .customer-empty-state,
   .customer-settings-section,
   .shift-checkin-card:not(.ready),
-  .venue-cover-panel > img,
   .venue-tv-video,
   .tv-managed-video
 ),
@@ -2228,7 +2227,6 @@ body.dancr-button-system .home-tv-feed-action:not(
   .customer-night-card,
   .customer-saved-card,
   .customer-empty-state,
-  .venue-cover-panel,
   .tv-managed-video
 ) {
   border-color: var(--dancr-color-border-subtle) !important;
@@ -2262,7 +2260,6 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
   .profile-media-feature video,
   .venue-main-photo,
   .venue-art,
-  .venue-cover-panel > img,
   .venue-tv-video,
   .tv-managed-video
 ) {

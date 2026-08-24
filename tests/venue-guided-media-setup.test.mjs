@@ -13,10 +13,10 @@ const { validateAndPrepareDancrImage } = await import(
   new URL("../src/lib/dancr/image-validation.ts", import.meta.url)
 );
 
-test("MyDancr prepares venue images and the venue receives a read-only review", () => {
-  assert.match(dashboard, /MyDancr builds the page for you/);
-  assert.match(dashboard, /Ask MyDancr for setup help/);
-  assert.match(dashboard, /Venue review copy · managed by MyDancr/);
+test("MyDancr prepares venue images without exposing construction panels to the venue", () => {
+  assert.match(dashboard, /MyDancr is completing your private venue page/);
+  assert.match(dashboard, /canPreviewVenuePage \? <button type="button" onClick=\{openVenueCardPreview\}>Preview venue<\/button>/);
+  assert.doesNotMatch(dashboard, /MyDancr builds the page for you|Venue review copy · managed by MyDancr|VenueMediaPreview|venue-readonly-fields/);
   assert.match(adminClient, /accept="image\/\*,\.heic,\.heif"/);
   assert.match(adminClient, /uploadVenueImage/);
   assert.match(adminClient, /Official logo/);

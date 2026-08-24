@@ -739,7 +739,7 @@ test("the shared aesthetic covers public content, accounts, and operations surfa
 test("customer, dancer, and venue dashboards keep idle content neutral", () => {
   assert.match(
     aesthetic,
-    /dashboards share the same quiet content[\s\S]*?\.customer-night-card,[\s\S]*?\.customer-saved-card,[\s\S]*?\.customer-empty-state,[\s\S]*?\.shift-checkin-card:not\(\.ready\),[\s\S]*?\.venue-cover-panel > img,[\s\S]*?\.venue-tv-video,[\s\S]*?\.tv-managed-video[\s\S]*?background-color: var\(--dancr-color-surface-subtle\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+    /dashboards share the same quiet content[\s\S]*?\.customer-night-card,[\s\S]*?\.customer-saved-card,[\s\S]*?\.customer-empty-state,[\s\S]*?\.shift-checkin-card:not\(\.ready\),[\s\S]*?\.venue-tv-video,[\s\S]*?\.tv-managed-video[\s\S]*?background-color: var\(--dancr-color-surface-subtle\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     aesthetic,

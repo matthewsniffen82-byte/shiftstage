@@ -82,9 +82,7 @@ test("venue website fields accept www domains and normalize them to secure URLs"
   assert.doesNotMatch(liveApp, /id="venue(?:Request|Profile)Website(?:Input)?"[^>]*type="url"/);
   assert.match(requestService, /new URL\(\/\^https\?:\\\/\\\/\/i\.test\(text\) \? text : `https:\/\/\$\{text\}`\)/);
   assert.match(adminService, /new URL\(\/\^https\?:\\\/\\\/\/i\.test\(text\) \? text : `https:\/\/\$\{text\}`\)/);
-  assert.match(venueDashboard, /placeholder=\{key === "website" \? "www\.yourclub\.com" : undefined\}/);
-  assert.match(venueDashboard, /type=\{key === "opensAt" \|\| key === "closesAt" \? "time" : key === "phone" \? "tel" : "text"\}/);
-  assert.doesNotMatch(venueDashboard, /type=\{key === "website" \? "url"/);
+  assert.doesNotMatch(venueDashboard, /venue-readonly-fields|venue-profile-\$\{key\}/);
 });
 
 test("club listing is available only through venue account creation", () => {

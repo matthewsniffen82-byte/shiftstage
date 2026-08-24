@@ -1760,45 +1760,11 @@ function DashboardLoadingState({ role }: { role: DashboardRole }) {
   );
 }
 
-function VenueMediaPreview({
-  alt,
-  emptyLabel,
-  isLocal,
-  source,
-  sourceSet,
-  variant,
-}: {
-  alt: string;
-  emptyLabel: string;
-  isLocal: boolean;
-  source: string;
-  sourceSet?: string;
-  variant: "logo" | "cover";
-}) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [source]);
-
-  return (
-    <div className={`venue-media-preview is-${variant}${isLocal ? " is-local" : ""}`}>
-      {source && !failed ? (
-        <img
-          alt={alt}
-          sizes={variant === "logo" ? "160px" : "(max-width: 760px) 100vw, 340px"}
-          src={source}
-          srcSet={!isLocal && sourceSet ? sourceSet : undefined}
-          onError={() => setFailed(true)}
-        />
-      ) : <span aria-hidden="true">{isLocal ? "Image selected" : emptyLabel}</span>}
-      {isLocal ? <b>New preview</b> : null}
-    </div>
-  );
-}
-
 type VenueWorkspace = "tonight" | "venue" | "business";
 
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (["venue-working-now", "venue-dancer-roster", "venue-club-deals", "venue-deal-contract-ledger"].includes(sectionId)) return "tonight";
-  if (["venue-public-profile", "venue-tv"].includes(sectionId)) return "venue";
+  if (sectionId === "venue-tv") return "venue";
   if (["venue-overview", "venue-team", "venue-account"].includes(sectionId)) return "business";
   return null;
 }
@@ -1854,16 +1820,6 @@ function VenuePanel({
   onPublicationChange: (publication: Record<string, unknown>) => void;
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
 }) {
-  const [form, setForm] = useState({
-    name: "",
-    city: "",
-    state: "",
-    address: "",
-    phone: "",
-    website: "",
-    opensAt: "",
-    closesAt: "",
-  });
   const [publicationStatus, setPublicationStatus] = useState("");
   const [isPublishingVenue, setIsPublishingVenue] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
@@ -1878,19 +1834,6 @@ function VenuePanel({
     const hashWorkspace = venueWorkspaceForSection(window.location.hash.replace(/^#/, ""));
     if (hashWorkspace) setActiveWorkspace(hashWorkspace);
   }, []);
-
-  useEffect(() => {
-    setForm({
-      name: String(profile?.name || ""),
-      city: String(profile?.city || ""),
-      state: String(profile?.state || ""),
-      address: String(profile?.address || ""),
-      phone: String(profile?.phone || ""),
-      website: String(profile?.website || ""),
-      opensAt: String(profile?.opensAt || "").slice(0, 5),
-      closesAt: String(profile?.closesAt || "").slice(0, 5),
-    });
-  }, [profile]);
 
   useEffect(() => {
     if (!isVenueCardPreviewOpen) return;
@@ -2035,7 +1978,6 @@ function VenuePanel({
   const isPublished = profile?.isActive === true;
   const pageReviewStatus = String(profile?.pageReviewStatus || (isPublished ? "published" : "admin_draft"));
   const isAwaitingVenueReview = !isPublished && pageReviewStatus === "venue_review";
-  const isPreparedForVenue = ["venue_review", "changes_requested", "venue_approved", "published"].includes(pageReviewStatus);
   const canPreviewVenuePage = isAwaitingVenueReview || pageReviewStatus === "venue_approved";
   const venuePageTabStatus = isPublished
     ? "Live page"
@@ -2273,87 +2215,6 @@ function VenuePanel({
             <VenueAnalyticsMetric label="Deal redemptions" value={Number(analytics?.cashierNfcRedemptions || 0)} change={readOptionalNumber(analytics?.redemptionsChangePercent)} />
             <Metric label="Attempt → redemption" value={formatPercent(analytics?.redemptionConversionPercent)} />
           </InfoPanel>
-        </div>
-      </DashboardSection>
-
-      <DashboardSection
-        description="Review the guest-facing page prepared by MyDancr. Your approval never publishes it automatically."
-        eyebrow="Guest experience"
-        hidden={activeWorkspace !== "venue"}
-        id="venue-public-profile"
-        title="Public venue profile"
-      >
-        <section className="venue-page-setup-guide" aria-labelledby="venue-page-setup-guide-heading">
-          <div>
-            <span className="eyebrow">Managed setup</span>
-            <h2 id="venue-page-setup-guide-heading">MyDancr builds the page for you</h2>
-            <p>MyDancr enters the approved venue details, images, hours, and contracted Club Deals. Your team reviews the complete private page before it can go live.</p>
-          </div>
-          <ol>
-            <li className={isPreparedForVenue ? "is-complete" : ""}><span>{isPreparedForVenue ? "✓" : "1"}</span><strong>MyDancr prepares page</strong><small>Details, images, hours, and deal</small></li>
-            <li className={["venue_approved", "published"].includes(pageReviewStatus) ? "is-complete" : ""}><span>{["venue_approved", "published"].includes(pageReviewStatus) ? "✓" : "2"}</span><strong>Venue reviews page</strong><small>Approve or request corrections</small></li>
-            <li className={isPublished ? "is-complete" : ""}><span>{isPublished ? "✓" : "3"}</span><strong>MyDancr publishes</strong><small>Final administrative check</small></li>
-          </ol>
-          <a href="mailto:support@mydancr.com?subject=Venue%20page%20setup%20help">Ask MyDancr for setup help</a>
-        </section>
-        <div className="venue-dashboard-inner-grid venue-dashboard-profile-grid">
-          <article className="info-panel venue-profile-panel">
-            <h2>Venue details</h2>
-            <div className="venue-readonly-fields">
-              {Object.entries(form).map(([key, value]) => (
-                <label key={key}>
-                  {venueFieldLabel(key)}
-                  <input
-                    autoCapitalize={key === "website" ? "none" : undefined}
-                    autoComplete={key === "website" ? "url" : undefined}
-                    id={`venue-profile-${key}`}
-                    inputMode={key === "website" ? "url" : undefined}
-                    placeholder={key === "website" ? "www.yourclub.com" : undefined}
-                    readOnly
-                    spellCheck={key === "website" ? false : undefined}
-                    type={key === "opensAt" || key === "closesAt" ? "time" : key === "phone" ? "tel" : "text"}
-                    value={value}
-                  />
-                </label>
-              ))}
-              {isPublished && profile?.slug ? (
-                <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
-                  Open live venue page
-                </Link>
-              ) : canPreviewVenuePage ? <button type="button" onClick={openVenueCardPreview}>Preview venue card</button> : null}
-              <small>To correct anything, use Request changes when MyDancr sends the page for review.</small>
-            </div>
-          </article>
-          <article className="info-panel venue-logo-panel">
-            <div className="venue-media-copy">
-              <h2>Venue logo</h2>
-              <p>The official logo MyDancr prepared for guest cards and the full venue page.</p>
-            </div>
-            <VenueMediaPreview
-              alt={`${String(profile?.name || "Venue")} logo preview`}
-              emptyLabel="Add logo"
-              isLocal={false}
-              source={String(profile?.logoImageUrl || "")}
-              sourceSet={profile?.logoImageSrcSet ? String(profile.logoImageSrcSet) : undefined}
-              variant="logo"
-            />
-            <small className="venue-media-requirements">Venue review copy · managed by MyDancr</small>
-          </article>
-          <article className="info-panel venue-cover-panel">
-            <div className="venue-media-copy venue-cover-copy">
-              <h2>Discovery cover</h2>
-              <p>The venue, interior, or branded image guests see while discovering the club.</p>
-            </div>
-            <VenueMediaPreview
-              alt={`${String(profile?.name || "Venue")} discovery cover preview`}
-              emptyLabel="Add cover"
-              isLocal={false}
-              source={String(profile?.coverImageUrl || "")}
-              sourceSet={profile?.coverImageSrcSet ? String(profile.coverImageSrcSet) : undefined}
-              variant="cover"
-            />
-            <small className="venue-media-requirements">Venue review copy · managed by MyDancr</small>
-          </article>
         </div>
       </DashboardSection>
 
@@ -3063,10 +2924,6 @@ function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
       {status ? <p role="status">{status}</p> : null}
     </section>
   );
-}
-
-function venueFieldLabel(key: string) {
-  return ({ name: "Venue name", city: "City", state: "State", address: "Public address", phone: "Public phone", website: "Website", opensAt: "Opens", closesAt: "Closes" } as Record<string, string>)[key] || key;
 }
 
 function CustomerPreferencesPanel({
@@ -7730,7 +7587,6 @@ function DashboardStyles() {
       .venue-dashboard-inner-grid { display: grid; gap: var(--mydancr-dashboard-gap); }
       .venue-dashboard-overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .venue-dashboard-account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .venue-dashboard-profile-grid { grid-template-columns: 1fr; }
       .venue-dashboard-section-body > .info-panel, .venue-dashboard-inner-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); box-shadow: none; }
       .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-dashboard-tabs { position: sticky; z-index: 20; top: max(8px, env(safe-area-inset-top)); grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 5px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
@@ -7764,7 +7620,7 @@ function DashboardStyles() {
       .visibility-copy p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.45; }
       .visibility-panel button.visibility-toggle { width: fit-content; min-height: 44px; padding: 0 13px; border-radius: 999px; font-size: 11px; }
       .visibility-status { margin: 0; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-verification-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-working-panel, .venue-verification-panel { grid-column: span 3; }
       .dancer-performance-workspace { display: grid; gap: 14px; }
       .dancer-nats-signup-callout { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 17px 18px; border: 1px solid rgba(148,229,255,.26); border-radius: var(--mydancr-dashboard-radius); background: linear-gradient(145deg,rgba(12,33,42,.68),#09090d 72%); box-shadow: inset 3px 0 0 rgba(148,229,255,.58); }
       .dancer-nats-signup-copy { min-width: 0; display: grid; gap: 5px; }
@@ -8077,59 +7933,6 @@ function DashboardStyles() {
       .customer-settings-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
       .customer-settings-grid > .customer-settings-panel, .customer-settings-grid > .support-panel, .customer-settings-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-settings-panel .city-field { grid-column: span 2; }
-      .venue-profile-panel form, .venue-readonly-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
-      .venue-profile-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
-      .venue-profile-panel input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; box-sizing: border-box; }
-      .venue-profile-panel input[readonly] { color: #cbd5e1; background: #111118; cursor: default; }
-      .venue-readonly-fields > a, .venue-readonly-fields > button, .venue-readonly-fields > small { grid-column: 1 / -1; }
-      .venue-profile-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font: inherit; font-weight: 900; cursor: pointer; padding: 0 14px; }
-      .venue-profile-panel a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; border: 1px solid rgba(255,255,255,.14); text-decoration: none; font-weight: 900; }
-      .venue-page-setup-guide { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; padding: 18px; border: 1px solid rgba(124,58,237,.38); border-radius: var(--mydancr-dashboard-radius); background: linear-gradient(145deg,rgba(124,58,237,.12),rgba(17,17,24,.94) 64%); box-shadow: inset 3px 0 0 #7c3aed; }
-      .venue-page-setup-guide > div { min-width: 0; display: grid; gap: 6px; }
-      .venue-page-setup-guide h2, .venue-page-setup-guide p { margin: 0; }
-      .venue-page-setup-guide p { max-width: 70ch; color: var(--mydancr-dashboard-muted); line-height: 1.5; }
-      .venue-page-setup-guide ol { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; margin: 0; padding: 0; list-style: none; }
-      .venue-page-setup-guide li { min-width: 0; display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 2px 9px; align-items: center; padding: 11px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; color: #f8fafc; background: #111118; }
-      .venue-page-setup-guide li > span { grid-row: 1 / span 2; width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid rgba(124,58,237,.46); border-radius: 50%; color: #f8fafc; background: rgba(124,58,237,.18); font-weight: 950; }
-      .venue-page-setup-guide li strong { font-size: 12px; }
-      .venue-page-setup-guide li small { color: #94a3b8; font-size: 10px; }
-      .venue-page-setup-guide li.is-complete > span { border-color: rgba(16,185,129,.58); color: #baf7df; background: rgba(16,185,129,.18); }
-      .venue-page-setup-guide > a { align-self: start; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #f8fafc; background: #111118; font-weight: 900; text-decoration: none; }
-      .venue-logo-panel, .venue-cover-panel { grid-template-columns: minmax(0,1fr) minmax(150px, 220px); align-items: start; }
-      .venue-media-copy { display: grid; gap: 8px !important; }
-      .venue-media-copy > p, .venue-media-copy > small { color: var(--mydancr-dashboard-muted); line-height: 1.5; }
-      .venue-media-preview { position: relative; grid-column: 2; grid-row: 1 / span 3; width: 100%; display: grid; place-items: center; overflow: hidden; box-sizing: border-box; border: 1px solid rgba(124,58,237,.34); border-radius: 16px; color: #94a3b8; background: #050507; box-shadow: 0 18px 42px rgba(0,0,0,.3); }
-      .venue-media-preview.is-logo { max-width: 180px; aspect-ratio: 1; justify-self: end; padding: 12px; }
-      .venue-media-preview.is-cover { max-width: 340px; aspect-ratio: 4 / 5; justify-self: end; }
-      .venue-media-preview img { width: 100%; height: 100%; display: block; object-fit: cover; }
-      .venue-media-preview.is-logo img { object-fit: contain; }
-      .venue-media-preview > span { font-size: 15px; font-weight: 900; }
-      .venue-media-preview > b { position: absolute; left: 9px; bottom: 9px; padding: 5px 8px; border-radius: 999px; color: #f8fafc; background: rgba(5,5,7,.8); font-size: 9px; letter-spacing: .04em; text-transform: uppercase; }
-      .venue-media-upload { min-width: 0; display: grid; gap: 10px; }
-      .venue-media-source-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
-      .venue-media-source-action { position: relative; min-width: 0; min-height: 70px; display: grid !important; grid-template-columns: 38px minmax(0,1fr) auto; align-items: center; gap: 8px !important; overflow: hidden; padding: 9px; border: 1px solid rgba(124,58,237,.28); border-radius: 12px; color: #f8fafc; background: #111118; box-sizing: border-box; cursor: pointer; }
-      .venue-media-source-action:hover { border-color: rgba(124,58,237,.62); background: rgba(124,58,237,.12); }
-      .venue-media-source-action:focus-within { outline: 2px solid #7c3aed; outline-offset: 2px; }
-      .venue-media-source-action.is-disabled { opacity: .56; cursor: wait; }
-      .venue-media-source-input { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
-      .venue-media-source-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; color: #f8fafc; background: rgba(124,58,237,.2); }
-      .venue-media-source-icon svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-      .venue-media-source-action > span:nth-of-type(2) { min-width: 0; display: grid; gap: 2px; }
-      .venue-media-source-action strong { font-size: 12px; }
-      .venue-media-source-action small { color: #94a3b8; font-size: 9px; }
-      .venue-media-source-action > b { padding: 5px 7px; border: 1px solid rgba(124,58,237,.3); border-radius: 999px; color: #ddd6fe; background: rgba(124,58,237,.12); font-size: 9px; text-transform: uppercase; }
-      .venue-media-selected { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border: 1px solid rgba(16,185,129,.32); border-radius: 10px; background: rgba(16,185,129,.07); }
-      .venue-media-selected > span { min-width: 0; display: grid; gap: 2px; }
-      .venue-media-selected strong { overflow: hidden; color: #f8fafc; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-      .venue-media-selected small { color: #9ce7c9; font-size: 9px; }
-      .venue-media-selected button { flex: 0 0 auto; border: 0; color: #cbd5e1; background: transparent; font: inherit; font-size: 10px; font-weight: 900; text-decoration: underline; cursor: pointer; }
-      .venue-media-actions { display: flex; flex-wrap: wrap; gap: 9px; }
-      .venue-media-actions button { min-height: 44px; padding: 0 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #f8fafc; background: #111118; font: inherit; font-weight: 900; cursor: pointer; }
-      .venue-media-actions button.primary { border-color: #7c3aed; background: #7c3aed; box-shadow: 0 0 18px rgba(124,58,237,.22); }
-      .venue-media-actions button.destructive { border-color: rgba(239,68,68,.36); color: #fecaca; background: rgba(239,68,68,.08); }
-      .venue-media-actions button:disabled, .venue-media-selected button:disabled { opacity: .48; cursor: not-allowed; }
-      .venue-media-status { margin: 0; color: #cbd5e1; font-size: 11px; line-height: 1.4; }
-      .venue-media-requirements { color: #94a3b8; font-size: 10px; line-height: 1.4; }
       .venue-working-list { display: grid; gap: 9px; }
       .venue-working-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); color: #fff; background: rgba(255,255,255,.04); text-decoration: none; }
       .venue-working-list a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
@@ -8693,8 +8496,7 @@ function DashboardStyles() {
         .weekly-result-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
         .earnings-history-tabs button { padding: 5px 8px; }
       }
-      @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-readonly-fields, .venue-logo-panel, .venue-logo-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-logo-panel > img, .venue-logo-empty, .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-logo-panel > img, .venue-logo-empty { justify-self: start; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 860px) { .venue-page-setup-guide { grid-template-columns: 1fr; } .venue-page-setup-guide > a { justify-self: start; } .venue-media-preview { grid-column: auto; grid-row: auto; justify-self: start; } .venue-media-preview.is-logo { width: 160px; } .venue-media-preview.is-cover { width: min(100%,340px); } }
+      @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
@@ -8727,7 +8529,6 @@ function DashboardStyles() {
         .venue-card-preview-avatar, .venue-card-preview-lineup-count { width: 27px; height: 27px; }
         .venue-card-preview-pills > span { min-height: 29px; padding: 6px 8px; font-size: 9px; }
         .venue-card-preview-heart { top: 9px; right: 9px; width: 31px; height: 31px; font-size: 19px; }
-        .venue-logo-panel > img, .venue-logo-empty { width: 132px; height: 132px; }
         .venue-workspace-tabs { top: max(6px,env(safe-area-inset-top)); gap: 3px; padding: 4px; border-radius: 14px; }
         .venue-workspace-tabs button { min-height: 52px; padding-inline: 5px; }
         .venue-workspace-tabs strong { font-size: 12px; }
@@ -8741,10 +8542,6 @@ function DashboardStyles() {
         .venue-referral-request-panel > button { width: 100%; }
         .venue-working-list a { align-items: flex-start; flex-direction: column; }
         .venue-working-verification { justify-items: start; text-align: left; padding-left: 58px; }
-        .venue-page-setup-guide { padding: 15px; }
-        .venue-page-setup-guide ol, .venue-media-source-grid { grid-template-columns: 1fr; }
-        .venue-page-setup-guide > a, .venue-media-actions, .venue-media-actions button { width: 100%; box-sizing: border-box; }
-        .venue-media-selected { align-items: flex-start; flex-direction: column; }
       }
     `}</style>
   );
