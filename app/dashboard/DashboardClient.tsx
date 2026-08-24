@@ -2027,6 +2027,23 @@ function VenuePanel({
     window.setTimeout(() => section.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true }), 350);
   }
 
+  function openVenueSetupRequirement(
+    event: React.MouseEvent<HTMLAnchorElement>,
+    sectionId: string,
+    targetId: string,
+  ) {
+    const section = document.getElementById(sectionId) as HTMLDetailsElement | null;
+    if (!section) return;
+    event.preventDefault();
+    section.open = true;
+    window.setTimeout(() => {
+      const target = document.getElementById(targetId) as HTMLElement | null;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      (target || section).scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      target?.focus({ preventScroll: true });
+    }, 100);
+  }
+
   const venueName = String(profile?.name || "Your venue");
   const venueCity = String(profile?.city || "your city");
   const venueSlug = String(profile?.slug || "");
@@ -2046,12 +2063,12 @@ function VenuePanel({
   const canViewTeam = permissions.includes("view_team");
   const isPublished = profile?.isActive === true;
   const setupRequirements = [
-    { key: "details", label: "Venue details", complete: Boolean(profile?.name && profile?.address && profile?.city && profile?.state) },
-    { key: "contact", label: "Public phone", complete: Boolean(profile?.phone) },
-    { key: "hours", label: "Venue hours", complete: Boolean(profile?.opensAt && profile?.closesAt) },
-    { key: "logo", label: "Venue logo", complete: Boolean(profile?.logoImageUrl) },
-    { key: "cover", label: "Discovery cover", complete: Boolean(profile?.coverImageUrl) },
-    { key: "deal", label: "Active Club Deal", complete: activeDealCount > 0 },
+    { key: "details", label: "Venue details", complete: Boolean(profile?.name && profile?.address && profile?.city && profile?.state), sectionId: "venue-public-profile", targetId: "venue-profile-name" },
+    { key: "contact", label: "Public phone", complete: Boolean(profile?.phone), sectionId: "venue-public-profile", targetId: "venue-profile-phone" },
+    { key: "hours", label: "Venue hours", complete: Boolean(profile?.opensAt && profile?.closesAt), sectionId: "venue-public-profile", targetId: "venue-profile-opensAt" },
+    { key: "logo", label: "Venue logo", complete: Boolean(profile?.logoImageUrl), sectionId: "venue-public-profile", targetId: "venue-logo-upload" },
+    { key: "cover", label: "Discovery cover", complete: Boolean(profile?.coverImageUrl), sectionId: "venue-public-profile", targetId: "venue-cover-upload" },
+    { key: "deal", label: "Active Club Deal", complete: activeDealCount > 0, sectionId: "venue-club-deals", targetId: "venue-deal-primary-action" },
   ];
   const setupCompletedCount = setupRequirements.filter((requirement) => requirement.complete).length;
   const isReadyToPublish = setupCompletedCount === setupRequirements.length;
@@ -2090,7 +2107,15 @@ function VenuePanel({
         <ul>
           {setupRequirements.map((requirement) => (
             <li className={requirement.complete ? "complete" : ""} key={requirement.key}>
-              <span aria-hidden="true">{requirement.complete ? "✓" : "○"}</span>{requirement.label}
+              <a
+                aria-label={`${requirement.complete ? "Review" : "Complete"} ${requirement.label}`}
+                href={`#${requirement.targetId}`}
+                onClick={(event) => openVenueSetupRequirement(event, requirement.sectionId, requirement.targetId)}
+              >
+                <span className="venue-publication-requirement-status" aria-hidden="true">{requirement.complete ? "✓" : "○"}</span>
+                <span className="venue-publication-requirement-label">{requirement.label}</span>
+                <span className="venue-publication-requirement-arrow" aria-hidden="true">›</span>
+              </a>
             </li>
           ))}
         </ul>
@@ -2253,6 +2278,7 @@ function VenuePanel({
                     autoCapitalize={key === "website" ? "none" : undefined}
                     autoComplete={key === "website" ? "url" : undefined}
                     disabled={!canManageProfile}
+                    id={`venue-profile-${key}`}
                     inputMode={key === "website" ? "url" : undefined}
                     placeholder={key === "website" ? "www.yourclub.com" : undefined}
                     required={["name", "city", "state", "address", "phone", "opensAt", "closesAt"].includes(key)}
@@ -2291,6 +2317,7 @@ function VenuePanel({
                 Logo image
                 <input
                   accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                  id="venue-logo-upload"
                   ref={logoFileInputRef}
                   type="file"
                   onChange={(event) => setLogoFile(event.target.files?.[0] || null)}
@@ -2322,6 +2349,7 @@ function VenuePanel({
                 Venue image
                 <input
                   accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                  id="venue-cover-upload"
                   ref={coverFileInputRef}
                   type="file"
                   onChange={(event) => setCoverFile(event.target.files?.[0] || null)}
@@ -2697,7 +2725,7 @@ function VenueClubDealPanel({
           <span><small>Outstanding</small><strong>{formatCents(Number(revenue?.pendingVenuePaymentCents || 0))}</strong></span>
         </div>
         <div className="venue-deal-control-actions">
-          <button className="venue-deal-control-primary" type="button" onClick={() => openDealEditor(primaryDeal ? "primary" : "new")}>
+          <button className="venue-deal-control-primary" id="venue-deal-primary-action" type="button" onClick={() => openDealEditor(primaryDeal ? "primary" : "new")}>
             {liveCount > 1 ? "Manage live deals" : liveDeal ? "Edit live deal" : primaryDeal ? "Continue draft" : "Create Club Deal"}
           </button>
           {venueSlug && liveCount ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Preview live {liveCount === 1 ? "deal" : "deals"}</Link> : null}
@@ -7249,10 +7277,17 @@ function DashboardStyles() {
       .venue-publication-panel h2 { margin: 0; color: #f8fafc; font-size: clamp(20px,3.5vw,27px); line-height: 1.08; }
       .venue-publication-panel p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.48; }
       .venue-publication-panel > ul { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
-      .venue-publication-panel > ul > li { min-height: 42px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; color: #aaa3b5; background: rgba(255,255,255,.025); font-size: 12px; font-weight: 850; }
-      .venue-publication-panel > ul > li > span { width: 22px; height: 22px; display: grid; place-items: center; flex: 0 0 22px; border-radius: 50%; color: #9d92ad; background: rgba(255,255,255,.06); }
+      .venue-publication-panel > ul > li { min-width: 0; min-height: 42px; padding: 0; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; color: #aaa3b5; background: rgba(255,255,255,.025); font-size: 12px; font-weight: 850; overflow: hidden; }
+      .venue-publication-panel > ul > li > a { min-height: 42px; display: flex; align-items: center; gap: 8px; box-sizing: border-box; padding: 8px 9px; color: inherit; text-decoration: none; transition: border-color .16s ease, background .16s ease, color .16s ease; }
+      .venue-publication-panel > ul > li > a:hover { color: #f8fafc; background: rgba(124,58,237,.12); }
+      .venue-publication-panel > ul > li > a:active { background: rgba(124,58,237,.2); }
+      .venue-publication-panel > ul > li > a:focus-visible { outline: 2px solid #a78bfa; outline-offset: -2px; }
+      .venue-publication-requirement-status { width: 22px; height: 22px; display: grid; place-items: center; flex: 0 0 22px; border-radius: 50%; color: #9d92ad; background: rgba(255,255,255,.06); }
+      .venue-publication-requirement-label { min-width: 0; flex: 1 1 auto; }
+      .venue-publication-requirement-arrow { flex: 0 0 auto; color: #c4b5fd; font-size: 20px; font-weight: 700; line-height: 1; }
       .venue-publication-panel > ul > li.complete { border-color: rgba(16,185,129,.25); color: #d1fae5; background: rgba(6,78,59,.13); }
-      .venue-publication-panel > ul > li.complete > span { color: #052e24; background: #6ee7b7; }
+      .venue-publication-panel > ul > li.complete .venue-publication-requirement-status { color: #052e24; background: #6ee7b7; }
+      .venue-publication-panel > ul > li.complete .venue-publication-requirement-arrow { color: #6ee7b7; }
       .venue-publication-actions { display: flex; flex-wrap: wrap; gap: 10px; }
       .venue-publication-actions > button, .venue-publication-actions > a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; color: #f8fafc; background: #17171d; font: inherit; font-size: 13px; font-weight: 900; text-decoration: none; cursor: pointer; }
       .venue-publication-actions > .primary { border-color: rgba(196,181,253,.6); background: #7c3aed; box-shadow: 0 0 18px rgba(124,58,237,.2); }

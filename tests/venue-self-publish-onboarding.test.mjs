@@ -109,6 +109,25 @@ test("the venue dashboard clearly presents private setup, preview, and explicit 
   assert.match(documentation, /Venue accounts receive access only to their own venue dashboard; they never receive MyDancr administrator access/);
 });
 
+test("each venue publishing requirement opens the control that completes it", () => {
+  assert.match(dashboard, /function openVenueSetupRequirement[\s\S]*?section\.open = true[\s\S]*?target\?\.focus/);
+  for (const target of [
+    "venue-profile-name",
+    "venue-profile-phone",
+    "venue-profile-opensAt",
+    "venue-logo-upload",
+    "venue-cover-upload",
+    "venue-deal-primary-action",
+  ]) {
+    assert.match(dashboard, new RegExp(`targetId: "${target}"`));
+  }
+  assert.match(dashboard, /id=\{`venue-profile-\$\{key\}`\}/);
+  assert.match(dashboard, /id="venue-logo-upload"/);
+  assert.match(dashboard, /id="venue-cover-upload"/);
+  assert.match(dashboard, /id="venue-deal-primary-action"/);
+  assert.match(dashboard, /onClick=\{\(event\) => openVenueSetupRequirement\(event, requirement\.sectionId, requirement\.targetId\)\}/);
+});
+
 test("venue identity and publication actions share the role-aware refresh boundary", () => {
   const venueIdentityActions = dashboard.match(/async function saveProfile[\s\S]*?function openVenueSection/)?.[0] || "";
   for (const path of [
