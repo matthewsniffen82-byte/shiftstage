@@ -100,6 +100,7 @@ export type DashboardJsonRequestOptions = Omit<RequestInit, "headers"> & {
   expectedRole?: string;
   fallbackMessage?: string;
   headers?: Record<string, string>;
+  acceptResponse?: (response: Response, data: unknown) => boolean;
 };
 
 export class DashboardDataRequestError extends Error {
@@ -117,6 +118,7 @@ export async function requestDashboardJson(
   options: DashboardJsonRequestOptions = {},
 ) {
   const {
+    acceptResponse,
     expectedRole,
     fallbackMessage = "Unable to update dashboard.",
     headers: requestHeaders,
@@ -130,7 +132,8 @@ export async function requestDashboardJson(
     headers: { ...requestHeaders, ...authHeaders },
   });
   const data = await response.json().catch(() => null);
-  if (!response.ok || !data?.ok) {
+  const accepted = (response.ok && data?.ok) || Boolean(acceptResponse?.(response, data));
+  if (!accepted) {
     throw new DashboardDataRequestError(data?.error || data?.message || fallbackMessage, response.status);
   }
   persistResponseSession(data);
@@ -250,6 +253,20 @@ export function requestVenueTeamJson(options: DashboardJsonRequestOptions = {}) 
     expectedRole: "venue",
     fallbackMessage: options.fallbackMessage || "Unable to update venue team access.",
   });
+}
+
+export function requestDancerPhotosJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/photos", {
+    ...options,
+    acceptResponse: options.acceptResponse || isRejectedDancerPhotoModerationResponse,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update dancer photos.",
+  });
+}
+
+function isRejectedDancerPhotoModerationResponse(response: Response, data: unknown) {
+  if (response.status !== 422 || !data || typeof data !== "object") return false;
+  return "decision" in data && data.decision === "rejected";
 }
 
 type DashboardFileRequestOptions = {

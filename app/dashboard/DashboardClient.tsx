@@ -35,6 +35,7 @@ import {
   requestDancerAvatarJson,
   requestDancerFinanceJson,
   requestDancerFinanceStatement,
+  requestDancerPhotosJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
   requestDancerShiftCheckInJson,
@@ -6647,13 +6648,12 @@ function DancerPhotoPanel({
           formData.set("sortOrder", String(uploadSortOrder));
           formData.set("idempotencyKey", uploadKey);
 
-          const response = await fetch("/api/dancer/photos", {
+          const data = await requestDancerPhotosJson({
             method: "POST",
-            headers: { authorization: `Bearer ${session.accessToken}`, "idempotency-key": uploadKey },
+            headers: { "idempotency-key": uploadKey },
             body: formData,
+            fallbackMessage: "Unable to upload photo.",
           });
-          const data = await response.json();
-          if (!response.ok && data.decision !== "rejected") throw new Error(data.message || data.error || "Unable to upload photo.");
           updateQueuedPhoto(item.id, { stage: "checking", progress: 85 });
           const uploadStatus = normalizePhotoStatus(data.photo?.reviewStatus || data.photo?.review_status || data.decision);
           const approved = uploadStatus === "approved";
@@ -6784,13 +6784,12 @@ function DancerPhotoPanel({
     setDeletingPhotoIds((current) => new Set(current).add(photo.id));
     setStatus("Deleting photo...");
     try {
-      const response = await fetch("/api/dancer/photos", {
+      await requestDancerPhotosJson({
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ photoId: photo.id }),
+        fallbackMessage: "Unable to delete photo.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete photo.");
 
       setPhotos((current) => relabelPhotoItems(current.filter((item) => item.id !== photo.id)));
       deletedPhotoIdsRef.current = deletedPhotoIdsRef.current.filter((id) => id !== photo.id);

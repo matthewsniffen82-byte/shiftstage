@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     });
 
     const status = result.decision === "rejected" ? 422 : 200;
-    return NextResponse.json({ ok: result.decision !== "rejected", ...result }, { status });
+    return NextResponse.json({ ok: result.decision !== "rejected", ...result, session }, { status });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     if (message.startsWith("Image moderation ")) {
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const body = await request.json().catch(() => ({}));
     const photoId = typeof body?.photoId === "string" ? body.photoId.trim() : "";
 
@@ -52,7 +52,7 @@ export async function DELETE(request: Request) {
     }
 
     const photo = await deleteOwnDancerPhoto(client, user.id, photoId, createAdminSupabaseClient());
-    return NextResponse.json({ ok: true, photo });
+    return NextResponse.json({ ok: true, photo, session });
   } catch (error) {
     return apiError(error, "Unable to delete dancer photo.");
   }

@@ -206,7 +206,9 @@ test("routed dashboard photo deletion is immediate, authenticated, and refresh-p
   const photoPanel = dashboardSource.match(/function DancerPhotoPanel[\s\S]*?function dancerPhotoItemsFromProfile/)?.[0] || "";
 
   assert.match(photoPanel, /async function deletePhoto\(photo: DancerPhotoItem\)/);
-  assert.match(photoPanel, /fetch\("\/api\/dancer\/photos", \{[\s\S]*?method: "DELETE"/);
+  assert.match(photoPanel, /requestDancerPhotosJson\(\{[\s\S]*?method: "DELETE"/);
+  assert.doesNotMatch(photoPanel, /fetch\("\/api\/dancer\/photos"/);
+  assert.doesNotMatch(photoPanel, /authorization: `Bearer/);
   assert.match(photoPanel, /body: JSON\.stringify\(\{ photoId: photo\.id \}\)/);
   assert.match(photoPanel, /requestDancerProfileJson\(\{[\s\S]*?cache: "no-store"/);
   assert.match(photoPanel, /current\.filter\(\(item\) => item\.id !== photo\.id\)/);
@@ -273,7 +275,7 @@ test("save keeps non-deleted photos and releases deleted slots before upload", (
   assert.match(profileRouteSource, /if \(submittedPhotoUrls\.length\) \{[\s\S]*?removeSupersededPendingPhotoRows/);
   assert.match(profileRouteSource, /NON_DELETED_PHOTO_MISSING_AFTER_SAVE/);
   assert.match(dashboardSource, /async function persistQueuedPhotoDeletions/);
-  assert.match(dashboardSource, /await persistQueuedPhotoDeletions\(\);[\s\S]*?fetch\("\/api\/dancer\/photos"/);
+  assert.match(dashboardSource, /await persistQueuedPhotoDeletions\(\);[\s\S]*?requestDancerPhotosJson\(\{/);
   assert.match(dashboardSource, /review\.previewUrl/);
 });
 

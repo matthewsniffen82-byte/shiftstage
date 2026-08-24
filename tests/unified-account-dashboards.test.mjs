@@ -16,6 +16,7 @@ import {
   requestDancerAvatarJson,
   requestDancerFinanceJson,
   requestDancerFinanceStatement,
+  requestDancerPhotosJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
   requestDancerShiftCheckInJson,
@@ -47,6 +48,7 @@ const [dashboard, dashboardSession, venueTvPanel, venueTeamPanel, venueNfcPanel,
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 const agentDashboard = await readFile(new URL("../app/dashboard/agent/AgentDashboardClient.tsx", import.meta.url), "utf8");
+const dancerPhotoRoute = await readFile(new URL("../app/api/dancer/photos/route.ts", import.meta.url), "utf8");
 
 test("customer, dancer, and venue use the same routed dashboard client", () => {
   assert.match(customerRoute, /<DashboardClient role="customer"/);
@@ -940,6 +942,108 @@ test("dancer avatar uploads and removals use the refresh-aware dancer boundary",
   assert.match(avatarPanel, /requestDancerAvatarJson/);
   assert.doesNotMatch(avatarPanel, /fetch\("\/api\/dancer\/avatar"/);
   assert.doesNotMatch(avatarPanel, /authorization: `Bearer/);
+});
+
+test("dancer gallery photo uploads and deletions preserve refresh and moderation outcomes", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    if (options?.method === "POST") {
+      return new Response(JSON.stringify({
+        ok: true,
+        decision: "pending",
+        session: { accessToken: "rotated-photo-access", expiresAt: 99999 },
+      }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ ok: true, photo: { id: "photo-id" } }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "dancer-access",
+      refreshToken: "dancer-refresh",
+      account: { role: "dancer" },
+    }));
+    const photoForm = new FormData();
+    photoForm.set("idempotencyKey", "photo-upload-key");
+    const uploaded = await requestDancerPhotosJson({
+      method: "POST",
+      headers: { "idempotency-key": "photo-upload-key" },
+      body: photoForm,
+    });
+    assert.equal(uploaded.decision, "pending");
+    await requestDancerPhotosJson({
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ photoId: "photo-id" }),
+    });
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/dancer/photos",
+        options: {
+          method: "POST",
+          headers: {
+            "idempotency-key": "photo-upload-key",
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: photoForm,
+        },
+      },
+      {
+        path: "/api/dancer/photos",
+        options: {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-photo-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: JSON.stringify({ photoId: "photo-id" }),
+        },
+      },
+    ]);
+
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      ok: false,
+      decision: "rejected",
+      message: "Photo rejected by moderation.",
+    }), {
+      status: 422,
+      headers: { "content-type": "application/json" },
+    });
+    const rejected = await requestDancerPhotosJson({ method: "POST", body: photoForm });
+    assert.equal(rejected.decision, "rejected");
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  const photoPanel = dashboard.match(/function DancerPhotoPanel[\s\S]*?function dancerPhotoItemsFromProfile/)?.[0] || "";
+  assert.match(dashboardSession, /function requestDancerPhotosJson/);
+  assert.match(photoPanel, /requestDancerPhotosJson/);
+  assert.doesNotMatch(photoPanel, /fetch\("\/api\/dancer\/photos"/);
+  assert.doesNotMatch(photoPanel, /authorization: `Bearer/);
+  assert.match(dancerPhotoRoute, /const \{ client, user, session \} = await createRequestSupabaseContext\(request\)/);
+  assert.match(dancerPhotoRoute, /result, session \}, \{ status \}/);
+  assert.match(dancerPhotoRoute, /\{ ok: true, photo, session \}/);
 });
 
 test("MyDancr TV lifecycle requests use the refresh-aware dancer boundary", async () => {
