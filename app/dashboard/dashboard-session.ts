@@ -237,6 +237,14 @@ export function requestVenueTvVideosJson(options: DashboardJsonRequestOptions = 
   });
 }
 
+export function requestVenueTeamJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/venue/team", {
+    ...options,
+    expectedRole: "venue",
+    fallbackMessage: options.fallbackMessage || "Unable to update venue team access.",
+  });
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();

@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
-  currentDashboardAuthHeaders as authHeaders,
-  persistRefreshedDashboardSession as persistRefreshedSession,
+  readDashboardAccessToken,
+  requestVenueTeamJson,
 } from "./dashboard-session";
 
 type Access = { role: "owner" | "manager" | "staff"; permissions: string[] };
@@ -24,17 +24,16 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   const [invitationUrl, setInvitationUrl] = useState("");
 
   const load = useCallback(async (clearStatus = true) => {
-    const auth = authHeaders();
-    if (!auth) {
+    if (!readDashboardAccessToken("venue")) {
       setIsLoading(false);
       return setStatus("Sign in required.");
     }
     setIsLoading(true);
     try {
-      const response = await fetch("/api/venue/team", { headers: auth, cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load venue team access.");
-      persistRefreshedSession(data.session);
+      const data = await requestVenueTeamJson({
+        cache: "no-store",
+        fallbackMessage: "Unable to load venue team access.",
+      });
       setAccess(data.access || null);
       setMembers(data.members || []);
       setInvitations(data.invitations || []);
@@ -51,19 +50,16 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
 
   async function invite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const auth = authHeaders();
-    if (!auth) return setStatus("Sign in required.");
+    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     setIsWorking(true);
     setInvitationUrl("");
     try {
-      const response = await fetch("/api/venue/team", {
+      const data = await requestVenueTeamJson({
         method: "POST",
-        headers: { ...auth, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, role }),
+        fallbackMessage: "Unable to invite this team member.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to invite this team member.");
-      persistRefreshedSession(data.session);
       setEmail("");
       setInvitationUrl(data.invitationUrl || "");
       setStatus(data.message || "Invitation created.");
@@ -77,17 +73,15 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
 
   async function updateMember(memberId: string, update: { role?: "manager" | "staff"; remove?: boolean }) {
     if (update.remove && !window.confirm("Remove this person's venue dashboard access?")) return;
-    const auth = authHeaders();
-    if (!auth) return setStatus("Sign in required.");
+    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     setIsWorking(true);
     try {
-      const response = await fetch("/api/venue/team", {
+      await requestVenueTeamJson({
         method: "PATCH",
-        headers: { ...auth, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ memberId, ...update }),
+        fallbackMessage: "Unable to update venue team access.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update venue team access.");
       await load(false);
       setStatus(update.remove ? "Team access removed." : "Team role updated.");
     } catch (error) {
@@ -98,17 +92,15 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   }
 
   async function revokeInvitation(invitationId: string) {
-    const auth = authHeaders();
-    if (!auth) return setStatus("Sign in required.");
+    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     setIsWorking(true);
     try {
-      const response = await fetch("/api/venue/team", {
+      await requestVenueTeamJson({
         method: "DELETE",
-        headers: { ...auth, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ invitationId }),
+        fallbackMessage: "Unable to revoke this invitation.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to revoke this invitation.");
       await load(false);
       setStatus("Invitation revoked.");
     } catch (error) {

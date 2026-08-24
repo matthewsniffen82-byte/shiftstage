@@ -21,6 +21,7 @@ import {
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestVenueDancerVerificationsJson,
+  requestVenueTeamJson,
   requestVenueTvVideosJson,
 } from "../app/dashboard/dashboard-session.ts";
 
@@ -168,8 +169,7 @@ test("venue dashboard subpanels use the shared session boundary and preserve tok
   }
 
   assert.match(venueTvPanel, /readDashboardAccessToken\("venue"\)/);
-  assert.match(venueTeamPanel, /currentDashboardAuthHeaders as authHeaders/);
-  assert.match(venueTeamPanel, /persistRefreshedDashboardSession as persistRefreshedSession/);
+  assert.match(venueTeamPanel, /requestVenueTeamJson/);
   assert.match(venueNfcPanel, /currentDashboardAuthHeaders as authHeaders/);
   assert.match(venueNfcPanel, /persistRefreshedDashboardSession as persistRefreshedSession/);
   for (const panel of [venueTvPanel, venueTeamPanel, venueNfcPanel]) {
@@ -910,6 +910,117 @@ test("venue TV loading uses the refresh-aware venue boundary", async () => {
   assert.match(venueTvPanel, /requestVenueTvVideosJson/);
   assert.doesNotMatch(venueTvPanel, /fetch\(/);
   assert.doesNotMatch(venueTvPanel, /authorization: `Bearer/);
+});
+
+test("venue team actions use one refresh-aware venue boundary", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    return new Response(JSON.stringify({
+      ok: true,
+      session: { accessToken: "rotated-venue-access", expiresAt: 99999 },
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "venue-access",
+      refreshToken: "venue-refresh",
+      account: { role: "venue" },
+    }));
+    await requestVenueTeamJson({ cache: "no-store" });
+    await requestVenueTeamJson({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "manager@example.com", role: "manager" }),
+    });
+    await requestVenueTeamJson({
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ memberId: "member-id", role: "staff" }),
+    });
+    await requestVenueTeamJson({
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ invitationId: "invitation-id" }),
+    });
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/venue/team",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/venue/team",
+        options: {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+          body: JSON.stringify({ email: "manager@example.com", role: "manager" }),
+        },
+      },
+      {
+        path: "/api/venue/team",
+        options: {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+          body: JSON.stringify({ memberId: "member-id", role: "staff" }),
+        },
+      },
+      {
+        path: "/api/venue/team",
+        options: {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+          body: JSON.stringify({ invitationId: "invitation-id" }),
+        },
+      },
+    ]);
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "rotated-venue-access",
+      refreshToken: "venue-refresh",
+      expiresAt: 99999,
+      account: { role: "venue" },
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestVenueTeamJson/);
+  assert.match(venueTeamPanel, /requestVenueTeamJson/);
+  assert.doesNotMatch(venueTeamPanel, /fetch\(/);
+  assert.doesNotMatch(venueTeamPanel, /currentDashboardAuthHeaders|persistRefreshedDashboardSession/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
