@@ -2072,7 +2072,7 @@ function VenuePanel({
         role="tabpanel"
       >
         <div>
-          <span className="eyebrow">{isPublished ? "Public venue" : "MyDancr-managed setup"}</span>
+          <span className="eyebrow">{isPublished ? "Public venue" : "Venue page review"}</span>
           <h2 id="venue-publication-heading">
             {isPublished
               ? "Your venue is live on MyDancr"
@@ -2088,7 +2088,7 @@ function VenuePanel({
             {isPublished
               ? "Guests can find this venue, its current Club Deals, and affiliated dancers."
               : pageReviewStatus === "venue_review"
-                ? "Verify the official venue information and commercial package below, then approve it or clearly describe what MyDancr should change."
+                ? "Review the official venue information and commercial terms below. Preview and approval controls are at the bottom."
                 : pageReviewStatus === "changes_requested"
                   ? "Your requested changes were sent. MyDancr will update the page and return it for another review."
                   : pageReviewStatus === "venue_approved"
@@ -2096,23 +2096,9 @@ function VenuePanel({
                     : "MyDancr is completing your private venue page. You will be notified when it is ready to review."}
           </p>
         </div>
-        {venueCustomerPreviewHref || (isPublished && venueSlug) ? (
+        {isPublished && venueSlug ? (
           <div className="venue-publication-actions">
-            {venueCustomerPreviewHref ? (
-              <a className="venue-preview-action" href={venueCustomerPreviewHref} rel="noopener noreferrer" target="_blank">
-                <svg aria-hidden="true" viewBox="0 0 24 24">
-                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
-                  <circle cx="12" cy="12" r="2.75" />
-                </svg>
-                Preview customer experience
-              </a>
-            ) : null}
-            {isAwaitingVenueReview ? (
-              <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
-                {isPublishingVenue ? "Making venue live..." : "Approve & make live"}
-              </button>
-            ) : null}
-            {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link> : null}
+            <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link>
           </div>
         ) : null}
         {isAwaitingVenueReview ? (
@@ -2177,6 +2163,27 @@ function VenuePanel({
             />
             <button className="secondary" type="button" disabled={isPublishingVenue || reviewNotes.trim().length < 10} onClick={() => void submitVenueReview("changes_requested")}>Request changes</button>
           </div>
+        ) : null}
+        {isAwaitingVenueReview ? (
+          <section className="venue-review-completion" aria-labelledby="venue-review-completion-heading">
+            <span className="eyebrow">Final review step</span>
+            <h3 id="venue-review-completion-heading">Preview, then approve</h3>
+            <p>Preview the customer experience using the information above. If everything is correct, approve the venue page to make it live.</p>
+            <div className="venue-publication-actions">
+              {venueCustomerPreviewHref ? (
+                <a className="venue-preview-action" href={venueCustomerPreviewHref} rel="noopener noreferrer" target="_blank">
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                    <circle cx="12" cy="12" r="2.75" />
+                  </svg>
+                  Preview customer experience
+                </a>
+              ) : null}
+              <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
+                {isPublishingVenue ? "Making venue live..." : "Approve & make live"}
+              </button>
+            </div>
+          </section>
         ) : null}
         {publicationStatus ? <p role="status">{publicationStatus}</p> : null}
       </section>
@@ -7512,6 +7519,11 @@ function DashboardStyles() {
       .venue-publication-actions > button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
       .venue-publication-panel > p[role="status"] { padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 9px; color: #baf5ff; background: rgba(148,229,255,.07); font-weight: 850; }
       .venue-review-request { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(251,191,36,.25); border-radius: 10px; background: rgba(251,191,36,.045); }
+      .venue-review-completion { display: grid; gap: 9px; padding: 14px; border: 1px solid rgba(139,92,246,.44); border-radius: 13px; background: linear-gradient(145deg,rgba(46,22,89,.36),rgba(8,8,12,.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
+      .venue-review-completion h3 { margin: 0; color: #f8fafc; font-size: 19px; line-height: 1.15; }
+      .venue-review-completion > p { color: #aaa3b4; font-size: 12px; line-height: 1.45; }
+      .venue-review-completion .venue-publication-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 3px; }
+      .venue-review-completion .venue-publication-actions > * { width: 100%; }
       .venue-review-package { display: grid; gap: 14px; padding: 14px; border: 1px solid rgba(255,255,255,.13); border-radius: 13px; background: rgba(8,8,12,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
       .venue-review-package-heading { min-width: 0; display: grid; grid-template-columns: 72px minmax(0,1fr); align-items: center; gap: 13px; }
       .venue-review-package-heading > span:last-child { min-width: 0; display: grid; gap: 5px; }
