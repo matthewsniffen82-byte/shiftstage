@@ -20,6 +20,7 @@ const ADMIN_AUTH_ENTRY_STYLES = `<style>
 #authPage .auth-admin-entry-copy strong{font-size:15px;line-height:1.15}
 #authPage .auth-admin-entry-copy small{color:rgba(226,226,237,.62);font-size:10px;line-height:1.2}
 #authPage .auth-admin-entry-arrow{color:#c4b5fd;font-size:20px;line-height:1}
+#authPage.venue-request-succeeded .auth-admin-entry{display:none}
 </style>`;
 
 const ADMIN_AUTH_ENTRY_HTML = `<a class="auth-admin-entry" id="platformAdminAuthLink" href="/admin" aria-label="Open Platform admin sign in or signup"><span class="auth-admin-entry-mark" aria-hidden="true">ADMIN</span><span class="auth-admin-entry-copy"><strong>Platform admin</strong><small>Private admin access</small></span><span class="auth-admin-entry-arrow" aria-hidden="true">›</span></a>`;

@@ -4036,11 +4036,21 @@
       white-space: nowrap !important;
     }
 
-    .venue-request-submit.is-submitted {
-      border-color: rgba(35,222,140,.5);
-      color: #06150e;
-      background: #38e39d;
-      box-shadow: 0 0 22px rgba(56,227,157,.22);
+    body.dancr-button-system #authPage .venue-request-submit.is-submitted:disabled {
+      opacity: 1 !important;
+      border-color: #34d399 !important;
+      color: #04110b !important;
+      background: #10b981 !important;
+      background-image: none !important;
+      box-shadow: 0 0 16px rgba(16,185,129,.18), inset 0 1px 0 rgba(255,255,255,.2) !important;
+      filter: none !important;
+      cursor: default !important;
+    }
+
+    #authPage.venue-request-succeeded .venue-request-back {
+      border-color: rgba(139,92,246,.78);
+      background: #7c3aed;
+      box-shadow: 0 0 18px rgba(124,58,237,.2), inset 0 1px 0 rgba(255,255,255,.18);
     }
 
     .venue-request-privacy {
@@ -38517,7 +38527,7 @@
             </label>
             <button class="action-btn venue-request-submit" id="venueRequestSubmit" type="submit">Send club request</button>
             <div class="venue-request-privacy">MyDancr uses these details only to verify the business and contact you about club access.</div>
-            <button class="venue-request-back" id="venueRequestBackBtn" type="button">Already approved? Enter your access code</button>
+            <button class="venue-request-back" id="venueRequestBackBtn" type="button">Have an access code? Continue</button>
             <button class="auth-back-to-types" id="venueRequestBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueRequestStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
@@ -50406,6 +50416,7 @@
           requestSubmit.classList.remove("is-submitted");
           requestSubmit.textContent = "Send club request";
         }
+        authPage.classList.remove("venue-request-succeeded");
         setVenueRequestStatus("");
       }
 
@@ -59449,10 +59460,11 @@
 
         form.reset();
         pendingVenueAgentReferralCode = "";
+        authPage.classList.add("venue-request-succeeded");
         submit.classList.add("is-submitted");
         submit.textContent = "✓ Request received";
         setVenueRequestStatus(
-          `${payload?.message || "Request received. MyDancr will review the club."} After approval, use the private code from the email to create the club manager account.`
+          "After approval, we’ll email the private access code to the business contact. Use it here to create the club manager account."
         );
         showToast("Club request received");
       } catch (error) {
