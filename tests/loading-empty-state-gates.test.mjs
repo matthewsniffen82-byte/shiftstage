@@ -29,7 +29,7 @@ test("secondary account panels do not claim data is empty while requests are loa
   );
   assert.match(
     venueNfcPanel,
-    /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?: !isLoading \? <p>No dancers have tapped this venue&apos;s dressing-room sticker yet\.<\/p>/,
+    /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?: !isLoading \? <p>No dancers have used this venue&apos;s dancer check-in sticker yet\.<\/p>/,
   );
   assert.match(
     venueTeamPanel,

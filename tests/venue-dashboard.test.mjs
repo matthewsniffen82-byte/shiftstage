@@ -64,7 +64,7 @@ test("the primary venue dashboard opens the shared routed workspace immediately"
   assert.doesNotMatch(startVenueSession, /openVenueDashboard\(\)/);
 });
 
-test("venue operations prioritize tonight, Club Deals, NFC stickers, and then reporting", () => {
+test("venue operations prioritize tonight, Club Deals, phone-tap stickers, and then reporting", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
   assert.match(venuePanel, /Tonight/);
   assert.match(venuePanel, /title="Deals & billing"/);
@@ -142,13 +142,30 @@ test("MyDancr supplies NFC stickers while venue owners receive read-only invento
   assert.match(nfcService, /requireVenueAccess\(client, ownerUserId, "view_nfc"\)/);
   assert.match(nfcService, /recordNfcTagScan/);
   assert.match(nfcPanel, /scanCount > testBaselineRef\.current/);
-  assert.match(nfcPanel, /physical[\s\S]*?completed/);
+  assert.match(nfcPanel, /phone[\s\S]*?completed/);
   assert.match(nfcPanel, /MyDancr supplied hardware/);
-  assert.match(nfcPanel, /Assigned NFC stickers/);
-  assert.match(nfcPanel, /NFC-authorized dancer roster/);
+  assert.match(nfcPanel, /Check-in & redemption stickers/);
+  assert.match(nfcPanel, /Approved dancer roster/);
+  assert.match(nfcPanel, /tap-to-use stickers \(NFC\)/);
+  assert.match(nfcPanel, /Dancer check-in/);
+  assert.match(nfcPanel, /Guest redemption/);
+  assert.doesNotMatch(nfcPanel, /Assigned NFC stickers|NFC-authorized dancer roster|NFC verified|NFC workflow/);
   assert.match(nfcPanel, /no separate manager approval is needed/i);
   assert.doesNotMatch(nfcPanel, /Create programming URL/);
   assert.doesNotMatch(nfcPanel, />Rotate</);
+});
+
+test("venue-facing NFC language explains the physical actions in plain language", () => {
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
+  assert.match(venuePanel, /Verified dancer check-ins/);
+  assert.match(venuePanel, /Check-in verified/);
+  assert.match(venuePanel, /title="Check-in & redemption stickers"/);
+  assert.match(venuePanel, /Dancer check-ins/);
+  assert.match(venuePanel, /Guest redemption attempts/);
+  assert.doesNotMatch(venuePanel, /NFC-authorized check-ins|Assigned NFC access|NFC Deal visibility|Dressing-room taps|Cashier tap attempts/);
+  assert.match(venueDealPanel, /Guests redeem by holding their phone near the MyDancr redemption sticker at checkout/);
+  assert.doesNotMatch(venueDealPanel, /cashier NFC stickers/);
 });
 
 test("venue roster rows pair each dancer avatar with compact confirmed access removal", () => {

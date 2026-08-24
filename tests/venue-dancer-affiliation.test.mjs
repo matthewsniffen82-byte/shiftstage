@@ -47,8 +47,8 @@ test("dancer and venue dashboards show the official NFC workflow", () => {
   assert.match(dancerPanel, /six-hour Working Now session/);
   assert.match(dancerPanel, /six-hour cooldown/);
   assert.match(venuePanel, /no separate manager approval is needed/);
-  assert.match(venuePanel, /NFC-authorized dancer roster/);
-  assert.match(venuePanel, /MyDancr programs and supplies every sticker/);
+  assert.match(venuePanel, /Approved dancer roster/);
+  assert.match(venuePanel, /MyDancr programs and supplies these tap-to-use stickers \(NFC\)/);
 });
 
 test("venue roster affiliations expose responsive approved dancer avatars", () => {

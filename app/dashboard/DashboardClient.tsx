@@ -2409,14 +2409,14 @@ function VenuePanel({
 
       <DashboardSection
         badge={`${workingNow.length} active`}
-        description="Review NFC-authorized dancers currently checked in at this venue and open their live profiles."
+        description="Review dancers verified by this venue's official check-in sticker and open their live profiles."
         eyebrow="Floor status"
         hidden={activeWorkspace !== "tonight"}
         id="venue-working-now"
         title="Working now"
       >
         <article className="info-panel venue-working-panel">
-          <h2>NFC-authorized check-ins</h2>
+          <h2>Verified dancer check-ins</h2>
           <div className="venue-working-list">
             {workingNow.map((dancer) => (
               <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
@@ -2424,7 +2424,7 @@ function VenuePanel({
                   {dancer.avatarUrl ? <img src={String(dancer.avatarUrl)} srcSet={dancer.avatarSrcSet ? String(dancer.avatarSrcSet) : undefined} sizes="48px" alt="" /> : <i aria-hidden="true">{String(dancer.stageName || "D").slice(0, 1)}</i>}
                   <span><strong>{String(dancer.stageName || "Dancer")}</strong><small>Checked in {dancer.checkedInAt ? formatRelativeDashboardTime(String(dancer.checkedInAt)) : "during this shift"}</small></span>
                 </span>
-                <span className="venue-working-verification"><strong>NFC verified</strong><small>Check-in active until {formatDashboardTime(String(dancer.endsAt || ""))}</small></span>
+                <span className="venue-working-verification"><strong>Check-in verified</strong><small>Active until {formatDashboardTime(String(dancer.endsAt || ""))}</small></span>
               </Link>
             ))}
             {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
@@ -2433,11 +2433,11 @@ function VenuePanel({
       </DashboardSection>
 
       <DashboardSection
-        description="View the MyDancr-programmed dressing-room and cashier stickers assigned to this venue. A dressing-room tap authorizes the dancer at this venue and checks in a current posted shift."
+        description="View the official dancer check-in and guest redemption stickers assigned to this venue. A dancer uses the check-in sticker to verify venue access and start a current posted shift."
         eyebrow="Floor access"
         hidden={activeWorkspace !== "tonight"}
         id="venue-dancer-roster"
-        title="Assigned NFC access"
+        title="Check-in & redemption stickers"
         badge={`${nfcAuthorizedDancerCount} authorized`}
       >
         <VenueNfcTagPanel
@@ -2480,7 +2480,7 @@ function VenuePanel({
       </section>
 
       <DashboardSection
-        description="Guest reach, intent, live activity, and NFC Deal visibility."
+        description="Guest reach, intent, live activity, and Club Deal visibility."
         eyebrow="Live performance"
         hidden={activeWorkspace !== "business"}
         id="venue-overview"
@@ -2507,10 +2507,10 @@ function VenuePanel({
           <InfoPanel title="Live operations">
             <Metric label="Working now" value={String(analytics?.activeDancersNow || 0)} />
             <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
-            <Metric label="Dressing-room taps" value={String(analytics?.dressingRoomNfcTaps || 0)} />
-            <Metric label="Cashier tap attempts" value={String(analytics?.cashierNfcAttempts || 0)} />
+            <Metric label="Dancer check-ins" value={String(analytics?.dressingRoomNfcTaps || 0)} />
+            <Metric label="Guest redemption attempts" value={String(analytics?.cashierNfcAttempts || 0)} />
             <VenueAnalyticsMetric label="Deal redemptions" value={Number(analytics?.cashierNfcRedemptions || 0)} change={readOptionalNumber(analytics?.redemptionsChangePercent)} />
-            <Metric label="Tap → redemption" value={formatPercent(analytics?.redemptionConversionPercent)} />
+            <Metric label="Attempt → redemption" value={formatPercent(analytics?.redemptionConversionPercent)} />
           </InfoPanel>
         </div>
       </DashboardSection>
@@ -7538,7 +7538,7 @@ function VenueDealReadOnlyPanel({
         <div>
           <span>Redemption status</span>
           <strong>{liveDeals.length ? "Enabled" : "Not active"}</strong>
-          <small>MyDancr manages the official cashier NFC stickers.</small>
+          <small>Guests redeem by holding their phone near the MyDancr redemption sticker at checkout. MyDancr supplies and manages these stickers.</small>
         </div>
       </section>
 
