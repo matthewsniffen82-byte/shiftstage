@@ -58,8 +58,9 @@ export function SocialLinks({ dancerId, heading = "Socials", links, showConnectL
       <div className="social-list" aria-label="Social links">
         {links.map((link) => (
           <a
-            aria-label={`${platformLabels[link.platform]} (opens in a new tab)`}
+            aria-label={`${platformLabels[link.platform]} (opens in a new tab after a third-party warning)`}
             className={`social-link social-link-${link.platform}`}
+            data-third-party-social-link="true"
             href={link.url}
             key={link.id}
             onClick={trackClicks ? () => recordClick(link.platform) : undefined}

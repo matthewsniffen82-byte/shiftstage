@@ -34,7 +34,7 @@ export async function GET() {
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
   const withLiveProfileAssets = withBase.replace(
     "</head>",
-    `<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><script src="/video-autoplay-recovery.js?v=3" defer></script>${ADMIN_AUTH_ENTRY_STYLES}</head>`,
+    `<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><link rel="stylesheet" href="/third-party-social-link-warning.css?v=1"><script src="/video-autoplay-recovery.js?v=3" defer></script><script src="/third-party-social-link-warning.js?v=1" defer></script>${ADMIN_AUTH_ENTRY_STYLES}</head>`,
   );
   const withPreviewBanner = withLiveProfileAssets.replace(
     '<body class="dancr-button-system">',

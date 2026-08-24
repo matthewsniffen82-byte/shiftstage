@@ -5,6 +5,7 @@ import { MyDancrPreviewBanner } from "./components/MyDancrPreviewBanner";
 import "../public/dancr-brand-tokens.v1.css";
 import "../public/dancr-button-system.v1.css";
 import "../public/dancr-aesthetic.v1.css";
+import "../public/third-party-social-link-warning.css";
 
 const androidDeviceClassScript = `
 (() => {
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <MyDancrPreviewBanner />
         {children}
         <GlobalMobileBottomNav />
+        <script defer id="mydancr-third-party-social-link-warning" src="/third-party-social-link-warning.js?v=1" />
       </body>
     </html>
   );

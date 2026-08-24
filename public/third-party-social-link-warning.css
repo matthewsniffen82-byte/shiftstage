@@ -1,0 +1,194 @@
+#mydancrThirdPartySocialWarning[hidden] {
+  display: none !important;
+}
+
+#mydancrThirdPartySocialWarning {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 18px 14px max(18px, env(safe-area-inset-bottom));
+  color: #f8f7ff;
+  font-family: inherit;
+}
+
+.mydancr-third-party-social-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.76);
+  -webkit-backdrop-filter: blur(12px) saturate(112%);
+  backdrop-filter: blur(12px) saturate(112%);
+}
+
+.mydancr-third-party-social-dialog {
+  position: relative;
+  width: min(100%, 470px);
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(129, 82, 255, 0.54);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 86% 0%, rgba(95, 40, 218, 0.22), transparent 40%),
+    linear-gradient(160deg, rgba(18, 17, 27, 0.985), rgba(5, 5, 9, 0.99));
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.66),
+    0 0 42px rgba(90, 35, 222, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  isolation: isolate;
+  animation: mydancr-third-party-social-enter 180ms ease-out both;
+}
+
+.mydancr-third-party-social-dialog::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, #8b5cf6, #5b21d8 56%, rgba(91, 33, 216, 0));
+  box-shadow: 0 0 18px rgba(124, 58, 237, 0.72);
+}
+
+.mydancr-third-party-social-eyebrow {
+  width: fit-content;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(139, 92, 246, 0.34);
+  border-radius: 999px;
+  color: #c4b5fd;
+  background: rgba(91, 33, 216, 0.14);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mydancr-third-party-social-copy {
+  display: grid;
+  gap: 9px;
+}
+
+.mydancr-third-party-social-copy h2,
+.mydancr-third-party-social-copy p {
+  margin: 0;
+}
+
+.mydancr-third-party-social-copy h2 {
+  color: #ffffff;
+  font-size: clamp(24px, 7vw, 31px);
+  font-weight: 950;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+}
+
+.mydancr-third-party-social-copy p {
+  color: rgba(235, 233, 245, 0.75);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.52;
+}
+
+.mydancr-third-party-social-destination {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.mydancr-third-party-social-destination span {
+  color: rgba(206, 202, 220, 0.6);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mydancr-third-party-social-destination strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.mydancr-third-party-social-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.mydancr-third-party-social-actions button {
+  width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 15px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mydancr-third-party-social-actions button:focus-visible {
+  outline: 3px solid rgba(191, 219, 254, 0.9);
+  outline-offset: 3px;
+}
+
+.mydancr-third-party-social-stay {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f4f2fb;
+  background: rgba(42, 41, 51, 0.92);
+}
+
+.mydancr-third-party-social-continue {
+  border: 1px solid rgba(167, 139, 250, 0.82);
+  color: #ffffff;
+  background: linear-gradient(135deg, #6d28d9, #4c1d95);
+  box-shadow: 0 9px 24px rgba(76, 29, 149, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.mydancr-third-party-social-note {
+  margin: -2px 0 0;
+  color: rgba(207, 203, 220, 0.54);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-align: center;
+}
+
+@media (min-width: 430px) {
+  #mydancrThirdPartySocialWarning {
+    align-items: center;
+  }
+
+  .mydancr-third-party-social-actions {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mydancr-third-party-social-dialog {
+    animation: none;
+  }
+}
+
+@keyframes mydancr-third-party-social-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
