@@ -145,16 +145,17 @@
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-stay {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #f4f2fb;
-  background: rgba(42, 41, 51, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #f4f2fb !important;
+  background: rgba(42, 41, 51, 0.92) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-continue {
-  border: 1px solid rgba(167, 139, 250, 0.82);
-  color: #ffffff;
-  background: linear-gradient(135deg, #6d28d9, #4c1d95);
-  box-shadow: 0 9px 24px rgba(76, 29, 149, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(167, 139, 250, 0.82) !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #6d28d9, #4c1d95) !important;
+  box-shadow: 0 9px 24px rgba(76, 29, 149, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
 .mydancr-third-party-social-note {
