@@ -2048,7 +2048,7 @@ function VenuePanel({
   const venueCity = String(profile?.city || "your city");
   const venueSlug = String(profile?.slug || "");
   const venuePreviewHref = venueSlug
-    ? `/?city=${encodeURIComponent(venueCity)}&venue=${encodeURIComponent(venueSlug)}&venue_preview=1`
+    ? `/?venue=${encodeURIComponent(venueSlug)}&venue_preview=1`
     : "";
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
@@ -2123,7 +2123,7 @@ function VenuePanel({
           ))}
         </ul>
         <div className="venue-publication-actions">
-          {venuePreviewHref ? <Link href={venuePreviewHref}>Preview venue</Link> : <button type="button" disabled>Preview venue</button>}
+          {venuePreviewHref ? <a href={venuePreviewHref}>Preview venue</a> : <button type="button" disabled>Preview venue</button>}
           {!isPublished && canManageProfile ? (
             <button className="primary" type="button" disabled={!isReadyToPublish || isPublishingVenue} onClick={publishVenue}>
               {isPublishingVenue ? "Publishing..." : "Publish venue"}
@@ -2297,7 +2297,7 @@ function VenuePanel({
                 <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
                   Open live venue page
                 </Link>
-              ) : venuePreviewHref ? <Link href={venuePreviewHref}>Preview private venue page</Link> : null}
+              ) : venuePreviewHref ? <a href={venuePreviewHref}>Preview private venue page</a> : null}
               {profileStatus ? <p role="status">{profileStatus}</p> : null}
             </form>
           </article>

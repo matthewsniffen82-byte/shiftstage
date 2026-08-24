@@ -43602,6 +43602,7 @@
           profileViews30d: data.analytics?.pageViews30Days
         }
       }, previewCity, {});
+      previewRecord.city = previewCity;
       const existing = market.venues.find((venue) => (
         venue.id === previewRecord.id || venue.slug === previewRecord.slug || venue.name === previewRecord.name
       ));
@@ -61595,19 +61596,29 @@
       const city = params.get("city");
       const profileSlug = params.get("profile");
       const venueSlug = params.get("venue");
+      const isVenuePreview = Boolean(venueSlug && params.get("venue_preview") === "1");
+      if (isVenuePreview) {
+        try {
+          const previewVenue = await applyVenueDashboardPreview(city, venueSlug);
+          if (!previewVenue) return;
+          const previewCity = previewVenue.city || citySelect.value;
+          citySelect.value = previewCity;
+          activeTab = "venues";
+          document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === activeTab));
+          render();
+          openVenueFromName(previewVenue.slug || previewVenue.name);
+          scrollToSharedVenueSection();
+        } catch (error) {
+          showToast(error.message || "Venue preview could not be loaded");
+        }
+        return;
+      }
       if (!city || (!profileSlug && !venueSlug) || !markets[city]) return;
       citySelect.value = city;
       activeTab = venueSlug ? "venues" : "dancers";
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === activeTab));
       render();
       if (venueSlug) {
-        if (params.get("venue_preview") === "1") {
-          try {
-            await applyVenueDashboardPreview(city, venueSlug);
-          } catch (error) {
-            showToast(error.message || "Venue preview could not be loaded");
-          }
-        }
         const venue = resolveVenueByName(venueSlug, city);
         if (venue) {
           setTimeout(() => {
@@ -61765,6 +61776,8 @@
       syncHomeDestinationLocation(initialHomeDestination);
     }
     homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";
+    const initialVenuePreviewRequested = initialProfileParams.get("venue_preview") === "1" && Boolean(initialProfileParams.get("venue"));
+    const initialVenuePreviewRequest = initialVenuePreviewRequested ? openSharedProfileFromUrl() : null;
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();
     if (initialHomeDestinationRequested) {
@@ -61791,7 +61804,8 @@
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
     if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink()) {
-      void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl());
+      if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
+      else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl());
     }
   </script>
 </body>

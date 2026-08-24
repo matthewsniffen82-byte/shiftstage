@@ -103,11 +103,14 @@ test("the venue dashboard clearly presents private setup, preview, and explicit 
   assert.match(dashboard, /Complete, preview, and publish the guest-facing venue page from this private workspace/);
   assert.match(dashboard, /Nothing appears publicly until you publish/);
   assert.match(dashboard, /Preview private venue page/);
-  assert.match(dashboard, /venuePreviewHref[\s\S]*?\/\?city=\$\{encodeURIComponent\(venueCity\)\}&venue=\$\{encodeURIComponent\(venueSlug\)\}&venue_preview=1/);
+  assert.match(dashboard, /venuePreviewHref[\s\S]*?\/\?venue=\$\{encodeURIComponent\(venueSlug\)\}&venue_preview=1/);
+  assert.match(dashboard, /<a href=\{venuePreviewHref\}>Preview venue<\/a>/);
   assert.doesNotMatch(dashboard, /function VenueDraftPreview/);
   assert.match(dashboard, /Publish venue/);
   assert.match(dashboard, /Upload logo/);
   assert.match(liveApp, /async function applyVenueDashboardPreview[\s\S]*?getAuthenticatedJson\("\/api\/venue\/dashboard"\)/);
+  assert.match(liveApp, /const isVenuePreview[\s\S]*?await applyVenueDashboardPreview\(city, venueSlug\)[\s\S]*?openVenueFromName\(previewVenue\.slug \|\| previewVenue\.name\)[\s\S]*?if \(!city \|\| \(!profileSlug && !venueSlug\) \|\| !markets\[city\]\) return/);
+  assert.match(liveApp, /const initialVenuePreviewRequest = initialVenuePreviewRequested \? openSharedProfileFromUrl\(\) : null/);
   assert.match(liveApp, /venue\.isDashboardPreview[\s\S]*?This is the exact guest page customers will see after you publish/);
   assert.match(liveApp, /venue\.id && !venue\.isDashboardPreview/);
   assert.match(documentation, /request-first venue onboarding model/);
