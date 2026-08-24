@@ -84,10 +84,15 @@ test("admins can prepare all page fields and official venue images", () => {
 
 test("the venue dashboard presents a read-only review and approval experience", () => {
   assert.match(dashboard, /MyDancr prepares the venue page\. Your team reviews it before MyDancr publishes it/);
+  assert.match(dashboard, /Ready to review/);
+  assert.match(dashboard, /Changes in progress/);
+  assert.match(dashboard, /canPreviewVenuePage \? <button type="button" onClick=\{openVenueCardPreview\}>Preview venue<\/button>/);
   assert.match(dashboard, /Approve page/);
   assert.match(dashboard, /Request changes/);
   assert.match(dashboard, /Your approval is recorded\. A MyDancr administrator will complete the final check/);
   assert.match(dashboard, /readOnly/);
+  assert.doesNotMatch(dashboard, /const setupRequirements/);
+  assert.doesNotMatch(dashboard, /setupCompletedCount/);
   assert.doesNotMatch(dashboard, />Publish venue</);
   assert.doesNotMatch(dashboard, /Save venue page/);
   assert.doesNotMatch(dashboard, /Save replacement logo/);

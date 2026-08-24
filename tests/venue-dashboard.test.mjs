@@ -126,11 +126,11 @@ test("venue dashboards expose the complete MyDancr-managed contract ledger", () 
   assert.doesNotMatch(venueDealPanel, /Publish Club Deal|Pause Deal|Request fee change|Edit live deal/);
 });
 
-test("venue publication requirements point to the read-only MyDancr deal record", () => {
+test("venue publication status hides internal requirements while retaining the read-only deal record", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
-  assert.match(venuePanel, /label: "MyDancr Club Deal"/);
-  assert.match(venuePanel, /venue-publication-requirement-label/);
-  assert.doesNotMatch(venuePanel, /targetId:/);
+  assert.doesNotMatch(venuePanel, /setupRequirements|setupCompletedCount|venue-publication-requirement-label/);
+  assert.match(venuePanel, /Ready to review/);
+  assert.match(venuePanel, /Changes in progress/);
   assert.match(dashboard, /id="venue-deal-contract-ledger"/);
   assert.match(venuePanel, /View your MyDancr-managed deals, agreed fees, and monthly activity/);
 });

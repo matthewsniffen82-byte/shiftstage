@@ -2035,16 +2035,17 @@ function VenuePanel({
   const isPublished = profile?.isActive === true;
   const pageReviewStatus = String(profile?.pageReviewStatus || (isPublished ? "published" : "admin_draft"));
   const isAwaitingVenueReview = !isPublished && pageReviewStatus === "venue_review";
-  const setupRequirements = [
-    { key: "details", label: "Venue details", complete: Boolean(profile?.name && profile?.address && profile?.city && profile?.state) },
-    { key: "contact", label: "Public phone", complete: Boolean(profile?.phone) },
-    { key: "hours", label: "Venue hours", complete: Boolean(profile?.opensAt && profile?.closesAt) },
-    { key: "logo", label: "Venue logo", complete: Boolean(profile?.logoImageUrl) },
-    { key: "cover", label: "Discovery cover", complete: Boolean(profile?.coverImageUrl) },
-    { key: "deal", label: "MyDancr Club Deal", complete: activeDealCount > 0 },
-  ];
-  const setupCompletedCount = setupRequirements.filter((requirement) => requirement.complete).length;
-  const isReadyToPublish = setupCompletedCount === setupRequirements.length;
+  const isPreparedForVenue = ["venue_review", "changes_requested", "venue_approved", "published"].includes(pageReviewStatus);
+  const canPreviewVenuePage = isAwaitingVenueReview || pageReviewStatus === "venue_approved";
+  const venuePageTabStatus = isPublished
+    ? "Live page"
+    : pageReviewStatus === "venue_review"
+      ? "Ready to review"
+      : pageReviewStatus === "changes_requested"
+        ? "Changes in progress"
+        : pageReviewStatus === "venue_approved"
+          ? "Approved"
+          : "In preparation";
 
   return (
     <>
@@ -2065,7 +2066,7 @@ function VenuePanel({
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
           ["tonight", "Tonight", `${workingNow.length} working now`],
-          ["venue", "Venue page", isPublished ? "Live page" : `${setupCompletedCount}/${setupRequirements.length} ready`],
+          ["venue", "Venue page", venuePageTabStatus],
           ["business", "Business", "Analytics & team"],
         ] as const).map(([workspace, label, summary]) => (
           <button
@@ -2130,28 +2131,20 @@ function VenuePanel({
                   ? "Your requested changes were sent. MyDancr will update the page and return it for another review."
                   : pageReviewStatus === "venue_approved"
                     ? "Your approval is recorded. A MyDancr administrator will complete the final check and publish the page."
-                    : `${setupCompletedCount} of ${setupRequirements.length} page requirements are complete. MyDancr will send it to you when it is ready.`}
+                    : "MyDancr is completing your private venue page. You will be notified when it is ready to review."}
           </p>
         </div>
-        {!isPublished ? <ul>
-          {setupRequirements.map((requirement) => (
-            <li className={requirement.complete ? "complete" : ""} key={requirement.key}>
-              <span>
-                <span className="venue-publication-requirement-status" aria-hidden="true">{requirement.complete ? "✓" : "○"}</span>
-                <span className="venue-publication-requirement-label">{requirement.label}</span>
-              </span>
-            </li>
-          ))}
-        </ul> : null}
-        <div className="venue-publication-actions">
-          <button type="button" onClick={openVenueCardPreview}>Preview venue</button>
-          {isAwaitingVenueReview ? (
-            <button className="primary" type="button" disabled={!isReadyToPublish || isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
-              {isPublishingVenue ? "Saving review..." : "Approve page"}
-            </button>
-          ) : null}
-          {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link> : null}
-        </div>
+        {canPreviewVenuePage || (isPublished && venueSlug) ? (
+          <div className="venue-publication-actions">
+            {canPreviewVenuePage ? <button type="button" onClick={openVenueCardPreview}>Preview venue</button> : null}
+            {isAwaitingVenueReview ? (
+              <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
+                {isPublishingVenue ? "Saving review..." : "Approve page"}
+              </button>
+            ) : null}
+            {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link> : null}
+          </div>
+        ) : null}
         {isAwaitingVenueReview ? (
           <div className="venue-review-request">
             <label htmlFor="venue-page-review-notes">Need changes?</label>
@@ -2165,7 +2158,6 @@ function VenuePanel({
             <button className="secondary" type="button" disabled={isPublishingVenue || reviewNotes.trim().length < 10} onClick={() => void submitVenueReview("changes_requested")}>Request changes</button>
           </div>
         ) : null}
-        {!isPublished && !isReadyToPublish ? <small>MyDancr is completing the remaining page items.</small> : null}
         {publicationStatus ? <p role="status">{publicationStatus}</p> : null}
       </section>
 
@@ -2298,7 +2290,7 @@ function VenuePanel({
             <p>MyDancr enters the approved venue details, images, hours, and contracted Club Deals. Your team reviews the complete private page before it can go live.</p>
           </div>
           <ol>
-            <li className={isReadyToPublish ? "is-complete" : ""}><span>{isReadyToPublish ? "✓" : "1"}</span><strong>MyDancr prepares page</strong><small>Details, images, hours, and deal</small></li>
+            <li className={isPreparedForVenue ? "is-complete" : ""}><span>{isPreparedForVenue ? "✓" : "1"}</span><strong>MyDancr prepares page</strong><small>Details, images, hours, and deal</small></li>
             <li className={["venue_approved", "published"].includes(pageReviewStatus) ? "is-complete" : ""}><span>{["venue_approved", "published"].includes(pageReviewStatus) ? "✓" : "2"}</span><strong>Venue reviews page</strong><small>Approve or request corrections</small></li>
             <li className={isPublished ? "is-complete" : ""}><span>{isPublished ? "✓" : "3"}</span><strong>MyDancr publishes</strong><small>Final administrative check</small></li>
           </ol>
@@ -2328,7 +2320,7 @@ function VenuePanel({
                 <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
                   Open live venue page
                 </Link>
-              ) : <button type="button" onClick={openVenueCardPreview}>Preview venue card</button>}
+              ) : canPreviewVenuePage ? <button type="button" onClick={openVenueCardPreview}>Preview venue card</button> : null}
               <small>To correct anything, use Request changes when MyDancr sends the page for review.</small>
             </div>
           </article>
@@ -7648,21 +7640,11 @@ function DashboardStyles() {
       .venue-publication-panel > div:first-child { display: grid; gap: 7px; }
       .venue-publication-panel h2 { margin: 0; color: #f8fafc; font-size: clamp(20px,3.5vw,27px); line-height: 1.08; }
       .venue-publication-panel p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.48; }
-      .venue-publication-panel > ul { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
-      .venue-publication-panel > ul > li { min-width: 0; min-height: 42px; padding: 0; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; color: #aaa3b5; background: rgba(255,255,255,.025); font-size: 12px; font-weight: 850; overflow: hidden; }
-      .venue-publication-panel > ul > li > span { min-height: 42px; display: flex; align-items: center; gap: 8px; box-sizing: border-box; padding: 8px 9px; color: inherit; }
-      .venue-publication-requirement-status { width: 22px; height: 22px; display: grid; place-items: center; flex: 0 0 22px; border-radius: 50%; color: #9d92ad; background: rgba(255,255,255,.06); }
-      .venue-publication-requirement-label { min-width: 0; flex: 1 1 auto; }
-      .venue-publication-requirement-arrow { flex: 0 0 auto; color: #c4b5fd; font-size: 20px; font-weight: 700; line-height: 1; }
-      .venue-publication-panel > ul > li.complete { border-color: rgba(16,185,129,.25); color: #d1fae5; background: rgba(6,78,59,.13); }
-      .venue-publication-panel > ul > li.complete .venue-publication-requirement-status { color: #052e24; background: #6ee7b7; }
-      .venue-publication-panel > ul > li.complete .venue-publication-requirement-arrow { color: #6ee7b7; }
       .venue-publication-actions { display: flex; flex-wrap: wrap; gap: 10px; }
       .venue-publication-actions > button, .venue-publication-actions > a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; color: #f8fafc; background: #17171d; font: inherit; font-size: 13px; font-weight: 900; text-decoration: none; cursor: pointer; }
       .venue-publication-actions > .primary { border-color: rgba(196,181,253,.6); background: #7c3aed; box-shadow: 0 0 18px rgba(124,58,237,.2); }
       .venue-publication-actions > button:focus-visible, .venue-publication-actions > a:focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; }
       .venue-publication-actions > button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
-      .venue-publication-panel > small { color: #b9accd; font-size: 11px; font-weight: 760; }
       .venue-publication-panel > p[role="status"] { padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 9px; color: #baf5ff; background: rgba(148,229,255,.07); font-weight: 850; }
       .venue-review-request { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(251,191,36,.25); border-radius: 10px; background: rgba(251,191,36,.045); }
       .venue-review-request label { color: #f8fafc; font-size: 12px; font-weight: 900; }
@@ -8733,7 +8715,6 @@ function DashboardStyles() {
         .venue-refresh-control { grid-column: 1 / -1; width: 100%; display: flex; align-items: center; justify-content: space-between; }
         .venue-live-pill.is-inactive { font-size: 9px; }
         .venue-publication-panel { padding: 15px; }
-        .venue-publication-panel > ul { grid-template-columns: repeat(2,minmax(0,1fr)); }
         .venue-publication-actions { display: grid; grid-template-columns: 1fr; }
         .venue-publication-actions > button, .venue-publication-actions > a { width: 100%; min-height: 48px; }
         .venue-card-preview-overlay { align-items: center; padding-inline: 12px; }
