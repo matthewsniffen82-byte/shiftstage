@@ -59,6 +59,23 @@ test("venue profiles restore dashboard surfaces while venue preview opens the ca
   assert.doesNotMatch(customerProfileOpen, /closeDashboard\(\)/);
 });
 
+test("private venue previews do not flash the homepage or disappear during discovery refreshes", () => {
+  const applyMarket =
+    liveApp.match(/function applyLiveMarket[\s\S]*?\n    }/)?.[0] || "";
+  const sharedPreview =
+    liveApp.match(/async function openSharedProfileFromUrl[\s\S]*?\n    }/)?.[0] || "";
+
+  assert.match(liveApp, /root\.classList\.add\("venue-preview-bootstrap"\)/);
+  assert.match(liveApp, /html\.venue-preview-bootstrap body > \* \{[\s\S]*?visibility: hidden !important/);
+  assert.match(applyMarket, /privatePreviewVenues = venuePreviewRequested\(\)/);
+  assert.match(applyMarket, /dedupePublicVenues\(\[\.\.\.liveVenues, \.\.\.privatePreviewVenues\]\)/);
+  assert.match(liveApp, /Promise\.resolve\(initialDiscoveryRequest\)\.finally\(\(\) => openSharedProfileFromUrl\(\)\)/);
+  assert.match(sharedPreview, /openVenueFromName\(previewVenue\.slug \|\| previewVenue\.name\)/);
+  assert.match(sharedPreview, /finally \{[\s\S]*?finishVenuePreviewBootstrap\(\)/);
+  assert.match(liveApp, /Private customer preview/);
+  assert.match(liveApp, /Return to dashboard/);
+});
+
 test("venue roster dancer profiles stay inside the venue dashboard stack", () => {
   assert.match(
     liveApp,

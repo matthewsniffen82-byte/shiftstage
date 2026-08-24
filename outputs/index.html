@@ -32,6 +32,15 @@
       const isSamsung = /SamsungBrowser/i.test(ua);
       const root = document.documentElement;
 
+      try {
+        const initialParams = new URLSearchParams(window.location.search);
+        if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {
+          root.classList.add("venue-preview-bootstrap");
+        }
+      } catch {
+        // The normal application shell remains available when URL parsing is unavailable.
+      }
+
       if (isAndroid) root.classList.add("is-android", "android-rendering");
       if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");
 
@@ -109,6 +118,49 @@
         radial-gradient(circle at 92% 4%, rgba(217,173,79,.09), transparent 24rem),
         radial-gradient(circle at 78% 42%, rgba(183,77,255,.07), transparent 28rem),
         linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);
+    }
+
+    html.venue-preview-bootstrap body > * {
+      visibility: hidden !important;
+    }
+
+    html.venue-preview-bootstrap body::before {
+      content: "Loading private venue preview";
+      position: fixed;
+      z-index: 2147483646;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      visibility: visible;
+      color: #f4f2f8;
+      background: #030304;
+      font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: .01em;
+      text-align: center;
+    }
+
+    html.venue-preview-bootstrap body::after {
+      content: "";
+      position: fixed;
+      z-index: 2147483647;
+      left: 50%;
+      top: calc(50% + 38px);
+      width: 26px;
+      height: 26px;
+      visibility: visible;
+      border: 2px solid rgba(167,139,250,.24);
+      border-top-color: #8b5cf6;
+      border-radius: 50%;
+      animation: venue-preview-bootstrap-spin .8s linear infinite;
+    }
+
+    @keyframes venue-preview-bootstrap-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html.venue-preview-bootstrap body::after { animation: none; }
     }
 
     body.overlay-open {
@@ -1158,12 +1210,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      padding: 12px 14px;
-      border: 1px solid rgba(167,139,250,.42);
-      border-radius: 14px;
-      background: rgba(20,12,38,.96);
-      box-shadow: 0 10px 28px rgba(0,0,0,.42);
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid rgba(167,139,250,.28);
+      border-radius: 12px;
+      background: rgba(12,8,22,.94);
+      box-shadow: 0 8px 22px rgba(0,0,0,.34);
       backdrop-filter: blur(18px);
     }
 
@@ -1175,7 +1227,9 @@
 
     .venue-dashboard-preview-banner strong {
       color: #fff;
-      font-size: 13px;
+      font-size: 11px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
     }
 
     .venue-dashboard-preview-banner small {
@@ -1185,31 +1239,23 @@
     }
 
     .venue-dashboard-preview-banner a {
-      min-height: 38px;
+      min-height: 34px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       flex: 0 0 auto;
-      padding: 0 13px;
+      padding: 0 11px;
       border: 1px solid rgba(255,255,255,.18);
       border-radius: 999px;
       color: #fff;
       background: rgba(255,255,255,.08);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
       text-decoration: none;
     }
 
     @media (max-width: 560px) {
-      .venue-dashboard-preview-banner {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .venue-dashboard-preview-banner a {
-        width: 100%;
-        box-sizing: border-box;
-      }
+      .venue-dashboard-preview-banner { position: relative; }
     }
 
     .venue-hero {
@@ -43568,6 +43614,23 @@
       };
     }
 
+    function venuePreviewRequested() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("venue_preview") === "1" && Boolean(params.get("venue"));
+    }
+
+    function finishVenuePreviewBootstrap() {
+      document.documentElement.classList.remove("venue-preview-bootstrap");
+    }
+
+    function fitVenueLogoImage(image) {
+      if (!(image instanceof HTMLImageElement)) return;
+      const width = Number(image.naturalWidth || 0);
+      const height = Number(image.naturalHeight || 0);
+      const ratio = width > 0 && height > 0 ? width / height : 0;
+      image.classList.toggle("is-compact-logo-source", ratio >= .78 && ratio <= 1.28);
+    }
+
     function venueDashboardPreviewHours(profile) {
       const opensAt = String(profile?.opensAt || "").slice(0, 5);
       const closesAt = String(profile?.closesAt || "").slice(0, 5);
@@ -43756,6 +43819,9 @@
     function applyLiveMarket(city, dancers, tonightDancers, venues) {
       const market = markets[city];
       if (!market) return false;
+      const privatePreviewVenues = venuePreviewRequested()
+        ? market.venues.filter((venue) => venue?.isDashboardPreview === true)
+        : [];
       const tonightIds = new Set((tonightDancers || []).map((item) => item.id));
       const venueShiftCounts = {};
       const liveDancers = mergeAuthenticatedDancerIntoDiscovery(
@@ -43765,7 +43831,7 @@
       const liveVenues = (venues || []).map((item) => mapLiveVenue(item, city, venueShiftCounts));
 
       market.dancers = liveDancers;
-      market.venues = dedupePublicVenues(liveVenues);
+      market.venues = dedupePublicVenues([...liveVenues, ...privatePreviewVenues]);
       market.stats = {
         dancers: market.dancers.filter(isApprovedPublicProfile).length,
         shifts: market.dancers.filter((profile) => profile.scheduled).length,
@@ -49075,7 +49141,7 @@
     function venueLogoMarkup(venue, className) {
       const logoImageUrl = String(venue?.logoImageUrl || "").trim();
       if (!logoImageUrl) return "";
-      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" src="${escapeHtml(logoImageUrl)}" alt="" decoding="async"></span>`;
+      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" src="${escapeHtml(logoImageUrl)}" alt="" decoding="async" onload="fitVenueLogoImage(this)"></span>`;
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
@@ -49254,10 +49320,9 @@
       const previewBanner = venue.isDashboardPreview ? `
         <aside class="venue-dashboard-preview-banner" role="status" aria-label="Venue preview">
           <span>
-            <strong>${venue.isPrivatePreview ? "Private venue preview" : "Venue preview"}</strong>
-            <small>${venue.isPrivatePreview ? "This is the exact guest page customers will see after you publish." : "This is the same venue page customers see live."}</small>
+            <strong>${venue.isPrivatePreview ? "Private customer preview" : "Live customer preview"}</strong>
           </span>
-          <a href="/dashboard/venue">Back to dashboard</a>
+          <a href="/dashboard/venue">Return to dashboard</a>
         </aside>
       ` : "";
       if (venue.id && !venue.isDashboardPreview) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
@@ -61704,11 +61769,13 @@
           citySelect.value = previewCity;
           activeTab = "venues";
           document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === activeTab));
-          render();
           openVenueFromName(previewVenue.slug || previewVenue.name);
           scrollToSharedVenueSection();
         } catch (error) {
+          render();
           showToast(error.message || "Venue preview could not be loaded");
+        } finally {
+          finishVenuePreviewBootstrap();
         }
         return;
       }
@@ -61876,8 +61943,10 @@
     }
     homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";
     const initialVenuePreviewRequested = initialProfileParams.get("venue_preview") === "1" && Boolean(initialProfileParams.get("venue"));
-    const initialVenuePreviewRequest = initialVenuePreviewRequested ? openSharedProfileFromUrl() : null;
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
+    const initialVenuePreviewRequest = initialVenuePreviewRequested
+      ? Promise.resolve(initialDiscoveryRequest).finally(() => openSharedProfileFromUrl())
+      : null;
     render();
     if (initialHomeDestinationRequested) {
       focusHomeResults();

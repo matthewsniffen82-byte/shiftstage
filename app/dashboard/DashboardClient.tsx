@@ -2099,7 +2099,13 @@ function VenuePanel({
         {venueCustomerPreviewHref || (isPublished && venueSlug) ? (
           <div className="venue-publication-actions">
             {venueCustomerPreviewHref ? (
-              <a href={venueCustomerPreviewHref} rel="noopener noreferrer" target="_blank">Preview customer experience</a>
+              <a className="venue-preview-action" href={venueCustomerPreviewHref} rel="noopener noreferrer" target="_blank">
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                  <circle cx="12" cy="12" r="2.75" />
+                </svg>
+                Preview customer experience
+              </a>
             ) : null}
             {isAwaitingVenueReview ? (
               <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
@@ -2116,6 +2122,14 @@ function VenuePanel({
                 {profile?.logoImageUrl ? (
                   <img
                     alt={`${venueName} official logo`}
+                    className="venue-review-logo-image"
+                    onLoad={(event) => {
+                      const image = event.currentTarget;
+                      const ratio = image.naturalWidth > 0 && image.naturalHeight > 0
+                        ? image.naturalWidth / image.naturalHeight
+                        : 0;
+                      image.classList.toggle("is-compact-logo-source", ratio >= 0.78 && ratio <= 1.28);
+                    }}
                     src={String(profile.logoImageUrl)}
                     srcSet={profile.logoImageSrcSet ? String(profile.logoImageSrcSet) : undefined}
                     sizes="72px"
@@ -7491,6 +7505,9 @@ function DashboardStyles() {
       .venue-publication-actions { display: flex; flex-wrap: wrap; gap: 10px; }
       .venue-publication-actions > button, .venue-publication-actions > a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; color: #f8fafc; background: #17171d; font: inherit; font-size: 13px; font-weight: 900; text-decoration: none; cursor: pointer; }
       .venue-publication-actions > .primary { border-color: rgba(196,181,253,.6); background: #7c3aed; box-shadow: 0 0 18px rgba(124,58,237,.2); }
+      .venue-publication-actions > .venue-preview-action { gap: 9px; border-color: rgba(139,92,246,.7); background: linear-gradient(145deg,rgba(58,28,116,.82),rgba(20,11,40,.92)); box-shadow: 0 0 0 1px rgba(124,58,237,.15),0 0 22px rgba(124,58,237,.24),inset 0 1px 0 rgba(255,255,255,.08); }
+      .venue-publication-actions > .venue-preview-action > svg { width: 18px; height: 18px; fill: none; stroke: #d8ccff; stroke-width: 1.8; filter: drop-shadow(0 0 7px rgba(167,139,250,.95)); }
+      .venue-publication-actions > .venue-preview-action:hover { border-color: rgba(196,181,253,.92); background: linear-gradient(145deg,rgba(76,35,154,.9),rgba(28,14,56,.96)); box-shadow: 0 0 0 1px rgba(167,139,250,.2),0 0 28px rgba(124,58,237,.34),inset 0 1px 0 rgba(255,255,255,.1); }
       .venue-publication-actions > button:focus-visible, .venue-publication-actions > a:focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; }
       .venue-publication-actions > button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
       .venue-publication-panel > p[role="status"] { padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 9px; color: #baf5ff; background: rgba(148,229,255,.07); font-weight: 850; }
@@ -7502,6 +7519,7 @@ function DashboardStyles() {
       .venue-review-package-heading > span:last-child > small { color: #a19aa9; font-size: 11px; line-height: 1.4; }
       .venue-review-logo { width: 72px; height: 72px; display: grid; place-items: center; overflow: hidden; box-sizing: border-box; padding: 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 16px; color: #f3eaff; background: #17171d; box-shadow: inset 0 1px 0 rgba(255,255,255,.045); font-size: 18px; font-weight: 950; letter-spacing: .06em; }
       .venue-review-logo img { width: 100%; height: 100%; display: block; object-fit: contain; }
+      .venue-review-logo img.is-compact-logo-source { transform: scale(1.45); transform-origin: center; }
       .venue-review-package-section { min-width: 0; display: grid; gap: 9px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,.09); }
       .venue-review-package-section > strong { color: #f8fafc; font-size: 15px; line-height: 1.2; }
       .venue-review-commercial-heading { min-width: 0; display: grid; gap: 5px; }

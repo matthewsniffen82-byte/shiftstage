@@ -41,7 +41,8 @@ test("discovery begins empty and only production venue results populate it", () 
   assert.doesNotMatch(legacySource, /Azure Room|Midnight Palm|Peachtree Room|Mercer Night/);
   assert.match(legacySource, /"Las Vegas": \{[\s\S]*?stats: \{ dancers: 0, shifts: 0, venues: 0 \},[\s\S]*?venues: \[\]/);
   assert.match(legacySource, /market\.dancers = liveDancers/);
-  assert.match(legacySource, /market\.venues = dedupePublicVenues\(liveVenues\)/);
+  assert.match(legacySource, /market\.venues = dedupePublicVenues\(\[\.\.\.liveVenues, \.\.\.privatePreviewVenues\]\)/);
+  assert.match(legacySource, /privatePreviewVenues = venuePreviewRequested\(\)[\s\S]*?isDashboardPreview === true/);
   assert.match(legacySource, /function dedupePublicVenues\(venues\)/);
   assert.match(legacySource, /markets\[city\]\.dancers = \[\]/);
 });

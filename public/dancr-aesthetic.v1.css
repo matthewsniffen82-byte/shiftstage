@@ -2851,6 +2851,19 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.52));
 }
 
+/* Square upload canvases often contain a compact horizontal wordmark. Enlarge
+ * that source class without cropping naturally wide venue logos. */
+.venue-card-logo.is-compact-logo-source,
+.venue-detail-logo.is-compact-logo-source {
+  transform: scale(1.45);
+  transform-origin: center;
+}
+
+.home-venue-discovery-logo.is-compact-logo-source {
+  transform: scale(1.28);
+  transform-origin: center 34%;
+}
+
 .home-venue-discovery-logo {
   display: block;
   box-sizing: border-box;
@@ -5043,6 +5056,11 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   object-position: center center !important;
   filter: none !important;
   -webkit-filter: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-logo.is-compact-logo-source {
+  transform: scale(1.45) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body {

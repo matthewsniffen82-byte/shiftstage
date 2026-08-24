@@ -104,6 +104,8 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /Changes in progress/);
   assert.match(dashboard, /venueCustomerPreviewHref[\s\S]*?venue_preview=1/);
   assert.match(dashboard, /Preview customer experience/);
+  assert.match(dashboard, /className="venue-preview-action"/);
+  assert.match(dashboard, /\.venue-preview-action \{[\s\S]*?rgba\(139,92,246,\.7\)[\s\S]*?rgba\(124,58,237,\.24\)/);
   assert.match(dashboard, /Approve & make live/);
   assert.match(dashboard, /Approve this venue information and commercial package and make the venue live on MyDancr/);
   assert.match(dashboard, /Request changes/);
@@ -116,6 +118,8 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /per confirmed customer/);
   assert.match(dashboard, /These are read-only\. Request a correction before approving/);
   assert.match(dashboard, /profile\?\.logoImageUrl/);
+  assert.match(dashboard, /venue-review-logo-image/);
+  assert.match(dashboard, /is-compact-logo-source/);
   assert.match(dashboard, /readOnly/);
   assert.doesNotMatch(dashboard, /Venue card preview|openVenueCardPreview|venue-card-preview-/);
   assert.doesNotMatch(dashboard, /const setupRequirements/);

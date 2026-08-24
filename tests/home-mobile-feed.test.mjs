@@ -570,7 +570,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function applyLiveMarket\(city, dancers, tonightDancers, venues\)[\s\S]*?market\.venues = dedupePublicVenues\(liveVenues\)/,
+    /function applyLiveMarket\(city, dancers, tonightDancers, venues\)[\s\S]*?privatePreviewVenues = venuePreviewRequested\(\)[\s\S]*?market\.venues = dedupePublicVenues\(\[\.\.\.liveVenues, \.\.\.privatePreviewVenues\]\)/,
   );
   assert.match(
     homeSource,
