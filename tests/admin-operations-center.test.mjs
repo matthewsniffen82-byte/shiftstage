@@ -39,9 +39,18 @@ test("operations center is backed by production queues and audit records", () =>
 });
 
 test("admin UI provides the complete mobile operations workspace", () => {
-  for (const workspace of ["overview", "approvals", "activity", "accounts", "system"]) {
+  for (const workspace of ["home", "approvals", "people", "clubs", "money", "more"]) {
     assert.match(client, new RegExp(`\\"${workspace}\\"`));
   }
+  assert.match(client, /const ADMIN_WORKSPACES/);
+  assert.match(client, /function adminSectionsForWorkspace/);
+  assert.match(client, /function loadWorkspaceData/);
+  assert.match(client, /loadedWorkspaces\[nextWorkspace\]/);
+  assert.match(client, /<AdminWorkspaceLoadingState workspace=\{workspace\}/);
+  assert.match(client, /title="People"/);
+  assert.match(client, /title="Clubs"/);
+  assert.match(client, /title="Money"/);
+  assert.match(client, /title="More"/);
   assert.match(client, /What needs attention now/);
   assert.match(client, /Live operations/);
   assert.match(client, /Revenue & deal health/);

@@ -109,7 +109,7 @@ test("daily automation and every production finance dashboard are wired", () => 
   assert.match(vercel, /"path": "\/api\/cron\/finance"/);
   assert.match(cron, /authorization.*Bearer/);
   assert.match(cron, /runQrFinanceAutomation/);
-  assert.match(adminUi, /type AdminWorkspace = "overview" \| "approvals" \| "finance"/);
+  assert.match(adminUi, /type AdminWorkspace = "home" \| "approvals" \| "people" \| "clubs" \| "money" \| "more"/);
   assert.match(adminUi, /Run full reconciliation/);
   assert.match(adminUi, /Record bank, ACH, or check payment/);
   assert.match(dashboard, /Club invoices/);

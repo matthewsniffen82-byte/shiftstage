@@ -51,7 +51,102 @@ type AdminActionNotice = {
 };
 
 const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
-type AdminWorkspace = "overview" | "approvals" | "finance" | "activity" | "accounts" | "system" | "pilot";
+type AdminWorkspace = "home" | "approvals" | "people" | "clubs" | "money" | "more";
+
+const ADMIN_WORKSPACES: Array<{ id: AdminWorkspace; label: string }> = [
+  { id: "home", label: "Home" },
+  { id: "approvals", label: "Approvals" },
+  { id: "people", label: "People" },
+  { id: "clubs", label: "Clubs" },
+  { id: "money", label: "Money" },
+  { id: "more", label: "More" },
+];
+
+type AdminDataSection = {
+  label: string;
+  path: string;
+  apply: (data: any) => Partial<AdminState>;
+};
+
+function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[] {
+  if (workspace === "home") {
+    return [
+      { label: "Monitoring", path: "/api/admin/monitoring", apply: (data) => ({ monitoring: data.monitoring }) },
+      { label: "Live operations", path: "/api/admin/operations", apply: (data) => ({ operations: data.operations }) },
+    ];
+  }
+  if (workspace === "approvals") {
+    return [
+      {
+        label: "Dancer approvals",
+        path: "/api/admin/approvals",
+        apply: (data) => ({ queue: data.queue || [], dancerTotal: Number(data.dancerTotal || 0) }),
+      },
+      {
+        label: "Image moderation",
+        path: "/api/admin/image-moderation?decision=review",
+        apply: (data) => ({ imageModeration: data.records || [] }),
+      },
+      { label: "Reports", path: "/api/admin/reports", apply: (data) => ({ reports: data.reports || [] }) },
+    ];
+  }
+  if (workspace === "people") {
+    return [
+      {
+        label: "Subscriptions",
+        path: "/api/admin/subscriptions",
+        apply: (data) => ({ subscriptions: data.subscriptions || [] }),
+      },
+    ];
+  }
+  if (workspace === "clubs") {
+    return [
+      {
+        label: "Venues",
+        path: "/api/admin/venues",
+        apply: (data) => ({ venues: data.venues || [], venueClaimCodes: data.claimCodes || [] }),
+      },
+      {
+        label: "Venue signup requests",
+        path: "/api/admin/venue-signup-requests",
+        apply: (data) => ({ venueSignupRequests: data.requests || [] }),
+      },
+      {
+        label: "Club Deals",
+        path: "/api/admin/deals",
+        apply: (data) => ({ deals: data.activity || [], clubDeals: data.clubDeals || [], dealRequests: data.dealRequests || [] }),
+      },
+      {
+        label: "Referral fee agreements",
+        path: "/api/admin/referral-fees",
+        apply: (data) => ({ referralFees: data.referralFees }),
+      },
+    ];
+  }
+  if (workspace === "money") {
+    return [
+      { label: "QR finance", path: "/api/admin/finance", apply: (data) => ({ finance: data.finance }) },
+      {
+        label: "Referral fee agreements",
+        path: "/api/admin/referral-fees",
+        apply: (data) => ({ referralFees: data.referralFees }),
+      },
+      {
+        label: "Deal activity",
+        path: "/api/admin/deals",
+        apply: (data) => ({ deals: data.activity || [], clubDeals: data.clubDeals || [], dealRequests: data.dealRequests || [] }),
+      },
+      {
+        label: "Venues",
+        path: "/api/admin/venues",
+        apply: (data) => ({ venues: data.venues || [], venueClaimCodes: data.claimCodes || [] }),
+      },
+    ];
+  }
+  return [
+    { label: "Support inbox", path: "/api/admin/support", apply: (data) => ({ supportThreads: data.threads || [] }) },
+  ];
+}
 
 export default function AdminClient() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -66,8 +161,11 @@ export default function AdminClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [actionNotice, setActionNotice] = useState<AdminActionNotice | null>(null);
   const [openApprovalIds, setOpenApprovalIds] = useState<Record<string, boolean>>({});
-  const [workspace, setWorkspace] = useState<AdminWorkspace>("overview");
+  const [workspace, setWorkspace] = useState<AdminWorkspace>("home");
+  const [loadedWorkspaces, setLoadedWorkspaces] = useState<Partial<Record<AdminWorkspace, boolean>>>({});
+  const [loadingWorkspace, setLoadingWorkspace] = useState<AdminWorkspace | null>(null);
   const openApprovalIdsRef = useRef<Record<string, boolean>>({});
+  const pendingWorkspaceLoadsRef = useRef<Set<AdminWorkspace>>(new Set());
 
   useEffect(() => {
     loadAdmin();
@@ -89,6 +187,14 @@ export default function AdminClient() {
 
   function confirmAdminAction(message: string) {
     setActionNotice({ id: Date.now(), message });
+  }
+
+  function openWorkspace(nextWorkspace: AdminWorkspace) {
+    setWorkspace(nextWorkspace);
+    void loadWorkspaceData(nextWorkspace);
+    window.requestAnimationFrame(() => {
+      document.querySelector(".admin-workspace-nav")?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
   }
 
   function setApprovalOpen(dancerId: string, open: boolean) {
@@ -177,14 +283,86 @@ export default function AdminClient() {
     setPassword("");
     setAdminCode("");
     setShowPassword(false);
-    setWorkspace("overview");
+    setWorkspace("home");
+    setLoadedWorkspaces({});
+    setLoadingWorkspace(null);
+    pendingWorkspaceLoadsRef.current.clear();
     setActionNotice(null);
     setState({ authRequired: true, error: "Admin session ended. Sign in to continue." });
     setIsSigningOut(false);
   }
 
+  async function loadWorkspaceData(nextWorkspace: AdminWorkspace) {
+    if (nextWorkspace === "home" || loadedWorkspaces[nextWorkspace] || pendingWorkspaceLoadsRef.current.has(nextWorkspace)) return;
+    const token = readToken();
+    if (!token) {
+      clearAdminSession();
+      setState({ authRequired: true, error: "Admin sign in required." });
+      return;
+    }
+
+    const sections = adminSectionsForWorkspace(nextWorkspace);
+    pendingWorkspaceLoadsRef.current.add(nextWorkspace);
+    setLoadingWorkspace(nextWorkspace);
+
+    try {
+      const headers = { authorization: `Bearer ${token}` };
+      const results = await Promise.allSettled(sections.map((section) => readJson(section.path, headers)));
+      const authenticationFailure = results.find(
+        (result) => result.status === "rejected" && isAdminAuthenticationError(result.reason),
+      );
+      if (authenticationFailure?.status === "rejected") {
+        clearAdminSession();
+        setState({
+          authRequired: true,
+          error: authenticationFailure.reason instanceof Error
+            ? authenticationFailure.reason.message
+            : "Admin sign in required.",
+        });
+        return;
+      }
+
+      const update: Partial<AdminState> = { authRequired: false };
+      const warnings: string[] = [];
+      results.forEach((result, index) => {
+        const section = sections[index];
+        if (result.status === "fulfilled") {
+          Object.assign(update, section.apply(result.value));
+          return;
+        }
+        warnings.push(`${section.label}: ${result.reason instanceof Error ? result.reason.message : "This section could not be loaded."}`);
+      });
+
+      setState((current) => ({
+        ...current,
+        ...update,
+        warnings: [
+          ...(current.warnings || []).filter((warning) => !sections.some((section) => warning.startsWith(`${section.label}:`))),
+          ...warnings,
+        ],
+      }));
+      setLoadedWorkspaces((current) => ({ ...current, [nextWorkspace]: true }));
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        warnings: [
+          ...(current.warnings || []).filter((warning) => !warning.startsWith(`${labelize(nextWorkspace)}:`)),
+          `${labelize(nextWorkspace)}: ${error instanceof Error ? error.message : "Unable to load this workspace."}`,
+        ],
+      }));
+      setLoadedWorkspaces((current) => ({ ...current, [nextWorkspace]: true }));
+    } finally {
+      pendingWorkspaceLoadsRef.current.delete(nextWorkspace);
+      setLoadingWorkspace((current) => (current === nextWorkspace ? null : current));
+    }
+  }
+
   async function loadAdmin() {
     setIsLoading(true);
+    setWorkspace("home");
+    setLoadedWorkspaces({});
+    setLoadingWorkspace(null);
+    pendingWorkspaceLoadsRef.current.clear();
     const token = readToken();
     if (!token) {
       setState({ authRequired: true, error: "Admin sign in required." });
@@ -194,47 +372,7 @@ export default function AdminClient() {
 
     try {
       const headers = { authorization: `Bearer ${token}` };
-      const sections: Array<{
-        label: string;
-        path: string;
-        apply: (data: any) => Partial<AdminState>;
-      }> = [
-        { label: "Monitoring", path: "/api/admin/monitoring", apply: (data) => ({ monitoring: data.monitoring }) },
-        { label: "Live operations", path: "/api/admin/operations", apply: (data) => ({ operations: data.operations }) },
-        { label: "QR finance", path: "/api/admin/finance", apply: (data) => ({ finance: data.finance }) },
-        { label: "Referral fee agreements", path: "/api/admin/referral-fees", apply: (data) => ({ referralFees: data.referralFees }) },
-        {
-          label: "Dancer approvals",
-          path: "/api/admin/approvals",
-          apply: (data) => ({ queue: data.queue || [], dancerTotal: Number(data.dancerTotal || 0) }),
-        },
-        {
-          label: "Venues",
-          path: "/api/admin/venues",
-          apply: (data) => ({
-            venues: data.venues || [],
-            venueClaimCodes: data.claimCodes || [],
-          }),
-        },
-        {
-          label: "Venue signup requests",
-          path: "/api/admin/venue-signup-requests",
-          apply: (data) => ({ venueSignupRequests: data.requests || [] }),
-        },
-        {
-          label: "Subscriptions",
-          path: "/api/admin/subscriptions",
-          apply: (data) => ({ subscriptions: data.subscriptions || [] }),
-        },
-        { label: "Deal activity", path: "/api/admin/deals", apply: (data) => ({ deals: data.activity || [], clubDeals: data.clubDeals || [], dealRequests: data.dealRequests || [] }) },
-        { label: "Support inbox", path: "/api/admin/support", apply: (data) => ({ supportThreads: data.threads || [] }) },
-        {
-          label: "Image moderation",
-          path: "/api/admin/image-moderation?decision=review",
-          apply: (data) => ({ imageModeration: data.records || [] }),
-        },
-        { label: "Reports", path: "/api/admin/reports", apply: (data) => ({ reports: data.reports || [] }) },
-      ];
+      const sections = adminSectionsForWorkspace("home");
       const results = await Promise.allSettled(
         sections.map((section) => readJson(section.path, headers)),
       );
@@ -289,6 +427,7 @@ export default function AdminClient() {
 
       nextState.warnings = warnings;
       setState(nextState);
+      setLoadedWorkspaces({ home: true });
     } catch (error) {
       setState({
         authRequired: false,
@@ -417,41 +556,176 @@ export default function AdminClient() {
             </aside>
           ) : null}
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
-            {(["overview", "pilot", "approvals", "finance", "activity", "accounts", "system"] as AdminWorkspace[]).map((item) => (
+            {ADMIN_WORKSPACES.map((item) => (
               <button
-                key={item}
+                key={item.id}
                 type="button"
-                className={workspace === item ? "active" : ""}
-                aria-current={workspace === item ? "page" : undefined}
-                onClick={() => {
-                  setWorkspace(item);
-                  window.requestAnimationFrame(() => document.querySelector(".admin-workspace-nav")?.scrollIntoView({ block: "start", behavior: "smooth" }));
-                }}
+                className={workspace === item.id ? "active" : ""}
+                aria-current={workspace === item.id ? "page" : undefined}
+                onClick={() => openWorkspace(item.id)}
               >
-                {labelize(item)}
-                {item === "approvals" && state.operations?.attention.total
+                {item.label}
+                {item.id === "approvals" && state.operations?.attention.total
                   ? <span>{state.operations.attention.total}</span>
                   : null}
               </button>
             ))}
           </nav>
-          {workspace === "overview" ? (
-            <OperationsOverview
-              operations={state.operations || null}
-              monitoring={state.monitoring || null}
-              onOpenWorkspace={setWorkspace}
-            />
-          ) : null}
-          {workspace === "pilot" ? (
-            <AdminPilotAnalytics
-              venues={state.venues || []}
-              onActionConfirmed={confirmAdminAction}
-            />
-          ) : null}
-          {workspace === "activity" ? <ActivityTimeline operations={state.operations || null} /> : null}
-          {workspace === "accounts" ? <AccountOverview operations={state.operations || null} /> : null}
-          {workspace === "finance" ? (
+          {workspace === "home" ? (
             <>
+              <OperationsOverview
+                operations={state.operations || null}
+                monitoring={state.monitoring || null}
+                onOpenWorkspace={openWorkspace}
+              />
+              <ActivityTimeline operations={state.operations || null} />
+            </>
+          ) : null}
+
+          {workspace !== "home" && loadingWorkspace === workspace && !loadedWorkspaces[workspace]
+            ? <AdminWorkspaceLoadingState workspace={workspace} />
+            : null}
+
+          {workspace === "approvals" && loadedWorkspaces.approvals ? (
+            <>
+              <WorkspaceHeader
+                eyebrow="Review queues"
+                title="Approvals"
+                description="Review profiles, media, safety reports, and TV submissions from one focused queue. Open a record only when you are ready to act."
+              />
+              <section className="admin-grid">
+                <Panel
+                  title="Dancer approvals"
+                  badge={`${pendingDancerApprovalCount} needed`}
+                  defaultOpen
+                >
+                  <Metric label="Dancers needing approval" value={String(pendingDancerApprovalCount)} />
+                  <Metric label="Profiles in roster" value={String(state.dancerTotal || 0)} />
+                  <ApprovalQueue
+                    items={state.queue || []}
+                    openById={openApprovalIds}
+                    onToggleOpen={(dancerId) =>
+                      setApprovalOpen(dancerId, !Boolean(openApprovalIdsRef.current[dancerId]))
+                    }
+                    onKeepOpen={(dancerId) => setApprovalOpen(dancerId, true)}
+                    onSocialReviewed={(dancerId, targetId, status, notes) =>
+                      setState((current) => ({
+                        ...current,
+                        queue: (current.queue || []).map((item) =>
+                          asText(item.id) === dancerId
+                            ? withReviewedSocial(item, targetId, status, notes)
+                            : item
+                        ),
+                      }))
+                    }
+                    onProfileUpdated={(profile) =>
+                      setState((current) => ({
+                        ...current,
+                        queue: (current.queue || []).map((item) =>
+                          asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
+                        ),
+                      }))
+                    }
+                    onActionConfirmed={confirmAdminAction}
+                    onReviewed={(dancerId) => {
+                      setState((current) => ({
+                        ...current,
+                        queue: (current.queue || []).filter((item) => String(item.id) !== dancerId),
+                      }));
+                      setApprovalOpen(dancerId, false);
+                    }}
+                  />
+                </Panel>
+                <Panel title="Reports" badge={`${state.reports?.length || 0} open`}>
+                  <ReportManager
+                    reports={state.reports || []}
+                    onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
+                  />
+                </Panel>
+                <Panel
+                  title="Image moderation"
+                  badge={`${state.imageModeration?.filter((item) => String(item.decision) === "review").length || 0} to review`}
+                >
+                  <ImageModerationQueue
+                    records={state.imageModeration || []}
+                    onRecordsChange={(imageModeration) => setState((current) => ({ ...current, imageModeration }))}
+                    onActionConfirmed={confirmAdminAction}
+                  />
+                </Panel>
+                <Panel title="MyDancr TV moderation">
+                  <AdminTvPanel />
+                </Panel>
+              </section>
+            </>
+          ) : null}
+
+          {workspace === "people" && loadedWorkspaces.people ? (
+            <>
+              <WorkspaceHeader
+                eyebrow="Accounts"
+                title="People"
+                description="Find dancers, customers, agents, and admins. Open a person to see their complete record and available actions."
+              />
+              <AccountOverview operations={state.operations || null} />
+              <section className="admin-grid">
+                <Panel title="Dancer management" badge={`${state.dancerTotal || 0} profiles`} defaultOpen>
+                  <DancerDirectory
+                    onActionConfirmed={confirmAdminAction}
+                    onProfileUpdated={(profile) => {
+                      setState((current) => ({
+                        ...current,
+                        queue: (current.queue || []).map((item) =>
+                          asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
+                        ),
+                      }));
+                    }}
+                    onDeleted={(dancerId) => {
+                      setState((current) => ({
+                        ...current,
+                        queue: (current.queue || []).filter((item) => asText(item.id) !== dancerId),
+                        dancerTotal: Math.max(0, Number(current.dancerTotal || 0) - 1),
+                      }));
+                      setApprovalOpen(dancerId, false);
+                    }}
+                  />
+                </Panel>
+                <Panel title="Customer subscriptions" badge={`${state.subscriptions?.length || 0} tracked`}>
+                  <ListPreview items={state.subscriptions} empty="No customer subscriptions returned." />
+                </Panel>
+              </section>
+              <AdminSalesAgentPanel onActionConfirmed={confirmAdminAction} />
+            </>
+          ) : null}
+
+          {workspace === "clubs" && loadedWorkspaces.clubs ? (
+            <>
+              <WorkspaceHeader
+                eyebrow="Venue operations"
+                title="Clubs"
+                description="Manage club accounts, signup requests, dancer affiliations, published deals, and MyDancr-programmed NFC inventory."
+              />
+              <section className="admin-grid">
+                <Panel title="Club accounts" badge={`${state.venues?.length || 0} managed`} defaultOpen>
+                  <VenueSignupRequestQueue
+                    requests={state.venueSignupRequests || []}
+                    venues={state.venues || []}
+                    onRequestsChange={(venueSignupRequests) => setState((current) => ({ ...current, venueSignupRequests }))}
+                    onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
+                    onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
+                    claimCodes={state.venueClaimCodes || []}
+                    onActionConfirmed={confirmAdminAction}
+                  />
+                  <VenueManager
+                    venues={state.venues || []}
+                    claimCodes={state.venueClaimCodes || []}
+                    onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
+                    onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
+                  />
+                </Panel>
+                <Panel title="NFC sticker inventory">
+                  <AdminNfcInventoryPanel />
+                </Panel>
+              </section>
               <AdminClubDealManager
                 venues={state.venues || []}
                 clubDeals={state.clubDeals || []}
@@ -461,153 +735,71 @@ export default function AdminClient() {
                 onDealRequestsChange={(dealRequests) => setState((current) => ({ ...current, dealRequests }))}
                 onActionConfirmed={confirmAdminAction}
               />
-              <ReferralFeeManager
-                venues={state.venues || []}
-                referralFees={state.referralFees || null}
-                onReferralFeesChange={(referralFees) => setState((current) => ({ ...current, referralFees }))}
-                onActionConfirmed={confirmAdminAction}
+            </>
+          ) : null}
+
+          {workspace === "money" && loadedWorkspaces.money ? (
+            <>
+              <WorkspaceHeader
+                eyebrow="Financial operations"
+                title="Money"
+                description="Review referral fees, club receivables, dancer commissions, settlements, reversals, and payout status."
               />
               <FinanceManager
                 finance={state.finance || null}
                 onFinanceChange={(finance) => setState((current) => ({ ...current, finance }))}
                 onActionConfirmed={confirmAdminAction}
               />
-              <AdminSalesAgentPanel onActionConfirmed={confirmAdminAction} />
+              <ReferralFeeManager
+                venues={state.venues || []}
+                referralFees={state.referralFees || null}
+                onReferralFeesChange={(referralFees) => setState((current) => ({ ...current, referralFees }))}
+                onActionConfirmed={confirmAdminAction}
+              />
+              <section className="admin-grid">
+                <Panel title="Deal attribution" badge={`${state.deals?.length || 0} redemptions`}>
+                  <DealActivityManager
+                    activity={state.deals || []}
+                    onActivityChange={(deals) => setState((current) => ({ ...current, deals }))}
+                  />
+                </Panel>
+              </section>
             </>
           ) : null}
-          <section className="admin-grid">
-          {workspace === "system" ? <Panel title="Monitoring">
-            {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
-              <Metric key={key} label={labelize(key)} value={formatValue(value)} />
-            ))}
-            {!state.monitoring ? <Metric label="Status" value="Ready" /> : null}
-          </Panel> : null}
-          {workspace === "system" ? <Panel title="NFC sticker inventory">
-            <AdminNfcInventoryPanel />
-          </Panel> : null}
-          {workspace === "approvals" ? <Panel
-            title="Dancer approvals"
-            badge={`${pendingDancerApprovalCount} needed`}
-          >
-            <Metric label="Dancers needing approval" value={String(pendingDancerApprovalCount)} />
-            <Metric label="Profiles in roster" value={String(state.dancerTotal || 0)} />
-            <ApprovalQueue
-              items={state.queue || []}
-              openById={openApprovalIds}
-              onToggleOpen={(dancerId) =>
-                setApprovalOpen(dancerId, !Boolean(openApprovalIdsRef.current[dancerId]))
-              }
-              onKeepOpen={(dancerId) => setApprovalOpen(dancerId, true)}
-              onSocialReviewed={(dancerId, targetId, status, notes) =>
-                setState((current) => ({
-                  ...current,
-                  queue: (current.queue || []).map((item) =>
-                    asText(item.id) === dancerId
-                      ? withReviewedSocial(item, targetId, status, notes)
-                      : item
-                  ),
-                }))
-              }
-              onProfileUpdated={(profile) =>
-                setState((current) => ({
-                  ...current,
-                  queue: (current.queue || []).map((item) =>
-                    asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
-                  ),
-                }))
-              }
-              onActionConfirmed={confirmAdminAction}
-              onReviewed={(dancerId) => {
-                setState((current) => ({
-                  ...current,
-                  queue: (current.queue || []).filter((item) => String(item.id) !== dancerId),
-                }));
-                setApprovalOpen(dancerId, false);
-              }}
-            />
-          </Panel> : null}
-          {workspace === "accounts" ? <Panel title="Dancer management">
-            <DancerDirectory
-              onActionConfirmed={confirmAdminAction}
-              onProfileUpdated={(profile) => {
-                setState((current) => ({
-                  ...current,
-                  queue: (current.queue || []).map((item) =>
-                    asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
-                  ),
-                }));
-              }}
-              onDeleted={(dancerId) => {
-                setState((current) => ({
-                  ...current,
-                  queue: (current.queue || []).filter((item) => asText(item.id) !== dancerId),
-                  dancerTotal: Math.max(0, Number(current.dancerTotal || 0) - 1),
-                }));
-                setApprovalOpen(dancerId, false);
-              }}
-            />
-          </Panel> : null}
-          {workspace === "accounts" ? <Panel title="Venues">
-            <Metric label="Managed venues" value={String(state.venues?.length || 0)} />
-            <VenueSignupRequestQueue
-              requests={state.venueSignupRequests || []}
-              venues={state.venues || []}
-              onRequestsChange={(venueSignupRequests) => setState((current) => ({ ...current, venueSignupRequests }))}
-              onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
-              onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
-              claimCodes={state.venueClaimCodes || []}
-              onActionConfirmed={confirmAdminAction}
-            />
-            <VenueManager
-              venues={state.venues || []}
-              claimCodes={state.venueClaimCodes || []}
-              onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
-              onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
-            />
-          </Panel> : null}
-          {workspace === "accounts" ? <Panel title="Subscriptions">
-            <Metric label="Tracked subscriptions" value={String(state.subscriptions?.length || 0)} />
-            <ListPreview items={state.subscriptions} empty="No subscriptions returned." />
-          </Panel> : null}
-          {workspace === "approvals" ? <Panel title="Reports">
-            <Metric label="Open reports" value={String(state.reports?.length || 0)} />
-            <ReportManager
-              reports={state.reports || []}
-              onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
-            />
-          </Panel> : null}
-          {workspace === "approvals" ? <Panel title="Image Moderation">
-            <Metric label="Needs review" value={String(state.imageModeration?.filter((item) => String(item.decision) === "review").length || 0)} />
-            <ImageModerationQueue
-              records={state.imageModeration || []}
-              onRecordsChange={(imageModeration) => setState((current) => ({ ...current, imageModeration }))}
-              onActionConfirmed={confirmAdminAction}
-            />
-          </Panel> : null}
-          {workspace === "approvals" ? <Panel title="MyDancr TV">
-            <AdminTvPanel />
-          </Panel> : null}
-          {workspace === "approvals" ? <Panel title="Copyright / DMCA">
-            <AdminDmcaPanel />
-          </Panel> : null}
-          {workspace === "activity" ? <Panel title="Deal QR Attribution">
-            <Metric label="Tracked redemptions" value={String(state.deals?.length || 0)} />
-            <DealActivityManager
-              activity={state.deals || []}
-              onActivityChange={(deals) => setState((current) => ({ ...current, deals }))}
-            />
-          </Panel> : null}
-          {workspace === "activity" ? <Panel title="Support Inbox">
-            <Metric label="Open conversations" value={String(state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0)} />
-            <AdminSupportInbox
-              threads={state.supportThreads || []}
-              onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
-            />
-          </Panel> : null}
-          {workspace === "system" ? <Panel title="Rankings">
-            <RankingManager />
-          </Panel> : null}
-          </section>
+
+          {workspace === "more" && loadedWorkspaces.more ? (
+            <>
+              <WorkspaceHeader
+                eyebrow="Platform tools"
+                title="More"
+                description="Open infrequent operational tools only when needed: support, legal requests, pilot analytics, rankings, and system status."
+              />
+              <section className="admin-grid">
+                <Panel title="Support Inbox" badge={`${state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0} open`} defaultOpen>
+                  <AdminSupportInbox
+                    threads={state.supportThreads || []}
+                    onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
+                  />
+                </Panel>
+                <Panel title="Copyright / DMCA">
+                  <AdminDmcaPanel />
+                </Panel>
+                <Panel title="Monitoring">
+                  {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
+                    <Metric key={key} label={labelize(key)} value={formatValue(value)} />
+                  ))}
+                  {!state.monitoring ? <Metric label="Status" value="Ready" /> : null}
+                </Panel>
+                <Panel title="Rankings">
+                  <RankingManager />
+                </Panel>
+              </section>
+              <AdminPilotAnalytics
+                venues={state.venues || []}
+                onActionConfirmed={confirmAdminAction}
+              />
+            </>
+          ) : null}
         </>
       )}
     </main>
@@ -631,6 +823,23 @@ function AdminDashboardLoadingState() {
         <span />
       </div>
       <div className="admin-dashboard-loading-metrics">
+        <span />
+        <span />
+        <span />
+      </div>
+    </section>
+  );
+}
+
+function AdminWorkspaceLoadingState({ workspace }: { workspace: AdminWorkspace }) {
+  return (
+    <section className="admin-workspace-loading" aria-busy="true" aria-live="polite">
+      <span className="dashboard-sr-only">Loading {labelize(workspace)} workspace</span>
+      <header>
+        <span className="admin-workspace-loading-line wide" />
+        <span className="admin-workspace-loading-line" />
+      </header>
+      <div>
         <span />
         <span />
         <span />
@@ -1469,7 +1678,7 @@ function OperationsOverview({
   if (!operations) {
     return (
       <section className="operations-center" aria-live="polite">
-        <Panel title="Live operations"><p className="empty">Live operational data is temporarily unavailable. Use System to inspect the affected connection.</p></Panel>
+        <Panel title="Live operations" defaultOpen><p className="empty">Live operational data is temporarily unavailable. Use More to inspect the affected connection.</p></Panel>
       </section>
     );
   }
@@ -1500,7 +1709,7 @@ function OperationsOverview({
 
       <div className="attention-grid">
         {attentionItems.map(([label, value]) => (
-          <button key={label} type="button" onClick={() => onOpenWorkspace(label === "Support" ? "activity" : label === "Venues" ? "accounts" : "approvals")}>
+          <button key={label} type="button" onClick={() => onOpenWorkspace(label === "Support" ? "more" : label === "Venues" ? "clubs" : "approvals")}>
             <span>{label}</span>
             <strong>{value}</strong>
             <small>{value === 1 ? "item" : "items"}</small>
@@ -1540,8 +1749,8 @@ function OperationsOverview({
             </div>
           ) : null}
           <div className="quick-links">
-            <button type="button" onClick={() => onOpenWorkspace("activity")}>Review QR activity</button>
-            <button type="button" onClick={() => onOpenWorkspace("accounts")}>Open accounts</button>
+            <button type="button" onClick={() => onOpenWorkspace("money")}>Review deal activity</button>
+            <button type="button" onClick={() => onOpenWorkspace("people")}>Open people</button>
           </div>
         </Panel>
 
@@ -1554,7 +1763,7 @@ function OperationsOverview({
             <Metric label="Payable to dancers" value={formatAdminCents(operations.revenue.payableCents)} />
             <Metric label="Settled" value={formatAdminCents(operations.revenue.settledCents)} />
           </div>
-          <button className="panel-link-button" type="button" onClick={() => onOpenWorkspace("activity")}>Open deal settlement workspace</button>
+          <button className="panel-link-button" type="button" onClick={() => onOpenWorkspace("money")}>Open money workspace</button>
         </Panel>
 
         <Panel title="Growth & engagement">
@@ -1570,7 +1779,7 @@ function OperationsOverview({
           </div>
         </Panel>
 
-        <SystemHealthSummary monitoring={monitoring} warnings={operations.warnings} onOpenSystem={() => onOpenWorkspace("system")} />
+        <SystemHealthSummary monitoring={monitoring} warnings={operations.warnings} onOpenSystem={() => onOpenWorkspace("more")} />
       </div>
       <small className="data-freshness">Live data checked {relativeTime(operations.checkedAt)}.</small>
     </section>
@@ -1667,6 +1876,24 @@ function AccountOverview({ operations }: { operations: AdminOperationsCenter | n
         )) : <p className="empty">No accounts match this search.</p>}
       </div>
     </section>
+  );
+}
+
+function WorkspaceHeader({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <header className="admin-workspace-heading">
+      <span className="eyebrow">{eyebrow}</span>
+      <h2>{title}</h2>
+      <p>{description}</p>
+    </header>
   );
 }
 
@@ -3839,9 +4066,19 @@ function formatMoneyFromCents(value: unknown) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount / 100);
 }
 
-function Panel({ title, badge, children }: { title: string; badge?: string; children: React.ReactNode }) {
+function Panel({
+  title,
+  badge,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  badge?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <details className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"}>
+    <details className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"} open={defaultOpen || undefined}>
       <summary className="admin-panel-head">
         <h2>{title}</h2>
         <span className="admin-panel-summary-side">
@@ -4347,11 +4584,20 @@ function AdminStyles() {
       .deal-settlement-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
       .deal-settlement-action input { min-height: 38px; border: 1px solid rgba(148,229,255,.22); border-radius: 8px; color: #fff; background: rgba(148,229,255,.06); padding: 0 10px; font: inherit; }
       .admin-grid:empty { display: none; }
-      .admin-workspace-nav { position: sticky; z-index: 30; top: 8px; max-width: 1120px; margin: 0 auto 18px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 6px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(8,8,12,.9); backdrop-filter: blur(18px); box-shadow: 0 16px 50px rgba(0,0,0,.38); }
+      .admin-workspace-nav { position: sticky; z-index: 30; top: 8px; max-width: 1120px; margin: 0 auto 18px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; padding: 6px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(8,8,12,.9); backdrop-filter: blur(18px); box-shadow: 0 16px 50px rgba(0,0,0,.38); }
       .admin-workspace-nav button { position: relative; min-height: 46px; padding: 8px 12px; color: #b9accd; background: transparent; border: 1px solid transparent; }
       .admin-workspace-nav button.active { color: #fff; border-color: rgba(148,229,255,.28); background: linear-gradient(135deg, rgba(139,92,246,.36), rgba(34,199,255,.14)); box-shadow: inset 0 0 22px rgba(139,92,246,.14); }
       .admin-workspace-nav button span { position: absolute; top: 3px; right: 5px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; color: #071016; background: #94e5ff; font-size: 10px; font-weight: 950; }
       .operations-center, .workspace-lead { max-width: 1120px; margin: 0 auto 18px; display: grid; gap: 14px; }
+      .admin-workspace-heading { width: 100%; max-width: 1120px; display: grid; gap: 7px; margin: 0 auto 14px; padding: 8px 2px 2px; }
+      .admin-workspace-heading h2 { font-size: clamp(28px, 5vw, 40px); }
+      .admin-workspace-heading p { color: #a99fb9; font-size: 15px; }
+      .admin-workspace-loading { width: 100%; max-width: 1120px; display: grid; gap: 14px; margin: 0 auto 18px; }
+      .admin-workspace-loading header, .admin-workspace-loading > div { display: grid; gap: 10px; padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #0b0b10; }
+      .admin-workspace-loading > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .admin-workspace-loading span:not(.dashboard-sr-only) { display: block; min-height: 62px; border-radius: 10px; background: linear-gradient(100deg, rgba(255,255,255,.045) 20%, rgba(139,92,246,.12) 45%, rgba(255,255,255,.045) 70%); background-size: 240% 100%; animation: adminDashboardLoadingPulse 1.25s ease-in-out infinite; }
+      .admin-workspace-loading header span { min-height: 15px; width: 58%; }
+      .admin-workspace-loading header span.wide { min-height: 28px; width: 34%; }
       .admin-club-deal-manager .admin-panel-body > p, .referral-fee-manager .admin-panel-body > p { color: #b9accd; line-height: 1.5; }
       .admin-club-deal-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 12px; border: 1px solid rgba(124,58,237,.32); border-radius: 10px; background: rgba(124,58,237,.045); }
       .admin-deal-request-inbox { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(34,211,238,.24); border-radius: 10px; background: rgba(34,211,238,.035); }
@@ -4480,7 +4726,7 @@ function AdminStyles() {
         .submission-thumb img { max-height: 260px; object-fit: contain; }
         h1, h2, h3, p, small, span, strong { overflow-wrap: anywhere; }
         .admin-head { gap: 10px; margin-bottom: 18px; }
-        .admin-workspace-nav { top: 4px; grid-template-columns: repeat(5, minmax(72px, 1fr)); overflow-x: auto; scroll-snap-type: x mandatory; }
+        .admin-workspace-nav { top: 4px; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
         .admin-workspace-nav button { min-height: 43px; padding: 7px 8px; font-size: 11px; scroll-snap-align: start; }
         .operations-status-line { align-items: flex-start; flex-direction: column; }
         .attention-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -4520,7 +4766,7 @@ function AdminStyles() {
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
       }
-      .dashboard-head, .admin-grid, .admin-warning, .sign-in, .admin-workspace-nav, .operations-center, .workspace-lead { width: 100%; max-width: 1120px; margin-left: auto; margin-right: auto; }
+      .dashboard-head, .admin-grid, .admin-warning, .sign-in, .admin-workspace-nav, .operations-center, .workspace-lead, .admin-workspace-heading { width: 100%; max-width: 1120px; margin-left: auto; margin-right: auto; }
       .dashboard-head { min-height: 0; box-sizing: border-box; display: grid; gap: 18px; margin-bottom: var(--mydancr-dashboard-gap); padding: 24px 26px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 24px; background: #07070a; box-shadow: 0 20px 48px rgba(0,0,0,.34); }
       .dashboard-head-row { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: start; gap: 18px; }
       .dashboard-head-copy { min-width: 0; display: grid; gap: 8px; align-content: center; overflow: visible; }
@@ -4551,7 +4797,7 @@ function AdminStyles() {
       .admin-dashboard-loading-metrics { min-height: 74px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; overflow: hidden; }
       .admin-dashboard-loading-metrics span { border-radius: 0; }
       @keyframes adminDashboardLoadingPulse { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-      .admin-workspace-nav { top: max(8px, env(safe-area-inset-top)); grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: var(--mydancr-dashboard-gap); padding: 5px; border-color: rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
+      .admin-workspace-nav { top: max(8px, env(safe-area-inset-top)); grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-bottom: var(--mydancr-dashboard-gap); padding: 5px; border-color: rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
       .admin-workspace-nav button { min-width: 0; min-height: 42px; padding: 0 8px; border: 0; border-radius: 11px; color: #d8cfeb; font-size: 13px; text-align: center; }
       .admin-workspace-nav button:hover { color: #fff; background: rgba(126,234,255,.08); }
       .admin-workspace-nav button:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
@@ -4566,7 +4812,7 @@ function AdminStyles() {
       .sign-in > button[type="submit"] { min-height: 48px; border-radius: 12px; }
 
       @media (prefers-reduced-motion: reduce) {
-        .admin-dashboard-loading-pill, .admin-dashboard-loading-copy span, .admin-dashboard-loading-actions span, .admin-dashboard-loading-metrics span { animation: none; }
+        .admin-dashboard-loading-pill, .admin-dashboard-loading-copy span, .admin-dashboard-loading-actions span, .admin-dashboard-loading-metrics span, .admin-workspace-loading span:not(.dashboard-sr-only) { animation: none; }
         .dashboard-close { transition: none; }
       }
       @media (max-width: 680px) {
@@ -4583,6 +4829,7 @@ function AdminStyles() {
         .admin-dashboard-loading-metrics span:first-child { border-top: 0; }
         .admin-workspace-nav { top: max(4px, env(safe-area-inset-top)); grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
         .admin-workspace-nav button { min-height: 44px; padding: 0 6px; font-size: 12px; }
+        .admin-workspace-loading > div { grid-template-columns: 1fr; }
         .admin-panel, .approval-row, .submission-detail { padding: 12px; }
       }
     `}</style>
