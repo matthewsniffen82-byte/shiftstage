@@ -1867,8 +1867,13 @@ function VenuePanel({
   const [isPublishingCover, setIsPublishingCover] = useState(false);
   const [isPublishingLogo, setIsPublishingLogo] = useState(false);
   const [isPublishingVenue, setIsPublishingVenue] = useState(false);
+  const [isVenueCardPreviewOpen, setIsVenueCardPreviewOpen] = useState(false);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const venueCardPreviewCloseRef = useRef<HTMLButtonElement>(null);
+  const venueCardPreviewOverlayRef = useRef<HTMLDivElement>(null);
+  const venueCardPreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const venueCardPreviewScrollRef = useRef(0);
 
   useEffect(() => {
     setForm({
@@ -1882,6 +1887,69 @@ function VenuePanel({
       closesAt: String(profile?.closesAt || "").slice(0, 5),
     });
   }, [profile]);
+
+  useEffect(() => {
+    if (!isVenueCardPreviewOpen) return;
+    const scrollY = venueCardPreviewScrollRef.current;
+    const body = document.body;
+    const trigger = venueCardPreviewTriggerRef.current;
+    const previous = {
+      left: body.style.left,
+      overflow: body.style.overflow,
+      position: body.style.position,
+      right: body.style.right,
+      top: body.style.top,
+      width: body.style.width,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    const frame = window.requestAnimationFrame(() => venueCardPreviewCloseRef.current?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsVenueCardPreviewOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(
+        venueCardPreviewOverlayRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) || [],
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKeyDown);
+      body.style.left = previous.left;
+      body.style.overflow = previous.overflow;
+      body.style.position = previous.position;
+      body.style.right = previous.right;
+      body.style.top = previous.top;
+      body.style.width = previous.width;
+      window.scrollTo(0, scrollY);
+      window.requestAnimationFrame(() => trigger?.focus({ preventScroll: true }));
+    };
+  }, [isVenueCardPreviewOpen]);
+
+  function openVenueCardPreview(event: React.MouseEvent<HTMLButtonElement>) {
+    venueCardPreviewTriggerRef.current = event.currentTarget;
+    venueCardPreviewScrollRef.current = window.scrollY;
+    setIsVenueCardPreviewOpen(true);
+  }
 
   async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -2042,11 +2110,13 @@ function VenuePanel({
   const venueName = String(profile?.name || "Your venue");
   const venueCity = String(profile?.city || "your city");
   const venueSlug = String(profile?.slug || "");
-  const venuePreviewHref = venueSlug
-    ? `/?venue=${encodeURIComponent(venueSlug)}&venue_preview=1`
-    : "";
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
+  const venueCardPreviewDeal = dashboardDeals.find((venueDeal) => venueDeal.isActive === true);
+  const venueCardPreviewHours = formatVenuePreviewHours(profile?.opensAt, profile?.closesAt);
+  const venueCardPreviewLocation = [profile?.city, profile?.state].map((value) => String(value || "").trim()).filter(Boolean).join(", ") || "Location not added";
+  const venueCardPreviewInitials = venueName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.slice(0, 1)).join("").toUpperCase() || "V";
+  const venueCardPreviewWorkingNow = workingNow.slice(0, 4);
   const upcomingShiftCount = Number(analytics?.upcomingShiftCount || 0);
   const activeAffiliations = initialAffiliations.filter((affiliation) => affiliation.status === "active");
   const nfcAuthorizedDancerCount = activeAffiliations.length;
@@ -2118,7 +2188,7 @@ function VenuePanel({
           ))}
         </ul>
         <div className="venue-publication-actions">
-          {venuePreviewHref ? <a href={venuePreviewHref}>Preview venue</a> : <button type="button" disabled>Preview venue</button>}
+          <button type="button" onClick={openVenueCardPreview}>Preview venue</button>
           {!isPublished && canManageProfile ? (
             <button className="primary" type="button" disabled={!isReadyToPublish || isPublishingVenue} onClick={publishVenue}>
               {isPublishingVenue ? "Publishing..." : "Publish venue"}
@@ -2288,7 +2358,7 @@ function VenuePanel({
                 <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
                   Open live venue page
                 </Link>
-              ) : venuePreviewHref ? <a href={venuePreviewHref}>Preview private venue page</a> : null}
+              ) : <button type="button" onClick={openVenueCardPreview}>Preview venue card</button>}
               {profileStatus ? <p role="status">{profileStatus}</p> : null}
             </form>
           </article>
@@ -2385,6 +2455,79 @@ function VenuePanel({
         >
           <VenueTeamPanel initialAccess={venueAccess as { role: "owner" | "manager" | "staff"; permissions: string[] } | null} />
         </DashboardSection>
+      ) : null}
+
+      {isVenueCardPreviewOpen ? (
+        <div
+          aria-labelledby="venue-card-preview-heading"
+          aria-modal="true"
+          className="venue-card-preview-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsVenueCardPreviewOpen(false);
+          }}
+          ref={venueCardPreviewOverlayRef}
+          role="dialog"
+        >
+          <section className="venue-card-preview-dialog">
+            <header>
+              <div>
+                <span className="eyebrow">Customer view</span>
+                <h2 id="venue-card-preview-heading">Venue card preview</h2>
+              </div>
+              <button
+                aria-label="Close venue card preview"
+                className="venue-card-preview-close"
+                onClick={() => setIsVenueCardPreviewOpen(false)}
+                ref={venueCardPreviewCloseRef}
+                type="button"
+              >
+                ×
+              </button>
+            </header>
+            <article className="venue-card-preview-card" aria-label={`${venueName} venue card preview`}>
+              <div
+                className={`venue-card-preview-art${profile?.coverImageUrl ? " has-cover" : ""}`}
+                style={profile?.coverImageUrl ? { backgroundImage: `linear-gradient(180deg, rgba(4,4,8,.08), rgba(4,4,8,.66)), url("${String(profile.coverImageUrl).replace(/"/g, "\\\"")}")` } : undefined}
+              >
+                <span className="venue-card-preview-kicker">MyDancr club</span>
+                {profile?.logoImageUrl ? (
+                  <span className="venue-card-preview-logo-shell" aria-hidden="true">
+                    <img
+                      alt=""
+                      src={String(profile.logoImageUrl)}
+                      srcSet={profile.logoImageSrcSet ? String(profile.logoImageSrcSet) : undefined}
+                      sizes="72px"
+                    />
+                  </span>
+                ) : <span className="venue-card-preview-mark" aria-hidden="true">{venueCardPreviewInitials}</span>}
+              </div>
+              <div className="venue-card-preview-body">
+                {venueCardPreviewWorkingNow.length ? (
+                  <div className="venue-card-preview-lineup" aria-label={`${workingNow.length} working now`}>
+                    {venueCardPreviewWorkingNow.map((dancer, index) => (
+                      <span className="venue-card-preview-avatar" key={String(dancer.shiftId || dancer.dancerId || index)}>
+                        {dancer.avatarUrl ? <img alt="" src={String(dancer.avatarUrl)} srcSet={dancer.avatarSrcSet ? String(dancer.avatarSrcSet) : undefined} sizes="34px" /> : String(dancer.stageName || "D").slice(0, 1)}
+                      </span>
+                    ))}
+                    {workingNow.length > venueCardPreviewWorkingNow.length ? <span className="venue-card-preview-lineup-count">+{workingNow.length - venueCardPreviewWorkingNow.length}</span> : null}
+                  </div>
+                ) : null}
+                <h3>{venueName}</h3>
+                <p>{venueCardPreviewLocation}</p>
+                <div className="venue-card-preview-pills">
+                  {venueCardPreviewHours ? <span>{venueCardPreviewHours}</span> : null}
+                  {venueCardPreviewDeal?.dealTitle ? (
+                    <span className="venue-card-preview-offer">
+                      <small>Tonight&apos;s offer</small>
+                      <strong>{String(venueCardPreviewDeal.dealTitle)}</strong>
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              <span className="venue-card-preview-heart" aria-hidden="true">♡</span>
+            </article>
+          </section>
+        </div>
       ) : null}
 
     </>
@@ -7187,6 +7330,21 @@ function formatDashboardTime(value: string) {
   return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
 }
 
+function formatVenuePreviewHours(opensAt: unknown, closesAt: unknown) {
+  const formatTime = (value: unknown) => {
+    const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
+    if (!match) return "";
+    const hour = Number(match[1]);
+    if (!Number.isInteger(hour) || hour < 0 || hour > 23) return "";
+    const suffix = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${match[2]} ${suffix}`;
+  };
+  const opens = formatTime(opensAt);
+  const closes = formatTime(closesAt);
+  return opens && closes ? `${opens} – ${closes}` : "";
+}
+
 function formatDashboardDate(value: string) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return "date unavailable";
@@ -7413,6 +7571,34 @@ function DashboardStyles() {
       .venue-publication-actions > button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
       .venue-publication-panel > small { color: #b9accd; font-size: 11px; font-weight: 760; }
       .venue-publication-panel > p[role="status"] { padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 9px; color: #baf5ff; background: rgba(148,229,255,.07); font-weight: 850; }
+      .venue-card-preview-overlay { position: fixed; z-index: 1600; inset: var(--mydancr-preview-banner-offset,0px) 0 0; display: grid; place-items: center; box-sizing: border-box; overflow: auto; overscroll-behavior: contain; padding: max(18px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left)); background: rgba(2,2,5,.86); backdrop-filter: blur(18px); }
+      .venue-card-preview-dialog { width: min(100%,560px); display: grid; gap: 16px; box-sizing: border-box; padding: 17px; border: 1px solid rgba(139,92,246,.42); border-radius: 22px; background: linear-gradient(160deg,rgba(24,18,38,.98),rgba(7,7,11,.99) 44%); box-shadow: 0 30px 90px rgba(0,0,0,.72),0 0 38px rgba(124,58,237,.14),inset 0 1px 0 rgba(255,255,255,.055); }
+      .venue-card-preview-dialog > header { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .venue-card-preview-dialog > header > div { min-width: 0; display: grid; gap: 5px; }
+      .venue-card-preview-dialog h2 { margin: 0; color: #fff; font-size: clamp(21px,4vw,27px); line-height: 1.08; }
+      .venue-card-preview-close { width: 44px; min-width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; flex: 0 0 44px; padding: 0; border: 1px solid rgba(196,181,253,.28); border-radius: 50%; color: #fff; background: rgba(23,23,31,.94); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); font: inherit; font-size: 28px; font-weight: 400; line-height: 1; cursor: pointer; }
+      body.dancr-button-system .venue-card-preview-close { width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; border-radius: 50% !important; background: rgba(23,23,31,.94) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important; }
+      .venue-card-preview-close:focus-visible { border-color: #a78bfa; outline: 3px solid rgba(167,139,250,.24); outline-offset: 2px; }
+      .venue-card-preview-card { position: relative; min-width: 0; min-height: 164px; display: grid; grid-template-columns: minmax(120px,158px) minmax(0,1fr); overflow: hidden; border: 1px solid rgba(124,58,237,.38); border-radius: 19px; background: linear-gradient(135deg,rgba(17,17,24,.98),rgba(8,8,13,.99)); box-shadow: 0 20px 54px rgba(0,0,0,.56),0 0 24px rgba(124,58,237,.1),inset 0 1px 0 rgba(255,255,255,.035); }
+      .venue-card-preview-art { position: relative; min-height: 164px; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 52% 50%,rgba(53,216,255,.2),transparent 0 23%),radial-gradient(circle at 56% 50%,rgba(168,85,247,.22),transparent 0 44%),linear-gradient(135deg,rgba(13,12,20,.98),rgba(4,4,7,.98)); background-position: center; background-size: cover; }
+      .venue-card-preview-art.has-cover::after { position: absolute; inset: 0; content: ""; pointer-events: none; background: linear-gradient(180deg,rgba(3,3,6,.04),rgba(3,3,6,.3)); }
+      .venue-card-preview-kicker { position: absolute; z-index: 2; top: 11px; left: 11px; padding: 5px 7px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f3efff; background: rgba(6,6,10,.62); backdrop-filter: blur(8px); font-size: 8px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+      .venue-card-preview-mark, .venue-card-preview-logo-shell { position: relative; z-index: 2; width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 18px; color: #f3eaff; background: rgba(10,10,16,.78); box-shadow: 0 12px 30px rgba(0,0,0,.44),0 0 24px rgba(124,58,237,.2); font-size: 17px; font-weight: 900; letter-spacing: .06em; }
+      .venue-card-preview-logo-shell img { width: 100%; height: 100%; display: block; object-fit: contain; background: rgba(255,255,255,.96); }
+      .venue-card-preview-body { min-width: 0; align-content: center; display: grid; gap: 10px; padding: 20px 50px 20px 18px; }
+      .venue-card-preview-body h3 { min-width: 0; margin: 0; overflow: hidden; color: #fff; font-size: 22px; line-height: 1.05; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-card-preview-body > p { margin: 0; overflow: hidden; color: #a8a0b4; font-size: 12px; font-weight: 760; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-card-preview-lineup { min-height: 32px; display: flex; align-items: center; padding-left: 4px; }
+      .venue-card-preview-avatar, .venue-card-preview-lineup-count { width: 31px; height: 31px; display: grid; place-items: center; overflow: hidden; margin-left: -5px; border: 2px solid #111118; border-radius: 50%; color: #fff; background: linear-gradient(145deg,#6d28d9,#155e75); box-shadow: 0 6px 14px rgba(0,0,0,.35); font-size: 10px; font-weight: 950; }
+      .venue-card-preview-avatar:first-child { margin-left: 0; }
+      .venue-card-preview-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .venue-card-preview-lineup-count { color: #ddd6fe; background: #211934; }
+      .venue-card-preview-pills { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+      .venue-card-preview-pills > span { min-height: 32px; display: inline-flex; align-items: center; box-sizing: border-box; padding: 7px 10px; border: 1px solid rgba(192,132,255,.18); border-radius: 999px; color: #d5cddd; background: rgba(12,12,17,.64); font-size: 10px; font-weight: 850; }
+      .venue-card-preview-pills > .venue-card-preview-offer { min-width: 0; display: grid; align-items: center; gap: 1px; border-color: rgba(16,185,129,.28); color: #d1fae5; background: rgba(6,78,59,.22); border-radius: 11px; }
+      .venue-card-preview-offer small { color: #6ee7b7; font-size: 7px; font-weight: 950; letter-spacing: .06em; text-transform: uppercase; }
+      .venue-card-preview-offer strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-card-preview-heart { position: absolute; top: 11px; right: 11px; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; color: #d7cfdf; background: rgba(7,7,12,.66); backdrop-filter: blur(8px); font-size: 21px; line-height: 1; }
       .venue-dashboard-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
       .venue-dashboard-shortcuts > a { min-width: 0; min-height: 78px; display: flex; align-items: center; gap: 11px; padding: 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; color: #f8f7fb; background: var(--mydancr-dashboard-panel-raised); text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
       .venue-dashboard-shortcuts > a:hover { border-color: rgba(255,255,255,.2); background: #15151d; }
@@ -8403,6 +8589,16 @@ function DashboardStyles() {
         .venue-publication-panel > ul { grid-template-columns: repeat(2,minmax(0,1fr)); }
         .venue-publication-actions { display: grid; grid-template-columns: 1fr; }
         .venue-publication-actions > button, .venue-publication-actions > a { width: 100%; min-height: 48px; }
+        .venue-card-preview-overlay { align-items: center; padding-inline: 12px; }
+        .venue-card-preview-dialog { padding: 13px; border-radius: 19px; }
+        .venue-card-preview-card { min-height: 142px; grid-template-columns: 102px minmax(0,1fr); border-radius: 16px; }
+        .venue-card-preview-art { min-height: 142px; }
+        .venue-card-preview-mark, .venue-card-preview-logo-shell { width: 54px; height: 54px; border-radius: 14px; font-size: 13px; }
+        .venue-card-preview-body { gap: 8px; padding: 15px 43px 15px 13px; }
+        .venue-card-preview-body h3 { font-size: 18px; }
+        .venue-card-preview-avatar, .venue-card-preview-lineup-count { width: 27px; height: 27px; }
+        .venue-card-preview-pills > span { min-height: 29px; padding: 6px 8px; font-size: 9px; }
+        .venue-card-preview-heart { top: 9px; right: 9px; width: 31px; height: 31px; font-size: 19px; }
         .venue-logo-panel > img, .venue-logo-empty { width: 132px; height: 132px; }
         .venue-dashboard-shortcuts { gap: 10px; }
         .venue-dashboard-shortcuts > a { min-height: 78px; padding: 13px; }

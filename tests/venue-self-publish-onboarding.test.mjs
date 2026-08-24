@@ -99,20 +99,17 @@ test("only self-published venues reach public discovery and use their uploaded l
   }
 });
 
-test("the venue dashboard clearly presents private setup, preview, and explicit publishing", () => {
+test("the venue dashboard previews its customer-facing venue card without leaving the dashboard", () => {
   assert.match(dashboard, /Complete, preview, and publish the guest-facing venue page from this private workspace/);
   assert.match(dashboard, /Nothing appears publicly until you publish/);
-  assert.match(dashboard, /Preview private venue page/);
-  assert.match(dashboard, /venuePreviewHref[\s\S]*?\/\?venue=\$\{encodeURIComponent\(venueSlug\)\}&venue_preview=1/);
-  assert.match(dashboard, /<a href=\{venuePreviewHref\}>Preview venue<\/a>/);
-  assert.doesNotMatch(dashboard, /function VenueDraftPreview/);
+  assert.match(dashboard, /<button type="button" onClick=\{openVenueCardPreview\}>Preview venue<\/button>/);
+  assert.match(dashboard, /aria-labelledby="venue-card-preview-heading"[\s\S]*?aria-modal="true"[\s\S]*?role="dialog"/);
+  assert.match(dashboard, /aria-label="Close venue card preview"[\s\S]*?setIsVenueCardPreviewOpen\(false\)[\s\S]*?>[\s\S]*?×/);
+  assert.match(dashboard, /venue-card-preview-card[\s\S]*?profile\?\.coverImageUrl[\s\S]*?profile\?\.logoImageUrl[\s\S]*?venueCardPreviewWorkingNow[\s\S]*?venueCardPreviewHours[\s\S]*?venueCardPreviewDeal\.dealTitle/);
+  assert.match(dashboard, /event\.key === "Escape"[\s\S]*?setIsVenueCardPreviewOpen\(false\)/);
+  assert.doesNotMatch(dashboard, /venue_preview=1/);
   assert.match(dashboard, /Publish venue/);
   assert.match(dashboard, /Upload logo/);
-  assert.match(liveApp, /async function applyVenueDashboardPreview[\s\S]*?getAuthenticatedJson\("\/api\/venue\/dashboard"\)/);
-  assert.match(liveApp, /const isVenuePreview[\s\S]*?await applyVenueDashboardPreview\(city, venueSlug\)[\s\S]*?openVenueFromName\(previewVenue\.slug \|\| previewVenue\.name\)[\s\S]*?if \(!city \|\| \(!profileSlug && !venueSlug\) \|\| !markets\[city\]\) return/);
-  assert.match(liveApp, /const initialVenuePreviewRequest = initialVenuePreviewRequested \? openSharedProfileFromUrl\(\) : null/);
-  assert.match(liveApp, /venue\.isDashboardPreview[\s\S]*?This is the exact guest page customers will see after you publish/);
-  assert.match(liveApp, /venue\.id && !venue\.isDashboardPreview/);
   assert.match(documentation, /request-first venue onboarding model/);
   assert.match(documentation, /private venue workspace and one-time venue signup code/);
   assert.match(documentation, /Venue accounts receive access only to their own venue dashboard; they never receive MyDancr administrator access/);
