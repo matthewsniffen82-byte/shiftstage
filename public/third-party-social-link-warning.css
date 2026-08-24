@@ -125,7 +125,7 @@
   gap: 10px;
 }
 
-.mydancr-third-party-social-actions button {
+#mydancrThirdPartySocialWarning .mydancr-third-party-social-actions button {
   width: 100%;
   min-height: 52px;
   margin: 0;
@@ -139,18 +139,18 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.mydancr-third-party-social-actions button:focus-visible {
+#mydancrThirdPartySocialWarning .mydancr-third-party-social-actions button:focus-visible {
   outline: 3px solid rgba(191, 219, 254, 0.9);
   outline-offset: 3px;
 }
 
-.mydancr-third-party-social-stay {
+#mydancrThirdPartySocialWarning .mydancr-third-party-social-stay {
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: #f4f2fb;
   background: rgba(42, 41, 51, 0.92);
 }
 
-.mydancr-third-party-social-continue {
+#mydancrThirdPartySocialWarning .mydancr-third-party-social-continue {
   border: 1px solid rgba(167, 139, 250, 0.82);
   color: #ffffff;
   background: linear-gradient(135deg, #6d28d9, #4c1d95);

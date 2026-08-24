@@ -13,7 +13,7 @@ const [guard, styles, layout, liveRoute, socialLinks] = await Promise.all([
 test("the third-party warning is loaded by routed pages and the live homepage shell", () => {
   assert.match(layout, /import "\.\.\/public\/third-party-social-link-warning\.css"/);
   assert.match(layout, /third-party-social-link-warning\.js\?v=1/);
-  assert.match(liveRoute, /third-party-social-link-warning\.css\?v=1/);
+  assert.match(liveRoute, /third-party-social-link-warning\.css\?v=2/);
   assert.match(liveRoute, /third-party-social-link-warning\.js\?v=1/);
 });
 
@@ -44,6 +44,7 @@ test("the warning is an accessible responsive modal and profile social links opt
   assert.match(styles, /env\(safe-area-inset-bottom\)/);
   assert.match(styles, /@media \(min-width: 430px\)/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(styles, /#mydancrThirdPartySocialWarning \.mydancr-third-party-social-continue/);
   assert.match(socialLinks, /data-third-party-social-link="true"/);
   assert.match(socialLinks, /opens in a new tab after a third-party warning/);
 });
