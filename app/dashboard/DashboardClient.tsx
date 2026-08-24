@@ -2047,7 +2047,7 @@ function VenuePanel({
   const venueCity = String(profile?.city || "your city");
   const venueSlug = String(profile?.slug || "");
   const venuePreviewHref = venueSlug
-    ? `/outputs/index.html?city=${encodeURIComponent(venueCity)}&venue=${encodeURIComponent(venueSlug)}&venue_preview=1`
+    ? `/?city=${encodeURIComponent(venueCity)}&venue=${encodeURIComponent(venueSlug)}&venue_preview=1`
     : "";
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;

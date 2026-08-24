@@ -50,7 +50,7 @@ test("venue profiles restore dashboard surfaces while venue preview opens the ca
   assert.match(openVenue, /suspendProfileReturnSurface\(venueProfileReturnContext\)/);
   assert.match(closeVenue, /restoreProfileReturnContext\(returnContext\)/);
 
-  assert.match(venuePreview, /new URL\("\/outputs\/index\.html", window\.location\.origin\)/);
+  assert.match(venuePreview, /new URL\("\/", window\.location\.origin\)/);
   assert.match(venuePreview, /searchParams\.set\("venue_preview", "1"\)/);
   assert.match(venuePreview, /window\.location\.assign\(previewUrl\.toString\(\)\)/);
   assert.match(closeVenue, /get\("venue_preview"\) === "1"[\s\S]*?window\.location\.assign\("\/dashboard\/venue"\)/);

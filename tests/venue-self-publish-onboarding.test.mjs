@@ -103,7 +103,7 @@ test("the venue dashboard clearly presents private setup, preview, and explicit 
   assert.match(dashboard, /Complete, preview, and publish the guest-facing venue page from this private workspace/);
   assert.match(dashboard, /Nothing appears publicly until you publish/);
   assert.match(dashboard, /Preview private venue page/);
-  assert.match(dashboard, /venuePreviewHref[\s\S]*?\/outputs\/index\.html\?city=\$\{encodeURIComponent\(venueCity\)\}&venue=\$\{encodeURIComponent\(venueSlug\)\}&venue_preview=1/);
+  assert.match(dashboard, /venuePreviewHref[\s\S]*?\/\?city=\$\{encodeURIComponent\(venueCity\)\}&venue=\$\{encodeURIComponent\(venueSlug\)\}&venue_preview=1/);
   assert.doesNotMatch(dashboard, /function VenueDraftPreview/);
   assert.match(dashboard, /Publish venue/);
   assert.match(dashboard, /Upload logo/);

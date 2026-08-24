@@ -59223,7 +59223,7 @@
         return;
       }
       const profileCity = String(profile.city || citySelect.value).trim();
-      const previewUrl = new URL("/outputs/index.html", window.location.origin);
+      const previewUrl = new URL("/", window.location.origin);
       previewUrl.searchParams.set("city", profileCity || citySelect.value);
       previewUrl.searchParams.set("venue", profile.slug);
       previewUrl.searchParams.set("venue_preview", "1");
