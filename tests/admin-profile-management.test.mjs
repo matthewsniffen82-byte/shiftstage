@@ -30,7 +30,7 @@ test("admin full profile detail includes the private account and subscription st
   assert.match(adminDashboardSource, /function AdminDancerFullProfile/);
   assert.match(adminDashboardSource, /Login account/);
   assert.match(adminDashboardSource, /Account approval/);
-  assert.match(adminDashboardSource, /Approval is based on venue affiliation and profile and media review/);
+  assert.match(adminDashboardSource, /MyDancr controls profile approval\. Club affiliations are recorded separately/);
   assert.doesNotMatch(adminDashboardSource, /Tokenized identity verification|VerifyMy/);
   assert.match(adminDashboardSource, /Review history/);
   assert.match(liveAppSource, /function adminFullProfileMarkup/);

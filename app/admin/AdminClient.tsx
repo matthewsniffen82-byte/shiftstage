@@ -9,6 +9,7 @@ import {
   defaultClubDealOfferPreset,
 } from "@/src/lib/dancr/club-deal-presets";
 import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
+import type { AdminDancerRosterItem, AdminDancerRosterResult } from "@/src/lib/dancr/admin-dancers";
 import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
 import AdminPilotAnalytics from "./AdminPilotAnalytics";
@@ -25,7 +26,7 @@ import {
 type AdminState = {
   monitoring?: Record<string, unknown> | null;
   queue?: Array<Record<string, unknown>>;
-  dancers?: Array<Record<string, unknown>>;
+  dancerTotal?: number;
   venues?: Array<Record<string, unknown>>;
   venueClaimCodes?: Array<Record<string, unknown>>;
   venueSignupRequests?: Array<Record<string, unknown>>;
@@ -205,7 +206,7 @@ export default function AdminClient() {
         {
           label: "Dancer approvals",
           path: "/api/admin/approvals",
-          apply: (data) => ({ queue: data.queue || [], dancers: data.dancers || [] }),
+          apply: (data) => ({ queue: data.queue || [], dancerTotal: Number(data.dancerTotal || 0) }),
         },
         {
           label: "Venues",
@@ -259,7 +260,7 @@ export default function AdminClient() {
         finance: null,
         referralFees: null,
         queue: [],
-        dancers: [],
+        dancerTotal: 0,
         venues: [],
         venueClaimCodes: [],
         venueSignupRequests: [],
@@ -489,7 +490,7 @@ export default function AdminClient() {
             badge={`${pendingDancerApprovalCount} needed`}
           >
             <Metric label="Dancers needing approval" value={String(pendingDancerApprovalCount)} />
-            <Metric label="All real dancers" value={String(state.dancers?.length || 0)} />
+            <Metric label="Profiles in roster" value={String(state.dancerTotal || 0)} />
             <ApprovalQueue
               items={state.queue || []}
               openById={openApprovalIds}
@@ -513,9 +514,6 @@ export default function AdminClient() {
                   queue: (current.queue || []).map((item) =>
                     asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
                   ),
-                  dancers: (current.dancers || []).map((item) =>
-                    asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
-                  ),
                 }))
               }
               onActionConfirmed={confirmAdminAction}
@@ -528,18 +526,13 @@ export default function AdminClient() {
               }}
             />
           </Panel> : null}
-          {workspace === "accounts" ? <Panel title="Dancer Directory">
-            <Metric label="Approved dancers" value={String(state.dancers?.filter((item) => String(item.status) === "approved").length || 0)} />
+          {workspace === "accounts" ? <Panel title="Dancer management">
             <DancerDirectory
-              items={state.dancers || []}
               onActionConfirmed={confirmAdminAction}
               onProfileUpdated={(profile) => {
                 setState((current) => ({
                   ...current,
                   queue: (current.queue || []).map((item) =>
-                    asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
-                  ),
-                  dancers: (current.dancers || []).map((item) =>
                     asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
                   ),
                 }));
@@ -548,7 +541,7 @@ export default function AdminClient() {
                 setState((current) => ({
                   ...current,
                   queue: (current.queue || []).filter((item) => asText(item.id) !== dancerId),
-                  dancers: (current.dancers || []).filter((item) => asText(item.id) !== dancerId),
+                  dancerTotal: Math.max(0, Number(current.dancerTotal || 0) - 1),
                 }));
                 setApprovalOpen(dancerId, false);
               }}
@@ -2814,6 +2807,7 @@ function ApprovalQueue({
             {selectedProfileStatus !== "Loading full profile..." ? (
               <AdminDancerFullProfile
                 profile={selectedProfile}
+                activeTab="all"
                 deletingContentKey={deletingContentKey}
                 onDeletePhoto={(targetId, label) => deleteProfileContent("photo", targetId, label)}
                 onDeleteSocial={(targetId, label) => deleteProfileContent("social-link", targetId, label)}
@@ -3265,21 +3259,91 @@ async function requestAdminDancerContentDeletion(
 }
 
 function DancerDirectory({
-  items,
   onDeleted,
   onProfileUpdated,
   onActionConfirmed,
 }: {
-  items: Array<Record<string, unknown>>;
   onDeleted: (dancerId: string) => void;
   onProfileUpdated: (profile: Record<string, unknown>) => void;
   onActionConfirmed: (message: string) => void;
 }) {
+  const [roster, setRoster] = useState<AdminDancerRosterResult | null>(null);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [scheduleFilter, setScheduleFilter] = useState("all");
+  const [moderationFilter, setModerationFilter] = useState("all");
+  const [commissionFilter, setCommissionFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("");
+  const [venueFilter, setVenueFilter] = useState("");
+  const [sort, setSort] = useState("updated");
+  const [page, setPage] = useState(1);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [isLoadingRoster, setIsLoadingRoster] = useState(true);
   const [selectedId, setSelectedId] = useState("");
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [status, setStatus] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingLifecycle, setIsUpdatingLifecycle] = useState(false);
+  const [lifecycleReason, setLifecycleReason] = useState("");
+  const [detailTab, setDetailTab] = useState("overview");
   const [deletingContentKey, setDeletingContentKey] = useState("");
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQuery, statusFilter, scheduleFilter, moderationFilter, commissionFilter, sourceFilter, cityFilter, venueFilter, sort]);
+
+  useEffect(() => {
+    const token = readToken();
+    if (!token) {
+      setStatus("Admin sign in required.");
+      setIsLoadingRoster(false);
+      return;
+    }
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      q: debouncedQuery,
+      status: statusFilter,
+      schedule: scheduleFilter,
+      moderation: moderationFilter,
+      commission: commissionFilter,
+      source: sourceFilter,
+      city: cityFilter,
+      venueId: venueFilter,
+      sort,
+      page: String(page),
+      pageSize: "20",
+    });
+    setIsLoadingRoster(true);
+    setStatus("");
+    fetch(`/api/admin/dancers?${params.toString()}`, {
+      headers: { authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data.ok || !data.roster) throw new Error(data.error || "Unable to load dancer roster.");
+        if (page > data.roster.totalPages) {
+          setPage(Math.max(1, data.roster.totalPages));
+          return;
+        }
+        setRoster(data.roster);
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setStatus(error instanceof Error ? error.message : "Unable to load dancer roster.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoadingRoster(false);
+      });
+    return () => controller.abort();
+  }, [debouncedQuery, statusFilter, scheduleFilter, moderationFilter, commissionFilter, sourceFilter, cityFilter, venueFilter, sort, page, refreshVersion]);
 
   async function openProfile(item: Record<string, unknown>) {
     const dancerId = asText(item.id);
@@ -3291,6 +3355,8 @@ function DancerDirectory({
 
     setSelectedId(dancerId);
     setProfile(null);
+    setDetailTab("overview");
+    setLifecycleReason("");
     setStatus("Loading full profile...");
     try {
       const detail = await requestAdminDancerProfile(dancerId);
@@ -3298,6 +3364,38 @@ function DancerDirectory({
       setStatus("");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load dancer profile.");
+    }
+  }
+
+  async function updateLifecycle(action: "disable" | "reactivate") {
+    if (!profile) return;
+    const dancerId = asText(profile.id);
+    const token = readToken();
+    if (!token || !dancerId) return;
+    if (lifecycleReason.trim().length < 4) {
+      setStatus("Add a short reason before changing profile access.");
+      return;
+    }
+    setIsUpdatingLifecycle(true);
+    setStatus(action === "disable" ? "Disabling profile..." : "Reactivating profile...");
+    try {
+      const response = await fetch(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action, reason: lifecycleReason.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to update dancer lifecycle.");
+      setProfile(data.profile);
+      onProfileUpdated(data.profile);
+      setLifecycleReason("");
+      setRefreshVersion((value) => value + 1);
+      setStatus("");
+      onActionConfirmed(action === "disable" ? "Dancer profile disabled and hidden." : "Dancer profile reactivated using its saved approval state.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update dancer lifecycle.");
+    } finally {
+      setIsUpdatingLifecycle(false);
     }
   }
 
@@ -3317,6 +3415,7 @@ function DancerDirectory({
       const updated = await requestAdminDancerContentDeletion(dancerId, kind, targetId);
       setProfile(updated.profile);
       onProfileUpdated(updated.profile);
+      setRefreshVersion((value) => value + 1);
       setStatus("");
       onActionConfirmed(`${label} deleted from ${stageName}'s profile.`);
     } catch (error) {
@@ -3346,6 +3445,11 @@ function DancerDirectory({
       `Permanently delete ${stageName}'s dancer profile, profile photos, any legacy identity files, schedules, and profile activity? Their login account will remain. This cannot be undone.`,
     );
     if (!confirmed) return;
+    const typedName = window.prompt(`Type ${stageName} to permanently delete this profile.`);
+    if (typedName !== stageName) {
+      setStatus("Permanent deletion canceled because the stage name did not match.");
+      return;
+    }
 
     setIsDeleting(true);
     setStatus("Deleting profile and stored content...");
@@ -3358,6 +3462,7 @@ function DancerDirectory({
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete dancer profile.");
 
       onDeleted(dancerId);
+      setRefreshVersion((value) => value + 1);
       const warningCount = Array.isArray(data.deleted?.warnings) ? data.deleted.warnings.length : 0;
       onActionConfirmed(
         warningCount
@@ -3374,32 +3479,55 @@ function DancerDirectory({
     }
   }
 
-  if (!items.length) return <p className="empty">No dancers returned from Supabase.</p>;
-
   return (
-    <div className="dancer-directory-list">
-      {items.map((item) => {
-        const dancerId = asText(item.id);
-        const stageName = asText(item.stageName || item.stage_name) || "Stage name not submitted";
+    <div className="dancer-management">
+      <div className="dancer-roster-summary">
+        <span><strong>{roster?.total ?? 0}</strong><small>matching profiles</small></span>
+        <span><strong>{roster?.items.filter((item) => item.schedule.state === "working_now").length ?? 0}</strong><small>working now on page</small></span>
+        <span><strong>{roster?.items.filter((item) => item.openReports > 0).length ?? 0}</strong><small>reported on page</small></span>
+      </div>
+      <div className="dancer-roster-filters" role="search" aria-label="Search and filter dancer profiles">
+        <label className="dancer-roster-search"><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Stage name, city, email, or slug" /></label>
+        <RosterSelect label="Profile state" value={statusFilter} onChange={setStatusFilter} options={[["all", "All profiles"], ["needs_action", "Needs action"], ["draft", "Draft"], ["pending_review", "Pending"], ["approved", "Live"], ["rejected", "Rejected"], ["disabled", "Disabled / archived"]]} />
+        <RosterSelect label="Schedule" value={scheduleFilter} onChange={setScheduleFilter} options={[["all", "Any schedule"], ["working_now", "Working now"], ["upcoming", "Upcoming"], ["no_schedule", "No schedule"]]} />
+        <RosterSelect label="Moderation" value={moderationFilter} onChange={setModerationFilter} options={[["all", "Any moderation"], ["pending", "Pending review"], ["clear", "No pending review"]]} />
+        <RosterSelect label="Commission" value={commissionFilter} onChange={setCommissionFilter} options={[["all", "Any commission state"], ["active", "NATS active"], ["not_active", "NATS not active"]]} />
+        <RosterSelect label="Source" value={sourceFilter} onChange={setSourceFilter} options={[["all", "Demo and standard"], ["demo", "Demo assignments"], ["standard", "Standard profiles"]]} />
+        <RosterSelect label="City" value={cityFilter} onChange={setCityFilter} options={[["", "All cities"], ...(roster?.filters.cities || []).map((city) => [city, city] as [string, string])]} />
+        <RosterSelect label="Club" value={venueFilter} onChange={setVenueFilter} options={[["", "All clubs"], ...(roster?.filters.venues || []).map((venue) => [venue.id, `${venue.name} · ${venue.city}`] as [string, string])]} />
+        <RosterSelect label="Sort" value={sort} onChange={setSort} options={[["updated", "Recently active"], ["created", "Newest profiles"], ["name", "Stage name"], ["status", "Profile state"]]} />
+        <button className="secondary-action dancer-roster-clear" type="button" onClick={() => { setQuery(""); setStatusFilter("all"); setScheduleFilter("all"); setModerationFilter("all"); setCommissionFilter("all"); setSourceFilter("all"); setCityFilter(""); setVenueFilter(""); setSort("updated"); }}>Clear filters</button>
+      </div>
+      {status ? <p className="dancer-roster-status" role={status.startsWith("Unable") ? "alert" : "status"}>{status}</p> : null}
+      {isLoadingRoster ? <p className="empty">Loading dancer roster…</p> : null}
+      {!isLoadingRoster && !roster?.items.length ? <p className="empty">No dancer profiles match these filters.</p> : null}
+      <div className="dancer-directory-list" aria-busy={isLoadingRoster}>
+      {(roster?.items || []).map((item) => {
+        const dancerId = item.id;
+        const stageName = item.stageName || "Stage name not submitted";
         return (
           <article className="dancer-directory-row" key={dancerId}>
-            <button className="dancer-directory-profile-link" type="button" onClick={() => openProfile(item)}>
-              <strong>{stageName}</strong>
-              <small>
-                {[asText(item.city) || "City not submitted", asText(item.status) || "draft"].join(" - ")}
-              </small>
+            <button className="dancer-directory-profile-link" type="button" onClick={() => openProfile(item as unknown as Record<string, unknown>)}>
+              <span className="dancer-roster-avatar">{item.avatarUrl ? <img src={item.avatarUrl} srcSet={item.avatarSrcSet || undefined} alt="" /> : <span>{stageName.slice(0, 1).toUpperCase()}</span>}</span>
+              <span className="dancer-roster-identity"><strong>{stageName}</strong><small>{item.email || "No account email"}</small><small>{item.city}{item.venue ? ` · ${item.venue.name}` : " · No active club"}</small></span>
+              <span className="dancer-roster-badges"><RosterBadge value={item.status} /><RosterBadge value={item.schedule.state} />{item.isDemo ? <RosterBadge value="demo" /> : null}{item.openReports ? <RosterBadge value={`${item.openReports} open report${item.openReports === 1 ? "" : "s"}`} tone="danger" /> : null}</span>
             </button>
+            <div className="dancer-roster-data">
+              <span><small>Media</small><strong>{item.media.approved} approved · {item.media.pending} pending</strong></span>
+              <span><small>Affiliations</small><strong>{item.affiliationCount}</strong></span>
+              <span><small>Commission</small><strong>{labelize(item.commissionStatus)}</strong></span>
+              <span><small>Last activity</small><strong>{formatDate(item.lastActivityAt)}</strong></span>
+            </div>
             <div className="dancer-directory-actions">
-              <button className="secondary-action" type="button" onClick={() => openProfile(item)}>
-                View full profile
-              </button>
-              <button className="danger-action" type="button" onClick={() => deleteProfile(item)}>
-                Delete profile
+              <button className="secondary-action" type="button" onClick={() => openProfile(item as unknown as Record<string, unknown>)}>
+                View full profile &amp; management
               </button>
             </div>
           </article>
         );
       })}
+      </div>
+      {roster && roster.totalPages > 1 ? <nav className="dancer-roster-pagination" aria-label="Dancer roster pages"><button type="button" className="secondary-action" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</button><span>Page {roster.page} of {roster.totalPages}</span><button type="button" className="secondary-action" disabled={page >= roster.totalPages} onClick={() => setPage((value) => Math.min(roster.totalPages, value + 1))}>Next</button></nav> : null}
       {selectedId ? (
         <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label="Full dancer profile" onClick={closeProfile}>
           <div className="admin-preview-modal admin-profile-modal" onClick={(event) => event.stopPropagation()}>
@@ -3415,20 +3543,28 @@ function DancerDirectory({
             <h3>{profile ? `${asText(profile.stageName || profile.stage_name) || "Dancer"} — full profile` : "Full dancer profile"}</h3>
             {status ? <p role={status.startsWith("Unable") ? "alert" : "status"}>{status}</p> : null}
             {profile ? (
+              <>
+              <nav className="admin-dancer-tabs" aria-label="Dancer management sections">
+                {[["overview", "Overview"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["commissions", "Club Deals & commissions"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} onClick={() => setDetailTab(id)}>{label}</button>)}
+              </nav>
               <AdminDancerFullProfile
                 profile={profile}
+                activeTab={detailTab}
                 deletingContentKey={deletingContentKey}
                 onDeletePhoto={(targetId, label) => deleteProfileContent("photo", targetId, label)}
                 onDeleteSocial={(targetId, label) => deleteProfileContent("social-link", targetId, label)}
               />
+              </>
             ) : null}
             {profile ? (
               <div className="admin-profile-delete-zone">
-                <strong>Delete dancer profile</strong>
-                <p>This removes the profile and its stored content. The dancer&apos;s login account remains active.</p>
-                <button className="danger-action" type="button" onClick={() => deleteProfile(profile)} disabled={isDeleting}>
-                  {isDeleting ? "Deleting profile..." : "Delete profile"}
-                </button>
+                <strong>Profile access and retention</strong>
+                <p>Disable a profile for a reversible hold. Permanent deletion is reserved for verified deletion requests or required data removal.</p>
+                <label><span>Required action reason</span><textarea value={lifecycleReason} onChange={(event) => setLifecycleReason(event.target.value)} maxLength={500} placeholder="Why this profile is being disabled or reactivated" /></label>
+                <div className="admin-profile-lifecycle-actions">
+                  {asText(profile.status) === "disabled" ? <button className="secondary-action" type="button" onClick={() => updateLifecycle("reactivate")} disabled={isUpdatingLifecycle}>Reactivate profile</button> : <button className="danger-action" type="button" onClick={() => updateLifecycle("disable")} disabled={isUpdatingLifecycle}>Disable profile</button>}
+                  <details><summary>Permanent deletion</summary><p>This removes profile data and stored media. The login account remains.</p><button className="danger-action" type="button" onClick={() => deleteProfile(profile)} disabled={isDeleting}>{isDeleting ? "Deleting profile..." : "Permanently delete profile"}</button></details>
+                </div>
               </div>
             ) : null}
           </div>
@@ -3438,13 +3574,23 @@ function DancerDirectory({
   );
 }
 
+function RosterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<[string, string]> }) {
+  return <label><span>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([id, text]) => <option key={id || "all"} value={id}>{text}</option>)}</select></label>;
+}
+
+function RosterBadge({ value, tone = "neutral" }: { value: string; tone?: "neutral" | "danger" }) {
+  return <em className={`dancer-roster-badge ${tone} is-${value.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`}>{labelize(value)}</em>;
+}
+
 function AdminDancerFullProfile({
   profile,
+  activeTab,
   deletingContentKey,
   onDeletePhoto,
   onDeleteSocial,
 }: {
   profile: Record<string, unknown>;
+  activeTab: string;
   deletingContentKey: string;
   onDeletePhoto: (targetId: string, label: string) => void;
   onDeleteSocial: (targetId: string, label: string) => void;
@@ -3454,10 +3600,19 @@ function AdminDancerFullProfile({
   const photos = labelSubmittedPhotos(asRecordArray(profile.photos));
   const socials = asRecordArray(profile.socialLinks || profile.social_links);
   const reviews = asRecordArray(profile.reviews);
+  const operations = asRecordObject(profile.operations);
+  const affiliations = asRecordArray(operations.affiliations);
+  const shifts = asRecordArray(operations.shifts);
+  const videos = asRecordArray(operations.videos);
+  const commissions = asRecordArray(operations.commissions);
+  const reports = asRecordArray(operations.reports);
+  const accountHistory = asRecordArray(operations.accountHistory || operations.account_history);
+  const analytics = asRecordObject(operations.analytics);
+  const natsAccount = asRecordObject(operations.natsAccount || operations.nats_account);
 
   return (
     <div className="admin-full-profile">
-      <section className="submission-section">
+      {activeTab === "all" || activeTab === "overview" ? <section className="submission-section">
         <h3>Profile information</h3>
         <div className="submission-grid">
           <SubmissionValue label="Stage name" value={profile.stageName || profile.stage_name} />
@@ -3474,9 +3629,9 @@ function AdminDancerFullProfile({
           <SubmissionValue label="Approved" value={formatDate(profile.approvedAt || profile.approved_at)} />
           <SubmissionValue label="Disabled" value={formatDate(profile.disabledAt || profile.disabled_at)} />
         </div>
-      </section>
+      </section> : null}
 
-      <section className="submission-section">
+      {activeTab === "all" || activeTab === "overview" ? <section className="submission-section">
         <h3>Login account</h3>
         <div className="submission-grid">
           <SubmissionValue label="Email" value={account.email} />
@@ -3484,9 +3639,14 @@ function AdminDancerFullProfile({
           <SubmissionValue label="Account state" value={account.accountState || account.account_state} />
           <SubmissionValue label="Account created" value={formatDate(account.createdAt || account.created_at)} />
         </div>
-      </section>
+      </section> : null}
 
-      <section className="submission-section">
+      {activeTab === "all" || activeTab === "overview" ? <section className="submission-section">
+        <h3>Account approval</h3>
+        <p className="submission-empty">MyDancr controls profile approval. Club affiliations are recorded separately from account and media decisions.</p>
+      </section> : null}
+
+      {activeTab === "all" || activeTab === "media" ? <section className="submission-section">
         <h3>Photos ({photos.length})</h3>
         {photos.length ? (
           <div className="submission-media-grid">
@@ -3514,14 +3674,9 @@ function AdminDancerFullProfile({
             })}
           </div>
         ) : <p className="submission-empty">No profile photos.</p>}
-      </section>
+      </section> : null}
 
-      <section className="submission-section">
-        <h3>Account approval</h3>
-        <p className="submission-empty">Approval is based on venue affiliation and profile and media review.</p>
-      </section>
-
-      <section className="submission-section">
+      {activeTab === "all" || activeTab === "media" ? <section className="submission-section">
         <h3>Social links ({socials.length})</h3>
         {socials.length ? (
           <div className="submission-files">
@@ -3548,9 +3703,14 @@ function AdminDancerFullProfile({
             })}
           </div>
         ) : <p className="submission-empty">No social links.</p>}
-      </section>
+      </section> : null}
 
-      <section className="submission-section">
+      {activeTab === "all" || activeTab === "media" ? <section className="submission-section">
+        <h3>Videos ({videos.length})</h3>
+        {videos.length ? <div className="submission-files">{videos.map((video, index) => <div className="submission-link" key={asText(video.id) || index}><strong>{asText(video.status) || "Unknown state"}</strong><small>{formatValue(video.duration_seconds || video.durationSeconds)} seconds</small><small>{formatDate(video.published_at || video.publishedAt || video.created_at || video.createdAt)}</small></div>)}</div> : <p className="submission-empty">No uploaded videos.</p>}
+      </section> : null}
+
+      {activeTab === "all" || activeTab === "overview" ? <section className="submission-section">
         <h3>Subscription</h3>
         {Object.keys(subscription).length ? (
           <div className="submission-grid">
@@ -3560,9 +3720,9 @@ function AdminDancerFullProfile({
             <SubmissionValue label="Stripe subscription" value={subscription.stripeSubscriptionId || subscription.stripe_subscription_id} />
           </div>
         ) : <p className="submission-empty">No subscription record.</p>}
-      </section>
+      </section> : null}
 
-      <section className="submission-section">
+      {activeTab === "all" || activeTab === "history" ? <section className="submission-section">
         <h3>Review history ({reviews.length})</h3>
         {reviews.length ? (
           <div className="submission-files">
@@ -3575,7 +3735,24 @@ function AdminDancerFullProfile({
             ))}
           </div>
         ) : <p className="submission-empty">No review history.</p>}
-      </section>
+      </section> : null}
+
+      {activeTab === "all" || activeTab === "affiliations" ? <>
+        <section className="submission-section"><h3>Club affiliations ({affiliations.length})</h3>{affiliations.length ? <div className="submission-files">{affiliations.map((item, index) => { const venue = asRecordObject(item.venues); return <div className="submission-link" key={asText(item.id) || index}><strong>{asText(venue.name) || "Club"} · {labelize(asText(item.status))}</strong><small>{asText(venue.city) || "City unavailable"}</small><small>{formatDate(item.approved_at || item.approvedAt || item.revoked_at || item.revokedAt)}</small></div>; })}</div> : <p className="submission-empty">No club affiliations.</p>}</section>
+        <section className="submission-section"><h3>Shift history ({shifts.length})</h3>{shifts.length ? <div className="submission-files">{shifts.map((item, index) => { const venue = asRecordObject(item.venues); return <div className="submission-link" key={asText(item.id) || index}><strong>{asText(venue.name) || "Club"} · {labelize(asText(item.status))}</strong><small>{formatDate(item.starts_at || item.startsAt)} to {formatDate(item.ends_at || item.endsAt)}</small><small>{labelize(asText(item.shift_source || item.shiftSource) || "scheduled")}</small></div>; })}</div> : <p className="submission-empty">No posted or historical shifts.</p>}</section>
+      </> : null}
+
+      {activeTab === "all" || activeTab === "commissions" ? <>
+        <section className="submission-section"><h3>NATS payout eligibility</h3><div className="submission-grid"><SubmissionValue label="Link status" value={natsAccount.status || "Not linked"} /><SubmissionValue label="Username" value={natsAccount.username || "Not supplied"} /><SubmissionValue label="Activated" value={formatDate(natsAccount.activated_at || natsAccount.activatedAt)} /><SubmissionValue label="Last error" value={natsAccount.last_error || natsAccount.lastError || "None"} /></div></section>
+        <section className="submission-section"><h3>Commission activity ({commissions.length})</h3>{commissions.length ? <div className="submission-files">{commissions.map((item, index) => <div className="submission-link" key={asText(item.id) || index}><strong>{formatMoneyFromCents(item.amount_cents || item.amountCents)} · {labelize(asText(item.status))}</strong><small>{formatDate(item.paid_at || item.paidAt || item.payable_at || item.payableAt || item.created_at || item.createdAt)}</small></div>)}</div> : <p className="submission-empty">No attributed commission activity.</p>}</section>
+      </> : null}
+
+      {activeTab === "all" || activeTab === "analytics" ? <>
+        <section className="submission-section"><h3>Customer activity</h3><div className="submission-grid"><SubmissionValue label="Followers" value={analytics.followers} /><SubmissionValue label="Profile views" value={analytics.profileViews || analytics.profile_views} /><SubmissionValue label="Direction requests" value={analytics.directionRequests || analytics.direction_requests} /><SubmissionValue label="Active shifts" value={analytics.activeShifts || analytics.active_shifts} /><SubmissionValue label="Recorded commissions" value={formatMoneyFromCents(analytics.totalCommissionCents || analytics.total_commission_cents)} /></div></section>
+        <section className="submission-section"><h3>Reports ({reports.length})</h3>{reports.length ? <div className="submission-files">{reports.map((item, index) => <div className="submission-link" key={asText(item.id) || index}><strong>{asText(item.reason) || "Report"} · {labelize(asText(item.status))}</strong><small>{asText(item.details) || "No additional details"}</small><small>{formatDate(item.created_at || item.createdAt)}</small></div>)}</div> : <p className="submission-empty">No reports against this profile.</p>}</section>
+      </> : null}
+
+      {activeTab === "all" || activeTab === "history" ? <section className="submission-section"><h3>Admin account history ({accountHistory.length})</h3>{accountHistory.length ? <div className="submission-files">{accountHistory.map((item, index) => <div className="submission-link" key={asText(item.id) || index}><strong>{labelize(asText(item.action) || "Admin action")}</strong><small>{asText(item.notes) || "No notes"}</small><small>{formatDate(item.created_at || item.createdAt)}</small></div>)}</div> : <p className="submission-empty">No administrative lifecycle history.</p>}</section> : null}
     </div>
   );
 }
@@ -3655,6 +3832,11 @@ function formatDate(value: unknown) {
   const date = new Date(text);
   if (Number.isNaN(date.getTime())) return text;
   return date.toLocaleString();
+}
+
+function formatMoneyFromCents(value: unknown) {
+  const amount = Number(value || 0);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount / 100);
 }
 
 function Panel({ title, badge, children }: { title: string; badge?: string; children: React.ReactNode }) {
@@ -3893,13 +4075,43 @@ function AdminStyles() {
       .approval-row .secondary-action { color: #f7f2ff; background: rgba(139,92,246,.16); border: 1px solid rgba(139,92,246,.34); }
       .approval-row p { color: #94e5ff; font-size: 14px; }
       .approval-blocked { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,214,102,.22); background: rgba(255,214,102,.08); color: #ffd666 !important; font-size: 13px !important; }
+      .admin-panel:has(.dancer-management) { grid-column: 1 / -1; }
+      .dancer-management { display: grid; gap: 14px; }
+      .dancer-roster-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+      .dancer-roster-summary > span { display: grid; gap: 2px; padding: 11px; border: 1px solid rgba(148,229,255,.14); border-radius: 9px; background: rgba(148,229,255,.035); }
+      .dancer-roster-summary strong { color: #fff; font-size: 21px; }
+      .dancer-roster-summary small { color: #9c90b3; font-size: 11px; font-weight: 850; }
+      .dancer-roster-filters { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 9px; padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(255,255,255,.025); }
+      .dancer-roster-filters label, .admin-profile-delete-zone label { display: grid; gap: 5px; color: #a99fba; font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+      .dancer-roster-filters input, .dancer-roster-filters select { width: 100%; background: #15151c; }
+      .dancer-roster-filters option { color: #fff; background: #15151c; }
+      .dancer-roster-search { grid-column: span 2; }
+      .dancer-roster-clear { align-self: end; min-height: 42px; }
+      .dancer-roster-status { max-width: none; padding: 10px 12px; border: 1px solid rgba(148,229,255,.2); border-radius: 8px; color: #d5f8ff; background: rgba(148,229,255,.05); font-size: 13px; }
       .dancer-directory-list { display: grid; gap: 10px; }
-      .dancer-directory-row { display: grid; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
-      .dancer-directory-profile-link { display: grid; gap: 3px; width: 100%; }
+      .dancer-directory-row { display: grid; grid-template-columns: minmax(280px,1.2fr) minmax(340px,1fr) auto; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); }
+      .dancer-directory-row:hover { border-color: rgba(148,229,255,.25); background: rgba(148,229,255,.045); }
+      .dancer-directory-profile-link { display: grid; grid-template-columns: 52px minmax(0,1fr); align-items: center; gap: 10px; width: 100%; text-decoration: none; }
+      .dancer-roster-avatar { grid-row: span 2; display: grid; place-items: center; width: 52px; height: 52px; overflow: hidden; border: 1px solid rgba(148,229,255,.26); border-radius: 999px; color: #fff; background: rgba(139,92,246,.16); font-size: 20px; font-weight: 950; }
+      .dancer-roster-avatar img { width: 100%; height: 100%; object-fit: cover; }
+      .dancer-roster-identity { display: grid; gap: 2px; }
+      .dancer-roster-badges { grid-column: 2; display: flex; flex-wrap: wrap; gap: 5px; }
+      .dancer-roster-badge { padding: 4px 7px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #cfc5de; background: rgba(255,255,255,.045); font-size: 9px; font-style: normal; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; }
+      .dancer-roster-badge.is-approved, .dancer-roster-badge.is-working-now { color: #8dffc4; border-color: rgba(50,255,164,.28); background: rgba(50,255,164,.07); }
+      .dancer-roster-badge.is-pending-review, .dancer-roster-badge.is-upcoming { color: #94e5ff; border-color: rgba(148,229,255,.25); background: rgba(148,229,255,.06); }
+      .dancer-roster-badge.is-disabled, .dancer-roster-badge.danger { color: #ffb3bf; border-color: rgba(255,104,124,.3); background: rgba(255,104,124,.07); }
+      .dancer-roster-badge.is-demo { color: #d8c4ff; border-color: rgba(155,92,255,.35); background: rgba(155,92,255,.1); }
+      .dancer-roster-data { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+      .dancer-roster-data > span { display: grid; gap: 2px; }
+      .dancer-roster-data small { color: #857a98; font-size: 9px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+      .dancer-roster-data strong { color: #d8cfeb; font-size: 11px; }
       .dancer-directory-row strong { color: #fff; overflow-wrap: anywhere; }
       .dancer-directory-row small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
-      .dancer-directory-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .dancer-directory-actions { display: grid; gap: 8px; }
       .dancer-directory-actions button { min-height: 40px; padding: 8px 10px; }
+      .dancer-roster-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; }
+      .dancer-roster-pagination span { color: #b9accd; font-size: 12px; font-weight: 900; }
+      .dancer-roster-pagination button { padding: 0 14px; }
       .secondary-action { color: #f7f2ff; background: rgba(139,92,246,.16); border: 1px solid rgba(139,92,246,.34); }
       .danger-action { color: #fff; background: rgba(202,36,63,.88); border: 1px solid rgba(255,122,142,.56); padding: 9px 12px; }
       .danger-action:hover { background: rgba(225,45,73,.96); }
@@ -3959,11 +4171,19 @@ function AdminStyles() {
       .admin-preview-link p { margin: 0; color: #b9accd; }
       .admin-preview-link a { justify-self: start; color: #090911; background: #f7f2ff; border-radius: 999px; padding: 10px 14px; text-decoration: none; font-weight: 900; }
       .admin-profile-modal { width: min(920px, 100%); max-height: 92vh; }
+      .admin-dancer-tabs { position: sticky; top: -16px; z-index: 4; display: flex; gap: 6px; overflow-x: auto; padding: 10px 0; background: #08080c; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; }
+      .admin-dancer-tabs button { flex: 0 0 auto; min-height: 36px; padding: 0 10px; color: #b9accd; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); font-size: 11px; }
+      .admin-dancer-tabs button.active { color: #fff; border-color: rgba(148,229,255,.4); background: rgba(148,229,255,.1); }
       .admin-full-profile { display: grid; gap: 18px; }
       .admin-full-profile .submission-thumb img { aspect-ratio: 4 / 5; max-height: none; object-fit: cover; }
       .admin-profile-delete-zone { display: grid; gap: 9px; padding: 14px; border-radius: 8px; border: 1px solid rgba(255,104,124,.38); background: rgba(255,104,124,.08); }
       .admin-profile-delete-zone p { color: #ffccd4; font-size: 13px; }
       .admin-profile-delete-zone button { justify-self: start; }
+      .admin-profile-delete-zone textarea { width: 100%; min-height: 64px; padding: 10px; resize: vertical; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: rgba(255,255,255,.055); font: inherit; text-transform: none; }
+      .admin-profile-lifecycle-actions { display: flex; align-items: flex-start; gap: 9px; flex-wrap: wrap; }
+      .admin-profile-lifecycle-actions details { flex: 1 1 240px; padding: 10px; border: 1px solid rgba(255,104,124,.25); border-radius: 8px; }
+      .admin-profile-lifecycle-actions summary { cursor: pointer; color: #ffccd4; font-weight: 900; }
+      .admin-profile-lifecycle-actions details p { margin: 8px 0; }
       .submission-empty { color: #9c90b3; font-size: 13px; }
       .submission-json { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 10px; background: rgba(255,255,255,.035); }
       .submission-json summary { cursor: pointer; color: #94e5ff; font-weight: 900; }
@@ -4271,6 +4491,16 @@ function AdminStyles() {
         .account-table { padding: 0 10px; }
         .account-table [role="row"] { grid-template-columns: 1fr auto; gap: 7px; }
         .account-table [role="cell"]:first-child, .account-table [role="cell"]:last-child { grid-column: 1 / -1; }
+        .dancer-roster-summary { grid-template-columns: 1fr; }
+        .dancer-roster-filters { grid-template-columns: 1fr; padding: 10px; }
+        .dancer-roster-search { grid-column: 1; }
+        .dancer-directory-row { grid-template-columns: 1fr; gap: 10px; }
+        .dancer-roster-data { padding-left: 62px; }
+        .dancer-directory-actions button { width: 100%; }
+        .dancer-roster-pagination { justify-content: space-between; }
+        .admin-dancer-tabs { top: -16px; }
+        .admin-profile-lifecycle-actions { display: grid; grid-template-columns: 1fr; }
+        .admin-profile-lifecycle-actions > button, .admin-profile-lifecycle-actions details { width: 100%; }
       }
 
       /* Keep the routed admin workspace visually and behaviorally aligned with the

@@ -5,6 +5,10 @@ import {
   getAdminDancerDetail,
   requireAdmin,
 } from "@/src/lib/dancr/admin";
+import {
+  getAdminDancerOperationalDetail,
+  updateAdminDancerLifecycle,
+} from "@/src/lib/dancr/admin-dancers";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -27,14 +31,49 @@ export async function GET(request: Request, context: RouteContext) {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
-    const profile = await getAdminDancerDetail(createAdminSupabaseClient(), dancerId);
+    const admin = createAdminSupabaseClient();
+    const [profile, operations] = await Promise.all([
+      getAdminDancerDetail(admin, dancerId),
+      getAdminDancerOperationalDetail(admin, dancerId),
+    ]);
     if (!profile) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, profile });
+    return NextResponse.json({ ok: true, profile: { ...profile, operations } });
   } catch (error) {
     return apiError(error, "Unable to load dancer profile.");
+  }
+}
+
+export async function PATCH(request: Request, context: RouteContext) {
+  try {
+    const dancerId = await readDancerId(context);
+    if (!dancerId) {
+      return NextResponse.json({ ok: false, error: "Invalid dancer profile ID." }, { status: 400 });
+    }
+    const { client, user } = await createRequestSupabaseContext(request);
+    await requireAdmin(client, user.id);
+    const body = await request.json();
+    const action = body?.action === "disable" || body?.action === "reactivate" ? body.action : "";
+    const reason = typeof body?.reason === "string" ? body.reason.trim() : "";
+    if (!action) {
+      return NextResponse.json({ ok: false, error: "Action must be disable or reactivate." }, { status: 400 });
+    }
+    const lifecycle = await updateAdminDancerLifecycle(createAdminSupabaseClient(), {
+      dancerId,
+      adminId: user.id,
+      action,
+      reason,
+    });
+    const admin = createAdminSupabaseClient();
+    const [profile, operations] = await Promise.all([
+      getAdminDancerDetail(admin, dancerId),
+      getAdminDancerOperationalDetail(admin, dancerId),
+    ]);
+    return NextResponse.json({ ok: true, lifecycle, profile: profile ? { ...profile, operations } : null });
+  } catch (error) {
+    return apiError(error, "Unable to update dancer lifecycle.");
   }
 }
 

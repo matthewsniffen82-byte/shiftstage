@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getAdminDancerDirectory, getApprovalQueue, requireAdmin, reviewDancerProfile, reviewSubmissionContent } from "@/src/lib/dancr/admin";
+import { getApprovalQueue, requireAdmin, reviewDancerProfile, reviewSubmissionContent } from "@/src/lib/dancr/admin";
 import type { ReviewStatus } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -16,8 +16,12 @@ export async function GET(request: Request) {
     await requireAdmin(client, user.id);
 
     const admin = createAdminSupabaseClient();
-    const [queue, dancers] = await Promise.all([getApprovalQueue(admin), getAdminDancerDirectory(admin)]);
-    return NextResponse.json({ ok: true, queue, dancers });
+    const queue = await getApprovalQueue(admin);
+    const { count, error } = await (admin as any)
+      .from("dancer_profiles")
+      .select("id", { count: "exact", head: true });
+    if (error) throw error;
+    return NextResponse.json({ ok: true, queue, dancerTotal: Number(count || 0) });
   } catch (error) {
     return apiError(error, "Unable to load approval queue.");
   }
