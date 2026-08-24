@@ -9,6 +9,8 @@ import {
   persistDashboardSession,
   persistRefreshedDashboardSession,
   readDashboardAccessToken,
+  requestAgentCommissionsJson,
+  requestAgentCommissionStatement,
   requestCustomerProfileJson,
   requestDancerAvatarJson,
   requestDancerFinanceJson,
@@ -41,6 +43,7 @@ const [dashboard, dashboardSession, venueTvPanel, venueTeamPanel, venueNfcPanel,
   readFile(new URL("../app/dashboard/venue/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
+const agentDashboard = await readFile(new URL("../app/dashboard/agent/AgentDashboardClient.tsx", import.meta.url), "utf8");
 
 test("customer, dancer, and venue use the same routed dashboard client", () => {
   assert.match(customerRoute, /<DashboardClient role="customer"/);
@@ -1139,6 +1142,117 @@ test("venue NFC operations use refresh-aware venue boundaries", async () => {
   assert.match(venueNfcPanel, /requestVenueNfcSupportJson/);
   assert.doesNotMatch(venueNfcPanel, /fetch\(/);
   assert.doesNotMatch(venueNfcPanel, /currentDashboardAuthHeaders|persistRefreshedDashboardSession/);
+});
+
+test("sales agent commission actions use the shared refresh-aware session boundary", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    if (path === "/api/agent/commissions?format=csv") {
+      return new Response("venue,amount\nClub,15.00", {
+        status: 200,
+        headers: { "content-type": "text/csv" },
+      });
+    }
+    const statementAccess = path === "/api/agent/commissions?access=1";
+    return new Response(JSON.stringify({
+      ok: true,
+      dashboard: { commissions: [] },
+      access: { active: true },
+      session: {
+        accessToken: statementAccess ? "statement-agent-access" : "rotated-agent-access",
+        expiresAt: 99999,
+      },
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "agent-account-access",
+      refreshToken: "agent-account-refresh",
+      account: { role: "customer" },
+    }));
+    await requestAgentCommissionsJson({ cache: "no-store" });
+    await requestAgentCommissionsJson({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "request_nats_link", loginId: "42", username: "agent" }),
+    });
+    const statement = await requestAgentCommissionStatement();
+    assert.equal(await statement.text(), "venue,amount\nClub,15.00");
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/agent/commissions",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer agent-account-access",
+            "x-dancr-refresh-token": "agent-account-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/agent/commissions",
+        options: {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-agent-access",
+            "x-dancr-refresh-token": "agent-account-refresh",
+          },
+          body: JSON.stringify({ action: "request_nats_link", loginId: "42", username: "agent" }),
+        },
+      },
+      {
+        path: "/api/agent/commissions?access=1",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer rotated-agent-access",
+            "x-dancr-refresh-token": "agent-account-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/agent/commissions?format=csv",
+        options: {
+          headers: {
+            authorization: "Bearer statement-agent-access",
+            "x-dancr-refresh-token": "agent-account-refresh",
+          },
+        },
+      },
+    ]);
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "statement-agent-access",
+      refreshToken: "agent-account-refresh",
+      expiresAt: 99999,
+      account: { role: "customer" },
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestAgentCommissionsJson/);
+  assert.match(dashboardSession, /function requestAgentCommissionStatement/);
+  assert.match(agentDashboard, /requestAgentCommissionsJson/);
+  assert.match(agentDashboard, /requestAgentCommissionStatement/);
+  assert.doesNotMatch(agentDashboard, /fetch\(|readBrowserAccessToken|authorization: `Bearer/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {

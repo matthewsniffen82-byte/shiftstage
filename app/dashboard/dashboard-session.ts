@@ -261,6 +261,34 @@ export function requestVenueNfcSupportJson(options: DashboardJsonRequestOptions 
   });
 }
 
+export function requestAgentCommissionsJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/agent/commissions", {
+    ...options,
+    fallbackMessage: options.fallbackMessage || "Unable to load agent commissions.",
+  });
+}
+
+export async function requestAgentCommissionStatement() {
+  await requestDashboardJson("/api/agent/commissions?access=1", {
+    cache: "no-store",
+    fallbackMessage: "Unable to verify sales agent access.",
+  });
+  const authHeaders = currentDashboardAuthHeaders();
+  if (!authHeaders) throw new DashboardDataRequestError("Sign in required.", 401);
+
+  const response = await fetch("/api/agent/commissions?format=csv", {
+    headers: authHeaders,
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new DashboardDataRequestError(
+      data?.error || data?.message || "Unable to download the statement.",
+      response.status,
+    );
+  }
+  return response.blob();
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();

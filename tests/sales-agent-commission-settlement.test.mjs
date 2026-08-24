@@ -114,4 +114,8 @@ test("agent dashboard reports the referral pipeline, immutable agreements, and r
   assert.match(agentDashboard, /Confirmed club attribution/);
   assert.match(agentDashboard, /Commission ledger/);
   assert.match(agentDashboard, /Download statement/);
+  assert.match(agentRoute, /session: authContext\.session \|\| null/);
+  assert.match(agentDashboard, /requestAgentCommissionsJson/);
+  assert.match(agentDashboard, /requestAgentCommissionStatement/);
+  assert.doesNotMatch(agentDashboard, /fetch\("\/api\/agent\/commissions/);
 });

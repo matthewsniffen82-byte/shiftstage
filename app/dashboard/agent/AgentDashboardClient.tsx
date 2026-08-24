@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
-import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import {
+  readDashboardAccessToken,
+  requestAgentCommissionsJson,
+  requestAgentCommissionStatement,
+} from "../dashboard-session";
 
 type Row = Record<string, any>;
 
@@ -17,14 +21,10 @@ export default function AgentDashboardClient() {
   const [username, setUsername] = useState("");
 
   const load = useCallback(async () => {
-    const token = readBrowserAccessToken();
-    if (!token) throw new Error("Sign in with your designated sales agent account to continue.");
-    const response = await fetch("/api/agent/commissions", {
-      headers: { authorization: `Bearer ${token}` },
+    if (!readDashboardAccessToken()) throw new Error("Sign in with your designated sales agent account to continue.");
+    const data = await requestAgentCommissionsJson({
       cache: "no-store",
     });
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load agent commissions.");
     setDashboard(data.dashboard);
   }, []);
 
@@ -36,18 +36,16 @@ export default function AgentDashboardClient() {
 
   async function requestNats(event: FormEvent) {
     event.preventDefault();
-    const token = readBrowserAccessToken();
-    if (!token) return;
+    if (!readDashboardAccessToken()) return;
     setWorking(true);
     setStatus("Submitting the NATS affiliate link for verification…");
     try {
-      const response = await fetch("/api/agent/commissions", {
+      const data = await requestAgentCommissionsJson({
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "request_nats_link", loginId, username }),
+        fallbackMessage: "Unable to link the NATS account.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to link the NATS account.");
       setDashboard(data.dashboard);
       setStatus("NATS account submitted for administrator verification.");
     } catch (error) {
@@ -58,16 +56,11 @@ export default function AgentDashboardClient() {
   }
 
   async function downloadStatement() {
-    const token = readBrowserAccessToken();
-    if (!token) return;
+    if (!readDashboardAccessToken()) return;
     setWorking(true);
     setStatus("Preparing your commission statement…");
     try {
-      const response = await fetch("/api/agent/commissions?format=csv", {
-        headers: { authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error("Unable to download the statement.");
-      const url = URL.createObjectURL(await response.blob());
+      const url = URL.createObjectURL(await requestAgentCommissionStatement());
       const anchor = document.createElement("a");
       anchor.href = url;
       anchor.download = `mydancr-agent-statement-${new Date().toISOString().slice(0, 10)}.csv`;

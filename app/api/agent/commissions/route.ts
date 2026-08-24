@@ -11,15 +11,22 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { user } = await createRequestSupabaseContext(request);
+    const authContext = await createRequestSupabaseContext(request);
+    const { user } = authContext;
     const url = new URL(request.url);
     const admin = createAdminSupabaseClient();
     if (url.searchParams.get("access") === "1") {
       const { data, error } = await (admin as any).from("sales_agents")
         .select("id").eq("user_id", user.id).eq("status", "active").maybeSingle();
       if (error) throw error;
-      return NextResponse.json({ ok: true, access: { active: Boolean(data?.id) } },
-        { headers: { "cache-control": "private, no-store" } });
+      return NextResponse.json(
+        {
+          ok: true,
+          access: { active: Boolean(data?.id) },
+          session: authContext.session || null,
+        },
+        { headers: { "cache-control": "private, no-store" } },
+      );
     }
     const dashboard = await getAgentCommissionDashboard(admin, user.id);
     if (url.searchParams.get("format") === "csv") {
@@ -29,7 +36,11 @@ export async function GET(request: Request) {
         "cache-control": "private, no-store",
       } });
     }
-    return NextResponse.json({ ok: true, dashboard }, { headers: { "cache-control": "private, no-store" } });
+    return NextResponse.json({
+      ok: true,
+      dashboard,
+      session: authContext.session || null,
+    }, { headers: { "cache-control": "private, no-store" } });
   } catch (error) {
     return apiError(error, "Unable to load agent commissions.");
   }
@@ -37,7 +48,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { user } = await createRequestSupabaseContext(request);
+    const authContext = await createRequestSupabaseContext(request);
+    const { user } = authContext;
     const body = await request.json().catch(() => ({}));
     if (body.action !== "request_nats_link") {
       return NextResponse.json({ ok: false, error: "Unsupported sales agent action." }, { status: 400 });
@@ -52,7 +64,11 @@ export async function POST(request: Request) {
     }
     const admin = createAdminSupabaseClient();
     await requestNatsAgentAffiliateLink(admin, user.id, { loginId, username: username || null });
-    return NextResponse.json({ ok: true, dashboard: await getAgentCommissionDashboard(admin, user.id) });
+    return NextResponse.json({
+      ok: true,
+      dashboard: await getAgentCommissionDashboard(admin, user.id),
+      session: authContext.session || null,
+    });
   } catch (error) {
     return apiError(error, "Unable to link the NATS agent account.");
   }
