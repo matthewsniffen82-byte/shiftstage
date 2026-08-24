@@ -97,7 +97,8 @@ test("onboarding arrives fully collapsed and exposes accessible controls", () =>
 
 test("profile and media workspace uses production avatar face centering and moderation", () => {
   assert.match(dashboard, /DancerAvatarPanel/);
-  assert.match(dashboard, /fetch\("\/api\/dancer\/avatar"/);
+  assert.match(dashboard, /requestDancerAvatarJson/);
+  assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/avatar"/);
   assert.match(dashboard, /Checking your avatar/);
   assert.match(dashboard, /pendingAvatar \? "Checking"/);
   assert.match(avatarRoute, /moderateAndStoreDancerPhoto/);

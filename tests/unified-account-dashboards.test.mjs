@@ -10,6 +10,7 @@ import {
   persistRefreshedDashboardSession,
   readDashboardAccessToken,
   requestCustomerProfileJson,
+  requestDancerAvatarJson,
   requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
@@ -606,6 +607,95 @@ test("customer preference saves use the refresh-aware customer boundary", async 
   assert.match(preferencesPanel, /requestCustomerProfileJson/);
   assert.doesNotMatch(preferencesPanel, /fetch\("\/api\/customer\/profile"/);
   assert.doesNotMatch(preferencesPanel, /authorization: `Bearer/);
+});
+
+test("dancer avatar uploads and removals use the refresh-aware dancer boundary", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    return new Response(JSON.stringify({ ok: true, decision: "pending" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "dancer-access",
+      refreshToken: "dancer-refresh",
+      account: { role: "dancer" },
+    }));
+    const avatarForm = new FormData();
+    avatarForm.set("idempotencyKey", "avatar-upload-key");
+    await requestDancerAvatarJson({
+      method: "POST",
+      headers: { "idempotency-key": "avatar-upload-key" },
+      body: avatarForm,
+      fallbackMessage: "Unable to upload avatar.",
+    });
+    await requestDancerAvatarJson({
+      method: "DELETE",
+      fallbackMessage: "Unable to remove avatar.",
+    });
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/dancer/avatar",
+        options: {
+          method: "POST",
+          headers: {
+            "idempotency-key": "avatar-upload-key",
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: avatarForm,
+        },
+      },
+      {
+        path: "/api/dancer/avatar",
+        options: {
+          method: "DELETE",
+          headers: {
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+        },
+      },
+    ]);
+
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      ok: false,
+      message: "Avatar needs a visible face.",
+    }), {
+      status: 422,
+      headers: { "content-type": "application/json" },
+    });
+    await assert.rejects(
+      requestDancerAvatarJson({ method: "POST", body: avatarForm }),
+      (error) => error instanceof DashboardDataRequestError
+        && error.status === 422
+        && error.message === "Avatar needs a visible face.",
+    );
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  const avatarPanel = dashboard.match(/function DancerAvatarPanel[\s\S]*?function DancerVenueVerificationPanel/)?.[0] || "";
+  assert.match(dashboardSession, /function requestDancerAvatarJson/);
+  assert.match(avatarPanel, /requestDancerAvatarJson/);
+  assert.doesNotMatch(avatarPanel, /fetch\("\/api\/dancer\/avatar"/);
+  assert.doesNotMatch(avatarPanel, /authorization: `Bearer/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {

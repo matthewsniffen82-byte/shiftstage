@@ -31,6 +31,7 @@ import {
   readOptionalJson,
   readSession,
   requestCustomerProfileJson,
+  requestDancerAvatarJson,
   requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
@@ -5004,13 +5005,12 @@ function DancerAvatarPanel({
     setUploadProgress(25);
     setStatus("Checking your avatar...");
     try {
-      const response = await fetch("/api/dancer/avatar", {
+      const data = await requestDancerAvatarJson({
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "idempotency-key": uploadKey },
+        headers: { "idempotency-key": uploadKey },
         body: formData,
+        fallbackMessage: "Unable to upload avatar.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || data.error || "Unable to upload avatar.");
       setUploadProgress(85);
       await refreshProfile();
       setFile(null);
@@ -5037,12 +5037,10 @@ function DancerAvatarPanel({
     setIsSaving(true);
     setStatus("Removing avatar...");
     try {
-      const response = await fetch("/api/dancer/avatar", {
+      await requestDancerAvatarJson({
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}` },
+        fallbackMessage: "Unable to remove avatar.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove avatar.");
       await refreshProfile();
       setStatus("Avatar removed.");
     } catch (error) {

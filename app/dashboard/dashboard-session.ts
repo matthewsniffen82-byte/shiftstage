@@ -131,7 +131,7 @@ export async function requestDashboardJson(
   });
   const data = await response.json().catch(() => null);
   if (!response.ok || !data?.ok) {
-    throw new DashboardDataRequestError(data?.error || fallbackMessage, response.status);
+    throw new DashboardDataRequestError(data?.error || data?.message || fallbackMessage, response.status);
   }
   persistResponseSession(data);
   return data;
@@ -142,6 +142,14 @@ export function requestDancerProfileJson(options: DashboardJsonRequestOptions = 
     ...options,
     expectedRole: "dancer",
     fallbackMessage: options.fallbackMessage || "Unable to update dancer profile.",
+  });
+}
+
+export function requestDancerAvatarJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/avatar", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update dancer avatar.",
   });
 }
 
