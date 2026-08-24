@@ -33,6 +33,8 @@ import {
   requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
+  requestDancerShiftCheckInJson,
+  requestDancerShiftsJson,
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestVenueDancerVerificationsJson,
@@ -5711,10 +5713,11 @@ function DancerShiftPanel() {
   const [editStartsAt, setEditStartsAt] = useState("");
   const [editEndsAt, setEditEndsAt] = useState("");
 
-  const loadShifts = useCallback(async (accessToken: string) => {
-    const response = await fetch("/api/dancer/shifts", { headers: { authorization: `Bearer ${accessToken}` } });
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load posted shifts.");
+  const loadShifts = useCallback(async () => {
+    const data = await requestDancerShiftsJson({
+      cache: "no-store",
+      fallbackMessage: "Unable to load posted shifts.",
+    });
     const approvedVenues = Array.isArray(data.venues) ? data.venues : [];
     setShifts(data.shifts || []);
     setVenues(approvedVenues);
@@ -5729,7 +5732,7 @@ function DancerShiftPanel() {
   useEffect(() => {
     const session = readSession();
     if (!session?.accessToken) return;
-    void loadShifts(session.accessToken).catch((error) => {
+    void loadShifts().catch((error) => {
       setStatus(error instanceof Error ? error.message : "Unable to load posted shifts.");
     });
   }, [loadShifts]);
@@ -5750,22 +5753,21 @@ function DancerShiftPanel() {
     setIsSaving(true);
     setStatus("");
     try {
-      const response = await fetch("/api/dancer/shifts", {
+      const data = await requestDancerShiftsJson({
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           venueId,
           startsAt: new Date(startsAt).toISOString(),
           endsAt: new Date(endsAt).toISOString(),
         }),
+        fallbackMessage: "Unable to post shift.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to post shift.");
       setStatus(`Shift posted. ${data.broadcastRecipients || 0} followers notified.`);
       setCheckInStatus("Shift posted. During the shift, tap the venue's official dressing-room NFC sticker to appear Working Now.");
       setStartsAt("");
       setEndsAt("");
-      await loadShifts(session.accessToken);
+      await loadShifts();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to post shift.");
     } finally {
@@ -5803,21 +5805,20 @@ function DancerShiftPanel() {
     setIsSaving(true);
     setStatus("");
     try {
-      const response = await fetch("/api/dancer/shifts", {
+      await requestDancerShiftsJson({
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           shiftId,
           venueId: editVenueId,
           startsAt: new Date(editStartsAt).toISOString(),
           endsAt: new Date(editEndsAt).toISOString(),
         }),
+        fallbackMessage: "Unable to update shift.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update shift.");
       setStatus("Shift updated. During those posted hours, tap the venue's dressing-room NFC sticker to check in.");
       stopEditingShift();
-      await loadShifts(session.accessToken);
+      await loadShifts();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update shift.");
     } finally {
@@ -5834,13 +5835,12 @@ function DancerShiftPanel() {
 
     setDeletingShiftId(shiftId);
     try {
-      const response = await fetch("/api/dancer/shifts", {
+      const data = await requestDancerShiftsJson({
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ shiftId, status: "cancelled" }),
+        fallbackMessage: "Unable to cancel shift.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to cancel shift.");
 
       setShifts((current) => current.filter((shift) => String(shift.id) !== shiftId));
       if (editingShiftId === shiftId) stopEditingShift();
@@ -5862,17 +5862,16 @@ function DancerShiftPanel() {
     setActiveCheckInId(shiftId);
     setStatus("");
     try {
-      const response = await fetch("/api/dancer/shifts/check-in", {
+      await requestDancerShiftCheckInJson({
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ shiftId }),
+        fallbackMessage: "Unable to check out.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check out.");
       setCheckInStatus("NFC check-in ended. Club Deal commission tracking is stopped.");
       setCheckInTone("success");
       setStatus("Checked out. This shift is no longer Working Now.");
-      await loadShifts(session.accessToken);
+      await loadShifts();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to check out.";
       setCheckInStatus(message);

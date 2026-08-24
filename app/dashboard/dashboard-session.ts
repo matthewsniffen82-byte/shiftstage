@@ -181,6 +181,22 @@ export function requestVenueDancerVerificationsJson(
   });
 }
 
+export function requestDancerShiftsJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/shifts", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update dancer shifts.",
+  });
+}
+
+export function requestDancerShiftCheckInJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/shifts/check-in", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update NFC check-in.",
+  });
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();

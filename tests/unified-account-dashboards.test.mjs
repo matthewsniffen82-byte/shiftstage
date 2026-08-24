@@ -12,6 +12,8 @@ import {
   requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
+  requestDancerShiftCheckInJson,
+  requestDancerShiftsJson,
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestVenueDancerVerificationsJson,
@@ -458,6 +460,77 @@ test("dancer and venue affiliation actions share role-aware refresh boundaries",
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/venue-verification"/);
   assert.doesNotMatch(dashboard, /fetch\(`\/api\/venue\/dancer-verifications/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/venue\/dancer-verifications"/);
+});
+
+test("dancer schedule actions use refresh-aware role boundaries", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "dancer-access",
+      refreshToken: "dancer-refresh",
+      account: { role: "dancer" },
+    }));
+    await requestDancerShiftsJson({ cache: "no-store" });
+    await requestDancerShiftCheckInJson({
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ shiftId: "shift-id" }),
+    });
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/dancer/shifts",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/dancer/shifts/check-in",
+        options: {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: JSON.stringify({ shiftId: "shift-id" }),
+        },
+      },
+    ]);
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  const shiftPanel = dashboard.match(/function DancerShiftPanel\(\)[\s\S]*?function canCheckInToShift/)?.[0] || "";
+  assert.match(dashboardSession, /function requestDancerShiftsJson/);
+  assert.match(dashboardSession, /function requestDancerShiftCheckInJson/);
+  assert.match(shiftPanel, /requestDancerShiftsJson/);
+  assert.match(shiftPanel, /requestDancerShiftCheckInJson/);
+  assert.doesNotMatch(shiftPanel, /fetch\("\/api\/dancer\/shifts/);
+  assert.doesNotMatch(shiftPanel, /authorization: `Bearer/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
