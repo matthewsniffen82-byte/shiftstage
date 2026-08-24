@@ -512,6 +512,12 @@ test("dancer schedule actions use refresh-aware role boundaries", async () => {
       account: { role: "dancer" },
     }));
     await requestDancerShiftsJson({ cache: "no-store" });
+    await requestDancerShiftsJson({
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ shiftId: "shift-id", status: "cancelled" }),
+      fallbackMessage: "Unable to save changes.",
+    });
     await requestDancerShiftCheckInJson({
       method: "DELETE",
       headers: { "content-type": "application/json" },
@@ -527,6 +533,18 @@ test("dancer schedule actions use refresh-aware role boundaries", async () => {
             authorization: "Bearer dancer-access",
             "x-dancr-refresh-token": "dancer-refresh",
           },
+        },
+      },
+      {
+        path: "/api/dancer/shifts",
+        options: {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: JSON.stringify({ shiftId: "shift-id", status: "cancelled" }),
         },
       },
       {
@@ -552,8 +570,12 @@ test("dancer schedule actions use refresh-aware role boundaries", async () => {
   assert.match(dashboardSession, /function requestDancerShiftCheckInJson/);
   assert.match(shiftPanel, /requestDancerShiftsJson/);
   assert.match(shiftPanel, /requestDancerShiftCheckInJson/);
+  assert.match(dancerShiftManager, /requestDancerShiftsJson/);
+  assert.match(dancerShiftManager, /requestDancerShiftCheckInJson/);
   assert.doesNotMatch(shiftPanel, /fetch\("\/api\/dancer\/shifts/);
   assert.doesNotMatch(shiftPanel, /authorization: `Bearer/);
+  assert.doesNotMatch(dancerShiftManager, /fetch\(/);
+  assert.doesNotMatch(dancerShiftManager, /readDashboardAccessToken/);
 });
 
 test("customer preference saves use the refresh-aware customer boundary", async () => {
@@ -722,7 +744,7 @@ test("dancer avatar uploads and removals use the refresh-aware dancer boundary",
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
   assert.match(dancerTvStudio, /currentDashboardAuthHeaders\("dancer"\)/);
   assert.match(dancerNfcPanel, /requestDancerVenueVerificationJson/);
-  assert.match(dancerShiftManager, /readDashboardAccessToken\("dancer"\)/);
+  assert.match(dancerShiftManager, /requestDancerShiftsJson/);
   for (const panel of [dancerTvStudio, dancerNfcPanel, dancerShiftManager]) {
     assert.doesNotMatch(panel, /const SESSION_KEY|dancrAuthSessionV1|localStorage\.getItem\(|function readSession\(|function readDashboardSession\(|function authHeaders\(/);
   }

@@ -8,7 +8,11 @@ import {
   nfcNextTapAllowedAt,
   nfcPresenceMinutesRemaining,
 } from "@/src/lib/dancr/shift-presence";
-import { readDashboardAccessToken } from "./dashboard-session";
+import {
+  DashboardDataRequestError,
+  requestDancerShiftCheckInJson,
+  requestDancerShiftsJson,
+} from "./dashboard-session";
 
 type VenueOption = { id: string; name: string; timezone?: string };
 type ShiftRow = Record<string, any>;
@@ -29,14 +33,10 @@ export default function DancerShiftManager() {
   const [editDate, setEditDate] = useState("");
 
   const load = useCallback(async () => {
-    const token = readDashboardAccessToken("dancer");
-    if (!token) throw new Error("Sign in required.");
-    const response = await fetch("/api/dancer/shifts", {
+    const data = await requestDancerShiftsJson({
       cache: "no-store",
-      headers: { authorization: `Bearer ${token}` },
+      fallbackMessage: "Unable to load shifts.",
     });
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load shifts.");
     const nextVenues = Array.isArray(data.venues) ? data.venues : [];
     setVenues(nextVenues);
     setShifts(Array.isArray(data.shifts) ? data.shifts : []);
@@ -75,7 +75,7 @@ export default function DancerShiftManager() {
       setStatus("Choose a venue and date.");
       return;
     }
-    await saveRequest("/api/dancer/shifts", "POST", { venueId, shiftDate }, "Upcoming date posted.");
+    await saveRequest("POST", { venueId, shiftDate }, "Upcoming date posted.");
     setShiftDate("");
   }
 
@@ -84,35 +84,27 @@ export default function DancerShiftManager() {
       setStatus("Choose a venue and date before saving.");
       return;
     }
-    await saveRequest("/api/dancer/shifts", "PATCH", { shiftId, venueId: editVenueId, shiftDate: editDate }, "Upcoming date updated.");
+    await saveRequest("PATCH", { shiftId, venueId: editVenueId, shiftDate: editDate }, "Upcoming date updated.");
     setEditingId("");
   }
 
   async function cancelDate(shiftId: string) {
-    await saveRequest("/api/dancer/shifts", "PATCH", { shiftId, status: "cancelled" }, "Upcoming date cancelled.");
+    await saveRequest("PATCH", { shiftId, status: "cancelled" }, "Upcoming date cancelled.");
   }
 
   async function endWorkingNow() {
     if (!activeShift?.id) return;
-    const token = readDashboardAccessToken("dancer");
-    if (!token) {
-      setWorkingNowStatusKind("error");
-      setWorkingNowStatus("Sign in again before ending Working Now.");
-      return;
-    }
-
     setEndConfirmationOpen(false);
     setSaving(true);
     setWorkingNowStatusKind("");
     setWorkingNowStatus("Ending Working Now...");
     try {
-      const response = await fetch("/api/dancer/shifts/check-in", {
+      await requestDancerShiftCheckInJson({
         method: "DELETE",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ shiftId: activeShift.id }),
+        fallbackMessage: "Unable to end Working Now.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to end Working Now.");
       setWorkingNowStatusKind("success");
       setWorkingNowStatus("Working Now ended. Guests no longer see you in Working Now.");
       try {
@@ -122,28 +114,24 @@ export default function DancerShiftManager() {
       }
     } catch (error) {
       setWorkingNowStatusKind("error");
-      setWorkingNowStatus(error instanceof Error ? error.message : "Unable to end Working Now.");
+      setWorkingNowStatus(error instanceof DashboardDataRequestError && error.status === 401
+        ? "Sign in again before ending Working Now."
+        : error instanceof Error ? error.message : "Unable to end Working Now.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function saveRequest(url: string, method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, success: string) {
-    const token = readDashboardAccessToken("dancer");
-    if (!token) {
-      setStatus("Sign in required.");
-      return;
-    }
+  async function saveRequest(method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, success: string) {
     setSaving(true);
     setStatus("");
     try {
-      const response = await fetch(url, {
+      await requestDancerShiftsJson({
         method,
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
+        fallbackMessage: "Unable to save changes.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save changes.");
       setStatus(success);
       await load();
     } catch (error) {
