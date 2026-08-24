@@ -39,7 +39,7 @@ test("owner pauses block every venue team role while personal team-account delet
 
 test("venue dashboard exposes clear reversible and permanent account controls", () => {
   const controls = dashboard.match(/function AccountControlsPanel[\s\S]*?function CustomerPanel/)?.[0] || "";
-  const venueAccount = dashboard.match(/id="venue-account"[\s\S]*?\{isVenueCardPreviewOpen/)?.[0] || "";
+  const venueAccount = dashboard.match(/id="venue-account"[\s\S]*?accountRole="venue"[\s\S]*?\/>/)?.[0] || "";
   assert.match(venueAccount, /accountRole="venue"/);
   assert.match(venueAccount, /venueAccessRole=\{venueRole\}/);
   assert.match(controls, /Disable venue account/);
