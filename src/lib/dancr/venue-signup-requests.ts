@@ -262,7 +262,7 @@ function normalizeWebsite(value: unknown) {
   if (!text) return null;
   try {
     const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-    if (!/^https?:$/.test(url.protocol) || !url.hostname.includes(".")) throw new Error("invalid");
+    if (!/^https?:$/.test(url.protocol) || !url.hostname.includes(".") || url.username || url.password) throw new Error("invalid");
     url.hash = "";
     return url.toString();
   } catch {

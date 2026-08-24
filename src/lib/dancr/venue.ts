@@ -770,11 +770,14 @@ function optionalUrl(value: string | null | undefined) {
   if (!text) return null;
   let url: URL;
   try {
-    url = new URL(text);
+    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
   } catch {
-    throw new Error("Website must be a valid URL.");
+    throw new Error("Enter a valid venue website, such as www.yourclub.com.");
   }
-  if (!["http:", "https:"].includes(url.protocol)) throw new Error("Website must use http or https.");
+  if (!["http:", "https:"].includes(url.protocol) || !url.hostname.includes(".") || url.username || url.password) {
+    throw new Error("Enter a valid venue website, such as www.yourclub.com.");
+  }
+  url.hash = "";
   return url.toString();
 }
 

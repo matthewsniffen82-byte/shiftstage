@@ -2250,9 +2250,14 @@ function VenuePanel({
                 <label key={key}>
                   {venueFieldLabel(key)}
                   <input
+                    autoCapitalize={key === "website" ? "none" : undefined}
+                    autoComplete={key === "website" ? "url" : undefined}
                     disabled={!canManageProfile}
+                    inputMode={key === "website" ? "url" : undefined}
+                    placeholder={key === "website" ? "www.yourclub.com" : undefined}
                     required={["name", "city", "state", "address", "phone", "opensAt", "closesAt"].includes(key)}
-                    type={key === "website" ? "url" : key === "opensAt" || key === "closesAt" ? "time" : key === "phone" ? "tel" : "text"}
+                    spellCheck={key === "website" ? false : undefined}
+                    type={key === "opensAt" || key === "closesAt" ? "time" : key === "phone" ? "tel" : "text"}
                     value={value}
                     onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
                   />

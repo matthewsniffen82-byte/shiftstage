@@ -11,6 +11,8 @@ const [
   adminClient,
   liveApp,
   clubJoinPage,
+  venueService,
+  venueDashboard,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220001_venue_signup_requests.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
@@ -20,6 +22,8 @@ const [
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/clubs/join/page.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
 test("public venue signup requests are private, validated, deduplicated, and rate limited", () => {
@@ -64,6 +68,17 @@ test("the live venue request form submits the verified business contact for revi
   assert.match(liveApp, /submit\.textContent = "✓ Request received"/);
   assert.match(liveApp, /function openVenueRequest\(\)/);
   assert.match(liveApp, /url\.searchParams\.get\("venueRequest"\) === "1"/);
+});
+
+test("venue website fields accept www domains and normalize them to secure URLs", () => {
+  assert.match(liveApp, /id="venueRequestWebsite"[^>]*type="text"[^>]*inputmode="url"[^>]*placeholder="www\.yourclub\.com"/);
+  assert.match(liveApp, /id="venueProfileWebsiteInput"[^>]*type="text"[^>]*inputmode="url"[^>]*placeholder="www\.yourclub\.com"/);
+  assert.doesNotMatch(liveApp, /id="venue(?:Request|Profile)Website(?:Input)?"[^>]*type="url"/);
+  assert.match(requestService, /new URL\(\/\^https\?:\\\/\\\/\/i\.test\(text\) \? text : `https:\/\/\$\{text\}`\)/);
+  assert.match(venueService, /new URL\(\/\^https\?:\\\/\\\/\/i\.test\(text\) \? text : `https:\/\/\$\{text\}`\)/);
+  assert.match(venueDashboard, /placeholder=\{key === "website" \? "www\.yourclub\.com" : undefined\}/);
+  assert.match(venueDashboard, /type=\{key === "opensAt" \|\| key === "closesAt" \? "time" : key === "phone" \? "tel" : "text"\}/);
+  assert.doesNotMatch(venueDashboard, /type=\{key === "website" \? "url"/);
 });
 
 test("club listing is available only through venue account creation", () => {
