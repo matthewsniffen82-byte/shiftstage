@@ -188,9 +188,19 @@ test("the canonical live shell uses cashier NFC instead of generating customer Q
 test("signed-in customer dashboards retain saved Club Deal state without owning redemption", () => {
   assert.match(customerDashboard, /CustomerDealPassPanel/);
   assert.match(customerDashboard, /dealRedemptions/);
+  assert.match(deals, /venues\(id, name, slug\)/);
   assert.match(liveApp, /Saved Club Deals/);
   assert.match(liveApp, /No saved Club Deals yet/);
   assert.match(liveApp, /Save a Club Deal to find it here later/);
+  assert.match(liveApp, /mergeLiveCustomerDealPasses\(saved\?\.dealRedemptions\)/);
+  assert.match(liveApp, /id="customerDealQuickCount"/);
+  assert.match(liveApp, /id="customerDealQuickCta"[^>]*>New deal saved · Open</);
+  assert.match(liveApp, /function unseenSavedDealCount\(\)/);
+  assert.match(liveApp, /savedAt: existingSavedPass\?\.savedAt \|\| new Date\(\)\.toISOString\(\)/);
+  assert.match(liveApp, /classList\.toggle\("has-new-deal", hasNewDeal\)/);
+  assert.match(liveApp, /function markSavedDealsSeen\(\)/);
+  assert.match(liveApp, /customerDealQuickBtn\.setAttribute\("aria-expanded", "true"\);\s*markSavedDealsSeen\(\);/);
+  assert.match(liveApp, /\.customer-deal-quick-cta \{/);
   assert.doesNotMatch(liveApp, /Tap a QR to enlarge it and show it at the club/);
   assert.doesNotMatch(liveApp, /Saved Club Deals will appear here after you choose an offer/);
 });

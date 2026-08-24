@@ -31296,6 +31296,83 @@
       }
     }
 
+    .customer-deal-quick-count {
+      color: #04120a !important;
+      background: #49f58b !important;
+      box-shadow: 0 0 14px rgba(73, 245, 139, 0.5) !important;
+    }
+
+    .customer-deal-quick-cta {
+      position: absolute;
+      top: calc(100% + 9px);
+      right: -2px;
+      z-index: 125;
+      width: max-content;
+      max-width: min(220px, calc(100vw - 24px));
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(73, 245, 139, 0.45);
+      border-radius: 999px;
+      color: #f7fff9;
+      background:
+        linear-gradient(180deg, rgba(73, 245, 139, 0.1), rgba(73, 245, 139, 0.02)),
+        rgba(6, 12, 9, 0.96);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 10px 30px rgba(0, 0, 0, 0.46),
+        0 0 20px rgba(73, 245, 139, 0.16);
+      -webkit-backdrop-filter: blur(16px) saturate(1.08);
+      backdrop-filter: blur(16px) saturate(1.08);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      pointer-events: none;
+      animation: customerDealQuickCtaIn 0.34s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    .customer-deal-quick-cta::after {
+      content: "\2192";
+      color: #49f58b;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .customer-deal-quick-cta[hidden] {
+      display: none !important;
+    }
+
+    header .customer-quick-btn.has-new-deal {
+      color: #fff !important;
+      border-color: rgba(73, 245, 139, 0.58) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 0 0 1px rgba(73, 245, 139, 0.08),
+        0 0 22px rgba(73, 245, 139, 0.28) !important;
+      animation: customerDealQuickPulse 1.8s ease-in-out 2;
+    }
+
+    @keyframes customerDealQuickCtaIn {
+      from { opacity: 0; transform: translateY(-5px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes customerDealQuickPulse {
+      0%, 100% { filter: drop-shadow(0 0 0 rgba(73, 245, 139, 0)); }
+      50% { filter: drop-shadow(0 0 9px rgba(73, 245, 139, 0.48)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .customer-deal-quick-cta,
+      header .customer-quick-btn.has-new-deal {
+        animation: none !important;
+      }
+    }
+
     .venue-affiliation-card {
       display: grid;
       gap: 14px;
@@ -31506,7 +31583,9 @@
               <span data-quick-icon="share"></span>
             </button>
             <button class="customer-quick-btn" id="customerDealQuickBtn" type="button" aria-label="Open saved Club Deals" title="Saved Club Deals" aria-expanded="false" aria-controls="customerDealsQuickPanel">
+              <span id="customerDealQuickCount" class="customer-quick-count customer-deal-quick-count" hidden>0</span>
               <span data-quick-icon="qr"></span>
+              <span id="customerDealQuickCta" class="customer-deal-quick-cta" role="status" aria-live="polite" hidden>New deal saved · Open</span>
             </button>
             <div class="customer-quick-panel" id="customerNotificationsQuickPanel" hidden>
               <h3>Notifications</h3>
@@ -39916,6 +39995,8 @@
     const dancerProfileShareQuickBtn = document.getElementById("dancerProfileShareQuickBtn");
     const customerDealQuickBtn = document.getElementById("customerDealQuickBtn");
     const customerNotificationQuickCount = document.getElementById("customerNotificationQuickCount");
+    const customerDealQuickCount = document.getElementById("customerDealQuickCount");
+    const customerDealQuickCta = document.getElementById("customerDealQuickCta");
     const customerNotificationsQuickPanel = document.getElementById("customerNotificationsQuickPanel");
     const customerDealsQuickPanel = document.getElementById("customerDealsQuickPanel");
     const customerNotificationsQuickList = document.getElementById("customerNotificationsQuickList");
@@ -42386,6 +42467,7 @@
     function applyLiveCustomerSaved(saved) {
       if (authSession?.accessToken) clearCustomerSavedCollections();
       applyLiveProfileActions(saved);
+      mergeLiveCustomerDealPasses(saved?.dealRedemptions);
       (saved?.favorites || []).forEach((item) => {
         const match = findProfileBySavedDancer(item);
         if (!match) return;
@@ -42773,6 +42855,7 @@
             </button>
           `).join("")
         : `<div class="customer-quick-empty">No saved Club Deals yet. Save a Club Deal to find it here later.</div>`;
+      syncCustomerDealQuickCta();
     }
 
     function renderCustomerQuickActions() {
@@ -42806,6 +42889,7 @@
       }
       if (showNotifications) renderCustomerQuickNotifications();
       if (showDeals) renderCustomerQuickDeals();
+      else syncCustomerDealQuickCta();
     }
 
     function toggleCustomerQuickPanel(panelName) {
@@ -42825,6 +42909,7 @@
         customerDealsQuickPanel.hidden = false;
         customerDealQuickBtn.classList.add("active");
         customerDealQuickBtn.setAttribute("aria-expanded", "true");
+        markSavedDealsSeen();
       }
     }
 
@@ -45437,6 +45522,90 @@
       }
     }
 
+    function savedDealsSeenStorageKey() {
+      const account = authSession?.account || {};
+      const identity = account.id || account.email || authSession?.user?.id || authSession?.email || "anonymous";
+      return `mydancr:saved-deals-seen-at:${identity}`;
+    }
+
+    function savedDealsSeenAt() {
+      try {
+        const value = Number(localStorage.getItem(savedDealsSeenStorageKey()) || 0);
+        return Number.isFinite(value) ? value : 0;
+      } catch {
+        return 0;
+      }
+    }
+
+    function savedDealTimestamp(pass) {
+      const rawValue = pass?.savedAt || pass?.generatedAt || pass?.preparedAt || 0;
+      const value = typeof rawValue === "number" ? rawValue : Date.parse(rawValue);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function savedDealIsReady(pass) {
+      const status = String(pass?.status || "generated").toLowerCase();
+      if (["redeemed", "expired", "voided", "reversed"].includes(status)) return false;
+      const expiresAt = typeof pass?.expiresAt === "number" ? pass.expiresAt : Date.parse(pass?.expiresAt || "");
+      return !Number.isFinite(expiresAt) || expiresAt > Date.now();
+    }
+
+    function unseenSavedDealCount() {
+      const seenAt = savedDealsSeenAt();
+      return savedDealPasses.filter((pass) => savedDealIsReady(pass) && savedDealTimestamp(pass) > seenAt).length;
+    }
+
+    function syncCustomerDealQuickCta() {
+      if (!customerDealQuickBtn || !customerDealQuickCount || !customerDealQuickCta) return;
+      const count = isCustomerSession() ? unseenSavedDealCount() : 0;
+      const hasNewDeal = count > 0;
+      customerDealQuickCount.textContent = count > 99 ? "99+" : String(count);
+      customerDealQuickCount.hidden = !hasNewDeal;
+      customerDealQuickCta.textContent = count === 1 ? "New deal saved · Open" : `${count} new deals · Open`;
+      customerDealQuickCta.hidden = !hasNewDeal;
+      customerDealQuickBtn.classList.toggle("has-new-deal", hasNewDeal);
+      customerDealQuickBtn.setAttribute("aria-label", hasNewDeal
+        ? `${count} new saved ${count === 1 ? "Club Deal" : "Club Deals"}. Open saved Club Deals.`
+        : "Open saved Club Deals");
+    }
+
+    function markSavedDealsSeen() {
+      try {
+        localStorage.setItem(savedDealsSeenStorageKey(), String(Date.now()));
+      } catch {
+        // The panel still opens if browser storage is unavailable.
+      }
+      syncCustomerDealQuickCta();
+    }
+
+    function mergeLiveCustomerDealPasses(redemptions) {
+      if (!Array.isArray(redemptions) || !redemptions.length) return;
+      const livePasses = redemptions
+        .filter((item) => item?.id && item?.venue && item?.deal)
+        .map((item) => ({
+          id: String(item.id),
+          venueId: String(item.venue?.id || ""),
+          venueSlug: String(item.venue?.slug || ""),
+          venueName: String(item.venue?.name || "Venue"),
+          title: String(item.deal?.title || "Club Deal"),
+          terms: item.deal?.terms ? String(item.deal.terms) : "",
+          sourceType: String(item.sourceType || "club_page"),
+          redemptionToken: String(item.redemptionToken || ""),
+          status: String(item.status || "generated"),
+          generatedAt: item.generatedAt || null,
+          savedAt: item.generatedAt || new Date().toISOString(),
+          expiresAt: item.expiresAt || null,
+          redeemedAt: item.redeemedAt || null,
+          serverGenerated: true
+        }));
+      if (!livePasses.length) return;
+      const liveIds = new Set(livePasses.map((pass) => pass.id));
+      savedDealPasses = [...livePasses, ...savedDealPasses.filter((pass) => !liveIds.has(String(pass.id)))]
+        .sort((left, right) => savedDealTimestamp(right) - savedDealTimestamp(left))
+        .slice(0, 20);
+      saveSavedDealPasses();
+    }
+
     function dealPassFileName(pass, extension = "png") {
       const venue = slugify(pass?.venueName || "club-deal") || "club-deal";
       const source = pass?.sourceType === "dancer_profile" && pass?.dancerName
@@ -45653,9 +45822,10 @@
 
     function saveCustomerDealPass(pass, message = "Club Deal ready for cashier NFC") {
       if (!pass?.id) return false;
-      const wasAlreadySaved = savedDealPasses.some((item) => item.id === pass.id);
+      const existingSavedPass = savedDealPasses.find((item) => item.id === pass.id);
+      const wasAlreadySaved = Boolean(existingSavedPass);
       const previousPasses = savedDealPasses;
-      const savedPass = { ...pass, savedAt: new Date().toISOString() };
+      const savedPass = { ...existingSavedPass, ...pass, savedAt: existingSavedPass?.savedAt || new Date().toISOString() };
       savedDealPasses = [savedPass, ...savedDealPasses.filter((item) => item.id !== pass.id)].slice(0, 20);
       const persisted = saveSavedDealPasses();
       if (!persisted) savedDealPasses = previousPasses;
