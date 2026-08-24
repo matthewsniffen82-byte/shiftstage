@@ -416,6 +416,12 @@ test("dancer and venue affiliation actions share role-aware refresh boundaries",
       account: { role: "dancer" },
     }));
     await requestDancerVenueVerificationJson({ cache: "no-store" });
+    await requestDancerVenueVerificationJson({
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ affiliationId: "dancer-affiliation-id" }),
+      fallbackMessage: "Unable to remove venue access.",
+    });
 
     stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
       accessToken: "venue-access",
@@ -440,6 +446,18 @@ test("dancer and venue affiliation actions share role-aware refresh boundaries",
         },
       },
       {
+        path: "/api/dancer/venue-verification",
+        options: {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: JSON.stringify({ affiliationId: "dancer-affiliation-id" }),
+        },
+      },
+      {
         path: "/api/venue/dancer-verifications?token=private%20token",
         options: {
           method: "DELETE",
@@ -459,6 +477,9 @@ test("dancer and venue affiliation actions share role-aware refresh boundaries",
 
   assert.match(dashboardSession, /function requestDancerVenueVerificationJson/);
   assert.match(dashboardSession, /function requestVenueDancerVerificationsJson/);
+  assert.match(dancerNfcPanel, /requestDancerVenueVerificationJson/);
+  assert.doesNotMatch(dancerNfcPanel, /fetch\("\/api\/dancer\/venue-verification"/);
+  assert.doesNotMatch(dancerNfcPanel, /currentDashboardAuthHeaders/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/venue-verification"/);
   assert.doesNotMatch(dashboard, /fetch\(`\/api\/venue\/dancer-verifications/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/venue\/dancer-verifications"/);
@@ -700,7 +721,7 @@ test("dancer avatar uploads and removals use the refresh-aware dancer boundary",
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
   assert.match(dancerTvStudio, /currentDashboardAuthHeaders\("dancer"\)/);
-  assert.match(dancerNfcPanel, /currentDashboardAuthHeaders\("dancer"\)/);
+  assert.match(dancerNfcPanel, /requestDancerVenueVerificationJson/);
   assert.match(dancerShiftManager, /readDashboardAccessToken\("dancer"\)/);
   for (const panel of [dancerTvStudio, dancerNfcPanel, dancerShiftManager]) {
     assert.doesNotMatch(panel, /const SESSION_KEY|dancrAuthSessionV1|localStorage\.getItem\(|function readSession\(|function readDashboardSession\(|function authHeaders\(/);

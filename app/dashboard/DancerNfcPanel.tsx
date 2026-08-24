@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import NfcIcon from "../components/NfcIcon";
-import { currentDashboardAuthHeaders } from "./dashboard-session";
+import { requestDancerVenueVerificationJson } from "./dashboard-session";
 
 type VenueSummary = { id?: string; name?: string; slug?: string; city?: string; state?: string | null };
 type Affiliation = {
@@ -48,14 +48,13 @@ export default function DancerNfcPanel({
   const pendingEnrollment = enrollment?.status === "pending";
 
   async function refresh() {
-    const auth = currentDashboardAuthHeaders("dancer");
-    if (!auth) return setStatus("Sign in required.");
     setPendingId("refresh");
     setStatus("");
     try {
-      const response = await fetch("/api/dancer/venue-verification", { headers: auth, cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to refresh NFC access.");
+      const data = await requestDancerVenueVerificationJson({
+        cache: "no-store",
+        fallbackMessage: "Unable to refresh NFC access.",
+      });
       setAffiliations(data.affiliations || []);
       setNfcState({ profileAuthorization: data.profileAuthorization, enrollment: data.enrollment });
       await onAuthorizationChange?.();
@@ -71,18 +70,15 @@ export default function DancerNfcPanel({
     if (!affiliation.id) return;
     const venueName = affiliation.venue?.name || "this venue";
     if (!window.confirm(`Remove NFC access for ${venueName}? You will need to tap its dressing-room sticker again before going Working Now there.`)) return;
-    const auth = currentDashboardAuthHeaders("dancer");
-    if (!auth) return setStatus("Sign in required.");
     setPendingId(affiliation.id);
     setStatus("");
     try {
-      const response = await fetch("/api/dancer/venue-verification", {
+      const data = await requestDancerVenueVerificationJson({
         method: "DELETE",
-        headers: { ...auth, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ affiliationId: affiliation.id }),
+        fallbackMessage: "Unable to remove venue access.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove venue access.");
       setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
       setStatus(data.message || "Venue NFC access removed.");
     } catch (error) {
