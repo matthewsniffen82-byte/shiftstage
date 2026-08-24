@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { requireAdmin } from "@/src/lib/dancr/admin";
+import { requireAdmin, resetManagedVenuePageReview } from "@/src/lib/dancr/admin";
 import {
   settleDealRevenueEvent,
   voidDealRedemption,
@@ -66,6 +66,7 @@ export async function POST(request: Request) {
         offerType: "admission",
         sortOrder: Number(body.sortOrder || 0),
       });
+      await resetManagedVenuePageReview(admin, user.id, result.deal.venueId, "contract Club Deal updated");
       if (typeof body.requestId === "string" && body.requestId) {
         await reviewVenueClubDealRequest(admin, {
           requestId: body.requestId,
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
         typeof body.venueId === "string" ? body.venueId : "",
         typeof body.dealId === "string" ? body.dealId : "",
       );
+      await resetManagedVenuePageReview(admin, user.id, typeof body.venueId === "string" ? body.venueId : "", "contract Club Deal removed");
       console.info("ADMIN_CONTRACT_CLUB_DEAL_DELETED", {
         adminUserId: user.id,
         venueId: body.venueId,

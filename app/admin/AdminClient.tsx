@@ -2718,6 +2718,115 @@ function VenueManager({
     setStatusByVenue((current) => ({ ...current, [venueId]: message }));
   }
 
+  function mergeVenue(venueId: string, next: Record<string, unknown>) {
+    onVenuesChange(venues.map((item) => {
+      if (asText(item.id) !== venueId) return item;
+      return {
+        ...item,
+        ...next,
+        ...(next.logoImageUrl !== undefined ? { logo_image_url: next.logoImageUrl, logo_storage_path: next.logoStoragePath } : {}),
+        ...(next.coverImageUrl !== undefined ? { cover_image_url: next.coverImageUrl, cover_image_storage_path: next.coverImageStoragePath } : {}),
+      };
+    }));
+  }
+
+  async function saveVenuePage(event: React.FormEvent<HTMLFormElement>, venue: Record<string, unknown>) {
+    event.preventDefault();
+    const venueId = asText(venue.id);
+    const token = readToken();
+    if (!token) return setVenueStatus(venueId, "Admin sign in required.");
+    const form = new FormData(event.currentTarget);
+    const body = Object.fromEntries(["name", "address", "city", "state", "phone", "website", "timezone", "opensAt", "closesAt"]
+      .map((key) => [key, String(form.get(key) || "").trim()]));
+    try {
+      setBusyVenueId(venueId);
+      setVenueStatus(venueId, "Saving private venue page...");
+      const response = await fetch("/api/admin/venues", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ venueId, ...body }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || "Unable to save venue page.");
+      mergeVenue(venueId, data.venue);
+      setVenueStatus(venueId, "Private venue page saved. Any prior approval was reset because the page changed.");
+    } catch (error) {
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to save venue page.");
+    } finally {
+      setBusyVenueId("");
+    }
+  }
+
+  async function uploadVenueImage(venue: Record<string, unknown>, kind: "logo" | "cover", file: File | null) {
+    const venueId = asText(venue.id);
+    if (!file) return setVenueStatus(venueId, `Choose a ${kind} image first.`);
+    const token = readToken();
+    if (!token) return setVenueStatus(venueId, "Admin sign in required.");
+    try {
+      setBusyVenueId(venueId);
+      setVenueStatus(venueId, `Checking and uploading venue ${kind}...`);
+      const body = new FormData();
+      body.set("venueId", venueId);
+      body.set("kind", kind);
+      body.set("file", file);
+      const response = await fetch("/api/admin/venues/media", { method: "POST", headers: { authorization: `Bearer ${token}` }, body });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || `Unable to upload venue ${kind}.`);
+      mergeVenue(venueId, data.venue);
+      setVenueStatus(venueId, `Venue ${kind} uploaded. Any prior approval was reset because the page changed.`);
+    } catch (error) {
+      setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to upload venue ${kind}.`);
+    } finally {
+      setBusyVenueId("");
+    }
+  }
+
+  async function removeVenueImage(venue: Record<string, unknown>, kind: "logo" | "cover") {
+    const venueId = asText(venue.id);
+    if (!window.confirm(`Remove this venue ${kind}?`)) return;
+    const token = readToken();
+    if (!token) return setVenueStatus(venueId, "Admin sign in required.");
+    try {
+      setBusyVenueId(venueId);
+      const response = await fetch("/api/admin/venues/media", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ venueId, kind }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || `Unable to remove venue ${kind}.`);
+      mergeVenue(venueId, data.venue);
+      setVenueStatus(venueId, `Venue ${kind} removed.`);
+    } catch (error) {
+      setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to remove venue ${kind}.`);
+    } finally {
+      setBusyVenueId("");
+    }
+  }
+
+  async function transitionVenuePage(venue: Record<string, unknown>, action: "send_for_review" | "publish") {
+    const venueId = asText(venue.id);
+    const token = readToken();
+    if (!token) return setVenueStatus(venueId, "Admin sign in required.");
+    try {
+      setBusyVenueId(venueId);
+      setVenueStatus(venueId, action === "send_for_review" ? "Sending private page to the venue..." : "Publishing approved venue page...");
+      const response = await fetch("/api/admin/venues", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ venueId, action }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || "Unable to update venue page workflow.");
+      mergeVenue(venueId, data.venue);
+      setVenueStatus(venueId, action === "send_for_review" ? "Review sent to the connected venue account." : "Venue page published to MyDancr.");
+    } catch (error) {
+      setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue page workflow.");
+    } finally {
+      setBusyVenueId("");
+    }
+  }
+
   function activeCodeForVenue(venueId: string) {
     return claimCodes.find((claimCode) => (
       asText(claimCode.venueId) === venueId
@@ -2748,7 +2857,7 @@ function VenueManager({
       }
 
       onVenuesChange(venues.map((item) => (String(item.id) === venueId ? { ...item, ...data.venue } : item)));
-      setVenueStatus(venueId, "Venue hidden. Its connected manager can publish again after reviewing the workspace.");
+      setVenueStatus(venueId, "Venue hidden. MyDancr must prepare a new private draft, obtain venue approval, and publish it again.");
     } catch (error) {
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue.");
     } finally {
@@ -2790,7 +2899,7 @@ function VenueManager({
 
   return (
     <div className="venue-manager">
-      <p className="admin-info-note">New venues are created only by approving a submitted venue request. Approval creates a private workspace and a one-time manager access code.</p>
+      <p className="admin-info-note">Approve a submitted request to create its private workspace. MyDancr then prepares the full venue page, sends it to the connected venue manager for approval, and performs the final publication.</p>
       <label className="venue-search">
         Find venue
         <input
@@ -2811,6 +2920,25 @@ function VenueManager({
           const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
           const isActive = venue.is_active !== false;
           const isBusy = busyVenueId === venueId;
+          const reviewStatus = asText(venue.page_review_status) || (isActive ? "published" : "admin_draft");
+          const requirements = [
+            { label: "Venue details", complete: Boolean(asText(venue.name) && asText(venue.address) && asText(venue.city) && asText(venue.state)) },
+            { label: "Public phone", complete: Boolean(asText(venue.phone)) },
+            { label: "Venue hours", complete: Boolean(asText(venue.opens_at) && asText(venue.closes_at)) },
+            { label: "Venue logo", complete: Boolean(asText(venue.logo_image_url)) },
+            { label: "Discovery cover", complete: Boolean(asText(venue.cover_image_url)) },
+            { label: "Active Club Deal", complete: Number(venue.active_deal_count || 0) > 0 },
+          ];
+          const isReady = requirements.every((requirement) => requirement.complete);
+          const reviewLabel = reviewStatus === "venue_review"
+            ? "Venue review"
+            : reviewStatus === "changes_requested"
+              ? "Changes requested"
+              : reviewStatus === "venue_approved"
+                ? "Venue approved"
+                : reviewStatus === "published"
+                  ? "Published"
+                  : "MyDancr draft";
           return (
             <details className="venue-admin-row" key={venueId}>
               <summary>
@@ -2819,16 +2947,66 @@ function VenueManager({
                   <small>{[asText(venue.city) || "City", asText(venue.state)].filter(Boolean).join(", ")}</small>
                 </span>
                 <span className="venue-admin-summary-state">
-                  <em className={connectedManager ? "connected" : isActive ? "active" : "inactive"}>
-                    {connectedManager ? "Connected" : isActive ? "Active" : "Inactive"}
+                  <em className={reviewStatus === "published" || reviewStatus === "venue_approved" ? "connected" : isActive ? "active" : "inactive"}>
+                    {reviewLabel}
                   </em>
                   <span className="venue-disclosure" aria-hidden="true">⌄</span>
                 </span>
               </summary>
               <div className="venue-admin-actions">
                 <small>{asText(venue.address) || "No address submitted"}</small>
-                {isActive ? <button type="button" disabled={isBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace</span>}
+                {isActive ? <button type="button" disabled={isBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
               </div>
+              <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
+                <div className="venue-page-admin-heading">
+                  <span><small>Managed venue page</small><strong>{reviewLabel}</strong></span>
+                  <b>{requirements.filter((requirement) => requirement.complete).length}/{requirements.length} ready</b>
+                </div>
+                {reviewStatus === "changes_requested" && asText(venue.page_review_notes) ? (
+                  <div className="venue-page-change-request"><strong>Venue requested changes</strong><p>{asText(venue.page_review_notes)}</p></div>
+                ) : null}
+                <form className="venue-page-editor" onSubmit={(event) => void saveVenuePage(event, venue)}>
+                  <label>Venue name<input name="name" defaultValue={asText(venue.name)} required readOnly={isActive} /></label>
+                  <label>Public address<input name="address" defaultValue={asText(venue.address)} required readOnly={isActive} /></label>
+                  <label>City<input name="city" defaultValue={asText(venue.city)} required readOnly={isActive} /></label>
+                  <label>State<input name="state" defaultValue={asText(venue.state)} required readOnly={isActive} /></label>
+                  <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} required readOnly={isActive} type="tel" /></label>
+                  <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={isActive} inputMode="url" /></label>
+                  <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={isActive} /></label>
+                  <label>Opens<input name="opensAt" defaultValue={asText(venue.opens_at).slice(0, 5)} required readOnly={isActive} type="time" /></label>
+                  <label>Closes<input name="closesAt" defaultValue={asText(venue.closes_at).slice(0, 5)} required readOnly={isActive} type="time" /></label>
+                  {!isActive ? <button type="submit" disabled={isBusy}>Save private page</button> : <small>Published venue details are locked here. Hide the venue before replacing its approved public page.</small>}
+                </form>
+                <div className="venue-page-media-admin">
+                  {(["logo", "cover"] as const).map((kind) => {
+                    const imageUrl = asText(venue[`${kind}_image_url`]);
+                    return (
+                      <form key={kind} onSubmit={(event) => {
+                        event.preventDefault();
+                        const file = new FormData(event.currentTarget).get("file");
+                        void uploadVenueImage(venue, kind, file instanceof File ? file : null);
+                      }}>
+                        <strong>{kind === "logo" ? "Official logo" : "Discovery cover"}</strong>
+                        <small>{kind === "logo" ? "Use the original high-resolution logo file." : "Use the original camera image for the clearest venue page."}</small>
+                        {imageUrl ? <img src={imageUrl} alt={`${asText(venue.name)} ${kind}`} /> : <span>No {kind} uploaded</span>}
+                        {!isActive ? <input accept="image/*,.heic,.heif" name="file" type="file" required /> : null}
+                        {!isActive ? <button type="submit" disabled={isBusy}>{imageUrl ? `Replace ${kind}` : `Upload ${kind}`}</button> : null}
+                        {!isActive && imageUrl ? <button className="secondary" type="button" disabled={isBusy} onClick={() => void removeVenueImage(venue, kind)}>Remove</button> : null}
+                      </form>
+                    );
+                  })}
+                </div>
+                <ul className="venue-page-requirements">
+                  {requirements.map((requirement) => <li className={requirement.complete ? "complete" : ""} key={requirement.label}><span>{requirement.complete ? "✓" : "○"}</span>{requirement.label}</li>)}
+                </ul>
+                <div className="venue-page-workflow-actions">
+                  {!isActive && reviewStatus !== "venue_approved" ? (
+                    <button type="button" disabled={isBusy || !isReady || !connectedManager} onClick={() => void transitionVenuePage(venue, "send_for_review")}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send page for venue approval"}</button>
+                  ) : null}
+                  {!isActive && reviewStatus === "venue_approved" ? <button type="button" disabled={isBusy || !isReady} onClick={() => void transitionVenuePage(venue, "publish")}>Publish approved page</button> : null}
+                  {!isReady ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
+                </div>
+              </section>
               <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>
                 <span className="eyebrow">Manager access</span>
                 {connectedManager ? (
@@ -4463,6 +4641,7 @@ function AdminStyles() {
       .venue-manager form { display: grid; gap: 10px; padding-top: 12px; }
       .venue-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .venue-manager input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .venue-manager input[readonly] { color: #94a3b8; background: #111118; }
       .venue-manager input:focus { border-color: rgba(148,229,255,.7); outline: 2px solid rgba(148,229,255,.16); outline-offset: 1px; }
       .venue-manager button { color: #090911; background: #f7f2ff; padding: 0 12px; }
       .venue-manager button.secondary { color: #f7f2ff; border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.06); }
@@ -4503,6 +4682,29 @@ function AdminStyles() {
       .venue-access-secret code { user-select: all; color: #fff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: clamp(18px, 5vw, 24px); font-weight: 900; letter-spacing: .08em; overflow-wrap: anywhere; }
       .venue-access-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .venue-status { margin-top: 10px; color: #94e5ff !important; }
+      .venue-page-admin-panel { display: grid; gap: 12px; margin-top: 12px; padding: 13px; border: 1px solid rgba(124,58,237,.34); border-radius: 10px; background: #08080d; }
+      .venue-page-admin-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .venue-page-admin-heading > span { display: grid; gap: 3px; }
+      .venue-page-admin-heading small { color: #94a3b8; font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+      .venue-page-admin-heading strong { color: #f8fafc; }
+      .venue-page-admin-heading b { padding: 5px 8px; border: 1px solid rgba(34,211,238,.28); border-radius: 999px; color: #67e8f9; font-size: 10px; }
+      .venue-page-change-request { display: grid; gap: 5px; padding: 11px; border: 1px solid rgba(251,191,36,.32); border-radius: 8px; background: rgba(251,191,36,.07); }
+      .venue-page-change-request strong { color: #fde68a; }
+      .venue-page-change-request p { margin: 0; color: #fef3c7; font-size: 12px; line-height: 1.45; }
+      .venue-page-editor { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 12px !important; border: 1px solid rgba(255,255,255,.09); border-radius: 9px; background: #111118; }
+      .venue-page-editor label:nth-child(1), .venue-page-editor label:nth-child(2), .venue-page-editor > button, .venue-page-editor > small { grid-column: 1 / -1; }
+      .venue-page-editor > button { justify-self: start; min-height: 42px; }
+      .venue-page-media-admin { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+      .venue-page-media-admin form { align-content: start; padding: 11px !important; border: 1px solid rgba(255,255,255,.09); border-radius: 9px; background: #111118; }
+      .venue-page-media-admin strong { color: #f8fafc; }
+      .venue-page-media-admin img, .venue-page-media-admin form > span { width: 100%; aspect-ratio: 16 / 10; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.08); border-radius: 7px; color: #64748b; background: #050507; object-fit: contain; }
+      .venue-page-media-admin input[type="file"] { width: 100%; min-width: 0; font-size: 11px; }
+      .venue-page-requirements { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; margin: 0; padding: 0; list-style: none; }
+      .venue-page-requirements li { display: flex; align-items: center; gap: 7px; padding: 9px; border: 1px solid rgba(255,255,255,.08); border-radius: 7px; color: #94a3b8; font-size: 11px; font-weight: 800; background: #111118; }
+      .venue-page-requirements li.complete { color: #6ee7b7; border-color: rgba(16,185,129,.25); }
+      .venue-page-workflow-actions { display: grid; gap: 8px; }
+      .venue-page-workflow-actions button { min-height: 44px; }
+      .venue-page-workflow-actions small { color: #94a3b8; line-height: 1.45; }
       .report-list { display: grid; gap: 12px; }
       .report-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .report-row span { color: #b9accd; }
@@ -4699,7 +4901,7 @@ function AdminStyles() {
       .account-state.disabled { color: #ffd19a !important; border-color: rgba(255,180,84,.3); background: rgba(255,180,84,.08); }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) {
-        .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid, .image-moderation-row, .image-moderation-filters, .dmca-agent-settings form, .dmca-case-actions { grid-template-columns: 1fr; }
+        .admin-grid, .venue-admin-row, .venue-page-editor, .venue-page-media-admin, .venue-page-requirements, .deal-filters, .submission-grid, .submission-media-grid, .image-moderation-row, .image-moderation-filters, .dmca-agent-settings form, .dmca-case-actions { grid-template-columns: 1fr; }
         .support-admin-panel { grid-column: auto; }
         .top-nav, .admin-warning { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
         .nav-links { justify-content: flex-start; }

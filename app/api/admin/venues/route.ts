@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getAdminVenues, requireAdmin, updateAdminVenue } from "@/src/lib/dancr/admin";
+import { getAdminVenues, requireAdmin, transitionAdminManagedVenuePage, updateAdminVenue } from "@/src/lib/dancr/admin";
 import { getAdminVenueClaimCodes } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -50,10 +50,19 @@ export async function PATCH(request: Request) {
     if (!venueId) {
       return NextResponse.json({ ok: false, error: "Missing venueId." }, { status: 400 });
     }
+    if (body?.action === "send_for_review" || body?.action === "publish") {
+      const venue = await transitionAdminManagedVenuePage(
+        createAdminSupabaseClient(),
+        user.id,
+        venueId,
+        body.action,
+      );
+      return NextResponse.json({ ok: true, venue });
+    }
     if (body?.isActive === true) {
       return NextResponse.json({
         ok: false,
-        error: "Only the connected venue manager can publish a completed private venue workspace.",
+        error: "Use the MyDancr publish action after the connected venue manager approves the prepared page.",
       }, { status: 400 });
     }
 

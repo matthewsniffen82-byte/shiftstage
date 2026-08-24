@@ -1760,33 +1760,6 @@ function DashboardLoadingState({ role }: { role: DashboardRole }) {
   );
 }
 
-const VENUE_MEDIA_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif";
-const MAX_VENUE_MEDIA_BYTES = 25 * 1024 * 1024;
-
-function useVenueMediaPreview(file: File | null) {
-  const [previewUrl, setPreviewUrl] = useState("");
-
-  useEffect(() => {
-    if (!file) {
-      setPreviewUrl("");
-      return;
-    }
-    const nextPreviewUrl = URL.createObjectURL(file);
-    setPreviewUrl(nextPreviewUrl);
-    return () => URL.revokeObjectURL(nextPreviewUrl);
-  }, [file]);
-
-  return previewUrl;
-}
-
-function isSupportedVenueMedia(file: File) {
-  return file.type.startsWith("image/") || /\.(?:jpe?g|png|webp|heic|heif)$/i.test(file.name);
-}
-
-function formatVenueMediaSize(size: number) {
-  return size >= 1024 * 1024 ? `${(size / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(size / 1024))} KB`;
-}
-
 function VenueMediaPreview({
   alt,
   emptyLabel,
@@ -1818,89 +1791,6 @@ function VenueMediaPreview({
       ) : <span aria-hidden="true">{isLocal ? "Image selected" : emptyLabel}</span>}
       {isLocal ? <b>New preview</b> : null}
     </div>
-  );
-}
-
-function VenueMediaUploadControls({
-  cameraInputId,
-  file,
-  hasSavedMedia,
-  inputId,
-  isBusy,
-  onClear,
-  onRemove,
-  onSelect,
-  onSubmit,
-  status,
-  submitLabel,
-}: {
-  cameraInputId: string;
-  file: File | null;
-  hasSavedMedia: boolean;
-  inputId: string;
-  isBusy: boolean;
-  onClear: () => void;
-  onRemove: () => void;
-  onSelect: (file: File | null) => void;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  status: string;
-  submitLabel: string;
-}) {
-  return (
-    <form className="venue-media-upload" onSubmit={onSubmit}>
-      <div className="venue-media-source-grid">
-        <label className={`venue-media-source-action${isBusy ? " is-disabled" : ""}`}>
-          <input
-            accept={VENUE_MEDIA_ACCEPT}
-            aria-label="Choose an image from your photo library"
-            className="venue-media-source-input"
-            disabled={isBusy}
-            id={inputId}
-            type="file"
-            onChange={(event) => {
-              onSelect(event.target.files?.[0] || null);
-              event.currentTarget.value = "";
-            }}
-          />
-          <span className="venue-media-source-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="m4 17 5-5 4 4 2-2 5 5" /></svg>
-          </span>
-          <span><strong>Photo library</strong><small>Choose from this phone</small></span>
-          <b aria-hidden="true">Choose</b>
-        </label>
-        <label className={`venue-media-source-action${isBusy ? " is-disabled" : ""}`}>
-          <input
-            accept="image/*"
-            aria-label="Take a new venue photo"
-            capture="environment"
-            className="venue-media-source-input"
-            disabled={isBusy}
-            id={cameraInputId}
-            type="file"
-            onChange={(event) => {
-              onSelect(event.target.files?.[0] || null);
-              event.currentTarget.value = "";
-            }}
-          />
-          <span className="venue-media-source-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M5 8h3l1.5-2h5L16 8h3v10H5z" /><circle cx="12" cy="13" r="3" /></svg>
-          </span>
-          <span><strong>Take photo</strong><small>Open the camera</small></span>
-          <b aria-hidden="true">Open</b>
-        </label>
-      </div>
-      {file ? (
-        <div className="venue-media-selected">
-          <span><strong>{file.name}</strong><small>{formatVenueMediaSize(file.size)} · Ready to save</small></span>
-          <button type="button" disabled={isBusy} onClick={onClear}>Change choice</button>
-        </div>
-      ) : null}
-      <div className="venue-media-actions">
-        <button className="primary" type="submit" disabled={isBusy || !file}>{isBusy ? "Preparing image..." : submitLabel}</button>
-        {hasSavedMedia ? <button className="destructive" type="button" disabled={isBusy} onClick={onRemove}>Remove</button> : null}
-      </div>
-      {status ? <p className="venue-media-status" role="status" aria-live="polite">{status}</p> : null}
-    </form>
   );
 }
 
@@ -1974,24 +1864,15 @@ function VenuePanel({
     opensAt: "",
     closesAt: "",
   });
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [profileStatus, setProfileStatus] = useState("");
-  const [coverStatus, setCoverStatus] = useState("");
-  const [logoStatus, setLogoStatus] = useState("");
   const [publicationStatus, setPublicationStatus] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [isPublishingCover, setIsPublishingCover] = useState(false);
-  const [isPublishingLogo, setIsPublishingLogo] = useState(false);
   const [isPublishingVenue, setIsPublishingVenue] = useState(false);
+  const [reviewNotes, setReviewNotes] = useState("");
   const [isVenueCardPreviewOpen, setIsVenueCardPreviewOpen] = useState(false);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => initialVenueWorkspace(profile?.isActive === true));
   const venueCardPreviewCloseRef = useRef<HTMLButtonElement>(null);
   const venueCardPreviewOverlayRef = useRef<HTMLDivElement>(null);
   const venueCardPreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const venueCardPreviewScrollRef = useRef(0);
-  const coverPreviewUrl = useVenueMediaPreview(coverFile);
-  const logoPreviewUrl = useVenueMediaPreview(logoFile);
 
   useEffect(() => {
     const hashWorkspace = venueWorkspaceForSection(window.location.hash.replace(/^#/, ""));
@@ -2074,145 +1955,23 @@ function VenuePanel({
     setIsVenueCardPreviewOpen(true);
   }
 
-  function selectCoverFile(nextFile: File | null) {
-    if (!nextFile) return;
-    if (!isSupportedVenueMedia(nextFile)) return setCoverStatus("Choose a JPEG, PNG, WebP, HEIC, or HEIF image.");
-    if (nextFile.size > MAX_VENUE_MEDIA_BYTES) return setCoverStatus("Choose an image that is 25 MB or smaller.");
-    setCoverFile(nextFile);
-    setCoverStatus("Cover selected. Review the preview, then save it.");
-  }
-
-  function selectLogoFile(nextFile: File | null) {
-    if (!nextFile) return;
-    if (!isSupportedVenueMedia(nextFile)) return setLogoStatus("Choose a JPEG, PNG, WebP, HEIC, or HEIF image.");
-    if (nextFile.size > MAX_VENUE_MEDIA_BYTES) return setLogoStatus("Choose an image that is 25 MB or smaller.");
-    setLogoFile(nextFile);
-    setLogoStatus("Logo selected. Review the preview, then save it.");
-  }
-
-  async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSaving(true);
-    setProfileStatus("");
-    try {
-      const data = await requestDashboardJson("/api/venue/profile", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(form),
-        expectedRole: "venue",
-        fallbackMessage: "Unable to save venue profile.",
-      });
-      onProfileChange(data.profile);
-      setProfileStatus("Venue page details saved.");
-    } catch (error) {
-      setProfileStatus(error instanceof Error ? error.message : "Unable to save venue profile.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function uploadCover(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!coverFile) return setCoverStatus("Choose a venue image first.");
-    setIsPublishingCover(true);
-    setCoverStatus("Checking and publishing venue image...");
-    try {
-      const body = new FormData();
-      body.set("file", coverFile);
-      const data = await requestDashboardJson("/api/venue/cover-image", {
-        method: "POST",
-        body,
-        expectedRole: "venue",
-        fallbackMessage: "Unable to publish venue image.",
-      });
-      onProfileChange(data.profile);
-      setCoverFile(null);
-      setCoverStatus(data.message || "Venue image published.");
-    } catch (error) {
-      setCoverStatus(error instanceof Error ? error.message : "Unable to publish venue image.");
-    } finally {
-      setIsPublishingCover(false);
-    }
-  }
-
-  async function removeCover() {
-    if (!window.confirm("Remove the saved discovery cover from this venue page?")) return;
-    setIsPublishingCover(true);
-    setCoverStatus("");
-    try {
-      const data = await requestDashboardJson("/api/venue/cover-image", {
-        method: "DELETE",
-        expectedRole: "venue",
-        fallbackMessage: "Unable to remove venue image.",
-      });
-      onProfileChange(data.profile);
-      setCoverFile(null);
-      setCoverStatus(data.message || "Venue image removed.");
-    } catch (error) {
-      setCoverStatus(error instanceof Error ? error.message : "Unable to remove venue image.");
-    } finally {
-      setIsPublishingCover(false);
-    }
-  }
-
-  async function uploadLogo(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!logoFile) return setLogoStatus("Choose a venue logo first.");
-    setIsPublishingLogo(true);
-    setLogoStatus("Checking and uploading venue logo...");
-    try {
-      const body = new FormData();
-      body.set("file", logoFile);
-      const data = await requestDashboardJson("/api/venue/logo-image", {
-        method: "POST",
-        body,
-        expectedRole: "venue",
-        fallbackMessage: "Unable to upload venue logo.",
-      });
-      onProfileChange(data.profile);
-      setLogoFile(null);
-      setLogoStatus(data.message || "Venue logo uploaded.");
-    } catch (error) {
-      setLogoStatus(error instanceof Error ? error.message : "Unable to upload venue logo.");
-    } finally {
-      setIsPublishingLogo(false);
-    }
-  }
-
-  async function removeLogo() {
-    if (!window.confirm("Remove the saved logo from this venue page?")) return;
-    setIsPublishingLogo(true);
-    setLogoStatus("");
-    try {
-      const data = await requestDashboardJson("/api/venue/logo-image", {
-        method: "DELETE",
-        expectedRole: "venue",
-        fallbackMessage: "Unable to remove venue logo.",
-      });
-      onProfileChange(data.profile);
-      setLogoFile(null);
-      setLogoStatus(data.message || "Venue logo removed.");
-    } catch (error) {
-      setLogoStatus(error instanceof Error ? error.message : "Unable to remove venue logo.");
-    } finally {
-      setIsPublishingLogo(false);
-    }
-  }
-
-  async function publishVenue() {
+  async function submitVenueReview(decision: "approved" | "changes_requested") {
     setIsPublishingVenue(true);
-    setPublicationStatus("Publishing venue...");
+    setPublicationStatus(decision === "approved" ? "Approving venue page..." : "Sending change request...");
     try {
       const data = await requestDashboardJson("/api/venue/publication", {
         method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ decision, notes: reviewNotes }),
         expectedRole: "venue",
-        fallbackMessage: "Unable to publish venue.",
+        fallbackMessage: "Unable to record venue page review.",
       });
       onProfileChange(data.profile);
       onPublicationChange(data.publication);
-      setPublicationStatus(data.message || "Venue published.");
+      if (decision === "changes_requested") setReviewNotes("");
+      setPublicationStatus(data.message || "Venue page review saved.");
     } catch (error) {
-      setPublicationStatus(error instanceof Error ? error.message : "Unable to publish venue.");
+      setPublicationStatus(error instanceof Error ? error.message : "Unable to record venue page review.");
     } finally {
       setIsPublishingVenue(false);
     }
@@ -2252,25 +2011,6 @@ function VenuePanel({
     }, 50);
   }
 
-  function openVenueSetupRequirement(
-    event: React.MouseEvent<HTMLAnchorElement>,
-    sectionId: string,
-    targetId: string,
-  ) {
-    event.preventDefault();
-    setActiveWorkspace(venueWorkspaceForSection(sectionId) || activeWorkspace);
-    window.history.replaceState(null, "", `#${targetId}`);
-    window.setTimeout(() => {
-      const section = document.getElementById(sectionId) as HTMLDetailsElement | null;
-      if (!section) return;
-      section.open = true;
-      const target = document.getElementById(targetId) as HTMLElement | null;
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      (target || section).scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
-      target?.focus({ preventScroll: true });
-    }, 50);
-  }
-
   const venueName = String(profile?.name || "Your venue");
   const venueCity = String(profile?.city || "your city");
   const venueSlug = String(profile?.slug || "");
@@ -2289,18 +2029,19 @@ function VenuePanel({
     : "No live Club Deals";
   const permissions = Array.isArray(venueAccess?.permissions) ? venueAccess.permissions : [];
   const venueRole = String(venueAccess?.role || "");
-  const canManageProfile = permissions.includes("manage_profile") || venueRole === "owner" || venueRole === "manager";
   const canManageRoster = permissions.includes("manage_roster");
   const canRequestNfcSupport = permissions.includes("request_nfc_support");
   const canViewTeam = permissions.includes("view_team");
   const isPublished = profile?.isActive === true;
+  const pageReviewStatus = String(profile?.pageReviewStatus || (isPublished ? "published" : "admin_draft"));
+  const isAwaitingVenueReview = !isPublished && pageReviewStatus === "venue_review";
   const setupRequirements = [
-    { key: "details", label: "Venue details", complete: Boolean(profile?.name && profile?.address && profile?.city && profile?.state), sectionId: "venue-public-profile", targetId: "venue-profile-name" },
-    { key: "contact", label: "Public phone", complete: Boolean(profile?.phone), sectionId: "venue-public-profile", targetId: "venue-profile-phone" },
-    { key: "hours", label: "Venue hours", complete: Boolean(profile?.opensAt && profile?.closesAt), sectionId: "venue-public-profile", targetId: "venue-profile-opensAt" },
-    { key: "logo", label: "Venue logo", complete: Boolean(profile?.logoImageUrl), sectionId: "venue-public-profile", targetId: "venue-logo-upload" },
-    { key: "cover", label: "Discovery cover", complete: Boolean(profile?.coverImageUrl), sectionId: "venue-public-profile", targetId: "venue-cover-upload" },
-    { key: "deal", label: "MyDancr Club Deal", complete: activeDealCount > 0, sectionId: "venue-club-deals", targetId: "venue-deal-contract-ledger" },
+    { key: "details", label: "Venue details", complete: Boolean(profile?.name && profile?.address && profile?.city && profile?.state) },
+    { key: "contact", label: "Public phone", complete: Boolean(profile?.phone) },
+    { key: "hours", label: "Venue hours", complete: Boolean(profile?.opensAt && profile?.closesAt) },
+    { key: "logo", label: "Venue logo", complete: Boolean(profile?.logoImageUrl) },
+    { key: "cover", label: "Discovery cover", complete: Boolean(profile?.coverImageUrl) },
+    { key: "deal", label: "MyDancr Club Deal", complete: activeDealCount > 0 },
   ];
   const setupCompletedCount = setupRequirements.filter((requirement) => requirement.complete).length;
   const isReadyToPublish = setupCompletedCount === setupRequirements.length;
@@ -2311,8 +2052,8 @@ function VenuePanel({
         <div className="venue-command-status">
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : "PRIVATE DRAFT"}</span>
           <div>
-            <h2 id="venue-command-heading">{isPublished ? `Tonight at ${venueName}` : `Set up ${venueName}`}</h2>
-            <p>{isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "Complete, preview, and publish the guest-facing venue page from this private workspace."}</p>
+          <h2 id="venue-command-heading">{isPublished ? `Tonight at ${venueName}` : `Private page for ${venueName}`}</h2>
+            <p>{isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "MyDancr prepares the venue page. Your team reviews it before MyDancr publishes it."}</p>
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
@@ -2368,35 +2109,63 @@ function VenuePanel({
         role="tabpanel"
       >
         <div>
-          <span className="eyebrow">{isPublished ? "Public venue" : "Private setup"}</span>
-          <h2 id="venue-publication-heading">{isPublished ? "Your venue is live on MyDancr" : "Finish your venue page before publishing"}</h2>
-          <p>{isPublished ? "Guests can find this venue, its current Club Deals, and affiliated dancers." : `${setupCompletedCount} of ${setupRequirements.length} publishing requirements complete. Nothing appears publicly until you publish.`}</p>
+          <span className="eyebrow">{isPublished ? "Public venue" : "MyDancr-managed setup"}</span>
+          <h2 id="venue-publication-heading">
+            {isPublished
+              ? "Your venue is live on MyDancr"
+              : pageReviewStatus === "venue_review"
+                ? "Review your prepared venue page"
+                : pageReviewStatus === "changes_requested"
+                  ? "MyDancr is working on your changes"
+                  : pageReviewStatus === "venue_approved"
+                    ? "Approved and waiting for publication"
+                    : "MyDancr is preparing your venue page"}
+          </h2>
+          <p>
+            {isPublished
+              ? "Guests can find this venue, its current Club Deals, and affiliated dancers."
+              : pageReviewStatus === "venue_review"
+                ? "Preview the private page, then approve it or clearly describe what MyDancr should change."
+                : pageReviewStatus === "changes_requested"
+                  ? "Your requested changes were sent. MyDancr will update the page and return it for another review."
+                  : pageReviewStatus === "venue_approved"
+                    ? "Your approval is recorded. A MyDancr administrator will complete the final check and publish the page."
+                    : `${setupCompletedCount} of ${setupRequirements.length} page requirements are complete. MyDancr will send it to you when it is ready.`}
+          </p>
         </div>
         {!isPublished ? <ul>
           {setupRequirements.map((requirement) => (
             <li className={requirement.complete ? "complete" : ""} key={requirement.key}>
-              <a
-                aria-label={`${requirement.complete ? "Review" : "Complete"} ${requirement.label}`}
-                href={`#${requirement.targetId}`}
-                onClick={(event) => openVenueSetupRequirement(event, requirement.sectionId, requirement.targetId)}
-              >
+              <span>
                 <span className="venue-publication-requirement-status" aria-hidden="true">{requirement.complete ? "✓" : "○"}</span>
                 <span className="venue-publication-requirement-label">{requirement.label}</span>
-                <span className="venue-publication-requirement-arrow" aria-hidden="true">›</span>
-              </a>
+              </span>
             </li>
           ))}
         </ul> : null}
         <div className="venue-publication-actions">
           <button type="button" onClick={openVenueCardPreview}>Preview venue</button>
-          {!isPublished && canManageProfile ? (
-            <button className="primary" type="button" disabled={!isReadyToPublish || isPublishingVenue} onClick={publishVenue}>
-              {isPublishingVenue ? "Publishing..." : "Publish venue"}
+          {isAwaitingVenueReview ? (
+            <button className="primary" type="button" disabled={!isReadyToPublish || isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
+              {isPublishingVenue ? "Saving review..." : "Approve page"}
             </button>
           ) : null}
           {isPublished && venueSlug ? <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link> : null}
         </div>
-        {!isPublished && !isReadyToPublish ? <small>Complete every item above to unlock publishing.</small> : null}
+        {isAwaitingVenueReview ? (
+          <div className="venue-review-request">
+            <label htmlFor="venue-page-review-notes">Need changes?</label>
+            <textarea
+              id="venue-page-review-notes"
+              maxLength={1000}
+              placeholder="Tell MyDancr exactly what should be corrected before you approve the page."
+              value={reviewNotes}
+              onChange={(event) => setReviewNotes(event.target.value)}
+            />
+            <button className="secondary" type="button" disabled={isPublishingVenue || reviewNotes.trim().length < 10} onClick={() => void submitVenueReview("changes_requested")}>Request changes</button>
+          </div>
+        ) : null}
+        {!isPublished && !isReadyToPublish ? <small>MyDancr is completing the remaining page items.</small> : null}
         {publicationStatus ? <p role="status">{publicationStatus}</p> : null}
       </section>
 
@@ -2516,7 +2285,7 @@ function VenuePanel({
       </DashboardSection>
 
       <DashboardSection
-        description="Build and preview the real guest-facing page. It stays private until every requirement is complete and you publish it."
+        description="Review the guest-facing page prepared by MyDancr. Your approval never publishes it automatically."
         eyebrow="Guest experience"
         hidden={activeWorkspace !== "venue"}
         id="venue-public-profile"
@@ -2524,109 +2293,74 @@ function VenuePanel({
       >
         <section className="venue-page-setup-guide" aria-labelledby="venue-page-setup-guide-heading">
           <div>
-            <span className="eyebrow">Guided setup</span>
-            <h2 id="venue-page-setup-guide-heading">MyDancr started your venue page</h2>
-            <p>Your approved application created this private workspace. Review the details, add your official images, then preview the guest page before publishing.</p>
+            <span className="eyebrow">Managed setup</span>
+            <h2 id="venue-page-setup-guide-heading">MyDancr builds the page for you</h2>
+            <p>MyDancr enters the approved venue details, images, hours, and contracted Club Deals. Your team reviews the complete private page before it can go live.</p>
           </div>
           <ol>
-            <li className="is-complete"><span>✓</span><strong>Private page created</strong><small>Application details added</small></li>
-            <li className={profile?.logoImageUrl && profile?.coverImageUrl ? "is-complete" : ""}><span>{profile?.logoImageUrl && profile?.coverImageUrl ? "✓" : "2"}</span><strong>Add logo & cover</strong><small>Camera or photo library</small></li>
-            <li className={isPublished ? "is-complete" : ""}><span>{isPublished ? "✓" : "3"}</span><strong>Preview & publish</strong><small>You control when it goes live</small></li>
+            <li className={isReadyToPublish ? "is-complete" : ""}><span>{isReadyToPublish ? "✓" : "1"}</span><strong>MyDancr prepares page</strong><small>Details, images, hours, and deal</small></li>
+            <li className={["venue_approved", "published"].includes(pageReviewStatus) ? "is-complete" : ""}><span>{["venue_approved", "published"].includes(pageReviewStatus) ? "✓" : "2"}</span><strong>Venue reviews page</strong><small>Approve or request corrections</small></li>
+            <li className={isPublished ? "is-complete" : ""}><span>{isPublished ? "✓" : "3"}</span><strong>MyDancr publishes</strong><small>Final administrative check</small></li>
           </ol>
           <a href="mailto:support@mydancr.com?subject=Venue%20page%20setup%20help">Ask MyDancr for setup help</a>
         </section>
         <div className="venue-dashboard-inner-grid venue-dashboard-profile-grid">
           <article className="info-panel venue-profile-panel">
             <h2>Venue details</h2>
-            <form onSubmit={saveProfile}>
+            <div className="venue-readonly-fields">
               {Object.entries(form).map(([key, value]) => (
                 <label key={key}>
                   {venueFieldLabel(key)}
                   <input
                     autoCapitalize={key === "website" ? "none" : undefined}
                     autoComplete={key === "website" ? "url" : undefined}
-                    disabled={!canManageProfile}
                     id={`venue-profile-${key}`}
                     inputMode={key === "website" ? "url" : undefined}
                     placeholder={key === "website" ? "www.yourclub.com" : undefined}
-                    required={["name", "city", "state", "address", "phone", "opensAt", "closesAt"].includes(key)}
+                    readOnly
                     spellCheck={key === "website" ? false : undefined}
                     type={key === "opensAt" || key === "closesAt" ? "time" : key === "phone" ? "tel" : "text"}
                     value={value}
-                    onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
                   />
                 </label>
               ))}
-              {canManageProfile ? <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button> : <small>This team role can view the venue profile but cannot edit it.</small>}
               {isPublished && profile?.slug ? (
                 <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
                   Open live venue page
                 </Link>
               ) : <button type="button" onClick={openVenueCardPreview}>Preview venue card</button>}
-              {profileStatus ? <p role="status">{profileStatus}</p> : null}
-            </form>
+              <small>To correct anything, use Request changes when MyDancr sends the page for review.</small>
+            </div>
           </article>
           <article className="info-panel venue-logo-panel">
             <div className="venue-media-copy">
               <h2>Venue logo</h2>
-              <p>Add the official logo shown on guest cards and the full venue page.</p>
-              <small>Choose the clearest version you have. MyDancr automatically rotates, resizes, removes private image metadata, and optimizes it.</small>
+              <p>The official logo MyDancr prepared for guest cards and the full venue page.</p>
             </div>
             <VenueMediaPreview
               alt={`${String(profile?.name || "Venue")} logo preview`}
               emptyLabel="Add logo"
-              isLocal={Boolean(logoPreviewUrl)}
-              source={logoPreviewUrl || String(profile?.logoImageUrl || "")}
+              isLocal={false}
+              source={String(profile?.logoImageUrl || "")}
               sourceSet={profile?.logoImageSrcSet ? String(profile.logoImageSrcSet) : undefined}
               variant="logo"
             />
-            {canManageProfile ? (
-              <VenueMediaUploadControls
-                cameraInputId="venue-logo-camera-upload"
-                file={logoFile}
-                hasSavedMedia={Boolean(profile?.logoImageUrl)}
-                inputId="venue-logo-upload"
-                isBusy={isPublishingLogo}
-                status={logoStatus}
-                submitLabel={profile?.logoImageUrl ? "Save replacement logo" : "Save logo"}
-                onClear={() => { setLogoFile(null); setLogoStatus(""); }}
-                onRemove={removeLogo}
-                onSelect={selectLogoFile}
-                onSubmit={uploadLogo}
-              />
-            ) : <p>Your staff role can view this logo but cannot change it.</p>}
-            <small className="venue-media-requirements">JPEG, PNG, WebP, HEIC, or HEIF · up to 25 MB · at least 512 × 512</small>
+            <small className="venue-media-requirements">Venue review copy · managed by MyDancr</small>
           </article>
           <article className="info-panel venue-cover-panel">
             <div className="venue-media-copy venue-cover-copy">
               <h2>Discovery cover</h2>
-              <p>Add the venue, interior, or branded image guests see while discovering the club.</p>
-              <small>Choose an original camera image when possible. The preview shows the guest crop; MyDancr automatically prepares every supported phone image after the safety check.</small>
+              <p>The venue, interior, or branded image guests see while discovering the club.</p>
             </div>
             <VenueMediaPreview
               alt={`${String(profile?.name || "Venue")} discovery cover preview`}
               emptyLabel="Add cover"
-              isLocal={Boolean(coverPreviewUrl)}
-              source={coverPreviewUrl || String(profile?.coverImageUrl || "")}
+              isLocal={false}
+              source={String(profile?.coverImageUrl || "")}
               sourceSet={profile?.coverImageSrcSet ? String(profile.coverImageSrcSet) : undefined}
               variant="cover"
             />
-            {canManageProfile ? (
-              <VenueMediaUploadControls
-                cameraInputId="venue-cover-camera-upload"
-                file={coverFile}
-                hasSavedMedia={Boolean(profile?.coverImageUrl)}
-                inputId="venue-cover-upload"
-                isBusy={isPublishingCover}
-                status={coverStatus}
-                submitLabel={profile?.coverImageUrl ? "Save replacement cover" : "Save discovery cover"}
-                onClear={() => { setCoverFile(null); setCoverStatus(""); }}
-                onRemove={removeCover}
-                onSelect={selectCoverFile}
-                onSubmit={uploadCover}
-              />
-            ) : <p>Your staff role can view this cover but cannot change it.</p>}
-            <small className="venue-media-requirements">JPEG, PNG, WebP, HEIC, or HEIF · up to 25 MB · at least 720 × 720</small>
+            <small className="venue-media-requirements">Venue review copy · managed by MyDancr</small>
           </article>
         </div>
       </DashboardSection>
@@ -7916,10 +7650,7 @@ function DashboardStyles() {
       .venue-publication-panel p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.48; }
       .venue-publication-panel > ul { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
       .venue-publication-panel > ul > li { min-width: 0; min-height: 42px; padding: 0; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; color: #aaa3b5; background: rgba(255,255,255,.025); font-size: 12px; font-weight: 850; overflow: hidden; }
-      .venue-publication-panel > ul > li > a { min-height: 42px; display: flex; align-items: center; gap: 8px; box-sizing: border-box; padding: 8px 9px; color: inherit; text-decoration: none; transition: border-color .16s ease, background .16s ease, color .16s ease; }
-      .venue-publication-panel > ul > li > a:hover { color: #f8fafc; background: rgba(124,58,237,.12); }
-      .venue-publication-panel > ul > li > a:active { background: rgba(124,58,237,.2); }
-      .venue-publication-panel > ul > li > a:focus-visible { outline: 2px solid #a78bfa; outline-offset: -2px; }
+      .venue-publication-panel > ul > li > span { min-height: 42px; display: flex; align-items: center; gap: 8px; box-sizing: border-box; padding: 8px 9px; color: inherit; }
       .venue-publication-requirement-status { width: 22px; height: 22px; display: grid; place-items: center; flex: 0 0 22px; border-radius: 50%; color: #9d92ad; background: rgba(255,255,255,.06); }
       .venue-publication-requirement-label { min-width: 0; flex: 1 1 auto; }
       .venue-publication-requirement-arrow { flex: 0 0 auto; color: #c4b5fd; font-size: 20px; font-weight: 700; line-height: 1; }
@@ -7933,6 +7664,12 @@ function DashboardStyles() {
       .venue-publication-actions > button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
       .venue-publication-panel > small { color: #b9accd; font-size: 11px; font-weight: 760; }
       .venue-publication-panel > p[role="status"] { padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 9px; color: #baf5ff; background: rgba(148,229,255,.07); font-weight: 850; }
+      .venue-review-request { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(251,191,36,.25); border-radius: 10px; background: rgba(251,191,36,.045); }
+      .venue-review-request label { color: #f8fafc; font-size: 12px; font-weight: 900; }
+      .venue-review-request textarea { width: 100%; min-height: 88px; box-sizing: border-box; resize: vertical; padding: 10px 11px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #f8fafc; background: #111118; font: inherit; }
+      .venue-review-request textarea:focus { border-color: #7c3aed; outline: 2px solid rgba(124,58,237,.22); outline-offset: 1px; }
+      .venue-review-request button { width: fit-content; min-height: 42px; padding: 0 14px; border: 1px solid rgba(255,255,255,.16); border-radius: 9px; color: #f8fafc; background: #17171d; font: inherit; font-weight: 900; }
+      .venue-review-request button:disabled { opacity: .45; cursor: not-allowed; }
       .venue-card-preview-overlay { position: fixed; z-index: 1600; inset: var(--mydancr-preview-banner-offset,0px) 0 0; display: grid; place-items: center; box-sizing: border-box; overflow: auto; overscroll-behavior: contain; padding: max(18px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left)); background: rgba(2,2,5,.86); backdrop-filter: blur(18px); }
       .venue-card-preview-dialog { width: min(100%,560px); display: grid; gap: 16px; box-sizing: border-box; padding: 17px; border: 1px solid rgba(139,92,246,.42); border-radius: 22px; background: linear-gradient(160deg,rgba(24,18,38,.98),rgba(7,7,11,.99) 44%); box-shadow: 0 30px 90px rgba(0,0,0,.72),0 0 38px rgba(124,58,237,.14),inset 0 1px 0 rgba(255,255,255,.055); }
       .venue-card-preview-dialog > header { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -8358,9 +8095,11 @@ function DashboardStyles() {
       .customer-settings-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
       .customer-settings-grid > .customer-settings-panel, .customer-settings-grid > .support-panel, .customer-settings-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-settings-panel .city-field { grid-column: span 2; }
-      .venue-profile-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+      .venue-profile-panel form, .venue-readonly-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .venue-profile-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .venue-profile-panel input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; box-sizing: border-box; }
+      .venue-profile-panel input[readonly] { color: #cbd5e1; background: #111118; cursor: default; }
+      .venue-readonly-fields > a, .venue-readonly-fields > button, .venue-readonly-fields > small { grid-column: 1 / -1; }
       .venue-profile-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font: inherit; font-weight: 900; cursor: pointer; padding: 0 14px; }
       .venue-profile-panel a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; border: 1px solid rgba(255,255,255,.14); text-decoration: none; font-weight: 900; }
       .venue-page-setup-guide { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; padding: 18px; border: 1px solid rgba(124,58,237,.38); border-radius: var(--mydancr-dashboard-radius); background: linear-gradient(145deg,rgba(124,58,237,.12),rgba(17,17,24,.94) 64%); box-shadow: inset 3px 0 0 #7c3aed; }
@@ -8972,7 +8711,7 @@ function DashboardStyles() {
         .weekly-result-summary { align-items: flex-start; flex-direction: column; gap: 8px; }
         .earnings-history-tabs button { padding: 5px 8px; }
       }
-      @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-logo-panel, .venue-logo-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-logo-panel > img, .venue-logo-empty, .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-logo-panel > img, .venue-logo-empty { justify-self: start; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
+      @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-readonly-fields, .venue-logo-panel, .venue-logo-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-logo-panel > img, .venue-logo-empty, .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-logo-panel > img, .venue-logo-empty { justify-self: start; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 860px) { .venue-page-setup-guide { grid-template-columns: 1fr; } .venue-page-setup-guide > a { justify-self: start; } .venue-media-preview { grid-column: auto; grid-row: auto; justify-self: start; } .venue-media-preview.is-logo { width: 160px; } .venue-media-preview.is-cover { width: min(100%,340px); } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }

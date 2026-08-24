@@ -11,7 +11,7 @@ const [
   adminClient,
   liveApp,
   clubJoinPage,
-  venueService,
+  adminService,
   venueDashboard,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220001_venue_signup_requests.sql", import.meta.url), "utf8"),
@@ -22,7 +22,7 @@ const [
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/clubs/join/page.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/admin.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
@@ -81,7 +81,7 @@ test("venue website fields accept www domains and normalize them to secure URLs"
   assert.match(liveApp, /id="venueProfileWebsiteInput"[^>]*type="text"[^>]*inputmode="url"[^>]*placeholder="www\.yourclub\.com"/);
   assert.doesNotMatch(liveApp, /id="venue(?:Request|Profile)Website(?:Input)?"[^>]*type="url"/);
   assert.match(requestService, /new URL\(\/\^https\?:\\\/\\\/\/i\.test\(text\) \? text : `https:\/\/\$\{text\}`\)/);
-  assert.match(venueService, /new URL\(\/\^https\?:\\\/\\\/\/i\.test\(text\) \? text : `https:\/\/\$\{text\}`\)/);
+  assert.match(adminService, /new URL\(\/\^https\?:\\\/\\\/\/i\.test\(text\) \? text : `https:\/\/\$\{text\}`\)/);
   assert.match(venueDashboard, /placeholder=\{key === "website" \? "www\.yourclub\.com" : undefined\}/);
   assert.match(venueDashboard, /type=\{key === "opensAt" \|\| key === "closesAt" \? "time" : key === "phone" \? "tel" : "text"\}/);
   assert.doesNotMatch(venueDashboard, /type=\{key === "website" \? "url"/);

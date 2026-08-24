@@ -52,6 +52,10 @@ const dashboard = readFileSync(
   new URL("../app/dashboard/DashboardClient.tsx", import.meta.url),
   "utf8",
 );
+const adminDashboard = readFileSync(
+  new URL("../app/admin/AdminClient.tsx", import.meta.url),
+  "utf8",
+);
 const liveShell = readFileSync(
   new URL("../outputs/index.html", import.meta.url),
   "utf8",
@@ -224,7 +228,7 @@ test("profile surfaces use responsive sources and concise plural upload guidance
     dancerCarousel,
     /srcSet=\{selectedItem\.imageSrcSet \|\| undefined\}/,
   );
-  assert.match(dashboard, /original camera image/);
+  assert.match(adminDashboard, /original camera image/);
   assert.match(dashboard, /Choose profile photos/);
   assert.doesNotMatch(dashboard, /Choose the original camera photo for maximum detail/);
   assert.doesNotMatch(dashboard, /never enlarges a small/);

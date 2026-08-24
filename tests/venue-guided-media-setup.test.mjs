@@ -3,33 +3,28 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import sharp from "sharp";
 
-const [dashboard, imageValidationSource] = await Promise.all([
+const [dashboard, adminClient, adminMediaRoute, imageValidationSource] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/venues/media/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-validation.ts", import.meta.url), "utf8"),
 ]);
 const { validateAndPrepareDancrImage } = await import(
   new URL("../src/lib/dancr/image-validation.ts", import.meta.url)
 );
 
-test("venue setup offers phone library and camera controls with immediate previews", () => {
-  assert.match(dashboard, /MyDancr started your venue page/);
+test("MyDancr prepares venue images and the venue receives a read-only review", () => {
+  assert.match(dashboard, /MyDancr builds the page for you/);
   assert.match(dashboard, /Ask MyDancr for setup help/);
-  assert.match(dashboard, /inputId="venue-logo-upload"/);
-  assert.match(dashboard, /cameraInputId="venue-logo-camera-upload"/);
-  assert.match(dashboard, /inputId="venue-cover-upload"/);
-  assert.match(dashboard, /cameraInputId="venue-cover-camera-upload"/);
-  assert.equal((dashboard.match(/capture="environment"/g) || []).length >= 2, true);
-  assert.match(dashboard, /Photo library/);
-  assert.match(dashboard, /Take photo/);
-  assert.match(dashboard, /URL\.createObjectURL\(file\)/);
-  assert.match(dashboard, /URL\.revokeObjectURL\(nextPreviewUrl\)/);
-  assert.match(dashboard, /New preview/);
-  assert.match(dashboard, /Ready to save/);
+  assert.match(dashboard, /Venue review copy · managed by MyDancr/);
+  assert.match(adminClient, /accept="image\/\*,\.heic,\.heif"/);
+  assert.match(adminClient, /uploadVenueImage/);
+  assert.match(adminClient, /Official logo/);
+  assert.match(adminClient, /Discovery cover/);
+  assert.match(adminMediaRoute, /requireAdmin/);
 });
 
-test("venue image guidance matches server-side phone image preparation", () => {
-  assert.match(dashboard, /automatically rotates, resizes, removes private image metadata, and optimizes it/);
-  assert.match(dashboard, /up to 25 MB/);
+test("admin venue images still use production phone-image preparation", () => {
   assert.match(imageValidationSource, /MAX_DANCR_RAW_UPLOAD_BYTES = 25 \* 1024 \* 1024/);
   assert.match(imageValidationSource, /\.rotate\(\)[\s\S]*?\.resize\(/);
   assert.match(imageValidationSource, /withoutEnlargement: true/);
@@ -59,6 +54,5 @@ test("JPEG phone orientation is applied before metadata is removed", async () =>
 });
 
 test("removing saved venue media requires an explicit confirmation", () => {
-  assert.match(dashboard, /window\.confirm\("Remove the saved logo from this venue page\?"\)/);
-  assert.match(dashboard, /window\.confirm\("Remove the saved discovery cover from this venue page\?"\)/);
+  assert.match(adminClient, /window\.confirm\(`Remove this venue \$\{kind\}\?`\)/);
 });

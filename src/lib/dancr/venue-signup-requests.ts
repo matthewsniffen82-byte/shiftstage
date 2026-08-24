@@ -292,7 +292,7 @@ async function deliverVenueAccessCode(input: {
     "",
     `Open ${signupUrl} and paste this code to create the club manager account.`,
     "Do not forward this code. It can be used once and only for the approved venue.",
-    "After sign up, complete the private venue page in your dashboard and publish it when it is ready for customers.",
+    "After sign up, MyDancr will prepare the private venue page. Your dashboard will notify you when it is ready to approve or return with corrections.",
     "",
     "MyDancr",
   ].join("\n");
@@ -304,7 +304,7 @@ async function deliverVenueAccessCode(input: {
     <p>Expires ${escapeHtml(expiration)} Pacific Time.</p>
     <p><a href="${escapeHtml(signupUrl)}">Continue venue setup on MyDancr</a>, then paste this code to create the club manager account.</p>
     <p>Do not forward this code. It can be used once and only for the approved venue.</p>
-    <p>After sign up, complete the private venue page in your dashboard and publish it when it is ready for customers.</p>
+    <p>After sign up, MyDancr will prepare the private venue page. Your dashboard will notify you when it is ready to approve or return with corrections.</p>
   `;
 
   return sendTransactionalEmail({

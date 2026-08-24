@@ -3,146 +3,106 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const [
-  migration,
+  signupMigration,
+  reviewMigration,
   venueService,
   venueAccess,
   publicationRoute,
-  logoRoute,
   adminVenueRoute,
-  adminCodeRoute,
+  adminMediaRoute,
+  adminService,
+  adminClient,
   publicVenuesRoute,
   publicDiscoveryRoute,
   publicService,
   dashboard,
+  signupService,
   documentation,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608240001_admin_managed_venue_page_review.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-access.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/publication/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/venue/logo-image/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/venues/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/admin/venue-claim-codes/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/venues/media/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/admin.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/venues/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/venue-signup-requests.ts", import.meta.url), "utf8"),
   readFile(new URL("../docs/venue-onboarding.md", import.meta.url), "utf8"),
 ]);
 
-test("approved venue requests create an unpublished workspace and bind redemption to that request", () => {
-  assert.match(migration, /add column if not exists published_at timestamptz/);
-  assert.match(migration, /insert into public\.venues[\s\S]*?is_active,[\s\S]*?published_at[\s\S]*?false,[\s\S]*?null/);
-  assert.match(migration, /Existing venue claims are not supported/);
-  assert.match(migration, /request\.status = 'approved'/);
-  assert.match(migration, /request\.matched_venue_id = v_venue_id/);
-  assert.match(migration, /request\.access_code_id = p_code_id/);
-  assert.match(migration, /set owner_user_id = p_user_id, updated_at = now\(\)/);
-  assert.doesNotMatch(migration, /set owner_user_id = p_user_id, is_active = true/);
+test("approved requests still create private workspaces without public activation", () => {
+  assert.match(signupMigration, /insert into public\.venues[\s\S]*?is_active,[\s\S]*?published_at[\s\S]*?false,[\s\S]*?null/);
+  assert.match(signupMigration, /set owner_user_id = p_user_id, updated_at = now\(\)/);
+  assert.doesNotMatch(signupMigration, /set owner_user_id = p_user_id, is_active = true/);
 });
 
-test("private venue owners retain dashboard access before publication", () => {
+test("the database stores the complete managed page review state", () => {
+  for (const status of ["admin_draft", "venue_review", "changes_requested", "venue_approved", "published"]) {
+    assert.match(reviewMigration, new RegExp(`'${status}'`));
+  }
+  assert.match(reviewMigration, /page_reviewed_by_user_id uuid references public\.app_users/);
+  assert.match(reviewMigration, /True only after the connected venue approves/);
+});
+
+test("private venue owners keep access but can only approve or request corrections", () => {
   const ownedVenueQuery = venueAccess.match(/const \{ data: ownedVenue[\s\S]*?if \(ownerError\)/)?.[0] || "";
-  const teamVenueQuery = venueAccess.match(/const \{ data: membership[\s\S]*?if \(membershipError\)/)?.[0] || "";
   assert.match(ownedVenueQuery, /\.eq\("owner_user_id", userId\)/);
   assert.doesNotMatch(ownedVenueQuery, /\.eq\("is_active", true\)/);
-  assert.doesNotMatch(teamVenueQuery, /\.eq\("is_active", true\)/);
+  assert.match(venueService, /export async function reviewVenuePageForAccount/);
+  assert.match(venueService, /profile\.pageReviewStatus !== "venue_review"/);
+  assert.match(venueService, /"venue_approved" : "changes_requested"/);
+  assert.match(venueService, /Describe the requested changes in at least 10 characters/);
+  assert.doesNotMatch(venueService, /export async function publishVenueForAccount/);
+  assert.match(publicationRoute, /decision === "approved" \|\| body\?\.decision === "changes_requested"/);
+  assert.doesNotMatch(publicationRoute, /is_active: true/);
 });
 
-test("venue self-publication is server-authoritative and requires a complete public page", () => {
-  assert.match(venueService, /export function getVenuePublicationState/);
-  for (const requirement of [
-    "Venue name, public address, city, and state",
-    "Public phone number",
-    "Opening and closing hours",
-    "Venue logo",
-    "Discovery cover image",
-    "At least one active Club Deal",
-  ]) {
-    assert.match(venueService, new RegExp(requirement.replaceAll(" ", "\\s+")));
-  }
-  assert.match(venueService, /export async function publishVenueForAccount/);
-  assert.match(venueService, /Complete venue setup before publishing/);
-  assert.match(venueService, /update\(\{ is_active: true, published_at: publishedAt \}\)/);
-  assert.match(publicationRoute, /requireVenueAccess\(admin, user\.id, "manage_profile"\)/);
-  assert.match(publicationRoute, /publishVenueForAccount\(admin, user\.id\)/);
-  assert.match(publicationRoute, /profile\.venue_published/);
+test("only MyDancr can send review and publish after venue approval", () => {
+  assert.match(adminVenueRoute, /body\?\.action === "send_for_review" \|\| body\?\.action === "publish"/);
+  assert.match(adminVenueRoute, /transitionAdminManagedVenuePage/);
+  assert.match(adminService, /profile\.pageReviewStatus !== "venue_approved"/);
+  assert.match(adminService, /update\(\{ is_active: true, published_at: now, page_review_status: "published"/);
+  assert.match(adminService, /Complete the MyDancr venue page first/);
+  assert.match(adminService, /The connected venue manager must approve this exact page/);
 });
 
-test("venue managers can upload a moderated official logo for public cards", () => {
-  assert.match(migration, /'venue-logo-images'/);
-  assert.match(migration, /public reads venue logo images/);
-  assert.match(venueService, /validateAndPrepareDancrImage\(file\)/);
-  assert.match(venueService, /moderateImageWithOpenAI\(client, tempPath\)/);
-  assert.match(venueService, /uploadResponsiveImage\([\s\S]*?watermark: false/);
-  assert.match(logoRoute, /requireVenueAccess\(admin, user\.id, "manage_profile"\)/g);
-  assert.match(logoRoute, /uploadVenueLogoImage/);
-  assert.match(logoRoute, /deleteVenueLogoImage/);
+test("admins can prepare all page fields and official venue images", () => {
+  assert.match(adminClient, /saveVenuePage/);
+  assert.match(adminClient, /uploadVenueImage/);
+  assert.match(adminClient, /Send page for venue approval/);
+  assert.match(adminClient, /Publish approved page/);
+  assert.match(adminMediaRoute, /uploadVenueLogoImageByAdmin/);
+  assert.match(adminMediaRoute, /uploadVenueCoverImageByAdmin/);
+  assert.match(venueService, /MyDancr manages venue page images/);
 });
 
-test("manual venue creation, claiming, and admin publication remain closed", () => {
-  assert.match(adminVenueRoute, /New venues must submit the venue request form/);
-  assert.match(adminVenueRoute, /status: 410/);
-  assert.match(adminVenueRoute, /body\?\.isActive === true/);
-  assert.match(adminVenueRoute, /Only the connected venue manager can publish/);
-  assert.match(adminCodeRoute, /Venue access codes are created only when an approved venue request/);
-  assert.match(adminCodeRoute, /status: 410/);
+test("the venue dashboard presents a read-only review and approval experience", () => {
+  assert.match(dashboard, /MyDancr prepares the venue page\. Your team reviews it before MyDancr publishes it/);
+  assert.match(dashboard, /Approve page/);
+  assert.match(dashboard, /Request changes/);
+  assert.match(dashboard, /Your approval is recorded\. A MyDancr administrator will complete the final check/);
+  assert.match(dashboard, /readOnly/);
+  assert.doesNotMatch(dashboard, />Publish venue</);
+  assert.doesNotMatch(dashboard, /Save venue page/);
+  assert.doesNotMatch(dashboard, /Save replacement logo/);
 });
 
-test("only self-published venues reach public discovery and use their uploaded logo", () => {
+test("manager access email and documentation describe the managed workflow", () => {
+  assert.match(signupService, /MyDancr will prepare the private venue page/);
+  assert.match(documentation, /MyDancr prepares the private page/);
+  assert.match(documentation, /venue previews the page and either approves/);
+  assert.match(documentation, /Venue approval records consent but never activates a listing/);
+});
+
+test("public discovery remains restricted to administratively published venues", () => {
   for (const source of [publicVenuesRoute, publicDiscoveryRoute, publicService]) {
     assert.match(source, /\.eq\("is_active", true\)/);
     assert.match(source, /logo_storage_path/);
-    assert.match(source, /venue-logo-images/);
   }
-});
-
-test("the venue dashboard previews its customer-facing venue card without leaving the dashboard", () => {
-  assert.match(dashboard, /Complete, preview, and publish the guest-facing venue page from this private workspace/);
-  assert.match(dashboard, /Nothing appears publicly until you publish/);
-  assert.match(dashboard, /<button type="button" onClick=\{openVenueCardPreview\}>Preview venue<\/button>/);
-  assert.match(dashboard, /aria-labelledby="venue-card-preview-heading"[\s\S]*?aria-modal="true"[\s\S]*?role="dialog"/);
-  assert.match(dashboard, /aria-label="Close venue card preview"[\s\S]*?setIsVenueCardPreviewOpen\(false\)[\s\S]*?>[\s\S]*?×/);
-  assert.match(dashboard, /venue-card-preview-card[\s\S]*?profile\?\.coverImageUrl[\s\S]*?profile\?\.logoImageUrl[\s\S]*?venueCardPreviewWorkingNow[\s\S]*?venueCardPreviewHours[\s\S]*?venueCardPreviewDeal\.dealTitle/);
-  assert.match(dashboard, /event\.key === "Escape"[\s\S]*?setIsVenueCardPreviewOpen\(false\)/);
-  assert.doesNotMatch(dashboard, /venue_preview=1/);
-  assert.match(dashboard, /Publish venue/);
-  assert.match(dashboard, /Save logo/);
-  assert.match(documentation, /request-first venue onboarding model/);
-  assert.match(documentation, /private venue workspace and one-time venue signup code/);
-  assert.match(documentation, /Venue accounts receive access only to their own venue dashboard; they never receive MyDancr administrator access/);
-});
-
-test("each venue publishing requirement opens the control that completes it", () => {
-  assert.match(dashboard, /function openVenueSetupRequirement[\s\S]*?section\.open = true[\s\S]*?target\?\.focus/);
-  for (const target of [
-    "venue-profile-name",
-    "venue-profile-phone",
-    "venue-profile-opensAt",
-    "venue-logo-upload",
-    "venue-cover-upload",
-    "venue-deal-contract-ledger",
-  ]) {
-    assert.match(dashboard, new RegExp(`targetId: "${target}"`));
-  }
-  assert.match(dashboard, /id=\{`venue-profile-\$\{key\}`\}/);
-  assert.match(dashboard, /inputId="venue-logo-upload"/);
-  assert.match(dashboard, /inputId="venue-cover-upload"/);
-  assert.match(dashboard, /id="venue-deal-contract-ledger"/);
-  assert.match(dashboard, /onClick=\{\(event\) => openVenueSetupRequirement\(event, requirement\.sectionId, requirement\.targetId\)\}/);
-});
-
-test("venue identity and publication actions share the role-aware refresh boundary", () => {
-  const venueIdentityActions = dashboard.match(/async function saveProfile[\s\S]*?function openVenueSection/)?.[0] || "";
-  for (const path of [
-    "/api/venue/profile",
-    "/api/venue/cover-image",
-    "/api/venue/logo-image",
-    "/api/venue/publication",
-  ]) {
-    assert.match(venueIdentityActions, new RegExp(`requestDashboardJson\\("${path.replaceAll("/", "\\/")}"`));
-  }
-  assert.equal((venueIdentityActions.match(/expectedRole: "venue"/g) || []).length, 6);
-  assert.doesNotMatch(venueIdentityActions, /authorization: `Bearer/);
-  assert.doesNotMatch(venueIdentityActions, /fetch\("\/api\/venue\/(?:profile|cover-image|logo-image|publication)/);
 });

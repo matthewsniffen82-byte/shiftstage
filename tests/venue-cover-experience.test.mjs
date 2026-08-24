@@ -6,7 +6,8 @@ const [
   migration,
   venueService,
   moderationService,
-  coverRoute,
+  adminMediaRoute,
+  adminClient,
   dashboard,
   discoveryRoute,
   publicVenuesRoute,
@@ -19,7 +20,8 @@ const [
   readFile(new URL("../supabase/migrations/202607300001_venue_cover_images.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/venue/cover-image/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/venues/media/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/venues/route.ts", import.meta.url), "utf8"),
@@ -41,8 +43,8 @@ test("venue cover storage is owner-scoped and public only after publication", ()
   );
 });
 
-test("venue cover uploads are validated, moderated, compensated, and permission-scoped", () => {
-  assert.match(venueService, /uploadVenueCoverImage/);
+test("admin-managed venue cover uploads are validated, moderated, and compensated", () => {
+  assert.match(venueService, /uploadVenueCoverImageByAdmin/);
   assert.match(venueService, /validateAndPrepareDancrImage\(file\)/);
   assert.match(venueService, /image\.width < 720 \|\| image\.height < 720/);
   assert.match(venueService, /MODERATION_TEMP_BUCKET/);
@@ -51,26 +53,22 @@ test("venue cover uploads are validated, moderated, compensated, and permission-
   assert.match(venueService, /const COVER_BUCKET = "venue-cover-images"/);
   assert.match(venueService, /cover_image_storage_path: finalPath/);
   assert.match(venueService, /if \(finalUploaded\)[\s\S]*?removeResponsiveImage\(/);
-  assert.match(venueService, /requireVenueAccess\(client, userId, "manage_profile"\)/);
-  assert.match(venueService, /\.eq\("id", access\.venueId\)/);
+  assert.match(venueService, /getVenueById\(client, venueId\)/);
   assert.match(moderationService, /export async function moderateImageWithOpenAI/);
 });
 
-test("only active venue accounts can publish or remove a cover image", () => {
-  assert.match(coverRoute, /createRequestSupabaseContext\(request\)/);
-  assert.match(coverRoute, /requireActiveVenueAccount/);
-  assert.match(coverRoute, /requireVenueAccess\(admin, user\.id, "manage_profile"\)/);
-  assert.match(coverRoute, /uploadVenueCoverImage\([\s\S]*?admin,[\s\S]*?user\.id/);
-  assert.match(coverRoute, /deleteVenueCoverImage\(admin, user\.id\)/);
-  assert.match(coverRoute, /Choose a venue cover image to upload/);
+test("only a MyDancr administrator can publish or remove a cover image", () => {
+  assert.match(adminMediaRoute, /createRequestSupabaseContext\(request\)/);
+  assert.match(adminMediaRoute, /requireAdmin/);
+  assert.match(adminMediaRoute, /uploadVenueCoverImageByAdmin/);
+  assert.match(adminMediaRoute, /deleteVenueCoverImageByAdmin/);
 });
 
-test("the venue dashboard publishes and removes real moderated cover media", () => {
-  assert.match(dashboard, /requestDashboardJson\("\/api\/venue\/cover-image", \{[\s\S]*?method: "POST"/);
-  assert.match(dashboard, /requestDashboardJson\("\/api\/venue\/cover-image", \{[\s\S]*?method: "DELETE"/);
-  assert.match(dashboard, /Checking and publishing venue image/);
-  assert.match(dashboard, /after the safety check/);
-  assert.match(dashboard, /accept="image\/jpeg,image\/png,image\/webp,image\/heic,image\/heif/);
+test("the admin prepares media and the venue dashboard reviews it read-only", () => {
+  assert.match(adminClient, /Checking and uploading venue \$\{kind\}/);
+  assert.match(adminClient, /accept="image\/\*,\.heic,\.heif"/);
+  assert.match(adminClient, /removeVenueImage/);
+  assert.match(dashboard, /Venue review copy · managed by MyDancr/);
   assert.match(dashboard, /profile\?\.coverImageUrl/);
 });
 

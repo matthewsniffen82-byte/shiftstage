@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
-import { publishVenueForAccount } from "@/src/lib/dancr/venue";
+import { reviewVenuePageForAccount } from "@/src/lib/dancr/venue";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -16,22 +16,36 @@ export async function POST(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_profile");
-    const result = await publishVenueForAccount(admin, user.id);
+    const body = await request.json().catch(() => null);
+    const decision = body?.decision === "approved" || body?.decision === "changes_requested"
+      ? body.decision
+      : null;
+    if (!decision) {
+      return NextResponse.json({ ok: false, error: "Choose whether to approve the page or request changes." }, { status: 400 });
+    }
+    const result = await reviewVenuePageForAccount(admin, user.id, {
+      decision,
+      notes: typeof body?.notes === "string" ? body.notes : null,
+    });
     await recordVenueActivity(admin, {
       venueId: access.venueId,
       actorUserId: user.id,
       actorRole: access.role,
-      action: "profile.venue_published",
+      action: decision === "approved" ? "profile.venue_page_approved" : "profile.venue_page_changes_requested",
       targetType: "venue",
       targetId: result.profile.id,
-      summary: "The completed venue page was published to guests.",
+      summary: decision === "approved"
+        ? "The venue approved its private MyDancr page for final publication."
+        : "The venue requested changes to its private MyDancr page.",
     });
     return NextResponse.json({
       ok: true,
       ...result,
-      message: "Venue published. Guests can now find it on MyDancr.",
+      message: decision === "approved"
+        ? "Page approved. MyDancr will complete the final publication check."
+        : "Change request sent to MyDancr.",
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    return apiError(error, "Unable to publish venue.", 400);
+    return apiError(error, "Unable to record venue page review.", 400);
   }
 }

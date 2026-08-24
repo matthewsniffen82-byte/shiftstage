@@ -6,6 +6,8 @@ import {
 import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
 import { deliverNotificationRows } from "./notification-delivery";
 import { transitionDancerPublication } from "./profile-publication";
+import { getActiveClubDealListsForVenues, getActiveClubDealsForVenue } from "./deals";
+import { getVenueById, getVenuePublicationState } from "./venue";
 import { getStripe } from "../stripe";
 
 type DancrClient = SupabaseClient;
@@ -597,7 +599,7 @@ async function pendingContentReviewDancerIds(db: any): Promise<string[]> {
 export async function getAdminVenues(client: DancrClient, city?: string | null) {
   let query = (client as any)
     .from("venues")
-    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, owner_user_id, created_at, updated_at")
+    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, created_at, updated_at")
     .order("city", { ascending: true })
     .order("name", { ascending: true });
 
@@ -606,7 +608,18 @@ export async function getAdminVenues(client: DancrClient, city?: string | null) 
   const { data, error } = await query;
   if (error) throw error;
 
-  return data || [];
+  const rows = data || [];
+  const dealLists = await getActiveClubDealListsForVenues(client, rows.map((row: any) => String(row.id)));
+  return rows.map((row: any) => {
+    const logo = responsivePublicImage(client, "venue-logo-images", row.logo_storage_path);
+    const cover = responsivePublicImage(client, "venue-cover-images", row.cover_image_storage_path);
+    return {
+      ...row,
+      logo_image_url: logo?.imageUrl || null,
+      cover_image_url: cover?.imageUrl || null,
+      active_deal_count: dealLists.get(String(row.id))?.length || 0,
+    };
+  });
 }
 
 export async function createAdminVenue(client: DancrClient, adminId: string, input: AdminVenueInput) {
@@ -642,11 +655,23 @@ export async function updateAdminVenue(
   const row = venueInputToRow(input, false);
   if (!Object.keys(row).length) throw new Error("No venue updates provided.");
 
+  const current = await getVenueById(client, venueId);
+  if (!current.isActive) {
+    row.page_review_status = "admin_draft";
+    row.page_review_sent_at = null;
+    row.page_reviewed_at = null;
+    row.page_reviewed_by_user_id = null;
+    row.page_review_notes = null;
+  }
+  if (input.isActive === false) {
+    row.page_review_status = "admin_draft";
+  }
+
   const { data, error } = await (client as any)
     .from("venues")
     .update(row)
     .eq("id", venueId)
-    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active")
+    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
     .single();
 
   if (error) throw error;
@@ -660,6 +685,113 @@ export async function updateAdminVenue(
   });
 
   return data;
+}
+
+export async function transitionAdminManagedVenuePage(
+  client: DancrClient,
+  adminId: string,
+  venueId: string,
+  action: "send_for_review" | "publish",
+) {
+  const profile = await getVenueById(client, venueId);
+  const deals = await getActiveClubDealsForVenue(client, venueId);
+  const publication = getVenuePublicationState(profile, deals);
+
+  if (!publication.isReady) {
+    const missing = publication.requirements
+      .filter((requirement) => !requirement.complete)
+      .map((requirement) => requirement.label);
+    throw new Error(`Complete the MyDancr venue page first: ${missing.join(", ")}.`);
+  }
+
+  const now = new Date().toISOString();
+  if (action === "send_for_review") {
+    if (!profile.ownerUserId) throw new Error("The approved venue manager must create their account before review can be sent.");
+    if (profile.isActive) throw new Error("This venue page is already published.");
+    const { data, error } = await (client as any)
+      .from("venues")
+      .update({
+        page_review_status: "venue_review",
+        page_review_sent_at: now,
+        page_reviewed_at: null,
+        page_reviewed_by_user_id: null,
+        page_review_notes: null,
+      })
+      .eq("id", venueId)
+      .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+      .single();
+    if (error) throw error;
+
+    const notificationRow = {
+      recipient_id: profile.ownerUserId,
+      notification_type: "approval_status" as const,
+      title: "Your venue page is ready to review",
+      body: `${profile.name} is ready for your approval. Open the venue dashboard to preview the page or request changes.`,
+      payload: { venueId, venueSlug: profile.slug, event: "venue_page_review" },
+    };
+    const { error: notificationError } = await (client as any).from("notifications").insert(notificationRow);
+    if (notificationError) throw notificationError;
+    await deliverNotificationRows(client, [notificationRow]);
+    await logAdminAction(client, { adminId, targetType: "venue", targetId: venueId, action: "send_venue_page_for_review", notes: profile.name });
+    return data;
+  }
+
+  if (profile.pageReviewStatus !== "venue_approved") {
+    throw new Error("The connected venue manager must approve this exact page before MyDancr can publish it.");
+  }
+
+  const { data, error } = await (client as any)
+    .from("venues")
+    .update({ is_active: true, published_at: now, page_review_status: "published", page_review_notes: null })
+    .eq("id", venueId)
+    .eq("page_review_status", "venue_approved")
+    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+    .single();
+  if (error) throw error;
+
+  if (profile.ownerUserId) {
+    const notificationRow = {
+      recipient_id: profile.ownerUserId,
+      notification_type: "approval_status" as const,
+      title: "Your venue page is live",
+      body: `${profile.name} is now published on MyDancr.`,
+      payload: { venueId, venueSlug: profile.slug, event: "venue_page_published" },
+    };
+    const { error: notificationError } = await (client as any).from("notifications").insert(notificationRow);
+    if (notificationError) throw notificationError;
+    await deliverNotificationRows(client, [notificationRow]);
+  }
+  await logAdminAction(client, { adminId, targetType: "venue", targetId: venueId, action: "publish_approved_venue_page", notes: profile.name });
+  return data;
+}
+
+export async function resetManagedVenuePageReview(
+  client: DancrClient,
+  adminId: string,
+  venueId: string,
+  reason: string,
+) {
+  const profile = await getVenueById(client, venueId);
+  if (!profile.isActive) {
+    const { error } = await (client as any)
+      .from("venues")
+      .update({
+        page_review_status: "admin_draft",
+        page_review_sent_at: null,
+        page_reviewed_at: null,
+        page_reviewed_by_user_id: null,
+        page_review_notes: null,
+      })
+      .eq("id", venueId);
+    if (error) throw error;
+  }
+  await logAdminAction(client, {
+    adminId,
+    targetType: "venue",
+    targetId: venueId,
+    action: "update_managed_venue_page",
+    notes: reason,
+  });
 }
 
 export async function getAdminSubscriptions(client: DancrClient, status?: string | null) {
@@ -1464,7 +1596,7 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   if ("state" in input) row.state = optionalText(input.state);
   if ("address" in input) row.address = optionalText(input.address);
   if ("phone" in input) row.phone = optionalText(input.phone);
-  if ("website" in input) row.website = optionalText(input.website);
+  if ("website" in input) row.website = optionalWebsite(input.website);
   if ("timezone" in input) row.timezone = optionalText(input.timezone) || "America/Los_Angeles";
   if ("opensAt" in input) row.opens_at = optionalText(input.opensAt);
   if ("closesAt" in input) row.closes_at = optionalText(input.closesAt);
@@ -1473,7 +1605,7 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   if (creating) {
     row.slug = row.slug || slugify(String(row.name));
     row.timezone = row.timezone || "America/Los_Angeles";
-    row.is_active = true;
+    row.is_active = false;
   }
 
   return row;
@@ -1498,6 +1630,25 @@ function requiredText(value: string, message: string) {
   const text = value.trim();
   if (!text) throw new Error(message);
   return text;
+}
+
+function optionalWebsite(value: string | null | undefined) {
+  const text = optionalText(value);
+  if (!text) return null;
+
+  let url: URL;
+  try {
+    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+  } catch {
+    throw new Error("Enter a valid venue website, such as www.yourclub.com.");
+  }
+
+  if (!["http:", "https:"].includes(url.protocol) || !url.hostname.includes(".") || url.username || url.password) {
+    throw new Error("Enter a valid venue website, such as www.yourclub.com.");
+  }
+
+  url.hash = "";
+  return url.toString();
 }
 
 function optionalText(value: string | null | undefined) {

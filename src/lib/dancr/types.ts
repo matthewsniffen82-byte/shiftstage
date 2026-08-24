@@ -112,6 +112,11 @@ export type VenueOwnerProfile = {
   closesAt: string | null;
   isActive: boolean;
   publishedAt: string | null;
+  pageReviewStatus: "admin_draft" | "venue_review" | "changes_requested" | "venue_approved" | "published";
+  pageReviewSentAt: string | null;
+  pageReviewedAt: string | null;
+  pageReviewedByUserId: string | null;
+  pageReviewNotes: string | null;
   logoStoragePath: string | null;
   logoImageUrl: string | null;
   logoImageSrcSet: string | null;

@@ -12,6 +12,7 @@ import {
 } from "./responsive-image";
 import { removeArchivedOriginalMedia } from "./media-watermark";
 import {
+  getActiveClubDealsForVenue,
   getVenueDealsForAccount,
   getVenueDealRevenueMetrics,
 } from "./deals";
@@ -47,7 +48,7 @@ export async function getVenueForAccount(client: DancrClient, userId: string): P
 export async function updateVenueForAccount(
   client: DancrClient,
   userId: string,
-  input: {
+  _input: {
     name?: string;
     city?: string;
     state?: string | null;
@@ -59,30 +60,9 @@ export async function updateVenueForAccount(
     qrCodeLabel?: string | null;
   },
 ): Promise<VenueOwnerProfile> {
-  const access = await requireVenueAccess(client, userId, "manage_profile");
-  const venue = await requireVenueForAccount(client, userId);
-  const update: Record<string, string | null> = {};
-  if (input.name !== undefined) update.name = requiredText(input.name, "Venue name", 2, 120);
-  if (input.city !== undefined) update.city = requiredText(input.city, "City", 2, 100);
-  if (input.state !== undefined) update.state = optionalText(input.state, "State", 50);
-  if (input.address !== undefined) update.address = optionalText(input.address, "Address", 240);
-  if (input.phone !== undefined) update.phone = optionalText(input.phone, "Phone", 40);
-  if (input.website !== undefined) update.website = optionalUrl(input.website);
-  if (input.opensAt !== undefined) update.opens_at = optionalTime(input.opensAt, "Opening time");
-  if (input.closesAt !== undefined) update.closes_at = optionalTime(input.closesAt, "Closing time");
-  if (input.qrCodeLabel !== undefined) update.qr_code_label = optionalText(input.qrCodeLabel, "QR label", 100);
-
-  if (!Object.keys(update).length) return venue;
-
-  const { data, error } = await client
-    .from("venues")
-    .update(update)
-    .eq("id", access.venueId)
-    .select(VENUE_OWNER_COLUMNS)
-    .single();
-
-  if (error) throw error;
-  return toVenueOwnerProfile(client, data);
+  await requireVenueAccess(client, userId, "manage_profile");
+  await requireVenueForAccount(client, userId);
+  throw new Error("MyDancr manages venue page changes. Review the private page or send a change request from your venue dashboard.");
 }
 
 export async function uploadVenueQrCode(
@@ -159,10 +139,20 @@ export async function deleteVenueQrCode(client: DancrClient, userId: string): Pr
 export async function uploadVenueCoverImage(
   client: DancrClient,
   userId: string,
+  _file: Blob,
+): Promise<VenueOwnerProfile> {
+  await requireVenueAccess(client, userId, "manage_profile");
+  await requireVenueForAccount(client, userId);
+  throw new Error("MyDancr manages venue page images. Send a change request from your venue dashboard.");
+}
+
+export async function uploadVenueCoverImageByAdmin(
+  client: DancrClient,
+  adminId: string,
+  venueId: string,
   file: Blob,
 ): Promise<VenueOwnerProfile> {
-  const access = await requireVenueAccess(client, userId, "manage_profile");
-  const venue = await requireVenueForAccount(client, userId);
+  const venue = await getVenueById(client, venueId);
   const image = await validateAndPrepareDancrImage(file);
   if (image.width < 720 || image.height < 720) {
     throw new Error("Venue cover image must be at least 720 by 720 pixels.");
@@ -173,7 +163,7 @@ export async function uploadVenueCoverImage(
     throw new Error("Choose a portrait, square, or landscape venue image.");
   }
 
-  const tempPath = `${userId}/venue-cover/${venue.id}/${Date.now()}-${image.storageFileName}`;
+  const tempPath = `${adminId}/venue-cover/${venue.id}/${Date.now()}-${image.storageFileName}`;
   let finalPath = "";
   let finalUploaded = false;
 
@@ -219,8 +209,9 @@ export async function uploadVenueCoverImage(
       .update({
         cover_image_storage_path: finalPath,
         cover_image_updated_at: new Date().toISOString(),
+        ...venuePageDraftReset(venue),
       })
-      .eq("id", access.venueId)
+      .eq("id", venue.id)
       .select(VENUE_OWNER_COLUMNS)
       .single();
 
@@ -258,15 +249,24 @@ export async function deleteVenueCoverImage(
   client: DancrClient,
   userId: string,
 ): Promise<VenueOwnerProfile> {
-  const access = await requireVenueAccess(client, userId, "manage_profile");
-  const venue = await requireVenueForAccount(client, userId);
+  await requireVenueAccess(client, userId, "manage_profile");
+  await requireVenueForAccount(client, userId);
+  throw new Error("MyDancr manages venue page images. Send a change request from your venue dashboard.");
+}
+
+export async function deleteVenueCoverImageByAdmin(
+  client: DancrClient,
+  venueId: string,
+): Promise<VenueOwnerProfile> {
+  const venue = await getVenueById(client, venueId);
   const { data, error } = await client
     .from("venues")
     .update({
       cover_image_storage_path: null,
       cover_image_updated_at: null,
+      ...venuePageDraftReset(venue),
     })
-    .eq("id", access.venueId)
+    .eq("id", venue.id)
     .select(VENUE_OWNER_COLUMNS)
     .single();
 
@@ -290,10 +290,20 @@ export async function deleteVenueCoverImage(
 export async function uploadVenueLogoImage(
   client: DancrClient,
   userId: string,
+  _file: Blob,
+): Promise<VenueOwnerProfile> {
+  await requireVenueAccess(client, userId, "manage_profile");
+  await requireVenueForAccount(client, userId);
+  throw new Error("MyDancr manages venue page images. Send a change request from your venue dashboard.");
+}
+
+export async function uploadVenueLogoImageByAdmin(
+  client: DancrClient,
+  adminId: string,
+  venueId: string,
   file: Blob,
 ): Promise<VenueOwnerProfile> {
-  const access = await requireVenueAccess(client, userId, "manage_profile");
-  const venue = await requireVenueForAccount(client, userId);
+  const venue = await getVenueById(client, venueId);
   const image = await validateAndPrepareDancrImage(file);
   if (image.width < 512 || image.height < 512) {
     throw new Error("Venue logo must be at least 512 by 512 pixels.");
@@ -303,7 +313,7 @@ export async function uploadVenueLogoImage(
     throw new Error("Choose a square or moderately rectangular venue logo.");
   }
 
-  const tempPath = `${userId}/venue-logo/${venue.id}/${Date.now()}-${image.storageFileName}`;
+  const tempPath = `${adminId}/venue-logo/${venue.id}/${Date.now()}-${image.storageFileName}`;
   let finalPath = "";
   let finalUploaded = false;
   try {
@@ -343,8 +353,9 @@ export async function uploadVenueLogoImage(
       .update({
         logo_storage_path: finalPath,
         logo_updated_at: new Date().toISOString(),
+        ...venuePageDraftReset(venue),
       })
-      .eq("id", access.venueId)
+      .eq("id", venue.id)
       .select(VENUE_OWNER_COLUMNS)
       .single();
     if (error) throw error;
@@ -370,12 +381,20 @@ export async function deleteVenueLogoImage(
   client: DancrClient,
   userId: string,
 ): Promise<VenueOwnerProfile> {
-  const access = await requireVenueAccess(client, userId, "manage_profile");
-  const venue = await requireVenueForAccount(client, userId);
+  await requireVenueAccess(client, userId, "manage_profile");
+  await requireVenueForAccount(client, userId);
+  throw new Error("MyDancr manages venue page images. Send a change request from your venue dashboard.");
+}
+
+export async function deleteVenueLogoImageByAdmin(
+  client: DancrClient,
+  venueId: string,
+): Promise<VenueOwnerProfile> {
+  const venue = await getVenueById(client, venueId);
   const { data, error } = await client
     .from("venues")
-    .update({ logo_storage_path: null, logo_updated_at: null })
-    .eq("id", access.venueId)
+    .update({ logo_storage_path: null, logo_updated_at: null, ...venuePageDraftReset(venue) })
+    .eq("id", venue.id)
     .select(VENUE_OWNER_COLUMNS)
     .single();
   if (error) throw error;
@@ -390,6 +409,8 @@ export async function deleteVenueLogoImage(
 export type VenuePublicationState = {
   isPublished: boolean;
   isReady: boolean;
+  workflowStatus: VenueOwnerProfile["pageReviewStatus"];
+  canVenueReview: boolean;
   completedCount: number;
   totalCount: number;
   requirements: Array<{ key: string; label: string; complete: boolean }>;
@@ -411,39 +432,59 @@ export function getVenuePublicationState(
   return {
     isPublished: profile.isActive,
     isReady: completedCount === requirements.length,
+    workflowStatus: profile.pageReviewStatus,
+    canVenueReview: !profile.isActive && profile.pageReviewStatus === "venue_review",
     completedCount,
     totalCount: requirements.length,
     requirements,
   };
 }
 
-export async function publishVenueForAccount(
+export async function reviewVenuePageForAccount(
   client: DancrClient,
   userId: string,
+  input: { decision: "approved" | "changes_requested"; notes?: string | null },
 ): Promise<{ profile: VenueOwnerProfile; publication: VenuePublicationState }> {
   const access = await requireVenueAccess(client, userId, "manage_profile");
   const profile = await requireVenueForAccount(client, userId);
-  const dealState = await getVenueDealsForAccount(client, userId);
-  const deals = dealState?.deals || [];
-  const publication = getVenuePublicationState(profile, deals);
-  if (!publication.isReady) {
-    const missing = publication.requirements.filter((requirement) => !requirement.complete).map((requirement) => requirement.label);
-    throw new Error(`Complete venue setup before publishing: ${missing.join(", ")}.`);
+  if (profile.pageReviewStatus !== "venue_review") {
+    throw new Error("This venue page is not currently awaiting your review.");
   }
 
-  const publishedAt = new Date().toISOString();
+  const deals = await getActiveClubDealsForVenue(client, access.venueId);
+  const publication = getVenuePublicationState(profile, deals);
+  if (input.decision === "approved" && !publication.isReady) {
+    const missing = publication.requirements.filter((requirement) => !requirement.complete).map((requirement) => requirement.label);
+    throw new Error(`MyDancr must complete the page before venue approval: ${missing.join(", ")}.`);
+  }
+
+  const notes = String(input.notes || "").trim();
+  if (input.decision === "changes_requested" && notes.length < 10) {
+    throw new Error("Describe the requested changes in at least 10 characters.");
+  }
+
+  const reviewedAt = new Date().toISOString();
   const { data, error } = await client
     .from("venues")
-    .update({ is_active: true, published_at: publishedAt })
+    .update({
+      page_review_status: input.decision === "approved" ? "venue_approved" : "changes_requested",
+      page_reviewed_at: reviewedAt,
+      page_reviewed_by_user_id: userId,
+      page_review_notes: input.decision === "approved" ? null : notes,
+    })
     .eq("id", access.venueId)
+    .eq("page_review_status", "venue_review")
     .select(VENUE_OWNER_COLUMNS)
     .single();
   if (error) throw error;
-  const publishedProfile = toVenueOwnerProfile(client, data);
-  console.info("VENUE_SELF_PUBLISHED", { venueId: access.venueId, userId });
+  const reviewedProfile = toVenueOwnerProfile(client, data);
+  console.info(input.decision === "approved" ? "VENUE_PAGE_APPROVED" : "VENUE_PAGE_CHANGES_REQUESTED", {
+    venueId: access.venueId,
+    userId,
+  });
   return {
-    profile: publishedProfile,
-    publication: getVenuePublicationState(publishedProfile, deals),
+    profile: reviewedProfile,
+    publication: getVenuePublicationState(reviewedProfile, deals),
   };
 }
 
@@ -547,12 +588,33 @@ export function readVenueAnalyticsPeriod(value: string | null | undefined): Venu
 }
 
 const VENUE_OWNER_COLUMNS =
-  "id, owner_user_id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, logo_storage_path, logo_updated_at, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
+  "id, owner_user_id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, logo_storage_path, logo_updated_at, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
 
 async function requireVenueForAccount(client: DancrClient, userId: string) {
   const venue = await getVenueForAccount(client, userId);
   if (!venue) throw new Error("Venue profile not found.");
   return venue;
+}
+
+export async function getVenueById(client: DancrClient, venueId: string) {
+  const { data, error } = await client
+    .from("venues")
+    .select(VENUE_OWNER_COLUMNS)
+    .eq("id", venueId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Venue not found.");
+  return toVenueOwnerProfile(client, data);
+}
+
+function venuePageDraftReset(venue: VenueOwnerProfile) {
+  return venue.isActive ? {} : {
+    page_review_status: "admin_draft",
+    page_review_sent_at: null,
+    page_reviewed_at: null,
+    page_reviewed_by_user_id: null,
+    page_review_notes: null,
+  };
 }
 
 function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
@@ -577,6 +639,11 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     closesAt: row.closes_at || null,
     isActive: row.is_active !== false,
     publishedAt: row.published_at || null,
+    pageReviewStatus: row.page_review_status || (row.is_active !== false ? "published" : "admin_draft"),
+    pageReviewSentAt: row.page_review_sent_at || null,
+    pageReviewedAt: row.page_reviewed_at || null,
+    pageReviewedByUserId: row.page_reviewed_by_user_id || null,
+    pageReviewNotes: row.page_review_notes || null,
     logoStoragePath: row.logo_storage_path || null,
     logoImageUrl: logoImage?.imageUrl || null,
     logoImageSrcSet: logoImage?.imageSrcSet || null,
@@ -750,42 +817,10 @@ function conversionPercent(completed: number, total: number) {
   return Math.round((completed / total) * 1000) / 10;
 }
 
-function requiredText(value: string, label: string, min: number, max: number) {
-  const text = value.trim();
-  if (text.length < min || text.length > max) throw new Error(`${label} must be ${min} to ${max} characters.`);
-  if (/[<>]/.test(text)) throw new Error(`${label} contains unsupported characters.`);
-  return text;
-}
-
 function optionalText(value: string | null | undefined, label: string, max: number) {
   const text = typeof value === "string" ? value.trim() : "";
   if (!text) return null;
   if (text.length > max) throw new Error(`${label} must be ${max} characters or fewer.`);
   if (/[<>]/.test(text)) throw new Error(`${label} contains unsupported characters.`);
   return text;
-}
-
-function optionalUrl(value: string | null | undefined) {
-  const text = optionalText(value, "Website", 300);
-  if (!text) return null;
-  let url: URL;
-  try {
-    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-  } catch {
-    throw new Error("Enter a valid venue website, such as www.yourclub.com.");
-  }
-  if (!["http:", "https:"].includes(url.protocol) || !url.hostname.includes(".") || url.username || url.password) {
-    throw new Error("Enter a valid venue website, such as www.yourclub.com.");
-  }
-  url.hash = "";
-  return url.toString();
-}
-
-function optionalTime(value: string | null | undefined, label: string) {
-  const text = typeof value === "string" ? value.trim() : "";
-  if (!text) return null;
-  if (!/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(text)) {
-    throw new Error(`${label} must be a valid 24-hour time.`);
-  }
-  return text.length === 5 ? `${text}:00` : text;
 }
