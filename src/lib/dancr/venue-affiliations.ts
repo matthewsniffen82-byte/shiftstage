@@ -569,8 +569,8 @@ async function requireManagedVenue(client: DancrClient, managerUserId: string) {
     .eq("id", access.venueId)
     .maybeSingle();
   if (error) throw error;
-  if (!data || data.is_active === false) {
-    throw new VenueAffiliationUserError("A verified active venue manager account is required.");
+  if (!data) {
+    throw new VenueAffiliationUserError("An assigned venue workspace is required.");
   }
   return data;
 }

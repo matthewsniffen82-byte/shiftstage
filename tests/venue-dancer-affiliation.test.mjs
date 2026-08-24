@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [baseMigration, firstTapMigration, lifecycleMigration, restoreMigration, service, dancerRoute, venueRoute, checkInRoute, deals, dashboard, dancerPanel, venuePanel] = await Promise.all([
+const [baseMigration, firstTapMigration, lifecycleMigration, restoreMigration, privateRosterMigration, service, dancerRoute, venueRoute, checkInRoute, deals, dashboard, dancerPanel, venuePanel] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608050001_dancer_venue_affiliations.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608110002_dressing_room_nfc_checkins.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608110005_nfc_shift_lifecycle.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608090001_restore_public_dancer_media.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608240003_private_venue_roster_management.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-affiliations.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/venue-verification/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/dancer-verifications/route.ts", import.meta.url), "utf8"),
@@ -36,6 +37,18 @@ test("manager QR approval endpoints are retired but both sides retain roster rem
   assert.doesNotMatch(venueRoute, /approveDancerVenueVerification/);
   assert.match(dancerRoute, /revokeDancerVenueAffiliation/);
   assert.match(venueRoute, /revokeDancerVenueAffiliation/);
+});
+
+test("private venue workspaces can view and remove existing roster affiliations before publication", () => {
+  const managedVenue = service.match(/async function requireManagedVenue[\s\S]*?(?=\nconst AFFILIATION_COLUMNS)/)?.[0] || "";
+  assert.match(managedVenue, /requireVenueAccess\(client, managerUserId, "view_roster"\)/);
+  assert.doesNotMatch(managedVenue, /data\.is_active === false/);
+  assert.match(venueRoute, /requireVenueAccess\(admin, user\.id, "manage_roster"\)/);
+  assert.match(venuePanel, /Remove access/);
+  assert.match(privateRosterMigration, /venue_team_members as member/);
+  assert.match(privateRosterMigration, /member\.role = 'manager'/);
+  assert.match(privateRosterMigration, /account\.account_state = 'active'/);
+  assert.doesNotMatch(privateRosterMigration, /member\.role = 'staff'/);
 });
 
 test("dancer and venue dashboards show the official NFC workflow", () => {
