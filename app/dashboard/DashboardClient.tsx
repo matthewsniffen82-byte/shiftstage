@@ -7537,8 +7537,11 @@ function DashboardStyles() {
       .venue-review-completion { display: grid; gap: 9px; padding: 14px; border: 1px solid rgba(139,92,246,.44); border-radius: 13px; background: linear-gradient(145deg,rgba(46,22,89,.36),rgba(8,8,12,.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
       .venue-review-completion h3 { margin: 0; color: #f8fafc; font-size: 19px; line-height: 1.15; }
       .venue-review-completion > p { color: #aaa3b4; font-size: 12px; line-height: 1.45; }
-      .venue-review-completion .venue-publication-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 3px; }
-      .venue-review-completion .venue-publication-actions > * { width: 100%; }
+      .venue-review-completion .venue-publication-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-top: 3px; }
+      .venue-review-completion .venue-publication-actions > * { width: 100%; min-height: 52px; padding-inline: 18px; border-radius: 14px; line-height: 1.2; white-space: nowrap; }
+      .venue-review-completion .venue-publication-actions > .venue-preview-action { border-color: rgba(167,139,250,.45) !important; background: rgba(8,8,13,.9) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important; }
+      .venue-review-completion .venue-publication-actions > .venue-preview-action:hover { border-color: rgba(196,181,253,.72) !important; background: rgba(20,13,35,.94) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.06) !important; }
+      .venue-review-completion .venue-publication-actions > .primary { border-color: rgba(196,181,253,.72) !important; color: #fff !important; background: linear-gradient(135deg,#6d28d9,#7c3aed) !important; box-shadow: 0 8px 22px rgba(76,29,149,.28), inset 0 1px 0 rgba(255,255,255,.14) !important; }
       .venue-review-package { display: grid; gap: 14px; padding: 14px; border: 1px solid rgba(255,255,255,.13); border-radius: 13px; background: rgba(8,8,12,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
       .venue-review-package-heading { min-width: 0; display: grid; grid-template-columns: 72px minmax(0,1fr); align-items: center; gap: 13px; }
       .venue-review-package-heading > span:last-child { min-width: 0; display: grid; gap: 5px; }
@@ -8550,6 +8553,7 @@ function DashboardStyles() {
         .venue-publication-panel { padding: 15px; }
         .venue-publication-actions { display: grid; grid-template-columns: 1fr; }
         .venue-publication-actions > button, .venue-publication-actions > a { width: 100%; min-height: 48px; }
+        .venue-review-completion .venue-publication-actions { grid-template-columns: 1fr; gap: 10px; }
         .venue-review-package { padding: 12px; }
         .venue-review-package-heading { grid-template-columns: 60px minmax(0,1fr); gap: 11px; }
         .venue-review-logo { width: 60px; height: 60px; border-radius: 14px; }
