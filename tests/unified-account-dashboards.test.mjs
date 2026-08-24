@@ -14,6 +14,7 @@ import {
   requestCustomerProfileJson,
   requestDancerAvatarJson,
   requestDancerFinanceJson,
+  requestDancerFinanceStatement,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
   requestDancerShiftCheckInJson,
@@ -23,6 +24,7 @@ import {
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestVenueDancerVerificationsJson,
+  requestVenueFinanceStatement,
   requestVenueNfcSupportJson,
   requestVenueNfcTagsJson,
   requestVenueTeamJson,
@@ -395,6 +397,115 @@ test("dancer payout actions use the refresh-aware role boundary", async () => {
 
   assert.match(dashboardSession, /function requestDancerFinanceJson/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/finance"/);
+});
+
+test("dancer and venue statements refresh their role-aware sessions before downloading", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    if (String(path).includes("/statement?")) {
+      return new Response(String(path).includes("/dancer/") ? "dancer,amount\nDancer,20.00" : "venue,amount\nClub,40.00", {
+        status: 200,
+        headers: { "content-type": "text/csv" },
+      });
+    }
+    const isDancer = String(path).startsWith("/api/dancer/");
+    return new Response(JSON.stringify({
+      ok: true,
+      access: { active: true },
+      session: {
+        accessToken: isDancer ? "rotated-dancer-access" : "rotated-venue-access",
+        expiresAt: 99999,
+      },
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "dancer-access",
+      refreshToken: "dancer-refresh",
+      account: { role: "dancer" },
+    }));
+    const dancerStatement = await requestDancerFinanceStatement("2026-08");
+    assert.equal(await dancerStatement.text(), "dancer,amount\nDancer,20.00");
+
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "venue-access",
+      refreshToken: "venue-refresh",
+      account: { role: "venue" },
+    }));
+    const venueStatement = await requestVenueFinanceStatement("2026-08");
+    assert.equal(await venueStatement.text(), "venue,amount\nClub,40.00");
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/dancer/finance?access=1",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/dancer/finance/statement?month=2026-08",
+        options: {
+          headers: {
+            authorization: "Bearer rotated-dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/venue/finance?access=1",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/venue/finance/statement?month=2026-08",
+        options: {
+          headers: {
+            authorization: "Bearer rotated-venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+        },
+      },
+    ]);
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "rotated-venue-access",
+      refreshToken: "venue-refresh",
+      expiresAt: 99999,
+      account: { role: "venue" },
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestDancerFinanceStatement/);
+  assert.match(dashboardSession, /function requestVenueFinanceStatement/);
+  assert.match(dashboard, /requestDancerFinanceStatement/);
+  assert.match(dashboard, /requestVenueFinanceStatement/);
+  assert.doesNotMatch(dashboard, /function downloadDashboardFile|fetch\(path, \{ headers: \{ authorization/);
 });
 
 test("dancer and venue affiliation actions share role-aware refresh boundaries", async () => {

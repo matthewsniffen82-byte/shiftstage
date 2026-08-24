@@ -33,6 +33,7 @@ import {
   requestCustomerProfileJson,
   requestDancerAvatarJson,
   requestDancerFinanceJson,
+  requestDancerFinanceStatement,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
   requestDancerShiftCheckInJson,
@@ -40,6 +41,7 @@ import {
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestVenueDancerVerificationsJson,
+  requestVenueFinanceStatement,
   storedSessionAccount,
   storedSessionIsFresh,
   type DashboardSessionAccount,
@@ -2882,8 +2884,8 @@ function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
   async function downloadStatement() {
     setStatus("Preparing statement...");
     try {
-      await downloadDashboardFile(
-        `/api/venue/finance/statement?month=${encodeURIComponent(currentMonth)}`,
+      await downloadDashboardBlob(
+        await requestVenueFinanceStatement(currentMonth),
         `mydancr-${currentMonth}-club-statement.csv`,
       );
       setStatus("Statement downloaded.");
@@ -4578,8 +4580,8 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
   async function downloadStatement() {
     setStatus("Preparing statement...");
     try {
-      await downloadDashboardFile(
-        `/api/dancer/finance/statement?month=${encodeURIComponent(currentMonth)}`,
+      await downloadDashboardBlob(
+        await requestDancerFinanceStatement(currentMonth),
         `mydancr-${currentMonth}-dancer-commission-statement.csv`,
       );
       setStatus("Statement downloaded.");
@@ -4702,15 +4704,8 @@ function dancerFinanceVenueName(value: unknown) {
   return venue && typeof venue === "object" && "name" in venue ? String((venue as { name?: unknown }).name || "Venue") : "Venue";
 }
 
-async function downloadDashboardFile(path: string, filename: string) {
-  const session = readSession();
-  if (!session?.accessToken) throw new Error("Sign in required.");
-  const response = await fetch(path, { headers: { authorization: `Bearer ${session.accessToken}` } });
-  if (!response.ok) {
-    const data = await response.json().catch(() => null);
-    throw new Error(data?.error || "Unable to download statement.");
-  }
-  const url = URL.createObjectURL(await response.blob());
+async function downloadDashboardBlob(file: Blob, filename: string) {
+  const url = URL.createObjectURL(file);
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;

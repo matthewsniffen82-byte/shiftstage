@@ -245,6 +245,48 @@ export function requestVenueTeamJson(options: DashboardJsonRequestOptions = {}) 
   });
 }
 
+type DashboardFileRequestOptions = {
+  expectedRole: string;
+  refreshPath: string;
+  fallbackMessage: string;
+};
+
+async function requestDashboardFile(path: string, options: DashboardFileRequestOptions) {
+  await requestDashboardJson(options.refreshPath, {
+    cache: "no-store",
+    expectedRole: options.expectedRole,
+    fallbackMessage: options.fallbackMessage,
+  });
+  const authHeaders = currentDashboardAuthHeaders(options.expectedRole);
+  if (!authHeaders) throw new DashboardDataRequestError("Sign in required.", 401);
+
+  const response = await fetch(path, { headers: authHeaders });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new DashboardDataRequestError(
+      data?.error || data?.message || options.fallbackMessage,
+      response.status,
+    );
+  }
+  return response.blob();
+}
+
+export function requestDancerFinanceStatement(month: string) {
+  return requestDashboardFile(`/api/dancer/finance/statement?month=${encodeURIComponent(month)}`, {
+    expectedRole: "dancer",
+    refreshPath: "/api/dancer/finance?access=1",
+    fallbackMessage: "Unable to download dancer commission statement.",
+  });
+}
+
+export function requestVenueFinanceStatement(month: string) {
+  return requestDashboardFile(`/api/venue/finance/statement?month=${encodeURIComponent(month)}`, {
+    expectedRole: "venue",
+    refreshPath: "/api/venue/finance?access=1",
+    fallbackMessage: "Unable to download venue statement.",
+  });
+}
+
 export function requestVenueNfcTagsJson(options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson("/api/venue/nfc-tags", {
     ...options,

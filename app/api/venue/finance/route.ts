@@ -10,9 +10,21 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const authContext = await createRequestSupabaseContext(request);
+    const { client, user } = authContext;
     await requireActiveVenueAccount(client, user.id);
-    return NextResponse.json({ ok: true, finance: await getVenueFinance(createAdminSupabaseClient(), user.id) });
+    if (new URL(request.url).searchParams.get("access") === "1") {
+      return NextResponse.json({
+        ok: true,
+        access: { active: true },
+        session: authContext.session || null,
+      }, { headers: { "cache-control": "private, no-store" } });
+    }
+    return NextResponse.json({
+      ok: true,
+      finance: await getVenueFinance(createAdminSupabaseClient(), user.id),
+      session: authContext.session || null,
+    });
   } catch (error) {
     return apiError(error, "Unable to load venue finance.");
   }

@@ -18,12 +18,24 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const authContext = await createRequestSupabaseContext(request);
+    const { client, user } = authContext;
     const denied = await requireActiveDancer(client, user.id);
     if (denied) return denied;
+    if (new URL(request.url).searchParams.get("access") === "1") {
+      return NextResponse.json({
+        ok: true,
+        access: { active: true },
+        session: authContext.session || null,
+      }, { headers: { "cache-control": "private, no-store" } });
+    }
     const admin = createAdminSupabaseClient();
     await refreshDancerConnectAccount(admin, user.id);
-    return NextResponse.json({ ok: true, finance: await getDancerFinance(admin, user.id) });
+    return NextResponse.json({
+      ok: true,
+      finance: await getDancerFinance(admin, user.id),
+      session: authContext.session || null,
+    });
   } catch (error) {
     return apiError(error, "Unable to load dancer payouts.");
   }
@@ -31,7 +43,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const authContext = await createRequestSupabaseContext(request);
+    const { client, user } = authContext;
     const denied = await requireActiveDancer(client, user.id);
     if (denied) return denied;
     const body = await request.json().catch(() => ({}));
@@ -45,7 +58,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "Enter a valid payout account login ID and optional username." }, { status: 400 });
       }
       const account = await requestNatsAffiliateLink(createAdminSupabaseClient(), user.id, { loginId, username });
-      return NextResponse.json({ ok: true, account, finance: await getDancerFinance(createAdminSupabaseClient(), user.id) });
+      return NextResponse.json({
+        ok: true,
+        account,
+        finance: await getDancerFinance(createAdminSupabaseClient(), user.id),
+        session: authContext.session || null,
+      });
     }
     if (body.action === "cash_out") {
       const suppliedKey = request.headers.get("idempotency-key")?.trim();
@@ -53,7 +71,12 @@ export async function POST(request: Request) {
         ? `${user.id}:${suppliedKey}`
         : `${user.id}:${crypto.randomUUID()}`;
       const payout = await requestDancerCashOut(createAdminSupabaseClient(), user.id, requestKey);
-      return NextResponse.json({ ok: true, payout, finance: await getDancerFinance(createAdminSupabaseClient(), user.id) });
+      return NextResponse.json({
+        ok: true,
+        payout,
+        finance: await getDancerFinance(createAdminSupabaseClient(), user.id),
+        session: authContext.session || null,
+      });
     }
     if (body.action === "connect_onboarding") {
       const origin = publicAppUrl();
@@ -63,7 +86,7 @@ export async function POST(request: Request) {
         `${origin}/dashboard?finance=connected`,
         `${origin}/dashboard?finance=refresh`,
       );
-      return NextResponse.json({ ok: true, onboarding });
+      return NextResponse.json({ ok: true, onboarding, session: authContext.session || null });
     }
     return NextResponse.json({ ok: false, error: "Unsupported payout action." }, { status: 400 });
   } catch (error) {

@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [statements, finance, venueRoute, dancerRoute] = await Promise.all([
+const [statements, finance, venueRoute, dancerRoute, venueFinanceRoute, dancerFinanceRoute] = await Promise.all([
   readFile(new URL("../src/lib/dancr/finance-statements.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/finance/statement/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/finance/statement/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/venue/finance/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/dancer/finance/route.ts", import.meta.url), "utf8"),
 ]);
 
 test("finance statement generation uses one dedicated boundary", () => {
@@ -53,4 +55,14 @@ test("statement routes preserve month validation and private downloads", () => {
     assert.match(route, /"content-type": "text\/csv; charset=utf-8"/);
     assert.match(route, /"cache-control": "private, no-store"/);
   }
+});
+
+test("finance access checks return refreshed sessions before protected statement downloads", () => {
+  for (const route of [venueFinanceRoute, dancerFinanceRoute]) {
+    assert.match(route, /searchParams\.get\("access"\) === "1"/);
+    assert.match(route, /session: authContext\.session \|\| null/);
+    assert.match(route, /"cache-control": "private, no-store"/);
+  }
+  assert.match(venueFinanceRoute, /requireActiveVenueAccount\(client, user\.id\)/);
+  assert.match(dancerFinanceRoute, /requireActiveDancer\(client, user\.id\)/);
 });
