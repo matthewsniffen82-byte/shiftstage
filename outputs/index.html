@@ -31616,7 +31616,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=134" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=135" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -43668,9 +43668,27 @@
       }
     }
 
+    function venueDashboardPreviewTime(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      const time24 = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/);
+      if (time24) {
+        const hour24 = Number(time24[1]);
+        if (!Number.isInteger(hour24) || hour24 < 0 || hour24 > 23) return "";
+        const period = hour24 >= 12 ? "PM" : "AM";
+        const hour12 = hour24 % 12 || 12;
+        return `${hour12}:${time24[2]} ${period}`;
+      }
+      const time12 = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+      if (!time12) return "";
+      const hour12 = Number(time12[1]);
+      if (!Number.isInteger(hour12) || hour12 < 1 || hour12 > 12) return "";
+      return `${hour12}:${time12[2] || "00"} ${time12[3].toUpperCase()}`;
+    }
+
     function venueDashboardPreviewHours(profile) {
-      const opensAt = String(profile?.opensAt || "").slice(0, 5);
-      const closesAt = String(profile?.closesAt || "").slice(0, 5);
+      const opensAt = venueDashboardPreviewTime(profile?.opensAt ?? profile?.opens_at);
+      const closesAt = venueDashboardPreviewTime(profile?.closesAt ?? profile?.closes_at);
       return opensAt && closesAt ? `${opensAt} - ${closesAt}` : "";
     }
 
@@ -49295,9 +49313,7 @@
       const city = citySelect.value;
       const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
-      const operatingSummaryLabel = operatingStatus.state === "unknown"
-        ? "Not posted"
-        : operatingStatus.label;
+      const hasPostedHours = operatingStatus.state !== "unknown";
       const visual = venueVisualAttrs(venue);
       const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo");
       const localProfiles = venueDancers(city, venue.name);
@@ -49384,12 +49400,14 @@
                   </div>
                 </div>
               </div>
-              <div class="venue-status-grid" aria-label="Tonight at ${escapeHtml(details.name)}">
-                <span class="venue-operating-summary">
-                  <span class="venue-status-kicker">Hours</span>
-                  <strong class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingSummaryLabel)}</strong>
-                  ${operatingStatus.hoursLabel ? `<span class="venue-status-pill">${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
-                </span>
+              <div class="venue-status-grid${hasPostedHours ? "" : " without-hours"}" aria-label="Tonight at ${escapeHtml(details.name)}">
+                ${hasPostedHours ? `
+                  <span class="venue-operating-summary">
+                    <span class="venue-status-kicker">Hours</span>
+                    <strong class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</strong>
+                    <span class="venue-status-pill">${escapeHtml(operatingStatus.hoursLabel)}</span>
+                  </span>
+                ` : ""}
                 ${quickStats}
               </div>
               ${venueOfferMarkup(venue)}

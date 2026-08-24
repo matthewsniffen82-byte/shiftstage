@@ -31,6 +31,33 @@ test("venue operating status uses posted hours in the selected city timezone", (
   assert.match(operatingStatus, /state: "unknown"[\s\S]*?label: "Hours not posted"/);
 });
 
+test("private venue previews preserve saved opening and closing times", () => {
+  const previewTimeSource = liveApp.match(
+    /function venueDashboardPreviewTime\(value\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  const previewHoursSource = liveApp.match(
+    /function venueDashboardPreviewHours\(profile\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+
+  assert.ok(previewTimeSource, "the preview time normalizer must exist");
+  assert.ok(previewHoursSource, "the preview hours formatter must exist");
+  const previewHours = new Function(
+    `${previewTimeSource}; ${previewHoursSource}; return venueDashboardPreviewHours;`,
+  )();
+  assert.equal(
+    previewHours({ opensAt: "20:00:00", closesAt: "06:00:00" }),
+    "8:00 PM - 6:00 AM",
+  );
+  assert.equal(
+    previewHours({ opensAt: "8:00 PM", closesAt: "6:00 AM" }),
+    "8:00 PM - 6:00 AM",
+  );
+  assert.equal(
+    previewHours({ opens_at: "20:00:00", closes_at: "06:00:00" }),
+    "8:00 PM - 6:00 AM",
+  );
+});
+
 test("venue cards and venue detail render the same semantic operating state", () => {
   const venueDetail = liveApp.match(
     /function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/,
@@ -40,7 +67,8 @@ test("venue cards and venue detail render the same semantic operating state", ()
   )?.[0] || "";
 
   assert.match(venueDetail, /venueOperatingStatus\(details\.hours, city\)/);
-  assert.match(venueDetail, /venue-operating-summary[\s\S]*?venue-operating-status is-\$\{operatingStatus\.state\}/);
+  assert.match(venueDetail, /hasPostedHours[\s\S]*?venue-operating-summary[\s\S]*?venue-operating-status is-\$\{operatingStatus\.state\}/);
+  assert.match(venueDetail, /venue-status-grid\$\{hasPostedHours \? "" : " without-hours"\}/);
   assert.match(venueDetail, /venue-status-pill[\s\S]*?operatingStatus\.hoursLabel/);
   assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city\)/);
   assert.match(venueSlide, /<span>Hours · \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
