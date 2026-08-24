@@ -30,6 +30,7 @@ import {
   readJson,
   readOptionalJson,
   readSession,
+  requestAccountJson,
   requestCustomerProfileJson,
   requestDancerAvatarJson,
   requestDancerFinanceJson,
@@ -866,7 +867,7 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
     setIsWorking(true);
     setStatus("");
     try {
-      const data = await requestDashboardJson("/api/account", {
+      const data = await requestAccountJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ accountState: nextState }),
@@ -884,26 +885,23 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
   async function deleteAccount() {
     if (!window.confirm("Delete this Dancr account? This cannot be undone.")) return;
     const session = readSession();
-    const authHeaders = dashboardAuthHeaders(session);
-    if (!authHeaders) {
+    if (!session?.accessToken) {
       setStatus("Sign in required.");
       return;
     }
 
     setIsWorking(true);
     setStatus("");
-    clearDashboardSession();
     try {
-      const response = await fetch("/api/account", {
+      await requestAccountJson({
         method: "DELETE",
-        headers: authHeaders,
+        fallbackMessage: "Unable to delete account.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete account.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to delete account.";
       window.alert(`${message} You have been signed out; sign in again to retry.`);
     } finally {
+      clearDashboardSession();
       window.location.replace("/");
     }
   }

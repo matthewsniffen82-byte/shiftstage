@@ -9,6 +9,7 @@ import {
   persistDashboardSession,
   persistRefreshedDashboardSession,
   readDashboardAccessToken,
+  requestAccountJson,
   requestAgentCommissionsJson,
   requestAgentCommissionStatement,
   requestCustomerProfileJson,
@@ -273,6 +274,87 @@ test("shared dashboard panels use the refresh-aware request boundary", () => {
   assert.match(customerActions, /requestDashboardJson\(path/);
   assert.match(customerActions, /requestDashboardJson\("\/api\/customer\/directions"/);
   assert.doesNotMatch(customerActions, /authorization: `Bearer/);
+});
+
+test("account state changes and deletion use the shared refresh-aware boundary", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    const isPatch = options?.method === "PATCH";
+    return new Response(JSON.stringify({
+      ok: true,
+      account: { accountState: isPatch ? "disabled" : "deleted" },
+      ...(isPatch ? { session: { accessToken: "rotated-account-access", expiresAt: 99999 } } : {}),
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "account-access",
+      refreshToken: "account-refresh",
+      account: { role: "customer" },
+    }));
+    const updated = await requestAccountJson({
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ accountState: "disabled" }),
+    });
+    assert.equal(updated.account.accountState, "disabled");
+    const deleted = await requestAccountJson({ method: "DELETE" });
+    assert.equal(deleted.account.accountState, "deleted");
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/account",
+        options: {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer account-access",
+            "x-dancr-refresh-token": "account-refresh",
+          },
+          body: JSON.stringify({ accountState: "disabled" }),
+        },
+      },
+      {
+        path: "/api/account",
+        options: {
+          method: "DELETE",
+          headers: {
+            authorization: "Bearer rotated-account-access",
+            "x-dancr-refresh-token": "account-refresh",
+          },
+        },
+      },
+    ]);
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "rotated-account-access",
+      refreshToken: "account-refresh",
+      expiresAt: 99999,
+      account: { role: "customer" },
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestAccountJson/);
+  assert.match(dashboard, /requestAccountJson/);
+  assert.doesNotMatch(dashboard, /fetch\("\/api\/account"/);
+  assert.match(dashboard, /finally \{\s*clearDashboardSession\(\);\s*window\.location\.replace\("\/"\)/);
 });
 
 test("dancer profile requests use one role-aware dashboard boundary", async () => {

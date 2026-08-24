@@ -137,6 +137,13 @@ export async function requestDashboardJson(
   return data;
 }
 
+export function requestAccountJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/account", {
+    ...options,
+    fallbackMessage: options.fallbackMessage || "Unable to update account.",
+  });
+}
+
 export function requestDancerProfileJson(options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson("/api/dancer/profile", {
     ...options,

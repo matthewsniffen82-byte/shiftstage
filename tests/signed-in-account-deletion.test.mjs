@@ -39,11 +39,12 @@ test("the global deletion control requires confirmation and calls the authentica
   assert.doesNotMatch(liveShell, /This demo will sign out of the account/);
 });
 
-test("the standalone dashboard clears the session and replaces browser history after deletion", () => {
+test("the standalone dashboard uses the refresh-aware account boundary before clearing the session", () => {
   assert.match(
     dashboardClient,
-    /async function deleteAccount\(\)[\s\S]*?clearDashboardSession\(\);[\s\S]*?method: "DELETE"[\s\S]*?finally \{\s*window\.location\.replace\("\/"\);/,
+    /async function deleteAccount\(\)[\s\S]*?await requestAccountJson\(\{[\s\S]*?method: "DELETE"[\s\S]*?finally \{\s*clearDashboardSession\(\);\s*window\.location\.replace\("\/"\);/,
   );
+  assert.doesNotMatch(dashboardClient, /fetch\("\/api\/account"/);
   assert.match(
     dashboardClient,
     /event\.key === SESSION_KEY && !event\.newValue[\s\S]*?leaveDeletedSessionDashboard\(\);\s*window\.addEventListener\("pageshow", leaveDeletedSessionDashboard\)/,
