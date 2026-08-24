@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, liquorMigration, supportedOfferMigration, dealPolicy, deals, venueDealActions, presets, venueDealRoute, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
+const [migration, liquorMigration, supportedOfferMigration, dealPolicy, deals, venueDealActions, presets, venueDealRoute, adminDealRoute, adminClient, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608080001_multi_offer_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608160004_prohibit_liquor_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608170001_standardize_active_club_deals.sql", import.meta.url), "utf8"),
@@ -11,6 +11,8 @@ const [migration, liquorMigration, supportedOfferMigration, dealPolicy, deals, v
   readFile(new URL("../src/lib/dancr/venue-deal-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/club-deal-presets.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/deals/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
@@ -18,7 +20,7 @@ const [migration, liquorMigration, supportedOfferMigration, dealPolicy, deals, v
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
-test("venues can publish a prioritized collection of non-alcohol Club Deals", () => {
+test("MyDancr admins can publish a prioritized collection of non-alcohol Club Deals", () => {
   assert.match(migration, /offer_type text not null default 'admission'/);
   assert.match(liquorMigration, /check \(offer_type in \('admission', 'other'\)\)/);
   assert.match(liquorMigration, /club_deals_liquor_free_check/);
@@ -26,15 +28,17 @@ test("venues can publish a prioritized collection of non-alcohol Club Deals", ()
   assert.match(deals, /export async function getActiveClubDealsForVenue/);
   assert.match(deals, /export async function getActiveClubDealListsForVenues/);
   assert.match(deals, /\.order\("sort_order", \{ ascending: true \}\)/);
-  assert.match(venueDealRoute, /offerType: typeof body\?\.offerType/);
-  assert.doesNotMatch(venueDealRoute, /bookingUrl: typeof body\?\.bookingUrl/);
-  assert.match(venueDealRoute, /const \{ deal, deals \} = await updateVenueDealForAccount/);
-  assert.match(venueDealRoute, /ok: true,[\s\S]*?deal,[\s\S]*?deals,/);
-  assert.match(venueDealActions, /return \{ deal, deals \};/);
-  assert.match(venueDealRoute, /export async function DELETE/);
+  assert.match(adminDealRoute, /upsert_contract_deal/);
+  assert.match(adminDealRoute, /upsertAdminVenueDeal/);
+  assert.match(adminDealRoute, /delete_contract_deal/);
+  assert.match(adminDealRoute, /deleteAdminVenueDeal/);
+  assert.match(adminDealRoute, /clubDeals/);
+  assert.match(venueDealRoute, /created and published by MyDancr/);
+  assert.equal((venueDealRoute.match(/status: 403/g) || []).length, 2);
 });
 
 test("new and currently active Club Deals are limited to half-off admission or line skip", () => {
+  const adminManager = adminClient.match(/function AdminClubDealManager\([\s\S]*?(?=\nfunction ReferralFeeManager)/)?.[0] || "";
   assert.match(presets, /title: "Half-off admission"/);
   assert.match(presets, /title: "Skip the line"/);
   assert.equal((presets.match(/title: "/g) || []).length, 2);
@@ -42,34 +46,29 @@ test("new and currently active Club Deals are limited to half-off admission or l
   assert.match(venueDealActions, /Choose Half-off admission or Skip the line/);
   assert.match(venueDealActions, /const offerType: ClubDealOfferType = "admission"/);
   assert.match(venueDealActions, /booking_url: null/);
-  assert.match(venueDashboard, /Deal offered/);
-  assert.match(venueDashboard, /CLUB_DEAL_OFFER_PRESETS\.map/);
-  assert.doesNotMatch(venueDashboard, /<option value="drink">/);
-  assert.doesNotMatch(venueDashboard, /<option value="bottle_service">/);
-  assert.doesNotMatch(venueDashboard, /<option value="other">/);
+  assert.match(adminManager, /Deal offered/);
+  assert.match(adminManager, /CLUB_DEAL_OFFER_PRESETS\.map/);
+  assert.doesNotMatch(adminManager, /<option value="drink">/);
+  assert.doesNotMatch(adminManager, /<option value="bottle_service">/);
+  assert.doesNotMatch(adminManager, /<option value="other">/);
   assert.match(supportedOfferMigration, /where is_active = true/);
   assert.match(supportedOfferMigration, /deal_title in \('Half-off admission', 'Skip the line'\)/);
   assert.match(supportedOfferMigration, /offer_type = 'admission'/);
   assert.match(supportedOfferMigration, /booking_url is null/);
 });
 
-test("venue managers can keep multiple deals live and manage each campaign independently", () => {
-  const updateFunction = venueDealActions.match(/export async function updateVenueDealForAccount[\s\S]*?(?=\nexport async function deleteVenueDealForAccount)/)?.[0] || "";
-  assert.match(venueDashboard, /Manage club deals/);
-  assert.match(venueDashboard, /Create, edit, publish, or pause offers/);
-  assert.match(venueDashboard, /\.venue-deal-editor \{[^}]*border-color: rgba\(139,92,246,\.44\)/);
-  assert.match(venueDashboard, /\.venue-deal-editor > summary::after \{[^}]*border-radius: 999px/);
-  assert.match(venueDashboard, /existing MyDancr cashier NFC sticker automatically opens current live deals/);
-  assert.match(venueDashboard, /const liveDeals = deals\.filter/);
-  assert.match(venueDashboard, /const liveCount = liveDeals\.length/);
-  assert.match(venueDashboard, /liveDeals\.map/);
-  assert.match(venueDashboard, /const draftCount = deals\.length - liveCount/);
-  assert.match(venueDashboard, /Keeps current live deals active/);
-  assert.match(venueDashboard, /This action only changes this deal/);
-  assert.match(venueDashboard, /VenueNfcTagPanel/);
-  assert.match(venueDashboard, /Ready for redemption/);
-  assert.doesNotMatch(updateFunction, /\.update\([^)]*is_active[\s\S]*?\.neq\("id"/);
-  assert.doesNotMatch(updateFunction, /is_active:\s*false/);
+test("admins manage multiple deals while venue accounts see every campaign read-only", () => {
+  const adminManager = adminClient.match(/function AdminClubDealManager\([\s\S]*?(?=\nfunction ReferralFeeManager)/)?.[0] || "";
+  const venueLedger = venueDashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
+  assert.match(adminManager, /venueDeals = clubDeals/);
+  assert.match(adminManager, /venueDeals\.map/);
+  assert.match(adminManager, /Publish contract deal/);
+  assert.match(adminManager, /onClick=\{\(\) => editDeal\(deal\)\}/);
+  assert.match(adminManager, /Delete unpublished deal/);
+  assert.match(venueLedger, /deals\.map/);
+  assert.match(venueLedger, /MyDancr creates and publishes these offers/);
+  assert.match(venueLedger, /Venue accounts have complete visibility without controls/);
+  assert.doesNotMatch(venueLedger, /Publish contract deal|Delete unpublished deal/);
 });
 
 test("liquor offers are rejected in application code and at the database boundary", () => {
@@ -82,7 +81,7 @@ test("liquor offers are rejected in application code and at the database boundar
   assert.match(liquorMigration, /is_active = false/);
   assert.doesNotMatch(dealCard, /bottle_service|Continue to club booking/);
   assert.doesNotMatch(liveApp, /bottle_service|Drink offer|Bottle service/);
-  assert.doesNotMatch(venueDashboard, /value="drink"|value="bottle_service"/);
+  assert.doesNotMatch(adminClient, /value="drink"|value="bottle_service"/);
 });
 
 test("each selected offer keeps its exact deal and dancer attribution token", () => {

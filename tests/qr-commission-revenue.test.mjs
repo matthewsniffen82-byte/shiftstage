@@ -72,7 +72,7 @@ test("new dancer-profile commissions use the monthly 30, 40, and 50 percent scal
   assert.doesNotMatch(scaleCommissionMigration, /v_success_number >= 75/);
   assert.match(scaleCommissionMigration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
   assert.match(scaleCommissionMigration, /Existing ledger entries[\s\S]*?remain unchanged/);
-  const venuePanel = venueDashboard.match(/function VenueClubDealPanel[\s\S]*?(?=function venueDealForm)/)?.[0] || "";
+  const venuePanel = venueDashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
   assert.notEqual(venuePanel, "");
   assert.doesNotMatch(venuePanel, /Dancer 30%|MyDancr 70%|Dancer 40%|MyDancr 60%|Dancer 50%|MyDancr 50%/);
   assert.doesNotMatch(venuePanel, /Dancer share|MyDancr share|correct commission split/);
@@ -167,19 +167,23 @@ test("venue QR revenue goes entirely to MyDancr while dancer-profile revenue use
   assert.match(migration, /successful_redemption_number[\s\S]*?commission_month[\s\S]*?policy_version/);
 });
 
-test("venues publish offers against a MyDancr-controlled referral agreement", () => {
+test("MyDancr publishes offers against a signed referral agreement for venue visibility", () => {
   assert.match(deals, /\.eq\("payout_type", "flat"\)[\s\S]*?\.gt\("payout_amount_cents", 0\)/);
-  assert.match(venueDealRoute, /updateVenueDealForAccount/);
+  assert.match(venueDealRoute, /created and published by MyDancr/);
+  assert.match(venueDealRoute, /status: 403/);
   assert.doesNotMatch(venueDealRoute, /body\?\.referralCommissionCents/);
   assert.match(venueDealActions, /getVenueReferralFeeState/);
   assert.match(venueDealActions, /A MyDancr referral fee agreement is required before publishing/);
+  assert.match(adminRoute, /upsert_contract_deal/);
+  assert.match(adminRoute, /upsertAdminVenueDeal/);
+  assert.match(adminClient, /Publish contract deal/);
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
-  assert.match(venueDashboard, /MyDancr referral fee/);
-  assert.match(venueDashboard, /Request fee change/);
-  assert.match(venueDashboard, /name="dealAction"[\s\S]*?value=\{form\.isActive \? "save" : "publish"\}/);
-  assert.match(venueDashboard, /Publish Club Deal/);
-  assert.match(venueDashboard, /Ready for redemption/);
+  const venueLedger = venueDashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
+  assert.match(venueLedger, /Referral fee/);
+  assert.match(venueLedger, /MyDancr creates and publishes these offers/);
+  assert.match(venueLedger, /Cashier NFC/);
+  assert.doesNotMatch(venueLedger, /Request fee change|Publish Club Deal/);
   assert.doesNotMatch(venueDashboard, /Monthly successful dancer QR redemptions/);
 });
 

@@ -43,23 +43,25 @@ test("only an active MyDancr admin can atomically set, schedule, and audit a fee
   assert.match(adminClient, /Agreement history/);
 });
 
-test("venues receive a read-only fee and can only request an admin-reviewed change", () => {
-  assert.match(venueRoute, /requestVenueReferralFeeChange/);
-  assert.match(service, /already has a referral fee change request awaiting review/);
-  assert.match(migration, /venue_referral_fee_requests_one_pending_idx/);
+test("venues receive the complete fee agreement as read-only contract information", () => {
+  assert.match(venueRoute, /read-only in the venue workspace/);
+  assert.match(venueRoute, /status: 403/);
   assert.match(dashboardRoute, /getVenueReferralFeeState/);
-  assert.match(dashboard, /MyDancr-controlled agreement/);
-  assert.match(dashboard, /Request fee change/);
-  assert.match(dashboard, /awaiting MyDancr review/);
+  const venueLedger = dashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
+  assert.match(venueLedger, /Referral fee/);
+  assert.match(venueLedger, /Agreement reference/);
+  assert.match(venueLedger, /Agreement history/);
+  assert.doesNotMatch(venueLedger, /Request fee change|awaiting MyDancr review/);
   assert.doesNotMatch(dealRoute, /body\?\.referralCommissionCents/);
 });
 
-test("deal publishing consumes the active agreement instead of venue-submitted money", () => {
-  assert.match(venueDealActions, /getVenueReferralFeeState\(client, owned\.venueId\)/);
+test("admin deal publishing consumes the active agreement instead of venue-submitted money", () => {
+  assert.match(venueDealActions, /getVenueReferralFeeState\(client, venueId\)/);
   assert.match(venueDealActions, /input\.isActive && !referralFee/);
   assert.match(venueDealActions, /payout_amount_cents: referralFee\?\.feeCents \|\| 0/);
   assert.match(venueDealActions, /currency: referralFee\?\.currency \|\| "usd"/);
   assert.doesNotMatch(venueDealActions, /input\.referralCommissionCents/);
+  assert.match(adminClient, /Record the signed referral fee agreement before publishing/);
   assert.match(uncontractedDealsMigration, /set is_active = false/);
   assert.match(uncontractedDealsMigration, /not exists[\s\S]*?venue_referral_fee_terms/);
 });
@@ -79,6 +81,6 @@ test("dancer rewards stay separate and are derived after the venue fee is fixed"
   assert.match(currentTierMigration, /v_dancer_cents := round\(v_gross_cents \* v_share_bps/);
   assert.match(currentTierMigration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
   assert.match(currentTierMigration, /if v_redemption\.source_type = 'dancer_profile' then[\s\S]*?insert into public\.commission_events/);
-  const venuePanel = dashboard.match(/function VenueClubDealPanel[\s\S]*?(?=function upsertVenueDeal)/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
   assert.doesNotMatch(venuePanel, /Dancer 30%|MyDancr 70%|Dancer 40%|MyDancr 60%|Dancer 50%|MyDancr 50%/);
 });

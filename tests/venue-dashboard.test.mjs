@@ -84,75 +84,40 @@ test("working-now actions are neutral when empty and emerald only for a live ros
   assert.doesNotMatch(venuePanel, /className="is-primary"/);
 });
 
-test("venue deal saves use the real API and immediately replace cards and counts from the response", () => {
-  assert.match(dashboard, /requestDashboardJson\("\/api\/venue\/deal"/);
-  assert.match(dashboard, /setDeals\(nextDeals\)/);
-  assert.match(dashboard, /onDealsChange\(nextDeals\)/);
-  assert.match(dashboard, /setEditingId/);
-  assert.match(dashboard, /Changes saved\. This deal is live across MyDancr/);
-  assert.match(venueDealRoute, /updateVenueDealForAccount/);
-  assert.match(venueDealRoute, /ok: true,[\s\S]*deal,[\s\S]*deals/);
+test("venue Club Deals are read-only and venue write routes enforce the contract boundary", () => {
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  assert.match(venuePanel, /<VenueDealReadOnlyPanel/);
+  assert.doesNotMatch(venuePanel, /<VenueClubDealPanel/);
+  assert.match(venueDealRoute, /MYDANCR_MANAGED_DEAL_MESSAGE/);
+  assert.equal((venueDealRoute.match(/status: 403/g) || []).length, 2);
+  assert.doesNotMatch(venueDealRoute, /updateVenueDealForAccount|deleteVenueDealForAccount/);
 });
 
-test("venue deal and referral-fee writes share the venue role-aware refresh boundary", () => {
-  const venueDealActions = dashboard.match(/async function saveDeal[\s\S]*?const liveDeals = deals\.filter/)?.[0] || "";
-  assert.match(venueDealActions, /requestDashboardJson\("\/api\/venue\/deal"/);
-  assert.match(venueDealActions, /requestDashboardJson\(`\/api\/venue\/deal\?dealId=/);
-  assert.match(venueDealActions, /requestDashboardJson\("\/api\/venue\/referral-fee"/);
-  assert.equal((venueDealActions.match(/expectedRole: "venue"/g) || []).length, 3);
-  assert.doesNotMatch(venueDealActions, /authorization: `Bearer/);
-  assert.doesNotMatch(venueDealActions, /fetch\((?:"|`)\/api\/venue\/(?:deal|referral-fee)/);
+test("venue dashboards expose the complete MyDancr-managed contract ledger", () => {
+  const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
+  assert.match(venueDealPanel, /MyDancr managed/);
+  assert.match(venueDealPanel, /Contract Club Deals/);
+  assert.match(venueDealPanel, /Venue accounts have complete visibility without controls/);
+  assert.match(venueDealPanel, /Referral fee/);
+  assert.match(venueDealPanel, /Agreement reference/);
+  assert.match(venueDealPanel, /Cashier NFC/);
+  assert.match(venueDealPanel, /deals\.map/);
+  assert.match(venueDealPanel, /Guest terms/);
+  assert.match(venueDealPanel, /Contract fee/);
+  assert.match(venueDealPanel, /Display order/);
+  assert.match(venueDealPanel, /Agreement history/);
+  assert.match(venueDealPanel, /Performance & invoices/);
+  assert.match(venueDealPanel, /Confirmed cashier taps this month/);
+  assert.match(venueDealPanel, /Outstanding to MyDancr/);
+  assert.match(venueDealPanel, /VenueFinanceSummary/);
+  assert.doesNotMatch(venueDealPanel, /Publish Club Deal|Pause Deal|Request fee change|Edit live deal/);
 });
 
-test("venue managers can publish only the two supported admission offers", () => {
-  assert.match(dashboard, /Deal offered/);
-  assert.match(dashboard, /CLUB_DEAL_OFFER_PRESETS\.map/);
-  assert.match(dashboard, /Club Deals are limited to these two clear admission offers/);
-  assert.doesNotMatch(dashboard, /<option value="drink">/);
-  assert.doesNotMatch(dashboard, /<option value="bottle_service">/);
-  assert.doesNotMatch(dashboard, /<option value="other">/);
-  assert.doesNotMatch(dashboard, /Live venue booking URL/);
-  assert.match(dashboard, /Display order/);
-  assert.match(dashboard, /MyDancr referral fee/);
-  assert.match(dashboard, /MyDancr-controlled agreement/);
-  assert.match(dashboard, /Request fee change/);
-  assert.match(dashboard, /Publish Club Deal/);
-});
-
-test("venue Club Deal management leads with live state, next action, and compact performance", () => {
-  const venueDealPanel = dashboard.match(/function VenueClubDealPanel\([\s\S]*?(?=\nfunction upsertVenueDeal)/)?.[0] || "";
-  assert.match(venueDealPanel, /venue-deal-control-card/);
-  assert.match(venueDealPanel, /Current Club Deal status/);
-  assert.match(venueDealPanel, /Live Club Deal/);
-  assert.match(venueDealPanel, /const liveDeals = deals\.filter/);
-  assert.match(venueDealPanel, /liveDeals\.map/);
-  assert.match(venueDealPanel, /aria-label="Live Club Deals"/);
-  assert.match(venueDealPanel, /openSpecificDealEditor\(deal\)/);
-  assert.match(venueDealPanel, /\$\{liveCount\} Club Deals are live/);
-  assert.match(venueDealPanel, /Manage live deals/);
-  assert.match(venueDealPanel, /Preview live \{liveCount === 1 \? "deal" : "deals"\}/);
-  assert.match(venueDealPanel, /Confirmed taps/);
-  assert.match(venueDealPanel, /Redemption intents/);
-  assert.match(venueDealPanel, /Outstanding/);
-  assert.match(venueDealPanel, /venue-deal-control-primary/);
-  assert.match(venueDealPanel, /Edit live deal/);
-  assert.match(venueDealPanel, /Create Club Deal/);
-  assert.match(venueDealPanel, /Preview live/);
-  assert.match(venueDealPanel, /<details className="venue-deal-editor"/);
-  assert.match(venueDealPanel, /Pause Deal/);
-  assert.match(venueDealPanel, /<details className="venue-deal-performance">/);
-  assert.doesNotMatch(venueDealPanel, /Unpublish This Deal/);
-  assert.ok(venueDealPanel.indexOf("venue-deal-control-card") < venueDealPanel.indexOf("venue-deal-editor"));
-});
-
-test("venue Club Deal guidance stays concise with details available on demand", () => {
-  const venueDealPanel = dashboard.match(/function VenueClubDealPanel\([\s\S]*?(?=\nfunction upsertVenueDeal)/)?.[0] || "";
-  assert.match(venueDealPanel, /no reprogramming required/);
-  assert.match(venueDealPanel, /<summary>How Club Deals work<\/summary>/);
-  assert.match(venueDealPanel, /Guests select a deal and tap your MyDancr cashier sticker/);
-  assert.match(venueDealPanel, /Sticker status is managed in Assigned NFC access/);
-  assert.doesNotMatch(venueDealPanel, /Venue staff must confirm redemption while signed in/);
-  assert.doesNotMatch(venueDealPanel, /Only a server-verified active tag creates/);
+test("venue publication requirements point to the read-only MyDancr deal record", () => {
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  assert.match(venuePanel, /label: "MyDancr Club Deal"/);
+  assert.match(venuePanel, /targetId: "venue-deal-contract-ledger"/);
+  assert.match(venuePanel, /Review the Club Deals, contract fee, cashier NFC readiness, performance, and settlement information managed by MyDancr/);
 });
 
 test("MyDancr supplies NFC stickers while venue owners receive read-only inventory", () => {

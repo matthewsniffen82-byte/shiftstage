@@ -14,11 +14,15 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireActiveVenueAccount(client, user.id);
-    const profile = await getVenueForAccount(createAdminSupabaseClient(), user.id);
+    const admin = createAdminSupabaseClient();
+    const [profile, venueAccess] = await Promise.all([
+      getVenueForAccount(admin, user.id),
+      requireVenueAccess(admin, user.id, "view_dashboard"),
+    ]);
     if (!profile) {
       return NextResponse.json({ ok: false, error: "Venue profile not found." }, { status: 404 });
     }
-    return NextResponse.json({ ok: true, profile });
+    return NextResponse.json({ ok: true, profile, venueAccess });
   } catch (error) {
     return apiError(error, "Unable to load venue profile.");
   }

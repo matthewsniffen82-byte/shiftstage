@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import {
   getVenueReferralFeeStateForAccount,
-  requestVenueReferralFeeChange,
 } from "@/src/lib/dancr/referral-fees";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -25,32 +24,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { user } = await createRequestSupabaseContext(request);
-    const body = await request.json().catch(() => ({}));
-    const requestRecord = await requestVenueReferralFeeChange(
-      createAdminSupabaseClient(),
-      user.id,
-      {
-        requestedFeeCents: body.requestedFeeCents,
-        reason: body.reason,
-      },
-    );
-    console.info("VENUE_REFERRAL_FEE_CHANGE_REQUESTED", {
-      venueId: requestRecord.venueId,
-      requestId: requestRecord.id,
-      requestedFeeCents: requestRecord.requestedFeeCents,
-      requestedByUserId: user.id,
-    });
-    const referralFee = await getVenueReferralFeeStateForAccount(
-      createAdminSupabaseClient(),
-      user.id,
-    );
+    await createRequestSupabaseContext(request);
     return NextResponse.json({
-      ok: true,
-      referralFee,
-      message: "Referral fee change request sent to MyDancr for review.",
-    });
+      ok: false,
+      error: "Referral fees are recorded by MyDancr from the signed venue agreement and are read-only in the venue workspace.",
+    }, { status: 403 });
   } catch (error) {
-    return apiError(error, "Unable to request a referral fee change.", 400);
+    return apiError(error, "Unable to verify the referral fee request.");
   }
 }

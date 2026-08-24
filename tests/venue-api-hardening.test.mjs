@@ -28,6 +28,7 @@ const expectedRoutes = [
   "cover-image/route.ts",
   "dancer-verifications/route.ts",
   "dashboard/route.ts",
+  "deal-requests/route.ts",
   "deal/qr/route.ts",
   "deal/route.ts",
   "finance/route.ts",

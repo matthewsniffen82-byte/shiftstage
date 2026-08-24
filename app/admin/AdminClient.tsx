@@ -4,6 +4,10 @@ import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import {
+  CLUB_DEAL_OFFER_PRESETS,
+  defaultClubDealOfferPreset,
+} from "@/src/lib/dancr/club-deal-presets";
 import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
 import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
@@ -28,6 +32,8 @@ type AdminState = {
   subscriptions?: unknown[];
   reports?: Array<Record<string, unknown>>;
   deals?: Array<Record<string, unknown>>;
+  clubDeals?: Array<Record<string, unknown>>;
+  dealRequests?: Array<Record<string, unknown>>;
   supportThreads?: Array<Record<string, unknown>>;
   imageModeration?: Array<Record<string, unknown>>;
   operations?: AdminOperationsCenter | null;
@@ -219,7 +225,7 @@ export default function AdminClient() {
           path: "/api/admin/subscriptions",
           apply: (data) => ({ subscriptions: data.subscriptions || [] }),
         },
-        { label: "Deal activity", path: "/api/admin/deals", apply: (data) => ({ deals: data.activity || [] }) },
+        { label: "Deal activity", path: "/api/admin/deals", apply: (data) => ({ deals: data.activity || [], clubDeals: data.clubDeals || [], dealRequests: data.dealRequests || [] }) },
         { label: "Support inbox", path: "/api/admin/support", apply: (data) => ({ supportThreads: data.threads || [] }) },
         {
           label: "Image moderation",
@@ -259,6 +265,8 @@ export default function AdminClient() {
         venueSignupRequests: [],
         subscriptions: [],
         deals: [],
+        clubDeals: [],
+        dealRequests: [],
         supportThreads: [],
         imageModeration: [],
         reports: [],
@@ -443,6 +451,15 @@ export default function AdminClient() {
           {workspace === "accounts" ? <AccountOverview operations={state.operations || null} /> : null}
           {workspace === "finance" ? (
             <>
+              <AdminClubDealManager
+                venues={state.venues || []}
+                clubDeals={state.clubDeals || []}
+                dealRequests={state.dealRequests || []}
+                referralFees={state.referralFees || null}
+                onClubDealsChange={(clubDeals) => setState((current) => ({ ...current, clubDeals }))}
+                onDealRequestsChange={(dealRequests) => setState((current) => ({ ...current, dealRequests }))}
+                onActionConfirmed={confirmAdminAction}
+              />
               <ReferralFeeManager
                 venues={state.venues || []}
                 referralFees={state.referralFees || null}
@@ -1001,6 +1018,261 @@ function FinanceManager({
   );
 }
 
+function AdminClubDealManager({
+  venues,
+  clubDeals,
+  dealRequests,
+  referralFees,
+  onClubDealsChange,
+  onDealRequestsChange,
+  onActionConfirmed,
+}: {
+  venues: Array<Record<string, unknown>>;
+  clubDeals: Array<Record<string, unknown>>;
+  dealRequests: Array<Record<string, unknown>>;
+  referralFees: Record<string, unknown> | null;
+  onClubDealsChange: (clubDeals: Array<Record<string, unknown>>) => void;
+  onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
+  onActionConfirmed: (message: string) => void;
+}) {
+  const preset = defaultClubDealOfferPreset();
+  const [venueId, setVenueId] = useState("");
+  const [dealId, setDealId] = useState("");
+  const [requestId, setRequestId] = useState("");
+  const [dealTitle, setDealTitle] = useState<string>(preset.title);
+  const [dealTerms, setDealTerms] = useState<string>(preset.terms);
+  const [sortOrder, setSortOrder] = useState("0");
+  const [isActive, setIsActive] = useState(false);
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const venueDeals = clubDeals
+    .filter((deal) => asText(deal.venueId) === venueId)
+    .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
+  const selectedPreset = CLUB_DEAL_OFFER_PRESETS.find((offer) => offer.title === dealTitle) || preset;
+  const terms = asRecordArray(referralFees?.terms);
+  const currentTerm = currentAdminReferralTerm(terms.filter((term) => asText(term.venueId) === venueId));
+  const openDealRequests = dealRequests.filter((request) => request.status === "pending" || request.status === "under_review");
+
+  function resetEditor(nextVenueId = venueId) {
+    setVenueId(nextVenueId);
+    setDealId("");
+    setRequestId("");
+    setDealTitle(preset.title);
+    setDealTerms(preset.terms);
+    setSortOrder(String(clubDeals.filter((deal) => asText(deal.venueId) === nextVenueId).length * 10));
+    setIsActive(false);
+    setStatus("");
+  }
+
+  function editDeal(deal: Record<string, unknown>) {
+    setRequestId("");
+    setDealId(asText(deal.id));
+    setDealTitle(asText(deal.dealTitle) || preset.title);
+    setDealTerms(asText(deal.dealTerms) || preset.terms);
+    setSortOrder(String(Number(deal.sortOrder || 0)));
+    setIsActive(deal.isActive === true);
+    setStatus("");
+  }
+
+  function prepareDealRequest(dealRequest: Record<string, unknown>) {
+    const nextVenueId = asText(dealRequest.venueId);
+    const linkedDeal = clubDeals.find((deal) => asText(deal.id) === asText(dealRequest.linkedDealId));
+    const requestedPreset = CLUB_DEAL_OFFER_PRESETS.find((offer) => offer.title === asText(dealRequest.offerTitle)) || preset;
+    setVenueId(nextVenueId);
+    setRequestId(asText(dealRequest.id));
+    setDealId(linkedDeal ? asText(linkedDeal.id) : "");
+    setDealTitle(linkedDeal ? asText(linkedDeal.dealTitle) || requestedPreset.title : requestedPreset.title);
+    setDealTerms(linkedDeal ? asText(linkedDeal.dealTerms) || requestedPreset.terms : requestedPreset.terms);
+    setSortOrder(linkedDeal ? String(Number(linkedDeal.sortOrder || 0)) : String(clubDeals.filter((deal) => asText(deal.venueId) === nextVenueId).length * 10));
+    setIsActive(linkedDeal?.isActive === true);
+    setStatus("Request loaded. Confirm the Deal Order and referral fee before publishing.");
+  }
+
+  function chooseOffer(nextTitle: string) {
+    const offer = CLUB_DEAL_OFFER_PRESETS.find((candidate) => candidate.title === nextTitle) || preset;
+    setDealTitle(offer.title);
+    setDealTerms(offer.terms);
+  }
+
+  async function saveDeal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    if (!venueId) return setStatus("Choose the contracted venue first.");
+    if (isActive && !currentTerm) return setStatus("Record the signed referral fee agreement before publishing this Club Deal.");
+    setIsSaving(true);
+    setStatus(isActive ? "Publishing the contract Club Deal…" : "Saving the contract Club Deal…");
+    try {
+      const response = await fetch("/api/admin/deals", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "upsert_contract_deal",
+          venueId,
+          dealId: dealId || null,
+          requestId: requestId || null,
+          dealTitle,
+          dealDescription: selectedPreset.description,
+          dealTerms,
+          isActive,
+          sortOrder: Number(sortOrder || 0),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save the contract Club Deal.");
+      onClubDealsChange(data.clubDeals || []);
+      onDealRequestsChange(data.dealRequests || dealRequests);
+      setDealId(asText(data.deal?.id));
+      if (isActive) setRequestId("");
+      const message = isActive ? "Contract Club Deal published by MyDancr." : "Contract Club Deal saved as an unpublished draft.";
+      setStatus(message);
+      onActionConfirmed(message);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save the contract Club Deal.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function deleteDeal() {
+    const token = readToken();
+    if (!token || !venueId || !dealId) return setStatus("Choose an unpublished Club Deal first.");
+    if (isActive) return setStatus("Pause this Club Deal and save it before deleting it.");
+    if (!window.confirm("Delete this unpublished Club Deal? This cannot be undone.")) return;
+    setIsSaving(true);
+    setStatus("Deleting unpublished Club Deal…");
+    try {
+      const response = await fetch("/api/admin/deals", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "delete_contract_deal", venueId, dealId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete the contract Club Deal.");
+      onClubDealsChange(data.clubDeals || []);
+      onDealRequestsChange(data.dealRequests || dealRequests);
+      resetEditor(venueId);
+      onActionConfirmed("Unpublished contract Club Deal deleted.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to delete the contract Club Deal.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function rejectDealRequest(dealRequest: Record<string, unknown>) {
+    const reason = window.prompt("Why is this Club Deal request not approved? This note will be visible to the venue.")?.trim();
+    if (!reason) return;
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    setIsSaving(true);
+    setStatus("Rejecting Club Deal request…");
+    try {
+      const response = await fetch("/api/admin/deals", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "review_deal_request",
+          requestId: asText(dealRequest.id),
+          venueId: asText(dealRequest.venueId),
+          status: "rejected",
+          decisionNote: reason,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to reject the Club Deal request.");
+      onDealRequestsChange(data.dealRequests || []);
+      if (requestId === asText(dealRequest.id)) resetEditor();
+      setStatus("Club Deal request rejected with an audit note.");
+      onActionConfirmed("Club Deal request rejected.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to reject the Club Deal request.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="operations-center admin-club-deal-manager" aria-labelledby="admin-club-deal-manager-heading">
+      <Panel title="Contract Club Deals" badge={`${clubDeals.filter((deal) => deal.isActive === true).length} live`}>
+        <span className="eyebrow">MyDancr controlled</span>
+        <h2 id="admin-club-deal-manager-heading">Create and publish venue offers</h2>
+        <p>Enter only the admission offer authorized by the signed deal order. Venue dashboards receive a read-only copy of every offer, fee, status, and settlement metric.</p>
+        <section className="admin-deal-request-inbox" aria-labelledby="admin-deal-request-inbox-heading">
+          <div>
+            <h3 id="admin-deal-request-inbox-heading">Venue deal requests</h3>
+            <span>{openDealRequests.length} open</span>
+          </div>
+          {openDealRequests.map((dealRequest) => (
+            <article key={asText(dealRequest.id)}>
+              <div>
+                <strong>{asText((dealRequest.venue as Record<string, unknown> | null)?.name) || "Venue"} · {asText(dealRequest.offerTitle)}</strong>
+                <small>{asText(dealRequest.requestNotes) || "No additional contract notes."}</small>
+              </div>
+              <span>{dealRequest.status === "under_review" ? "Under review" : "New request"}</span>
+              <button type="button" disabled={isSaving} onClick={() => prepareDealRequest(dealRequest)}>Prepare deal</button>
+              <button className="danger-action" type="button" disabled={isSaving} onClick={() => void rejectDealRequest(dealRequest)}>Reject</button>
+            </article>
+          ))}
+          {!openDealRequests.length ? <p className="empty">No venue Club Deal requests are waiting for review.</p> : null}
+        </section>
+        <form className="admin-club-deal-form" onSubmit={saveDeal}>
+          <label>
+            Contracted venue
+            <select value={venueId} onChange={(event) => resetEditor(event.target.value)} required>
+              <option value="">Choose venue</option>
+              {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)}</option>)}
+            </select>
+          </label>
+          <label>
+            Deal offered
+            <select value={dealTitle} onChange={(event) => chooseOffer(event.target.value)}>
+              {CLUB_DEAL_OFFER_PRESETS.map((offer) => <option key={offer.key} value={offer.title}>{offer.title}</option>)}
+            </select>
+          </label>
+          <label className="wide">
+            Public offer details
+            <textarea value={selectedPreset.description} readOnly rows={2} />
+          </label>
+          <label className="wide">
+            Contract and guest terms
+            <textarea value={dealTerms} onChange={(event) => setDealTerms(event.target.value)} maxLength={1200} rows={4} />
+          </label>
+          <label>
+            Display order
+            <input type="number" min="0" max="1000" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
+          </label>
+          <label className="admin-club-deal-publish-state">
+            Publication state
+            <span><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /> Live on MyDancr</span>
+          </label>
+          <div className="admin-club-deal-agreement wide">
+            <span>Signed referral fee</span>
+            <strong>{currentTerm ? `${formatAdminCents(Number(currentTerm.feeCents || 0))} per verified guest` : "Agreement required before publishing"}</strong>
+            <small>{currentTerm ? `${asText(currentTerm.agreementReference)} · effective ${formatDate(currentTerm.effectiveFrom)}` : "Record the fee in Venue referral terms below."}</small>
+          </div>
+          {requestId ? <p className="admin-club-deal-request-link wide">This draft is linked to venue request {requestId}. Publishing it will approve the request automatically.</p> : null}
+          <div className="admin-club-deal-actions wide">
+            <button disabled={isSaving} type="submit">{isSaving ? "Saving…" : isActive ? "Publish contract deal" : "Save unpublished deal"}</button>
+            {dealId ? <button className="secondary-action" disabled={isSaving} type="button" onClick={() => resetEditor(venueId)}>New deal</button> : null}
+            {dealId && !isActive ? <button className="danger-action" disabled={isSaving} type="button" onClick={() => void deleteDeal()}>Delete unpublished deal</button> : null}
+          </div>
+        </form>
+        {status ? <p role="status">{status}</p> : null}
+        <div className="admin-club-deal-list">
+          {venueDeals.map((deal) => (
+            <button className={asText(deal.id) === dealId ? "selected" : ""} key={asText(deal.id)} type="button" onClick={() => editDeal(deal)}>
+              <span><strong>{asText(deal.dealTitle) || "Club Deal"}</strong><small>{deal.isActive === true ? "Live" : "Unpublished"}</small></span>
+              <em>{formatAdminCents(Number(deal.payoutAmountCents || 0))} / verified guest</em>
+            </button>
+          ))}
+          {venueId && !venueDeals.length ? <p className="empty">No contract Club Deals have been entered for this venue.</p> : null}
+        </div>
+      </Panel>
+    </section>
+  );
+}
+
 function ReferralFeeManager({
   venues,
   referralFees,
@@ -1108,7 +1380,7 @@ function ReferralFeeManager({
       <Panel title="Referral fee agreements" badge={`${pendingRequests.length} requests`}>
         <span className="eyebrow">MyDancr controlled</span>
         <h2 id="referral-fee-manager-heading">Venue referral terms</h2>
-        <p>Only MyDancr admins can set the fee charged for each verified individual NFC redemption. Venue managers can review the active amount and request a change.</p>
+        <p>Only MyDancr admins can record the fee charged for each verified individual NFC redemption. Venue managers receive a complete read-only view of the signed amount and history.</p>
         <form id="admin-referral-fee-form" className="referral-fee-form" onSubmit={saveAgreement}>
           <label>
             Venue
@@ -2169,7 +2441,7 @@ function VenueSignupRequestQueue({
                   <strong>{request.referringAgentId ? "Approval confirms the agent referral" : "Approval creates a private venue workspace"}</strong>
                   <small>{request.referringAgentId
                     ? `Confirm that ${asText(request.referringAgentName) || "the listed sales agent"} introduced this club. Approval creates an immutable commission attribution and the private venue workspace.`
-                    : "The venue manager receives a one-time signup code, completes the page and Club Deals, previews it, and publishes it when ready."}</small>
+                    : "The venue manager receives a one-time signup code and completes the venue page. MyDancr records and publishes contract Club Deals and referral fees from the signed deal order."}</small>
                 </div>
                 <label>
                   Review notes
@@ -3860,7 +4132,35 @@ function AdminStyles() {
       .admin-workspace-nav button.active { color: #fff; border-color: rgba(148,229,255,.28); background: linear-gradient(135deg, rgba(139,92,246,.36), rgba(34,199,255,.14)); box-shadow: inset 0 0 22px rgba(139,92,246,.14); }
       .admin-workspace-nav button span { position: absolute; top: 3px; right: 5px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; color: #071016; background: #94e5ff; font-size: 10px; font-weight: 950; }
       .operations-center, .workspace-lead { max-width: 1120px; margin: 0 auto 18px; display: grid; gap: 14px; }
-      .referral-fee-manager .admin-panel-body > p { color: #b9accd; line-height: 1.5; }
+      .admin-club-deal-manager .admin-panel-body > p, .referral-fee-manager .admin-panel-body > p { color: #b9accd; line-height: 1.5; }
+      .admin-club-deal-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 12px; border: 1px solid rgba(124,58,237,.32); border-radius: 10px; background: rgba(124,58,237,.045); }
+      .admin-deal-request-inbox { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(34,211,238,.24); border-radius: 10px; background: rgba(34,211,238,.035); }
+      .admin-deal-request-inbox > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .admin-deal-request-inbox h3 { margin: 0; }
+      .admin-deal-request-inbox > div > span { padding: 5px 8px; border: 1px solid rgba(34,211,238,.35); border-radius: 999px; color: #67e8f9; font-size: 10px; font-weight: 900; }
+      .admin-deal-request-inbox article { display: grid; grid-template-columns: minmax(0,1fr) auto auto auto; align-items: center; gap: 8px; padding: 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: #111118; }
+      .admin-deal-request-inbox article > div { display: grid; gap: 3px; }
+      .admin-deal-request-inbox article small { color: #94a3b8; line-height: 1.35; }
+      .admin-deal-request-inbox article > span { color: #67e8f9; font-size: 10px; font-weight: 900; }
+      .admin-deal-request-inbox article > button { min-height: 38px; padding: 0 10px; }
+      .admin-club-deal-request-link { margin: 0; padding: 9px; border-left: 3px solid #22d3ee; color: #cbd5e1; background: rgba(34,211,238,.06); font-size: 11px; }
+      .admin-club-deal-form label { display: grid; gap: 6px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
+      .admin-club-deal-form .wide { grid-column: 1 / -1; }
+      .admin-club-deal-form input, .admin-club-deal-form select, .admin-club-deal-form textarea { width: 100%; min-height: 42px; box-sizing: border-box; padding: 9px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: #15151c; font: inherit; }
+      .admin-club-deal-form textarea { resize: vertical; }
+      .admin-club-deal-form textarea[readonly] { color: #cbd5e1; background: #111118; }
+      .admin-club-deal-publish-state > span { min-height: 42px; display: flex; align-items: center; gap: 9px; padding: 0 11px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; background: #15151c; }
+      .admin-club-deal-publish-state input { width: 18px; min-height: 18px; height: 18px; accent-color: #10b981; }
+      .admin-club-deal-agreement { display: grid; gap: 4px; padding: 12px; border: 1px solid rgba(16,185,129,.28); border-radius: 9px; background: rgba(16,185,129,.055); }
+      .admin-club-deal-agreement span, .admin-club-deal-agreement small { color: #94a3b8; }
+      .admin-club-deal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+      .admin-club-deal-actions > button { min-height: 42px; }
+      .admin-club-deal-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 8px; }
+      .admin-club-deal-list > button { display: grid; gap: 7px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 9px; color: #f8fafc; background: #111118; text-align: left; cursor: pointer; }
+      .admin-club-deal-list > button.selected { border-color: rgba(124,58,237,.72); box-shadow: 0 0 0 2px rgba(124,58,237,.18); }
+      .admin-club-deal-list > button span { display: flex; justify-content: space-between; gap: 8px; }
+      .admin-club-deal-list > button small { color: #6ee7b7; }
+      .admin-club-deal-list > button em { color: #94a3b8; font-size: 11px; font-style: normal; }
       .referral-fee-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; border: 1px solid rgba(148,229,255,.2); border-radius: 10px; background: rgba(148,229,255,.035); }
       .referral-fee-form label, .referral-fee-request-list label { display: grid; gap: 6px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
       .referral-fee-form label.wide { grid-column: 1 / -1; }
@@ -3943,7 +4243,8 @@ function AdminStyles() {
         .venue-request-details dl > div { grid-template-columns: 1fr; gap: 2px; }
         .venue-request-actions { grid-template-columns: 1fr; }
         .deal-settlement-action { grid-template-columns: 1fr; }
-        .referral-fee-form, .referral-fee-current, .referral-fee-history article { grid-template-columns: 1fr; }
+        .admin-club-deal-form, .referral-fee-form, .referral-fee-current, .referral-fee-history article, .admin-deal-request-inbox article { grid-template-columns: 1fr; }
+        .admin-club-deal-form .wide { grid-column: 1; }
         .referral-fee-form label.wide, .referral-fee-current small, .referral-fee-history p, .referral-fee-history small { grid-column: 1; }
         .referral-fee-form > button { width: 100%; }
         .admin-shell { padding-left: 8px; padding-right: 8px; overflow-x: hidden; }

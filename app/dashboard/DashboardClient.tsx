@@ -133,6 +133,7 @@ type LoadState = {
   workingNow?: Array<Record<string, unknown>>;
   deal?: Record<string, unknown> | null;
   venueDeals?: Array<Record<string, unknown>>;
+  dealRequests?: Array<Record<string, unknown>>;
   dealRevenue?: Record<string, unknown> | null;
   finance?: Record<string, unknown> | null;
   affiliations?: Array<Record<string, unknown>>;
@@ -251,11 +252,12 @@ export default function DashboardClient({
             workingNow: secondary.workingNow || [],
             deal: secondary.deal || null,
             venueDeals: Array.isArray(secondary.deals) ? secondary.deals : [],
+            dealRequests: Array.isArray(secondary.dealRequests) ? secondary.dealRequests : [],
             dealRevenue: secondary.dealRevenue || null,
             finance: secondary.finance || null,
             affiliations: secondary.affiliations || [],
             nfc: secondary.nfc || null,
-            venueAccess: secondary.venueAccess || null,
+            venueAccess: secondary.venueAccess || profile.venueAccess || null,
             referralFee: secondary.referralFee || null,
             agentAccess: agentAccess?.access || null,
             publication: secondary.publication || null,
@@ -310,6 +312,7 @@ export default function DashboardClient({
         workingNow: secondary.workingNow || [],
         deal: secondary.deal || null,
         venueDeals: Array.isArray(secondary.deals) ? secondary.deals : current.venueDeals || [],
+        dealRequests: Array.isArray(secondary.dealRequests) ? secondary.dealRequests : current.dealRequests || [],
         dealRevenue: secondary.dealRevenue || current.dealRevenue,
         finance: secondary.finance === null ? null : secondary.finance || current.finance,
         affiliations: secondary.affiliations || [],
@@ -358,15 +361,6 @@ export default function DashboardClient({
   function updateProfile(profile: Record<string, unknown> | null | undefined) {
     if (!profile) return;
     setState((current) => ({ ...current, profile }));
-  }
-
-  function updateVenueDeals(venueDeals: Array<Record<string, unknown>>) {
-    const primaryDeal = venueDeals.find((deal) => deal.isActive === true) || venueDeals[0] || null;
-    setState((current) => ({ ...current, deal: primaryDeal, venueDeals }));
-  }
-
-  function updateVenueReferralFee(referralFee: Record<string, unknown>) {
-    setState((current) => ({ ...current, referralFee }));
   }
 
   function updateSaved(update: (saved: CustomerSavedState) => CustomerSavedState) {
@@ -505,7 +499,8 @@ export default function DashboardClient({
               <VenuePanel
                   analytics={state.analytics}
                   deal={state.deal}
-                  venueDeals={state.venueDeals || []}
+                   venueDeals={state.venueDeals || []}
+                   dealRequests={state.dealRequests || []}
                   dealRevenue={state.dealRevenue}
                   finance={state.finance}
                   profile={state.profile}
@@ -519,10 +514,9 @@ export default function DashboardClient({
                   refreshStatus={venueRefreshStatus}
                   onAnalyticsPeriodChange={setAnalyticsPeriod}
                   onRefresh={() => void refreshVenueDashboard(true)}
-                  onDealsChange={updateVenueDeals}
-                  onReferralFeeChange={updateVenueReferralFee}
                   onProfileChange={updateProfile}
-                  onPublicationChange={(publication) => setState((current) => ({ ...current, publication }))}
+                   onPublicationChange={(publication) => setState((current) => ({ ...current, publication }))}
+                   onDealRequestsChange={(dealRequests) => setState((current) => ({ ...current, dealRequests }))}
                 />
               <DashboardSection
                 description="Notifications, support messages, and account controls."
@@ -1813,6 +1807,7 @@ function VenuePanel({
   analytics,
   deal,
   venueDeals,
+  dealRequests,
   dealRevenue,
   finance,
   profile,
@@ -1826,14 +1821,14 @@ function VenuePanel({
   refreshStatus,
   onAnalyticsPeriodChange,
   onRefresh,
-  onDealsChange,
-  onReferralFeeChange,
   onProfileChange,
   onPublicationChange,
+  onDealRequestsChange,
 }: {
   analytics?: LoadState["analytics"];
   deal?: LoadState["deal"];
   venueDeals: Array<Record<string, unknown>>;
+  dealRequests: Array<Record<string, unknown>>;
   dealRevenue?: LoadState["dealRevenue"];
   finance?: LoadState["finance"];
   profile?: LoadState["profile"];
@@ -1847,10 +1842,9 @@ function VenuePanel({
   refreshStatus: string;
   onAnalyticsPeriodChange: (period: "tonight" | "7d" | "30d") => void;
   onRefresh: () => void;
-  onDealsChange: (deals: Array<Record<string, unknown>>) => void;
-  onReferralFeeChange: (referralFee: Record<string, unknown>) => void;
   onProfileChange: (profile: Record<string, unknown>) => void;
   onPublicationChange: (publication: Record<string, unknown>) => void;
+  onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
 }) {
   const [form, setForm] = useState({
     name: "",
@@ -2059,8 +2053,8 @@ function VenuePanel({
     ? `${activeDealCount} live Club ${activeDealCount === 1 ? "Deal" : "Deals"}`
     : "No live Club Deals";
   const permissions = Array.isArray(venueAccess?.permissions) ? venueAccess.permissions : [];
-  const canManageProfile = permissions.includes("manage_profile");
-  const canManageDeals = permissions.includes("manage_deals");
+  const venueRole = String(venueAccess?.role || "");
+  const canManageProfile = permissions.includes("manage_profile") || venueRole === "owner" || venueRole === "manager";
   const canManageRoster = permissions.includes("manage_roster");
   const canRequestNfcSupport = permissions.includes("request_nfc_support");
   const canViewTeam = permissions.includes("view_team");
@@ -2071,7 +2065,7 @@ function VenuePanel({
     { key: "hours", label: "Venue hours", complete: Boolean(profile?.opensAt && profile?.closesAt), sectionId: "venue-public-profile", targetId: "venue-profile-opensAt" },
     { key: "logo", label: "Venue logo", complete: Boolean(profile?.logoImageUrl), sectionId: "venue-public-profile", targetId: "venue-logo-upload" },
     { key: "cover", label: "Discovery cover", complete: Boolean(profile?.coverImageUrl), sectionId: "venue-public-profile", targetId: "venue-cover-upload" },
-    { key: "deal", label: "Active Club Deal", complete: activeDealCount > 0, sectionId: "venue-club-deals", targetId: "venue-deal-primary-action" },
+    { key: "deal", label: "MyDancr Club Deal", complete: activeDealCount > 0, sectionId: "venue-club-deals", targetId: "venue-deal-contract-ledger" },
   ];
   const setupCompletedCount = setupRequirements.filter((requirement) => requirement.complete).length;
   const isReadyToPublish = setupCompletedCount === setupRequirements.length;
@@ -2184,25 +2178,21 @@ function VenuePanel({
 
       <DashboardSection
         badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
-        description="Create or edit offers, then review redemptions and venue invoices."
-        eyebrow="Revenue"
+        description="Review the Club Deals, contract fee, cashier NFC readiness, performance, and settlement information managed by MyDancr."
+        eyebrow="Contract revenue"
         id="venue-club-deals"
         title="Club Deals"
       >
-        {canManageDeals ? (
-          <VenueClubDealPanel
-            finance={finance}
-            initialDeal={deal}
-            initialDeals={venueDeals}
-            onDealsChange={onDealsChange}
-            referralFee={referralFee}
-            onReferralFeeChange={onReferralFeeChange}
-            revenue={dealRevenue}
-            venueSlug={venueSlug}
-          />
-        ) : (
-          <VenueDealReadOnlyPanel deals={dashboardDeals} />
-        )}
+        <VenueDealReadOnlyPanel
+          deals={dashboardDeals}
+          dealRequests={dealRequests}
+          finance={finance}
+          referralFee={referralFee}
+          revenue={dealRevenue}
+          venueSlug={venueSlug}
+          canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
+          onDealRequestsChange={onDealRequestsChange}
+        />
       </DashboardSection>
 
       <DashboardSection
@@ -2292,7 +2282,7 @@ function VenuePanel({
                   />
                 </label>
               ))}
-              {canManageProfile ? <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button> : <small>Your staff role can view this profile but cannot edit it.</small>}
+              {canManageProfile ? <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button> : <small>This team role can view the venue profile but cannot edit it.</small>}
               {isPublished && profile?.slug ? (
                 <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
                   Open live venue page
@@ -6958,24 +6948,213 @@ function VenueAnalyticsMetric({ label, value, change }: { label: string; value: 
   );
 }
 
-function VenueDealReadOnlyPanel({ deals }: { deals: Array<Record<string, unknown>> }) {
+function VenueDealReadOnlyPanel({
+  deals,
+  dealRequests,
+  finance,
+  referralFee,
+  revenue,
+  venueSlug,
+  canRequestDeals,
+  onDealRequestsChange,
+}: {
+  deals: Array<Record<string, unknown>>;
+  dealRequests: Array<Record<string, unknown>>;
+  finance?: LoadState["finance"];
+  referralFee?: LoadState["referralFee"];
+  revenue?: LoadState["dealRevenue"];
+  venueSlug: string;
+  canRequestDeals: boolean;
+  onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
+}) {
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [requestedOfferKey, setRequestedOfferKey] = useState<string>(CLUB_DEAL_OFFER_PRESETS[0].key);
+  const [requestNotes, setRequestNotes] = useState("");
+  const [requestStatus, setRequestStatus] = useState("");
+  const [isRequesting, setIsRequesting] = useState(false);
   const liveDeals = deals.filter((deal) => deal.isActive === true);
+  const currentFee = referralFee?.current && typeof referralFee.current === "object"
+    ? referralFee.current as Record<string, unknown>
+    : null;
+  const scheduledFees = Array.isArray(referralFee?.scheduled)
+    ? referralFee.scheduled as Array<Record<string, unknown>>
+    : [];
+  const feeHistory = Array.isArray(referralFee?.history)
+    ? referralFee.history as Array<Record<string, unknown>>
+    : [];
+
+  async function submitDealRequest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsRequesting(true);
+    setRequestStatus("Sending request to MyDancr…");
+    try {
+      const data = await requestDashboardJson("/api/venue/deal-requests", {
+        method: "POST",
+        body: JSON.stringify({ offerKey: requestedOfferKey, requestNotes }),
+        expectedRole: "venue",
+        fallbackMessage: "Unable to send this Club Deal request.",
+      });
+      onDealRequestsChange(Array.isArray(data.requests) ? data.requests : dealRequests);
+      setRequestNotes("");
+      setIsRequestOpen(false);
+      setRequestStatus(data.message || "Club Deal request sent to MyDancr.");
+    } catch (error) {
+      setRequestStatus(error instanceof Error ? error.message : "Unable to send this Club Deal request.");
+    } finally {
+      setIsRequesting(false);
+    }
+  }
+
   return (
-    <article className="info-panel venue-deal-readonly">
-      <h2>Published Club Deals</h2>
-      <p>Your staff role can review live offers but cannot publish, edit, delete, or access venue invoices.</p>
-      <div>
-        {liveDeals.map((deal) => (
-          <section key={String(deal.id)}>
-            <strong>{String(deal.dealTitle || "Club Deal")}</strong>
-            <span>{String(deal.dealDescription || "")}</span>
-            <small>Live · cashier NFC active</small>
+    <article className="info-panel venue-deal-readonly" id="venue-deal-contract-ledger" tabIndex={-1}>
+      <header className="venue-deal-readonly-heading">
+        <div>
+          <span className="eyebrow">MyDancr managed</span>
+          <h2>Contract Club Deals</h2>
+          <p>MyDancr creates and publishes these offers from your signed venue agreement. Venue accounts have complete visibility without controls that can change contract terms.</p>
+        </div>
+        <strong className={liveDeals.length ? "deal-state active" : "deal-state"}>
+          {liveDeals.length ? `${liveDeals.length} live` : "No live deals"}
+        </strong>
+      </header>
+
+      <section className="venue-contract-summary" aria-label="Current MyDancr agreement">
+        <div>
+          <span>Referral fee</span>
+          <strong>{currentFee ? `${formatCents(Number(currentFee.feeCents || 0))} per verified guest` : "Agreement pending"}</strong>
+          <small>{currentFee ? `Effective ${formatDashboardDate(String(currentFee.effectiveFrom || ""))}` : "MyDancr records this after the venue agreement is signed."}</small>
+        </div>
+        <div>
+          <span>Agreement reference</span>
+          <strong>{currentFee ? String(currentFee.agreementReference || "Recorded by MyDancr") : "Not recorded"}</strong>
+          <small>{scheduledFees.length ? `${scheduledFees.length} scheduled fee update${scheduledFees.length === 1 ? "" : "s"}` : "No scheduled fee changes"}</small>
+        </div>
+        <div>
+          <span>Cashier NFC</span>
+          <strong>{liveDeals.length ? "Deal redemption enabled" : "Waiting for a live deal"}</strong>
+          <small>MyDancr assigns and programs stickers; assigned hardware remains visible in NFC access.</small>
+        </div>
+      </section>
+
+      <div className="venue-contract-deal-list" aria-label="All contract Club Deals">
+        {deals.map((deal) => (
+          <section className={deal.isActive === true ? "is-live" : ""} key={String(deal.id)}>
+            <div className="venue-contract-deal-title">
+              <span>{deal.isActive === true ? "Live Club Deal" : "Not published"}</span>
+              <strong>{String(deal.dealTitle || "Club Deal")}</strong>
+            </div>
+            <p>{String(deal.dealDescription || "No public description recorded.")}</p>
+            <dl>
+              <div><dt>Offer type</dt><dd>{dealTypeLabel(String(deal.offerType || "admission"))}</dd></div>
+              <div><dt>Contract fee</dt><dd>{Number(deal.payoutAmountCents || 0) > 0 ? `${formatCents(Number(deal.payoutAmountCents || 0))} per verified guest` : "Pending"}</dd></div>
+              <div><dt>Display order</dt><dd>{String(Number(deal.sortOrder || 0))}</dd></div>
+              <div><dt>Cashier status</dt><dd>{deal.isActive === true ? "Enabled" : "Not enabled"}</dd></div>
+            </dl>
+            <div className="venue-contract-deal-terms">
+              <span>Guest terms</span>
+              <p>{String(deal.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</p>
+            </div>
           </section>
         ))}
-        {!liveDeals.length ? <p>No Club Deals are live right now.</p> : null}
+        {!deals.length ? (
+          <section className="venue-contract-empty">
+            <strong>MyDancr has not published a Club Deal yet.</strong>
+            <p>After the deal order and referral fee are recorded, the offer and its full terms will appear here automatically.</p>
+          </section>
+        ) : null}
       </div>
+
+      {venueSlug && liveDeals.length ? <Link className="venue-contract-preview" href={`/venues/${encodeURIComponent(venueSlug)}`}>Preview live Club Deals</Link> : null}
+
+      <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading">
+        <div>
+          <span className="eyebrow">Contract request</span>
+          <h3 id="venue-deal-request-heading">Want another Club Deal?</h3>
+          <p>Request an approved admission offer at any time. MyDancr will review the request, confirm the contract and referral fee, then publish it here.</p>
+        </div>
+        {canRequestDeals ? (
+          <button type="button" onClick={() => setIsRequestOpen((current) => !current)}>
+            {isRequestOpen ? "Close request" : "Request a new deal"}
+          </button>
+        ) : <small>Only venue owners and managers can request a new deal.</small>}
+        {isRequestOpen && canRequestDeals ? (
+          <form onSubmit={submitDealRequest}>
+            <label>
+              Requested offer
+              <select value={requestedOfferKey} onChange={(event) => setRequestedOfferKey(event.target.value)}>
+                {CLUB_DEAL_OFFER_PRESETS.map((offer) => <option value={offer.key} key={offer.key}>{offer.title}</option>)}
+              </select>
+            </label>
+            <label>
+              Contract notes (optional)
+              <textarea
+                maxLength={1000}
+                onChange={(event) => setRequestNotes(event.target.value)}
+                placeholder="Proposed dates, hours, exclusions, or campaign details for MyDancr to review"
+                rows={4}
+                value={requestNotes}
+              />
+            </label>
+            <button className="primary" disabled={isRequesting} type="submit">{isRequesting ? "Sending…" : "Send request to MyDancr"}</button>
+          </form>
+        ) : null}
+        {requestStatus ? <p role="status">{requestStatus}</p> : null}
+        {dealRequests.length ? (
+          <div className="venue-deal-request-history" aria-label="Club Deal request history">
+            {dealRequests.map((dealRequest) => (
+              <article key={String(dealRequest.id)}>
+                <div>
+                  <strong>{String(dealRequest.offerTitle || "Club Deal request")}</strong>
+                  <small>{formatDashboardDate(String(dealRequest.createdAt || ""))}</small>
+                </div>
+                <span data-status={String(dealRequest.status || "pending")}>{dealRequestStatusLabel(String(dealRequest.status || "pending"))}</span>
+                {dealRequest.requestNotes ? <p>{String(dealRequest.requestNotes)}</p> : null}
+                {dealRequest.decisionNote ? <p><strong>MyDancr:</strong> {String(dealRequest.decisionNote)}</p> : null}
+              </article>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      <details className="venue-contract-history">
+        <summary>Agreement history</summary>
+        <div>
+          {feeHistory.map((term) => (
+            <section key={String(term.id)}>
+              <strong>{formatCents(Number(term.feeCents || 0))} per verified guest</strong>
+              <span>{String(term.agreementReference || "MyDancr agreement")}</span>
+              <small>{formatDashboardDate(String(term.effectiveFrom || ""))}{term.effectiveUntil ? ` – ${formatDashboardDate(String(term.effectiveUntil))}` : " onward"}</small>
+            </section>
+          ))}
+          {!feeHistory.length ? <p>No agreement history has been recorded.</p> : null}
+        </div>
+      </details>
+
+      <details className="venue-deal-performance" open>
+        <summary><span><strong>Performance & invoices</strong><small>Redemptions, referral fees, and settlement</small></span></summary>
+        <div className="venue-deal-performance-body">
+          <div className="deal-metrics venue-deal-metrics">
+            <Metric label="Confirmed cashier taps this month" value={String(revenue?.confirmedCashierTapsThisMonth || 0)} />
+            <Metric label="Dancer attributed" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
+            <Metric label="Direct venue" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
+            <Metric label="MyDancr referral fees" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
+            <Metric label="Outstanding to MyDancr" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
+            <Metric label="Redemption intents" value={String(revenue?.passesIssuedThisMonth || 0)} />
+            <Metric label="Saved / opened" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
+          </div>
+          <VenueFinanceSummary finance={finance} />
+        </div>
+      </details>
     </article>
   );
+}
+
+function dealRequestStatusLabel(value: string) {
+  if (value === "under_review") return "Under review";
+  if (value === "approved") return "Approved & published";
+  if (value === "rejected") return "Not approved";
+  if (value === "withdrawn") return "Withdrawn";
+  return "Sent to MyDancr";
 }
 
 function readOptionalNumber(value: unknown) {
@@ -7668,12 +7847,56 @@ function DashboardStyles() {
       .venue-analytics-metric small { color: var(--mydancr-dashboard-muted); font-size: 9px; line-height: 1.25; }
       .venue-analytics-metric small.positive { color: #6ee7b7; }
       .venue-analytics-metric small.negative { color: #fca5a5; }
-      .venue-deal-readonly { display: grid; gap: 12px; }
-      .venue-deal-readonly > p { color: var(--mydancr-dashboard-muted); }
-      .venue-deal-readonly > div { display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 9px; }
-      .venue-deal-readonly section { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: #111118; }
-      .venue-deal-readonly span { color: #cbd5e1; font-size: 12px; line-height: 1.4; }
-      .venue-deal-readonly small { color: #6ee7b7; }
+      .venue-deal-readonly { grid-column: span 3; display: grid; gap: 14px; scroll-margin-top: 120px; }
+      .venue-deal-readonly:focus { outline: 2px solid rgba(124,58,237,.7); outline-offset: 3px; }
+      .venue-deal-readonly-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+      .venue-deal-readonly-heading > div { display: grid; gap: 5px; }
+      .venue-deal-readonly-heading h2, .venue-deal-readonly-heading p { margin: 0; }
+      .venue-deal-readonly-heading p { max-width: 720px; color: var(--mydancr-dashboard-muted); line-height: 1.5; }
+      .venue-contract-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; overflow: hidden; padding: 0 !important; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: var(--mydancr-dashboard-border) !important; }
+      .venue-contract-summary > div { min-width: 0; display: grid; align-content: start; gap: 5px; padding: 14px; background: #0d0d12; }
+      .venue-contract-summary span, .venue-contract-deal-title span, .venue-contract-deal-terms > span { color: #94a3b8; font-size: 10px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
+      .venue-contract-summary strong { color: #f8fafc; overflow-wrap: anywhere; }
+      .venue-contract-summary small { color: #94a3b8; line-height: 1.4; }
+      .venue-contract-deal-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 10px; }
+      .venue-contract-deal-list > section { display: grid; align-content: start; gap: 11px; padding: 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: #0d0d12; }
+      .venue-contract-deal-list > section.is-live { border-color: rgba(16,185,129,.36); box-shadow: inset 3px 0 0 rgba(16,185,129,.72); }
+      .venue-contract-deal-title { display: grid; gap: 4px; }
+      .venue-contract-deal-list > section.is-live .venue-contract-deal-title span { color: #6ee7b7; }
+      .venue-contract-deal-title strong { color: #f8fafc; font-size: 19px; }
+      .venue-contract-deal-list p { margin: 0; color: #cbd5e1; line-height: 1.45; }
+      .venue-contract-deal-list dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; overflow: hidden; margin: 0; border: 1px solid var(--mydancr-dashboard-border); border-radius: 9px; background: var(--mydancr-dashboard-border); }
+      .venue-contract-deal-list dl > div { display: grid; gap: 3px; padding: 10px; background: #111118; }
+      .venue-contract-deal-list dt { color: #94a3b8; font-size: 10px; font-weight: 850; }
+      .venue-contract-deal-list dd { margin: 0; color: #f8fafc; font-size: 12px; font-weight: 850; overflow-wrap: anywhere; }
+      .venue-contract-deal-terms { display: grid; gap: 5px; padding-top: 10px; border-top: 1px solid var(--mydancr-dashboard-border); }
+      .venue-contract-empty { min-height: 130px; place-content: center; }
+      .venue-contract-preview { width: fit-content; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border: 1px solid rgba(124,58,237,.54); border-radius: 9px; color: #f8fafc; background: #7c3aed; font-weight: 900; text-decoration: none; box-shadow: 0 0 16px rgba(124,58,237,.18); }
+      .venue-deal-request-center { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; padding: 15px; border: 1px solid rgba(124,58,237,.4); border-radius: 12px; background: #0d0d12; }
+      .venue-deal-request-center > div:first-child { display: grid; gap: 5px; }
+      .venue-deal-request-center h3, .venue-deal-request-center p { margin: 0; }
+      .venue-deal-request-center > div:first-child p { max-width: 680px; color: #cbd5e1; line-height: 1.45; }
+      .venue-deal-request-center > button, .venue-deal-request-center form button { min-height: 44px; padding: 0 15px; border: 1px solid rgba(124,58,237,.55); border-radius: 9px; background: #7c3aed; color: #f8fafc; font-weight: 900; }
+      .venue-deal-request-center > form { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(180px,.7fr) minmax(240px,1.3fr); gap: 10px; padding-top: 12px; border-top: 1px solid var(--mydancr-dashboard-border); }
+      .venue-deal-request-center form label { display: grid; gap: 7px; color: #cbd5e1; font-size: 12px; font-weight: 850; }
+      .venue-deal-request-center form select, .venue-deal-request-center form textarea { width: 100%; border: 1px solid var(--mydancr-dashboard-border); border-radius: 9px; background: #111118; color: #f8fafc; font: inherit; }
+      .venue-deal-request-center form select { min-height: 46px; padding: 0 12px; }
+      .venue-deal-request-center form textarea { min-height: 104px; padding: 12px; resize: vertical; }
+      .venue-deal-request-center form button { grid-column: 1 / -1; width: fit-content; }
+      .venue-deal-request-center > [role="status"], .venue-deal-request-center > small { grid-column: 1 / -1; color: #cbd5e1; }
+      .venue-deal-request-history { grid-column: 1 / -1; display: grid; gap: 8px; }
+      .venue-deal-request-history article { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px 12px; padding: 11px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 9px; background: #111118; }
+      .venue-deal-request-history article > div { display: grid; gap: 2px; }
+      .venue-deal-request-history small { color: #94a3b8; }
+      .venue-deal-request-history article > span { align-self: start; padding: 5px 8px; border: 1px solid #334155; border-radius: 999px; color: #cbd5e1; font-size: 10px; font-weight: 900; }
+      .venue-deal-request-history article > span[data-status="approved"] { border-color: rgba(16,185,129,.5); color: #6ee7b7; }
+      .venue-deal-request-history article > span[data-status="rejected"] { border-color: rgba(239,68,68,.45); color: #fca5a5; }
+      .venue-deal-request-history article > p { grid-column: 1 / -1; color: #cbd5e1; font-size: 12px; line-height: 1.45; }
+      .venue-contract-history { border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: #0d0d12; }
+      .venue-contract-history > summary { min-height: 48px; display: flex; align-items: center; padding: 0 14px; color: #f8fafc; font-weight: 900; cursor: pointer; }
+      .venue-contract-history > div { display: grid; gap: 8px; padding: 0 14px 14px; }
+      .venue-contract-history section { display: grid; grid-template-columns: minmax(150px,.7fr) minmax(180px,1.3fr) auto; gap: 10px; padding: 11px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 8px; background: #111118; }
+      .venue-contract-history span, .venue-contract-history small { color: #94a3b8; }
       .venue-deal-panel { grid-column: span 3; border-color: var(--mydancr-dashboard-border); background: #111118; }
       .venue-deal-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .venue-deal-heading > div { display: grid; gap: 4px; }
@@ -8145,7 +8368,7 @@ function DashboardStyles() {
       .dashboard-shell-venue .currency-input > span,
       .dashboard-shell-venue .commission-tier-table > strong { color: #d7d5dd; }
       .dashboard-shell-venue .commission-tier-table > strong { background: rgba(255,255,255,.04); }
-      @media (max-width: 720px) { .venue-deal-control-card { grid-template-columns: 1fr; } .venue-deal-control-actions { justify-content: flex-start; } .venue-deal-control-actions > button, .venue-deal-control-actions > a { flex: 1 1 140px; } }
+      @media (max-width: 720px) { .venue-deal-control-card, .venue-contract-summary { grid-template-columns: 1fr; } .venue-deal-control-actions { justify-content: flex-start; } .venue-deal-control-actions > button, .venue-deal-control-actions > a { flex: 1 1 140px; } .venue-contract-history section { grid-template-columns: 1fr; } }
       @media (max-width: 680px) {
         .dancer-performance-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .dancer-performance-summary .metric { min-height: 70px; padding: 11px 12px; }
@@ -8159,7 +8382,7 @@ function DashboardStyles() {
         .earnings-history-tabs button { padding: 5px 8px; }
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-logo-panel, .venue-logo-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-logo-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-logo-panel > img, .venue-logo-empty, .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-logo-panel > img, .venue-logo-empty { justify-self: start; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }

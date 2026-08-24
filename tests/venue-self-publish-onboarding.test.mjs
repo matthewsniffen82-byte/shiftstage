@@ -126,14 +126,14 @@ test("each venue publishing requirement opens the control that completes it", ()
     "venue-profile-opensAt",
     "venue-logo-upload",
     "venue-cover-upload",
-    "venue-deal-primary-action",
+    "venue-deal-contract-ledger",
   ]) {
     assert.match(dashboard, new RegExp(`targetId: "${target}"`));
   }
   assert.match(dashboard, /id=\{`venue-profile-\$\{key\}`\}/);
   assert.match(dashboard, /id="venue-logo-upload"/);
   assert.match(dashboard, /id="venue-cover-upload"/);
-  assert.match(dashboard, /id="venue-deal-primary-action"/);
+  assert.match(dashboard, /id="venue-deal-contract-ledger"/);
   assert.match(dashboard, /onClick=\{\(event\) => openVenueSetupRequirement\(event, requirement\.sectionId, requirement\.targetId\)\}/);
 });
 

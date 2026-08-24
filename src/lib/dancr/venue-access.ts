@@ -15,6 +15,7 @@ export type VenuePermission =
   | "manage_deals"
   | "manage_roster"
   | "manage_team"
+  | "request_deals"
   | "request_nfc_support";
 
 export type VenueAccess = {
@@ -35,9 +36,9 @@ const ROLE_PERMISSIONS: Record<VenueTeamRole, VenuePermission[]> = {
     "view_finance",
     "view_team",
     "manage_profile",
-    "manage_deals",
     "manage_roster",
     "manage_team",
+    "request_deals",
     "request_nfc_support",
   ],
   manager: [
@@ -49,8 +50,8 @@ const ROLE_PERMISSIONS: Record<VenueTeamRole, VenuePermission[]> = {
     "view_finance",
     "view_team",
     "manage_profile",
-    "manage_deals",
     "manage_roster",
+    "request_deals",
     "request_nfc_support",
   ],
   staff: [

@@ -36,7 +36,10 @@ const [
 
 test("venue team roles are least-privilege and private workspace access remains venue-scoped", () => {
   assert.match(access, /export type VenueTeamRole = "owner" \| "manager" \| "staff"/);
-  assert.match(access, /manager: \[[\s\S]*?"manage_profile"[\s\S]*?"manage_deals"[\s\S]*?"manage_roster"/);
+  const managerPermissions = access.match(/manager: \[([\s\S]*?)\],/)?.[1] || "";
+  assert.match(managerPermissions, /"manage_profile"/);
+  assert.match(managerPermissions, /"manage_roster"/);
+  assert.doesNotMatch(managerPermissions, /"manage_deals"/);
   const staffPermissions = access.match(/staff: \[([\s\S]*?)\],/)?.[1] || "";
   assert.match(staffPermissions, /"view_dashboard"/);
   assert.match(staffPermissions, /"view_nfc"/);
