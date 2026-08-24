@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
-import { readDashboardAccessToken } from "./dashboard-session";
+import { readDashboardAccessToken, requestVenueTvVideosJson } from "./dashboard-session";
 
 type VenueTvVideo = {
   id: string;
@@ -31,12 +31,9 @@ export default function VenueTvPanel() {
       return;
     }
     try {
-      const response = await fetch("/api/venue/tv/videos", {
-        headers: { authorization: `Bearer ${token}` },
+      const data = await requestVenueTvVideosJson({
         cache: "no-store",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load venue videos.");
       setVideos(data.videos || []);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load venue videos.");

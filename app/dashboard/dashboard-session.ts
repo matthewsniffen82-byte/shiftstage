@@ -229,6 +229,14 @@ export function requestDancerTvVideoJson(videoId: string, options: DashboardJson
   });
 }
 
+export function requestVenueTvVideosJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/venue/tv/videos", {
+    ...options,
+    expectedRole: "venue",
+    fallbackMessage: options.fallbackMessage || "Unable to load venue videos.",
+  });
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();
