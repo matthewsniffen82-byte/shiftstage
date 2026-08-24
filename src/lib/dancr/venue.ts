@@ -3,7 +3,10 @@ import {
   MODERATION_TEMP_BUCKET,
   moderateImageWithOpenAI,
 } from "./image-moderation";
-import { validateAndPrepareDancrImage } from "./image-validation";
+import {
+  normalizeDancrVenueLogoImage,
+  validateAndPrepareDancrImage,
+} from "./image-validation";
 import { evaluateDancrImageModeration } from "./moderation-policy";
 import {
   removeResponsiveImage,
@@ -304,14 +307,15 @@ export async function uploadVenueLogoImageByAdmin(
   file: Blob,
 ): Promise<VenueOwnerProfile> {
   const venue = await getVenueById(client, venueId);
-  const image = await validateAndPrepareDancrImage(file);
-  if (image.width < 512 || image.height < 512) {
+  const validatedImage = await validateAndPrepareDancrImage(file);
+  if (validatedImage.width < 512 || validatedImage.height < 512) {
     throw new Error("Venue logo must be at least 512 by 512 pixels.");
   }
-  const ratio = image.width / image.height;
+  const ratio = validatedImage.width / validatedImage.height;
   if (ratio < 0.5 || ratio > 2) {
     throw new Error("Choose a square or moderately rectangular venue logo.");
   }
+  const image = await normalizeDancrVenueLogoImage(validatedImage);
 
   const tempPath = `${adminId}/venue-logo/${venue.id}/${Date.now()}-${image.storageFileName}`;
   let finalPath = "";

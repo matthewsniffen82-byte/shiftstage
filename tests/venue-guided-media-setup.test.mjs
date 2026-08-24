@@ -9,7 +9,7 @@ const [dashboard, adminClient, adminMediaRoute, imageValidationSource] = await P
   readFile(new URL("../app/api/admin/venues/media/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-validation.ts", import.meta.url), "utf8"),
 ]);
-const { validateAndPrepareDancrImage } = await import(
+const { normalizeDancrVenueLogoImage, validateAndPrepareDancrImage } = await import(
   new URL("../src/lib/dancr/image-validation.ts", import.meta.url)
 );
 
@@ -54,6 +54,59 @@ test("JPEG phone orientation is applied before metadata is removed", async () =>
   assert.equal(prepared.height, 1200);
   assert.equal(metadata.orientation, undefined);
   assert.ok(prepared.buffer.length <= 10 * 1024 * 1024);
+});
+
+test("venue logos are trimmed, centered, and stored on one consistent canvas", async () => {
+  const source = await sharp({
+    create: {
+      width: 800,
+      height: 800,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([{
+      input: {
+        create: {
+          width: 280,
+          height: 92,
+          channels: 4,
+          background: { r: 220, g: 40, b: 70, alpha: 1 },
+        },
+      },
+      left: 72,
+      top: 118,
+    }])
+    .png()
+    .toBuffer();
+  const validated = await validateAndPrepareDancrImage(new Blob([source]));
+  const normalized = await normalizeDancrVenueLogoImage(validated);
+  const { data, info } = await sharp(normalized.buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  let minX = info.width;
+  let minY = info.height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = 0; x < info.width; x += 1) {
+      const alpha = data[((y * info.width) + x) * info.channels + 3];
+      if (alpha <= 24) continue;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  assert.equal(normalized.width, 1200);
+  assert.equal(normalized.height, 720);
+  assert.equal(normalized.contentType, "image/webp");
+  assert.ok(maxX > minX && maxY > minY);
+  assert.ok(Math.abs(((minX + maxX) / 2) - (info.width / 2)) <= 2);
+  assert.ok(Math.abs(((minY + maxY) / 2) - (info.height / 2)) <= 2);
 });
 
 test("removing saved venue media requires an explicit confirmation", () => {

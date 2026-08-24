@@ -1203,61 +1203,6 @@
       gap: 16px;
     }
 
-    .venue-dashboard-preview-banner {
-      position: sticky;
-      top: 0;
-      z-index: 8;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 8px 10px;
-      border: 1px solid rgba(167,139,250,.28);
-      border-radius: 12px;
-      background: rgba(12,8,22,.94);
-      box-shadow: 0 8px 22px rgba(0,0,0,.34);
-      backdrop-filter: blur(18px);
-    }
-
-    .venue-dashboard-preview-banner > span {
-      min-width: 0;
-      display: grid;
-      gap: 2px;
-    }
-
-    .venue-dashboard-preview-banner strong {
-      color: #fff;
-      font-size: 11px;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    .venue-dashboard-preview-banner small {
-      color: #c4b5fd;
-      font-size: 11px;
-      line-height: 1.35;
-    }
-
-    .venue-dashboard-preview-banner a {
-      min-height: 34px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-      padding: 0 11px;
-      border: 1px solid rgba(255,255,255,.18);
-      border-radius: 999px;
-      color: #fff;
-      background: rgba(255,255,255,.08);
-      font-size: 10px;
-      font-weight: 900;
-      text-decoration: none;
-    }
-
-    @media (max-width: 560px) {
-      .venue-dashboard-preview-banner { position: relative; }
-    }
-
     .venue-hero {
       overflow: hidden;
       border: 1px solid rgba(53,216,255,.13);
@@ -43623,12 +43568,104 @@
       document.documentElement.classList.remove("venue-preview-bootstrap");
     }
 
+    function venueLogoFitTarget(image) {
+      if (image.classList.contains("home-venue-discovery-logo")) {
+        return { width: .7, height: .44, maxScale: 2.25 };
+      }
+      if (image.classList.contains("venue-detail-logo")) {
+        return { width: .84, height: .62, maxScale: 2.8 };
+      }
+      return { width: .78, height: .58, maxScale: 2.5 };
+    }
+
+    function applyVenueLogoFit(image, scale, centerX = .5, centerY = .5) {
+      const safeScale = Math.max(1, Number(scale) || 1);
+      const shiftX = (.5 - centerX) * safeScale * 100;
+      const shiftY = (.5 - centerY) * safeScale * 100;
+      image.style.setProperty("--venue-logo-scale", safeScale.toFixed(3));
+      image.style.setProperty("--venue-logo-shift-x", `${shiftX.toFixed(2)}%`);
+      image.style.setProperty("--venue-logo-shift-y", `${shiftY.toFixed(2)}%`);
+      image.classList.add("is-logo-auto-fitted");
+    }
+
     function fitVenueLogoImage(image) {
       if (!(image instanceof HTMLImageElement)) return;
       const width = Number(image.naturalWidth || 0);
       const height = Number(image.naturalHeight || 0);
-      const ratio = width > 0 && height > 0 ? width / height : 0;
-      image.classList.toggle("is-compact-logo-source", ratio >= .78 && ratio <= 1.28);
+      if (!width || !height) return;
+      const ratio = width / height;
+      const target = venueLogoFitTarget(image);
+      const fallbackScale = ratio >= .78 && ratio <= 1.28 ? Math.min(1.75, target.maxScale) : 1;
+
+      try {
+        const sampleScale = Math.min(1, 240 / Math.max(width, height));
+        const sampleWidth = Math.max(1, Math.round(width * sampleScale));
+        const sampleHeight = Math.max(1, Math.round(height * sampleScale));
+        const canvas = document.createElement("canvas");
+        canvas.width = sampleWidth;
+        canvas.height = sampleHeight;
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        if (!context) {
+          applyVenueLogoFit(image, fallbackScale);
+          return;
+        }
+        context.drawImage(image, 0, 0, sampleWidth, sampleHeight);
+        const pixels = context.getImageData(0, 0, sampleWidth, sampleHeight).data;
+        const cornerOffsets = [
+          0,
+          (sampleWidth - 1) * 4,
+          (sampleHeight - 1) * sampleWidth * 4,
+          ((sampleHeight * sampleWidth) - 1) * 4
+        ];
+        const background = cornerOffsets.reduce((sum, offset) => ({
+          r: sum.r + pixels[offset],
+          g: sum.g + pixels[offset + 1],
+          b: sum.b + pixels[offset + 2],
+          a: sum.a + pixels[offset + 3]
+        }), { r: 0, g: 0, b: 0, a: 0 });
+        Object.keys(background).forEach((key) => { background[key] /= cornerOffsets.length; });
+
+        let minX = sampleWidth;
+        let minY = sampleHeight;
+        let maxX = -1;
+        let maxY = -1;
+        let contentPixels = 0;
+        for (let y = 0; y < sampleHeight; y += 1) {
+          for (let x = 0; x < sampleWidth; x += 1) {
+            const offset = ((y * sampleWidth) + x) * 4;
+            const alpha = pixels[offset + 3];
+            if (alpha <= 18) continue;
+            const redDelta = pixels[offset] - background.r;
+            const greenDelta = pixels[offset + 1] - background.g;
+            const blueDelta = pixels[offset + 2] - background.b;
+            const colorDelta = Math.sqrt((redDelta ** 2) + (greenDelta ** 2) + (blueDelta ** 2));
+            const alphaDelta = Math.abs(alpha - background.a);
+            const isContent = background.a < 28 ? alpha >= 44 : colorDelta >= 52 || alphaDelta >= 52;
+            if (!isContent) continue;
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+            contentPixels += 1;
+          }
+        }
+
+        if (contentPixels < sampleWidth * sampleHeight * .001 || maxX < minX || maxY < minY) {
+          applyVenueLogoFit(image, fallbackScale);
+          return;
+        }
+        const contentWidth = (maxX - minX + 1) / sampleWidth;
+        const contentHeight = (maxY - minY + 1) / sampleHeight;
+        const contentCenterX = ((minX + maxX + 1) / 2) / sampleWidth;
+        const contentCenterY = ((minY + maxY + 1) / 2) / sampleHeight;
+        const fittedScale = Math.min(
+          target.maxScale,
+          Math.max(1, Math.min(target.width / contentWidth, target.height / contentHeight))
+        );
+        applyVenueLogoFit(image, fittedScale, contentCenterX, contentCenterY);
+      } catch {
+        applyVenueLogoFit(image, fallbackScale);
+      }
     }
 
     function venueDashboardPreviewHours(profile) {
@@ -49141,7 +49178,7 @@
     function venueLogoMarkup(venue, className) {
       const logoImageUrl = String(venue?.logoImageUrl || "").trim();
       if (!logoImageUrl) return "";
-      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" src="${escapeHtml(logoImageUrl)}" alt="" decoding="async" onload="fitVenueLogoImage(this)"></span>`;
+      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" crossorigin="anonymous" src="${escapeHtml(logoImageUrl)}" alt="" decoding="async" onload="fitVenueLogoImage(this)"></span>`;
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
@@ -49317,19 +49354,10 @@
           </span>
         </section>
       `;
-      const previewBanner = venue.isDashboardPreview ? `
-        <aside class="venue-dashboard-preview-banner" role="status" aria-label="Venue preview">
-          <span>
-            <strong>${venue.isPrivatePreview ? "Private customer preview" : "Live customer preview"}</strong>
-          </span>
-          <a href="/dashboard/venue">Return to dashboard</a>
-        </aside>
-      ` : "";
       if (venue.id && !venue.isDashboardPreview) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
       return `
         <div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
-          ${previewBanner}
           <div class="venue-detail-modal-top">
             <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${details.name} club profile">
               <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>

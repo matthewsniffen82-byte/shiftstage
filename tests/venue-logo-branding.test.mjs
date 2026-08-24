@@ -177,7 +177,12 @@ test("verified logo identity flows through every public venue response", () => {
 test("venue cards use a full-card logo canvas while detail pages retain contain-fit identity", () => {
   assert.match(liveApp, /function venueLogoMarkup\(venue, className\)/);
   assert.match(liveApp, /function fitVenueLogoImage\(image\)/);
+  assert.match(liveApp, /function venueLogoFitTarget\(image\)/);
+  assert.match(liveApp, /function applyVenueLogoFit\(image, scale, centerX = \.5, centerY = \.5\)/);
   assert.match(liveApp, /ratio >= \.78 && ratio <= 1\.28/);
+  assert.match(liveApp, /getImageData\(0, 0, sampleWidth, sampleHeight\)/);
+  assert.match(liveApp, /contentCenterX[\s\S]*?contentCenterY[\s\S]*?applyVenueLogoFit\(image, fittedScale, contentCenterX, contentCenterY\)/);
+  assert.match(liveApp, /crossorigin="anonymous"/);
   assert.match(liveApp, /onload="fitVenueLogoImage\(this\)"/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "venue-card-logo"\)/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "home-venue-discovery-logo"\)/);
@@ -203,9 +208,10 @@ test("venue cards use a full-card logo canvas while detail pages retain contain-
     aesthetic,
     /\.venue-detail-logo-shell \{[\s\S]*?width: min\(86%, 360px\);[\s\S]*?height: 180px;/,
   );
+  assert.match(aesthetic, /--venue-logo-shift-x[\s\S]*?--venue-logo-shift-y[\s\S]*?--venue-logo-scale/);
   assert.match(
     aesthetic,
-    /\.venue-card-logo\.is-compact-logo-source,[\s\S]*?\.venue-detail-logo\.is-compact-logo-source \{[\s\S]*?transform: scale\(1\.45\)/,
+    /@media \(max-width: 650px\) \{[\s\S]*?\.venue-detail-logo-shell \{[\s\S]*?left: 50% !important;/,
   );
   assert.doesNotMatch(aesthetic, /home-venue-discovery-logo-shell \{[\s\S]{0,180}border: 1px solid/);
 });

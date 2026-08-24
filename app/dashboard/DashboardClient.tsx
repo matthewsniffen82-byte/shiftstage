@@ -7519,7 +7519,7 @@ function DashboardStyles() {
       .venue-review-package-heading > span:last-child > small { color: #a19aa9; font-size: 11px; line-height: 1.4; }
       .venue-review-logo { width: 72px; height: 72px; display: grid; place-items: center; overflow: hidden; box-sizing: border-box; padding: 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 16px; color: #f3eaff; background: #17171d; box-shadow: inset 0 1px 0 rgba(255,255,255,.045); font-size: 18px; font-weight: 950; letter-spacing: .06em; }
       .venue-review-logo img { width: 100%; height: 100%; display: block; object-fit: contain; }
-      .venue-review-logo img.is-compact-logo-source { transform: scale(1.45); transform-origin: center; }
+      .venue-review-logo img.is-compact-logo-source { transform: scale(1.7); transform-origin: center; }
       .venue-review-package-section { min-width: 0; display: grid; gap: 9px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,.09); }
       .venue-review-package-section > strong { color: #f8fafc; font-size: 15px; line-height: 1.2; }
       .venue-review-commercial-heading { min-width: 0; display: grid; gap: 5px; }

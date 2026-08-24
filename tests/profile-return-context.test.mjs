@@ -72,8 +72,9 @@ test("private venue previews do not flash the homepage or disappear during disco
   assert.match(liveApp, /Promise\.resolve\(initialDiscoveryRequest\)\.finally\(\(\) => openSharedProfileFromUrl\(\)\)/);
   assert.match(sharedPreview, /openVenueFromName\(previewVenue\.slug \|\| previewVenue\.name\)/);
   assert.match(sharedPreview, /finally \{[\s\S]*?finishVenuePreviewBootstrap\(\)/);
-  assert.match(liveApp, /Private customer preview/);
-  assert.match(liveApp, /Return to dashboard/);
+  assert.doesNotMatch(liveApp, /venue-dashboard-preview-banner/);
+  assert.doesNotMatch(liveApp, /Private customer preview|Live customer preview/);
+  assert.match(liveApp, /get\("venue_preview"\) === "1"[\s\S]*?window\.location\.assign\("\/dashboard\/venue"\)/);
 });
 
 test("venue roster dancer profiles stay inside the venue dashboard stack", () => {

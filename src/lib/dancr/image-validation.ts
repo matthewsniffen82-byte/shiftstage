@@ -5,6 +5,10 @@ export const MAX_DANCR_IMAGE_BYTES = 10 * 1024 * 1024;
 export const MAX_DANCR_RAW_UPLOAD_BYTES = 25 * 1024 * 1024;
 export const MAX_DANCR_IMAGE_DIMENSION = 6000;
 export const DANCR_HEIC_JPEG_QUALITY = 94;
+export const DANCR_VENUE_LOGO_WIDTH = 1200;
+export const DANCR_VENUE_LOGO_HEIGHT = 720;
+const DANCR_VENUE_LOGO_CONTENT_WIDTH = 1056;
+const DANCR_VENUE_LOGO_CONTENT_HEIGHT = 576;
 
 export type ValidatedDancrImage = {
   buffer: Buffer;
@@ -41,6 +45,67 @@ export async function validateAndPrepareDancrImage(file: Blob): Promise<Validate
     buffer: prepared.buffer,
     sha256: createHash("sha256").update(prepared.buffer).digest("hex"),
     storageFileName: `${randomUUID()}.${normalized.extension}`,
+  };
+}
+
+/**
+ * Produces one predictable transparent venue-logo canvas. Trimming against the
+ * source corner color handles both transparent exports and marks delivered on
+ * a flat black/white artboard. The preserved gutter keeps every venue identity
+ * centered and consistently sized in cards, approval screens, and detail pages.
+ */
+export async function normalizeDancrVenueLogoImage(
+  image: ValidatedDancrImage,
+): Promise<ValidatedDancrImage> {
+  let trimmed: { data: Buffer; info: { width: number; height: number } };
+  try {
+    trimmed = await sharp(image.buffer, { failOn: "error", limitInputPixels: false })
+      .ensureAlpha()
+      .trim({ threshold: 18 })
+      .png({ compressionLevel: 9 })
+      .toBuffer({ resolveWithObject: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error || "");
+    throw new Error(message ? `Unable to normalize this venue logo: ${message}` : "Unable to normalize this venue logo.");
+  }
+
+  if (trimmed.info.width < 8 || trimmed.info.height < 8) {
+    throw new Error("Venue logo must contain visible artwork.");
+  }
+
+  const content = await sharp(trimmed.data, { failOn: "error", limitInputPixels: false })
+    .resize({
+      width: DANCR_VENUE_LOGO_CONTENT_WIDTH,
+      height: DANCR_VENUE_LOGO_CONTENT_HEIGHT,
+      fit: "inside",
+      withoutEnlargement: false,
+    })
+    .png({ compressionLevel: 9 })
+    .toBuffer({ resolveWithObject: true });
+  const left = Math.floor((DANCR_VENUE_LOGO_WIDTH - content.info.width) / 2);
+  const right = DANCR_VENUE_LOGO_WIDTH - content.info.width - left;
+  const top = Math.floor((DANCR_VENUE_LOGO_HEIGHT - content.info.height) / 2);
+  const bottom = DANCR_VENUE_LOGO_HEIGHT - content.info.height - top;
+  const buffer = await sharp(content.data, { failOn: "error", limitInputPixels: false })
+    .extend({
+      top,
+      bottom,
+      left,
+      right,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .webp({ effort: 6, quality: 94, alphaQuality: 100, smartSubsample: true })
+    .toBuffer();
+  const stem = image.storageFileName.replace(/\.[^.]+$/, "");
+
+  return {
+    buffer,
+    contentType: "image/webp",
+    extension: "webp",
+    width: DANCR_VENUE_LOGO_WIDTH,
+    height: DANCR_VENUE_LOGO_HEIGHT,
+    sha256: createHash("sha256").update(buffer).digest("hex"),
+    storageFileName: `${stem}.webp`,
   };
 }
 

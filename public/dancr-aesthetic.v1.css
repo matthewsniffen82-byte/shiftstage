@@ -2848,20 +2848,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   height: 86%;
   object-fit: contain;
   object-position: center;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.52));
-}
-
-/* Square upload canvases often contain a compact horizontal wordmark. Enlarge
- * that source class without cropping naturally wide venue logos. */
-.venue-card-logo.is-compact-logo-source,
-.venue-detail-logo.is-compact-logo-source {
-  transform: scale(1.45);
+  transform: translate(
+      var(--venue-logo-shift-x, 0),
+      var(--venue-logo-shift-y, 0)
+    ) scale(var(--venue-logo-scale, 1));
   transform-origin: center;
-}
-
-.home-venue-discovery-logo.is-compact-logo-source {
-  transform: scale(1.28);
-  transform-origin: center 34%;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.52));
 }
 
 .home-venue-discovery-logo {
@@ -2875,6 +2867,11 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   padding: 42px 72px 142px 18px;
   object-fit: contain;
   object-position: center 34%;
+  transform: translate(
+      var(--venue-logo-shift-x, 0),
+      var(--venue-logo-shift-y, 0)
+    ) scale(var(--venue-logo-scale, 1));
+  transform-origin: center;
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.58));
 }
 
@@ -5015,13 +5012,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   isolation: isolate;
 }
 
-/* Compact venue heroes reserve a clear lane for the fixed close control. Wide
- * marks stay contain-fit, but shift and scale as one unit instead of running
- * beneath the X or being cropped. */
+/* Compact venue heroes keep centered logo geometry while reserving symmetric
+ * breathing room around the fixed close control. */
 @media (max-width: 650px) {
   body.dancr-button-system #results.venue-profile-overlay .venue-detail
     .venue-detail-logo-shell {
-    left: calc(50% - clamp(24px, 6vw, 36px)) !important;
+    left: 50% !important;
     width: calc(100% - clamp(86px, 22vw, 108px)) !important;
   }
 }
@@ -5054,13 +5050,13 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   max-height: 100% !important;
   object-fit: contain !important;
   object-position: center center !important;
+  transform: translate(
+      var(--venue-logo-shift-x, 0),
+      var(--venue-logo-shift-y, 0)
+    ) scale(var(--venue-logo-scale, 1)) !important;
+  transform-origin: center !important;
   filter: none !important;
   -webkit-filter: none !important;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-detail-logo.is-compact-logo-source {
-  transform: scale(1.45) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body {
