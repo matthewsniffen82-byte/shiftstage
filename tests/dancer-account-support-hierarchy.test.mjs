@@ -32,7 +32,8 @@ test("support and account controls have clear action hierarchy", () => {
   assert.match(support, /How can we help\?/);
   assert.match(support, /Add the details/);
   assert.match(support, /Send message/);
-  assert.match(controls, /<h2>Account &amp; security<\/h2>/);
+  assert.match(controls, /const accountHeading = ownsVenueWorkspace \? "Venue account & security" : "Account & security"/);
+  assert.match(controls, /<h2>\{accountHeading\}<\/h2>/);
   assert.ok(controls.indexOf("Sign out") < controls.indexOf("Disable account"));
   assert.match(controls, /className="account-action-row account-danger-row"[\s\S]*?className="account-action-button danger-button"/);
   assert.match(dashboard, /\.account-action-row \{[^}]*?grid-template-columns: minmax\(0,1fr\) auto;/);

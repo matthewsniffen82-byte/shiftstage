@@ -167,23 +167,100 @@ export async function setAccountState(
   accountState: AccountState,
   publicationClient: DancrClient = client,
 ) {
-  const update: Record<string, string | null> = {
-    account_state: accountState,
-  };
+  const { data: current, error: currentError } = await publicationClient
+    .from("app_users")
+    .select("id, role, display_name, email, account_state")
+    .eq("id", userId)
+    .single();
+  if (currentError) throw currentError;
 
-  if (accountState === "deleted") {
-    update.display_name = null;
-    update.email = null;
+  const { data: authData, error: authError } = await publicationClient.auth.admin.getUserById(userId);
+  if (authError) throw authError;
+  const originalMetadata = { ...(authData.user.app_metadata || {}) };
+  const selfDisabledAt = typeof originalMetadata.mydancr_self_disabled_at === "string"
+    ? originalMetadata.mydancr_self_disabled_at
+    : "";
+
+  if (accountState === "active" && current.account_state === "disabled" && !selfDisabledAt) {
+    throw new Error("This account was disabled by MyDancr. Contact support to restore access.");
   }
 
-  const { data, error } = await client
+  const { data: ownedVenue, error: venueReadError } = current.role === "venue"
+    ? await publicationClient
+        .from("venues")
+        .select("id, is_active")
+        .eq("owner_user_id", userId)
+        .maybeSingle()
+    : { data: null, error: null };
+  if (venueReadError) throw venueReadError;
+
+  const originalVenueActive = ownedVenue?.is_active === true;
+  const priorVenueActive = typeof originalMetadata.mydancr_venue_was_active === "boolean"
+    ? originalMetadata.mydancr_venue_was_active
+    : originalVenueActive;
+  const nextAccountUpdate: Record<string, string | null> = { account_state: accountState };
+  if (accountState === "deleted") {
+    nextAccountUpdate.display_name = null;
+    nextAccountUpdate.email = null;
+  }
+
+  if (accountState === "disabled") {
+    const { error: metadataError } = await publicationClient.auth.admin.updateUserById(userId, {
+      app_metadata: {
+        ...originalMetadata,
+        mydancr_self_disabled_at: selfDisabledAt || new Date().toISOString(),
+        ...(ownedVenue ? { mydancr_venue_was_active: priorVenueActive } : {}),
+      },
+    });
+    if (metadataError) throw metadataError;
+  }
+
+  if (ownedVenue && accountState !== "active") {
+    const { error: venueError } = await publicationClient
+      .from("venues")
+      .update({ is_active: false })
+      .eq("id", ownedVenue.id);
+    if (venueError) {
+      if (accountState === "disabled") {
+        await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalMetadata });
+      }
+      throw venueError;
+    }
+  }
+
+  const { data, error } = await publicationClient
     .from("app_users")
-    .update(update)
+    .update(nextAccountUpdate)
     .eq("id", userId)
     .select("id, role, display_name, email, account_state")
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (ownedVenue && accountState !== "active") {
+      await publicationClient.from("venues").update({ is_active: originalVenueActive }).eq("id", ownedVenue.id);
+    }
+    if (accountState === "disabled") {
+      await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalMetadata });
+    }
+    throw error;
+  }
+
+  if (accountState === "active") {
+    const { error: venueError } = ownedVenue
+      ? await publicationClient.from("venues").update({ is_active: priorVenueActive }).eq("id", ownedVenue.id)
+      : { error: null };
+    const restoredMetadata = { ...originalMetadata };
+    delete restoredMetadata.mydancr_self_disabled_at;
+    delete restoredMetadata.mydancr_venue_was_active;
+    const { error: metadataError } = await publicationClient.auth.admin.updateUserById(userId, {
+      app_metadata: restoredMetadata,
+    });
+    if (venueError || metadataError) {
+      if (ownedVenue) await publicationClient.from("venues").update({ is_active: false }).eq("id", ownedVenue.id);
+      await publicationClient.from("app_users").update({ account_state: "disabled" }).eq("id", userId);
+      throw venueError || metadataError;
+    }
+  }
 
   if (data.role === "dancer") {
     const { data: dancer, error: dancerError } = await publicationClient

@@ -110,6 +110,11 @@ export async function PATCH(request: Request) {
     }
 
     const account = await setAccountState(client, user.id, accountState, createAdminSupabaseClient());
+    console.info(JSON.stringify({
+      event: accountState === "disabled" ? "account.self_disabled" : "account.self_reactivated",
+      userId: user.id,
+      role: account.role,
+    }));
     return NextResponse.json({ ok: true, account, session });
   } catch (error) {
     return apiError(error, "Unable to update account.");
@@ -121,6 +126,7 @@ export async function DELETE(request: Request) {
     const { client, user } = await createRequestSupabaseContext(request);
     const admin = createAdminSupabaseClient();
     const account = await setAccountState(client, user.id, "deleted", admin);
+    console.info(JSON.stringify({ event: "account.self_deleted", userId: user.id, role: account.role }));
     const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id);
 
     if (deleteUserError) {

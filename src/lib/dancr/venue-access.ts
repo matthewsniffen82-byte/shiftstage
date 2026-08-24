@@ -93,7 +93,14 @@ export async function getVenueAccess(client: DancrClient, userId: string): Promi
     .maybeSingle();
   if (membershipError) throw membershipError;
   const venue = firstJoined(membership?.venues);
-  if (!membership || !venue || !isVenueTeamRole(membership.role)) return null;
+  if (!membership || !venue || !venue.owner_user_id || !isVenueTeamRole(membership.role)) return null;
+  const { data: owner, error: ownerAccountError } = await (client as any)
+    .from("app_users")
+    .select("account_state")
+    .eq("id", venue.owner_user_id)
+    .maybeSingle();
+  if (ownerAccountError) throw ownerAccountError;
+  if (owner?.account_state !== "active") return null;
   return mapVenueAccess(venue, membership.role);
 }
 

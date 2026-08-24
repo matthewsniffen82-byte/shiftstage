@@ -854,10 +854,31 @@ function SupportInboxPanel({
   );
 }
 
-function AccountControlsPanel({ accountState }: { accountState: string }) {
+function AccountControlsPanel({
+  accountRole,
+  accountState,
+  venueAccessRole,
+  venueName,
+}: {
+  accountRole?: DashboardRole;
+  accountState: string;
+  venueAccessRole?: string;
+  venueName?: string;
+}) {
   const [state, setState] = useState(accountState);
   const [status, setStatus] = useState("");
   const [isWorking, setIsWorking] = useState(false);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const isVenueAccount = accountRole === "venue";
+  const isVenueOwner = isVenueAccount && venueAccessRole === "owner";
+  const ownsVenueWorkspace = isVenueOwner || (isVenueAccount && state === "disabled" && !venueAccessRole);
+  const accountHeading = ownsVenueWorkspace ? "Venue account & security" : "Account & security";
+  const accountDescription = ownsVenueWorkspace
+    ? "Pause or permanently close this venue account."
+    : isVenueAccount
+      ? "Manage your personal venue-team login."
+      : "Manage this session and your account access.";
 
   useEffect(() => {
     setState(accountState);
@@ -874,7 +895,12 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
         fallbackMessage: "Unable to update account.",
       });
       setState(data.account?.accountState || nextState);
-      setStatus(nextState === "disabled" ? "Account disabled." : "Account reactivated.");
+      setStatus(nextState === "disabled"
+        ? ownsVenueWorkspace ? "Venue account disabled. The venue is now private and team access is paused." : "Account disabled."
+        : ownsVenueWorkspace ? "Venue account reactivated." : "Account reactivated.");
+      if (isVenueAccount) {
+        window.location.replace(nextState === "disabled" ? "/dashboard/venue#venue-account" : "/dashboard/venue");
+      }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update account.");
     } finally {
@@ -883,7 +909,10 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
   }
 
   async function deleteAccount() {
-    if (!window.confirm("Delete this Dancr account? This cannot be undone.")) return;
+    if (deleteConfirmation !== "DELETE") {
+      setStatus("Type DELETE exactly to confirm permanent deletion.");
+      return;
+    }
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
@@ -914,8 +943,8 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
   return (
     <article className="info-panel account-controls-panel">
       <div className="account-controls-heading">
-        <h2>Account &amp; security</h2>
-        <p>Manage this session and your account access.</p>
+        <h2>{accountHeading}</h2>
+        <p>{accountDescription}</p>
       </div>
       <div className="account-actions">
         <div className="account-action-row">
@@ -924,17 +953,66 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
         </div>
         <div className="account-action-row">
           <span>
-            <strong>{state === "disabled" ? "Reactivate account" : "Disable account"}</strong>
-            <small>{state === "disabled" ? "Restore access to your account." : "Pause access without deleting your account."}</small>
+            <strong>{state === "disabled" ? ownsVenueWorkspace ? "Reactivate venue account" : "Reactivate account" : ownsVenueWorkspace ? "Disable venue account" : "Disable account"}</strong>
+            <small>{state === "disabled"
+              ? ownsVenueWorkspace ? "Restore the venue and team access to the state they had before the pause." : "Restore access to your account."
+              : ownsVenueWorkspace ? "Immediately make the venue private and pause access for the entire venue team without deleting saved data." : "Pause your access without deleting the shared venue or your saved account data."}</small>
           </span>
           <button className="account-action-button" type="button" onClick={() => updateAccount(state === "disabled" ? "active" : "disabled")} disabled={isWorking}>
             {state === "disabled" ? "Reactivate" : "Disable"}
           </button>
         </div>
         <div className="account-action-row account-danger-row">
-          <span><strong>Delete account</strong><small>Permanently delete this account.</small></span>
-          <button className="account-action-button danger-button" type="button" onClick={deleteAccount} disabled={isWorking}>Delete</button>
+          <span>
+            <strong>{ownsVenueWorkspace ? "Delete venue account" : isVenueAccount ? "Delete my team account" : "Delete account"}</strong>
+            <small>{ownsVenueWorkspace
+              ? `Permanently remove this login and archive ${venueName || "the venue"}. MyDancr retains records required for accounting, security, and legal compliance.`
+              : isVenueAccount ? "Permanently remove your login and team membership without deleting the shared venue." : "Permanently delete this account."}</small>
+          </span>
+          <button
+            className="account-action-button danger-button"
+            type="button"
+            onClick={() => {
+              setDeleteConfirmationOpen(true);
+              setDeleteConfirmation("");
+              setStatus("");
+            }}
+            disabled={isWorking}
+          >Delete</button>
         </div>
+        {deleteConfirmationOpen ? (
+          <div className="account-delete-confirmation">
+            <label htmlFor="account-delete-confirmation">
+              Type <strong>DELETE</strong> to confirm. This cannot be undone and you will be signed out immediately.
+            </label>
+            <input
+              autoCapitalize="characters"
+              autoComplete="off"
+              id="account-delete-confirmation"
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              spellCheck={false}
+              value={deleteConfirmation}
+            />
+            <div>
+              <button
+                className="account-action-button"
+                type="button"
+                onClick={() => {
+                  setDeleteConfirmationOpen(false);
+                  setDeleteConfirmation("");
+                  setStatus("");
+                }}
+                disabled={isWorking}
+              >Cancel</button>
+              <button
+                className="account-action-button danger-button"
+                type="button"
+                onClick={deleteAccount}
+                disabled={isWorking || deleteConfirmation !== "DELETE"}
+              >{isWorking ? "Deleting…" : "Permanently delete"}</button>
+            </div>
+          </div>
+        ) : null}
         {status ? <p role="status" aria-live="polite">{status}</p> : null}
       </div>
     </article>
@@ -2256,7 +2334,12 @@ function VenuePanel({
           </InfoPanel>
           <NotificationPanel />
           <SupportInboxPanel initialThreads={supportThreads} />
-          <AccountControlsPanel accountState={String(account?.accountState || "active")} />
+          <AccountControlsPanel
+            accountRole="venue"
+            accountState={String(account?.accountState || "active")}
+            venueAccessRole={venueRole}
+            venueName={venueName}
+          />
         </div>
       </DashboardSection>
 
@@ -7821,6 +7904,12 @@ function DashboardStyles() {
       .account-action-button:disabled { opacity: .55; cursor: wait; }
       .account-danger-row { margin-top: 4px; padding: 12px; border: 1px solid rgba(248,113,113,.2); border-radius: 12px; background: rgba(127,29,29,.08); }
       .account-actions .danger-button { color: #fecaca; background: rgba(127,29,29,.22); border-color: rgba(248,113,113,.28); }
+      .account-delete-confirmation { display: grid !important; gap: 10px !important; margin-top: 10px; padding: 13px; border: 1px solid rgba(248,113,113,.24); border-radius: 12px; background: rgba(69,10,10,.2); }
+      .account-delete-confirmation label { color: #e7dce9; font-size: 12px; line-height: 1.45; }
+      .account-delete-confirmation label strong { color: #fecaca; letter-spacing: .08em; }
+      .account-delete-confirmation input { min-height: 42px; box-sizing: border-box; padding: 0 12px; border: 1px solid rgba(248,113,113,.3); border-radius: 9px; color: #fff; background: rgba(5,5,7,.72); font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+      .account-delete-confirmation input:focus-visible { outline: 2px solid #ef4444; outline-offset: 2px; }
+      .account-delete-confirmation > div { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
       .account-actions p { margin: 10px 0 0; color: #94e5ff; font-size: 14px; }
       .notification-title-row { display: flex !important; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px !important; }
       .notification-title-row > div { display: grid; gap: 4px; }

@@ -193,10 +193,13 @@ async function authResponse(
   if (!account?.role) {
     throw new Error("This account is not ready for sign in. Contact support for help.");
   }
+  if (account.accountState === "deleted") {
+    throw new Error("This account has been deleted.");
+  }
   if (expectedRole && account.role !== expectedRole) {
     throw new Error("Account role does not match this login.");
   }
-  if (account.role === "venue") {
+  if (account.role === "venue" && account.accountState === "active") {
     const venue = await getVenueForAccount(admin, userId);
     if (!venue) {
       throw new Error("No venue is connected to this account. Use your venue access code during sign up.");

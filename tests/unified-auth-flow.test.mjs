@@ -13,7 +13,7 @@ test("public sign-in resolves the real database role while admin remains strict"
   assert.match(authRoute, /expectedRole: AuthRole \| null/);
   assert.match(authRoute, /if \(!account\?\.role\) \{[\s\S]*?This account is not ready for sign in/);
   assert.match(authRoute, /if \(expectedRole && account\.role !== expectedRole\)/);
-  assert.match(authRoute, /if \(account\.role === "venue"\) \{[\s\S]*?getVenueForAccount/);
+  assert.match(authRoute, /if \(account\.role === "venue" && account\.accountState === "active"\) \{[\s\S]*?getVenueForAccount/);
 });
 
 test("the public auth surface has one sign-in and three concise signup paths", () => {
