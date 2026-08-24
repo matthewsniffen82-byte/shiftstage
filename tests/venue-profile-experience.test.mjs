@@ -50,6 +50,9 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?venue-address-directions[\s\S]*?\$\{rideMarkup\}/);
   assert.ok(venueDetail.indexOf("${venueOfferMarkup(venue)}") < venueDetail.indexOf("venue-primary-actions"));
   assert.ok(venueDetail.indexOf("venue-primary-actions") < venueDetail.indexOf("venue-secondary-actions"));
+  assert.ok(venueDetail.indexOf("${details.phone ?") < venueDetail.indexOf("venue-action-stack"));
+  assert.ok(venueDetail.indexOf("${details.website ?") < venueDetail.indexOf("venue-action-stack"));
+  assert.match(venueDetail, /class="venue-action-stack"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?class="venue-secondary-actions"/);
   assert.equal((venueDetail.match(/\$\{rideMarkup\}/g) || []).length, 1);
   assert.match(venueDetail, /id="venue-no-shift-posted"[\s\S]*?<span>No Shift Posted<\/span>/);
   assert.doesNotMatch(venueDetail, /Trending at|is-trending/);
@@ -155,6 +158,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-status-grid > \* \+ \* \{[\s\S]*?border-left: 1px solid var\(--dancr-color-border-subtle\) !important;/);
   assert.match(refinement, /\.venue-operating-status \{[\s\S]*?width: 100%;[\s\S]*?display: block !important;[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: anywhere;/);
   assert.match(refinement, /\.venue-address-tile \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/);
+  assert.match(refinement, /\.venue-action-stack \{[\s\S]*?display: grid;[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?gap: 8px;/);
   assert.match(refinement, /\.venue-location-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
   assert.match(refinement, /\.venue-location-actions \{[\s\S]*?padding: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?width: 100% !important;[\s\S]*?min-height: 48px !important;[\s\S]*?display: inline-flex !important;/);

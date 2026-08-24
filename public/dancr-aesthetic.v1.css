@@ -5270,6 +5270,13 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-add
   gap: 9px !important;
 }
 
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-action-stack {
+  min-width: 0;
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-actions {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
