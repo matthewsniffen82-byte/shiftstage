@@ -16,7 +16,7 @@ const lateMobileHeader = homeSource.match(
 )?.[0] || "";
 
 const mobileAuthClearance = homeSource.match(
-  /\/\* The utility header is hidden while account surfaces are open,[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: 0;[\s\S]*?#authPage > \.page-inner \{[\s\S]*?padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?#authPage \.auth-choice-card \{[\s\S]*?overflow: visible !important;[\s\S]*?#authPage > \.page-inner::after \{[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\}\s*\}/,
+  /\/\* The utility header is hidden while account surfaces are open,[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: var\(--dancr-auth-viewport-top, 0px\);[\s\S]*?height: var\(--dancr-auth-viewport-height, 100dvh\);[\s\S]*?#authPage > \.page-inner \{[\s\S]*?padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?#authPage \.auth-choice-card \{[\s\S]*?overflow: visible !important;[\s\S]*?#authPage > \.page-inner::after \{[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\}\s*\}/,
 )?.[0] || "";
 
 test("mobile utility header is rounded, compact, and aligned with the page", () => {
@@ -142,7 +142,7 @@ test("the mobile notification panel opens inside the visible viewport", () => {
   );
 });
 
-test("the mobile login sheet begins at the visible top after the utility header is hidden", () => {
+test("the mobile login sheet tracks the keyboard-reduced visual viewport", () => {
   assert.ok(mobileAuthClearance, "mobile login clearance CSS must exist");
   assert.match(
     homeSource,
@@ -150,9 +150,13 @@ test("the mobile login sheet begins at the visible top after the utility header 
   );
   assert.match(
     mobileAuthClearance,
-    /#authPage\.show \{[\s\S]*?top: 0;[\s\S]*?bottom: 0;[\s\S]*?min-height: 0;[\s\S]*?height: auto;[\s\S]*?overflow-y: auto;/,
+    /#authPage\.show \{[\s\S]*?top: var\(--dancr-auth-viewport-top, 0px\);[\s\S]*?bottom: auto;[\s\S]*?min-height: 0;[\s\S]*?height: var\(--dancr-auth-viewport-height, 100dvh\);[\s\S]*?max-height: var\(--dancr-auth-viewport-height, 100dvh\);[\s\S]*?overflow-y: auto;/,
   );
   assert.match(mobileAuthClearance, /padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);/);
+  assert.match(homeSource, /interactive-widget=resizes-content/);
+  assert.match(homeSource, /window\.visualViewport\?\.addEventListener\("resize", queueAuthVisualViewportSync/);
+  assert.match(homeSource, /--dancr-auth-viewport-height/);
+  assert.match(homeSource, /--dancr-auth-viewport-top/);
   assert.doesNotMatch(mobileAuthClearance, /\.page-panel\.show/);
 });
 
@@ -162,8 +166,33 @@ test("the mobile login sheet scrolls every sign-in and signup action above the f
     /#authPage > \.page-inner \{[\s\S]*?min-height: 100%;[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);/,
   );
   assert.match(mobileAuthClearance, /#authPage \.auth-choice-card \{\s*overflow: visible !important;\s*\}/);
+  assert.match(mobileAuthClearance, /#authPage \.auth-entry-tabs \{[\s\S]*?position: sticky;[\s\S]*?z-index: 4;/);
+  assert.match(mobileAuthClearance, /#authPage #authForm:not\(\[hidden\]\) #authSubmit \{[\s\S]*?position: sticky;[\s\S]*?bottom: max\(10px, env\(safe-area-inset-bottom, 0px\)\);/);
   assert.match(mobileAuthClearance, /#authPage > \.page-inner::after \{[\s\S]*?content: "";[\s\S]*?display: block;[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);/);
   assert.match(homeSource, /id="authSubmit" type="submit">Sign in<\/button>/);
   assert.match(homeSource, /id="authCreateTab"[^>]*>Create account<\/button>/);
   assert.doesNotMatch(homeSource, /id="customerJoinNowBtn"/);
+});
+
+test("mobile auth does not open the soft keyboard on arrival or keep hidden fields focused", () => {
+  assert.match(
+    homeSource,
+    /function usesSoftKeyboardAuthLayout\(\) \{[\s\S]*?matchMedia\("\(max-width: 720px\), \(hover: none\) and \(pointer: coarse\)"\)/,
+  );
+  assert.match(
+    homeSource,
+    /function focusAuthFieldWhenKeyboardSafe\(fieldId, delay = 60\) \{[\s\S]*?usesSoftKeyboardAuthLayout\(\)[\s\S]*?resetAuthViewport\(\)[\s\S]*?authCreateTab[\s\S]*?authSignInTab[\s\S]*?focus\(\{ preventScroll: true \}\)/,
+  );
+  assert.match(
+    homeSource,
+    /function setAuthEntryMode\(mode\) \{\s*blurFocusedAuthField\(\);[\s\S]*?authPage\.scrollTo\(\{ top: 0, behavior: "auto" \}\)/,
+  );
+  assert.match(
+    homeSource,
+    /function openAuthRole\(role = "customer"\)[\s\S]*?focusAuthFieldWhenKeyboardSafe\("customerEmail"\)/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /function openAuthRole\(role = "customer"\)[\s\S]*?setTimeout\(\(\) => document\.getElementById\("customerEmail"\)\?\.focus/,
+  );
 });

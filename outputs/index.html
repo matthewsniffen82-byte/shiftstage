@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <title>mydancr</title>
   <meta name="application-name" content="mydancr">
   <meta name="apple-mobile-web-app-title" content="mydancr">
@@ -38078,11 +38078,16 @@
            mobile login sheet should begin at the visible top of the viewport. */
         @media (max-width: 720px) {
           #authPage.show {
-            top: 0;
-            bottom: 0;
+            top: var(--dancr-auth-viewport-top, 0px);
+            bottom: auto;
             min-height: 0;
-            height: auto;
+            height: var(--dancr-auth-viewport-height, 100dvh);
+            max-height: var(--dancr-auth-viewport-height, 100dvh);
             overflow-y: auto;
+            overscroll-behavior-y: contain;
+            scroll-padding-top: max(80px, calc(68px + env(safe-area-inset-top, 0px)));
+            scroll-padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+            -webkit-overflow-scrolling: touch;
           }
 
           #authPage > .page-inner {
@@ -38093,6 +38098,18 @@
 
           #authPage .auth-choice-card {
             overflow: visible !important;
+          }
+
+          #authPage .auth-entry-tabs {
+            position: sticky;
+            top: max(66px, calc(56px + env(safe-area-inset-top, 0px)));
+            z-index: 4;
+          }
+
+          #authPage #authForm:not([hidden]) #authSubmit {
+            position: sticky;
+            bottom: max(10px, env(safe-area-inset-bottom, 0px));
+            z-index: 4;
           }
 
           #authPage > .page-inner::after {
@@ -50678,9 +50695,82 @@
 
     window.addEventListener("resize", syncProfileDestinationNavigation, { passive: true });
 
+    let authViewportFrame = 0;
+
+    function usesSoftKeyboardAuthLayout() {
+      return window.matchMedia("(max-width: 720px), (hover: none) and (pointer: coarse)").matches;
+    }
+
+    function blurFocusedAuthField() {
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLElement &&
+        authPage.contains(activeElement) &&
+        activeElement.matches("input, textarea, select")
+      ) {
+        activeElement.blur();
+      }
+    }
+
+    function syncAuthVisualViewport() {
+      if (!authPage.classList.contains("show")) return;
+      const viewport = window.visualViewport;
+      const viewportHeight = Math.max(1, Math.round(viewport?.height || window.innerHeight));
+      const viewportTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
+      authPage.style.setProperty("--dancr-auth-viewport-height", `${viewportHeight}px`);
+      authPage.style.setProperty("--dancr-auth-viewport-top", `${viewportTop}px`);
+
+      const activeElement = document.activeElement;
+      if (
+        usesSoftKeyboardAuthLayout() &&
+        activeElement instanceof HTMLElement &&
+        authPage.contains(activeElement) &&
+        activeElement.matches("input, textarea, select")
+      ) {
+        activeElement.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
+    }
+
+    function queueAuthVisualViewportSync() {
+      if (authViewportFrame) return;
+      authViewportFrame = window.requestAnimationFrame(() => {
+        authViewportFrame = 0;
+        syncAuthVisualViewport();
+      });
+    }
+
+    function resetAuthViewport() {
+      blurFocusedAuthField();
+      authPage.scrollTo({ top: 0, behavior: "auto" });
+      queueAuthVisualViewportSync();
+    }
+
+    function focusAuthFieldWhenKeyboardSafe(fieldId, delay = 60) {
+      window.setTimeout(() => {
+        if (!authPage.classList.contains("show")) return;
+        if (usesSoftKeyboardAuthLayout()) {
+          resetAuthViewport();
+          const activeTabId = authEntryMode === "create" ? "authCreateTab" : "authSignInTab";
+          document.getElementById(activeTabId)?.focus({ preventScroll: true });
+          return;
+        }
+        document.getElementById(fieldId)?.focus({ preventScroll: true });
+      }, delay);
+    }
+
+    window.visualViewport?.addEventListener("resize", queueAuthVisualViewportSync, { passive: true });
+    window.visualViewport?.addEventListener("scroll", queueAuthVisualViewportSync, { passive: true });
+    window.addEventListener("orientationchange", queueAuthVisualViewportSync, { passive: true });
+    authPage.addEventListener("focusin", (event) => {
+      if (!event.target.matches?.("input, textarea, select")) return;
+      window.setTimeout(queueAuthVisualViewportSync, 80);
+    });
+
     function openAuthPage() {
       authPage.classList.add("show");
       authPage.setAttribute("aria-hidden", "false");
+      authPage.scrollTo({ top: 0, behavior: "auto" });
+      queueAuthVisualViewportSync();
       syncOverlayScrollLock();
     }
 
@@ -50857,6 +50947,7 @@
     }
 
     function setAuthEntryMode(mode) {
+      blurFocusedAuthField();
       authEntryMode = mode === "create" ? "create" : "signin";
       const isCreate = authEntryMode === "create";
       const signInTab = document.getElementById("authSignInTab");
@@ -50879,10 +50970,13 @@
         setCustomerAuthMode("login");
         setCustomerAuthStatus("");
       }
+      authPage.scrollTo({ top: 0, behavior: "auto" });
+      queueAuthVisualViewportSync();
       syncOverlayScrollLock();
     }
 
     function openCustomerSignup() {
+      blurFocusedAuthField();
       authEntryMode = "create";
       document.getElementById("authSignInTab").classList.remove("active");
       document.getElementById("authCreateTab").classList.add("active");
@@ -50897,10 +50991,11 @@
       setCustomerAuthMode("signup");
       setCustomerAuthStatus("");
       syncOverlayScrollLock();
-      setTimeout(() => document.getElementById("customerEmail")?.focus({ preventScroll: true }), 60);
+      focusAuthFieldWhenKeyboardSafe("customerEmail");
     }
 
     function openVenueSignup() {
+      blurFocusedAuthField();
       authEntryMode = "create";
       closeRecoveryPopover(passwordRecoveryCard, false);
       closeRecoveryPopover(loginRecoveryCard, false);
@@ -50916,10 +51011,13 @@
       document.getElementById("venueLoginForm").hidden = false;
       document.getElementById("venueRequestForm").hidden = true;
       setVenueAuthMode("signup");
+      authPage.scrollTo({ top: 0, behavior: "auto" });
+      queueAuthVisualViewportSync();
       syncOverlayScrollLock();
     }
 
     function openVenueRequest() {
+      blurFocusedAuthField();
       authEntryMode = "create";
       closeRecoveryPopover(passwordRecoveryCard, false);
       closeRecoveryPopover(loginRecoveryCard, false);
@@ -50935,7 +51033,7 @@
       document.getElementById("venueLoginForm").hidden = true;
       document.getElementById("venueRequestForm").hidden = false;
       syncOverlayScrollLock();
-      setTimeout(() => document.getElementById("venueRequestName")?.focus({ preventScroll: true }), 60);
+      focusAuthFieldWhenKeyboardSafe("venueRequestName");
     }
 
     function openAuthRole(role = "customer") {
@@ -50948,10 +51046,11 @@
       if (isAdminSession()) {
         setCustomerAuthStatus("An admin session is active. Signing in here will safely switch to your public account.");
       }
-      setTimeout(() => document.getElementById("customerEmail")?.focus({ preventScroll: true }), 60);
+      focusAuthFieldWhenKeyboardSafe("customerEmail");
     }
 
     function closeAuthPage() {
+      blurFocusedAuthField();
       pendingVenueAuthReturnTo = "";
       pendingVenueAgentReferralCode = "";
       clearAuthFields("all");
@@ -50959,6 +51058,8 @@
       closeRecoveryPopover(loginRecoveryCard, false);
       authPage.classList.remove("show");
       authPage.setAttribute("aria-hidden", "true");
+      authPage.style.removeProperty("--dancr-auth-viewport-height");
+      authPage.style.removeProperty("--dancr-auth-viewport-top");
       syncOverlayScrollLock();
     }
 
@@ -61650,7 +61751,7 @@
         storePendingDancerDashboardLink(linkState);
         openAuthRole("dancer");
         showToast("Sign in to open your dancer dashboard and review changes.");
-        setTimeout(() => document.getElementById("customerEmail")?.focus(), 120);
+        focusAuthFieldWhenKeyboardSafe("customerEmail", 120);
       }
       return true;
     }
@@ -61714,10 +61815,10 @@
         openAuthPage();
         openVenueSignup();
         showToast("Enter the private access code from MyDancr to create your venue account.");
-        setTimeout(() => document.getElementById("venueSignupCode")?.focus(), 120);
+        focusAuthFieldWhenKeyboardSafe("venueSignupCode", 120);
       } else {
         openAuthRole("venue");
-        setTimeout(() => document.getElementById("customerEmail")?.focus(), 120);
+        focusAuthFieldWhenKeyboardSafe("customerEmail", 120);
       }
       return true;
     }

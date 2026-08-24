@@ -33,7 +33,10 @@ test("mobile discovery uses one consolidated Dancers destination beside TV and V
 });
 
 test("the Home TV button renders a larger mobile snap-scroll feed without leaving Home", () => {
-  assert.match(homeSource, /name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/);
+  assert.match(
+    homeSource,
+    /name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/,
+  );
   assert.match(
     homeSource,
     /#results\.home-tv-feed \{[\s\S]*?max-width: 720px[\s\S]*?display: grid[\s\S]*?overflow: visible[\s\S]*?scroll-snap-type: none[\s\S]*?\.home-tv-feed-slide \{[\s\S]*?height: clamp\(560px, calc\(100svh - 140px\), 760px\)[\s\S]*?border-radius: 18px/,
