@@ -68,17 +68,26 @@ test("customer and venue dashboards avoid double-bordered nested panels", () => 
   );
 });
 
-test("venue dashboard uses a tonight-first command inside its standalone workspace hierarchy", () => {
+test("venue dashboard uses one state-aware three-destination workspace", () => {
   const venuePanel = routedDashboards.match(/function VenuePanel[\s\S]*?function VenueClubDealPanel/)?.[0] || "";
   const commandIndex = venuePanel.indexOf('className="venue-command-panel"');
-  const shortcutsIndex = venuePanel.indexOf('className="venue-dashboard-shortcuts"');
+  const tabsIndex = venuePanel.indexOf('className="venue-workspace-tabs"');
+  const tonightIndex = venuePanel.indexOf('id="venue-workspace-tonight"');
   const metricsIndex = venuePanel.indexOf('className="venue-dashboard-metrics venue-tonight-metrics"');
   const managementIndex = venuePanel.indexOf("<DashboardSection");
 
   assert.ok(commandIndex >= 0);
-  assert.ok(shortcutsIndex > commandIndex);
-  assert.ok(metricsIndex > shortcutsIndex);
+  assert.ok(tabsIndex > commandIndex);
+  assert.ok(tonightIndex > tabsIndex);
+  assert.ok(metricsIndex > tonightIndex);
   assert.ok(managementIndex > metricsIndex);
+  assert.match(venuePanel, /\["tonight", "Tonight"[\s\S]*?\["venue", "Venue page"[\s\S]*?\["business", "Business"/);
+  assert.match(venuePanel, /role="tablist"[\s\S]*?aria-selected=\{activeWorkspace === workspace\}/);
+  assert.match(venuePanel, /initialVenueWorkspace\(profile\?\.isActive === true\)/);
+  assert.match(routedDashboards, /return isPublished \? "tonight" : "venue";/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?id="venue-working-now"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?id="venue-public-profile"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?id="venue-overview"/);
   assert.match(venuePanel, /className=\{`primary-link venue-working-now-link\$\{workingNow\.length \? " is-live" : ""\}`\} href="#venue-working-now"[\s\S]*?Open working-now roster/);
   assert.match(
     routedDashboards,
@@ -86,8 +95,9 @@ test("venue dashboard uses a tonight-first command inside its standalone workspa
   );
   assert.match(venuePanel, /function openVenueSection[\s\S]*?section\.open = true[\s\S]*?scrollIntoView/);
   assert.doesNotMatch(venuePanel, /<DashboardSection\s+defaultOpen[\s\S]*?id="venue-overview"/);
-  assert.match(routedDashboards, /\.venue-dashboard-shortcuts \{ display: grid; grid-template-columns: repeat\(4/);
-  assert.match(routedDashboards, /@media \(max-width: 860px\) \{ \.venue-dashboard-shortcuts \{ grid-template-columns: repeat\(2/);
+  assert.match(routedDashboards, /\.venue-workspace-tabs \{ position: sticky;[\s\S]*?grid-template-columns: repeat\(3/);
+  assert.match(routedDashboards, /\.venue-workspace-tabs button\.active \{[^}]*?linear-gradient/);
+  assert.match(routedDashboards, /\.venue-workspace-summary\[hidden\][\s\S]*?\.venue-dashboard-section\[hidden\] \{ display: none !important; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \{ display: grid; grid-template-columns: repeat\(3/);
   assert.match(routedDashboards, /\.venue-tonight-metrics \{ grid-template-columns: repeat\(4/);
   assert.match(
@@ -99,8 +109,8 @@ test("venue dashboard uses a tonight-first command inside its standalone workspa
   assert.match(liveApp, /#dancerDashboard \.dancer-live-heading strong \{[\s\S]*?font-size: 20px;/);
   assert.match(routedDashboards, /\.venue-command-status h2 \{[^}]*?font-size: 20px;/);
   assert.match(routedDashboards, /\.venue-command-status p, \.venue-command-primary p \{[^}]*?font-size: 12px;/);
-  assert.match(routedDashboards, /\.venue-dashboard-shortcuts svg \{[^}]*?width: 21px; height: 21px;/);
-  assert.match(routedDashboards, /\.venue-dashboard-shortcuts small \{[^}]*?font-size: 10px;/);
+  assert.match(routedDashboards, /\.venue-workspace-tabs strong \{[^}]*?font-size: 14px;/);
+  assert.match(routedDashboards, /\.venue-workspace-tabs small \{[^}]*?font-size: 9px;/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \.metric strong \{ font-size: 22px; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
   assert.doesNotMatch(routedDashboards, /venue-deal-builder-progress/);
@@ -129,10 +139,7 @@ test("venue dashboard uses a tonight-first command inside its standalone workspa
     routedDashboards,
     /\.dashboard-shell-venue \.venue-deal-panel,[\s\S]*?\.dashboard-shell-venue \.venue-verification-panel \{ border-color: var\(--mydancr-dashboard-border\); background: var\(--mydancr-dashboard-panel-raised\); \}/,
   );
-  assert.match(
-    routedDashboards,
-    /\.dashboard-shell-venue \.venue-dashboard-shortcuts > a\.is-live \{[^}]*?rgba\(16,185,129,\.46\)[^}]*?#10b981/,
-  );
+  assert.doesNotMatch(routedDashboards, /venue-dashboard-shortcuts/);
   assert.match(
     routedDashboards,
     /\.dashboard-shell-venue \.venue-deal-form-actions \.primary \{[^}]*?linear-gradient\(135deg, #8b20ef, #6d19d6\)/,

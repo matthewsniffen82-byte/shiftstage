@@ -73,14 +73,26 @@ test("venue operations prioritize tonight, Club Deals, NFC stickers, and then re
   assert.ok(venuePanel.indexOf("Tonight") < venuePanel.indexOf("Analytics & performance"));
 });
 
+test("venue owners navigate one simplified state-aware workspace without losing any controls", () => {
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Tonight"[\s\S]*?\["venue", "Venue page"[\s\S]*?\["business", "Business"/);
+  assert.match(venuePanel, /function moveVenueWorkspaceFocus[\s\S]*?"ArrowLeft"[\s\S]*?"ArrowRight"[\s\S]*?"Home"[\s\S]*?"End"/);
+  assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
+  assert.match(dashboard, /function venueWorkspaceForSection[\s\S]*?"venue-working-now"[\s\S]*?"venue-public-profile"[\s\S]*?"venue-overview"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?title="Working now"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="Public venue profile"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?title="Analytics & performance"/);
+  assert.match(venuePanel, /title="Account & support"/);
+  assert.doesNotMatch(venuePanel, /venue-dashboard-shortcuts/);
+});
+
 test("working-now actions are neutral when empty and emerald only for a live roster", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
   assert.match(venuePanel, /venue-working-now-link\$\{workingNow\.length \? " is-live" : ""\}/);
-  assert.match(venuePanel, /className=\{workingNow\.length \? "is-live" : undefined\}/);
   assert.match(venuePanel, /Open working-now roster/);
   assert.match(venuePanel, /View \$\{workingNow\.length\} working now/);
   assert.match(dashboard, /\.venue-command-primary \.venue-working-now-link\.is-live \{[^}]*rgba\(16,185,129/);
-  assert.match(dashboard, /\.venue-dashboard-shortcuts > a\.is-live \{[^}]*#10b981/);
+  assert.doesNotMatch(dashboard, /venue-dashboard-shortcuts/);
   assert.doesNotMatch(venuePanel, /className="is-primary"/);
 });
 
