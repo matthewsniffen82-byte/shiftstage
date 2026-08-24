@@ -65,50 +65,61 @@ test("notification and signed-in account actions share one neutral glass circle"
     /header \.customer-quick-btn,[\s\S]*?header #accountBtn\.account-icon-btn \{[\s\S]*?\n      }/,
   )?.[0] || "";
 
-  assert.match(sharedControls, /width: 48px !important;/);
-  assert.match(sharedControls, /height: 48px !important;/);
-  assert.match(sharedControls, /border: 1px solid rgba\(255, 255, 255, 0\.14\) !important;/);
-  assert.match(sharedControls, /color: rgba\(255, 255, 255, 0\.82\) !important;/);
+  assert.match(sharedControls, /width: 44px !important;/);
+  assert.match(sharedControls, /height: 44px !important;/);
+  assert.match(sharedControls, /border: 1px solid rgba\(255, 255, 255, 0\.1\) !important;/);
+  assert.match(sharedControls, /color: rgba\(255, 255, 255, 0\.74\) !important;/);
   assert.match(sharedControls, /blur\(14px\) saturate\(1\.06\) !important;/);
-  assert.match(sharedControls, /box-shadow:\s*inset 0 1px 0 rgba\(255, 255, 255, 0\.055\) !important;/);
+  assert.match(sharedControls, /inset 0 1px 0 rgba\(255, 255, 255, 0\.04\),\s*0 6px 18px rgba\(0, 0, 0, 0\.16\) !important;/);
   assert.doesNotMatch(sharedControls, /#22C7FF|#EC4899|rgba\(236, 72, 153/);
   assert.match(mobileHeader, /header \.topbar \{[\s\S]*?height: 58px !important;[\s\S]*?padding: 4px 6px !important;/);
-});
-
-test("open utility controls use restrained violet while the unread state stays distinct", () => {
   assert.match(
     mobileHeader,
-    /header \.customer-quick-btn:hover,[\s\S]*?header #accountBtn\.account-icon-btn\.active \{[\s\S]*?color: #fff !important;[\s\S]*?border-color: rgba\(139, 92, 246, 0\.46\) !important;[\s\S]*?rgba\(13, 12, 18, 0\.94\) !important;[\s\S]*?0 0 14px rgba\(124, 58, 237, 0\.1\) !important;[\s\S]*?transform: none !important;/,
+    /header \.customer-quick-btn \.action-icon,[\s\S]*?header #accountBtn\.account-icon-btn \.account-icon \{[\s\S]*?width: 19px !important;[\s\S]*?height: 19px !important;[\s\S]*?stroke-width: 2 !important;/,
+  );
+});
+
+test("hover remains neutral while every open role action uses restrained violet", () => {
+  assert.match(
+    mobileHeader,
+    /header \.customer-quick-btn:hover,[\s\S]*?header #accountBtn\.account-icon-btn:focus-visible \{[\s\S]*?border-color: rgba\(255, 255, 255, 0\.2\) !important;[\s\S]*?rgba\(12, 12, 18, 0\.82\) !important;[\s\S]*?0 8px 20px rgba\(0, 0, 0, 0\.2\) !important;/,
+  );
+  assert.match(
+    mobileHeader,
+    /header \.customer-quick-btn\.active,[\s\S]*?header \.customer-quick-btn\.is-open,[\s\S]*?header #accountBtn\.account-icon-btn\.active \{[\s\S]*?border-color: rgba\(139, 92, 246, 0\.5\) !important;[\s\S]*?rgba\(43, 26, 74, 0\.58\) !important;[\s\S]*?0 0 12px rgba\(124, 58, 237, 0\.12\) !important;/,
   );
   assert.doesNotMatch(
     mobileHeader,
     /header \.customer-quick-btn:hover,[\s\S]{0,900}radial-gradient|header #accountBtn\.account-icon-btn\.active \{[\s\S]{0,500}inset 0 0 15px/,
   );
-  assert.match(
-    mobileHeader,
-    /header \.customer-quick-count \{[\s\S]*?background: #6d28d9 !important;[\s\S]*?0 0 12px rgba\(109, 40, 217, 0\.48\)/,
-  );
   assert.match(homeSource, /customerNotificationQuickBtn\.addEventListener\("click"/);
   assert.match(homeSource, /accountBtn\.addEventListener\("click"/);
 });
 
-test("the unread badge floats clearly outside the bell without clipping", () => {
+test("the unread state is a compact dot with an accessible count", () => {
   const unreadBadge = mobileHeader.match(
     /header \.customer-quick-count \{[\s\S]*?\n      \}/,
   )?.[0] || "";
 
-  assert.ok(unreadBadge, "the mobile notification badge override must exist");
-  assert.match(unreadBadge, /top: -2px !important;/);
-  assert.match(unreadBadge, /right: -2px !important;/);
+  assert.ok(unreadBadge, "the mobile notification dot override must exist");
+  assert.match(unreadBadge, /top: 1px !important;/);
+  assert.match(unreadBadge, /right: 1px !important;/);
   assert.match(unreadBadge, /left: auto !important;/);
-  assert.match(unreadBadge, /width: 16px !important;/);
-  assert.match(unreadBadge, /max-width: 16px !important;/);
-  assert.match(unreadBadge, /height: 16px !important;/);
+  assert.match(unreadBadge, /width: 9px !important;/);
+  assert.match(unreadBadge, /max-width: 9px !important;/);
+  assert.match(unreadBadge, /height: 9px !important;/);
   assert.match(unreadBadge, /padding: 0 !important;/);
+  assert.match(unreadBadge, /font-size: 0 !important;/);
+  assert.match(unreadBadge, /background: #8b5cf6 !important;/);
+  assert.doesNotMatch(unreadBadge, /0 0 12px/);
   assert.match(unreadBadge, /transform: none !important;/);
   assert.match(
     mobileHeader,
     /header \.customer-quick-btn \{\s*overflow: visible !important;\s*clip-path: none !important;\s*\}/,
+  );
+  assert.match(
+    homeSource,
+    /count > 0 \? `Open notifications, \$\{count\} unread` : "Open notifications"/,
   );
 });
 

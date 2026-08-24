@@ -31167,30 +31167,31 @@
 
       header .menu {
         margin-left: auto !important;
-        gap: 8px !important;
+        gap: 7px !important;
       }
 
       header .customer-quick-actions {
-        gap: 8px !important;
+        gap: 7px !important;
       }
 
       header .customer-quick-btn,
       header #accountBtn.account-icon-btn {
-        width: 48px !important;
-        min-width: 48px !important;
-        max-width: 48px !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        max-height: 48px !important;
+        width: 44px !important;
+        min-width: 44px !important;
+        max-width: 44px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
         padding: 0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 999px !important;
-        color: rgba(255, 255, 255, 0.82) !important;
+        color: rgba(255, 255, 255, 0.74) !important;
         background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
-          rgba(12, 12, 17, 0.84) !important;
+          linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.012)),
+          rgba(10, 10, 15, 0.72) !important;
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+          inset 0 1px 0 rgba(255, 255, 255, 0.04),
+          0 6px 18px rgba(0, 0, 0, 0.16) !important;
         -webkit-backdrop-filter: blur(14px) saturate(1.06) !important;
         backdrop-filter: blur(14px) saturate(1.06) !important;
         clip-path: inset(0 round 999px) !important;
@@ -31204,44 +31205,61 @@
 
       header .customer-quick-btn .action-icon,
       header #accountBtn.account-icon-btn .account-icon {
-        width: 21px !important;
-        height: 21px !important;
+        width: 19px !important;
+        height: 19px !important;
         stroke: currentColor !important;
+        stroke-width: 2 !important;
         filter: none !important;
       }
 
       header .customer-quick-btn:hover,
       header .customer-quick-btn:focus-visible,
-      header .customer-quick-btn.active,
       header #accountBtn.account-icon-btn:hover,
-      header #accountBtn.account-icon-btn:focus-visible,
+      header #accountBtn.account-icon-btn:focus-visible {
+        color: rgba(255, 255, 255, 0.96) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.016)),
+          rgba(12, 12, 18, 0.82) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          0 8px 20px rgba(0, 0, 0, 0.2) !important;
+        transform: none !important;
+      }
+
+      header .customer-quick-btn.active,
+      header .customer-quick-btn.is-open,
       header #accountBtn.account-icon-btn.active {
         color: #fff !important;
-        border-color: rgba(139, 92, 246, 0.46) !important;
+        border-color: rgba(139, 92, 246, 0.5) !important;
         background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
-          rgba(13, 12, 18, 0.94) !important;
+          linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.016)),
+          rgba(43, 26, 74, 0.58) !important;
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.06),
-          0 0 14px rgba(124, 58, 237, 0.1) !important;
+          inset 0 1px 0 rgba(255, 255, 255, 0.055),
+          0 0 12px rgba(124, 58, 237, 0.12) !important;
         transform: none !important;
       }
 
       header .customer-quick-count {
-        top: -2px !important;
-        right: -2px !important;
+        top: 1px !important;
+        right: 1px !important;
         left: auto !important;
-        width: 16px !important;
-        min-width: 16px !important;
-        max-width: 16px !important;
-        height: 16px !important;
+        width: 9px !important;
+        min-width: 9px !important;
+        max-width: 9px !important;
+        height: 9px !important;
+        min-height: 9px !important;
+        max-height: 9px !important;
         padding: 0 !important;
         transform: none !important;
         box-sizing: border-box !important;
-        border: 1px solid rgba(255, 255, 255, 0.22) !important;
-        color: #fff !important;
-        background: #6d28d9 !important;
-        box-shadow: 0 0 12px rgba(109, 40, 217, 0.48) !important;
+        border: 1.5px solid rgba(7, 7, 11, 0.96) !important;
+        color: transparent !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+        background: #8b5cf6 !important;
+        box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.22) !important;
       }
 
       header #accountBtn:not(.account-icon-btn) {
@@ -42698,6 +42716,7 @@
 
     function renderCustomerQuickNotifications() {
       if (!customerNotificationsQuickList) return;
+      customerNotificationQuickBtn?.setAttribute("aria-label", "Open notifications");
       if (liveNotificationsState === "loading") {
         customerNotificationQuickCount.hidden = true;
         customerNotificationsQuickList.innerHTML = '<div class="customer-quick-empty" role="status">Loading notifications…</div>';
@@ -42713,6 +42732,10 @@
       const count = unreadCount;
       customerNotificationQuickCount.hidden = count <= 0;
       customerNotificationQuickCount.textContent = String(Math.min(count, 9));
+      customerNotificationQuickBtn?.setAttribute(
+        "aria-label",
+        count > 0 ? `Open notifications, ${count} unread` : "Open notifications"
+      );
       customerNotificationsQuickList.innerHTML = items.length
         ? items.map((item) => `
             <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""} ${Number.isFinite(item.index) ? `data-notification-index="${item.index}"` : ""}>
