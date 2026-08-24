@@ -4,6 +4,23 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
+test("venues with missing coordinates remain visible in the selected city", () => {
+  const coordinateSource = homeSource.match(
+    /function liveVenueCoordinate\(value, minimum, maximum\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  assert.ok(coordinateSource, "the live venue coordinate normalizer must exist");
+  const normalizeCoordinate = new Function(`${coordinateSource}; return liveVenueCoordinate;`)();
+
+  assert.equal(normalizeCoordinate(null, -90, 90), null);
+  assert.equal(normalizeCoordinate("", -180, 180), null);
+  assert.equal(normalizeCoordinate("36.1397", -90, 90), 36.1397);
+  assert.equal(normalizeCoordinate("not-a-coordinate", -90, 90), null);
+  assert.equal(normalizeCoordinate(181, -180, 180), null);
+  assert.match(homeSource, /latitude: liveVenueCoordinate\(item\.latitude, -90, 90\)/);
+  assert.match(homeSource, /longitude: liveVenueCoordinate\(item\.longitude, -180, 180\)/);
+  assert.match(homeSource, /function venueWithinSelectedRadius\(venue\) \{[\s\S]*?return miles === null \|\| miles <= selectedRadiusMiles\(\);/);
+});
+
 test("venue discovery uses inline one-column cards with visible continuation", () => {
   assert.match(
     homeSource,

@@ -43527,6 +43527,14 @@
       return merged;
     }
 
+    function liveVenueCoordinate(value, minimum, maximum) {
+      if (value === null || value === undefined || String(value).trim() === "") return null;
+      const coordinate = Number(value);
+      return Number.isFinite(coordinate) && coordinate >= minimum && coordinate <= maximum
+        ? coordinate
+        : null;
+    }
+
     function mapLiveVenue(item, city, venueShiftCounts) {
       return {
         id: item.id,
@@ -43540,8 +43548,8 @@
         hours: item.hoursLabel || "",
         shifts: venueShiftCounts[item.name] || 0,
         distance: "",
-        latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : null,
-        longitude: Number.isFinite(Number(item.longitude)) ? Number(item.longitude) : null,
+        latitude: liveVenueCoordinate(item.latitude, -90, 90),
+        longitude: liveVenueCoordinate(item.longitude, -180, 180),
         coverImageUrl: item.coverImageUrl || "",
         coverImageSrcSet: item.coverImageSrcSet || "",
         coverImageWidth: item.coverImageWidth || null,
