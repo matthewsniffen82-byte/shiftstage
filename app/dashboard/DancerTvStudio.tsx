@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
-import { currentDashboardAuthHeaders } from "./dashboard-session";
+import {
+  readDashboardAccessToken,
+  requestDancerTvVideoJson,
+  requestDancerTvVideosJson,
+} from "./dashboard-session";
 const MAX_VIDEO_DURATION_SECONDS = 30;
 
 type Workspace = {
@@ -72,20 +76,17 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   }, []);
 
   async function loadWorkspace() {
-    const auth = currentDashboardAuthHeaders("dancer");
-    if (!auth) {
+    if (!readDashboardAccessToken("dancer")) {
       setStatus("Sign in as a dancer to manage MyDancr TV.");
       setIsLoading(false);
       return;
     }
     setIsLoading(true);
     try {
-      const response = await fetch("/api/dancer/tv/videos", {
-        headers: auth,
+      const data = await requestDancerTvVideosJson({
         cache: "no-store",
+        fallbackMessage: "Unable to load MyDancr TV Studio.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load MyDancr TV Studio.");
       setWorkspace(data);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load MyDancr TV Studio.");
@@ -154,8 +155,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   }
 
   async function uploadVideoBatch(batch: QueuedVideo[]) {
-    const auth = currentDashboardAuthHeaders("dancer");
-    if (!auth) return setStatus("Sign in as a dancer to upload.");
+    if (!readDashboardAccessToken("dancer")) return setStatus("Sign in as a dancer to upload.");
     if (atVideoLimit) return setStatus(`You can upload up to ${maxVideos} profile videos. Remove one before adding another.`);
     if (!batch.length) return setStatus("Choose up to five MP4, WebM, or MOV videos, or record a new video first.");
     if (!consentConfirmed || !rightsConfirmed) {
@@ -175,9 +175,9 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         try {
           const metadata = await readVideoMetadata(item.file);
           updateQueuedVideo(item.id, { stage: "uploading", progress: 30 });
-          const response = await fetch("/api/dancer/tv/videos", {
+          const data = await requestDancerTvVideosJson({
             method: "POST",
-            headers: { ...auth, "content-type": "application/json" },
+            headers: { "content-type": "application/json" },
             body: JSON.stringify({
               mimeType: item.file.type,
               fileSize: item.file.size,
@@ -187,9 +187,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               consentConfirmed,
               rightsConfirmed,
             }),
+            fallbackMessage: "Unable to prepare upload.",
           });
-          const data = await response.json();
-          if (!response.ok || !data.ok) throw new Error(data.error || "Unable to prepare upload.");
           preparedVideoId = String(data.upload.videoId || "");
 
           setStatus(`Uploading video ${index + 1} of ${batch.length} securely...`);
@@ -204,22 +203,20 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
           updateQueuedVideo(item.id, { stage: "checking", progress: 85 });
           setStatus(`Running safety review for video ${index + 1} of ${batch.length}...`);
-          const submitResponse = await fetch(`/api/dancer/tv/videos/${preparedVideoId}`, {
+          const submitted = await requestDancerTvVideoJson(preparedVideoId, {
             method: "PATCH",
-            headers: { ...auth, "content-type": "application/json" },
+            headers: { "content-type": "application/json" },
             body: JSON.stringify({ action: "submit" }),
+            fallbackMessage: "Unable to submit video for review.",
           });
-          const submitted = await submitResponse.json();
-          if (!submitResponse.ok || !submitted.ok) throw new Error(submitted.error || "Unable to submit video for review.");
 
           submittedCount += 1;
           queuedPreviewUrlsRef.current.delete(item.previewUrl);
           URL.revokeObjectURL(item.previewUrl);
         } catch (error) {
           if (preparedVideoId) {
-            await fetch(`/api/dancer/tv/videos/${preparedVideoId}`, {
+            await requestDancerTvVideoJson(preparedVideoId, {
               method: "DELETE",
-              headers: auth,
             }).catch(() => undefined);
           }
           failedItems.push({
@@ -251,17 +248,14 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
   async function removeVideo(videoId: string) {
     if (!window.confirm("Remove this video from MyDancr TV?")) return;
-    const auth = currentDashboardAuthHeaders("dancer");
-    if (!auth) return setStatus("Sign in required.");
+    if (!readDashboardAccessToken("dancer")) return setStatus("Sign in required.");
     setRemovingId(videoId);
     setStatus("");
     try {
-      const response = await fetch(`/api/dancer/tv/videos/${videoId}`, {
+      const data = await requestDancerTvVideoJson(videoId, {
         method: "DELETE",
-        headers: auth,
+        fallbackMessage: "Unable to remove video.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove video.");
       setWorkspace((current) => current
         ? {
           ...current,

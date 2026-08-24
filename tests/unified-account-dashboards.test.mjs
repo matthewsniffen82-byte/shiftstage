@@ -16,6 +16,8 @@ import {
   requestDancerProfileVisibilityJson,
   requestDancerShiftCheckInJson,
   requestDancerShiftsJson,
+  requestDancerTvVideoJson,
+  requestDancerTvVideosJson,
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestVenueDancerVerificationsJson,
@@ -740,8 +742,117 @@ test("dancer avatar uploads and removals use the refresh-aware dancer boundary",
   assert.doesNotMatch(avatarPanel, /authorization: `Bearer/);
 });
 
+test("MyDancr TV lifecycle requests use the refresh-aware dancer boundary", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    return new Response(JSON.stringify({
+      ok: true,
+      upload: { videoId: "video id/with spaces" },
+      session: { accessToken: "rotated-dancer-access", expiresAt: 99999 },
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "dancer-access",
+      refreshToken: "dancer-refresh",
+      account: { role: "dancer" },
+    }));
+    await requestDancerTvVideosJson({ cache: "no-store" });
+    await requestDancerTvVideosJson({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mimeType: "video/mp4" }),
+      fallbackMessage: "Unable to prepare upload.",
+    });
+    await requestDancerTvVideoJson("video id/with spaces", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "submit" }),
+    });
+    await requestDancerTvVideoJson("video id/with spaces", { method: "DELETE" });
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/dancer/tv/videos",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/dancer/tv/videos",
+        options: {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: JSON.stringify({ mimeType: "video/mp4" }),
+        },
+      },
+      {
+        path: "/api/dancer/tv/videos/video%20id%2Fwith%20spaces",
+        options: {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer rotated-dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+          body: JSON.stringify({ action: "submit" }),
+        },
+      },
+      {
+        path: "/api/dancer/tv/videos/video%20id%2Fwith%20spaces",
+        options: {
+          method: "DELETE",
+          headers: {
+            authorization: "Bearer rotated-dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+        },
+      },
+    ]);
+    assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
+      accessToken: "rotated-dancer-access",
+      refreshToken: "dancer-refresh",
+      expiresAt: 99999,
+      account: { role: "dancer" },
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestDancerTvVideosJson/);
+  assert.match(dashboardSession, /function requestDancerTvVideoJson/);
+  assert.match(dancerTvStudio, /requestDancerTvVideosJson/);
+  assert.match(dancerTvStudio, /requestDancerTvVideoJson/);
+  assert.doesNotMatch(dancerTvStudio, /fetch\(/);
+  assert.doesNotMatch(dancerTvStudio, /currentDashboardAuthHeaders/);
+});
+
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
-  assert.match(dancerTvStudio, /currentDashboardAuthHeaders\("dancer"\)/);
+  assert.match(dancerTvStudio, /requestDancerTvVideosJson/);
   assert.match(dancerNfcPanel, /requestDancerVenueVerificationJson/);
   assert.match(dancerShiftManager, /requestDancerShiftsJson/);
   for (const panel of [dancerTvStudio, dancerNfcPanel, dancerShiftManager]) {

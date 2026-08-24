@@ -213,6 +213,22 @@ export function requestDancerShiftCheckInJson(options: DashboardJsonRequestOptio
   });
 }
 
+export function requestDancerTvVideosJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/tv/videos", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update MyDancr TV videos.",
+  });
+}
+
+export function requestDancerTvVideoJson(videoId: string, options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson(`/api/dancer/tv/videos/${encodeURIComponent(videoId)}`, {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update MyDancr TV video.",
+  });
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();
