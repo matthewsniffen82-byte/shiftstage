@@ -33,7 +33,9 @@ import {
   requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
+  requestDancerVenueVerificationJson,
   requestDashboardJson,
+  requestVenueDancerVerificationsJson,
   storedSessionAccount,
   storedSessionIsFresh,
   type DashboardSessionAccount,
@@ -5123,7 +5125,7 @@ function DancerVenueVerificationPanel() {
   const [isSaving, setIsSaving] = useState(false);
   const [dancerCity, setDancerCity] = useState("your city");
   const [onboardingRequired, setOnboardingRequired] = useState(false);
-  const loadInFlightRef = useRef<Promise<void> | null>(null);
+  const loadInFlightRef = useRef<Promise<Record<string, any> | null> | null>(null);
 
   const load = useCallback(({ quiet = false }: { quiet?: boolean } = {}) => {
     if (loadInFlightRef.current) return loadInFlightRef.current;
@@ -5139,12 +5141,12 @@ function DancerVenueVerificationPanel() {
       if (!quiet) setIsLoading(true);
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
-      let response: Response;
+      let data: Record<string, any>;
       try {
-        response = await fetch("/api/dancer/venue-verification", {
-          headers: { authorization: `Bearer ${session.accessToken}` },
+        data = await requestDancerVenueVerificationJson({
           cache: "no-store",
           signal: controller.signal,
+          fallbackMessage: "Unable to load venue verification.",
         });
       } catch (error) {
         if ((error as DOMException)?.name === "AbortError") {
@@ -5154,8 +5156,6 @@ function DancerVenueVerificationPanel() {
       } finally {
         window.clearTimeout(timeoutId);
       }
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load venue verification.");
       const availableVenues = Array.isArray(data.venues) ? data.venues : [];
       const savedDancerCity = String(data.dancer?.city || "your city");
       const readyVenues = availableVenues.filter((venue: Record<string, unknown>) => venue.managerReady === true);
@@ -5200,9 +5200,9 @@ function DancerVenueVerificationPanel() {
       ? "Refreshing your private verification QR..."
       : "Creating your private 10-minute QR...");
     try {
-      const response = await fetch("/api/dancer/venue-verification", {
+      const data = await requestDancerVenueVerificationJson({
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(currentVerification
           ? {
               venueId: targetVenueId,
@@ -5210,9 +5210,8 @@ function DancerVenueVerificationPanel() {
               rotationToken: currentVerification.rotationToken,
             }
           : { venueId: targetVenueId }),
+        fallbackMessage: "Unable to create verification QR.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to create verification QR.");
       setVerification(data.verification);
       setStatus(data.message || "Show this QR to the verified venue manager.");
     } catch (error) {
@@ -5287,13 +5286,12 @@ function DancerVenueVerificationPanel() {
     setIsSaving(true);
     setStatus("Removing venue verification...");
     try {
-      const response = await fetch("/api/dancer/venue-verification", {
+      const data = await requestDancerVenueVerificationJson({
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ affiliationId }),
+        fallbackMessage: "Unable to remove venue verification.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove venue verification.");
       setVerification(null);
       await load();
       setStatus(data.message || "Venue verification removed.");
@@ -5399,13 +5397,10 @@ function VenueDancerVerificationPanel({
       setStatus("Sign in to the verified venue account to approve dancers.");
       return;
     }
-    const query = verificationToken ? `?token=${encodeURIComponent(verificationToken)}` : "";
-    const response = await fetch(`/api/venue/dancer-verifications${query}`, {
-      headers: { authorization: `Bearer ${session.accessToken}` },
+    const data = await requestVenueDancerVerificationsJson(verificationToken, {
       cache: "no-store",
+      fallbackMessage: "Unable to load dancer verification.",
     });
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dancer verification.");
     setAffiliations(data.affiliations || []);
     setVerification(data.verification || null);
     setStatus(data.verification
@@ -5541,13 +5536,12 @@ function VenueDancerVerificationPanel({
     setIsSaving(true);
     setStatus("Approving dancer affiliation...");
     try {
-      const response = await fetch("/api/venue/dancer-verifications", {
+      const data = await requestVenueDancerVerificationsJson("", {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ token }),
+        fallbackMessage: "Unable to approve dancer verification.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to approve dancer verification.");
       clearVenueVerificationQuery();
       setToken("");
       setVerification(null);
@@ -5566,13 +5560,12 @@ function VenueDancerVerificationPanel({
     setIsSaving(true);
     setStatus("Removing dancer verification...");
     try {
-      const response = await fetch("/api/venue/dancer-verifications", {
+      const data = await requestVenueDancerVerificationsJson("", {
         method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ affiliationId, reason: "Venue manager removed affiliation." }),
+        fallbackMessage: "Unable to remove dancer verification.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove dancer verification.");
       await load();
       setStatus(data.message || "Dancer verification removed.");
     } catch (error) {

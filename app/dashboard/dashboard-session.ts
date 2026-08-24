@@ -161,6 +161,26 @@ export function requestDancerFinanceJson(options: DashboardJsonRequestOptions = 
   });
 }
 
+export function requestDancerVenueVerificationJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/venue-verification", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to update venue verification.",
+  });
+}
+
+export function requestVenueDancerVerificationsJson(
+  verificationToken = "",
+  options: DashboardJsonRequestOptions = {},
+) {
+  const query = verificationToken ? `?token=${encodeURIComponent(verificationToken)}` : "";
+  return requestDashboardJson(`/api/venue/dancer-verifications${query}`, {
+    ...options,
+    expectedRole: "venue",
+    fallbackMessage: options.fallbackMessage || "Unable to update dancer verification.",
+  });
+}
+
 export async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers, cache: "no-store" });
   const data = await response.json();

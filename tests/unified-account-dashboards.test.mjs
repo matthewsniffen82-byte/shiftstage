@@ -12,7 +12,9 @@ import {
   requestDancerFinanceJson,
   requestDancerProfileJson,
   requestDancerProfileVisibilityJson,
+  requestDancerVenueVerificationJson,
   requestDashboardJson,
+  requestVenueDancerVerificationsJson,
 } from "../app/dashboard/dashboard-session.ts";
 
 const [dashboard, dashboardSession, venueTvPanel, venueTeamPanel, venueNfcPanel, dancerTvStudio, dancerNfcPanel, dancerShiftManager, customerRoute, dancerRoute, venueRoute, liveShell] = await Promise.all([
@@ -381,6 +383,81 @@ test("dancer payout actions use the refresh-aware role boundary", async () => {
 
   assert.match(dashboardSession, /function requestDancerFinanceJson/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/finance"/);
+});
+
+test("dancer and venue affiliation actions share role-aware refresh boundaries", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const capturedRequests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequests.push({ path, options });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "dancer-access",
+      refreshToken: "dancer-refresh",
+      account: { role: "dancer" },
+    }));
+    await requestDancerVenueVerificationJson({ cache: "no-store" });
+
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "venue-access",
+      refreshToken: "venue-refresh",
+      account: { role: "venue" },
+    }));
+    await requestVenueDancerVerificationsJson("private token", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ affiliationId: "affiliation-id" }),
+    });
+
+    assert.deepEqual(capturedRequests, [
+      {
+        path: "/api/dancer/venue-verification",
+        options: {
+          cache: "no-store",
+          headers: {
+            authorization: "Bearer dancer-access",
+            "x-dancr-refresh-token": "dancer-refresh",
+          },
+        },
+      },
+      {
+        path: "/api/venue/dancer-verifications?token=private%20token",
+        options: {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer venue-access",
+            "x-dancr-refresh-token": "venue-refresh",
+          },
+          body: JSON.stringify({ affiliationId: "affiliation-id" }),
+        },
+      },
+    ]);
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  assert.match(dashboardSession, /function requestDancerVenueVerificationJson/);
+  assert.match(dashboardSession, /function requestVenueDancerVerificationsJson/);
+  assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/venue-verification"/);
+  assert.doesNotMatch(dashboard, /fetch\(`\/api\/venue\/dancer-verifications/);
+  assert.doesNotMatch(dashboard, /fetch\("\/api\/venue\/dancer-verifications"/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {
