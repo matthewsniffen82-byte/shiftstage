@@ -166,6 +166,9 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
     return `${baseUrl}/`;
   }
   if (row.notification_type !== "approval_status") return "";
+  if (payload.event === "venue_page_review" || payload.event === "venue_page_published") {
+    return `${baseUrl}/dashboard/venue`;
+  }
 
   const params = new URLSearchParams({
     dancr_dashboard: "dancer",

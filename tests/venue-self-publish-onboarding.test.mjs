@@ -18,6 +18,7 @@ const [
   publicService,
   dashboard,
   signupService,
+  notificationDelivery,
   documentation,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
@@ -35,6 +36,7 @@ const [
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-signup-requests.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/notification-delivery.ts", import.meta.url), "utf8"),
   readFile(new URL("../docs/venue-onboarding.md", import.meta.url), "utf8"),
 ]);
 
@@ -120,6 +122,8 @@ test("the venue dashboard presents a read-only review and approval experience", 
 
 test("manager access email and documentation describe the managed workflow", () => {
   assert.match(signupService, /MyDancr will prepare the private venue page/);
+  assert.match(notificationDelivery, /payload\.event === "venue_page_review" \|\| payload\.event === "venue_page_published"/);
+  assert.match(notificationDelivery, /return `\$\{baseUrl\}\/dashboard\/venue`/);
   assert.match(documentation, /MyDancr prepares the private page/);
   assert.match(documentation, /venue previews the page and either approves/);
   assert.match(documentation, /Approval publishes that exact completed page immediately/);
