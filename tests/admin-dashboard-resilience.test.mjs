@@ -11,6 +11,7 @@ import {
   persistRefreshedAdminSession,
   readAdminAccessToken,
   readAdminJson,
+  requestAdminJson,
 } from "../app/admin/admin-session.ts";
 
 const [adminSource, adminSession, nfcPanel, dmcaPanel, pilotPanel, tvPanel, dealMigration] = await Promise.all([
@@ -122,6 +123,89 @@ test("the admin request boundary classifies authorization failures by HTTP statu
     );
   } finally {
     globalThis.fetch = previousFetch;
+  }
+});
+
+test("admin mutations send the refresh token and persist rotated sessions", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousWindow = globalThis.window;
+  const stored = new Map();
+  const requests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => stored.get(key) ?? null,
+      setItem: (key, value) => stored.set(key, value),
+      removeItem: (key) => stored.delete(key),
+    },
+  };
+  persistAdminSession(
+    { accessToken: "admin-access", refreshToken: "admin-refresh", expiresAt: 12345 },
+    { role: "admin", displayName: "Platform Admin" },
+  );
+  globalThis.fetch = async (_path, init) => {
+    requests.push(init);
+    return new Response(JSON.stringify({
+      ok: true,
+      program: {},
+      session: {
+        accessToken: "rotated-admin-access",
+        refreshToken: "rotated-admin-refresh",
+        expiresAt: 67890,
+      },
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+
+  try {
+    await requestAdminJson("/api/admin/sales-agents", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "set_agent" }),
+    });
+    await requestAdminJson("/api/admin/sales-agents", { cache: "no-store" });
+
+    assert.equal(requests[0].headers.authorization, "Bearer admin-access");
+    assert.equal(requests[0].headers["x-dancr-refresh-token"], "admin-refresh");
+    assert.equal(requests[1].headers.authorization, "Bearer rotated-admin-access");
+    assert.equal(requests[1].headers["x-dancr-refresh-token"], "rotated-admin-refresh");
+    assert.equal(readAdminAccessToken(), "rotated-admin-access");
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+});
+
+test("admin mutations reject non-admin browser sessions before making a request", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousWindow = globalThis.window;
+  const stored = new Map([[ADMIN_SESSION_KEY, JSON.stringify({
+    accessToken: "dancer-access",
+    refreshToken: "dancer-refresh",
+    account: { role: "dancer" },
+  })]]);
+  let requestCount = 0;
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => stored.get(key) ?? null,
+      setItem: (key, value) => stored.set(key, value),
+      removeItem: (key) => stored.delete(key),
+    },
+  };
+  globalThis.fetch = async () => {
+    requestCount += 1;
+    throw new Error("A non-admin session must not reach the admin API.");
+  };
+
+  try {
+    await assert.rejects(
+      () => requestAdminJson("/api/admin/sales-agents", { method: "POST" }),
+      (error) => error instanceof AdminDataRequestError
+        && error.status === 401
+        && error.message === "Admin sign in required.",
+    );
+    assert.equal(requestCount, 0);
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
   }
 });
 

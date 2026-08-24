@@ -62,7 +62,10 @@ test("NATS agent exports are durable, service-only, and included in finance auto
 
 test("admin and agent surfaces require authenticated server boundaries and expose no NATS secrets", () => {
   assert.match(adminRoute, /requireAdmin/);
+  assert.match(adminRoute, /session: session \|\| null/);
   assert.match(agentRoute, /createRequestSupabaseContext/);
+  assert.match(adminPanel, /requestAdminJson/);
+  assert.doesNotMatch(adminPanel, /fetch\("\/api\/admin\/sales-agents|readAdminAccessToken/);
   assert.match(adminPanel, /MyDancr never stores W-9 or identity-document contents/);
   assert.match(agentDashboard, /MyDancr stores only the verified affiliate mapping and commission audit trail/);
   assert.match(salesAgentService, /function getPublicNatsRuntimeConfig/);

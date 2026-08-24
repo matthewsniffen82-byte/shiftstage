@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type SyntheticEvent } from "react";
-import { readAdminAccessToken as readToken } from "./admin-session";
+import { requestAdminJson } from "./admin-session";
 
 type Row = Record<string, any>;
 
@@ -17,19 +17,24 @@ export default function AdminSalesAgentPanel({ onActionConfirmed }: { onActionCo
   const activeAgents = agents.filter((row: Row) => row.status === "active"); const agentById = new Map(agents.map((row: Row) => [row.id, row]));
 
   const load = useCallback(async () => {
-    const token = readToken(); if (!token) return;
-    const response = await fetch("/api/admin/sales-agents", { headers: { authorization: `Bearer ${token}` }, cache: "no-store" });
-    const data = await response.json(); if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load sales agents.");
+    const data = await requestAdminJson("/api/admin/sales-agents", {
+      cache: "no-store",
+      fallbackMessage: "Unable to load sales agents.",
+    });
     setProgram(data.program);
   }, []);
   useEffect(() => { load().catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load sales agents.")); }, [load]);
 
   async function submit(event: SyntheticEvent, body: Row, confirmation: string) {
-    event.preventDefault(); const token = readToken(); if (!token) return;
+    event.preventDefault();
     setWorking(true); setMessage("");
     try {
-      const response = await fetch("/api/admin/sales-agents", { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify(body) });
-      const data = await response.json(); if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update sales agents.");
+      const data = await requestAdminJson("/api/admin/sales-agents", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+        fallbackMessage: "Unable to update sales agents.",
+      });
       setProgram(data.program); setMessage(confirmation); onActionConfirmed(confirmation);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to update sales agents."); }
     finally { setWorking(false); }

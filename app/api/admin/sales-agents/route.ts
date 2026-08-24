@@ -14,15 +14,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request); await requireAdmin(client, user.id);
-    return NextResponse.json({ ok: true, program: await getAdminSalesAgentProgram(createAdminSupabaseClient()) },
+    const { client, user, session } = await createRequestSupabaseContext(request); await requireAdmin(client, user.id);
+    return NextResponse.json({ ok: true, program: await getAdminSalesAgentProgram(createAdminSupabaseClient()), session: session || null },
       { headers: { "cache-control": "private, no-store" } });
   } catch (error) { return apiError(error, "Unable to load the sales agent program."); }
 }
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request); await requireAdmin(client, user.id);
+    const { client, user, session } = await createRequestSupabaseContext(request); await requireAdmin(client, user.id);
     const body = await request.json().catch(() => ({})); const admin = createAdminSupabaseClient();
     if (body.action === "set_agent") await setAdminSalesAgent(admin, {
       adminUserId: user.id, userId: required(body.userId, "Account is required."),
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     else if (body.action === "reconcile_nats_agent_export") await reconcileNatsAgentCommissionExport(admin, user.id,
       required(body.exportId, "Export is required."), resolution(body.resolution), reason(body.reason));
     else return NextResponse.json({ ok: false, error: "Unsupported sales agent action." }, { status: 400 });
-    return NextResponse.json({ ok: true, program: await getAdminSalesAgentProgram(admin) });
+    return NextResponse.json({ ok: true, program: await getAdminSalesAgentProgram(admin), session: session || null });
   } catch (error) { return apiError(error, "Unable to update the sales agent program."); }
 }
 

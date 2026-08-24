@@ -69,6 +69,35 @@ export class AdminDataRequestError extends Error {
   }
 }
 
+export type AdminJsonRequestOptions = Omit<RequestInit, "headers"> & {
+  fallbackMessage?: string;
+  headers?: Record<string, string>;
+};
+
+export async function requestAdminJson(
+  path: string,
+  options: AdminJsonRequestOptions = {},
+) {
+  const {
+    fallbackMessage = "Unable to update admin data.",
+    headers: requestHeaders,
+    ...requestInit
+  } = options;
+  const authHeaders = adminAuthHeaders();
+  if (!authHeaders) throw new AdminDataRequestError("Admin sign in required.", 401);
+
+  const response = await fetch(path, {
+    ...requestInit,
+    headers: { ...requestHeaders, ...authHeaders },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.ok) {
+    throw new AdminDataRequestError(data?.error || fallbackMessage, response.status);
+  }
+  persistRefreshedAdminSession(data.session);
+  return data;
+}
+
 export async function readAdminJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers });
   const data = await response.json().catch(() => null);
