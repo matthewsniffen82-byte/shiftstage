@@ -3451,25 +3451,52 @@ type DancerPreviewVideo = {
 };
 
 const DANCER_PREVIEW_SOCIAL_PLATFORMS = new Set<SocialPlatform>(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
+const DANCER_PROFILE_EDITOR_SAVE_EVENT = "mydancr:dancer-profile-editor-save";
+
+type DancerProfileEditorSaveRequest = {
+  tasks: Array<() => Promise<boolean>>;
+};
+
+async function saveDancerProfileEditor() {
+  const detail: DancerProfileEditorSaveRequest = { tasks: [] };
+  window.dispatchEvent(new CustomEvent<DancerProfileEditorSaveRequest>(DANCER_PROFILE_EDITOR_SAVE_EVENT, { detail }));
+  if (!detail.tasks.length) return false;
+  for (const task of detail.tasks) {
+    if (!await task()) return false;
+  }
+  return true;
+}
 
 function DancerProfilePreview({
   buttonClassName,
   buttonLabel,
+  editorContent,
+  editorTitle = "Edit your profile",
   isApproved = false,
   isPublic = false,
   name,
   city,
+  onClose,
+  onEditorSave,
   profile,
+  saveLabel = "Save profile",
 }: {
   buttonClassName: string;
   buttonLabel: string;
+  editorContent?: ReactNode;
+  editorTitle?: string;
   isApproved?: boolean;
   isPublic?: boolean;
   name?: string;
   city?: string;
+  onClose?: () => void;
+  onEditorSave?: () => Promise<boolean>;
   profile?: LoadState["profile"];
+  saveLabel?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditorSaving, setIsEditorSaving] = useState(false);
+  const [editorStatus, setEditorStatus] = useState("");
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState("");
   const [videos, setVideos] = useState<DancerPreviewVideo[]>([]);
@@ -3477,6 +3504,7 @@ function DancerProfilePreview({
   const overlayRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef(0);
+  const onCloseRef = useRef(onClose);
   const persistedName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
@@ -3486,6 +3514,12 @@ function DancerProfilePreview({
   const previewCity = city?.trim() || persistedCity || "Choose your city";
   const photos = approvedPhotos.map((photo) => ({ id: photo.id, imageUrl: photo.imageUrl }));
   const socialLinks = dancerPreviewSocialLinks(profile);
+  onCloseRef.current = onClose;
+
+  const closePreview = useCallback(() => {
+    setIsOpen(false);
+    onCloseRef.current?.();
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -3509,7 +3543,7 @@ function DancerProfilePreview({
     const frame = window.requestAnimationFrame(() => closeRef.current?.focus());
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsOpen(false);
+        closePreview();
         return;
       }
       if (event.key !== "Tab") return;
@@ -3542,7 +3576,7 @@ function DancerProfilePreview({
       window.scrollTo({ top: scrollY, behavior: "auto" });
       window.requestAnimationFrame(() => trigger?.focus({ preventScroll: true }));
     };
-  }, [isOpen]);
+  }, [closePreview, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -3589,7 +3623,27 @@ function DancerProfilePreview({
 
   function openPreview() {
     scrollRef.current = window.scrollY;
+    setEditorStatus("");
     setIsOpen(true);
+  }
+
+  async function saveEditor() {
+    if (!onEditorSave || isEditorSaving) return;
+    setIsEditorSaving(true);
+    setEditorStatus("Saving your profile...");
+    try {
+      const saved = await onEditorSave();
+      if (!saved) {
+        setEditorStatus("Some changes could not be saved. Check the highlighted section and try again.");
+        return;
+      }
+      setEditorStatus("Profile saved.");
+      closePreview();
+    } catch (error) {
+      setEditorStatus(error instanceof Error ? error.message : "Unable to save your profile.");
+    } finally {
+      setIsEditorSaving(false);
+    }
   }
 
   return (
@@ -3601,7 +3655,7 @@ function DancerProfilePreview({
         <div
           aria-labelledby="dancer-profile-preview-heading"
           aria-modal="true"
-          className="dancer-profile-preview-overlay"
+          className={`dancer-profile-preview-overlay${editorContent ? " is-editor" : ""}`}
           ref={overlayRef}
           role="dialog"
         >
@@ -3622,7 +3676,7 @@ function DancerProfilePreview({
               <button
                 aria-label="Close profile preview"
                 className="public-profile-close"
-                onClick={() => setIsOpen(false)}
+                onClick={closePreview}
                 ref={closeRef}
                 type="button"
               >
@@ -3665,6 +3719,24 @@ function DancerProfilePreview({
                   : "Your profile stays private until every setup step is complete."}
               </p>
             </section>
+            {editorContent ? (
+              <section className="dancer-profile-editor-tools" aria-labelledby="dancer-profile-editor-heading">
+                <header>
+                  <span className="eyebrow">Profile editor</span>
+                  <h2 id="dancer-profile-editor-heading">{editorTitle}</h2>
+                  <p>Update the information and media guests see in the live profile layout above.</p>
+                </header>
+                {editorContent}
+              </section>
+            ) : null}
+            {editorContent && onEditorSave ? (
+              <footer className="dancer-profile-editor-footer">
+                <p role="status" aria-live="polite">{editorStatus || "Changes stay private until you save."}</p>
+                <button disabled={isEditorSaving} onClick={() => void saveEditor()} type="button">
+                  {isEditorSaving ? "Saving..." : saveLabel}
+                </button>
+              </footer>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -4151,7 +4223,14 @@ function DancerOnboardingProfileMediaWorkspace({
     },
   ];
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [continueAfterSave, setContinueAfterSave] = useState(false);
   const completeCount = requiredItems.filter((item) => item.state === "complete").length;
+  const readyAfterSave = Boolean(
+    draftIdentity.stageName.trim()
+    && draftIdentity.city.trim()
+    && avatarUrl
+    && approvedPhotos.length,
+  );
 
   useEffect(() => {
     const keepPhotosOpen = () => setExpandedId("photos");
@@ -4159,11 +4238,24 @@ function DancerOnboardingProfileMediaWorkspace({
     return () => window.removeEventListener(DANCER_PHOTOS_KEEP_OPEN_EVENT, keepPhotosOpen);
   }, []);
 
+  useEffect(() => {
+    if (!continueAfterSave || !profileReady) return;
+    setContinueAfterSave(false);
+    continueToPreview();
+  }, [continueAfterSave, continueToPreview, profileReady]);
+
   function toggleSection(id: string) {
     setExpandedId((current) => current === id ? null : id);
   }
 
-  return (
+  async function saveAndContinue() {
+    if (!readyAfterSave) return false;
+    const saved = await saveDancerProfileEditor();
+    if (saved) setContinueAfterSave(true);
+    return saved;
+  }
+
+  const editorContent = (
     <div className="dancer-step-one-workspace">
       <section className="dancer-step-one-summary" aria-labelledby="dancer-step-one-summary-heading">
         <span>
@@ -4238,16 +4330,28 @@ function DancerOnboardingProfileMediaWorkspace({
         </section>
       </div>
 
-      <footer className={`dancer-step-one-footer ${profileReady ? "is-ready" : ""}`.trim()}>
-        <span>
-          <strong>{profileReady ? "Step 1 complete" : `${completeCount} of 3 required items complete`}</strong>
-          <small>{profileReady ? "Your saved profile is ready to preview." : "Open a required item to continue."}</small>
-        </span>
-        <button className="dancer-onboarding-primary" disabled={!profileReady} onClick={continueToPreview} type="button">
-          Continue to preview
-        </button>
-      </footer>
     </div>
+  );
+
+  return (
+    <article className="dancer-profile-editor-launch-card" aria-labelledby="dancer-profile-setup-launch-heading">
+      <span>
+        <span className="eyebrow">Full profile setup</span>
+        <strong id="dancer-profile-setup-launch-heading">Build your profile in the live layout</strong>
+        <small>Add your identity, avatar, pictures, socials, and videos in one full-screen editor.</small>
+      </span>
+      <DancerProfilePreview
+        buttonClassName="dancer-profile-editor-launch-button"
+        buttonLabel={profileReady ? "Review profile setup" : "Open profile setup"}
+        city={draftIdentity.city}
+        editorContent={editorContent}
+        editorTitle="Set up your full profile"
+        name={draftIdentity.stageName}
+        onEditorSave={saveAndContinue}
+        profile={profile}
+        saveLabel="Save & continue"
+      />
+    </article>
   );
 }
 
@@ -4373,10 +4477,11 @@ function DancerPanel({
       profile={profile}
       onProfileChange={onProfileChange}
       onDraftChange={setDraftIdentity}
+      unifiedSave
     />
   );
   const avatarContent = <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />;
-  const socialContent = <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />;
+  const socialContent = <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} unifiedSave />;
   const photoContent = (
     <DancerPhotoPanel
       deletedPhotoIds={deletedPhotoIds}
@@ -4388,6 +4493,16 @@ function DancerPanel({
     />
   );
   const videoContent = <DancerTvStudio embedded />;
+  const profileEditorContent = (
+    <div className="venue-dashboard-inner-grid dancer-profile-editor-grid">
+      {identityContent}
+      {avatarContent}
+      {socialContent}
+      {photoContent}
+      {videoContent}
+      <DancerSharePanel profile={profile} />
+    </div>
+  );
   const profileMediaWorkspace = (
     <div className="venue-dashboard-inner-grid dancer-onboarding-profile-workspace">
       <article className="dancer-profile-media-preview" aria-labelledby="dancer-profile-media-preview-heading">
@@ -4395,24 +4510,26 @@ function DancerPanel({
           <svg viewBox="0 0 24 24"><path d="M2.8 12s3.2-5.5 9.2-5.5 9.2 5.5 9.2 5.5-3.2 5.5-9.2 5.5S2.8 12 2.8 12Z" /><circle cx="12" cy="12" r="2.6" /></svg>
         </span>
         <span className="dancer-profile-media-preview-copy">
-          <span className="eyebrow">Guest view</span>
-          <strong id="dancer-profile-media-preview-heading">Preview your profile</strong>
-          <small>See your approved photos, videos, and socials exactly as guests do.</small>
+          <span className="eyebrow">Full-screen editor</span>
+          <strong id="dancer-profile-media-preview-heading">Edit your full live profile</strong>
+          <small>Update everything in the same layout guests see, then save once and return here.</small>
         </span>
         <DancerProfilePreview
           buttonClassName="dancer-profile-media-preview-button"
-          buttonLabel="Preview profile"
+          buttonLabel="Edit full profile"
+          editorContent={profileEditorContent}
+          editorTitle="Edit your full profile"
           isApproved
           isPublic={isPublic}
+          onClose={() => {
+            const section = document.getElementById("dancer-profile-media") as HTMLDetailsElement | null;
+            if (section) section.open = false;
+          }}
+          onEditorSave={saveDancerProfileEditor}
           profile={profile}
+          saveLabel="Save & return to dashboard"
         />
       </article>
-      {identityContent}
-      {avatarContent}
-      {socialContent}
-      {photoContent}
-      {videoContent}
-      <DancerSharePanel profile={profile} />
     </div>
   );
   const profileMediaSection = (
@@ -5038,6 +5155,7 @@ function DancerSetupPanel({
   onDraftChange,
   onProfileChange,
   profile,
+  unifiedSave = false,
 }: {
   deletedPhotoIds?: string[];
   deletedPhotoStoragePaths?: string[];
@@ -5045,6 +5163,7 @@ function DancerSetupPanel({
   onDraftChange?: (draft: DancerIdentityDraft) => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
+  unifiedSave?: boolean;
 }) {
   const [stageName, setStageName] = useState("");
   const [city, setCity] = useState("");
@@ -5059,10 +5178,22 @@ function DancerSetupPanel({
   const draftHydratedRef = useRef(false);
   const draftDirtyRef = useRef(false);
   const draftKey = `mydancr:dancer-profile-draft:${String(profile?.id || "profile")}`;
+  const editorSaveRef = useRef<() => Promise<boolean>>(async () => true);
+  editorSaveRef.current = () => saveProfile();
 
   useEffect(() => {
     console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v14");
   }, []);
+
+  useEffect(() => {
+    if (!unifiedSave) return;
+    const addSaveTask = (event: Event) => {
+      const detail = (event as CustomEvent<DancerProfileEditorSaveRequest>).detail;
+      detail?.tasks.push(() => editorSaveRef.current());
+    };
+    window.addEventListener(DANCER_PROFILE_EDITOR_SAVE_EVENT, addSaveTask);
+    return () => window.removeEventListener(DANCER_PROFILE_EDITOR_SAVE_EVENT, addSaveTask);
+  }, [unifiedSave]);
 
   useEffect(() => {
     if (draftDirtyRef.current) return;
@@ -5189,15 +5320,15 @@ function DancerSetupPanel({
     }
   }
 
-  async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (saveInFlightRef.current) return;
+  async function saveProfile(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    if (saveInFlightRef.current) return false;
 
     const session = readSession();
     if (!session?.accessToken) {
       setSaveStatus("error");
       setStatus("Sign in required.");
-      return;
+      return false;
     }
 
     saveInFlightRef.current = true;
@@ -5257,10 +5388,12 @@ function DancerSetupPanel({
       setStatus(hasPendingPhotos
         ? "Saved Profile. Photos awaiting review will appear on your live profile after approval."
         : "Saved Profile");
+      return true;
     } catch (error) {
       console.error("EDIT_PROFILE_SAVE_FAILED", error);
       setSaveStatus("error");
       setStatus(error instanceof Error ? error.message : "Profile could not be saved.");
+      return false;
     } finally {
       saveInFlightRef.current = false;
     }
@@ -5294,14 +5427,16 @@ function DancerSetupPanel({
           </select>
           <small>{cityOptionsStatus === "error" ? "The live city list could not be loaded. Try again before saving." : "Choose from active MyDancr venue markets."}</small>
         </label>
-        <div className="dancer-profile-form-actions">
-          <button className="dancer-profile-save-action primary-action" type="submit" disabled={saveStatus === "saving" || cityOptionsStatus !== "ready"}>
-            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save profile"}
-          </button>
-          <button aria-label="Reload saved profile" className="dancer-profile-reload-action" type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
-            {isResetting ? "Reloading..." : "Reload saved"}
-          </button>
-        </div>
+        {unifiedSave ? null : (
+          <div className="dancer-profile-form-actions">
+            <button className="dancer-profile-save-action primary-action" type="submit" disabled={saveStatus === "saving" || cityOptionsStatus !== "ready"}>
+              {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save profile"}
+            </button>
+            <button aria-label="Reload saved profile" className="dancer-profile-reload-action" type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
+              {isResetting ? "Reloading..." : "Reload saved"}
+            </button>
+          </div>
+        )}
         <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
           {status || (saveStatus === "saving" ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : persistedStageNameAndCity(profile) ? "Saved" : "Add and save your stage name and city.")}
         </p>
@@ -6516,9 +6651,11 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
 function DancerSocialPanel({
   onProfileChange,
   profile,
+  unifiedSave = false,
 }: {
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
+  unifiedSave?: boolean;
 }) {
   const [socials, setSocials] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
@@ -6526,6 +6663,18 @@ function DancerSocialPanel({
   const draftHydratedRef = useRef(false);
   const draftDirtyRef = useRef(false);
   const draftKey = `mydancr:dancer-social-draft:${String(profile?.id || "profile")}`;
+  const editorSaveRef = useRef<() => Promise<boolean>>(async () => true);
+  editorSaveRef.current = () => saveSocials();
+
+  useEffect(() => {
+    if (!unifiedSave) return;
+    const addSaveTask = (event: Event) => {
+      const detail = (event as CustomEvent<DancerProfileEditorSaveRequest>).detail;
+      detail?.tasks.push(() => editorSaveRef.current());
+    };
+    window.addEventListener(DANCER_PROFILE_EDITOR_SAVE_EVENT, addSaveTask);
+    return () => window.removeEventListener(DANCER_PROFILE_EDITOR_SAVE_EVENT, addSaveTask);
+  }, [unifiedSave]);
 
   useEffect(() => {
     if (draftDirtyRef.current) return;
@@ -6556,12 +6705,12 @@ function DancerSocialPanel({
     }
   }, [draftKey, socials]);
 
-  async function saveSocials(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function saveSocials(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
-      return;
+      return false;
     }
 
     setIsSaving(true);
@@ -6587,8 +6736,10 @@ function DancerSocialPanel({
       draftDirtyRef.current = false;
       window.localStorage.removeItem(draftKey);
       setStatus("Social links saved.");
+      return true;
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save socials.");
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -6612,9 +6763,11 @@ function DancerSocialPanel({
             />
           </label>
         ))}
-        <button type="submit" disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save socials"}
-        </button>
+        {unifiedSave ? null : (
+          <button type="submit" disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save socials"}
+          </button>
+        )}
         <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
           {status || (isSaving ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : "Saved")}
         </p>
@@ -8540,6 +8693,11 @@ function DashboardStyles() {
       .dancer-profile-media-preview-button { min-width: 132px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(126,234,255,.42); border-radius: 999px; color: #fff; background: linear-gradient(135deg,#6d28d9,#0b94c9); box-shadow: 0 10px 24px rgba(61,27,143,.28),inset 0 1px 0 rgba(255,255,255,.14); font: inherit; font-size: 11px; font-weight: 950; cursor: pointer; white-space: nowrap; }
       .dancer-profile-media-preview-button:hover { border-color: rgba(126,234,255,.7); filter: brightness(1.08); }
       .dancer-profile-media-preview-button:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .dancer-profile-editor-launch-card { min-width:0; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:14px; padding:16px; border:1px solid rgba(126,234,255,.22); border-radius:16px; background:radial-gradient(circle at 0 0,rgba(126,234,255,.08),transparent 16rem),linear-gradient(145deg,rgba(18,13,31,.98),rgba(7,7,11,.98)); box-shadow:inset 3px 0 0 rgba(139,92,246,.82); }
+      .dancer-profile-editor-launch-card > span { min-width:0; display:grid; gap:5px; }
+      .dancer-profile-editor-launch-card > span > strong { color:#fff; font-size:18px; line-height:1.15; }
+      .dancer-profile-editor-launch-card > span > small { max-width:56ch; color:var(--mydancr-dashboard-muted); font-size:12px; line-height:1.45; }
+      .dancer-profile-editor-launch-button { min-width:170px; min-height:46px; padding:0 16px; border:1px solid rgba(126,234,255,.42); border-radius:999px; color:#fff; background:linear-gradient(135deg,#6d28d9,#0b94c9); box-shadow:0 10px 24px rgba(61,27,143,.28); font:inherit; font-size:12px; font-weight:950; cursor:pointer; }
       .dancer-onboarding-command-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
       .dancer-onboarding-command-head > span { display: grid; gap: 7px; }
       .dancer-onboarding-command-head h2 { color: #f8f7fb; font-size: clamp(25px,4vw,34px); letter-spacing: -.025em; }
@@ -8718,6 +8876,17 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-section-heading h2 { max-width: 100%; margin: 0; overflow-wrap: anywhere; color: #fff; font-size: clamp(22px,5vw,32px); line-height: 1.05; }
       .dancer-profile-preview-overlay .profile-section-heading > span { align-self: start; color: #9487a5; font-size: 11px; font-weight: 850; white-space: nowrap; }
       .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }
+      .dancer-profile-editor-tools { width:min(100%,760px); max-width:100%; min-width:0; box-sizing:border-box; display:grid; gap:14px; margin:24px auto 0; padding:18px; border:1px solid rgba(139,92,246,.3); border-radius:20px; background:linear-gradient(180deg,rgba(13,10,23,.96),rgba(7,7,11,.98)); box-shadow:0 24px 70px rgba(0,0,0,.34),inset 3px 0 0 rgba(139,92,246,.72); }
+      .dancer-profile-editor-tools > header { display:grid; gap:6px; padding:0 2px 4px; }
+      .dancer-profile-editor-tools > header h2,.dancer-profile-editor-tools > header p { margin:0; }
+      .dancer-profile-editor-tools > header h2 { color:#fff; font-size:clamp(24px,5vw,34px); line-height:1.05; }
+      .dancer-profile-editor-tools > header p { color:#b9accd; font-size:13px; line-height:1.45; }
+      .dancer-profile-editor-grid { min-width:0; }
+      .dancer-profile-editor-grid > .info-panel { grid-column:1 / -1; }
+      .dancer-profile-editor-footer { position:sticky; z-index:12; bottom:0; width:min(100%,760px); max-width:100%; min-width:0; box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; margin:18px auto 0; padding:12px max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border:1px solid rgba(126,234,255,.2); border-bottom:0; border-radius:18px 18px 0 0; background:rgba(7,7,11,.94); box-shadow:0 -16px 42px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.04); backdrop-filter:blur(22px); }
+      .dancer-profile-editor-footer p { margin:0; color:#b9accd; font-size:11px; line-height:1.4; }
+      .dancer-profile-editor-footer button { min-width:230px; min-height:48px; padding:0 18px; border:1px solid rgba(126,234,255,.5); border-radius:13px; color:#fff; background:linear-gradient(135deg,#7c2be8,#087fae); box-shadow:0 10px 28px rgba(79,30,174,.3); font:inherit; font-size:13px; font-weight:950; cursor:pointer; }
+      .dancer-profile-editor-footer button:disabled { opacity:.62; cursor:wait; }
       .dancer-onboarding-primary { width: 100%; min-height: 52px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); font: inherit; font-weight: 950; cursor: pointer; }
       .dancer-onboarding-primary:disabled { opacity: .58; cursor: wait; }
       .dancer-onboarding-steps button:focus-visible, .dancer-onboarding-primary:focus-visible, .dancer-avatar-panel button:focus-visible, .dancer-avatar-panel input:focus-visible { outline: 2px solid #7eeaff; outline-offset: -3px; }
@@ -8811,6 +8980,7 @@ function DashboardStyles() {
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dashboard-shell-dancer .dashboard-section-summary > summary { min-height: 62px; padding: 12px 14px; } .dashboard-shell-dancer .dashboard-section-primary > summary { min-height: 74px; padding: 14px; } .dashboard-shell-dancer .dashboard-section-secondary > summary { min-height: 68px; padding: 13px 14px; } .dashboard-shell-dancer .dashboard-section-utility > summary { min-height: 60px; padding: 11px 14px; } .dancer-status-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .dashboard-shell-dancer .dancer-status-metrics .metric { min-height: 64px; padding: 9px 10px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-profile-media-preview { grid-template-columns: 42px minmax(0,1fr); gap: 9px 11px; padding: 13px; } .dancer-profile-media-preview-icon { width: 40px; height: 40px; } .dancer-profile-media-preview-button { grid-column: 1 / -1; width: 100%; min-height: 46px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
+      @media (max-width: 620px) { .dancer-profile-editor-launch-card { grid-template-columns:1fr; padding:14px; } .dancer-profile-editor-launch-button { width:100%; min-width:0; } .dancer-profile-editor-tools { margin-top:18px; padding:12px; border-radius:17px; } .dancer-profile-editor-footer { grid-template-columns:1fr; gap:8px; } .dancer-profile-editor-footer button { width:100%; min-width:0; } }
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
       @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 620px) { .photo-upload-heading { align-items: flex-start; } .photo-source-action { min-height: 70px; } .photo-slot-summary { align-items: flex-start; flex-direction: column; gap: 2px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-review-list .photo-review-card { grid-template-columns: 92px minmax(0,1fr); align-items: start; min-height: 0; gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 92px; } }
