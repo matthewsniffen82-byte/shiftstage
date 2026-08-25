@@ -100,7 +100,7 @@
   height: 22px !important;
 }
 
-#profileBackdrop .profile-modal-video-controls input[type="range"] {
+#profileBackdrop #modalVideoControls #modalVideoProgress {
   box-sizing: border-box !important;
   position: absolute !important;
   z-index: 2 !important;
@@ -124,7 +124,7 @@
   pointer-events: auto !important;
 }
 
-#profileBackdrop .profile-modal-video-controls input[type="range"]::-webkit-slider-runnable-track {
+#profileBackdrop #modalVideoControls #modalVideoProgress::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: 999px;
   background: linear-gradient(
@@ -134,7 +134,7 @@
   );
 }
 
-#profileBackdrop .profile-modal-video-controls input[type="range"]::-webkit-slider-thumb {
+#profileBackdrop #modalVideoControls #modalVideoProgress::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 0;
@@ -146,20 +146,20 @@
   opacity: 0;
 }
 
-#profileBackdrop .profile-modal-video-controls input[type="range"]::-moz-range-track {
+#profileBackdrop #modalVideoControls #modalVideoProgress::-moz-range-track {
   height: 3px;
   border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
 }
 
-#profileBackdrop .profile-modal-video-controls input[type="range"]::-moz-range-progress {
+#profileBackdrop #modalVideoControls #modalVideoProgress::-moz-range-progress {
   height: 3px;
   border-radius: 999px;
   background: #f8f8fa;
 }
 
-#profileBackdrop .profile-modal-video-controls input[type="range"]::-moz-range-thumb {
+#profileBackdrop #modalVideoControls #modalVideoProgress::-moz-range-thumb {
   width: 0;
   height: 0;
   border: 0;
@@ -168,7 +168,7 @@
   opacity: 0;
 }
 
-#profileBackdrop .profile-modal-video-controls input[type="range"]:focus-visible {
+#profileBackdrop #modalVideoControls #modalVideoProgress:focus-visible {
   border-radius: 999px !important;
   outline: 2px solid rgba(248, 248, 250, 0.82);
   outline-offset: -10px;
