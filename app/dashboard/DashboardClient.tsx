@@ -2026,12 +2026,13 @@ function VenuePanel({
 
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
-          ["tonight", "Tonight", `${workingNow.length} working · ${activeDealCount} live ${activeDealCount === 1 ? "deal" : "deals"}`],
-          ["venue", "Venue page", venuePageTabStatus],
-          ["business", "Business", "Analytics & team"],
-        ] as const).map(([workspace, label, summary]) => (
+          ["tonight", "Tonight", "Roster · deals · check-in", `${workingNow.length} working · ${activeDealCount} live ${activeDealCount === 1 ? "deal" : "deals"}`],
+          ["venue", "Venue page", "Preview · review · MyDancr TV", venuePageTabStatus],
+          ["business", "Business", "Analytics · team · account", "Management tools"],
+        ] as const).map(([workspace, label, contents, status]) => (
           <button
             aria-controls={`venue-workspace-${workspace}`}
+            aria-label={`${label}. ${contents}. ${status}.`}
             aria-selected={activeWorkspace === workspace}
             className={activeWorkspace === workspace ? "active" : ""}
             id={`venue-workspace-${workspace}-tab`}
@@ -2042,7 +2043,8 @@ function VenuePanel({
             type="button"
           >
             <strong>{label}</strong>
-            <small>{summary}</small>
+            <small>{contents}</small>
+            <span className="venue-workspace-tab-status">{status}</span>
           </button>
         ))}
       </nav>
@@ -7606,12 +7608,15 @@ function DashboardStyles() {
       .venue-review-request button { width: fit-content; min-height: 42px; padding: 0 14px; border: 1px solid rgba(255,255,255,.16); border-radius: 9px; color: #f8fafc; background: #17171d; font: inherit; font-weight: 900; }
       .venue-review-request button:disabled { opacity: .45; cursor: not-allowed; }
       .venue-workspace-tabs { position: sticky; z-index: 30; top: max(8px, env(safe-area-inset-top)); display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; padding: 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: rgba(7,7,11,.94); box-shadow: 0 16px 38px rgba(0,0,0,.42); backdrop-filter: blur(18px); }
-      .venue-workspace-tabs button { min-width: 0; min-height: 54px; display: grid; align-content: center; gap: 3px; padding: 7px 10px; border: 0; border-radius: 11px; color: #a9a3b3; background: transparent; font: inherit; text-align: center; cursor: pointer; }
+      .venue-workspace-tabs button { min-width: 0; min-height: 78px; display: grid; align-content: center; gap: 4px; padding: 8px 9px; border: 0; border-radius: 11px; color: #a9a3b3; background: transparent; font: inherit; text-align: center; cursor: pointer; }
       .venue-workspace-tabs button:hover { color: #fff; background: rgba(255,255,255,.045); }
       .venue-workspace-tabs button:focus-visible { outline: 2px solid #a78bfa; outline-offset: -2px; }
       .venue-workspace-tabs button.active { color: #fff; background: linear-gradient(135deg,rgba(124,58,237,.9),rgba(88,28,135,.92)); box-shadow: 0 8px 20px rgba(76,29,149,.28), inset 0 1px 0 rgba(255,255,255,.14); }
       .venue-workspace-tabs strong { overflow: hidden; font-size: 14px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
-      .venue-workspace-tabs small { overflow: hidden; color: inherit; font-size: 9px; font-weight: 760; line-height: 1.15; opacity: .78; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-workspace-tabs small { display: grid; min-height: 21px; place-items: center; color: #cbd5e1; font-size: 9px; font-weight: 820; line-height: 1.18; }
+      .venue-workspace-tabs button.active small { color: #f8fafc; }
+      .venue-workspace-tab-status { overflow: hidden; color: #94a3b8; font-size: 8px; font-weight: 780; line-height: 1.12; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-workspace-tabs button.active .venue-workspace-tab-status { color: #ddd6fe; }
       .venue-workspace-business-summary { display: grid; gap: 7px; padding: 16px 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
       .venue-workspace-business-summary h2 { margin: 0; color: #f8fafc; font-size: clamp(20px,3.5vw,25px); line-height: 1.08; }
       .venue-workspace-business-summary p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.45; }
@@ -8611,9 +8616,10 @@ function DashboardStyles() {
         .venue-review-logo { width: 60px; height: 60px; border-radius: 14px; }
         .venue-review-package dl > div { grid-template-columns: 1fr; gap: 4px; }
         .venue-workspace-tabs { top: max(6px,env(safe-area-inset-top)); gap: 3px; padding: 4px; border-radius: 14px; }
-        .venue-workspace-tabs button { min-height: 52px; padding-inline: 5px; }
+        .venue-workspace-tabs button { min-height: 76px; padding-inline: 5px; }
         .venue-workspace-tabs strong { font-size: 12px; }
         .venue-workspace-tabs small { font-size: 8px; }
+        .venue-workspace-tab-status { font-size: 7.5px; }
         .venue-tonight-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .venue-tonight-metrics .metric:nth-child(odd) { border-left: 0; }
         .venue-tonight-metrics .metric:nth-child(n + 3) { border-top: 1px solid var(--mydancr-dashboard-border); }

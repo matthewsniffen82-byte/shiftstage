@@ -82,6 +82,7 @@ test("venue dashboard uses one state-aware three-destination workspace", () => {
   assert.ok(metricsIndex > tonightIndex);
   assert.ok(managementIndex > metricsIndex);
   assert.match(venuePanel, /\["tonight", "Tonight"[\s\S]*?\["venue", "Venue page"[\s\S]*?\["business", "Business"/);
+  assert.match(venuePanel, /"Roster · deals · check-in"[\s\S]*?"Preview · review · MyDancr TV"[\s\S]*?"Analytics · team · account"/);
   assert.match(venuePanel, /role="tablist"[\s\S]*?aria-selected=\{activeWorkspace === workspace\}/);
   assert.match(venuePanel, /initialVenueWorkspace\(profile\?\.isActive === true\)/);
   assert.match(routedDashboards, /return isPublished \? "tonight" : "venue";/);
@@ -110,7 +111,8 @@ test("venue dashboard uses one state-aware three-destination workspace", () => {
   assert.match(routedDashboards, /\.venue-command-status h2 \{[^}]*?font-size: 20px;/);
   assert.match(routedDashboards, /\.venue-command-status p, \.venue-command-primary p \{[^}]*?font-size: 12px;/);
   assert.match(routedDashboards, /\.venue-workspace-tabs strong \{[^}]*?font-size: 14px;/);
-  assert.match(routedDashboards, /\.venue-workspace-tabs small \{[^}]*?font-size: 9px;/);
+  assert.match(routedDashboards, /\.venue-workspace-tabs small \{[^}]*?color: #cbd5e1;[^}]*?font-size: 9px;/);
+  assert.match(routedDashboards, /\.venue-workspace-tab-status \{[^}]*?color: #94a3b8;[^}]*?font-size: 8px;/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \.metric strong \{ font-size: 22px; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
   assert.doesNotMatch(routedDashboards, /venue-deal-builder-progress/);
