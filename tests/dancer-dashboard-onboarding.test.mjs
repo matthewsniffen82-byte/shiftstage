@@ -117,7 +117,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /aria-label="Record a new profile video"/);
   assert.match(dancerStudio, />Video library<\/strong>/);
   assert.match(dancerStudio, />Record video<\/strong>/);
-  assert.match(dancerStudio, />Confirm permissions to enable uploads<\/strong>/);
+  assert.match(dancerStudio, />Confirm permissions<\/strong>/);
   assert.doesNotMatch(dancerStudio, /Confirm permissions once, then choose videos|Every selected video uploads automatically/);
   assert.match(dancerStudio, /\.tv-video-source-action \{ position: relative; min-width: 0; min-height: 74px;/);
   assert.match(dancerStudio, /function openVideoSource\(input: HTMLInputElement \| null\)[\s\S]*?Check both permission boxes first\.[\s\S]*?input\?\.click\(\)/);
@@ -156,6 +156,13 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.match(dashboard, /className=\{`dancer-profile-preview-overlay\$\{isEditor \? " is-editor" : ""\}`\}/);
   assert.match(dashboard, /aria-label="Close profile preview"[\s\S]*?onClick=\{closePreview\}/);
   assert.match(dashboard, /className="dancer-profile-builder-panel"[\s\S]*?editorSections\[activeEditorSection\]/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \{ z-index:1510; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel > div \{[^}]*overflow-x:hidden;[^}]*overflow-y:auto;/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-grid,[\s\S]*?grid-template-columns:repeat\(2,58px\) !important;/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-copy,[\s\S]*?\.tv-video-source-cta \{ display:none; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-media-empty \{ height:clamp\(220px,38dvh,340px\); min-height:220px; aspect-ratio:auto !important;/);
+  assert.match(dashboard, /\.dancer-profile-builder-media-empty \{ height:clamp\(190px,30dvh,260px\); min-height:190px; \}/);
+  assert.doesNotMatch(dashboard, /editorTitle/);
   assert.match(dashboard, /disabled=\{isEditorSaving \|\| !requirementsComplete\}/);
   assert.match(dashboard, /<DancerSetupPanel[\s\S]*?unifiedSave/);
   assert.match(dashboard, /<DancerSocialPanel profile=\{profile\} onProfileChange=\{onProfileChange\} unifiedSave \/>/);

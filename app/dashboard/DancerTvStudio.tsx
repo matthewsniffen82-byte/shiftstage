@@ -332,7 +332,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       {workspace && !atVideoLimit ? (
         <section className="tv-upload-form" aria-label="Add profile videos">
           <div className="tv-upload-permissions">
-            <strong>Confirm permissions to enable uploads</strong>
+            <strong>Confirm permissions</strong>
           </div>
           <label className="tv-check">
             <input ref={consentInputRef} checked={consentConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />

@@ -3092,9 +3092,9 @@ type DancerProfileBuilderRequirement = {
 const DANCER_PROFILE_EDITOR_SECTION_LABELS: Record<DancerProfileEditorSectionId, string> = {
   identity: "Stage name & city",
   avatar: "Avatar",
-  photos: "Profile photos",
-  videos: "Profile videos",
-  socials: "Social links",
+  photos: "Photos",
+  videos: "Videos",
+  socials: "Socials",
   share: "Share profile",
 };
 
@@ -3113,7 +3113,6 @@ function DancerProfilePreview({
   buttonClassName,
   buttonLabel,
   editorSections,
-  editorTitle = "Edit your profile",
   isApproved = false,
   isPublic = false,
   name,
@@ -3127,7 +3126,6 @@ function DancerProfilePreview({
   buttonClassName: string;
   buttonLabel: string;
   editorSections?: DancerProfileEditorSections;
-  editorTitle?: string;
   isApproved?: boolean;
   isPublic?: boolean;
   name?: string;
@@ -3442,7 +3440,7 @@ function DancerProfilePreview({
             {isEditor && activeEditorSection && editorSections?.[activeEditorSection] ? (
               <section className="dancer-profile-builder-panel" id="dancer-profile-builder-panel" tabIndex={-1} aria-labelledby="dancer-profile-builder-panel-heading">
                 <header>
-                  <span><span className="eyebrow">{editorTitle}</span><h2 id="dancer-profile-builder-panel-heading">{DANCER_PROFILE_EDITOR_SECTION_LABELS[activeEditorSection]}</h2></span>
+                  <h2 id="dancer-profile-builder-panel-heading">{DANCER_PROFILE_EDITOR_SECTION_LABELS[activeEditorSection]}</h2>
                   <button aria-label="Close profile editing panel" onClick={() => setActiveEditorSection(null)} type="button">×</button>
                 </header>
                 <div>{editorSections[activeEditorSection]}</div>
@@ -3965,7 +3963,6 @@ function DancerOnboardingProfileMediaWorkspace({
         buttonLabel={profileReady ? "Review profile setup" : "Open profile setup"}
         city={draftIdentity.city}
         editorSections={editorSections}
-        editorTitle="Set up your full profile"
         name={draftIdentity.stageName}
         onEditorSave={saveAndContinue}
         profile={profile}
@@ -4135,7 +4132,6 @@ function DancerPanel({
           buttonLabel="Edit full profile"
           city={draftIdentity.city}
           editorSections={profileEditorSections}
-          editorTitle="Edit your full profile"
           isApproved
           isPublic={isPublic}
           name={draftIdentity.stageName}
@@ -8564,6 +8560,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-metrics dd { margin:0; color:#eee9f5; font-size:clamp(18px,3.5vw,24px); font-weight:950; line-height:1; }
       .dancer-profile-preview-overlay .profile-metrics dt { color:#8f849c; font-size:clamp(9px,2.1vw,11px); font-weight:850; text-align:center; }
       .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }
+      .dancer-profile-preview-overlay.is-editor { z-index:1510; }
       .dancer-profile-preview-overlay.is-editor .dancer-profile-preview-shell { padding-bottom: max(156px,calc(env(safe-area-inset-bottom) + 136px)); }
       .dancer-profile-builder-avatar { appearance:none; padding:0; cursor:pointer; }
       .dancer-profile-builder-avatar.is-empty { overflow:visible !important; border-style:dashed !important; color:#c9f7ff !important; background:linear-gradient(145deg,rgba(124,58,237,.34),rgba(34,199,255,.13)) !important; }
@@ -8578,11 +8575,11 @@ function DashboardStyles() {
       body.dancr-button-system .dancer-profile-builder-identity { min-height:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; }
       body.dancr-button-system .dancer-profile-builder-city { min-height:22px !important; padding:0 8px !important; border-radius:999px !important; background:rgba(255,255,255,.035) !important; box-shadow:none !important; }
       .dancer-profile-builder-plus { position:absolute; z-index:3; top:0; right:0; width:16px; height:16px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.22); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 3px 9px rgba(0,0,0,.5); font-size:11px; font-weight:950; line-height:1; }
-      .dancer-profile-builder-media-empty { min-height:clamp(360px,64dvh,620px); aspect-ratio:4 / 5 !important; display:grid; align-content:center; justify-items:center; gap:9px; padding:28px; border-style:dashed !important; border-color:rgba(126,234,255,.32) !important; color:#f9f8fb; background:radial-gradient(circle at 50% 38%,rgba(124,58,237,.22),transparent 13rem),#07070b !important; cursor:pointer; }
+      .dancer-profile-builder-media-empty { height:clamp(220px,38dvh,340px); min-height:220px; aspect-ratio:auto !important; display:grid; align-content:center; justify-items:center; gap:9px; padding:22px; border-style:dashed !important; border-color:rgba(126,234,255,.32) !important; color:#f9f8fb; background:radial-gradient(circle at 50% 38%,rgba(124,58,237,.22),transparent 13rem),#07070b !important; cursor:pointer; }
       .dancer-profile-builder-media-empty::after { display:none; }
       .dancer-profile-builder-media-empty > span { width:64px; height:64px; display:grid; place-items:center; border:1px solid rgba(126,234,255,.42); border-radius:50%; color:#fff; background:linear-gradient(135deg,#681fd4,#0d789e); box-shadow:0 0 32px rgba(109,40,217,.32); font-size:34px; font-weight:700; line-height:1; }
       .dancer-profile-builder-media-empty > strong { font-size:clamp(22px,5vw,31px); }
-      body.dancr-button-system .dancer-profile-builder-media-empty { min-height:clamp(360px,64dvh,620px) !important; padding:28px !important; border-radius:20px !important; background:radial-gradient(circle at 50% 38%,rgba(124,58,237,.22),transparent 13rem),#07070b !important; box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 34px rgba(124,58,237,.12) !important; }
+      body.dancr-button-system .dancer-profile-builder-media-empty { height:clamp(220px,38dvh,340px) !important; min-height:220px !important; padding:22px !important; border-radius:20px !important; background:radial-gradient(circle at 50% 38%,rgba(124,58,237,.22),transparent 13rem),#07070b !important; box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 34px rgba(124,58,237,.12) !important; }
       .dancer-profile-builder-empty-slots { justify-content:center; }
       .dancer-profile-builder-empty-slots button { width:64px; min-width:64px; aspect-ratio:4 / 5; display:grid; place-items:center; padding:0; border:1px dashed rgba(126,234,255,.27); border-radius:10px; color:#d8f8ff; background:rgba(126,234,255,.045); font:inherit; font-size:24px; cursor:pointer; }
       body.dancr-button-system .dancer-profile-builder-empty-slots button { min-height:80px !important; padding:0 !important; border-radius:10px !important; background:rgba(126,234,255,.045) !important; box-shadow:none !important; }
@@ -8595,15 +8592,35 @@ function DashboardStyles() {
       .dancer-profile-builder-social-empty > button { min-height:88px; display:grid; grid-template-columns:42px minmax(0,1fr); align-items:center; gap:2px 10px; padding:12px 16px; border:1px dashed rgba(126,234,255,.3); border-radius:15px; color:#fff; background:rgba(126,234,255,.045); font:inherit; text-align:left; cursor:pointer; }
       .dancer-profile-builder-social-empty > button > span { width:40px; height:40px; grid-row:1 / span 2; display:grid; place-items:center; border-radius:50%; color:#fff; background:#5b20c8; font-size:24px; }
       .dancer-profile-builder-social-empty > button strong { font-size:15px; }
-      .dancer-profile-builder-panel { position:fixed; z-index:30; left:50%; bottom:0; width:min(calc(100% - 24px),760px); max-height:min(80dvh,780px); box-sizing:border-box; display:grid; grid-template-rows:auto minmax(0,1fr); overflow:hidden; padding:0 max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border:1px solid rgba(126,234,255,.28); border-bottom:0; border-radius:22px 22px 0 0; outline:none; color:#f7f2ff; background:linear-gradient(180deg,rgba(15,12,25,.995),rgba(5,5,8,.998)); box-shadow:0 -24px 80px rgba(0,0,0,.72),0 0 36px rgba(109,40,217,.2); transform:translateX(-50%); }
-      .dancer-profile-builder-panel > header { position:sticky; z-index:2; top:0; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 2px 11px; border-bottom:1px solid rgba(255,255,255,.09); background:rgba(14,11,23,.98); }
-      .dancer-profile-builder-panel > header > span { min-width:0; display:grid; gap:3px; }
+      .dancer-profile-builder-panel { position:fixed; z-index:30; left:50%; bottom:0; width:min(calc(100% - 24px),760px); max-height:min(88dvh,780px); box-sizing:border-box; display:grid; grid-template-rows:auto minmax(0,1fr); overflow:hidden; padding:0 max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border:1px solid rgba(126,234,255,.28); border-bottom:0; border-radius:22px 22px 0 0; outline:none; color:#f7f2ff; background:linear-gradient(180deg,rgba(15,12,25,.995),rgba(5,5,8,.998)); box-shadow:0 -24px 80px rgba(0,0,0,.72),0 0 36px rgba(109,40,217,.2); transform:translateX(-50%); }
+      .dancer-profile-builder-panel > header { position:sticky; z-index:2; top:0; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 2px 9px; border-bottom:1px solid rgba(255,255,255,.09); background:rgba(14,11,23,.98); }
       .dancer-profile-builder-panel > header h2 { margin:0; font-size:clamp(20px,5vw,28px); line-height:1.05; }
       .dancer-profile-builder-panel > header button { width:40px; min-width:40px; height:40px; min-height:40px; display:grid; place-items:center; padding:0; border:1px solid rgba(255,255,255,.14); border-radius:50%; color:#fff; background:rgba(255,255,255,.06); font-size:24px; cursor:pointer; }
-      .dancer-profile-builder-panel > div { min-width:0; overflow-y:auto; overscroll-behavior:contain; padding:12px 2px 4px; scrollbar-width:thin; }
+      .dancer-profile-builder-panel > div { min-width:0; max-width:100%; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; padding:10px 0 max(18px,env(safe-area-inset-bottom)); scrollbar-width:thin; }
       .dancer-profile-builder-panel > div > * { width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
-      .dancer-profile-builder-panel .info-panel { grid-column:1 / -1; }
-      .dancer-profile-builder-panel .photo-source-grid { width:100%; }
+      .dancer-profile-builder-panel .info-panel { grid-column:1 / -1; max-width:100%; box-sizing:border-box; overflow:hidden; padding:12px; }
+      .dancer-profile-builder-panel .upload-panel > h2 { display:none; }
+      .dancer-profile-builder-panel .photo-upload-heading { justify-content:flex-end; }
+      .dancer-profile-builder-panel .photo-upload-heading > span { display:none; }
+      .dancer-profile-builder-panel .photo-slot-summary { justify-content:center; }
+      .dancer-profile-builder-panel .photo-slot-summary > span { display:none; }
+      .dancer-profile-builder-panel .photo-source-grid,
+      .dancer-profile-builder-panel .tv-video-source-grid { width:fit-content !important; max-width:100%; grid-template-columns:repeat(2,58px) !important; grid-auto-rows:58px !important; justify-content:center; gap:14px; margin-inline:auto; }
+      .dancer-profile-builder-panel .photo-source-action,
+      .dancer-profile-builder-panel .tv-video-source-action { width:58px !important; min-width:58px !important; max-width:58px !important; height:58px !important; min-height:58px !important; max-height:58px !important; display:grid !important; grid-template-columns:1fr !important; place-items:center; gap:0 !important; overflow:hidden; padding:0 !important; border-radius:50% !important; text-align:center; }
+      .dancer-profile-builder-panel .photo-source-icon,
+      .dancer-profile-builder-panel .tv-video-source-icon { width:100%; height:100%; border-radius:50%; background:rgba(34,199,255,.08); }
+      .dancer-profile-builder-panel .photo-source-icon svg,
+      .dancer-profile-builder-panel .tv-video-source-icon svg { width:26px; height:26px; }
+      .dancer-profile-builder-panel .photo-source-copy,
+      .dancer-profile-builder-panel .photo-source-cta,
+      .dancer-profile-builder-panel .tv-video-source-copy,
+      .dancer-profile-builder-panel .tv-video-source-cta { display:none; }
+      .dancer-profile-builder-panel .tv-studio-embedded-head { justify-content:flex-end; margin-bottom:8px; }
+      .dancer-profile-builder-panel .tv-studio-embedded-head > div { display:none; }
+      .dancer-profile-builder-panel .tv-upload-form { width:100%; max-width:100%; box-sizing:border-box; gap:10px; padding:12px; overflow:hidden; }
+      .dancer-profile-builder-panel .tv-upload-permissions strong { font-size:13px; }
+      .dancer-profile-builder-panel .tv-upload-requirements { line-height:1.35; overflow-wrap:anywhere; }
       .dancer-avatar-source-grid { width:100%; }
       .dancer-profile-preview-overlay.is-editor .dancer-profile-editor-footer { position:fixed; z-index:18; left:50%; bottom:0; width:min(calc(100% - 24px),760px); margin:0; transform:translateX(-50%); }
       .dancer-profile-editor-tools { width:min(100%,760px); max-width:100%; min-width:0; box-sizing:border-box; display:grid; gap:14px; margin:24px auto 0; padding:18px; border:1px solid rgba(139,92,246,.3); border-radius:20px; background:linear-gradient(180deg,rgba(13,10,23,.96),rgba(7,7,11,.98)); box-shadow:0 24px 70px rgba(0,0,0,.34),inset 3px 0 0 rgba(139,92,246,.72); }
@@ -8709,7 +8726,7 @@ function DashboardStyles() {
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dashboard-shell-dancer .dashboard-section-summary > summary { min-height: 62px; padding: 12px 14px; } .dashboard-shell-dancer .dashboard-section-primary > summary { min-height: 74px; padding: 14px; } .dashboard-shell-dancer .dashboard-section-secondary > summary { min-height: 68px; padding: 13px 14px; } .dashboard-shell-dancer .dashboard-section-utility > summary { min-height: 60px; padding: 11px 14px; } .dancer-status-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .dashboard-shell-dancer .dancer-status-metrics .metric { min-height: 64px; padding: 9px 10px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-profile-media-preview { grid-template-columns: 42px minmax(0,1fr); gap: 9px 11px; padding: 13px; } .dancer-profile-media-preview-icon { width: 40px; height: 40px; } .dancer-profile-media-preview-button { grid-column: 1 / -1; width: 100%; min-height: 46px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
-      @media (max-width: 620px) { .dancer-profile-editor-launch-card { grid-template-columns:1fr; padding:14px; } .dancer-profile-editor-launch-button { width:100%; min-width:0; } .dancer-profile-editor-tools { margin-top:18px; padding:12px; border-radius:17px; } .dancer-profile-editor-footer { grid-template-columns:1fr; gap:8px; } .dancer-profile-editor-footer button { width:100%; min-width:0; } .dancer-profile-builder-media-empty { min-height:clamp(330px,60dvh,520px); } .dancer-profile-preview-overlay .live-actions { grid-template-columns:repeat(2,minmax(0,1fr)); } .dancer-profile-builder-panel { width:100%; max-height:84dvh; border-radius:20px 20px 0 0; } .dancer-profile-preview-overlay.is-editor .dancer-profile-editor-footer { width:100%; } }
+      @media (max-width: 620px) { .dancer-profile-editor-launch-card { grid-template-columns:1fr; padding:14px; } .dancer-profile-editor-launch-button { width:100%; min-width:0; } .dancer-profile-editor-tools { margin-top:18px; padding:12px; border-radius:17px; } .dancer-profile-editor-footer { grid-template-columns:1fr; gap:8px; } .dancer-profile-editor-footer button { width:100%; min-width:0; } .dancer-profile-builder-media-empty { height:clamp(190px,30dvh,260px); min-height:190px; } body.dancr-button-system .dancer-profile-builder-media-empty { height:clamp(190px,30dvh,260px) !important; min-height:190px !important; } .dancer-profile-preview-overlay .live-actions { grid-template-columns:repeat(2,minmax(0,1fr)); } .dancer-profile-builder-panel { width:100%; max-height:calc(100dvh - var(--mydancr-preview-banner-offset,0px)); border-radius:20px 20px 0 0; } .dancer-profile-preview-overlay.is-editor .dancer-profile-editor-footer { width:100%; } }
       @media (max-width: 340px) { .dancer-profile-preview-overlay .venue-qr-unavailable { grid-template-columns:minmax(0,1fr) 112px; } .dancer-profile-preview-overlay .venue-qr-placeholder-icon { width:112px; min-width:112px; } }
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
       @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
