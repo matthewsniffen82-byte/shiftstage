@@ -244,7 +244,7 @@ test("profiles can be shared and close back to the referring site page", () => {
   assert.match(navigationActions, /window\.location\.assign\(destination\.toString\(\)\)/);
 });
 
-test("profile videos stay passive in the grid and open the complete full-screen player", () => {
+test("profile videos stay passive and duration-free in the grid, then open the complete full-screen player", () => {
   const mediaGrid = profileCarousel.slice(
     profileCarousel.indexOf("{visibleItems.map"),
     profileCarousel.indexOf("{viewer && activeViewerItem"),
@@ -254,7 +254,9 @@ test("profile videos stay passive in the grid and open the complete full-screen 
   assert.match(mediaGrid, /src=\{`\$\{item\.videoUrl\}#t=0\.1`\}/);
   assert.doesNotMatch(mediaGrid, /autoPlay/);
   assert.match(profileCarousel, /className="profile-media-play"/);
-  assert.match(profileCarousel, /className="profile-media-duration"/);
+  assert.doesNotMatch(profileCarousel, /profile-media-duration|formatDuration/);
+  assert.doesNotMatch(liveApp, /<span class="profile-media-thumb-duration"/);
+  assert.match(liveApp, /function profileVideoThumbMarkup\(item, index, total, profileName\)[\s\S]*?aria-label="Open \$\{escapeHtml\(profileName\)\} profile video \$\{index \+ 1\} of \$\{total\} full screen, \$\{escapeHtml\(scheduleLabel\)\}"/);
   assert.match(profileCarousel, /openViewer\(item\.kind, index, event\.currentTarget\)/);
   assert.match(profileCarousel, /autoPlay[\s\S]*?controls[\s\S]*?controlsList="nofullscreen noremoteplayback nodownload"/);
   assert.match(profileCarousel, /DANCER_PROFILE_MEDIA_PAGE_SIZE/);

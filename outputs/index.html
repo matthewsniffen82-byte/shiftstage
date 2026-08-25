@@ -29170,20 +29170,6 @@
       transform: translate(-50%, -50%);
     }
 
-    .profile-modal .profile-media-thumb-duration {
-      position: absolute;
-      right: 5px;
-      bottom: 5px;
-      padding: 3px 5px;
-      border-radius: 999px;
-      color: #fff;
-      background: rgba(0,0,0,.76);
-      font-size: 9px;
-      font-weight: 950;
-      line-height: 1;
-      pointer-events: none;
-    }
-
     .profile-modal .modal-image.is-video-media {
       background-image: none !important;
     }
@@ -50546,17 +50532,15 @@
 
     function profileVideoThumbMarkup(item, index, total, profileName) {
       const scheduleLabel = profileTvScheduleLabel(item);
-      const durationLabel = formatProfileTvDuration(item.durationSeconds);
       const posterUrl = profileVideoPosterUrl(item);
       const previewUrl = profileVideoPreviewUrl(item);
       const previewMarkup = previewUrl
         ? `<video src="${escapeHtml(previewUrl)}"${posterUrl ? ` poster="${escapeHtml(posterUrl)}"` : ""} muted playsinline preload="metadata" tabindex="-1" aria-hidden="true"></video>`
         : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
       return `
-        <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} full screen, ${escapeHtml(scheduleLabel)}, ${escapeHtml(durationLabel)}">
+        <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} full screen, ${escapeHtml(scheduleLabel)}">
           ${previewMarkup}
           <span class="profile-media-thumb-play" aria-hidden="true"></span>
-          <span class="profile-media-thumb-duration">${escapeHtml(durationLabel)}</span>
         </button>
       `;
     }

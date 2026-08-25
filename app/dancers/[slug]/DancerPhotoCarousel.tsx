@@ -445,9 +445,6 @@ export function DancerPhotoCarousel({
                   tabIndex={-1}
                 />
                 <span aria-hidden="true" className="profile-media-play" />
-                <span className="profile-media-duration">
-                  {formatDuration(item.durationSeconds)}
-                </span>
               </>
             )}
           </button>
@@ -619,10 +616,4 @@ function emptyGesture(): SwipeGesture {
     vertical: false,
     cancelled: false,
   };
-}
-
-function formatDuration(durationSeconds: number) {
-  const seconds = Math.max(0, Math.round(durationSeconds));
-  const minutes = Math.floor(seconds / 60);
-  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
 }
