@@ -274,7 +274,7 @@ test("the in-profile TV tab is dancer-only, opens full screen, and does not alte
   assert.match(profileMedia, /className="profile-media-tab-label">Photos<\/span>/);
   assert.match(profileMedia, /className="profile-media-tab-label">Videos<\/span>/);
   assert.match(profileMedia, /className=\{`profile-media-viewer is-\$\{viewer\.kind\}`\}/);
-  assert.match(profileMedia, /showRelativeViewerItem\(distanceX < 0 \? 1 : -1\)/);
+  assert.match(profileMedia, /const mediaSwipe =[\s\S]*?Math\.abs\(distanceY\)[\s\S]*?showRelativeViewerItem\(distanceY < 0 \? 1 : -1\)/);
 
   assert.match(liveApp, /data-profile-media-tab="photo"/);
   assert.match(liveApp, /data-profile-media-tab="video"/);

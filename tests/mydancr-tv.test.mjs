@@ -378,10 +378,10 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(liveApp, /video\.autoplay = true[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/);
   assert.doesNotMatch(liveApp, /modal-media-video-play/);
   assert.match(liveApp, /id="profileTvViewer"[\s\S]*?role="dialog"[\s\S]*?profile-tv-viewer-video[\s\S]*?controlslist="nofullscreen noremoteplayback nodownload"[\s\S]*?loop playsinline/);
-  assert.match(liveApp, /data-previous-profile-tv[\s\S]*?data-next-profile-tv[\s\S]*?id="profileTvViewerGallery"/);
-  assert.match(liveApp, /touchstart[\s\S]*?touchend[\s\S]*?showRelativeProfileTvVideo\(distance < 0 \? 1 : -1\)/);
-  assert.match(liveApp, /function renderProfileTvViewerItem\(index\)[\s\S]*?profileTvVideos[\s\S]*?scrollIntoView/);
-  assert.match(liveApp, /profile-tv-viewer-gallery[\s\S]*?overflow-x: auto[\s\S]*?scroll-snap-type: x proximity/);
+  assert.match(liveApp, /data-previous-profile-tv[\s\S]*?data-next-profile-tv[\s\S]*?class="profile-tv-viewer-actions"/);
+  assert.match(liveApp, /touchstart[\s\S]*?clientY[\s\S]*?touchend[\s\S]*?showRelativeProfileTvVideo\(distance < 0 \? 1 : -1\)/);
+  assert.match(liveApp, /function renderProfileTvViewerItem\(index\)[\s\S]*?profileTvVideos[\s\S]*?preloadAdjacentProfileTvVideos/);
+  assert.doesNotMatch(liveApp, /profile-tv-viewer-gallery|profileTvViewerGallery/);
   assert.match(liveApp, /requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?requestFullscreen\(\{ navigationUI: "hide" \}\)/);
   assert.match(liveApp, /async function shareProfileTvVideo\(\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(videoId\)\}`[\s\S]*?navigator\.share[\s\S]*?copyText\(url, "Video link copied"\)/);
   assert.doesNotMatch(liveApp, /all\.href = `\/tv\?|link\.href = `\/tv\/\$\{encodeURIComponent\(item\.id\)\}`/);

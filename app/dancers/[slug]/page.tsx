@@ -550,6 +550,18 @@ function PublicProfileStyles() {
       .profile-media-viewer-share svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
       .profile-media-viewer-share-status { min-height: 14px; color: #a7f3d0; font-size: 10px; font-weight: 800; text-align: right; }
       .profile-media-viewer-hint { color: #aaa0b8; font-size: 11px; font-weight: 800; }
+      .profile-media-viewer { display: block; }
+      .profile-media-viewer .profile-media-viewer-stage { width: 100%; height: 100%; }
+      .profile-media-viewer.is-video .profile-media-viewer-stage > video { object-fit: cover; }
+      .profile-media-viewer .profile-media-viewer-previous,
+      .profile-media-viewer .profile-media-viewer-next { z-index: 2; left: auto; right: max(12px, env(safe-area-inset-right)); width: 48px; height: 48px; border-color: rgba(255,255,255,.2); background: rgba(8,8,12,.68); font-size: 22px; transform: none; }
+      .profile-media-viewer .profile-media-viewer-previous { top: 34%; }
+      .profile-media-viewer .profile-media-viewer-next { top: calc(34% + 58px); }
+      .profile-media-viewer .profile-media-viewer-footer { position: absolute; z-index: 2; inset: 0; min-height: 0; display: block; padding: 0; border: 0; background: linear-gradient(0deg, rgba(0,0,0,.82) 0, rgba(0,0,0,.34) 14%, transparent 38%); pointer-events: none; }
+      .profile-media-viewer .profile-media-viewer-copy { position: absolute; right: 82px; bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); left: max(18px, env(safe-area-inset-left)); gap: 4px; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
+      .profile-media-viewer .profile-media-viewer-actions { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); min-width: 0; pointer-events: auto; }
+      .profile-media-viewer .profile-media-viewer-share { width: 48px; min-width: 48px; min-height: 48px; flex-direction: column; gap: 2px; padding: 0; border-radius: 50%; font-size: 9px; }
+      .profile-media-viewer .profile-media-viewer-share-status { position: absolute; right: 56px; bottom: 4px; width: max-content; max-width: 180px; text-shadow: 0 1px 5px #000; }
       .profile-media-viewer-preload { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
       .profile-media-viewer-preload img, .profile-media-viewer-preload video { width: 1px; height: 1px; }
       @keyframes profile-media-loading { to { transform: translateX(-50%) rotate(360deg); } }

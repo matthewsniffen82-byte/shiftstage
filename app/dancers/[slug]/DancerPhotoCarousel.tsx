@@ -50,7 +50,7 @@ type SwipeGesture = {
   pointerId: number | null;
   startX: number;
   startY: number;
-  horizontal: boolean;
+  vertical: boolean;
   cancelled: boolean;
 };
 
@@ -192,9 +192,11 @@ export function DancerPhotoCarousel({
         window.requestAnimationFrame(() => viewerTrigger.current?.focus());
         return;
       }
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      const previousKey = "ArrowUp";
+      const nextKey = "ArrowDown";
+      if (event.key !== previousKey && event.key !== nextKey) return;
       event.preventDefault();
-      const direction = event.key === "ArrowRight" ? 1 : -1;
+      const direction = event.key === nextKey ? 1 : -1;
       setShareStatus("");
       setViewer((current) => {
         if (!current) return current;
@@ -224,8 +226,14 @@ export function DancerPhotoCarousel({
     window.requestAnimationFrame(() => viewerTrigger.current?.focus());
   }
 
-  function viewerShareUrl(item: VideoMedia) {
-    return new URL(`/tv/${encodeURIComponent(item.id)}`, window.location.origin).toString();
+  function viewerShareUrl(item: ProfileMedia) {
+    if (item.kind === "video") {
+      return new URL(`/tv/${encodeURIComponent(item.id)}`, window.location.origin).toString();
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("media", "photo");
+    url.searchParams.set("mediaIndex", String(viewerIndex));
+    return url.toString();
   }
 
   async function copyViewerShareUrl(url: string) {
@@ -246,24 +254,25 @@ export function DancerPhotoCarousel({
   }
 
   async function shareViewerItem() {
-    if (!activeViewerItem || activeViewerItem.kind !== "video") return;
+    if (!activeViewerItem) return;
     const url = viewerShareUrl(activeViewerItem);
+    const isVideo = activeViewerItem.kind === "video";
     setShareStatus("");
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `${stageName} on MyDancr TV`,
-          text: `Watch ${stageName} on MyDancr TV.`,
+          title: `${stageName} on ${isVideo ? "MyDancr TV" : "MyDancr"}`,
+          text: `${isVideo ? "Watch" : "View"} ${stageName} on ${isVideo ? "MyDancr TV" : "MyDancr"}.`,
           url,
         });
-        setShareStatus("Video shared.");
+        setShareStatus(isVideo ? "Video shared." : "Photo shared.");
         return;
       }
       await copyViewerShareUrl(url);
-      setShareStatus("Video link copied.");
+      setShareStatus(isVideo ? "Video link copied." : "Photo link copied.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      setShareStatus("Unable to share this video.");
+      setShareStatus(isVideo ? "Unable to share this video." : "Unable to share this photo.");
     }
   }
 
@@ -294,7 +303,7 @@ export function DancerPhotoCarousel({
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      horizontal: false,
+      vertical: false,
       cancelled: false,
     };
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -306,11 +315,11 @@ export function DancerPhotoCarousel({
     const distanceX = event.clientX - current.startX;
     const distanceY = event.clientY - current.startY;
     if (Math.abs(distanceX) < 10 && Math.abs(distanceY) < 10) return;
-    if (Math.abs(distanceY) >= Math.abs(distanceX)) {
+    if (Math.abs(distanceX) >= Math.abs(distanceY)) {
       current.cancelled = true;
       return;
     }
-    current.horizontal = true;
+    current.vertical = true;
     event.preventDefault();
   }
 
@@ -319,31 +328,27 @@ export function DancerPhotoCarousel({
     if (current.pointerId !== event.pointerId) return;
     const distanceX = event.clientX - current.startX;
     const distanceY = event.clientY - current.startY;
-    if (
-      !current.cancelled &&
-      current.horizontal &&
-      Math.abs(distanceX) >= SWIPE_DISTANCE_PX &&
-      Math.abs(distanceX) > Math.abs(distanceY) * 1.2
-    ) {
+    const mediaSwipe =
+      current.vertical &&
+      Math.abs(distanceY) >= SWIPE_DISTANCE_PX &&
+      Math.abs(distanceY) > Math.abs(distanceX) * 1.2;
+    if (!current.cancelled && mediaSwipe) {
       event.preventDefault();
-      showRelativeViewerItem(distanceX < 0 ? 1 : -1);
+      showRelativeViewerItem(distanceY < 0 ? 1 : -1);
     }
     resetGesture();
   }
 
   function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    if (
-      viewerItems.length < 2 ||
-      Math.abs(event.deltaX) < 18 ||
-      Math.abs(event.deltaX) <= Math.abs(event.deltaY)
-    ) {
-      return;
-    }
+    if (viewerItems.length < 2) return;
+    const primaryDelta = event.deltaY;
+    const crossDelta = event.deltaX;
+    if (Math.abs(primaryDelta) < 18 || Math.abs(primaryDelta) <= Math.abs(crossDelta)) return;
     event.preventDefault();
     const now = Date.now();
     if (now < trackpadLockedUntil.current) return;
     trackpadLockedUntil.current = now + TRACKPAD_LOCK_MS;
-    showRelativeViewerItem(event.deltaX > 0 ? 1 : -1);
+    showRelativeViewerItem(primaryDelta > 0 ? 1 : -1);
   }
 
   return (
@@ -530,7 +535,7 @@ export function DancerPhotoCarousel({
               onClick={() => showRelativeViewerItem(-1)}
               type="button"
             >
-              ‹
+              ↑
             </button>
             <button
               aria-label={`Next ${viewer.kind}`}
@@ -539,34 +544,30 @@ export function DancerPhotoCarousel({
               onClick={() => showRelativeViewerItem(1)}
               type="button"
             >
-              ›
+              ↓
             </button>
           </div>
           <div className="profile-media-viewer-footer">
             <div className="profile-media-viewer-copy">
               <strong>{stageName}</strong>
               <span>
-                {viewer.kind === "photo" ? "Photo" : "Video"} {viewerIndex + 1} of {viewerItems.length}
+                Swipe up or down · {viewer.kind === "photo" ? "Photo" : "Video"} {viewerIndex + 1} of {viewerItems.length}
               </span>
             </div>
-            {activeViewerItem.kind === "video" ? (
-              <div className="profile-media-viewer-actions">
-                <button
-                  aria-label="Share this TV video"
-                  className="profile-media-viewer-share"
-                  onClick={shareViewerItem}
-                  type="button"
-                >
-                  <ShareIcon />
-                  Share
-                </button>
-                <span aria-live="polite" className="profile-media-viewer-share-status">
-                  {shareStatus}
-                </span>
-              </div>
-            ) : (
-              <span className="profile-media-viewer-hint">Swipe to browse photos</span>
-            )}
+            <div className="profile-media-viewer-actions">
+              <button
+                aria-label={activeViewerItem.kind === "video" ? "Share this TV video" : "Share this profile photo"}
+                className="profile-media-viewer-share"
+                onClick={shareViewerItem}
+                type="button"
+              >
+                <ShareIcon />
+                Share
+              </button>
+              <span aria-live="polite" className="profile-media-viewer-share-status">
+                {shareStatus}
+              </span>
+            </div>
           </div>
           {adjacentViewerItems.length ? (
             <div aria-hidden="true" className="profile-media-viewer-preload">
@@ -615,7 +616,7 @@ function emptyGesture(): SwipeGesture {
     pointerId: null,
     startX: 0,
     startY: 0,
-    horizontal: false,
+    vertical: false,
     cancelled: false,
   };
 }

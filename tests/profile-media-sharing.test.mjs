@@ -12,7 +12,7 @@ const publicProfilePage = fs.readFileSync("app/dancers/[slug]/page.tsx", "utf8")
 test("full dancer profiles share the exact TV video being viewed", () => {
   assert.match(
     publicPhotoCarousel,
-    /function viewerShareUrl\(item: VideoMedia\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(item\.id\)\}`/,
+    /function viewerShareUrl\(item: ProfileMedia\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(item\.id\)\}`[\s\S]*?url\.searchParams\.set\("media", "photo"\)/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -20,7 +20,11 @@ test("full dancer profiles share the exact TV video being viewed", () => {
   );
   assert.match(
     publicPhotoCarousel,
-    /aria-label="Share this TV video"[\s\S]*?className="profile-media-viewer-share"[\s\S]*?onClick=\{shareViewerItem\}/,
+    /aria-label=\{activeViewerItem\.kind === "video" \? "Share this TV video" : "Share this profile photo"\}[\s\S]*?className="profile-media-viewer-share"[\s\S]*?onClick=\{shareViewerItem\}/,
+  );
+  assert.match(
+    publicPhotoCarousel,
+    /setShareStatus\(isVideo \? "Video shared\." : "Photo shared\."\)[\s\S]*?setShareStatus\(isVideo \? "Video link copied\." : "Photo link copied\."\)/,
   );
   assert.match(publicPhotoCarousel, /className="profile-media-viewer-share-status"/);
   assert.match(

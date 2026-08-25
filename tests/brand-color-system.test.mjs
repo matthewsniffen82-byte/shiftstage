@@ -216,7 +216,7 @@ test("brand emphasis is crisp on stateful and keyboard-focused UI", () => {
   assert.match(tokens, /--dancr-shadow-beam-active:[\s\S]*?--dancr-shadow-beam-card:/);
   assert.match(
     aesthetic,
-    /#profileBackdrop \.gallery \.thumb\.active,[\s\S]*?\.profile-tv-viewer-gallery button\.active[\s\S]*?border-color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?0 0 0 1px var\(--dancr-color-white-medium\) !important;/,
+    /#profileBackdrop \.gallery \.thumb\.active \{[\s\S]*?border-color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?0 0 0 1px var\(--dancr-color-white-medium\) !important;/,
   );
   assert.match(aesthetic, /\.public-profile-shell \.profile-media-grid-item[\s\S]*?:focus-visible \{[\s\S]*?var\(--dancr-color-beam-violet\)/);
   assert.doesNotMatch(

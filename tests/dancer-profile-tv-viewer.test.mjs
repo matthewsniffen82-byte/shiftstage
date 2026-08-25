@@ -27,7 +27,7 @@ test("profile videos have only thumbnail and fixed full-screen viewer sizes", ()
   assert.doesNotMatch(profileTvStrip, /requestFullscreen|:fullscreen|enterDeviceFullscreen/);
 });
 
-test("live profile viewer blocks gesture enlargement but keeps horizontal video swiping", () => {
+test("live profile viewer mirrors MyDancr TV with vertical profile-only video paging", () => {
   assert.match(
     liveApp,
     /\.profile-tv-viewer \{[^}]*position: fixed;[^}]*inset: 0;[^}]*padding: 0;[^}]*touch-action: none;/,
@@ -39,7 +39,8 @@ test("live profile viewer blocks gesture enlargement but keeps horizontal video 
   assert.match(liveApp, /id="profileTvViewerVideo" controlslist="nofullscreen noremoteplayback nodownload" disablepictureinpicture/);
   assert.match(liveApp, /data-toggle-profile-tv-playback aria-label="Pause TV video">\$\{modalVideoPlaybackIcon\(false\)\}/);
   assert.match(liveApp, /data-toggle-profile-tv-sound aria-label="Turn TV video sound off">\$\{modalVideoSoundIcon\(false\)\}/);
-  assert.match(liveApp, /Math\.abs\(distance\) < 50\) return;[\s\S]*?showRelativeProfileTvVideo/);
+  assert.match(liveApp, /let swipeStartY = null;[\s\S]*?clientY[\s\S]*?Math\.abs\(distance\) < 50\) return;[\s\S]*?showRelativeProfileTvVideo/);
+  assert.match(liveApp, /stage\.addEventListener\("wheel"[\s\S]*?event\.deltaY[\s\S]*?showRelativeProfileTvVideo\(event\.deltaY > 0 \? 1 : -1\)/);
   assert.match(
     liveApp,
     /async function requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
@@ -74,7 +75,7 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
 });
 
-test("live profile thumbnails use passive video frames while the selected viewer owns playback", () => {
+test("profile grid thumbnails stay passive while the full viewer has no thumbnail strip", () => {
   const loader =
     liveApp.match(
       /async function loadProfileMyDancrTv\(profile\)[\s\S]*?\n    function formatProfileTvShift/,
@@ -98,10 +99,8 @@ test("live profile thumbnails use passive video frames while the selected viewer
     liveApp,
     /#profileBackdrop \.profile-modal-media-previous,[\s\S]*?width: 44px;[\s\S]*?border: 0;[\s\S]*?background: rgba\(0,0,0,\.06\);[\s\S]*?box-shadow: none;[\s\S]*?font-size: 22px;[\s\S]*?opacity: \.64;[\s\S]*?backdrop-filter: none/,
   );
-  assert.match(
-    liveApp,
-    /\.profile-tv-viewer-previous,[\s\S]*?width: 44px;[\s\S]*?background: rgba\(0,0,0,\.06\);[\s\S]*?box-shadow: none;[\s\S]*?font-size: 22px;[\s\S]*?opacity: \.64;[\s\S]*?backdrop-filter: none/,
-  );
+  assert.match(liveApp, /\.profile-tv-viewer-actions \{[^}]*position: absolute;[^}]*right: max\(12px, env\(safe-area-inset-right\)\);[^}]*grid-template-columns: 52px;/);
+  assert.doesNotMatch(liveApp, /profile-tv-viewer-gallery|profileTvViewerGallery|data-profile-tv-index[^\n]*aria-current/);
   assert.match(
     liveApp,
     /\.profile-modal \.gallery \{[^}]*display: flex !important;[^}]*justify-content: flex-start !important;/,

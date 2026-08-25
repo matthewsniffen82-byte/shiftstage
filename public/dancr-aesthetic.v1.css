@@ -2003,8 +2003,7 @@ body.dancr-button-system .home-tv-feed-action:not(
 
 /* The hero beam is a state signal, reserved for active, selected, and keyboard-focused UI. */
 #profileBackdrop .profile-modal-media-tabs button.active,
-#profileBackdrop .gallery .thumb.active,
-.profile-tv-viewer-gallery button.active {
+#profileBackdrop .gallery .thumb.active {
   border-color: var(--dancr-color-text-secondary) !important;
   outline-color: var(--dancr-color-white-medium) !important;
   box-shadow: 0 0 0 1px var(--dancr-color-white-medium) !important;

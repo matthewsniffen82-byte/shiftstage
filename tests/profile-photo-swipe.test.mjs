@@ -9,26 +9,26 @@ const publicPhotoCarousel = fs.readFileSync(
   "utf8",
 );
 
-test("the live dancer profile changes photos with horizontal swipe and trackpad gestures", () => {
+test("the live profile keeps the grid horizontal and makes full photos vertically pageable", () => {
   assert.match(
     liveApp,
     /function bindHorizontalProfilePhotoSwipe\(element, options = \{\}\)/,
   );
   assert.match(
     liveApp,
-    /element\.addEventListener\("pointermove",[\s\S]*?Math\.abs\(distanceX\) >= 44[\s\S]*?moveModalPhoto\(distanceX < 0 \? 1 : -1, options\)/,
+    /const vertical = options\.vertical === true;[\s\S]*?const verticalSwipe =[\s\S]*?Math\.abs\(distanceY\) >= 44[\s\S]*?moveModalPhoto\(vertical \? distanceY < 0 \? 1 : -1 : distanceX < 0 \? 1 : -1, options\)/,
   );
   assert.match(
     liveApp,
-    /element\.addEventListener\("wheel",[\s\S]*?Math\.abs\(event\.deltaX\)[\s\S]*?moveModalPhoto\(event\.deltaX > 0 \? 1 : -1, options\)/,
+    /element\.addEventListener\("wheel",[\s\S]*?const primaryDelta = vertical \? event\.deltaY : event\.deltaX;[\s\S]*?moveModalPhoto\(primaryDelta > 0 \? 1 : -1, options\)/,
   );
   assert.match(
     liveApp,
-    /bindHorizontalProfilePhotoSwipe\(modalImage\);[\s\S]*?bindHorizontalProfilePhotoSwipe\(profilePhotoViewerImage, \{ syncViewer: true \}\)/,
+    /bindHorizontalProfilePhotoSwipe\(modalImage\);[\s\S]*?bindHorizontalProfilePhotoSwipe\(profilePhotoViewerImage, \{ syncViewer: true, vertical: true \}\)/,
   );
   assert.match(
     liveApp,
-    /\.profile-modal \.modal-image,[\s\S]*?\.profile-photo-viewer-image \{ touch-action: pan-y; overscroll-behavior-x: contain;/,
+    /\.profile-modal \.modal-image \{ touch-action: pan-y;[\s\S]*?\.profile-photo-viewer-image \{ touch-action: none; overscroll-behavior: none;/,
   );
   assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil/);
 });
@@ -48,7 +48,7 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   );
   assert.match(
     liveApp,
-    /profilePhotoViewerImage\?\.addEventListener\("keydown",[\s\S]*?event\.key !== "ArrowLeft" && event\.key !== "ArrowRight"[\s\S]*?moveModalPhoto\([^;]*\{ syncViewer: true \}\)/,
+    /profilePhotoViewerImage\?\.addEventListener\("keydown",[\s\S]*?event\.key !== "ArrowUp" && event\.key !== "ArrowDown"[\s\S]*?moveModalPhoto\(event\.key === "ArrowDown" \? 1 : -1, \{ syncViewer: true \}\)/,
   );
   const galleryClickHandler = liveApp.match(
     /modalGallery\.addEventListener\("click"[\s\S]*?(?=\n    \[modalMediaPhotoTab, modalMediaTvTab\])/,
@@ -65,7 +65,9 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   assert.match(liveApp, /#profileBackdrop \.gallery \.thumb \{[\s\S]*?flex: 0 0 calc\(\(100% - 4px\) \/ 3\) !important;/);
   assert.doesNotMatch(liveApp, /id="modalPhotoSwipeHint"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerSwipeHint"/);
-  assert.match(liveApp, /id="profilePhotoViewerImage"[^>]*tabindex="0"[^>]*aria-label="Selected profile photo\. Swipe left or right to change photos\."/);
+  assert.match(liveApp, /id="profilePhotoViewerImage"[^>]*tabindex="0"[^>]*aria-label="Selected profile photo\. Swipe up or down to change photos\."/);
+  assert.match(liveApp, /id="profilePhotoViewerPosition"/);
+  assert.match(liveApp, /profilePhotoViewerPosition\.textContent = `Swipe up or down · Photo \$\{activePhotoIndex \+ 1\} of \$\{totalPhotos\}`/);
 });
 test("the profile presents approved photos and dancer-only videos as separate three-column grids", () => {
   assert.match(publicPhotoCarousel, /type MediaTab = ProfileMedia\["kind"\]/);
@@ -137,7 +139,7 @@ test("full-profile photo and video grids use stable tall portrait tiles", () => 
 });
 
 
-test("the standalone public dancer profile uses the production full-screen horizontal media viewer", () => {
+test("the standalone profile uses vertical profile-scoped full-screen media paging", () => {
   assert.match(
     publicProfilePage,
     /import \{ DancerPhotoCarousel \} from "\.\/DancerPhotoCarousel"/,
@@ -152,7 +154,7 @@ test("the standalone public dancer profile uses the production full-screen horiz
   );
   assert.match(
     publicPhotoCarousel,
-    /Math\.abs\(distanceX\) >= SWIPE_DISTANCE_PX[\s\S]*?showRelativeViewerItem\(distanceX < 0 \? 1 : -1\)/,
+    /const mediaSwipe =[\s\S]*?Math\.abs\(distanceY\) >= SWIPE_DISTANCE_PX[\s\S]*?showRelativeViewerItem\(distanceY < 0 \? 1 : -1\)/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -168,7 +170,7 @@ test("the standalone public dancer profile uses the production full-screen horiz
   );
   assert.match(
     publicPhotoCarousel,
-    /event\.key !== "ArrowLeft"[\s\S]*?event\.key !== "ArrowRight"/,
+    /const previousKey = "ArrowUp";[\s\S]*?const nextKey = "ArrowDown";/,
   );
   assert.match(
     publicProfilePage,

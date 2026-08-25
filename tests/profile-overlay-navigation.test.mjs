@@ -7,7 +7,7 @@ const homeSource = fs.readFileSync("outputs/index.html", "utf8");
 test("mobile navigation cannot cover the fixed profile video viewer", () => {
   assert.match(
     homeSource,
-    /body\.profile-tv-viewer-open #discoveryTabs(?:,\s+body\.profile-tv-viewer-open #homeTvDrawer)? \{\s+visibility: hidden !important;\s+pointer-events: none !important;\s+\}/,
+    /body\.profile-tv-viewer-open #discoveryTabs,\s+body\.profile-photo-viewer-open #discoveryTabs \{\s+visibility: hidden !important;\s+pointer-events: none !important;\s+\}/,
   );
   assert.match(
     homeSource,
@@ -24,5 +24,25 @@ test("mobile navigation cannot cover the fixed profile video viewer", () => {
   assert.match(
     homeSource,
     /data-profile-more-menu role="menu" hidden>[\s\S]*?<button id="reportBtn" type="button" role="menuitem"[^>]*>Report profile<\/button>/,
+  );
+});
+
+test("mobile navigation cannot cover the fixed profile photo viewer", () => {
+  assert.match(
+    homeSource,
+    /body\.profile-tv-viewer-open #discoveryTabs,\s+body\.profile-photo-viewer-open #discoveryTabs \{\s+visibility: hidden !important;\s+pointer-events: none !important;\s+\}/,
+  );
+  assert.match(homeSource, /document\.body\.appendChild\(profilePhotoViewer\)/);
+  assert.match(
+    homeSource,
+    /function openPhotoViewerFromElement[\s\S]*?document\.body\.classList\.add\("profile-photo-viewer-open"\);\s+syncOverlayScrollLock\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /function closeProfilePhotoViewer[\s\S]*?document\.body\.classList\.remove\("profile-photo-viewer-open"\);\s+syncOverlayScrollLock\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.profile-photo-viewer \{[\s\S]*?inset: 0;[\s\S]*?position: fixed;[\s\S]*?\.profile-photo-viewer-image \{[\s\S]*?height: 100dvh;[\s\S]*?width: 100vw;/,
   );
 });
