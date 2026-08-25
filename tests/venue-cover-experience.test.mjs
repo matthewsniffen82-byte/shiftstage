@@ -153,7 +153,7 @@ test("venue lineups show only dancers working now as compact avatar stacks", () 
   assert.doesNotMatch(venueSlide, /workingNowMarkup|home-discovery-feed-status is-now/);
   assert.match(
     aestheticSource,
-    /home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?top: 8%;[\s\S]*?right: 72px;[\s\S]*?left: 18px;[\s\S]*?height: 50%;[\s\S]*?pointer-events: none;/,
+    /home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?top: 5%;[\s\S]*?right: 72px;[\s\S]*?left: 18px;[\s\S]*?height: 50%;[\s\S]*?pointer-events: none;/,
   );
 });
 

@@ -2822,13 +2822,13 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   -webkit-backdrop-filter: blur(14px);
 }
 
-/* Every verified venue logo uses one protected stage at the same 33% card
+/* Every verified venue logo uses one protected stage at the same 30% card
  * baseline. Logo-content normalization happens inside this stage, so artwork
  * padding cannot move one venue identity above or below another. */
 .home-venue-discovery-art .home-venue-discovery-logo-shell {
   position: absolute;
   z-index: 1;
-  top: 8%;
+  top: 5%;
   right: 72px;
   bottom: auto;
   left: 18px;
