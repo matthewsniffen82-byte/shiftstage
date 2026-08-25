@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
+import { VenueQrUnavailable } from "@/app/components/VenueQrCode";
+import { DancerProfileActionsPreview } from "@/app/dancers/[slug]/DancerProfileActions";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { SocialLinks } from "@/app/dancers/[slug]/SocialLinks";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -3347,6 +3349,7 @@ function DancerProfilePreview({
                       <span aria-hidden="true">{name?.trim() || persistedName ? "✎" : "+"}</span>
                     </button>
                   ) : <h1 id="dancer-profile-preview-heading">{previewName}</h1>}
+                  {isApproved ? <span className="profile-verified" aria-label="Verified dancer">✓</span> : null}
                 </div>
                 <div className="profile-titlebar-context">
                   {isEditor ? (
@@ -3354,7 +3357,6 @@ function DancerProfilePreview({
                       {city?.trim() || persistedCity || "Add city"}<span aria-hidden="true">{city?.trim() || persistedCity ? "✎" : "+"}</span>
                     </button>
                   ) : <span className="profile-titlebar-city">{previewCity}</span>}
-                  <span className="profile-titlebar-status is-empty">{isApproved ? isPublic ? "Public profile" : "Incognito" : "Private preview"}</span>
                 </div>
               </div>
               <button
@@ -3367,25 +3369,6 @@ function DancerProfilePreview({
                 ×
               </button>
             </header>
-            {isEditor && builderRequirements?.length ? (
-              <section className="dancer-profile-builder-requirements" aria-label="Required profile setup">
-                <strong>{completedRequirements} of {builderRequirements.length} required items ready</strong>
-                <div>
-                  {builderRequirements.map((requirement) => (
-                    <button
-                      className={requirement.complete ? "is-complete" : "is-missing"}
-                      key={requirement.section}
-                      onClick={() => openEditorSection(requirement.section)}
-                      type="button"
-                    >
-                      <span aria-hidden="true">{requirement.complete ? "✓" : "+"}</span>
-                      <b>{requirement.label}</b>
-                      <small>{requirement.status}</small>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ) : null}
             {isEditor && !photos.length && !videos.length ? (
               <section className="profile-media-section dancer-profile-builder-empty-media" aria-label="Add profile media">
                 <div className="profile-media-tabs" role="group" aria-label="Add photos or videos">
@@ -3400,8 +3383,7 @@ function DancerProfilePreview({
                 </div>
                 <button className="profile-media-feature dancer-profile-builder-media-empty" onClick={() => openEditorSection("photos")} type="button">
                   <span aria-hidden="true">+</span>
-                  <strong>Add profile photos</strong>
-                  <small>Choose from your device or open your camera. At least one approved photo is required.</small>
+                  <strong>Add photos</strong>
                 </button>
                 <div className="profile-media-grid dancer-profile-builder-empty-slots" aria-label="Five empty photo slots">
                   {Array.from({ length: MAX_DANCER_PROFILE_PHOTOS }, (_, index) => (
@@ -3422,21 +3404,16 @@ function DancerProfilePreview({
             )}
             {isEditor ? (
               <>
-                <section className="profile-schedule-section dancer-profile-builder-static-card" aria-label="Schedule preview">
-                  <span className="eyebrow">Schedule</span>
-                  <h2>No shift posted</h2>
-                  <p>Your upcoming shifts will appear here after profile setup.</p>
+                <section className="profile-schedule-section" aria-labelledby="dancer-profile-builder-schedule-heading">
+                  <div className="profile-section-heading">
+                    <div><span className="eyebrow">Schedule</span><h2 id="dancer-profile-builder-schedule-heading">No shift posted</h2></div>
+                  </div>
+                  <p>This dancer has not posted an upcoming shift yet.</p>
                 </section>
-                <section className="dancer-profile-builder-deal" aria-label="Club Deal preview">
-                  <div><h2>Club Deal</h2><p>No Club Deal is active right now.</p></div>
-                  <span><b aria-hidden="true">◫</b><strong>Not active</strong><small>Check back later</small></span>
+                <section className="profile-deal-availability" aria-label="Club Deal status">
+                  <VenueQrUnavailable availability="not-available-now" venueName={previewCity} />
                 </section>
-                <div className="dancer-profile-builder-guest-actions" aria-label="Guest profile actions preview">
-                  <button disabled type="button">♡ <span>Follow</span></button>
-                  <button disabled type="button">♧ <span>Notify Me</span></button>
-                  <button disabled={!editorSections?.share} onClick={() => openEditorSection("share")} type="button">⌯ <span>Share Profile</span></button>
-                  <button disabled type="button">••• <span>Report & options</span></button>
-                </div>
+                <DancerProfileActionsPreview onShare={editorSections?.share ? () => openEditorSection("share") : undefined} />
               </>
             ) : null}
             {socialLinks.length ? (
@@ -3447,12 +3424,14 @@ function DancerProfilePreview({
             ) : isEditor ? (
               <section className="profile-social-section dancer-profile-builder-social-empty" aria-label="Add social links">
                 <span className="eyebrow">Socials</span>
-                <button onClick={() => openEditorSection("socials")} type="button"><span aria-hidden="true">+</span><strong>Add social links</strong><small>Instagram, TikTok, Snapchat, X, and OnlyFans</small></button>
+                <button onClick={() => openEditorSection("socials")} type="button"><span aria-hidden="true">+</span><strong>Add socials</strong></button>
               </section>
             ) : null}
             {isEditor ? (
-              <section className="dancer-profile-builder-metrics" aria-label="Profile metrics preview">
-                <div><b>0</b><span>Followers</span></div><div><b>0</b><span>Going</span></div><div><b>0</b><span>Views today</span></div>
+              <section className="profile-overview" aria-label={`${previewName} profile summary`}>
+                <dl className="profile-metrics" aria-label="Profile activity">
+                  <div><dd>0</dd><dt>Followers</dt></div><div><dd>0</dd><dt>Going</dt></div><div><dd>0</dd><dt>Views today</dt></div>
+                </dl>
               </section>
             ) : (
               <section className="profile-schedule-section dancer-profile-preview-status" aria-labelledby="dancer-profile-preview-status-heading">
@@ -3471,7 +3450,7 @@ function DancerProfilePreview({
             ) : null}
             {isEditor && onEditorSave ? (
               <footer className="dancer-profile-editor-footer">
-                <p role="status" aria-live="polite">{editorStatus || (requirementsComplete ? "Your required profile items are ready to save." : `Complete ${builderRequirements!.length - completedRequirements} required ${builderRequirements!.length - completedRequirements === 1 ? "item" : "items"} to continue.`)}</p>
+                <p role="status" aria-live="polite">{editorStatus || (builderRequirements?.length ? `${completedRequirements}/${builderRequirements.length} required` : "Save changes when finished")}</p>
                 <button disabled={isEditorSaving || !requirementsComplete} onClick={() => void saveEditor()} type="button">
                   {isEditorSaving ? "Saving..." : saveLabel}
                 </button>
@@ -3978,9 +3957,7 @@ function DancerOnboardingProfileMediaWorkspace({
   return (
     <article className="dancer-profile-editor-launch-card" aria-labelledby="dancer-profile-setup-launch-heading">
       <span>
-        <span className="eyebrow">Full profile setup</span>
-        <strong id="dancer-profile-setup-launch-heading">Build your profile in the live layout</strong>
-        <small>Add your identity, avatar, pictures, socials, and videos in one full-screen editor.</small>
+        <strong id="dancer-profile-setup-launch-heading">Build your profile</strong>
       </span>
       <DancerProfilePreview
         builderRequirements={builderRequirements}
@@ -4151,9 +4128,7 @@ function DancerPanel({
           <svg viewBox="0 0 24 24"><path d="M2.8 12s3.2-5.5 9.2-5.5 9.2 5.5 9.2 5.5-3.2 5.5-9.2 5.5S2.8 12 2.8 12Z" /><circle cx="12" cy="12" r="2.6" /></svg>
         </span>
         <span className="dancer-profile-media-preview-copy">
-          <span className="eyebrow">Full-screen editor</span>
-          <strong id="dancer-profile-media-preview-heading">Edit your full live profile</strong>
-          <small>Update everything in the same layout guests see, then save once and return here.</small>
+          <strong id="dancer-profile-media-preview-heading">Edit profile</strong>
         </span>
         <DancerProfilePreview
           buttonClassName="dancer-profile-media-preview-button"
@@ -8505,11 +8480,11 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-titlebar-identity > div { min-width: 0; display: flex; align-items: center; gap: 7px; }
       .dancer-profile-preview-overlay .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(20px,4vw,26px); line-height: 1.05; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
       .dancer-profile-preview-overlay .profile-titlebar-context { max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; overflow: hidden; }
-      .dancer-profile-preview-overlay .profile-titlebar-city, .dancer-profile-preview-overlay .profile-titlebar-status { min-height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; color: #c8bfd6; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 850; white-space: nowrap; }
-      .dancer-profile-preview-overlay .profile-titlebar-status { color: #a99eb7; font-size: 8px; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; }
+      .dancer-profile-preview-overlay .profile-titlebar-city { min-height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; color: #c8bfd6; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 850; white-space: nowrap; }
+      .dancer-profile-preview-overlay .profile-verified { width:20px; height:20px; flex:0 0 20px; display:inline-grid; place-items:center; border-radius:50%; color:#051019; background:#7eeaff; box-shadow:0 0 15px rgba(126,234,255,.3); font-size:12px; font-weight:950; }
       .dancer-profile-preview-overlay .public-profile-close { position: absolute; top: max(8px,env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .dancer-profile-preview-overlay .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13),0 0 22px rgba(34,199,255,.18); }
-      .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-social-section, .dancer-profile-preview-overlay .profile-schedule-section { width: min(100%,760px); max-width: 100%; min-width: 0; box-sizing: border-box; margin-inline: auto; }
+      .dancer-profile-preview-overlay .profile-overview, .dancer-profile-preview-overlay .profile-social-section, .dancer-profile-preview-overlay .live-actions, .dancer-profile-preview-overlay .profile-deal-availability, .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-schedule-section { width: min(100%,760px); max-width: 100%; min-width: 0; box-sizing: border-box; margin-inline: auto; }
       .dancer-profile-preview-overlay .profile-media-section { display: grid; gap: 9px; margin-top: 8px; }
       .dancer-profile-preview-overlay .profile-media-tabs { width: fit-content; display: grid; grid-template-columns: repeat(2,44px); justify-self: center; padding: 0; }
       .dancer-profile-preview-overlay .profile-media-tabs button { position: relative; isolation: isolate; width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #91869f; background: transparent; box-shadow: none; cursor: pointer; }
@@ -8553,10 +8528,41 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .social-list a.social-link-instagram svg, .dancer-profile-preview-overlay .social-list a.social-link-x svg { fill: none; }
       .dancer-profile-preview-overlay .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       .dancer-profile-preview-overlay .profile-schedule-section { display: grid; gap: 14px; margin-top: 24px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
-      .dancer-profile-preview-overlay .profile-section-heading { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 14px; }
+      .dancer-profile-preview-overlay .profile-section-heading { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .dancer-profile-preview-overlay .profile-section-heading > div { min-width: 0; display: grid; gap: 5px; }
       .dancer-profile-preview-overlay .profile-section-heading h2 { max-width: 100%; margin: 0; overflow-wrap: anywhere; color: #fff; font-size: clamp(22px,5vw,32px); line-height: 1.05; }
       .dancer-profile-preview-overlay .profile-section-heading > span { align-self: start; color: #9487a5; font-size: 11px; font-weight: 850; white-space: nowrap; }
+      .dancer-profile-preview-overlay .profile-schedule-section > p { margin:0; color:#cfc5de; font-size:13px; line-height:1.45; }
+      .dancer-profile-preview-overlay .profile-deal-availability { margin-top:12px; border:0; background:transparent; box-shadow:none; }
+      .dancer-profile-preview-overlay .venue-qr-unavailable { width:100%; min-height:140px; display:grid; grid-template-columns:minmax(0,1fr) 128px; align-items:center; justify-self:stretch; gap:14px; padding:14px 15px; border:1px solid rgba(148,163,184,.13); border-radius:18px; color:rgba(203,196,214,.76); background:rgba(17,17,24,.82); box-shadow:none; text-align:left; }
+      .dancer-profile-preview-overlay .profile-deal-availability::before, .dancer-profile-preview-overlay .profile-deal-availability::after, .dancer-profile-preview-overlay .venue-qr-unavailable::before, .dancer-profile-preview-overlay .venue-qr-unavailable::after { content:none !important; display:none !important; background:none !important; box-shadow:none !important; }
+      .dancer-profile-preview-overlay .venue-qr-placeholder-icon { width:128px; min-width:128px; min-height:112px; display:grid; grid-template-rows:42px auto; place-items:center; align-content:center; gap:8px; padding:12px 10px; border:1px solid rgba(148,163,184,.18); border-radius:14px; color:rgba(203,196,214,.58); background:rgba(255,255,255,.035); box-shadow:inset 0 1px 0 rgba(255,255,255,.03); opacity:1; }
+      .dancer-profile-preview-overlay .venue-qr-placeholder-icon > svg { width:42px; height:42px; }
+      .dancer-profile-preview-overlay .venue-qr-placeholder-icon .qr-finder { fill:none; stroke:currentColor; stroke-width:2; stroke-linejoin:miter; }
+      .dancer-profile-preview-overlay .venue-qr-placeholder-icon .qr-module { fill:currentColor; stroke:none; }
+      .dancer-profile-preview-overlay .venue-qr-unavailable-copy { min-width:0; display:grid; justify-items:start; gap:7px; }
+      .dancer-profile-preview-overlay .venue-qr-unavailable-label { color:rgba(203,196,214,.76); font-size:clamp(18px,5vw,23px); font-weight:950; letter-spacing:-.015em; line-height:1.05; }
+      .dancer-profile-preview-overlay .venue-qr-unavailable-copy small { color:rgba(203,196,214,.7); font-size:11px; font-weight:800; line-height:1.3; }
+      .dancer-profile-preview-overlay .venue-qr-placeholder-copy { display:grid; gap:2px; text-align:center; }
+      .dancer-profile-preview-overlay .venue-qr-placeholder-copy strong { color:rgba(203,196,214,.7); font-size:12px; font-weight:950; line-height:1.08; }
+      .dancer-profile-preview-overlay .venue-qr-placeholder-copy small { color:rgba(203,196,214,.64); font-size:9px; font-weight:850; line-height:1.12; }
+      .dancer-profile-preview-overlay .live-actions { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; padding:14px 0 12px; }
+      .dancer-profile-preview-overlay .live-actions > button, .dancer-profile-preview-overlay .profile-action-share-slot .profile-share button { width:100%; min-height:48px; display:inline-flex; align-items:center; justify-content:center; padding:7px 10px; border:1px solid rgba(148,229,255,.24); border-radius:12px; color:#fff; background:rgba(148,229,255,.075); cursor:pointer; font-size:12px; font-weight:900; text-align:center; }
+      .dancer-profile-preview-overlay .live-actions > button:disabled { opacity:.66; cursor:default; }
+      .dancer-profile-preview-overlay .live-actions .profile-action-going { grid-column:1 / -1; min-height:54px; flex-direction:column; gap:2px; }
+      .dancer-profile-preview-overlay .live-actions .profile-action-primary { border-color:rgba(126,234,255,.48); background:linear-gradient(135deg,rgba(109,40,217,.86),rgba(11,148,201,.74)); box-shadow:0 12px 30px rgba(49,46,129,.2),0 0 18px rgba(34,199,255,.08); }
+      .dancer-profile-preview-overlay .live-actions .profile-action-primary.profile-action-unavailable { border-color:rgba(148,137,166,.3); color:#bdb4ca; background:rgba(255,255,255,.055); }
+      .dancer-profile-preview-overlay .profile-action-requirement { color:#c7bbd8; font-size:8px; font-weight:850; line-height:1.1; }
+      .dancer-profile-preview-overlay .profile-action-share-slot, .dancer-profile-preview-overlay .profile-action-overflow { position:relative; min-width:0; }
+      .dancer-profile-preview-overlay .profile-action-share-slot .profile-share { display:block; min-height:48px; }
+      .dancer-profile-preview-overlay .profile-action-share-slot .profile-share button { gap:6px; }
+      .dancer-profile-preview-overlay .profile-action-overflow-toggle { width:100%; min-height:48px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:7px 10px; border:1px solid rgba(148,229,255,.18); border-radius:12px; color:#d8d0e4; background:rgba(255,255,255,.04); cursor:default; font-size:12px; font-weight:900; }
+      .dancer-profile-preview-overlay .profile-action-overflow-toggle > span:first-child { color:#9fefff; font-size:15px; letter-spacing:.08em; line-height:1; }
+      .dancer-profile-preview-overlay .profile-overview { display:block; margin-top:0; padding:10px 0 4px; border-top:1px solid rgba(126,234,255,.08); }
+      .dancer-profile-preview-overlay .profile-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin:0; }
+      .dancer-profile-preview-overlay .profile-metrics > div { min-width:0; display:grid; gap:4px; justify-items:center; padding:8px 4px; }
+      .dancer-profile-preview-overlay .profile-metrics dd { margin:0; color:#eee9f5; font-size:clamp(18px,3.5vw,24px); font-weight:950; line-height:1; }
+      .dancer-profile-preview-overlay .profile-metrics dt { color:#8f849c; font-size:clamp(9px,2.1vw,11px); font-weight:850; text-align:center; }
       .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .dancer-profile-preview-overlay.is-editor .dancer-profile-preview-shell { padding-bottom: max(156px,calc(env(safe-area-inset-bottom) + 136px)); }
       .dancer-profile-builder-avatar { appearance:none; padding:0; cursor:pointer; }
@@ -8571,21 +8577,11 @@ function DashboardStyles() {
       .dancer-profile-builder-city span { font-size:10px; font-weight:950; }
       body.dancr-button-system .dancer-profile-builder-identity { min-height:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; }
       body.dancr-button-system .dancer-profile-builder-city { min-height:22px !important; padding:0 8px !important; border-radius:999px !important; background:rgba(255,255,255,.035) !important; box-shadow:none !important; }
-      .dancer-profile-builder-requirements { width:min(100%,760px); max-width:100%; box-sizing:border-box; display:grid; gap:9px; margin:10px auto 13px; padding:12px; border:1px solid rgba(126,234,255,.2); border-radius:16px; background:linear-gradient(145deg,rgba(14,17,27,.96),rgba(8,7,13,.98)); box-shadow:0 16px 38px rgba(0,0,0,.23); }
-      .dancer-profile-builder-requirements > strong { color:#f8f7fb; font-size:12px; }
-      .dancer-profile-builder-requirements > div { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
-      .dancer-profile-builder-requirements button { min-width:0; min-height:58px; display:grid; grid-template-columns:24px minmax(0,1fr); align-items:center; gap:1px 7px; padding:8px; border:1px solid rgba(255,255,255,.1); border-radius:11px; color:#f7f5fa; background:rgba(255,255,255,.035); font:inherit; text-align:left; cursor:pointer; }
-      .dancer-profile-builder-requirements button > span { width:22px; height:22px; grid-row:1 / span 2; display:grid; place-items:center; border-radius:50%; color:#dffaff; background:rgba(34,199,255,.13); font-weight:950; }
-      .dancer-profile-builder-requirements button b { overflow:hidden; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
-      .dancer-profile-builder-requirements button small { color:#aca2b8; font-size:8px; font-weight:850; line-height:1.15; text-transform:uppercase; }
-      .dancer-profile-builder-requirements button.is-complete { border-color:rgba(76,223,166,.25); background:rgba(25,140,101,.08); }
-      .dancer-profile-builder-requirements button.is-complete > span,.dancer-profile-builder-requirements button.is-complete small { color:#70efbd; }
       .dancer-profile-builder-plus { position:absolute; z-index:3; top:0; right:0; width:16px; height:16px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.22); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 3px 9px rgba(0,0,0,.5); font-size:11px; font-weight:950; line-height:1; }
       .dancer-profile-builder-media-empty { min-height:clamp(360px,64dvh,620px); aspect-ratio:4 / 5 !important; display:grid; align-content:center; justify-items:center; gap:9px; padding:28px; border-style:dashed !important; border-color:rgba(126,234,255,.32) !important; color:#f9f8fb; background:radial-gradient(circle at 50% 38%,rgba(124,58,237,.22),transparent 13rem),#07070b !important; cursor:pointer; }
       .dancer-profile-builder-media-empty::after { display:none; }
       .dancer-profile-builder-media-empty > span { width:64px; height:64px; display:grid; place-items:center; border:1px solid rgba(126,234,255,.42); border-radius:50%; color:#fff; background:linear-gradient(135deg,#681fd4,#0d789e); box-shadow:0 0 32px rgba(109,40,217,.32); font-size:34px; font-weight:700; line-height:1; }
       .dancer-profile-builder-media-empty > strong { font-size:clamp(22px,5vw,31px); }
-      .dancer-profile-builder-media-empty > small { max-width:34ch; color:#bdb3c9; font-size:12px; line-height:1.45; text-align:center; }
       body.dancr-button-system .dancer-profile-builder-media-empty { min-height:clamp(360px,64dvh,620px) !important; padding:28px !important; border-radius:20px !important; background:radial-gradient(circle at 50% 38%,rgba(124,58,237,.22),transparent 13rem),#07070b !important; box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 34px rgba(124,58,237,.12) !important; }
       .dancer-profile-builder-empty-slots { justify-content:center; }
       .dancer-profile-builder-empty-slots button { width:64px; min-width:64px; aspect-ratio:4 / 5; display:grid; place-items:center; padding:0; border:1px dashed rgba(126,234,255,.27); border-radius:10px; color:#d8f8ff; background:rgba(126,234,255,.045); font:inherit; font-size:24px; cursor:pointer; }
@@ -8593,33 +8589,12 @@ function DashboardStyles() {
       .dancer-profile-builder-media-actions { width:min(100%,760px); max-width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:10px auto 0; }
       .dancer-profile-builder-media-actions button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(126,234,255,.24); border-radius:12px; color:#effcff; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(34,199,255,.06)); font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
       .dancer-profile-builder-media-actions button span { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; background:rgba(126,234,255,.12); }
-      .dancer-profile-builder-static-card h2,.dancer-profile-builder-static-card p,.dancer-profile-builder-deal h2,.dancer-profile-builder-deal p { margin:0; }
-      .dancer-profile-builder-static-card { gap:7px !important; }
-      .dancer-profile-builder-static-card h2 { font-size:22px; }
-      .dancer-profile-builder-static-card p,.dancer-profile-builder-deal p { color:#aca2b8; font-size:12px; line-height:1.4; }
-      .dancer-profile-builder-deal { width:min(100%,760px); max-width:100%; box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) 150px; align-items:center; gap:14px; margin:12px auto 0; padding:18px; border:1px solid rgba(139,92,246,.27); border-radius:18px; background:rgba(10,10,16,.84); }
-      .dancer-profile-builder-deal > div { display:grid; gap:7px; }
-      .dancer-profile-builder-deal h2 { font-size:22px; }
-      .dancer-profile-builder-deal > span { display:grid; justify-items:center; gap:4px; padding:16px 10px; border:1px solid rgba(255,255,255,.08); border-radius:15px; color:#8f849c; background:rgba(255,255,255,.025); text-align:center; text-transform:uppercase; }
-      .dancer-profile-builder-deal > span b { font-size:34px; line-height:1; }
-      .dancer-profile-builder-deal > span strong { font-size:10px; letter-spacing:.08em; }
-      .dancer-profile-builder-deal > span small { font-size:8px; text-transform:none; }
-      .dancer-profile-builder-guest-actions { width:min(100%,760px); max-width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:10px auto 0; }
-      .dancer-profile-builder-guest-actions button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:7px; border:1px solid rgba(255,255,255,.12); border-radius:12px; color:#d9d3e1; background:rgba(255,255,255,.045); font:inherit; font-size:16px; cursor:pointer; }
-      .dancer-profile-builder-guest-actions button span { font-size:11px; font-weight:900; }
-      .dancer-profile-builder-guest-actions button:disabled { opacity:.7; cursor:default; }
       .dancer-profile-builder-social-action { justify-self:center; min-height:36px; margin-top:10px; padding:0 13px; border:1px solid rgba(126,234,255,.22); border-radius:999px; color:#e9fbff; background:rgba(126,234,255,.07); font:inherit; font-size:10px; font-weight:900; cursor:pointer; }
       .dancer-profile-builder-social-action span { margin-right:6px; }
       .dancer-profile-builder-social-empty { justify-items:center; gap:10px !important; text-align:center; }
       .dancer-profile-builder-social-empty > button { min-height:88px; display:grid; grid-template-columns:42px minmax(0,1fr); align-items:center; gap:2px 10px; padding:12px 16px; border:1px dashed rgba(126,234,255,.3); border-radius:15px; color:#fff; background:rgba(126,234,255,.045); font:inherit; text-align:left; cursor:pointer; }
       .dancer-profile-builder-social-empty > button > span { width:40px; height:40px; grid-row:1 / span 2; display:grid; place-items:center; border-radius:50%; color:#fff; background:#5b20c8; font-size:24px; }
       .dancer-profile-builder-social-empty > button strong { font-size:15px; }
-      .dancer-profile-builder-social-empty > button small { color:#aaa0b6; font-size:10px; }
-      .dancer-profile-builder-metrics { width:min(100%,760px); max-width:100%; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:12px auto 0; padding:13px 0; border-top:1px solid rgba(255,255,255,.12); border-bottom:1px solid rgba(255,255,255,.12); }
-      .dancer-profile-builder-metrics > div { display:grid; justify-items:center; gap:3px; border-left:1px solid rgba(255,255,255,.12); }
-      .dancer-profile-builder-metrics > div:first-child { border-left:0; }
-      .dancer-profile-builder-metrics b { font-size:20px; }
-      .dancer-profile-builder-metrics span { color:#aaa0b6; font-size:9px; font-weight:850; }
       .dancer-profile-builder-panel { position:fixed; z-index:30; left:50%; bottom:0; width:min(calc(100% - 24px),760px); max-height:min(80dvh,780px); box-sizing:border-box; display:grid; grid-template-rows:auto minmax(0,1fr); overflow:hidden; padding:0 max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border:1px solid rgba(126,234,255,.28); border-bottom:0; border-radius:22px 22px 0 0; outline:none; color:#f7f2ff; background:linear-gradient(180deg,rgba(15,12,25,.995),rgba(5,5,8,.998)); box-shadow:0 -24px 80px rgba(0,0,0,.72),0 0 36px rgba(109,40,217,.2); transform:translateX(-50%); }
       .dancer-profile-builder-panel > header { position:sticky; z-index:2; top:0; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 2px 11px; border-bottom:1px solid rgba(255,255,255,.09); background:rgba(14,11,23,.98); }
       .dancer-profile-builder-panel > header > span { min-width:0; display:grid; gap:3px; }
@@ -8734,7 +8709,8 @@ function DashboardStyles() {
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dashboard-shell-dancer .dashboard-section-summary > summary { min-height: 62px; padding: 12px 14px; } .dashboard-shell-dancer .dashboard-section-primary > summary { min-height: 74px; padding: 14px; } .dashboard-shell-dancer .dashboard-section-secondary > summary { min-height: 68px; padding: 13px 14px; } .dashboard-shell-dancer .dashboard-section-utility > summary { min-height: 60px; padding: 11px 14px; } .dancer-status-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .dashboard-shell-dancer .dancer-status-metrics .metric { min-height: 64px; padding: 9px 10px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-profile-media-preview { grid-template-columns: 42px minmax(0,1fr); gap: 9px 11px; padding: 13px; } .dancer-profile-media-preview-icon { width: 40px; height: 40px; } .dancer-profile-media-preview-button { grid-column: 1 / -1; width: 100%; min-height: 46px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 60px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
-      @media (max-width: 620px) { .dancer-profile-editor-launch-card { grid-template-columns:1fr; padding:14px; } .dancer-profile-editor-launch-button { width:100%; min-width:0; } .dancer-profile-editor-tools { margin-top:18px; padding:12px; border-radius:17px; } .dancer-profile-editor-footer { grid-template-columns:1fr; gap:8px; } .dancer-profile-editor-footer button { width:100%; min-width:0; } .dancer-profile-builder-requirements > div { grid-template-columns:1fr; } .dancer-profile-builder-requirements button { min-height:48px; } .dancer-profile-builder-media-empty { min-height:clamp(330px,60dvh,520px); } .dancer-profile-builder-deal { grid-template-columns:minmax(0,1fr) 116px; padding:15px; } .dancer-profile-builder-panel { width:100%; max-height:84dvh; border-radius:20px 20px 0 0; } .dancer-profile-preview-overlay.is-editor .dancer-profile-editor-footer { width:100%; } }
+      @media (max-width: 620px) { .dancer-profile-editor-launch-card { grid-template-columns:1fr; padding:14px; } .dancer-profile-editor-launch-button { width:100%; min-width:0; } .dancer-profile-editor-tools { margin-top:18px; padding:12px; border-radius:17px; } .dancer-profile-editor-footer { grid-template-columns:1fr; gap:8px; } .dancer-profile-editor-footer button { width:100%; min-width:0; } .dancer-profile-builder-media-empty { min-height:clamp(330px,60dvh,520px); } .dancer-profile-preview-overlay .live-actions { grid-template-columns:repeat(2,minmax(0,1fr)); } .dancer-profile-builder-panel { width:100%; max-height:84dvh; border-radius:20px 20px 0 0; } .dancer-profile-preview-overlay.is-editor .dancer-profile-editor-footer { width:100%; } }
+      @media (max-width: 340px) { .dancer-profile-preview-overlay .venue-qr-unavailable { grid-template-columns:minmax(0,1fr) 112px; } .dancer-profile-preview-overlay .venue-qr-placeholder-icon { width:112px; min-width:112px; } }
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
       @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }
       @media (max-width: 620px) { .photo-upload-heading { align-items: flex-start; } .photo-source-action { min-height: 70px; } .photo-slot-summary { align-items: flex-start; flex-direction: column; gap: 2px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-review-list .photo-review-card { grid-template-columns: 92px minmax(0,1fr); align-items: start; min-height: 0; gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 92px; } }

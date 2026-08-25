@@ -105,6 +105,30 @@ export function DancerGoingCount() {
   return <>{new Intl.NumberFormat("en-US").format(goingCount)}</>;
 }
 
+export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
+  return (
+    <div className="live-actions" aria-label="Guest actions">
+      <button className="profile-action-primary profile-action-public profile-action-going profile-action-unavailable" disabled type="button">
+        I’m Going
+        <small className="profile-action-requirement">No shift posted</small>
+      </button>
+      <button className="profile-action-secondary" disabled type="button">Follow</button>
+      <button className="profile-action-secondary" disabled type="button">Notify me</button>
+      <div className="profile-action-share-slot">
+        <span className="profile-share">
+          <button disabled={!onShare} onClick={onShare} type="button">Share profile</button>
+        </span>
+      </div>
+      <div className="profile-action-overflow">
+        <button className="profile-action-overflow-toggle" disabled type="button">
+          <span aria-hidden="true">•••</span>
+          <span>More</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function DancerNotificationCount() {
   const { notificationCount } = useDancerFollowState();
   return <>{new Intl.NumberFormat("en-US").format(notificationCount)}</>;

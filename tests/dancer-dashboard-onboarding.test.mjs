@@ -139,10 +139,11 @@ test("step one guides dancers through required work in the live profile layout",
   assert.match(dashboard, /label: "Stage name & city", section: "identity"/);
   assert.match(dashboard, /label: "Avatar", section: "avatar"/);
   assert.match(dashboard, /label: "Profile photo", section: "photos"/);
-  assert.match(dashboard, /\{completedRequirements\} of \{builderRequirements\.length\} required items ready/);
+  assert.match(dashboard, /`\$\{completedRequirements\}\/\$\{builderRequirements\.length\} required`/);
   assert.match(dashboard, /videos: videoContent/);
   assert.match(dashboard, /socials: socialContent/);
-  assert.match(dashboard, /Build your profile in the live layout/);
+  assert.match(dashboard, /Build your profile/);
+  assert.doesNotMatch(dashboard, /required items ready|Choose from your device or open your camera\. At least one approved photo is required\./);
   assert.match(dashboard, /buttonLabel=\{profileReady \? "Review profile setup" : "Open profile setup"\}/);
   assert.match(dashboard, /saveLabel="Save & continue"/);
   assert.match(dashboard, /if \(!continueAfterSave \|\| !profileReady\) return;[\s\S]*?continueToPreview\(\)/);
@@ -354,15 +355,20 @@ test("approved dancers edit their full guest view from inside Profile & media", 
   assert.match(dashboard, /const isPublic = isApproved && profile\?\.is_public !== false && profile\?\.isPublic !== false/);
   assert.match(dashboard, /id="dancer-profile-media"[\s\S]*?\{profileMediaWorkspace\}/);
   assert.match(profileMediaWorkspace, /<article className="dancer-profile-media-preview"/);
-  assert.match(profileMediaWorkspace, /id="dancer-profile-media-preview-heading">Edit your full live profile/);
+  assert.match(profileMediaWorkspace, /id="dancer-profile-media-preview-heading">Edit profile/);
   assert.match(profileMediaWorkspace, /buttonLabel="Edit full profile"[\s\S]*editorSections=\{profileEditorSections\}[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
   assert.match(profileMediaWorkspace, /saveLabel="Save & return to dashboard"/);
   assert.match(profileMediaWorkspace, /document\.getElementById\("dancer-profile-media"\)[\s\S]*?section\.open = false/);
   assert.match(profileEditorSections, /identity: identityContent[\s\S]*?avatar: avatarContent[\s\S]*?photos: photoContent[\s\S]*?videos: videoContent[\s\S]*?socials: socialContent/);
   assert.match(profileEditorSections, /share: <DancerSharePanel profile=\{profile\} \/>/);
-  assert.match(dashboard, /className="profile-schedule-section dancer-profile-builder-static-card"/);
-  assert.match(dashboard, /className="dancer-profile-builder-deal"/);
-  assert.match(dashboard, /className="dancer-profile-builder-metrics"/);
+  assert.match(dashboard, /import \{ VenueQrUnavailable \} from "@\/app\/components\/VenueQrCode"/);
+  assert.match(dashboard, /import \{ DancerProfileActionsPreview \} from "@\/app\/dancers\/\[slug\]\/DancerProfileActions"/);
+  assert.match(dashboard, /className="profile-schedule-section"/);
+  assert.match(dashboard, /<VenueQrUnavailable availability="not-available-now" venueName=\{previewCity\} \/>/);
+  assert.match(dashboard, /<DancerProfileActionsPreview onShare=/);
+  assert.match(dashboard, /className="profile-overview"/);
+  assert.match(dashboard, /className="profile-metrics"/);
+  assert.doesNotMatch(dashboard, /dancer-profile-builder-(requirements|static-card|deal|guest-actions|metrics)/);
   assert.doesNotMatch(dashboard, /dancer-dashboard-profile-preview/);
   assert.match(dashboard, /Public profile preview/);
   assert.match(dashboard, /This is how your approved profile appears to guests/);
@@ -409,7 +415,7 @@ test("mobile onboarding remains one-column with reachable 44px-plus controls", (
   assert.match(dashboard, /\.dancer-profile-preview-shell \{ padding-inline: max\(12px,env\(safe-area-inset-left\)\) max\(12px,env\(safe-area-inset-right\)\)/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-titlebar \{ min-height: 60px/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-titlebar-context \{ max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap/);
-  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading \{ min-width: 0; display: grid; grid-template-columns: minmax\(0,1fr\) auto/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading \{ min-width: 0; display: flex; align-items: center; justify-content: space-between/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading h2 \{[^}]*overflow-wrap: anywhere/);
 });
 
