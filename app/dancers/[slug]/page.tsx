@@ -205,7 +205,13 @@ export default async function DancerPublicPage({ params }: PageProps) {
               ))}
             </div>
           </section>
-        ) : null}
+        ) : (
+          <section className="profile-schedule-empty" aria-label="Schedule status">
+            <strong>No shift posted</strong>
+            <span aria-hidden="true">·</span>
+            <span>Follow {profile.stageName} for updates</span>
+          </section>
+        )}
 
         <DancerProfileActions
           dancerId={profile.id}
@@ -274,8 +280,8 @@ export default async function DancerPublicPage({ params }: PageProps) {
         )}
 
         {profile.socialLinks.length ? (
-          <section className="profile-social-section" aria-labelledby="profile-social-heading">
-            <SocialLinks dancerId={profile.id} links={profile.socialLinks} />
+          <section className="profile-social-section" aria-label="External profiles">
+            <SocialLinks dancerId={profile.id} links={profile.socialLinks} showHeading={false} />
           </section>
         ) : null}
 
@@ -399,14 +405,17 @@ function PublicProfileStyles() {
       .profile-verified { width: 20px; height: 20px; flex: 0 0 20px; display: inline-grid; place-items: center; border-radius: 50%; color: #051019; background: #7eeaff; box-shadow: 0 0 15px rgba(126,234,255,.3); font-size: 12px; font-weight: 950; }
       .public-profile-close { position: absolute; top: max(8px, env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; flex: 0 0 40px; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
-      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
+      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section, .profile-schedule-empty { width: min(100%, 760px); margin-inline: auto; }
+      .profile-schedule-empty { min-width: 0; display: flex; align-items: center; gap: 6px; margin-top: 5px; padding: 8px 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #82798c; background: rgba(255,255,255,.025); font-size: 10px; line-height: 1.2; }
+      .profile-schedule-empty strong { flex: 0 0 auto; color: #d9d3e0; font-size: 12px; white-space: nowrap; }
+      .profile-schedule-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .profile-overview { display: block; margin-top: 0; padding: 10px 0 4px; border-top: 1px solid rgba(126,234,255,.08); }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 8px 4px; }
       .profile-metrics dd { margin: 0; color: #eee9f5; font-size: clamp(18px, 3.5vw, 24px); font-weight: 950; line-height: 1; }
       .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; text-align: center; }
-      .profile-social-section { display: grid; margin-top: 20px; margin-bottom: 8px; padding: 15px 14px 14px; border: 1px solid rgba(126,234,255,.18); border-radius: 18px; background: radial-gradient(circle at 50% 0%, rgba(126,234,255,.08), transparent 11rem), rgba(13,10,23,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 16px 38px rgba(0,0,0,.2); }
-      .social-links-control { display: grid; justify-items: center; gap: 12px; text-align: center; }
+      .profile-social-section { display: grid; margin-top: 6px; margin-bottom: 4px; padding: 6px 0 4px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .social-list-heading h2 { margin: 0; font-size: 15px; line-height: 1.1; }
@@ -419,6 +428,7 @@ function PublicProfileStyles() {
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
       .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 9px 0 8px; }
+      .live-actions.is-no-shift { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 11px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
       .live-actions .profile-action-primary { border-color: rgba(126,234,255,.48); background: linear-gradient(135deg, rgba(109,40,217,.86), rgba(11,148,201,.74)); box-shadow: 0 12px 30px rgba(49,46,129,.2), 0 0 18px rgba(34,199,255,.08); }
@@ -452,6 +462,8 @@ function PublicProfileStyles() {
       .profile-share-dialog-status { min-height: 16px; color: #9fefff; font-size: 11px; font-weight: 850; text-align: center; }
       .profile-action-overflow { position: relative; grid-column: 1 / -1; min-width: 0; justify-self: end; }
       .profile-action-overflow-toggle { min-width: 82px; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 5px 10px; border: 1px solid rgba(148,229,255,.14); border-radius: 999px; color: #bfb5cc; background: rgba(255,255,255,.025); cursor: pointer; font-size: 10px; font-weight: 900; }
+      .live-actions.is-no-shift .profile-action-overflow { grid-column: auto; width: 100%; justify-self: stretch; }
+      .live-actions.is-no-shift .profile-action-overflow-toggle { width: 100%; min-height: 44px; border-radius: 11px; }
       .profile-action-overflow-toggle > span:first-child { color: #9fefff; font-size: 15px; letter-spacing: .08em; line-height: 1; }
       .profile-action-overflow-menu { position: absolute; z-index: 30; right: 0; top: calc(100% + 7px); width: min(220px, 74vw); display: grid; gap: 6px; padding: 8px; border: 1px solid rgba(126,234,255,.28); border-radius: 13px; background: rgba(10,8,16,.98); box-shadow: 0 18px 48px rgba(0,0,0,.56), 0 0 20px rgba(34,199,255,.08); }
       .profile-action-overflow-menu button { min-height: 44px; padding: 0 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #d8d0e4; background: rgba(255,255,255,.035); font-size: 12px; font-weight: 850; text-align: left; cursor: pointer; }
@@ -471,13 +483,14 @@ function PublicProfileStyles() {
       p { margin: 0; color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .profile-active-deal { display: grid; justify-items: stretch; margin-top: 2px; }
       .profile-active-deal.has-club-deal { padding: 7px; border: 1px solid rgba(77,236,157,.5); border-radius: 15px; background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.12), transparent 14rem), rgba(5,18,14,.9); box-shadow: 0 12px 34px rgba(0,0,0,.3), 0 0 24px rgba(77,236,157,.11); }
-      .profile-active-deal.is-inactive { padding: 7px; border: 1px solid rgba(255,255,255,.09); border-radius: 15px; background: rgba(255,255,255,.025); box-shadow: none; }
-      .profile-club-deal-placeholder { min-height: 58px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 8px 9px; border: 1px solid rgba(255,255,255,.08); border-radius: 11px; background: rgba(6,7,10,.68); }
+      .profile-active-deal.is-inactive { padding: 5px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: rgba(255,255,255,.025); box-shadow: none; }
+      .profile-active-deal.is-inactive::before, .profile-active-deal.is-inactive::after { content: none; display: none; }
+      .profile-club-deal-placeholder { min-height: 48px; display: grid; grid-template-columns: minmax(0,1fr) 76px; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(6,7,10,.68); }
       .profile-club-deal-placeholder > span { min-width: 0; display: grid; gap: 3px; }
       .profile-club-deal-placeholder small { color: #8f849c; font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
       .profile-club-deal-placeholder strong { overflow: hidden; color: #d9d3e0; font-size: 14px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
       .profile-club-deal-placeholder em { overflow: hidden; color: #857b8f; font-size: 9px; font-style: normal; font-weight: 750; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-club-deal-placeholder button { min-width: 82px; min-height: 38px; padding: 0 11px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #756d7d; background: rgba(255,255,255,.025); font: inherit; font-size: 10px; font-weight: 900; }
+      .profile-club-deal-placeholder button { width: 76px; min-width: 76px; min-height: 38px; padding: 0 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #756d7d; background: rgba(255,255,255,.025); font: inherit; font-size: 10px; font-weight: 900; }
       .club-deal-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px; border: 1px solid rgba(126,234,255,.22); border-radius: 14px; background: rgba(0,0,0,.24); }
       .club-deal-copy { min-width: 0; display: grid; gap: 7px; }
       .club-deal-copy h2 { font-size: 20px; }
@@ -595,6 +608,7 @@ function PublicProfileStyles() {
         .profile-titlebar { min-height: 60px; }
         .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; }
         .live-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .live-actions.is-no-shift { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
         .profile-working-card { padding: 5px; }
         .club-deal-card { grid-template-columns: minmax(0, 1fr) 128px; gap: 14px; padding: 14px; }

@@ -38127,10 +38127,7 @@
         /* No-shift profiles should communicate the state without spending a
            full dashboard card on an unavailable schedule. */
         #profileBackdrop #profileModal .modal-grid > .profile-schedule-card.schedule-empty {
-          grid-template-columns: auto minmax(0, 1fr) !important;
-          align-items: center !important;
-          column-gap: 10px !important;
-          row-gap: 2px !important;
+          display: block !important;
           min-height: 0 !important;
           padding: 8px 10px !important;
           border-color: rgba(255,255,255,.08) !important;
@@ -38138,37 +38135,29 @@
           box-shadow: none !important;
         }
 
-        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty > strong {
-          grid-column: 1 !important;
-          grid-row: 1 / span 2 !important;
-          align-self: center !important;
-          padding: 6px 8px !important;
-          border: 1px solid rgba(255,255,255,.08) !important;
-          border-radius: 999px !important;
-          color: #91889c !important;
-          background: rgba(255,255,255,.025) !important;
-          font-size: 8px !important;
-          letter-spacing: .1em !important;
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-schedule-inline {
+          min-width: 0 !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          overflow: hidden !important;
+          line-height: 1.2 !important;
         }
 
-        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty > .profile-schedule-primary {
-          grid-column: 2 !important;
-          grid-row: 1 !important;
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-schedule-inline > strong {
+          flex: 0 0 auto !important;
           color: #d9d3e0 !important;
-          font-size: 14px !important;
-          line-height: 1.1 !important;
+          font-size: 12px !important;
+          white-space: nowrap !important;
         }
 
-        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty > .profile-schedule-explanation {
-          grid-column: 2 !important;
-          grid-row: 2 !important;
-          display: -webkit-box !important;
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-schedule-inline > span {
+          min-width: 0 !important;
           overflow: hidden !important;
           color: #82798c !important;
-          font-size: 9px !important;
-          line-height: 1.25 !important;
-          -webkit-box-orient: vertical !important;
-          -webkit-line-clamp: 2 !important;
+          font-size: 10px !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
         }
 
         #profileBackdrop .profile-modal-media {
@@ -38330,11 +38319,15 @@
           height: 28px !important;
         }
 
-        /* Follow, ride, share and schedule stay visible. Lower-frequency
-           actions live in the compact overflow menu. */
+        /* Available actions stay visible. Unavailable ride and schedule
+           controls do not consume space on no-shift profiles. */
         #profileBackdrop .modal-actions {
           grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
           gap: 6px !important;
+        }
+
+        #profileBackdrop .modal-actions.is-no-shift {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         }
 
         #profileBackdrop .modal-actions .action-btn,
@@ -38364,6 +38357,12 @@
           justify-self: end !important;
         }
 
+        #profileBackdrop .modal-actions.is-no-shift .profile-action-overflow {
+          grid-column: auto !important;
+          width: 100% !important;
+          justify-self: stretch !important;
+        }
+
         #profileBackdrop .profile-action-overflow-toggle {
           width: auto !important;
           min-height: 32px !important;
@@ -38373,6 +38372,15 @@
           color: #a9a0b4 !important;
           background: transparent !important;
           font-size: 10px !important;
+        }
+
+        #profileBackdrop .modal-actions.is-no-shift .profile-action-overflow-toggle {
+          width: 100% !important;
+          min-height: 44px !important;
+          padding: 5px 8px !important;
+          border: 1px solid rgba(255,255,255,.1) !important;
+          border-radius: 11px !important;
+          background: rgba(255,255,255,.035) !important;
         }
 
         #profileBackdrop .profile-action-overflow-menu :is(.action-btn, #reportBtn) {
@@ -38453,12 +38461,32 @@
           color: #d9d3e0 !important;
         }
 
+        #profileBackdrop #profileModal .profile-club-deal-tile.is-inactive {
+          grid-template-columns: minmax(0, 1fr) 76px !important;
+          gap: 8px !important;
+          padding: 6px 8px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-club-deal-tile.is-inactive::before,
+        #profileBackdrop #profileModal .profile-club-deal-tile.is-inactive::after {
+          content: none !important;
+          display: none !important;
+          background: none !important;
+          box-shadow: none !important;
+        }
+
         #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-copy small {
           color: #817889 !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
         }
 
         #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-qr-button {
-          min-height: 48px !important;
+          width: 76px !important;
+          min-width: 76px !important;
+          max-width: 76px !important;
+          min-height: 38px !important;
           grid-template-columns: minmax(0, 1fr) !important;
           place-items: center !important;
           border-color: rgba(255,255,255,.07) !important;
@@ -38495,6 +38523,10 @@
         @media (max-width: 520px) {
           #profileBackdrop .modal-actions {
             grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          }
+
+          #profileBackdrop .modal-actions.is-no-shift {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           }
         }
 
@@ -47497,21 +47529,13 @@
         })
         .filter((platform) => platform.url);
       if (!links.length) {
-        return `
-          <div class="info-tile social-tile">
-            <div class="social-tile-head">
-              <strong>Social links</strong>
-            </div>
-            <div class="meta">No social links posted</div>
-          </div>
-        `;
+        return includeUnapproved
+          ? '<div class="info-tile social-tile" aria-label="External profiles"><div class="meta">No profiles posted</div></div>'
+          : "";
       }
       return `
-        <div class="info-tile social-tile">
-          <div class="social-tile-head">
-            <strong>Social links</strong>
-          </div>
-          <div class="social-links">
+        <div class="info-tile social-tile" aria-label="External profiles">
+          <div class="social-links" role="list">
             ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noopener noreferrer" aria-label="${platform.label}" title="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}</a>`).join("")}
           </div>
         </div>
@@ -50685,11 +50709,16 @@
           ${shiftNotesMarkup(profile)}
         `;
       }
+      const emptyScheduleCopy = isEditorPreview
+        ? "Post a shift from your dashboard to show guests when and where you're working."
+        : `Follow ${escapeHtml(profile.name)} for updates`;
       return `
-          <div class="info-tile profile-schedule-card schedule-empty">
-          <strong>Schedule</strong>
-          <div class="profile-schedule-primary">No shift posted</div>
-          <p class="profile-schedule-explanation">${isEditorPreview ? "Post a shift from your dashboard to show guests when and where you're working." : "This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update."}</p>
+        <div class="info-tile profile-schedule-card schedule-empty" aria-label="Schedule status">
+          <div class="profile-schedule-inline">
+            <strong>No shift posted</strong>
+            <span aria-hidden="true">·</span>
+            <span>${emptyScheduleCopy}</span>
+          </div>
         </div>
       `;
     }
@@ -50764,17 +50793,18 @@
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
       const canMarkGoing = Boolean(profile.shiftId);
       const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
+      const hasShiftActions = Boolean(profile.scheduled);
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
         ? `<button class="action-btn going-btn is-primary-action ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
         : `<button class="action-btn going-btn is-unavailable" id="goingBtn" type="button" disabled aria-disabled="true">${profileActionButtonMarkup("clock", goingCopy.idle)}<small class="profile-action-requirement">No shift posted</small></button>`;
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
-        <div class="modal-actions" aria-label="Guest actions">
+        <div class="modal-actions ${hasShiftActions ? "has-shift-actions" : "is-no-shift"}" aria-label="Guest actions">
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
-          <div class="profile-primary-ride">${rideMarkup || '<button class="action-btn secondary is-unavailable" type="button" disabled>Get a Ride</button>'}</div>
+          ${hasShiftActions && rideMarkup ? `<div class="profile-primary-ride">${rideMarkup}</div>` : ""}
           <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
-          <button class="action-btn secondary profile-schedule-action" type="button" data-profile-schedule-action ${profile.scheduled ? "" : "disabled"}>Schedule</button>
+          ${hasShiftActions ? '<button class="action-btn secondary profile-schedule-action" type="button" data-profile-schedule-action>Schedule</button>' : ""}
           <div class="profile-action-overflow">
             <button class="profile-action-overflow-toggle" type="button" data-profile-more-actions aria-haspopup="menu" aria-expanded="false" aria-label="More profile actions"><span aria-hidden="true">•••</span><span>More</span></button>
             <div class="profile-action-overflow-menu" data-profile-more-menu role="menu" hidden>

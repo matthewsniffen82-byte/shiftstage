@@ -167,7 +167,7 @@ test("working-now profiles show the club's active deal without granting demo com
   assert.match(profilePage, /dancerId=\{dancerAttributionEligible \? profile\.id : null\}/);
 });
 
-test("profile actions prioritize Follow, Ride, Share, and Schedule while preserving safety actions", () => {
+test("profile actions prioritize available controls while preserving shift and safety actions", () => {
   assert.match(
     profileActions,
     /className=\{`profile-action-primary\$\{showSignedOutRequirements \? " profile-action-requires-account" : ""\}`\}/,
@@ -175,7 +175,7 @@ test("profile actions prioritize Follow, Ride, Share, and Schedule while preserv
   assert.match(profileActions, /aria-checked=\{isGoing\}/);
   assert.match(profileActions, /role="menuitemcheckbox"/);
   const followButtonIndex = profileActions.indexOf('className={`profile-action-primary');
-  const rideIndex = profileActions.indexOf('{rideControl ?');
+  const rideIndex = profileActions.indexOf('{hasShiftActions && rideControl ?');
   const shareIndex = profileActions.indexOf('{shareControl ?');
   const scheduleIndex = profileActions.indexOf('className="profile-action-secondary profile-action-schedule"');
   const goingIndex = profileActions.indexOf('className={`profile-action-going-menu');
@@ -197,6 +197,11 @@ test("profile actions prioritize Follow, Ride, Share, and Schedule while preserv
     profileActions,
     /reason: "Profile report"[\s\S]*details: "Reported from the public dancer profile\."/,
   );
+  assert.match(profileActions, /const hasShiftActions = shifts\.length > 0/);
+  assert.match(profileActions, /live-actions\$\{hasShiftActions \? " has-shift-actions" : " is-no-shift"\}/);
+  assert.match(profileActions, /\{hasShiftActions \? \([\s\S]*?profile-action-schedule/);
+  assert.match(profilePage, /className="profile-schedule-empty" aria-label="Schedule status"[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
+  assert.match(profilePage, /\.live-actions\.is-no-shift \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
 });
 
 test("reports are bounded, validated, attributable when possible, and logged", () => {
@@ -260,10 +265,14 @@ test("profile videos stay passive in the grid and open the complete full-screen 
   assert.match(profilePage, /\.profile-media-grid-item \{[\s\S]*?aspect-ratio: 9 \/ 16;/);
 });
 
-test("social icons use one simple Socials heading without publishing handles", () => {
+test("public social icons render without a visible heading or published handles", () => {
   assert.match(socialLinks, /heading = "Socials"/);
   assert.match(socialLinks, /showConnectLabel = false/);
-  assert.match(socialLinks, /<h2 id="profile-social-heading">\{heading\}<\/h2>/);
+  assert.match(socialLinks, /showHeading = true/);
+  assert.match(socialLinks, /\{showHeading \? \([\s\S]*?<h2 id="profile-social-heading">\{heading\}<\/h2>/);
+  assert.match(profilePage, /showHeading=\{false\}/);
+  assert.match(profilePage, /className="profile-social-section" aria-label="External profiles"/);
+  assert.doesNotMatch(profilePage, /aria-labelledby="profile-social-heading"/);
   assert.match(socialLinks, /rel="noopener noreferrer"/);
   assert.match(socialLinks, /opens in a new tab/);
   assert.match(socialLinks, /\{links\.map\(\(link\) =>/);

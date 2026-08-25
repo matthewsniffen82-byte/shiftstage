@@ -14,6 +14,7 @@ type SocialLinksProps = {
   links: PublicSocialLink[];
   heading?: string;
   showConnectLabel?: boolean;
+  showHeading?: boolean;
   trackClicks?: boolean;
 };
 
@@ -25,7 +26,7 @@ const platformLabels: Record<SocialPlatform, string> = {
   onlyfans: "OnlyFans",
 };
 
-export function SocialLinks({ dancerId, heading = "Socials", links, showConnectLabel = false, trackClicks = true }: SocialLinksProps) {
+export function SocialLinks({ dancerId, heading = "Socials", links, showConnectLabel = false, showHeading = true, trackClicks = true }: SocialLinksProps) {
   if (!links.length) return null;
 
   function recordClick(platform: SocialPlatform) {
@@ -51,11 +52,13 @@ export function SocialLinks({ dancerId, heading = "Socials", links, showConnectL
 
   return (
     <div className="social-links-control">
-      <div className="social-list-heading">
-        {showConnectLabel ? <span>Connect</span> : null}
-        <h2 id="profile-social-heading">{heading}</h2>
-      </div>
-      <div className="social-list" aria-label="Social links">
+      {showHeading ? (
+        <div className="social-list-heading">
+          {showConnectLabel ? <span>Connect</span> : null}
+          <h2 id="profile-social-heading">{heading}</h2>
+        </div>
+      ) : null}
+      <div className="social-list" aria-label="External profiles">
         {links.map((link) => (
           <a
             aria-label={`${platformLabels[link.platform]} (opens in a new tab after a third-party warning)`}

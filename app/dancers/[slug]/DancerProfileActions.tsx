@@ -198,6 +198,7 @@ export function DancerProfileActions({
     [shifts],
   );
   const actionShiftId = actionShift?.id || "";
+  const hasShiftActions = shifts.length > 0;
   const isGoing = Boolean(actionShift && saved.goingShiftIds.includes(actionShift.id));
   const showSignedOutRequirements = savedLoaded && !token;
 
@@ -480,7 +481,7 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className="live-actions" aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
+      <div className={`live-actions${hasShiftActions ? " has-shift-actions" : " is-no-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
           className={`profile-action-primary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
@@ -494,24 +495,23 @@ export function DancerProfileActions({
             <small className="profile-action-requirement">Sign in required</small>
           ) : null}
         </button>
-        {rideControl ? (
+        {hasShiftActions && rideControl ? (
           <div className="profile-action-ride-slot">{rideControl}</div>
-        ) : (
-          <button className="profile-action-secondary profile-action-unavailable" disabled type="button">Get a Ride</button>
-        )}
+        ) : null}
         {shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>
         ) : (
           <button className="profile-action-secondary profile-action-unavailable" disabled type="button">Share</button>
         )}
-        <button
-          className="profile-action-secondary profile-action-schedule"
-          disabled={!shifts.length}
-          onClick={() => setScheduleOpen(true)}
-          type="button"
-        >
-          Schedule
-        </button>
+        {hasShiftActions ? (
+          <button
+            className="profile-action-secondary profile-action-schedule"
+            onClick={() => setScheduleOpen(true)}
+            type="button"
+          >
+            Schedule
+          </button>
+        ) : null}
         <div className="profile-action-overflow" ref={moreActionsRef}>
           <button
             aria-expanded={moreActionsOpen}

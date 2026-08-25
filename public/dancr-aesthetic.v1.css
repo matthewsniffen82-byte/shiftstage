@@ -3824,6 +3824,22 @@ body.dancr-button-system #profileBackdrop .social-tile {
   box-shadow: none !important;
 }
 
+body.dancr-button-system .public-profile-shell .profile-social-section {
+  margin-top: 6px !important;
+  margin-bottom: 4px !important;
+  padding: 6px 0 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop, .public-profile-shell) .social-links {
+  justify-content: center !important;
+  gap: 7px !important;
+  margin: 0 !important;
+}
+
 body.dancr-button-system #profileBackdrop .social-tile::before,
 body.dancr-button-system #profileBackdrop .profile-activity-metrics::before {
   content: none !important;

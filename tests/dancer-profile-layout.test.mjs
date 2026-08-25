@@ -50,7 +50,8 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(profilePage, /profile\.profileViewsToday \|\| 0/);
   assert.match(profilePage, /<dt>Views today<\/dt>/);
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
-  assert.match(profilePage, /aria-labelledby="profile-social-heading"/);
+  assert.match(profilePage, /className="profile-social-section" aria-label="External profiles"/);
+  assert.match(profilePage, /<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>/);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);
 
   assert.match(liveApp, /class="profile-modal-summary"/);
@@ -189,7 +190,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /Follow, ride, share and schedule stay visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
+    /Available actions stay visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,

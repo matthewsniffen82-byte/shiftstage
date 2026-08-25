@@ -27,5 +27,6 @@ test("editor guidance stays concise and inactive profile deals retain their slot
   assert.match(liveApp, /label: "No active club deal"[\s\S]*?Deals activate after a verified club check-in\./);
   assert.doesNotMatch(liveApp, /Unlocks after you verify you're working and the venue has an active offer\./);
   assert.match(liveApp, /This is the dancer's next posted shift\. Follow or turn on notifications for schedule updates\./);
-  assert.match(liveApp, /This dancer has not posted an upcoming shift yet\. Follow or turn on notifications to see the next update\./);
+  assert.match(liveApp, /const emptyScheduleCopy = isEditorPreview[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;/);
+  assert.match(liveApp, /<strong>No shift posted<\/strong>[\s\S]*?<span>\$\{emptyScheduleCopy\}<\/span>/);
 });

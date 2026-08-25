@@ -15,14 +15,14 @@ const profilePolishBlock = liveApp.match(
   /\/\* Instagram-familiar dancer profile hierarchy; scoped away from global navigation\. \*\/[\s\S]*?\/\* Venue profiles keep X dismissal/,
 )?.[0];
 
-test("empty and upcoming schedules use one explanatory production card", () => {
+test("empty schedules collapse to one status line while upcoming schedules retain their destination", () => {
   assert.match(
     liveApp,
     /if \(profile\.scheduled\) \{[\s\S]*?class="info-tile profile-schedule-card schedule-upcoming"[\s\S]*?This is the dancer's next posted shift\./,
   );
   assert.match(
     liveApp,
-    /class="info-tile profile-schedule-card schedule-empty"[\s\S]*?<strong>Schedule<\/strong>[\s\S]*?No shift posted[\s\S]*?has not posted an upcoming shift yet\./,
+    /const emptyScheduleCopy =[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;[\s\S]*?class="info-tile profile-schedule-card schedule-empty" aria-label="Schedule status">[\s\S]*?class="profile-schedule-inline">[\s\S]*?<strong>No shift posted<\/strong>[\s\S]*?\$\{emptyScheduleCopy\}/,
   );
   assert.doesNotMatch(
     liveApp,
@@ -30,7 +30,7 @@ test("empty and upcoming schedules use one explanatory production card", () => {
   );
   assert.match(
     liveApp,
-    /No-shift profiles should communicate the state[\s\S]*?\.profile-schedule-card\.schedule-empty \{[\s\S]*?grid-template-columns: auto minmax\(0, 1fr\) !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 8px 10px !important;/,
+    /No-shift profiles should communicate the state[\s\S]*?\.profile-schedule-card\.schedule-empty \{[\s\S]*?display: block !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 8px 10px !important;[\s\S]*?\.profile-schedule-inline \{[\s\S]*?display: flex !important;/,
   );
   const shiftsFunction = liveApp.match(
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
@@ -150,6 +150,12 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     /#profileBackdrop \.modal-actions :is\([\s\S]*?#followBtn,[\s\S]*?#notifyBtn,[\s\S]*?\.profile-share-action,[\s\S]*?\.profile-action-overflow-toggle[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;/,
   );
   assert.match(liveApp, /\.profile-action-overflow \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;/);
+  assert.match(liveActionsMarkup, /const hasShiftActions = Boolean\(profile\.scheduled\)/);
+  assert.match(liveActionsMarkup, /modal-actions \$\{hasShiftActions \? "has-shift-actions" : "is-no-shift"\}/);
+  assert.match(liveActionsMarkup, /\$\{hasShiftActions && rideMarkup \? `<div class="profile-primary-ride">\$\{rideMarkup\}<\/div>` : ""\}/);
+  assert.match(liveActionsMarkup, /\$\{hasShiftActions \? '<button class="action-btn secondary profile-schedule-action"/);
+  assert.match(liveApp, /\.modal-actions\.is-no-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
+  assert.match(liveApp, /\.modal-actions\.is-no-shift \.profile-action-overflow \{[\s\S]*?grid-column: auto !important;[\s\S]*?justify-self: stretch !important;/);
 });
 
 test("profile socials and activity metrics use a compact neutral presentation", () => {
@@ -194,6 +200,12 @@ test("profile socials and activity metrics use a compact neutral presentation", 
     liveApp,
     /followerLabelEl\.textContent = followerCount === 1 \? "Follower" : "Followers"/,
   );
+  const publicSocialMarkup = liveApp.match(
+    /function socialLinksMarkup\(profile, options = \{\}\) \{[\s\S]*?function approvedDancerShiftVenues/,
+  )?.[0] || "";
+  assert.match(publicSocialMarkup, /aria-label="External profiles"/);
+  assert.match(publicSocialMarkup, /class="social-links" role="list"/);
+  assert.doesNotMatch(publicSocialMarkup, />Social links</);
 });
 
 test("home profile overlay mirrors the public profile information hierarchy", () => {
