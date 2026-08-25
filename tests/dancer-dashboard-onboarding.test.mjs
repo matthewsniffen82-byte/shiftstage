@@ -401,6 +401,7 @@ test("approved dancers edit their full guest view from inside Profile & media", 
   assert.match(dashboard, /\.dancer-profile-media-preview-button \{[^}]*min-height: 44px/);
   assert.match(dashboard, /\.dancer-profile-media-preview-button \{ grid-column: 1 \/ -1; width: 100%; min-height: 46px/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \*, \.dancer-profile-preview-overlay \*::before, \.dancer-profile-preview-overlay \*::after \{ box-sizing:border-box; \}/);
+  assert.match(dashboard, /@media \(max-width: 620px\) \{[^\n]*\.dancer-profile-preview-overlay \.profile-titlebar \{ min-height: 64px; \} \.dancer-profile-preview-overlay \.profile-titlebar-avatar \{ width: 48px; height: 48px; flex-basis: 48px; \}/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-schedule-section \.eyebrow \{ color:#f7f2ff; \}/);
 });
 
@@ -441,7 +442,7 @@ test("mobile onboarding remains one-column with reachable 44px-plus controls", (
   assert.match(dashboard, /\.dancer-profile-preview-overlay \{[^}]*overflow-x: hidden; overflow-y: auto;[^}]*overscroll-behavior-x: none/);
   assert.match(dashboard, /\.dancer-profile-preview-shell \{[^}]*width: 100%; max-width: 100%; min-width: 0;[^}]*overflow-x: hidden/);
   assert.match(dashboard, /\.dancer-profile-preview-shell \{ padding-inline: max\(12px,env\(safe-area-inset-left\)\) max\(12px,env\(safe-area-inset-right\)\)/);
-  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-titlebar \{ min-height: 60px/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-titlebar \{ min-height: 64px/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-titlebar-context \{ max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading \{ min-width: 0; display: flex; align-items: center; justify-content: space-between/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-section-heading h2 \{[^}]*overflow-wrap: anywhere/);

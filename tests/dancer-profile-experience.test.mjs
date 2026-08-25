@@ -55,6 +55,10 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.doesNotMatch(profilePage, /\.profile-titlebar \{ position: sticky;/);
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?gap: 10px;/);
   assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 42px; height: 42px;/);
+  assert.match(
+    profilePage,
+    /@media \(max-width: 600px\) \{[\s\S]*?\.profile-titlebar \{ min-height: 64px; \}[\s\S]*?\.profile-titlebar-avatar \{ width: 48px; height: 48px; flex-basis: 48px; \}/,
+  );
   assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);
   assert.match(
     profilePage,

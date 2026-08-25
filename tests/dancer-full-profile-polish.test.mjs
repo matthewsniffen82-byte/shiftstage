@@ -290,7 +290,7 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 42px minmax\(0, 1fr\);[\s\S]*?min-height: 60px;[\s\S]*?margin-inline: -12px;/,
+    /#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 48px minmax\(0, 1fr\);[\s\S]*?min-height: 66px;[\s\S]*?margin-inline: -12px;/,
   );
   assert.match(
     liveApp,
@@ -378,6 +378,10 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.profile-modal-avatar \{[\s\S]*?width: 44px;[\s\S]*?border: 1px solid rgba\(126,234,255,\.46\);[\s\S]*?box-shadow: none;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 48px minmax\(0, 1fr\);[\s\S]*?min-height: 66px;[\s\S]*?#profileBackdrop \.profile-modal-avatar \{\s*width: 48px;/,
   );
   assert.match(
     profilePolishBlock,

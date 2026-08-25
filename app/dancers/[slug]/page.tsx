@@ -614,8 +614,8 @@ function PublicProfileStyles() {
       .profile-report-error { color: #ffb4c8; }
       @media (max-width: 600px) {
         .public-profile-shell { padding: 0 12px max(132px, calc(108px + env(safe-area-inset-bottom))); }
-        .profile-titlebar { min-height: 60px; }
-        .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; }
+        .profile-titlebar { min-height: 64px; }
+        .profile-titlebar-avatar { width: 48px; height: 48px; flex-basis: 48px; }
         .live-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .live-actions.is-no-shift { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
