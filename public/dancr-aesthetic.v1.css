@@ -2876,7 +2876,11 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 .venue-card-logo-shell {
-  width: min(76%, 350px);
+  /* Center the legacy logo stage inside the usable content column instead of
+   * beneath the right-side action rail. The width grows on larger cards while
+   * retaining the same protected 72px action gutter used by the live feed. */
+  left: calc(50% - 28px);
+  width: min(calc(100% - 72px), 390px);
   height: 58%;
   min-height: 136px;
   border-radius: 30px;
