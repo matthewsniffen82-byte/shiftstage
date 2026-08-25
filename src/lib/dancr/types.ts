@@ -25,6 +25,7 @@ export type NotificationType =
   | "ranking_milestone"
   | "approval_status"
   | "venue_claim_status"
+  | "venue_publication_status"
   | "venue_affiliation_status"
   | "tv_video_status"
   | "dmca_status"

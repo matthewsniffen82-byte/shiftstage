@@ -6,6 +6,7 @@ const [
   signupMigration,
   reviewMigration,
   approvalPublicationMigration,
+  venueLiveNotificationMigration,
   venueService,
   venueAccess,
   publicationRoute,
@@ -23,10 +24,12 @@ const [
   coordinateMigration,
   adminVenuePreviewRoute,
   liveShell,
+  dancrTypes,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608240001_admin_managed_venue_page_review.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608240002_venue_approval_publishes_page.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608240007_venue_card_live_notification.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-access.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/publication/route.ts", import.meta.url), "utf8"),
@@ -44,6 +47,7 @@ const [
   readFile(new URL("../supabase/migrations/202608240006_require_published_venue_coordinates.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/venues/preview/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
 ]);
 
 test("approved requests still create private workspaces without public activation", () => {
@@ -75,6 +79,20 @@ test("private venue owners keep read-only access and approval publishes the comp
   assert.doesNotMatch(venueService, /export async function publishVenueForAccount/);
   assert.match(publicationRoute, /decision === "approved" \|\| body\?\.decision === "changes_requested"/);
   assert.match(publicationRoute, /Page approved and published\. Your venue is now live on MyDancr\./);
+});
+
+test("first publication notifies every active venue account that its card is live", () => {
+  assert.match(venueLiveNotificationMigration, /alter type public\.notification_type add value if not exists 'venue_publication_status'/);
+  assert.match(venueLiveNotificationMigration, /new\.is_active is true[\s\S]*?new\.page_review_status = 'published'[\s\S]*?new\.published_at is not null[\s\S]*?old\.published_at is null/);
+  assert.match(venueLiveNotificationMigration, /select new\.owner_user_id as user_id[\s\S]*?from public\.venue_team_members as member[\s\S]*?member\.status = 'active'/);
+  assert.match(venueLiveNotificationMigration, /'Your venue card is live'/);
+  assert.match(venueLiveNotificationMigration, /'kind', 'venue_card_live'[\s\S]*?'venueSlug', new\.slug/);
+  assert.match(venueLiveNotificationMigration, /not exists[\s\S]*?existing\.notification_type = 'venue_publication_status'[\s\S]*?existing\.payload @> jsonb_build_object/);
+  assert.match(venueLiveNotificationMigration, /after update of is_active, published_at, page_review_status on public\.venues/);
+  assert.match(dancrTypes, /\| "venue_publication_status"/);
+  assert.match(dashboard, /const \[notificationRevision, setNotificationRevision\] = useState\(0\)/);
+  assert.match(dashboard, /decision === "approved"\) setNotificationRevision\(\(current\) => current \+ 1\)/);
+  assert.match(dashboard, /<NotificationPanel refreshKey=\{notificationRevision\} \/>/);
 });
 
 test("only MyDancr can prepare and send a page before venue-controlled publication", () => {
@@ -186,6 +204,7 @@ test("manager access email and documentation describe the managed workflow", () 
   assert.match(documentation, /venue reviews the same official information and commercial package/);
   assert.match(documentation, /MyDancr controls the venue-card and page presentation/);
   assert.match(documentation, /Approval publishes that exact completed page immediately/);
+  assert.match(documentation, /“Your venue card is live” notification/);
   assert.match(documentation, /approved review atomically marks that exact page published/);
 });
 

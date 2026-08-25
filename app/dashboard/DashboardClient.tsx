@@ -598,10 +598,12 @@ function NotificationPanel({
   saved,
   customerMode = false,
   panelId,
+  refreshKey = 0,
 }: {
   saved?: LoadState["saved"];
   customerMode?: boolean;
   panelId?: string;
+  refreshKey?: number;
 } = {}) {
   const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
   const [status, setStatus] = useState("");
@@ -612,7 +614,7 @@ function NotificationPanel({
         setNotifications(data.notifications || []);
       })
       .catch((error) => setStatus(error instanceof Error ? error.message : "Unable to load notifications."));
-  }, []);
+  }, [refreshKey]);
 
   async function markAllRead() {
     try {
@@ -1902,6 +1904,7 @@ function VenuePanel({
   const [publicationStatus, setPublicationStatus] = useState("");
   const [isPublishingVenue, setIsPublishingVenue] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
+  const [notificationRevision, setNotificationRevision] = useState(0);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => initialVenueWorkspace(profile?.isActive === true));
 
   useEffect(() => {
@@ -1923,6 +1926,7 @@ function VenuePanel({
       });
       onProfileChange(data.profile);
       onPublicationChange(data.publication);
+      if (decision === "approved") setNotificationRevision((current) => current + 1);
       if (decision === "changes_requested") setReviewNotes("");
       setPublicationStatus(data.message || "Venue page review saved.");
     } catch (error) {
@@ -2340,7 +2344,7 @@ function VenuePanel({
             <Metric label="Email" value={String(account?.email || "Private")} />
             <Metric label="Role" value={String(account?.role || "venue")} />
           </InfoPanel>
-          <NotificationPanel />
+          <NotificationPanel refreshKey={notificationRevision} />
           <SupportInboxPanel initialThreads={supportThreads} />
           <AccountControlsPanel
             accountRole="venue"
