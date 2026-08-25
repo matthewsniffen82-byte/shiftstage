@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
+import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 
 export function TvVideoStrip({
   title,
@@ -15,7 +16,7 @@ export function TvVideoStrip({
   const [activeVideo, setActiveVideo] = useState<MyDancrTvVideo | null>(null);
   const [viewerStatus, setViewerStatus] = useState("");
   const [viewerPaused, setViewerPaused] = useState(false);
-  const [viewerMuted, setViewerMuted] = useState(true);
+  const [viewerMuted, setViewerMuted] = useVideoSoundPreference();
   const viewerVideo = useRef<HTMLVideoElement | null>(null);
   const previewCards = useRef<Record<string, HTMLButtonElement | null>>({});
   const closeButton = useRef<HTMLButtonElement | null>(null);
@@ -122,7 +123,6 @@ export function TvVideoStrip({
 
     if (!video.muted) {
       video.muted = true;
-      setViewerMuted(true);
       try {
         await video.play();
         setViewerStatus("");
@@ -207,7 +207,6 @@ export function TvVideoStrip({
               onClick={() => {
                 setViewerStatus("");
                 setViewerPaused(false);
-                setViewerMuted(true);
                 setActiveVideo(video);
               }}
               onFocus={(event) => playPreviewCard(event.currentTarget)}
