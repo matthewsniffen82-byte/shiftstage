@@ -3870,21 +3870,21 @@ body.dancr-button-system #profileBackdrop .social-tile .social-link svg {
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics {
-  padding: 6px 0 5px !important;
+  padding: 10px 0 9px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics > div {
-  gap: 1px !important;
-  padding: 1px 4px !important;
+  gap: 4px !important;
+  padding: 4px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics dd {
-  font-size: clamp(17px, 4vw, 21px) !important;
+  font-size: clamp(18px, 4.25vw, 22px) !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
-  font-size: clamp(9px, 2.2vw, 10px) !important;
-  line-height: 1.15 !important;
+  font-size: clamp(9px, 2.3vw, 11px) !important;
+  line-height: 1.2 !important;
 }
 
 /* Production TV-card branding keeps the moving media as the visual hero.

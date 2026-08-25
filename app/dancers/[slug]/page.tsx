@@ -410,9 +410,9 @@ function PublicProfileStyles() {
       .profile-schedule-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .profile-overview { display: block; margin-top: 0; padding: 10px 0 4px; border-top: 1px solid rgba(126,234,255,.08); }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
-      .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 8px 4px; }
+      .profile-metrics > div { min-width: 0; display: grid; gap: 5px; justify-items: center; padding: 10px 4px; }
       .profile-metrics dd { margin: 0; color: #eee9f5; font-size: clamp(18px, 3.5vw, 24px); font-weight: 950; line-height: 1; }
-      .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; text-align: center; }
+      .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; line-height: 1.2; text-align: center; }
       .profile-social-section { display: grid; margin-top: 6px; margin-bottom: 4px; padding: 6px 0 4px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
