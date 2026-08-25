@@ -202,7 +202,7 @@ test("venue scroll cards use one fixed logo stage while detail pages retain cont
   assert.match(aesthetic, /\.venue-card-logo-shell,[\s\S]*?\.venue-detail-logo-shell \{[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\)/);
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?top: 10%;[\s\S]*?right: 72px;[\s\S]*?bottom: auto;[\s\S]*?left: 18px;[\s\S]*?height: 50%;[\s\S]*?transform: none;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/,
+    /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?top: 8%;[\s\S]*?right: 72px;[\s\S]*?bottom: auto;[\s\S]*?left: 18px;[\s\S]*?height: 50%;[\s\S]*?transform: none;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     aesthetic,
