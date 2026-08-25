@@ -38,6 +38,12 @@ test("venue owners and managers can request but cannot publish contract deals", 
   assert.match(venueLedger, /Request a new deal/);
   assert.match(venueLedger, /\/api\/venue\/deal-requests/);
   assert.match(venueLedger, /Send request to MyDancr/);
+  assert.match(venueLedger, /data\.dealRequest\?\.id/);
+  assert.match(venueLedger, /confirmedRequests\.some/);
+  assert.match(venueLedger, /Request sent successfully/);
+  assert.match(venueLedger, /It is saved and pending review/);
+  assert.match(venueLedger, /venue-deal-request-feedback is-\$\{requestStatusTone\}/);
+  assert.match(venueLedger, /requestStatusTone === "error" \? "alert" : "status"/);
   assert.match(venueLedger, /Club Deal request history/);
   assert.match(venueLedger, /Only venue owners and managers can request a new deal/);
   assert.doesNotMatch(venueLedger, /Publish contract deal/);

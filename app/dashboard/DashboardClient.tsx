@@ -7078,6 +7078,8 @@ function VenueDealReadOnlyPanel({
   const [requestedOfferKey, setRequestedOfferKey] = useState<string>(CLUB_DEAL_OFFER_PRESETS[0].key);
   const [requestNotes, setRequestNotes] = useState("");
   const [requestStatus, setRequestStatus] = useState("");
+  const [requestStatusTone, setRequestStatusTone] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [confirmedRequestId, setConfirmedRequestId] = useState("");
   const [isRequesting, setIsRequesting] = useState(false);
   const liveDeals = deals.filter((deal) => deal.isActive === true);
   const displayedDeals = [...liveDeals, ...deals.filter((deal) => deal.isActive !== true)];
@@ -7094,19 +7096,33 @@ function VenueDealReadOnlyPanel({
   async function submitDealRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsRequesting(true);
+    setRequestStatusTone("sending");
+    setConfirmedRequestId("");
     setRequestStatus("Sending request to MyDancr…");
     try {
       const data = await requestDashboardJson("/api/venue/deal-requests", {
         method: "POST",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ offerKey: requestedOfferKey, requestNotes }),
         expectedRole: "venue",
         fallbackMessage: "Unable to send this Club Deal request.",
       });
-      onDealRequestsChange(Array.isArray(data.requests) ? data.requests : dealRequests);
+      const confirmedId = String(data.dealRequest?.id || "").trim();
+      const confirmedRequests = Array.isArray(data.requests) ? data.requests : [];
+      const requestWasPersisted = confirmedId
+        && confirmedRequests.some((dealRequest: Record<string, unknown>) => String(dealRequest.id || "") === confirmedId);
+      if (!requestWasPersisted) {
+        throw new Error("MyDancr did not confirm that this request was saved. Please try again.");
+      }
+      const confirmedOfferTitle = String(data.dealRequest?.offerTitle || "Club Deal");
+      onDealRequestsChange(confirmedRequests);
       setRequestNotes("");
       setIsRequestOpen(false);
-      setRequestStatus(data.message || "Club Deal request sent to MyDancr.");
+      setConfirmedRequestId(confirmedId);
+      setRequestStatusTone("success");
+      setRequestStatus(`MyDancr received your ${confirmedOfferTitle} request. It is saved and pending review.`);
     } catch (error) {
+      setRequestStatusTone("error");
       setRequestStatus(error instanceof Error ? error.message : "Unable to send this Club Deal request.");
     } finally {
       setIsRequesting(false);
@@ -7189,7 +7205,16 @@ function VenueDealReadOnlyPanel({
           <p>Send the offer details. MyDancr reviews the terms and publishes approved deals.</p>
         </div>
         {canRequestDeals ? (
-          <button type="button" onClick={() => setIsRequestOpen((current) => !current)}>
+          <button
+            disabled={isRequesting}
+            type="button"
+            onClick={() => {
+              setIsRequestOpen((current) => !current);
+              setRequestStatus("");
+              setRequestStatusTone("idle");
+              setConfirmedRequestId("");
+            }}
+          >
             {isRequestOpen ? "Close request" : "Request a new deal"}
           </button>
         ) : <small>Only venue owners and managers can request a new deal.</small>}
@@ -7214,11 +7239,23 @@ function VenueDealReadOnlyPanel({
             <button className="primary" disabled={isRequesting} type="submit">{isRequesting ? "Sending…" : "Send request to MyDancr"}</button>
           </form>
         ) : null}
-        {requestStatus ? <p role="status">{requestStatus}</p> : null}
+        {requestStatus ? (
+          <div
+            aria-live={requestStatusTone === "error" ? "assertive" : "polite"}
+            className={`venue-deal-request-feedback is-${requestStatusTone}`}
+            role={requestStatusTone === "error" ? "alert" : "status"}
+          >
+            <span aria-hidden="true">{requestStatusTone === "success" ? "✓" : requestStatusTone === "error" ? "!" : "…"}</span>
+            <div>
+              <strong>{requestStatusTone === "success" ? "Request sent successfully" : requestStatusTone === "error" ? "Request not sent" : "Sending request"}</strong>
+              <p>{requestStatus}</p>
+            </div>
+          </div>
+        ) : null}
         {dealRequests.length ? (
           <div className="venue-deal-request-history" aria-label="Club Deal request history">
             {dealRequests.map((dealRequest) => (
-              <article key={String(dealRequest.id)}>
+              <article className={String(dealRequest.id) === confirmedRequestId ? "is-confirmed" : ""} key={String(dealRequest.id)}>
                 <div>
                   <strong>{String(dealRequest.offerTitle || "Club Deal request")}</strong>
                   <small>{formatDashboardDate(String(dealRequest.createdAt || ""))}</small>
@@ -8024,9 +8061,20 @@ function DashboardStyles() {
       .venue-deal-request-center form select { min-height: 46px; padding: 0 12px; }
       .venue-deal-request-center form textarea { min-height: 104px; padding: 12px; resize: vertical; }
       .venue-deal-request-center form button { grid-column: 1 / -1; width: fit-content; }
-      .venue-deal-request-center > [role="status"], .venue-deal-request-center > small { grid-column: 1 / -1; color: #cbd5e1; }
+      .venue-deal-request-center > small { grid-column: 1 / -1; color: #cbd5e1; }
+      .venue-deal-request-feedback { grid-column: 1 / -1; display: grid; grid-template-columns: 34px minmax(0,1fr); align-items: center; gap: 10px; padding: 12px; border: 1px solid #334155; border-radius: 10px; color: #cbd5e1; background: #111118; }
+      .venue-deal-request-feedback > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 999px; color: #f8fafc; background: #334155; font-weight: 950; }
+      .venue-deal-request-feedback > div { display: grid; gap: 3px; }
+      .venue-deal-request-feedback strong, .venue-deal-request-feedback p { margin: 0; }
+      .venue-deal-request-feedback strong { color: #f8fafc; font-size: 13px; }
+      .venue-deal-request-feedback p { color: #cbd5e1; font-size: 12px; line-height: 1.4; }
+      .venue-deal-request-feedback.is-success { border-color: rgba(16,185,129,.52); background: rgba(16,185,129,.08); }
+      .venue-deal-request-feedback.is-success > span { color: #050507; background: #10b981; }
+      .venue-deal-request-feedback.is-error { border-color: rgba(239,68,68,.5); background: rgba(239,68,68,.08); }
+      .venue-deal-request-feedback.is-error > span { background: #ef4444; }
       .venue-deal-request-history { grid-column: 1 / -1; display: grid; gap: 8px; }
       .venue-deal-request-history article { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px 12px; padding: 11px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 9px; background: #111118; }
+      .venue-deal-request-history article.is-confirmed { border-color: rgba(16,185,129,.42); box-shadow: inset 3px 0 0 rgba(16,185,129,.72); }
       .venue-deal-request-history article > div { display: grid; gap: 2px; }
       .venue-deal-request-history small { color: #94a3b8; }
       .venue-deal-request-history article > span { align-self: start; padding: 5px 8px; border: 1px solid #334155; border-radius: 999px; color: #cbd5e1; font-size: 10px; font-weight: 900; }
