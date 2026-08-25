@@ -1,0 +1,206 @@
+/* Keep full-profile playback visually consistent with MyDancr TV cards. */
+#profileBackdrop .profile-modal-video-controls {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  opacity: 1;
+  transform: none;
+  pointer-events: none;
+  transition: none;
+}
+
+#profileBackdrop .profile-modal-video-controls[hidden] {
+  display: none !important;
+}
+
+#profileBackdrop .profile-modal-video-controls.is-visible,
+#profileBackdrop .profile-modal-video-controls:focus-within {
+  opacity: 1;
+  transform: none;
+}
+
+#profileBackdrop .profile-modal-video-controls button {
+  position: absolute;
+  z-index: 3;
+  width: 52px;
+  min-width: 52px;
+  max-width: 52px;
+  height: 52px;
+  min-height: 52px;
+  max-height: 52px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 50% !important;
+  color: #f8f8fa !important;
+  background: rgba(14, 14, 18, 0.62) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(115%) !important;
+  backdrop-filter: blur(12px) saturate(115%) !important;
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+#profileBackdrop .profile-modal-video-controls.is-visible button,
+#profileBackdrop .profile-modal-video-controls:focus-within button {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+#profileBackdrop .profile-modal-video-controls #modalVideoPlayback {
+  top: 50%;
+  left: 50%;
+  margin: -26px 0 0 -26px;
+}
+
+#profileBackdrop .profile-modal-video-controls #modalVideoSound {
+  top: 14px;
+  right: 14px;
+}
+
+#profileBackdrop .profile-modal-video-controls .profile-modal-media-expand {
+  position: absolute;
+  z-index: 3;
+  right: 14px;
+  bottom: 18px;
+  left: auto;
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+}
+
+#profileBackdrop .profile-modal-video-controls.is-visible .profile-modal-media-expand,
+#profileBackdrop .profile-modal-video-controls:focus-within .profile-modal-media-expand {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+#profileBackdrop .profile-modal-video-controls .profile-modal-media-control-icon {
+  width: 22px;
+  height: 22px;
+}
+
+#profileBackdrop .profile-modal-video-controls input[type="range"] {
+  box-sizing: border-box !important;
+  position: absolute;
+  z-index: 2;
+  right: 14px;
+  bottom: 0;
+  left: 14px;
+  width: calc(100% - 28px) !important;
+  min-width: 0 !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0;
+  color: #f8f8fa !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#profileBackdrop .profile-modal-video-controls input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #f8f8fa 0 var(--profile-video-progress),
+    rgba(255, 255, 255, 0.18) var(--profile-video-progress) 100%
+  );
+}
+
+#profileBackdrop .profile-modal-video-controls input[type="range"]::-webkit-slider-thumb {
+  width: 0;
+  height: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+}
+
+#profileBackdrop .profile-modal-video-controls input[type="range"]::-moz-range-track {
+  height: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+#profileBackdrop .profile-modal-video-controls input[type="range"]::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: #f8f8fa;
+}
+
+#profileBackdrop .profile-modal-video-controls input[type="range"]::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+}
+
+#profileBackdrop .profile-modal-video-controls input[type="range"]:focus-visible {
+  border-radius: 999px !important;
+  outline: 2px solid rgba(248, 248, 250, 0.82);
+  outline-offset: -10px;
+}
+
+#profileBackdrop .profile-modal-video-controls output {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  #profileBackdrop .profile-modal-video-controls {
+    inset: 0;
+    padding: 0;
+  }
+
+  #profileBackdrop .profile-modal-video-controls button {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+  }
+
+  #profileBackdrop .profile-modal-video-controls #modalVideoPlayback {
+    margin: -25px 0 0 -25px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #profileBackdrop .profile-modal-video-controls button {
+    transition: none;
+  }
+}
