@@ -164,7 +164,7 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.doesNotMatch(emptyMediaStyles, /(?:^|;)\s*(?:height|min-height|aspect-ratio):/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-media-feature \{[^}]*aspect-ratio: 9 \/ 16;/);
   assert.match(dashboard, /\.dancer-profile-builder-panel \{ bottom:calc\(88px \+ env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\); max-height:min\(66dvh,620px,calc\(100dvh - var\(--mydancr-preview-banner-offset,0px\) - 104px - env\(safe-area-inset-bottom\)\)\);/);
-  assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \.dancer-profile-editor-footer \{ bottom:calc\(88px \+ env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\);/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \.dancer-profile-editor-footer \{ bottom:max\(8px,env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\);/);
   assert.doesNotMatch(dashboard, /editorTitle/);
   assert.match(dashboard, /disabled=\{isEditorSaving \|\| !requirementsComplete\}/);
   assert.match(dashboard, /<DancerSetupPanel[\s\S]*?unifiedSave/);
