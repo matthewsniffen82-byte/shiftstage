@@ -389,7 +389,7 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(liveApp, /formatProfileTvShift\(item\.shift\.startsAt, item\.shift\.timezone\)/);
   assert.match(
     liveApp,
-    /class="info-tile profile-schedule-card working-now-tile schedule-live"[\s\S]*?<strong>Current shift<\/strong>[\s\S]*?profile-schedule-primary modal-schedule-text tonight">Working Now<\/div>/,
+    /class="info-tile profile-schedule-card profile-shift-card working-now-tile schedule-live"[\s\S]*?<strong>Current shift<\/strong>[\s\S]*?profile-schedule-primary modal-schedule-text tonight">Working Now<\/div>/,
   );
   assert.doesNotMatch(liveApp, /Upcoming interest/);
   assert.doesNotMatch(liveApp, /caption\.textContent = item\.caption \|\| "Watch video"/);

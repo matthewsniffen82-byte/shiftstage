@@ -90,7 +90,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const overviewIndex = profilePage.indexOf('className="profile-overview"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const scheduleIndex = profilePage.indexOf('className={`profile-working-card');
+  const scheduleIndex = profilePage.indexOf('className={`profile-shift-card profile-working-card');
   const dealIndex = profilePage.indexOf('className="profile-active-deal has-club-deal"');
   const socialIndex = profilePage.indexOf('className="profile-social-section"');
 
@@ -176,12 +176,12 @@ test("profile actions keep customer, live-night, travel, and safety controls vis
     profileActions,
     /className=\{`profile-action-secondary\$\{showSignedOutRequirements \? " profile-action-requires-account" : ""\}`\}/,
   );
-  assert.match(profileActions, /aria-pressed=\{isGoing\}/);
+  assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
   const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
   const notifyIndex = profileActions.indexOf('if (requireCustomerAccount("notify"))');
   const goingIndex = profileActions.indexOf('className={`profile-action-secondary profile-action-going');
   const rideIndex = profileActions.indexOf('{hasLiveActions && rideControl ?');
-  const directionsIndex = profileActions.indexOf('{hasLiveActions && directionsControl ?');
+  const directionsIndex = profileActions.indexOf('{directionsControl ?');
   const shareIndex = profileActions.indexOf('{shareControl ?');
   const reportIndex = profileActions.indexOf('className="profile-report-action"');
   assert.ok(followButtonIndex > -1 && notifyIndex > followButtonIndex);
@@ -200,10 +200,11 @@ test("profile actions keep customer, live-night, travel, and safety controls vis
     profileActions,
     /reason: "Profile report"[\s\S]*details: "Reported from the public dancer profile\."/,
   );
-  assert.match(profileActions, /const hasLiveActions = Boolean\(actionShift\)/);
-  assert.match(profileActions, /live-actions\$\{hasLiveActions \? " has-live-shift" : " is-no-live-shift"\}/);
-  assert.match(profileActions, /\{actionShift \? \([\s\S]*?profile-action-going/);
-  assert.match(profilePage, /className="profile-schedule-empty" aria-label="Schedule status"[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
+  assert.match(profileActions, /const hasLiveActions = Boolean\(actionShift\?\.isActive\)/);
+  assert.match(profileActions, /const hasScheduledActions = Boolean\(actionShift\)/);
+  assert.match(profileActions, /live-actions\$\{hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"\}/);
+  assert.match(profileActions, /profile-action-going[\s\S]*?profile-action-unavailable[\s\S]*?No shift posted/);
+  assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
   assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
 });
 

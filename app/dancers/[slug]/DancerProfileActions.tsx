@@ -107,7 +107,7 @@ export function DancerGoingCount() {
 function DancerProfileActionPreviewIcon({
   type,
 }: {
-  type: "bell" | "check" | "clock" | "personPlus" | "share";
+  type: "bell" | "check" | "clock" | "directions" | "personPlus" | "ride" | "share";
 }) {
   return (
     <svg aria-hidden="true" className="profile-action-preview-icon" viewBox="0 0 24 24">
@@ -115,6 +115,8 @@ function DancerProfileActionPreviewIcon({
       {type === "check" ? <path d="m5 12 4 4L19 6" /> : null}
       {type === "bell" ? <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" /><path d="M10 20a2 2 0 0 0 4 0" /></> : null}
       {type === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : null}
+      {type === "directions" ? <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></> : null}
+      {type === "ride" ? <><path d="m5 11 1.7-4.3A2.7 2.7 0 0 1 9.2 5h5.6a2.7 2.7 0 0 1 2.5 1.7L19 11" /><path d="M4 11h16a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a1 1 0 0 1 1-1ZM6.5 15h.01M17.5 15h.01M6 19v2M18 19v2" /></> : null}
       {type === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" /></> : null}
     </svg>
   );
@@ -122,7 +124,7 @@ function DancerProfileActionPreviewIcon({
 
 export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
   return (
-    <div className="live-actions has-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
+    <div className="live-actions is-no-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
       <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="personPlus" /><span>Follow</span></span>
         <small className="profile-action-requirement">Sign in required</small>
@@ -131,14 +133,17 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="bell" /><span>Notify Me</span></span>
         <small className="profile-action-requirement">Sign in required</small>
       </button>
-      <button className="profile-action-secondary profile-action-preview-static" disabled type="button">
+      <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
+        <small className="profile-action-requirement">No shift posted</small>
       </button>
-      <button className="profile-action-secondary profile-action-preview-static" disabled type="button">
-        Ride
+      <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="ride" /><span>Ride</span></span>
+        <small className="profile-action-requirement">Working Now only</small>
       </button>
-      <button className="profile-action-secondary profile-action-preview-static" disabled type="button">
-        Directions
+      <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="directions" /><span>Directions</span></span>
+        <small className="profile-action-requirement">Venue required</small>
       </button>
       <div className="profile-action-share-slot">
         <span className="profile-share">
@@ -195,11 +200,12 @@ export function DancerProfileActions({
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
   const actionShift = useMemo(
-    () => shifts.find((shift) => shift.isActive) || null,
+    () => shifts.find((shift) => shift.isActive) || shifts[0] || null,
     [shifts],
   );
   const actionShiftId = actionShift?.id || "";
-  const hasLiveActions = Boolean(actionShift);
+  const hasLiveActions = Boolean(actionShift?.isActive);
+  const hasScheduledActions = Boolean(actionShift);
   const isGoing = Boolean(actionShift && saved.goingShiftIds.includes(actionShift.id));
   const showSignedOutRequirements = savedLoaded && !token;
 
@@ -462,7 +468,7 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className={`live-actions${hasLiveActions ? " has-live-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
+      <div className={`live-actions${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
           className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
@@ -496,26 +502,36 @@ export function DancerProfileActions({
             <small className="profile-action-requirement">Sign in required</small>
           ) : null}
         </button>
-        {actionShift ? (
-          <button
-            aria-pressed={isGoing}
-            className={`profile-action-secondary profile-action-going${isGoing ? " is-going" : ""}`}
-            disabled={!savedLoaded || goingSaving}
-            onClick={() => updateGoing(actionShift.id)}
-            type="button"
-          >
-            <span className="profile-action-main">
-              <DancerProfileActionPreviewIcon type="clock" />
-              <span>{isGoing ? "Going ✓" : "I’m Going"}</span>
-            </span>
-          </button>
-        ) : null}
+        <button
+          aria-disabled={!actionShift ? "true" : undefined}
+          aria-pressed={actionShift ? isGoing : undefined}
+          className={`profile-action-secondary profile-action-going${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable profile-action-requires-account" : ""}`}
+          disabled={actionShift ? !savedLoaded || goingSaving : true}
+          onClick={() => actionShift && updateGoing(actionShift.id)}
+          type="button"
+        >
+          <span className="profile-action-main">
+            <DancerProfileActionPreviewIcon type="clock" />
+            <span>{isGoing ? "Going ✓" : "I’m Going"}</span>
+          </span>
+          {!actionShift ? <small className="profile-action-requirement">No shift posted</small> : null}
+        </button>
         {hasLiveActions && rideControl ? (
           <div className="profile-action-ride-slot">{rideControl}</div>
-        ) : null}
-        {hasLiveActions && directionsControl ? (
+        ) : (
+          <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account" disabled type="button">
+            <span className="profile-action-main"><DancerProfileActionPreviewIcon type="ride" /><span>Ride</span></span>
+            <small className="profile-action-requirement">Working Now only</small>
+          </button>
+        )}
+        {directionsControl ? (
           <div className="profile-action-directions-slot">{directionsControl}</div>
-        ) : null}
+        ) : (
+          <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account" disabled type="button">
+            <span className="profile-action-main"><DancerProfileActionPreviewIcon type="directions" /><span>Directions</span></span>
+            <small className="profile-action-requirement">Venue required</small>
+          </button>
+        )}
         {shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>
         ) : (

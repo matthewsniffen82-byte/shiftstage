@@ -67,7 +67,8 @@ export default async function DancerPublicPage({ params }: PageProps) {
     (shift) => shift.id !== activeShift?.id,
   );
   const hasUpcomingShift = !activeShift && upcomingShifts.length > 0;
-  const [activeDeals, tvVideos, activeVenue] = await Promise.all([
+  const actionShift = activeShift || upcomingShifts[0] || null;
+  const [activeDeals, tvVideos, actionVenue] = await Promise.all([
     activeShift?.venueId
       ? getActiveClubDealsForVenue(client, activeShift.venueId)
       : Promise.resolve([]),
@@ -76,8 +77,8 @@ export default async function DancerPublicPage({ params }: PageProps) {
       dancerId: profile.id,
       limit: MAX_DANCER_PROFILE_VIDEOS,
     }),
-    activeShift?.venueSlug
-      ? getVenueProfile(client, activeShift.venueSlug)
+    actionShift?.venueSlug
+      ? getVenueProfile(client, actionShift.venueSlug)
       : Promise.resolve(null),
   ]);
   const activeDeal = activeDeals[0] || null;
@@ -157,7 +158,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         {activeShift ? (
           <section
-            className={`profile-working-card${activeDeal ? " has-club-deal" : ""}`}
+            className={`profile-shift-card profile-working-card is-now${activeDeal ? " has-club-deal" : ""}`}
             aria-labelledby="profile-working-title"
           >
             <div className="profile-working-head">
@@ -177,7 +178,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </section>
         ) : upcomingShifts.length ? (
           <section
-            className="profile-schedule-section"
+            className="profile-shift-card profile-schedule-section is-upcoming"
             aria-labelledby="profile-schedule-title"
           >
             <div className="profile-section-heading">
@@ -206,26 +207,26 @@ export default async function DancerPublicPage({ params }: PageProps) {
               ))}
             </div>
           </section>
-        ) : activeShift || !upcomingShifts.length ? (
-          <section className="profile-schedule-empty" aria-label="Schedule status">
+        ) : (
+          <section className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status">
             <strong>No shift posted</strong>
             <span aria-hidden="true">·</span>
             <span>Follow {profile.stageName} for updates</span>
           </section>
-        ) : null}
+        )}
 
         <DancerProfileActions
           dancerId={profile.id}
-          directionsControl={activeVenue ? (
-            <DancerDirectionsButton dancerId={profile.id} venue={activeVenue} />
+          directionsControl={actionVenue ? (
+            <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
           ) : null}
           profileName={profile.stageName}
-          rideControl={activeVenue ? (
+          rideControl={activeShift && actionVenue ? (
             <UberRideButton
               compact
               dancerId={profile.id}
               source="dancer_profile"
-              venue={{ ...activeVenue, isActive: true, isPublic: true }}
+              venue={{ ...actionVenue, isActive: true, isPublic: true }}
             />
           ) : null}
           shareControl={<ProfileShareButton stageName={profile.stageName} />}
@@ -256,7 +257,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
               sectionId="club-deal"
             />
           </section>
-        ) : activeShift || !upcomingShifts.length ? (
+        ) : (
           <section
             className="profile-active-deal is-inactive"
             aria-label="Inactive Club Deal"
@@ -270,13 +271,15 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 <em>
                   {activeShift
                     ? `${activeShift.venueName} has no live offer right now.`
-                    : "Deals activate after a verified club check-in."}
+                    : actionShift
+                      ? `Deals activate after a verified check-in at ${actionShift.venueName}.`
+                      : "Deals activate after a verified club check-in."}
                 </em>
               </span>
               <button disabled type="button">Inactive</button>
             </div>
           </section>
-        ) : null}
+        )}
 
         {profile.socialLinks.length ? (
           <section className="profile-social-section" aria-label="External profiles">
@@ -430,6 +433,9 @@ function PublicProfileStyles() {
       .live-actions.is-no-live-shift { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 11px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
+      .live-actions > button.profile-action-unavailable:disabled { opacity: .7; cursor: default; }
+      .live-actions .profile-action-unavailable { flex-direction: column; gap: 1px; border-color: rgba(148,137,166,.22); color: #958b9f; background: rgba(255,255,255,.03); box-shadow: none; }
+      .live-actions .profile-action-unavailable .profile-action-requirement { color: #83798d; }
       .live-actions .profile-action-primary { border-color: rgba(126,234,255,.48); background: linear-gradient(135deg, rgba(109,40,217,.86), rgba(11,148,201,.74)); box-shadow: 0 12px 30px rgba(49,46,129,.2), 0 0 18px rgba(34,199,255,.08); }
       .live-actions .profile-action-primary.profile-action-unavailable { border-color: rgba(148,137,166,.3); color: #bdb4ca; background: rgba(255,255,255,.055); }
       .live-actions .profile-action-going.profile-action-secondary { border-color: rgba(148,229,255,.26); background: linear-gradient(135deg, rgba(38,31,56,.82), rgba(18,33,44,.76)); box-shadow: none; }
@@ -616,8 +622,7 @@ function PublicProfileStyles() {
         .public-profile-shell { padding: 0 12px max(132px, calc(108px + env(safe-area-inset-bottom))); }
         .profile-titlebar { min-height: 64px; }
         .profile-titlebar-avatar { width: 48px; height: 48px; flex-basis: 48px; }
-        .live-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-        .live-actions.is-no-shift { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .live-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
         .profile-working-card { padding: 5px; }
         .club-deal-card { grid-template-columns: minmax(0, 1fr) 128px; gap: 14px; padding: 14px; }

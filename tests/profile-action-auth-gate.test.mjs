@@ -217,12 +217,12 @@ test("venue follows are empty and unavailable until a real customer session is a
   assert.match(venueFollowsRouteSource, /customer_id: user\.id/);
 });
 
-test("public profiles display Going directly only while Working Now", () => {
+test("public profiles keep Going visible and enable it for current or upcoming posted shifts", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
   assert.match(actionsSource, /showSignedOutRequirements = savedLoaded && !token/);
   assert.match(actionsSource, /profile-action-requirement">Sign in required/);
-  assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| null/);
-  assert.match(actionsSource, /\{actionShift \? \([\s\S]*?\{isGoing \? "Going ✓" : "I’m Going"\}[\s\S]*?\) : null\}/);
+  assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| shifts\[0\] \|\| null/);
+  assert.match(actionsSource, /<button[\s\S]*?profile-action-going[\s\S]*?\{isGoing \? "Going ✓" : "I’m Going"\}[\s\S]*?No shift posted/);
   for (const action of ["follow", "notify"]) {
     assert.match(
       actionsSource,
@@ -231,10 +231,10 @@ test("public profiles display Going directly only while Working Now", () => {
   }
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("report"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
-  assert.match(actionsSource, /updateGoing\(actionShift\.id\)/);
+  assert.match(actionsSource, /actionShift && updateGoing\(actionShift\.id\)/);
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
-  assert.match(actionsSource, /className=\{`profile-action-secondary profile-action-going\$\{isGoing \? " is-going" : ""\}`\}/);
-  assert.match(actionsSource, /disabled=\{!savedLoaded \|\| goingSaving\}/);
+  assert.match(actionsSource, /className=\{`profile-action-secondary profile-action-going\$\{isGoing \? " is-going" : ""\}\$\{!actionShift \? " profile-action-unavailable profile-action-requires-account" : ""\}`\}/);
+  assert.match(actionsSource, /disabled=\{actionShift \? !savedLoaded \|\| goingSaving : true\}/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
@@ -244,7 +244,7 @@ test("public profiles display Going directly only while Working Now", () => {
   assert.match(profilePageSource, /\.profile-action-requirement \{/);
 });
 
-test("the live mobile profile exposes Going only while Working Now and keeps Report discreet", () => {
+test("the live mobile profile keeps all six action slots and Report stays discreet", () => {
   assert.match(homeSource, /function profileActionRequirementMarkup\(requirement\)/);
   assert.match(homeSource, /Sign in required/);
   assert.match(homeSource, /No sign-in needed/);
@@ -259,13 +259,15 @@ test("the live mobile profile exposes Going only while Working Now and keeps Rep
   assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);
   assert.match(
     homeSource,
-    /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = Boolean\(isWorkingTonight\(profile, city\) && profile\.shiftId\)[\s\S]*?const goingButton = canMarkGoing[\s\S]*?: "";/,
+    /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = Boolean\(profile\?\.scheduled && profile\.shiftId\)[\s\S]*?const goingButton = canMarkGoing[\s\S]*?data-shift-state="unavailable"/,
   );
   assert.match(
     homeSource,
     /async function refreshProfileGoingState\(profile\) \{\s+if \(!profile\?\.shiftId \|\| window\.location\.protocol === "file:"\) return;/,
   );
   assert.match(homeSource, /data-shift-state="posted"/);
+  assert.match(homeSource, /profileActionButtonMarkup\("car", "Ride", "working-now"\)/);
+  assert.match(homeSource, /profileActionButtonMarkup\("pin", "Directions", "venue"\)/);
   assert.match(homeSource, /This dancer has no posted shift yet\./);
 });
 

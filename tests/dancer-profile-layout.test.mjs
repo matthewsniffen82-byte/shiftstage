@@ -83,15 +83,15 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(profileActions, /profile-action-share-slot/);
   assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Notify Me[\s\S]*?I’m Going[\s\S]*?Ride[\s\S]*?Directions[\s\S]*?Share[\s\S]*?Report profile/);
   assert.doesNotMatch(profileActions, />Schedule<|>More</);
-  assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "check" \| "clock" \| "personPlus" \| "share"/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "check" \| "clock" \| "directions" \| "personPlus" \| "ride" \| "share"/);
   assert.match(profileActions, /type === "personPlus"[\s\S]*?<circle cx="8\.5" cy="7\.5" r="3\.5" \/>[\s\S]*?M18 8\.5v6M15 11\.5h6/);
   assert.match(profileActions, /DancerProfileActionPreviewIcon type="personPlus" \/>[\s\S]*?<span>Follow<\/span>/);
   assert.match(profileActions, /DancerProfileActionPreviewIcon type=\{saved\.following \? "check" : "personPlus"\} \/>/);
   assert.doesNotMatch(profileActions, /DancerProfileActionPreviewIcon type="heart"/);
   assert.match(profileDirections, /dancerIds: \[dancerId\]/);
   assert.match(profileDirections, /source: "dancer_profile"/);
-  assert.match(profilePage, /directionsControl=\{activeVenue \? \(/);
-  assert.match(profilePage, /<DancerDirectionsButton dancerId=\{profile\.id\} venue=\{activeVenue\} \/>/);
+  assert.match(profilePage, /directionsControl=\{actionVenue \? \(/);
+  assert.match(profilePage, /<DancerDirectionsButton dancerId=\{profile\.id\} venue=\{actionVenue\} \/>/);
   assert.match(profilePage, /<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
@@ -116,20 +116,20 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
 });
 
-test("Working Now profiles retain the cashier NFC Club Deal while Upcoming stays date-and-venue only", () => {
+test("every profile keeps Shift and Club Deal boxes while only Working Now activates a deal", () => {
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
-  assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
+  assert.match(profilePage, /className=\{`profile-shift-card profile-working-card is-now\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<small>Club<\/small>[\s\S]*?Venue-confirmed until/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
   assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
   assert.match(profilePage, /className="profile-active-deal is-inactive"[\s\S]*?aria-label="Inactive Club Deal"/);
-  assert.match(profilePage, /\) : activeShift \|\| !upcomingShifts\.length \? \([\s\S]*?activeShift \? "No active deal" : "No active club deal"[\s\S]*?\) : null\}/);
-  assert.doesNotMatch(profilePage, /Available after check-in/);
+  assert.match(profilePage, /\) : \(\s*<section[\s\S]*?activeShift \? "No active deal" : "No active club deal"[\s\S]*?\)\}/);
+  assert.match(profilePage, /Deals activate after a verified check-in at \$\{actionShift\.venueName\}\./);
   assert.match(profilePage, /Deals activate after a verified club check-in\./);
-  assert.match(liveApp, /const showDeal = !profile\.scheduled \|\| isWorkingTonight\(profile, city\)[\s\S]*?const dealMarkup = showDeal/);
+  assert.match(liveApp, /const dealMarkup = options\.preview[\s\S]*?profileDealTileMarkup\(profile\);/);
   assert.match(
     profilePage,
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
@@ -144,7 +144,7 @@ test("Working Now profiles retain the cashier NFC Club Deal while Upcoming stays
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
   )?.[0] || "";
   const liveScheduleBranch = shiftsFunction.split("if (profile.scheduled)")[0];
-  assert.match(liveScheduleBranch, /class="info-tile profile-schedule-card working-now-tile schedule-live"/);
+  assert.match(liveScheduleBranch, /class="info-tile profile-schedule-card profile-shift-card working-now-tile schedule-live"/);
   assert.match(liveScheduleBranch, /<strong>Current shift<\/strong>/);
   assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working Now<\/div>/);
   assert.match(liveScheduleBranch, /class="schedule-stack"[\s\S]*?profileVenueDestinationMarkup\(profile, \{ live: true \}\)/);
@@ -218,7 +218,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /Keep the customer actions visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
+    /same six customer action slots visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,

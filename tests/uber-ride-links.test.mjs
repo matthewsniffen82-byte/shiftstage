@@ -173,7 +173,8 @@ test("the reusable control uses one universal ride label with a destination-awar
 test("the reusable control hides private, unpublished, and invalid destinations", () => {
   assert.match(componentSource, /venue\.isActive === false \|\| venue\.isPublic === false/);
   assert.match(componentSource, /if \(!isValidUberDestination\(destination\)\) return null/);
-  assert.match(dancerPageSource, /activeShift[\s\S]*?getVenueProfile\(client, activeShift\.venueSlug\)/);
+  assert.match(dancerPageSource, /const actionShift = activeShift \|\| upcomingShifts\[0\] \|\| null[\s\S]*?getVenueProfile\(client, actionShift\.venueSlug\)/);
+  assert.match(dancerPageSource, /rideControl=\{activeShift && actionVenue \? \(/);
   assert.match(dancerPageSource, /source="dancer_profile"/);
 });
 

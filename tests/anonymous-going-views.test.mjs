@@ -53,11 +53,11 @@ test("Going GET and POST work with or without auth and return the authoritative 
   assert.match(goingRoute, /anonymous: !identity\.customerId/);
 });
 
-test("both production dancer profile surfaces let signed-out visitors use Going only while Working Now", () => {
+test("both production dancer profile surfaces keep Going visible and enable it for posted shifts", () => {
   assert.doesNotMatch(nextActions, /requireCustomerAccount\("going"\)/);
-  assert.match(nextActions, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| null/);
-  assert.match(nextActions, /\{actionShift \? \([\s\S]*?updateGoing\(actionShift\.id\)[\s\S]*?\) : null\}/);
-  assert.doesNotMatch(nextActions, /No shift posted/);
+  assert.match(nextActions, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| shifts\[0\] \|\| null/);
+  assert.match(nextActions, /onClick=\{\(\) => actionShift && updateGoing\(actionShift\.id\)\}/);
+  assert.match(nextActions, /profile-action-unavailable[\s\S]*?No shift posted/);
   assert.match(nextActions, /fetch\(`\/api\/customer\/going\?shiftId=/);
   assert.match(nextActions, /credentials: "same-origin"/);
   assert.match(nextActions, /export function DancerGoingCount/);
@@ -67,7 +67,8 @@ test("both production dancer profile surfaces let signed-out visitors use Going 
     liveApp,
     /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\) &&\s+!requireCustomerAccountForProfileAction\(actionButton\)/,
   );
-  assert.match(liveApp, /const canMarkGoing = Boolean\(isWorkingTonight\(profile, city\) && profile\.shiftId\)/);
+  assert.match(liveApp, /const canMarkGoing = Boolean\(profile\?\.scheduled && profile\.shiftId\)/);
+  assert.match(liveApp, /data-shift-state="unavailable"[\s\S]*?profileActionButtonMarkup\("clock", goingCopy\.idle, "no-shift"\)/);
   assert.match(liveApp, /await postOptionalAuthJson\("\/api\/customer\/going"/);
 });
 

@@ -38307,8 +38307,8 @@
           height: 28px !important;
         }
 
-        /* Keep the customer actions visible in two compact rows. Live-night
-           travel and attendance actions only render while the dancer is Now. */
+        /* Keep the same six customer action slots visible in two compact rows.
+           State-specific availability is communicated inside each slot. */
         #profileBackdrop .modal-actions {
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           gap: 6px !important;
@@ -38341,6 +38341,19 @@
         #profileBackdrop .modal-actions .going-btn {
           grid-column: auto !important;
           min-height: 44px !important;
+        }
+
+        #profileBackdrop .modal-actions .action-btn.is-unavailable:disabled {
+          border-color: rgba(148,137,166,.2) !important;
+          color: #958b9f !important;
+          background: rgba(255,255,255,.025) !important;
+          box-shadow: none !important;
+          cursor: default !important;
+          opacity: .7 !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-requirement.is-unavailable {
+          color: #83798d !important;
         }
 
         #profileBackdrop .profile-report-action {
@@ -50662,7 +50675,7 @@
       const city = options.city || selectedCity();
       if (isWorkingTonight(profile) && profile.scheduled) {
         return `
-          <div class="info-tile profile-schedule-card working-now-tile schedule-live">
+          <div class="info-tile profile-schedule-card profile-shift-card working-now-tile schedule-live">
             <strong>Current shift</strong>
             <div class="profile-schedule-primary modal-schedule-text tonight">Working Now</div>
             <div class="schedule-stack">
@@ -50674,7 +50687,7 @@
       }
       if (profile.scheduled) {
         return `
-          <div class="info-tile profile-schedule-card schedule-upcoming">
+          <div class="info-tile profile-schedule-card profile-shift-card schedule-upcoming">
             <strong>Upcoming shift</strong>
             <div class="profile-schedule-primary">${displayPublicShiftTime(profile.time, profile)}</div>
             <div class="schedule-stack">
@@ -50689,7 +50702,7 @@
         ? "Post a shift from your dashboard to show guests when and where you're working."
         : `Follow ${escapeHtml(profile.name)} for updates`;
       return `
-        <div class="info-tile profile-schedule-card schedule-empty" aria-label="Schedule status">
+        <div class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">
           <div class="profile-schedule-inline">
             <strong>No shift posted</strong>
             <span aria-hidden="true">·</span>
@@ -50736,7 +50749,7 @@
 
     function dancerProfileDirectionsMarkup(profile, options = {}) {
       const city = options.city || selectedCity();
-      if (options.preview || !profile?.scheduled || !isWorkingTonight(profile, city)) return "";
+      if (options.preview || !profile?.scheduled) return "";
       const venue = resolveVenueByName(profile.venue, city);
       if (!venue) return "";
       return venueDirectionsMarkup({
@@ -50752,12 +50765,9 @@
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
       const socialMarkup = options.socialMarkup || socialLinksMarkup(profile, { preview: Boolean(options.preview) });
-      const showDeal = !profile.scheduled || isWorkingTonight(profile, city);
-      const dealMarkup = showDeal
-        ? options.preview
-          ? profileDealTileMarkup(profile, { preview: true })
-          : profileDealTileMarkup(profile)
-        : "";
+      const dealMarkup = options.preview
+        ? profileDealTileMarkup(profile, { preview: true })
+        : profileDealTileMarkup(profile);
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
           ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
@@ -50771,6 +50781,14 @@
     }
 
     function profileActionRequirementMarkup(requirement) {
+      const unavailableCopy = {
+        "no-shift": "No shift posted",
+        "working-now": "Working Now only",
+        venue: "Venue required"
+      };
+      if (unavailableCopy[requirement]) {
+        return `<small class="profile-action-requirement is-unavailable">${unavailableCopy[requirement]}</small>`;
+      }
       if (isCustomerSession() || !requirement) return "";
       const isPublic = requirement === "public";
       return `<small class="profile-action-requirement ${isPublic ? "is-public" : ""}">${isPublic ? "No sign-in needed" : "Sign in required"}</small>`;
@@ -50785,21 +50803,28 @@
       const isFollowed = isFollowingProfile(city, profile.name);
       const isNotified = isNotificationOn(city, profile.name);
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
-      const canMarkGoing = Boolean(isWorkingTonight(profile, city) && profile.shiftId);
+      const isWorkingNow = isWorkingTonight(profile, city);
+      const canMarkGoing = Boolean(profile?.scheduled && profile.shiftId);
       const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
       const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn is-primary-action ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
-        : "";
+        ? `<button class="action-btn going-btn ${isWorkingNow ? "is-primary-action" : "secondary"} ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
+        : `<button class="action-btn going-btn secondary is-unavailable has-requirement" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle, "no-shift")}</button>`;
+      const rideAction = rideMarkup
+        ? `<div class="profile-primary-ride">${rideMarkup}</div>`
+        : `<button class="action-btn secondary is-unavailable has-requirement" type="button" aria-disabled="true" disabled>${profileActionButtonMarkup("car", "Ride", "working-now")}</button>`;
+      const directionsAction = directionsMarkup
+        ? `<div class="profile-primary-directions-slot">${directionsMarkup}</div>`
+        : `<button class="action-btn secondary is-unavailable has-requirement" type="button" aria-disabled="true" disabled>${profileActionButtonMarkup("pin", "Directions", "venue")}</button>`;
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
-        <div class="modal-actions ${canMarkGoing ? "is-working-now" : "is-no-live-shift"}" aria-label="Guest actions">
+        <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
           ${goingButton}
-          ${rideMarkup ? `<div class="profile-primary-ride">${rideMarkup}</div>` : ""}
-          ${directionsMarkup ? `<div class="profile-primary-directions-slot">${directionsMarkup}</div>` : ""}
+          ${rideAction}
+          ${directionsAction}
           <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
           <button class="profile-report-action" id="reportBtn" type="button" data-profile="${profile.name}">Report profile</button>
         </div>

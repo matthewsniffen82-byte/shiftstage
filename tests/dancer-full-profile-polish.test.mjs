@@ -18,11 +18,11 @@ const profilePolishBlock = liveApp.match(
 test("empty schedules collapse to one status line while upcoming schedules retain their destination", () => {
   assert.match(
     liveApp,
-    /if \(profile\.scheduled\) \{[\s\S]*?class="info-tile profile-schedule-card schedule-upcoming"[\s\S]*?This is the dancer's next posted shift\./,
+    /if \(profile\.scheduled\) \{[\s\S]*?class="info-tile profile-schedule-card profile-shift-card schedule-upcoming"[\s\S]*?This is the dancer's next posted shift\./,
   );
   assert.match(
     liveApp,
-    /const emptyScheduleCopy =[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;[\s\S]*?class="info-tile profile-schedule-card schedule-empty" aria-label="Schedule status">[\s\S]*?class="profile-schedule-inline">[\s\S]*?<strong>No shift posted<\/strong>[\s\S]*?\$\{emptyScheduleCopy\}/,
+    /const emptyScheduleCopy =[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;[\s\S]*?class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">[\s\S]*?class="profile-schedule-inline">[\s\S]*?<strong>No shift posted<\/strong>[\s\S]*?\$\{emptyScheduleCopy\}/,
   );
   assert.doesNotMatch(
     liveApp,
@@ -36,7 +36,7 @@ test("empty schedules collapse to one status line while upcoming schedules retai
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
   )?.[0] || "";
   const liveScheduleBranch = shiftsFunction.split("if (profile.scheduled)")[0];
-  assert.match(liveScheduleBranch, /profile-schedule-card working-now-tile schedule-live/);
+  assert.match(liveScheduleBranch, /profile-schedule-card profile-shift-card working-now-tile schedule-live/);
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
 });
 
@@ -102,8 +102,8 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   const followIndex = liveActionsMarkup.indexOf('id="followBtn"');
   const notifyIndex = liveActionsMarkup.indexOf('id="notifyBtn"');
   const goingIndex = liveActionsMarkup.indexOf('${goingButton}');
-  const rideIndex = liveActionsMarkup.indexOf('class="profile-primary-ride"');
-  const directionsIndex = liveActionsMarkup.indexOf('class="profile-primary-directions-slot"');
+  const rideIndex = liveActionsMarkup.indexOf('${rideAction}');
+  const directionsIndex = liveActionsMarkup.indexOf('${directionsAction}');
   const shareIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-share-action"');
   const reportIndex = liveActionsMarkup.indexOf('class="profile-report-action"');
   assert.ok(followIndex > -1 && notifyIndex > followIndex);
@@ -122,7 +122,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(liveApp, /class="profile-report-action" id="reportBtn" type="button"/);
   assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);
-  assert.match(liveActionsMarkup, /id="notifyBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-primary-ride[\s\S]*?profile-primary-directions-slot[\s\S]*?profile-share-action[\s\S]*?profile-report-action/);
+  assert.match(liveActionsMarkup, /id="notifyBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?\$\{rideAction\}[\s\S]*?\$\{directionsAction\}[\s\S]*?profile-share-action[\s\S]*?profile-report-action/);
   assert.doesNotMatch(
     liveActionsMarkup.match(/<button class="action-btn secondary profile-share-action"[^>]*>/)?.[0] || "",
     /disabled|aria-disabled/,
@@ -133,16 +133,16 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(
     liveApp,
-    /Keep the customer actions visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
+    /same six customer action slots visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.modal-actions \.profile-share-action \{\s*grid-column: auto !important;/,
   );
   assert.match(liveActionsMarkup, /const directionsMarkup = dancerProfileDirectionsMarkup\(profile, \{ city \}\)/);
-  assert.match(liveActionsMarkup, /modal-actions \$\{canMarkGoing \? "is-working-now" : "is-no-live-shift"\}/);
+  assert.match(liveActionsMarkup, /modal-actions \$\{isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"\}/);
   assert.match(liveApp, /function dancerProfileUberRideMarkup\(profile, options = \{\}\)[\s\S]*?!isWorkingTonight\(profile, city\)\) return "";/);
-  assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?!isWorkingTonight\(profile, city\)\) return "";/);
+  assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
   assert.match(liveApp, /\.profile-report-action \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;[\s\S]*?background: transparent !important;/);
 });
@@ -227,7 +227,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   assert.match(liveApp, /modalCity\.hidden = false/);
   assert.match(
     liveApp,
-    /class="info-tile profile-schedule-card schedule-upcoming">[\s\S]*?<div class="profile-schedule-primary">\$\{displayPublicShiftTime\(profile\.time, profile\)\}<\/div>/,
+    /class="info-tile profile-schedule-card profile-shift-card schedule-upcoming">[\s\S]*?<div class="profile-schedule-primary">\$\{displayPublicShiftTime\(profile\.time, profile\)\}<\/div>/,
   );
 });
 

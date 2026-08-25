@@ -71,7 +71,7 @@ test("follow API returns authoritative follower and notification subscriber coun
 test("I'm Going changes the visible count before the request and reconciles or rolls back", () => {
   assert.match(
     homeSource,
-    /<button class="action-btn going-btn is-primary-action[\s\S]*?id="goingBtn" type="button"[\s\S]*?aria-pressed="\$\{isGoingTonight\}"/,
+    /<button class="action-btn going-btn \$\{isWorkingNow \? "is-primary-action" : "secondary"\}[\s\S]*?id="goingBtn" type="button"[\s\S]*?aria-pressed="\$\{isGoingTonight\}"/,
   );
   assert.doesNotMatch(
     homeSource,
