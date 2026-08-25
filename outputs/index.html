@@ -43703,11 +43703,22 @@
     async function applyVenueDashboardPreview(city, reference) {
       const params = new URLSearchParams(window.location.search);
       if (params.get("venue_preview") !== "1") return null;
-      if (!isVenueSession()) throw new Error("Sign in as this venue's manager to open its preview.");
-
-      const data = await getAuthenticatedJson("/api/venue/dashboard");
+      const venueId = String(params.get("venue_id") || "").trim();
+      let data;
+      if (isVenueSession()) {
+        data = await getAuthenticatedJson("/api/venue/dashboard");
+      } else if (isAdminSession()) {
+        if (!venueId) throw new Error("Choose a venue from Admin before opening its preview.");
+        data = await getAuthenticatedJson(`/api/admin/venues/preview?venueId=${encodeURIComponent(venueId)}`);
+      } else {
+        throw new Error("Sign in as the venue manager or a MyDancr administrator to open this preview.");
+      }
       const profile = data?.profile;
       if (!profile?.slug || !profile?.name) throw new Error("Venue preview is unavailable.");
+
+      if (isAdminSession() && profile.id !== venueId) {
+        throw new Error("This Admin preview does not match the selected venue.");
+      }
 
       const normalizedReference = slugify(String(reference || ""));
       if (normalizedReference && ![slugify(profile.slug), slugify(profile.name)].includes(normalizedReference)) {
@@ -43715,8 +43726,21 @@
       }
 
       const previewCity = String(profile.city || city || "").trim();
+      if (!previewCity) throw new Error("Add the venue city before opening its preview.");
+      if (!markets[previewCity]) {
+        markets[previewCity] = {
+          stats: { dancers: 0, shifts: 0, venues: 0 },
+          dancers: [],
+          venues: []
+        };
+      }
+      if (![...citySelect.options].some((option) => option.value === previewCity)) {
+        const previewCityOption = document.createElement("option");
+        previewCityOption.value = previewCity;
+        previewCityOption.textContent = previewCity;
+        citySelect.append(previewCityOption);
+      }
       const market = markets[previewCity];
-      if (!market) throw new Error("This venue's city is not available in discovery yet.");
 
       const activeDeals = (Array.isArray(data.deals) ? data.deals : [])
         .filter((deal) => deal?.isActive === true);
@@ -58114,8 +58138,9 @@
 
     function closeVenueProfile() {
       if (!selectedVenueName) return false;
-      if (new URLSearchParams(window.location.search).get("venue_preview") === "1") {
-        window.location.assign("/dashboard/venue");
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("venue_preview") === "1") {
+        window.location.assign(params.get("preview_source") === "admin" ? "/admin" : "/dashboard/venue");
         return true;
       }
       const returnContext = venueProfileReturnContext;

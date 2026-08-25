@@ -21,6 +21,8 @@ const [
   notificationDelivery,
   documentation,
   coordinateMigration,
+  adminVenuePreviewRoute,
+  liveShell,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608240001_admin_managed_venue_page_review.sql", import.meta.url), "utf8"),
@@ -40,6 +42,8 @@ const [
   readFile(new URL("../src/lib/dancr/notification-delivery.ts", import.meta.url), "utf8"),
   readFile(new URL("../docs/venue-onboarding.md", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608240006_require_published_venue_coordinates.sql", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/venues/preview/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
 test("approved requests still create private workspaces without public activation", () => {
@@ -91,6 +95,12 @@ test("admins can prepare all page fields and official venue images", () => {
   assert.match(adminClient, /saveVenuePage/);
   assert.match(adminClient, /uploadVenueImage/);
   assert.match(adminClient, /Send page for venue approval/);
+  assert.match(adminClient, /Preview full customer page/);
+  assert.match(adminClient, /same venue-page renderer the manager will review and customers will see after approval/);
+  assert.ok(adminClient.indexOf("Preview full customer page") < adminClient.indexOf("Send page for venue approval"));
+  assert.match(adminClient, /venue_preview: "1"/);
+  assert.match(adminClient, /preview_source: "admin"/);
+  assert.match(adminClient, /venue_id: asText\(venue\.id\)/);
   assert.doesNotMatch(adminClient, /Publish approved page/);
   assert.match(adminMediaRoute, /uploadVenueLogoImageByAdmin/);
   assert.match(adminMediaRoute, /uploadVenueCoverImageByAdmin/);
@@ -103,6 +113,17 @@ test("admins can prepare all page fields and official venue images", () => {
   assert.match(publicationRequirements, /key: "coordinates"[\s\S]*?Verified map coordinates/);
   assert.match(publicationRequirements, /key: "logo"/);
   assert.doesNotMatch(publicationRequirements, /key: "cover"/);
+});
+
+test("Admin and venue previews share the canonical customer venue renderer", () => {
+  assert.match(adminVenuePreviewRoute, /await requireAdmin\(client, user\.id\)/);
+  assert.match(adminVenuePreviewRoute, /getVenueById\(admin, venueId\)/);
+  assert.match(adminVenuePreviewRoute, /getActiveClubDealsForVenue\(admin, venueId\)/);
+  assert.match(adminVenuePreviewRoute, /getVenuePublicationState\(profile, deals\)/);
+  assert.match(liveShell, /isAdminSession\(\)[\s\S]*?\/api\/admin\/venues\/preview\?venueId=/);
+  assert.match(liveShell, /if \(!markets\[previewCity\]\)[\s\S]*?stats: \{ dancers: 0, shifts: 0, venues: 0 \}/);
+  assert.match(liveShell, /citySelect\.append\(previewCityOption\)/);
+  assert.match(liveShell, /preview_source"\) === "admin" \? "\/admin" : "\/dashboard\/venue"/);
 });
 
 test("published venues require verified coordinates at the database boundary", () => {
@@ -161,8 +182,8 @@ test("manager access email and documentation describe the managed workflow", () 
   assert.match(notificationDelivery, /payload\.event === "venue_page_review" \|\| payload\.event === "venue_page_published"/);
   assert.match(notificationDelivery, /return `\$\{baseUrl\}\/dashboard\/venue`/);
   assert.match(documentation, /MyDancr prepares the private page/);
-  assert.match(documentation, /reviews the official information and commercial package/);
-  assert.match(documentation, /exact customer venue-page renderer as an optional preview/);
+  assert.match(documentation, /administrator opens the complete private page in the exact customer venue-page renderer/);
+  assert.match(documentation, /venue reviews the same official information and commercial package/);
   assert.match(documentation, /MyDancr controls the venue-card and page presentation/);
   assert.match(documentation, /Approval publishes that exact completed page immediately/);
   assert.match(documentation, /approved review atomically marks that exact page published/);

@@ -53,7 +53,7 @@ test("venue profiles restore dashboard surfaces while venue preview opens the ca
   assert.match(venuePreview, /new URL\("\/", window\.location\.origin\)/);
   assert.match(venuePreview, /searchParams\.set\("venue_preview", "1"\)/);
   assert.match(venuePreview, /window\.location\.assign\(previewUrl\.toString\(\)\)/);
-  assert.match(closeVenue, /get\("venue_preview"\) === "1"[\s\S]*?window\.location\.assign\("\/dashboard\/venue"\)/);
+  assert.match(closeVenue, /get\("venue_preview"\) === "1"[\s\S]*?get\("preview_source"\) === "admin" \? "\/admin" : "\/dashboard\/venue"/);
 
   assert.match(customerProfileOpen, /returnTo: "customer-dashboard"/);
   assert.doesNotMatch(customerProfileOpen, /closeDashboard\(\)/);
@@ -74,7 +74,7 @@ test("private venue previews do not flash the homepage or disappear during disco
   assert.match(sharedPreview, /finally \{[\s\S]*?finishVenuePreviewBootstrap\(\)/);
   assert.doesNotMatch(liveApp, /venue-dashboard-preview-banner/);
   assert.doesNotMatch(liveApp, /Private customer preview|Live customer preview/);
-  assert.match(liveApp, /get\("venue_preview"\) === "1"[\s\S]*?window\.location\.assign\("\/dashboard\/venue"\)/);
+  assert.match(liveApp, /get\("venue_preview"\) === "1"[\s\S]*?get\("preview_source"\) === "admin" \? "\/admin" : "\/dashboard\/venue"/);
 });
 
 test("venue roster dancer profiles stay inside the venue dashboard stack", () => {

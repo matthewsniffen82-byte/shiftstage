@@ -2812,6 +2812,17 @@ function VenueManager({
     ));
   }
 
+  function venuePagePreviewHref(venue: Record<string, unknown>) {
+    const params = new URLSearchParams({
+      city: asText(venue.city),
+      venue: asText(venue.slug) || asText(venue.name),
+      venue_id: asText(venue.id),
+      venue_preview: "1",
+      preview_source: "admin",
+    });
+    return `/?${params.toString()}`;
+  }
+
   async function hideVenue(venue: Record<string, unknown>) {
     const venueId = asText(venue.id);
     const token = readToken();
@@ -2979,6 +2990,12 @@ function VenueManager({
                   {requirements.map((requirement) => <li className={requirement.complete ? "complete" : ""} key={requirement.label}><span>{requirement.complete ? "✓" : "○"}</span>{requirement.label}</li>)}
                 </ul>
                 <div className="venue-page-workflow-actions">
+                  <div className="venue-page-workflow-copy">
+                    <small>Final Admin review</small>
+                    <strong>Preview the completed customer experience, then send it to the venue.</strong>
+                    <p>The preview uses the same venue-page renderer the manager will review and customers will see after approval.</p>
+                  </div>
+                  <a className="venue-page-preview-action" href={venuePagePreviewHref(venue)} rel="noopener noreferrer" target="_blank">Preview full customer page</a>
                   {!isActive && reviewStatus !== "venue_approved" ? (
                     <button type="button" disabled={isBusy || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send page for venue approval"}</button>
                   ) : null}
@@ -4687,7 +4704,14 @@ function AdminStyles() {
       .venue-page-requirements li { display: flex; align-items: center; gap: 7px; padding: 9px; border: 1px solid rgba(255,255,255,.08); border-radius: 7px; color: #94a3b8; font-size: 11px; font-weight: 800; background: #111118; }
       .venue-page-requirements li.complete { color: #6ee7b7; border-color: rgba(16,185,129,.25); }
       .venue-page-workflow-actions { display: grid; gap: 8px; }
-      .venue-page-workflow-actions button { min-height: 44px; }
+      .venue-page-workflow-copy { display: grid; gap: 5px; padding: 11px; border: 1px solid rgba(139,92,246,.24); border-radius: 8px; background: rgba(124,58,237,.07); }
+      .venue-page-workflow-copy small { color: #a78bfa; font-size: 10px; font-weight: 950; letter-spacing: .13em; text-transform: uppercase; }
+      .venue-page-workflow-copy strong { color: #f8fafc; line-height: 1.35; }
+      .venue-page-workflow-copy p { margin: 0; color: #b9accd; font-size: 12px; line-height: 1.45; }
+      .venue-page-workflow-actions button, .venue-page-preview-action { min-height: 44px; }
+      .venue-page-preview-action { display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(139,92,246,.72); border-radius: 8px; color: #fff; background: linear-gradient(135deg,rgba(109,40,217,.26),rgba(124,58,237,.14)); box-shadow: inset 0 0 18px rgba(124,58,237,.12), 0 0 16px rgba(109,40,217,.12); font-size: 12px; font-weight: 900; text-align: center; text-decoration: none; }
+      .venue-page-preview-action:hover { border-color: rgba(167,139,250,.92); background: linear-gradient(135deg,rgba(109,40,217,.38),rgba(124,58,237,.22)); }
+      .venue-page-preview-action:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
       .venue-page-workflow-actions small { color: #94a3b8; line-height: 1.45; }
       .report-list { display: grid; gap: 12px; }
       .report-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
