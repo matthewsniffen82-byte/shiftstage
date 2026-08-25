@@ -520,7 +520,7 @@ function PublicProfileStyles() {
       body.dancr-button-system .public-profile-shell .profile-media-tabs button.active { color: #fff !important; background: rgba(126,234,255,.045) !important; box-shadow: inset 0 -2px #7eeaff !important; text-shadow: none; }
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .profile-media-grid { min-height: 108px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
-      .profile-media-grid-item { position: relative; width: 100%; min-width: 0; aspect-ratio: 4 / 5; display: block; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 3px; color: #fff; background: #0b0b10; box-shadow: none; cursor: pointer; }
+      .profile-media-grid-item { position: relative; width: 100%; min-width: 0; aspect-ratio: 9 / 16; display: block; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 3px; color: #fff; background: #0b0b10; box-shadow: none; cursor: pointer; }
       .profile-media-grid-item img, .profile-media-grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
       .profile-media-grid-item img { filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
       .profile-media-poster-placeholder { width: 100%; height: 100%; display: block; background: radial-gradient(circle at 50% 32%, rgba(126,234,255,.18), transparent 28%), linear-gradient(145deg, rgba(109,40,217,.28), rgba(5,5,9,.96)); }

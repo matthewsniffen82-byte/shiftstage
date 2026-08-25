@@ -257,7 +257,7 @@ test("profile videos stay passive in the grid and open the complete full-screen 
   assert.match(profileCarousel, /new IntersectionObserver/);
   assert.match(profileCarousel, /data-profile-media-lazy-sentinel/);
   assert.doesNotMatch(profileCarousel, /Load more|inlinePlaying|profile-media-video-controls/);
-  assert.match(profilePage, /\.profile-media-grid-item \{[\s\S]*?aspect-ratio: 4 \/ 5;/);
+  assert.match(profilePage, /\.profile-media-grid-item \{[\s\S]*?aspect-ratio: 9 \/ 16;/);
 });
 
 test("social icons use one simple Socials heading without publishing handles", () => {

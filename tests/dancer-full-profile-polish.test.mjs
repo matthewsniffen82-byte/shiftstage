@@ -71,7 +71,7 @@ test("profile media uses a seamless three-column vertical library", () => {
   );
   assert.match(
     liveApp,
-    /action-first media library[\s\S]*?#profileBackdrop \.gallery \.thumb \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?aspect-ratio: 4 \/ 5 !important;[\s\S]*?scroll-snap-align: none !important;/,
+    /action-first media library[\s\S]*?#profileBackdrop \.gallery \.thumb \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?aspect-ratio: 9 \/ 16 !important;[\s\S]*?scroll-snap-align: none !important;/,
   );
   assert.match(liveApp, /profile-media-lazy-sentinel \{[\s\S]*?grid-column: 1 \/ -1 !important;/);
   assert.match(profilePolishBlock, /overflow-anchor: none;/);

@@ -99,7 +99,7 @@ test("the profile presents approved photos and dancer-only videos as separate th
   );
   assert.match(
     publicProfilePage,
-    /\.profile-media-grid-item \{[^}]*width: 100%;[^}]*aspect-ratio: 4 \/ 5;/,
+    /\.profile-media-grid-item \{[^}]*width: 100%;[^}]*aspect-ratio: 9 \/ 16;/,
   );
   assert.match(
     publicProfilePage,
@@ -111,7 +111,7 @@ test("the profile presents approved photos and dancer-only videos as separate th
   assert.doesNotMatch(publicProfilePage, /<TvVideoStrip/);
 });
 
-test("full-profile photo and video grids use stable portrait tiles", () => {
+test("full-profile photo and video grids use stable tall portrait tiles", () => {
   assert.match(
     liveApp,
     /#profileBackdrop \.modal-image \{[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: 9 \/ 16 !important;[\s\S]*?background-size: cover !important;/,
@@ -131,7 +131,7 @@ test("full-profile photo and video grids use stable portrait tiles", () => {
     /#profileBackdrop \.modal-grid > \.info-tile:not\(\.working-now-tile\):not\(\.schedule-upcoming\):not\(\.profile-club-deal-tile\)::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
   );
   assert.doesNotMatch(publicPhotoCarousel, /selectedItem|profile-media-feature/);
-  assert.match(publicProfilePage, /\.profile-media-grid-item \{[^}]*aspect-ratio: 4 \/ 5;/);
+  assert.match(publicProfilePage, /\.profile-media-grid-item \{[^}]*aspect-ratio: 9 \/ 16;/);
   assert.match(publicProfilePage, /\.profile-media-grid-item img, \.profile-media-grid-item video \{[^}]*object-fit: cover;/);
   assert.match(publicProfilePage, /\.profile-media-viewer-stage > img, \.profile-media-viewer-stage > video \{[^}]*object-fit: contain;/);
 });
