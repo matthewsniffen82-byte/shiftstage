@@ -164,6 +164,9 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.dancer-photo-upload-form \{[^}]*grid-template-columns:auto auto;[^}]*justify-content:center;/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.photo-upload-heading \{ display:none; \}/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.photo-review-list > p:only-child \{ display:none; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-empty-slots \{ justify-content:flex-start; scroll-padding-inline:10px; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-empty-slots::before,[\s\S]*?\.dancer-profile-builder-empty-slots::after \{ content:""; flex:0 0 8px; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-empty-slots button:last-of-type \{ scroll-snap-align:end; \}/);
   const emptyMediaStyles = dashboard.match(/\.dancer-profile-builder-media-empty \{([^}]*)\}/)?.[1] || "";
   assert.doesNotMatch(emptyMediaStyles, /(?:^|;)\s*(?:height|min-height|aspect-ratio):/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-media-feature \{[^}]*aspect-ratio: 9 \/ 16;/);

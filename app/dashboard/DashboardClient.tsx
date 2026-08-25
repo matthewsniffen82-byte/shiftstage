@@ -8686,8 +8686,11 @@ function DashboardStyles() {
       .dancer-profile-builder-media-empty > span { width:64px; height:64px; display:grid; place-items:center; border:1px solid rgba(126,234,255,.42); border-radius:50%; color:#fff; background:linear-gradient(135deg,#681fd4,#0d789e); box-shadow:0 0 32px rgba(109,40,217,.32); font-size:34px; font-weight:700; line-height:1; }
       .dancer-profile-builder-media-empty > strong { font-size:clamp(22px,5vw,31px); }
       body.dancr-button-system .dancer-profile-builder-media-empty { padding:22px !important; border-radius:20px !important; background:radial-gradient(circle at 50% 38%,rgba(124,58,237,.22),transparent 13rem),#07070b !important; box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 34px rgba(124,58,237,.12) !important; }
-      .dancer-profile-builder-empty-slots { justify-content:center; }
-      .dancer-profile-builder-empty-slots button { width:64px; min-width:64px; aspect-ratio:4 / 5; display:grid; place-items:center; padding:0; border:1px dashed rgba(126,234,255,.27); border-radius:10px; color:#d8f8ff; background:rgba(126,234,255,.045); font:inherit; font-size:24px; cursor:pointer; }
+      .dancer-profile-builder-empty-slots { justify-content:flex-start; scroll-padding-inline:10px; }
+      .dancer-profile-builder-empty-slots::before,
+      .dancer-profile-builder-empty-slots::after { content:""; flex:0 0 8px; }
+      .dancer-profile-builder-empty-slots button { width:64px; min-width:64px; aspect-ratio:4 / 5; display:grid; place-items:center; padding:0; scroll-snap-align:start; border:1px dashed rgba(126,234,255,.27); border-radius:10px; color:#d8f8ff; background:rgba(126,234,255,.045); font:inherit; font-size:24px; cursor:pointer; }
+      .dancer-profile-builder-empty-slots button:last-of-type { scroll-snap-align:end; }
       body.dancr-button-system .dancer-profile-builder-empty-slots button { min-height:80px !important; padding:0 !important; border-radius:10px !important; background:rgba(126,234,255,.045) !important; box-shadow:none !important; }
       .dancer-profile-builder-media-actions { width:min(100%,760px); max-width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:10px auto 0; }
       .dancer-profile-builder-media-actions button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(126,234,255,.24); border-radius:12px; color:#effcff; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(34,199,255,.06)); font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
