@@ -3441,25 +3441,29 @@ function DancerProfilePreview({
               </>
             ) : null}
             {isEditor ? (
-              <section className="profile-social-section dancer-profile-builder-socials" aria-label="Add social links">
-                <span className="eyebrow">Socials</span>
-                <div className="dancer-profile-builder-social-platforms">
-                  {SOCIAL_PLATFORMS.map((platform) => {
-                    const hasLink = socialLinks.some((link) => link.platform === platform.key);
-                    return (
-                      <button
-                        aria-label={`${hasLink ? "Edit" : "Add"} ${platform.label}`}
-                        className={`dancer-profile-builder-social-platform is-${platform.key}${hasLink ? " is-added" : ""}`}
-                        key={platform.key}
-                        onClick={() => openSocialEditor(platform.key)}
-                        title={`${hasLink ? "Edit" : "Add"} ${platform.label}`}
-                        type="button"
-                      >
-                        <SocialPlatformIcon platform={platform.key} />
-                        <span aria-hidden="true">+</span>
-                      </button>
-                    );
-                  })}
+              <section className="profile-social-section dancer-profile-builder-socials" aria-labelledby="dancer-profile-builder-social-heading">
+                <div className="social-links-control">
+                  <div className="social-list-heading">
+                    <h2 id="dancer-profile-builder-social-heading">Social Links</h2>
+                  </div>
+                  <div className="social-list dancer-profile-builder-social-platforms" aria-label="Add social links">
+                    {SOCIAL_PLATFORMS.map((platform) => {
+                      const hasLink = socialLinks.some((link) => link.platform === platform.key);
+                      return (
+                        <button
+                          aria-label={`${hasLink ? "Edit" : "Add"} ${platform.label}`}
+                          className={`social-link social-link-${platform.key} dancer-profile-builder-social-platform${hasLink ? " is-added" : ""}`}
+                          key={platform.key}
+                          onClick={() => openSocialEditor(platform.key)}
+                          title={`${hasLink ? "Edit" : "Add"} ${platform.label}`}
+                          type="button"
+                        >
+                          <SocialPlatformIcon platform={platform.key} />
+                          <span aria-hidden="true">+</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </section>
             ) : socialLinks.length ? (
@@ -8618,12 +8622,12 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .dancer-profile-preview-overlay .social-list-heading h2 { margin: 0; font-size: 15px; line-height: 1.1; }
       .dancer-profile-preview-overlay .social-list { width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
-      .dancer-profile-preview-overlay .social-list a { width: 48px; min-width: 48px; height: 48px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 48px; padding: 0; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; color: #fff; background: linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); text-decoration: none; transition: border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease; }
-      .dancer-profile-preview-overlay .social-list a:hover { border-color: rgba(126,234,255,.56); background: linear-gradient(135deg,rgba(139,92,246,.22),rgba(34,199,255,.12)); box-shadow: 0 0 18px rgba(34,199,255,.1); transform: translateY(-1px); }
-      .dancer-profile-preview-overlay .social-list a:focus-visible { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 3px; }
-      .dancer-profile-preview-overlay .social-list a svg { width: 23px; height: 23px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-      .dancer-profile-preview-overlay .social-list a.social-link-instagram svg, .dancer-profile-preview-overlay .social-list a.social-link-x svg { fill: none; }
-      .dancer-profile-preview-overlay .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
+      .dancer-profile-preview-overlay .social-list :is(a,button) { width: 48px; min-width: 48px; height: 48px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 48px; padding: 0; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; color: #fff; background: linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); text-decoration: none; transition: border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease; }
+      .dancer-profile-preview-overlay .social-list :is(a,button):hover { border-color: rgba(126,234,255,.56); background: linear-gradient(135deg,rgba(139,92,246,.22),rgba(34,199,255,.12)); box-shadow: 0 0 18px rgba(34,199,255,.1); transform: translateY(-1px); }
+      .dancer-profile-preview-overlay .social-list :is(a,button):focus-visible { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 3px; }
+      .dancer-profile-preview-overlay .social-list :is(a,button) svg { width: 23px; height: 23px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .dancer-profile-preview-overlay .social-list :is(.social-link-instagram,.social-link-x) svg { fill: none; }
+      .dancer-profile-preview-overlay .social-list :is(a,button) .logo-cutout { fill: #0d0a17; stroke: none; }
       .dancer-profile-preview-overlay .profile-schedule-section { display: grid; gap: 14px; margin-top: 24px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
       .dancer-profile-preview-overlay .profile-schedule-section .eyebrow { color:#f7f2ff; }
       .dancer-profile-preview-overlay .profile-section-heading { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
@@ -8695,23 +8699,9 @@ function DashboardStyles() {
       .dancer-profile-builder-media-actions { width:min(100%,760px); max-width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:10px auto 0; }
       .dancer-profile-builder-media-actions button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(126,234,255,.24); border-radius:12px; color:#effcff; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(34,199,255,.06)); font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
       .dancer-profile-builder-media-actions button span { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; background:rgba(126,234,255,.12); }
-      .dancer-profile-builder-socials { justify-items:center; gap:12px !important; text-align:center; }
-      .dancer-profile-builder-social-platforms { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px; }
-      .dancer-profile-builder-social-platform { position:relative; width:52px; min-width:52px; height:52px; min-height:52px; display:grid; flex:0 0 52px; place-items:center; padding:0; border:1px solid rgba(139,92,246,.38); border-radius:50%; color:#d8d0e4; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(34,199,255,.06)); box-shadow:inset 0 1px 0 rgba(255,255,255,.05); cursor:pointer; }
-      .dancer-profile-builder-social-platform:hover { border-color:rgba(126,234,255,.66); color:#fff; transform:translateY(-1px); }
-      .dancer-profile-builder-social-platform:focus-visible { outline:2px solid #7eeaff; outline-offset:3px; }
-      .dancer-profile-builder-social-platform svg { width:24px; height:24px; display:block; fill:currentColor; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-      .dancer-profile-builder-social-platform.is-instagram { color:#ff6b9a; }
-      .dancer-profile-builder-social-platform.is-tiktok { color:#48e8ed; }
-      .dancer-profile-builder-social-platform.is-snapchat { color:#ffe84a; }
-      .dancer-profile-builder-social-platform.is-x { color:#f4f1f8; }
-      .dancer-profile-builder-social-platform.is-onlyfans { color:#46c7ed; }
-      .dancer-profile-builder-social-platform.is-instagram svg,
-      .dancer-profile-builder-social-platform.is-x svg { fill:none; }
-      .dancer-profile-builder-social-platform .logo-cutout { fill:#09090f; stroke:none; }
+      .dancer-profile-builder-social-platform { position:relative; cursor:pointer; }
       .dancer-profile-builder-social-platform > span { position:absolute; z-index:2; top:-2px; right:-2px; width:18px; height:18px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.34); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 3px 9px rgba(0,0,0,.5); font-size:12px; font-weight:950; line-height:1; }
-      .dancer-profile-builder-social-platform.is-added { border-color:rgba(76,223,166,.54); box-shadow:0 0 16px rgba(76,223,166,.09),inset 0 1px 0 rgba(255,255,255,.05); }
-      body.dancr-button-system .dancer-profile-builder-social-platform { min-height:52px !important; padding:0 !important; border-radius:50% !important; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(34,199,255,.06)) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.05) !important; }
+      body.dancr-button-system .public-profile-shell .dancer-profile-builder-social-platform { width:48px !important; min-width:48px !important; height:48px !important; min-height:48px !important; flex:0 0 48px !important; padding:0 !important; border-radius:50% !important; }
       .dancer-social-link-editor { width:min(100%,460px) !important; margin-inline:auto; padding:10px !important; }
       .dancer-social-link-form { display:grid !important; grid-template-columns:1fr !important; gap:10px !important; align-items:stretch !important; }
       .dancer-social-link-editor-heading { display:flex; align-items:center; gap:10px; }

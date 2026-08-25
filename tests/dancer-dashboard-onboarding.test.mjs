@@ -224,12 +224,15 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("videos"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
   assert.match(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
+  assert.match(dashboard, /className="social-links-control"[\s\S]*?<h2 id="dancer-profile-builder-social-heading">Social Links<\/h2>/);
+  assert.match(dashboard, /className=\{`social-link social-link-\$\{platform\.key\} dancer-profile-builder-social-platform/);
   assert.match(dashboard, /<SocialPlatformIcon platform=\{platform\.key\} \/>[\s\S]*?<span aria-hidden="true">\+<\/span>/);
   assert.match(dashboard, /socialEditorContent = editorSections\?\.socials\?\.\(activeSocialPlatform \|\| "instagram"\)/);
   assert.match(dashboard, /hidden=\{activeEditorSection !== "socials"\}/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\[hidden\] \{ display:none; \}/);
   assert.match(dashboard, /className="dancer-social-link-form"[\s\S]*?Profile link or username/);
-  assert.match(dashboard, /\.dancer-profile-builder-social-platform \{[^}]*width:52px;[^}]*border-radius:50%/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.social-list :is\(a,button\) \{ width: 48px;[^}]*height: 48px;[^}]*justify-content: center;/);
+  assert.match(dashboard, /body\.dancr-button-system \.public-profile-shell \.dancer-profile-builder-social-platform \{[^}]*width:48px !important;[^}]*height:48px !important;/);
   assert.match(dashboard, /dancerStepOneStateLabel/);
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
 });
