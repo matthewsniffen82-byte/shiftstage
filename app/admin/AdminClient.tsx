@@ -2381,29 +2381,29 @@ function ReportManager({
   onReportsChange: (reports: Array<Record<string, unknown>>) => void;
 }) {
   const [statusById, setStatusById] = useState<Record<string, string>>({});
+  const [busyReportId, setBusyReportId] = useState("");
 
   if (!reports.length) return <p className="empty">No open reports.</p>;
 
   async function updateReport(reportId: string, action: "resolved" | "removed") {
-    const token = readToken();
-    if (!token) {
-      setStatusById((current) => ({ ...current, [reportId]: "Admin sign in required." }));
-      return;
-    }
-
+    setBusyReportId(reportId);
     setStatusById((current) => ({ ...current, [reportId]: "Saving..." }));
-    const response = await fetch("/api/admin/reports", {
-      method: "PATCH",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ reportId, action }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setStatusById((current) => ({ ...current, [reportId]: data.error || "Unable to update report." }));
-      return;
+    try {
+      await requestAdminJson("/api/admin/reports", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reportId, action }),
+        fallbackMessage: "Unable to update report.",
+      });
+      onReportsChange(reports.filter((report) => String(report.id) !== reportId));
+    } catch (error) {
+      setStatusById((current) => ({
+        ...current,
+        [reportId]: error instanceof Error ? error.message : "Unable to update report. Check your connection and try again.",
+      }));
+    } finally {
+      setBusyReportId("");
     }
-
-    onReportsChange(reports.filter((report) => String(report.id) !== reportId));
   }
 
   return (
@@ -2416,10 +2416,10 @@ function ReportManager({
             <span>{String(report.reason || "Reason pending")}</span>
             {report.details ? <p>{String(report.details)}</p> : null}
             <div>
-              <button type="button" onClick={() => updateReport(reportId, "resolved")}>
-                Resolve
+              <button type="button" onClick={() => updateReport(reportId, "resolved")} disabled={busyReportId === reportId}>
+                {busyReportId === reportId ? "Saving..." : "Resolve"}
               </button>
-              <button type="button" onClick={() => updateReport(reportId, "removed")}>
+              <button type="button" onClick={() => updateReport(reportId, "removed")} disabled={busyReportId === reportId}>
                 Remove
               </button>
             </div>

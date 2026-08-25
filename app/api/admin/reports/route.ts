@@ -11,13 +11,13 @@ const REPORT_ACTIONS = new Set(["resolved", "removed"]);
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const status = new URL(request.url).searchParams.get("status") || "open";
     const reports = await getContentReports(createAdminSupabaseClient(), status);
 
-    return NextResponse.json({ ok: true, reports });
+    return NextResponse.json({ ok: true, reports, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load content reports.");
   }
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const body = await request.json();
@@ -42,7 +42,7 @@ export async function PATCH(request: Request) {
 
     const report = await updateContentReport(createAdminSupabaseClient(), user.id, reportId, action as "resolved" | "removed");
 
-    return NextResponse.json({ ok: true, report });
+    return NextResponse.json({ ok: true, report, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to update content report.");
   }
