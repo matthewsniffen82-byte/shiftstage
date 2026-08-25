@@ -2861,10 +2861,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  /* Keep every logo inside the visual canvas to the left of the 48px action
-   * rail. The rail sits 10px from the card edge, so 72px preserves a clear
-   * 14px gutter instead of letting wide marks run beneath the controls. */
-  padding: 42px 72px 142px 18px;
+  /* Center venue identity consistently on every scroll card. The symmetric
+   * 64px inset also keeps the artwork clear of the 48px action rail. */
+  padding: 42px 64px 142px;
   object-fit: contain;
   object-position: center 34%;
   transform: translate(
@@ -2876,6 +2875,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 .venue-card-logo-shell {
+  /* The legacy venue-card renderer is still used by some discovery states.
+   * Center its logo stage against the full card instead of the action rail. */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  transform: translateY(-50%);
   width: min(76%, 350px);
   height: 58%;
   min-height: 136px;
@@ -2892,7 +2897,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-logo {
-    padding: 40px 72px 138px 16px;
+    padding: 40px 64px 138px;
   }
 
   body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
