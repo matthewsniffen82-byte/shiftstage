@@ -18,7 +18,11 @@ test("MyDancr TV declares and retries muted autoplay for the active snap-scroll 
   );
   assert.match(
     feedClient,
-    /if \(!element\.muted\)[\s\S]*?setMuted\(true\)[\s\S]*?await element\.play\(\)/,
+    /if \(!element\.muted\)[\s\S]*?element\.muted = true[\s\S]*?await element\.play\(\)/,
+  );
+  assert.doesNotMatch(
+    feedClient,
+    /if \(!element\.muted\)[\s\S]{0,160}(?:mutedRef\.current = true|setMuted\(true\))/,
   );
   assert.match(
     feedClient,
@@ -59,7 +63,11 @@ test("profile and venue video strips autoplay only their visible muted preview",
     videoStrip,
     /function playPreviewCard\(card: HTMLButtonElement\)[\s\S]*?video\.autoplay = active[\s\S]*?preview\.muted = true[\s\S]*?preview\.play\(\)/,
   );
-  assert.match(videoStrip, /const \[viewerMuted, setViewerMuted\] = useState\(true\)/);
+  assert.match(videoStrip, /const \[viewerMuted, setViewerMuted\] = useVideoSoundPreference\(\)/);
+  assert.doesNotMatch(
+    videoStrip,
+    /if \(!video\.muted\)[\s\S]{0,100}setViewerMuted\(true\)/,
+  );
   assert.match(
     videoStrip,
     /onCanPlay=\{\(event\) => \{[\s\S]*?playViewerVideo\(event\.currentTarget\)/,
