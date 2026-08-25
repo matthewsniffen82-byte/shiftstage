@@ -8667,11 +8667,11 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-action-share-slot .profile-share button { gap:6px; }
       .dancer-profile-preview-overlay .profile-action-overflow-toggle { width:100%; min-height:48px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:7px 10px; border:1px solid rgba(148,229,255,.18); border-radius:12px; color:#d8d0e4; background:rgba(255,255,255,.04); cursor:default; font-size:12px; font-weight:900; }
       .dancer-profile-preview-overlay .profile-action-overflow-toggle > span:first-child { color:#9fefff; font-size:15px; letter-spacing:.08em; line-height:1; }
-      .dancer-profile-preview-overlay .profile-overview { display:block; margin-top:0; padding:10px 0 4px; border-top:1px solid rgba(126,234,255,.08); }
+      .dancer-profile-preview-overlay .profile-overview { display:block; margin-top:0; padding:10px 0 4px; border:0; }
       .dancer-profile-preview-overlay .profile-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin:0; }
-      .dancer-profile-preview-overlay .profile-metrics > div { min-width:0; display:grid; gap:5px; justify-items:center; padding:10px 4px; }
-      .dancer-profile-preview-overlay .profile-metrics dd { margin:0; color:#eee9f5; font-size:clamp(18px,3.5vw,24px); font-weight:950; line-height:1; }
-      .dancer-profile-preview-overlay .profile-metrics dt { color:#8f849c; font-size:clamp(9px,2.1vw,11px); font-weight:850; line-height:1.2; text-align:center; }
+      .dancer-profile-preview-overlay .profile-metrics > div { min-width:0; display:grid; gap:6px; justify-items:center; padding:10px 4px; }
+      .dancer-profile-preview-overlay .profile-metrics dd { margin:0; color:#eee9f5; font-size:clamp(19px,3.75vw,24px); font-weight:900; letter-spacing:.01em; line-height:1.08; }
+      .dancer-profile-preview-overlay .profile-metrics dt { color:#8f849c; font-size:clamp(9px,2.1vw,11px); font-weight:850; line-height:1.25; text-align:center; }
       .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .dancer-profile-preview-overlay.is-editor { z-index:1510; }
       .dancer-profile-preview-overlay.is-editor .dancer-profile-preview-shell { padding-bottom: max(156px,calc(env(safe-area-inset-bottom) + 136px)); }

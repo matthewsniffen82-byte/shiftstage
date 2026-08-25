@@ -50,7 +50,9 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(profilePage, /className="profile-titlebar"/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /className="profile-metrics"/);
-  assert.match(profilePage, /\.profile-metrics > div \{[^}]*gap: 5px;[^}]*padding: 10px 4px;/);
+  assert.match(profilePage, /\.profile-overview \{[^}]*border: 0;/);
+  assert.match(profilePage, /\.profile-metrics > div \{[^}]*gap: 6px;[^}]*padding: 10px 4px;/);
+  assert.match(profilePage, /\.profile-metrics dd \{[^}]*font-weight: 900;[^}]*line-height: 1\.08;/);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /profile\.profileViewsToday \|\| 0/);
@@ -63,7 +65,9 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(liveApp, /class="profile-modal-summary"/);
   assert.match(liveApp, /class="profile-modal-avatar" id="modalProfileAvatar"/);
   assert.match(liveApp, /class="profile-activity-metrics"/);
-  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 4px;[\s\S]*?padding: 4px;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?border: 0;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 5px;[\s\S]*?padding: 5px;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics dd \{[\s\S]*?font-weight: 900;[\s\S]*?line-height: 1\.08;/);
   assert.match(liveApp, /id="modalFollowerCount"/);
   assert.match(liveApp, /id="tonightInterestCount"/);
   assert.match(liveApp, /id="modalProfileViews"/);

@@ -711,7 +711,7 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   assert.match(fullProfilePalette, /\.social-link-onlyfans \{[\s\S]*?color: #00aff0 !important;/);
   assert.match(
     fullProfilePalette,
-    /\.profile-activity-metrics > div \+ div,[\s\S]*?\.profile-metrics > div \+ div \{[\s\S]*?var\(--dancr-color-border-subtle\)/,
+    /\.profile-activity-metrics > div \+ div,[\s\S]*?\.profile-metrics > div \+ div \{[\s\S]*?box-shadow: none !important;/,
   );
   assert.doesNotMatch(
     fullProfilePalette,

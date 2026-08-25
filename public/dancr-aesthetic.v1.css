@@ -3676,7 +3676,7 @@ body.dancr-button-system .public-profile-shell :is(
  * discovery bar. Its grid already contributes 12px of terminal clearance, so
  * the remaining 60px keeps the final stats at the dock without creating a
  * second empty footer. A narrow reveal zone keeps the dock's glass paint and
- * shadow from covering the stats divider. */
+ * shadow from covering the final stats row. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop .profile-modal .modal-body {
     padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
@@ -3743,18 +3743,18 @@ body.dancr-button-system .public-profile-shell .live-actions button:focus-visibl
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics,
 body.dancr-button-system .public-profile-shell .profile-overview {
-  border-color: var(--dancr-color-border-subtle) !important;
+  border: 0 !important;
   background: var(--dancr-color-surface) !important;
   box-shadow: none !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics {
-  border-bottom: 1px solid var(--dancr-color-border-subtle) !important;
+  border-bottom: 0 !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics > div + div,
 body.dancr-button-system .public-profile-shell .profile-metrics > div + div {
-  box-shadow: inset 1px 0 0 var(--dancr-color-border-subtle) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics dd,
@@ -3870,21 +3870,24 @@ body.dancr-button-system #profileBackdrop .social-tile .social-link svg {
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics {
-  padding: 10px 0 9px !important;
+  padding: 11px 0 10px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics > div {
-  gap: 4px !important;
-  padding: 4px !important;
+  gap: 5px !important;
+  padding: 5px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics dd {
-  font-size: clamp(18px, 4.25vw, 22px) !important;
+  font-size: clamp(19px, 4.5vw, 23px) !important;
+  font-weight: 900 !important;
+  letter-spacing: .01em !important;
+  line-height: 1.08 !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
   font-size: clamp(9px, 2.3vw, 11px) !important;
-  line-height: 1.2 !important;
+  line-height: 1.25 !important;
 }
 
 /* Production TV-card branding keeps the moving media as the visual hero.
