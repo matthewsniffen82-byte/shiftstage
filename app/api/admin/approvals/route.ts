@@ -12,7 +12,7 @@ const REVIEW_STATUSES = new Set(["approved", "rejected"]);
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const admin = createAdminSupabaseClient();
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       .from("dancer_profiles")
       .select("id", { count: "exact", head: true });
     if (error) throw error;
-    return NextResponse.json({ ok: true, queue, dancerTotal: Number(count || 0) });
+    return NextResponse.json({ ok: true, queue, dancerTotal: Number(count || 0), session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load approval queue.");
   }
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const body = await request.json();
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
         label,
       });
 
-      return NextResponse.json({ ok: true, review });
+      return NextResponse.json({ ok: true, review, session: session || null });
     }
 
     const review = await reviewDancerProfile(createAdminSupabaseClient(), {
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       notes,
     });
 
-    return NextResponse.json({ ok: true, review });
+    return NextResponse.json({ ok: true, review, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to review dancer profile.");
   }

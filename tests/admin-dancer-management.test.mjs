@@ -84,3 +84,10 @@ test("approval loading no longer transfers the complete dancer table", () => {
   assert.match(adminDashboard, /Profiles in roster/);
   assert.match(adminDashboard, /\/api\/admin\/dancers\?/);
 });
+
+test("approval decisions use the refresh-aware role-isolated admin boundary", () => {
+  assert.equal((approvalsRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
+  assert.equal((approvalsRoute.match(/session: session \|\| null/g) || []).length, 3);
+  assert.equal((adminDashboard.match(/requestAdminJson\("\/api\/admin\/approvals"/g) || []).length, 2);
+  assert.doesNotMatch(adminDashboard, /fetch\("\/api\/admin\/approvals"/);
+});

@@ -3075,31 +3075,24 @@ function ApprovalQueue({
   }
 
   async function rejectProfile(dancerId: string) {
-    const token = readToken();
-    if (!token) {
-      setStatusById((current) => ({ ...current, [dancerId]: "Admin sign in required." }));
-      return;
-    }
-
     setStatusById((current) => ({ ...current, [dancerId]: "Saving..." }));
     try {
-      const response = await fetch("/api/admin/approvals", {
+      await requestAdminJson("/api/admin/approvals", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ dancerId, status: "rejected", notes: notesById[dancerId] || null }),
+        fallbackMessage: "Unable to review profile.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) {
-        setStatusById((current) => ({ ...current, [dancerId]: data.error || "Unable to review profile." }));
-        return;
-      }
 
       const confirmation = "Dancer profile rejected successfully.";
       setStatusById((current) => ({ ...current, [dancerId]: confirmation }));
       onActionConfirmed(confirmation);
       onReviewed(dancerId);
-    } catch {
-      setStatusById((current) => ({ ...current, [dancerId]: "Unable to review profile. Check your connection and try again." }));
+    } catch (error) {
+      setStatusById((current) => ({
+        ...current,
+        [dancerId]: error instanceof Error ? error.message : "Unable to review profile. Check your connection and try again.",
+      }));
     }
   }
 
@@ -3242,14 +3235,6 @@ function SubmissionDetails({
     onKeepOpen();
     const key = `${targetType}:${targetId}`;
     const notes = reasonByKey[key]?.trim() || "";
-    const token = readToken();
-    if (!token) {
-      setFeedbackByKey((current) => ({
-        ...current,
-        [key]: { tone: "error", message: "Admin sign in required." },
-      }));
-      return;
-    }
     if (status === "rejected" && !notes) {
       setFeedbackByKey((current) => ({
         ...current,
@@ -3265,9 +3250,9 @@ function SubmissionDetails({
     }));
 
     try {
-      const response = await fetch("/api/admin/approvals", {
+      const data = await requestAdminJson("/api/admin/approvals", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "review_content",
           dancerId,
@@ -3277,15 +3262,8 @@ function SubmissionDetails({
           notes,
           label,
         }),
+        fallbackMessage: "Unable to save this review.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) {
-        setFeedbackByKey((current) => ({
-          ...current,
-          [key]: { tone: "error", message: data.error || "Unable to save this review." },
-        }));
-        return;
-      }
 
       const responseStatus = asText(data.review?.status);
       const savedStatus = responseStatus === "approved" || responseStatus === "rejected" ? responseStatus : status;
@@ -3300,10 +3278,13 @@ function SubmissionDetails({
       }));
       onActionConfirmed(confirmation);
       onKeepOpen();
-    } catch {
+    } catch (error) {
       setFeedbackByKey((current) => ({
         ...current,
-        [key]: { tone: "error", message: "Unable to save this review. Check your connection and try again." },
+        [key]: {
+          tone: "error",
+          message: error instanceof Error ? error.message : "Unable to save this review. Check your connection and try again.",
+        },
       }));
     } finally {
       onKeepOpen();
