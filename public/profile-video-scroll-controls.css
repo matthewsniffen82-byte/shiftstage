@@ -116,10 +116,16 @@
   border: 0 !important;
   border-radius: 0 !important;
   outline: 0;
-  color: #f8f8fa !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  color: transparent !important;
+  accent-color: transparent !important;
   background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
   box-shadow: none !important;
   filter: none !important;
+  opacity: 0 !important;
   cursor: pointer !important;
   pointer-events: auto !important;
 }
@@ -127,11 +133,7 @@
 #profileBackdrop #modalVideoControls #modalVideoProgress::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    #f8f8fa 0 var(--profile-video-progress),
-    rgba(255, 255, 255, 0.18) var(--profile-video-progress) 100%
-  );
+  background: transparent !important;
 }
 
 #profileBackdrop #modalVideoControls #modalVideoProgress::-webkit-slider-thumb {
@@ -150,13 +152,13 @@
   height: 3px;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
+  background: transparent !important;
 }
 
 #profileBackdrop #modalVideoControls #modalVideoProgress::-moz-range-progress {
   height: 3px;
   border-radius: 999px;
-  background: #f8f8fa;
+  background: transparent !important;
 }
 
 #profileBackdrop #modalVideoControls #modalVideoProgress::-moz-range-thumb {
@@ -168,10 +170,28 @@
   opacity: 0;
 }
 
-#profileBackdrop #modalVideoControls #modalVideoProgress:focus-visible {
+#profileBackdrop .profile-modal-video-progress-line {
+  box-sizing: border-box !important;
+  position: absolute !important;
+  z-index: 2 !important;
+  right: 14px !important;
+  bottom: 8px !important;
+  left: 14px !important;
+  width: calc(100% - 28px) !important;
+  height: 3px !important;
+  display: block !important;
+  overflow: hidden !important;
+  border: 0 !important;
   border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+
+#profileBackdrop #modalVideoControls:has(#modalVideoProgress:focus-visible) .profile-modal-video-progress-line {
   outline: 2px solid rgba(248, 248, 250, 0.82);
-  outline-offset: -10px;
+  outline-offset: 3px;
 }
 
 #profileBackdrop .profile-modal-video-controls output {
