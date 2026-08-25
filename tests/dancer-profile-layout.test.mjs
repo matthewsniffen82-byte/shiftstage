@@ -92,16 +92,20 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
 });
 
-test("Working Now profiles mirror the upcoming schedule hierarchy and retain the cashier NFC Club Deal", () => {
+test("Working Now profiles retain the cashier NFC Club Deal while Upcoming stays date-and-venue only", () => {
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<small>Club<\/small>[\s\S]*?Venue-confirmed until/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
+  assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
+  assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
   assert.match(profilePage, /className="profile-active-deal is-inactive"[\s\S]*?aria-label="Inactive Club Deal"/);
-  assert.match(profilePage, /activeShift[\s\S]*?"No active deal"[\s\S]*?"Available after check-in"[\s\S]*?"No active club deal"/);
+  assert.match(profilePage, /\) : activeShift \|\| !upcomingShifts\.length \? \([\s\S]*?activeShift \? "No active deal" : "No active club deal"[\s\S]*?\) : null\}/);
+  assert.doesNotMatch(profilePage, /Available after check-in/);
   assert.match(profilePage, /Deals activate after a verified club check-in\./);
+  assert.match(liveApp, /const showDeal = !profile\.scheduled \|\| isWorkingTonight\(profile, city\)[\s\S]*?const dealMarkup = showDeal/);
   assert.match(
     profilePage,
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,

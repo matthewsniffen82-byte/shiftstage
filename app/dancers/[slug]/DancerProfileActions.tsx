@@ -194,7 +194,7 @@ export function DancerProfileActions({
   const [status, setStatus] = useState("");
   const moreActionsRef = useRef<HTMLDivElement | null>(null);
   const actionShift = useMemo(
-    () => shifts.find((shift) => shift.isActive) || shifts[0] || null,
+    () => shifts.find((shift) => shift.isActive) || null,
     [shifts],
   );
   const actionShiftId = actionShift?.id || "";
@@ -525,19 +525,21 @@ export function DancerProfileActions({
           </button>
           {moreActionsOpen ? (
             <div className="profile-action-overflow-menu" role="menu">
-              <button
-                aria-checked={isGoing}
-                className={`profile-action-going-menu${isGoing ? " is-going" : ""}`}
-                disabled={!actionShift || !savedLoaded || goingSaving}
-                onClick={() => {
-                  if (actionShift) updateGoing(actionShift.id);
-                  setMoreActionsOpen(false);
-                }}
-                role="menuitemcheckbox"
-                type="button"
-              >
-                {isGoing ? "Going tonight ✓" : actionShift ? "I’m Going" : "No shift posted"}
-              </button>
+              {actionShift ? (
+                <button
+                  aria-checked={isGoing}
+                  className={`profile-action-going-menu${isGoing ? " is-going" : ""}`}
+                  disabled={!savedLoaded || goingSaving}
+                  onClick={() => {
+                    updateGoing(actionShift.id);
+                    setMoreActionsOpen(false);
+                  }}
+                  role="menuitemcheckbox"
+                  type="button"
+                >
+                  {isGoing ? "Going tonight ✓" : "I’m Going"}
+                </button>
+              ) : null}
               <button
                 disabled={!savedLoaded || followSaving}
                 onClick={() => {

@@ -7,16 +7,19 @@ const [manager, deals] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
 ]);
 
-test("the guarded Demo Mode operation publishes six NFC-backed deals at distinct venues", () => {
-  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-demo-nfc-deals-v1"/);
-  assert.match(manager, /const TARGET_DEAL_COUNT = 6/);
+test("the guarded Demo Mode operation gives every active club an NFC-backed deal", () => {
+  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-all-active-club-deals-v2"/);
+  assert.doesNotMatch(manager, /TARGET_DEAL_COUNT/);
+  assert.match(manager, /return state\.venues\.filter\(\(venue\) => !state\.activeDealVenueIds\.has\(venue\.id\)\)/);
+  assert.match(manager, /const programmingLinks = await provisionMissingCashierTags\(state\.venues, state\.cashierVenueIds\)/);
   assert.match(manager, /\.eq\("tag_type", "cashier"\)/);
   assert.match(manager, /\.eq\("status", "active"\)/);
   assert.match(manager, /provision_admin_venue_nfc_tag/);
   assert.match(manager, /p_tag_type: "cashier"/);
   assert.match(manager, /programmingUrl: `https:\/\/mydancr\.com\/nfc\/\$\{token\}`/);
   assert.match(manager, /cashier_nfc_required: true/);
-  assert.match(manager, /new Set\(venueIds\)\.size !== TARGET_DEAL_COUNT/);
+  assert.match(manager, /new Set\(venueIds\)\.size !== venueIds\.length/);
+  assert.match(manager, /active clubs are missing an active Club Deal/);
   assert.match(manager, /missing an active cashier NFC sticker/);
 });
 
@@ -41,10 +44,11 @@ test("managed Demo Mode deals alternate only the two supported admission offers"
   );
 });
 
-test("the operation preserves existing venue deals and only deactivates its own managed rows", () => {
+test("the operation preserves existing venue deals and refuses to leave a club without one", () => {
   const applyBody = manager.match(/async function applyDeals\(\)[\s\S]*?async function deactivateManagedDeals/)?.[0] || "";
   const removeBody = manager.match(/async function deactivateManagedDeals\(\)[\s\S]*?async function loadState/)?.[0] || "";
   assert.doesNotMatch(applyBody, /\.update\(\{\s*is_active: false/);
   assert.match(removeBody, /state\.managedDeals\.map\(\(deal\) => deal\.id\)/);
+  assert.match(removeBody, /every active club must retain an active offer/);
   assert.doesNotMatch(removeBody, /\.delete\(\)/);
 });

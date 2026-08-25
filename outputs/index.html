@@ -49685,7 +49685,7 @@
         const isNotified = isNotificationOn(citySelect.value, profile.name);
         const isGoing = !!goingTonightSavedByProfile[profile.name];
         const canMarkGoing = Boolean(workingTonight && profile.shiftId);
-        const feedVenue = profile.scheduled ? resolveVenueByName(profile.venue, citySelect.value) : null;
+        const feedVenue = workingTonight ? resolveVenueByName(profile.venue, citySelect.value) : null;
         const rideMarkup = feedVenue
           ? uberRideLinkMarkup({
               venue: feedVenue,
@@ -50744,8 +50744,8 @@
     }
 
     function dancerProfileUberRideMarkup(profile, options = {}) {
-      if (options.preview || !profile?.scheduled) return "";
       const city = options.city || selectedCity();
+      if (options.preview || !profile?.scheduled || !isWorkingTonight(profile, city)) return "";
       const venue = resolveVenueByName(profile.venue, city);
       if (!venue) return "";
       return uberRideLinkMarkup({
@@ -50761,9 +50761,12 @@
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
       const socialMarkup = options.socialMarkup || socialLinksMarkup(profile, { preview: Boolean(options.preview) });
-      const dealMarkup = options.preview
-        ? profileDealTileMarkup(profile, { preview: true })
-        : profileDealTileMarkup(profile);
+      const showDeal = !profile.scheduled || isWorkingTonight(profile, city);
+      const dealMarkup = showDeal
+        ? options.preview
+          ? profileDealTileMarkup(profile, { preview: true })
+          : profileDealTileMarkup(profile)
+        : "";
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
           ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
@@ -50791,13 +50794,13 @@
       const isFollowed = isFollowingProfile(city, profile.name);
       const isNotified = isNotificationOn(city, profile.name);
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
-      const canMarkGoing = Boolean(profile.shiftId);
+      const canMarkGoing = Boolean(isWorkingTonight(profile, city) && profile.shiftId);
       const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
       const hasShiftActions = Boolean(profile.scheduled);
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
         ? `<button class="action-btn going-btn is-primary-action ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
-        : `<button class="action-btn going-btn is-unavailable" id="goingBtn" type="button" disabled aria-disabled="true">${profileActionButtonMarkup("clock", goingCopy.idle)}<small class="profile-action-requirement">No shift posted</small></button>`;
+        : "";
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
         <div class="modal-actions ${hasShiftActions ? "has-shift-actions" : "is-no-shift"}" aria-label="Guest actions">
@@ -56726,7 +56729,7 @@
             city
           })
         : "";
-      const rideMarkup = profile.scheduled && venue
+      const rideMarkup = isLive && venue
         ? uberRideLinkMarkup({
             venue,
             source: "tonight_feed",

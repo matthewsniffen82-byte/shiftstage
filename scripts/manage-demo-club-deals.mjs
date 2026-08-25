@@ -6,10 +6,9 @@ import { createClient } from "@supabase/supabase-js";
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.env.DANCR_ENV_DIR?.trim() || process.cwd());
 
-const OPERATION_CONFIRMATION = "mydancr-demo-nfc-deals-v1";
+const OPERATION_CONFIRMATION = "mydancr-all-active-club-deals-v2";
 const MANAGER_NAME = "manage-demo-club-deals";
-const BATCH_VERSION = "v1";
-const TARGET_DEAL_COUNT = 6;
+const BATCH_VERSION = "v2";
 const REFERRAL_COMMISSION_CENTS = 500;
 const MANAGED_CASHIER_LABEL = "Main cashier · Demo Mode";
 const DEAL_TEMPLATES = Object.freeze([
@@ -53,9 +52,10 @@ async function inspectState() {
   writeResult({
     event: "demo_nfc_deals.inspected",
     target,
-    activeLasVegasVenueCount: state.venues.length,
+    activeVenueCount: state.venues.length,
     activeCashierNfcVenueCount: state.cashierVenueIds.size,
     activeDealVenueCount: state.activeDealVenueIds.size,
+    missingActiveDealVenueCount: candidateVenues(state).length,
     managedActiveDealCount: state.managedDeals.length,
     managedDeals: state.managedDeals.map(publicDeal),
     eligibleVenueCount: candidateVenues(state).length,
@@ -64,33 +64,23 @@ async function inspectState() {
 
 async function applyDeals() {
   const state = await loadState();
-  if (state.managedDeals.length > TARGET_DEAL_COUNT) {
-    throw new Error(`Expected no more than ${TARGET_DEAL_COUNT} active managed deals; found ${state.managedDeals.length}.`);
-  }
-
-  const missingCount = TARGET_DEAL_COUNT - state.managedDeals.length;
-  if (!missingCount) {
-    const verified = await verifyManagedDeals();
+  const candidates = candidateVenues(state);
+  const programmingLinks = await provisionMissingCashierTags(state.venues, state.cashierVenueIds);
+  if (!candidates.length) {
+    const verified = await verifyActiveVenueDeals();
     writeResult({
       event: "demo_nfc_deals.already_applied",
       target,
-      activeDealCount: verified.length,
-      deals: verified.map(publicDeal),
+      activeVenueCount: verified.venues.length,
+      activeDealVenueCount: verified.activeDealVenueIds.size,
+      deals: verified.managedDeals.map(publicDeal),
+      newlyProvisionedCashierNfc: programmingLinks,
     });
     return;
   }
 
-  const candidates = candidateVenues(state);
-  if (candidates.length < missingCount) {
-    throw new Error(
-      `${missingCount} additional active venues with no published Club Deal are required; found ${candidates.length}.`,
-    );
-  }
-
   const now = new Date().toISOString();
-  const selectedVenues = candidates.slice(0, missingCount);
-  const programmingLinks = await provisionMissingCashierTags(selectedVenues, state.cashierVenueIds);
-  const rows = selectedVenues.map((venue, index) => {
+  const rows = candidates.map((venue, index) => {
     const templateIndex = (state.managedDeals.length + index) % DEAL_TEMPLATES.length;
     const template = DEAL_TEMPLATES[templateIndex];
     return {
@@ -128,17 +118,18 @@ async function applyDeals() {
     .insert(rows)
     .select("id, venue_id, deal_title, is_active, payout_type, payout_amount_cents, redemption_rules, venues(name, slug)");
   assertSuccess(error, "publish Demo Mode cashier-NFC Club Deals");
-  if ((data || []).length !== missingCount) {
-    throw new Error(`Expected ${missingCount} inserted deals; received ${(data || []).length}.`);
+  if ((data || []).length !== candidates.length) {
+    throw new Error(`Expected ${candidates.length} inserted deals; received ${(data || []).length}.`);
   }
 
-  const verified = await verifyManagedDeals();
+  const verified = await verifyActiveVenueDeals();
   writeResult({
     event: "demo_nfc_deals.applied",
     target,
     createdCount: (data || []).length,
-    activeDealCount: verified.length,
-    deals: verified.map(publicDeal),
+    activeVenueCount: verified.venues.length,
+    activeDealVenueCount: verified.activeDealVenueIds.size,
+    deals: verified.managedDeals.map(publicDeal),
     newlyProvisionedCashierNfc: programmingLinks,
   });
 }
@@ -148,6 +139,18 @@ async function deactivateManagedDeals() {
   if (!state.managedDeals.length) {
     writeResult({ event: "demo_nfc_deals.already_removed", target, deactivatedCount: 0 });
     return;
+  }
+  const managedIds = new Set(state.managedDeals.map((deal) => deal.id));
+  const replacementVenueIds = new Set(
+    state.activeDeals
+      .filter((deal) => !managedIds.has(deal.id))
+      .map((deal) => deal.venue_id),
+  );
+  const blocked = state.managedDeals.filter((deal) => !replacementVenueIds.has(deal.venue_id));
+  if (blocked.length) {
+    throw new Error(
+      `Cannot remove ${blocked.length} managed Club Deals because every active club must retain an active offer.`,
+    );
   }
   const now = new Date().toISOString();
   const { data, error } = await admin
@@ -164,12 +167,12 @@ async function deactivateManagedDeals() {
 }
 
 async function loadState() {
-  const [venuesResult, tagsResult, dealsResult, workingResult] = await Promise.all([
+  const [venuesResult, tagsResult, dealsResult] = await Promise.all([
     admin
       .from("venues")
       .select("id, name, slug, city, state, is_active")
       .eq("is_active", true)
-      .ilike("city", "Las Vegas")
+      .order("city", { ascending: true })
       .order("name", { ascending: true }),
     admin
       .from("nfc_tags")
@@ -182,38 +185,23 @@ async function loadState() {
       .eq("is_active", true)
       .eq("payout_type", "flat")
       .gt("payout_amount_cents", 0),
-    admin
-      .from("shifts")
-      .select("venue_id")
-      .eq("shift_source", "demo_locked")
-      .eq("status", "posted")
-      .is("checked_out_at", null),
   ]);
-  assertSuccess(venuesResult.error, "load active Las Vegas venues");
+  assertSuccess(venuesResult.error, "load active public venues");
   assertSuccess(tagsResult.error, "load active cashier NFC stickers");
   assertSuccess(dealsResult.error, "load active Club Deals");
-  assertSuccess(workingResult.error, "load locked Demo Mode Working Now venue assignments");
 
   const deals = dealsResult.data || [];
   return {
     venues: venuesResult.data || [],
     cashierVenueIds: new Set((tagsResult.data || []).map((tag) => tag.venue_id)),
+    activeDeals: deals,
     activeDealVenueIds: new Set(deals.map((deal) => deal.venue_id)),
     managedDeals: deals.filter(isManagedDeal),
-    workingVenueIds: new Set((workingResult.data || []).map((shift) => shift.venue_id)),
   };
 }
 
 function candidateVenues(state) {
-  const managedVenueIds = new Set(state.managedDeals.map((deal) => deal.venue_id));
-  const candidates = state.venues.filter((venue) =>
-    !state.activeDealVenueIds.has(venue.id)
-    && !managedVenueIds.has(venue.id),
-  );
-  return [
-    ...candidates.filter((venue) => !state.workingVenueIds.has(venue.id)),
-    ...candidates.filter((venue) => state.workingVenueIds.has(venue.id)),
-  ];
+  return state.venues.filter((venue) => !state.activeDealVenueIds.has(venue.id));
 }
 
 async function provisionMissingCashierTags(venues, cashierVenueIds) {
@@ -259,16 +247,19 @@ async function loadActiveAdminUserId() {
   return data.id;
 }
 
-async function verifyManagedDeals() {
+async function verifyActiveVenueDeals() {
   const state = await loadState();
-  if (state.managedDeals.length !== TARGET_DEAL_COUNT) {
-    throw new Error(`Expected ${TARGET_DEAL_COUNT} active managed deals; found ${state.managedDeals.length}.`);
+  const missingDeals = candidateVenues(state);
+  if (missingDeals.length) {
+    throw new Error(`${missingDeals.length} active clubs are missing an active Club Deal.`);
   }
   const venueIds = state.managedDeals.map((deal) => deal.venue_id);
-  if (new Set(venueIds).size !== TARGET_DEAL_COUNT) {
+  if (new Set(venueIds).size !== venueIds.length) {
     throw new Error("Every managed Demo Mode Club Deal must belong to a different venue.");
   }
-  const missingCashierNfc = venueIds.filter((venueId) => !state.cashierVenueIds.has(venueId));
+  const missingCashierNfc = state.venues
+    .map((venue) => venue.id)
+    .filter((venueId) => !state.cashierVenueIds.has(venueId));
   if (missingCashierNfc.length) {
     throw new Error(`${missingCashierNfc.length} managed Club Deals are missing an active cashier NFC sticker.`);
   }
@@ -277,14 +268,14 @@ async function verifyManagedDeals() {
   if (unsupportedDeals.length) {
     throw new Error(`${unsupportedDeals.length} managed Club Deals are not Half-off admission or Skip the line.`);
   }
-  return state.managedDeals;
+  return state;
 }
 
 function isManagedDeal(deal) {
   const rules = deal.redemption_rules;
   return rules?.demo_managed === true
     && rules?.managed_by === MANAGER_NAME
-    && rules?.batch_version === BATCH_VERSION;
+    && ["v1", BATCH_VERSION].includes(rules?.batch_version);
 }
 
 function publicDeal(row) {

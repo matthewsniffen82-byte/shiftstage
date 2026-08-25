@@ -217,12 +217,12 @@ test("venue follows are empty and unavailable until a real customer session is a
   assert.match(venueFollowsRouteSource, /customer_id: user\.id/);
 });
 
-test("public profiles preserve public Going in More while gating only Follow and Notify", () => {
+test("public profiles preserve public Going in More only while Working Now", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
   assert.match(actionsSource, /showSignedOutRequirements = savedLoaded && !token/);
   assert.match(actionsSource, /profile-action-requirement">Sign in required/);
-  assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| shifts\[0\] \|\| null/);
-  assert.match(actionsSource, /\{isGoing \? "Going tonight ✓" : actionShift \? "I’m Going" : "No shift posted"\}/);
+  assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| null/);
+  assert.match(actionsSource, /\{actionShift \? \([\s\S]*?\{isGoing \? "Going tonight ✓" : "I’m Going"\}[\s\S]*?\) : null\}/);
   for (const action of ["follow", "notify"]) {
     assert.match(
       actionsSource,
@@ -231,10 +231,10 @@ test("public profiles preserve public Going in More while gating only Follow and
   }
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("report"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
-  assert.match(actionsSource, /if \(actionShift\) updateGoing\(actionShift\.id\)/);
+  assert.match(actionsSource, /updateGoing\(actionShift\.id\)/);
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
   assert.match(actionsSource, /className=\{`profile-action-going-menu\$\{isGoing \? " is-going" : ""\}`\}/);
-  assert.match(actionsSource, /disabled=\{!actionShift \|\| !savedLoaded \|\| goingSaving\}/);
+  assert.match(actionsSource, /disabled=\{!savedLoaded \|\| goingSaving\}/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
@@ -244,7 +244,7 @@ test("public profiles preserve public Going in More while gating only Follow and
   assert.match(profilePageSource, /\.profile-action-requirement \{/);
 });
 
-test("the live mobile profile labels protected actions, keeps Going public, and places public reporting under More", () => {
+test("the live mobile profile keeps Going public only while Working Now and reports under More", () => {
   assert.match(homeSource, /function profileActionRequirementMarkup\(requirement\)/);
   assert.match(homeSource, /Sign in required/);
   assert.match(homeSource, /No sign-in needed/);
@@ -258,7 +258,7 @@ test("the live mobile profile labels protected actions, keeps Going public, and 
   );
   assert.match(
     homeSource,
-    /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = Boolean\(profile\.shiftId\)[\s\S]*?No shift posted/,
+    /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = Boolean\(isWorkingTonight\(profile, city\) && profile\.shiftId\)[\s\S]*?const goingButton = canMarkGoing[\s\S]*?: "";/,
   );
   assert.match(
     homeSource,

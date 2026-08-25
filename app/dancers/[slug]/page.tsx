@@ -205,13 +205,13 @@ export default async function DancerPublicPage({ params }: PageProps) {
               ))}
             </div>
           </section>
-        ) : (
+        ) : activeShift || !upcomingShifts.length ? (
           <section className="profile-schedule-empty" aria-label="Schedule status">
             <strong>No shift posted</strong>
             <span aria-hidden="true">·</span>
             <span>Follow {profile.stageName} for updates</span>
           </section>
-        )}
+        ) : null}
 
         <DancerProfileActions
           dancerId={profile.id}
@@ -251,7 +251,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
               sectionId="club-deal"
             />
           </section>
-        ) : (
+        ) : activeShift || !upcomingShifts.length ? (
           <section
             className="profile-active-deal is-inactive"
             aria-label="Inactive Club Deal"
@@ -260,24 +260,18 @@ export default async function DancerPublicPage({ params }: PageProps) {
               <span>
                 <small>Club Deal</small>
                 <strong>
-                  {activeShift
-                    ? "No active deal"
-                    : upcomingShifts.length
-                      ? "Available after check-in"
-                      : "No active club deal"}
+                  {activeShift ? "No active deal" : "No active club deal"}
                 </strong>
                 <em>
                   {activeShift
                     ? `${activeShift.venueName} has no live offer right now.`
-                    : upcomingShifts[0]
-                      ? `Deals activate after a verified check-in at ${upcomingShifts[0].venueName}.`
-                      : "Deals activate after a verified club check-in."}
+                    : "Deals activate after a verified club check-in."}
                 </em>
               </span>
               <button disabled type="button">Inactive</button>
             </div>
           </section>
-        )}
+        ) : null}
 
         {profile.socialLinks.length ? (
           <section className="profile-social-section" aria-label="External profiles">
