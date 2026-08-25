@@ -356,7 +356,10 @@ test("account state changes and deletion use the shared refresh-aware boundary",
   assert.match(dashboardSession, /function requestAccountJson/);
   assert.match(dashboard, /requestAccountJson/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/account"/);
-  assert.match(dashboard, /finally \{\s*clearDashboardSession\(\);\s*window\.location\.replace\("\/"\)/);
+  assert.match(
+    dashboard,
+    /finally \{[\s\S]*?if \(accountDeleted\)[\s\S]*?sessionStorage\.setItem\(PUBLIC_DISCOVERY_REFRESH_KEY, String\(Date\.now\(\)\)\)[\s\S]*?clearDashboardSession\(\);\s*window\.location\.replace\("\/"\)/,
+  );
 });
 
 test("dancer profile requests use one role-aware dashboard boundary", async () => {

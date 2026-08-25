@@ -52,6 +52,8 @@ import {
 type DashboardRole = "customer" | "dancer" | "venue";
 type CustomerDashboardSection = "offers" | "saved";
 
+const PUBLIC_DISCOVERY_REFRESH_KEY = "mydancrPublicDiscoveryRefreshV1";
+
 type SavedImageSummary = {
   imageUrl?: string | null;
   imageSrcSet?: string | null;
@@ -924,15 +926,24 @@ function AccountControlsPanel({
 
     setIsWorking(true);
     setStatus("");
+    let accountDeleted = false;
     try {
       await requestAccountJson({
         method: "DELETE",
         fallbackMessage: "Unable to delete account.",
       });
+      accountDeleted = true;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to delete account.";
       window.alert(`${message} You have been signed out; sign in again to retry.`);
     } finally {
+      if (accountDeleted) {
+        try {
+          window.sessionStorage.setItem(PUBLIC_DISCOVERY_REFRESH_KEY, String(Date.now()));
+        } catch {
+          // A cache-busting foreground refresh still removes stale public results.
+        }
+      }
       clearDashboardSession();
       window.location.replace("/");
     }

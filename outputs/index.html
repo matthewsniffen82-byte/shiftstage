@@ -40121,6 +40121,7 @@
     const homeDiscoveryFeedQrPromptsShown = new Set();
     const HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000;
     const HOME_DISCOVERY_REFRESH_MS = 30000;
+    const PUBLIC_DISCOVERY_REFRESH_KEY = "mydancrPublicDiscoveryRefreshV1";
     let savedScrollY = 0;
     let tonightExpanded = false;
     let dancersExpanded = false;
@@ -41977,10 +41978,29 @@
       logoutAccount({ message: "Deleting account…" });
       try {
         await deleteAuthenticatedJson("/api/account", deletionSession);
+        markPublicDiscoveryForRefresh();
         finalizeDeletedAccount(role);
         return true;
       } catch (error) {
         showToast(`${error.message || "Could not delete account"} You have been signed out; sign in again to retry.`);
+        return false;
+      }
+    }
+
+    function markPublicDiscoveryForRefresh() {
+      try {
+        window.sessionStorage.setItem(PUBLIC_DISCOVERY_REFRESH_KEY, String(Date.now()));
+      } catch {
+        // The next foreground refresh also bypasses stale public discovery data.
+      }
+    }
+
+    function consumePublicDiscoveryRefreshRequest() {
+      try {
+        const requested = Boolean(window.sessionStorage.getItem(PUBLIC_DISCOVERY_REFRESH_KEY));
+        if (requested) window.sessionStorage.removeItem(PUBLIC_DISCOVERY_REFRESH_KEY);
+        return requested;
+      } catch {
         return false;
       }
     }
@@ -62024,7 +62044,9 @@
     }
     homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";
     const initialVenuePreviewRequested = initialProfileParams.get("venue_preview") === "1" && Boolean(initialProfileParams.get("venue"));
-    const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
+    const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value, {
+      force: consumePublicDiscoveryRefreshRequest()
+    });
     const initialVenuePreviewRequest = initialVenuePreviewRequested
       ? Promise.resolve(initialDiscoveryRequest).finally(() => openSharedProfileFromUrl())
       : null;
@@ -62032,15 +62054,15 @@
     if (initialHomeDestinationRequested) {
       focusHomeResults();
     }
-    async function refreshVisibleHomeDiscovery() {
+    async function refreshVisibleHomeDiscovery({ bypassCache = false } = {}) {
       if (document.visibilityState !== "visible") return;
-      await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: false, background: true });
+      await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
     window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") void refreshVisibleHomeDiscovery();
+      if (document.visibilityState === "visible") void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
-    window.addEventListener("focus", () => { void refreshVisibleHomeDiscovery(); });
+    window.addEventListener("focus", () => { void refreshVisibleHomeDiscovery({ bypassCache: true }); });
     if (isCustomerSession()) loadLiveCustomerDashboardData();
     if (isDancerSession()) {
       loadLiveDancerAnalytics();

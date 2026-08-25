@@ -184,7 +184,10 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /function venueLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?video\.dancer\.city\.trim\(\)[\s\S]*?return `\/\?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\)\}`/);
   assert.match(feedClient, /function slugifyLiveProfileName\(value: string\) \{[\s\S]*?replaceAll\(" ", "-"\)[\s\S]*?replace\(\/\[\^a-z0-9-\]\/g, ""\)/);
   assert.doesNotMatch(feedClient, /slugifyLiveProfileName\(video\.dancer\.stageName\)|`\/dancers\/\$\{encodeURIComponent\(slug\)\}`/);
-  assert.match(liveApp, /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value\)/);
+  assert.match(
+    liveApp,
+    /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value, \{\s*force: consumePublicDiscoveryRefreshRequest\(\)\s*\}\)/,
+  );
   assert.match(liveApp, /initialDiscoveryRequest\.finally\(\(\) => openSharedProfileFromUrl\(\)\)/);
   assert.match(liveApp, /const approvedProfiles = markets\[city\]\.dancers\.filter\(isApprovedPublicProfile\);[\s\S]*?approvedProfiles\.find\(\(item\) => item\.slug === profileSlug\)[\s\S]*?\|\| approvedProfiles\.find\(\(item\) => slugify\(item\.name\) === profileSlug\)/);
   assert.match(liveApp, /const venueSlug = params\.get\("venue"\);[\s\S]*?activeTab = venueSlug \? "venues" : "dancers";[\s\S]*?resolveVenueByName\(venueSlug, city\)[\s\S]*?openVenueFromName\(venue\.slug \|\| venue\.name\)/);

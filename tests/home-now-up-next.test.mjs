@@ -72,16 +72,18 @@ test("the consolidated Dancers destination exposes only All, Now, and Upcoming f
   assert.match(homeSource, /No approved dancer profiles \$\{scope\}\./);
 });
 
-test("visible homepages refresh through the shared cached discovery endpoint", () => {
+test("visible homepages refresh public discovery without retaining deleted venues", () => {
   assert.match(homeSource, /const HOME_DISCOVERY_REFRESH_MS = 30000/);
   assert.match(
     homeSource,
-    /async function refreshVisibleHomeDiscovery\(\)[\s\S]*document\.visibilityState !== "visible"[\s\S]*loadLiveDiscovery\(citySelect\.value, \{ force: true, cacheBust: false, background: true \}\)/,
+    /async function refreshVisibleHomeDiscovery\(\{ bypassCache = false \} = \{\}\)[\s\S]*document\.visibilityState !== "visible"[\s\S]*loadLiveDiscovery\(citySelect\.value, \{ force: true, cacheBust: bypassCache, background: true \}\)/,
   );
   assert.match(homeSource, /window\.setInterval\(\(\) => \{ void refreshVisibleHomeDiscovery\(\); \}, HOME_DISCOVERY_REFRESH_MS\)/);
   assert.match(homeSource, /document\.addEventListener\("visibilitychange"/);
   assert.match(homeSource, /window\.addEventListener\("focus"/);
+  assert.match(homeSource, /refreshVisibleHomeDiscovery\(\{ bypassCache: true \}\)/);
   assert.match(homeSource, /const cacheBust = force && options\.cacheBust !== false/);
+  assert.match(homeSource, /if \(cacheBust\) params\.set\("refresh", String\(Date\.now\(\)\)\)/);
   assert.match(homeSource, /const liveMarketRefreshes = new Set\(\)/);
   assert.match(homeSource, /Live discovery refresh failed; keeping the current public results/);
 });

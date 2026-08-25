@@ -26,7 +26,7 @@ test("the global deletion control requires confirmation and calls the authentica
   );
   assert.match(
     liveShell,
-    /async function deleteLiveAccount\(role, button\)[\s\S]*?const deletionSession = authSession[\s\S]*?logoutAccount\(\{ message: "Deleting account…" \}\)[\s\S]*?deleteAuthenticatedJson\("\/api\/account", deletionSession\)[\s\S]*?finalizeDeletedAccount\(role\)/,
+    /async function deleteLiveAccount\(role, button\)[\s\S]*?const deletionSession = authSession[\s\S]*?logoutAccount\(\{ message: "Deleting account…" \}\)[\s\S]*?deleteAuthenticatedJson\("\/api\/account", deletionSession\)[\s\S]*?markPublicDiscoveryForRefresh\(\)[\s\S]*?finalizeDeletedAccount\(role\)/,
   );
   assert.match(
     liveShell,
@@ -42,12 +42,28 @@ test("the global deletion control requires confirmation and calls the authentica
 test("the standalone dashboard uses the refresh-aware account boundary before clearing the session", () => {
   assert.match(
     dashboardClient,
-    /async function deleteAccount\(\)[\s\S]*?await requestAccountJson\(\{[\s\S]*?method: "DELETE"[\s\S]*?finally \{\s*clearDashboardSession\(\);\s*window\.location\.replace\("\/"\);/,
+    /async function deleteAccount\(\)[\s\S]*?await requestAccountJson\(\{[\s\S]*?method: "DELETE"[\s\S]*?accountDeleted = true[\s\S]*?finally \{[\s\S]*?sessionStorage\.setItem\(PUBLIC_DISCOVERY_REFRESH_KEY, String\(Date\.now\(\)\)\)[\s\S]*?clearDashboardSession\(\);\s*window\.location\.replace\("\/"\);/,
   );
   assert.doesNotMatch(dashboardClient, /fetch\("\/api\/account"/);
   assert.match(
     dashboardClient,
     /event\.key === SESSION_KEY && !event\.newValue[\s\S]*?leaveDeletedSessionDashboard\(\);\s*window\.addEventListener\("pageshow", leaveDeletedSessionDashboard\)/,
+  );
+});
+
+test("successful account deletion invalidates cached public venue discovery", () => {
+  assert.match(liveShell, /const PUBLIC_DISCOVERY_REFRESH_KEY = "mydancrPublicDiscoveryRefreshV1"/);
+  assert.match(
+    liveShell,
+    /function markPublicDiscoveryForRefresh\(\)[\s\S]*?sessionStorage\.setItem\(PUBLIC_DISCOVERY_REFRESH_KEY, String\(Date\.now\(\)\)\)/,
+  );
+  assert.match(
+    liveShell,
+    /function consumePublicDiscoveryRefreshRequest\(\)[\s\S]*?sessionStorage\.getItem\(PUBLIC_DISCOVERY_REFRESH_KEY\)[\s\S]*?sessionStorage\.removeItem\(PUBLIC_DISCOVERY_REFRESH_KEY\)/,
+  );
+  assert.match(
+    liveShell,
+    /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value, \{\s*force: consumePublicDiscoveryRefreshRequest\(\)\s*\}\)/,
   );
 });
 
