@@ -2459,11 +2459,6 @@ function VenueSignupRequestQueue({
   } | null>(null);
   async function reviewRequest(request: Record<string, unknown>, decision: "approved" | "rejected") {
     const requestId = asText(request.id);
-    const token = readToken();
-    if (!token) {
-      setStatusByRequest((current) => ({ ...current, [requestId]: "Admin sign in required." }));
-      return;
-    }
     const notes = notesByRequest[requestId]?.trim() || "";
     if (decision === "rejected" && !notes) {
       setStatusByRequest((current) => ({ ...current, [requestId]: "Add a reason before rejecting this request." }));
@@ -2478,20 +2473,17 @@ function VenueSignupRequestQueue({
     }));
 
     try {
-      const response = await fetch("/api/admin/venue-signup-requests", {
+      const data = await requestAdminJson("/api/admin/venue-signup-requests", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           requestId,
           decision,
           notes: notes || null,
           confirmAgentReferral: decision === "approved" && Boolean(asText(request.referringAgentId)),
         }),
+        fallbackMessage: "Unable to review the venue request.",
       });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.error || "Unable to review the venue request.");
-      }
 
       onRequestsChange(requests.filter((item) => asText(item.id) !== requestId));
       if (decision === "approved" && data.venue?.id) {

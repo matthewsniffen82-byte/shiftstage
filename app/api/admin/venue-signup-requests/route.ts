@@ -14,11 +14,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const requests = await getAdminVenueSignupRequests(createAdminSupabaseClient());
     return NextResponse.json(
-      { ok: true, requests },
+      { ok: true, requests, session: session || null },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json();
     const decision = body?.decision === "approved" || body?.decision === "rejected"
@@ -60,6 +60,7 @@ export async function POST(request: Request) {
           ? "Venue approved. The private access code was emailed to the business contact."
           : "Venue approved, but email delivery was unavailable. Copy the private access code now."
         : "Venue request rejected.",
+      session: session || null,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const userMessage = error instanceof VenueSignupRequestUserError ? error.message : "";
