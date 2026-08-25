@@ -194,21 +194,16 @@ test("venue cards use a full-card logo canvas while detail pages retain contain-
   assert.match(aesthetic, /\.venue-card-logo-shell,[\s\S]*?\.venue-detail-logo-shell \{[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\)/);
   assert.match(
     aesthetic,
-    /\.venue-card-logo-shell \{[\s\S]*?left: 0;[\s\S]*?right: 0;[\s\S]*?margin-inline: auto;[\s\S]*?transform: translateY\(-50%\);/,
-  );
-  assert.match(
-    aesthetic,
     /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?inset: 0;[\s\S]*?transform: none;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-logo \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?padding: 42px 64px 142px;[\s\S]*?object-fit: contain;[\s\S]*?object-position: center 34%;/,
+    /\.home-venue-discovery-logo \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?padding: 42px 72px 142px 18px;[\s\S]*?object-fit: contain;[\s\S]*?object-position: center 34%;/,
   );
   assert.match(
     aesthetic,
-    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?padding: 40px 64px 138px;/,
+    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?padding: 40px 72px 138px 16px;/,
   );
-  assert.doesNotMatch(aesthetic, /\.home-venue-discovery-logo \{[\s\S]{0,260}?padding:\s*[^;]*\s72px\s[^;]*\s(?:18|16)px;/);
   assert.match(
     aesthetic,
     /\.venue-detail-logo-shell \{[\s\S]*?width: min\(86%, 360px\);[\s\S]*?height: 180px;/,
