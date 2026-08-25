@@ -19,6 +19,7 @@ import {
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
+import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 
 const VIEWER_SESSION_KEY = "mydancrTvViewerSessionV1";
 const FILTERS = [
@@ -61,7 +62,7 @@ export default function TvFeedClient({
     FILTERS.some((item) => item.value === initialFilter) ? initialFilter : "for-you",
   );
   const [activeVideoId, setActiveVideoId] = useState(initialSelectedVideoId || initialVideos[0]?.id || "");
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useVideoSoundPreference();
   const [autoplayBlockedVideoId, setAutoplayBlockedVideoId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -130,9 +131,7 @@ export default function TvFeedClient({
     }
 
     if (!element.muted) {
-      mutedRef.current = true;
       element.muted = true;
-      setMuted(true);
       try {
         await element.play();
         setAutoplayBlockedVideoId((current) => current === videoId ? "" : current);
