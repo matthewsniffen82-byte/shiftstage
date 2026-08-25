@@ -94,7 +94,7 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.profile-modal \{[\s\S]*?--profile-report-clearance: max\(16px, env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?scroll-padding-bottom: var\(--profile-report-clearance\) !important;[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?padding-bottom: 0 !important;[\s\S]*?#profileBackdrop \.modal-grid \{[\s\S]*?padding-bottom: var\(--profile-report-clearance\) !important;/,
+    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?scroll-padding-bottom: var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?padding-bottom: var\(--profile-bottom-nav-clearance\) !important;/,
   );
   assert.doesNotMatch(homeSource, /--profile-report-clearance: calc\(80px/);
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
@@ -217,13 +217,12 @@ test("venue follows are empty and unavailable until a real customer session is a
   assert.match(venueFollowsRouteSource, /customer_id: user\.id/);
 });
 
-test("public profiles keep Going visible for the next posted shift and gate only Follow and Notify", () => {
+test("public profiles preserve public Going in More while gating only Follow and Notify", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
   assert.match(actionsSource, /showSignedOutRequirements = savedLoaded && !token/);
   assert.match(actionsSource, /profile-action-requirement">Sign in required/);
   assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| shifts\[0\] \|\| null/);
-  assert.match(actionsSource, /\? `\$\{actionShift\.isActive \? "Working now" : actionShift\.label\} · No sign-in needed`/);
-  assert.match(actionsSource, /: "No shift posted"/);
+  assert.match(actionsSource, /\{isGoing \? "Going tonight ✓" : actionShift \? "I’m Going" : "No shift posted"\}/);
   for (const action of ["follow", "notify"]) {
     assert.match(
       actionsSource,
@@ -234,14 +233,14 @@ test("public profiles keep Going visible for the next posted shift and gate only
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
   assert.match(actionsSource, /if \(actionShift\) updateGoing\(actionShift\.id\)/);
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
-  assert.match(actionsSource, /\{isGoing \? "Going" : "I’m Going"\}/);
+  assert.match(actionsSource, /className=\{`profile-action-going-menu\$\{isGoing \? " is-going" : ""\}`\}/);
   assert.match(actionsSource, /disabled=\{!actionShift \|\| !savedLoaded \|\| goingSaving\}/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
   assert.match(actionsSource, /href="\/account\?role=customer&mode=signup"/);
   assert.match(actionsSource, /href="\/account\?role=customer"/);
-  assert.match(profilePageSource, /\.profile-account-gate, \.profile-report-gate \{ position: fixed; inset: 0; z-index: 1700/);
+  assert.match(profilePageSource, /\.profile-account-gate, \.profile-report-gate, \.profile-schedule-gate \{ position: fixed; inset: 0; z-index: 1700/);
   assert.match(profilePageSource, /\.profile-action-requirement \{/);
 });
 

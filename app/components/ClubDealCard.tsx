@@ -322,8 +322,12 @@ export function ClubDealCard({
             openDealDialog(event.currentTarget);
           }}
         >
-          <span>{offerDeals.length > 1 ? `${offerDeals.length} live offers` : "Club Deal"}</span>
-          <strong>{actionLabel}</strong>
+          <span className="club-deal-launcher-copy">
+            <small>{venueName ? `Available tonight at ${venueName}` : "Available tonight at the club"}</small>
+            <strong>{activeDeal.dealTitle}</strong>
+            <em>Cashier NFC required</em>
+          </span>
+          <strong className="club-deal-launcher-action">{actionLabel}</strong>
         </button>
       ) : (
         <article
@@ -523,9 +527,12 @@ function formatDealClockTime(value: string | null) {
 function ClubDealInteractionStyles() {
   return (
     <style>{`
-      .club-deal-launcher { width: fit-content; max-width: 100%; min-height: 48px; display: grid; gap: 1px; justify-items: start; padding: 7px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 999px; color: #fff; background: color-mix(in srgb, var(--dancr-color-success) 14%, var(--dancr-color-surface)); box-shadow: 0 8px 18px var(--dancr-color-black-soft); font: inherit; text-align: left; cursor: pointer; }
-      .club-deal-launcher span { color: #d8f7ff; font-size: 9px; font-weight: 950; letter-spacing: .14em; line-height: 1; text-transform: uppercase; }
-      .club-deal-launcher strong { max-width: 230px; overflow: hidden; font-size: 13px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+      .club-deal-launcher { width: fit-content; max-width: 100%; min-height: 58px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; justify-items: stretch; padding: 9px 10px 9px 13px; border: 1px solid var(--dancr-color-success-medium); border-radius: 14px; color: #fff; background: color-mix(in srgb, var(--dancr-color-success) 14%, var(--dancr-color-surface)); box-shadow: 0 8px 18px var(--dancr-color-black-soft); font: inherit; text-align: left; cursor: pointer; }
+      .club-deal-launcher-copy { min-width: 0; display: grid; gap: 3px; color: inherit; text-transform: none; }
+      .club-deal-launcher-copy small { overflow: hidden; color: #b7ffd8; font-size: 9px; font-weight: 900; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+      .club-deal-launcher-copy strong { max-width: 100%; overflow: hidden; color: #fff; font-size: 14px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+      .club-deal-launcher-copy em { color: #d8f7ff; font-size: 9px; font-style: normal; font-weight: 800; line-height: 1.15; }
+      .club-deal-launcher-action { max-width: 126px; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; overflow: hidden; border-radius: 10px; color: #062015; background: #b7ffd8; font-size: 11px; line-height: 1.1; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
       .club-deal-dialog-backdrop { position: fixed; z-index: 1700; inset: 0; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); background: rgba(2,3,6,.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
       .club-deal-dialog { position: relative; width: min(420px, 100%); height:var(--club-deal-stable-height,auto); min-height:0; max-height: min(90dvh, 760px); display: flex; flex-direction: column; gap: 14px; overflow-y: auto; box-sizing: border-box; padding: 24px 20px 20px; border: 1px solid rgba(255,255,255,.14); border-radius: 24px; color: #f7f2ff; background: linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985)); box-shadow: 0 28px 80px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06); }
       .club-deal-dialog>* { flex:0 0 auto; }

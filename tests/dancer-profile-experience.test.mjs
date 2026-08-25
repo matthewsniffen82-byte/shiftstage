@@ -64,9 +64,9 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?border-bottom: 0;/);
   assert.doesNotMatch(profileCarousel, /profile-media-heading|Photos &amp; TV|approved<\/span>/);
   assert.match(profileCarousel, /className="profile-media-section"[\s\S]*?className="profile-media-tabs"/);
-  assert.match(profilePage, /\.profile-media-tabs \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 4px;[\s\S]*?padding: 4px;[\s\S]*?border-radius: 15px;/);
-  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.profile-media-tabs button \{[\s\S]*?min-height: 46px;[\s\S]*?border-radius: 11px !important;/);
-  assert.match(profilePage, /\.profile-media-tab-icon \{ width: 18px; height: 18px;[\s\S]*?flex: 0 0 18px;/);
+  assert.match(profilePage, /\.profile-media-tabs \{[\s\S]*?position: sticky;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border-radius: 0;/);
+  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.profile-media-tabs button \{[\s\S]*?min-height: 40px;[\s\S]*?border-radius: 0 !important;/);
+  assert.match(profilePage, /\.profile-media-tab-icon \{ width: 16px; height: 16px;[\s\S]*?flex: 0 0 16px;/);
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 
@@ -81,22 +81,22 @@ test("standalone dancer profiles keep the document scrollbar neutral", () => {
   );
 });
 
-test("the mobile profile places schedule directly after media, before revenue and actions", () => {
+test("the mobile profile keeps nightlife actions and active deals above the media library", () => {
   const identityIndex = profilePage.indexOf('className="profile-titlebar"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const overviewIndex = profilePage.indexOf('className="profile-overview"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
   const scheduleIndex = profilePage.indexOf('className={`profile-working-card');
-  const dealIndex = profilePage.indexOf('className={`profile-active-deal');
+  const dealIndex = profilePage.indexOf('className="profile-active-deal has-club-deal"');
   const socialIndex = profilePage.indexOf('className="profile-social-section"');
 
   assert.ok(identityIndex > -1);
-  assert.ok(mediaIndex > identityIndex);
-  assert.ok(scheduleIndex > mediaIndex);
-  assert.ok(dealIndex > scheduleIndex);
-  assert.ok(actionsIndex > dealIndex);
+  assert.ok(scheduleIndex > identityIndex);
+  assert.ok(actionsIndex > scheduleIndex);
+  assert.ok(dealIndex > actionsIndex);
   assert.ok(socialIndex > actionsIndex);
   assert.ok(overviewIndex > socialIndex);
+  assert.ok(mediaIndex > overviewIndex);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /\{profile\.profileViewsToday \|\| 0\}[\s\S]*?<dt>Views today<\/dt>/);
@@ -104,16 +104,15 @@ test("the mobile profile places schedule directly after media, before revenue an
   assert.match(profilePage, /shareControl=\{<ProfileShareButton stageName=\{profile\.stageName\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
-  assert.match(profilePage, /Dressing-room NFC verified · active until/);
-  assert.match(profilePage, /Club &amp; directions/);
+  assert.match(profilePage, /className="profile-working-destination"[\s\S]*?Venue-confirmed until/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/);
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
   assert.match(profilePage, /presentation="launcher"/);
-  assert.match(profilePage, /ctaLabel="Club Deals"/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use at Club"\}/);
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
-  assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
-  assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
+  assert.doesNotMatch(profilePage, /import \{ VenueQrUnavailable \}|<VenueQrUnavailable/);
+  assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
 });
 
 test("working-now profiles show the club's active deal without granting demo commission attribution", () => {
@@ -168,15 +167,23 @@ test("working-now profiles show the club's active deal without granting demo com
   assert.match(profilePage, /dancerId=\{dancerAttributionEligible \? profile\.id : null\}/);
 });
 
-test("profile actions prioritize Going and demote reporting to a complete safety flow", () => {
+test("profile actions prioritize Follow, Ride, Share, and Schedule while preserving safety actions", () => {
   assert.match(
     profileActions,
-    /className=\{`profile-action-primary profile-action-public profile-action-going\$\{isGoing \? " is-going" : ""\}/,
+    /className=\{`profile-action-primary\$\{showSignedOutRequirements \? " profile-action-requires-account" : ""\}`\}/,
   );
-  assert.match(profileActions, /aria-pressed=\{isGoing\}/);
-  const goingIndex = profileActions.indexOf('className={`profile-action-primary');
-  const followIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
-  assert.ok(goingIndex > -1 && goingIndex < followIndex);
+  assert.match(profileActions, /aria-checked=\{isGoing\}/);
+  assert.match(profileActions, /role="menuitemcheckbox"/);
+  const followButtonIndex = profileActions.indexOf('className={`profile-action-primary');
+  const rideIndex = profileActions.indexOf('{rideControl ?');
+  const shareIndex = profileActions.indexOf('{shareControl ?');
+  const scheduleIndex = profileActions.indexOf('className="profile-action-secondary profile-action-schedule"');
+  const goingIndex = profileActions.indexOf('className={`profile-action-going-menu');
+  const followHandlerIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
+  assert.ok(followButtonIndex > -1 && followHandlerIndex > -1);
+  assert.ok(rideIndex > followButtonIndex);
+  assert.ok(shareIndex > rideIndex && scheduleIndex > shareIndex);
+  assert.ok(goingIndex > scheduleIndex);
   assert.match(profileActions, /className="profile-action-overflow-toggle"/);
   assert.match(profileActions, /className="profile-action-overflow-menu" role="menu"/);
   assert.match(profileActions, /Report profile/);

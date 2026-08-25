@@ -64,10 +64,11 @@ test("full dancer profiles use a compact identity and honest public activity hea
 
 test("profile actions expose live customer actions and keep Club Deal NFC distinct from profile sharing", () => {
   assert.match(profileActions, /\{saved\.following \? "Following" : "Follow"\}/);
-  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Notifications on" : "Notify me"\}/);
+  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Turn notifications off" : "Notify me"\}/);
   assert.match(profileActions, /"I’m Going"/);
+  assert.match(profileActions, /rideControl/);
   assert.match(profileActions, /profile-action-share-slot/);
-  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?profile-action-main[\s\S]*?Notify Me[\s\S]*?Share Profile[\s\S]*?Report &amp; options/);
+  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Get a Ride[\s\S]*?Share Profile[\s\S]*?Schedule[\s\S]*?More/);
   assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "clock" \| "heart" \| "share"/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share Profile"\)/);
@@ -94,20 +95,19 @@ test("Working Now profiles mirror the upcoming schedule hierarchy and retain the
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
-  assert.match(profilePage, /<span className="profile-live-state">Schedule<\/span>[\s\S]*?<h2 id="profile-working-title">Working Now<\/h2>/);
-  assert.match(profilePage, /Dressing-room NFC verified · active until/);
-  assert.match(profilePage, /Club &amp; directions/);
-  assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
+  assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<small>Club<\/small>[\s\S]*?Venue-confirmed until/);
+  assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
+  assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(
     profilePage,
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
   );
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
-  assert.match(profilePage, /ctaLabel="Club Deals"/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use at Club"\}/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /attributionTokens=\{dealAttributionTokens\}/);
-  assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
+  assert.doesNotMatch(profilePage, /VenueQrUnavailable/);
   const shiftsFunction = liveApp.match(
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
   )?.[0] || "";
@@ -116,7 +116,8 @@ test("Working Now profiles mirror the upcoming schedule hierarchy and retain the
   assert.match(liveScheduleBranch, /<strong>Current shift<\/strong>/);
   assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working Now<\/div>/);
   assert.match(liveScheduleBranch, /class="schedule-stack"[\s\S]*?profileVenueDestinationMarkup\(profile, \{ live: true \}\)/);
-  assert.match(liveScheduleBranch, /This dancer is venue-confirmed as working here now\.<\/p>[\s\S]*?\$\{rideMarkup\}/);
+  assert.match(liveScheduleBranch, /This dancer is venue-confirmed as working here now\.<\/p>/);
+  assert.doesNotMatch(liveScheduleBranch, /rideMarkup|profile-uber-ride/);
   assert.doesNotMatch(liveScheduleBranch, /profile-working-stack|profile-working-directions|Club &amp; directions/);
   assert.doesNotMatch(liveScheduleBranch, /Checked in for current shift|activeShiftStartedMarkup/);
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
@@ -133,27 +134,28 @@ test("active full-profile Club Deals render a compact cashier NFC action and use
   );
   assert.match(
     liveApp,
-    /Compact the live profile essentials[\s\S]*?#profileBackdrop \.profile-club-deal-tile \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 128px !important;[\s\S]*?padding: 14px 15px !important;/,
+    /Only a genuinely active deal receives the emerald treatment\.[\s\S]*?#profileBackdrop #profileModal \.profile-club-deal-tile \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(96px, 108px\) !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 8px 9px !important;/,
   );
   assert.match(activeDealMarkup, /data-profile-club-deal-config=/);
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
-  assert.match(activeDealMarkup, /class="profile-club-deal-label">Club Deal<\/strong>/);
-  assert.match(activeDealMarkup, /<small>Choose your deal here, then tap the cashier NFC sticker at the club\.<\/small>/);
+  assert.match(activeDealMarkup, /class="profile-club-deal-label">Active Club Deal<\/strong>/);
+  assert.match(activeDealMarkup, /class="profile-club-deal-title">\$\{escapeHtml\(dealTitle\)\}<\/b>/);
+  assert.match(activeDealMarkup, /Available tonight at \$\{escapeHtml\(venueName\)\} · Cashier NFC required/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?Choose deal[\s\S]*?live offers[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?View Club Deals[\s\S]*?Cashier NFC/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?View all \$\{offers\.length\}[\s\S]*?Club Deals[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?Use at Club[\s\S]*?Cashier NFC/,
   );
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
   assert.doesNotMatch(liveApp, /profile-club-deal-count/);
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?min-height: 112px !important;[\s\S]*?border: 1px solid rgba\(77, 236, 157, \.72\) !important;[\s\S]*?linear-gradient\(145deg, rgba\(8, 72, 55, \.98\), rgba\(3, 31, 25, \.98\)\) !important;/,
+    /Only a genuinely active deal[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 108px !important;[\s\S]*?min-height: 48px !important;[\s\S]*?grid-template-columns: 22px minmax\(0, 1fr\) !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-club-deal-qr-button \.club-deal-qr-symbol \{[\s\S]*?width: 42px;[\s\S]*?height: 42px;[\s\S]*?color: #7effbd;/,
+    /Only a genuinely active deal[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \.club-deal-qr-symbol \{[\s\S]*?width: 22px !important;[\s\S]*?height: 22px !important;/,
   );
   assert.match(
     liveApp,
@@ -161,14 +163,22 @@ test("active full-profile Club Deals render a compact cashier NFC action and use
   );
 });
 
-test("live dancer essentials stay compact, scannable, and tight against the mobile dock", () => {
+test("live dancer essentials stay compact above media and clear the mobile dock", () => {
   assert.match(
     liveApp,
-    /Working Now mirrors the upcoming schedule hierarchy[\s\S]*?#profileBackdrop \.modal-grid > \.working-now-tile \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 8px !important;[\s\S]*?padding: 12px 14px !important;/,
+    /#profileBackdrop #profileModal \.modal-grid \{\s*grid-auto-rows: max-content !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.working-now-tile > strong,[\s\S]*?#profileBackdrop \.working-now-tile > \.schedule-stack,[\s\S]*?#profileBackdrop \.working-now-tile > \.profile-schedule-explanation,[\s\S]*?#profileBackdrop \.working-now-tile > \.profile-uber-ride \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?grid-row: auto !important;/,
+    /Current Shift is a single destination row[\s\S]*?#profileBackdrop #profileModal \.modal-grid > \.working-now-tile \{[\s\S]*?grid-template-columns: auto minmax\(0, 1fr\) !important;[\s\S]*?gap: 9px !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 6px 8px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.working-now-tile > strong,[\s\S]*?#profileBackdrop \.working-now-tile > \.profile-schedule-explanation \{\s*display: none !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop #profileModal \.working-now-tile::before,[\s\S]*?\.working-now-tile::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
   );
   assert.match(
     liveApp,
@@ -176,11 +186,11 @@ test("live dancer essentials stay compact, scannable, and tight against the mobi
   );
   assert.match(
     liveApp,
-    /Working Now mirrors the upcoming schedule hierarchy[\s\S]*?#profileBackdrop \.working-now-tile > \.profile-uber-ride \{[\s\S]*?width: 100% !important;[\s\S]*?margin-top: 3px !important;/,
+    /Follow, ride, share and schedule stay visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 128px !important;[\s\S]*?min-width: 128px !important;[\s\S]*?max-width: 128px !important;/,
+    /Only a genuinely active deal[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 108px !important;[\s\S]*?max-width: 108px !important;/,
   );
   assert.match(
     liveApp,
@@ -188,11 +198,11 @@ test("live dancer essentials stay compact, scannable, and tight against the mobi
   );
   assert.match(
     liveApp,
-    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.profile-modal \{[\s\S]*?--profile-report-clearance: max\(16px, env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?#profileBackdrop \.modal-grid \{[\s\S]*?padding-bottom: var\(--profile-report-clearance\) !important;/,
+    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?padding-bottom: var\(--profile-bottom-nav-clearance\) !important;/,
   );
   assert.match(
     profilePage,
-    /\.public-profile-shell \{ padding: 0 12px; \}/,
+    /\.public-profile-shell \{ padding: 0 12px max\(132px, calc\(108px \+ env\(safe-area-inset-bottom\)\)\); \}/,
   );
   assert.match(
     profilePage,
@@ -214,11 +224,11 @@ test("Working Now uses one full-width live club destination", () => {
 test("Current Shift uses a quieter club row and secondary ride action", () => {
   assert.match(
     liveApp,
-    /Keep Current Shift compact:[\s\S]*?#profileBackdrop \.modal-grid > \.working-now-tile \{[\s\S]*?gap: 6px !important;[\s\S]*?padding: 10px 12px !important;/,
+    /Current Shift is a single destination row[\s\S]*?#profileBackdrop #profileModal \.modal-grid > \.working-now-tile \{[\s\S]*?gap: 9px !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 6px 8px !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.working-now-tile \.profile-venue-destination\.is-live \{[\s\S]*?min-height: 52px !important;[\s\S]*?border-color: rgba\(77, 236, 157, \.16\) !important;[\s\S]*?box-shadow: none !important;/,
+    /Current Shift is a single destination row[\s\S]*?#profileBackdrop \.working-now-tile \.profile-venue-destination\.is-live \{[\s\S]*?min-height: 46px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/,
   );
   assert.match(
     liveApp,

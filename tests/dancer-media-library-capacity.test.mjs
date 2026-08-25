@@ -41,8 +41,8 @@ test("public media grids lazy-render in batches of twelve without a load button"
   assert.match(liveApp, /const PROFILE_MEDIA_PAGE_SIZE = 12/);
   assert.match(liveApp, /function appendNextProfileMediaBatch/);
   assert.match(liveApp, /function observeProfileMediaSentinel/);
-  assert.match(liveApp, /root: modalGallery, rootMargin: "0px 480px"/);
-  assert.match(liveApp, /profile-media-lazy-sentinel \{[\s\S]*?flex: 0 0 28px/);
+  assert.match(liveApp, /root: profileModal, rootMargin: "480px 0px"/);
+  assert.match(liveApp, /action-first media library[\s\S]*?profile-media-lazy-sentinel \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?height: 28px !important;/);
   assert.doesNotMatch(liveApp, /profile-media-load-more|>Load more</i);
 });
 

@@ -59,17 +59,17 @@ test("current and upcoming schedules share one compact club destination", () => 
   );
 });
 
-test("profile media uses a three-up horizontally scrollable rail", () => {
+test("profile media uses a seamless three-column vertical library", () => {
   assert.ok(profilePolishBlock, "profile polish CSS block must exist");
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.gallery \{[\s\S]*?display: flex !important;[\s\S]*?gap: 2px !important;[\s\S]*?overflow-x: auto !important;[\s\S]*?scroll-snap-type: x mandatory !important;/,
+    liveApp,
+    /action-first media library[\s\S]*?#profileBackdrop \.gallery \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 3px !important;[\s\S]*?overflow: visible !important;[\s\S]*?touch-action: pan-y !important;/,
   );
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.gallery \.thumb \{[\s\S]*?flex: 0 0 calc\(\(100% - 4px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?aspect-ratio: 9 \/ 16 !important;[\s\S]*?scroll-snap-align: start !important;/,
+    liveApp,
+    /action-first media library[\s\S]*?#profileBackdrop \.gallery \.thumb \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?aspect-ratio: 4 \/ 5 !important;[\s\S]*?scroll-snap-align: none !important;/,
   );
-  assert.match(profilePolishBlock, /#profileBackdrop \.gallery::\-webkit-scrollbar \{[\s\S]*?display: none;/);
+  assert.match(liveApp, /profile-media-lazy-sentinel \{[\s\S]*?grid-column: 1 \/ -1 !important;/);
   assert.match(profilePolishBlock, /overflow-anchor: none;/);
 });
 
@@ -95,10 +95,14 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   const liveActionsMarkup = liveApp.match(
     /function liveProfileModalActionsMarkup\(profile, status\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
-  assert.match(
-    liveApp,
-    /<div class="modal-actions" aria-label="Guest actions">\s*\$\{goingButton\}/,
-  );
+  const followIndex = liveActionsMarkup.indexOf('id="followBtn"');
+  const rideIndex = liveActionsMarkup.indexOf('class="profile-primary-ride"');
+  const shareIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-share-action"');
+  const scheduleIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-schedule-action"');
+  const overflowIndex = liveActionsMarkup.indexOf('class="profile-action-overflow"');
+  assert.ok(followIndex > -1 && rideIndex > followIndex);
+  assert.ok(shareIndex > rideIndex && scheduleIndex > shareIndex);
+  assert.ok(overflowIndex > scheduleIndex);
   assert.match(
     liveApp,
     /class="action-btn follow-primary[\s\S]*?id="followBtn"/,
@@ -116,6 +120,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(liveApp, /data-profile-more-menu role="menu" hidden/);
   assert.match(liveApp, /id="reportBtn" type="button" role="menuitem"/);
+  assert.match(liveActionsMarkup, /\$\{goingButton\}[\s\S]*?id="notifyBtn"/);
   assert.doesNotMatch(
     liveActionsMarkup.match(/<button class="action-btn secondary profile-share-action"[^>]*>/)?.[0] || "",
     /disabled|aria-disabled/,
@@ -125,8 +130,8 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\)[\s\S]*?!requireCustomerAccountForProfileAction\(actionButton\)/,
   );
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.modal-actions \.going-btn \{\s*grid-column: 1 \/ -1 !important;/,
+    liveApp,
+    /action-first media library[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     profilePolishBlock,
@@ -140,10 +145,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     aesthetic,
     /#profileBackdrop \.modal-actions :is\([\s\S]*?#followBtn,[\s\S]*?#notifyBtn,[\s\S]*?\.profile-share-action,[\s\S]*?\.profile-action-overflow-toggle[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;/,
   );
-  assert.doesNotMatch(
-    aesthetic.match(/Full-profile actions and supporting information stay compact[\s\S]*?Production TV-card branding/)?.[0] || "",
-    /(?:^|\n)[^\{\n]*\.going-btn\s*\{[^\}]*min-height:/m,
-  );
+  assert.match(liveApp, /\.profile-action-overflow \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;/);
 });
 
 test("profile socials and activity metrics use a compact neutral presentation", () => {
@@ -201,8 +203,8 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   const scheduleIndex = gridFunction.indexOf("shiftsMarkup");
 
   assert.ok(scheduleIndex > -1);
-  assert.ok(dealIndex > scheduleIndex);
-  assert.ok(actionsIndex > dealIndex);
+  assert.ok(actionsIndex > scheduleIndex);
+  assert.ok(dealIndex > actionsIndex);
   assert.ok(socialIndex > actionsIndex);
   assert.ok(metricsIndex > socialIndex);
   assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
@@ -282,12 +284,12 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
     /#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 42px minmax\(0, 1fr\);[\s\S]*?min-height: 60px;[\s\S]*?margin-inline: -12px;/,
   );
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important;/,
+    liveApp,
+    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
-    profilePolishBlock,
-    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?padding-bottom: 0 !important;[\s\S]*?#profileBackdrop \.modal-grid \{[\s\S]*?padding-bottom: var\(--profile-report-clearance\) !important;/,
+    liveApp,
+    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?padding-bottom: var\(--profile-bottom-nav-clearance\) !important;/,
   );
   assert.doesNotMatch(profilePolishBlock, /\.is-android|\.is-ios|SamsungBrowser|iPhone/);
 });
@@ -376,15 +378,15 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.doesNotMatch(liveApp, /profileModalMediaTitle|profileModalMediaCount|profile-modal-media-head/);
   assert.match(liveApp, /<section class="profile-modal-media" aria-label="Dancer profile media">\s*<div class="profile-modal-media-tabs"/);
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.profile-modal-media-tabs \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 4px;[\s\S]*?padding: 4px;[\s\S]*?border: 1px solid rgba\(255,255,255,\.1\);/,
+    liveApp,
+    /action-first media library[\s\S]*?#profileBackdrop \.profile-modal-media-tabs \{[\s\S]*?position: sticky !important;[\s\S]*?min-height: 40px !important;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
-    profilePolishBlock,
-    /body\.dancr-button-system #profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?min-height: 46px;[\s\S]*?display: flex;[\s\S]*?border-radius: 11px !important;/,
+    liveApp,
+    /action-first media library[\s\S]*?body\.dancr-button-system #profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?min-height: 40px !important;[\s\S]*?border-radius: 0 !important;/,
   );
   assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-label \{[\s\S]*?font-weight: 900;/);
-  assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-icon \{[\s\S]*?width: 18px;[\s\S]*?height: 18px;/);
+  assert.match(liveApp, /action-first media library[\s\S]*?#profileBackdrop \.profile-media-tab-icon \{[\s\S]*?width: 16px !important;[\s\S]*?height: 16px !important;/);
 });
 
 test("Working Now profiles do not repeat the Club Confirmed check-in card", () => {
@@ -395,32 +397,12 @@ test("Working Now profiles do not repeat the Club Confirmed check-in card", () =
   assert.match(liveApp, /\$\{profileLocationStatusTile\(profile, city\)\}/);
 });
 
-test("inactive profile Club Deals retain the active card geometry without implying a live offer", () => {
-  const unavailableDealMarkup = liveApp.match(
-    /const unavailableLabel = state\.key === "no-active-offer"[\s\S]*?(?=\n    function profileShareText)/,
+test("inactive profile Club Deals are hidden completely", () => {
+  const dealMarkup = liveApp.match(
+    /function profileDealTileMarkup\(profile\) \{[\s\S]*?(?=\n    function profileShareText)/,
   )?.[0] || "";
-  assert.match(unavailableDealMarkup, /"Available when dancer is working"/);
-  assert.match(unavailableDealMarkup, /state\.key === "no-active-offer"/);
-  assert.match(unavailableDealMarkup, /profile-qr-tile profile-club-deal-tile profile-qr-unavailable/);
-  assert.match(unavailableDealMarkup, /<strong class="profile-club-deal-label">Club Deal<\/strong>/);
-  assert.match(unavailableDealMarkup, /profile-club-deal-qr-button is-unavailable/);
-  assert.match(unavailableDealMarkup, /clubDealQrSymbolMarkup\("profile-club-deal-unavailable-symbol"\)/);
-  assert.match(unavailableDealMarkup, /<strong>Not active<\/strong>[\s\S]*?<small>Check back later<\/small>/);
-  assert.doesNotMatch(unavailableDealMarkup, /How Club Deals work|profile-deal-disclosure|profile-deal-note/);
-  assert.match(
-    liveApp,
-    /#profileBackdrop \.profile-club-deal-tile \{[\s\S]*?width: 100% !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(96px, 112px\) !important;/,
-  );
-  assert.match(
-    liveApp,
-    /#profileBackdrop \.profile-club-deal-tile\.profile-qr-unavailable \{[\s\S]*?border-color: rgba\(148, 163, 184, \.2\) !important;[\s\S]*?background: rgba\(17, 17, 24, \.82\) !important;[\s\S]*?box-shadow: none !important;/,
-  );
-  assert.match(
-    liveApp,
-    /#profileBackdrop \.profile-club-deal-qr-button\.is-unavailable:disabled \{[\s\S]*?background: rgba\(255, 255, 255, \.035\) !important;[\s\S]*?cursor: default !important;/,
-  );
-  assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.profile-qr-unavailable::before,[\s\S]*?#profileBackdrop \.profile-qr-unavailable::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?background: none !important;[\s\S]*?box-shadow: none !important;/,
-  );
+  assert.match(dealMarkup, /if \(state\.key === "available"\)/);
+  assert.match(dealMarkup, /return "";/);
+  assert.doesNotMatch(dealMarkup, /profile-qr-unavailable|Not active|Check back later/);
+  assert.match(dealMarkup, /Available tonight at \$\{escapeHtml\(venueName\)\} · Cashier NFC required/);
 });

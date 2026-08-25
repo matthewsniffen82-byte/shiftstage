@@ -38081,6 +38081,324 @@
           }
         }
 
+        /* The full dancer profile is an action-first media library. Keep all
+           nightlife actions above a vertical, lazily populated gallery and
+           reserve space for the floating discovery dock below the final row. */
+        #profileBackdrop .profile-modal {
+          --profile-bottom-nav-clearance: max(132px, calc(108px + env(safe-area-inset-bottom, 0px)));
+          scroll-padding-bottom: var(--profile-bottom-nav-clearance) !important;
+        }
+
+        #profileBackdrop .modal-body,
+        #profileBackdrop .modal-actions,
+        #profileBackdrop .modal-grid {
+          padding-bottom: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .modal-grid {
+          grid-auto-rows: max-content !important;
+        }
+
+        #profileBackdrop .profile-modal-media {
+          gap: 3px !important;
+          margin: 2px 0 0 !important;
+          padding-bottom: var(--profile-bottom-nav-clearance) !important;
+        }
+
+        #profileBackdrop .profile-modal-media-tabs {
+          position: sticky !important;
+          top: 0 !important;
+          z-index: 25 !important;
+          width: 100% !important;
+          min-height: 40px !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          justify-self: stretch !important;
+          gap: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-bottom: 1px solid rgba(255,255,255,.12) !important;
+          border-radius: 0 !important;
+          background: rgba(5,5,8,.92) !important;
+          box-shadow: 0 10px 18px rgba(0,0,0,.18) !important;
+          backdrop-filter: blur(16px);
+        }
+
+        body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button {
+          min-height: 40px !important;
+          gap: 6px !important;
+          padding: 0 10px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          color: #918a9a !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .profile-media-tab-icon {
+          width: 16px !important;
+          height: 16px !important;
+          flex-basis: 16px !important;
+        }
+
+        #profileBackdrop .profile-media-tab-count {
+          min-width: 20px !important;
+          height: 20px !important;
+          padding-inline: 5px !important;
+        }
+
+        body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button.active {
+          color: #fff !important;
+          background: rgba(124,58,237,.08) !important;
+          box-shadow: inset 0 -2px 0 #8b5cf6 !important;
+        }
+
+        #profileBackdrop .gallery {
+          width: 100% !important;
+          min-height: 0 !important;
+          display: grid !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          align-items: start !important;
+          justify-content: stretch !important;
+          gap: 3px !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: visible !important;
+          overscroll-behavior: auto !important;
+          scroll-snap-type: none !important;
+          touch-action: pan-y !important;
+        }
+
+        #profileBackdrop .gallery .thumb {
+          width: 100% !important;
+          min-width: 0 !important;
+          max-width: none !important;
+          height: auto !important;
+          min-height: 0 !important;
+          aspect-ratio: 4 / 5 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+          scroll-snap-align: none !important;
+          border: 0 !important;
+          border-radius: 3px !important;
+        }
+
+        #profileBackdrop .gallery .profile-media-lazy-sentinel {
+          grid-column: 1 / -1 !important;
+          width: auto !important;
+          min-width: 0 !important;
+          height: 28px !important;
+          min-height: 28px !important;
+          align-self: auto !important;
+        }
+
+        #profileBackdrop .gallery .profile-media-lazy-sentinel::after {
+          top: 5px !important;
+          transform: translateX(-50%) !important;
+        }
+
+        @keyframes profile-media-lazy-spin {
+          to { transform: translateX(-50%) rotate(360deg); }
+        }
+
+        /* Current Shift is a single destination row, not a second dashboard
+           card. The whole club destination remains tappable. */
+        #profileBackdrop #profileModal .modal-grid > .working-now-tile {
+          grid-template-columns: auto minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 9px !important;
+          min-height: 0 !important;
+          padding: 6px 8px !important;
+          border-color: rgba(77,236,157,.22) !important;
+          background: rgba(77,236,157,.045) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .working-now-tile::before,
+        #profileBackdrop #profileModal .working-now-tile::after {
+          content: none !important;
+          display: none !important;
+        }
+
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile > .profile-schedule-explanation {
+          display: none !important;
+        }
+
+        #profileBackdrop .working-now-tile > .profile-schedule-primary {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          width: auto !important;
+          padding: 0 2px !important;
+          color: #4dec9d !important;
+          font-size: 11px !important;
+          line-height: 1.05 !important;
+          text-transform: uppercase !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .working-now-tile > .schedule-stack {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          min-width: 0 !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live {
+          grid-template-columns: 28px minmax(0, 1fr) 16px !important;
+          gap: 7px !important;
+          min-height: 46px !important;
+          padding: 3px 6px !important;
+          border: 0 !important;
+          background: transparent !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live > .venue-dot {
+          width: 28px !important;
+          height: 28px !important;
+        }
+
+        /* Follow, ride, share and schedule stay visible. Lower-frequency
+           actions live in the compact overflow menu. */
+        #profileBackdrop .modal-actions {
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          gap: 6px !important;
+        }
+
+        #profileBackdrop .modal-actions .action-btn,
+        #profileBackdrop .modal-actions .profile-share-action,
+        #profileBackdrop .profile-primary-ride > :is(a, button) {
+          min-height: 44px !important;
+          padding: 5px 6px !important;
+          border-radius: 11px !important;
+          font-size: 11px !important;
+        }
+
+        #profileBackdrop .profile-primary-ride {
+          min-width: 0 !important;
+        }
+
+        #profileBackdrop .profile-primary-ride > :is(a, button) {
+          width: 100% !important;
+        }
+
+        #profileBackdrop .modal-actions .going-btn {
+          grid-column: auto !important;
+          min-height: 44px !important;
+        }
+
+        #profileBackdrop .profile-action-overflow {
+          grid-column: 1 / -1 !important;
+          justify-self: end !important;
+        }
+
+        #profileBackdrop .profile-action-overflow-toggle {
+          width: auto !important;
+          min-height: 32px !important;
+          padding: 3px 8px !important;
+          border: 0 !important;
+          border-radius: 999px !important;
+          color: #a9a0b4 !important;
+          background: transparent !important;
+          font-size: 10px !important;
+        }
+
+        #profileBackdrop .profile-action-overflow-menu :is(.action-btn, #reportBtn) {
+          width: 100% !important;
+          min-height: 44px !important;
+          padding: 6px 10px !important;
+          border: 1px solid rgba(255,255,255,.08) !important;
+          border-radius: 10px !important;
+          background: rgba(255,255,255,.035) !important;
+          text-align: left !important;
+        }
+
+        /* Only a genuinely active deal receives the emerald treatment. */
+        #profileBackdrop #profileModal .profile-club-deal-tile {
+          grid-template-columns: minmax(0, 1fr) minmax(96px, 108px) !important;
+          gap: 10px !important;
+          min-height: 0 !important;
+          padding: 8px 9px !important;
+          border-color: rgba(77,236,157,.36) !important;
+          background:
+            radial-gradient(circle at 0 0, rgba(77,236,157,.11), transparent 58%),
+            rgba(6,20,17,.9) !important;
+          box-shadow: 0 0 18px rgba(77,236,157,.08) !important;
+        }
+
+        #profileBackdrop .profile-club-deal-copy {
+          gap: 4px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-label {
+          color: #4dec9d !important;
+          font-size: 9px !important;
+          letter-spacing: .12em !important;
+          line-height: 1.1 !important;
+          text-transform: uppercase !important;
+        }
+
+        #profileBackdrop .profile-club-deal-title {
+          font-size: 14px !important;
+          line-height: 1.15 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-copy small {
+          font-size: 10px !important;
+          line-height: 1.25 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button {
+          width: 108px !important;
+          min-width: 96px !important;
+          max-width: 108px !important;
+          min-height: 48px !important;
+          grid-template-columns: 22px minmax(0, 1fr) !important;
+          place-items: center start !important;
+          gap: 6px !important;
+          padding: 7px 8px !important;
+          border-radius: 10px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button .club-deal-qr-symbol {
+          width: 22px !important;
+          height: 22px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy {
+          text-align: left !important;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy strong {
+          font-size: 10px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy small {
+          font-size: 8px !important;
+        }
+
+        @media (max-width: 520px) {
+          #profileBackdrop .modal-actions {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          }
+        }
+
+        @media (max-width: 340px) {
+          #profileBackdrop .working-now-tile > .profile-schedule-primary {
+            font-size: 9px !important;
+          }
+
+          #profileBackdrop .profile-club-deal-tile {
+            grid-template-columns: minmax(0, 1fr) 96px !important;
+          }
+
+          #profileBackdrop .profile-club-deal-qr-button {
+            width: 96px !important;
+            min-width: 96px !important;
+            max-width: 96px !important;
+          }
+        }
+
         .feed-uber-ride {
           min-height: 44px !important;
           padding-inline: 9px !important;
@@ -39843,6 +40161,7 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
+        <div class="modal-body" id="modalBody"></div>
         <section class="profile-modal-media" aria-label="Dancer profile media">
           <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">
             <button class="active" id="modalMediaPhotoTab" type="button" role="tab" aria-label="Photos" title="Photos" aria-selected="true" aria-controls="modalGallery" data-profile-media-tab="photo">
@@ -39877,7 +40196,6 @@
           <div class="gallery" id="modalGallery" data-media-tab="photo" role="tabpanel" aria-labelledby="modalMediaPhotoTab"></div>
           <p class="profile-modal-media-empty" id="modalMediaEmpty" hidden>No approved media yet.</p>
         </section>
-        <div class="modal-body" id="modalBody"></div>
       </section>
       <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Larger profile photo" hidden>
         <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
@@ -46094,7 +46412,7 @@
       if (offers.length > 1) {
         qrButton.dataset.clubDealCta = encodedConfig;
         qrButton.setAttribute("aria-label", `Open ${offers.length} Club Deals at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-hub-symbol")}<span class="profile-club-deal-action-copy"><strong>Choose deal</strong><small>${offers.length} live offers</small></span>`;
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-hub-symbol")}<span class="profile-club-deal-action-copy"><strong>View all ${offers.length}</strong><small>Club Deals</small></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready", "has-multiple-offers");
         return;
@@ -46108,7 +46426,7 @@
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
         qrButton.setAttribute("aria-label", `Prepare the ${config.venueName || "active"} Club Deal for cashier NFC`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>View Club Deals</strong><small>Cashier NFC</small></span>`;
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>Use at Club</strong><small>Cashier NFC</small></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({
@@ -46885,39 +47203,24 @@
       const state = dancerClubDealState(profile);
       if (state.key === "available") {
         const config = dancerProfileClubDealConfig(profile);
+        const offerCount = Math.max(1, config?.deals?.length || 1);
+        const dealTitle = String(config?.deal?.dealTitle || "Club Deal").trim() || "Club Deal";
+        const venueName = String(config?.venueName || profile?.venue || "the club").trim() || "the club";
         return `
           <div class="info-tile profile-qr-tile profile-club-deal-tile" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
             <div class="profile-club-deal-copy">
-              <strong class="profile-club-deal-label">Club Deal</strong>
-              <small>Choose your deal here, then tap the cashier NFC sticker at the club.</small>
+              <strong class="profile-club-deal-label">Active Club Deal</strong>
+              <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
+              <small>Available tonight at ${escapeHtml(venueName)} · Cashier NFC required</small>
             </div>
             <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
+              <span class="profile-club-deal-offer-count" hidden>${offerCount}</span>
             </button>
           </div>
         `;
       }
-      const unavailableLabel = state.key === "no-active-offer"
-        ? state.label
-        : "Available when dancer is working";
-      const unavailableDetail = state.key === "no-active-offer"
-        ? "This club has no active Club Deal right now."
-        : "No Club Deal is active for this dancer right now.";
-      return `
-        <div class="info-tile profile-qr-tile profile-club-deal-tile profile-qr-unavailable is-${state.key}" data-club-deal-state="${state.key}" aria-label="${escapeHtml(unavailableLabel)}">
-          <div class="profile-club-deal-copy">
-            <strong class="profile-club-deal-label">Club Deal</strong>
-            <small>${escapeHtml(unavailableDetail)}</small>
-          </div>
-          <button class="profile-club-deal-qr-button is-unavailable" type="button" aria-label="${escapeHtml(unavailableLabel)}" disabled>
-            ${clubDealQrSymbolMarkup("profile-club-deal-unavailable-symbol")}
-            <span class="profile-club-deal-action-copy">
-              <strong>Not active</strong>
-              <small>Check back later</small>
-            </span>
-          </button>
-        </div>
-      `;
+      return "";
     }
 
     function profileShareText(profileName, city = selectedCity()) {
@@ -50142,7 +50445,7 @@
         if (!entries.some((entry) => entry.isIntersecting)) return;
         profileMediaObserver?.disconnect();
         appendNextProfileMediaBatch(tab);
-      }, { root: modalGallery, rootMargin: "0px 480px" });
+      }, { root: profileModal, rootMargin: "480px 0px" });
       profileMediaObserver.observe(sentinel);
     }
 
@@ -50194,7 +50497,6 @@
     function shiftsMarkup(profile, status = shiftStatus(profile), options = {}) {
       const isEditorPreview = Boolean(options.preview);
       const city = options.city || selectedCity();
-      const rideMarkup = dancerProfileUberRideMarkup(profile, { preview: isEditorPreview, city });
       if (isWorkingTonight(profile) && profile.scheduled) {
         return `
           <div class="info-tile profile-schedule-card working-now-tile schedule-live">
@@ -50204,7 +50506,6 @@
               ${profileVenueDestinationMarkup(profile, { live: true })}
             </div>
             <p class="profile-schedule-explanation">This dancer is venue-confirmed as working here now.</p>
-            ${rideMarkup}
           </div>
         `;
       }
@@ -50217,7 +50518,6 @@
               ${profileVenueDestinationMarkup(profile)}
             </div>
             <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to guests." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
-            ${rideMarkup}
           </div>
           ${shiftNotesMarkup(profile)}
         `;
@@ -50275,8 +50575,8 @@
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
           ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
-          ${dealMarkup}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
+          ${dealMarkup}
           ${socialMarkup}
           ${profileActivityMetricsMarkup(profile, city)}
           ${profileLocationStatusTile(profile, city)}
@@ -50300,6 +50600,7 @@
       const isNotified = isNotificationOn(city, profile.name);
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
       const canMarkGoing = Boolean(profile.shiftId);
+      const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
         ? `<button class="action-btn going-btn is-primary-action ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
@@ -50307,13 +50608,15 @@
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
         <div class="modal-actions" aria-label="Guest actions">
-          ${goingButton}
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
-          <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
+          <div class="profile-primary-ride">${rideMarkup || '<button class="action-btn secondary is-unavailable" type="button" disabled>Get a Ride</button>'}</div>
           <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share Profile")}</button>
+          <button class="action-btn secondary profile-schedule-action" type="button" data-profile-schedule-action ${profile.scheduled ? "" : "disabled"}>Schedule</button>
           <div class="profile-action-overflow">
             <button class="profile-action-overflow-toggle" type="button" data-profile-more-actions aria-haspopup="menu" aria-expanded="false" aria-label="Report and profile options"><span aria-hidden="true">•••</span><span>Report &amp; options</span></button>
             <div class="profile-action-overflow-menu" data-profile-more-menu role="menu" hidden>
+              ${goingButton}
+              <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}" role="menuitem">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
               <button id="reportBtn" type="button" role="menuitem" data-profile="${profile.name}">Report profile</button>
             </div>
           </div>
@@ -59397,6 +59700,12 @@
       if (!event.target.closest(".profile-action-overflow")) {
         modalBody.querySelectorAll("[data-profile-more-menu]").forEach((item) => { item.hidden = true; });
         modalBody.querySelectorAll("[data-profile-more-actions]").forEach((item) => item.setAttribute("aria-expanded", "false"));
+      }
+      const scheduleAction = event.target.closest("[data-profile-schedule-action]");
+      if (scheduleAction) {
+        const scheduleCard = modalBody.querySelector(".profile-schedule-card");
+        scheduleCard?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
       }
       const socialLink = event.target.closest(".social-link[data-profile]");
       if (socialLink) {
