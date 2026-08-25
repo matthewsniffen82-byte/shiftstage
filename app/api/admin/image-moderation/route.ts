@@ -26,7 +26,7 @@ const REVIEW_DECISIONS = new Set(["approved", "rejected"]);
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const admin = createAdminSupabaseClient() as any;
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     if (error) throw error;
 
     const records = await Promise.all((data || []).map((record: any) => withSignedThumbnail(admin, record)));
-    return NextResponse.json({ ok: true, records, count: count || 0, page, pageSize });
+    return NextResponse.json({ ok: true, records, count: count || 0, page, pageSize, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load image moderation queue.");
   }
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const admin = createAdminSupabaseClient() as any;
     const body = await request.json();
@@ -76,11 +76,11 @@ export async function POST(request: Request) {
 
     if (decision === "approved") {
       const approved = await approveReviewRecord(admin, record, user.id, notes);
-      return NextResponse.json({ ok: true, record: approved });
+      return NextResponse.json({ ok: true, record: approved, session: session || null });
     }
 
     const rejected = await rejectReviewRecord(admin, record, user.id, notes);
-    return NextResponse.json({ ok: true, record: rejected });
+    return NextResponse.json({ ok: true, record: rejected, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to update image moderation record.");
   }

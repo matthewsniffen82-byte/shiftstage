@@ -2188,53 +2188,45 @@ function ImageModerationQueue({
   const [isLoading, setIsLoading] = useState(false);
 
   async function loadQueue(nextFilter = filter) {
-    const token = readToken();
-    if (!token) {
-      setMessage("Admin sign in required.");
-      return;
-    }
     setIsLoading(true);
     setMessage("");
-    const response = await fetch(`/api/admin/image-moderation?decision=${encodeURIComponent(nextFilter)}`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setIsLoading(false);
-    if (!response.ok || !data.ok) {
-      setMessage(data.error || "Unable to load image moderation queue.");
-      return;
+    try {
+      const data = await requestAdminJson(`/api/admin/image-moderation?decision=${encodeURIComponent(nextFilter)}`, {
+        cache: "no-store",
+        fallbackMessage: "Unable to load image moderation queue.",
+      });
+      const nextRecords = Array.isArray(data.records) ? data.records : [];
+      onRecordsChange(nextRecords);
+      setMessage(`${nextRecords.length} image moderation records loaded.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to load image moderation queue. Check your connection and try again.");
+    } finally {
+      setIsLoading(false);
     }
-    onRecordsChange(data.records || []);
-    setMessage(`${data.records?.length || 0} image moderation records loaded.`);
   }
 
   async function decide(recordId: string, decision: "approved" | "rejected") {
-    const token = readToken();
-    if (!token) {
-      setMessage("Admin sign in required.");
-      return;
-    }
     const confirmed = window.confirm(decision === "approved" ? "Approve this photo and publish it?" : "Reject this photo and keep it private?");
     if (!confirmed) return;
 
     setMessage(decision === "approved" ? "Publishing approved photo..." : "Rejecting photo...");
-    const response = await fetch("/api/admin/image-moderation", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ recordId, decision, notes: notesById[recordId] || "" }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setMessage(data.error || "Unable to update moderation record.");
-      return;
+    try {
+      await requestAdminJson("/api/admin/image-moderation", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ recordId, decision, notes: notesById[recordId] || "" }),
+        fallbackMessage: "Unable to update moderation record.",
+      });
+      onRecordsChange(records.filter((record) => String(record.id) !== recordId));
+      const confirmation =
+        decision === "approved"
+          ? "Picture approved and published successfully."
+          : "Picture rejected successfully and removed from private review storage.";
+      setMessage(confirmation);
+      onActionConfirmed(confirmation);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to update moderation record. Check your connection and try again.");
     }
-    onRecordsChange(records.filter((record) => String(record.id) !== recordId));
-    const confirmation =
-      decision === "approved"
-        ? "Picture approved and published successfully."
-        : "Picture rejected successfully and removed from private review storage.";
-    setMessage(confirmation);
-    onActionConfirmed(confirmation);
   }
 
   return (
