@@ -5,8 +5,8 @@ import test from "node:test";
 const dashboard = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 
 test("the final dancer workspace focuses on sharing instead of redundant billing cards", () => {
-  const profileEditorContent = dashboard.match(/const profileEditorContent = \([\s\S]*?\n  \);/)?.[0] || "";
-  assert.match(profileEditorContent, /<DancerSharePanel profile=\{profile\} \/>/);
+  const profileEditorSections = dashboard.match(/const profileEditorSections: DancerProfileEditorSections = \{[\s\S]*?\n  \};/)?.[0] || "";
+  assert.match(profileEditorSections, /share: <DancerSharePanel profile=\{profile\} \/>/);
   assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
   assert.doesNotMatch(dashboard, /function DancerBillingPanel/);
   assert.doesNotMatch(dashboard, /<Metric label="Subscription" value="FREE"/);

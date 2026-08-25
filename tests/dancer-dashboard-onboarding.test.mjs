@@ -134,13 +134,14 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /\.tv-video-source-cta \{ min-width: 60px; display: grid; place-items: center;/);
 });
 
-test("step one guides dancers through required work before optional profile enhancements", () => {
-  assert.match(dashboard, /Required for approval/);
-  assert.match(dashboard, /Finish your public profile/);
-  assert.match(dashboard, /Stage name & city/);
-  assert.match(dashboard, /\{completeCount\} of 3 complete/);
-  assert.match(dashboard, /Social links & videos/);
-  assert.match(dashboard, /Optional — add now or any time after approval/);
+test("step one guides dancers through required work in the live profile layout", () => {
+  assert.match(dashboard, /const builderRequirements: DancerProfileBuilderRequirement\[\]/);
+  assert.match(dashboard, /label: "Stage name & city", section: "identity"/);
+  assert.match(dashboard, /label: "Avatar", section: "avatar"/);
+  assert.match(dashboard, /label: "Profile photo", section: "photos"/);
+  assert.match(dashboard, /\{completedRequirements\} of \{builderRequirements\.length\} required items ready/);
+  assert.match(dashboard, /videos: videoContent/);
+  assert.match(dashboard, /socials: socialContent/);
   assert.match(dashboard, /Build your profile in the live layout/);
   assert.match(dashboard, /buttonLabel=\{profileReady \? "Review profile setup" : "Open profile setup"\}/);
   assert.match(dashboard, /saveLabel="Save & continue"/);
@@ -151,8 +152,10 @@ test("step one guides dancers through required work before optional profile enha
 test("profile setup and approved editing share one full-screen save boundary", () => {
   assert.match(dashboard, /const DANCER_PROFILE_EDITOR_SAVE_EVENT = "mydancr:dancer-profile-editor-save"/);
   assert.match(dashboard, /for \(const task of detail\.tasks\) \{[\s\S]*?if \(!await task\(\)\) return false/);
-  assert.match(dashboard, /className=\{`dancer-profile-preview-overlay\$\{editorContent \? " is-editor" : ""\}`\}/);
+  assert.match(dashboard, /className=\{`dancer-profile-preview-overlay\$\{isEditor \? " is-editor" : ""\}`\}/);
   assert.match(dashboard, /aria-label="Close profile preview"[\s\S]*?onClick=\{closePreview\}/);
+  assert.match(dashboard, /className="dancer-profile-builder-panel"[\s\S]*?editorSections\[activeEditorSection\]/);
+  assert.match(dashboard, /disabled=\{isEditorSaving \|\| !requirementsComplete\}/);
   assert.match(dashboard, /<DancerSetupPanel[\s\S]*?unifiedSave/);
   assert.match(dashboard, /<DancerSocialPanel profile=\{profile\} onProfileChange=\{onProfileChange\} unifiedSave \/>/);
   assert.match(dashboard, /\{unifiedSave \? null : \([\s\S]*?Save profile/);
@@ -189,13 +192,19 @@ test("approved dancers who skipped payout setup get a plain-language call to act
   assert.match(dashboard, /#dancer-performance \.venue-dashboard-section-badge \{[^}]*color: #fde68a/);
 });
 
-test("step one required items are accessible accordions that preserve the active editor", () => {
-  assert.match(dashboard, /const \[expandedId, setExpandedId\] = useState<string \| null>\(null\)/);
-  assert.doesNotMatch(dashboard, /setExpandedId\(\(current\) => current \?\? firstIncompleteId\)/);
-  assert.doesNotMatch(dashboard, /setExpandedId\(firstIncompleteId\)/);
-  assert.match(dashboard, /aria-controls=\{panelId\}/);
-  assert.match(dashboard, /aria-expanded=\{open\}/);
-  assert.match(dashboard, /hidden=\{!open\}/);
+test("step one uses accessible live-profile add targets that preserve the active editor", () => {
+  assert.match(dashboard, /const \[activeEditorSection, setActiveEditorSection\] = useState<DancerProfileEditorSectionId \| null>\(null\)/);
+  assert.match(dashboard, /aria-label=\{headerImage \? "Edit avatar" : "Add avatar"\}/);
+  assert.match(dashboard, /"Add stage name"/);
+  assert.match(dashboard, /"Add city"/);
+  assert.match(dashboard, /aria-label="Add profile photos"/);
+  assert.match(dashboard, /aria-label="Add profile videos"/);
+  assert.match(dashboard, /aria-label="Add social links"/);
+  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("identity"\)\}/);
+  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
+  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("photos"\)\}/);
+  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("videos"\)\}/);
+  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("socials"\)\}/);
   assert.match(dashboard, /dancerStepOneStateLabel/);
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
 });
@@ -281,6 +290,10 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /event\.target\.value = ""/);
   assert.match(dashboard, /if \(galleryPhotoInputRef\.current\) galleryPhotoInputRef\.current\.value = ""/);
   assert.match(dashboard, /if \(cameraPhotoInputRef\.current\) cameraPhotoInputRef\.current\.value = ""/);
+  assert.match(dashboard, /aria-label="Choose avatar from your photo library"/);
+  assert.match(dashboard, /aria-label="Take a new avatar photo"/);
+  assert.match(dashboard, /capture="user"/);
+  assert.match(dashboard, /dancer-avatar-source-grid/);
 });
 
 test("photo and video uploaders auto-upload multiple phone files with independent recovery", () => {
@@ -335,18 +348,21 @@ test("the full profile preview renders approved media and restores the dashboard
 });
 
 test("approved dancers edit their full guest view from inside Profile & media", () => {
-  const profileEditorContent = dashboard.match(/const profileEditorContent = \([\s\S]*?\n  \);/)?.[0] || "";
+  const profileEditorSections = dashboard.match(/const profileEditorSections: DancerProfileEditorSections = \{[\s\S]*?\n  \};/)?.[0] || "";
   const profileMediaWorkspace = dashboard.match(/const profileMediaWorkspace = \([\s\S]*?\n  \);/)?.[0] || "";
 
   assert.match(dashboard, /const isPublic = isApproved && profile\?\.is_public !== false && profile\?\.isPublic !== false/);
   assert.match(dashboard, /id="dancer-profile-media"[\s\S]*?\{profileMediaWorkspace\}/);
   assert.match(profileMediaWorkspace, /<article className="dancer-profile-media-preview"/);
   assert.match(profileMediaWorkspace, /id="dancer-profile-media-preview-heading">Edit your full live profile/);
-  assert.match(profileMediaWorkspace, /buttonLabel="Edit full profile"[\s\S]*editorContent=\{profileEditorContent\}[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
+  assert.match(profileMediaWorkspace, /buttonLabel="Edit full profile"[\s\S]*editorSections=\{profileEditorSections\}[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
   assert.match(profileMediaWorkspace, /saveLabel="Save & return to dashboard"/);
   assert.match(profileMediaWorkspace, /document\.getElementById\("dancer-profile-media"\)[\s\S]*?section\.open = false/);
-  assert.match(profileEditorContent, /\{identityContent\}[\s\S]*?\{avatarContent\}[\s\S]*?\{socialContent\}[\s\S]*?\{photoContent\}[\s\S]*?\{videoContent\}/);
-  assert.match(profileEditorContent, /<DancerSharePanel profile=\{profile\} \/>/);
+  assert.match(profileEditorSections, /identity: identityContent[\s\S]*?avatar: avatarContent[\s\S]*?photos: photoContent[\s\S]*?videos: videoContent[\s\S]*?socials: socialContent/);
+  assert.match(profileEditorSections, /share: <DancerSharePanel profile=\{profile\} \/>/);
+  assert.match(dashboard, /className="profile-schedule-section dancer-profile-builder-static-card"/);
+  assert.match(dashboard, /className="dancer-profile-builder-deal"/);
+  assert.match(dashboard, /className="dancer-profile-builder-metrics"/);
   assert.doesNotMatch(dashboard, /dancer-dashboard-profile-preview/);
   assert.match(dashboard, /Public profile preview/);
   assert.match(dashboard, /This is how your approved profile appears to guests/);
