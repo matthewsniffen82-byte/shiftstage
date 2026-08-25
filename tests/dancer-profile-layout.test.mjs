@@ -273,7 +273,7 @@ test("the in-profile TV tab is dancer-only, opens full screen, and does not alte
   assert.match(liveApp, /syncProfileMediaTabCounts\(photoCount, videos\.length\)/);
   assert.match(
     liveApp,
-    /fetch\(`\/api\/public\/tv\?city=\$\{encodeURIComponent\(citySelect\.value\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}&limit=4`/,
+    /fetch\(`\/api\/public\/tv\?city=\$\{encodeURIComponent\(citySelect\.value\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}&limit=\$\{MAX_DANCER_PROFILE_VIDEOS\}`/,
   );
   assert.match(liveApp, /selectModalMediaThumb\(thumb, \{ syncViewer: true \}\);[\s\S]*?openPhotoViewerFromElement\(modalImage\)/);
   assert.match(liveApp, /openProfileTvViewer\(item, modalGallery\.profileTvProfileName/);

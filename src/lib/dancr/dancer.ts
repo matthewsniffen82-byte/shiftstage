@@ -4,9 +4,9 @@ import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
 import { removeResponsiveImage } from "./responsive-image";
 import { removeArchivedOriginalMedia } from "./media-watermark";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
+import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
 
 type DancrClient = SupabaseClient;
-const MAX_DANCER_PROFILE_PHOTOS = 5;
 
 export type DancerProfileInput = {
   dancerId: string;

@@ -8,6 +8,7 @@ import {
 } from "./avatar-face";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-validation";
+import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
 import {
   DANCR_IMAGE_MODERATION_MODEL,
   evaluateDancrImageModeration,
@@ -891,7 +892,9 @@ async function getOwnDancerProfile(client: DancrClient, userId: string) {
 
 async function assertDancerPhotoLimit(client: DancrClient, dancerId: string, userId: string) {
   const slots = await occupiedDancerPhotoSlots(client, dancerId, userId);
-  if (slots.size >= 5) throw new Error("You can upload up to 5 profile pictures. Delete or replace one before adding more.");
+  if (slots.size >= MAX_DANCER_PROFILE_PHOTOS) {
+    throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
+  }
 }
 
 async function resolveDancerPhotoSortOrder(
@@ -907,10 +910,10 @@ async function resolveDancerPhotoSortOrder(
   if (Number.isInteger(preferred) && preferred > 0 && (allowOccupiedPreferred || !used.has(`gallery:${preferred}`))) {
     return preferred;
   }
-  for (let sortOrder = 1; sortOrder <= 5; sortOrder += 1) {
+  for (let sortOrder = 1; sortOrder <= MAX_DANCER_PROFILE_PHOTOS; sortOrder += 1) {
     if (!used.has(`gallery:${sortOrder}`)) return sortOrder;
   }
-  throw new Error("You can upload up to 5 profile pictures. Delete or replace one before adding more.");
+  throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
 }
 
 async function occupiedDancerPhotoSlots(
@@ -942,7 +945,7 @@ async function occupiedDancerPhotoSlots(
       slots.add(slot.key);
       continue;
     }
-    for (let sortOrder = 1; sortOrder <= 5; sortOrder += 1) {
+    for (let sortOrder = 1; sortOrder <= MAX_DANCER_PROFILE_PHOTOS; sortOrder += 1) {
       const key = `gallery:${sortOrder}`;
       if (!slots.has(key)) {
         slots.add(key);

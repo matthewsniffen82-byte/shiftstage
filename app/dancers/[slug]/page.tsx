@@ -6,6 +6,7 @@ import { VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealsForVenue } from "@/src/lib/dancr/deals";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
+import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
@@ -73,7 +74,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
     getPublicMyDancrTvFeed(client, {
       city: profile.city,
       dancerId: profile.id,
-      limit: 12,
+      limit: MAX_DANCER_PROFILE_VIDEOS,
     }),
     activeShift?.venueSlug
       ? getVenueProfile(client, activeShift.venueSlug)
@@ -165,6 +166,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           videos={tvVideos.map((video) => ({
             id: video.id,
             videoUrl: video.videoUrl,
+            posterUrl: video.dancer.primaryPhotoUrl || heroPhoto,
             durationSeconds: video.durationSeconds,
           }))}
           stageName={profile.stageName}
@@ -497,11 +499,15 @@ function PublicProfileStyles() {
       .profile-media-grid-item { position: relative; width: 100%; min-width: 0; aspect-ratio: 4 / 5; display: block; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 11px; color: #fff; background: #0b0b10; box-shadow: none; cursor: pointer; }
       .profile-media-grid-item img, .profile-media-grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
       .profile-media-grid-item img { filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
+      .profile-media-poster-placeholder { width: 100%; height: 100%; display: block; background: radial-gradient(circle at 50% 32%, rgba(126,234,255,.18), transparent 28%), linear-gradient(145deg, rgba(109,40,217,.28), rgba(5,5,9,.96)); }
       .profile-media-grid-item:hover { border-color: rgba(126,234,255,.42); }
       .profile-media-grid-item:focus-visible { z-index: 1; outline: 2px solid #7eeaff; outline-offset: 2px; }
       .profile-media-play { position: absolute; top: 50%; left: 50%; width: 30px; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 7px 22px rgba(0,0,0,.36); transform: translate(-50%, -50%); }
       .profile-media-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 9px solid #111; transform: translate(-50%, -50%); }
       .profile-media-duration { position: absolute; right: 6px; bottom: 6px; padding: 4px 6px; border-radius: 999px; color: #fff; background: rgba(0,0,0,.78); font-size: 9px; font-weight: 950; }
+      .profile-media-grid-sentinel { position: relative; grid-column: 1 / -1; height: 28px; pointer-events: none; }
+      .profile-media-grid-sentinel::after { position: absolute; top: 5px; left: 50%; width: 14px; height: 14px; content: ""; border: 2px solid rgba(126,234,255,.18); border-top-color: #7eeaff; border-radius: 50%; animation: profile-media-loading 700ms linear infinite; transform: translateX(-50%); }
+      .profile-media-grid-status { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
       .profile-media-empty { grid-column: 1 / -1; min-height: 108px; display: grid; place-items: center; color: #8f849c; text-align: center; }
       .profile-media-viewer { position: fixed; z-index: 1600; inset: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; color: #fff; background: rgba(0,0,0,.98); overscroll-behavior: none; touch-action: none; }
       .profile-media-viewer-close { position: fixed; z-index: 3; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 50px; height: 50px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: rgba(10,10,14,.78); font-size: 30px; cursor: pointer; backdrop-filter: blur(12px); }
@@ -520,6 +526,9 @@ function PublicProfileStyles() {
       .profile-media-viewer-share svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
       .profile-media-viewer-share-status { min-height: 14px; color: #a7f3d0; font-size: 10px; font-weight: 800; text-align: right; }
       .profile-media-viewer-hint { color: #aaa0b8; font-size: 11px; font-weight: 800; }
+      .profile-media-viewer-preload { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+      .profile-media-viewer-preload img, .profile-media-viewer-preload video { width: 1px; height: 1px; }
+      @keyframes profile-media-loading { to { transform: translateX(-50%) rotate(360deg); } }
       .profile-schedule-section { display: grid; gap: 14px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
       .shift-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
       .shift-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 14px; border: 1px solid rgba(255,255,255,.085); border-radius: 14px; color: #f7f2ff; background: rgba(255,255,255,.035); text-decoration: none; }

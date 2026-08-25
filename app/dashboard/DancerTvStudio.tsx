@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import {
   readDashboardAccessToken,
@@ -61,7 +62,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const consentInputRef = useRef<HTMLInputElement>(null);
   const rightsInputRef = useRef<HTMLInputElement>(null);
   const queuedPreviewUrlsRef = useRef<Set<string>>(new Set());
-  const maxVideos = workspace?.maxVideos || 5;
+  const maxVideos = workspace?.maxVideos || MAX_DANCER_PROFILE_VIDEOS;
   const currentVideoCount = workspace?.videos.length || 0;
   const atVideoLimit = currentVideoCount >= maxVideos;
   const videoPermissionsConfirmed = consentConfirmed && rightsConfirmed;
@@ -157,7 +158,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   async function uploadVideoBatch(batch: QueuedVideo[]) {
     if (!readDashboardAccessToken("dancer")) return setStatus("Sign in as a dancer to upload.");
     if (atVideoLimit) return setStatus(`You can upload up to ${maxVideos} profile videos. Remove one before adding another.`);
-    if (!batch.length) return setStatus("Choose up to five MP4, WebM, or MOV videos, or record a new video first.");
+    if (!batch.length) return setStatus("Choose MP4, WebM, or MOV videos, or record a new video first.");
     if (!consentConfirmed || !rightsConfirmed) {
       return setStatus("Confirm consent and content rights for every queued video before submitting.");
     }
@@ -278,7 +279,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         <div className="tv-studio-embedded-head">
           <div>
             <h2>Profile videos</h2>
-            <p>Vertical or square videos • Up to 5 • Approval required</p>
+            <p>Vertical or square videos • Up to {maxVideos} • Approval required</p>
           </div>
           {workspace ? <strong aria-label={`${currentVideoCount} of ${maxVideos} profile video slots used`}>{currentVideoCount}/{maxVideos}</strong> : null}
         </div>
@@ -445,7 +446,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
             <article className="tv-managed-video" key={video.id}>
-              {video.videoUrl ? <video controls playsInline preload="metadata" src={video.videoUrl} /> : <div className="tv-video-unavailable">Video unavailable</div>}
+              {video.videoUrl ? <video controls playsInline preload="none" src={video.videoUrl} /> : <div className="tv-video-unavailable">Video unavailable</div>}
               <div>
                 <span className={`tv-video-status status-${video.status}`}>{statusLabel(video.status)}</span>
                 {video.moderationDecision ? (

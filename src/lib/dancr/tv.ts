@@ -3,6 +3,7 @@ import { createDancerDealAttributionToken } from "./deal-attribution";
 import { getActiveClubDealListsForVenues } from "./deals";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
+import { MAX_DANCER_PROFILE_VIDEOS } from "./media-limits";
 import type { ClubDeal } from "./types";
 import { prioritizeMyDancrTvVenue } from "./tv-feed-order";
 import { isActiveNfcPresence } from "./shift-presence";
@@ -24,7 +25,7 @@ export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
 export const MYDANCR_TV_MAX_DURATION_SECONDS = 30;
 export const MYDANCR_TV_SIGNED_URL_SECONDS = 60 * 60;
-export const MYDANCR_TV_PROFILE_VIDEO_LIMIT = 5;
+export const MYDANCR_TV_PROFILE_VIDEO_LIMIT = MAX_DANCER_PROFILE_VIDEOS;
 export const MYDANCR_TV_MIME_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 
 export const MYDANCR_TV_PROFILE_SLOT_STATUSES = [
@@ -303,7 +304,7 @@ export async function getPublicMyDancrTvFeed(
   );
   const deduped = venuePrioritized.slice(
     0,
-    Math.min(24, Math.max(1, options.limit || 12)),
+    Math.min(MYDANCR_TV_PROFILE_VIDEO_LIMIT, Math.max(1, options.limit || 12)),
   );
   const signedVideos = await signPublicVideos(admin, deduped);
   const deals = await getActiveClubDealListsForVenues(
@@ -736,7 +737,7 @@ export async function createMyDancrTvUpload(
       .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
     if (countError) throw countError;
     if (Number(activeVideoCount || 0) >= MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
-      throw new Error("You can upload up to 5 profile videos. Remove one before adding another.");
+      throw new Error(`You can upload up to ${MYDANCR_TV_PROFILE_VIDEO_LIMIT} profile videos. Remove one before adding another.`);
     }
   }
 

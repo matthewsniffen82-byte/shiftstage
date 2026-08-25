@@ -9,6 +9,7 @@ import {
   profilePhotoSlotKey,
 } from "@/src/lib/dancr/photo-slot";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
+import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerSignupCityInputError, requireDancerSignupCity } from "@/src/lib/dancr/signup-cities";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -24,7 +25,6 @@ function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
   return response;
 }
-const MAX_DANCER_PROFILE_PHOTOS = 5;
 const MIN_DANCER_STAGE_NAME_LENGTH = 2;
 const MAX_DANCER_STAGE_NAME_LENGTH = 40;
 const APPROVED_PHOTO_BUCKET = "dancer-photos";
@@ -241,7 +241,7 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
     .neq("upload_context", PROFILE_AVATAR_CONTEXT)
     .in("status", ACTIVE_IMAGE_MODERATION_STATUSES)
     .order("created_at", { ascending: false })
-    .limit(25);
+    .limit(MAX_DANCER_PROFILE_PHOTOS);
 
   if (error) throw error;
   const occupiedSlots = new Set(occupiedPhotos.map((photo: any) => profilePhotoSlotKey(photo)));

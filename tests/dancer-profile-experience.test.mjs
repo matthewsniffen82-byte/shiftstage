@@ -234,13 +234,21 @@ test("profiles can be shared and close back to the referring site page", () => {
 });
 
 test("profile videos stay passive in the grid and open the complete full-screen player", () => {
+  const mediaGrid = profileCarousel.slice(
+    profileCarousel.indexOf("{visibleItems.map"),
+    profileCarousel.indexOf("{viewer && activeViewerItem"),
+  );
   assert.match(profileCarousel, /className=\{`profile-media-grid-item is-\$\{item\.kind\}`\}/);
-  assert.match(profileCarousel, /preload="metadata"[\s\S]*?src=\{item\.videoUrl\}/);
+  assert.match(profileCarousel, /item\.posterUrl[\s\S]*?loading="lazy"[\s\S]*?src=\{item\.posterUrl\}/);
+  assert.doesNotMatch(mediaGrid, /<video/);
   assert.match(profileCarousel, /className="profile-media-play"/);
   assert.match(profileCarousel, /className="profile-media-duration"/);
   assert.match(profileCarousel, /openViewer\(item\.kind, index, event\.currentTarget\)/);
   assert.match(profileCarousel, /autoPlay[\s\S]*?controls[\s\S]*?controlsList="nofullscreen noremoteplayback nodownload"/);
-  assert.doesNotMatch(profileCarousel, /IntersectionObserver|inlinePlaying|profile-media-video-controls/);
+  assert.match(profileCarousel, /DANCER_PROFILE_MEDIA_PAGE_SIZE/);
+  assert.match(profileCarousel, /new IntersectionObserver/);
+  assert.match(profileCarousel, /data-profile-media-lazy-sentinel/);
+  assert.doesNotMatch(profileCarousel, /Load more|inlinePlaying|profile-media-video-controls/);
   assert.match(profilePage, /\.profile-media-grid-item \{[\s\S]*?aspect-ratio: 4 \/ 5;/);
 });
 

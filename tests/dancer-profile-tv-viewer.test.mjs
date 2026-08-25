@@ -74,23 +74,22 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
 });
 
-test("live profile thumbnails stay idle while the selected preview autoplays without a redundant play overlay", () => {
+test("live profile thumbnails use passive posters while the selected viewer owns playback", () => {
   const loader =
     liveApp.match(
       /async function loadProfileMyDancrTv\(profile\)[\s\S]*?\n    function formatProfileTvShift/,
     )?.[0] || "";
 
-  assert.match(loader, /const videos = payload\.videos\.slice\(0, 4\)/);
+  assert.match(loader, /const videos = payload\.videos\.slice\(0, MAX_DANCER_PROFILE_VIDEOS\)/);
   assert.match(loader, /modalGallery\.profileTvVideos = videos/);
   assert.match(loader, /modalGallery\.dataset\.profileMediaProfile !== requestProfileId/);
-  assert.match(loader, /thumb\.className = "thumb profile-media-thumb is-video"/);
-  assert.match(loader, /video\.preload = "metadata"/);
-  assert.match(loader, /profile-media-thumb-play/);
-  assert.match(loader, /profile-media-thumb-duration/);
+  assert.match(loader, /appendNextProfileMediaBatch\("video"/);
+  assert.match(liveApp, /function profileVideoThumbMarkup[\s\S]*?profileVideoPosterUrl\(item\)/);
+  assert.doesNotMatch(loader, /createElement\("video"\)|video\.src = item\.videoUrl/);
   assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)/);
   assert.match(
     liveApp,
-    /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?video\.autoplay = true[\s\S]*?video\.muted = true[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/,
+    /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?video\.autoplay = true[\s\S]*?video\.muted = modalProfileVideoMuted[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/,
   );
   assert.doesNotMatch(liveApp, /modal-media-video-play/);
   assert.match(liveApp, /Tap the video to show or hide playback controls\. Use the full-screen button for immersive playback/);

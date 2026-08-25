@@ -33806,7 +33806,7 @@
         .profile-tv-viewer-gallery { grid-column: 1 / -1; display: grid; grid-auto-flow: column; grid-auto-columns: 72px; gap: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; }
         .profile-tv-viewer-gallery button { position: relative; width: 72px; height: 78px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 9px; background: #000; scroll-snap-align: center; cursor: pointer; }
         .profile-tv-viewer-gallery button.active { border-color: #7eeaff; box-shadow: 0 0 14px rgba(126,234,255,.28); }
-        .profile-tv-viewer-gallery video { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
+        .profile-tv-viewer-gallery video, .profile-tv-viewer-gallery img, .profile-tv-viewer-gallery .profile-media-thumb-poster { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
         .profile-tv-viewer-gallery span { position: absolute; right: 4px; bottom: 4px; min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); font-size: 10px; font-weight: 950; }
         .profile-modal .modal-image,
         .profile-photo-viewer-image { touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; -webkit-user-select: none; }
@@ -36630,6 +36630,7 @@
           box-shadow: none !important;
         }
         #profileBackdrop .gallery .thumb .portrait,
+        #profileBackdrop .gallery .thumb > img,
         #profileBackdrop .gallery .thumb > video {
           width: 100% !important;
           height: 100% !important;
@@ -36637,6 +36638,39 @@
           display: block !important;
           object-fit: cover !important;
           border-radius: 1px !important;
+        }
+        #profileBackdrop .gallery .profile-media-thumb-poster {
+          width: 100%;
+          height: 100%;
+          display: block;
+          background: radial-gradient(circle at 50% 32%, rgba(126,234,255,.18), transparent 28%), linear-gradient(145deg, rgba(109,40,217,.28), rgba(5,5,9,.96));
+        }
+        #profileBackdrop .gallery .profile-media-lazy-sentinel {
+          position: relative;
+          flex: 0 0 28px;
+          width: 28px;
+          min-width: 28px;
+          align-self: stretch;
+          pointer-events: none;
+        }
+        #profileBackdrop .gallery .profile-media-lazy-sentinel[hidden] {
+          display: none !important;
+        }
+        #profileBackdrop .gallery .profile-media-lazy-sentinel::after {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 14px;
+          height: 14px;
+          content: "";
+          border: 2px solid rgba(126,234,255,.18);
+          border-top-color: #7eeaff;
+          border-radius: 50%;
+          animation: profile-media-lazy-spin 700ms linear infinite;
+          transform: translate(-50%, -50%);
+        }
+        @keyframes profile-media-lazy-spin {
+          to { transform: translate(-50%, -50%) rotate(360deg); }
         }
         #profileBackdrop .gallery .thumb:hover {
           border-color: rgba(126,234,255,.42) !important;
@@ -40021,6 +40055,7 @@
     const modalVideoProgress = document.getElementById("modalVideoProgress");
     const modalVideoTime = document.getElementById("modalVideoTime");
     let modalVideoControlsHideTimer = 0;
+    let modalProfileVideoMuted = true;
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
     const cityCoordinates = {
@@ -40285,8 +40320,10 @@
     let shiftLocationRefreshTimer = 0;
     let shiftLocationRefreshShiftId = "";
     const SHIFT_LOCATION_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
-    const MAX_DANCER_PROFILE_PHOTOS = 5;
-    const MAX_DANCER_PROFILE_VIDEOS = 5;
+    const MAX_DANCER_PROFILE_PHOTOS = 50;
+    const MAX_DANCER_PROFILE_VIDEOS = 50;
+    const PROFILE_MEDIA_PAGE_SIZE = 12;
+    let profileMediaObserver = null;
     console.log("PHOTO_NUMBERING_FIX_VERSION", "2026-07-13-v1");
 
     const stateByCity = {
@@ -47842,7 +47879,7 @@
         ? workspace.videos.slice(0, MAX_DANCER_PROFILE_VIDEOS)
         : [];
       const atLimit = videos.length >= MAX_DANCER_PROFILE_VIDEOS;
-      const emptySlots = Math.max(0, MAX_DANCER_PROFILE_VIDEOS - videos.length);
+      const emptySlots = Math.min(6, Math.max(0, MAX_DANCER_PROFILE_VIDEOS - videos.length));
       const message = approvedProfileVideoStatus || (approvedProfileVideoLoading
         ? "Loading your profile videos..."
         : workspace?.profileEligible === false
@@ -47854,7 +47891,7 @@
           <div class="approved-profile-video-head">
             <div>
               <strong id="approvedProfileVideoTitle">Profile videos</strong>
-              <p>Upload up to five vertical videos here. Every video is checked before it can go live.</p>
+              <p>Upload up to ${MAX_DANCER_PROFILE_VIDEOS} vertical videos here. Every video is checked before it can go live.</p>
             </div>
             <span class="approved-profile-video-count">${videos.length}/${MAX_DANCER_PROFILE_VIDEOS}</span>
           </div>
@@ -47862,7 +47899,7 @@
             ${videos.map((video, index) => `
               <article class="approved-profile-video-slot">
                 ${video.videoUrl
-                  ? `<video src="${displayText(video.videoUrl)}" controls playsinline preload="metadata" aria-label="Profile video ${index + 1}"></video>`
+                  ? `<video src="${displayText(video.videoUrl)}" controls playsinline preload="none" aria-label="Profile video ${index + 1}"></video>`
                   : '<div class="approved-profile-video-empty"><small>Video preview unavailable</small></div>'}
                 <div class="approved-profile-video-slot-copy">
                   <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status))}</span>
@@ -47885,7 +47922,7 @@
           ${!workspace ? (approvedProfileVideoLoading
               ? ""
               : '<button class="action-btn secondary" type="button" data-approved-profile-video-retry>Retry loading videos</button>') : atLimit
-              ? '<p class="approved-profile-video-limit">All five video slots are filled. Remove a video above before uploading another.</p>'
+              ? `<p class="approved-profile-video-limit">All ${MAX_DANCER_PROFILE_VIDEOS} video slots are filled. Remove a video above before uploading another.</p>`
               : `
                 <form class="approved-profile-video-form" id="approvedProfileVideoUploadForm">
                   <label>
@@ -47994,7 +48031,7 @@
       const file = fileInput?.files?.[0] || pendingApprovedProfileVideoFile;
       if (!file) throw new Error("Choose an MP4 or WebM video first.");
       if ((approvedProfileVideoWorkspace?.videos?.length || 0) >= MAX_DANCER_PROFILE_VIDEOS) {
-        throw new Error("You can upload up to 5 profile videos. Remove one before adding another.");
+        throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_VIDEOS} profile videos. Remove one before adding another.`);
       }
       const consentConfirmed = form.querySelector("#approvedProfileVideoConsent")?.checked === true || pendingApprovedProfileVideoConsent;
       const rightsConfirmed = form.querySelector("#approvedProfileVideoRights")?.checked === true || pendingApprovedProfileVideoRights;
@@ -48099,7 +48136,7 @@
       const selectedPhotoIndex = Math.max(0, photos.indexOf(mainPhoto));
       const primaryPhoto = photos.find((photo) => photo.target === "main" || photo.isPrimary || photo.is_primary) || photos[0] || null;
       const availableGallerySortOrders = availableApprovedGallerySortOrders(profile);
-      const emptyPhotoSlots = Array.from({ length: Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length) }, (_, index) => {
+      const emptyPhotoSlots = Array.from({ length: Math.min(6, Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length)) }, (_, index) => {
         const slotNumber = photos.length + index + 1;
         const target = slotNumber === 1
           ? "main"
@@ -49567,8 +49604,8 @@
       modalVideoControls.classList.remove("is-visible");
       modalVideoPlayback.innerHTML = modalVideoPlaybackIcon(true);
       modalVideoPlayback.setAttribute("aria-label", "Play TV video");
-      modalVideoSound.innerHTML = modalVideoSoundIcon(true);
-      modalVideoSound.setAttribute("aria-label", "Turn TV video sound on");
+      modalVideoSound.innerHTML = modalVideoSoundIcon(modalProfileVideoMuted);
+      modalVideoSound.setAttribute("aria-label", modalProfileVideoMuted ? "Turn TV video sound on" : "Turn TV video sound off");
       modalVideoProgress.value = "0";
       modalVideoProgress.max = "0.1";
       modalVideoProgress.style.setProperty("--profile-video-progress", "0%");
@@ -49593,6 +49630,7 @@
         ? video.duration
         : Math.max(0, Number(item.durationSeconds) || 0);
       const currentTime = Math.min(Math.max(0, video.currentTime || 0), Math.max(0, duration));
+      modalProfileVideoMuted = video.muted;
       modalVideoControls.hidden = false;
       modalVideoPlayback.innerHTML = modalVideoPlaybackIcon(video.paused);
       modalVideoPlayback.setAttribute("aria-label", video.paused ? "Play TV video" : "Pause TV video");
@@ -49649,6 +49687,7 @@
       const selected = visibleThumbs.find((thumb) => thumb.classList.contains("active")) || visibleThumbs[0];
       if (selected && tab === "photo") selectModalMediaThumb(selected);
       if (tab === "video") clearModalVideoPreview();
+      window.requestAnimationFrame(observeProfileMediaSentinel);
     }
 
     function syncModalMediaNavigation(kind, index, total) {
@@ -49679,16 +49718,16 @@
           thumb.removeAttribute("aria-current");
         }
       });
-      const activeIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
       const photoThumbs = thumbs.filter((thumb) => !thumb.hasAttribute("data-profile-tv-index"));
-      const activePhotoIndex = Math.max(0, photoThumbs.findIndex((thumb) => thumb.classList.contains("active")));
-      const totalPhotos = Math.max(1, photoThumbs.length);
-      modalImage.dataset.activePhotoIndex = String(activeIndex);
+      const activePhotoThumb = photoThumbs.find((thumb) => thumb.classList.contains("active"));
+      const activePhotoIndex = Math.max(0, Number(activePhotoThumb?.dataset.profilePhotoIndex || 0));
+      const totalPhotos = Math.max(1, modalGallery.profilePhotoItems?.length || photoThumbs.length);
+      modalImage.dataset.activePhotoIndex = String(activePhotoIndex);
       modalImage.dataset.activeMediaType = "photo";
       modalMediaExpand.hidden = true;
       modalImage.setAttribute(
         "aria-label",
-        `${modalName.textContent.trim() || "Dancer"} profile photo, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Swipe left or right to change media.`
+        `${modalName.textContent.trim() || "Dancer"} profile photo ${activePhotoIndex + 1} of ${totalPhotos}. Swipe left or right to change photos.`
       );
       profilePhotoViewerImage?.setAttribute(
         "aria-label",
@@ -49712,8 +49751,8 @@
       video.src = item.videoUrl;
       video.autoplay = true;
       video.loop = true;
-      video.muted = true;
-      video.defaultMuted = true;
+      video.muted = modalProfileVideoMuted;
+      video.defaultMuted = modalProfileVideoMuted;
       video.playsInline = true;
       video.preload = "metadata";
       video.setAttribute("autoplay", "");
@@ -49815,7 +49854,8 @@
 
     async function shareProfilePhoto() {
       const photoThumbs = [...modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])")];
-      const activePhotoIndex = Math.max(0, photoThumbs.findIndex((thumb) => thumb.classList.contains("active")));
+      const activePhoto = photoThumbs.find((thumb) => thumb.classList.contains("active"));
+      const activePhotoIndex = Math.max(0, Number(activePhoto?.dataset.profilePhotoIndex || 0));
       const profileName = modalName.textContent.trim() || "Dancer";
       const url = profilePhotoShareUrl(profileName, citySelect.value || selectedCity(), activePhotoIndex);
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
@@ -49841,9 +49881,15 @@
       const selector = options.syncViewer || modalGallery.dataset.mediaTab !== "video"
         ? ".thumb:not([data-profile-tv-index])"
         : ".thumb[data-profile-tv-index]";
-      const thumbs = [...modalGallery.querySelectorAll(selector)];
+      let thumbs = [...modalGallery.querySelectorAll(selector)];
       if (thumbs.length < 2) return false;
-      const currentIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
+      let currentIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
+      const tab = selector.includes("data-profile-tv-index") ? "video" : "photo";
+      if (direction > 0 && currentIndex >= thumbs.length - 2 && profileMediaHasMore(tab)) {
+        appendNextProfileMediaBatch(tab);
+        thumbs = [...modalGallery.querySelectorAll(selector)];
+        currentIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
+      }
       const nextIndex = (currentIndex + direction + thumbs.length) % thumbs.length;
       const nextThumb = thumbs[nextIndex];
       return selectModalMediaThumb(nextThumb, options);
@@ -49974,25 +50020,142 @@
       return String(profile?.avatarPhotoSrcSet || profile?.avatar_photo_src_set || publicProfilePhotoSrcSet(profile) || "").trim();
     }
 
-    function galleryMarkup(profile, baseIndex, options = {}) {
+    function profilePhotoGalleryItems(profile, baseIndex, options = {}) {
       const isPrivatePreview = Boolean(options.preview);
       const uploadedUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
-      if (profile.status === "Pending" && !isPrivatePreview) {
-        return '<div class="lock-row" style="grid-column:1/-1">Gallery locked.</div>';
+      if (profile.status === "Pending" && !isPrivatePreview) return [];
+      if (profile.photoStatus !== "Approved" && !isPrivatePreview && !uploadedUrls.length) return [];
+      const galleryOffsets = uploadedUrls.length
+        ? uploadedUrls.map((photoUrl, offset) => ({ offset, photoUrl }))
+        : [0, 1, 2, 3].map((offset) => ({ offset, photoUrl: customPhotoUrl(profile, offset) }));
+      return galleryOffsets.map(({ offset, photoUrl }) => ({
+        index: offset,
+        photoClass: portraitClass(baseIndex + offset),
+        photoUrl,
+        photoSrcSet: profilePhotoSrcSet(profile, photoUrl)
+      }));
+    }
+
+    function profilePhotoThumbMarkup(item, total) {
+      const photoAttrs = customPhotoAttrs(item.photoUrl, item.photoSrcSet);
+      return `
+        <button class="thumb ${item.index === 0 ? "active" : ""}" type="button" data-profile-photo-index="${item.index}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${item.index + 1} of ${total} full screen" aria-pressed="${item.index === 0 ? "true" : "false"}">
+          <span class="portrait ${item.photoClass}${photoAttrs.className}"${photoAttrs.style}></span>
+        </button>
+      `;
+    }
+
+    function galleryMarkup(profile, baseIndex, options = {}) {
+      const items = profilePhotoGalleryItems(profile, baseIndex, options);
+      if (!items.length) {
+        return profile.status === "Pending" && !options.preview
+          ? '<div class="lock-row" style="grid-column:1/-1">Gallery locked.</div>'
+          : '<div class="lock-row" style="grid-column:1/-1">Photos pending admin approval.</div>';
       }
-      if (profile.photoStatus !== "Approved" && !isPrivatePreview && !uploadedUrls.length) {
-        return '<div class="lock-row" style="grid-column:1/-1">Photos pending admin approval.</div>';
+      const limit = Math.max(1, Number(options.limit) || PROFILE_MEDIA_PAGE_SIZE);
+      return items.slice(0, limit).map((item) => profilePhotoThumbMarkup(item, items.length)).join("");
+    }
+
+    function profileVideoPosterUrl(item) {
+      return String(
+        item?.posterUrl ||
+        item?.poster_url ||
+        item?.dancer?.primaryPhotoUrl ||
+        item?.dancer?.avatarPhotoUrl ||
+        ""
+      ).trim();
+    }
+
+    function profileVideoThumbMarkup(item, index, total, profileName) {
+      const scheduleLabel = profileTvScheduleLabel(item);
+      const durationLabel = formatProfileTvDuration(item.durationSeconds);
+      const posterUrl = profileVideoPosterUrl(item);
+      const posterMarkup = posterUrl
+        ? `<img src="${escapeHtml(posterUrl)}" alt="" loading="lazy" decoding="async" aria-hidden="true">`
+        : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
+      return `
+        <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} full screen, ${escapeHtml(scheduleLabel)}, ${escapeHtml(durationLabel)}">
+          ${posterMarkup}
+          <span class="profile-media-thumb-play" aria-hidden="true"></span>
+          <span class="profile-media-thumb-duration">${escapeHtml(durationLabel)}</span>
+        </button>
+      `;
+    }
+
+    function profileMediaSentinel() {
+      let sentinel = modalGallery.querySelector("[data-profile-media-lazy-sentinel]");
+      if (sentinel) return sentinel;
+      sentinel = document.createElement("div");
+      sentinel.className = "profile-media-lazy-sentinel";
+      sentinel.dataset.profileMediaLazySentinel = "";
+      sentinel.setAttribute("aria-hidden", "true");
+      modalGallery.appendChild(sentinel);
+      return sentinel;
+    }
+
+    function profileMediaHasMore(tab = modalGallery.dataset.mediaTab) {
+      if (tab === "video") {
+        return Number(modalGallery.profileVisibleVideoCount || 0) < (modalGallery.profileTvVideos?.length || 0);
       }
-      const galleryOffsets = uploadedUrls.length ? uploadedUrls.map((photoUrl, offset) => ({ offset, photoUrl })) : [0, 1, 2, 3].map((offset) => ({ offset, photoUrl: customPhotoUrl(profile, offset) }));
-      return galleryOffsets.map(({ offset, photoUrl }) => {
-        const photoClass = portraitClass(baseIndex + offset);
-        const photoAttrs = customPhotoAttrs(photoUrl, profilePhotoSrcSet(profile, photoUrl));
-        return `
-          <button class="thumb ${offset === 0 ? "active" : ""}" type="button" data-photo="${photoClass}" data-photo-url="${displayText(photoUrl)}" aria-label="Open gallery photo ${offset + 1} full screen" aria-pressed="${offset === 0 ? "true" : "false"}">
-            <span class="portrait ${photoClass}${photoAttrs.className}"${photoAttrs.style}></span>
-          </button>
-        `;
-      }).join("");
+      return Number(modalGallery.profileVisiblePhotoCount || 0) < (modalGallery.profilePhotoItems?.length || 0);
+    }
+
+    function appendNextProfileMediaBatch(tab = modalGallery.dataset.mediaTab, options = {}) {
+      const sentinel = profileMediaSentinel();
+      if (tab === "video") {
+        const items = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
+        const start = Number(modalGallery.profileVisibleVideoCount || 0);
+        const end = Math.min(items.length, start + PROFILE_MEDIA_PAGE_SIZE);
+        if (end > start) {
+          sentinel.insertAdjacentHTML(
+            "beforebegin",
+            items.slice(start, end).map((item, offset) =>
+              profileVideoThumbMarkup(item, start + offset, items.length, modalGallery.profileTvProfileName || "Dancer")
+            ).join("")
+          );
+          modalGallery.profileVisibleVideoCount = end;
+        }
+      } else {
+        const items = Array.isArray(modalGallery.profilePhotoItems) ? modalGallery.profilePhotoItems : [];
+        const start = Number(modalGallery.profileVisiblePhotoCount || 0);
+        const end = Math.min(items.length, start + PROFILE_MEDIA_PAGE_SIZE);
+        if (end > start) {
+          sentinel.insertAdjacentHTML(
+            "beforebegin",
+            items.slice(start, end).map((item) => profilePhotoThumbMarkup(item, items.length)).join("")
+          );
+          modalGallery.profileVisiblePhotoCount = end;
+        }
+      }
+      sentinel.hidden = !profileMediaHasMore(tab);
+      if (!options.skipObserve) window.requestAnimationFrame(observeProfileMediaSentinel);
+    }
+
+    function observeProfileMediaSentinel() {
+      profileMediaObserver?.disconnect();
+      profileMediaObserver = null;
+      const tab = modalGallery.dataset.mediaTab || "photo";
+      const sentinel = profileMediaSentinel();
+      sentinel.hidden = !profileMediaHasMore(tab);
+      if (sentinel.hidden || !("IntersectionObserver" in window)) return;
+      profileMediaObserver = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        profileMediaObserver?.disconnect();
+        appendNextProfileMediaBatch(tab);
+      }, { root: modalGallery, rootMargin: "0px 480px" });
+      profileMediaObserver.observe(sentinel);
+    }
+
+    function initializeProfileMediaLibrary(profile, baseIndex, options = {}) {
+      profileMediaObserver?.disconnect();
+      profileMediaObserver = null;
+      modalGallery.profilePhotoItems = profilePhotoGalleryItems(profile, baseIndex, options);
+      modalGallery.profileVisiblePhotoCount = 0;
+      modalGallery.profileTvVideos = [];
+      modalGallery.profileVisibleVideoCount = 0;
+      modalGallery.innerHTML = "";
+      appendNextProfileMediaBatch("photo", { skipObserve: true });
+      profileMediaSentinel();
     }
 
     function shiftNotesMarkup(profile) {
@@ -50342,8 +50505,8 @@
         modalRank.removeAttribute("aria-hidden");
         modalRank.setAttribute("aria-label", `Trending rank ${modalTrendRank}`);
       }
-      modalGallery.innerHTML = galleryMarkup(profile, profileIndex, { preview: isPrivatePreview });
-      const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
+      initializeProfileMediaLibrary(profile, profileIndex, { preview: isPrivatePreview });
+      const photoCount = modalGallery.profilePhotoItems?.length || 0;
       syncProfileMediaTabCounts(photoCount, 0);
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
       modalProfileAvatar.dataset.workingNow = String(modalIsWorkingNow);
@@ -50392,6 +50555,7 @@
     }
 
     let profileTvViewerOwnsFullscreen = false;
+    let profileTvViewerMuted = false;
 
     function profileTvFullscreenElement() {
       return document.fullscreenElement || document.webkitFullscreenElement || null;
@@ -50563,8 +50727,9 @@
       document.getElementById("profileTvViewerStatus").textContent = "";
       video.pause();
       video.src = item.videoUrl;
-      video.muted = false;
+      video.muted = profileTvViewerMuted;
       video.load();
+      preloadAdjacentProfileTvVideos(overlay, videos, index);
       document.querySelector("[data-previous-profile-tv]").disabled = index <= 0;
       document.querySelector("[data-next-profile-tv]").disabled = index >= videos.length - 1;
       document.querySelectorAll("[data-profile-tv-index]").forEach((button) => {
@@ -50592,6 +50757,25 @@
       renderProfileTvViewerItem(currentIndex + direction);
     }
 
+    function preloadAdjacentProfileTvVideos(overlay, videos, index) {
+      let holder = overlay.querySelector("[data-profile-tv-preload]");
+      if (!holder) {
+        holder = document.createElement("div");
+        holder.dataset.profileTvPreload = "";
+        holder.hidden = true;
+        overlay.appendChild(holder);
+      }
+      holder.innerHTML = "";
+      [videos[index - 1], videos[index + 1]].filter(Boolean).forEach((item) => {
+        const preload = document.createElement("video");
+        preload.src = item.videoUrl;
+        preload.muted = true;
+        preload.playsInline = true;
+        preload.preload = "metadata";
+        holder.appendChild(preload);
+      });
+    }
+
     function openProfileTvViewer(item, profileName, videos) {
       const overlay = profileTvViewer();
       overlay.profileTvVideos = Array.isArray(videos) ? videos : [item];
@@ -50608,11 +50792,16 @@
         button.type = "button";
         button.dataset.profileTvIndex = String(index);
         button.setAttribute("aria-label", `Open video ${index + 1} of ${overlay.profileTvVideos.length}`);
-        const preview = document.createElement("video");
-        preview.src = galleryVideo.videoUrl;
-        preview.muted = true;
-        preview.playsInline = true;
-        preview.preload = "metadata";
+        const posterUrl = profileVideoPosterUrl(galleryVideo);
+        const preview = posterUrl ? document.createElement("img") : document.createElement("div");
+        if (posterUrl) {
+          preview.src = posterUrl;
+          preview.alt = "";
+          preview.loading = "lazy";
+          preview.decoding = "async";
+        } else {
+          preview.className = "profile-media-thumb-poster";
+        }
         preview.setAttribute("aria-hidden", "true");
         const number = document.createElement("span");
         number.textContent = String(index + 1);
@@ -50640,6 +50829,7 @@
       overlay.hidden = true;
       overlay.setAttribute("aria-hidden", "true");
       overlay.profileTvVideos = [];
+      overlay.querySelector("[data-profile-tv-preload]")?.remove();
       overlay.profileTvReturnTarget = null;
       if (video) {
         video.removeAttribute("src");
@@ -50664,6 +50854,7 @@
       const button = document.querySelector("[data-toggle-profile-tv-sound]");
       if (!button) return;
       const muted = Boolean(video?.muted);
+      if (video) profileTvViewerMuted = muted;
       button.innerHTML = modalVideoSoundIcon(muted);
       button.setAttribute("aria-label", muted ? "Turn TV video sound on" : "Turn TV video sound off");
     }
@@ -50718,9 +50909,10 @@
       modalGallery.dataset.profileMediaProfile = requestProfileId;
       modalGallery.querySelectorAll("[data-profile-tv-index]").forEach((thumb) => thumb.remove());
       modalGallery.profileTvVideos = [];
+      modalGallery.profileVisibleVideoCount = 0;
       modalGallery.profileTvProfileName = profile.name || "Dancer";
       try {
-        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(citySelect.value)}&dancer=${encodeURIComponent(profile.id)}&limit=4`, { cache: "no-store" });
+        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(citySelect.value)}&dancer=${encodeURIComponent(profile.id)}&limit=${MAX_DANCER_PROFILE_VIDEOS}`, { cache: "no-store" });
         const payload = await response.json();
         if (
           modalGallery.dataset.profileMediaProfile !== requestProfileId ||
@@ -50728,38 +50920,13 @@
           !payload.ok ||
           !payload.videos?.length
         ) return;
-        const videos = payload.videos.slice(0, 4);
+        const videos = payload.videos.slice(0, MAX_DANCER_PROFILE_VIDEOS);
         modalGallery.profileTvVideos = videos;
-        videos.forEach((item, index) => {
-          const thumb = document.createElement("button");
-          thumb.type = "button";
-          thumb.className = "thumb profile-media-thumb is-video";
-          thumb.dataset.profileTvIndex = String(index);
-          thumb.setAttribute("aria-pressed", "false");
-          const scheduleLabel = profileTvScheduleLabel(item);
-          const durationLabel = formatProfileTvDuration(item.durationSeconds);
-          thumb.setAttribute(
-            "aria-label",
-            `Open ${profile.name} profile video ${index + 1} of ${videos.length} full screen, ${scheduleLabel}, ${durationLabel}`
-          );
-          const video = document.createElement("video");
-          video.src = item.videoUrl;
-          video.muted = true;
-          video.defaultMuted = true;
-          video.playsInline = true;
-          video.preload = "metadata";
-          video.setAttribute("aria-hidden", "true");
-          const play = document.createElement("span");
-          play.className = "profile-media-thumb-play";
-          play.setAttribute("aria-hidden", "true");
-          const duration = document.createElement("span");
-          duration.className = "profile-media-thumb-duration";
-          duration.textContent = durationLabel;
-          thumb.append(video, play, duration);
-          modalGallery.appendChild(thumb);
-        });
-        const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
+        modalGallery.profileVisibleVideoCount = 0;
+        appendNextProfileMediaBatch("video", { skipObserve: true });
+        const photoCount = modalGallery.profilePhotoItems?.length || 0;
         syncProfileMediaTabCounts(photoCount, videos.length);
+        window.requestAnimationFrame(observeProfileMediaSentinel);
       } catch {
         // The live profile remains fully usable if optional profile videos cannot load.
       }
@@ -50797,6 +50964,8 @@
     }
 
     function closeProfileModal() {
+      profileMediaObserver?.disconnect();
+      profileMediaObserver = null;
       modalImage?.querySelector("video")?.pause();
       clearModalVideoPreview();
       [

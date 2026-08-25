@@ -370,9 +370,10 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.doesNotMatch(videoStrip, /requestFullscreen\(\)|:fullscreen|<video[\s\S]*?\scontrols(?:\s|>)/);
   assert.match(videoStrip, /`\/tv\/\$\{encodeURIComponent\(video\.id\)\}`[\s\S]*?navigator\.share[\s\S]*?navigator\.clipboard\.writeText/);
   assert.doesNotMatch(profileTvLoader, /video\.autoplay = true/);
-  assert.match(liveApp, /const videos = payload\.videos\.slice\(0, 4\)/);
+  assert.match(liveApp, /const videos = payload\.videos\.slice\(0, MAX_DANCER_PROFILE_VIDEOS\)/);
   assert.match(liveApp, /modalGallery\.profileTvVideos = videos/);
-  assert.match(liveApp, /thumb\.className = "thumb profile-media-thumb is-video"/);
+  assert.match(liveApp, /function profileVideoThumbMarkup[\s\S]*?profile-media-thumb is-video/);
+  assert.match(liveApp, /appendNextProfileMediaBatch\("video"/);
   assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?className = "modal-media-video-preview"/);
   assert.match(liveApp, /video\.autoplay = true[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/);
   assert.doesNotMatch(liveApp, /modal-media-video-play/);

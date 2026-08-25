@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getPublicMyDancrTvFeed, MYDANCR_TV_FILTERS } from "@/src/lib/dancr/tv";
+import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext, getBearerToken } from "@/src/lib/supabase/request";
 
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     const dancerId = cleanUuid(url.searchParams.get("dancer"));
     const venueId = cleanUuid(url.searchParams.get("venue"));
     const preferredVenueId = cleanUuid(url.searchParams.get("preferredVenue"));
-    const limit = Math.min(24, Math.max(1, Number.parseInt(url.searchParams.get("limit") || "12", 10) || 12));
+    const limit = Math.min(MAX_DANCER_PROFILE_VIDEOS, Math.max(1, Number.parseInt(url.searchParams.get("limit") || "12", 10) || 12));
     const admin = createAdminSupabaseClient();
     const followingDancerIds = filter === "following"
       ? await followingIdsForRequest(admin, request)

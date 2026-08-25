@@ -6,6 +6,7 @@ import type {
   WheelEvent as ReactWheelEvent,
 } from "react";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
+import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 
 type DancerPhotoCarouselProps = {
   photos: Array<{
@@ -18,6 +19,7 @@ type DancerPhotoCarouselProps = {
   videos?: Array<{
     id: string;
     videoUrl: string;
+    posterUrl?: string | null;
     durationSeconds: number;
   }>;
   stageName: string;
@@ -36,6 +38,7 @@ type VideoMedia = {
   id: string;
   kind: "video";
   videoUrl: string;
+  posterUrl: string;
   durationSeconds: number;
 };
 
@@ -70,13 +73,21 @@ export function DancerPhotoCarousel({
     () =>
       videos
         .filter((video) => video.videoUrl)
-        .map((video) => ({ ...video, kind: "video" })),
-    [videos],
+        .map((video) => ({
+          ...video,
+          kind: "video",
+          posterUrl: video.posterUrl || photoMedia[0]?.imageUrl || "",
+        })),
+    [photoMedia, videos],
   );
   const [activeTab, setActiveTab] = useState<MediaTab>(
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
   const [viewer, setViewer] = useState<MediaViewer | null>(null);
+  const [visibleCounts, setVisibleCounts] = useState<Record<MediaTab, number>>({
+    photo: DANCER_PROFILE_MEDIA_PAGE_SIZE,
+    video: DANCER_PROFILE_MEDIA_PAGE_SIZE,
+  });
   const [inlineMuted, setInlineMuted] = useVideoSoundPreference();
   const [shareStatus, setShareStatus] = useState("");
   const gesture = useRef<SwipeGesture>(emptyGesture());
@@ -84,9 +95,13 @@ export function DancerPhotoCarousel({
   const deepLinkHandled = useRef(false);
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const viewerTrigger = useRef<HTMLButtonElement | null>(null);
+  const lazyLoadSentinel = useRef<HTMLDivElement | null>(null);
   const tabGroupId = useId();
   const activeItems: ProfileMedia[] =
     activeTab === "photo" ? photoMedia : videoMedia;
+  const visibleItemCount = Math.min(visibleCounts[activeTab], activeItems.length);
+  const visibleItems = activeItems.slice(0, visibleItemCount);
+  const hasMoreItems = visibleItemCount < activeItems.length;
   const viewerItems: ProfileMedia[] = viewer?.kind === "photo"
     ? photoMedia
     : viewer?.kind === "video"
@@ -96,6 +111,11 @@ export function DancerPhotoCarousel({
     ? Math.min(Math.max(viewer.index, 0), Math.max(0, viewerItems.length - 1))
     : 0;
   const activeViewerItem = viewerItems[viewerIndex];
+  const adjacentViewerItems = viewer
+    ? [viewerItems[viewerIndex - 1], viewerItems[viewerIndex + 1]].filter(
+        (item): item is ProfileMedia => Boolean(item),
+      )
+    : [];
   const viewerKind = viewer?.kind;
   const activeTabId = `${tabGroupId}-${activeTab}-tab`;
   const panelId = `${tabGroupId}-panel`;
@@ -127,6 +147,27 @@ export function DancerPhotoCarousel({
       setActiveTab("photo");
     }
   }, [activeTab, photoMedia.length, videoMedia.length]);
+
+  useEffect(() => {
+    const sentinel = lazyLoadSentinel.current;
+    if (!sentinel || !hasMoreItems) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setVisibleCounts((current) => ({
+          ...current,
+          [activeTab]: Math.min(
+            activeItems.length,
+            current[activeTab] + DANCER_PROFILE_MEDIA_PAGE_SIZE,
+          ),
+        }));
+      },
+      { rootMargin: "480px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [activeItems.length, activeTab, hasMoreItems, visibleItemCount]);
 
   useEffect(() => {
     if (!viewerKind) return;
@@ -365,7 +406,7 @@ export function DancerPhotoCarousel({
         id={panelId}
         role="tabpanel"
       >
-        {activeItems.map((item, index) => (
+        {visibleItems.map((item, index) => (
           <button
             aria-label={`Open ${stageName} ${item.kind} ${index + 1} of ${activeItems.length}`}
             className={`profile-media-grid-item is-${item.kind}`}
@@ -380,6 +421,7 @@ export function DancerPhotoCarousel({
                 decoding="async"
                 draggable={false}
                 height={item.imageHeight || undefined}
+                loading="lazy"
                 sizes="(max-width: 760px) 33vw, 250px"
                 src={item.imageUrl}
                 srcSet={item.imageSrcSet || undefined}
@@ -387,14 +429,19 @@ export function DancerPhotoCarousel({
               />
             ) : (
               <>
-                <video
-                  aria-hidden="true"
-                  muted
-                  playsInline
-                  preload="metadata"
-                  src={item.videoUrl}
-                  tabIndex={-1}
-                />
+                {item.posterUrl ? (
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    decoding="async"
+                    draggable={false}
+                    loading="lazy"
+                    sizes="(max-width: 760px) 33vw, 250px"
+                    src={item.posterUrl}
+                  />
+                ) : (
+                  <span aria-hidden="true" className="profile-media-poster-placeholder" />
+                )}
                 <span aria-hidden="true" className="profile-media-play" />
                 <span className="profile-media-duration">
                   {formatDuration(item.durationSeconds)}
@@ -403,6 +450,19 @@ export function DancerPhotoCarousel({
             )}
           </button>
         ))}
+        {hasMoreItems ? (
+          <div
+            aria-hidden="true"
+            className="profile-media-grid-sentinel"
+            data-profile-media-lazy-sentinel
+            ref={lazyLoadSentinel}
+          />
+        ) : null}
+        {activeItems.length ? (
+          <span aria-live="polite" className="profile-media-grid-status">
+            Showing {visibleItemCount} of {activeItems.length} {activeTab === "photo" ? "photos" : "videos"}
+          </span>
+        ) : null}
         {!activeItems.length ? (
           <p className="profile-media-empty">
             No approved {activeTab === "photo" ? "photos" : "videos"} yet.
@@ -511,6 +571,23 @@ export function DancerPhotoCarousel({
               <span className="profile-media-viewer-hint">Swipe to browse photos</span>
             )}
           </div>
+          {adjacentViewerItems.length ? (
+            <div aria-hidden="true" className="profile-media-viewer-preload">
+              {adjacentViewerItems.map((item) =>
+                item.kind === "photo" ? (
+                  <img alt="" key={`preload-photo-${item.id}`} src={item.imageUrl} />
+                ) : (
+                  <video
+                    key={`preload-video-${item.id}`}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    src={item.videoUrl}
+                  />
+                ),
+              )}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

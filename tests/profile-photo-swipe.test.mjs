@@ -40,7 +40,7 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   );
   assert.match(
     liveApp,
-    /aria-pressed="\$\{offset === 0 \? "true" : "false"\}"/,
+    /aria-pressed="\$\{item\.index === 0 \? "true" : "false"\}"/,
   );
   assert.match(
     liveApp,
@@ -88,7 +88,11 @@ test("the profile presents approved photos and dancer-only videos as separate th
     publicPhotoCarousel,
     /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?src=\{activeViewerItem\.videoUrl\}/,
   );
-  assert.doesNotMatch(publicPhotoCarousel, /profile-media-feature|IntersectionObserver|inlinePlaying/);
+  assert.doesNotMatch(publicPhotoCarousel, /profile-media-feature|inlinePlaying/);
+  assert.match(publicPhotoCarousel, /new IntersectionObserver/);
+  assert.match(publicPhotoCarousel, /DANCER_PROFILE_MEDIA_PAGE_SIZE/);
+  assert.match(publicPhotoCarousel, /data-profile-media-lazy-sentinel/);
+  assert.doesNotMatch(publicPhotoCarousel, /Load more/);
   assert.match(
     publicProfilePage,
     /\.profile-media-grid \{[^}]*display: grid;[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/,

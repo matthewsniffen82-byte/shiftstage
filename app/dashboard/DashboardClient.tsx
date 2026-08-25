@@ -8,6 +8,7 @@ import { DancerProfileActionsPreview } from "@/app/dancers/[slug]/DancerProfileA
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { SocialLinks, SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
 import { isFictionalVenueTravelPreviewOnly } from "@/src/lib/dancr/venue-branding";
@@ -3407,8 +3408,8 @@ function DancerProfilePreview({
                     <span className="profile-media-tab-count" aria-hidden="true">+</span>
                   </button>
                 </div>
-                <div className="profile-media-grid dancer-profile-builder-empty-slots" aria-label="Five empty photo slots">
-                  {Array.from({ length: MAX_DANCER_PROFILE_PHOTOS }, (_, index) => (
+                <div className="profile-media-grid dancer-profile-builder-empty-slots" aria-label="Empty photo grid preview">
+                  {Array.from({ length: 6 }, (_, index) => (
                     <button aria-label={`Add photo ${index + 1}`} key={index} onClick={() => openEditorSection("photos")} type="button">+</button>
                   ))}
                 </div>
@@ -6560,7 +6561,6 @@ type DancerPhotoItem = {
   sortOrder?: number;
 };
 
-const MAX_DANCER_PROFILE_PHOTOS = 5;
 const DANCER_PHOTOS_KEEP_OPEN_EVENT = "mydancr:dancer-photos-keep-open";
 
 type DancerPhotoQueueItem = {
@@ -6696,7 +6696,7 @@ function DancerPhotoPanel({
   async function uploadPhotoBatch(batch: DancerPhotoQueueItem[]) {
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
-    if (!batch.length) return setStatus("Choose up to five photos or take a new photo first.");
+    if (!batch.length) return setStatus("Choose profile photos or take a new photo first.");
     if (!batch.some((item) => item.makePrimary) && photos.length + batch.length > MAX_DANCER_PROFILE_PHOTOS) {
       return setStatus(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
     }

@@ -10,6 +10,7 @@ import {
 } from "@/src/lib/dancr/image-moderation";
 import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
 import { isProfileAvatarUploadContext, profilePhotoSlotFromUploadContext } from "@/src/lib/dancr/photo-slot";
+import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import {
   removeResponsiveImage,
   responsiveImageStoragePaths,
@@ -299,7 +300,7 @@ async function nextPhotoSortOrder(admin: any, dancerId: string) {
     .in("review_status", ["approved", "pending"]);
   if (error) throw error;
   const used = new Set((data || []).map((photo: any) => Number(photo.sort_order)));
-  for (let sortOrder = 1; sortOrder <= 5; sortOrder += 1) {
+  for (let sortOrder = 1; sortOrder <= MAX_DANCER_PROFILE_PHOTOS; sortOrder += 1) {
     if (!used.has(sortOrder)) return sortOrder;
   }
   throw new Error("No profile photo slot is available for this approval.");
