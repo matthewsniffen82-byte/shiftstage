@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const body = await request.json();
     const city = typeof body?.city === "string" && body.city.trim() ? body.city.trim() : "Las Vegas";
     const rankings = await recalculateCityRankings(createAdminSupabaseClient(), user.id, city);
 
-    return NextResponse.json({ ok: true, city, rankings });
+    return NextResponse.json({ ok: true, city, rankings, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to recalculate rankings.");
   }

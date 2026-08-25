@@ -2130,28 +2130,23 @@ function RankingManager() {
 
   async function recalculate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const token = readToken();
-    if (!token) {
-      setStatus("Admin sign in required.");
-      return;
-    }
-
     setIsWorking(true);
     setStatus("");
-    const response = await fetch("/api/admin/rankings/recalculate", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ city }),
-    });
-    const data = await response.json();
-    setIsWorking(false);
-    if (!response.ok || !data.ok) {
-      setStatus(data.error || "Unable to recalculate rankings.");
-      return;
+    try {
+      const data = await requestAdminJson("/api/admin/rankings/recalculate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ city }),
+        fallbackMessage: "Unable to recalculate rankings.",
+      });
+      const nextRankings = Array.isArray(data.rankings) ? data.rankings : [];
+      setRankings(nextRankings);
+      setStatus(`${nextRankings.length} rankings recalculated.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to recalculate rankings. Check your connection and try again.");
+    } finally {
+      setIsWorking(false);
     }
-
-    setRankings(data.rankings || []);
-    setStatus(`${data.rankings?.length || 0} rankings recalculated.`);
   }
 
   return (
