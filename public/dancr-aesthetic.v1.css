@@ -2867,17 +2867,16 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   padding: 42px 72px 142px 18px;
   object-fit: contain;
   object-position: center 34%;
-  transform: translate(-10px, -12px);
+  transform: translate(
+      var(--venue-logo-shift-x, 0),
+      var(--venue-logo-shift-y, 0)
+    ) scale(var(--venue-logo-scale, 1));
   transform-origin: center;
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.58));
 }
 
 .venue-card-logo-shell {
-  /* Center the legacy logo stage inside the usable content column instead of
-   * beneath the right-side action rail. The width grows on larger cards while
-   * retaining the same protected 72px action gutter used by the live feed. */
-  left: calc(50% - 28px);
-  width: min(calc(100% - 72px), 390px);
+  width: min(76%, 350px);
   height: 58%;
   min-height: 136px;
   border-radius: 30px;
