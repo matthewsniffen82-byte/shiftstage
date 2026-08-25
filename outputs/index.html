@@ -38311,7 +38311,9 @@
            State-specific availability is communicated inside each slot. */
         #profileBackdrop .modal-actions {
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-          gap: 6px !important;
+          column-gap: 6px !important;
+          row-gap: 2px !important;
+          padding-block: 6px 5px !important;
         }
 
         #profileBackdrop .modal-actions.is-no-live-shift {
@@ -38357,11 +38359,12 @@
         }
 
         body.dancr-button-system #profileBackdrop .modal-actions .action-btn.profile-action-icon-control {
-          min-height: 72px !important;
-          align-self: start !important;
+          min-height: 56px !important;
+          align-self: stretch !important;
           display: flex !important;
           flex-direction: column !important;
-          gap: 3px !important;
+          justify-content: flex-start !important;
+          gap: 1px !important;
           padding: 2px !important;
           border: 0 !important;
           border-radius: 0 !important;
@@ -38371,7 +38374,7 @@
 
         #profileBackdrop .modal-actions .profile-action-icon-control .profile-action-main {
           flex-direction: column !important;
-          gap: 4px !important;
+          gap: 2px !important;
           overflow: visible !important;
         }
 
@@ -38386,36 +38389,34 @@
         }
 
         #profileBackdrop .modal-actions .profile-action-icon-control .action-icon {
-          width: 40px !important;
-          height: 40px !important;
+          width: 24px !important;
+          height: 24px !important;
           display: grid !important;
-          flex: 0 0 40px !important;
+          flex: 0 0 24px !important;
           place-items: center !important;
-          padding: 9px !important;
-          border: 1px solid rgba(148,229,255,.24) !important;
-          border-radius: 50% !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
           color: #d9d2e2 !important;
-          background: radial-gradient(circle at 32% 22%, rgba(148,229,255,.12), transparent 58%), rgba(255,255,255,.04) !important;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
+          background: transparent !important;
+          box-shadow: none !important;
         }
 
         #profileBackdrop .modal-actions .profile-action-icon-control .action-icon > svg {
-          width: 19px !important;
-          height: 19px !important;
+          width: 24px !important;
+          height: 24px !important;
         }
 
         #profileBackdrop .modal-actions .profile-action-icon-control.going-btn:not(.is-unavailable) .action-icon {
-          border-color: rgba(139,92,246,.62) !important;
-          color: #fff !important;
-          background: linear-gradient(145deg, rgba(109,40,217,.88), rgba(11,148,201,.52)) !important;
-          box-shadow: 0 0 18px rgba(124,58,237,.18) !important;
+          color: #a78bfa !important;
+          background: transparent !important;
+          box-shadow: none !important;
         }
 
         #profileBackdrop .modal-actions .profile-action-icon-control:is(.is-following, .is-going) .action-icon {
-          border-color: rgba(77,236,157,.62) !important;
-          color: #b7ffd8 !important;
-          background: rgba(23,137,82,.2) !important;
-          box-shadow: 0 0 18px rgba(77,236,157,.14) !important;
+          color: #7cf0b4 !important;
+          background: transparent !important;
+          box-shadow: none !important;
         }
 
         #profileBackdrop .modal-actions .action-btn.profile-action-icon-control.is-unavailable:disabled {
@@ -38425,9 +38426,9 @@
         }
 
         #profileBackdrop .modal-actions .profile-action-icon-control.is-unavailable .action-icon {
-          border-color: rgba(148,137,166,.16) !important;
+          border: 0 !important;
           color: #756d7d !important;
-          background: rgba(255,255,255,.02) !important;
+          background: transparent !important;
           box-shadow: none !important;
         }
 
