@@ -17,6 +17,7 @@ import {
   DancerGoingCount,
   DancerProfileActions,
 } from "./DancerProfileActions";
+import { DancerDirectionsButton } from "./DancerDirectionsButton";
 import { DancerPhotoCarousel } from "./DancerPhotoCarousel";
 import {
   ProfileCloseButton,
@@ -215,9 +216,13 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         <DancerProfileActions
           dancerId={profile.id}
+          directionsControl={activeVenue ? (
+            <DancerDirectionsButton dancerId={profile.id} venue={activeVenue} />
+          ) : null}
           profileName={profile.stageName}
           rideControl={activeVenue ? (
             <UberRideButton
+              compact
               dancerId={profile.id}
               source="dancer_profile"
               venue={{ ...activeVenue, isActive: true, isPublic: true }}
@@ -421,15 +426,19 @@ function PublicProfileStyles() {
       .social-list a.social-link-instagram svg, .social-list a.social-link-x svg { fill: none; }
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
-      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 9px 0 8px; }
-      .live-actions.is-no-shift { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .live-actions { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 9px 0 8px; }
+      .live-actions.is-no-live-shift { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 11px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
       .live-actions .profile-action-primary { border-color: rgba(126,234,255,.48); background: linear-gradient(135deg, rgba(109,40,217,.86), rgba(11,148,201,.74)); box-shadow: 0 12px 30px rgba(49,46,129,.2), 0 0 18px rgba(34,199,255,.08); }
       .live-actions .profile-action-primary.profile-action-unavailable { border-color: rgba(148,137,166,.3); color: #bdb4ca; background: rgba(255,255,255,.055); }
       .live-actions .profile-action-going.profile-action-secondary { border-color: rgba(148,229,255,.26); background: linear-gradient(135deg, rgba(38,31,56,.82), rgba(18,33,44,.76)); box-shadow: none; }
+      .live-actions .profile-action-going.is-going { border-color: rgba(77,236,157,.42); color: #b7ffd8; background: rgba(77,236,157,.1); }
       .profile-action-requires-account { flex-direction: column; gap: 1px; }
       .profile-action-requirement { color: #c7bbd8; font-size: 8px; font-weight: 850; line-height: 1.1; }
+      .profile-action-main { min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+      .profile-action-main > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-action-preview-icon { width: 15px; height: 15px; flex: 0 0 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-action-share-slot { min-width: 0; }
       .profile-action-share-slot .profile-share { display: block; min-height: 44px; }
       .profile-action-share-slot .profile-share button { gap: 6px; }
@@ -438,6 +447,13 @@ function PublicProfileStyles() {
       .profile-action-ride-slot { min-width: 0; }
       .profile-action-ride-slot > a, .profile-action-ride-slot > button { width: 100% !important; min-height: 44px !important; justify-content: center !important; padding-inline: 8px !important; border-radius: 11px !important; font-size: 10px !important; text-align: center !important; }
       .profile-action-ride-slot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-action-directions-slot { min-width: 0; }
+      .profile-directions-button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 10px; font-weight: 900; text-align: center; text-decoration: none; }
+      .profile-directions-button[aria-disabled="true"] { cursor: default; opacity: 1; }
+      .profile-directions-button svg { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: #8ee2f8; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-directions-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-report-action { grid-column: 1 / -1; width: auto !important; min-height: 28px !important; justify-self: end; padding: 3px 2px !important; border: 0 !important; color: #8f8799 !important; background: transparent !important; box-shadow: none !important; font-size: 9px !important; font-weight: 750 !important; text-decoration: underline; text-decoration-color: rgba(143,135,153,.34); text-underline-offset: 3px; }
+      .profile-report-action:hover, .profile-report-action:focus-visible { color: #d4ccd9 !important; outline: none; text-decoration-color: currentColor; }
       .profile-share-dialog-backdrop { position: fixed; z-index: 1750; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.84); backdrop-filter: blur(12px); }
       .profile-share-dialog { position: relative; width: min(430px, 100%); max-height: calc(100dvh - 28px); display: grid; gap: 14px; overflow-y: auto; padding: 24px; border: 1px solid rgba(126,234,255,.42); border-radius: 18px; color: #f7f2ff; background: radial-gradient(circle at 82% 4%, rgba(34,199,255,.14), transparent 15rem), linear-gradient(145deg, #0d0a18, #050507); box-shadow: 0 28px 90px rgba(0,0,0,.74), 0 0 38px rgba(109,40,217,.22); }
       .profile-share-dialog > span:first-of-type { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .15em; text-transform: uppercase; }

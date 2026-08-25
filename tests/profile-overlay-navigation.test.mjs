@@ -23,8 +23,9 @@ test("mobile navigation cannot cover the fixed profile video viewer", () => {
   );
   assert.match(
     homeSource,
-    /data-profile-more-menu role="menu" hidden>[\s\S]*?<button id="reportBtn" type="button" role="menuitem"[^>]*>Report profile<\/button>/,
+    /<button class="profile-report-action" id="reportBtn" type="button"[^>]*>Report profile<\/button>/,
   );
+  assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions/);
 });
 
 test("mobile navigation cannot cover the fixed profile photo viewer", () => {

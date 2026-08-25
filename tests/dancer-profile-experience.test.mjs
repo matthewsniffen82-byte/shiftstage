@@ -167,25 +167,24 @@ test("working-now profiles show the club's active deal without granting demo com
   assert.match(profilePage, /dancerId=\{dancerAttributionEligible \? profile\.id : null\}/);
 });
 
-test("profile actions prioritize available controls while preserving shift and safety actions", () => {
+test("profile actions keep customer, live-night, travel, and safety controls visible", () => {
   assert.match(
     profileActions,
-    /className=\{`profile-action-primary\$\{showSignedOutRequirements \? " profile-action-requires-account" : ""\}`\}/,
+    /className=\{`profile-action-secondary\$\{showSignedOutRequirements \? " profile-action-requires-account" : ""\}`\}/,
   );
-  assert.match(profileActions, /aria-checked=\{isGoing\}/);
-  assert.match(profileActions, /role="menuitemcheckbox"/);
-  const followButtonIndex = profileActions.indexOf('className={`profile-action-primary');
-  const rideIndex = profileActions.indexOf('{hasShiftActions && rideControl ?');
+  assert.match(profileActions, /aria-pressed=\{isGoing\}/);
+  const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
+  const notifyIndex = profileActions.indexOf('if (requireCustomerAccount("notify"))');
+  const goingIndex = profileActions.indexOf('className={`profile-action-secondary profile-action-going');
+  const rideIndex = profileActions.indexOf('{hasLiveActions && rideControl ?');
+  const directionsIndex = profileActions.indexOf('{hasLiveActions && directionsControl ?');
   const shareIndex = profileActions.indexOf('{shareControl ?');
-  const scheduleIndex = profileActions.indexOf('className="profile-action-secondary profile-action-schedule"');
-  const goingIndex = profileActions.indexOf('className={`profile-action-going-menu');
-  const followHandlerIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
-  assert.ok(followButtonIndex > -1 && followHandlerIndex > -1);
-  assert.ok(rideIndex > followButtonIndex);
-  assert.ok(shareIndex > rideIndex && scheduleIndex > shareIndex);
-  assert.ok(goingIndex > scheduleIndex);
-  assert.match(profileActions, /className="profile-action-overflow-toggle"/);
-  assert.match(profileActions, /className="profile-action-overflow-menu" role="menu"/);
+  const reportIndex = profileActions.indexOf('className="profile-report-action"');
+  assert.ok(followButtonIndex > -1 && notifyIndex > followButtonIndex);
+  assert.ok(goingIndex > notifyIndex && rideIndex > goingIndex);
+  assert.ok(directionsIndex > rideIndex && shareIndex > directionsIndex);
+  assert.ok(reportIndex > shareIndex);
+  assert.doesNotMatch(profileActions, /profile-action-overflow|profile-action-schedule|>Schedule<|>More</);
   assert.match(profileActions, /Report profile/);
   assert.match(profileActions, /onClick=\{submitReport\}/);
   assert.match(profileActions, /className="profile-report-dialog"/);
@@ -197,11 +196,11 @@ test("profile actions prioritize available controls while preserving shift and s
     profileActions,
     /reason: "Profile report"[\s\S]*details: "Reported from the public dancer profile\."/,
   );
-  assert.match(profileActions, /const hasShiftActions = shifts\.length > 0/);
-  assert.match(profileActions, /live-actions\$\{hasShiftActions \? " has-shift-actions" : " is-no-shift"\}/);
-  assert.match(profileActions, /\{hasShiftActions \? \([\s\S]*?profile-action-schedule/);
+  assert.match(profileActions, /const hasLiveActions = Boolean\(actionShift\)/);
+  assert.match(profileActions, /live-actions\$\{hasLiveActions \? " has-live-shift" : " is-no-live-shift"\}/);
+  assert.match(profileActions, /\{actionShift \? \([\s\S]*?profile-action-going/);
   assert.match(profilePage, /className="profile-schedule-empty" aria-label="Schedule status"[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
-  assert.match(profilePage, /\.live-actions\.is-no-shift \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
+  assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
 });
 
 test("reports are bounded, validated, attributable when possible, and logged", () => {

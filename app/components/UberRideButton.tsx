@@ -21,6 +21,7 @@ type UberRideButtonProps = {
   venue: UberRideVenue;
   source: UberRideSource;
   dancerId?: string | null;
+  compact?: boolean;
 };
 
 const sourceClass: Record<UberRideSource, string> = {
@@ -29,11 +30,12 @@ const sourceClass: Record<UberRideSource, string> = {
   tonight_feed: styles.tonightFeed,
 };
 
-export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps) {
+export function UberRideButton({ venue, source, dancerId, compact = false }: UberRideButtonProps) {
   if (venue.isActive === false || venue.isPublic === false) return null;
 
   const venueName = String(venue.name || "this club").trim() || "this club";
   const label = rideActionLabel(source, venueName);
+  const visibleLabel = compact ? "Ride" : label;
 
   if (isFictionalVenueTravelPreviewOnly(venue)) {
     return (
@@ -49,7 +51,7 @@ export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps)
         type="button"
       >
         <RideIcon />
-        <span>{label}</span>
+        <span>{visibleLabel}</span>
       </button>
     );
   }
@@ -76,7 +78,7 @@ export function UberRideButton({ venue, source, dancerId }: UberRideButtonProps)
       target="_blank"
     >
       <RideIcon />
-      <span>{label}</span>
+      <span>{visibleLabel}</span>
     </a>
   );
 }

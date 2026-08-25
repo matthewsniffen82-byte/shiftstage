@@ -7,6 +7,7 @@ const [
   profilePage,
   profileMedia,
   profileActions,
+  profileDirections,
   profileNavigationActions,
   bottomNavigation,
   nfcIcon,
@@ -21,6 +22,10 @@ const [
     ),
     readFile(
       new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/dancers/[slug]/DancerDirectionsButton.tsx", import.meta.url),
       "utf8",
     ),
     readFile(
@@ -65,12 +70,19 @@ test("full dancer profiles use a compact identity and honest public activity hea
 
 test("profile actions expose live customer actions and keep Club Deal NFC distinct from profile sharing", () => {
   assert.match(profileActions, /\{saved\.following \? "Following" : "Follow"\}/);
-  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Turn notifications off" : "Notify me"\}/);
+  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Notifications On" : "Notify Me"\}/);
   assert.match(profileActions, /"I’m Going"/);
   assert.match(profileActions, /rideControl/);
+  assert.match(profileActions, /directionsControl/);
   assert.match(profileActions, /profile-action-share-slot/);
-  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Get a Ride[\s\S]*?Share[\s\S]*?Schedule[\s\S]*?More/);
+  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Notify Me[\s\S]*?I’m Going[\s\S]*?Ride[\s\S]*?Directions[\s\S]*?Share[\s\S]*?Report profile/);
+  assert.doesNotMatch(profileActions, />Schedule<|>More</);
   assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "clock" \| "heart" \| "share"/);
+  assert.match(profileDirections, /dancerIds: \[dancerId\]/);
+  assert.match(profileDirections, /source: "dancer_profile"/);
+  assert.match(profilePage, /directionsControl=\{activeVenue \? \(/);
+  assert.match(profilePage, /<DancerDirectionsButton dancerId=\{profile\.id\} venue=\{activeVenue\} \/>/);
+  assert.match(profilePage, /<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
@@ -194,7 +206,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /Available actions stay visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
+    /Keep the customer actions visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,

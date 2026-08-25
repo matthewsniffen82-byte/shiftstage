@@ -217,12 +217,12 @@ test("venue follows are empty and unavailable until a real customer session is a
   assert.match(venueFollowsRouteSource, /customer_id: user\.id/);
 });
 
-test("public profiles preserve public Going in More only while Working Now", () => {
+test("public profiles display Going directly only while Working Now", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
   assert.match(actionsSource, /showSignedOutRequirements = savedLoaded && !token/);
   assert.match(actionsSource, /profile-action-requirement">Sign in required/);
   assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| null/);
-  assert.match(actionsSource, /\{actionShift \? \([\s\S]*?\{isGoing \? "Going tonight ✓" : "I’m Going"\}[\s\S]*?\) : null\}/);
+  assert.match(actionsSource, /\{actionShift \? \([\s\S]*?\{isGoing \? "Going ✓" : "I’m Going"\}[\s\S]*?\) : null\}/);
   for (const action of ["follow", "notify"]) {
     assert.match(
       actionsSource,
@@ -233,7 +233,7 @@ test("public profiles preserve public Going in More only while Working Now", () 
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
   assert.match(actionsSource, /updateGoing\(actionShift\.id\)/);
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
-  assert.match(actionsSource, /className=\{`profile-action-going-menu\$\{isGoing \? " is-going" : ""\}`\}/);
+  assert.match(actionsSource, /className=\{`profile-action-secondary profile-action-going\$\{isGoing \? " is-going" : ""\}`\}/);
   assert.match(actionsSource, /disabled=\{!savedLoaded \|\| goingSaving\}/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
@@ -244,7 +244,7 @@ test("public profiles preserve public Going in More only while Working Now", () 
   assert.match(profilePageSource, /\.profile-action-requirement \{/);
 });
 
-test("the live mobile profile keeps Going public only while Working Now and reports under More", () => {
+test("the live mobile profile exposes Going only while Working Now and keeps Report discreet", () => {
   assert.match(homeSource, /function profileActionRequirementMarkup\(requirement\)/);
   assert.match(homeSource, /Sign in required/);
   assert.match(homeSource, /No sign-in needed/);
@@ -254,8 +254,9 @@ test("the live mobile profile keeps Going public only while Working Now and repo
   );
   assert.match(
     homeSource,
-    /data-profile-more-menu role="menu" hidden>[\s\S]*?id="reportBtn" type="button" role="menuitem"[\s\S]*?Report profile/,
+    /class="profile-report-action" id="reportBtn" type="button"[\s\S]*?Report profile/,
   );
+  assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);
   assert.match(
     homeSource,
     /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = Boolean\(isWorkingTonight\(profile, city\) && profile\.shiftId\)[\s\S]*?const goingButton = canMarkGoing[\s\S]*?: "";/,

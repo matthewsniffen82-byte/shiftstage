@@ -6,7 +6,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type FormEvent,
   type PropsWithChildren,
@@ -122,13 +121,23 @@ function DancerProfileActionPreviewIcon({
 
 export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
   return (
-    <div className="live-actions dancer-profile-preview-actions" aria-label="Guest actions">
+    <div className="live-actions has-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
       <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="heart" /><span>Follow</span></span>
         <small className="profile-action-requirement">Sign in required</small>
       </button>
+      <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="bell" /><span>Notify Me</span></span>
+        <small className="profile-action-requirement">Sign in required</small>
+      </button>
       <button className="profile-action-secondary profile-action-preview-static" disabled type="button">
-        Get a Ride
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
+      </button>
+      <button className="profile-action-secondary profile-action-preview-static" disabled type="button">
+        Ride
+      </button>
+      <button className="profile-action-secondary profile-action-preview-static" disabled type="button">
+        Directions
       </button>
       <div className="profile-action-share-slot">
         <span className="profile-share">
@@ -137,15 +146,7 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
           </button>
         </span>
       </div>
-      <button className="profile-action-secondary profile-action-preview-static" disabled type="button">
-        Schedule
-      </button>
-      <div className="profile-action-overflow">
-        <button className="profile-action-overflow-toggle profile-action-preview-static" disabled type="button">
-          <span aria-hidden="true">•••</span>
-          <span>More</span>
-        </button>
-      </div>
+      <button className="profile-report-action profile-action-preview-static" disabled type="button">Report profile</button>
     </div>
   );
 }
@@ -161,12 +162,14 @@ export function DancerProfileActions({
   shifts,
   shareControl,
   rideControl,
+  directionsControl,
 }: {
   dancerId: string;
   profileName: string;
   shifts: ShiftAction[];
   shareControl?: ReactNode;
   rideControl?: ReactNode;
+  directionsControl?: ReactNode;
 }) {
   const {
     setFollowerCount,
@@ -188,17 +191,14 @@ export function DancerProfileActions({
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [reportError, setReportError] = useState("");
-  const [moreActionsOpen, setMoreActionsOpen] = useState(false);
-  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
-  const moreActionsRef = useRef<HTMLDivElement | null>(null);
   const actionShift = useMemo(
     () => shifts.find((shift) => shift.isActive) || null,
     [shifts],
   );
   const actionShiftId = actionShift?.id || "";
-  const hasShiftActions = shifts.length > 0;
+  const hasLiveActions = Boolean(actionShift);
   const isGoing = Boolean(actionShift && saved.goingShiftIds.includes(actionShift.id));
   const showSignedOutRequirements = savedLoaded && !token;
 
@@ -268,13 +268,12 @@ export function DancerProfileActions({
   }, [actionShiftId, dancerId, setGoingCount]);
 
   useEffect(() => {
-    if (!accountRequiredAction && !reportDialogOpen && !scheduleOpen) return;
+    if (!accountRequiredAction && !reportDialogOpen) return;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setAccountRequiredAction(null);
       setReportDialogOpen(false);
-      setScheduleOpen(false);
     };
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeOnEscape);
@@ -282,25 +281,7 @@ export function DancerProfileActions({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [accountRequiredAction, reportDialogOpen, scheduleOpen]);
-
-  useEffect(() => {
-    if (!moreActionsOpen) return;
-    const closeMoreActions = (event: PointerEvent) => {
-      if (!moreActionsRef.current?.contains(event.target as Node)) {
-        setMoreActionsOpen(false);
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMoreActionsOpen(false);
-    };
-    document.addEventListener("pointerdown", closeMoreActions);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeMoreActions);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [moreActionsOpen]);
+  }, [accountRequiredAction, reportDialogOpen]);
 
   function requireCustomerAccount(action: AccountAction) {
     if (token) return true;
@@ -407,7 +388,6 @@ export function DancerProfileActions({
 
   function submitReport() {
     if (reportSaving || reportSubmitted) return;
-    setMoreActionsOpen(false);
     setReportError("");
     setReportDialogOpen(true);
   }
@@ -481,123 +461,75 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className={`live-actions${hasShiftActions ? " has-shift-actions" : " is-no-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
+      <div className={`live-actions${hasLiveActions ? " has-live-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
-          className={`profile-action-primary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
+          className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
           onClick={() => {
             if (requireCustomerAccount("follow")) updateFollow(false);
           }}
           disabled={!savedLoaded || followSaving}
         >
-          {saved.following ? "Following" : "Follow"}
+          <span className="profile-action-main">
+            <DancerProfileActionPreviewIcon type="heart" />
+            <span>{saved.following ? "Following" : "Follow"}</span>
+          </span>
           {showSignedOutRequirements ? (
             <small className="profile-action-requirement">Sign in required</small>
           ) : null}
         </button>
-        {hasShiftActions && rideControl ? (
+        <button
+          aria-pressed={saved.notificationsEnabled}
+          className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
+          disabled={!savedLoaded || followSaving}
+          onClick={() => {
+            if (requireCustomerAccount("notify")) updateNotifications();
+          }}
+          type="button"
+        >
+          <span className="profile-action-main">
+            <DancerProfileActionPreviewIcon type="bell" />
+            <span>{saved.notificationsEnabled ? "Notifications On" : "Notify Me"}</span>
+          </span>
+          {showSignedOutRequirements ? (
+            <small className="profile-action-requirement">Sign in required</small>
+          ) : null}
+        </button>
+        {actionShift ? (
+          <button
+            aria-pressed={isGoing}
+            className={`profile-action-secondary profile-action-going${isGoing ? " is-going" : ""}`}
+            disabled={!savedLoaded || goingSaving}
+            onClick={() => updateGoing(actionShift.id)}
+            type="button"
+          >
+            <span className="profile-action-main">
+              <DancerProfileActionPreviewIcon type="clock" />
+              <span>{isGoing ? "Going ✓" : "I’m Going"}</span>
+            </span>
+          </button>
+        ) : null}
+        {hasLiveActions && rideControl ? (
           <div className="profile-action-ride-slot">{rideControl}</div>
+        ) : null}
+        {hasLiveActions && directionsControl ? (
+          <div className="profile-action-directions-slot">{directionsControl}</div>
         ) : null}
         {shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>
         ) : (
           <button className="profile-action-secondary profile-action-unavailable" disabled type="button">Share</button>
         )}
-        {hasShiftActions ? (
-          <button
-            className="profile-action-secondary profile-action-schedule"
-            onClick={() => setScheduleOpen(true)}
-            type="button"
-          >
-            Schedule
-          </button>
-        ) : null}
-        <div className="profile-action-overflow" ref={moreActionsRef}>
-          <button
-            aria-expanded={moreActionsOpen}
-            aria-haspopup="menu"
-            className="profile-action-overflow-toggle"
-            onClick={() => setMoreActionsOpen((current) => !current)}
-            type="button"
-          >
-            <span aria-hidden="true">•••</span>
-            <span>More</span>
-          </button>
-          {moreActionsOpen ? (
-            <div className="profile-action-overflow-menu" role="menu">
-              {actionShift ? (
-                <button
-                  aria-checked={isGoing}
-                  className={`profile-action-going-menu${isGoing ? " is-going" : ""}`}
-                  disabled={!savedLoaded || goingSaving}
-                  onClick={() => {
-                    updateGoing(actionShift.id);
-                    setMoreActionsOpen(false);
-                  }}
-                  role="menuitemcheckbox"
-                  type="button"
-                >
-                  {isGoing ? "Going tonight ✓" : "I’m Going"}
-                </button>
-              ) : null}
-              <button
-                disabled={!savedLoaded || followSaving}
-                onClick={() => {
-                  if (requireCustomerAccount("notify")) updateNotifications();
-                  setMoreActionsOpen(false);
-                }}
-                role="menuitem"
-                type="button"
-              >
-                {saved.notificationsEnabled ? "Turn notifications off" : "Notify me"}
-              </button>
-              <button
-                disabled={reportSaving || reportSubmitted}
-                onClick={submitReport}
-                role="menuitem"
-                type="button"
-              >
-                {reportSubmitted ? "Profile reported" : reportSaving ? "Submitting report" : "Report profile"}
-              </button>
-            </div>
-          ) : null}
-        </div>
+        <button
+          className="profile-report-action"
+          disabled={reportSaving || reportSubmitted}
+          onClick={submitReport}
+          type="button"
+        >
+          {reportSubmitted ? "Profile reported" : reportSaving ? "Submitting report" : "Report profile"}
+        </button>
         {status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </div>
-      {scheduleOpen ? (
-        <div
-          className="profile-schedule-gate"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setScheduleOpen(false);
-          }}
-        >
-          <section
-            aria-labelledby="profile-schedule-dialog-title"
-            aria-modal="true"
-            className="profile-schedule-dialog"
-            role="dialog"
-          >
-            <button
-              aria-label="Close schedule"
-              className="profile-schedule-dialog-close"
-              onClick={() => setScheduleOpen(false)}
-              type="button"
-            >
-              ×
-            </button>
-            <span>Schedule</span>
-            <h2 id="profile-schedule-dialog-title">{profileName}</h2>
-            <div className="profile-schedule-dialog-list">
-              {shifts.map((shift) => (
-                <div className={shift.isActive ? "is-active" : ""} key={shift.id}>
-                  <strong>{shift.isActive ? "Working now" : shift.label}</strong>
-                  <small>{shift.isActive ? "Venue-confirmed current shift" : "Upcoming posted shift"}</small>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      ) : null}
       {accountRequiredAction ? (
         <div
           className="profile-account-gate"

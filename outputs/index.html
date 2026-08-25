@@ -38319,31 +38319,34 @@
           height: 28px !important;
         }
 
-        /* Available actions stay visible. Unavailable ride and schedule
-           controls do not consume space on no-shift profiles. */
+        /* Keep the customer actions visible in two compact rows. Live-night
+           travel and attendance actions only render while the dancer is Now. */
         #profileBackdrop .modal-actions {
-          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           gap: 6px !important;
         }
 
-        #profileBackdrop .modal-actions.is-no-shift {
+        #profileBackdrop .modal-actions.is-no-live-shift {
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         }
 
         #profileBackdrop .modal-actions .action-btn,
         #profileBackdrop .modal-actions .profile-share-action,
-        #profileBackdrop .profile-primary-ride > :is(a, button) {
+        #profileBackdrop .profile-primary-ride > :is(a, button),
+        #profileBackdrop .profile-primary-directions-slot > :is(a, button) {
           min-height: 44px !important;
           padding: 5px 6px !important;
           border-radius: 11px !important;
           font-size: 11px !important;
         }
 
-        #profileBackdrop .profile-primary-ride {
+        #profileBackdrop .profile-primary-ride,
+        #profileBackdrop .profile-primary-directions-slot {
           min-width: 0 !important;
         }
 
-        #profileBackdrop .profile-primary-ride > :is(a, button) {
+        #profileBackdrop .profile-primary-ride > :is(a, button),
+        #profileBackdrop .profile-primary-directions-slot > :is(a, button) {
           width: 100% !important;
         }
 
@@ -38352,45 +38355,29 @@
           min-height: 44px !important;
         }
 
-        #profileBackdrop .profile-action-overflow {
+        #profileBackdrop .profile-report-action {
           grid-column: 1 / -1 !important;
-          justify-self: end !important;
-        }
-
-        #profileBackdrop .modal-actions.is-no-shift .profile-action-overflow {
-          grid-column: auto !important;
-          width: 100% !important;
-          justify-self: stretch !important;
-        }
-
-        #profileBackdrop .profile-action-overflow-toggle {
           width: auto !important;
-          min-height: 32px !important;
-          padding: 3px 8px !important;
+          min-height: 28px !important;
+          justify-self: end !important;
+          padding: 3px 2px !important;
           border: 0 !important;
-          border-radius: 999px !important;
-          color: #a9a0b4 !important;
+          color: #8f8799 !important;
           background: transparent !important;
-          font-size: 10px !important;
+          box-shadow: none !important;
+          font: inherit;
+          font-size: 9px !important;
+          font-weight: 750 !important;
+          text-decoration: underline;
+          text-decoration-color: rgba(143,135,153,.34);
+          text-underline-offset: 3px;
+          cursor: pointer;
         }
 
-        #profileBackdrop .modal-actions.is-no-shift .profile-action-overflow-toggle {
-          width: 100% !important;
-          min-height: 44px !important;
-          padding: 5px 8px !important;
-          border: 1px solid rgba(255,255,255,.1) !important;
-          border-radius: 11px !important;
-          background: rgba(255,255,255,.035) !important;
-        }
-
-        #profileBackdrop .profile-action-overflow-menu :is(.action-btn, #reportBtn) {
-          width: 100% !important;
-          min-height: 44px !important;
-          padding: 6px 10px !important;
-          border: 1px solid rgba(255,255,255,.08) !important;
-          border-radius: 10px !important;
-          background: rgba(255,255,255,.035) !important;
-          text-align: left !important;
+        #profileBackdrop .profile-report-action:is(:hover, :focus-visible) {
+          color: #d4ccd9 !important;
+          outline: none;
+          text-decoration-color: currentColor;
         }
 
         /* Every profile keeps the Club Deal slot. Only a genuinely active
@@ -38522,10 +38509,10 @@
 
         @media (max-width: 520px) {
           #profileBackdrop .modal-actions {
-            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           }
 
-          #profileBackdrop .modal-actions.is-no-shift {
+          #profileBackdrop .modal-actions.is-no-live-shift {
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           }
         }
@@ -41154,17 +41141,18 @@
       return isFictionalDemoVenue(venue);
     }
 
-    function venueDirectionsMarkup({ venue, className, label = "Directions", city = selectedCity() }) {
+    function venueDirectionsMarkup({ venue, className, label = "Directions", city = selectedCity(), dancerId = "" }) {
       const details = venueDetails(venue, city);
       const safeName = escapeHtml(venue?.name || details.name || "this club");
       const venueValue = escapeOptionValue(venue?.name || details.name || "");
+      const dancerValue = escapeOptionValue(dancerId);
       if (isFictionalDemoTravelPreviewOnly(venue)) {
         return `<button class="${className} is-inactive-demo" type="button" data-demo-travel="directions" tabindex="-1" aria-disabled="true" aria-label="${escapeHtml(label)}. Preview only.">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
       }
       if (!String(details.address || "").trim()) {
         return `<button class="${className} is-travel-unavailable" type="button" data-travel-unavailable="directions" disabled aria-disabled="true" aria-label="Directions unavailable for ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
       }
-      return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
+      return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}"${dancerValue ? ` data-dancer-id="${dancerValue}"` : ""} aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
     }
 
     function rideActionLabel(source, venueName) {
@@ -41172,19 +41160,20 @@
       return source === "dancer_profile" ? `Get a Ride to ${safeVenueName}` : "Get a Ride";
     }
 
-    function uberRideLinkMarkup({ venue, source, className = "", dancerId = "", city = selectedCity() }) {
+    function uberRideLinkMarkup({ venue, source, className = "", dancerId = "", city = selectedCity(), displayLabel = "" }) {
       const destination = publicVenueUberDestination(venue, city);
       const label = rideActionLabel(source, venue?.name);
+      const visibleLabel = String(displayLabel || label).trim() || label;
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
       if (isFictionalDemoTravelPreviewOnly(venue)) {
-        return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" tabindex="-1" aria-disabled="true" aria-label="${escapeHtml(label)}. Preview only.">${actionButtonLabel("car", escapeHtml(label))}</button>`;
+        return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" tabindex="-1" aria-disabled="true" aria-label="${escapeHtml(label)}. Preview only.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</button>`;
       }
       if (!destination) {
         const safeName = escapeHtml(venue?.name || "this club");
         return `<button class="${classes} is-travel-unavailable" type="button" data-travel-unavailable="uber" disabled aria-disabled="true" aria-label="Uber unavailable for ${safeName}">${actionButtonLabel("car", escapeHtml(label))}</button>`;
       }
       const href = buildUberRideUrl(destination);
-      return `<a class="${classes}" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" data-uber-ride-link data-uber-venue-id="${escapeOptionValue(venue.id || "")}" data-uber-venue-name="${escapeOptionValue(destination.name)}" data-uber-dancer-id="${escapeOptionValue(dancerId)}" data-uber-source="${escapeOptionValue(source)}" data-uber-city="${escapeOptionValue(city)}" aria-label="${escapeHtml(label)}. Opens Uber with ${escapeHtml(destination.formattedAddress)} as the destination.">${actionButtonLabel("car", escapeHtml(label))}</a>`;
+      return `<a class="${classes}" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" data-uber-ride-link data-uber-venue-id="${escapeOptionValue(venue.id || "")}" data-uber-venue-name="${escapeOptionValue(destination.name)}" data-uber-dancer-id="${escapeOptionValue(dancerId)}" data-uber-source="${escapeOptionValue(source)}" data-uber-city="${escapeOptionValue(city)}" aria-label="${escapeHtml(label)}. Opens Uber with ${escapeHtml(destination.formattedAddress)} as the destination.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
     }
 
     function recordUberRideLinkClick(link) {
@@ -50753,7 +50742,22 @@
         source: "dancer_profile",
         className: "profile-uber-ride",
         dancerId: profile.id || "",
-        city
+        city,
+        displayLabel: "Ride"
+      });
+    }
+
+    function dancerProfileDirectionsMarkup(profile, options = {}) {
+      const city = options.city || selectedCity();
+      if (options.preview || !profile?.scheduled || !isWorkingTonight(profile, city)) return "";
+      const venue = resolveVenueByName(profile.venue, city);
+      if (!venue) return "";
+      return venueDirectionsMarkup({
+        venue,
+        className: "profile-primary-directions venue-directions-btn",
+        label: "Directions",
+        city,
+        dancerId: profile.id || ""
       });
     }
 
@@ -50796,26 +50800,21 @@
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
       const canMarkGoing = Boolean(isWorkingTonight(profile, city) && profile.shiftId);
       const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
-      const hasShiftActions = Boolean(profile.scheduled);
+      const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
         ? `<button class="action-btn going-btn is-primary-action ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
         : "";
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
-        <div class="modal-actions ${hasShiftActions ? "has-shift-actions" : "is-no-shift"}" aria-label="Guest actions">
+        <div class="modal-actions ${canMarkGoing ? "is-working-now" : "is-no-live-shift"}" aria-label="Guest actions">
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
-          ${hasShiftActions && rideMarkup ? `<div class="profile-primary-ride">${rideMarkup}</div>` : ""}
+          <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
+          ${goingButton}
+          ${rideMarkup ? `<div class="profile-primary-ride">${rideMarkup}</div>` : ""}
+          ${directionsMarkup ? `<div class="profile-primary-directions-slot">${directionsMarkup}</div>` : ""}
           <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
-          ${hasShiftActions ? '<button class="action-btn secondary profile-schedule-action" type="button" data-profile-schedule-action>Schedule</button>' : ""}
-          <div class="profile-action-overflow">
-            <button class="profile-action-overflow-toggle" type="button" data-profile-more-actions aria-haspopup="menu" aria-expanded="false" aria-label="More profile actions"><span aria-hidden="true">•••</span><span>More</span></button>
-            <div class="profile-action-overflow-menu" data-profile-more-menu role="menu" hidden>
-              ${goingButton}
-              <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}" role="menuitem">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
-              <button id="reportBtn" type="button" role="menuitem" data-profile="${profile.name}">Report profile</button>
-            </div>
-          </div>
+          <button class="profile-report-action" id="reportBtn" type="button" data-profile="${profile.name}">Report profile</button>
         </div>
       `;
     }
@@ -59008,18 +59007,23 @@
       if (directionsLink) {
         const city = citySelect.value;
         const venueName = directionsLink.dataset.venue;
+        const attributedDancerId = directionsLink.dataset.dancerId || "";
         const venueRecord = markets[city].venues.find((venue) => venue.name === venueName);
         const venueProfiles = markets[city].dancers
           .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName);
-        venueProfiles.forEach((profile) => recordUniqueTrendEvent("directionRequests", city, profile.name));
+        const attributedProfiles = attributedDancerId
+          ? venueProfiles.filter((profile) => profile.id === attributedDancerId)
+          : venueProfiles;
+        const directionSource = attributedDancerId ? "dancer_profile" : "venue_detail";
+        attributedProfiles.forEach((profile) => recordUniqueTrendEvent("directionRequests", city, profile.name));
         if (isCustomerSession() && venueRecord?.id) {
           postAuthenticatedJson("/api/customer/directions", {
             venueId: venueRecord.id,
-            dancerIds: venueProfiles.map((profile) => profile.id).filter(Boolean),
+            dancerIds: attributedProfiles.map((profile) => profile.id).filter(Boolean),
             sessionId: dancrLiveSessionId()
-          }).catch(() => recordLiveEvent("direction_request", { venueName, source: "venue_detail" }));
+          }).catch(() => recordLiveEvent("direction_request", { venueName, dancerId: attributedDancerId || undefined, source: directionSource }));
         } else {
-          recordLiveEvent("direction_request", { venueName, source: "venue_detail" });
+          recordLiveEvent("direction_request", { venueName, dancerId: attributedDancerId || undefined, source: directionSource });
         }
         return;
       }
@@ -59853,26 +59857,6 @@
       if (handleShareClick(event)) return;
       if (!event.target.closest("[data-qr-popover]")) closeQrPopovers();
       if (!event.target.closest("[data-share-popover]")) closeSharePopovers();
-      const moreActionsToggle = event.target.closest("[data-profile-more-actions]");
-      if (moreActionsToggle) {
-        const menu = moreActionsToggle.parentElement?.querySelector("[data-profile-more-menu]");
-        const willOpen = Boolean(menu?.hidden);
-        modalBody.querySelectorAll("[data-profile-more-menu]").forEach((item) => { item.hidden = true; });
-        modalBody.querySelectorAll("[data-profile-more-actions]").forEach((item) => item.setAttribute("aria-expanded", "false"));
-        if (menu) menu.hidden = !willOpen;
-        moreActionsToggle.setAttribute("aria-expanded", String(willOpen));
-        return;
-      }
-      if (!event.target.closest(".profile-action-overflow")) {
-        modalBody.querySelectorAll("[data-profile-more-menu]").forEach((item) => { item.hidden = true; });
-        modalBody.querySelectorAll("[data-profile-more-actions]").forEach((item) => item.setAttribute("aria-expanded", "false"));
-      }
-      const scheduleAction = event.target.closest("[data-profile-schedule-action]");
-      if (scheduleAction) {
-        const scheduleCard = modalBody.querySelector(".profile-schedule-card");
-        scheduleCard?.scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
-      }
       const socialLink = event.target.closest(".social-link[data-profile]");
       if (socialLink) {
         recordUniqueTrendEvent("socialClicks", citySelect.value, socialLink.dataset.profile);
@@ -59907,11 +59891,6 @@
       }
       if (actionButton.id === "reportBtn") {
         if (actionButton.disabled) return;
-        const overflow = actionButton.closest(".profile-action-overflow");
-        const overflowMenu = overflow?.querySelector("[data-profile-more-menu]");
-        const overflowToggle = overflow?.querySelector("[data-profile-more-actions]");
-        if (overflowMenu) overflowMenu.hidden = true;
-        overflowToggle?.setAttribute("aria-expanded", "false");
         const city = citySelect.value;
         const profileName = actionButton.dataset.profile;
         const profile = findProfile(profileName);
@@ -59986,10 +59965,6 @@
     profileBackdrop.addEventListener("click", (event) => {
       if (event.target.closest?.("#profilePhotoViewer")) return;
       if (!event.target.closest("[data-share-popover], [data-toggle-share]")) closeSharePopovers();
-      if (!event.target.closest(".profile-action-overflow")) {
-        modalBody.querySelectorAll("[data-profile-more-menu]").forEach((item) => { item.hidden = true; });
-        modalBody.querySelectorAll("[data-profile-more-actions]").forEach((item) => item.setAttribute("aria-expanded", "false"));
-      }
       const venueLink = event.target.closest(".profile-modal-summary [data-open-venue]");
       if (venueLink) {
         closeProfileModal();
@@ -61846,13 +61821,6 @@
       if (event.key === "Escape" && profileBackdrop.classList.contains("show")) {
         if (profilePhotoViewer && !profilePhotoViewer.hidden) {
           closeProfilePhotoViewer();
-          return;
-        }
-        const openMoreMenu = modalBody.querySelector("[data-profile-more-menu]:not([hidden])");
-        if (openMoreMenu) {
-          openMoreMenu.hidden = true;
-          openMoreMenu.closest(".profile-action-overflow")?.querySelector("[data-profile-more-actions]")?.setAttribute("aria-expanded", "false");
-          event.preventDefault();
           return;
         }
         event.preventDefault();

@@ -100,13 +100,16 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     /function liveProfileModalActionsMarkup\(profile, status\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   const followIndex = liveActionsMarkup.indexOf('id="followBtn"');
+  const notifyIndex = liveActionsMarkup.indexOf('id="notifyBtn"');
+  const goingIndex = liveActionsMarkup.indexOf('${goingButton}');
   const rideIndex = liveActionsMarkup.indexOf('class="profile-primary-ride"');
+  const directionsIndex = liveActionsMarkup.indexOf('class="profile-primary-directions-slot"');
   const shareIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-share-action"');
-  const scheduleIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-schedule-action"');
-  const overflowIndex = liveActionsMarkup.indexOf('class="profile-action-overflow"');
-  assert.ok(followIndex > -1 && rideIndex > followIndex);
-  assert.ok(shareIndex > rideIndex && scheduleIndex > shareIndex);
-  assert.ok(overflowIndex > scheduleIndex);
+  const reportIndex = liveActionsMarkup.indexOf('class="profile-report-action"');
+  assert.ok(followIndex > -1 && notifyIndex > followIndex);
+  assert.ok(goingIndex > notifyIndex && rideIndex > goingIndex);
+  assert.ok(directionsIndex > rideIndex && shareIndex > directionsIndex);
+  assert.ok(reportIndex > shareIndex);
   assert.match(
     liveApp,
     /class="action-btn follow-primary[\s\S]*?id="followBtn"/,
@@ -117,14 +120,9 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     liveApp,
     /class="action-btn secondary profile-share-action"[\s\S]*?data-profile-share-menu=/,
   );
-  assert.match(liveApp, /data-profile-more-actions aria-haspopup="menu" aria-expanded="false"/);
-  assert.match(
-    liveApp,
-    /aria-label="More profile actions"><span aria-hidden="true">•••<\/span><span>More<\/span>/,
-  );
-  assert.match(liveApp, /data-profile-more-menu role="menu" hidden/);
-  assert.match(liveApp, /id="reportBtn" type="button" role="menuitem"/);
-  assert.match(liveActionsMarkup, /\$\{goingButton\}[\s\S]*?id="notifyBtn"/);
+  assert.match(liveApp, /class="profile-report-action" id="reportBtn" type="button"/);
+  assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);
+  assert.match(liveActionsMarkup, /id="notifyBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-primary-ride[\s\S]*?profile-primary-directions-slot[\s\S]*?profile-share-action[\s\S]*?profile-report-action/);
   assert.doesNotMatch(
     liveActionsMarkup.match(/<button class="action-btn secondary profile-share-action"[^>]*>/)?.[0] || "",
     /disabled|aria-disabled/,
@@ -135,27 +133,18 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(
     liveApp,
-    /action-first media library[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
+    /Keep the customer actions visible[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.modal-actions \.profile-share-action \{\s*grid-column: auto !important;/,
   );
-  assert.match(
-    aesthetic,
-    /#profileBackdrop \.modal-actions :is\([\s\S]*?\.action-btn:not\(\.going-btn\),[\s\S]*?\.profile-action-overflow-toggle[\s\S]*?min-height: 44px !important;/,
-  );
-  assert.match(
-    aesthetic,
-    /#profileBackdrop \.modal-actions :is\([\s\S]*?#followBtn,[\s\S]*?#notifyBtn,[\s\S]*?\.profile-share-action,[\s\S]*?\.profile-action-overflow-toggle[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;/,
-  );
-  assert.match(liveApp, /\.profile-action-overflow \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;/);
-  assert.match(liveActionsMarkup, /const hasShiftActions = Boolean\(profile\.scheduled\)/);
-  assert.match(liveActionsMarkup, /modal-actions \$\{hasShiftActions \? "has-shift-actions" : "is-no-shift"\}/);
-  assert.match(liveActionsMarkup, /\$\{hasShiftActions && rideMarkup \? `<div class="profile-primary-ride">\$\{rideMarkup\}<\/div>` : ""\}/);
-  assert.match(liveActionsMarkup, /\$\{hasShiftActions \? '<button class="action-btn secondary profile-schedule-action"/);
-  assert.match(liveApp, /\.modal-actions\.is-no-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
-  assert.match(liveApp, /\.modal-actions\.is-no-shift \.profile-action-overflow \{[\s\S]*?grid-column: auto !important;[\s\S]*?justify-self: stretch !important;/);
+  assert.match(liveActionsMarkup, /const directionsMarkup = dancerProfileDirectionsMarkup\(profile, \{ city \}\)/);
+  assert.match(liveActionsMarkup, /modal-actions \$\{canMarkGoing \? "is-working-now" : "is-no-live-shift"\}/);
+  assert.match(liveApp, /function dancerProfileUberRideMarkup\(profile, options = \{\}\)[\s\S]*?!isWorkingTonight\(profile, city\)\) return "";/);
+  assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?!isWorkingTonight\(profile, city\)\) return "";/);
+  assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
+  assert.match(liveApp, /\.profile-report-action \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;[\s\S]*?background: transparent !important;/);
 });
 
 test("profile socials and activity metrics use a compact neutral presentation", () => {
@@ -301,7 +290,7 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   );
   assert.match(
     liveApp,
-    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
+    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,
