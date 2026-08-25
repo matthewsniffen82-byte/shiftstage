@@ -105,24 +105,47 @@ export function DancerGoingCount() {
   return <>{new Intl.NumberFormat("en-US").format(goingCount)}</>;
 }
 
+function DancerProfileActionPreviewIcon({
+  type,
+}: {
+  type: "bell" | "clock" | "heart" | "share";
+}) {
+  return (
+    <svg aria-hidden="true" className="profile-action-preview-icon" viewBox="0 0 24 24">
+      {type === "heart" ? <path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z" /> : null}
+      {type === "bell" ? <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" /><path d="M10 20a2 2 0 0 0 4 0" /></> : null}
+      {type === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : null}
+      {type === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" /></> : null}
+    </svg>
+  );
+}
+
 export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
   return (
-    <div className="live-actions" aria-label="Guest actions">
+    <div className="live-actions dancer-profile-preview-actions" aria-label="Guest actions">
       <button className="profile-action-primary profile-action-public profile-action-going profile-action-unavailable" disabled type="button">
-        I’m Going
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
         <small className="profile-action-requirement">No shift posted</small>
       </button>
-      <button className="profile-action-secondary" disabled type="button">Follow</button>
-      <button className="profile-action-secondary" disabled type="button">Notify me</button>
+      <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="heart" /><span>Follow</span></span>
+        <small className="profile-action-requirement">Sign in required</small>
+      </button>
+      <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="bell" /><span>Notify Me</span></span>
+        <small className="profile-action-requirement">Sign in required</small>
+      </button>
       <div className="profile-action-share-slot">
         <span className="profile-share">
-          <button disabled={!onShare} onClick={onShare} type="button">Share profile</button>
+          <button disabled={!onShare} onClick={onShare} type="button">
+            <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share Profile</span></span>
+          </button>
         </span>
       </div>
       <div className="profile-action-overflow">
-        <button className="profile-action-overflow-toggle" disabled type="button">
+        <button className="profile-action-overflow-toggle profile-action-preview-static" disabled type="button">
           <span aria-hidden="true">•••</span>
-          <span>More</span>
+          <span>Report &amp; options</span>
         </button>
       </div>
     </div>

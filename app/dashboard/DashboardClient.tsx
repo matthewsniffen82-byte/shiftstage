@@ -3406,7 +3406,7 @@ function DancerProfilePreview({
                   <div className="profile-section-heading">
                     <div><span className="eyebrow">Schedule</span><h2 id="dancer-profile-builder-schedule-heading">No shift posted</h2></div>
                   </div>
-                  <p>This dancer has not posted an upcoming shift yet.</p>
+                  <p>This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update.</p>
                 </section>
                 <section className="profile-deal-availability" aria-label="Club Deal status">
                   <VenueQrUnavailable availability="not-available-now" venueName={previewCity} />
@@ -8465,6 +8465,7 @@ function DashboardStyles() {
       .dancer-onboarding-preview-open { width: 100%; min-height: 46px; border: 1px solid rgba(126,234,255,.34); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.8), rgba(11,148,201,.58)); font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
       .dancer-onboarding-preview-open:disabled { opacity: .48; cursor: not-allowed; }
       .dancer-profile-preview-overlay { position: fixed; z-index: 1498; inset: var(--mydancr-preview-banner-offset,0px) 0 0; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-x: hidden; overflow-y: auto; overscroll-behavior-x: none; overscroll-behavior-y: contain; color: #f7f2ff; background: #050507; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent; }
+      .dancer-profile-preview-overlay *, .dancer-profile-preview-overlay *::before, .dancer-profile-preview-overlay *::after { box-sizing:border-box; }
       .dancer-profile-preview-overlay::-webkit-scrollbar { width: 4px; }
       .dancer-profile-preview-overlay::-webkit-scrollbar-track { background: transparent; }
       .dancer-profile-preview-overlay::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(255,255,255,.28); }
@@ -8524,6 +8525,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .social-list a.social-link-instagram svg, .dancer-profile-preview-overlay .social-list a.social-link-x svg { fill: none; }
       .dancer-profile-preview-overlay .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       .dancer-profile-preview-overlay .profile-schedule-section { display: grid; gap: 14px; margin-top: 24px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
+      .dancer-profile-preview-overlay .profile-schedule-section .eyebrow { color:#f7f2ff; }
       .dancer-profile-preview-overlay .profile-section-heading { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .dancer-profile-preview-overlay .profile-section-heading > div { min-width: 0; display: grid; gap: 5px; }
       .dancer-profile-preview-overlay .profile-section-heading h2 { max-width: 100%; margin: 0; overflow-wrap: anywhere; color: #fff; font-size: clamp(22px,5vw,32px); line-height: 1.05; }
@@ -8549,6 +8551,10 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .live-actions .profile-action-primary { border-color:rgba(126,234,255,.48); background:linear-gradient(135deg,rgba(109,40,217,.86),rgba(11,148,201,.74)); box-shadow:0 12px 30px rgba(49,46,129,.2),0 0 18px rgba(34,199,255,.08); }
       .dancer-profile-preview-overlay .live-actions .profile-action-primary.profile-action-unavailable { border-color:rgba(148,137,166,.3); color:#bdb4ca; background:rgba(255,255,255,.055); }
       .dancer-profile-preview-overlay .profile-action-requirement { color:#c7bbd8; font-size:8px; font-weight:850; line-height:1.1; }
+      .dancer-profile-preview-overlay .profile-action-requires-account { flex-direction:column; gap:1px; }
+      .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-main { display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+      .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-preview-icon { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; }
+      .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-preview-static:disabled { opacity:1; cursor:default; }
       .dancer-profile-preview-overlay .profile-action-share-slot, .dancer-profile-preview-overlay .profile-action-overflow { position:relative; min-width:0; }
       .dancer-profile-preview-overlay .profile-action-share-slot .profile-share { display:block; min-height:48px; }
       .dancer-profile-preview-overlay .profile-action-share-slot .profile-share button { gap:6px; }

@@ -67,6 +67,8 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(profileActions, /\{saved\.notificationsEnabled \? "Notifications on" : "Notify me"\}/);
   assert.match(profileActions, /"I’m Going"/);
   assert.match(profileActions, /profile-action-share-slot/);
+  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?profile-action-main[\s\S]*?Notify Me[\s\S]*?Share Profile[\s\S]*?Report &amp; options/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "clock" \| "heart" \| "share"/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share Profile"\)/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);

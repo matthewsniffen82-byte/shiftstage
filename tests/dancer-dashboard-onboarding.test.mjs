@@ -374,6 +374,7 @@ test("approved dancers edit their full guest view from inside Profile & media", 
   assert.match(dashboard, /import \{ VenueQrUnavailable \} from "@\/app\/components\/VenueQrCode"/);
   assert.match(dashboard, /import \{ DancerProfileActionsPreview \} from "@\/app\/dancers\/\[slug\]\/DancerProfileActions"/);
   assert.match(dashboard, /className="profile-schedule-section"/);
+  assert.match(dashboard, /This dancer has not posted an upcoming shift yet\. Follow or turn on notifications to see the next update\./);
   assert.match(dashboard, /<VenueQrUnavailable availability="not-available-now" venueName=\{previewCity\} \/>/);
   assert.match(dashboard, /<DancerProfileActionsPreview onShare=/);
   assert.match(dashboard, /className="profile-overview"/);
@@ -384,6 +385,8 @@ test("approved dancers edit their full guest view from inside Profile & media", 
   assert.match(dashboard, /This is how your approved profile appears to guests/);
   assert.match(dashboard, /\.dancer-profile-media-preview-button \{[^}]*min-height: 44px/);
   assert.match(dashboard, /\.dancer-profile-media-preview-button \{ grid-column: 1 \/ -1; width: 100%; min-height: 46px/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \*, \.dancer-profile-preview-overlay \*::before, \.dancer-profile-preview-overlay \*::after \{ box-sizing:border-box; \}/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-schedule-section \.eyebrow \{ color:#f7f2ff; \}/);
 });
 
 test("the mobile full-profile preview leaves room for its media thumbnails above navigation", () => {
