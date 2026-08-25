@@ -2867,10 +2867,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   padding: 42px 72px 142px 18px;
   object-fit: contain;
   object-position: center 34%;
-  transform: translate(
-      calc(var(--venue-logo-shift-x, 0%) - 10px),
-      calc(var(--venue-logo-shift-y, 0%) - 48px)
-    ) scale(var(--venue-logo-scale, 1));
+  transform: translate(-10px, -12px);
   transform-origin: center;
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.58));
 }

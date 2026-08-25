@@ -31616,7 +31616,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=139" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=140" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -43597,9 +43597,6 @@
     }
 
     function venueLogoFitTarget(image) {
-      if (image.classList.contains("home-venue-discovery-logo")) {
-        return { width: .92, height: .56, maxScale: 2.7 };
-      }
       if (image.classList.contains("venue-detail-logo")) {
         return { width: .84, height: .62, maxScale: 2.8 };
       }
@@ -43621,6 +43618,10 @@
       const width = Number(image.naturalWidth || 0);
       const height = Number(image.naturalHeight || 0);
       if (!width || !height) return;
+      if (image.classList.contains("home-venue-discovery-logo")) {
+        applyVenueLogoFit(image, 1);
+        return;
+      }
       const ratio = width / height;
       const target = venueLogoFitTarget(image);
       const fallbackScale = ratio >= .78 && ratio <= 1.28 ? Math.min(1.75, target.maxScale) : 1;
