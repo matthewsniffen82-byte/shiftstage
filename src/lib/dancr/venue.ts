@@ -426,6 +426,7 @@ export function getVenuePublicationState(
 ): VenuePublicationState {
   const requirements = [
     { key: "details", label: "Venue name, public address, city, and state", complete: Boolean(profile.name && profile.address && profile.city && profile.state) },
+    { key: "coordinates", label: "Verified map coordinates", complete: profile.latitude !== null && profile.longitude !== null },
     { key: "contact", label: "Public phone number", complete: Boolean(profile.phone) },
     { key: "hours", label: "Opening and closing hours", complete: Boolean(profile.opensAt && profile.closesAt) },
     { key: "logo", label: "Venue logo", complete: Boolean(profile.logoImageUrl) },
@@ -594,7 +595,7 @@ export function readVenueAnalyticsPeriod(value: string | null | undefined): Venu
 }
 
 const VENUE_OWNER_COLUMNS =
-  "id, owner_user_id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, logo_storage_path, logo_updated_at, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
+  "id, owner_user_id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, logo_storage_path, logo_updated_at, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
 
 async function requireVenueForAccount(client: DancrClient, userId: string) {
   const venue = await getVenueForAccount(client, userId);
@@ -638,6 +639,8 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     city: row.city,
     state: row.state || null,
     address: row.address || null,
+    latitude: validCoordinate(row.latitude, -90, 90),
+    longitude: validCoordinate(row.longitude, -180, 180),
     phone: row.phone || null,
     website: row.website || null,
     timezone: row.timezone,
@@ -669,6 +672,12 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     qrCodeLabel: row.qr_code_label || null,
     qrCodeUpdatedAt: row.qr_code_updated_at || null,
   };
+}
+
+function validCoordinate(value: unknown, minimum: number, maximum: number) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const coordinate = Number(value);
+  return Number.isFinite(coordinate) && coordinate >= minimum && coordinate <= maximum ? coordinate : null;
 }
 
 async function countByVenue(client: DancrClient, table: string, venueId: string) {

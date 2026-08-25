@@ -71,6 +71,8 @@ export type AdminVenueInput = {
   city?: string;
   state?: string | null;
   address?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   phone?: string | null;
   website?: string | null;
   timezone?: string | null;
@@ -600,7 +602,7 @@ async function pendingContentReviewDancerIds(db: any): Promise<string[]> {
 export async function getAdminVenues(client: DancrClient, city?: string | null) {
   let query = (client as any)
     .from("venues")
-    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, created_at, updated_at")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, created_at, updated_at")
     .order("city", { ascending: true })
     .order("name", { ascending: true });
 
@@ -631,7 +633,7 @@ export async function createAdminVenue(client: DancrClient, adminId: string, inp
   const { data, error } = await (client as any)
     .from("venues")
     .insert(row)
-    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active")
     .single();
 
   if (error) throw error;
@@ -672,7 +674,7 @@ export async function updateAdminVenue(
     .from("venues")
     .update(row)
     .eq("id", venueId)
-    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
     .single();
 
   if (error) throw error;
@@ -720,7 +722,7 @@ export async function transitionAdminManagedVenuePage(
         page_review_notes: null,
       })
       .eq("id", venueId)
-      .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+      .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
       .single();
     if (error) throw error;
 
@@ -754,7 +756,7 @@ export async function transitionAdminManagedVenuePage(
     .update({ is_active: true, published_at: now, page_review_status: "published", page_review_notes: null })
     .eq("id", venueId)
     .eq("page_review_status", "venue_approved")
-    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
+    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
     .single();
   if (error) throw error;
 
@@ -1602,7 +1604,7 @@ function getMilestoneMessage(stageName: string, city: string, oldRank: number | 
 }
 
 function venueInputToRow(input: AdminVenueInput, creating: boolean) {
-  const row: Record<string, string | boolean | null> = {};
+  const row: Record<string, string | number | boolean | null> = {};
 
   if (typeof input.name === "string") {
     row.name = requiredText(input.name, "Venue name is required.");
@@ -1613,6 +1615,8 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   if (typeof input.city === "string") row.city = requiredText(input.city, "Venue city is required.");
   if ("state" in input) row.state = optionalText(input.state);
   if ("address" in input) row.address = optionalText(input.address);
+  if ("latitude" in input) row.latitude = requiredCoordinate(input.latitude, "latitude", -90, 90);
+  if ("longitude" in input) row.longitude = requiredCoordinate(input.longitude, "longitude", -180, 180);
   if ("phone" in input) row.phone = optionalText(input.phone);
   if ("website" in input) row.website = optionalWebsite(input.website);
   if ("timezone" in input) row.timezone = optionalText(input.timezone) || "America/Los_Angeles";
@@ -1627,6 +1631,17 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   }
 
   return row;
+}
+
+function requiredCoordinate(value: number | string | null | undefined, label: string, minimum: number, maximum: number) {
+  if (value === null || value === undefined || String(value).trim() === "") {
+    throw new Error(`Venue ${label} is required.`);
+  }
+  const coordinate = Number(value);
+  if (!Number.isFinite(coordinate) || coordinate < minimum || coordinate > maximum) {
+    throw new Error(`Enter a valid venue ${label} between ${minimum} and ${maximum}.`);
+  }
+  return coordinate;
 }
 
 async function logAdminAction(

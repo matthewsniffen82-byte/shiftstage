@@ -105,6 +105,8 @@ export type VenueOwnerProfile = {
   city: string;
   state: string | null;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   phone: string | null;
   website: string | null;
   timezone: string;

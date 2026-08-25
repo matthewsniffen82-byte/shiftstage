@@ -2713,7 +2713,7 @@ function VenueManager({
     const token = readToken();
     if (!token) return setVenueStatus(venueId, "Admin sign in required.");
     const form = new FormData(event.currentTarget);
-    const body = Object.fromEntries(["name", "address", "city", "state", "phone", "website", "timezone", "opensAt", "closesAt"]
+    const body = Object.fromEntries(["name", "address", "city", "state", "latitude", "longitude", "phone", "website", "timezone", "opensAt", "closesAt"]
       .map((key) => [key, String(form.get(key) || "").trim()]));
     try {
       setBusyVenueId(venueId);
@@ -2900,6 +2900,7 @@ function VenueManager({
           const reviewStatus = asText(venue.page_review_status) || (isActive ? "published" : "admin_draft");
           const requirements = [
             { label: "Venue details", complete: Boolean(asText(venue.name) && asText(venue.address) && asText(venue.city) && asText(venue.state)) },
+            { label: "Map coordinates", complete: validAdminCoordinate(venue.latitude, -90, 90) !== null && validAdminCoordinate(venue.longitude, -180, 180) !== null },
             { label: "Public phone", complete: Boolean(asText(venue.phone)) },
             { label: "Venue hours", complete: Boolean(asText(venue.opens_at) && asText(venue.closes_at)) },
             { label: "Venue logo", complete: Boolean(asText(venue.logo_image_url)) },
@@ -2946,6 +2947,8 @@ function VenueManager({
                   <label>Public address<input name="address" defaultValue={asText(venue.address)} required readOnly={isActive} /></label>
                   <label>City<input name="city" defaultValue={asText(venue.city)} required readOnly={isActive} /></label>
                   <label>State<input name="state" defaultValue={asText(venue.state)} required readOnly={isActive} /></label>
+                  <label>Latitude<input name="latitude" defaultValue={asText(venue.latitude)} inputMode="decimal" max="90" min="-90" required readOnly={isActive} step="0.000001" type="number" /></label>
+                  <label>Longitude<input name="longitude" defaultValue={asText(venue.longitude)} inputMode="decimal" max="180" min="-180" required readOnly={isActive} step="0.000001" type="number" /></label>
                   <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} required readOnly={isActive} type="tel" /></label>
                   <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={isActive} inputMode="url" /></label>
                   <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={isActive} /></label>
@@ -4194,6 +4197,12 @@ function asText(value: unknown) {
   if (typeof value === "string") return value.trim();
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   return "";
+}
+
+function validAdminCoordinate(value: unknown, minimum: number, maximum: number) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const coordinate = Number(value);
+  return Number.isFinite(coordinate) && coordinate >= minimum && coordinate <= maximum ? coordinate : null;
 }
 
 function asRecordArray(value: unknown): Array<Record<string, unknown>> {

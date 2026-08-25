@@ -45060,9 +45060,9 @@
     }
 
     function hasCoordinates(value) {
-      const latitude = Number(value?.latitude);
-      const longitude = Number(value?.longitude);
-      return Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+      const latitude = liveVenueCoordinate(value?.latitude, -90, 90);
+      const longitude = liveVenueCoordinate(value?.longitude, -180, 180);
+      return latitude !== null && longitude !== null;
     }
 
     function distanceMilesBetween(left, right) {

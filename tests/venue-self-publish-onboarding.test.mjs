@@ -20,6 +20,7 @@ const [
   signupService,
   notificationDelivery,
   documentation,
+  coordinateMigration,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220002_venue_self_publish_onboarding.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608240001_admin_managed_venue_page_review.sql", import.meta.url), "utf8"),
@@ -38,6 +39,7 @@ const [
   readFile(new URL("../src/lib/dancr/venue-signup-requests.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/notification-delivery.ts", import.meta.url), "utf8"),
   readFile(new URL("../docs/venue-onboarding.md", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608240006_require_published_venue_coordinates.sql", import.meta.url), "utf8"),
 ]);
 
 test("approved requests still create private workspaces without public activation", () => {
@@ -94,8 +96,22 @@ test("admins can prepare all page fields and official venue images", () => {
   assert.match(adminMediaRoute, /uploadVenueCoverImageByAdmin/);
   assert.match(venueService, /MyDancr manages venue page images/);
   const publicationRequirements = venueService.match(/export function getVenuePublicationState[\s\S]*?(?=export async function reviewVenuePageForAccount)/)?.[0] || "";
+  assert.match(adminClient, /name="latitude"[\s\S]*?required/);
+  assert.match(adminClient, /name="longitude"[\s\S]*?required/);
+  assert.match(adminService, /requiredCoordinate\(input\.latitude, "latitude", -90, 90\)/);
+  assert.match(adminService, /requiredCoordinate\(input\.longitude, "longitude", -180, 180\)/);
+  assert.match(publicationRequirements, /key: "coordinates"[\s\S]*?Verified map coordinates/);
   assert.match(publicationRequirements, /key: "logo"/);
   assert.doesNotMatch(publicationRequirements, /key: "cover"/);
+});
+
+test("published venues require verified coordinates at the database boundary", () => {
+  assert.match(coordinateMigration, /where slug = 'scores-las-vegas'/);
+  assert.match(coordinateMigration, /latitude = 36\.135360/);
+  assert.match(coordinateMigration, /longitude = -115\.174890/);
+  assert.match(coordinateMigration, /venues_published_coordinates_required/);
+  assert.match(coordinateMigration, /is_active is not true[\s\S]*?latitude is not null[\s\S]*?longitude is not null/);
+  assert.match(coordinateMigration, /validate constraint venues_published_coordinates_required/);
 });
 
 test("the venue dashboard presents a read-only review and approval experience", () => {

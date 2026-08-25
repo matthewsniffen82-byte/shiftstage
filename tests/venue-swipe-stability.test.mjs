@@ -18,6 +18,7 @@ test("venues with missing coordinates remain visible in the selected city", () =
   assert.equal(normalizeCoordinate(181, -180, 180), null);
   assert.match(homeSource, /latitude: liveVenueCoordinate\(item\.latitude, -90, 90\)/);
   assert.match(homeSource, /longitude: liveVenueCoordinate\(item\.longitude, -180, 180\)/);
+  assert.match(homeSource, /function hasCoordinates\(value\) \{[\s\S]*?liveVenueCoordinate\(value\?\.latitude, -90, 90\)[\s\S]*?liveVenueCoordinate\(value\?\.longitude, -180, 180\)[\s\S]*?latitude !== null && longitude !== null/);
   assert.match(homeSource, /function venueWithinSelectedRadius\(venue\) \{[\s\S]*?return miles === null \|\| miles <= selectedRadiusMiles\(\);/);
 });
 
