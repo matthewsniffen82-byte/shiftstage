@@ -1,20 +1,20 @@
 /* Keep full-profile playback visually consistent with MyDancr TV cards. */
 #profileBackdrop .profile-modal-video-controls {
-  position: absolute;
-  z-index: 7;
-  inset: 0;
-  display: block;
-  padding: 0;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  opacity: 1;
-  transform: none;
-  pointer-events: none;
-  transition: none;
+  position: absolute !important;
+  z-index: 7 !important;
+  inset: 0 !important;
+  display: block !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: none !important;
+  transition: none !important;
 }
 
 #profileBackdrop .profile-modal-video-controls[hidden] {
@@ -23,23 +23,24 @@
 
 #profileBackdrop .profile-modal-video-controls.is-visible,
 #profileBackdrop .profile-modal-video-controls:focus-within {
-  opacity: 1;
-  transform: none;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: none !important;
 }
 
 #profileBackdrop .profile-modal-video-controls button {
-  position: absolute;
-  z-index: 3;
-  width: 52px;
-  min-width: 52px;
-  max-width: 52px;
-  height: 52px;
-  min-height: 52px;
-  max-height: 52px;
-  display: grid;
-  place-items: center;
-  margin: 0;
-  padding: 0;
+  position: absolute !important;
+  z-index: 3 !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  display: grid !important;
+  place-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 50% !important;
   color: #f8f8fa !important;
@@ -47,60 +48,65 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24) !important;
   -webkit-backdrop-filter: blur(12px) saturate(115%) !important;
   backdrop-filter: blur(12px) saturate(115%) !important;
-  opacity: 0;
-  transform: scale(0.96);
-  pointer-events: none;
-  transition: opacity 160ms ease, transform 160ms ease;
+  opacity: 0 !important;
+  transform: scale(0.96) !important;
+  pointer-events: none !important;
+  transition: opacity 160ms ease, transform 160ms ease !important;
 }
 
 #profileBackdrop .profile-modal-video-controls.is-visible button,
 #profileBackdrop .profile-modal-video-controls:focus-within button {
-  opacity: 1;
-  transform: none;
-  pointer-events: auto;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
 }
 
 #profileBackdrop .profile-modal-video-controls #modalVideoPlayback {
-  top: 50%;
-  left: 50%;
-  margin: -26px 0 0 -26px;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 50% !important;
+  margin: -26px 0 0 -26px !important;
 }
 
 #profileBackdrop .profile-modal-video-controls #modalVideoSound {
-  top: 14px;
-  right: 14px;
+  top: 14px !important;
+  right: 14px !important;
+  bottom: auto !important;
+  left: auto !important;
 }
 
 #profileBackdrop .profile-modal-video-controls .profile-modal-media-expand {
-  position: absolute;
-  z-index: 3;
-  right: 14px;
-  bottom: 18px;
-  left: auto;
-  opacity: 0;
-  transform: scale(0.96);
-  pointer-events: none;
+  position: absolute !important;
+  z-index: 3 !important;
+  top: auto !important;
+  right: 14px !important;
+  bottom: 18px !important;
+  left: auto !important;
+  opacity: 0 !important;
+  transform: scale(0.96) !important;
+  pointer-events: none !important;
 }
 
 #profileBackdrop .profile-modal-video-controls.is-visible .profile-modal-media-expand,
 #profileBackdrop .profile-modal-video-controls:focus-within .profile-modal-media-expand {
-  opacity: 1;
-  transform: none;
-  pointer-events: auto;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
 }
 
 #profileBackdrop .profile-modal-video-controls .profile-modal-media-control-icon {
-  width: 22px;
-  height: 22px;
+  width: 22px !important;
+  height: 22px !important;
 }
 
 #profileBackdrop .profile-modal-video-controls input[type="range"] {
   box-sizing: border-box !important;
-  position: absolute;
-  z-index: 2;
-  right: 14px;
-  bottom: 0;
-  left: 14px;
+  position: absolute !important;
+  z-index: 2 !important;
+  right: 14px !important;
+  bottom: 0 !important;
+  left: 14px !important;
   width: calc(100% - 28px) !important;
   min-width: 0 !important;
   height: 28px !important;
@@ -114,8 +120,8 @@
   background: transparent !important;
   box-shadow: none !important;
   filter: none !important;
-  cursor: pointer;
-  pointer-events: auto;
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 #profileBackdrop .profile-modal-video-controls input[type="range"]::-webkit-slider-runnable-track {
@@ -129,6 +135,8 @@
 }
 
 #profileBackdrop .profile-modal-video-controls input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
   width: 0;
   height: 0;
   margin: 0;
@@ -167,16 +175,17 @@
 }
 
 #profileBackdrop .profile-modal-video-controls output {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  border: 0;
-  white-space: nowrap;
+  position: absolute !important;
+  width: 1px !important;
+  min-width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
 }
 
 @media (max-width: 520px) {
@@ -186,16 +195,16 @@
   }
 
   #profileBackdrop .profile-modal-video-controls button {
-    width: 50px;
-    min-width: 50px;
-    max-width: 50px;
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
   }
 
   #profileBackdrop .profile-modal-video-controls #modalVideoPlayback {
-    margin: -25px 0 0 -25px;
+    margin: -25px 0 0 -25px !important;
   }
 }
 
