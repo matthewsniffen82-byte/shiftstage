@@ -267,7 +267,8 @@ test("social icons use one simple Socials heading without publishing handles", (
   assert.match(socialLinks, /rel="noopener noreferrer"/);
   assert.match(socialLinks, /opens in a new tab/);
   assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
-  assert.match(socialLinks, /<SocialIcon platform=\{link\.platform\} \/>/);
+  assert.match(socialLinks, /<SocialPlatformIcon platform=\{link\.platform\} \/>/);
+  assert.match(socialLinks, /export function SocialPlatformIcon/);
   assert.doesNotMatch(socialLinks, /<strong>\{link\.handle\}<\/strong>/);
   assert.doesNotMatch(socialLinks, /social-list-toggle|Show fewer links|more links/);
   assert.match(profilePage, /\.social-links-control \{ display: grid; justify-items: center;/);

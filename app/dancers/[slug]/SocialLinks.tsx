@@ -68,7 +68,7 @@ export function SocialLinks({ dancerId, heading = "Socials", links, showConnectL
             target="_blank"
             title={platformLabels[link.platform]}
           >
-            <SocialIcon platform={link.platform} />
+            <SocialPlatformIcon platform={link.platform} />
           </a>
         ))}
       </div>
@@ -76,7 +76,7 @@ export function SocialLinks({ dancerId, heading = "Socials", links, showConnectL
   );
 }
 
-function SocialIcon({ platform }: { platform: SocialPlatform }) {
+export function SocialPlatformIcon({ platform }: { platform: SocialPlatform }) {
   if (platform === "instagram") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">

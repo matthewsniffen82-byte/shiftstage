@@ -10,7 +10,7 @@ const [dashboardSource, mobileAppSource, rootRouteSource, mobileSocialStripSourc
 ]);
 
 test("social-link editors ask for a username or profile URL without an at-sign", () => {
-  const dashboardPlatforms = dashboardSource.match(/const SOCIAL_PLATFORMS = \[[\s\S]*?\n\];/)?.[0] || "";
+  const dashboardPlatforms = dashboardSource.match(/const SOCIAL_PLATFORMS:[^=]+ = \[[\s\S]*?\n\];/)?.[0] || "";
   assert.equal(dashboardPlatforms.match(/placeholder: "Username or profile URL"/g)?.length, 5);
   assert.doesNotMatch(dashboardPlatforms, /placeholder: "@/);
 

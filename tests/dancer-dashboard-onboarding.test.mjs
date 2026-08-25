@@ -155,7 +155,7 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.match(dashboard, /for \(const task of detail\.tasks\) \{[\s\S]*?if \(!await task\(\)\) return false/);
   assert.match(dashboard, /className=\{`dancer-profile-preview-overlay\$\{isEditor \? " is-editor" : ""\}`\}/);
   assert.match(dashboard, /aria-label="Close profile preview"[\s\S]*?onClick=\{closePreview\}/);
-  assert.match(dashboard, /className="dancer-profile-builder-panel"[\s\S]*?editorSections\[activeEditorSection\]/);
+  assert.match(dashboard, /className="dancer-profile-builder-panel"[\s\S]*?activeEditorContent/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \{ z-index:1510; \}/);
   assert.match(dashboard, /\.dancer-profile-builder-panel > div \{[^}]*overflow-x:hidden;[^}]*overflow-y:auto;[^}]*scroll-padding-bottom:max\(28px,env\(safe-area-inset-bottom\)\);/);
   assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-grid,[\s\S]*?grid-template-columns:repeat\(2,58px\) !important;/);
@@ -168,7 +168,7 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.doesNotMatch(dashboard, /editorTitle/);
   assert.match(dashboard, /disabled=\{isEditorSaving \|\| !requirementsComplete\}/);
   assert.match(dashboard, /<DancerSetupPanel[\s\S]*?unifiedSave/);
-  assert.match(dashboard, /<DancerSocialPanel profile=\{profile\} onProfileChange=\{onProfileChange\} unifiedSave \/>/);
+  assert.match(dashboard, /<DancerSocialPanel activePlatform=\{platform\} profile=\{profile\} onProfileChange=\{onProfileChange\} unifiedSave \/>/);
   assert.match(dashboard, /\{unifiedSave \? null : \([\s\S]*?Save profile/);
   assert.match(dashboard, /\{unifiedSave \? null : \([\s\S]*?Save socials/);
 });
@@ -215,7 +215,14 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("photos"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("videos"\)\}/);
-  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("socials"\)\}/);
+  assert.match(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
+  assert.match(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
+  assert.match(dashboard, /<SocialPlatformIcon platform=\{platform\.key\} \/>[\s\S]*?<span aria-hidden="true">\+<\/span>/);
+  assert.match(dashboard, /socialEditorContent = editorSections\?\.socials\?\.\(activeSocialPlatform \|\| "instagram"\)/);
+  assert.match(dashboard, /hidden=\{activeEditorSection !== "socials"\}/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\[hidden\] \{ display:none; \}/);
+  assert.match(dashboard, /className="dancer-social-link-form"[\s\S]*?Profile link or username/);
+  assert.match(dashboard, /\.dancer-profile-builder-social-platform \{[^}]*width:52px;[^}]*border-radius:50%/);
   assert.match(dashboard, /dancerStepOneStateLabel/);
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
 });
