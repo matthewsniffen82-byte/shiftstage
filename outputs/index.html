@@ -36654,6 +36654,7 @@
           min-height: 0 !important;
           display: block !important;
           object-fit: cover !important;
+          object-position: center top !important;
           border-radius: 1px !important;
         }
         #profileBackdrop .gallery .profile-media-thumb-poster {
@@ -50494,10 +50495,13 @@
     }
 
     function profilePhotoThumbMarkup(item, total) {
-      const photoAttrs = customPhotoAttrs(item.photoUrl, item.photoSrcSet);
+      const photoAttrs = nativeResponsivePhotoAttrs(item.photoUrl, item.photoSrcSet);
+      const photoMarkup = photoAttrs
+        ? `<img class="portrait ${item.photoClass} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false">`
+        : `<span class="portrait ${item.photoClass}"></span>`;
       return `
         <button class="thumb ${item.index === 0 ? "active" : ""}" type="button" data-profile-photo-index="${item.index}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${item.index + 1} of ${total} full screen" aria-pressed="${item.index === 0 ? "true" : "false"}">
-          <span class="portrait ${item.photoClass}${photoAttrs.className}"${photoAttrs.style}></span>
+          ${photoMarkup}
         </button>
       `;
     }

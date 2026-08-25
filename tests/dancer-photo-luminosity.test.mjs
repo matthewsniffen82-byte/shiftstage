@@ -64,6 +64,27 @@ test("profile avatars, gallery thumbnails, and full-screen photos share the rest
   );
 });
 
+test("profile grid photos use the native responsive image path used by dancer discovery", () => {
+  const profileThumbRenderer = homeSource.match(
+    /function profilePhotoThumbMarkup\(item, total\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+
+  assert.ok(profileThumbRenderer, "the profile photo thumbnail renderer must exist");
+  assert.match(
+    profileThumbRenderer,
+    /nativeResponsivePhotoAttrs\(item\.photoUrl, item\.photoSrcSet\)/,
+  );
+  assert.match(
+    profileThumbRenderer,
+    /<img class="portrait \$\{item\.photoClass\} has-custom-photo" \$\{photoAttrs\}[^>]*sizes="\(max-width: 720px\) calc\(\(100vw - 6px\) \/ 3\), 250px"[^>]*width="360" height="504"[^>]*loading="lazy"[^>]*decoding="async"[^>]*draggable="false">/,
+  );
+  assert.doesNotMatch(profileThumbRenderer, /customPhotoAttrs\(/);
+  assert.match(
+    homeSource,
+    /#profileBackdrop \.gallery \.thumb > img,[\s\S]*?object-fit: cover !important;[\s\S]*?object-position: center top !important;/,
+  );
+});
+
 test("Android's final media layer outranks the coarse-pointer filter reset", () => {
   const androidMediaLayer = aestheticSource.match(
     /Android media luminance recovery must remain the final media layer[\s\S]*$/,
