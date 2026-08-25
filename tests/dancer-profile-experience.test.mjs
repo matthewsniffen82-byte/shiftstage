@@ -246,8 +246,9 @@ test("profile videos stay passive in the grid and open the complete full-screen 
     profileCarousel.indexOf("{viewer && activeViewerItem"),
   );
   assert.match(profileCarousel, /className=\{`profile-media-grid-item is-\$\{item\.kind\}`\}/);
-  assert.match(profileCarousel, /item\.posterUrl[\s\S]*?loading="lazy"[\s\S]*?src=\{item\.posterUrl\}/);
-  assert.doesNotMatch(mediaGrid, /<video/);
+  assert.match(mediaGrid, /<video[\s\S]*?muted[\s\S]*?playsInline[\s\S]*?preload="metadata"/);
+  assert.match(mediaGrid, /src=\{`\$\{item\.videoUrl\}#t=0\.1`\}/);
+  assert.doesNotMatch(mediaGrid, /autoPlay/);
   assert.match(profileCarousel, /className="profile-media-play"/);
   assert.match(profileCarousel, /className="profile-media-duration"/);
   assert.match(profileCarousel, /openViewer\(item\.kind, index, event\.currentTarget\)/);

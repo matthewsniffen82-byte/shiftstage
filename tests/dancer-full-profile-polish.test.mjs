@@ -28,6 +28,10 @@ test("empty and upcoming schedules use one explanatory production card", () => {
     liveApp,
     /return `\s*<div class="info-tile">\s*<strong>Now<\/strong>[\s\S]*?<strong>Next shift<\/strong>[\s\S]*?No shift posted/,
   );
+  assert.match(
+    liveApp,
+    /No-shift profiles should communicate the state[\s\S]*?\.profile-schedule-card\.schedule-empty \{[\s\S]*?grid-template-columns: auto minmax\(0, 1fr\) !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 8px 10px !important;/,
+  );
   const shiftsFunction = liveApp.match(
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
   )?.[0] || "";
@@ -116,7 +120,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /data-profile-more-actions aria-haspopup="menu" aria-expanded="false"/);
   assert.match(
     liveApp,
-    /aria-label="Report and profile options"><span aria-hidden="true">•••<\/span><span>Report &amp; options<\/span>/,
+    /aria-label="More profile actions"><span aria-hidden="true">•••<\/span><span>More<\/span>/,
   );
   assert.match(liveApp, /data-profile-more-menu role="menu" hidden/);
   assert.match(liveApp, /id="reportBtn" type="button" role="menuitem"/);
@@ -397,12 +401,15 @@ test("Working Now profiles do not repeat the Club Confirmed check-in card", () =
   assert.match(liveApp, /\$\{profileLocationStatusTile\(profile, city\)\}/);
 });
 
-test("inactive profile Club Deals are hidden completely", () => {
+test("inactive profile Club Deals keep a neutral placeholder", () => {
   const dealMarkup = liveApp.match(
     /function profileDealTileMarkup\(profile\) \{[\s\S]*?(?=\n    function profileShareText)/,
   )?.[0] || "";
   assert.match(dealMarkup, /if \(state\.key === "available"\)/);
-  assert.match(dealMarkup, /return "";/);
-  assert.doesNotMatch(dealMarkup, /profile-qr-unavailable|Not active|Check back later/);
+  assert.match(dealMarkup, /profile-club-deal-tile is-inactive/);
+  assert.match(dealMarkup, /aria-label="Inactive Club Deal"/);
+  assert.match(dealMarkup, /<span class="profile-club-deal-action-copy"><strong>Inactive<\/strong><\/span>/);
   assert.match(dealMarkup, /Available tonight at \$\{escapeHtml\(venueName\)\} · Cashier NFC required/);
+  assert.match(liveApp, /#profileBackdrop #profileModal \.modal-body \{[\s\S]*?padding-bottom: 0 !important;/);
+  assert.match(liveApp, /\.profile-club-deal-tile\.is-inactive \.profile-club-deal-qr-button \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?place-items: center !important;/);
 });

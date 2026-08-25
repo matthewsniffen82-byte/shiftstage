@@ -118,7 +118,7 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
           type="button"
         >
           <ShareIcon />
-          Share profile
+          Share
         </button>
         <span aria-live="polite">{status}</span>
       </div>

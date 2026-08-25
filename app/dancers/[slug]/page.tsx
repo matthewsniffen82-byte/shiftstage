@@ -245,7 +245,33 @@ export default async function DancerPublicPage({ params }: PageProps) {
               sectionId="club-deal"
             />
           </section>
-        ) : null}
+        ) : (
+          <section
+            className="profile-active-deal is-inactive"
+            aria-label="Inactive Club Deal"
+          >
+            <div className="profile-club-deal-placeholder">
+              <span>
+                <small>Club Deal</small>
+                <strong>
+                  {activeShift
+                    ? "No active deal"
+                    : upcomingShifts.length
+                      ? "Available after check-in"
+                      : "No active club deal"}
+                </strong>
+                <em>
+                  {activeShift
+                    ? `${activeShift.venueName} has no live offer right now.`
+                    : upcomingShifts[0]
+                      ? `Deals activate after a verified check-in at ${upcomingShifts[0].venueName}.`
+                      : "Deals activate after a verified club check-in."}
+                </em>
+              </span>
+              <button disabled type="button">Inactive</button>
+            </div>
+          </section>
+        )}
 
         {profile.socialLinks.length ? (
           <section className="profile-social-section" aria-labelledby="profile-social-heading">
@@ -281,7 +307,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
           videos={tvVideos.map((video) => ({
             id: video.id,
             videoUrl: video.videoUrl,
-            posterUrl: video.dancer.primaryPhotoUrl || heroPhoto,
             durationSeconds: video.durationSeconds,
           }))}
           stageName={profile.stageName}
@@ -446,6 +471,13 @@ function PublicProfileStyles() {
       p { margin: 0; color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .profile-active-deal { display: grid; justify-items: stretch; margin-top: 2px; }
       .profile-active-deal.has-club-deal { padding: 7px; border: 1px solid rgba(77,236,157,.5); border-radius: 15px; background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.12), transparent 14rem), rgba(5,18,14,.9); box-shadow: 0 12px 34px rgba(0,0,0,.3), 0 0 24px rgba(77,236,157,.11); }
+      .profile-active-deal.is-inactive { padding: 7px; border: 1px solid rgba(255,255,255,.09); border-radius: 15px; background: rgba(255,255,255,.025); box-shadow: none; }
+      .profile-club-deal-placeholder { min-height: 58px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 8px 9px; border: 1px solid rgba(255,255,255,.08); border-radius: 11px; background: rgba(6,7,10,.68); }
+      .profile-club-deal-placeholder > span { min-width: 0; display: grid; gap: 3px; }
+      .profile-club-deal-placeholder small { color: #8f849c; font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+      .profile-club-deal-placeholder strong { overflow: hidden; color: #d9d3e0; font-size: 14px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-club-deal-placeholder em { overflow: hidden; color: #857b8f; font-size: 9px; font-style: normal; font-weight: 750; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-club-deal-placeholder button { min-width: 82px; min-height: 38px; padding: 0 11px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #756d7d; background: rgba(255,255,255,.025); font: inherit; font-size: 10px; font-weight: 900; }
       .club-deal-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px; border: 1px solid rgba(126,234,255,.22); border-radius: 14px; background: rgba(0,0,0,.24); }
       .club-deal-copy { min-width: 0; display: grid; gap: 7px; }
       .club-deal-copy h2 { font-size: 20px; }

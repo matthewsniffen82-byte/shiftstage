@@ -404,7 +404,7 @@ test("the mobile utility header is borderless with one neutral elevation shadow 
 
 test("profile violet side beams are limited to live, upcoming, and active deals", () => {
   const profileAccentBlock = liveApp.match(
-    /\/\* Profile color is reserved[\s\S]*?(?=\s*<\/style>)/,
+    /\/\* Profile color is reserved[\s\S]*?(?=\s*\/\* Edit Profile is a preview workspace)/,
   )?.[0] || "";
 
   assert.ok(profileAccentBlock, "profile accent CSS must exist");

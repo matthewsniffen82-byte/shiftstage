@@ -68,10 +68,10 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(profileActions, /"I’m Going"/);
   assert.match(profileActions, /rideControl/);
   assert.match(profileActions, /profile-action-share-slot/);
-  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Get a Ride[\s\S]*?Share Profile[\s\S]*?Schedule[\s\S]*?More/);
+  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Get a Ride[\s\S]*?Share[\s\S]*?Schedule[\s\S]*?More/);
   assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "clock" \| "heart" \| "share"/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
-  assert.match(liveApp, /profileActionButtonMarkup\("share", "Share Profile"\)/);
+  assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
   assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
   assert.match(liveApp, /Club Deals redeem only through a club cashier NFC tap/);
@@ -98,6 +98,9 @@ test("Working Now profiles mirror the upcoming schedule hierarchy and retain the
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<small>Club<\/small>[\s\S]*?Venue-confirmed until/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
+  assert.match(profilePage, /className="profile-active-deal is-inactive"[\s\S]*?aria-label="Inactive Club Deal"/);
+  assert.match(profilePage, /activeShift[\s\S]*?"No active deal"[\s\S]*?"Available after check-in"[\s\S]*?"No active club deal"/);
+  assert.match(profilePage, /Deals activate after a verified club check-in\./);
   assert.match(
     profilePage,
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
@@ -134,7 +137,7 @@ test("active full-profile Club Deals render a compact cashier NFC action and use
   );
   assert.match(
     liveApp,
-    /Only a genuinely active deal receives the emerald treatment\.[\s\S]*?#profileBackdrop #profileModal \.profile-club-deal-tile \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(96px, 108px\) !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 8px 9px !important;/,
+    /Every profile keeps the Club Deal slot\.[\s\S]*?#profileBackdrop #profileModal \.profile-club-deal-tile \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(96px, 108px\) !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 8px 9px !important;/,
   );
   assert.match(activeDealMarkup, /data-profile-club-deal-config=/);
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
@@ -151,11 +154,11 @@ test("active full-profile Club Deals render a compact cashier NFC action and use
   assert.doesNotMatch(liveApp, /profile-club-deal-count/);
   assert.match(
     liveApp,
-    /Only a genuinely active deal[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 108px !important;[\s\S]*?min-height: 48px !important;[\s\S]*?grid-template-columns: 22px minmax\(0, 1fr\) !important;/,
+    /Every profile keeps the Club Deal slot[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 108px !important;[\s\S]*?min-height: 48px !important;[\s\S]*?grid-template-columns: 22px minmax\(0, 1fr\) !important;/,
   );
   assert.match(
     liveApp,
-    /Only a genuinely active deal[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \.club-deal-qr-symbol \{[\s\S]*?width: 22px !important;[\s\S]*?height: 22px !important;/,
+    /Every profile keeps the Club Deal slot[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \.club-deal-qr-symbol \{[\s\S]*?width: 22px !important;[\s\S]*?height: 22px !important;/,
   );
   assert.match(
     liveApp,
@@ -166,7 +169,7 @@ test("active full-profile Club Deals render a compact cashier NFC action and use
 test("live dancer essentials stay compact above media and clear the mobile dock", () => {
   assert.match(
     liveApp,
-    /#profileBackdrop #profileModal \.modal-grid \{\s*grid-auto-rows: max-content !important;/,
+    /#profileBackdrop #profileModal \.modal-grid \{[\s\S]*?align-content: start !important;[\s\S]*?grid-auto-rows: max-content !important;/,
   );
   assert.match(
     liveApp,
@@ -190,7 +193,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /Only a genuinely active deal[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 108px !important;[\s\S]*?max-width: 108px !important;/,
+    /Every profile keeps the Club Deal slot[\s\S]*?#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 108px !important;[\s\S]*?max-width: 108px !important;/,
   );
   assert.match(
     liveApp,

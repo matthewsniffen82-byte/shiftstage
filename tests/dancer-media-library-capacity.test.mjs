@@ -46,15 +46,20 @@ test("public media grids lazy-render in batches of twelve without a load button"
   assert.doesNotMatch(liveApp, /profile-media-load-more|>Load more</i);
 });
 
-test("video grids use poster images and only create video elements in viewers", () => {
+test("video grids show a passive frame from each actual video", () => {
   const gridMarkup = carousel.slice(
     carousel.indexOf("{visibleItems.map"),
     carousel.indexOf("{viewer && activeViewerItem"),
   );
-  assert.match(gridMarkup, /item\.posterUrl/);
-  assert.doesNotMatch(gridMarkup, /<video/);
+  assert.match(gridMarkup, /<video/);
+  assert.match(gridMarkup, /muted[\s\S]*?playsInline[\s\S]*?preload="metadata"/);
+  assert.match(gridMarkup, /src=\{`\$\{item\.videoUrl\}#t=0\.1`\}/);
+  assert.doesNotMatch(carousel, /posterUrl: video\.posterUrl \|\| photoMedia/);
+  assert.doesNotMatch(profilePage, /posterUrl: video\.dancer\.primaryPhotoUrl/);
   assert.match(carousel, /className="profile-media-viewer-preload"/);
   assert.match(carousel, /preload="metadata"/);
   assert.match(liveApp, /function profileVideoThumbMarkup/);
-  assert.match(liveApp, /profileVideoPosterUrl\(item\)/);
+  assert.match(liveApp, /function profileVideoPreviewUrl\(item\)/);
+  assert.match(liveApp, /<video src="\$\{escapeHtml\(previewUrl\)\}"[\s\S]*?muted playsinline preload="metadata"/);
+  assert.doesNotMatch(liveApp.match(/function profileVideoPosterUrl\(item\)[\s\S]*?function profileVideoPreviewUrl/)?.[0] || "", /primaryPhotoUrl|avatarPhotoUrl/);
 });

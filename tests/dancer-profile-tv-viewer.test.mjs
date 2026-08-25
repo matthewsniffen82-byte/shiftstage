@@ -74,7 +74,7 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
 });
 
-test("live profile thumbnails use passive posters while the selected viewer owns playback", () => {
+test("live profile thumbnails use passive video frames while the selected viewer owns playback", () => {
   const loader =
     liveApp.match(
       /async function loadProfileMyDancrTv\(profile\)[\s\S]*?\n    function formatProfileTvShift/,
@@ -84,7 +84,8 @@ test("live profile thumbnails use passive posters while the selected viewer owns
   assert.match(loader, /modalGallery\.profileTvVideos = videos/);
   assert.match(loader, /modalGallery\.dataset\.profileMediaProfile !== requestProfileId/);
   assert.match(loader, /appendNextProfileMediaBatch\("video"/);
-  assert.match(liveApp, /function profileVideoThumbMarkup[\s\S]*?profileVideoPosterUrl\(item\)/);
+  assert.match(liveApp, /function profileVideoThumbMarkup[\s\S]*?profileVideoPreviewUrl\(item\)/);
+  assert.match(liveApp, /muted playsinline preload="metadata" tabindex="-1"/);
   assert.doesNotMatch(loader, /createElement\("video"\)|video\.src = item\.videoUrl/);
   assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)/);
   assert.match(

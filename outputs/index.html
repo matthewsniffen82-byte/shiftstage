@@ -37297,7 +37297,7 @@
         #profileBackdrop :is(
           .working-now-tile,
           .profile-schedule-card.schedule-upcoming,
-          .profile-club-deal-tile
+          .profile-club-deal-tile.is-active
         ) {
           position: relative !important;
           overflow: hidden !important;
@@ -37308,7 +37308,7 @@
         #profileBackdrop :is(
           .working-now-tile,
           .profile-schedule-card.schedule-upcoming,
-          .profile-club-deal-tile
+          .profile-club-deal-tile.is-active
         )::before {
           content: "";
           position: absolute;
@@ -38096,7 +38096,61 @@
         }
 
         #profileBackdrop #profileModal .modal-grid {
+          align-content: start !important;
           grid-auto-rows: max-content !important;
+        }
+
+        #profileBackdrop #profileModal .modal-body {
+          height: auto !important;
+          align-content: start !important;
+          padding-bottom: 0 !important;
+        }
+
+        /* No-shift profiles should communicate the state without spending a
+           full dashboard card on an unavailable schedule. */
+        #profileBackdrop #profileModal .modal-grid > .profile-schedule-card.schedule-empty {
+          grid-template-columns: auto minmax(0, 1fr) !important;
+          align-items: center !important;
+          column-gap: 10px !important;
+          row-gap: 2px !important;
+          min-height: 0 !important;
+          padding: 8px 10px !important;
+          border-color: rgba(255,255,255,.08) !important;
+          background: rgba(255,255,255,.025) !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty > strong {
+          grid-column: 1 !important;
+          grid-row: 1 / span 2 !important;
+          align-self: center !important;
+          padding: 6px 8px !important;
+          border: 1px solid rgba(255,255,255,.08) !important;
+          border-radius: 999px !important;
+          color: #91889c !important;
+          background: rgba(255,255,255,.025) !important;
+          font-size: 8px !important;
+          letter-spacing: .1em !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty > .profile-schedule-primary {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          color: #d9d3e0 !important;
+          font-size: 14px !important;
+          line-height: 1.1 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty > .profile-schedule-explanation {
+          grid-column: 2 !important;
+          grid-row: 2 !important;
+          display: -webkit-box !important;
+          overflow: hidden !important;
+          color: #82798c !important;
+          font-size: 9px !important;
+          line-height: 1.25 !important;
+          -webkit-box-orient: vertical !important;
+          -webkit-line-clamp: 2 !important;
         }
 
         #profileBackdrop .profile-modal-media {
@@ -38313,12 +38367,20 @@
           text-align: left !important;
         }
 
-        /* Only a genuinely active deal receives the emerald treatment. */
+        /* Every profile keeps the Club Deal slot. Only a genuinely active
+           offer receives the emerald treatment. */
         #profileBackdrop #profileModal .profile-club-deal-tile {
           grid-template-columns: minmax(0, 1fr) minmax(96px, 108px) !important;
           gap: 10px !important;
           min-height: 0 !important;
           padding: 8px 9px !important;
+          border-color: rgba(255,255,255,.08) !important;
+          background: rgba(255,255,255,.025) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-club-deal-tile.is-active {
           border-color: rgba(77,236,157,.36) !important;
           background:
             radial-gradient(circle at 0 0, rgba(77,236,157,.11), transparent 58%),
@@ -38331,11 +38393,15 @@
         }
 
         #profileBackdrop .profile-club-deal-label {
-          color: #4dec9d !important;
+          color: #91889c !important;
           font-size: 9px !important;
           letter-spacing: .12em !important;
           line-height: 1.1 !important;
           text-transform: uppercase !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-active .profile-club-deal-label {
+          color: #4dec9d !important;
         }
 
         #profileBackdrop .profile-club-deal-title {
@@ -38363,6 +38429,37 @@
         #profileBackdrop .profile-club-deal-qr-button .club-deal-qr-symbol {
           width: 22px !important;
           height: 22px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-title {
+          color: #d9d3e0 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-copy small {
+          color: #817889 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-qr-button {
+          min-height: 48px !important;
+          grid-template-columns: minmax(0, 1fr) !important;
+          place-items: center !important;
+          border-color: rgba(255,255,255,.07) !important;
+          color: #716978 !important;
+          background: rgba(255,255,255,.02) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-action-copy {
+          display: block !important;
+          width: 100% !important;
+          text-align: center !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-action-copy strong {
+          font-size: 10px !important;
+          white-space: nowrap !important;
         }
 
         #profileBackdrop .profile-club-deal-action-copy {
@@ -47181,21 +47278,21 @@
       if (workingNow) {
         return {
           key: "no-active-offer",
-          label: "No Club Deal available",
-          detail: "This club does not have an active tracked offer right now."
+          label: "No active deal",
+          detail: `${profile?.venue || "This club"} has no live offer right now.`
         };
       }
       if (profile?.scheduled) {
         return {
           key: "available-when-working",
-          label: "Available when working",
-          detail: "A tracked Club Deal can unlock after a verified check-in when the club has an active offer."
+          label: "Available after check-in",
+          detail: `Deals activate after a verified check-in${profile?.venue ? ` at ${profile.venue}` : ""}.`
         };
       }
       return {
         key: "not-available-now",
-        label: "Not available now",
-        detail: "A verified current check-in is required before dancer attribution can be carried to a cashier NFC redemption."
+        label: "No active club deal",
+        detail: "Deals activate after a verified club check-in."
       };
     }
 
@@ -47207,7 +47304,7 @@
         const dealTitle = String(config?.deal?.dealTitle || "Club Deal").trim() || "Club Deal";
         const venueName = String(config?.venueName || profile?.venue || "the club").trim() || "the club";
         return `
-          <div class="info-tile profile-qr-tile profile-club-deal-tile" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
+          <div class="info-tile profile-qr-tile profile-club-deal-tile is-active" data-club-deal-state="active" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
             <div class="profile-club-deal-copy">
               <strong class="profile-club-deal-label">Active Club Deal</strong>
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
@@ -47220,7 +47317,18 @@
           </div>
         `;
       }
-      return "";
+      return `
+        <div class="info-tile profile-qr-tile profile-club-deal-tile is-inactive" data-club-deal-state="${escapeHtml(state.key)}" aria-label="Inactive Club Deal">
+          <div class="profile-club-deal-copy">
+            <strong class="profile-club-deal-label">Club Deal</strong>
+            <b class="profile-club-deal-title">${escapeHtml(state.label)}</b>
+            <small>${escapeHtml(state.detail)}</small>
+          </div>
+          <button class="profile-club-deal-qr-button" type="button" aria-label="Club Deal inactive" disabled>
+            <span class="profile-club-deal-action-copy"><strong>Inactive</strong></span>
+          </button>
+        </div>
+      `;
     }
 
     function profileShareText(profileName, city = selectedCity()) {
@@ -50363,22 +50471,27 @@
       return String(
         item?.posterUrl ||
         item?.poster_url ||
-        item?.dancer?.primaryPhotoUrl ||
-        item?.dancer?.avatarPhotoUrl ||
         ""
       ).trim();
+    }
+
+    function profileVideoPreviewUrl(item) {
+      const videoUrl = String(item?.videoUrl || "").trim();
+      if (!videoUrl) return "";
+      return videoUrl.includes("#") ? videoUrl : `${videoUrl}#t=0.1`;
     }
 
     function profileVideoThumbMarkup(item, index, total, profileName) {
       const scheduleLabel = profileTvScheduleLabel(item);
       const durationLabel = formatProfileTvDuration(item.durationSeconds);
       const posterUrl = profileVideoPosterUrl(item);
-      const posterMarkup = posterUrl
-        ? `<img src="${escapeHtml(posterUrl)}" alt="" loading="lazy" decoding="async" aria-hidden="true">`
+      const previewUrl = profileVideoPreviewUrl(item);
+      const previewMarkup = previewUrl
+        ? `<video src="${escapeHtml(previewUrl)}"${posterUrl ? ` poster="${escapeHtml(posterUrl)}"` : ""} muted playsinline preload="metadata" tabindex="-1" aria-hidden="true"></video>`
         : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
       return `
         <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} full screen, ${escapeHtml(scheduleLabel)}, ${escapeHtml(durationLabel)}">
-          ${posterMarkup}
+          ${previewMarkup}
           <span class="profile-media-thumb-play" aria-hidden="true"></span>
           <span class="profile-media-thumb-duration">${escapeHtml(durationLabel)}</span>
         </button>
@@ -50610,10 +50723,10 @@
         <div class="modal-actions" aria-label="Guest actions">
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
           <div class="profile-primary-ride">${rideMarkup || '<button class="action-btn secondary is-unavailable" type="button" disabled>Get a Ride</button>'}</div>
-          <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share Profile")}</button>
+          <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
           <button class="action-btn secondary profile-schedule-action" type="button" data-profile-schedule-action ${profile.scheduled ? "" : "disabled"}>Schedule</button>
           <div class="profile-action-overflow">
-            <button class="profile-action-overflow-toggle" type="button" data-profile-more-actions aria-haspopup="menu" aria-expanded="false" aria-label="Report and profile options"><span aria-hidden="true">•••</span><span>Report &amp; options</span></button>
+            <button class="profile-action-overflow-toggle" type="button" data-profile-more-actions aria-haspopup="menu" aria-expanded="false" aria-label="More profile actions"><span aria-hidden="true">•••</span><span>More</span></button>
             <div class="profile-action-overflow-menu" data-profile-more-menu role="menu" hidden>
               ${goingButton}
               <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}" role="menuitem">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>

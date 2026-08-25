@@ -38,7 +38,7 @@ type VideoMedia = {
   id: string;
   kind: "video";
   videoUrl: string;
-  posterUrl: string;
+  posterUrl: string | null;
   durationSeconds: number;
 };
 
@@ -76,9 +76,9 @@ export function DancerPhotoCarousel({
         .map((video) => ({
           ...video,
           kind: "video",
-          posterUrl: video.posterUrl || photoMedia[0]?.imageUrl || "",
+          posterUrl: video.posterUrl || null,
         })),
-    [photoMedia, videos],
+    [videos],
   );
   const [activeTab, setActiveTab] = useState<MediaTab>(
     photoMedia.length || !videoMedia.length ? "photo" : "video",
@@ -429,19 +429,16 @@ export function DancerPhotoCarousel({
               />
             ) : (
               <>
-                {item.posterUrl ? (
-                  <img
-                    alt=""
-                    aria-hidden="true"
-                    decoding="async"
-                    draggable={false}
-                    loading="lazy"
-                    sizes="(max-width: 760px) 33vw, 250px"
-                    src={item.posterUrl}
-                  />
-                ) : (
-                  <span aria-hidden="true" className="profile-media-poster-placeholder" />
-                )}
+                <video
+                  aria-hidden="true"
+                  draggable={false}
+                  muted
+                  playsInline
+                  poster={item.posterUrl || undefined}
+                  preload="metadata"
+                  src={`${item.videoUrl}#t=0.1`}
+                  tabIndex={-1}
+                />
                 <span aria-hidden="true" className="profile-media-play" />
                 <span className="profile-media-duration">
                   {formatDuration(item.durationSeconds)}
