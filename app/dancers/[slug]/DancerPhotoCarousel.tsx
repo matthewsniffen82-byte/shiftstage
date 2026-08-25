@@ -6,6 +6,7 @@ import type {
   PointerEvent as ReactPointerEvent,
   WheelEvent as ReactWheelEvent,
 } from "react";
+import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 
 type DancerPhotoCarouselProps = {
   photos: Array<{
@@ -78,7 +79,7 @@ export function DancerPhotoCarousel({
   );
   const [activeIndex, setActiveIndex] = useState(0);
   const [viewer, setViewer] = useState<{ index: number } | null>(null);
-  const [inlineMuted, setInlineMuted] = useState(true);
+  const [inlineMuted, setInlineMuted] = useVideoSoundPreference();
   const [inlinePlaying, setInlinePlaying] = useState(false);
   const [inlineCurrentTime, setInlineCurrentTime] = useState(0);
   const [inlineDuration, setInlineDuration] = useState(0);
@@ -564,7 +565,12 @@ export function DancerPhotoCarousel({
               aria-label={`${stageName} TV preview ${selectedIndex + 1} of ${activeItems.length}`}
               key={selectedItem.id}
               loop
-              muted
+              muted={inlineMuted}
+              onVolumeChange={(event) => {
+                if (event.currentTarget.muted !== inlineMuted) {
+                  setInlineMuted(event.currentTarget.muted);
+                }
+              }}
               onDurationChange={(event) => {
                 if (Number.isFinite(event.currentTarget.duration)) {
                   setInlineDuration(event.currentTarget.duration);
@@ -747,7 +753,12 @@ export function DancerPhotoCarousel({
               disablePictureInPicture
               key={activeViewerItem.id}
               loop
-              muted
+              muted={inlineMuted}
+              onVolumeChange={(event) => {
+                if (event.currentTarget.muted !== inlineMuted) {
+                  setInlineMuted(event.currentTarget.muted);
+                }
+              }}
               playsInline
               preload="auto"
               src={activeViewerItem.videoUrl}
