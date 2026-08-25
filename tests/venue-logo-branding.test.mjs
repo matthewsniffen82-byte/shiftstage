@@ -179,6 +179,14 @@ test("venue cards use a full-card logo canvas while detail pages retain contain-
   assert.match(liveApp, /function fitVenueLogoImage\(image\)/);
   assert.match(liveApp, /function venueLogoFitTarget\(image\)/);
   assert.match(liveApp, /function applyVenueLogoFit\(image, scale, centerX = \.5, centerY = \.5\)/);
+  assert.match(
+    liveApp,
+    /classList\.contains\("home-venue-discovery-logo"\)[\s\S]*?return \{ width: \.82, height: \.5, maxScale: 2\.4 \};/,
+  );
+  assert.match(
+    liveApp,
+    /classList\.contains\("venue-detail-logo"\)[\s\S]*?return \{ width: \.84, height: \.62, maxScale: 2\.8 \};[\s\S]*?return \{ width: \.84, height: \.64, maxScale: 2\.6 \};/,
+  );
   assert.match(liveApp, /ratio >= \.78 && ratio <= 1\.28/);
   assert.match(liveApp, /getImageData\(0, 0, sampleWidth, sampleHeight\)/);
   assert.match(liveApp, /contentCenterX[\s\S]*?contentCenterY[\s\S]*?applyVenueLogoFit\(image, fittedScale, contentCenterX, contentCenterY\)/);
