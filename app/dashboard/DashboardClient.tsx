@@ -3496,7 +3496,7 @@ function DancerProfilePreview({
               </section>
             ) : null}
             {isEditor && activeEditorSection && activeEditorSection !== "socials" && activeEditorContent ? (
-              <section className="dancer-profile-builder-panel" id="dancer-profile-builder-panel" tabIndex={-1} aria-labelledby="dancer-profile-builder-panel-heading">
+              <section className="dancer-profile-builder-panel" data-section={activeEditorSection} id="dancer-profile-builder-panel" tabIndex={-1} aria-labelledby="dancer-profile-builder-panel-heading">
                 <header>
                   <h2 id="dancer-profile-builder-panel-heading">{activeEditorLabel}</h2>
                   <button aria-label="Close profile editing panel" onClick={() => { setActiveEditorSection(null); setActiveSocialPlatform(null); }} type="button">×</button>
@@ -8737,6 +8737,16 @@ function DashboardStyles() {
       .dancer-profile-builder-panel .photo-upload-heading > span { display:none; }
       .dancer-profile-builder-panel .photo-slot-summary { justify-content:center; }
       .dancer-profile-builder-panel .photo-slot-summary > span { display:none; }
+      .dancer-profile-builder-panel[data-section="photos"] > div { padding-top:7px; padding-bottom:max(12px,env(safe-area-inset-bottom)); scroll-padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+      .dancer-profile-builder-panel[data-section="photos"] .upload-panel { gap:8px; padding:8px; border-radius:14px; }
+      .dancer-profile-builder-panel[data-section="photos"] .dancer-photo-upload-form { grid-template-columns:auto auto; align-items:center; justify-content:center; gap:8px 12px; }
+      .dancer-profile-builder-panel[data-section="photos"] .photo-upload-heading { display:none; }
+      .dancer-profile-builder-panel[data-section="photos"] .photo-primary-choice,
+      .dancer-profile-builder-panel[data-section="photos"] .photo-upload-status { grid-column:1 / -1; }
+      .dancer-profile-builder-panel[data-section="photos"] .photo-source-grid { margin:0; }
+      .dancer-profile-builder-panel[data-section="photos"] .photo-slot-summary { width:auto; justify-content:flex-start; white-space:nowrap; }
+      .dancer-profile-builder-panel[data-section="photos"] .photo-review-list:empty,
+      .dancer-profile-builder-panel[data-section="photos"] .photo-review-list > p:only-child { display:none; }
       .dancer-profile-builder-panel .photo-source-grid,
       .dancer-profile-builder-panel .tv-video-source-grid { width:fit-content !important; max-width:100%; grid-template-columns:repeat(2,58px) !important; grid-auto-rows:58px !important; justify-content:center; gap:14px; margin-inline:auto; }
       .dancer-profile-builder-panel .photo-source-action,

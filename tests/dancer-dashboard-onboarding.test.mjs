@@ -156,10 +156,14 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.match(dashboard, /className=\{`dancer-profile-preview-overlay\$\{isEditor \? " is-editor" : ""\}`\}/);
   assert.match(dashboard, /aria-label="Close profile preview"[\s\S]*?onClick=\{closePreview\}/);
   assert.match(dashboard, /className="dancer-profile-builder-panel"[\s\S]*?activeEditorContent/);
+  assert.match(dashboard, /className="dancer-profile-builder-panel" data-section=\{activeEditorSection\}/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \{ z-index:1510; \}/);
   assert.match(dashboard, /\.dancer-profile-builder-panel > div \{[^}]*overflow-x:hidden;[^}]*overflow-y:auto;[^}]*scroll-padding-bottom:max\(28px,env\(safe-area-inset-bottom\)\);/);
   assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-grid,[\s\S]*?grid-template-columns:repeat\(2,58px\) !important;/);
   assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-copy,[\s\S]*?\.tv-video-source-cta \{ display:none; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.dancer-photo-upload-form \{[^}]*grid-template-columns:auto auto;[^}]*justify-content:center;/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.photo-upload-heading \{ display:none; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.photo-review-list > p:only-child \{ display:none; \}/);
   const emptyMediaStyles = dashboard.match(/\.dancer-profile-builder-media-empty \{([^}]*)\}/)?.[1] || "";
   assert.doesNotMatch(emptyMediaStyles, /(?:^|;)\s*(?:height|min-height|aspect-ratio):/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-media-feature \{[^}]*aspect-ratio: 9 \/ 16;/);
