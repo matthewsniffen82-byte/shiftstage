@@ -157,11 +157,13 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.match(dashboard, /aria-label="Close profile preview"[\s\S]*?onClick=\{closePreview\}/);
   assert.match(dashboard, /className="dancer-profile-builder-panel"[\s\S]*?editorSections\[activeEditorSection\]/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \{ z-index:1510; \}/);
-  assert.match(dashboard, /\.dancer-profile-builder-panel > div \{[^}]*overflow-x:hidden;[^}]*overflow-y:auto;/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel > div \{[^}]*overflow-x:hidden;[^}]*overflow-y:auto;[^}]*scroll-padding-bottom:max\(28px,env\(safe-area-inset-bottom\)\);/);
   assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-grid,[\s\S]*?grid-template-columns:repeat\(2,58px\) !important;/);
   assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-copy,[\s\S]*?\.tv-video-source-cta \{ display:none; \}/);
   assert.match(dashboard, /\.dancer-profile-builder-media-empty \{ height:clamp\(220px,38dvh,340px\); min-height:220px; aspect-ratio:auto !important;/);
   assert.match(dashboard, /\.dancer-profile-builder-media-empty \{ height:clamp\(190px,30dvh,260px\); min-height:190px; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel \{ bottom:calc\(88px \+ env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\); max-height:min\(66dvh,620px,calc\(100dvh - var\(--mydancr-preview-banner-offset,0px\) - 104px - env\(safe-area-inset-bottom\)\)\);/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \.dancer-profile-editor-footer \{ bottom:calc\(88px \+ env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\);/);
   assert.doesNotMatch(dashboard, /editorTitle/);
   assert.match(dashboard, /disabled=\{isEditorSaving \|\| !requirementsComplete\}/);
   assert.match(dashboard, /<DancerSetupPanel[\s\S]*?unifiedSave/);
