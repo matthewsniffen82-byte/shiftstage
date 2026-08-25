@@ -46203,6 +46203,7 @@
     function actionIconMarkup(type) {
       const icons = {
         heart: '<svg viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>',
+        personPlus: '<svg viewBox="0 0 24 24"><circle cx="8.5" cy="7.5" r="3.5"></circle><path d="M3 20a5.5 5.5 0 0 1 11 0M18 8.5v6M15 11.5h6"></path></svg>',
         star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.4 4.2 1.1 6-5.5-3-5.5 3 1.1-6-4.4-4.2 6.1-.8L12 3Z"></path></svg>',
         profile: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path></svg>',
         venue: '<svg viewBox="0 0 24 24"><path d="M4 20V8.5L12 4l8 4.5V20"></path><path d="M8 20v-5h8v5"></path><path d="M8 10h.01M12 10h.01M16 10h.01"></path></svg>',
@@ -49681,7 +49682,7 @@
               ${profileCardBody}
             </a>
             <div class="feed-card-actions${canMarkGoing ? "" : " without-going"}" aria-label="${profile.name} actions">
-              <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profile.name}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
+              <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profile.name}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
               <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profile.name}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify")}</button>
               ${goingActionMarkup}
               ${rideMarkup}
@@ -50794,7 +50795,7 @@
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
         <div class="modal-actions ${canMarkGoing ? "is-working-now" : "is-no-live-shift"}" aria-label="Guest actions">
-          <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
+          <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
           ${goingButton}
           ${rideMarkup ? `<div class="profile-primary-ride">${rideMarkup}</div>` : ""}
@@ -56733,7 +56734,7 @@
             <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileReference}" aria-label="Open ${safeName}'s full profile">${profileActionVisual}<span>Profile</span></button>
             ${homeDancerGridQrMarkup(profile)}
             <button class="feed-card-action home-dancer-grid-share" type="button" data-native-share="${profileValue}" data-share-city="${cityValue}" aria-label="Share ${safeName}'s profile">${actionButtonLabel("share", "Share")}</button>
-            <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
+            <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
           </div>
           ${contextActions ? `<div class="home-dancer-grid-context-actions${rideMarkup ? " with-uber-ride" : ""}">${contextActions}</div>` : ""}
@@ -56947,7 +56948,7 @@
           <div class="home-discovery-feed-actions" aria-label="${safeName} actions">
             ${liveQrMarkup}
             <button class="home-discovery-feed-profile-button" type="button" data-profile="${profileValue}" aria-label="Open ${safeName}'s full profile">${actionButtonLabel("star", "Profile")}</button>
-            <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
+            <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
             ${goingMarkup}
             ${directionsMarkup}
@@ -58368,7 +58369,7 @@
       follow.setAttribute("aria-label", followLabel);
       follow.title = followLabel;
       follow.setAttribute("aria-pressed", String(isFollowed));
-      follow.innerHTML = actionIconMarkup(isFollowed ? "check" : "heart");
+      follow.innerHTML = actionIconMarkup(isFollowed ? "check" : "personPlus");
       follow.addEventListener("click", () => closeHomeTvFeedReportMenus());
 
       const dealState = homeTvFeedDealState(item);
@@ -59600,11 +59601,11 @@
           button.setAttribute("aria-pressed", String(active));
           if (button.dataset.iconOnlyAction === "true") {
             const label = active ? `Following ${profile.name}` : `Follow ${profile.name}`;
-            button.innerHTML = actionIconMarkup(active ? "check" : "heart");
+            button.innerHTML = actionIconMarkup(active ? "check" : "personPlus");
             button.setAttribute("aria-label", label);
             button.title = label;
           } else {
-            button.innerHTML = actionButtonLabel(active ? "check" : "heart", active ? "Following" : "Follow");
+            button.innerHTML = actionButtonLabel(active ? "check" : "personPlus", active ? "Following" : "Follow");
           }
           return;
         }
@@ -59635,7 +59636,7 @@
 
       const followButton = document.getElementById("followBtn");
       if (followButton) {
-        followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "heart", following ? "Following" : "Follow", "account");
+        followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "personPlus", following ? "Following" : "Follow", "account");
         followButton.classList.toggle("is-following", following);
       }
 

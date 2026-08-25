@@ -83,7 +83,11 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(profileActions, /profile-action-share-slot/);
   assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Notify Me[\s\S]*?I’m Going[\s\S]*?Ride[\s\S]*?Directions[\s\S]*?Share[\s\S]*?Report profile/);
   assert.doesNotMatch(profileActions, />Schedule<|>More</);
-  assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "clock" \| "heart" \| "share"/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "check" \| "clock" \| "personPlus" \| "share"/);
+  assert.match(profileActions, /type === "personPlus"[\s\S]*?<circle cx="8\.5" cy="7\.5" r="3\.5" \/>[\s\S]*?M18 8\.5v6M15 11\.5h6/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon type="personPlus" \/>[\s\S]*?<span>Follow<\/span>/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon type=\{saved\.following \? "check" : "personPlus"\} \/>/);
+  assert.doesNotMatch(profileActions, /DancerProfileActionPreviewIcon type="heart"/);
   assert.match(profileDirections, /dancerIds: \[dancerId\]/);
   assert.match(profileDirections, /source: "dancer_profile"/);
   assert.match(profilePage, /directionsControl=\{activeVenue \? \(/);
@@ -91,6 +95,8 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(profilePage, /<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
+  assert.match(liveApp, /personPlus: '<svg[\s\S]*?M18 8\.5v6M15 11\.5h6/);
+  assert.match(liveApp, /id="followBtn"[\s\S]*?profileActionButtonMarkup\(isFollowed \? "check" : "personPlus"/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
   assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
   assert.match(liveApp, /Club Deals redeem only through a club cashier NFC tap/);

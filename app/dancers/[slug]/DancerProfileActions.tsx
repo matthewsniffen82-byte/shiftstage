@@ -107,11 +107,12 @@ export function DancerGoingCount() {
 function DancerProfileActionPreviewIcon({
   type,
 }: {
-  type: "bell" | "clock" | "heart" | "share";
+  type: "bell" | "check" | "clock" | "personPlus" | "share";
 }) {
   return (
     <svg aria-hidden="true" className="profile-action-preview-icon" viewBox="0 0 24 24">
-      {type === "heart" ? <path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z" /> : null}
+      {type === "personPlus" ? <><circle cx="8.5" cy="7.5" r="3.5" /><path d="M3 20a5.5 5.5 0 0 1 11 0M18 8.5v6M15 11.5h6" /></> : null}
+      {type === "check" ? <path d="m5 12 4 4L19 6" /> : null}
       {type === "bell" ? <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" /><path d="M10 20a2 2 0 0 0 4 0" /></> : null}
       {type === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : null}
       {type === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" /></> : null}
@@ -123,7 +124,7 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
   return (
     <div className="live-actions has-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
       <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
-        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="heart" /><span>Follow</span></span>
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="personPlus" /><span>Follow</span></span>
         <small className="profile-action-requirement">Sign in required</small>
       </button>
       <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
@@ -471,7 +472,7 @@ export function DancerProfileActions({
           disabled={!savedLoaded || followSaving}
         >
           <span className="profile-action-main">
-            <DancerProfileActionPreviewIcon type="heart" />
+            <DancerProfileActionPreviewIcon type={saved.following ? "check" : "personPlus"} />
             <span>{saved.following ? "Following" : "Follow"}</span>
           </span>
           {showSignedOutRequirements ? (

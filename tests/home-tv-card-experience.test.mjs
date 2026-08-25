@@ -51,7 +51,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.doesNotMatch(homeSource, /home-tv-feed-profile-hint|home-tv-feed-profile-cue|View profile →/);
   assert.match(
     homeSource,
-    /actions\.className = "home-tv-feed-actions"[\s\S]*?follow\.className = `home-tv-feed-action home-tv-feed-follow-action feed-card-action[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?follow\.dataset\.profile = dancerName[\s\S]*?follow\.dataset\.homeTvVideoId = videoId[\s\S]*?follow\.dataset\.iconOnlyAction = "true"[\s\S]*?follow\.innerHTML = actionIconMarkup\(isFollowed \? "check" : "heart"\)/,
+    /actions\.className = "home-tv-feed-actions"[\s\S]*?follow\.className = `home-tv-feed-action home-tv-feed-follow-action feed-card-action[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?follow\.dataset\.profile = dancerName[\s\S]*?follow\.dataset\.homeTvVideoId = videoId[\s\S]*?follow\.dataset\.iconOnlyAction = "true"[\s\S]*?follow\.innerHTML = actionIconMarkup\(isFollowed \? "check" : "personPlus"\)/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-dancer-actions/);
   assert.match(
