@@ -1281,16 +1281,14 @@ function AdminClubDealManager({
 
   async function saveDeal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     if (!venueId) return setStatus("Choose the contracted venue first.");
     if (isActive && !currentTerm) return setStatus("Record the signed referral fee agreement before publishing this Club Deal.");
     setIsSaving(true);
     setStatus(isActive ? "Publishing the contract Club Deal…" : "Saving the contract Club Deal…");
     try {
-      const response = await fetch("/api/admin/deals", {
+      const data = await requestAdminJson("/api/admin/deals", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "upsert_contract_deal",
           venueId,
@@ -1302,9 +1300,8 @@ function AdminClubDealManager({
           isActive,
           sortOrder: Number(sortOrder || 0),
         }),
+        fallbackMessage: "Unable to save the contract Club Deal.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save the contract Club Deal.");
       onClubDealsChange(data.clubDeals || []);
       onDealRequestsChange(data.dealRequests || dealRequests);
       setDealId(asText(data.deal?.id));
@@ -1320,20 +1317,18 @@ function AdminClubDealManager({
   }
 
   async function deleteDeal() {
-    const token = readToken();
-    if (!token || !venueId || !dealId) return setStatus("Choose an unpublished Club Deal first.");
+    if (!venueId || !dealId) return setStatus("Choose an unpublished Club Deal first.");
     if (isActive) return setStatus("Pause this Club Deal and save it before deleting it.");
     if (!window.confirm("Delete this unpublished Club Deal? This cannot be undone.")) return;
     setIsSaving(true);
     setStatus("Deleting unpublished Club Deal…");
     try {
-      const response = await fetch("/api/admin/deals", {
+      const data = await requestAdminJson("/api/admin/deals", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "delete_contract_deal", venueId, dealId }),
+        fallbackMessage: "Unable to delete the contract Club Deal.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete the contract Club Deal.");
       onClubDealsChange(data.clubDeals || []);
       onDealRequestsChange(data.dealRequests || dealRequests);
       resetEditor(venueId);
@@ -1348,14 +1343,12 @@ function AdminClubDealManager({
   async function rejectDealRequest(dealRequest: Record<string, unknown>) {
     const reason = window.prompt("Why is this Club Deal request not approved? This note will be visible to the venue.")?.trim();
     if (!reason) return;
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     setIsSaving(true);
     setStatus("Rejecting Club Deal request…");
     try {
-      const response = await fetch("/api/admin/deals", {
+      const data = await requestAdminJson("/api/admin/deals", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "review_deal_request",
           requestId: asText(dealRequest.id),
@@ -1363,9 +1356,8 @@ function AdminClubDealManager({
           status: "rejected",
           decisionNote: reason,
         }),
+        fallbackMessage: "Unable to reject the Club Deal request.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to reject the Club Deal request.");
       onDealRequestsChange(data.dealRequests || []);
       if (requestId === asText(dealRequest.id)) resetEditor();
       setStatus("Club Deal request rejected with an audit note.");
@@ -1941,12 +1933,6 @@ function DealActivityManager({
   const [paymentReferences, setPaymentReferences] = useState<Record<string, string>>({});
 
   async function loadFiltered() {
-    const token = readToken();
-    if (!token) {
-      setMessage("Admin sign in required.");
-      return;
-    }
-
     setIsLoading(true);
     setMessage("");
     const params = new URLSearchParams();
@@ -1958,51 +1944,36 @@ function DealActivityManager({
     if (commissionStatus) params.set("commissionStatus", commissionStatus);
     if (suspicious) params.set("suspicious", suspicious);
 
-    const response = await fetch(`/api/admin/deals?${params.toString()}`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setIsLoading(false);
-
-    if (!response.ok || !data.ok) {
-      setMessage(data.error || "Unable to load deal activity.");
-      return;
+    try {
+      const data = await requestAdminJson(`/api/admin/deals?${params.toString()}`, {
+        fallbackMessage: "Unable to load deal activity.",
+      });
+      onActivityChange(data.activity || []);
+      setMessage(`${data.activity?.length || 0} records loaded.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to load deal activity.");
+    } finally {
+      setIsLoading(false);
     }
-
-    onActivityChange(data.activity || []);
-    setMessage(`${data.activity?.length || 0} records loaded.`);
   }
 
   async function voidRedemption(redemptionId: string) {
-    const token = readToken();
-    if (!token) {
-      setMessage("Admin sign in required.");
-      return;
-    }
-
     setMessage("Voiding redemption...");
-    const response = await fetch("/api/admin/deals", {
-      method: "PATCH",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ redemptionId }),
-    });
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      setMessage(data.error || "Unable to void redemption.");
-      return;
+    try {
+      await requestAdminJson("/api/admin/deals", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ redemptionId }),
+        fallbackMessage: "Unable to void redemption.",
+      });
+      onActivityChange(activity.map((item) => (String(item.id) === redemptionId ? { ...item, status: "voided", suspicious: true } : item)));
+      setMessage("Redemption voided.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to void redemption.");
     }
-
-    onActivityChange(activity.map((item) => (String(item.id) === redemptionId ? { ...item, status: "voided", suspicious: true } : item)));
-    setMessage("Redemption voided.");
   }
 
   async function settleVenueBalance(eventId: string) {
-    const token = readToken();
-    if (!token) {
-      setMessage("Admin sign in required.");
-      return;
-    }
     const referenceKey = `venue_payment_received:${eventId}`;
     const externalReference = String(paymentReferences[referenceKey] || "").trim();
     if (externalReference.length < 3) {
@@ -2011,23 +1982,23 @@ function DealActivityManager({
     }
 
     setMessage("Recording venue payment...");
-    const response = await fetch("/api/admin/deals", {
-      method: "PATCH",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "venue_payment_received",
-        externalReference,
-        revenueEventId: eventId,
-      }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setMessage(data.error || "Unable to record settlement.");
-      return;
+    try {
+      await requestAdminJson("/api/admin/deals", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "venue_payment_received",
+          externalReference,
+          revenueEventId: eventId,
+        }),
+        fallbackMessage: "Unable to record settlement.",
+      });
+      await loadFiltered();
+      setPaymentReferences((current) => ({ ...current, [referenceKey]: "" }));
+      setMessage("Venue payment recorded.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to record settlement.");
     }
-    await loadFiltered();
-    setPaymentReferences((current) => ({ ...current, [referenceKey]: "" }));
-    setMessage("Venue payment recorded.");
   }
 
   return (

@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [route, deals, actions] = await Promise.all([
+const [route, deals, actions, adminClient] = await Promise.all([
   readFile(new URL("../app/api/admin/deals/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-admin-actions.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
 ]);
 
 test("admin deal routes delegate every settlement and fraud write to one boundary", () => {
@@ -14,6 +15,13 @@ test("admin deal routes delegate every settlement and fraud write to one boundar
   assert.match(route, /voidDealRedemption/);
   assert.doesNotMatch(route, /\.rpc\(/);
   assert.doesNotMatch(deals, /settleDealRevenueEvent|settleDancerCommissionEvent|voidDealRedemption/);
+});
+
+test("admin deal operations share the refresh-aware role-isolated request boundary", () => {
+  assert.equal((route.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 3);
+  assert.equal((route.match(/session: session \|\| null/g) || []).length, 6);
+  assert.equal((adminClient.match(/requestAdminJson\((?:"|`)\/api\/admin\/deals/g) || []).length, 6);
+  assert.doesNotMatch(adminClient, /fetch\((?:"|`)\/api\/admin\/deals/);
 });
 
 test("venue-payment settlement keeps its exact audited database operation", () => {

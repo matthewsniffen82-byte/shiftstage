@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const params = new URL(request.url).searchParams;
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       getAdminVenueClubDealRequests(admin),
     ]);
 
-    return NextResponse.json({ ok: true, activity, clubDeals, dealRequests });
+    return NextResponse.json({ ok: true, activity, clubDeals, dealRequests, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load deal activity.");
   }
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json().catch(() => ({}));
     const admin = createAdminSupabaseClient();
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         dealId: result.deal.id,
         active: result.deal.isActive,
       });
-      return NextResponse.json({ ok: true, clubDeals: result.deals, dealRequests, deal: result.deal });
+      return NextResponse.json({ ok: true, clubDeals: result.deals, dealRequests, deal: result.deal, session: session || null });
     }
 
     if (body.action === "delete_contract_deal") {
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
         venueId: body.venueId,
         dealId: result.id,
       });
-      return NextResponse.json({ ok: true, clubDeals: result.deals, dealRequests: await getAdminVenueClubDealRequests(admin) });
+      return NextResponse.json({ ok: true, clubDeals: result.deals, dealRequests: await getAdminVenueClubDealRequests(admin), session: session || null });
     }
 
     if (body.action === "review_deal_request") {
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
         requestId: dealRequest.id,
         status: dealRequest.status,
       });
-      return NextResponse.json({ ok: true, dealRequest, dealRequests: await getAdminVenueClubDealRequests(admin) });
+      return NextResponse.json({ ok: true, dealRequest, dealRequests: await getAdminVenueClubDealRequests(admin), session: session || null });
     }
 
     return NextResponse.json({ ok: false, error: "Unsupported Club Deal action." }, { status: 400 });
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const body = await request.json();
@@ -154,7 +154,7 @@ export async function PATCH(request: Request) {
         revenueEventId,
         action: settlementAction,
       });
-      return NextResponse.json({ ok: true, revenueEvent });
+      return NextResponse.json({ ok: true, revenueEvent, session: session || null });
     }
 
     const redemptionId = typeof body?.redemptionId === "string" ? body.redemptionId.trim() : "";
@@ -167,7 +167,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "Redemption is unavailable." }, { status: 409 });
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to update deal activity.");
   }
