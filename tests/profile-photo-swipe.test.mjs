@@ -66,8 +66,18 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   assert.doesNotMatch(liveApp, /id="modalPhotoSwipeHint"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerSwipeHint"/);
   assert.match(liveApp, /id="profilePhotoViewerImage"[^>]*tabindex="0"[^>]*aria-label="Selected profile photo\. Swipe up or down to change photos\."/);
+  assert.match(liveApp, /id="profilePhotoViewerName"/);
   assert.match(liveApp, /id="profilePhotoViewerPosition"/);
-  assert.match(liveApp, /profilePhotoViewerPosition\.textContent = `Swipe up or down · Photo \$\{activePhotoIndex \+ 1\} of \$\{totalPhotos\}`/);
+  assert.match(liveApp, /id="profilePhotoViewerPrevious"[^>]*aria-label="Previous dancer photo"/);
+  assert.match(liveApp, /id="profilePhotoViewerNext"[^>]*aria-label="Next dancer photo"/);
+  assert.match(liveApp, /profilePhotoViewerName\.textContent = profileName/);
+  assert.match(liveApp, /profilePhotoViewerPosition\.textContent = `\$\{profilePhotoScheduleLabel\(\)\} · Swipe up or down · Photo \$\{activePhotoIndex \+ 1\} of \$\{totalPhotos\}`/);
+  assert.match(
+    liveApp,
+    /async function requestProfilePhotoViewerFullscreen\(overlay\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
+  );
+  assert.match(liveApp, /void requestProfilePhotoViewerFullscreen\(profilePhotoViewer\)/);
+  assert.match(liveApp, /function exitProfilePhotoViewerFullscreen\(\)[\s\S]*?document\.exitFullscreen[\s\S]*?document\.webkitExitFullscreen/);
 });
 test("the profile presents approved photos and dancer-only videos as separate three-column grids", () => {
   assert.match(publicPhotoCarousel, /type MediaTab = ProfileMedia\["kind"\]/);
@@ -176,5 +186,8 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
     publicProfilePage,
     /@media \(max-width: 600px\)[\s\S]*?\.profile-media-viewer-previous, \.profile-media-viewer-next/,
   );
-  assert.doesNotMatch(publicPhotoCarousel, /requestFullscreen|:fullscreen/);
+  assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?requestViewerFullscreen\(\)/);
+  assert.match(publicPhotoCarousel, /element\.requestFullscreen\(\{ navigationUI: "hide" \}\)/);
+  assert.match(publicProfilePage, /\.profile-media-viewer:fullscreen/);
+  assert.match(publicPhotoCarousel, /\{viewerStatus\} · Swipe up or down ·/);
 });

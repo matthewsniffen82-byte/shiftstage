@@ -325,6 +325,11 @@ export default async function DancerPublicPage({ params }: PageProps) {
             durationSeconds: video.durationSeconds,
           }))}
           stageName={profile.stageName}
+          viewerStatus={activeShift
+            ? "Working Now"
+            : actionShift
+              ? `Upcoming · ${formatShiftDate(actionShift.shiftDate || actionShift.startsAt, actionShift.timezone)}`
+              : "No shift posted"}
         />
 
       </main>
@@ -579,7 +584,8 @@ function PublicProfileStyles() {
       .profile-media-grid-sentinel::after { position: absolute; top: 5px; left: 50%; width: 14px; height: 14px; content: ""; border: 2px solid rgba(126,234,255,.18); border-top-color: #7eeaff; border-radius: 50%; animation: profile-media-loading 700ms linear infinite; transform: translateX(-50%); }
       .profile-media-grid-status { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
       .profile-media-empty { grid-column: 1 / -1; min-height: 108px; display: grid; place-items: center; color: #8f849c; text-align: center; }
-      .profile-media-viewer { position: fixed; z-index: 1600; inset: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; color: #fff; background: rgba(0,0,0,.98); overscroll-behavior: none; touch-action: none; }
+      .profile-media-viewer { position: fixed; z-index: 1600; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; color: #fff; background: rgba(0,0,0,.98); overscroll-behavior: none; touch-action: none; }
+      .profile-media-viewer:fullscreen, .profile-media-viewer:-webkit-full-screen { width: 100vw; height: 100vh; height: 100dvh; border: 0; background: #000; }
       .profile-media-viewer-close { position: fixed; z-index: 3; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 50px; height: 50px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: rgba(10,10,14,.78); font-size: 30px; cursor: pointer; backdrop-filter: blur(12px); }
       .profile-media-viewer-stage { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; }
       .profile-media-viewer-stage > img, .profile-media-viewer-stage > video { width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: #000; user-select: none; }

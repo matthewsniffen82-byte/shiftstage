@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type {
   PointerEvent as ReactPointerEvent,
   WheelEvent as ReactWheelEvent,
@@ -23,6 +24,7 @@ type DancerPhotoCarouselProps = {
     durationSeconds: number;
   }>;
   stageName: string;
+  viewerStatus?: string;
 };
 
 type PhotoMedia = {
@@ -61,6 +63,7 @@ export function DancerPhotoCarousel({
   photos,
   videos = [],
   stageName,
+  viewerStatus = "No shift posted",
 }: DancerPhotoCarouselProps) {
   const photoMedia = useMemo<PhotoMedia[]>(
     () =>
@@ -94,6 +97,8 @@ export function DancerPhotoCarousel({
   const trackpadLockedUntil = useRef(0);
   const deepLinkHandled = useRef(false);
   const closeButton = useRef<HTMLButtonElement | null>(null);
+  const viewerRoot = useRef<HTMLDivElement | null>(null);
+  const viewerOwnsFullscreen = useRef(false);
   const viewerTrigger = useRef<HTMLButtonElement | null>(null);
   const lazyLoadSentinel = useRef<HTMLDivElement | null>(null);
   const tabGroupId = useId();
@@ -170,6 +175,20 @@ export function DancerPhotoCarousel({
   }, [activeItems.length, activeTab, hasMoreItems, visibleItemCount]);
 
   useEffect(() => {
+    const onFullscreenChange = () => {
+      if (fullscreenElement() !== viewerRoot.current) {
+        viewerOwnsFullscreen.current = false;
+      }
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!viewerKind) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -186,6 +205,7 @@ export function DancerPhotoCarousel({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        exitViewerFullscreen();
         setViewer(null);
         setShareStatus("");
         clearMediaDeepLink();
@@ -216,14 +236,49 @@ export function DancerPhotoCarousel({
   ) {
     viewerTrigger.current = trigger;
     setShareStatus("");
-    setViewer({ kind, index });
+    flushSync(() => setViewer({ kind, index }));
+    void requestViewerFullscreen();
   }
 
   function closeViewer() {
+    exitViewerFullscreen();
     setViewer(null);
     setShareStatus("");
     clearMediaDeepLink();
     window.requestAnimationFrame(() => viewerTrigger.current?.focus());
+  }
+
+  async function requestViewerFullscreen() {
+    const element = viewerRoot.current as FullscreenViewerElement | null;
+    if (!element || fullscreenElement()) return;
+    const request = typeof element.requestFullscreen === "function"
+      ? () => element.requestFullscreen({ navigationUI: "hide" })
+      : typeof element.webkitRequestFullscreen === "function"
+        ? () => element.webkitRequestFullscreen?.()
+        : null;
+    if (!request) return;
+    try {
+      await request();
+      viewerOwnsFullscreen.current = fullscreenElement() === element;
+    } catch {
+      viewerOwnsFullscreen.current = false;
+    }
+  }
+
+  function exitViewerFullscreen() {
+    const documentWithWebkit = document as FullscreenViewerDocument;
+    const exit = document.exitFullscreen || documentWithWebkit.webkitExitFullscreen;
+    if (!viewerOwnsFullscreen.current || !fullscreenElement() || !exit) {
+      viewerOwnsFullscreen.current = false;
+      return;
+    }
+    viewerOwnsFullscreen.current = false;
+    try {
+      const result = exit.call(document);
+      if (result && typeof result.catch === "function") void result.catch(() => undefined);
+    } catch {
+      // The fixed overlay remains available when device fullscreen has already exited.
+    }
   }
 
   function viewerShareUrl(item: ProfileMedia) {
@@ -473,6 +528,7 @@ export function DancerPhotoCarousel({
           aria-label={`${stageName} ${viewer.kind} viewer`}
           aria-modal="true"
           className={`profile-media-viewer is-${viewer.kind}`}
+          ref={viewerRoot}
           role="dialog"
         >
           <button
@@ -548,7 +604,7 @@ export function DancerPhotoCarousel({
             <div className="profile-media-viewer-copy">
               <strong>{stageName}</strong>
               <span>
-                Swipe up or down · {viewer.kind === "photo" ? "Photo" : "Video"} {viewerIndex + 1} of {viewerItems.length}
+                {viewerStatus} · Swipe up or down · {viewer.kind === "photo" ? "Photo" : "Video"} {viewerIndex + 1} of {viewerItems.length}
               </span>
             </div>
             <div className="profile-media-viewer-actions">
@@ -587,6 +643,21 @@ export function DancerPhotoCarousel({
       ) : null}
     </section>
   );
+}
+
+type FullscreenViewerDocument = Document & {
+  webkitExitFullscreen?: () => Promise<void> | void;
+  webkitFullscreenElement?: Element | null;
+};
+
+type FullscreenViewerElement = HTMLDivElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+
+function fullscreenElement() {
+  return document.fullscreenElement ||
+    (document as FullscreenViewerDocument).webkitFullscreenElement ||
+    null;
 }
 
 function ShareIcon() {

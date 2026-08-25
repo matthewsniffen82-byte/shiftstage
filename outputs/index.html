@@ -29018,8 +29018,8 @@
     }
 
     .profile-photo-viewer {
-      background: #000;
-      display: block;
+      background: rgba(0,0,0,.96);
+      display: grid;
       inset: 0;
       overflow: hidden;
       padding: 0;
@@ -29029,8 +29029,29 @@
       touch-action: none;
     }
 
+    .profile-photo-viewer:fullscreen,
+    .profile-photo-viewer:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      border: 0;
+      background: #000;
+    }
+
     .profile-photo-viewer[hidden] {
       display: none !important;
+    }
+
+    .profile-photo-viewer-shell,
+    .profile-photo-viewer-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      background: #000;
+      overscroll-behavior: none;
+      touch-action: none;
     }
 
     .profile-photo-viewer-image {
@@ -29049,17 +29070,69 @@
     }
 
     .profile-photo-viewer-close {
-      position: fixed !important;
-      right: max(18px, env(safe-area-inset-right)) !important;
-      top: max(18px, env(safe-area-inset-top)) !important;
+      position: absolute !important;
+      right: max(12px, env(safe-area-inset-right)) !important;
+      top: max(12px, env(safe-area-inset-top)) !important;
       z-index: 82 !important;
     }
 
+    .profile-photo-viewer-previous,
+    .profile-photo-viewer-next {
+      position: absolute;
+      z-index: 82;
+      right: max(12px, env(safe-area-inset-right));
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 12px;
+      color: rgba(255,255,255,.72);
+      background: rgba(0,0,0,.06);
+      box-shadow: none;
+      font-size: 20px;
+      line-height: 1;
+      opacity: .64;
+      cursor: pointer;
+      text-shadow: 0 1px 5px rgba(0,0,0,.9);
+    }
+
+    .profile-photo-viewer-previous { top: 32%; }
+    .profile-photo-viewer-next { top: calc(32% + 54px); }
+    .profile-photo-viewer-previous:disabled,
+    .profile-photo-viewer-next:disabled { opacity: .28; cursor: default; }
+
+    .profile-photo-viewer-footer {
+      position: absolute;
+      z-index: 81;
+      inset: 0;
+      min-width: 0;
+      display: block;
+      background: linear-gradient(0deg, rgba(0,0,0,.88) 0, rgba(0,0,0,.34) 17%, transparent 42%);
+      pointer-events: none;
+    }
+
+    .profile-photo-viewer-copy {
+      position: absolute;
+      right: 82px;
+      bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px));
+      left: max(16px, env(safe-area-inset-left));
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+      text-shadow: 0 2px 8px rgba(0,0,0,.92);
+    }
+
+    .profile-photo-viewer-copy strong {
+      overflow: hidden;
+      color: #fff;
+      font-size: 16px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .profile-photo-viewer-share {
-      position: fixed !important;
-      right: max(12px, env(safe-area-inset-right)) !important;
-      bottom: max(76px, calc(env(safe-area-inset-bottom) + 68px)) !important;
-      z-index: 82 !important;
       width: 52px !important;
       min-width: 52px !important;
       height: 52px !important;
@@ -29080,13 +29153,22 @@
       font-weight: 900 !important;
     }
 
+    .profile-photo-viewer-actions {
+      position: absolute;
+      right: max(12px, env(safe-area-inset-right));
+      bottom: max(76px, calc(env(safe-area-inset-bottom) + 68px));
+      display: grid;
+      grid-template-columns: 52px;
+      pointer-events: auto;
+    }
+
     .profile-photo-viewer-share .icon {
       width: 18px !important;
       height: 18px !important;
     }
 
     .profile-photo-viewer-status {
-      position: fixed;
+      position: absolute;
       z-index: 82;
       right: 78px;
       bottom: max(6px, env(safe-area-inset-bottom));
@@ -29099,16 +29181,10 @@
     }
 
     .profile-photo-viewer-position {
-      position: fixed;
-      z-index: 82;
-      right: 78px;
-      bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px));
-      left: max(16px, env(safe-area-inset-left));
       margin: 0;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 900;
-      text-shadow: 0 2px 10px #000;
+      color: #9fefff;
+      font-size: 11px;
+      font-weight: 850;
       pointer-events: none;
     }
 
@@ -40486,17 +40562,30 @@
           <p class="profile-modal-media-empty" id="modalMediaEmpty" hidden>No approved media yet.</p>
         </section>
       </section>
-      <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Larger profile photo" hidden>
-        <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
-          <span>Share</span>
-        </button>
-        <button class="close-btn profile-photo-viewer-close" id="profilePhotoViewerClose" type="button" aria-label="Close larger profile photo">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-        </button>
-        <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="img" tabindex="0" aria-label="Selected profile photo. Swipe up or down to change photos."></div>
-        <p class="profile-photo-viewer-position" id="profilePhotoViewerPosition"></p>
-        <p class="profile-photo-viewer-status" id="profilePhotoViewerStatus" aria-live="polite"></p>
+      <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Profile photo" hidden>
+        <div class="profile-photo-viewer-shell">
+          <button class="close-btn profile-photo-viewer-close" id="profilePhotoViewerClose" type="button" aria-label="Close full-screen profile photo">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+          <div class="profile-photo-viewer-stage">
+            <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="img" tabindex="0" aria-label="Selected profile photo. Swipe up or down to change photos."></div>
+            <button class="profile-photo-viewer-previous" id="profilePhotoViewerPrevious" type="button" aria-label="Previous dancer photo">↑</button>
+            <button class="profile-photo-viewer-next" id="profilePhotoViewerNext" type="button" aria-label="Next dancer photo">↓</button>
+          </div>
+          <div class="profile-photo-viewer-footer">
+            <div class="profile-photo-viewer-copy">
+              <strong id="profilePhotoViewerName"></strong>
+              <p class="profile-photo-viewer-position" id="profilePhotoViewerPosition"></p>
+            </div>
+            <div class="profile-photo-viewer-actions">
+              <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
+                <span>Share</span>
+              </button>
+            </div>
+            <p class="profile-photo-viewer-status" id="profilePhotoViewerStatus" aria-live="polite"></p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -40640,10 +40729,14 @@
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
     const profilePhotoViewerShare = document.getElementById("profilePhotoViewerShare");
+    const profilePhotoViewerPrevious = document.getElementById("profilePhotoViewerPrevious");
+    const profilePhotoViewerNext = document.getElementById("profilePhotoViewerNext");
+    const profilePhotoViewerName = document.getElementById("profilePhotoViewerName");
     const profilePhotoViewerPosition = document.getElementById("profilePhotoViewerPosition");
     const profilePhotoViewerStatus = document.getElementById("profilePhotoViewerStatus");
     if (profilePhotoViewer) document.body.appendChild(profilePhotoViewer);
     let profilePhotoViewerReturnTarget = null;
+    let profilePhotoViewerOwnsFullscreen = false;
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
     const modalVerified = document.getElementById("modalVerified");
@@ -50417,6 +50510,52 @@
       return true;
     }
 
+    function profilePhotoFullscreenElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+
+    async function requestProfilePhotoViewerFullscreen(overlay) {
+      if (!overlay || profilePhotoFullscreenElement()) return false;
+      const request = typeof overlay.requestFullscreen === "function"
+        ? () => overlay.requestFullscreen({ navigationUI: "hide" })
+        : typeof overlay.webkitRequestFullscreen === "function"
+          ? () => overlay.webkitRequestFullscreen()
+          : null;
+      if (!request) return false;
+      try {
+        await request();
+        profilePhotoViewerOwnsFullscreen = profilePhotoFullscreenElement() === overlay;
+        return profilePhotoViewerOwnsFullscreen;
+      } catch {
+        profilePhotoViewerOwnsFullscreen = false;
+        return false;
+      }
+    }
+
+    function exitProfilePhotoViewerFullscreen() {
+      const fullscreenElement = profilePhotoFullscreenElement();
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (!profilePhotoViewerOwnsFullscreen || !fullscreenElement || typeof exit !== "function") {
+        profilePhotoViewerOwnsFullscreen = false;
+        return;
+      }
+      profilePhotoViewerOwnsFullscreen = false;
+      try {
+        const result = exit.call(document);
+        if (result && typeof result.catch === "function") result.catch(() => {});
+      } catch {
+        // The fixed immersive overlay remains available if device fullscreen exits first.
+      }
+    }
+
+    function profilePhotoScheduleLabel() {
+      const workingNow = modalBody?.querySelector(".working-now-tile .profile-schedule-primary")?.textContent?.trim();
+      if (workingNow) return workingNow;
+      const upcoming = modalBody?.querySelector(".schedule-upcoming .profile-schedule-primary")?.textContent?.trim();
+      if (upcoming) return `Upcoming · ${upcoming}`;
+      return "No shift posted";
+    }
+
     function syncProfilePhotoViewerImage() {
       if (!profilePhotoViewerImage || !modalImage) return;
       const photoStyle = getComputedStyle(modalImage);
@@ -50434,7 +50573,12 @@
       const activePhoto = photoThumbs.find((thumb) => thumb.classList.contains("active"));
       const activePhotoIndex = Math.max(0, Number(activePhoto?.dataset.profilePhotoIndex || 0));
       const totalPhotos = Math.max(1, modalGallery.profilePhotoItems?.length || photoThumbs.length);
-      profilePhotoViewerPosition.textContent = `Swipe up or down · Photo ${activePhotoIndex + 1} of ${totalPhotos}`;
+      const profileName = modalName.textContent.trim() || "Dancer";
+      if (profilePhotoViewerName) profilePhotoViewerName.textContent = profileName;
+      profilePhotoViewerPosition.textContent = `${profilePhotoScheduleLabel()} · Swipe up or down · Photo ${activePhotoIndex + 1} of ${totalPhotos}`;
+      profilePhotoViewerPrevious.disabled = activePhotoIndex <= 0;
+      profilePhotoViewerNext.disabled = activePhotoIndex >= totalPhotos - 1;
+      profilePhotoViewer?.setAttribute("aria-label", `${profileName} profile photo`);
     }
 
     function openPhotoViewerFromElement(element) {
@@ -50453,11 +50597,13 @@
       syncOverlayScrollLock();
       syncProfilePhotoViewerPosition();
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
+      void requestProfilePhotoViewerFullscreen(profilePhotoViewer);
       profilePhotoViewerImage.focus({ preventScroll: true });
     }
 
     function closeProfilePhotoViewer() {
       if (!profilePhotoViewer) return;
+      exitProfilePhotoViewerFullscreen();
       profilePhotoViewer.hidden = true;
       profilePhotoViewer.style.removeProperty("z-index");
       document.body.classList.remove("profile-photo-viewer-open");
@@ -50506,7 +50652,9 @@
         thumbs = [...modalGallery.querySelectorAll(selector)];
         currentIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
       }
-      const nextIndex = (currentIndex + direction + thumbs.length) % thumbs.length;
+      const requestedIndex = currentIndex + direction;
+      if (options.syncViewer && (requestedIndex < 0 || requestedIndex >= thumbs.length)) return false;
+      const nextIndex = (requestedIndex + thumbs.length) % thumbs.length;
       const nextThumb = thumbs[nextIndex];
       return selectModalMediaThumb(nextThumb, options);
     }
@@ -59740,6 +59888,23 @@
       if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
       event.preventDefault();
       moveModalPhoto(event.key === "ArrowDown" ? 1 : -1, { syncViewer: true });
+    });
+    profilePhotoViewerPrevious?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      moveModalPhoto(-1, { syncViewer: true });
+    });
+    profilePhotoViewerNext?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      moveModalPhoto(1, { syncViewer: true });
+    });
+    ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
+      document.addEventListener(eventName, () => {
+        if (profilePhotoFullscreenElement() !== profilePhotoViewer) {
+          profilePhotoViewerOwnsFullscreen = false;
+        }
+      });
     });
 
     function confirmedFollowerCount(data, errorMessage) {
