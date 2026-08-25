@@ -90,14 +90,14 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const overviewIndex = profilePage.indexOf('className="profile-overview"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const scheduleIndex = profilePage.indexOf('className={`profile-shift-card profile-working-card');
-  const dealIndex = profilePage.indexOf('className="profile-active-deal has-club-deal"');
+  const scheduleIndex = profilePage.indexOf('className={`profile-tonight-card');
+  const dealIndex = profilePage.indexOf('className="profile-tonight-deal"');
   const socialIndex = profilePage.indexOf('className="profile-social-section"');
 
   assert.ok(identityIndex > -1);
   assert.ok(scheduleIndex > identityIndex);
-  assert.ok(actionsIndex > scheduleIndex);
-  assert.ok(dealIndex > actionsIndex);
+  assert.ok(dealIndex > scheduleIndex);
+  assert.ok(actionsIndex > dealIndex);
   assert.ok(socialIndex > actionsIndex);
   assert.ok(overviewIndex > socialIndex);
   assert.ok(mediaIndex > overviewIndex);
@@ -117,6 +117,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.doesNotMatch(profilePage, /import \{ VenueQrUnavailable \}|<VenueQrUnavailable/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
+  assert.match(profilePage, /aria-label="Tonight"[\s\S]*?className="profile-tonight-deal"/);
 });
 
 test("working-now profiles show the club's active deal without granting demo commission attribution", () => {

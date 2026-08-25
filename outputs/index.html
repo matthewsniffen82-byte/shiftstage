@@ -38087,6 +38087,75 @@
           }
         }
 
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card {
+          grid-column: 1 / -1;
+          width: 100%;
+          min-width: 0;
+          overflow: hidden;
+          display: grid;
+          gap: 0;
+          border: 1px solid rgba(139, 92, 246, .24);
+          border-radius: 15px;
+          background: linear-gradient(145deg, rgba(13, 11, 21, .94), rgba(6, 7, 11, .98));
+          box-shadow: 0 12px 32px rgba(0, 0, 0, .26);
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-now {
+          border-color: rgba(77, 236, 157, .28);
+          background:
+            radial-gradient(circle at 94% 0%, rgba(77, 236, 157, .08), transparent 13rem),
+            rgba(7, 14, 13, .94);
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.has-club-deal {
+          border-color: rgba(77, 236, 157, .46);
+          box-shadow: 0 12px 34px rgba(0, 0, 0, .3), 0 0 20px rgba(77, 236, 157, .08);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card > .profile-schedule-card {
+          width: 100% !important;
+          min-height: 0 !important;
+          margin: 0 !important;
+          padding: 10px 12px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card > .working-now-tile {
+          display: grid !important;
+          grid-template-columns: auto minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 9px !important;
+          padding: 6px 8px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card > .schedule-empty {
+          display: block !important;
+          padding: 8px 10px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-deal {
+          padding: 5px;
+          border-top: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card.has-club-deal .profile-tonight-deal {
+          border-top-color: rgba(77, 236, 157, .18);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-deal .profile-club-deal-tile {
+          width: 100% !important;
+          margin: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
         /* The full dancer profile is an action-first media library. Keep all
            nightlife actions above a vertical, lazily populated gallery and
            reserve space for the floating discovery dock below the final row. */
@@ -50853,11 +50922,19 @@
       const dealMarkup = options.preview
         ? profileDealTileMarkup(profile, { preview: true })
         : profileDealTileMarkup(profile);
+      const dealState = dancerClubDealState(profile);
+      const tonightClasses = [
+        "profile-tonight-card",
+        isWorkingTonight(profile, city) && profile.scheduled ? "is-now" : "",
+        dealState.key === "available" ? "has-club-deal" : ""
+      ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
-          ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
+          <section class="${tonightClasses}" aria-label="Tonight">
+            ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
+            <div class="profile-tonight-deal">${dealMarkup}</div>
+          </section>
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
-          ${dealMarkup}
           ${socialMarkup}
           ${profileActivityMetricsMarkup(profile, city)}
           ${profileLocationStatusTile(profile, city)}

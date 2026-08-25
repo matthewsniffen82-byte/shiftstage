@@ -156,9 +156,13 @@ export default async function DancerPublicPage({ params }: PageProps) {
           />
         </header>
 
+        <section
+          aria-label="Tonight"
+          className={`profile-tonight-card${activeShift ? " is-now" : ""}${activeDeal ? " has-club-deal" : ""}`}
+        >
         {activeShift ? (
-          <section
-            className={`profile-shift-card profile-working-card is-now${activeDeal ? " has-club-deal" : ""}`}
+          <div
+            className="profile-shift-card profile-working-card is-now"
             aria-labelledby="profile-working-title"
           >
             <div className="profile-working-head">
@@ -175,15 +179,15 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 <span aria-hidden="true" className="profile-working-cue">›</span>
               </Link>
             </div>
-          </section>
+          </div>
         ) : upcomingShifts.length ? (
-          <section
+          <div
             className="profile-shift-card profile-schedule-section is-upcoming"
             aria-labelledby="profile-schedule-title"
           >
             <div className="profile-section-heading">
               <div>
-                <span className="eyebrow">Schedule</span>
+                <span className="eyebrow">Tonight</span>
                 <h2 id="profile-schedule-title">Upcoming dates</h2>
               </div>
               <span>{upcomingShifts.length} posted</span>
@@ -206,14 +210,61 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 </Link>
               ))}
             </div>
-          </section>
+          </div>
         ) : (
-          <section className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status">
+          <div className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status">
             <strong>No shift posted</strong>
             <span aria-hidden="true">·</span>
             <span>Follow {profile.stageName} for updates</span>
-          </section>
+          </div>
         )}
+
+        <div className="profile-tonight-deal">
+        {activeShift && activeDeal ? (
+          <div
+            className="profile-active-deal has-club-deal"
+            aria-label="Active Club Deal for cashier NFC"
+          >
+            <ClubDealCard
+              deal={activeDeal}
+              deals={activeDeals}
+              venueId={activeShift.venueId}
+              venueName={activeShift.venueName}
+              sourceType={dealSourceType}
+              dancerId={dancerAttributionEligible ? profile.id : null}
+              attributionToken={dealAttributionToken}
+              attributionTokens={dealAttributionTokens}
+              dancerNote={dancerAttributionEligible}
+              presentation="launcher"
+              ctaLabel={activeDeals.length > 1 ? `View all ${activeDeals.length}` : "Use at Club"}
+              sectionId="club-deal"
+            />
+          </div>
+        ) : (
+          <div
+            className="profile-active-deal is-inactive"
+            aria-label="Inactive Club Deal"
+          >
+            <div className="profile-club-deal-placeholder">
+              <span>
+                <small>Club Deal</small>
+                <strong>
+                  {activeShift ? "No active deal" : "No active club deal"}
+                </strong>
+                <em>
+                  {activeShift
+                    ? `${activeShift.venueName} has no live offer right now.`
+                    : actionShift
+                      ? `Deals activate after a verified check-in at ${actionShift.venueName}.`
+                      : "Deals activate after a verified club check-in."}
+                </em>
+              </span>
+              <button disabled type="button">Inactive</button>
+            </div>
+          </div>
+        )}
+        </div>
+        </section>
 
         <DancerProfileActions
           dancerId={profile.id}
@@ -236,50 +287,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
             isActive: isActiveNow(shift),
           }))}
         />
-
-        {activeShift && activeDeal ? (
-          <section
-            className="profile-active-deal has-club-deal"
-            aria-label="Active Club Deal for cashier NFC"
-          >
-            <ClubDealCard
-              deal={activeDeal}
-              deals={activeDeals}
-              venueId={activeShift.venueId}
-              venueName={activeShift.venueName}
-              sourceType={dealSourceType}
-              dancerId={dancerAttributionEligible ? profile.id : null}
-              attributionToken={dealAttributionToken}
-              attributionTokens={dealAttributionTokens}
-              dancerNote={dancerAttributionEligible}
-              presentation="launcher"
-              ctaLabel={activeDeals.length > 1 ? `View all ${activeDeals.length}` : "Use at Club"}
-              sectionId="club-deal"
-            />
-          </section>
-        ) : (
-          <section
-            className="profile-active-deal is-inactive"
-            aria-label="Inactive Club Deal"
-          >
-            <div className="profile-club-deal-placeholder">
-              <span>
-                <small>Club Deal</small>
-                <strong>
-                  {activeShift ? "No active deal" : "No active club deal"}
-                </strong>
-                <em>
-                  {activeShift
-                    ? `${activeShift.venueName} has no live offer right now.`
-                    : actionShift
-                      ? `Deals activate after a verified check-in at ${actionShift.venueName}.`
-                      : "Deals activate after a verified club check-in."}
-                </em>
-              </span>
-              <button disabled type="button">Inactive</button>
-            </div>
-          </section>
-        )}
 
         {profile.socialLinks.length ? (
           <section className="profile-social-section" aria-label="External profiles">
@@ -407,7 +414,7 @@ function PublicProfileStyles() {
       .profile-verified { width: 20px; height: 20px; flex: 0 0 20px; display: inline-grid; place-items: center; border-radius: 50%; color: #051019; background: #7eeaff; box-shadow: 0 0 15px rgba(126,234,255,.3); font-size: 12px; font-weight: 950; }
       .public-profile-close { position: absolute; top: max(8px, env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; flex: 0 0 40px; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
-      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section, .profile-schedule-empty { width: min(100%, 760px); margin-inline: auto; }
+      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section, .profile-schedule-empty, .profile-tonight-card { width: min(100%, 760px); margin-inline: auto; }
       .profile-schedule-empty { min-width: 0; display: flex; align-items: center; gap: 6px; margin-top: 5px; padding: 8px 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #82798c; background: rgba(255,255,255,.025); font-size: 10px; line-height: 1.2; }
       .profile-schedule-empty strong { flex: 0 0 auto; color: #d9d3e0; font-size: 12px; white-space: nowrap; }
       .profile-schedule-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -605,6 +612,16 @@ function PublicProfileStyles() {
       .profile-media-viewer-preload img, .profile-media-viewer-preload video { width: 1px; height: 1px; }
       @keyframes profile-media-loading { to { transform: translateX(-50%) rotate(360deg); } }
       .profile-schedule-section { display: grid; gap: 14px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
+      .profile-tonight-card { margin-top: 8px; overflow: hidden; border: 1px solid rgba(139,92,246,.24); border-radius: 15px; background: linear-gradient(145deg, rgba(13,11,21,.94), rgba(6,7,11,.98)); box-shadow: 0 12px 32px rgba(0,0,0,.26); }
+      .profile-tonight-card.is-now { border-color: rgba(77,236,157,.28); background: radial-gradient(circle at 94% 0%, rgba(77,236,157,.08), transparent 13rem), rgba(7,14,13,.94); }
+      .profile-tonight-card.has-club-deal { border-color: rgba(77,236,157,.46); box-shadow: 0 12px 34px rgba(0,0,0,.3), 0 0 20px rgba(77,236,157,.08); }
+      .profile-tonight-card > .profile-shift-card { width: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-tonight-card > .profile-schedule-section { padding: 14px; }
+      .profile-tonight-card > .profile-schedule-empty { padding: 9px 10px; }
+      .profile-tonight-deal { padding: 5px; border-top: 1px solid rgba(255,255,255,.08); }
+      .profile-tonight-card.has-club-deal .profile-tonight-deal { border-top-color: rgba(77,236,157,.18); }
+      .profile-tonight-deal .profile-active-deal { width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-tonight-deal .profile-club-deal-placeholder { border: 0; background: transparent; }
       .shift-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
       .shift-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 14px; border: 1px solid rgba(255,255,255,.085); border-radius: 14px; color: #f7f2ff; background: rgba(255,255,255,.035); text-decoration: none; }
       .shift-date { grid-column: 1 / -1; color: #94e5ff; font-size: 10px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }

@@ -3427,16 +3427,18 @@ function DancerProfilePreview({
             )}
             {isEditor ? (
               <>
-                <section className="profile-shift-card profile-schedule-section is-empty" aria-labelledby="dancer-profile-builder-schedule-heading">
-                  <div className="profile-section-heading">
-                    <div><span className="eyebrow">Schedule</span><h2 id="dancer-profile-builder-schedule-heading">No shift posted</h2></div>
+                <section className="profile-tonight-card dancer-profile-builder-tonight" aria-label="Tonight">
+                  <div className="profile-shift-card profile-schedule-section is-empty" aria-labelledby="dancer-profile-builder-schedule-heading">
+                    <div className="profile-section-heading">
+                      <div><span className="eyebrow">Tonight</span><h2 id="dancer-profile-builder-schedule-heading">No shift posted</h2></div>
+                    </div>
+                    <p>This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update.</p>
                   </div>
-                  <p>This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update.</p>
+                  <div className="profile-tonight-deal" aria-label="Club Deal status">
+                    <VenueQrUnavailable availability="not-available-now" venueName={previewCity} />
+                  </div>
                 </section>
                 <DancerProfileActionsPreview onShare={editorSections?.share ? () => openEditorSection("share") : undefined} />
-                <section className="profile-deal-availability" aria-label="Club Deal status">
-                  <VenueQrUnavailable availability="not-available-now" venueName={previewCity} />
-                </section>
               </>
             ) : null}
             {isEditor ? (
@@ -8583,7 +8585,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-verified { width:20px; height:20px; flex:0 0 20px; display:inline-grid; place-items:center; border-radius:50%; color:#051019; background:#7eeaff; box-shadow:0 0 15px rgba(126,234,255,.3); font-size:12px; font-weight:950; }
       .dancer-profile-preview-overlay .public-profile-close { position: absolute; top: max(8px,env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .dancer-profile-preview-overlay .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13),0 0 22px rgba(34,199,255,.18); }
-      .dancer-profile-preview-overlay .profile-overview, .dancer-profile-preview-overlay .profile-social-section, .dancer-profile-preview-overlay .live-actions, .dancer-profile-preview-overlay .profile-deal-availability, .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-schedule-section { width: min(100%,760px); max-width: 100%; min-width: 0; box-sizing: border-box; margin-inline: auto; }
+      .dancer-profile-preview-overlay .profile-overview, .dancer-profile-preview-overlay .profile-social-section, .dancer-profile-preview-overlay .live-actions, .dancer-profile-preview-overlay .profile-deal-availability, .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-schedule-section, .dancer-profile-preview-overlay .profile-tonight-card { width: min(100%,760px); max-width: 100%; min-width: 0; box-sizing: border-box; margin-inline: auto; }
       .dancer-profile-preview-overlay .profile-media-section { display: grid; gap: 12px; margin-top: 12px; }
       .dancer-profile-preview-overlay .profile-media-tabs { width: min(100%,360px); display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); justify-self: center; gap: 4px; padding: 4px; border: 1px solid rgba(255,255,255,.1); border-radius: 15px; background: rgba(255,255,255,.035); }
       .dancer-profile-preview-overlay .profile-media-tabs button { position: relative; min-width: 0; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 1px solid transparent; border-radius: 11px; color: #a59aae; background: transparent; box-shadow: none; cursor: pointer; }
@@ -8640,6 +8642,10 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-schedule-section > p { margin:0; color:#cfc5de; font-size:13px; line-height:1.45; }
       .dancer-profile-preview-overlay .profile-deal-availability { margin-top:12px; border:0; background:transparent; box-shadow:none; }
       .dancer-profile-preview-overlay .venue-qr-unavailable { width:100%; min-height:140px; display:grid; grid-template-columns:minmax(0,1fr) 128px; align-items:center; justify-self:stretch; gap:14px; padding:14px 15px; border:1px solid rgba(148,163,184,.13); border-radius:18px; color:rgba(203,196,214,.76); background:rgba(17,17,24,.82); box-shadow:none; text-align:left; }
+      .dancer-profile-preview-overlay .profile-tonight-card { margin-top:12px; overflow:hidden; border:1px solid rgba(139,92,246,.24); border-radius:15px; background:linear-gradient(145deg,rgba(13,11,21,.94),rgba(6,7,11,.98)); box-shadow:0 12px 32px rgba(0,0,0,.26); }
+      .dancer-profile-preview-overlay .profile-tonight-card > .profile-schedule-section { width:100%; margin:0; padding:14px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+      .dancer-profile-preview-overlay .profile-tonight-deal { padding:5px; border-top:1px solid rgba(255,255,255,.08); }
+      .dancer-profile-preview-overlay .profile-tonight-deal .venue-qr-unavailable { min-height:76px; padding:6px 8px; border:0; border-radius:0; background:transparent; }
       .dancer-profile-preview-overlay .profile-deal-availability::before, .dancer-profile-preview-overlay .profile-deal-availability::after, .dancer-profile-preview-overlay .venue-qr-unavailable::before, .dancer-profile-preview-overlay .venue-qr-unavailable::after { content:none !important; display:none !important; background:none !important; box-shadow:none !important; }
       .dancer-profile-preview-overlay .venue-qr-placeholder-icon { width:128px; min-width:128px; min-height:112px; display:grid; grid-template-rows:42px auto; place-items:center; align-content:center; gap:8px; padding:12px 10px; border:1px solid rgba(148,163,184,.18); border-radius:14px; color:rgba(203,196,214,.58); background:rgba(255,255,255,.035); box-shadow:inset 0 1px 0 rgba(255,255,255,.03); opacity:1; }
       .dancer-profile-preview-overlay .venue-qr-placeholder-icon > svg { width:42px; height:42px; }

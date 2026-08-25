@@ -126,17 +126,18 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
 });
 
-test("every profile keeps Shift and Club Deal boxes while only Working Now activates a deal", () => {
+test("every profile combines tonight's shift and Club Deal while only Working Now activates a deal", () => {
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
-  assert.match(profilePage, /className=\{`profile-shift-card profile-working-card is-now\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
+  assert.match(profilePage, /className=\{`profile-tonight-card\$\{activeShift \? " is-now" : ""\}\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
+  assert.match(profilePage, /className="profile-shift-card profile-working-card is-now"/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<small>Club<\/small>[\s\S]*?Venue-confirmed until/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
   assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
   assert.match(profilePage, /className="profile-active-deal is-inactive"[\s\S]*?aria-label="Inactive Club Deal"/);
-  assert.match(profilePage, /\) : \(\s*<section[\s\S]*?activeShift \? "No active deal" : "No active club deal"[\s\S]*?\)\}/);
+  assert.match(profilePage, /\) : \(\s*<div[\s\S]*?activeShift \? "No active deal" : "No active club deal"[\s\S]*?\)\}/);
   assert.match(profilePage, /Deals activate after a verified check-in at \$\{actionShift\.venueName\}\./);
   assert.match(profilePage, /Deals activate after a verified club check-in\./);
   assert.match(liveApp, /const dealMarkup = options\.preview[\s\S]*?profileDealTileMarkup\(profile\);/);
@@ -164,6 +165,8 @@ test("every profile keeps Shift and Club Deal boxes while only Working Now activ
   assert.doesNotMatch(liveScheduleBranch, /Checked in for current shift|activeShiftStartedMarkup/);
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
+  assert.match(liveApp, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?shiftsMarkup\(profile, status,[\s\S]*?profile-tonight-deal/);
+  assert.match(liveApp, /modal-grid > \.profile-tonight-card[\s\S]*?border-radius: 15px;[\s\S]*?profile-tonight-deal[\s\S]*?border-top:/);
 });
 
 test("active full-profile Club Deals render a compact cashier NFC action and use one live-status color", () => {

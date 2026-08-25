@@ -216,10 +216,11 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   const scheduleIndex = gridFunction.indexOf("shiftsMarkup");
 
   assert.ok(scheduleIndex > -1);
-  assert.ok(actionsIndex > scheduleIndex);
-  assert.ok(dealIndex > actionsIndex);
+  assert.ok(dealIndex > scheduleIndex);
+  assert.ok(actionsIndex > dealIndex);
   assert.ok(socialIndex > actionsIndex);
   assert.ok(metricsIndex > socialIndex);
+  assert.match(gridFunction, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?class="profile-tonight-deal">\$\{dealMarkup\}<\/div>[\s\S]*?<\/section>/);
   assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
   assert.match(liveApp, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
   assert.doesNotMatch(liveApp, /profile-modal-live-status|modalLiveStatus/);
