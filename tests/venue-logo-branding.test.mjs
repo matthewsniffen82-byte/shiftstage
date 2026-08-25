@@ -174,7 +174,7 @@ test("verified logo identity flows through every public venue response", () => {
   assert.match(liveApp, /logoImageUrl: item\.logoImageUrl \|\| ""/);
 });
 
-test("venue cards use a full-card logo canvas while detail pages retain contain-fit identity", () => {
+test("venue scroll cards use one fixed logo stage while detail pages retain contain-fit identity", () => {
   assert.match(liveApp, /function venueLogoMarkup\(venue, className\)/);
   assert.match(liveApp, /function fitVenueLogoImage\(image\)/);
   assert.match(liveApp, /function venueLogoFitTarget\(image\)/);
@@ -202,7 +202,7 @@ test("venue cards use a full-card logo canvas while detail pages retain contain-
   assert.match(aesthetic, /\.venue-card-logo-shell,[\s\S]*?\.venue-detail-logo-shell \{[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\)/);
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?inset: 0;[\s\S]*?transform: none;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/,
+    /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?top: 10%;[\s\S]*?right: 72px;[\s\S]*?bottom: auto;[\s\S]*?left: 18px;[\s\S]*?height: 50%;[\s\S]*?transform: none;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     aesthetic,
@@ -210,11 +210,11 @@ test("venue cards use a full-card logo canvas while detail pages retain contain-
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-logo \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?padding: 42px 72px 142px 18px;[\s\S]*?object-fit: contain;[\s\S]*?object-position: center 34%;/,
+    /\.home-venue-discovery-logo \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?padding: 0;[\s\S]*?object-fit: contain;[\s\S]*?object-position: center;/,
   );
   assert.match(
     aesthetic,
-    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?padding: 40px 72px 138px 16px;/,
+    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo-shell \{[\s\S]*?right: 68px;[\s\S]*?left: 16px;/,
   );
   assert.match(
     aesthetic,
