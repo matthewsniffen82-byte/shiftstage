@@ -125,15 +125,15 @@ function DancerProfileActionPreviewIcon({
 export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
   return (
     <div className="live-actions is-no-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
-      <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
+      <button className="profile-action-secondary profile-action-icon-control profile-action-requires-account profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="personPlus" /><span>Follow</span></span>
         <small className="profile-action-requirement">Sign in required</small>
       </button>
-      <button className="profile-action-secondary profile-action-requires-account profile-action-preview-static" disabled type="button">
-        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="bell" /><span>Notify Me</span></span>
+      <button className="profile-action-secondary profile-action-icon-control profile-action-requires-account profile-action-preview-static" disabled type="button">
+        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="bell" /><span>Notify</span></span>
         <small className="profile-action-requirement">Sign in required</small>
       </button>
-      <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
+      <button aria-disabled="true" className="profile-action-secondary profile-action-going profile-action-icon-control profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
         <small className="profile-action-requirement">No shift posted</small>
       </button>
@@ -470,7 +470,8 @@ export function DancerProfileActions({
     <>
       <div className={`live-actions${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
-          className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
+          aria-pressed={saved.following}
+          className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
           onClick={() => {
             if (requireCustomerAccount("follow")) updateFollow(false);
@@ -487,7 +488,7 @@ export function DancerProfileActions({
         </button>
         <button
           aria-pressed={saved.notificationsEnabled}
-          className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
+          className={`profile-action-secondary profile-action-icon-control${saved.notificationsEnabled ? " is-selected" : ""}${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           disabled={!savedLoaded || followSaving}
           onClick={() => {
             if (requireCustomerAccount("notify")) updateNotifications();
@@ -495,8 +496,8 @@ export function DancerProfileActions({
           type="button"
         >
           <span className="profile-action-main">
-            <DancerProfileActionPreviewIcon type="bell" />
-            <span>{saved.notificationsEnabled ? "Notifications On" : "Notify Me"}</span>
+            <DancerProfileActionPreviewIcon type={saved.notificationsEnabled ? "check" : "bell"} />
+            <span>{saved.notificationsEnabled ? "Notified" : "Notify"}</span>
           </span>
           {showSignedOutRequirements ? (
             <small className="profile-action-requirement">Sign in required</small>
@@ -505,7 +506,7 @@ export function DancerProfileActions({
         <button
           aria-disabled={!actionShift ? "true" : undefined}
           aria-pressed={actionShift ? isGoing : undefined}
-          className={`profile-action-secondary profile-action-going${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable profile-action-requires-account" : ""}`}
+          className={`profile-action-secondary profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable profile-action-requires-account" : ""}`}
           disabled={actionShift ? !savedLoaded || goingSaving : true}
           onClick={() => actionShift && updateGoing(actionShift.id)}
           type="button"

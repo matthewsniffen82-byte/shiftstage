@@ -233,7 +233,7 @@ test("public profiles keep Going visible and enable it for current or upcoming p
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
   assert.match(actionsSource, /actionShift && updateGoing\(actionShift\.id\)/);
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
-  assert.match(actionsSource, /className=\{`profile-action-secondary profile-action-going\$\{isGoing \? " is-going" : ""\}\$\{!actionShift \? " profile-action-unavailable profile-action-requires-account" : ""\}`\}/);
+  assert.match(actionsSource, /className=\{`profile-action-secondary profile-action-going profile-action-icon-control\$\{isGoing \? " is-going" : ""\}\$\{!actionShift \? " profile-action-unavailable profile-action-requires-account" : ""\}`\}/);
   assert.match(actionsSource, /disabled=\{actionShift \? !savedLoaded \|\| goingSaving : true\}/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);

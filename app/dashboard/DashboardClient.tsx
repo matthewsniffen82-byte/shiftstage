@@ -8663,6 +8663,14 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-action-requires-account { flex-direction:column; gap:1px; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-main { display:inline-flex; align-items:center; justify-content:center; gap:7px; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-preview-icon { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; }
+      .dancer-profile-preview-overlay .live-actions > button.profile-action-icon-control { min-height:76px; align-self:start; flex-direction:column; gap:3px; padding:2px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+      .dancer-profile-preview-overlay .profile-action-icon-control .profile-action-main { flex-direction:column; gap:4px; overflow:visible; }
+      .dancer-profile-preview-overlay .profile-action-icon-control .profile-action-main > span { overflow:visible; color:#ded8e7; font-size:10px; line-height:1.05; text-overflow:clip; white-space:nowrap; }
+      .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control .profile-action-preview-icon { width:40px; height:40px; padding:9px; border:1px solid rgba(148,229,255,.24); border-radius:50%; color:#d9d2e2; background:radial-gradient(circle at 32% 22%,rgba(148,229,255,.12),transparent 58%),rgba(255,255,255,.04); box-shadow:inset 0 1px 0 rgba(255,255,255,.05); }
+      .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control.profile-action-going:not(.profile-action-unavailable) .profile-action-preview-icon { border-color:rgba(139,92,246,.62); color:#fff; background:linear-gradient(145deg,rgba(109,40,217,.88),rgba(11,148,201,.52)); }
+      .dancer-profile-preview-overlay .live-actions > button.profile-action-icon-control.profile-action-unavailable:disabled { color:#766e7f; background:transparent; opacity:1; }
+      .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control.profile-action-unavailable .profile-action-preview-icon { border-color:rgba(148,137,166,.16); color:#756d7d; background:rgba(255,255,255,.02); box-shadow:none; }
+      .dancer-profile-preview-overlay .profile-action-icon-control .profile-action-requirement { max-width:100%; overflow:hidden; color:#8e8498; font-size:7px; text-overflow:ellipsis; white-space:nowrap; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-preview-static:disabled { opacity:1; cursor:default; }
       .dancer-profile-preview-overlay .profile-action-share-slot, .dancer-profile-preview-overlay .profile-action-overflow { position:relative; min-width:0; }
       .dancer-profile-preview-overlay .profile-action-share-slot .profile-share { display:block; min-height:48px; }

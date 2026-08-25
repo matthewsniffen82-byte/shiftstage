@@ -76,12 +76,20 @@ test("full dancer profiles use a compact identity and honest public activity hea
 
 test("profile actions expose live customer actions and keep Club Deal NFC distinct from profile sharing", () => {
   assert.match(profileActions, /\{saved\.following \? "Following" : "Follow"\}/);
-  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Notifications On" : "Notify Me"\}/);
+  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Notified" : "Notify"\}/);
   assert.match(profileActions, /"I’m Going"/);
   assert.match(profileActions, /rideControl/);
   assert.match(profileActions, /directionsControl/);
   assert.match(profileActions, /profile-action-share-slot/);
-  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Notify Me[\s\S]*?I’m Going[\s\S]*?Ride[\s\S]*?Directions[\s\S]*?Share[\s\S]*?Report profile/);
+  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Notify[\s\S]*?I’m Going[\s\S]*?Ride[\s\S]*?Directions[\s\S]*?Share[\s\S]*?Report profile/);
+  assert.match(profileActions, /profile-action-icon-control[\s\S]*?DancerProfileActionPreviewIcon type="personPlus"[\s\S]*?<span>Follow<\/span>/);
+  assert.match(profileActions, /profile-action-icon-control[\s\S]*?DancerProfileActionPreviewIcon type="bell"[\s\S]*?<span>Notify<\/span>/);
+  assert.match(profileActions, /profile-action-going profile-action-icon-control/);
+  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.live-actions > button\.profile-action-icon-control \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
+  assert.match(profilePage, /\.profile-action-icon-control \.profile-action-preview-icon \{[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?border-radius: 50%;/);
+  assert.match(liveApp, /action-btn follow-primary profile-action-icon-control/);
+  assert.match(liveApp, /action-btn secondary profile-action-icon-control/);
+  assert.match(liveApp, /going-btn profile-action-icon-control/);
   assert.doesNotMatch(profileActions, />Schedule<|>More</);
   assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "check" \| "clock" \| "directions" \| "personPlus" \| "ride" \| "share"/);
   assert.match(profileActions, /type === "personPlus"[\s\S]*?<circle cx="8\.5" cy="7\.5" r="3\.5" \/>[\s\S]*?M18 8\.5v6M15 11\.5h6/);

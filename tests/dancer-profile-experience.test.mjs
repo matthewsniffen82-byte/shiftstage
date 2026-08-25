@@ -174,7 +174,7 @@ test("working-now profiles show the club's active deal without granting demo com
 test("profile actions keep customer, live-night, travel, and safety controls visible", () => {
   assert.match(
     profileActions,
-    /className=\{`profile-action-secondary\$\{showSignedOutRequirements \? " profile-action-requires-account" : ""\}`\}/,
+    /className=\{`profile-action-secondary profile-action-icon-control\$\{saved\.following \? " is-selected" : ""\}\$\{showSignedOutRequirements \? " profile-action-requires-account" : ""\}`\}/,
   );
   assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
   const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
