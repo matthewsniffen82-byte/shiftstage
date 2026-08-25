@@ -1771,7 +1771,7 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   .club-deal-card,
   .profile-deal-availability .venue-qr-unavailable,
   .profile-media-tabs,
-  .profile-media-feature,
+  .profile-media-grid-item,
   .profile-schedule-section,
   .shift-row,
   .profile-account-gate,
@@ -2004,8 +2004,7 @@ body.dancr-button-system .home-tv-feed-action:not(
 /* The hero beam is a state signal, reserved for active, selected, and keyboard-focused UI. */
 #profileBackdrop .profile-modal-media-tabs button.active,
 #profileBackdrop .gallery .thumb.active,
-.profile-tv-viewer-gallery button.active,
-.public-profile-shell .profile-media-grid-item.active {
+.profile-tv-viewer-gallery button.active {
   border-color: var(--dancr-color-text-secondary) !important;
   outline-color: var(--dancr-color-white-medium) !important;
   box-shadow: 0 0 0 1px var(--dancr-color-white-medium) !important;
@@ -2031,7 +2030,7 @@ body.dancr-button-system .home-tv-feed-action:not(
   .home-feed-card .dancer-card-link,
   .profile-modal .modal-image,
   .profile-photo-viewer-image,
-  .public-profile-shell .profile-media-feature
+  .public-profile-shell .profile-media-grid-item
 ):focus-visible {
   outline: 2px solid var(--dancr-color-beam-violet) !important;
   outline-offset: 3px !important;
@@ -2218,7 +2217,7 @@ body.dancr-button-system .home-tv-feed-action:not(
   .home-discovery-feed-slide:not(.home-venue-discovery-slide),
   .profile-titlebar,
   .profile-social-section,
-  .profile-media-feature,
+  .profile-media-grid-item,
   .profile-schedule-section,
   .venue-detail,
   .venue-section,
@@ -2256,8 +2255,8 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
   .home-discovery-feed-photo,
   .home-tv-feed-video,
   .tv-video,
-  .profile-media-feature img,
-  .profile-media-feature video,
+  .profile-media-grid-item img,
+  .profile-media-grid-item video,
   .venue-main-photo,
   .venue-art,
   .venue-tv-video,
@@ -2282,7 +2281,6 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
   #profileBackdrop .gallery .thumb .portrait.has-custom-photo,
   .profile-photo-viewer-image,
   .public-profile-shell .profile-titlebar-avatar img,
-  .public-profile-shell .profile-media-feature > img,
   .public-profile-shell .profile-media-grid-item img,
   .public-profile-shell .profile-media-viewer-stage > img
 ) {
@@ -2597,13 +2595,17 @@ body.dancr-button-system .home-dancer-grid-heading.is-trending > strong {
   ) !important;
 }
 
-/* The large dancer-profile media frame stays neutral so the approved photo is
+/* Dancer-profile media stays neutral so the approved photo or video remains
  * the focal point. This rule intentionally excludes avatars, media tabs,
- * thumbnails, verified marks, and navigation. */
-#profileBackdrop .profile-modal .modal-image,
-.public-profile-shell .profile-media-feature {
+ * verified marks, and navigation. */
+#profileBackdrop .profile-modal .modal-image {
   border: 1px solid var(--dancr-color-border-subtle) !important;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3) !important;
+}
+
+.public-profile-shell .profile-media-grid-item {
+  border: 1px solid var(--dancr-color-border-subtle) !important;
+  box-shadow: none !important;
 }
 
 /* Venue discovery keeps its premium black-metal cards neutral. Profile uses
@@ -3309,11 +3311,16 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
     var(--dancr-shadow-brand-subtle) !important;
 }
 
-body.dancr-button-system #profileBackdrop .modal-image,
-body.dancr-button-system .public-profile-shell .profile-media-feature {
+body.dancr-button-system #profileBackdrop .modal-image {
   border-color: var(--dancr-color-border-subtle) !important;
   background-color: var(--dancr-color-surface) !important;
   box-shadow: 0 12px 28px var(--dancr-color-black-medium) !important;
+}
+
+body.dancr-button-system .public-profile-shell .profile-media-grid-item {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background-color: var(--dancr-color-surface) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-modal-media-position,
@@ -3329,12 +3336,6 @@ body.dancr-button-system #profileBackdrop .gallery .thumb.active {
   border-color: var(--dancr-color-brand-primary) !important;
   outline-color: var(--dancr-color-brand-primary-medium) !important;
   box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
-}
-
-body.dancr-button-system .public-profile-shell .profile-media-grid-item.active {
-  border-color: var(--dancr-color-info) !important;
-  outline-color: var(--dancr-color-info-medium) !important;
-  box-shadow: inset 0 0 0 1px var(--dancr-color-info-medium) !important;
 }
 
 body.dancr-button-system #profileBackdrop .gallery[data-media-tab="video"] .thumb.active {
@@ -6233,7 +6234,6 @@ html:is(
   .samsung-rendering
 ) body :is(
   .public-profile-shell .profile-titlebar-avatar img,
-  .public-profile-shell .profile-media-feature > img,
   .public-profile-shell .profile-media-grid-item img,
   .public-profile-shell .profile-media-viewer-stage > img,
   .tv-shell .tv-profile-photo-image

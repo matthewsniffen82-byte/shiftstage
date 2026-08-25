@@ -64,9 +64,9 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?border-bottom: 0;/);
   assert.doesNotMatch(profileCarousel, /profile-media-heading|Photos &amp; TV|approved<\/span>/);
   assert.match(profileCarousel, /className="profile-media-section"[\s\S]*?className="profile-media-tabs"/);
-  assert.match(profilePage, /\.profile-media-tabs \{[\s\S]*?grid-template-columns: repeat\(2, 44px\);[\s\S]*?gap: 0;[\s\S]*?padding: 0;[\s\S]*?border: 0;/);
-  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.profile-media-tabs button::before \{[\s\S]*?inset: 4px;[\s\S]*?border-radius: 50%;/);
-  assert.match(profilePage, /\.profile-media-tab-icon \{ position: relative; z-index: 1; width: 18px; height: 18px;/);
+  assert.match(profilePage, /\.profile-media-tabs \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 4px;[\s\S]*?padding: 4px;[\s\S]*?border-radius: 15px;/);
+  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.profile-media-tabs button \{[\s\S]*?min-height: 46px;[\s\S]*?border-radius: 11px !important;/);
+  assert.match(profilePage, /\.profile-media-tab-icon \{ width: 18px; height: 18px;[\s\S]*?flex: 0 0 18px;/);
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 
@@ -233,31 +233,15 @@ test("profiles can be shared and close back to the referring site page", () => {
   assert.match(navigationActions, /window\.location\.assign\(destination\.toString\(\)\)/);
 });
 
-test("inline profile TV has complete play, sound, progress, and duration controls", () => {
-  assert.match(profileCarousel, /INLINE_CONTROLS_HIDE_DELAY_MS = 1_500/);
-  assert.match(profileCarousel, /function toggleInlinePlayback\(\)/);
-  assert.match(profileCarousel, /function toggleInlineSound\(\)/);
-  assert.match(profileCarousel, /function seekInlineVideo\(value: number\)/);
-  assert.match(profileCarousel, /function revealInlineControls\(\)/);
-  assert.match(profileCarousel, /profile-media-video-controls\$\{inlineControlsVisible \|\| !inlinePlaying \? " is-visible" : ""\}/);
-  assert.match(profileCarousel, /aria-label="TV video progress"/);
-  assert.match(profileCarousel, /type="range"/);
-  assert.match(profileCarousel, /--profile-inline-video-progress/);
-  assert.match(profileCarousel, /<PlaybackStateIcon paused=\{!inlinePlaying\} \/>/);
-  assert.match(profileCarousel, /<SoundStateIcon muted=\{inlineMuted\} \/>/);
-  assert.match(profileCarousel, /className="profile-media-fullscreen-control"/);
-  assert.match(profileCarousel, /<FullscreenIcon \/>/);
-  assert.doesNotMatch(profileCarousel, /\{inlinePlaying \? "Pause" : "Play"\}/);
-  assert.doesNotMatch(profileCarousel, /\{inlineMuted \? "Sound on" : "Sound off"\}/);
-  assert.doesNotMatch(profileCarousel, />View full screen<\/button>/);
-  assert.match(profileCarousel, /formatDuration\(inlineCurrentTime\)/);
-  assert.match(profilePage, /\.profile-media-video-controls \{ position: absolute;/);
-  assert.match(profilePage, /\.profile-media-video-controls\.is-visible \{ opacity: 1; pointer-events: auto;/);
-  assert.match(profilePage, /grid-template-columns: 36px minmax\(88px, 1fr\) auto 36px 36px;/);
-  assert.match(profilePage, /\.profile-media-video-controls input\[type="range"\][\s\S]*?height: 16px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(profilePage, /\.profile-media-video-controls output \{ min-width: 64px;[\s\S]*?font-size: 10px;[\s\S]*?font-variant-numeric: tabular-nums;/);
-  assert.match(profilePage, /\.profile-media-video-controls button \{ width: 36px;[\s\S]*?height: 36px;/);
-  assert.match(profilePage, /\.profile-media-feature\.is-video \{ aspect-ratio: 9 \/ 16;/);
+test("profile videos stay passive in the grid and open the complete full-screen player", () => {
+  assert.match(profileCarousel, /className=\{`profile-media-grid-item is-\$\{item\.kind\}`\}/);
+  assert.match(profileCarousel, /preload="metadata"[\s\S]*?src=\{item\.videoUrl\}/);
+  assert.match(profileCarousel, /className="profile-media-play"/);
+  assert.match(profileCarousel, /className="profile-media-duration"/);
+  assert.match(profileCarousel, /openViewer\(item\.kind, index, event\.currentTarget\)/);
+  assert.match(profileCarousel, /autoPlay[\s\S]*?controls[\s\S]*?controlsList="nofullscreen noremoteplayback nodownload"/);
+  assert.doesNotMatch(profileCarousel, /IntersectionObserver|inlinePlaying|profile-media-video-controls/);
+  assert.match(profilePage, /\.profile-media-grid-item \{[\s\S]*?aspect-ratio: 4 \/ 5;/);
 });
 
 test("social icons use one simple Socials heading without publishing handles", () => {

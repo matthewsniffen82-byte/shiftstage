@@ -164,12 +164,10 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.dancer-photo-upload-form \{[^}]*grid-template-columns:auto auto;[^}]*justify-content:center;/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.photo-upload-heading \{ display:none; \}/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.photo-review-list > p:only-child \{ display:none; \}/);
-  assert.match(dashboard, /\.dancer-profile-builder-empty-slots \{ justify-content:flex-start; scroll-padding-inline:10px; \}/);
-  assert.match(dashboard, /\.dancer-profile-builder-empty-slots::before,[\s\S]*?\.dancer-profile-builder-empty-slots::after \{ content:""; flex:0 0 8px; \}/);
-  assert.match(dashboard, /\.dancer-profile-builder-empty-slots button:last-of-type \{ scroll-snap-align:end; \}/);
-  const emptyMediaStyles = dashboard.match(/\.dancer-profile-builder-media-empty \{([^}]*)\}/)?.[1] || "";
-  assert.doesNotMatch(emptyMediaStyles, /(?:^|;)\s*(?:height|min-height|aspect-ratio):/);
-  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-media-feature \{[^}]*aspect-ratio: 9 \/ 16;/);
+  assert.doesNotMatch(dashboard, /dancer-profile-builder-media-empty/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-media-grid \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\);/);
+  assert.match(dashboard, /\.dancer-profile-builder-empty-slots button \{ width:100%; min-width:0; aspect-ratio:4 \/ 5;/);
+
   assert.match(dashboard, /\.dancer-profile-builder-panel \{ bottom:calc\(88px \+ env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\); max-height:min\(66dvh,620px,calc\(100dvh - var\(--mydancr-preview-banner-offset,0px\) - 104px - env\(safe-area-inset-bottom\)\)\);/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \.dancer-profile-editor-footer \{ bottom:max\(8px,env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\);/);
   assert.doesNotMatch(dashboard, /editorTitle/);
@@ -406,10 +404,10 @@ test("approved dancers edit their full guest view from inside Profile & media", 
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-schedule-section \.eyebrow \{ color:#f7f2ff; \}/);
 });
 
-test("the mobile full-profile preview leaves room for its media thumbnails above navigation", () => {
+test("the mobile full-profile preview keeps the three-column media grid above navigation", () => {
   assert.match(
     dashboard,
-    /@media \(max-width: 620px\) \{[\s\S]*?\.dancer-profile-preview-overlay \.profile-media-feature \{ aspect-ratio: 4 \/ 5;/,
+    /@media \(max-width: 620px\) \{ \.dancer-profile-preview-overlay \.profile-media-tabs \{ width:100%; \}[\s\S]*?\.dancer-profile-preview-overlay \.profile-media-grid \{ gap:4px; \}/,
   );
 });
 

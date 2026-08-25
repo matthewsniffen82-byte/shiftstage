@@ -223,14 +223,14 @@ test("venue pins stay neutral while Upcoming keeps the cyan schedule signal", ()
   );
 });
 
-test("large dancer profile media frames use a neutral edge without a colored halo", () => {
+test("dancer profile media viewers and grid tiles use neutral edges without colored halos", () => {
   const mediaFrameRule = aesthetic.match(
-    /The large dancer-profile media frame stays neutral[\s\S]*?\n\}/,
+    /Dancer-profile media stays neutral[\s\S]*?(?=\/\* Venue discovery)/,
   )?.[0] || "";
 
   assert.ok(mediaFrameRule, "the neutral dancer profile media frame rule must exist");
   assert.match(mediaFrameRule, /#profileBackdrop \.profile-modal \.modal-image/);
-  assert.match(mediaFrameRule, /\.public-profile-shell \.profile-media-feature/);
+  assert.match(mediaFrameRule, /\.public-profile-shell \.profile-media-grid-item/);
   assert.match(
     mediaFrameRule,
     /border: 1px solid var\(--dancr-color-border-subtle\) !important;/,
@@ -243,10 +243,8 @@ test("large dancer profile media frames use a neutral edge without a colored hal
     mediaFrameRule,
     /beam-violet|brand-primary|126,\s*234,\s*255|124,\s*58,\s*237/,
   );
-  assert.doesNotMatch(
-    mediaFrameRule,
-    /profile-titlebar-avatar|profile-media-tabs|profile-media-grid-item|home-bottom|home-nav/,
-  );
+  assert.match(mediaFrameRule, /\.profile-media-grid-item \{[\s\S]*?box-shadow: none !important;/);
+  assert.doesNotMatch(mediaFrameRule, /profile-titlebar-avatar|profile-media-tabs|home-bottom|home-nav/);
 });
 
 test("venue discovery keeps restrained brand actions while venue-detail outlines stay neutral", () => {
@@ -463,11 +461,11 @@ test("Android and Samsung Browser cannot reintroduce device-only glow or media f
   );
   assert.match(
     parityLayer,
-    /Device rendering never color-corrects the supplied hero, video, or venue[\s\S]*?\.hero\.reference-hero,[\s\S]*?\.home-tv-feed-video,[\s\S]*?\.profile-media-feature video,[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/,
+    /Device rendering never color-corrects the supplied hero, video, or venue[\s\S]*?\.hero\.reference-hero,[\s\S]*?\.home-tv-feed-video,[\s\S]*?\.profile-media-grid-item video,[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/,
   );
   assert.match(
     parityLayer,
-    /Keep approved dancer photography equally clear on iPhone, Android, and[\s\S]*?#results \.home-dancer-grid-photo\.has-custom-photo,[\s\S]*?#results \.home-discovery-feed-slide:not\(\.home-venue-discovery-slide\) \.home-discovery-feed-photo\.has-custom-photo,[\s\S]*?\.public-profile-shell \.profile-media-feature > img,[\s\S]*?filter: brightness\(1\.14\) contrast\(1\.03\) !important;[\s\S]*?-webkit-filter: brightness\(1\.14\) contrast\(1\.03\) !important;/,
+    /Keep approved dancer photography equally clear on iPhone, Android, and[\s\S]*?#results \.home-dancer-grid-photo\.has-custom-photo,[\s\S]*?#results \.home-discovery-feed-slide:not\(\.home-venue-discovery-slide\) \.home-discovery-feed-photo\.has-custom-photo,[\s\S]*?\.public-profile-shell \.profile-media-grid-item img,[\s\S]*?filter: brightness\(1\.14\) contrast\(1\.03\) !important;[\s\S]*?-webkit-filter: brightness\(1\.14\) contrast\(1\.03\) !important;/,
   );
 
   const neutralSurfaceRule = parityLayer.match(
@@ -615,7 +613,7 @@ test("venue detail and full dancer profiles use the same near-black foundation a
   );
   assert.match(
     aesthetic,
-    /\.public-profile-shell :is\([\s\S]*?\.profile-titlebar,[\s\S]*?\.profile-social-section,[\s\S]*?\.profile-media-feature,[\s\S]*?\.profile-schedule-section,[\s\S]*?\.shift-row[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: none !important;/,
+    /\.public-profile-shell :is\([\s\S]*?\.profile-titlebar,[\s\S]*?\.profile-social-section,[\s\S]*?\.profile-media-grid-item,[\s\S]*?\.profile-schedule-section,[\s\S]*?\.shift-row[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     venueProfileAesthetic,
@@ -677,10 +675,8 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
     fullProfilePalette,
     /\.gallery\[data-media-tab="video"\] \.thumb\.active \{[\s\S]*?border-color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?outline-color: var\(--dancr-color-white-soft\) !important;[\s\S]*?var\(--dancr-color-black-medium\) !important;/,
   );
-  assert.match(
-    fullProfilePalette,
-    /#profileBackdrop \.modal-image,[\s\S]*?\.profile-media-feature \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: 0 12px 28px var\(--dancr-color-black-medium\) !important;/,
-  );
+  assert.match(fullProfilePalette, /#profileBackdrop \.modal-image \{[\s\S]*?box-shadow: 0 12px 28px var\(--dancr-color-black-medium\) !important;/);
+  assert.match(fullProfilePalette, /\.public-profile-shell \.profile-media-grid-item \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(
     fullProfilePalette,
     /#profileBackdrop \.working-now-tile,[\s\S]*?\.profile-working-card:not\(\.has-club-deal\) \{[\s\S]*?var\(--dancr-color-success\)/,

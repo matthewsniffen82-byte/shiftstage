@@ -6,10 +6,6 @@ const profileCarousel = await readFile(
   new URL("../app/dancers/[slug]/DancerPhotoCarousel.tsx", import.meta.url),
   "utf8",
 );
-const profilePage = await readFile(
-  new URL("../app/dancers/[slug]/page.tsx", import.meta.url),
-  "utf8",
-);
 const tvFeed = await readFile(
   new URL("../app/tv/TvFeedClient.tsx", import.meta.url),
   "utf8",
@@ -23,19 +19,10 @@ const liveApp = await readFile(
   "utf8",
 );
 
-test("visible video play and pause controls stay neutral in every interaction state", () => {
-  assert.match(
-    profileCarousel,
-    /aria-label=\{inlinePlaying \? "Pause TV video" : "Play TV video"\}[\s\S]*?className="profile-media-playback-control"/,
-  );
-
-  const profilePlaybackRule = profilePage.match(
-    /\.profile-media-playback-control:is\(:hover, :focus-visible, :active\) \{[\s\S]*?\}/,
-  )?.[0] || "";
-  assert.match(profilePlaybackRule, /border-color: rgba\(255,255,255,\.18\) !important;/);
-  assert.match(profilePlaybackRule, /background: rgba\(25,25,30,\.9\) !important;/);
-  assert.match(profilePlaybackRule, /background-image: none !important;/);
-  assert.doesNotMatch(profilePlaybackRule, /126,234,255|34,199,255|124,58,237|109,40,217/);
+test("profile video grids defer playback to native full-screen controls", () => {
+  assert.match(profileCarousel, /preload="metadata"[\s\S]*?className="profile-media-play"/);
+  assert.match(profileCarousel, /autoPlay[\s\S]*?controls[\s\S]*?src=\{activeViewerItem\.videoUrl\}/);
+  assert.doesNotMatch(profileCarousel, /profile-media-playback-control|inlinePlaying|toggleInlinePlayback/);
 
   const tvRetryRule = tvFeed.match(/\.tv-playback-retry \{[\s\S]*?\}/)?.[0] || "";
   assert.match(tvRetryRule, /border: 1px solid rgba\(255,255,255,\.18\)/);

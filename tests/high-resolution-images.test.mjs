@@ -226,7 +226,7 @@ test("profile surfaces use responsive sources and concise plural upload guidance
   assert.match(dancerCarousel, /srcSet=\{item\.imageSrcSet \|\| undefined\}/);
   assert.match(
     dancerCarousel,
-    /srcSet=\{selectedItem\.imageSrcSet \|\| undefined\}/,
+    /srcSet=\{activeViewerItem\.imageSrcSet \|\| undefined\}/,
   );
   assert.match(adminDashboard, /original camera image/);
   assert.match(dashboard, /Choose profile photos/);

@@ -53,10 +53,12 @@ test("dedicated TV feed preserves user preference even if autoplay needs a muted
   );
 });
 
-test("profile video surfaces share the same sound preference across selected videos", () => {
+test("profile video viewers retain sound preference while grid previews stay passive", () => {
   assert.match(tvStrip, /const \[viewerMuted, setViewerMuted\] = useVideoSoundPreference\(\)/);
   assert.doesNotMatch(tvStrip, /setViewerMuted\(true\);[\s\S]{0,80}setActiveVideo\(video\)/);
   assert.match(dancerCarousel, /const \[inlineMuted, setInlineMuted\] = useVideoSoundPreference\(\)/);
-  assert.equal((dancerCarousel.match(/muted=\{inlineMuted\}/g) || []).length, 3);
-  assert.equal((dancerCarousel.match(/onVolumeChange=\{\(event\) =>/g) || []).length, 2);
+  assert.equal((dancerCarousel.match(/muted=\{inlineMuted\}/g) || []).length, 1);
+  assert.equal((dancerCarousel.match(/onVolumeChange=\{\(event\) =>/g) || []).length, 1);
+  assert.match(dancerCarousel, /className={`profile-media-grid-item is-\$\{item\.kind\}`}/);
+  assert.doesNotMatch(dancerCarousel, /className={`profile-media-grid-item[\s\S]{0,700}autoPlay/);
 });

@@ -33,7 +33,7 @@ test("the live dancer profile changes photos with horizontal swipe and trackpad 
   assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil/);
 });
 
-test("live profile photos remain accessible with thumbnails and keyboard navigation", () => {
+test("live profile grid photos open an accessible full-screen collection", () => {
   assert.match(
     liveApp,
     /id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos\. Swipe left or right to change media\."/,
@@ -48,83 +48,53 @@ test("live profile photos remain accessible with thumbnails and keyboard navigat
   );
   assert.match(
     liveApp,
-    /modalImage\?\.addEventListener\("keydown",[\s\S]*?event\.key === "ArrowLeft" \|\| event\.key === "ArrowRight"/,
+    /profilePhotoViewerImage\?\.addEventListener\("keydown",[\s\S]*?event\.key !== "ArrowLeft" && event\.key !== "ArrowRight"[\s\S]*?moveModalPhoto\([^;]*\{ syncViewer: true \}\)/,
   );
-  assert.match(
-    liveApp,
-    /function openSelectedModalMediaViewer\(\) \{[\s\S]*?activeMediaType !== "video"\) return false;[\s\S]*?openProfileTvViewer[\s\S]*?return true;/,
-  );
-  assert.doesNotMatch(liveApp, /openPhotoViewerFromElement\(modalImage\)/);
-  const modalPhotoClickHandler = liveApp.match(
-    /modalImage\?\.addEventListener\("click"[\s\S]*?(?=\n    modalImage\?\.addEventListener\("keydown")/,
+  const galleryClickHandler = liveApp.match(
+    /modalGallery\.addEventListener\("click"[\s\S]*?(?=\n    \[modalMediaPhotoTab, modalMediaTvTab\])/,
   )?.[0] || "";
-  assert.ok(modalPhotoClickHandler, "the inline media click handler must exist");
-  assert.doesNotMatch(modalPhotoClickHandler, /openSelectedModalMediaViewer|openPhotoViewerFromElement/);
+  assert.ok(galleryClickHandler, "the media grid click handler must exist");
+  assert.match(galleryClickHandler, /thumb\.hasAttribute\("data-profile-tv-index"\)[\s\S]*?openProfileTvViewer/);
+  assert.match(galleryClickHandler, /selectModalMediaThumb\(thumb, \{ syncViewer: true \}\);[\s\S]*?openPhotoViewerFromElement\(modalImage\);/);
+  assert.match(liveApp, /let profilePhotoViewerReturnTarget = null;/);
+  assert.match(liveApp, /returnTarget\?\.isConnected[\s\S]*?returnTarget\.focus\(\{ preventScroll: true \}\)/);
   assert.match(
     liveApp,
-    /id="modalMediaExpand"[^>]*aria-label="Open selected profile video full screen"[^>]*hidden/,
-  );
-  assert.match(liveApp, /modalImage\.dataset\.activeMediaType = "photo";[\s\S]*?modalMediaExpand\.hidden = true/);
-  assert.match(liveApp, /modalImage\.dataset\.activeMediaType = "video";[\s\S]*?modalMediaExpand\.hidden = false/);
-  assert.match(liveApp, /modalMediaExpand\?\.addEventListener\("click"/);
-  assert.match(
-    liveApp,
-    /\.profile-modal \.gallery \{ overscroll-behavior-x: contain; scroll-snap-type: x proximity; touch-action: pan-x pan-y; \}/,
+    /#profileBackdrop \.gallery \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.doesNotMatch(liveApp, /id="modalPhotoSwipeHint"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerSwipeHint"/);
-  assert.match(liveApp, /id="modalMediaPrevious"[\s\S]*?id="modalMediaNext"/);
+  assert.match(liveApp, /id="profilePhotoViewerImage"[^>]*tabindex="0"[^>]*aria-label="Selected profile photo\. Swipe left or right to change photos\."/);
 });
-test("the profile promotes approved photos and dancer-only TV videos into one tabbed media stage", () => {
+test("the profile presents approved photos and dancer-only videos as separate three-column grids", () => {
   assert.match(publicPhotoCarousel, /type MediaTab = ProfileMedia\["kind"\]/);
   assert.match(publicPhotoCarousel, /className="profile-media-tabs"/);
   assert.match(publicPhotoCarousel, /aria-label=\{`Photos, \$\{photoMedia\.length\}`\}/);
-  assert.match(publicPhotoCarousel, /aria-label=\{`TV videos, \$\{videoMedia\.length\}`\}/);
+  assert.match(publicPhotoCarousel, /aria-label=\{`Videos, \$\{videoMedia\.length\}`\}/);
+  assert.match(publicPhotoCarousel, /className="profile-media-tab-label">Photos<\/span>/);
+  assert.match(publicPhotoCarousel, /className="profile-media-tab-label">Videos<\/span>/);
   assert.match(publicPhotoCarousel, /className="profile-media-tab-icon"/);
   assert.match(publicPhotoCarousel, /className="profile-media-tab-play"/);
   assert.match(publicPhotoCarousel, /activeTab === "photo" \? photoMedia : videoMedia/);
-  assert.match(
-    publicPhotoCarousel,
-    /className=\{`profile-media-feature is-\$\{selectedItem\.kind\}\$\{selectedItem\.kind === "video"[\s\S]*?data-profile-inline-media-swipe-surface/,
-  );
   assert.match(publicPhotoCarousel, /data-dancer-media-tabs/);
   assert.match(
     publicPhotoCarousel,
-    /onClick=\{\(\) => setActiveIndex\(index\)\}/,
+    /onClick=\{\(event\) => openViewer\(item\.kind, index, event\.currentTarget\)\}/,
   );
-  assert.match(publicPhotoCarousel, /if \(selectedItem\.kind === "video"\) revealInlineControls\(\)/);
-  assert.doesNotMatch(publicPhotoCarousel, /openViewer\(selectedItem\.kind, selectedIndex\)/);
-  assert.doesNotMatch(publicPhotoCarousel, /setViewer\(\{ kind: "photo", index \}\)/);
-  assert.match(publicPhotoCarousel, /profile-media-feature-position/);
-  assert.match(
-    publicPhotoCarousel,
-    /selectedItem\.kind === "video" \? \([\s\S]*?profile-media-fullscreen-control[\s\S]*?openViewer\(selectedIndex\)/,
-  );
-  assert.doesNotMatch(
-    publicPhotoCarousel,
-    /aria-label=\{`Open \$\{stageName\} photo/,
-  );
-  assert.match(publicPhotoCarousel, /IntersectionObserver/);
-  assert.match(publicPhotoCarousel, /video\.play\(\)\.catch/);
-  assert.doesNotMatch(
-    publicPhotoCarousel,
-    /activeViewerItem\.kind === "photo"/,
-  );
+  assert.match(publicPhotoCarousel, /aria-label=\{`Open \$\{stageName\} \$\{item\.kind\} \$\{index \+ 1\} of \$\{activeItems\.length\}`\}/);
+  assert.match(publicPhotoCarousel, /activeViewerItem\.kind === "photo"/);
   assert.match(
     publicPhotoCarousel,
     /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?src=\{activeViewerItem\.videoUrl\}/,
   );
+  assert.doesNotMatch(publicPhotoCarousel, /profile-media-feature|IntersectionObserver|inlinePlaying/);
   assert.match(
     publicProfilePage,
-    /\.profile-media-grid \{[^}]*display: flex;[^}]*overflow-x: auto;[^}]*scroll-snap-type: x mandatory/,
+    /\.profile-media-grid \{[^}]*display: grid;[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/,
   );
   assert.match(
     publicProfilePage,
-    /\.profile-media-feature \{[^}]*aspect-ratio: 9 \/ 16;[^}]*touch-action: pan-y/,
-  );
-  assert.match(
-    publicProfilePage,
-    /\.profile-media-feature\.is-video \{[^}]*aspect-ratio: 9 \/ 16;/,
+    /\.profile-media-grid-item \{[^}]*width: 100%;[^}]*aspect-ratio: 4 \/ 5;/,
   );
   assert.match(
     publicProfilePage,
@@ -136,7 +106,7 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
   assert.doesNotMatch(publicProfilePage, /<TvVideoStrip/);
 });
 
-test("full-profile photo and video stages use one stable portrait frame", () => {
+test("full-profile photo and video grids use stable portrait tiles", () => {
   assert.match(
     liveApp,
     /#profileBackdrop \.modal-image \{[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: 9 \/ 16 !important;[\s\S]*?background-size: cover !important;/,
@@ -155,11 +125,10 @@ test("full-profile photo and video stages use one stable portrait frame", () => 
     liveApp,
     /#profileBackdrop \.modal-grid > \.info-tile:not\(\.working-now-tile\):not\(\.schedule-upcoming\):not\(\.profile-club-deal-tile\)::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
   );
-  assert.doesNotMatch(publicPhotoCarousel, /style=\{selectedItem\.kind === "photo"[^}]*aspectRatio/);
-  assert.match(publicProfilePage, /@media \(max-width: 600px\)[\s\S]*?\.profile-media-feature, \.profile-media-feature\.is-photo, \.profile-media-feature\.is-video \{ aspect-ratio: 4 \/ 5; max-height: none;/);
-  assert.match(publicProfilePage, /@media \(max-width: 600px\)[\s\S]*?\.profile-media-grid-item\.is-video \{ aspect-ratio: 4 \/ 5; \}/);
-  assert.match(publicProfilePage, /\.profile-media-feature > img \{ object-fit: cover;/);
-  assert.match(publicProfilePage, /\.profile-media-feature > video \{ object-fit: cover; \}/);
+  assert.doesNotMatch(publicPhotoCarousel, /selectedItem|profile-media-feature/);
+  assert.match(publicProfilePage, /\.profile-media-grid-item \{[^}]*aspect-ratio: 4 \/ 5;/);
+  assert.match(publicProfilePage, /\.profile-media-grid-item img, \.profile-media-grid-item video \{[^}]*object-fit: cover;/);
+  assert.match(publicProfilePage, /\.profile-media-viewer-stage > img, \.profile-media-viewer-stage > video \{[^}]*object-fit: contain;/);
 });
 
 
@@ -194,7 +163,7 @@ test("the standalone public dancer profile uses the production full-screen horiz
   );
   assert.match(
     publicPhotoCarousel,
-    /event\.key === "ArrowLeft"[\s\S]*?event\.key === "ArrowRight"/,
+    /event\.key !== "ArrowLeft"[\s\S]*?event\.key !== "ArrowRight"/,
   );
   assert.match(
     publicProfilePage,

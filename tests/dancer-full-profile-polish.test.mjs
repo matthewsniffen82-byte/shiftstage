@@ -59,15 +59,15 @@ test("current and upcoming schedules share one compact club destination", () => 
   );
 });
 
-test("profile media is a compact horizontal filmstrip with stable geometry", () => {
+test("profile media uses a compact three-column grid with stable geometry", () => {
   assert.ok(profilePolishBlock, "profile polish CSS block must exist");
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.gallery \{[\s\S]*?display: flex !important;[\s\S]*?overflow-x: auto !important;[\s\S]*?scroll-snap-type: x proximity !important;/,
+    /#profileBackdrop \.gallery \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?overflow: visible !important;/,
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.gallery \.thumb \{[\s\S]*?aspect-ratio: 4 \/ 5 !important;[\s\S]*?scroll-snap-align: start !important;/,
+    /#profileBackdrop \.gallery \.thumb \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?aspect-ratio: 4 \/ 5 !important;/,
   );
   assert.match(profilePolishBlock, /overflow-anchor: none;/);
 });
@@ -376,13 +376,13 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.match(liveApp, /<section class="profile-modal-media" aria-label="Dancer profile media">\s*<div class="profile-modal-media-tabs"/);
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.profile-modal-media-tabs \{[\s\S]*?grid-template-columns: repeat\(2, 44px\);[\s\S]*?gap: 0;[\s\S]*?padding: 0;[\s\S]*?border: 0;/,
+    /#profileBackdrop \.profile-modal-media-tabs \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 4px;[\s\S]*?padding: 4px;[\s\S]*?border: 1px solid rgba\(255,255,255,\.1\);/,
   );
   assert.match(
     profilePolishBlock,
-    /body\.dancr-button-system #profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?border-radius: 50% !important;/,
+    /body\.dancr-button-system #profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?min-height: 46px;[\s\S]*?display: flex;[\s\S]*?border-radius: 11px !important;/,
   );
-  assert.match(profilePolishBlock, /body\.dancr-button-system #profileBackdrop \.profile-modal-media-tabs button::before \{[\s\S]*?inset: 4px;[\s\S]*?border-radius: 50%;/);
+  assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-label \{[\s\S]*?font-weight: 900;/);
   assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-icon \{[\s\S]*?width: 18px;[\s\S]*?height: 18px;/);
 });
 

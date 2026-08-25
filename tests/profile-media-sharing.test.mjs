@@ -29,12 +29,12 @@ test("full dancer profiles share the exact TV video being viewed", () => {
   );
 });
 
-test("shared profile-photo links select the exact inline photo without opening an enlargement", () => {
+test("shared profile-photo links open the exact photo in the full-screen collection", () => {
   assert.match(
     publicPhotoCarousel,
-    /params\.get\("media"\) !== "photo"[\s\S]*?Number\(params\.get\("mediaIndex"\)\)[\s\S]*?setActiveTab\("photo"\);[\s\S]*?setActiveIndex\(index\);/,
+    /const requestedKind = params\.get\("media"\)[\s\S]*?Number\(params\.get\("mediaIndex"\)\)[\s\S]*?setActiveTab\(requestedKind\);[\s\S]*?setViewer\(\{ kind: requestedKind, index \}\);/,
   );
-  assert.doesNotMatch(publicPhotoCarousel, /setViewer\(\{ kind: "photo", index \}\)/);
+  assert.doesNotMatch(publicPhotoCarousel, /setActiveIndex/);
   assert.match(
     liveApp,
     /function profilePhotoShareUrl\(profileName, city = selectedCity\(\), photoIndex = 0\)[\s\S]*?url\.searchParams\.set\("media", "photo"\)[\s\S]*?url\.searchParams\.set\("mediaIndex"/,
@@ -46,12 +46,12 @@ test("shared profile-photo links select the exact inline photo without opening a
   );
   assert.match(
     liveApp,
-    /function openSharedProfileMedia\(params\)[\s\S]*?selectModalMediaThumb\(photoThumbs\[photoIndex\]\);/,
+    /function openSharedProfileMedia\(params\)[\s\S]*?selectModalMediaThumb\(photoThumbs\[photoIndex\], \{ syncViewer: true \}\);[\s\S]*?openPhotoViewerFromElement\(modalImage\);/,
   );
   const sharedPhotoHandler = liveApp.match(
-    /function openSharedProfileMedia\(params\)[\s\S]*?(?=\n    function openSharedProfileFromUrl)/,
+    /function openSharedProfileMedia\(params\)[\s\S]*?(?=\n    async function openSharedProfileFromUrl)/,
   )?.[0] || "";
-  assert.doesNotMatch(sharedPhotoHandler, /openPhotoViewerFromElement|syncViewer/);
+  assert.match(sharedPhotoHandler, /syncViewer: true[\s\S]*?openPhotoViewerFromElement\(modalImage\)/);
   assert.match(
     liveApp,
     /openProfileModal\(profileReferenceValue\(profile\)\);[\s\S]*?openSharedProfileMedia\(params\);/,
