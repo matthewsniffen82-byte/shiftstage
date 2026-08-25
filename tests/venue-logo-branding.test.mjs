@@ -181,7 +181,7 @@ test("venue cards use a full-card logo canvas while detail pages retain contain-
   assert.match(liveApp, /function applyVenueLogoFit\(image, scale, centerX = \.5, centerY = \.5\)/);
   assert.match(
     liveApp,
-    /classList\.contains\("home-venue-discovery-logo"\)[\s\S]*?return \{ width: \.82, height: \.5, maxScale: 2\.4 \};/,
+    /classList\.contains\("home-venue-discovery-logo"\)[\s\S]*?return \{ width: \.92, height: \.56, maxScale: 2\.7 \};/,
   );
   assert.match(
     liveApp,
@@ -211,6 +211,10 @@ test("venue cards use a full-card logo canvas while detail pages retain contain-
   assert.match(
     aesthetic,
     /\.home-venue-discovery-logo \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?padding: 42px 72px 142px 18px;[\s\S]*?object-fit: contain;[\s\S]*?object-position: center 34%;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-logo \{[\s\S]*?calc\(var\(--venue-logo-shift-x, 0%\) - 10px\)[\s\S]*?calc\(var\(--venue-logo-shift-y, 0%\) - 48px\)[\s\S]*?scale\(var\(--venue-logo-scale, 1\)\)/,
   );
   assert.match(
     aesthetic,
