@@ -10,10 +10,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const threads = await listAdminSupportThreads(createAdminSupabaseClient());
-    return NextResponse.json({ ok: true, threads });
+    return NextResponse.json({ ok: true, threads, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load support inbox.");
   }
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json();
     const threadId = typeof body.threadId === "string" ? body.threadId.trim() : "";
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       body: typeof body.message === "string" ? body.message : "",
     });
 
-    return NextResponse.json({ ok: true, thread });
+    return NextResponse.json({ ok: true, thread, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to reply to support message.");
   }

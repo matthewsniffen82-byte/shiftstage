@@ -2298,36 +2298,35 @@ function AdminSupportInbox({
 }) {
   const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
   const [statusByThread, setStatusByThread] = useState<Record<string, string>>({});
+  const [busyThreadId, setBusyThreadId] = useState("");
 
   async function reply(threadId: string) {
-    const token = readToken();
-    if (!token) {
-      setStatusByThread((current) => ({ ...current, [threadId]: "Admin sign in required." }));
-      return;
-    }
-
     const message = (replyByThread[threadId] || "").trim();
     if (!message) {
       setStatusByThread((current) => ({ ...current, [threadId]: "Enter a reply first." }));
       return;
     }
 
+    setBusyThreadId(threadId);
     setStatusByThread((current) => ({ ...current, [threadId]: "Sending reply..." }));
-    const response = await fetch("/api/admin/support", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ threadId, message }),
-    });
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      setStatusByThread((current) => ({ ...current, [threadId]: data.error || "Unable to send reply." }));
-      return;
+    try {
+      const data = await requestAdminJson("/api/admin/support", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ threadId, message }),
+        fallbackMessage: "Unable to send reply.",
+      });
+      onThreadsChange([data.thread, ...threads.filter((thread) => String(thread.id) !== threadId)]);
+      setReplyByThread((current) => ({ ...current, [threadId]: "" }));
+      setStatusByThread((current) => ({ ...current, [threadId]: "Reply sent." }));
+    } catch (error) {
+      setStatusByThread((current) => ({
+        ...current,
+        [threadId]: error instanceof Error ? error.message : "Unable to send reply. Check your connection and try again.",
+      }));
+    } finally {
+      setBusyThreadId("");
     }
-
-    onThreadsChange([data.thread, ...threads.filter((thread) => String(thread.id) !== threadId)]);
-    setReplyByThread((current) => ({ ...current, [threadId]: "" }));
-    setStatusByThread((current) => ({ ...current, [threadId]: "Reply sent." }));
   }
 
   if (!threads.length) return <p className="empty">No support messages yet.</p>;
@@ -2363,8 +2362,8 @@ function AdminSupportInbox({
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
               placeholder="Reply to this guest, dancer, or venue"
             />
-            <button type="button" onClick={() => reply(threadId)}>
-              Reply to account
+            <button type="button" onClick={() => reply(threadId)} disabled={busyThreadId === threadId}>
+              {busyThreadId === threadId ? "Sending reply..." : "Reply to account"}
             </button>
             {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
           </details>
