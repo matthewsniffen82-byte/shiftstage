@@ -60,8 +60,9 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   assert.match(liveApp, /returnTarget\?\.isConnected[\s\S]*?returnTarget\.focus\(\{ preventScroll: true \}\)/);
   assert.match(
     liveApp,
-    /#profileBackdrop \.gallery \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
+    /#profileBackdrop \.gallery \{[\s\S]*?display: flex !important;[\s\S]*?overflow-x: auto !important;[\s\S]*?scroll-snap-type: x mandatory !important;/,
   );
+  assert.match(liveApp, /#profileBackdrop \.gallery \.thumb \{[\s\S]*?flex: 0 0 calc\(\(100% - 4px\) \/ 3\) !important;/);
   assert.doesNotMatch(liveApp, /id="modalPhotoSwipeHint"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerSwipeHint"/);
   assert.match(liveApp, /id="profilePhotoViewerImage"[^>]*tabindex="0"[^>]*aria-label="Selected profile photo\. Swipe left or right to change photos\."/);

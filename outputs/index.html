@@ -36586,27 +36586,40 @@
         }
         #profileBackdrop .gallery {
           width: 100% !important;
-          min-height: 108px !important;
-          display: grid !important;
-          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-          align-items: start !important;
-          gap: 6px !important;
+          min-height: 0 !important;
+          display: flex !important;
+          align-items: stretch !important;
+          justify-content: flex-start !important;
+          gap: 2px !important;
           margin: 0 !important;
-          padding: 0 !important;
-          overflow: visible !important;
-          touch-action: manipulation !important;
+          padding: 2px 2px 8px !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          overscroll-behavior-x: contain !important;
+          scroll-padding-inline: 2px !important;
+          scroll-snap-type: x mandatory !important;
+          scrollbar-width: none;
+          touch-action: pan-x pan-y !important;
+          -webkit-overflow-scrolling: touch;
+        }
+        #profileBackdrop .gallery::-webkit-scrollbar {
+          display: none;
         }
         #profileBackdrop .gallery .thumb {
-          width: 100% !important;
-          min-width: 0 !important;
+          flex: 0 0 calc((100% - 4px) / 3) !important;
+          width: calc((100% - 4px) / 3) !important;
+          min-width: calc((100% - 4px) / 3) !important;
+          max-width: none !important;
           height: auto !important;
           min-height: 0 !important;
-          aspect-ratio: 4 / 5 !important;
+          aspect-ratio: 9 / 16 !important;
           margin: 0 !important;
           padding: 0 !important;
           overflow: hidden !important;
+          scroll-snap-align: start !important;
+          scroll-snap-stop: always;
           border: 1px solid rgba(255,255,255,.1) !important;
-          border-radius: 11px !important;
+          border-radius: 2px !important;
           background: #0b0b10 !important;
           box-shadow: none !important;
           transform: none !important;
@@ -36623,7 +36636,7 @@
           min-height: 0 !important;
           display: block !important;
           object-fit: cover !important;
-          border-radius: 10px !important;
+          border-radius: 1px !important;
         }
         #profileBackdrop .gallery .thumb:hover {
           border-color: rgba(126,234,255,.42) !important;

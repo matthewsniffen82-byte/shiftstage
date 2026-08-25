@@ -59,16 +59,17 @@ test("current and upcoming schedules share one compact club destination", () => 
   );
 });
 
-test("profile media uses a compact three-column grid with stable geometry", () => {
+test("profile media uses a three-up horizontally scrollable rail", () => {
   assert.ok(profilePolishBlock, "profile polish CSS block must exist");
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.gallery \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?overflow: visible !important;/,
+    /#profileBackdrop \.gallery \{[\s\S]*?display: flex !important;[\s\S]*?gap: 2px !important;[\s\S]*?overflow-x: auto !important;[\s\S]*?scroll-snap-type: x mandatory !important;/,
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.gallery \.thumb \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?aspect-ratio: 4 \/ 5 !important;/,
+    /#profileBackdrop \.gallery \.thumb \{[\s\S]*?flex: 0 0 calc\(\(100% - 4px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?aspect-ratio: 9 \/ 16 !important;[\s\S]*?scroll-snap-align: start !important;/,
   );
+  assert.match(profilePolishBlock, /#profileBackdrop \.gallery::\-webkit-scrollbar \{[\s\S]*?display: none;/);
   assert.match(profilePolishBlock, /overflow-anchor: none;/);
 });
 
