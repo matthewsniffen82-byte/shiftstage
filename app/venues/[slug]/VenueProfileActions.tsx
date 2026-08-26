@@ -68,6 +68,20 @@ export function VenueProfileActions({
     return () => controller.abort();
   }, [venueId]);
 
+  useEffect(() => {
+    if (!accountGateOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAccountGateOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountGateOpen]);
+
   async function shareVenue() {
     setStatus("");
     const url = window.location.href;
@@ -204,6 +218,7 @@ export function VenueProfileActions({
           }}
         >
           <section
+            aria-describedby="venue-account-gate-message"
             aria-labelledby="venue-account-gate-title"
             aria-modal="true"
             className="venue-account-gate-dialog"
@@ -218,13 +233,13 @@ export function VenueProfileActions({
             >
               ×
             </button>
-            <span>Free guest account</span>
-            <h2 id="venue-account-gate-title">Save this club</h2>
-            <p>Use a guest account to follow clubs and receive schedule alerts.</p>
+            <span>FREE GUEST ACCOUNT</span>
+            <h2 id="venue-account-gate-title">Follow your favorites</h2>
+            <p id="venue-account-gate-message">Create a free account to save clubs, follow favorites, and get updates.</p>
             <div>
-              <Link href="/account?role=customer&mode=signup">Create a free account</Link>
+              <Link href="/account?role=customer&mode=signup">Create free account</Link>
               <Link className="secondary" href="/account?role=customer">
-                Sign in
+                Already have an account? Sign in
               </Link>
             </div>
           </section>

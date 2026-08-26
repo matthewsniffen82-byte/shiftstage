@@ -891,7 +891,8 @@
 
 .shell :global(.venue-account-gate-dialog) {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+  padding: 19px;
 }
 
 .shell :global(.venue-account-gate-dialog > span) {
@@ -907,14 +908,19 @@
   margin: 0;
 }
 
+.shell :global(.venue-account-gate-dialog h2) {
+  padding-right: 42px;
+}
+
 .shell :global(.venue-account-gate-dialog p) {
   color: #b9accd;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .shell :global(.venue-account-gate-dialog > div) {
   display: grid;
-  gap: 9px;
+  gap: 4px;
+  margin-top: 2px;
 }
 
 .shell :global(.venue-account-gate-dialog a) {
@@ -931,8 +937,23 @@
 }
 
 .shell :global(.venue-account-gate-dialog a.secondary) {
-  border: 1px solid rgba(126, 234, 255, 0.24);
-  background: rgba(126, 234, 255, 0.08);
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  color: #a99eb7;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.shell :global(.venue-account-gate-dialog a.secondary:hover),
+.shell :global(.venue-account-gate-dialog a.secondary:focus-visible) {
+  color: #fff;
+  outline: 2px solid rgba(126, 234, 255, 0.46);
+  outline-offset: -4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* Shared production palette. The independently owned profile navigation stays unchanged. */

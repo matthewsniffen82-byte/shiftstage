@@ -543,11 +543,11 @@ export function DancerProfileActions({
             >
               ×
             </button>
-            <span>Free guest account</span>
-            <h2 id="profile-account-gate-title">Create an account to continue</h2>
+            <span>FREE GUEST ACCOUNT</span>
+            <h2 id="profile-account-gate-title">Follow your favorites</h2>
             <p id="profile-account-gate-message">{accountActionMessage(accountRequiredAction)}</p>
             <div>
-              <Link href="/account?role=customer&mode=signup">Create a free account</Link>
+              <Link href="/account?role=customer&mode=signup">Create free account</Link>
               <Link className="secondary" href="/account?role=customer">Already have an account? Sign in</Link>
             </div>
           </section>
@@ -657,6 +657,6 @@ function readConfirmedNotificationCount(data: { notificationCount?: unknown }) {
 }
 
 function accountActionMessage(action: AccountAction) {
-  if (action === "follow") return "Create a free guest account to follow this dancer and save the profile.";
-  return "Create a free guest account to turn on dancer notifications.";
+  if (action === "notify") return "Create a free account to follow dancers and get updates.";
+  return "Create a free account to follow dancers, save profiles, and get updates.";
 }

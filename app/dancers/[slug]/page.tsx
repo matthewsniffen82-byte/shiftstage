@@ -671,11 +671,13 @@ function PublicProfileStyles() {
       .shift-row em { grid-column: 2; grid-row: 2 / span 2; align-self: center; padding: 6px 9px; border: 1px solid rgba(148,229,255,.22); border-radius: 999px; color: #94e5ff; background: rgba(148,229,255,.08); font-size: 9px; font-style: normal; font-weight: 950; text-transform: uppercase; }
       .profile-account-gate, .profile-report-gate, .profile-schedule-gate { position: fixed; inset: 0; z-index: 1700; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.8); backdrop-filter: blur(11px); }
       .profile-account-gate-dialog, .profile-report-dialog, .profile-schedule-dialog { position: relative; width: min(430px, 100%); max-height: calc(100dvh - 24px); display: grid; gap: 14px; padding: 24px; overflow-y: auto; border: 1px solid rgba(53,216,255,.42); border-radius: 16px; background: linear-gradient(145deg, #0b0b13, #060609); box-shadow: 0 28px 90px rgba(0,0,0,.72); }
+      .profile-account-gate-dialog { gap: 10px; padding: 19px; }
       .profile-account-gate-dialog > span, .profile-report-dialog > span, .profile-schedule-dialog > span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
       .profile-account-gate-dialog h2, .profile-report-dialog h2 { padding-right: 40px; }
-      .profile-account-gate-dialog > div { display: grid; gap: 10px; }
+      .profile-account-gate-dialog > div { display: grid; gap: 4px; margin-top: 2px; }
       .profile-account-gate-dialog a, .profile-report-dialog form > button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; text-decoration: none; }
-      .profile-account-gate-dialog a.secondary { border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); }
+      .profile-account-gate-dialog a.secondary { min-height: 44px; padding: 0 8px; border: 0; border-radius: 10px; color: #a99eb7; background: transparent; font-size: 14px; font-weight: 750; }
+      .profile-account-gate-dialog a.secondary:hover, .profile-account-gate-dialog a.secondary:focus-visible { color: #fff; outline: 2px solid rgba(126,234,255,.46); outline-offset: -4px; text-decoration: underline; text-underline-offset: 3px; }
       .profile-account-gate-close, .profile-report-close, .profile-schedule-dialog-close { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(53,216,255,.42); border-radius: 50%; color: #fff; background: #08080d; font-size: 26px; cursor: pointer; }
       .profile-schedule-dialog-list { display: grid; gap: 8px; }
       .profile-schedule-dialog-list > div { display: grid; gap: 3px; padding: 11px 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 11px; background: rgba(255,255,255,.035); }
