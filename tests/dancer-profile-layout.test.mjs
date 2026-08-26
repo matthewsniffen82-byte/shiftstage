@@ -77,7 +77,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(liveApp, /class="profile-modal-header-metrics" id="modalProfileMetrics"/);
   assert.match(liveApp, /class="profile-activity-metrics"/);
   assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?margin: 0 !important;/);
-  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?grid-template-rows: 22px 14px !important;[\s\S]*?gap: 1px !important;[\s\S]*?padding: 2px 1px !important;/);
+  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?grid-template: 22px 14px \/ minmax\(0, 1fr\) !important;[\s\S]*?grid-auto-flow: row !important;[\s\S]*?gap: 1px !important;[\s\S]*?padding: 2px 1px !important;/);
   assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics dd \{[\s\S]*?font-weight: 900;/);
   assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics dd \{[\s\S]*?font-size: clamp\(16px, 3\.4vw, 21px\) !important;[\s\S]*?line-height: 1\.05 !important;/);
   assert.match(liveApp, /id="modalFollowerCount"/);
@@ -86,6 +86,14 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(liveApp, /profileViewsToday\(profile, city\)\.toLocaleString\(\)/);
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
   assert.match(liveApp, /liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?class="\$\{tonightClasses\}"[\s\S]*?\$\{socialMarkup\}/);
+  assert.match(
+    aesthetic,
+    /Keep the compact profile-header metrics stacked[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?display: grid !important;[\s\S]*?grid-template: 22px 14px \/ minmax\(0, 1fr\) !important;[\s\S]*?grid-auto-flow: row !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.profile-modal-header-metrics \.profile-activity-metrics dd \{[\s\S]*?grid-row: 1 !important;[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics dt \{[\s\S]*?grid-row: 2 !important;/,
+  );
 });
 
 test("profile actions keep profile controls separate from Tonight travel actions", () => {

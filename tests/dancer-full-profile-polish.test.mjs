@@ -275,7 +275,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   assert.ok(compactMobileProfile, "compact mobile profile CSS must exist");
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-summary \{[\s\S]*?grid-template-columns: minmax\(112px, \.82fr\) minmax\(0, 1\.18fr\) !important;[\s\S]*?min-height: 60px !important;[\s\S]*?padding: max\(6px, calc\(env\(safe-area-inset-top, 0px\) \+ 4px\)\) 48px 6px 10px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-summary \{[\s\S]*?grid-template-columns: minmax\(118px, \.9fr\) minmax\(0, 1\.1fr\) !important;[\s\S]*?min-height: 60px !important;[\s\S]*?padding: max\(6px, calc\(env\(safe-area-inset-top, 0px\) \+ 4px\)\) 48px 6px 10px !important;/,
   );
   assert.match(
     compactMobileProfile,

@@ -32034,7 +32034,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=154" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=155" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39877,7 +39877,7 @@
            The approved shift/deal card below remains an unchanged component. */
         #profileBackdrop #profileModal .profile-modal-summary {
           position: relative !important;
-          grid-template-columns: minmax(112px, .82fr) minmax(0, 1.18fr) !important;
+          grid-template-columns: minmax(118px, .9fr) minmax(0, 1.1fr) !important;
           align-items: center !important;
           gap: 4px !important;
           min-height: 60px !important;
@@ -39965,7 +39965,8 @@
           min-width: 0 !important;
           min-height: 44px !important;
           display: grid !important;
-          grid-template-rows: 22px 14px !important;
+          grid-template: 22px 14px / minmax(0, 1fr) !important;
+          grid-auto-flow: row !important;
           align-content: center !important;
           justify-items: center !important;
           gap: 1px !important;
@@ -39973,16 +39974,23 @@
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          width: 100% !important;
           max-width: 100% !important;
           overflow: hidden !important;
           font-size: clamp(16px, 3.4vw, 21px) !important;
           font-variant-numeric: tabular-nums !important;
           line-height: 1.05 !important;
+          text-align: center !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
+          grid-column: 1 !important;
+          grid-row: 2 !important;
+          width: 100% !important;
           max-width: 100% !important;
           overflow: hidden !important;
           font-size: clamp(8px, 1.9vw, 10px) !important;
@@ -40036,7 +40044,7 @@
 
         @media (max-width: 520px) {
           #profileBackdrop #profileModal .profile-modal-summary {
-            grid-template-columns: minmax(112px, .82fr) minmax(0, 1.18fr) !important;
+            grid-template-columns: minmax(118px, .9fr) minmax(0, 1.1fr) !important;
             gap: 4px !important;
             min-height: 60px !important;
             margin-inline: -12px !important;

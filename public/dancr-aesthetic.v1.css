@@ -4026,7 +4026,7 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
     position: relative !important;
-    grid-template-columns: minmax(112px, .82fr) minmax(0, 1.18fr) !important;
+    grid-template-columns: minmax(118px, .9fr) minmax(0, 1.1fr) !important;
     gap: 4px !important;
     min-height: 60px !important;
     padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 6px 10px !important;
@@ -10007,5 +10007,59 @@ html:is(
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-secondary-actions > .venue-card-secondary-action > span:not(.action-icon) {
     font-size: 10px !important;
+  }
+}
+
+/* Keep the compact profile-header metrics stacked. Shared profile-summary
+ * rules below the component previously forced these values back onto one
+ * horizontal line, clipping the stage name and activity labels on phones. */
+@media (max-width: 759px) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
+    grid-template-columns: minmax(118px, .9fr) minmax(0, 1.1fr) !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal
+    .profile-modal-header-metrics .profile-activity-metrics > div {
+    min-width: 0 !important;
+    min-height: 44px !important;
+    display: grid !important;
+    grid-template: 22px 14px / minmax(0, 1fr) !important;
+    grid-auto-flow: row !important;
+    align-content: center !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    justify-items: center !important;
+    gap: 1px !important;
+    padding: 2px 1px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal
+    .profile-modal-header-metrics .profile-activity-metrics dd,
+  body.dancr-button-system #profileBackdrop #profileModal
+    .profile-modal-header-metrics .profile-activity-metrics dt {
+    grid-column: 1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal
+    .profile-modal-header-metrics .profile-activity-metrics dd {
+    grid-row: 1 !important;
+    align-self: end !important;
+    font-size: clamp(16px, 3.4vw, 19px) !important;
+    line-height: 1.05 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal
+    .profile-modal-header-metrics .profile-activity-metrics dt {
+    grid-row: 2 !important;
+    align-self: start !important;
+    font-size: clamp(8px, 1.9vw, 9px) !important;
+    line-height: 1.1 !important;
   }
 }
