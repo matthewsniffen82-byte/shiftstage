@@ -5,12 +5,13 @@ import test from "node:test";
 const liveShell = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
 
-test("dancer discovery reuses canonical state while applying a scoped compact layout", () => {
+test("dancer discovery reuses canonical state and shared discovery-control dimensions", () => {
   assert.match(liveShell, /document\.body\.classList\.toggle\("dancer-directory-active", activeTab === "dancers"\)/);
   assert.match(liveShell, /<label id="citySelectLabel" for="citySelect">City<\/label>/);
   assert.match(aesthetic, /body\.dancer-directory-active[\s\S]*?#citySelectLabel \{[\s\S]*?clip-path: inset\(50%\)/);
-  assert.match(aesthetic, /body\.dancer-directory-active[\s\S]*?grid-template-columns: minmax\(0, 2\.05fr\) minmax\(96px, 0\.95fr\)/);
-  assert.match(aesthetic, /:is\(#citySelect, \.city-picker-trigger, \.home-filter-toggle\) \{[\s\S]*?height: 48px !important;[\s\S]*?min-height: 48px !important/);
+  assert.match(aesthetic, /body\.dancer-directory-active[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto/);
+  assert.match(aesthetic, /:is\(#citySelect, \.city-picker-trigger, \.home-filter-toggle\) \{[\s\S]*?height: 44px !important;[\s\S]*?min-height: 44px !important;[\s\S]*?max-height: 44px !important;[\s\S]*?border-radius: 14px !important/);
+  assert.match(aesthetic, /\.home-filter-toggle \{[\s\S]*?min-width: 104px !important;[\s\S]*?padding-inline: 12px !important/);
 });
 
 test("directory heading, dynamic total, and segmented filters are compact and accessible", () => {
@@ -44,7 +45,7 @@ test("existing city, radius, club, Working Now, Upcoming, and filter result logi
 
 test("narrow and long-label safeguards keep controls and counts collision-free", () => {
   assert.match(aesthetic, /:is\(\.city-picker-trigger-value, #citySelect\) \{[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap/);
-  assert.match(aesthetic, /@media \(max-width: 360px\) \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 96px/);
+  assert.match(aesthetic, /@media \(max-width: 360px\) \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 104px/);
   assert.match(aesthetic, /#tabCount \{[\s\S]*?white-space: nowrap/);
   assert.match(liveShell, /const empty = counts\[filter\.id\] === 0/);
   assert.match(liveShell, /empty \? " is-empty" : ""/);

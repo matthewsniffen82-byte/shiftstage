@@ -7568,9 +7568,9 @@ body.dancer-directory-active > .app > main.stack {
 }
 
 body.dancer-directory-active > .app main.stack > .home-discovery-controls {
-  grid-template-columns: minmax(0, 2.05fr) minmax(96px, 0.95fr) !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  gap: 7px !important;
+  gap: 8px !important;
 }
 
 body.dancer-directory-active > .app main.stack > .home-discovery-controls .home-city-filter {
@@ -7595,10 +7595,10 @@ body.dancer-directory-active > .app main.stack > .home-discovery-controls #cityS
 body.dancer-directory-active > .app main.stack > .home-discovery-controls
   :is(#citySelect, .city-picker-trigger, .home-filter-toggle) {
   box-sizing: border-box !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  max-height: 48px !important;
-  border-radius: 13px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  border-radius: 14px !important;
 }
 
 body.dancer-directory-active > .app main.stack > .home-discovery-controls
@@ -7610,8 +7610,8 @@ body.dancer-directory-active > .app main.stack > .home-discovery-controls
 }
 
 body.dancer-directory-active > .app main.stack > .home-discovery-controls .home-filter-toggle {
-  min-width: 96px !important;
-  padding-inline: 10px !important;
+  min-width: 104px !important;
+  padding-inline: 12px !important;
 }
 
 /* Give the city and Filters labels the same internal line box. Their control
@@ -7811,7 +7811,7 @@ body.dancer-directory-active > .app main.stack > section.stack
 
 @media (max-width: 360px) {
   body.dancer-directory-active > .app main.stack > .home-discovery-controls {
-    grid-template-columns: minmax(0, 1fr) 96px !important;
+    grid-template-columns: minmax(0, 1fr) 104px !important;
   }
 
   body.dancer-directory-active > .app main.stack > .home-discovery-controls .home-filter-toggle {
