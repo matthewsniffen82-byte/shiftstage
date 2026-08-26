@@ -466,6 +466,10 @@ test("TV sound and fullscreen controls share the compact rail and remain icon-on
     homeSource,
     /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)[\s\S]*?button\.setAttribute\("aria-pressed", String\(!homeTvFeedMuted\)\)/,
   );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-action:not\(\.home-tv-feed-sound\)\[aria-pressed="true"\]/,
+  );
   assert.doesNotMatch(soundFactory, /showHomeTvFeedFeedback[\s\S]*?Sound off|showHomeTvFeedFeedback[\s\S]*?Sound on/);
   assert.match(
     homeSource,
@@ -495,6 +499,10 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
   assert.match(activeControls, /\.home-tv-feed-overflow-action/);
   assert.match(activeControls, /\.home-tv-feed-fullscreen/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
+  assert.match(
+    activeControls,
+    /\.home-tv-feed-fullscreen,\s*\.home-tv-feed-sound\s*\):is\(\.is-active, \[aria-pressed="true"\]\)/,
+  );
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
   assert.equal(
     (aestheticSource.match(/\.home-tv-feed-overflow-action,\s*\.home-tv-feed-fullscreen/g) || []).length,
@@ -504,7 +512,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=152/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=153/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {

@@ -1990,7 +1990,8 @@ body.dancr-button-system :is(
 body.dancr-button-system .home-tv-feed-action:not(
   .home-tv-feed-deal-action,
   .home-tv-feed-overflow-action,
-  .home-tv-feed-fullscreen
+  .home-tv-feed-fullscreen,
+  .home-tv-feed-sound
 ):is(.is-active, [aria-pressed="true"]) {
   border-color: var(--dancr-color-brand-primary-medium) !important;
   color: var(--dancr-color-text-primary) !important;
@@ -5253,7 +5254,8 @@ body.dancr-button-system :is(
 body.dancr-button-system .home-tv-feed-action:not(
     .home-tv-feed-deal-action,
     .home-tv-feed-overflow-action,
-    .home-tv-feed-fullscreen
+    .home-tv-feed-fullscreen,
+    .home-tv-feed-sound
   ):is(.is-active, [aria-pressed="true"]) {
   border-color: var(--dancr-color-brand-primary-strong) !important;
   color: var(--dancr-color-brand-core) !important;
