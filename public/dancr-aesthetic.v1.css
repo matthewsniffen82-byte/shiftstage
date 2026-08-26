@@ -3686,6 +3686,10 @@ body.dancr-button-system .public-profile-shell :is(
   body.dancr-button-system #profileBackdrop .profile-activity-metrics {
     margin-bottom: 10px !important;
   }
+
+  body.dancr-button-system #profileBackdrop .profile-activity-metrics:has(+ .social-tile) {
+    margin-bottom: 0 !important;
+  }
 }
 
 body.dancr-button-system #profileBackdrop .social-tile,
@@ -3869,6 +3873,7 @@ body.dancr-button-system #profileBackdrop .modal-actions .profile-action-require
 
 body.dancr-button-system #profileBackdrop .social-tile {
   min-height: 0 !important;
+  align-self: start !important;
   padding: 2px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -3878,9 +3883,9 @@ body.dancr-button-system #profileBackdrop .social-tile {
 
 body.dancr-button-system .public-profile-shell .profile-social-section {
   min-height: 0 !important;
-  margin-top: 2px !important;
-  margin-bottom: 2px !important;
-  padding: 2px 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+  padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -3910,16 +3915,56 @@ body.dancr-button-system #profileBackdrop .social-tile .social-links {
 }
 
 body.dancr-button-system #profileBackdrop .social-tile .social-link {
+  position: relative !important;
   width: 44px !important;
   height: 44px !important;
   min-width: 44px !important;
   min-height: 44px !important;
   flex: 0 0 44px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop, .public-profile-shell) .social-link::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 50%;
+  background: var(--dancr-color-surface-raised);
+  box-shadow: none;
+}
+
+body.dancr-button-system :is(#profileBackdrop, .public-profile-shell) .social-link:hover::before {
+  border-color: var(--dancr-color-brand-primary);
+}
+
+body.dancr-button-system :is(#profileBackdrop, .public-profile-shell) .social-link:focus-visible::before {
+  border-color: var(--dancr-color-brand-primary);
+  outline: 2px solid var(--dancr-color-info);
+  outline-offset: 1px;
 }
 
 body.dancr-button-system #profileBackdrop .social-tile .social-link svg {
-  width: 20px !important;
-  height: 20px !important;
+  position: relative;
+  z-index: 1;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+body.dancr-button-system .public-profile-shell .social-list a {
+  position: relative !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system .public-profile-shell .social-list a svg {
+  position: relative;
+  z-index: 1;
+  width: 18px !important;
+  height: 18px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics {

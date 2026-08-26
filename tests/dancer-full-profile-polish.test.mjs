@@ -164,7 +164,7 @@ test("profile socials and activity metrics use a compact neutral presentation", 
 
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.social-tile \{[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 2px 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop \.social-tile \{[\s\S]*?min-height: 0 !important;[\s\S]*?align-self: start !important;[\s\S]*?padding: 2px 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
@@ -172,7 +172,11 @@ test("profile socials and activity metrics use a compact neutral presentation", 
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.social-tile \.social-link svg \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;/,
+    /#profileBackdrop \.social-tile \.social-link svg \{[\s\S]*?width: 18px !important;[\s\S]*?height: 18px !important;/,
+  );
+  assert.match(
+    compactProfileBlock,
+    /:is\(#profileBackdrop, \.public-profile-shell\) \.social-link::before \{[\s\S]*?inset: 2px;[\s\S]*?border-radius: 50%;/,
   );
   assert.match(
     compactProfileBlock,
@@ -197,6 +201,10 @@ test("profile socials and activity metrics use a compact neutral presentation", 
   assert.match(
     aesthetic,
     /@media \(max-width: 759px\) \{[\s\S]*?#profileBackdrop \.profile-activity-metrics \{[\s\S]*?margin-bottom: 10px !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#profileBackdrop \.profile-activity-metrics:has\(\+ \.social-tile\) \{[\s\S]*?margin-bottom: 0 !important;/,
   );
   assert.match(
     aesthetic,

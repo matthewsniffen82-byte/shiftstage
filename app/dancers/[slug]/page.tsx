@@ -434,16 +434,19 @@ function PublicProfileStyles() {
       .profile-metrics > div { min-width: 0; display: grid; gap: 2px; justify-items: center; padding: 4px; }
       .profile-metrics dd { margin: 0; color: #eee9f5; font-size: clamp(19px, 3.75vw, 24px); font-weight: 900; letter-spacing: .01em; line-height: 1.08; }
       .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; line-height: 1.25; text-align: center; }
-      .profile-social-section { min-height: 0; display: grid; margin-top: 2px; margin-bottom: 2px; padding: 2px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-social-section { min-height: 0; display: grid; margin-top: 0; margin-bottom: 8px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .social-list-heading h2 { margin: 0; font-size: 15px; line-height: 1.1; }
       .social-list { width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
-      .social-list a { width: 44px; min-width: 44px; height: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; color: #fff; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); text-decoration: none; transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease; }
-      .social-list a:hover { border-color: rgba(126,234,255,.56); background: linear-gradient(135deg, rgba(139,92,246,.22), rgba(34,199,255,.12)); box-shadow: 0 0 18px rgba(34,199,255,.1); transform: translateY(-1px); }
-      .social-list a:focus-visible { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 3px; }
-      .social-list a svg { width: 20px; height: 20px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .social-list a { position: relative; width: 44px; min-width: 44px; height: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: transparent; box-shadow: none; text-decoration: none; transition: transform .16s ease; }
+      .social-list a::before { content: ""; position: absolute; inset: 2px; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); transition: border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+      .social-list a:hover { transform: translateY(-1px); }
+      .social-list a:hover::before { border-color: rgba(126,234,255,.56); background: linear-gradient(135deg, rgba(139,92,246,.22), rgba(34,199,255,.12)); box-shadow: 0 0 18px rgba(34,199,255,.1); }
+      .social-list a:focus-visible { outline: none; }
+      .social-list a:focus-visible::before { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 2px; }
+      .social-list a svg { position: relative; z-index: 1; width: 18px; height: 18px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .social-list a.social-link-instagram svg, .social-list a.social-link-x svg { fill: none; }
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
