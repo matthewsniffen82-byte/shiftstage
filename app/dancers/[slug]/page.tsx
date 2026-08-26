@@ -409,29 +409,35 @@ function PublicProfileStyles() {
       .profile-schedule-empty { min-width: 0; display: flex; align-items: center; gap: 6px; margin-top: 5px; padding: 8px 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #82798c; background: rgba(255,255,255,.025); font-size: 10px; line-height: 1.2; }
       .profile-schedule-empty strong { flex: 0 0 auto; color: #d9d3e0; font-size: 12px; white-space: nowrap; }
       .profile-schedule-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-overview { display: block; margin-top: -2px; padding: 0 0 2px; border: 0; }
+      .profile-overview { display: block; margin-top: -2px; margin-bottom: 26px; padding: 0; border: 0; }
+      .profile-overview:has(+ .profile-social-section) { margin-bottom: 18px; }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .profile-metrics > div { min-width: 0; display: grid; gap: 2px; justify-items: center; padding: 4px; }
-      .profile-metrics dd { margin: 0; color: #eee9f5; font-size: clamp(19px, 3.75vw, 24px); font-weight: 900; letter-spacing: .01em; line-height: 1.08; }
+      .profile-metrics dd { max-width: 100%; margin: 0; overflow: hidden; color: #eee9f5; font-size: clamp(19px, 3.75vw, 24px); font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: .01em; line-height: 1.08; text-overflow: ellipsis; white-space: nowrap; }
       .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; line-height: 1.25; text-align: center; }
-      .profile-social-section { min-height: 0; display: grid; margin: 0 0 2px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-social-section { min-height: 0; display: grid; margin: 0 0 22px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .social-list-heading h2 { margin: 0; font-size: 15px; line-height: 1.1; }
-      .social-list { width: fit-content; max-width: 100%; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 4px; margin-inline: auto; overflow-x: auto; scrollbar-width: none; }
+      .social-list { width: fit-content; max-width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin-inline: auto; overflow: visible; scrollbar-width: none; }
       .social-list::-webkit-scrollbar { display: none; }
-      .social-list a { position: relative; width: 44px; min-width: 44px; height: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: transparent; box-shadow: none; text-decoration: none; transition: transform .16s ease; }
-      .social-list a::before { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); transform: translate(-50%, -50%); transition: border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+      .social-list a { position: relative; width: 44px; min-width: 44px; height: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; border: 0; border-radius: 50%; color: #f4f4f6; background: transparent; box-shadow: none; text-decoration: none; transition: transform .16s ease; }
+      .social-list a::before { content: ""; position: absolute; inset: 0; border: 1px solid rgba(226,232,240,.14); border-radius: 50%; background: rgba(17,17,23,.78); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); transition: border-color .16s ease, background .16s ease; }
       .social-list a:hover { transform: translateY(-1px); }
-      .social-list a:hover::before { border-color: rgba(126,234,255,.56); background: linear-gradient(135deg, rgba(139,92,246,.22), rgba(34,199,255,.12)); box-shadow: 0 0 18px rgba(34,199,255,.1); }
+      .social-list a:hover::before { border-color: rgba(226,232,240,.26); background: rgba(24,24,31,.88); box-shadow: none; }
       .social-list a:focus-visible { outline: none; }
       .social-list a:focus-visible::before { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 2px; }
-      .social-list a svg { position: relative; z-index: 1; width: 15px; height: 15px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .social-list a svg { position: relative; z-index: 1; width: 16px; height: 16px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .social-list a.social-link-instagram svg, .social-list a.social-link-x svg { fill: none; }
+      .social-list a.social-link-instagram { color: #e4405f; }
+      .social-list a.social-link-tiktok { color: #25f4ee; }
+      .social-list a.social-link-snapchat { color: #fffc00; }
+      .social-list a.social-link-onlyfans { color: #00aff0; }
+      .social-list a.social-link-x { color: #f4f4f6; }
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
-      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 0; padding: 1px 0 0; }
+      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 2px; padding: 1px 0 0; }
       .live-actions.is-no-live-shift { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 11px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
@@ -482,7 +488,7 @@ function PublicProfileStyles() {
       .profile-directions-button[aria-disabled="true"] { cursor: default; opacity: 1; }
       .profile-directions-button svg { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: rgba(226,232,240,.82); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-directions-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-report-action { grid-column: 1 / -1; width: auto !important; min-height: 28px !important; justify-self: end; margin: 0; padding: 0 4px !important; border: 0 !important; color: #8d8497 !important; background: transparent !important; box-shadow: none !important; font-size: 10px !important; font-weight: 750 !important; line-height: 1; opacity: .82; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
+      .profile-report-action { grid-column: 1 / -1; width: auto !important; min-height: 24px !important; justify-self: end; margin: 0; padding: 0 4px !important; border: 0 !important; color: #8d8497 !important; background: transparent !important; box-shadow: none !important; font-size: 10px !important; font-weight: 750 !important; line-height: 1; opacity: .82; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
       .profile-report-action:hover, .profile-report-action:focus-visible { color: #d4ccd9 !important; outline: none; text-decoration-color: currentColor; }
       .profile-share-dialog-backdrop { position: fixed; z-index: 1750; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.84); backdrop-filter: blur(12px); }
       .profile-share-dialog { position: relative; width: min(430px, 100%); max-height: calc(100dvh - 28px); display: grid; gap: 14px; overflow-y: auto; padding: 24px; border: 1px solid rgba(126,234,255,.42); border-radius: 18px; color: #f7f2ff; background: radial-gradient(circle at 82% 4%, rgba(34,199,255,.14), transparent 15rem), linear-gradient(145deg, #0d0a18, #050507); box-shadow: 0 28px 90px rgba(0,0,0,.74), 0 0 38px rgba(109,40,217,.22); }

@@ -10,6 +10,14 @@ const aesthetic = await readFile(
   new URL("../public/dancr-aesthetic.v1.css", import.meta.url),
   "utf8",
 );
+const publicProfilePage = await readFile(
+  new URL("../app/dancers/[slug]/page.tsx", import.meta.url),
+  "utf8",
+);
+const publicSocialLinks = await readFile(
+  new URL("../app/dancers/[slug]/SocialLinks.tsx", import.meta.url),
+  "utf8",
+);
 
 const profilePolishBlock = liveApp.match(
   /\/\* Instagram-familiar dancer profile hierarchy; scoped away from global navigation\. \*\/[\s\S]*?\/\* Venue profiles keep X dismissal/,
@@ -157,67 +165,63 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /\.profile-report-action \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;[\s\S]*?background: transparent !important;/);
 });
 
-test("profile socials and activity metrics use a compact neutral presentation", () => {
+test("profile socials stay secondary, responsive, and absent when no links exist", () => {
   const compactProfileBlock = aesthetic.match(
-    /Full-profile actions and supporting information stay compact[\s\S]*?Production TV-card branding/,
+    /Optional dancer-profile engagement content uses natural document flow[\s\S]*?Production TV-card branding/,
+  )?.[0] || "";
+  const liveProfileBlock = liveApp.match(
+    /Dancer profile socials stay secondary to MyDancr actions and media[\s\S]*?@media \(prefers-reduced-motion: reduce\) \{\s*\.uber-ride-link/,
   )?.[0] || "";
 
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.social-tile \{[\s\S]*?min-height: 0 !important;[\s\S]*?align-self: start !important;[\s\S]*?padding: 2px 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop #profileModal \.social-tile,[\s\S]*?\.public-profile-shell \.profile-social-section \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 0 22px !important;[\s\S]*?padding: 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.social-tile \.social-link \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;/,
+    /#profileBackdrop #profileModal \.social-tile \.social-link,[\s\S]*?\.public-profile-shell \.profile-social-section \.social-list a \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;[\s\S]*?min-width: 44px !important;[\s\S]*?min-height: 44px !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.social-tile \.social-link svg \{[\s\S]*?width: 18px !important;[\s\S]*?height: 18px !important;/,
+    /#profileBackdrop #profileModal \.social-tile \.social-link svg,[\s\S]*?\.public-profile-shell \.profile-social-section \.social-list a svg \{[\s\S]*?width: 16px !important;[\s\S]*?height: 16px !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /:is\(#profileBackdrop, \.public-profile-shell\) \.social-link::before \{[\s\S]*?inset: 2px;[\s\S]*?border-radius: 50%;/,
+    /\.social-list \{[\s\S]*?flex-wrap: wrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?gap: 6px !important;[\s\S]*?overflow: visible !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.profile-activity-metrics::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+    /\.social-list a::before \{[\s\S]*?inset: 0 !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.14\) !important;[\s\S]*?background: rgba\(17, 17, 23, \.78\) !important;[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, \.035\) !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.social-tile \{[\s\S]*?margin-bottom: 12px !important;/,
+    /\.social-list a:hover::before \{[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /\.public-profile-shell \.profile-social-section \{[\s\S]*?margin-bottom: 12px !important;/,
+    /\.social-instagram,[\s\S]*?\.social-link-instagram \{[\s\S]*?color: #e4405f !important;[\s\S]*?\.social-tiktok,[\s\S]*?color: #25f4ee !important;[\s\S]*?\.social-snapchat,[\s\S]*?color: #fffc00 !important;[\s\S]*?\.social-onlyfans,[\s\S]*?color: #00aff0 !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?margin-top: -2px !important;[\s\S]*?padding: 2px 0 4px !important;/,
+    /#profileBackdrop #profileModal \.profile-activity-metrics \{[\s\S]*?margin-bottom: 26px !important;[\s\S]*?#profileBackdrop #profileModal \.profile-activity-metrics:has\(\+ \.social-tile\) \{[\s\S]*?margin-bottom: 9px !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 2px !important;[\s\S]*?padding: 3px 5px !important;/,
+    /\.public-profile-shell \.profile-overview \{[\s\S]*?margin-bottom: 26px !important;[\s\S]*?\.public-profile-shell \.profile-overview:has\(\+ \.profile-social-section\) \{[\s\S]*?margin-bottom: 18px !important;/,
   );
   assert.match(
-    aesthetic,
-    /#profileBackdrop \.profile-activity-metrics,[\s\S]*?\.public-profile-shell \.profile-overview \{[\s\S]*?border: 0 !important;/,
+    compactProfileBlock,
+    /profile-activity-metrics dd,[\s\S]*?\.profile-metrics dd \{[\s\S]*?font-variant-numeric: tabular-nums !important;[\s\S]*?text-overflow: ellipsis !important;[\s\S]*?white-space: nowrap !important;/,
   );
   assert.match(
-    aesthetic,
-    /#profileBackdrop \.profile-activity-metrics > div \+ div,[\s\S]*?\.public-profile-shell \.profile-metrics > div \+ div \{[\s\S]*?box-shadow: none !important;/,
+    liveProfileBlock,
+    /\.modal-actions \.profile-report-action \{[\s\S]*?position: static !important;[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?min-height: 24px !important;[\s\S]*?justify-self: end !important;/,
   );
   assert.match(
-    aesthetic,
-    /@media \(max-width: 759px\) \{[\s\S]*?#profileBackdrop \.profile-activity-metrics \{[\s\S]*?margin-bottom: 10px !important;/,
+    liveProfileBlock,
+    /\.social-tile \.social-links \{[\s\S]*?flex-wrap: wrap !important;[\s\S]*?gap: 6px !important;[\s\S]*?overflow: visible !important;/,
   );
-  assert.match(
-    aesthetic,
-    /#profileBackdrop \.profile-activity-metrics:has\(\+ \.social-tile\) \{[\s\S]*?margin-bottom: 0 !important;/,
-  );
-  assert.match(
-    aesthetic,
-    /#profileBackdrop \.profile-modal \{[\s\S]*?height: auto !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: min\(94vh, calc\(100dvh - var\(--mydancr-preview-banner-offset\)\)\) !important;/,
-  );
+  assert.match(publicSocialLinks, /if \(!links\.length\) return null;/);
   assert.match(
     liveApp,
     /const followerCount = followerNumber\(profile, city\);[\s\S]*?id="modalFollowerLabel">\$\{followerCount === 1 \? "Follower" : "Followers"\}/,
@@ -230,9 +234,17 @@ test("profile socials and activity metrics use a compact neutral presentation", 
   const publicSocialMarkup = liveApp.match(
     /function socialLinksMarkup\(profile, options = \{\}\) \{[\s\S]*?function approvedDancerShiftVenues/,
   )?.[0] || "";
+  assert.match(publicSocialMarkup, /if \(!links\.length\) \{\s*return "";\s*\}/);
   assert.match(publicSocialMarkup, /aria-label="External profiles"/);
   assert.match(publicSocialMarkup, /class="social-links" role="list"/);
   assert.doesNotMatch(publicSocialMarkup, />Social links</);
+
+  const publicActionsIndex = publicProfilePage.indexOf("<DancerProfileActions");
+  const publicMetricsIndex = publicProfilePage.indexOf('className="profile-overview"');
+  const publicSocialIndex = publicProfilePage.indexOf("profile.socialLinks.length ?");
+  const publicMediaIndex = publicProfilePage.indexOf("<DancerPhotoCarousel");
+  assert.ok(publicActionsIndex > -1 && publicMetricsIndex > publicActionsIndex);
+  assert.ok(publicSocialIndex > publicMetricsIndex && publicMediaIndex > publicSocialIndex);
 });
 
 test("profile action controls are unboxed and Going highlights only its icon", () => {
@@ -277,7 +289,7 @@ test("mobile full profiles compact identity, Tonight, actions, and metrics witho
   );
   assert.match(
     compactMobileProfile,
-    /\.modal-actions \.profile-report-action,[\s\S]*?position: absolute !important;[\s\S]*?right: 2px !important;[\s\S]*?grid-column: auto !important;/,
+    /\.modal-actions \.profile-report-action,[\s\S]*?position: static !important;[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?min-height: 24px !important;[\s\S]*?justify-self: end !important;/,
   );
   assert.match(
     compactMobileProfile,

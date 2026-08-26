@@ -39781,6 +39781,108 @@
           }
         }
 
+        /* Dancer profile socials stay secondary to MyDancr actions and media.
+           Optional social rows collapse completely because their markup is
+           omitted when no approved links exist. */
+        #profileBackdrop #profileModal .modal-actions {
+          row-gap: 2px !important;
+        }
+
+        #profileBackdrop #profileModal .modal-actions .profile-report-action {
+          position: static !important;
+          right: auto !important;
+          bottom: auto !important;
+          grid-column: 1 / -1 !important;
+          width: auto !important;
+          min-height: 24px !important;
+          justify-self: end !important;
+          margin: 0 !important;
+          padding: 0 4px !important;
+          color: #8d8497 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font-size: 10px !important;
+          opacity: .82 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-activity-metrics {
+          margin: 0 0 26px !important;
+          padding: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-activity-metrics:has(+ .social-tile) {
+          margin-bottom: 9px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-activity-metrics:has(+ .location-status-tile) {
+          margin-bottom: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-activity-metrics dd {
+          max-width: 100% !important;
+          overflow: hidden !important;
+          font-variant-numeric: tabular-nums !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile {
+          min-height: 0 !important;
+          margin: 0 0 22px !important;
+          padding: 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-links {
+          width: fit-content !important;
+          max-width: 100% !important;
+          display: flex !important;
+          flex-wrap: wrap !important;
+          justify-content: center !important;
+          gap: 6px !important;
+          margin-inline: auto !important;
+          overflow: visible !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-link {
+          position: relative !important;
+          width: 44px !important;
+          height: 44px !important;
+          min-width: 44px !important;
+          min-height: 44px !important;
+          flex: 0 0 44px !important;
+          border: 0 !important;
+          border-radius: 50% !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-link::before {
+          content: "" !important;
+          position: absolute !important;
+          inset: 0 !important;
+          width: auto !important;
+          height: auto !important;
+          border: 1px solid rgba(226,232,240,.14) !important;
+          border-radius: 50% !important;
+          background: rgba(17,17,23,.78) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+          transform: none !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-link:hover::before {
+          border-color: rgba(226,232,240,.26) !important;
+          background: rgba(24,24,31,.88) !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-link svg {
+          width: 16px !important;
+          height: 16px !important;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .uber-ride-link {
             transition: none;
