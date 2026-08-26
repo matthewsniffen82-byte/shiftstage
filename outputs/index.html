@@ -38169,6 +38169,31 @@
             rgba(7, 14, 13, .94);
         }
 
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-upcoming::before {
+          position: absolute;
+          z-index: 5;
+          inset: 0;
+          content: "";
+          pointer-events: none;
+          border: 2px solid rgba(126, 234, 255, .46);
+          border-radius: inherit;
+          box-shadow: none;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-upcoming {
+          border-color: transparent;
+          background:
+            radial-gradient(circle at 94% 0%, rgba(126, 234, 255, .07), transparent 13rem),
+            rgba(7, 12, 16, .94);
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-no-schedule {
+          border-color: rgba(255, 255, 255, .13);
+          background:
+            radial-gradient(circle at 94% 0%, rgba(255, 255, 255, .035), transparent 13rem),
+            rgba(9, 9, 13, .94);
+        }
+
         #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.has-club-deal {
           border-color: transparent;
           box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
@@ -38200,8 +38225,12 @@
         }
 
         #profileBackdrop #profileModal .profile-tonight-card > .schedule-empty {
-          display: block !important;
-          padding: 8px 10px !important;
+          min-height: 52px !important;
+          display: grid !important;
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          padding: 4px 8px !important;
         }
 
         #profileBackdrop #profileModal .profile-tonight-travel-actions {
@@ -38212,7 +38241,7 @@
           border-top: 1px solid rgba(255, 255, 255, .06);
         }
 
-        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-working-now {
+        #profileBackdrop #profileModal .profile-tonight-travel-actions:is(.is-working-now, .is-upcoming) {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
@@ -38252,6 +38281,14 @@
           border-top-color: rgba(77, 236, 157, .18);
         }
 
+        #profileBackdrop #profileModal .profile-tonight-card.is-upcoming .profile-tonight-deal {
+          border-top-color: rgba(126, 234, 255, .16);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card.is-no-schedule .profile-tonight-deal {
+          border-top-color: rgba(255, 255, 255, .07);
+        }
+
         #profileBackdrop #profileModal .profile-tonight-deal .profile-club-deal-tile {
           width: 100% !important;
           margin: 0 !important;
@@ -38287,38 +38324,53 @@
           padding-bottom: 0 !important;
         }
 
-        /* No-shift profiles should communicate the state without spending a
-           full dashboard card on an unavailable schedule. */
+        /* No-shift profiles use the same compact two-column hierarchy as
+           current and upcoming shifts, with a deliberately neutral state. */
         #profileBackdrop #profileModal .modal-grid > .profile-schedule-card.schedule-empty {
-          display: block !important;
-          min-height: 0 !important;
-          padding: 8px 10px !important;
+          display: grid !important;
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 52px !important;
+          padding: 4px 8px !important;
           border-color: rgba(255,255,255,.08) !important;
           background: rgba(255,255,255,.025) !important;
           box-shadow: none !important;
         }
 
-        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-schedule-inline {
-          min-width: 0 !important;
-          display: flex !important;
-          align-items: center !important;
-          gap: 6px !important;
-          overflow: hidden !important;
-          line-height: 1.2 !important;
-        }
-
-        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-schedule-inline > strong {
-          flex: 0 0 auto !important;
-          color: #d9d3e0 !important;
-          font-size: 12px !important;
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-empty-state {
+          color: #a9a3af !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          letter-spacing: .065em !important;
+          line-height: 1.05 !important;
+          text-transform: uppercase !important;
           white-space: nowrap !important;
         }
 
-        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-schedule-inline > span {
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-empty-copy {
           min-width: 0 !important;
+          display: grid !important;
+          gap: 2px !important;
+          overflow: hidden !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-empty-copy > strong {
+          overflow: hidden !important;
+          color: #f5f2f7 !important;
+          font-size: 14px !important;
+          font-weight: 950 !important;
+          line-height: 1.1 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-empty-copy > span {
           overflow: hidden !important;
           color: #82798c !important;
           font-size: 10px !important;
+          font-weight: 750 !important;
+          line-height: 1.2 !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
         }
@@ -38509,6 +38561,92 @@
           font-size: clamp(15px, 4.2vw, 18px) !important;
           letter-spacing: -.015em !important;
           line-height: 1.1 !important;
+        }
+
+        /* Upcoming uses the same compact Tonight hierarchy as Working Now,
+           with cyan reserved for the future-state signal. */
+        #profileBackdrop #profileModal .modal-grid > .schedule-upcoming {
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 0 !important;
+          padding: 4px 8px !important;
+          border-color: rgba(126, 234, 255, .2) !important;
+          background: rgba(126, 234, 255, .04) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .schedule-upcoming::before,
+        #profileBackdrop #profileModal .schedule-upcoming::after {
+          content: none !important;
+          display: none !important;
+        }
+
+        #profileBackdrop .schedule-upcoming > .profile-schedule-primary {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          width: auto !important;
+          padding: 0 2px !important;
+          color: #7eeaff !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          letter-spacing: .065em !important;
+          line-height: 1.05 !important;
+          text-transform: uppercase !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .schedule-upcoming > .schedule-stack {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          min-width: 0 !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming {
+          grid-template-columns: 18px minmax(0, 1fr) 16px !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 40px !important;
+          padding: 3px 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming > .venue-dot {
+          align-self: center !important;
+          width: 18px !important;
+          height: 18px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          color: #7eeaff !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming > .venue-dot svg {
+          width: 18px !important;
+          height: 18px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          filter: none !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming .profile-venue-copy {
+          align-self: center !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming .profile-venue-name {
+          display: block !important;
+          font-size: clamp(15px, 4.2vw, 18px) !important;
+          letter-spacing: -.015em !important;
+          line-height: 1.1 !important;
+        }
+
+        #profileBackdrop .profile-tonight-card.is-upcoming .profile-club-deal-copy small {
+          display: none !important;
         }
 
         /* Keep profile-level actions separate from the venue travel controls
@@ -47741,6 +47879,7 @@
           </div>
         `;
       }
+      const inactiveActionLabel = state.key === "available-when-working" ? "At check-in" : "Inactive";
       return `
         <div class="info-tile profile-qr-tile profile-club-deal-tile is-inactive" data-club-deal-state="${escapeHtml(state.key)}" aria-label="Inactive Club Deal">
           <div class="profile-club-deal-copy">
@@ -47748,8 +47887,8 @@
             <b class="profile-club-deal-title">${escapeHtml(state.label)}</b>
             <small>${escapeHtml(state.detail)}</small>
           </div>
-          <button class="profile-club-deal-qr-button" type="button" aria-label="Club Deal inactive" disabled>
-            <span class="profile-club-deal-action-copy"><strong>Inactive</strong></span>
+          <button class="profile-club-deal-qr-button" type="button" aria-label="Club Deal ${escapeHtml(inactiveActionLabel.toLowerCase())}" disabled>
+            <span class="profile-club-deal-action-copy"><strong>${escapeHtml(inactiveActionLabel)}</strong></span>
           </button>
         </div>
       `;
@@ -51084,9 +51223,9 @@
 
     function profileVenueDestinationMarkup(profile, options = {}) {
       const safeVenueName = displayText(profile.venue);
-      const liveClass = options.live ? " is-live" : "";
+      const statusClass = options.live ? " is-live" : options.upcoming ? " is-upcoming" : "";
       return `
-        <button class="profile-venue-destination${liveClass}" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
+        <button class="profile-venue-destination${statusClass}" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
           ${venueIconMarkup()}
           <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span></span>
           <span class="profile-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>
@@ -51110,14 +51249,13 @@
         `;
       }
       if (profile.scheduled) {
+        const upcomingDateLabel = compactUpcomingDateLabel(profile) || "Date posted";
         return `
           <div class="info-tile profile-schedule-card profile-shift-card schedule-upcoming">
-            <strong>Upcoming shift</strong>
-            <div class="profile-schedule-primary">${displayPublicShiftTime(profile.time, profile)}</div>
+            <div class="profile-schedule-primary">Upcoming · ${escapeHtml(upcomingDateLabel)}</div>
             <div class="schedule-stack">
-              ${profileVenueDestinationMarkup(profile)}
+              ${profileVenueDestinationMarkup(profile, { upcoming: true })}
             </div>
-            <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to guests." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
           </div>
           ${shiftNotesMarkup(profile)}
         `;
@@ -51127,11 +51265,11 @@
         : `Follow ${escapeHtml(profile.name)} for updates`;
       return `
         <div class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">
-          <div class="profile-schedule-inline">
+          <span class="profile-empty-state">No schedule</span>
+          <span class="profile-empty-copy">
             <strong>No shift posted</strong>
-            <span aria-hidden="true">·</span>
             <span>${emptyScheduleCopy}</span>
-          </div>
+          </span>
         </div>
       `;
     }
@@ -51158,7 +51296,7 @@
 
     function dancerProfileUberRideMarkup(profile, options = {}) {
       const city = options.city || selectedCity();
-      if (options.preview || !profile?.scheduled || !isWorkingTonight(profile, city)) return "";
+      if (options.preview || !profile?.scheduled) return "";
       const venue = resolveVenueByName(profile.venue, city);
       if (!venue) return "";
       return uberRideLinkMarkup({
@@ -51192,7 +51330,8 @@
       const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
       const actions = [directionsMarkup, rideMarkup].filter(Boolean);
       if (!actions.length) return "";
-      return `<div class="profile-tonight-travel-actions ${rideMarkup ? "is-working-now" : "is-upcoming"}" aria-label="Venue travel actions">${actions.join("")}</div>`;
+      const statusClass = isWorkingTonight(profile, city) ? "is-working-now" : "is-upcoming";
+      return `<div class="profile-tonight-travel-actions ${statusClass}" aria-label="Venue travel actions">${actions.join("")}</div>`;
     }
 
     function profileModalGridMarkup(profile, options = {}) {
@@ -51210,6 +51349,8 @@
       const tonightClasses = [
         "profile-tonight-card",
         isWorkingTonight(profile, city) && profile.scheduled ? "is-now" : "",
+        profile.scheduled && !isWorkingTonight(profile, city) ? "is-upcoming" : "",
+        !profile.scheduled ? "is-no-schedule" : "",
         dealState.key === "available" ? "has-club-deal" : ""
       ].filter(Boolean).join(" ");
       return `

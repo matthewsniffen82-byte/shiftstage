@@ -15,14 +15,14 @@ const profilePolishBlock = liveApp.match(
   /\/\* Instagram-familiar dancer profile hierarchy; scoped away from global navigation\. \*\/[\s\S]*?\/\* Venue profiles keep X dismissal/,
 )?.[0];
 
-test("empty schedules collapse to one status line while upcoming schedules retain their destination", () => {
+test("empty schedules use the compact neutral hierarchy while upcoming schedules retain their destination", () => {
   assert.match(
     liveApp,
-    /if \(profile\.scheduled\) \{[\s\S]*?class="info-tile profile-schedule-card profile-shift-card schedule-upcoming"[\s\S]*?This is the dancer's next posted shift\./,
+    /if \(profile\.scheduled\) \{[\s\S]*?const upcomingDateLabel = compactUpcomingDateLabel\(profile\)[\s\S]*?class="info-tile profile-schedule-card profile-shift-card schedule-upcoming"[\s\S]*?Upcoming · \$\{escapeHtml\(upcomingDateLabel\)\}[\s\S]*?profileVenueDestinationMarkup\(profile, \{ upcoming: true \}\)/,
   );
   assert.match(
     liveApp,
-    /const emptyScheduleCopy =[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;[\s\S]*?class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">[\s\S]*?class="profile-schedule-inline">[\s\S]*?<strong>No shift posted<\/strong>[\s\S]*?\$\{emptyScheduleCopy\}/,
+    /const emptyScheduleCopy =[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;[\s\S]*?class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">[\s\S]*?class="profile-empty-state">No schedule<\/span>[\s\S]*?class="profile-empty-copy">[\s\S]*?<strong>No shift posted<\/strong>[\s\S]*?\$\{emptyScheduleCopy\}/,
   );
   assert.doesNotMatch(
     liveApp,
@@ -30,7 +30,7 @@ test("empty schedules collapse to one status line while upcoming schedules retai
   );
   assert.match(
     liveApp,
-    /No-shift profiles should communicate the state[\s\S]*?\.profile-schedule-card\.schedule-empty \{[\s\S]*?display: block !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 8px 10px !important;[\s\S]*?\.profile-schedule-inline \{[\s\S]*?display: flex !important;/,
+    /No-shift profiles use the same compact two-column hierarchy[\s\S]*?\.profile-schedule-card\.schedule-empty \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\) !important;[\s\S]*?gap: 6px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?padding: 4px 8px !important;[\s\S]*?\.profile-empty-copy \{[\s\S]*?display: grid !important;/,
   );
   const shiftsFunction = liveApp.match(
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
@@ -43,7 +43,7 @@ test("empty schedules collapse to one status line while upcoming schedules retai
 test("current and upcoming schedules share one compact venue destination", () => {
   assert.match(
     liveApp,
-    /function profileVenueDestinationMarkup\(profile, options = \{\}\)[\s\S]*?class="profile-venue-destination\$\{liveClass\}"[^>]*data-open-venue="\$\{safeVenueName\}"[^>]*aria-label="Open \$\{safeVenueName\} club details"[\s\S]*?class="profile-venue-name">\$\{safeVenueName\}<[\s\S]*?class="profile-venue-cue"/,
+    /function profileVenueDestinationMarkup\(profile, options = \{\}\)[\s\S]*?const statusClass = options\.live \? " is-live" : options\.upcoming \? " is-upcoming" : "";[\s\S]*?class="profile-venue-destination\$\{statusClass\}"[^>]*data-open-venue="\$\{safeVenueName\}"[^>]*aria-label="Open \$\{safeVenueName\} club details"[\s\S]*?class="profile-venue-name">\$\{safeVenueName\}<[\s\S]*?class="profile-venue-cue"/,
   );
   assert.match(
     liveApp,
@@ -55,7 +55,7 @@ test("current and upcoming schedules share one compact venue destination", () =>
   );
   assert.match(
     liveApp,
-    /profileVenueDestinationMarkup\(profile, \{ live: true \}\)[\s\S]*?profileVenueDestinationMarkup\(profile\)/,
+    /profileVenueDestinationMarkup\(profile, \{ live: true \}\)[\s\S]*?profileVenueDestinationMarkup\(profile, \{ upcoming: true \}\)/,
   );
   assert.doesNotMatch(
     liveApp,
@@ -151,7 +151,8 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?const directionsMarkup = dancerProfileDirectionsMarkup\(profile, \{ city \}\)[\s\S]*?const rideMarkup = dancerProfileUberRideMarkup\(profile, \{ city \}\)/);
   assert.match(liveActionsMarkup, /modal-actions \$\{isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"\}/);
-  assert.match(liveApp, /function dancerProfileUberRideMarkup\(profile, options = \{\}\)[\s\S]*?!isWorkingTonight\(profile, city\)\) return "";/);
+  assert.match(liveApp, /function dancerProfileUberRideMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
+  assert.match(liveApp, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
   assert.match(liveApp, /\.profile-report-action \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;[\s\S]*?background: transparent !important;/);
@@ -250,7 +251,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   assert.match(liveApp, /modalCity\.hidden = false/);
   assert.match(
     liveApp,
-    /class="info-tile profile-schedule-card profile-shift-card schedule-upcoming">[\s\S]*?<div class="profile-schedule-primary">\$\{displayPublicShiftTime\(profile\.time, profile\)\}<\/div>/,
+    /class="info-tile profile-schedule-card profile-shift-card schedule-upcoming">[\s\S]*?<div class="profile-schedule-primary">Upcoming · \$\{escapeHtml\(upcomingDateLabel\)\}<\/div>[\s\S]*?profileVenueDestinationMarkup\(profile, \{ upcoming: true \}\)/,
   );
 });
 
@@ -444,7 +445,8 @@ test("inactive profile Club Deals keep a neutral placeholder", () => {
   assert.match(dealMarkup, /if \(state\.key === "available"\)/);
   assert.match(dealMarkup, /profile-club-deal-tile is-inactive/);
   assert.match(dealMarkup, /aria-label="Inactive Club Deal"/);
-  assert.match(dealMarkup, /<span class="profile-club-deal-action-copy"><strong>Inactive<\/strong><\/span>/);
+  assert.match(dealMarkup, /const inactiveActionLabel = state\.key === "available-when-working" \? "At check-in" : "Inactive";/);
+  assert.match(dealMarkup, /<span class="profile-club-deal-action-copy"><strong>\$\{escapeHtml\(inactiveActionLabel\)\}<\/strong><\/span>/);
   assert.doesNotMatch(dealMarkup, /Tap How to use for instructions|Tap to choose an offer and view instructions/);
   assert.match(liveApp, /#profileBackdrop #profileModal \.modal-body \{[\s\S]*?padding-bottom: 0 !important;/);
   assert.match(liveApp, /\.profile-club-deal-tile\.is-inactive \.profile-club-deal-qr-button \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?place-items: center !important;/);

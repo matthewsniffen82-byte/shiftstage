@@ -209,7 +209,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /live-actions\$\{hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"\}/);
   assert.match(profileActions, /profile-action-going[\s\S]*?profile-action-unavailable/);
   assert.doesNotMatch(profileActions, /<small className="profile-action-requirement">No shift posted<\/small>/);
-  assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
+  assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?className="profile-empty-state">No schedule<[\s\S]*?className="profile-empty-copy">[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
   assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\); \}/);
 });
 
@@ -236,8 +236,9 @@ test("the primary shift is not repeated and empty profile sections stay hidden",
     /const upcomingShifts = profile\.upcomingShifts\.filter\([\s\S]*?shift\.id !== activeShift\?\.id/,
   );
   assert.match(profilePage, /upcomingShifts\.length \? \(/);
-  assert.match(profilePage, /<h2 id="profile-schedule-title">Upcoming dates<\/h2>/);
-  assert.match(profilePage, /\{upcomingShifts\.map\(\(shift\) =>/);
+  assert.match(profilePage, /className="profile-shift-card profile-upcoming-card is-upcoming"/);
+  assert.match(profilePage, /\{upcomingShifts\.map\(\(shift, index\) =>/);
+  assert.match(profilePage, /className="profile-upcoming-state"[\s\S]*?Upcoming · \{formatShiftDate/);
   assert.doesNotMatch(profilePage, /<p className="muted">No posted shifts right now\.<\/p>/);
 });
 

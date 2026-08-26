@@ -269,7 +269,8 @@ test("the live mobile profile separates profile actions from venue travel action
   assert.match(homeSource, /data-shift-state="posted"/);
   assert.match(homeSource, /function dancerProfileTonightTravelActionsMarkup\(profile, options = \{\}\)/);
   assert.match(homeSource, /const actions = \[directionsMarkup, rideMarkup\]\.filter\(Boolean\)/);
-  assert.match(homeSource, /profile-tonight-travel-actions \$\{rideMarkup \? "is-working-now" : "is-upcoming"\}/);
+  assert.match(homeSource, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
+  assert.match(homeSource, /profile-tonight-travel-actions \$\{statusClass\}/);
   assert.match(homeSource, /\$\{shiftsMarkup\(profile, status,[\s\S]*?<div class="profile-tonight-deal">[\s\S]*?\$\{travelActionsMarkup\}/);
   assert.doesNotMatch(homeSource, /profileActionButtonMarkup\("car", "Ride", "working-now"\)/);
   assert.doesNotMatch(homeSource, /profileActionButtonMarkup\("pin", "Directions", "venue"\)/);

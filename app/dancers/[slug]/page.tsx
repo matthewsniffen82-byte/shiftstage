@@ -158,7 +158,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         <section
           aria-label="Tonight"
-          className={`profile-tonight-card${activeShift ? " is-now" : ""}${activeDeal ? " has-club-deal" : ""}`}
+          className={`profile-tonight-card${activeShift ? " is-now" : ""}${!activeShift && upcomingShifts.length ? " is-upcoming" : ""}${!activeShift && !upcomingShifts.length ? " is-no-schedule" : ""}${activeDeal ? " has-club-deal" : ""}`}
         >
         {activeShift ? (
           <div
@@ -181,40 +181,37 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </div>
         ) : upcomingShifts.length ? (
           <div
-            className="profile-shift-card profile-schedule-section is-upcoming"
+            className="profile-shift-card profile-upcoming-card is-upcoming"
             aria-labelledby="profile-schedule-title"
           >
-            <div className="profile-section-heading">
-              <div>
-                <span className="eyebrow">Tonight</span>
-                <h2 id="profile-schedule-title">Upcoming dates</h2>
-              </div>
-              <span>{upcomingShifts.length} posted</span>
-            </div>
-            <div className="shift-list">
-              {upcomingShifts.map((shift) => (
+            <div className="profile-upcoming-list">
+              {upcomingShifts.map((shift, index) => (
                 <Link
-                  className="shift-row"
+                  className="profile-upcoming-destination"
                   href={`/venues/${encodeURIComponent(shift.venueSlug)}`}
                   key={shift.id}
                 >
-                  <span className="shift-date">
-                    {formatShiftDate(shift.shiftDate || shift.startsAt, shift.timezone)}
+                  <span
+                    className="profile-upcoming-state"
+                    id={index === 0 ? "profile-schedule-title" : undefined}
+                  >
+                    Upcoming · {formatShiftDate(shift.shiftDate || shift.startsAt, shift.timezone)}
                   </span>
-                  <strong>{shift.venueName}</strong>
-                  <span className="shift-time">
-                    Upcoming · Venue and date posted
+                  <span className="profile-upcoming-copy">
+                    <strong>{shift.venueName}</strong>
                   </span>
-                  <em>Club</em>
+                  <span aria-hidden="true" className="profile-upcoming-cue">›</span>
                 </Link>
               ))}
             </div>
           </div>
         ) : (
           <div className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status">
-            <strong>No shift posted</strong>
-            <span aria-hidden="true">·</span>
-            <span>Follow {profile.stageName} for updates</span>
+            <span className="profile-empty-state">No schedule</span>
+            <span className="profile-empty-copy">
+              <strong>No shift posted</strong>
+              <em>Follow {profile.stageName} for updates</em>
+            </span>
           </div>
         )}
 
@@ -249,7 +246,11 @@ export default async function DancerPublicPage({ params }: PageProps) {
               <span>
                 <small>Club Deal</small>
                 <strong>
-                  {activeShift ? "No active deal" : "No active club deal"}
+                  {activeShift
+                    ? "No active deal"
+                    : actionShift
+                      ? "Available after check-in"
+                      : "No active club deal"}
                 </strong>
                 <em>
                   {activeShift
@@ -259,7 +260,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
                       : "Deals activate after a verified club check-in."}
                 </em>
               </span>
-              <button disabled type="button">Inactive</button>
+              <button disabled type="button">
+                {!activeShift && actionShift ? "At check-in" : "Inactive"}
+              </button>
             </div>
           </div>
         )}
@@ -271,14 +274,12 @@ export default async function DancerPublicPage({ params }: PageProps) {
             className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming"}`}
           >
             <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
-            {activeShift ? (
-              <UberRideButton
-                compact
-                dancerId={profile.id}
-                source="dancer_profile"
-                venue={{ ...actionVenue, isActive: true, isPublic: true }}
-              />
-            ) : null}
+            <UberRideButton
+              compact
+              dancerId={profile.id}
+              source="dancer_profile"
+              venue={{ ...actionVenue, isActive: true, isPublic: true }}
+            />
           </div>
         ) : null}
         </section>
@@ -646,19 +647,35 @@ function PublicProfileStyles() {
       .profile-schedule-section { display: grid; gap: 14px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
       .profile-tonight-card { margin-top: 8px; overflow: hidden; border: 1px solid rgba(139,92,246,.24); border-radius: 15px; background: linear-gradient(145deg, rgba(13,11,21,.94), rgba(6,7,11,.98)); box-shadow: 0 12px 32px rgba(0,0,0,.26); }
       .profile-tonight-card.is-now { border-color: rgba(77,236,157,.24); background: radial-gradient(circle at 94% 0%, rgba(77,236,157,.045), transparent 13rem), rgba(7,14,13,.94); }
+      .profile-tonight-card.is-upcoming { border-color: rgba(126,234,255,.46); background: radial-gradient(circle at 94% 0%, rgba(126,234,255,.07), transparent 13rem), rgba(7,12,16,.94); }
+      .profile-tonight-card.is-no-schedule { border-color: rgba(255,255,255,.13); background: radial-gradient(circle at 94% 0%, rgba(255,255,255,.035), transparent 13rem), rgba(9,9,13,.94); }
       .profile-tonight-card.has-club-deal { border-color: rgba(77,236,157,.3); box-shadow: 0 12px 32px rgba(0,0,0,.3); }
       .profile-tonight-card > .profile-shift-card { width: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .profile-tonight-card > .profile-schedule-section { padding: 14px; }
-      .profile-tonight-card > .profile-schedule-empty { padding: 9px 10px; }
+      .profile-tonight-card > .profile-schedule-empty { min-height: 52px; display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 12px; padding: 6px 10px; }
+      .profile-empty-state { color: #a9a3af; font-size: 11px; font-weight: 950; letter-spacing: .075em; line-height: 1.05; text-transform: uppercase; white-space: nowrap; }
+      .profile-empty-copy { min-width: 0; display: grid; gap: 2px; }
+      .profile-empty-copy strong { overflow: hidden; color: #f5f2f7; font-size: 14px; font-weight: 950; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-empty-copy em { overflow: hidden; color: #8e8795; font-size: 10px; font-style: normal; font-weight: 750; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
       .profile-tonight-travel-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 5px 10px 8px; border-top: 1px solid rgba(255,255,255,.06); }
-      .profile-tonight-travel-actions.is-working-now { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .profile-tonight-travel-actions:is(.is-working-now, .is-upcoming) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 44px !important; min-height: 44px !important; max-height: 44px !important; padding-inline: 10px !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 10px !important; color: rgba(248,250,252,.94) !important; background: rgba(255,255,255,.055) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important; font-size: 11px !important; opacity: 1 !important; }
       .profile-tonight-travel-actions > .profile-directions-button { border-color: rgba(142,226,248,.24) !important; background: rgba(142,226,248,.07) !important; }
       .profile-tonight-travel-actions > :is(a, button) :is(svg, span) { opacity: 1 !important; }
       .profile-tonight-deal { padding: 5px; border-top: 1px solid rgba(255,255,255,.08); }
       .profile-tonight-card.has-club-deal .profile-tonight-deal { border-top-color: rgba(77,236,157,.18); }
+      .profile-tonight-card.is-upcoming .profile-tonight-deal { border-top-color: rgba(126,234,255,.16); }
+      .profile-tonight-card.is-no-schedule .profile-tonight-deal { border-top-color: rgba(255,255,255,.07); }
       .profile-tonight-deal .profile-active-deal { width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .profile-tonight-deal .profile-club-deal-placeholder { border: 0; background: transparent; }
+      .profile-upcoming-card { display: grid; padding: 4px 8px !important; }
+      .profile-upcoming-list { display: grid; }
+      .profile-upcoming-destination { min-width: 0; display: grid; grid-template-columns: auto minmax(0,1fr) 16px; align-items: center; gap: 9px; min-height: 44px; padding: 4px 6px; color: #fff; text-decoration: none; }
+      .profile-upcoming-destination + .profile-upcoming-destination { border-top: 1px solid rgba(126,234,255,.12); }
+      .profile-upcoming-state { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .03em; line-height: 1.05; text-transform: uppercase; white-space: nowrap; }
+      .profile-upcoming-copy { min-width: 0; }
+      .profile-upcoming-copy strong { display: block; overflow: hidden; color: #fff; font-size: 14px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-upcoming-cue { color: #7eeaff; font-size: 23px; line-height: 1; }
       .shift-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
       .shift-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 14px; border: 1px solid rgba(255,255,255,.085); border-radius: 14px; color: #f7f2ff; background: rgba(255,255,255,.035); text-decoration: none; }
       .shift-date { grid-column: 1 / -1; color: #94e5ff; font-size: 10px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }

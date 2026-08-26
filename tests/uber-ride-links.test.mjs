@@ -175,7 +175,7 @@ test("the reusable control hides private, unpublished, and invalid destinations"
   assert.match(componentSource, /venue\.isActive === false \|\| venue\.isPublic === false/);
   assert.match(componentSource, /if \(!isValidUberDestination\(destination\)\) return null/);
   assert.match(dancerPageSource, /const actionShift = activeShift \|\| upcomingShifts\[0\] \|\| null[\s\S]*?getVenueProfile\(client, actionShift\.venueSlug\)/);
-  assert.match(dancerPageSource, /profile-tonight-travel-actions[\s\S]*?\{activeShift \? \([\s\S]*?<UberRideButton/);
+  assert.match(dancerPageSource, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
   assert.match(dancerPageSource, /source="dancer_profile"/);
 });
 
