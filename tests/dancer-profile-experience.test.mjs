@@ -98,9 +98,9 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.ok(scheduleIndex > identityIndex);
   assert.ok(dealIndex > scheduleIndex);
   assert.ok(actionsIndex > dealIndex);
-  assert.ok(socialIndex > actionsIndex);
-  assert.ok(overviewIndex > socialIndex);
-  assert.ok(mediaIndex > overviewIndex);
+  assert.ok(overviewIndex > actionsIndex);
+  assert.ok(socialIndex > overviewIndex);
+  assert.ok(mediaIndex > socialIndex);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /\{profile\.profileViewsToday \|\| 0\}[\s\S]*?<dt>Views today<\/dt>/);

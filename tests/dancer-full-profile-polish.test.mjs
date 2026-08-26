@@ -141,7 +141,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveActionsMarkup, /modal-actions \$\{isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"\}/);
   assert.match(liveApp, /function dancerProfileUberRideMarkup\(profile, options = \{\}\)[\s\S]*?!isWorkingTonight\(profile, city\)\) return "";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
-  assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
+  assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
   assert.match(liveApp, /\.profile-report-action \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;[\s\S]*?background: transparent !important;/);
 });
 
@@ -164,11 +164,11 @@ test("profile socials and activity metrics use a compact neutral presentation", 
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?padding: 11px 0 10px !important;/,
+    /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?margin-top: -2px !important;[\s\S]*?padding: 2px 0 4px !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 5px !important;[\s\S]*?padding: 5px !important;/,
+    /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 2px !important;[\s\S]*?padding: 3px 5px !important;/,
   );
   assert.match(
     aesthetic,
@@ -216,8 +216,8 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   assert.ok(scheduleIndex > -1);
   assert.ok(dealIndex > scheduleIndex);
   assert.ok(actionsIndex > dealIndex);
-  assert.ok(socialIndex > actionsIndex);
-  assert.ok(metricsIndex > socialIndex);
+  assert.ok(metricsIndex > actionsIndex);
+  assert.ok(socialIndex > metricsIndex);
   assert.match(gridFunction, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?class="profile-tonight-deal">\$\{dealMarkup\}<\/div>[\s\S]*?<\/section>/);
   assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
   assert.match(liveApp, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
@@ -297,7 +297,7 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   );
   assert.match(
     liveApp,
-    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
+    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,

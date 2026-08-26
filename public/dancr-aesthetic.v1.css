@@ -3771,11 +3771,12 @@ body.dancr-button-system .public-profile-shell .profile-metrics dt {
  * schedule, and Club Deal remain the visual focus. Public actions remain
  * visibly tappable even when an account is needed for the next step. */
 body.dancr-button-system #profileBackdrop .modal-grid {
-  gap: 7px !important;
+  gap: 4px !important;
 }
 
 body.dancr-button-system #profileBackdrop .modal-actions {
-  gap: 6px !important;
+  column-gap: 4px !important;
+  row-gap: 0 !important;
   padding-bottom: 0 !important;
 }
 
@@ -3870,12 +3871,23 @@ body.dancr-button-system #profileBackdrop .social-tile .social-link svg {
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics {
-  padding: 11px 0 10px !important;
+  margin-top: -2px !important;
+  padding: 2px 0 4px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics > div {
-  gap: 5px !important;
-  padding: 5px !important;
+  gap: 2px !important;
+  padding: 3px 5px !important;
+}
+
+body.dancr-button-system .public-profile-shell .profile-overview {
+  margin-top: -2px !important;
+  padding: 0 0 2px !important;
+}
+
+body.dancr-button-system .public-profile-shell .profile-metrics > div {
+  gap: 2px !important;
+  padding: 4px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics dd {

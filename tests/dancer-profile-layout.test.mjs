@@ -47,11 +47,14 @@ const [
   ]);
 
 test("full dancer profiles use a compact identity and honest public activity header without a bio", () => {
+  const actionsIndex = profilePage.indexOf("<DancerProfileActions");
+  const metricsIndex = profilePage.indexOf('className="profile-overview"');
+  const socialsIndex = profilePage.indexOf('className="profile-social-section"');
   assert.match(profilePage, /className="profile-titlebar"/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /className="profile-metrics"/);
   assert.match(profilePage, /\.profile-overview \{[^}]*border: 0;/);
-  assert.match(profilePage, /\.profile-metrics > div \{[^}]*gap: 3px;[^}]*padding: 6px 4px;/);
+  assert.match(profilePage, /\.profile-metrics > div \{[^}]*gap: 2px;[^}]*padding: 4px;/);
   assert.match(profilePage, /\.profile-metrics dd \{[^}]*font-weight: 900;[^}]*line-height: 1\.08;/);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
@@ -60,18 +63,23 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
   assert.match(profilePage, /className="profile-social-section" aria-label="External profiles"/);
   assert.match(profilePage, /<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>/);
+  assert.ok(actionsIndex > -1 && metricsIndex > actionsIndex && socialsIndex > metricsIndex);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);
 
   assert.match(liveApp, /class="profile-modal-summary"/);
   assert.match(liveApp, /class="profile-modal-avatar" id="modalProfileAvatar"/);
   assert.match(liveApp, /class="profile-activity-metrics"/);
   assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?border: 0;/);
-  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 3px;[\s\S]*?padding: 4px;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 2px;[\s\S]*?padding: 3px 4px;/);
   assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics dd \{[\s\S]*?font-weight: 900;[\s\S]*?line-height: 1\.08;/);
   assert.match(liveApp, /id="modalFollowerCount"/);
   assert.match(liveApp, /id="tonightInterestCount"/);
   assert.match(liveApp, /id="modalProfileViews"/);
   assert.match(liveApp, /profileViewsToday\(profile, city\)\.toLocaleString\(\)/);
+  assert.match(
+    liveApp,
+    /liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?profileActivityMetricsMarkup\(profile, city\)[\s\S]*?socialMarkup/,
+  );
 });
 
 test("profile actions keep profile controls separate from Tonight travel actions", () => {
@@ -97,7 +105,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /\.action-icon-clock > svg \{[\s\S]*?--profile-icon-offset-x: -\.5px;/);
   assert.match(profilePage, /data-profile-action-icon="personPlus"[\s\S]*?width: 26px;[\s\S]*?data-profile-action-icon="bell"[\s\S]*?width: 22px;/);
   assert.match(profilePage, /button:not\(\.profile-action-icon-control\):not\(\.profile-report-action\)[\s\S]*?grid-template-rows: 18px 9px;/);
-  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 4px;[\s\S]*?row-gap: 0;[\s\S]*?padding: 3px 0 0;/);
+  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 4px;[\s\S]*?row-gap: 0;[\s\S]*?padding: 2px 0 0;/);
   assert.match(liveApp, /#profileBackdrop \.modal-actions \.profile-action-icon-control \.action-icon \{[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(liveApp, /action-icon action-icon-\$\{resolvedType\}/);
   assert.match(liveApp, /data-action-icon="\$\{resolvedType\}"[\s\S]*?aria-hidden="true"/);
@@ -183,6 +191,10 @@ test("every profile combines tonight's shift and Club Deal while only Working No
   assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?\[directionsMarkup, rideMarkup\]\.filter\(Boolean\)[\s\S]*?profile-tonight-travel-actions/);
   assert.doesNotMatch(liveApp.match(/function liveProfileModalActionsMarkup[\s\S]*?async function refreshProfileGoingState/)?.[0] || "", /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);
   assert.match(liveApp, /modal-grid > \.profile-tonight-card[\s\S]*?border-radius: 15px;[\s\S]*?profile-tonight-deal[\s\S]*?border-top:/);
+  assert.match(
+    liveApp,
+    /profile-tonight-card\.has-club-deal[\s\S]*?inset 0 0 0 1px rgba\(77, 236, 157, \.38\)/,
+  );
 });
 
 test("active full-profile Club Deals render a compact cashier-tap action and use one live-status color", () => {
@@ -247,7 +259,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /Keep profile-level actions separate from the venue travel controls[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
+    /Keep profile-level actions separate from the venue travel controls[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,
