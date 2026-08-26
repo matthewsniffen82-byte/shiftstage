@@ -179,6 +179,18 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   );
   assert.match(
     discoveryPalette,
+    /\.dancer-directory-filter\[data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-info-strong\)[\s\S]*?var\(--dancr-color-info\) 18%[\s\S]*?var\(--dancr-color-info-medium\)/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.dancer-directory-filter:not\(\.is-active\) > \.dancer-directory-filter-status \{[\s\S]*?var\(--dancr-color-text-muted\)[\s\S]*?box-shadow: none/,
+  );
+  assert.doesNotMatch(
+    discoveryPalette,
+    /\.dancer-directory-filter\[data-dancer-directory-filter="now"\]:not\(\.is-empty\):not\(\.is-active\) > span[\s\S]*?var\(--dancr-color-live\)/,
+  );
+  assert.match(
+    discoveryPalette,
     /\.dancer-directory-filter\[data-dancer-directory-filter="now"\]\.is-active\.is-empty \{[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-text-muted\)[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?box-shadow: none/,
   );
   assert.match(

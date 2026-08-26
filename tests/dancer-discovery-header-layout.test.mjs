@@ -25,6 +25,13 @@ test("directory heading, dynamic total, and segmented filters are compact and ac
   assert.match(aesthetic, /> \.dancer-directory-filters \+ \.home-dancer-grid-heading \{[\s\S]*?display: none !important/);
 });
 
+test("segmented dancer filters use semantic active colors and neutral inactive states", () => {
+  assert.match(aesthetic, /data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\)[\s\S]*?var\(--dancr-color-live\)/);
+  assert.match(aesthetic, /data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\)[\s\S]*?var\(--dancr-color-info\)/);
+  assert.match(aesthetic, /\.dancer-directory-filter:not\(\.is-active\) \{[\s\S]*?var\(--dancr-color-surface-raised\)/);
+  assert.doesNotMatch(liveShell, /data-dancer-directory-filter="now"\]:not\(\.is-empty\):not\(\.is-active\) span \{[\s\S]*?#4dec9d/);
+});
+
 test("existing city, radius, club, Working Now, Upcoming, and filter result logic remains canonical", () => {
   assert.match(liveShell, /const radiusLabel = distanceSelect\?\.value \|\| "25 mi"/);
   assert.match(liveShell, /const venueLabel = venueName === "all" \? "All clubs" : venueName/);

@@ -35998,9 +35998,6 @@
         .dancer-directory-filter.is-active span {
           color: #f8fafc;
         }
-        .dancer-directory-filter[data-dancer-directory-filter="now"]:not(.is-empty):not(.is-active) span {
-          color: #4dec9d;
-        }
         .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) {
           border-color: rgba(77, 236, 157, .78);
           color: #f8fafc;
@@ -36013,6 +36010,19 @@
         }
         .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) span {
           color: #4dec9d;
+        }
+        .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty) {
+          border-color: rgba(34, 211, 238, .72);
+          color: #f8fafc;
+          background:
+            linear-gradient(rgba(34, 211, 238, .18), rgba(34, 211, 238, .18)),
+            #18181c;
+          box-shadow:
+            inset 0 0 0 1px rgba(34, 211, 238, .34),
+            0 0 12px rgba(34, 211, 238, .1);
+        }
+        .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty) span {
+          color: #67e8f9;
         }
         .dancer-directory-filter[data-dancer-directory-filter="now"].is-active.is-empty {
           border-color: rgba(51, 65, 85, .64);

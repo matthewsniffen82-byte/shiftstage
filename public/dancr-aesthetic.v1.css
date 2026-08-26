@@ -3058,8 +3058,9 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
   color: var(--dancr-color-text-primary) !important;
 }
 
-body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"]:not(.is-empty):not(.is-active) > span {
-  color: var(--dancr-color-live) !important;
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter:not(.is-active) > .dancer-directory-filter-status {
+  background: var(--dancr-color-text-muted) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) {
@@ -3077,6 +3078,23 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) > span {
   color: var(--dancr-color-live) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty) {
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 18%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--dancr-color-info-medium),
+    0 0 12px var(--dancr-color-info-soft) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty) > span {
+  color: var(--dancr-color-info) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active.is-empty {
@@ -7645,20 +7663,14 @@ body.dancer-directory-active > .app main.stack > section.stack
   height: 6px;
   flex: 0 0 6px;
   border-radius: 999px;
-  background: var(--dancr-color-live);
-  box-shadow: 0 0 8px var(--dancr-color-live-soft);
+  background: var(--dancr-color-text-muted);
+  box-shadow: none;
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filter-count {
   color: var(--dancr-color-text-muted) !important;
   font-size: 0.86em !important;
-}
-
-body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"]
-  > .dancer-directory-filter-count {
-  color: var(--dancr-color-live) !important;
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
@@ -7671,6 +7683,29 @@ body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty)
   > .dancer-directory-filter-count {
   color: var(--dancr-color-live) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty)
+  > .dancer-directory-filter-status {
+  background: var(--dancr-color-live) !important;
+  box-shadow: 0 0 8px var(--dancr-color-live-soft) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty) {
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 16%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-info-medium) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty)
+  > :is(.dancer-directory-filter-label, .dancer-directory-filter-count) {
+  color: var(--dancr-color-info) !important;
 }
 
 /* The selected tab already names a single-status result set, so repeating that
