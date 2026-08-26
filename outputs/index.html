@@ -45382,7 +45382,7 @@
 
     function venueLogoFitTarget(image) {
       if (image.classList.contains("home-venue-discovery-logo")) {
-        return { width: .7, height: .44, maxScale: 2.25 };
+        return { width: .82, height: .56, maxScale: 2.35 };
       }
       if (image.classList.contains("venue-detail-logo")) {
         return { width: .84, height: .62, maxScale: 2.8 };
@@ -50893,7 +50893,7 @@
       if (!hoursLabel || parts.length !== 2) {
         return {
           state: "unknown",
-          label: "Hours not posted",
+          label: "Hours unavailable",
           hoursLabel: ""
         };
       }
@@ -50902,7 +50902,7 @@
       if (start === null || end === null) {
         return {
           state: "unknown",
-          label: "Hours not posted",
+          label: "Hours unavailable",
           hoursLabel: ""
         };
       }
@@ -51051,7 +51051,7 @@
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
       if (!liveProfiles.length) return "";
-      const visibleLimit = options.mobile ? 3 : 4;
+      const visibleLimit = options.mobile ? 2 : 4;
       const profiles = liveProfiles.slice(0, visibleLimit);
       const remaining = liveProfiles.length - profiles.length;
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
@@ -51064,11 +51064,14 @@
         );
         return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true"></span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
       }).join("");
-      const remainingMarkup = remaining > 0
+      const remainingMarkup = !options.mobile && remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
         : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
-      return `<span class="${classPrefix}-lineup" role="group" aria-label="${liveLabel}">${avatars}${remainingMarkup}</span>`;
+      const mobileLiveCount = options.mobile
+        ? `<span class="${classPrefix}-lineup-label" aria-hidden="true"><strong>${liveProfiles.length}</strong><span>NOW</span></span>`
+        : "";
+      return `<span class="${classPrefix}-lineup" role="group" aria-label="${liveLabel}">${avatars}${remainingMarkup}${mobileLiveCount}</span>`;
     }
 
     function venueCardQrMarkup(venue) {

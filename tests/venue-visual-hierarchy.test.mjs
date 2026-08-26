@@ -28,7 +28,7 @@ test("venue operating status uses posted hours in the selected city timezone", (
   assert.match(operatingStatus, /label: isOpen \? "Open now" : "Closed"/);
   assert.match(operatingStatus, /hoursLabel\s*\n\s*\}/);
   assert.doesNotMatch(operatingStatus, /Hours ·/);
-  assert.match(operatingStatus, /state: "unknown"[\s\S]*?label: "Hours not posted"/);
+  assert.match(operatingStatus, /state: "unknown"[\s\S]*?label: "Hours unavailable"/);
 });
 
 test("private venue previews preserve saved opening and closing times", () => {

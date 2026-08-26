@@ -181,7 +181,7 @@ test("venue scroll cards use one fixed logo stage while detail pages retain cont
   assert.match(liveApp, /function applyVenueLogoFit\(image, scale, centerX = \.5, centerY = \.5\)/);
   assert.match(
     liveApp,
-    /classList\.contains\("home-venue-discovery-logo"\)[\s\S]*?return \{ width: \.7, height: \.44, maxScale: 2\.25 \};/,
+    /classList\.contains\("home-venue-discovery-logo"\)[\s\S]*?return \{ width: \.82, height: \.56, maxScale: 2\.35 \};/,
   );
   assert.match(
     liveApp,
