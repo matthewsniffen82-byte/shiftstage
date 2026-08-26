@@ -3090,7 +3090,10 @@ type DancerProfileEditorSaveRequest = {
 
 type DancerProfileEditorSectionId = "identity" | "avatar" | "photos" | "videos" | "socials" | "share";
 
-type DancerProfileSocialEditor = (platform: SocialPlatform) => ReactNode;
+type DancerProfileSocialEditor = (
+  platform: SocialPlatform,
+  controls: { onClose: () => void },
+) => ReactNode;
 
 type DancerProfileEditorSections = Partial<Record<Exclude<DancerProfileEditorSectionId, "socials">, ReactNode>> & {
   socials?: DancerProfileSocialEditor;
@@ -3162,6 +3165,7 @@ function DancerProfilePreview({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef(0);
   const onCloseRef = useRef(onClose);
+  const activeEditorSectionRef = useRef<DancerProfileEditorSectionId | null>(null);
   const persistedName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
@@ -3177,16 +3181,27 @@ function DancerProfilePreview({
   const headerImage = isEditor ? avatarUrl : previewImage;
   const completedRequirements = builderRequirements?.filter((requirement) => requirement.complete).length || 0;
   const requirementsComplete = !builderRequirements?.length || completedRequirements === builderRequirements.length;
+  const closeActiveEditor = useCallback(() => {
+    const platform = activeSocialPlatform;
+    setActiveEditorSection(null);
+    setActiveSocialPlatform(null);
+    if (platform) {
+      window.requestAnimationFrame(() => {
+        document.getElementById(`dancer-social-trigger-${platform}`)?.focus({ preventScroll: true });
+      });
+    }
+  }, [activeSocialPlatform]);
   const activeEditorContent = activeEditorSection && activeEditorSection !== "socials"
     ? editorSections?.[activeEditorSection]
     : null;
-  const socialEditorContent = editorSections?.socials?.(activeSocialPlatform || "instagram");
-  const activeEditorLabel = activeEditorSection === "socials" && activeSocialPlatform
-    ? SOCIAL_PLATFORMS.find((platform) => platform.key === activeSocialPlatform)?.label || "Socials"
-    : activeEditorSection
-      ? DANCER_PROFILE_EDITOR_SECTION_LABELS[activeEditorSection]
-      : "";
+  const socialEditorContent = activeSocialPlatform
+    ? editorSections?.socials?.(activeSocialPlatform, { onClose: closeActiveEditor })
+    : null;
+  const activeEditorLabel = activeEditorSection && activeEditorSection !== "socials"
+    ? DANCER_PROFILE_EDITOR_SECTION_LABELS[activeEditorSection]
+    : "";
   onCloseRef.current = onClose;
+  activeEditorSectionRef.current = activeEditorSection;
 
   const closePreview = useCallback(() => {
     setActiveEditorSection(null);
@@ -3199,19 +3214,25 @@ function DancerProfilePreview({
     if (!editorSections?.[section]) return;
     setActiveSocialPlatform(null);
     setActiveEditorSection(section);
-    window.requestAnimationFrame(() => {
-      document.getElementById("dancer-profile-builder-panel")?.focus({ preventScroll: true });
-    });
   }
 
   function openSocialEditor(platform: SocialPlatform) {
     if (!editorSections?.socials) return;
     setActiveSocialPlatform(platform);
     setActiveEditorSection("socials");
-    window.requestAnimationFrame(() => {
+  }
+
+  useEffect(() => {
+    if (!isOpen || !activeEditorSection) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (activeEditorSection === "socials" && activeSocialPlatform) {
+        document.getElementById(`dancer-social-${activeSocialPlatform}`)?.focus({ preventScroll: true });
+        return;
+      }
       document.getElementById("dancer-profile-builder-panel")?.focus({ preventScroll: true });
     });
-  }
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeEditorSection, activeSocialPlatform, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -3235,12 +3256,19 @@ function DancerProfilePreview({
     const frame = window.requestAnimationFrame(() => closeRef.current?.focus());
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (activeEditorSectionRef.current === "socials") {
+          document.querySelector<HTMLButtonElement>("[data-social-modal-close]")?.click();
+          return;
+        }
         closePreview();
         return;
       }
       if (event.key !== "Tab") return;
+      const focusRoot = activeEditorSectionRef.current === "socials"
+        ? document.getElementById("dancer-profile-builder-panel")
+        : overlayRef.current;
       const focusable = Array.from(
-        overlayRef.current?.querySelectorAll<HTMLElement>(
+        focusRoot?.querySelectorAll<HTMLElement>(
           'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
         ) || [],
       ).filter((element) => !element.closest("[hidden]") && element.offsetParent !== null);
@@ -3533,6 +3561,7 @@ function DancerProfilePreview({
                         <button
                           aria-label={`${hasLink ? "Edit" : "Add"} ${platform.label}`}
                           className={`social-link social-link-${platform.key} dancer-profile-builder-social-platform${hasLink ? " is-added" : ""}`}
+                          id={`dancer-social-trigger-${platform.key}`}
                           key={platform.key}
                           onClick={() => openSocialEditor(platform.key)}
                           title={`${hasLink ? "Edit" : "Add"} ${platform.label}`}
@@ -3563,34 +3592,19 @@ function DancerProfilePreview({
                 <p>{isMediaLoading ? "Loading your approved profile videos. " : mediaError ? `${mediaError} ` : "Approved photos and videos appear in the media switcher above. "}{socialLinks.length ? `${socialLinks.length} saved social ${socialLinks.length === 1 ? "link is" : "links are"} included in this preview. ` : "Saved social links will appear here. "}{isApproved ? isPublic ? "This is how your approved profile appears to guests." : "Your approved profile is currently hidden from guests while you are incognito." : "Your profile stays private until every setup step is complete."}</p>
               </section>
             ) : null}
-            {isEditor && editorSections?.socials && socialEditorContent ? (
-              <section
-                aria-hidden={activeEditorSection === "socials" ? undefined : true}
-                aria-labelledby={activeEditorSection === "socials" ? "dancer-profile-builder-panel-heading" : undefined}
-                className="dancer-profile-builder-panel"
-                hidden={activeEditorSection !== "socials"}
-                id={activeEditorSection === "socials" ? "dancer-profile-builder-panel" : undefined}
-                tabIndex={activeEditorSection === "socials" ? -1 : undefined}
-              >
-                <header>
-                  <h2 id={activeEditorSection === "socials" ? "dancer-profile-builder-panel-heading" : undefined}>{activeEditorLabel}</h2>
-                  <button aria-label="Close profile editing panel" onClick={() => { setActiveEditorSection(null); setActiveSocialPlatform(null); }} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
-                </header>
-                <div>{socialEditorContent}</div>
-              </section>
-            ) : null}
+            {isEditor && activeEditorSection === "socials" && socialEditorContent ? socialEditorContent : null}
             {isEditor && activeEditorSection && activeEditorSection !== "socials" && activeEditorContent ? (
               <section className="dancer-profile-builder-panel" data-section={activeEditorSection} id="dancer-profile-builder-panel" tabIndex={-1} aria-labelledby="dancer-profile-builder-panel-heading">
                 <header>
                   <h2 id="dancer-profile-builder-panel-heading">{activeEditorLabel}</h2>
-                  <button aria-label="Close profile editing panel" onClick={() => { setActiveEditorSection(null); setActiveSocialPlatform(null); }} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+                  <button aria-label="Close profile editing panel" onClick={closeActiveEditor} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
                 </header>
                 <div>{activeEditorContent}</div>
               </section>
             ) : null}
             {isEditor && onEditorSave ? (
               <footer className="dancer-profile-editor-footer">
-                <p role="status" aria-live="polite">{editorStatus || (builderRequirements?.length ? `${completedRequirements}/${builderRequirements.length} required` : "Save changes when finished")}</p>
+                <p role="status" aria-live="polite">{editorStatus || (builderRequirements?.length ? `Profile essentials: ${completedRequirements}/${builderRequirements.length} complete` : "Save changes when finished")}</p>
                 <button disabled={isEditorSaving || !requirementsComplete} onClick={() => void saveEditor()} type="button">
                   {isEditorSaving ? "Saving..." : saveLabel}
                 </button>
@@ -4261,8 +4275,14 @@ function DancerPanel({
     />
   );
   const avatarContent = <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />;
-  const socialContent: DancerProfileSocialEditor = (platform) => (
-    <DancerSocialPanel activePlatform={platform} profile={profile} onProfileChange={onProfileChange} unifiedSave />
+  const socialContent: DancerProfileSocialEditor = (platform, controls) => (
+    <SocialLinkModal
+      onClose={controls.onClose}
+      onProfileChange={onProfileChange}
+      platform={platform}
+      profile={profile}
+      unifiedSave
+    />
   );
   const photoContent = (
     <DancerPhotoPanel
@@ -6451,14 +6471,24 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
   );
 }
 
-function DancerSocialPanel({
-  activePlatform,
+function socialValuesFromProfile(profile?: LoadState["profile"]) {
+  const existing = Array.isArray(profile?.social_links) ? profile.social_links : [];
+  return Object.fromEntries(SOCIAL_PLATFORMS.map((platform) => {
+    const row = existing.find((item: any) => item?.platform === platform.key && item?.is_active !== false);
+    return [platform.key, String(row?.url || row?.handle || "")];
+  })) as Record<SocialPlatform, string>;
+}
+
+function SocialLinkModal({
+  onClose,
   onProfileChange,
+  platform,
   profile,
   unifiedSave = false,
 }: {
-  activePlatform?: SocialPlatform;
+  onClose: () => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
+  platform: SocialPlatform;
   profile?: LoadState["profile"];
   unifiedSave?: boolean;
 }) {
@@ -6467,11 +6497,13 @@ function DancerSocialPanel({
   const [isSaving, setIsSaving] = useState(false);
   const draftHydratedRef = useRef(false);
   const draftDirtyRef = useRef(false);
+  const savePendingRef = useRef(false);
   const draftKey = `mydancr:dancer-social-draft:${String(profile?.id || "profile")}`;
   const editorSaveRef = useRef<() => Promise<boolean>>(async () => true);
-  const selectedPlatform = activePlatform
-    ? SOCIAL_PLATFORMS.find((platform) => platform.key === activePlatform)
-    : undefined;
+  const persistedSocials = useMemo(() => socialValuesFromProfile(profile), [profile]);
+  const selectedPlatform = SOCIAL_PLATFORMS.find((item) => item.key === platform) || SOCIAL_PLATFORMS[0];
+  const persistedValue = persistedSocials[selectedPlatform.key] || "";
+  const hasExistingLink = Boolean(persistedValue.trim());
   editorSaveRef.current = () => saveSocials();
 
   useEffect(() => {
@@ -6486,12 +6518,7 @@ function DancerSocialPanel({
 
   useEffect(() => {
     if (draftDirtyRef.current) return;
-    const existing = Array.isArray(profile?.social_links) ? profile.social_links : [];
-    const nextSocials: Record<string, string> = {};
-    for (const platform of SOCIAL_PLATFORMS) {
-      const row = existing.find((item: any) => item?.platform === platform.key && item?.is_active !== false);
-      nextSocials[platform.key] = String(row?.url || row?.handle || "");
-    }
+    const nextSocials: Record<string, string> = { ...persistedSocials };
     if (!draftHydratedRef.current) {
       try {
         const stored = JSON.parse(window.localStorage.getItem(draftKey) || "null");
@@ -6505,7 +6532,7 @@ function DancerSocialPanel({
       draftHydratedRef.current = true;
     }
     setSocials(nextSocials);
-  }, [draftKey, profile]);
+  }, [draftKey, persistedSocials]);
 
   useEffect(() => {
     if (draftHydratedRef.current && draftDirtyRef.current) {
@@ -6513,14 +6540,16 @@ function DancerSocialPanel({
     }
   }, [draftKey, socials]);
 
-  async function saveSocials(event?: React.FormEvent<HTMLFormElement>) {
+  async function saveSocials(event?: React.FormEvent<HTMLFormElement>, values = socials) {
     event?.preventDefault();
+    if (savePendingRef.current) return false;
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
       return false;
     }
 
+    savePendingRef.current = true;
     setIsSaving(true);
     setStatus("");
     try {
@@ -6529,7 +6558,7 @@ function DancerSocialPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           socials: SOCIAL_PLATFORMS.map((platform) => {
-            const value = (socials[platform.key] || "").trim();
+            const value = (values[platform.key] || "").trim();
             return {
               platform: platform.key,
               handle: toSocialHandle(value),
@@ -6549,73 +6578,110 @@ function DancerSocialPanel({
       setStatus(error instanceof Error ? error.message : "Unable to save socials.");
       return false;
     } finally {
+      savePendingRef.current = false;
       setIsSaving(false);
     }
   }
 
-  if (selectedPlatform) {
-    return (
-      <article className="info-panel socials-panel dancer-social-link-editor">
-        <form className="dancer-social-link-form" onSubmit={saveSocials}>
-          <div className={`dancer-social-link-editor-heading is-${selectedPlatform.key}`}>
-            <span aria-hidden="true"><SocialPlatformIcon platform={selectedPlatform.key} /></span>
-            <strong>{selectedPlatform.label}</strong>
-          </div>
-          <label htmlFor={`dancer-social-${selectedPlatform.key}`}>
-            Profile link or username
-            <input
-              id={`dancer-social-${selectedPlatform.key}`}
-              inputMode="url"
-              placeholder={selectedPlatform.placeholder}
-              value={socials[selectedPlatform.key] || ""}
-              onChange={(event) => {
-                draftDirtyRef.current = true;
-                setSocials((current) => ({ ...current, [selectedPlatform.key]: event.target.value }));
-                setStatus("");
-              }}
-            />
-          </label>
-          {unifiedSave ? null : (
-            <button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : `Save ${selectedPlatform.label}`}
-            </button>
-          )}
-          <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
-            {status || (isSaving ? "Saving changes..." : draftDirtyRef.current ? "Ready to save" : socials[selectedPlatform.key] ? "Added" : "Not added")}
-          </p>
-        </form>
-      </article>
-    );
+  function discardSelectedDraftAndClose() {
+    const nextSocials = { ...socials, [selectedPlatform.key]: persistedValue };
+    const hasRemainingDraft = SOCIAL_PLATFORMS.some((item) => (
+      String(nextSocials[item.key] || "") !== String(persistedSocials[item.key] || "")
+    ));
+    draftDirtyRef.current = hasRemainingDraft;
+    setSocials(nextSocials);
+    setStatus("");
+    if (hasRemainingDraft) {
+      window.localStorage.setItem(draftKey, JSON.stringify(nextSocials));
+    } else {
+      window.localStorage.removeItem(draftKey);
+    }
+    onClose();
+  }
+
+  async function saveSelectedSocial(event: React.FormEvent<HTMLFormElement>) {
+    const saved = await saveSocials(event);
+    if (saved) onClose();
+  }
+
+  async function removeSelectedSocial() {
+    if (!hasExistingLink || savePendingRef.current) return;
+    const nextSocials = { ...socials, [selectedPlatform.key]: "" };
+    draftDirtyRef.current = true;
+    setSocials(nextSocials);
+    setStatus("");
+    const saved = await saveSocials(undefined, nextSocials);
+    if (saved) onClose();
   }
 
   return (
-    <article className="info-panel socials-panel">
-      <h2>Social Links</h2>
-      <form onSubmit={saveSocials}>
-        {SOCIAL_PLATFORMS.map((platform) => (
-          <label key={platform.key}>
-            {platform.label}
-            <input
-              placeholder={platform.placeholder}
-              value={socials[platform.key] || ""}
-              onChange={(event) => {
-                draftDirtyRef.current = true;
-                setSocials((current) => ({ ...current, [platform.key]: event.target.value }));
-                setStatus("");
-              }}
-            />
-          </label>
-        ))}
-        {unifiedSave ? null : (
-          <button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save socials"}
+    <div
+      className="dancer-social-link-modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !isSaving) discardSelectedDraftAndClose();
+      }}
+    >
+      <section
+        aria-labelledby="dancer-social-link-modal-heading"
+        aria-modal="true"
+        className="dancer-profile-builder-panel dancer-social-link-modal"
+        data-section="socials"
+        id="dancer-profile-builder-panel"
+        role="dialog"
+        tabIndex={-1}
+      >
+        <header>
+          <div className={`dancer-social-link-modal-heading is-${selectedPlatform.key}`}>
+            <span aria-hidden="true"><SocialPlatformIcon platform={selectedPlatform.key} /></span>
+            <h2 id="dancer-social-link-modal-heading">{hasExistingLink ? "Edit" : "Add"} {selectedPlatform.label}</h2>
+          </div>
+          <button
+            aria-label={`Close ${selectedPlatform.label} social link editor`}
+            data-social-modal-close
+            disabled={isSaving}
+            onClick={discardSelectedDraftAndClose}
+            type="button"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>
-        )}
-        <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
-          {status || (isSaving ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : "Saved")}
-        </p>
-      </form>
-    </article>
+        </header>
+        <div>
+          <form className="dancer-social-link-form" onSubmit={(event) => void saveSelectedSocial(event)}>
+            <label htmlFor={`dancer-social-${selectedPlatform.key}`}>
+              Profile link or username
+              <input
+                autoCapitalize="none"
+                autoComplete="url"
+                autoCorrect="off"
+                id={`dancer-social-${selectedPlatform.key}`}
+                inputMode="url"
+                placeholder={selectedPlatform.placeholder}
+                spellCheck={false}
+                value={socials[selectedPlatform.key] || ""}
+                onChange={(event) => {
+                  draftDirtyRef.current = true;
+                  setSocials((current) => ({ ...current, [selectedPlatform.key]: event.target.value }));
+                  setStatus("");
+                }}
+              />
+            </label>
+            {status || isSaving ? (
+              <p className={`dancer-form-save-state ${status ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
+                {status || "Saving changes..."}
+              </p>
+            ) : null}
+            <button className="dancer-social-link-save" type="submit" disabled={isSaving}>
+              {isSaving ? "Saving..." : hasExistingLink ? "Save changes" : "Save"}
+            </button>
+            {hasExistingLink ? (
+              <button className="dancer-social-link-remove" disabled={isSaving} onClick={() => void removeSelectedSocial()} type="button">
+                Remove link
+              </button>
+            ) : null}
+          </form>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -8866,21 +8932,39 @@ function DashboardStyles() {
       .dancer-profile-builder-social-platform > svg { position:relative; z-index:1; }
       .dancer-profile-builder-social-platform > span { position:absolute; z-index:2; top:-2px; right:-2px; width:18px; height:18px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.34); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 3px 9px rgba(0,0,0,.5); font-size:12px; font-weight:950; line-height:1; }
       body.dancr-button-system .public-profile-shell .dancer-profile-builder-social-platform { width:48px !important; min-width:48px !important; height:48px !important; min-height:48px !important; flex:0 0 48px !important; padding:0 !important; border-radius:50% !important; }
-      .dancer-social-link-editor { width:min(100%,460px) !important; margin-inline:auto; padding:10px !important; }
-      .dancer-social-link-form { display:grid !important; grid-template-columns:1fr !important; gap:10px !important; align-items:stretch !important; }
-      .dancer-social-link-editor-heading { display:flex; align-items:center; gap:10px; }
-      .dancer-social-link-editor-heading > span { width:42px; height:42px; display:grid; flex:0 0 42px; place-items:center; border:1px solid rgba(139,92,246,.36); border-radius:50%; color:#fff; background:rgba(124,58,237,.1); }
-      .dancer-social-link-editor-heading > span svg { width:22px; height:22px; display:block; fill:currentColor; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-      .dancer-social-link-editor-heading.is-instagram > span { color:#ff6b9a; }
-      .dancer-social-link-editor-heading.is-tiktok > span { color:#48e8ed; }
-      .dancer-social-link-editor-heading.is-snapchat > span { color:#ffe84a; }
-      .dancer-social-link-editor-heading.is-x > span { color:#f4f1f8; }
-      .dancer-social-link-editor-heading.is-onlyfans > span { color:#46c7ed; }
-      .dancer-social-link-editor-heading.is-instagram svg,
-      .dancer-social-link-editor-heading.is-x svg { fill:none; }
-      .dancer-social-link-editor-heading .logo-cutout { fill:#0b0a11; stroke:none; }
-      .dancer-social-link-editor-heading strong { color:#fff; font-size:17px; }
-      .dancer-social-link-editor .dancer-form-save-state { min-height:0; margin:0; font-size:11px; }
+      .dancer-social-link-modal-backdrop { position:fixed; z-index:35; inset:0; display:grid; align-items:end; justify-items:center; padding:12px max(12px,env(safe-area-inset-right)) max(12px,calc(92px + env(safe-area-inset-bottom))) max(12px,env(safe-area-inset-left)); background:rgba(0,0,0,.66); backdrop-filter:blur(4px); }
+      .dancer-profile-builder-panel.dancer-social-link-modal { position:relative; z-index:1; inset:auto; left:auto; bottom:auto; width:min(100%,460px); max-height:min(72dvh,440px); grid-template-rows:auto minmax(0,1fr); padding:0; border:1px solid rgba(139,92,246,.34); border-radius:20px; background:linear-gradient(180deg,rgba(16,13,25,.995),rgba(7,7,11,.998)); box-shadow:0 24px 80px rgba(0,0,0,.68),0 0 30px rgba(124,58,237,.16); transform:none; }
+      .dancer-profile-builder-panel.dancer-social-link-modal > header { position:static; gap:12px; padding:14px 14px 12px; border-bottom:1px solid rgba(255,255,255,.08); background:transparent; }
+      .dancer-profile-builder-panel.dancer-social-link-modal > header > button { width:42px; min-width:42px; height:42px; min-height:42px; flex:0 0 42px; }
+      .dancer-profile-builder-panel.dancer-social-link-modal > div { overflow-x:hidden; overflow-y:auto; padding:14px; scroll-padding-bottom:16px; }
+      .dancer-social-link-modal-heading { min-width:0; display:flex; align-items:center; gap:11px; }
+      .dancer-social-link-modal-heading > span { width:40px; height:40px; display:grid; flex:0 0 40px; place-items:center; border:1px solid rgba(139,92,246,.36); border-radius:50%; color:#fff; background:rgba(124,58,237,.1); }
+      .dancer-social-link-modal-heading > span svg { width:21px; height:21px; display:block; fill:currentColor; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+      .dancer-social-link-modal-heading.is-instagram > span { color:#ff6b9a; }
+      .dancer-social-link-modal-heading.is-tiktok > span { color:#48e8ed; }
+      .dancer-social-link-modal-heading.is-snapchat > span { color:#ffe84a; }
+      .dancer-social-link-modal-heading.is-x > span { color:#f4f1f8; }
+      .dancer-social-link-modal-heading.is-onlyfans > span { color:#46c7ed; }
+      .dancer-social-link-modal-heading.is-instagram svg,
+      .dancer-social-link-modal-heading.is-x svg { fill:none; }
+      .dancer-social-link-modal-heading .logo-cutout { fill:#0b0a11; stroke:none; }
+      .dancer-profile-builder-panel.dancer-social-link-modal > header h2 { min-width:0; overflow-wrap:anywhere; font-size:clamp(19px,5vw,23px); line-height:1.1; }
+      .dancer-social-link-form { display:grid !important; grid-template-columns:1fr !important; gap:11px !important; align-items:stretch !important; }
+      .dancer-social-link-form > label { min-width:0; display:grid; gap:7px; color:#d9d4e1; font-size:12px; font-weight:900; line-height:1.2; }
+      .dancer-social-link-form input { width:100%; min-width:0; min-height:50px; box-sizing:border-box; padding:0 14px; border:1px solid rgba(148,163,184,.42); border-radius:13px; outline:none; color:#f8fafc; background:#111118; font:inherit; font-size:16px; }
+      .dancer-social-link-form input::placeholder { color:#94a3b8; opacity:.78; }
+      .dancer-social-link-form input:focus { border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,.2); }
+      .dancer-social-link-form .dancer-form-save-state { min-height:0; margin:0; color:#cbd5e1; font-size:11px; line-height:1.35; }
+      .dancer-social-link-form .dancer-form-save-state.is-unsaved { color:#fda4af; }
+      .dancer-social-link-save,
+      .dancer-social-link-remove { width:100%; min-height:48px; border-radius:13px; font:inherit; font-size:14px; font-weight:950; cursor:pointer; }
+      .dancer-social-link-save { border:1px solid rgba(196,181,253,.5); color:#fff; background:#7c3aed; box-shadow:0 0 18px rgba(124,58,237,.18); }
+      .dancer-social-link-remove { min-height:42px; border:1px solid rgba(239,68,68,.32); color:#fecaca; background:rgba(239,68,68,.08); box-shadow:none; }
+      .dancer-social-link-save:disabled,
+      .dancer-social-link-remove:disabled,
+      .dancer-profile-builder-panel.dancer-social-link-modal > header > button:disabled { cursor:wait; opacity:.58; }
+      body.dancr-button-system .dancer-social-link-save { min-height:48px !important; border-color:rgba(196,181,253,.5) !important; border-radius:13px !important; color:#fff !important; background:#7c3aed !important; box-shadow:0 0 18px rgba(124,58,237,.18) !important; }
+      body.dancr-button-system .dancer-social-link-remove { min-height:42px !important; border-color:rgba(239,68,68,.32) !important; border-radius:13px !important; color:#fecaca !important; background:rgba(239,68,68,.08) !important; box-shadow:none !important; }
       .dancer-profile-builder-panel { position:fixed; z-index:30; left:50%; bottom:0; width:min(calc(100% - 24px),760px); max-height:min(88dvh,780px); box-sizing:border-box; display:grid; grid-template-rows:auto minmax(0,1fr); overflow:hidden; padding:0 max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border:1px solid rgba(126,234,255,.28); border-bottom:0; border-radius:22px 22px 0 0; outline:none; color:#f7f2ff; background:linear-gradient(180deg,rgba(15,12,25,.995),rgba(5,5,8,.998)); box-shadow:0 -24px 80px rgba(0,0,0,.72),0 0 36px rgba(109,40,217,.2); transform:translateX(-50%); }
       .dancer-profile-builder-panel[hidden] { display:none; }
       .dancer-profile-builder-panel > header { position:sticky; z-index:2; top:0; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 2px 9px; border-bottom:1px solid rgba(255,255,255,.09); background:rgba(14,11,23,.98); }
@@ -9030,6 +9114,7 @@ function DashboardStyles() {
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(128px, calc(env(safe-area-inset-bottom) + 104px)); } .dancer-onboarding-steps > li > button { min-height: 60px; grid-template-columns: 30px minmax(0,1fr) auto; gap: 8px; padding: 9px 10px; } .dancer-onboarding-step-control { grid-column: 3; grid-row: 1; } }
       @media (max-width: 620px) { .dancer-profile-preview-overlay .profile-media-tabs { width:100%; } .dancer-profile-preview-overlay .profile-media-tabs button { padding-inline:9px; } .dancer-profile-preview-overlay .profile-media-grid { gap:4px; } .dancer-profile-preview-overlay .profile-media-viewer-previous, .dancer-profile-preview-overlay .profile-media-viewer-next { width:40px; height:50px; font-size:30px; } }
       @media (max-width: 620px) { .dancer-profile-editor-launch-card { grid-template-columns:1fr; padding:14px; } .dancer-profile-editor-launch-button { width:100%; min-width:0; } .dancer-profile-editor-tools { margin-top:18px; padding:12px; border-radius:17px; } .dancer-profile-editor-footer { grid-template-columns:1fr; gap:8px; } .dancer-profile-editor-footer button { width:100%; min-width:0; } .dancer-profile-preview-overlay .live-actions { grid-template-columns:repeat(3,minmax(0,1fr)); } .dancer-profile-preview-overlay.is-editor .dancer-profile-preview-shell { padding-bottom:max(244px,calc(env(safe-area-inset-bottom) + 224px)); } .dancer-profile-builder-panel { bottom:calc(88px + env(safe-area-inset-bottom)); width:calc(100% - 16px); max-height:min(66dvh,620px,calc(100dvh - var(--mydancr-preview-banner-offset,0px) - 104px - env(safe-area-inset-bottom))); padding-bottom:10px; border-bottom:1px solid rgba(126,234,255,.28); border-radius:20px; } .dancer-profile-preview-overlay.is-editor .dancer-profile-editor-footer { bottom:max(8px,env(safe-area-inset-bottom)); width:calc(100% - 16px); border-bottom:1px solid rgba(126,234,255,.2); border-radius:18px; } }
+      @media (max-width: 620px) { .dancer-social-link-modal-backdrop { align-items:end; padding:10px max(10px,env(safe-area-inset-right)) max(10px,calc(92px + env(safe-area-inset-bottom))) max(10px,env(safe-area-inset-left)); } .dancer-profile-builder-panel.dancer-social-link-modal { inset:auto; left:auto; bottom:auto; width:100%; max-height:min(58dvh,360px,calc(100dvh - 118px - env(safe-area-inset-bottom))); padding:0; border-bottom:1px solid rgba(139,92,246,.34); border-radius:18px; transform:none; } .dancer-profile-builder-panel.dancer-social-link-modal > header { padding:12px 12px 10px; } .dancer-profile-builder-panel.dancer-social-link-modal > div { padding:12px; } .dancer-social-link-form input { min-height:48px; } }
       @media (max-width: 340px) { .dancer-profile-preview-overlay .venue-qr-unavailable { grid-template-columns:minmax(0,1fr) 112px; } .dancer-profile-preview-overlay .venue-qr-placeholder-icon { width:112px; min-width:112px; } }
       @media (max-width: 620px) { .dancer-onboarding-payout-actions { grid-template-columns:1fr; } }
       @media (max-width: 620px) { .dancer-step-one-workspace { padding-bottom: 28px; } .dancer-step-one-summary { grid-template-columns: 1fr; padding: 12px; } .dancer-step-one-summary > b { width: fit-content; } .dancer-step-one-checklist { grid-template-columns: 1fr; } .dancer-step-one-checklist button { min-height: 48px; grid-template-columns: 22px minmax(0,1fr); gap: 2px 7px; } .dancer-step-one-section-button { min-height: 72px; grid-template-columns: 30px minmax(0,1fr) 26px; gap: 7px; } .dancer-step-one-section-button em { grid-column: 2; width: fit-content; } .dancer-step-one-section-button i { grid-column: 3; grid-row: 1 / span 2; } .dancer-step-one-section-button small { white-space: normal; } .dancer-step-one-section-panel { padding: 6px; } .dancer-step-one-section-panel > .info-panel { padding: 10px; } .photo-source-grid { grid-template-columns: 1fr; } .dancer-step-one-section-panel .photo-upload-queue .photo-review-card { grid-template-columns: 72px minmax(0,1fr); gap: 10px; padding: 10px; } .dancer-step-one-section-panel .photo-upload-queue .photo-preview { width: 72px; } .dancer-step-one-section-panel .photo-review-list { grid-template-columns: repeat(2, minmax(0,1fr)); } .dancer-step-one-section-panel .photo-review-list .photo-review-card { min-height: 284px; gap: 8px; padding: 8px; } .dancer-step-one-section-panel .photo-review-list .photo-preview { width: 100%; } .dancer-step-one-section-panel .photo-delete-button { max-width: 100%; } .dancer-step-one-footer { grid-template-columns: 1fr; } .dancer-step-one-footer .dancer-onboarding-primary { width: 100%; } }

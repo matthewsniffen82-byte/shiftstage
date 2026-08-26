@@ -72,7 +72,7 @@ test("draft identity and social form values survive refreshes without bypassing 
   assert.match(dashboard, /window\.localStorage\.setItem\(draftKey/);
   assert.match(dashboard, /window\.localStorage\.removeItem\(draftKey\)/);
   assert.match(dashboard, /<form onSubmit=\{saveProfile\}>/);
-  assert.match(dashboard, /<form onSubmit=\{saveSocials\}>/);
+  assert.match(dashboard, /<form className="dancer-social-link-form" onSubmit=\{\(event\) => void saveSelectedSocial\(event\)\}>/);
   assert.match(dashboard, /draftDirtyRef\.current/);
 });
 
@@ -145,7 +145,7 @@ test("step one guides dancers through required work in the live profile layout",
   assert.match(dashboard, /label: "Stage name & city", section: "identity"/);
   assert.match(dashboard, /label: "Avatar", section: "avatar"/);
   assert.match(dashboard, /label: "Profile photo", section: "photos"/);
-  assert.match(dashboard, /`\$\{completedRequirements\}\/\$\{builderRequirements\.length\} required`/);
+  assert.match(dashboard, /`Profile essentials: \$\{completedRequirements\}\/\$\{builderRequirements\.length\} complete`/);
   assert.match(dashboard, /videos: videoContent/);
   assert.match(dashboard, /socials: socialContent/);
   assert.match(dashboard, /Build your profile/);
@@ -180,9 +180,9 @@ test("profile setup and approved editing share one full-screen save boundary", (
   assert.doesNotMatch(dashboard, /editorTitle/);
   assert.match(dashboard, /disabled=\{isEditorSaving \|\| !requirementsComplete\}/);
   assert.match(dashboard, /<DancerSetupPanel[\s\S]*?unifiedSave/);
-  assert.match(dashboard, /<DancerSocialPanel activePlatform=\{platform\} profile=\{profile\} onProfileChange=\{onProfileChange\} unifiedSave \/>/);
+  assert.match(dashboard, /<SocialLinkModal[\s\S]*?platform=\{platform\}[\s\S]*?profile=\{profile\}[\s\S]*?unifiedSave/);
   assert.match(dashboard, /\{unifiedSave \? null : \([\s\S]*?Save profile/);
-  assert.match(dashboard, /\{unifiedSave \? null : \([\s\S]*?Save socials/);
+  assert.match(dashboard, /hasExistingLink \? "Save changes" : "Save"/);
 });
 
 test("optional payout onboarding uses plain language and names the provider only in setup", () => {
@@ -241,8 +241,8 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /className=\{`social-link social-link-\$\{platform\.key\} dancer-profile-builder-social-platform/);
   assert.match(dashboard, /<SocialPlatformIcon platform=\{platform\.key\} \/>[\s\S]*?<span aria-hidden="true">\+<\/span>/);
   assert.match(dashboard, /\.dancer-profile-builder-social-platform > svg \{ position:relative; z-index:1; \}/);
-  assert.match(dashboard, /socialEditorContent = editorSections\?\.socials\?\.\(activeSocialPlatform \|\| "instagram"\)/);
-  assert.match(dashboard, /hidden=\{activeEditorSection !== "socials"\}/);
+  assert.match(dashboard, /socialEditorContent = activeSocialPlatform[\s\S]*?editorSections\?\.socials\?\.\(activeSocialPlatform, \{ onClose: closeActiveEditor \}\)/);
+  assert.match(dashboard, /activeEditorSection === "socials" && socialEditorContent \? socialEditorContent : null/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\[hidden\] \{ display:none; \}/);
   assert.match(dashboard, /className="dancer-social-link-form"[\s\S]*?Profile link or username/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.social-list :is\(a,button\) \{ width: 48px;[^}]*height: 48px;[^}]*justify-content: center;/);
@@ -404,7 +404,8 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /window\.scrollTo\(\{ top: scrollY, behavior: "auto" \}\)/);
   assert.match(dashboard, /event\.key === "Escape"/);
   assert.match(dashboard, /event\.key !== "Tab"/);
-  assert.match(dashboard, /overlayRef\.current\?\.querySelectorAll<HTMLElement>/);
+  assert.match(dashboard, /const focusRoot = activeEditorSectionRef\.current === "socials"[\s\S]*?: overlayRef\.current/);
+  assert.match(dashboard, /focusRoot\?\.querySelectorAll<HTMLElement>/);
 });
 
 test("approved dancers edit their full guest view from inside Profile & media", () => {
