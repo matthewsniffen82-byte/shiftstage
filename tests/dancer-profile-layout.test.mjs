@@ -193,11 +193,15 @@ test("every profile combines tonight's shift and Club Deal while only Working No
   assert.match(liveApp, /modal-grid > \.profile-tonight-card[\s\S]*?border-radius: 15px;[\s\S]*?profile-tonight-deal[\s\S]*?border-top:/);
   assert.match(
     liveApp,
-    /profile-tonight-card\.has-club-deal[\s\S]*?inset 0 0 0 1px rgba\(77, 236, 157, \.38\)/,
+    /profile-tonight-card\.is-now::before[\s\S]*?border: 2px solid rgba\(77, 236, 157, \.52\);[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     liveApp,
-    /profile-tonight-card\.is-now::before[\s\S]*?inset: 0;[\s\S]*?border-radius: inherit;[\s\S]*?profile-tonight-card\.has-club-deal::before/,
+    /profile-tonight-card\.is-now \{[\s\S]*?border-color: transparent;[\s\S]*?profile-tonight-card\.has-club-deal \{[\s\S]*?border-color: transparent;/,
+  );
+  assert.match(
+    liveApp,
+    /profile-tonight-card\.is-now::before[\s\S]*?inset: 0;[\s\S]*?border-radius: inherit;[\s\S]*?profile-tonight-card\.has-club-deal::before[\s\S]*?border-color: rgba\(77, 236, 157, \.64\);/,
   );
 });
 
