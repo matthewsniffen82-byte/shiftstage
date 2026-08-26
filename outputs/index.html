@@ -31674,7 +31674,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=148" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=149" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -47950,7 +47950,7 @@
       if (profile?.scheduled) {
         return {
           key: "available-when-working",
-          label: "Available after check-in",
+          label: "Club deal available after check-in",
           detail: `Deals activate after a verified check-in${profile?.venue ? ` at ${profile.venue}` : ""}.`
         };
       }
@@ -47970,8 +47970,8 @@
         return `
           <div class="info-tile profile-qr-tile profile-club-deal-tile is-active" data-club-deal-state="active" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
             <div class="profile-club-deal-copy">
-              <strong class="profile-club-deal-label">Active Club Deal</strong>
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
+              <strong class="profile-club-deal-label">Active Club Deal</strong>
             </div>
             <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
@@ -51372,9 +51372,8 @@
         : `Follow ${escapeHtml(profile.name)} for updates`;
       return `
         <div class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">
-          <span class="profile-empty-state">No schedule</span>
+          <span class="profile-empty-state">No shift posted</span>
           <span class="profile-empty-copy">
-            <strong>No shift posted</strong>
             <span>${emptyScheduleCopy}</span>
           </span>
         </div>
@@ -51433,14 +51432,7 @@
     function dancerProfileTonightTravelActionsMarkup(profile, options = {}) {
       const city = options.city || selectedCity();
       if (options.preview) return "";
-      if (!profile?.scheduled) {
-        return `
-          <div class="profile-tonight-travel-actions is-no-schedule" aria-label="Venue travel actions unavailable">
-            <button class="profile-primary-directions venue-directions-btn is-travel-unavailable" type="button" disabled aria-disabled="true" aria-label="Directions unavailable until a shift is posted">${actionButtonLabel("pin", "Directions")}</button>
-            <button class="uber-ride-link profile-uber-ride is-travel-unavailable" type="button" disabled aria-disabled="true" aria-label="Ride unavailable until a shift is posted">${actionButtonLabel("car", "Get a Ride")}</button>
-          </div>
-        `;
-      }
+      if (!profile?.scheduled) return "";
       const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
       const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
       const actions = [directionsMarkup, rideMarkup].filter(Boolean);
@@ -51453,14 +51445,21 @@
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
       const socialMarkup = options.socialMarkup || socialLinksMarkup(profile, { preview: Boolean(options.preview) });
-      const dealMarkup = options.preview
-        ? profileDealTileMarkup(profile, { preview: true })
-        : profileDealTileMarkup(profile);
       const dealState = dancerClubDealState(profile);
+      const dealMarkup = profile?.scheduled
+        ? options.preview
+          ? profileDealTileMarkup(profile, { preview: true })
+          : profileDealTileMarkup(profile)
+        : "";
       const travelActionsMarkup = dancerProfileTonightTravelActionsMarkup(profile, {
         city,
         preview: Boolean(options.preview)
       });
+      const shiftState = isWorkingTonight(profile, city) && profile.scheduled
+        ? "now"
+        : profile.scheduled
+          ? "upcoming"
+          : "no-schedule";
       const tonightClasses = [
         "profile-tonight-card",
         isWorkingTonight(profile, city) && profile.scheduled ? "is-now" : "",
@@ -51470,9 +51469,9 @@
       ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
-          <section class="${tonightClasses}" aria-label="Tonight">
+          <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
-            <div class="profile-tonight-deal">${dealMarkup}</div>
+            ${dealMarkup ? `<div class="profile-tonight-deal">${dealMarkup}</div>` : ""}
             ${travelActionsMarkup}
           </section>
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}

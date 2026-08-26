@@ -99,6 +99,16 @@ export function DancerFollowerCount() {
   return <>{new Intl.NumberFormat("en-US").format(followerCount)}</>;
 }
 
+export function DancerFollowerMetric() {
+  const { followerCount } = useDancerFollowState();
+  return (
+    <>
+      <dd>{new Intl.NumberFormat("en-US").format(followerCount)}</dd>
+      <dt>{followerCount === 1 ? "Follower" : "Followers"}</dt>
+    </>
+  );
+}
+
 export function DancerGoingCount() {
   const { goingCount } = useDancerFollowState();
   return <>{new Intl.NumberFormat("en-US").format(goingCount)}</>;

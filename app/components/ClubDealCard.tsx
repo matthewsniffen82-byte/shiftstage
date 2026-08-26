@@ -20,7 +20,7 @@ type ClubDealCardProps = {
   attributionTokens?: Record<string, string>;
   dancerNote?: boolean;
   compact?: boolean;
-  presentation?: "card" | "launcher";
+  presentation?: "card" | "launcher" | "profileCompact";
   contextLabel?: string;
   ctaLabel?: string;
   stickyCta?: boolean;
@@ -315,7 +315,26 @@ export function ClubDealCard({
 
   return (
     <>
-      {presentation === "launcher" ? (
+      {presentation === "profileCompact" ? (
+        <div className="club-deal-profile-compact" data-club-deal-state="available">
+          <span className="club-deal-profile-copy">
+            <strong>{activeDeal.dealTitle}</strong>
+            <small>Active Club Deal</small>
+          </span>
+          <button
+            aria-label={`${actionLabel} for ${activeDeal.dealTitle}`}
+            className="club-deal-profile-action club-deal-active-action"
+            data-club-deal-state="available"
+            onClick={(event) => {
+              openDealDialog(event.currentTarget);
+            }}
+            type="button"
+          >
+            <span>{actionLabel}</span>
+            <span aria-hidden="true">›</span>
+          </button>
+        </div>
+      ) : presentation === "launcher" ? (
         <button
           className="club-deal-launcher club-deal-active-action"
           type="button"
@@ -535,6 +554,11 @@ function ClubDealInteractionStyles() {
       .club-deal-launcher-copy strong { max-width: 100%; overflow: hidden; color: #fff; font-size: 14px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
       .club-deal-launcher-copy em { color: #d8f7ff; font-size: 9px; font-style: normal; font-weight: 800; line-height: 1.15; }
       .club-deal-launcher-action { max-width: 116px; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; overflow: hidden; border-radius: 9px; color: #062015; background: #b7ffd8; font-size: 11px; line-height: 1.1; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+      .club-deal-profile-compact { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) minmax(92px,auto); align-items: center; gap: 8px; }
+      .club-deal-profile-copy { min-width: 0; display: flex; align-items: baseline; gap: 7px; overflow: hidden; }
+      .club-deal-profile-copy strong { overflow: hidden; color: #fff; font-size: 14px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+      .club-deal-profile-copy small { flex: 0 0 auto; color: #4dec9d; font-size: 8px; font-weight: 900; letter-spacing: .08em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+      .club-deal-profile-action { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; border: 1px solid rgba(77,236,157,.28); border-radius: 10px; color: #eafff4; background: rgba(77,236,157,.07); font: inherit; font-size: 10px; font-weight: 900; cursor: pointer; }
       .club-deal-dialog-backdrop { position: fixed; z-index: 1700; inset: 0; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); background: rgba(2,3,6,.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
       .club-deal-dialog { position: relative; width: min(420px, 100%); height:var(--club-deal-stable-height,auto); min-height:0; max-height: min(90dvh, 760px); display: flex; flex-direction: column; gap: 14px; overflow-y: auto; box-sizing: border-box; padding: 24px 20px 20px; border: 1px solid rgba(255,255,255,.14); border-radius: 24px; color: #f7f2ff; background: linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985)); box-shadow: 0 28px 80px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06); }
       .club-deal-dialog>* { flex:0 0 auto; }

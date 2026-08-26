@@ -103,18 +103,18 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.ok(overviewIndex > actionsIndex);
   assert.ok(socialIndex > overviewIndex);
   assert.ok(mediaIndex > socialIndex);
-  assert.match(profilePage, /<DancerFollowerCount \/>/);
+  assert.match(profilePage, /<DancerFollowerMetric \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /\{profile\.profileViewsToday \|\| 0\}[\s\S]*?<dt>Views today<\/dt>/);
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
   assert.match(profilePage, /shareControl=\{<ProfileShareButton stageName=\{profile\.stageName\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
-  assert.match(profilePage, /className="profile-working-destination"[\s\S]*?Venue-confirmed until/);
+  assert.match(profilePage, /className="profile-working-destination"[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/);
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
-  assert.match(profilePage, /presentation="launcher"/);
+  assert.match(profilePage, /presentation="profileCompact"/);
   assert.doesNotMatch(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
   assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "How to use"\}/);
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
@@ -209,7 +209,8 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /live-actions\$\{hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"\}/);
   assert.match(profileActions, /profile-action-going[\s\S]*?profile-action-unavailable/);
   assert.doesNotMatch(profileActions, /<small className="profile-action-requirement">No shift posted<\/small>/);
-  assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?className="profile-empty-state">No schedule<[\s\S]*?className="profile-empty-copy">[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
+  assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?className="profile-empty-state">No shift posted<[\s\S]*?className="profile-empty-copy">[\s\S]*?Follow \{profile\.stageName\} for updates/);
+  assert.doesNotMatch(profilePage, /profile-tonight-travel-actions is-no-schedule/);
   assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\); \}/);
 });
 

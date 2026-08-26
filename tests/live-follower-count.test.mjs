@@ -12,11 +12,13 @@ const [actionsSource, profileSource, followRouteSource, mobileSource] = await Pr
 test("the public follower count is shared with the live follow controls", () => {
   assert.match(actionsSource, /export function DancerFollowStateProvider/);
   assert.match(actionsSource, /export function DancerFollowerCount/);
+  assert.match(actionsSource, /export function DancerFollowerMetric/);
   assert.match(
     profileSource,
     /<DancerFollowStateProvider[\s\S]*?initialFollowerCount=\{profile\.followerCount\}[\s\S]*?key=\{profile\.id\}/,
   );
-  assert.match(profileSource, /<DancerFollowerCount \/>[\s\S]*?<dt>Followers<\/dt>/);
+  assert.match(profileSource, /<DancerFollowerMetric \/>/);
+  assert.match(actionsSource, /followerCount === 1 \? "Follower" : "Followers"/);
 });
 
 test("successful follow and unfollow responses update the visible follower count immediately", () => {

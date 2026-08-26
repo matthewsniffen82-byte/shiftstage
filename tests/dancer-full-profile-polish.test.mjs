@@ -22,16 +22,15 @@ test("empty schedules use the compact neutral hierarchy while upcoming schedules
   );
   assert.match(
     liveApp,
-    /const emptyScheduleCopy =[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;[\s\S]*?class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">[\s\S]*?class="profile-empty-state">No schedule<\/span>[\s\S]*?class="profile-empty-copy">[\s\S]*?<strong>No shift posted<\/strong>[\s\S]*?\$\{emptyScheduleCopy\}/,
+    /const emptyScheduleCopy =[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;[\s\S]*?class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">[\s\S]*?class="profile-empty-state">No shift posted<\/span>[\s\S]*?class="profile-empty-copy">[\s\S]*?\$\{emptyScheduleCopy\}/,
   );
   assert.doesNotMatch(
     liveApp,
     /return `\s*<div class="info-tile">\s*<strong>Now<\/strong>[\s\S]*?<strong>Next shift<\/strong>[\s\S]*?No shift posted/,
   );
-  assert.match(
-    liveApp,
-    /No-shift profiles use the same compact two-column hierarchy[\s\S]*?\.profile-schedule-card\.schedule-empty \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\) !important;[\s\S]*?gap: 6px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?padding: 4px 8px !important;[\s\S]*?\.profile-empty-copy \{[\s\S]*?display: grid !important;/,
-  );
+  assert.match(aesthetic, /profile-tonight-card\.is-no-schedule[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/);
+  assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 48px !important;/);
+  assert.match(aesthetic, /profile-tonight-card\.is-no-schedule \.schedule-empty::before,[\s\S]*?content: none !important;/);
   const shiftsFunction = liveApp.match(
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
   )?.[0] || "";
@@ -237,17 +236,20 @@ test("profile socials and activity metrics use a compact neutral presentation", 
 });
 
 test("profile action controls are unboxed and Going highlights only its icon", () => {
+  const guestActionsBlock = aesthetic.match(
+    /\/\* Guest actions read as a single icon row[\s\S]*?(?=\/\* Production TV-card branding)/,
+  )?.[0] || "";
   assert.match(
-    aesthetic,
+    guestActionsBlock,
     /modal-actions \.action-btn\.profile-action-icon-control,[\s\S]*?profile-action-share-slot \.profile-share > button\.profile-action-icon-control \{[\s\S]*?border-color: transparent !important;[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
-    aesthetic,
-    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?background: transparent !important;/,
+    guestActionsBlock,
+    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?background: transparent !important;/,
   );
   assert.match(
-    aesthetic,
-    /going-btn\.is-available-action\.is-going \.action-icon,[\s\S]*?profile-action-going\.profile-action-available\.is-going \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-success\) !important;/,
+    guestActionsBlock,
+    /going-btn\.is-available-action\.is-going \.action-icon,[\s\S]*?profile-action-going\.profile-action-available\.is-going \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-brand-primary\) !important;/,
   );
 });
 
@@ -281,6 +283,8 @@ test("mobile full profiles compact identity, Tonight, actions, and metrics witho
     compactMobileProfile,
     /#profileBackdrop #profileModal \.profile-activity-metrics > div,[\s\S]*?gap: 1px !important;[\s\S]*?padding: 2px 4px !important;/,
   );
+  assert.match(compactMobileProfile, /grid-template-columns: 38px minmax\(0, 1fr\) !important;[\s\S]*?min-height: 52px !important;/);
+  assert.match(compactMobileProfile, /profile-tonight-card\.has-club-deal[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
   assert.doesNotMatch(liveApp, /profile-club-deal-context">Available tonight at/);
 });
 
@@ -288,7 +292,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   const gridFunction = liveApp.match(
     /function profileModalGridMarkup\(profile, options = \{\}\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
-  const dealIndex = gridFunction.indexOf("${dealMarkup}");
+  const dealIndex = gridFunction.indexOf("dealMarkup ?");
   const actionsIndex = gridFunction.indexOf("liveProfileModalActionsMarkup");
   const metricsIndex = gridFunction.indexOf("profileActivityMetricsMarkup");
   const socialIndex = gridFunction.indexOf("${socialMarkup}");
@@ -299,7 +303,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   assert.ok(actionsIndex > dealIndex);
   assert.ok(metricsIndex > actionsIndex);
   assert.ok(socialIndex > metricsIndex);
-  assert.match(gridFunction, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?class="profile-tonight-deal">\$\{dealMarkup\}<\/div>[\s\S]*?<\/section>/);
+  assert.match(gridFunction, /<section class="\$\{tonightClasses\}" data-profile-shift-state="\$\{shiftState\}" data-profile-deal-state="\$\{escapeHtml\(dealState\.key\)\}" aria-label="Tonight">[\s\S]*?\$\{dealMarkup \? `<div class="profile-tonight-deal">\$\{dealMarkup\}<\/div>` : ""\}[\s\S]*?<\/section>/);
   assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
   assert.match(liveApp, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
   assert.doesNotMatch(liveApp, /profile-modal-live-status|modalLiveStatus/);

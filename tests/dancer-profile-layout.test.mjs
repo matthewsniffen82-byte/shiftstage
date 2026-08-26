@@ -12,6 +12,7 @@ const [
   bottomNavigation,
   nfcIcon,
   uberRideStyles,
+  aesthetic,
 ] =
   await Promise.all([
     readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
@@ -44,6 +45,7 @@ const [
       new URL("../app/components/UberRideButton.module.css", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
   ]);
 
 test("full dancer profiles use a compact identity and honest public activity header without a bio", () => {
@@ -56,7 +58,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(profilePage, /\.profile-overview \{[^}]*border: 0;/);
   assert.match(profilePage, /\.profile-metrics > div \{[^}]*gap: 2px;[^}]*padding: 4px;/);
   assert.match(profilePage, /\.profile-metrics dd \{[^}]*font-weight: 900;[^}]*line-height: 1\.08;/);
-  assert.match(profilePage, /<DancerFollowerCount \/>/);
+  assert.match(profilePage, /<DancerFollowerMetric \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /profile\.profileViewsToday \|\| 0/);
   assert.match(profilePage, /<dt>Views today<\/dt>/);
@@ -147,22 +149,21 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
 });
 
-test("every profile combines tonight's shift and Club Deal while only Working Now activates a deal", () => {
+test("every profile uses one compact Tonight card while only Working Now activates a deal", () => {
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
   assert.match(profilePage, /className=\{`profile-tonight-card\$\{activeShift \? " is-now" : ""\}\$\{!activeShift && upcomingShifts\.length \? " is-upcoming" : ""\}\$\{!activeShift && !upcomingShifts\.length \? " is-no-schedule" : ""\}\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /className="profile-shift-card profile-working-card is-now"/);
-  assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?Venue-confirmed until/);
+  assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
   assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
   assert.doesNotMatch(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
-  assert.match(profilePage, /className="profile-active-deal is-inactive"[\s\S]*?aria-label="Inactive Club Deal"/);
-  assert.match(profilePage, /activeShift[\s\S]*?\? "No active deal"[\s\S]*?: actionShift[\s\S]*?\? "Available after check-in"[\s\S]*?: "No active club deal"/);
-  assert.match(profilePage, /Deals activate after a verified check-in at \$\{actionShift\.venueName\}\./);
-  assert.match(profilePage, /Deals activate after a verified club check-in\./);
-  assert.match(liveApp, /const dealMarkup = options\.preview[\s\S]*?profileDealTileMarkup\(profile\);/);
+  assert.match(profilePage, /presentation="profileCompact"/);
+  assert.match(profilePage, /\) : actionShift \? \([\s\S]*?className="profile-deal-availability-line"[\s\S]*?"Club deal available after check-in"/);
+  assert.doesNotMatch(profilePage, /className="profile-active-deal is-inactive"|Deals activate after a verified club check-in/);
+  assert.match(liveApp, /const dealMarkup = profile\?\.scheduled[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?: "";/);
   assert.match(
     profilePage,
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
@@ -187,8 +188,8 @@ test("every profile combines tonight's shift and Club Deal while only Working No
   assert.doesNotMatch(liveScheduleBranch, /Checked in for current shift|activeShiftStartedMarkup/);
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
-  assert.match(liveApp, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?shiftsMarkup\(profile, status,[\s\S]*?profile-tonight-deal/);
-  assert.match(liveApp, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?profile-tonight-deal[\s\S]*?\$\{travelActionsMarkup\}/);
+  assert.match(liveApp, /<section class="\$\{tonightClasses\}" data-profile-shift-state="\$\{shiftState\}" data-profile-deal-state="\$\{escapeHtml\(dealState\.key\)\}" aria-label="Tonight">[\s\S]*?shiftsMarkup\(profile, status,[\s\S]*?profile-tonight-deal/);
+  assert.match(liveApp, /dealMarkup \? `<div class="profile-tonight-deal">\$\{dealMarkup\}<\/div>` : ""[\s\S]*?\$\{travelActionsMarkup\}/);
   assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?\[directionsMarkup, rideMarkup\]\.filter\(Boolean\)[\s\S]*?profile-tonight-travel-actions/);
   assert.match(liveApp, /profile\.scheduled && !isWorkingTonight\(profile, city\) \? "is-upcoming" : ""/);
   assert.doesNotMatch(liveApp.match(/function liveProfileModalActionsMarkup[\s\S]*?async function refreshProfileGoingState/)?.[0] || "", /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);
@@ -378,12 +379,12 @@ test("Upcoming Shift mirrors the compact current-shift row with cyan status cues
 
 test("No Schedule mirrors the compact shift hierarchy with a neutral state", () => {
   assert.match(
-    liveApp,
-    /No-shift profiles use the same compact two-column hierarchy[\s\S]*?\.profile-schedule-card\.schedule-empty \{[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\) !important;[\s\S]*?gap: 6px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?padding: 4px 8px !important;/,
+    aesthetic,
+    /profile-tonight-card\.is-no-schedule[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/,
   );
   assert.match(
     liveApp,
-    /class="profile-empty-state">No schedule<\/span>[\s\S]*?class="profile-empty-copy">[\s\S]*?<strong>No shift posted<\/strong>[\s\S]*?\$\{emptyScheduleCopy\}/,
+    /class="profile-empty-state">No shift posted<\/span>[\s\S]*?class="profile-empty-copy">[\s\S]*?\$\{emptyScheduleCopy\}/,
   );
   assert.match(
     liveApp,
@@ -393,18 +394,9 @@ test("No Schedule mirrors the compact shift hierarchy with a neutral state", () 
     profilePage,
     /\.profile-tonight-card::before \{[\s\S]*?border: 2px solid rgba\(255,255,255,\.13\);[\s\S]*?\.profile-tonight-card\.is-no-schedule \{[\s\S]*?\.profile-empty-state \{[\s\S]*?letter-spacing: \.075em;/,
   );
-  assert.match(
-    liveApp,
-    /Working Now is the canonical profile-state box[\s\S]*?\.working-now-tile,[\s\S]*?\.schedule-upcoming,[\s\S]*?\.schedule-empty[\s\S]*?min-height: 52px !important;[\s\S]*?padding: 4px 8px !important;/,
-  );
-  assert.match(
-    liveApp,
-    /if \(!profile\?\.scheduled\) \{[\s\S]*?profile-tonight-travel-actions is-no-schedule[\s\S]*?Directions unavailable until a shift is posted[\s\S]*?Ride unavailable until a shift is posted/,
-  );
-  assert.match(
-    profilePage,
-    /className="profile-tonight-travel-actions is-no-schedule"[\s\S]*?Directions unavailable until a shift is posted[\s\S]*?Ride unavailable until a shift is posted/,
-  );
+  assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 48px !important;/);
+  assert.match(liveApp, /if \(!profile\?\.scheduled\) return "";/);
+  assert.doesNotMatch(profilePage, /profile-tonight-travel-actions is-no-schedule|Directions unavailable until a shift is posted|Ride unavailable until a shift is posted/);
 });
 
 test("NFC actions use one recognizable phone-and-tap symbol", () => {

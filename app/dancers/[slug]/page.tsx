@@ -12,7 +12,7 @@ import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import type { ShiftSummary } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
-  DancerFollowerCount,
+  DancerFollowerMetric,
   DancerFollowStateProvider,
   DancerGoingCount,
   DancerProfileActions,
@@ -159,8 +159,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
         <section
           aria-label="Tonight"
           className={`profile-tonight-card${activeShift ? " is-now" : ""}${!activeShift && upcomingShifts.length ? " is-upcoming" : ""}${!activeShift && !upcomingShifts.length ? " is-no-schedule" : ""}${activeDeal ? " has-club-deal" : ""}`}
+          data-profile-deal-state={activeDeal ? "available" : actionShift ? "available-after-check-in" : "none"}
+          data-profile-shift-state={activeShift ? "now" : actionShift ? "upcoming" : "no-schedule"}
         >
-        {activeShift ? (
+          {activeShift ? (
           <div
             className="profile-shift-card profile-working-card is-now"
             aria-labelledby="profile-working-title"
@@ -172,14 +174,14 @@ export default async function DancerPublicPage({ params }: PageProps) {
               >
                 <span className="profile-live-state" id="profile-working-title">Working now</span>
                 <span className="profile-working-copy">
+                  <VenuePinIcon />
                   <strong>{activeShift.venueName}</strong>
-                  <em>Venue-confirmed until {formatShiftTime(activeShift.locationVerificationExpiresAt || activeShift.endsAt, activeShift.timezone)}</em>
                 </span>
                 <span aria-hidden="true" className="profile-working-cue">›</span>
               </Link>
             </div>
           </div>
-        ) : upcomingShifts.length ? (
+          ) : upcomingShifts.length ? (
           <div
             className="profile-shift-card profile-upcoming-card is-upcoming"
             aria-labelledby="profile-schedule-title"
@@ -198,6 +200,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                     Upcoming · {formatShiftDate(shift.shiftDate || shift.startsAt, shift.timezone)}
                   </span>
                   <span className="profile-upcoming-copy">
+                    <VenuePinIcon />
                     <strong>{shift.venueName}</strong>
                   </span>
                   <span aria-hidden="true" className="profile-upcoming-cue">›</span>
@@ -205,113 +208,59 @@ export default async function DancerPublicPage({ params }: PageProps) {
               ))}
             </div>
           </div>
-        ) : (
+          ) : (
           <div className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status">
-            <span className="profile-empty-state">No schedule</span>
+            <span className="profile-empty-state">No shift posted</span>
             <span className="profile-empty-copy">
-              <strong>No shift posted</strong>
               <em>Follow {profile.stageName} for updates</em>
             </span>
           </div>
-        )}
+          )}
 
-        <div className="profile-tonight-deal">
-        {activeShift && activeDeal ? (
-          <div
-            className="profile-active-deal has-club-deal"
-            aria-label="Active Club Deal for cashier tap"
-          >
-            <ClubDealCard
-              deal={activeDeal}
-              deals={activeDeals}
-              venueId={activeShift.venueId}
-              venueName={activeShift.venueName}
-              sourceType={dealSourceType}
-              dancerId={dancerAttributionEligible ? profile.id : null}
-              attributionToken={dealAttributionToken}
-              attributionTokens={dealAttributionTokens}
-              dancerNote={dancerAttributionEligible}
-              presentation="launcher"
-              ctaLabel={activeDeals.length > 1 ? `View all ${activeDeals.length}` : "How to use"}
-              sectionId="club-deal"
-            />
-          </div>
-        ) : (
-          <div
-            className="profile-active-deal is-inactive"
-            aria-label="Inactive Club Deal"
-          >
-            <div className="profile-club-deal-placeholder">
-              <span>
-                <small>Club Deal</small>
-                <strong>
-                  {activeShift
-                    ? "No active deal"
-                    : actionShift
-                      ? "Available after check-in"
-                      : "No active club deal"}
-                </strong>
-                <em>
-                  {activeShift
-                    ? `${activeShift.venueName} has no live offer right now.`
-                    : actionShift
-                      ? `Deals activate after a verified check-in at ${actionShift.venueName}.`
-                      : "Deals activate after a verified club check-in."}
-                </em>
-              </span>
-              <button disabled type="button">
-                {!activeShift && actionShift ? "At check-in" : "Inactive"}
-              </button>
+          {activeShift && activeDeal ? (
+            <div className="profile-tonight-deal">
+              <div
+                className="profile-active-deal has-club-deal"
+                aria-label="Active Club Deal for cashier tap"
+              >
+                <ClubDealCard
+                  deal={activeDeal}
+                  deals={activeDeals}
+                  venueId={activeShift.venueId}
+                  venueName={activeShift.venueName}
+                  sourceType={dealSourceType}
+                  dancerId={dancerAttributionEligible ? profile.id : null}
+                  attributionToken={dealAttributionToken}
+                  attributionTokens={dealAttributionTokens}
+                  dancerNote={dancerAttributionEligible}
+                  presentation="profileCompact"
+                  ctaLabel={activeDeals.length > 1 ? `View all ${activeDeals.length}` : "How to use"}
+                  sectionId="club-deal"
+                />
+              </div>
             </div>
-          </div>
-        )}
-        </div>
+          ) : actionShift ? (
+            <div className="profile-tonight-deal">
+              <p className="profile-deal-availability-line">
+                {activeShift ? "No active club deal" : "Club deal available after check-in"}
+              </p>
+            </div>
+          ) : null}
 
-        {actionVenue ? (
-          <div
-            aria-label="Venue travel actions"
-            className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming"}`}
-          >
-            <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
-            <UberRideButton
-              compact
-              dancerId={profile.id}
-              source="dancer_profile"
-              venue={{ ...actionVenue, isActive: true, isPublic: true }}
-            />
-          </div>
-        ) : (
-          <div
-            aria-label="Venue travel actions unavailable"
-            className="profile-tonight-travel-actions is-no-schedule"
-          >
-            <button
-              aria-label="Directions unavailable until a shift is posted"
-              className="profile-directions-button profile-travel-placeholder"
-              disabled
-              type="button"
+          {actionVenue ? (
+            <div
+              aria-label="Venue travel actions"
+              className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming"}`}
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24">
-                <path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z" />
-                <circle cx="12" cy="9" r="2.4" />
-              </svg>
-              <span>Directions</span>
-            </button>
-            <button
-              aria-label="Ride unavailable until a shift is posted"
-              className="profile-uber-ride profile-travel-placeholder"
-              disabled
-              type="button"
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24">
-                <path d="m5 11 1.7-4.3A2.7 2.7 0 0 1 9.2 5h5.6a2.7 2.7 0 0 1 2.5 1.7L19 11" />
-                <path d="M4 11h16a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a1 1 0 0 1 1-1Z" />
-                <path d="M6.5 15h.01M17.5 15h.01M6 19v2M18 19v2" />
-              </svg>
-              <span>Get a Ride</span>
-            </button>
-          </div>
-        )}
+              <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
+              <UberRideButton
+                compact
+                dancerId={profile.id}
+                source="dancer_profile"
+                venue={{ ...actionVenue, isActive: true, isPublic: true }}
+              />
+            </div>
+          ) : null}
         </section>
 
         <DancerProfileActions
@@ -328,8 +277,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
         <section className="profile-overview" aria-label={`${profile.stageName} profile summary`}>
           <dl className="profile-metrics" aria-label="Profile activity">
             <div>
-              <dd><DancerFollowerCount /></dd>
-              <dt>Followers</dt>
+              <DancerFollowerMetric />
             </div>
             <div>
               <dd><DancerGoingCount /></dd>
@@ -382,14 +330,6 @@ function formatShiftDate(startsAt: string, timeZone?: string | null) {
   );
 }
 
-function formatShiftTime(startsAt: string, timeZone?: string | null) {
-  return formatDateValue(
-    startsAt,
-    { hour: "numeric", minute: "2-digit" },
-    timeZone,
-  );
-}
-
 function shortShiftLabel(startsAt: string, timeZone?: string | null) {
   return formatDateValue(
     startsAt,
@@ -425,6 +365,15 @@ function initials(value: string) {
     .map((part) => part[0])
     .join("")
     .toUpperCase();
+}
+
+function VenuePinIcon() {
+  return (
+    <svg aria-hidden="true" className="profile-venue-pin" viewBox="0 0 24 24">
+      <path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z" />
+      <circle cx="12" cy="9" r="2.4" />
+    </svg>
+  );
 }
 
 function PublicProfileStyles() {
