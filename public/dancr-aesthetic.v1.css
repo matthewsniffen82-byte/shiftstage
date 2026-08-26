@@ -3874,6 +3874,7 @@ body.dancr-button-system #profileBackdrop .modal-actions .profile-action-require
 body.dancr-button-system #profileBackdrop .social-tile {
   min-height: 0 !important;
   align-self: start !important;
+  margin-bottom: 12px !important;
   padding: 2px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -3884,7 +3885,7 @@ body.dancr-button-system #profileBackdrop .social-tile {
 body.dancr-button-system .public-profile-shell .profile-social-section {
   min-height: 0 !important;
   margin-top: 0 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 12px !important;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -4264,6 +4265,44 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     margin-top: -1px !important;
     padding: 0 0 4px !important;
   }
+}
+
+/* Guest actions read as a single icon row, not four boxed buttons. The Going
+ * affordance uses color and glow on the icon itself so its full tap target can
+ * stay accessible without turning the entire action cell into a purple tile. */
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action .action-icon,
+body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available .profile-action-icon-frame {
+  color: var(--dancr-color-brand-primary) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action .action-icon > svg,
+body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available .profile-action-preview-icon {
+  color: inherit !important;
+  filter: drop-shadow(0 0 7px var(--dancr-color-brand-primary-strong)) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action.is-going .action-icon,
+body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available.is-going .profile-action-icon-frame {
+  color: var(--dancr-color-success) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action.is-going .action-icon > svg,
+body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available.is-going .profile-action-preview-icon {
+  filter: drop-shadow(0 0 7px var(--dancr-color-success-strong)) !important;
 }
 
 /* Production TV-card branding keeps the moving media as the visual hero.

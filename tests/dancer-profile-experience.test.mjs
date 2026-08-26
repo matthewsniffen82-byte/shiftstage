@@ -184,7 +184,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
   const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
   const notifyIndex = profileActions.indexOf('if (requireCustomerAccount("notify"))');
-  const goingIndex = profileActions.indexOf('className={`${actionShift ? "profile-action-primary" : "profile-action-secondary"} profile-action-going');
+  const goingIndex = profileActions.indexOf('className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going');
   const shareIndex = profileActions.indexOf('{shareControl ?');
   const reportIndex = profileActions.indexOf('className="profile-report-action"');
   assert.ok(followButtonIndex > -1 && notifyIndex > followButtonIndex);
@@ -293,7 +293,7 @@ test("public social icons render without a visible heading or published handles"
   assert.doesNotMatch(socialLinks, /<strong>\{link\.handle\}<\/strong>/);
   assert.doesNotMatch(socialLinks, /social-list-toggle|Show fewer links|more links/);
   assert.match(profilePage, /\.social-links-control \{ display: grid; justify-items: center;/);
-  assert.match(profilePage, /\.profile-social-section \{ min-height: 0;[\s\S]*?margin-top: 0;[\s\S]*?margin-bottom: 8px;[\s\S]*?padding: 0;/);
+  assert.match(profilePage, /\.profile-social-section \{ min-height: 0;[\s\S]*?margin-top: 0;[\s\S]*?margin-bottom: 12px;[\s\S]*?padding: 0;/);
   assert.match(profilePage, /\.social-list \{ width: 100%;[\s\S]*?justify-content: center;/);
   assert.match(profilePage, /\.social-list a \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?justify-content: center;/);
   assert.match(profilePage, /\.social-list a::before \{[\s\S]*?inset: 2px;[\s\S]*?border-radius: 50%;/);

@@ -31674,7 +31674,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=147" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=148" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -51496,7 +51496,7 @@
       const canMarkGoing = Boolean(profile?.scheduled && profile.shiftId);
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn profile-action-icon-control is-primary-action ${isGoingTonight ? "is-going" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-label="${isGoingTonight ? "Remove this shift from your plans" : "Add this shift to your plans"}" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
+        ? `<button class="action-btn going-btn profile-action-icon-control is-available-action ${isGoingTonight ? "is-going" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-label="${isGoingTonight ? "Remove this shift from your plans" : "Add this shift to your plans"}" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
         : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle)}</button>`;
       return `
         <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">

@@ -71,7 +71,7 @@ test("follow API returns authoritative follower and notification subscriber coun
 test("I'm Going changes the visible count before the request and reconciles or rolls back", () => {
   assert.match(
     homeSource,
-    /<button class="action-btn going-btn profile-action-icon-control is-primary-action[\s\S]*?id="goingBtn" type="button"[\s\S]*?aria-label="\$\{isGoingTonight \? "Remove this shift from your plans" : "Add this shift to your plans"\}"[\s\S]*?aria-pressed="\$\{isGoingTonight\}"/,
+    /<button class="action-btn going-btn profile-action-icon-control is-available-action[\s\S]*?id="goingBtn" type="button"[\s\S]*?aria-label="\$\{isGoingTonight \? "Remove this shift from your plans" : "Add this shift to your plans"\}"[\s\S]*?aria-pressed="\$\{isGoingTonight\}"/,
   );
   assert.match(
     homeSource,

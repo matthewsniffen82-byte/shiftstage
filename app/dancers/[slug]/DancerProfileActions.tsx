@@ -485,14 +485,14 @@ export function DancerProfileActions({
           aria-disabled={!actionShift ? "true" : undefined}
           aria-label={actionShift ? (isGoing ? "Remove this shift from your plans" : "Add this shift to your plans") : "I’m Going unavailable until a shift is posted"}
           aria-pressed={actionShift ? isGoing : undefined}
-          className={`${actionShift ? "profile-action-primary" : "profile-action-secondary"} profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable" : ""}`}
+          className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable" : ""}`}
           disabled={actionShift ? !savedLoaded || goingSaving : true}
           onClick={() => actionShift && updateGoing(actionShift.id)}
           type="button"
         >
           <span className="profile-action-main">
             <DancerProfileActionPreviewIcon type={isGoing ? "check" : "clock"} />
-            <span>{isGoing ? "Going ✓" : "I’m Going"}</span>
+            <span>{isGoing ? "Going" : "I’m Going"}</span>
           </span>
         </button>
         {shareControl ? (

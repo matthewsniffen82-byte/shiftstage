@@ -185,6 +185,14 @@ test("profile socials and activity metrics use a compact neutral presentation", 
   );
   assert.match(
     compactProfileBlock,
+    /#profileBackdrop \.social-tile \{[\s\S]*?margin-bottom: 12px !important;/,
+  );
+  assert.match(
+    compactProfileBlock,
+    /\.public-profile-shell \.profile-social-section \{[\s\S]*?margin-bottom: 12px !important;/,
+  );
+  assert.match(
+    compactProfileBlock,
     /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?margin-top: -2px !important;[\s\S]*?padding: 2px 0 4px !important;/,
   );
   assert.match(
@@ -226,6 +234,21 @@ test("profile socials and activity metrics use a compact neutral presentation", 
   assert.match(publicSocialMarkup, /aria-label="External profiles"/);
   assert.match(publicSocialMarkup, /class="social-links" role="list"/);
   assert.doesNotMatch(publicSocialMarkup, />Social links</);
+});
+
+test("profile action controls are unboxed and Going highlights only its icon", () => {
+  assert.match(
+    aesthetic,
+    /modal-actions \.action-btn\.profile-action-icon-control,[\s\S]*?profile-action-share-slot \.profile-share > button\.profile-action-icon-control \{[\s\S]*?border-color: transparent !important;[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?background: transparent !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /going-btn\.is-available-action\.is-going \.action-icon,[\s\S]*?profile-action-going\.profile-action-available\.is-going \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-success\) !important;/,
+  );
 });
 
 test("mobile full profiles compact identity, Tonight, actions, and metrics without shrinking tap targets", () => {
