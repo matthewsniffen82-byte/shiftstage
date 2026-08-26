@@ -61,6 +61,15 @@ test("mobile venue identity stays compact, anchored, and single-line", () => {
   assert.match(hierarchy, /\.venue-card-primary-action:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?rgba\(226, 232, 240, 0\.76\)/);
 });
 
+test("mobile Clubs cards use matte gutters and restrained neutral separation", () => {
+  const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
+
+  assert.match(hierarchy, /border-color: rgba\(203, 213, 225, 0\.13\) !important;/);
+  assert.match(hierarchy, /inset 0 1px 0 rgba\(255, 255, 255, 0\.05\),/);
+  assert.match(hierarchy, /0 13px 26px rgba\(0, 0, 0, 0\.4\) !important;/);
+  assert.match(hierarchy, /> #results\.home-discovery-feed\.home-venue-discovery-feed \{\s+gap: 20px !important;/);
+});
+
 test("the mobile lineup explains working-now avatars without changing venue actions", () => {
   const lineup = liveApp.match(
     /function venueLineupMarkup\(venue, city, options = \{\}\) \{[\s\S]*?(?=\n    function venueCardQrMarkup)/,
