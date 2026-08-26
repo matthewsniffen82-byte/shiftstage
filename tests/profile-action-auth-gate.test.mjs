@@ -233,7 +233,9 @@ test("public profiles keep Going visible and enable it for current or upcoming p
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
   assert.match(actionsSource, /actionShift && updateGoing\(actionShift\.id\)/);
   assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
-  assert.match(actionsSource, /className=\{`profile-action-secondary profile-action-going profile-action-icon-control\$\{isGoing \? " is-going" : ""\}\$\{!actionShift \? " profile-action-unavailable" : ""\}`\}/);
+  assert.match(actionsSource, /className=\{`\$\{actionShift \? "profile-action-primary" : "profile-action-secondary"\} profile-action-going profile-action-icon-control\$\{isGoing \? " is-going" : ""\}\$\{!actionShift \? " profile-action-unavailable" : ""\}`\}/);
+  assert.match(actionsSource, /aria-label=\{actionShift \? \(isGoing \? "Remove this shift from your plans" : "Add this shift to your plans"\)/);
+  assert.match(actionsSource, /DancerProfileActionPreviewIcon type=\{isGoing \? "check" : "clock"\}/);
   assert.match(actionsSource, /disabled=\{actionShift \? !savedLoaded \|\| goingSaving : true\}/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);

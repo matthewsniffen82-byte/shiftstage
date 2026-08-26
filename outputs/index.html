@@ -51435,7 +51435,7 @@
       const canMarkGoing = Boolean(profile?.scheduled && profile.shiftId);
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn profile-action-icon-control secondary ${isGoingTonight ? "is-going" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
+        ? `<button class="action-btn going-btn profile-action-icon-control is-primary-action ${isGoingTonight ? "is-going" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-label="${isGoingTonight ? "Remove this shift from your plans" : "Add this shift to your plans"}" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
         : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle)}</button>`;
       return `
         <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
@@ -51479,6 +51479,7 @@
           countEl.textContent = realCount.toLocaleString();
         }
         actionButton.classList.toggle("is-going", savedGoing);
+        actionButton.setAttribute("aria-label", savedGoing ? "Remove this shift from your plans" : "Add this shift to your plans");
         actionButton.setAttribute("aria-pressed", String(savedGoing));
         actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel);
       } catch {
@@ -60454,6 +60455,7 @@
         countEl.textContent = optimisticCount.toLocaleString();
       }
       actionButton.classList.toggle("is-going", requestedGoing);
+      actionButton.setAttribute("aria-label", requestedGoing ? "Remove this shift from your plans" : "Add this shift to your plans");
       actionButton.setAttribute("aria-pressed", String(requestedGoing));
       actionButton.innerHTML = profileActionButtonMarkup(
         requestedGoing ? "check" : "clock",
@@ -60478,6 +60480,7 @@
           countEl.textContent = realCount.toLocaleString();
         }
         actionButton.classList.toggle("is-going", savedGoing);
+        actionButton.setAttribute("aria-label", savedGoing ? "Remove this shift from your plans" : "Add this shift to your plans");
         actionButton.setAttribute("aria-pressed", String(savedGoing));
         actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel);
         syncHomeFeedActionButtons(profile, citySelect.value);
@@ -60492,6 +60495,7 @@
           countEl.textContent = previousCount.toLocaleString();
         }
         actionButton.classList.toggle("is-going", wasGoing);
+        actionButton.setAttribute("aria-label", wasGoing ? "Remove this shift from your plans" : "Add this shift to your plans");
         actionButton.setAttribute("aria-pressed", String(wasGoing));
         actionButton.innerHTML = profileActionButtonMarkup(wasGoing ? "check" : "clock", wasGoing ? activeLabel : idleLabel);
         syncHomeFeedActionButtons(profile, citySelect.value);

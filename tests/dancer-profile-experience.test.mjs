@@ -184,7 +184,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
   const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
   const notifyIndex = profileActions.indexOf('if (requireCustomerAccount("notify"))');
-  const goingIndex = profileActions.indexOf('className={`profile-action-secondary profile-action-going');
+  const goingIndex = profileActions.indexOf('className={`${actionShift ? "profile-action-primary" : "profile-action-secondary"} profile-action-going');
   const shareIndex = profileActions.indexOf('{shareControl ?');
   const reportIndex = profileActions.indexOf('className="profile-report-action"');
   assert.ok(followButtonIndex > -1 && notifyIndex > followButtonIndex);
