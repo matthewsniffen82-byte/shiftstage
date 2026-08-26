@@ -52464,7 +52464,7 @@
       modalCity.hidden = false;
       modalProfileMetrics.innerHTML = profileActivityMetricsMarkup(profile, city);
       profileReportButton.disabled = false;
-      profileReportButton.textContent = "Report";
+      profileReportButton.setAttribute("aria-label", "Report profile");
       profileReportButton.dataset.profile = profile.name;
       modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
