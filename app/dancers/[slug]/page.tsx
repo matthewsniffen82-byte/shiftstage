@@ -708,7 +708,7 @@ function PublicProfileStyles() {
       .profile-report-error { color: #ffb4c8; }
       @media (max-width: 600px) {
         .public-profile-shell { padding: 0 12px max(132px, calc(108px + env(safe-area-inset-bottom))); }
-        .profile-titlebar { grid-template-columns: minmax(112px, .92fr) minmax(0, 1.08fr) auto; gap: 6px; min-height: 70px; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: minmax(112px, .92fr) minmax(0, 1.08fr) auto; gap: 6px !important; min-height: 70px !important; padding: max(8px, env(safe-area-inset-top)) 0 8px !important; }
         .profile-titlebar-person { grid-template-columns: 46px minmax(0, 1fr); gap: 7px; }
         .profile-titlebar-avatar { width: 46px; height: 46px; }
         .profile-titlebar h1 { font-size: clamp(17px, 5vw, 22px); }
@@ -730,6 +730,9 @@ function PublicProfileStyles() {
       @media (max-width: 340px) {
         .profile-titlebar { grid-template-columns: minmax(0, 1fr) auto; gap: 5px; min-height: 96px; }
         .profile-titlebar-person { grid-column: 1; grid-row: 1; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-identity { display: grid !important; align-items: center !important; gap: 2px !important; overflow: hidden !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-identity > div:first-child,
+        body.dancr-button-system .public-profile-shell .profile-titlebar-context { max-width: 100%; min-width: 0; }
         .profile-header-metrics { grid-column: 1 / -1; grid-row: 2; }
         .profile-titlebar-controls { grid-column: 2; grid-row: 1; grid-template-columns: repeat(2, 44px); gap: 3px; }
         .profile-titlebar-person { grid-template-columns: 42px minmax(0, 1fr); gap: 6px; }

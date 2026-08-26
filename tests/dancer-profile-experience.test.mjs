@@ -58,7 +58,7 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 48px; height: 48px;/);
   assert.match(
     profilePage,
-    /@media \(max-width: 600px\) \{[\s\S]*?\.profile-titlebar \{[\s\S]*?min-height: 70px;[\s\S]*?\.profile-titlebar-avatar \{ width: 46px; height: 46px; \}/,
+    /@media \(max-width: 600px\) \{[\s\S]*?body\.dancr-button-system \.public-profile-shell \.profile-titlebar \{[\s\S]*?min-height: 70px !important;[\s\S]*?\.profile-titlebar-avatar \{ width: 46px; height: 46px; \}/,
   );
   assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);
   assert.match(
