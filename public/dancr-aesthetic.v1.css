@@ -4237,6 +4237,15 @@ body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destinat
   box-shadow: none !important;
 }
 
+/* The compact Working Now row pairs the pin directly with the club name. */
+body.dancr-button-system #profileBackdrop .profile-modal .working-now-tile
+  .profile-venue-destination.is-live > .venue-dot {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 body.dancr-button-system .home-tv-feed-verified.home-tv-feed-verified.home-tv-feed-verified,
 .tv-shell .tv-verified-mark.tv-verified-mark.tv-verified-mark {
   border-color: var(--mydancr-verified-outline) !important;

@@ -215,6 +215,10 @@ test("venue pins stay neutral while Upcoming keeps the cyan schedule signal", ()
   assert.match(venuePinRules, /color: var\(--dancr-color-text-muted\) !important;/);
   assert.match(venuePinRules, /stroke: currentColor !important;/);
   assert.match(venuePinRules, /filter: none !important;/);
+  assert.match(
+    aesthetic,
+    /compact Working Now row pairs the pin directly with the club name[\s\S]*?\.working-now-tile[\s\S]*?\.profile-venue-destination\.is-live > \.venue-dot \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+  );
   assert.match(venuePinRules, /border-color: var\(--dancr-color-border-subtle\) !important;/);
   assert.doesNotMatch(venuePinRules, /dancr-color-info|dancr-color-live|dancr-color-success/);
   assert.match(
