@@ -95,17 +95,15 @@ test("customers explicitly select an exact offer and dancer token until the phys
 
 test("Club Deal checkout uses one concise automatic cashier-tap flow across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /<strong>Tap &ldquo;Use this deal&rdquo; below<\/strong>/);
-    assert.match(source, /Go to the cashier/);
-    assert.match(source, /Unlock and tap the MyDancr cashier sticker/);
-    assert.match(source, /<strong>Redemption completes automatically<\/strong>/);
-    assert.match(source, /After selecting, MyDancr does not need to stay open\. Only this venue’s registered cashier sticker can complete redemption\./);
-    assert.match(source, /Save for later/);
+    assert.match(source, /<strong>Tap &ldquo;Use this deal&rdquo;<\/strong>/);
+    assert.match(source, /Go to cashier/);
+    assert.match(source, /Unlock your phone &amp; tap the MyDancr cashier sticker/);
+    assert.match(source, /<strong>Done<\/strong>/);
+    assert.match(source, /After selecting, you can close MyDancr\./);
+    assert.match(source, /Only this venue’s registered cashier sticker can complete redemption\./);
     assert.match(source, /aria-label="Tap cashier sticker"/);
-    assert.doesNotMatch(source, /<strong>Tap cashier sticker<\/strong>/);
-    assert.doesNotMatch(source, /Select before you reach the cashier\./);
+    assert.doesNotMatch(source, /Available now · Not selected/);
   }
-  assert.match(dealCard, /status && intentState !== "preview"/);
   assert.match(liveApp, /status\.hidden = state === "preview"/);
   assert.match(dealCopy, /Cashier NFC confirmation is required/);
   assert.match(dealCard, /customerFacingDealTerms\(activeDeal\.dealTerms\)/);
@@ -113,55 +111,41 @@ test("Club Deal checkout uses one concise automatic cashier-tap flow across both
   assert.doesNotMatch(demoDeals, /terms: .*Cashier NFC confirmation is required/);
 });
 
-test("selected Club Deals replace preparation controls with one cashier instruction", () => {
-  const cashierInstruction = /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr cashier sticker\. MyDancr opens and completes the redemption automatically\./;
-
-  assert.match(dealCard, cashierInstruction);
-  assert.match(dealCard, /intentState !== "ready" \? \([\s\S]*?club-deal-redemption-steps/);
-  assert.match(dealCard, /dialogOpen && intentState !== "ready"/);
-  assert.doesNotMatch(dealCard, /Select before you reach the cashier\./);
-  assert.match(dealCard, /intentState === "ready" \? "Deal selected ✓"/);
-
-  assert.match(liveApp, cashierInstruction);
-  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-steps,[\s\S]*?\.deal-pass-preview-note,[\s\S]*?\.deal-pass-actions \{\s*display: none;/);
-  assert.doesNotMatch(liveApp, /data-deal-pass-primary-note|primaryNote/);
-  assert.match(liveApp, /selectButton\.textContent = "Deal selected ✓"/);
-  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \{[\s\S]*?padding-bottom: 18px;/);
-  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?margin-top: auto;[\s\S]*?transform: none;/);
+test("selected Club Deals replace preparation controls with a shorter Ready at Cashier state", () => {
+  for (const source of [dealCard, liveApp]) {
+    assert.match(source, /Ready at Cashier ✓/);
+    assert.match(source, /Unlock your phone and tap the MyDancr cashier sticker\./);
+    assert.match(source, /You can close MyDancr now\./);
+    assert.match(source, /Only this venue’s registered cashier sticker can complete redemption\./);
+  }
+  assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);
+  assert.match(dealCard, /className="club-deal-ready-instructions"/);
   assert.match(dealCard, /className="club-deal-dialog"[\s\S]*?data-deal-state=\{intentState\}/);
-  assert.match(dealCard, /\.club-deal-dialog\[data-deal-state="ready"\] \.club-deal-primary-dock \{ position:static; width:100%; margin-top:0; transform:none; \}/);
+  assert.match(liveApp, /availableContent\.hidden = state === "ready"/);
+  assert.match(liveApp, /readyContent\.hidden = state !== "ready"/);
+  assert.match(liveApp, /selectButton\.textContent = "Ready at Cashier ✓"/);
+  assert.doesNotMatch(liveApp, /--deal-pass-stable-height/);
+  assert.doesNotMatch(dealCard, /--club-deal-stable-height/);
 });
 
 test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {
-  assert.match(liveApp, /width: min\(370px, calc\(100vw - 16px\)\)/);
+  assert.match(liveApp, /width: min\(380px, calc\(100vw - 16px\)\)/);
   assert.match(liveApp, /max-height: calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)/);
-  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?height: var\(--deal-pass-stable-height, auto\);[\s\S]*?min-height: 0;[\s\S]*?scroll-padding-bottom: 14px;[\s\S]*?padding-bottom: 14px;/);
-  assert.match(liveApp, /@media \(max-width: 560px\) \{[\s\S]*?\.deal-pass-step \{[\s\S]*?grid-template-columns: 18px minmax\(0, 1fr\);[\s\S]*?padding: 4px 6px;[\s\S]*?\.deal-pass-action \{[\s\S]*?min-height: 38px !important;/);
-  assert.match(dealCard, /\.club-deal-dialog \{ width:min\(370px,100%\); height:var\(--club-deal-stable-height,auto\); min-height:0; max-height:calc\(100dvh - 16px/);
-  assert.match(dealCard, /\.club-deal-primary-dock \{ width:100%; gap:3px; margin-top:0;/);
+  assert.match(liveApp, /@media \(max-width: 330px\) \{[\s\S]*?#dealPassOverlay \.deal-pass-steps \{\s*grid-template-columns: 1fr;/);
+  assert.match(liveApp, /overflow-x: hidden;/);
+  assert.match(dealCard, /\.club-deal-dialog \{ position: relative; width: min\(400px, 100%\);[\s\S]*?overflow-x:hidden;/);
+  assert.match(dealCard, /@media \(max-width: 330px\) \{[\s\S]*?\.club-deal-redemption-steps \{ grid-template-columns:1fr; \}/);
 });
 
-test("Club Deal selection preserves card height and aligns every bottom action", () => {
-  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet \{[\s\S]*?height: var\(--deal-pass-stable-height, auto\);[\s\S]*?min-height: 0;[\s\S]*?display: flex;[\s\S]*?flex-direction: column;/);
-  assert.match(liveApp, /const previewHeight = sheet\?\.dataset\.dealState !== "ready"[\s\S]*?getBoundingClientRect\(\)\.height[\s\S]*?setProperty\("--deal-pass-stable-height", `\$\{previewHeight\}px`\)/);
-  assert.match(liveApp, /removeProperty\("--deal-pass-stable-height"\)/);
-  assert.doesNotMatch(liveApp, /min-height: min\(720px/);
-  assert.match(liveApp, /\.deal-pass-actions \{[\s\S]*?width: 100%;[\s\S]*?grid-template-columns: 1fr 1fr;/);
-  assert.match(liveApp, /#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{[\s\S]*?margin-top: 10px;/);
-  assert.match(liveApp, /@media \(max-width: 560px\) \{\s*#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{\s*margin-top: 7px;/);
-  assert.doesNotMatch(liveApp, /#dealPassOverlay \.deal-pass-sheet:not\(\[data-deal-state="ready"\]\) \.deal-pass-actions \{[^}]*margin-top: auto;/);
-  assert.match(liveApp, /\.deal-pass-primary-dock \{[\s\S]*?position: static;[\s\S]*?width: 100%;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?transform: none;/);
-  assert.match(liveApp, /\.deal-pass-sheet\[data-deal-state="ready"\] \.deal-pass-primary-dock \{[\s\S]*?margin-top: auto;/);
-  assert.doesNotMatch(liveApp, /\.deal-pass-primary-dock \{[^}]*position: fixed;/);
-  assert.match(dealCard, /\.club-deal-dialog \{[^}]*height:var\(--club-deal-stable-height,auto\);[^}]*min-height:0;[^}]*display: flex;[^}]*flex-direction: column;[^}]*padding: 24px 20px 20px;/);
-  assert.match(dealCard, /ref=\{dialogRef\}/);
-  assert.match(dealCard, /getBoundingClientRect\(\)\.height[\s\S]*?setProperty\("--club-deal-stable-height", `\$\{previewHeight\}px`\)/);
-  assert.doesNotMatch(dealCard, /min-height:min\(720px/);
-  assert.match(dealCard, /\.club-deal-dialog \.club-deal-action \{ display:grid; gap:10px; margin-top:10px; \}/);
-  assert.match(dealCard, /\.club-deal-dialog\[data-deal-state="ready"\] \.club-deal-action \{ margin-top:auto; \}/);
-  assert.doesNotMatch(dealCard, /\.club-deal-dialog \.club-deal-action \{[^}]*margin-top:auto;/);
-  assert.match(dealCard, /\.club-deal-primary-dock \{ position:static;[^}]*width:100%;[^}]*margin-top:0;[^}]*padding:0;[^}]*border:0;[^}]*background:transparent;[^}]*transform:none;/);
-  assert.doesNotMatch(dealCard, /\.club-deal-primary-dock \{[^}]*position:fixed;/);
+test("Club Deal optional data collapses and complete terms expand accessibly", () => {
+  assert.match(dealCard, /displayDescription \? <p className="club-deal-benefit">\{displayDescription\}<\/p> : null/);
+  assert.match(dealCard, /validityLabel \|\| displayTerms \? \(/);
+  assert.match(dealCard, /aria-expanded=\{termsExpanded\}/);
+  assert.match(dealCard, /hidden=\{!termsExpanded\}>\{displayTerms\}/);
+  assert.match(liveApp, /offerElement\.hidden = !description && !terms && !validity/);
+  assert.match(liveApp, /termsButton\.hidden = !terms/);
+  assert.match(liveApp, /button\.setAttribute\("aria-expanded", String\(!expanded\)\)/);
+  assert.match(liveApp, /terms\.hidden = expanded/);
 });
 
 test("cashier NFC mark is explicitly centered and visually emphasized", () => {

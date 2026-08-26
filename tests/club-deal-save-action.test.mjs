@@ -18,7 +18,7 @@ test("Club Deals save without requiring customer authentication", () => {
 test("preview, cashier-tap selection, and saving are separate intentional actions", () => {
   assert.match(liveSource, /data-select-deal-pass aria-pressed="false">Use this deal<\/button>/);
   assert.match(liveSource, /Only this venue’s registered cashier sticker can complete redemption\./);
-  assert.match(liveSource, /data-save-deal-pass aria-pressed="false">Save for later<\/button>/);
+  assert.match(liveSource, /data-save-deal-pass aria-pressed="false">Save<\/button>/);
   assert.match(
     liveSource,
     /const bindDealPassAction[\s\S]*?addEventListener\("click"[\s\S]*?event\.preventDefault\(\);[\s\S]*?event\.stopPropagation\(\);[\s\S]*?action\(button\);/,
@@ -28,7 +28,7 @@ test("preview, cashier-tap selection, and saving are separate intentional action
   )?.[0] || "";
   assert.doesNotMatch(actionBinding, /addEventListener\("pointerup"/);
   assert.match(liveSource, /function selectDealPassForNfc[\s\S]*?localStorage\.setItem\("mydancrPendingNfcDealV2"/);
-  assert.match(liveSource, /button\.textContent = persisted \? "Saved for later ✓ · Remove" : "Try saving again"/);
+  assert.match(liveSource, /button\.textContent = persisted \? "Saved ✓ · Remove" : "Try saving again"/);
   assert.match(liveSource, /button\.classList\.toggle\("is-saved", persisted\)/);
   assert.match(liveSource, /if \(persisted && !wasAlreadySaved\) recordRevenueDealLifecycle\(pass, "saved"\)/);
 });
@@ -58,7 +58,7 @@ test("Club Deal dialogs keep one share action without a redundant copy-link butt
     /function dealPassOverlay\(\) \{[\s\S]*?(?=\n    function dealPassPresentation)/,
   )?.[0] || "";
 
-  assert.match(liveOverlay, /data-share-deal-pass>Share deal<\/button>/);
+  assert.match(liveOverlay, /data-share-deal-pass>Share<\/button>/);
   assert.doesNotMatch(liveOverlay, /data-copy-deal-pass|>Copy link<\/button>|const copyButton/);
   assert.match(dealCardSource, /navigator\.share[\s\S]*?copyDealLink\(url\)/);
   assert.doesNotMatch(dealCardSource, /copyCurrentDealLink|className="copy"|>Copy link<\/button>/);
@@ -66,7 +66,7 @@ test("Club Deal dialogs keep one share action without a redundant copy-link butt
 
 test("saved Club Deals can be removed from the device", () => {
   assert.match(liveSource, /function removeSavedDealPass[\s\S]*?savedDealPasses\.filter\(\(item\) => item\.id !== pass\.id\)/);
-  assert.match(liveSource, /button\.textContent = removed \? "Save for later" : "Try removing again"/);
+  assert.match(liveSource, /button\.textContent = removed \? "Save" : "Try removing again"/);
   assert.match(liveSource, /saveButton\.disabled = false/);
 });
 

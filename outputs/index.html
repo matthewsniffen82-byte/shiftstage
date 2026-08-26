@@ -26049,7 +26049,6 @@
     }
 
     #dealPassOverlay .deal-pass-sheet {
-      height: var(--deal-pass-stable-height, auto);
       min-height: 0;
       display: flex;
       flex-direction: column;
@@ -26258,7 +26257,6 @@
       }
 
       #dealPassOverlay .deal-pass-sheet {
-        height: var(--deal-pass-stable-height, auto);
         min-height: 0;
         scroll-padding-bottom: 14px;
         padding-bottom: 14px;
@@ -26532,6 +26530,302 @@
       .deal-pass-action {
         min-height: 38px !important;
         font-size: .7rem !important;
+      }
+    }
+
+    #dealPassOverlay .deal-pass-sheet {
+      width: min(400px, calc(100vw - 28px));
+      gap: 9px;
+      overflow-x: hidden;
+      padding: 18px 16px 16px;
+      text-align: left;
+    }
+
+    #dealPassOverlay .deal-pass-kicker {
+      margin: 0;
+      padding-right: 40px;
+      font-size: .66rem;
+    }
+
+    #dealPassOverlay .deal-pass-title {
+      padding: 0 40px 0 0;
+      font-size: clamp(1.35rem, 6vw, 1.8rem);
+      text-align: left;
+    }
+
+    #dealPassOverlay .deal-pass-copy {
+      max-width: 100%;
+      margin: -4px 0 0;
+      color: rgba(248, 248, 252, .76);
+      font-size: .76rem;
+      font-weight: 800;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    #dealPassOverlay .deal-pass-availability-status {
+      min-height: 24px;
+      margin: -2px 0 0;
+      padding-inline: 9px;
+      font-size: .58rem;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .deal-pass-available-content,
+    .deal-pass-ready-content {
+      display: grid;
+      gap: 9px;
+    }
+
+    .deal-pass-available-content[hidden],
+    .deal-pass-ready-content[hidden] {
+      display: none;
+    }
+
+    #dealPassOverlay .deal-pass-offer {
+      gap: 5px;
+      margin: 0;
+      padding: 10px 11px;
+      border-radius: 13px;
+    }
+
+    #dealPassOverlay .deal-pass-description {
+      font-size: .8rem;
+      font-weight: 850;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    #dealPassOverlay .deal-pass-meta {
+      font-size: .62rem;
+      line-height: 1.3;
+    }
+
+    .deal-pass-terms-toggle {
+      width: fit-content;
+      min-height: 28px;
+      padding: 0;
+      border: 0;
+      color: #7eeaff;
+      background: transparent;
+      font: inherit;
+      font-size: .68rem;
+      font-weight: 950;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .deal-pass-terms-toggle[hidden] {
+      display: none;
+    }
+
+    #dealPassOverlay .deal-pass-terms {
+      padding: 7px 8px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 9px;
+      background: rgba(0, 0, 0, .22);
+      font-size: .64rem;
+      line-height: 1.36;
+      overflow-wrap: anywhere;
+    }
+
+    .deal-pass-redemption-guide {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    #dealPassOverlay .deal-pass-frame {
+      width: 56px;
+      align-self: center;
+      margin: 0;
+      padding: 5px;
+      border-radius: 14px;
+    }
+
+    #dealPassOverlay .deal-pass-frame .deal-pass-nfc-symbol {
+      width: 42px;
+      height: 42px;
+    }
+
+    #dealPassOverlay .deal-pass-steps {
+      min-width: 0;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+      margin: 0;
+    }
+
+    #dealPassOverlay .deal-pass-step {
+      grid-template-columns: 19px minmax(0, 1fr);
+      gap: 5px;
+      padding: 5px 6px;
+      border-radius: 9px;
+      font-size: .56rem;
+      line-height: 1.15;
+    }
+
+    #dealPassOverlay .deal-pass-step > span {
+      width: 19px;
+      height: 19px;
+      font-size: .52rem;
+    }
+
+    #dealPassOverlay .deal-pass-step strong {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    #dealPassOverlay .deal-pass-preview-note {
+      display: grid;
+      gap: 2px;
+      margin: 0;
+      font-size: .58rem;
+      line-height: 1.3;
+    }
+
+    #dealPassOverlay .deal-pass-preview-note span {
+      color: rgba(217, 249, 255, .72);
+    }
+
+    #dealPassOverlay .deal-pass-how {
+      margin: 0;
+      padding: 7px 9px;
+      font-size: .64rem;
+      line-height: 1.3;
+    }
+
+    #dealPassOverlay .deal-pass-actions {
+      gap: 6px;
+      margin: 0;
+    }
+
+    #dealPassOverlay .deal-pass-actions .deal-pass-action {
+      min-height: 36px !important;
+      border-radius: 11px !important;
+      color: rgba(255, 255, 255, .82) !important;
+      background: rgba(255, 255, 255, .035) !important;
+      font-size: .68rem !important;
+    }
+
+    #dealPassOverlay .deal-pass-primary-dock {
+      margin-top: 0;
+    }
+
+    #dealPassOverlay .deal-pass-primary-dock .deal-pass-action.primary {
+      min-height: 50px !important;
+    }
+
+    .deal-pass-ready-instructions {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      align-items: center;
+      gap: 11px;
+      padding: 10px;
+      border: 1px solid rgba(74, 222, 128, .28);
+      border-radius: 13px;
+      background: rgba(34, 197, 94, .07);
+    }
+
+    .deal-pass-ready-instructions .deal-pass-nfc-symbol {
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(126, 234, 255, .72);
+      border-radius: 50%;
+      color: #f8fdff;
+      background: rgba(7, 10, 15, .88);
+      box-shadow: 0 0 14px rgba(53, 216, 255, .3);
+    }
+
+    .deal-pass-ready-instructions .club-deal-qr-symbol {
+      width: 55%;
+      height: 55%;
+    }
+
+    .deal-pass-ready-instructions strong {
+      color: #effff6;
+      font-size: .8rem;
+      line-height: 1.3;
+    }
+
+    .deal-pass-ready-instructions p {
+      margin: 4px 0 0;
+      color: #b7ffd1;
+      font-size: .64rem;
+      font-weight: 850;
+    }
+
+    .deal-pass-ready-security,
+    .deal-pass-ready-until {
+      margin: 0;
+      color: #d9f9ff;
+      font-size: .64rem;
+      font-weight: 850;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .deal-pass-ready-until {
+      color: rgba(255, 255, 255, .62);
+    }
+
+    @media (max-width: 560px) {
+      #dealPassOverlay .deal-pass-sheet {
+        width: min(380px, calc(100vw - 16px));
+        gap: 6px;
+        padding: 14px 12px max(14px, env(safe-area-inset-bottom));
+      }
+
+      #dealPassOverlay .deal-pass-title {
+        font-size: clamp(1.22rem, 5.7vw, 1.5rem);
+      }
+
+      #dealPassOverlay .deal-pass-redemption-guide {
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 6px;
+      }
+
+      #dealPassOverlay .deal-pass-frame {
+        width: 52px;
+      }
+
+      #dealPassOverlay .deal-pass-frame .deal-pass-nfc-symbol {
+        width: 38px;
+        height: 38px;
+      }
+
+      #dealPassOverlay .deal-pass-step {
+        grid-template-columns: 18px minmax(0, 1fr);
+        gap: 4px;
+        padding: 4px 5px;
+        font-size: .52rem;
+      }
+
+      #dealPassOverlay .deal-pass-step > span {
+        width: 18px;
+        height: 18px;
+      }
+
+      #dealPassOverlay .deal-pass-primary-dock .deal-pass-action.primary {
+        min-height: 46px !important;
+      }
+    }
+
+    @media (max-width: 330px) {
+      #dealPassOverlay .deal-pass-redemption-guide {
+        grid-template-columns: 46px minmax(0, 1fr);
+      }
+
+      #dealPassOverlay .deal-pass-frame {
+        width: 46px;
+      }
+
+      #dealPassOverlay .deal-pass-steps {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -47459,28 +47753,41 @@
             <p class="deal-pass-kicker" id="dealPassKicker">Use at the cashier</p>
             <h3 class="deal-pass-title" id="dealPassTitle">Club Deal</h3>
             <p class="deal-pass-copy" id="dealPassCopy">Club offer</p>
-            <p class="deal-pass-availability-status" id="dealPassAvailabilityStatus" role="status">Available now · Not selected</p>
-            <div class="deal-pass-offer">
+            <p class="deal-pass-availability-status" id="dealPassAvailabilityStatus" role="status">Available now</p>
+            <div class="deal-pass-available-content" data-deal-pass-available>
+            <div class="deal-pass-offer" id="dealPassOffer">
               <p class="deal-pass-description" id="dealPassDescription"></p>
               <div class="deal-pass-meta">
-                <span id="dealPassExpiry">Availability verified at tap</span>
+                <span id="dealPassExpiry"></span>
               </div>
+              <button class="deal-pass-terms-toggle" type="button" data-toggle-deal-pass-terms aria-expanded="false" aria-controls="dealPassTerms" hidden>View terms</button>
               <p class="deal-pass-terms" id="dealPassTerms" hidden></p>
             </div>
+            <div class="deal-pass-redemption-guide">
             <div class="deal-pass-frame">
               <div id="dealPassImage" class="deal-pass-nfc-symbol" role="img" aria-label="Tap cashier sticker">${clubDealQrSymbolMarkup("deal-pass-nfc-icon")}</div>
             </div>
             <div class="deal-pass-steps" aria-label="How to redeem">
-              <div class="deal-pass-step"><span>1</span><strong>Tap &ldquo;Use this deal&rdquo; below</strong></div>
-              <div class="deal-pass-step"><span>2</span><strong>Go to the cashier</strong></div>
-              <div class="deal-pass-step"><span>3</span><strong>Unlock and tap the MyDancr cashier sticker</strong></div>
-              <div class="deal-pass-step"><span>4</span><strong>Redemption completes automatically</strong></div>
+              <div class="deal-pass-step"><span>1</span><strong>Tap &ldquo;Use this deal&rdquo;</strong></div>
+              <div class="deal-pass-step"><span>2</span><strong>Go to cashier</strong></div>
+              <div class="deal-pass-step"><span>3</span><strong>Unlock your phone &amp; tap the MyDancr cashier sticker</strong></div>
+              <div class="deal-pass-step"><span>4</span><strong>Done</strong></div>
             </div>
-            <p class="deal-pass-preview-note">After selecting, MyDancr does not need to stay open. Only this venue’s registered cashier sticker can complete redemption.</p>
+            </div>
+            <p class="deal-pass-preview-note"><strong>After selecting, you can close MyDancr.</strong><span>Only this venue’s registered cashier sticker can complete redemption.</span></p>
             <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
             <div class="deal-pass-actions">
-              <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
-              <button class="deal-pass-action" type="button" data-share-deal-pass>Share deal</button>
+              <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save</button>
+              <button class="deal-pass-action" type="button" data-share-deal-pass>Share</button>
+            </div>
+            </div>
+            <div class="deal-pass-ready-content" data-deal-pass-ready hidden>
+              <div class="deal-pass-ready-instructions">
+                <div class="deal-pass-nfc-symbol" role="img" aria-label="Tap cashier sticker">${clubDealQrSymbolMarkup("deal-pass-ready-nfc-icon")}</div>
+                <div><strong>Unlock your phone and tap the MyDancr cashier sticker.</strong><p>You can close MyDancr now.</p></div>
+              </div>
+              <p class="deal-pass-ready-security">Only this venue’s registered cashier sticker can complete redemption.</p>
+              <p class="deal-pass-ready-until" id="dealPassReadyUntil"></p>
             </div>
             <div class="deal-pass-primary-dock">
               <button class="deal-pass-action primary" type="button" data-select-deal-pass aria-pressed="false">Use this deal</button>
@@ -47493,6 +47800,7 @@
       const selectButton = overlay.querySelector("[data-select-deal-pass]");
       const saveButton = overlay.querySelector("[data-save-deal-pass]");
       const shareButton = overlay.querySelector("[data-share-deal-pass]");
+      const termsButton = overlay.querySelector("[data-toggle-deal-pass-terms]");
       const closeFromButton = (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -47511,6 +47819,13 @@
         });
       };
       const currentPass = () => decodeDealPass(overlay.dataset.dealPass || "");
+      bindDealPassAction(termsButton, (button) => {
+        const terms = document.getElementById("dealPassTerms");
+        const expanded = button.getAttribute("aria-expanded") === "true";
+        button.setAttribute("aria-expanded", String(!expanded));
+        button.textContent = expanded ? "View terms" : "Hide terms";
+        terms.hidden = expanded;
+      });
       bindDealPassAction(selectButton, (button) => {
         const pass = currentPass();
         if (!pass) {
@@ -47519,15 +47834,8 @@
         }
         button.disabled = true;
         button.textContent = "Preparing…";
-        const sheet = overlay.querySelector(".deal-pass-sheet");
-        const previewHeight = sheet?.dataset.dealState !== "ready"
-          ? Math.ceil(sheet.getBoundingClientRect().height)
-          : 0;
         const result = selectDealPassForNfc(pass);
         if (result.ok) {
-          if (sheet && previewHeight > 0) {
-            sheet.style.setProperty("--deal-pass-stable-height", `${previewHeight}px`);
-          }
           syncDealPassOverlayState(overlay, pass);
           showToast("Deal ready for the cashier tap");
         } else {
@@ -47546,13 +47854,13 @@
         const isSaved = savedDealPasses.some((item) => item.id === pass.id);
         if (isSaved) {
           const removed = removeSavedDealPass(pass);
-          button.textContent = removed ? "Save for later" : "Try removing again";
+          button.textContent = removed ? "Save" : "Try removing again";
           button.setAttribute("aria-pressed", removed ? "false" : "true");
           button.classList.toggle("is-saved", !removed);
           return;
         }
         const persisted = saveDealPassForLater(pass);
-        button.textContent = persisted ? "Saved for later ✓ · Remove" : "Try saving again";
+        button.textContent = persisted ? "Saved ✓ · Remove" : "Try saving again";
         button.setAttribute("aria-pressed", persisted ? "true" : "false");
         button.classList.toggle("is-saved", persisted);
       });
@@ -47610,13 +47918,17 @@
         : [];
       const start = formatDealPassClockTime(pass?.validStartTime);
       const end = formatDealPassClockTime(pass?.validEndTime);
-      const dayLabel = days.length
-        ? days.map((day) => day.slice(0, 3).replace(/^./, (letter) => letter.toUpperCase())).join(", ")
-        : "Published hours";
-      if (start && end) return `${dayLabel} · ${start}–${end}`;
-      if (start) return `${dayLabel} · From ${start}`;
-      if (end) return `${dayLabel} · Until ${end}`;
-      return `${dayLabel} · verified at tap`;
+      const dayLabel = days
+        .map((day) => day.slice(0, 3).replace(/^./, (letter) => letter.toUpperCase()))
+        .join(", ");
+      if (dayLabel && start && end) return `${dayLabel} · ${start}–${end}`;
+      if (dayLabel && start) return `${dayLabel} · From ${start}`;
+      if (dayLabel && end) return `${dayLabel} · Until ${end}`;
+      if (dayLabel) return dayLabel;
+      if (start && end) return `${start}–${end}`;
+      if (start) return `From ${start}`;
+      if (end) return `Until ${end}`;
+      return "";
     }
 
     function formatNfcIntentExpiry(value) {
@@ -47635,24 +47947,31 @@
       const saveButton = overlay.querySelector("[data-save-deal-pass]");
       const status = document.getElementById("dealPassHow");
       const expiry = document.getElementById("dealPassExpiry");
+      const availableContent = overlay.querySelector("[data-deal-pass-available]");
+      const readyContent = overlay.querySelector("[data-deal-pass-ready]");
+      const readyUntilElement = document.getElementById("dealPassReadyUntil");
       const availabilityStatus = document.getElementById("dealPassAvailabilityStatus");
       const intent = pendingNfcDealIntentForPass(pass);
       const state = override?.state || (intent?.expired ? "expired" : intent ? "ready" : "preview");
       sheet.dataset.dealState = state;
+      availableContent.hidden = state === "ready";
+      readyContent.hidden = state !== "ready";
       status.hidden = state === "preview";
       status.classList.toggle("is-ready", state === "ready");
       status.classList.toggle("is-error", state === "error");
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr cashier sticker. MyDancr opens and completes the redemption automatically.";
-        selectButton.textContent = "Deal selected ✓";
+        status.textContent = "";
+        status.hidden = true;
+        selectButton.textContent = "Ready at Cashier ✓";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");
         selectButton.classList.add("is-ready");
-        availabilityStatus.textContent = "Selected · Ready at cashier";
+        availabilityStatus.textContent = "Ready at Cashier ✓";
         availabilityStatus.classList.add("is-ready");
-        expiry.textContent = readyUntil ? `Ready until ${readyUntil}` : dealPassAvailabilityLabel(pass);
+        readyUntilElement.textContent = readyUntil ? `Ready until ${readyUntil}` : "";
+        readyUntilElement.hidden = !readyUntil;
       } else {
         status.textContent = state === "preview" ? "" : override?.message || (state === "expired"
           ? "Your previous selection expired. Select this deal again before tapping at the cashier."
@@ -47661,12 +47980,12 @@
         selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "false");
         selectButton.classList.remove("is-ready");
-        availabilityStatus.textContent = "Available now · Not selected";
+        availabilityStatus.textContent = "Available now";
         availabilityStatus.classList.remove("is-ready");
         expiry.textContent = dealPassAvailabilityLabel(pass);
       }
       const isSaved = savedDealPasses.some((savedPass) => savedPass.id === pass.id);
-      saveButton.textContent = isSaved ? "Saved for later ✓ · Remove" : "Save for later";
+      saveButton.textContent = isSaved ? "Saved ✓ · Remove" : "Save";
       saveButton.setAttribute("aria-pressed", isSaved ? "true" : "false");
       saveButton.classList.toggle("is-saved", isSaved);
       saveButton.disabled = false;
@@ -47677,7 +47996,6 @@
         captureClubDealOverlayReturnContext(triggerButton);
       }
       const overlay = dealPassOverlay();
-      overlay.querySelector(".deal-pass-sheet")?.style.removeProperty("--deal-pass-stable-height");
       const presentation = dealPassPresentation(pass);
       overlay.hidden = false;
       overlay.dataset.dealPass = encodeDealPass(pass);
@@ -47690,8 +48008,18 @@
       descriptionElement.textContent = description;
       const terms = customerFacingDealTerms(pass.terms);
       const termsElement = document.getElementById("dealPassTerms");
-      termsElement.hidden = !terms;
-      termsElement.textContent = terms ? `Terms: ${terms}` : "";
+      const termsButton = overlay.querySelector("[data-toggle-deal-pass-terms]");
+      termsButton.hidden = !terms;
+      termsButton.textContent = "View terms";
+      termsButton.setAttribute("aria-expanded", "false");
+      termsElement.hidden = true;
+      termsElement.textContent = terms;
+      const validity = dealPassAvailabilityLabel(pass);
+      const expiryElement = document.getElementById("dealPassExpiry");
+      expiryElement.hidden = !validity;
+      expiryElement.textContent = validity;
+      const offerElement = document.getElementById("dealPassOffer");
+      offerElement.hidden = !description && !terms && !validity;
       document.getElementById("dealPassImage").setAttribute("aria-label", `Tap ${pass.venueName}'s registered cashier sticker`);
       syncDealPassOverlayState(overlay, pass);
       overlay.classList.add("show");

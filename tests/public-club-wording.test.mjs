@@ -38,7 +38,7 @@ test("customer profile and Club Deal actions use club language", () => {
   assert.match(clubActions, /Follow club/);
   assert.match(clubActions, /Club alerts/);
   assert.match(clubDeal, /Use this deal/);
-  assert.match(clubDeal, /registered MyDancr cashier sticker/);
+  assert.match(clubDeal, /this venue[’']s registered cashier sticker/);
   assert.match(nfcTap, /Verified club tap/);
   assert.match(nfcTap, /Confirm Working Now/);
 
