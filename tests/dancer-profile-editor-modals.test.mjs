@@ -82,3 +82,9 @@ test("the three-item counter remains the authoritative profile essentials counte
   assert.doesNotMatch(dashboard, /label: "Videos", section: "videos"/);
   assert.doesNotMatch(dashboard, /label: "Socials", section: "socials"/);
 });
+
+test("completed compact editors do not report a false save failure after they unmount", () => {
+  assert.match(dashboard, /if \(!detail\.tasks\.length\) return true;/);
+  assert.doesNotMatch(dashboard, /Some changes could not be saved\. Check the highlighted section/);
+  assert.match(dashboard, /A profile section could not be saved\. Reopen the section you changed and review its message\./);
+});

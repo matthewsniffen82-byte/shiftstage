@@ -3122,7 +3122,10 @@ const DANCER_PROFILE_EDITOR_SECTION_LABELS: Record<DancerProfileEditorSectionId,
 async function saveDancerProfileEditor() {
   const detail: DancerProfileEditorSaveRequest = { tasks: [] };
   window.dispatchEvent(new CustomEvent<DancerProfileEditorSaveRequest>(DANCER_PROFILE_EDITOR_SAVE_EVENT, { detail }));
-  if (!detail.tasks.length) return false;
+  // Compact editors persist when their own Save/Done action completes and then
+  // unmount. No registered task therefore means there is nothing left to save,
+  // not that the profile save failed.
+  if (!detail.tasks.length) return true;
   for (const task of detail.tasks) {
     if (!await task()) return false;
   }
@@ -3400,7 +3403,7 @@ function DancerProfilePreview({
     try {
       const saved = await onEditorSave();
       if (!saved) {
-        setEditorStatus("Some changes could not be saved. Check the highlighted section and try again.");
+        setEditorStatus("A profile section could not be saved. Reopen the section you changed and review its message.");
         return;
       }
       setEditorStatus("Profile saved.");
