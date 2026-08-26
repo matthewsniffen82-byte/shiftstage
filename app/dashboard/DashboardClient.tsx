@@ -3370,8 +3370,16 @@ function DancerProfilePreview({
                     onClick={() => openEditorSection("avatar")}
                     type="button"
                   >
-                    {headerImage ? <img alt="" src={headerImage} /> : <b aria-hidden="true">+</b>}
-                    <i aria-hidden="true">{headerImage ? "✎" : "+"}</i>
+                    {headerImage ? <img alt="" src={headerImage} /> : (
+                      <svg aria-hidden="true" className="dancer-profile-builder-avatar-add" viewBox="0 0 24 24">
+                        <path d="M12 6v12M6 12h12" />
+                      </svg>
+                    )}
+                    <i aria-hidden="true">
+                      {headerImage ? "✎" : (
+                        <svg viewBox="0 0 16 16"><path d="M8 4v8M4 8h8" /></svg>
+                      )}
+                    </i>
                   </button>
                   <small>Avatar</small>
                 </span>
@@ -3405,7 +3413,7 @@ function DancerProfilePreview({
                 ref={closeRef}
                 type="button"
               >
-                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+                <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></svg>
               </button>
             </header>
             {isOnboardingEditor ? (
@@ -8682,8 +8690,8 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-titlebar-context { max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; overflow: hidden; }
       .dancer-profile-preview-overlay .profile-titlebar-city { min-height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; color: #c8bfd6; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 850; white-space: nowrap; }
       .dancer-profile-preview-overlay .profile-verified { width:20px; height:20px; flex:0 0 20px; display:inline-grid; place-items:center; border-radius:50%; color:#051019; background:#7eeaff; box-shadow:0 0 15px rgba(126,234,255,.3); font-size:12px; font-weight:950; }
-      .dancer-profile-preview-overlay .public-profile-close { position: absolute; top: max(8px,env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
-      .dancer-profile-preview-overlay .public-profile-close svg { width:22px; height:22px; display:block; overflow:visible; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+      .dancer-profile-preview-overlay .public-profile-close { position: absolute; top: max(8px,env(safe-area-inset-top)); right: 0; width: 40px; min-width: 40px; max-width: 40px; height: 40px; min-height: 40px; max-height: 40px; display: inline-grid; flex: 0 0 40px; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50% !important; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.28); font-size: 0; line-height: 0; cursor: pointer; }
+      .dancer-profile-preview-overlay .public-profile-close svg { width:20px; height:20px; display:block; overflow:visible; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transform:none; }
       .dancer-profile-preview-overlay .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13),0 0 22px rgba(34,199,255,.18); }
       .dancer-profile-preview-overlay .profile-overview, .dancer-profile-preview-overlay .profile-social-section, .dancer-profile-preview-overlay .live-actions, .dancer-profile-preview-overlay .profile-deal-availability, .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-schedule-section, .dancer-profile-preview-overlay .profile-tonight-card { width: min(100%,760px); max-width: 100%; min-width: 0; box-sizing: border-box; margin-inline: auto; }
       .dancer-profile-preview-overlay .profile-media-section { display: grid; gap: 12px; margin-top: 12px; }
@@ -8812,11 +8820,12 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay.is-editor .dancer-profile-preview-shell { padding-bottom: max(156px,calc(env(safe-area-inset-bottom) + 136px)); }
       .dancer-profile-builder-avatar-control { width:48px; display:grid; flex:0 0 48px; justify-items:center; gap:3px; }
       .dancer-profile-builder-avatar-control > small { color:#a9a1b5; font-size:8px; font-weight:850; letter-spacing:.04em; line-height:1; }
-      .dancer-profile-builder-avatar { appearance:none; padding:0; cursor:pointer; }
-      .dancer-profile-builder-avatar.is-empty { overflow:visible !important; border-style:dashed !important; color:#c9f7ff !important; background:linear-gradient(145deg,rgba(124,58,237,.34),rgba(34,199,255,.13)) !important; }
-      .dancer-profile-builder-avatar > b { font-size:23px; line-height:1; }
-      .dancer-profile-builder-avatar > i { position:absolute; z-index:3; right:-4px; bottom:-4px; width:18px; height:18px; display:grid; place-items:center; border:1px solid rgba(126,234,255,.52); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 4px 12px rgba(0,0,0,.48); font-size:11px; font-style:normal; font-weight:950; line-height:1; }
-      body.dancr-button-system .dancer-profile-builder-avatar { min-height:42px !important; border-radius:50% !important; box-shadow:0 10px 26px rgba(0,0,0,.36),0 0 18px rgba(124,58,237,.15) !important; }
+      .dancer-profile-builder-avatar { width:42px; min-width:42px; max-width:42px; height:42px; min-height:42px; max-height:42px; aspect-ratio:1; appearance:none; padding:0; line-height:0; cursor:pointer; }
+      .dancer-profile-builder-avatar.is-empty { overflow:visible !important; border-style:solid !important; color:#c9f7ff !important; background:linear-gradient(145deg,rgba(124,58,237,.34),rgba(34,199,255,.13)) !important; }
+      .dancer-profile-builder-avatar-add { width:22px; height:22px; display:block; fill:none; stroke:currentColor; stroke-width:2.25; stroke-linecap:round; }
+      .dancer-profile-builder-avatar > i { position:absolute; z-index:3; right:-4px; bottom:-4px; width:18px; min-width:18px; max-width:18px; height:18px; min-height:18px; max-height:18px; display:grid; place-items:center; padding:0; border:1px solid rgba(126,234,255,.52); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 4px 12px rgba(0,0,0,.48); font-size:10px; font-style:normal; font-weight:950; line-height:1; }
+      .dancer-profile-builder-avatar > i svg { width:12px; height:12px; display:block; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+      body.dancr-button-system .dancer-profile-builder-avatar { width:42px !important; min-width:42px !important; max-width:42px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:0 !important; border-radius:50% !important; box-shadow:0 10px 26px rgba(0,0,0,.36),0 0 0 2px rgba(126,234,255,.08),0 0 18px rgba(124,58,237,.15) !important; }
       .dancer-profile-builder-identity { min-width:0; display:inline-flex; align-items:center; gap:7px; padding:0; border:0; color:#fff; background:transparent; font:inherit; text-align:left; cursor:pointer; }
       .dancer-profile-builder-name { max-width:min(52vw,440px); overflow:hidden; font-size:clamp(20px,4vw,26px); font-weight:950; line-height:1.05; letter-spacing:-.025em; text-overflow:ellipsis; white-space:nowrap; }
       .dancer-profile-builder-identity > span:last-child { width:18px; height:18px; display:grid; flex:0 0 18px; place-items:center; border:1px solid rgba(126,234,255,.25); border-radius:50%; color:#bff7ff; background:rgba(34,199,255,.09); font-size:10px; font-weight:950; }
