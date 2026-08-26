@@ -3869,7 +3869,7 @@ body.dancr-button-system .public-profile-shell .profile-social-section {
 
 body.dancr-button-system :is(#profileBackdrop, .public-profile-shell) .social-links {
   justify-content: center !important;
-  gap: 7px !important;
+  gap: 8px !important;
   margin: 0 !important;
 }
 
@@ -3886,20 +3886,20 @@ body.dancr-button-system #profileBackdrop .social-tile .social-tile-head {
 }
 
 body.dancr-button-system #profileBackdrop .social-tile .social-links {
-  gap: 7px !important;
+  gap: 8px !important;
 }
 
 body.dancr-button-system #profileBackdrop .social-tile .social-link {
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px !important;
-  min-height: 48px !important;
-  flex: 0 0 48px !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  flex: 0 0 44px !important;
 }
 
 body.dancr-button-system #profileBackdrop .social-tile .social-link svg {
-  width: 19px !important;
-  height: 19px !important;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-activity-metrics {
