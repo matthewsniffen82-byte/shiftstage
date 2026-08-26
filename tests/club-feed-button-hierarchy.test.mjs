@@ -37,10 +37,10 @@ test("the hierarchy preserves every existing venue action hook and state", () =>
 test("mobile venue controls use a compact premium glass hierarchy without a backing slab", () => {
   const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
 
-  assert.match(hierarchy, /--venue-primary-height: 50px;/);
+  assert.match(hierarchy, /--venue-primary-height: 44px;/);
   assert.match(hierarchy, /--venue-secondary-height: 46px;/);
   assert.match(hierarchy, /height: clamp\(300px, 80vw, 324px\) !important;/);
-  assert.match(hierarchy, /\.venue-card-primary-actions \{[\s\S]*?height: 56px !important;[\s\S]*?gap: 10px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(hierarchy, /\.venue-card-primary-actions \{[\s\S]*?height: 48px !important;[\s\S]*?gap: 10px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-primary-action \{[\s\S]*?border-radius: 16px !important;[\s\S]*?linear-gradient\(180deg,[\s\S]*?font-size: 14\.5px !important;/);
   assert.match(hierarchy, /\.venue-card-secondary-actions \{[\s\S]*?height: 56px !important;[\s\S]*?repeat\(3, minmax\(0, 1fr\)\) minmax\(58px, 0\.72fr\)/);
   assert.match(hierarchy, /\.venue-card-secondary-actions > \.venue-card-secondary-action[\s\S]*?border-radius: 14px !important;[\s\S]*?linear-gradient\(180deg,/);
@@ -50,12 +50,12 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
   assert.match(hierarchy, /@media \(max-width: 360px\)[\s\S]*?minmax\(54px, 0\.68fr\)/);
 });
 
-test("mobile venue identity stays compact, anchored, and single-line", () => {
+test("mobile venue identity keeps its copy full-width above a dedicated lineup row", () => {
   const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
 
-  assert.match(hierarchy, /grid-template-rows: 96px minmax\(92px, 1fr\) 56px 56px !important;/);
+  assert.match(hierarchy, /grid-template-rows: 96px minmax\(100px, 1fr\) 48px 56px !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-logo \{[\s\S]*?height: 90px !important;/);
-  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?top: -18px !important;[\s\S]*?right: 20px !important;/);
+  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?position: static !important;[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-lineup-label \{[\s\S]*?min-width: 46px !important;[\s\S]*?rgba\(46, 229, 138, 0\.34\)/);
   assert.match(hierarchy, /span:not\(\.action-icon\) \{[\s\S]*?white-space: nowrap !important;[\s\S]*?overflow-wrap: normal !important;[\s\S]*?word-break: normal !important;/);
   assert.match(hierarchy, /\.venue-card-primary-action:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?rgba\(226, 232, 240, 0\.76\)/);
@@ -85,14 +85,15 @@ test("the mobile lineup explains working-now avatars without changing venue acti
   assert.match(lineup, /aria-label="\$\{liveLabel\}"/);
 });
 
-test("mobile Clubs cards move the five-avatar lineup above the full-width venue name", () => {
+test("mobile Clubs cards place the five-avatar lineup after all full-width venue copy", () => {
   const slide = liveApp.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
   )?.[0] || "";
   const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
 
   assert.doesNotMatch(slide, /mobileLineupReserve|--home-venue-lineup-reserve/);
-  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?right: 20px !important;/);
+  assert.match(slide, /home-venue-discovery-name-row[\s\S]*?home-venue-discovery-location[\s\S]*?home-venue-discovery-meta[\s\S]*?home-venue-discovery-lineup-slot/);
+  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?top: auto !important;[\s\S]*?right: auto !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-slide\.has-live-lineup[\s\S]*?\.home-venue-discovery-name-row \{[\s\S]*?padding-right: 0 !important;/);
   assert.match(hierarchy, /margin-left: -8px !important;/);
 });
