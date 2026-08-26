@@ -205,7 +205,7 @@ test("venue and dancer profiles expose their required primary ride actions", () 
   assert.match(componentStyles, /\.dancerProfile[\s\S]*?width: 100%[\s\S]*?height: 48px/);
 });
 
-test("Get a Ride stays neutral glass at rest and reserves violet fill for interaction", () => {
+test("Get a Ride stays neutral glass at rest and reserves violet fill for general interaction", () => {
   assert.match(componentStyles, /\.button \{[\s\S]*?var\(--dancr-color-brand-primary-medium[\s\S]*?rgba\(17, 17, 24, 0\.82\)[\s\S]*?backdrop-filter: blur\(16px\)/);
   assert.match(componentStyles, /\.button:is\(:hover, :focus-visible\)[\s\S]*?brand-primary[\s\S]*?16%/);
   assert.match(componentStyles, /\.button:active[\s\S]*?brand-primary[\s\S]*?24%/);
@@ -215,7 +215,10 @@ test("Get a Ride stays neutral glass at rest and reserves violet fill for intera
   assert.match(liveShellSource, /\.uber-ride-link:is\(:hover, :focus-visible\)[\s\S]*?brand-primary\) 16%/);
   assert.match(liveShellSource, /\.uber-ride-link:active[\s\S]*?brand-primary\) 24%/);
   assert.doesNotMatch(liveShellSource, /linear-gradient\(135deg, #6d28d9, #4c1d95\)/);
-  assert.match(sharedAesthetic, /Working Now owns the Emerald schedule signal[\s\S]*?#profileBackdrop \.working-now-tile[\s\S]*?\.profile-uber-ride \.action-icon \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;[\s\S]*?background: transparent !important;[\s\S]*?filter: none !important;/);
+  assert.match(componentStyles, /\.dancerProfile \.icon \{[\s\S]*?rgba\(226, 232, 240, 0\.82\) !important/);
+  assert.match(liveShellSource, /#profileBackdrop \.profile-uber-ride \.action-icon \{[\s\S]*?rgba\(226, 232, 240, \.82\) !important/);
+  assert.match(liveShellSource, /\.profile-tonight-travel-actions > \.profile-primary-directions \{[\s\S]*?rgba\(226, 232, 240, \.18\) !important;[\s\S]*?rgba\(255, 255, 255, \.055\) !important/);
+  assert.doesNotMatch(liveShellSource, /\.profile-tonight-travel-actions > \.profile-primary-directions \{[\s\S]*?rgba\(142, 226, 248/);
 });
 
 test("venue travel actions keep compact labels and explicit address-unavailable states", () => {

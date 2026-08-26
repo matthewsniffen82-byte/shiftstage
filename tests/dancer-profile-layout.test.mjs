@@ -343,8 +343,9 @@ test("Current Shift uses a quieter club row and secondary ride action", () => {
   );
   assert.match(
     uberRideStyles,
-    /\.dancerProfile \{[\s\S]*?border-color: rgba\(255, 255, 255, 0\.14\);[\s\S]*?background: rgba\(255, 255, 255, 0\.045\);[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.045\);/,
+    /\.dancerProfile \{[\s\S]*?border-color: rgba\(226, 232, 240, 0\.18\);[\s\S]*?linear-gradient\(180deg, rgba\(255, 255, 255, 0\.065\), transparent 52%\)[\s\S]*?rgba\(12, 13, 16, 0\.86\);[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.045\);/,
   );
+  assert.match(uberRideStyles, /\.dancerProfile \.icon \{[\s\S]*?rgba\(226, 232, 240, 0\.82\) !important/);
 });
 
 test("Working Now scales the venue pin and name to the club-name length", () => {

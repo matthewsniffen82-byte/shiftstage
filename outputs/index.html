@@ -38287,7 +38287,7 @@
         }
 
         #profileBackdrop .profile-uber-ride .action-icon {
-          color: var(--dancr-color-brand-core) !important;
+          color: rgba(226, 232, 240, .82) !important;
           opacity: 1 !important;
           filter: none !important;
         }
@@ -38421,13 +38421,13 @@
         }
 
         #profileBackdrop .profile-uber-ride .action-icon {
-          color: rgba(142, 226, 248, .88) !important;
+          color: rgba(226, 232, 240, .82) !important;
           filter: none !important;
         }
 
         #profileBackdrop .profile-uber-ride:is(:hover, :focus-visible) {
-          border-color: rgba(142, 226, 248, .3) !important;
-          background: rgba(142, 226, 248, .07) !important;
+          border-color: rgba(226, 232, 240, .28) !important;
+          background: rgba(255, 255, 255, .075) !important;
           background-image: none !important;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
         }
@@ -38609,8 +38609,13 @@
         }
 
         #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-primary-directions {
-          border-color: rgba(142, 226, 248, .24) !important;
-          background: rgba(142, 226, 248, .07) !important;
+          border-color: rgba(226, 232, 240, .18) !important;
+          background: rgba(255, 255, 255, .055) !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-uber-ride) :is(svg, .action-icon) {
+          color: rgba(226, 232, 240, .82) !important;
+          stroke: currentColor !important;
         }
 
         #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) :is(svg, .action-icon, span) {
