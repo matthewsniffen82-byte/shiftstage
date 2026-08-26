@@ -195,6 +195,10 @@ test("every profile combines tonight's shift and Club Deal while only Working No
     liveApp,
     /profile-tonight-card\.has-club-deal[\s\S]*?inset 0 0 0 1px rgba\(77, 236, 157, \.38\)/,
   );
+  assert.match(
+    liveApp,
+    /profile-tonight-card\.is-now::before[\s\S]*?inset: 0;[\s\S]*?border-radius: inherit;[\s\S]*?profile-tonight-card\.has-club-deal::before/,
+  );
 });
 
 test("active full-profile Club Deals render a compact cashier-tap action and use one live-status color", () => {
