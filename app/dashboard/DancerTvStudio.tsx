@@ -277,11 +277,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       <DancerTvStudioStyles />
       {embedded ? (
         <div className="tv-studio-embedded-head">
-          <div>
-            <h2>Profile videos</h2>
-            <p>Videos are optional. Add, replace, or remove them anytime.</p>
-          </div>
-          {workspace ? <strong aria-label={`${currentVideoCount} profile videos added`}>{currentVideoCount} added</strong> : null}
+          <p>Optional · Add videos now or later.</p>
         </div>
       ) : (
         <div className="tv-studio-head">
@@ -369,7 +365,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                 <svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z" /><path d="m10 9 5 3-5 3z" /></svg>
               </span>
               <span className="tv-video-source-copy">
-                <strong>Video library</strong>
+                <strong>Choose video</strong>
                 <small>Choose one or several videos</small>
               </span>
               <span className="tv-video-source-cta" aria-hidden="true">Choose</span>
@@ -406,7 +402,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             </button>
           </div>
           <small className="tv-upload-requirements">
-            Vertical or square MP4/WebM/MOV · 1–30 seconds each · 75 MB maximum each · {queuedVideos.length} selected
+            Vertical or square · MP4, WebM, or MOV · 1–30 sec · 75 MB max
           </small>
           {queuedVideos.length ? (
             <div className="tv-upload-queue" aria-label="Video upload progress">
@@ -438,10 +434,10 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
       {status ? <div className="tv-studio-status" role="status" aria-live="polite">{status}</div> : null}
 
-      <section className="tv-video-manager">
+      {isLoading || currentVideoCount ? <section className="tv-video-manager">
         <div className="tv-manager-title">
           <h3>My videos</h3>
-          <span>{isLoading ? "…" : `${currentVideoCount} added`}</span>
+          <span>{isLoading ? "…" : `${currentVideoCount} ${currentVideoCount === 1 ? "video" : "videos"}`}</span>
         </div>
         <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
@@ -471,9 +467,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               </div>
             </article>
           ))}
-          {!isLoading && workspace && !workspace.videos.length ? <p className="tv-no-videos">No videos submitted yet.</p> : null}
         </div>
-      </section>
+      </section> : null}
     </>
   );
 

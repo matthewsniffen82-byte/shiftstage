@@ -44,5 +44,5 @@ test("the Next account defers city to the dashboard onboarding selector", () => 
   assert.match(accountClient, /if \(mode === "signup" && role === "customer"\) payload\.city = city/);
   assert.match(dashboardClient, /fetch\("\/api\/public\/cities"/);
   assert.match(dashboardClient, /<select value=\{city\}[\s\S]*?cityOptions\.map/);
-  assert.match(dashboardClient, /Add and save your stage name and city/);
+  assert.match(dashboardClient, /Choose from active MyDancr venue markets\./);
 });

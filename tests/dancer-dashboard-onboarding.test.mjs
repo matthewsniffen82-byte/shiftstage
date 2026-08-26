@@ -71,7 +71,7 @@ test("draft identity and social form values survive refreshes without bypassing 
   assert.match(dashboard, /mydancr:dancer-social-draft/);
   assert.match(dashboard, /window\.localStorage\.setItem\(draftKey/);
   assert.match(dashboard, /window\.localStorage\.removeItem\(draftKey\)/);
-  assert.match(dashboard, /<form onSubmit=\{saveProfile\}>/);
+  assert.match(dashboard, /<form className="dancer-profile-identity-form" onSubmit=\{saveProfile\}>/);
   assert.match(dashboard, /<form className="dancer-social-link-form" onSubmit=\{\(event\) => void saveSelectedSocial\(event\)\}>/);
   assert.match(dashboard, /draftDirtyRef\.current/);
 });
@@ -112,7 +112,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);
   assert.match(dashboard, /DancerPhotoPanel/);
   assert.match(dashboard, /DancerTvStudio embedded/);
-  assert.match(dancerStudio, /embedded \? \([\s\S]*?<h2>Profile videos<\/h2>[\s\S]*?Videos are optional\. Add, replace, or remove them anytime\./);
+  assert.match(dancerStudio, /embedded \? \([\s\S]*?Optional · Add videos now or later\./);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
   assert.match(dancerStudio, /Upload started automatically/);
@@ -121,7 +121,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.doesNotMatch(dancerStudio, /type="submit"/);
   assert.match(dancerStudio, /aria-label="Choose profile videos from your library"/);
   assert.match(dancerStudio, /aria-label="Record a new profile video"/);
-  assert.match(dancerStudio, />Video library<\/strong>/);
+  assert.match(dancerStudio, />Choose video<\/strong>/);
   assert.match(dancerStudio, />Record video<\/strong>/);
   assert.match(dancerStudio, />Confirm permissions<\/strong>/);
   assert.doesNotMatch(dancerStudio, /Confirm permissions once, then choose videos|Every selected video uploads automatically/);
@@ -157,25 +157,29 @@ test("step one guides dancers through required work in the live profile layout",
   assert.match(dashboard, /document\.getElementById\("dancer-onboarding-profile-review"\)\?\.scrollIntoView/);
 });
 
-test("profile setup and approved editing share one full-screen save boundary", () => {
+test("profile setup editors use the compact shared modal shell without changing the save boundary", () => {
   assert.match(dashboard, /const DANCER_PROFILE_EDITOR_SAVE_EVENT = "mydancr:dancer-profile-editor-save"/);
   assert.match(dashboard, /for \(const task of detail\.tasks\) \{[\s\S]*?if \(!await task\(\)\) return false/);
   assert.match(dashboard, /className=\{`dancer-profile-preview-overlay\$\{isEditor \? " is-editor" : ""\}`\}/);
   assert.match(dashboard, /aria-label="Close profile preview"[\s\S]*?onClick=\{closePreview\}/);
-  assert.match(dashboard, /className="dancer-profile-builder-panel"[\s\S]*?activeEditorContent/);
-  assert.match(dashboard, /className="dancer-profile-builder-panel" data-section=\{activeEditorSection\}/);
+  assert.match(dashboard, /className="dancer-profile-editor-modal-backdrop"[\s\S]*?activeEditorContent/);
+  assert.match(dashboard, /className="dancer-profile-builder-panel dancer-profile-editor-modal"/);
+  assert.match(dashboard, /aria-modal="true"[\s\S]*?role="dialog"/);
+  assert.match(dashboard, /aria-label=\{`Close \$\{activeEditorLabel\} editor`\}/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \{ z-index:1510; \}/);
-  assert.match(dashboard, /\.dancer-profile-builder-panel > div \{[^}]*overflow-x:hidden;[^}]*overflow-y:auto;[^}]*scroll-padding-bottom:max\(28px,env\(safe-area-inset-bottom\)\);/);
-  assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-grid,[\s\S]*?grid-template-columns:repeat\(2,58px\) !important;/);
-  assert.match(dashboard, /\.dancer-profile-builder-panel \.photo-source-copy,[\s\S]*?\.tv-video-source-cta \{ display:none; \}/);
-  assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.dancer-photo-upload-form \{[^}]*grid-template-columns:auto auto;[^}]*justify-content:center;/);
-  assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.photo-upload-heading \{ display:none; \}/);
-  assert.match(dashboard, /\.dancer-profile-builder-panel\[data-section="photos"\] \.photo-review-list > p:only-child \{ display:none; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal > \.dancer-profile-editor-modal-body \{[^}]*overflow-x:hidden;[^}]*overflow-y:auto;/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal \.photo-source-grid,[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\) !important;/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal \.photo-source-copy,[\s\S]*?display:grid;/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal\[data-section="photos"\] \.dancer-photo-upload-form \{[^}]*grid-template-columns:1fr;/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal\[data-section="photos"\] \.photo-upload-heading \{ display:block; \}/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal\[data-section="photos"\] \.photo-review-list \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.doesNotMatch(dashboard, /dancer-profile-builder-media-empty/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-media-grid \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\);/);
   assert.match(dashboard, /\.dancer-profile-builder-empty-slots button \{ width:100%; min-width:0; aspect-ratio:4 \/ 5;/);
 
-  assert.match(dashboard, /\.dancer-profile-builder-panel \{ bottom:calc\(88px \+ env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\); max-height:min\(66dvh,620px,calc\(100dvh - var\(--mydancr-preview-banner-offset,0px\) - 104px - env\(safe-area-inset-bottom\)\)\);/);
+  assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal,[\s\S]*?width:100%; max-height:min\(88dvh,720px,calc\(100dvh - var\(--mydancr-preview-banner-offset,0px\) - 16px\)\);/);
+  assert.match(dashboard, /\.dancer-profile-editor-modal-actions \{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(132px,190px\)/);
+  assert.match(dashboard, /activeEditorSection === "identity" \? "Save" : "Done"/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \.dancer-profile-editor-footer \{ bottom:max\(8px,env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\);/);
   assert.doesNotMatch(dashboard, /editorTitle/);
   assert.match(dashboard, /disabled=\{isEditorSaving \|\| !requirementsComplete\}/);
@@ -343,7 +347,7 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /multiple[\s\S]*?ref=\{galleryPhotoInputRef\}[\s\S]*?type="file"/);
   assert.match(dashboard, /aria-label="Choose profile photos from your library"/);
   assert.match(dashboard, /className="photo-source-input"/);
-  assert.match(dashboard, /Photo library/);
+  assert.match(dashboard, />Gallery<\/strong>/);
   assert.match(dashboard, /Take a new photo now/);
   assert.doesNotMatch(dashboard, /Choose from your phone or take a new photo\. Upload starts automatically\./);
   assert.match(dashboard, /\.photo-preview:not\(\.empty\) \{ filter: brightness\(1\.14\) contrast\(1\.03\); \}/);
@@ -404,7 +408,7 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /window\.scrollTo\(\{ top: scrollY, behavior: "auto" \}\)/);
   assert.match(dashboard, /event\.key === "Escape"/);
   assert.match(dashboard, /event\.key !== "Tab"/);
-  assert.match(dashboard, /const focusRoot = activeEditorSectionRef\.current === "socials"[\s\S]*?: overlayRef\.current/);
+  assert.match(dashboard, /const focusRoot = activeEditorSectionRef\.current[\s\S]*?\? document\.getElementById\("dancer-profile-builder-panel"\)[\s\S]*?: overlayRef\.current/);
   assert.match(dashboard, /focusRoot\?\.querySelectorAll<HTMLElement>/);
 });
 

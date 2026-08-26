@@ -71,7 +71,7 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(tvSource, /MYDANCR_TV_MAX_DURATION_SECONDS = 30/);
   assert.match(tvSource, /\.lte\("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS\)/);
   assert.match(tvSource, /Only videos that are 30 seconds or shorter can be approved/);
-  assert.match(dancerStudio, /1–30 seconds/);
+  assert.match(dancerStudio, /1–30 sec/);
   assert.match(dancerStudio, /metadata\.duration > MAX_VIDEO_DURATION_SECONDS/);
   assert.match(tenSecondMigration, /where duration_seconds > 10[\s\S]*?status not in \('hidden', 'expired'\)/);
   assert.match(tenSecondMigration, /check \(duration_seconds between 1 and 10\)[\s\S]*?not valid/);

@@ -21,8 +21,9 @@ const [
 test("secondary account panels do not claim data is empty while requests are loading", () => {
   assert.match(
     dancerTvStudio,
-    /\{!isLoading && workspace && !workspace\.videos\.length \? <p className="tv-no-videos">No videos submitted yet\.<\/p>/,
+    /\{isLoading \|\| currentVideoCount \? <section className="tv-video-manager">/,
   );
+  assert.doesNotMatch(dancerTvStudio, /No videos submitted yet\./);
   assert.match(
     dashboardClient,
     /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?disabled=\{isLoading \|\| isSaving \|\| !venues\.length\}[\s\S]*?\{!isLoading && !activeAffiliations\.length \? <small>No venue has verified your profile yet\.<\/small>/,

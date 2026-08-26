@@ -65,6 +65,6 @@ test("the direct studio respects the same fifty-video contract", () => {
   assert.match(dancerStudio, /const maxVideos = workspace\?\.maxVideos \|\| MAX_DANCER_PROFILE_VIDEOS/);
   assert.match(dancerStudio, /const atVideoLimit = currentVideoCount >= maxVideos/);
   assert.match(dancerStudio, /Your profile video library is full\. Remove a video before adding another\./);
-  assert.match(dancerStudio, /\{currentVideoCount\} added/);
+  assert.match(dancerStudio, /\{currentVideoCount\} \$\{currentVideoCount === 1 \? "video" : "videos"\}/);
   assert.doesNotMatch(dancerStudio, /Up to \{maxVideos\}|\{currentVideoCount\}\/\{maxVideos\}|slots remaining/);
 });

@@ -3108,7 +3108,7 @@ type DancerProfileBuilderRequirement = {
 
 const DANCER_PROFILE_EDITOR_SECTION_LABELS: Record<DancerProfileEditorSectionId, string> = {
   identity: "Stage name & city",
-  avatar: "Avatar",
+  avatar: "Add profile photo",
   photos: "Photos",
   videos: "Videos",
   socials: "Socials",
@@ -3156,6 +3156,8 @@ function DancerProfilePreview({
   const [activeEditorSection, setActiveEditorSection] = useState<DancerProfileEditorSectionId | null>(null);
   const [activeSocialPlatform, setActiveSocialPlatform] = useState<SocialPlatform | null>(null);
   const [isEditorSaving, setIsEditorSaving] = useState(false);
+  const [isSectionSaving, setIsSectionSaving] = useState(false);
+  const [sectionStatus, setSectionStatus] = useState("");
   const [editorStatus, setEditorStatus] = useState("");
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState("");
@@ -3183,11 +3185,17 @@ function DancerProfilePreview({
   const requirementsComplete = !builderRequirements?.length || completedRequirements === builderRequirements.length;
   const closeActiveEditor = useCallback(() => {
     const platform = activeSocialPlatform;
+    const section = activeEditorSectionRef.current;
     setActiveEditorSection(null);
     setActiveSocialPlatform(null);
+    setSectionStatus("");
     if (platform) {
       window.requestAnimationFrame(() => {
         document.getElementById(`dancer-social-trigger-${platform}`)?.focus({ preventScroll: true });
+      });
+    } else if (section) {
+      window.requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>(`[data-profile-editor-trigger="${section}"]`)?.focus({ preventScroll: true });
       });
     }
   }, [activeSocialPlatform]);
@@ -3212,6 +3220,7 @@ function DancerProfilePreview({
 
   function openEditorSection(section: Exclude<DancerProfileEditorSectionId, "socials">) {
     if (!editorSections?.[section]) return;
+    setSectionStatus("");
     setActiveSocialPlatform(null);
     setActiveEditorSection(section);
   }
@@ -3260,11 +3269,15 @@ function DancerProfilePreview({
           document.querySelector<HTMLButtonElement>("[data-social-modal-close]")?.click();
           return;
         }
+        if (activeEditorSectionRef.current) {
+          closeActiveEditor();
+          return;
+        }
         closePreview();
         return;
       }
       if (event.key !== "Tab") return;
-      const focusRoot = activeEditorSectionRef.current === "socials"
+      const focusRoot = activeEditorSectionRef.current
         ? document.getElementById("dancer-profile-builder-panel")
         : overlayRef.current;
       const focusable = Array.from(
@@ -3296,7 +3309,7 @@ function DancerProfilePreview({
       window.scrollTo({ top: scrollY, behavior: "auto" });
       window.requestAnimationFrame(() => trigger?.focus({ preventScroll: true }));
     };
-  }, [closePreview, isOpen]);
+  }, [closeActiveEditor, closePreview, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -3375,6 +3388,29 @@ function DancerProfilePreview({
     }
   }
 
+  async function finishActiveEditor() {
+    if (!activeEditorSection || isSectionSaving) return;
+    if (activeEditorSection !== "identity") {
+      closeActiveEditor();
+      return;
+    }
+
+    setIsSectionSaving(true);
+    setSectionStatus("Saving...");
+    try {
+      const saved = await saveDancerProfileEditor();
+      if (!saved) {
+        setSectionStatus("Check the fields above and try again.");
+        return;
+      }
+      closeActiveEditor();
+    } catch (error) {
+      setSectionStatus(error instanceof Error ? error.message : "Unable to save your profile details.");
+    } finally {
+      setIsSectionSaving(false);
+    }
+  }
+
   return (
     <>
       <button className={buttonClassName} onClick={openPreview} ref={triggerRef} type="button">
@@ -3395,6 +3431,7 @@ function DancerProfilePreview({
                   <button
                     aria-label={headerImage ? "Edit avatar" : "Add avatar"}
                     className={`profile-titlebar-avatar dancer-profile-builder-avatar${headerImage ? " has-photo" : " is-empty"}`}
+                    data-profile-editor-trigger="avatar"
                     onClick={() => openEditorSection("avatar")}
                     type="button"
                   >
@@ -3419,7 +3456,7 @@ function DancerProfilePreview({
               <div className="profile-titlebar-identity">
                 <div>
                   {isEditor ? (
-                    <button className="dancer-profile-builder-identity" onClick={() => openEditorSection("identity")} type="button">
+                    <button className="dancer-profile-builder-identity" data-profile-editor-trigger="identity" onClick={() => openEditorSection("identity")} type="button">
                       <span className="dancer-profile-builder-name" id="dancer-profile-preview-heading">{name?.trim() || persistedName || "Stage name"}</span>
                       <span aria-hidden="true">{name?.trim() || persistedName ? "✎" : "+"}</span>
                     </button>
@@ -3428,7 +3465,7 @@ function DancerProfilePreview({
                 </div>
                 <div className="profile-titlebar-context">
                   {isEditor ? (
-                    <button className="profile-titlebar-city dancer-profile-builder-city" onClick={() => openEditorSection("identity")} type="button">
+                    <button className="profile-titlebar-city dancer-profile-builder-city" data-profile-editor-trigger="identity" onClick={() => openEditorSection("identity")} type="button">
                       {city?.trim() || persistedCity || "Add city"}<span aria-hidden="true">{city?.trim() || persistedCity ? "✎" : "+"}</span>
                     </button>
                   ) : <span className="profile-titlebar-city">{previewCity}</span>}
@@ -3467,7 +3504,7 @@ function DancerProfilePreview({
                         </button>
                       );
                     })}
-                    <button className="dancer-profile-builder-slot is-more" onClick={() => openEditorSection("photos")} type="button">
+                    <button className="dancer-profile-builder-slot is-more" data-profile-editor-trigger="photos" onClick={() => openEditorSection("photos")} type="button">
                       <span aria-hidden="true">+</span><strong>Add more</strong><small>Manage pictures</small>
                     </button>
                   </div>
@@ -3494,7 +3531,7 @@ function DancerProfilePreview({
                         </button>
                       );
                     })}
-                    <button className="dancer-profile-builder-slot is-more" onClick={() => openEditorSection("videos")} type="button">
+                    <button className="dancer-profile-builder-slot is-more" data-profile-editor-trigger="videos" onClick={() => openEditorSection("videos")} type="button">
                       <span aria-hidden="true">+</span><strong>Add more</strong><small>Manage videos</small>
                     </button>
                   </div>
@@ -3594,13 +3631,36 @@ function DancerProfilePreview({
             ) : null}
             {isEditor && activeEditorSection === "socials" && socialEditorContent ? socialEditorContent : null}
             {isEditor && activeEditorSection && activeEditorSection !== "socials" && activeEditorContent ? (
-              <section className="dancer-profile-builder-panel" data-section={activeEditorSection} id="dancer-profile-builder-panel" tabIndex={-1} aria-labelledby="dancer-profile-builder-panel-heading">
-                <header>
-                  <h2 id="dancer-profile-builder-panel-heading">{activeEditorLabel}</h2>
-                  <button aria-label="Close profile editing panel" onClick={closeActiveEditor} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
-                </header>
-                <div>{activeEditorContent}</div>
-              </section>
+              <div
+                className="dancer-profile-editor-modal-backdrop"
+                onMouseDown={(event) => {
+                  if (event.target === event.currentTarget && !isSectionSaving) closeActiveEditor();
+                }}
+              >
+                <section
+                  aria-labelledby="dancer-profile-builder-panel-heading"
+                  aria-modal="true"
+                  className="dancer-profile-builder-panel dancer-profile-editor-modal"
+                  data-section={activeEditorSection}
+                  id="dancer-profile-builder-panel"
+                  role="dialog"
+                  tabIndex={-1}
+                >
+                  <header>
+                    <h2 id="dancer-profile-builder-panel-heading">{activeEditorLabel}</h2>
+                    <button aria-label={`Close ${activeEditorLabel} editor`} disabled={isSectionSaving} onClick={closeActiveEditor} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+                  </header>
+                  <div className="dancer-profile-editor-modal-body">{activeEditorContent}</div>
+                  {(["identity", "avatar", "photos", "videos"] as DancerProfileEditorSectionId[]).includes(activeEditorSection) ? (
+                    <footer className="dancer-profile-editor-modal-actions">
+                      {sectionStatus ? <p role="status" aria-live="polite">{sectionStatus}</p> : <span />}
+                      <button disabled={isSectionSaving} onClick={() => void finishActiveEditor()} type="button">
+                        {isSectionSaving ? "Saving..." : activeEditorSection === "identity" ? "Save" : "Done"}
+                      </button>
+                    </footer>
+                  ) : null}
+                </section>
+              </div>
             ) : null}
             {isEditor && onEditorSave ? (
               <footer className="dancer-profile-editor-footer">
@@ -5191,13 +5251,16 @@ function DancerSetupPanel({
     }
   }
 
+  const visibleStatus = status
+    || (saveStatus === "saving" ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : saveStatus === "saved" ? "Saved" : "");
+
   return (
-    <article className="info-panel setup-panel">
-      <h2>Setup</h2>
-      <form onSubmit={saveProfile}>
+    <article className="info-panel setup-panel dancer-profile-identity-editor">
+      {unifiedSave ? null : <h2>Setup</h2>}
+      <form className="dancer-profile-identity-form" onSubmit={saveProfile}>
         <label>
           Stage name
-          <input className="dancer-stage-name-input" type="text" value={stageName} minLength={2} maxLength={40} autoComplete="nickname" onChange={(event) => {
+          <input className="dancer-stage-name-input" type="text" value={stageName} minLength={2} maxLength={40} autoComplete="nickname" placeholder="Enter stage name" onChange={(event) => {
             draftDirtyRef.current = true;
             setStageName(event.target.value);
             setSaveStatus("idle");
@@ -5229,9 +5292,11 @@ function DancerSetupPanel({
             </button>
           </div>
         )}
-        <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
-          {status || (saveStatus === "saving" ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : persistedStageNameAndCity(profile) ? "Saved" : "Add and save your stage name and city.")}
-        </p>
+        {visibleStatus ? (
+          <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
+            {visibleStatus}
+          </p>
+        ) : null}
       </form>
     </article>
   );
@@ -5336,16 +5401,12 @@ function DancerAvatarPanel({
   const moderationLabel = pendingAvatar ? "Checking" : avatarUrl ? "Approved" : "Required";
   return (
     <article className="info-panel dancer-avatar-panel">
-      <span className="eyebrow">Profile identity</span>
-      <h2>Avatar</h2>
-      <div className="dancer-avatar-editor">
+      <p className="dancer-profile-editor-intro">Required · Choose a clear face photo.</p>
+      <div className="dancer-avatar-editor" aria-label="Profile photo preview">
         <span className="dancer-avatar-preview">
           {visibleAvatar ? <img src={visibleAvatar} alt="Selected dancer avatar preview" /> : <b aria-hidden="true">+</b>}
         </span>
-        <span>
-          <strong>{moderationLabel}</strong>
-          <small>Choose a clear face photo. We will center it and check it automatically.</small>
-        </span>
+        <strong className={`dancer-avatar-state is-${moderationLabel.toLowerCase()}`}>{moderationLabel}</strong>
       </div>
       <div className="dancer-avatar-upload-controls">
         <div className="photo-source-grid dancer-avatar-source-grid">
@@ -5362,7 +5423,7 @@ function DancerAvatarPanel({
               }}
             />
             <span className="photo-source-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" /><circle cx="16.5" cy="9" r="1" /></svg></span>
-            <span className="photo-source-copy"><strong>Photo library</strong><small>Choose a clear face photo</small></span>
+            <span className="photo-source-copy"><strong>Gallery</strong><small>Choose a clear face photo</small></span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
           <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>
@@ -5387,7 +5448,8 @@ function DancerAvatarPanel({
         {file && !isSaving ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry avatar upload</button> : null}
         {avatarUrl ? <button type="button" disabled={isSaving} onClick={() => void removeAvatar()}>Remove avatar</button> : null}
       </div>
-      <p role="status" aria-live="polite">{status || (pendingAvatar ? "We are checking this avatar. This page updates automatically." : avatarUrl ? "Approved and saved." : "Add one clear face photo to continue.")}</p>
+      <p className="dancer-avatar-guidance">We&apos;ll center and check it automatically.</p>
+      {status || pendingAvatar ? <p role="status" aria-live="polite">{status || "We are checking this photo. Your current approved photo stays visible."}</p> : null}
     </article>
   );
 }
@@ -7070,18 +7132,13 @@ function DancerPhotoPanel({
     }
   }
 
-  const remainingPhotoSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - queuedPhotos.length);
   const hasMainPhoto = photos.some((photo) => photo.isPrimary);
 
   return (
-    <article className="info-panel upload-panel">
-      <h2>Photos</h2>
+    <article aria-label="Profile photo manager" className="info-panel upload-panel">
       <div className="dancer-photo-upload-form">
         <div className="photo-upload-heading">
-          <span>
-            <strong>Add profile photos</strong>
-          </span>
-          <b>{photos.length ? "Add more anytime" : "1 picture needed"}</b>
+          <span><strong>Add at least 1 picture. You can add more later.</strong></span>
         </div>
         {hasMainPhoto ? (
           <label className="photo-primary-choice">
@@ -7111,7 +7168,7 @@ function DancerPhotoPanel({
               <svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" /><circle cx="16.5" cy="9" r="1" /></svg>
             </span>
             <span className="photo-source-copy">
-              <strong>Photo library</strong>
+              <strong>Gallery</strong>
               <small>Choose one or several photos</small>
             </span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
@@ -7140,10 +7197,6 @@ function DancerPhotoPanel({
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </label>
         </div>
-        <div className="photo-slot-summary">
-          <strong>{photos.length} {photos.length === 1 ? "picture" : "pictures"} on your profile</strong>
-          <span>{queuedPhotos.length ? `${queuedPhotos.length} uploading now` : remainingPhotoSlots ? "Add more anytime" : "Your picture library is full"}</span>
-        </div>
         {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       {queuedPhotos.length ? (
@@ -7163,6 +7216,12 @@ function DancerPhotoPanel({
               </span>
             </div>
           ))}
+        </div>
+      ) : null}
+      {photos.length ? (
+        <div className="dancer-media-manager-title">
+          <strong>Your photos</strong>
+          <span>{photos.length} {photos.length === 1 ? "photo" : "photos"}</span>
         </div>
       ) : null}
       <div className="photo-review-list">
@@ -7194,7 +7253,6 @@ function DancerPhotoPanel({
             </div>
           );
         })}
-        {!photos.length ? <p>No profile photos uploaded yet.</p> : null}
       </div>
     </article>
   );
@@ -9150,6 +9208,103 @@ function DashboardStyles() {
         .venue-referral-request-panel > button { width: 100%; }
         .venue-working-list a { align-items: flex-start; flex-direction: column; }
         .venue-working-verification { justify-items: start; text-align: left; padding-left: 58px; }
+      }
+
+      /* Compact profile editors share the social-link modal shell without duplicating editor logic. */
+      .dancer-profile-editor-modal-backdrop { position:fixed; z-index:34; inset:0; display:grid; align-items:end; justify-items:center; padding:12px max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); background:rgba(0,0,0,.66); backdrop-filter:blur(4px); }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal { position:relative; z-index:1; inset:auto; left:auto; bottom:auto; width:min(100%,480px); max-height:min(82dvh,680px,calc(100dvh - var(--mydancr-preview-banner-offset,0px) - 24px)); grid-template-rows:auto minmax(0,1fr) auto; padding:0; border:1px solid rgba(139,92,246,.34); border-radius:20px; background:linear-gradient(180deg,rgba(16,13,25,.995),rgba(7,7,11,.998)); box-shadow:0 24px 80px rgba(0,0,0,.68),0 0 30px rgba(124,58,237,.16); transform:none; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"],
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] { width:min(100%,680px); max-height:min(88dvh,760px,calc(100dvh - var(--mydancr-preview-banner-offset,0px) - 24px)); }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal > header { position:static; padding:14px 14px 12px; border-bottom:1px solid rgba(255,255,255,.08); background:transparent; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal > header h2 { min-width:0; overflow-wrap:anywhere; font-size:clamp(19px,5vw,23px); line-height:1.1; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal > header > button { width:42px; min-width:42px; height:42px; min-height:42px; flex:0 0 42px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal > .dancer-profile-editor-modal-body { overflow-x:hidden; overflow-y:auto; padding:14px; scroll-padding-bottom:18px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .info-panel { display:grid; gap:12px; overflow:visible; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+      .dancer-profile-editor-modal-actions { min-width:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(132px,190px); align-items:center; gap:12px; padding:12px 14px max(12px,env(safe-area-inset-bottom)); border-top:1px solid rgba(255,255,255,.08); background:rgba(9,8,14,.96); }
+      .dancer-profile-editor-modal-actions > p { margin:0; color:#fda4af; font-size:11px; line-height:1.35; }
+      .dancer-profile-editor-modal-actions > button { width:100%; min-height:48px; border:1px solid rgba(196,181,253,.5); border-radius:13px; color:#fff; background:#7c3aed; box-shadow:0 0 18px rgba(124,58,237,.18); font:inherit; font-size:14px; font-weight:950; cursor:pointer; }
+      .dancer-profile-editor-modal-actions > button:disabled { cursor:wait; opacity:.58; }
+      body.dancr-button-system .dancer-profile-editor-modal-actions > button { min-height:48px !important; border-color:rgba(196,181,253,.5) !important; border-radius:13px !important; color:#fff !important; background:#7c3aed !important; box-shadow:0 0 18px rgba(124,58,237,.18) !important; }
+
+      .dancer-profile-editor-intro,
+      .dancer-avatar-guidance { margin:0; color:#c5bdce !important; font-size:13px !important; line-height:1.4; }
+      .dancer-profile-identity-editor .dancer-profile-identity-form { display:grid; grid-template-columns:1fr; gap:12px; }
+      .dancer-profile-identity-editor .dancer-profile-identity-form > label { display:grid; gap:7px; color:#d9d4e1; font-size:12px; font-weight:900; line-height:1.2; }
+      .dancer-profile-identity-editor .dancer-profile-identity-form input,
+      .dancer-profile-identity-editor .dancer-profile-identity-form select { width:100%; min-width:0; min-height:50px; height:50px; box-sizing:border-box; padding:0 14px; border:1px solid rgba(148,163,184,.42); border-radius:13px; outline:none; color:#f8fafc; background:#111118; font:inherit; font-size:16px; }
+      .dancer-profile-identity-editor .dancer-profile-identity-form input:focus,
+      .dancer-profile-identity-editor .dancer-profile-identity-form select:focus { border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,.2); }
+      .dancer-profile-identity-editor .dancer-profile-identity-form label small { color:#9f97aa; font-size:11px; font-weight:700; line-height:1.35; }
+      .dancer-profile-identity-editor .dancer-form-save-state { min-height:0; margin:0; }
+
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel { justify-items:center; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel > * { width:100%; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-editor { position:relative; width:112px; display:grid; grid-template-columns:1fr; justify-items:center; gap:0; margin:2px auto; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-preview { width:108px; height:108px; font-size:36px; }
+      .dancer-avatar-state { position:absolute; right:-7px; bottom:2px; width:auto !important; padding:5px 7px; border:1px solid rgba(255,255,255,.18); border-radius:999px; color:#f8fafc; background:#18171f; box-shadow:0 4px 14px rgba(0,0,0,.52); font-size:9px; font-weight:950; letter-spacing:.08em; line-height:1; text-transform:uppercase; }
+      .dancer-avatar-state.is-approved { border-color:rgba(52,211,153,.4); color:#86efc0; background:#0e251d; }
+      .dancer-avatar-state.is-checking { border-color:rgba(34,199,255,.4); color:#9aefff; background:#0b2027; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-upload-controls { display:grid; grid-template-columns:1fr; gap:10px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-guidance { text-align:center; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel > p[role="status"] { margin:0; color:#b9eff8; font-size:11px; line-height:1.4; text-align:center; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel button { width:100%; min-height:42px; }
+
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-grid,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .tv-video-source-grid { width:100% !important; max-width:100%; grid-template-columns:repeat(2,minmax(0,1fr)) !important; grid-auto-rows:1fr !important; justify-content:stretch; gap:10px; margin:0; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-action,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .tv-video-source-action { width:100% !important; min-width:0 !important; max-width:none !important; height:auto !important; min-height:52px !important; max-height:none !important; display:grid !important; grid-template-columns:36px minmax(0,1fr) !important; align-items:center; justify-items:start; gap:9px !important; padding:8px 10px !important; border-radius:12px !important; text-align:left; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-icon,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .tv-video-source-icon { width:36px; height:36px; border-radius:9px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-icon svg,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .tv-video-source-icon svg { width:21px; height:21px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-copy,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .tv-video-source-copy { display:grid; gap:1px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-copy strong,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .tv-video-source-copy strong { font-size:12px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-copy small,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .tv-video-source-copy small { font-size:9px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-cta,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .tv-video-source-cta { display:none; }
+
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .upload-panel { gap:12px; padding:0; border-radius:0; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .dancer-photo-upload-form { display:grid; grid-template-columns:1fr; align-items:stretch; justify-content:stretch; gap:10px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-upload-heading { display:block; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-upload-heading > span { display:block; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-upload-heading strong { color:#c5bdce; font-size:13px; font-weight:750; line-height:1.4; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-primary-choice,
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-upload-status { grid-column:auto; }
+      .dancer-media-manager-title { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:3px; border-top:1px solid rgba(255,255,255,.08); }
+      .dancer-media-manager-title strong { color:#fff; font-size:15px; }
+      .dancer-media-manager-title span { color:#aaa2b5; font-size:11px; font-weight:800; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list .photo-review-card { min-height:0; gap:8px; padding:8px; border-radius:12px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list .photo-preview { width:100%; aspect-ratio:4 / 5; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-card em { font-size:10px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-card-actions { gap:5px !important; }
+
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-studio-embedded { overflow:visible; padding:0; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-studio-embedded-head { display:block; margin:0 0 12px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-studio-embedded-head p { margin:0; color:#c5bdce; font-size:13px; line-height:1.4; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-upload-form { display:grid; grid-template-columns:1fr; gap:10px; overflow:visible; padding:0; border:0; border-radius:0; background:transparent; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-upload-form > * { grid-column:auto !important; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-upload-permissions strong { font-size:13px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-check { min-height:0; grid-template-columns:20px minmax(0,1fr) !important; align-items:start; gap:9px; padding:10px; border:1px solid rgba(255,255,255,.09); border-radius:11px; background:rgba(255,255,255,.035); font-size:12px; font-weight:700; letter-spacing:normal; line-height:1.45; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-check input { width:18px; height:18px; margin:1px 0 0; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-upload-requirements { color:#9f97aa; font-size:10px; font-weight:700; line-height:1.4; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-video-manager { margin-top:16px; padding-top:12px; border-top:1px solid rgba(255,255,255,.08); }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-manager-title h3 { font-size:15px; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-manager-title span { min-height:0; padding:0; color:#aaa2b5; background:transparent; font-size:11px; }
+
+      @media (max-width:620px) {
+        .dancer-profile-editor-modal-backdrop { align-items:end; padding:8px max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left)); }
+        .dancer-profile-builder-panel.dancer-profile-editor-modal,
+        .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"],
+        .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] { inset:auto; left:auto; bottom:auto; width:100%; max-height:min(88dvh,720px,calc(100dvh - var(--mydancr-preview-banner-offset,0px) - 16px)); padding:0; border-bottom:1px solid rgba(139,92,246,.34); border-radius:18px; transform:none; }
+        .dancer-profile-builder-panel.dancer-profile-editor-modal > header { padding:12px 12px 10px; }
+        .dancer-profile-builder-panel.dancer-profile-editor-modal > .dancer-profile-editor-modal-body { padding:12px; }
+        .dancer-profile-editor-modal-actions { grid-template-columns:1fr; gap:7px; padding:10px 12px max(10px,env(safe-area-inset-bottom)); }
+        .dancer-profile-editor-modal-actions > span:empty { display:none; }
+        .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
       }
     `}</style>
   );
