@@ -23,13 +23,9 @@ test("mobile navigation cannot cover the fixed profile video viewer", () => {
   );
   assert.match(
     homeSource,
-    /<button class="profile-action-overflow-toggle" id="profileActionOverflowToggle"[^>]*aria-haspopup="menu"[^>]*>/,
+    /<button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">Report<\/button>/,
   );
-  assert.match(
-    homeSource,
-    /<div class="profile-action-overflow-menu" id="profileActionOverflowMenu" role="menu" hidden>[\s\S]*?<button id="reportBtn" role="menuitem" type="button">Report profile<\/button>/,
-  );
-  assert.doesNotMatch(homeSource, /<button class="profile-report-action" id="reportBtn"/);
+  assert.doesNotMatch(homeSource, /profileActionOverflowToggle|profileActionOverflowMenu|<button class="profile-report-action" id="reportBtn"/);
 });
 
 test("mobile navigation cannot cover the fixed profile photo viewer", () => {

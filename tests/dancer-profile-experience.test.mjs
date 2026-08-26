@@ -54,18 +54,18 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(navigationActions, /className="public-profile-close"/);
   assert.match(profilePage, /\.profile-titlebar \{ position: relative; z-index: 10;/);
   assert.doesNotMatch(profilePage, /\.profile-titlebar \{ position: sticky;/);
-  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 72px;[\s\S]*?grid-template-columns:[\s\S]*?gap: 10px;/);
+  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: minmax\(120px, \.95fr\) minmax\(150px, 1\.05fr\) 44px;[\s\S]*?gap: 6px;/);
   assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 48px; height: 48px;/);
   assert.match(
     profilePage,
-    /@media \(max-width: 600px\) \{[\s\S]*?body\.dancr-button-system \.public-profile-shell \.profile-titlebar \{[\s\S]*?min-height: 70px !important;[\s\S]*?\.profile-titlebar-avatar \{ width: 46px; height: 46px; \}/,
+    /@media \(max-width: 600px\) \{[\s\S]*?body\.dancr-button-system \.public-profile-shell \.profile-titlebar \{[\s\S]*?min-height: 64px !important;[\s\S]*?\.profile-titlebar-avatar \{ width: 46px; height: 46px; \}/,
   );
   assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);
   assert.match(
     profilePage,
-    /\.profile-header-overflow-toggle, \.public-profile-close \{ width: 44px; min-height: 44px;/,
+    /\.public-profile-close \{ position: static; width: 44px; min-height: 44px;/,
   );
-  assert.match(profilePage, /\.public-profile-close \{ position: static; font-size: 26px; \}/);
+  assert.match(profilePage, /\.public-profile-close \{ position: static;[^}]*font-size: 26px;/);
   assert.match(profilePage, /\.profile-header-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?border-bottom: 0;/);
   assert.doesNotMatch(profileCarousel, /profile-media-heading|Photos &amp; TV|approved<\/span>/);
@@ -194,7 +194,9 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.doesNotMatch(profileActions, /rideControl|directionsControl|Working Now only|Venue required/);
   assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
   assert.doesNotMatch(profileActions, /profile-action-schedule|>Schedule</);
-  assert.match(profileActions, /className="profile-header-overflow"/);
+  assert.match(profileActions, /className="profile-header-report"/);
+  assert.match(profileActions, /className="profile-header-report-toggle"/);
+  assert.doesNotMatch(profileActions, /profile-header-overflow/);
   assert.match(profileActions, /Report profile/);
   assert.match(profileActions, /onClick=\{openReport\}/);
   assert.match(profileActions, /className="profile-report-dialog"/);

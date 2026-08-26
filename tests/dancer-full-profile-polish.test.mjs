@@ -123,8 +123,8 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     liveApp,
     /class="action-btn secondary profile-share-action profile-action-icon-control"[\s\S]*?data-profile-share-menu=/,
   );
-  assert.match(liveApp, /id="profileActionOverflowToggle"[\s\S]*?aria-haspopup="menu"/);
-  assert.match(liveApp, /<button id="reportBtn" role="menuitem" type="button">Report profile<\/button>/);
+  assert.match(liveApp, /class="profile-modal-report-link" id="reportBtn"[^>]*aria-label="Report profile">Report<\/button>/);
+  assert.doesNotMatch(liveApp, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);
   assert.match(liveActionsMarkup, /id="notifyBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-share-action/);
   assert.doesNotMatch(liveActionsMarkup, /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);
@@ -162,7 +162,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
-  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?grid-template-columns: repeat\(2, 44px\)/);
+  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?grid-template-columns: 44px/);
 });
 
 test("profile socials stay secondary, responsive, and absent when no links exist", () => {

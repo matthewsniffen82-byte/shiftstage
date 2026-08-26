@@ -6,7 +6,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type FormEvent,
   type PropsWithChildren,
@@ -169,30 +168,12 @@ export function DancerReportControl({
   dancerId: string;
   profileName: string;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [reportError, setReportError] = useState("");
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const closeMenu = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setMenuOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    document.addEventListener("pointerdown", closeMenu);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeMenu);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [menuOpen]);
 
   useEffect(() => {
     if (!reportDialogOpen) return;
@@ -210,7 +191,6 @@ export function DancerReportControl({
 
   function openReport() {
     if (reportSaving || reportSubmitted) return;
-    setMenuOpen(false);
     setReportError("");
     setReportDialogOpen(true);
   }
@@ -257,29 +237,16 @@ export function DancerReportControl({
   }
 
   return (
-    <div className="profile-header-overflow" ref={rootRef}>
+    <div className="profile-header-report">
       <button
-        aria-expanded={menuOpen}
-        aria-haspopup="menu"
-        aria-label="More profile actions"
-        className="profile-header-overflow-toggle"
-        onClick={() => setMenuOpen((open) => !open)}
+        aria-label="Report profile"
+        className="profile-header-report-toggle"
+        disabled={reportSaving || reportSubmitted}
+        onClick={openReport}
         type="button"
       >
-        <span aria-hidden="true">•••</span>
+        {reportSubmitted ? "Reported" : "Report"}
       </button>
-      {menuOpen ? (
-        <div className="profile-header-overflow-menu" role="menu">
-          <button
-            disabled={reportSaving || reportSubmitted}
-            onClick={openReport}
-            role="menuitem"
-            type="button"
-          >
-            {reportSubmitted ? "Profile reported" : "Report profile"}
-          </button>
-        </div>
-      ) : null}
       {reportSubmitted ? (
         <span className="profile-report-confirmation" role="status">Report submitted for review.</span>
       ) : null}

@@ -39876,11 +39876,12 @@
         /* Public profile identity and social proof share one compact header.
            The approved shift/deal card below remains an unchanged component. */
         #profileBackdrop #profileModal .profile-modal-summary {
-          grid-template-columns: minmax(116px, .95fr) minmax(0, 1.05fr) auto !important;
-          gap: 10px !important;
-          min-height: 72px !important;
+          grid-template-columns: minmax(120px, .95fr) minmax(150px, 1.05fr) 44px !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 64px !important;
           margin-inline: -14px !important;
-          padding: max(8px, calc(env(safe-area-inset-top, 0px) + 6px)) 14px 8px !important;
+          padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 14px 6px !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-person {
@@ -39893,6 +39894,51 @@
 
         #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
           min-width: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
+          min-width: 0 !important;
+          display: grid !important;
+          align-content: center !important;
+          gap: 2px !important;
+          overflow: hidden !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .profile-modal-name-row,
+        #profileBackdrop #profileModal .profile-modal-summary .profile-modal-context {
+          min-width: 0 !important;
+          max-width: 100% !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .profile-modal-context {
+          display: flex !important;
+          align-items: center !important;
+          gap: 5px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-report-link {
+          min-height: 20px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 2px;
+          border: 0;
+          border-radius: 0;
+          color: #81798b;
+          background: transparent;
+          box-shadow: none;
+          font-size: 8px;
+          font-weight: 800;
+          line-height: 1;
+          text-decoration: underline;
+          text-decoration-color: transparent;
+          text-underline-offset: 2px;
+          cursor: pointer;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-report-link:is(:hover, :focus-visible) {
+          color: #c9c1d2;
+          outline: none;
+          text-decoration-color: currentColor;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics {
@@ -39908,8 +39954,13 @@
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
           min-width: 0 !important;
-          gap: 2px !important;
-          padding: 2px !important;
+          min-height: 42px !important;
+          display: grid !important;
+          grid-template-rows: 22px 14px !important;
+          align-content: center !important;
+          justify-items: center !important;
+          gap: 1px !important;
+          padding: 2px 1px !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
@@ -39923,18 +39974,22 @@
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
+          max-width: 100% !important;
+          overflow: hidden !important;
           font-size: clamp(8px, 1.9vw, 10px) !important;
           line-height: 1.15 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-controls {
+          width: 44px;
           display: grid;
-          grid-template-columns: repeat(2, 44px);
-          align-items: center;
-          gap: 5px;
+          grid-template-columns: 44px;
+          align-self: start;
+          justify-self: end;
         }
 
-        #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-toggle,
         #profileBackdrop #profileModal #modalClose {
           position: static !important;
           inset: auto !important;
@@ -39951,21 +40006,9 @@
           box-shadow: none !important;
         }
 
-        #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-toggle {
-          font-size: 17px !important;
-          letter-spacing: .08em;
-        }
-
-        #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-menu {
-          top: calc(100% + 7px) !important;
-          right: 0 !important;
-          bottom: auto !important;
-          width: min(190px, 72vw) !important;
-        }
-
         #profileBackdrop #profileModal .modal-grid > .modal-actions {
           order: 0;
-          margin-top: 8px !important;
+          margin-top: 0 !important;
         }
 
         #profileBackdrop #profileModal .modal-grid > .profile-tonight-card {
@@ -39982,10 +40025,11 @@
 
         @media (max-width: 520px) {
           #profileBackdrop #profileModal .profile-modal-summary {
-            grid-template-columns: minmax(112px, .92fr) minmax(0, 1.08fr) auto !important;
-            gap: 6px !important;
+            grid-template-columns: minmax(108px, .92fr) minmax(0, 1.08fr) 44px !important;
+            gap: 5px !important;
+            min-height: 64px !important;
             margin-inline: -12px !important;
-            padding-inline: 12px !important;
+            padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 12px 6px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
@@ -40002,11 +40046,9 @@
           }
 
           #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: repeat(2, 44px);
-            gap: 3px;
+            grid-template-columns: 44px;
           }
 
-          #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-toggle,
           #profileBackdrop #profileModal #modalClose {
             width: 44px !important;
             height: 44px !important;
@@ -40016,14 +40058,12 @@
 
         @media (max-width: 340px) {
           #profileBackdrop #profileModal .profile-modal-summary {
-            grid-template-columns: minmax(0, 1fr) auto !important;
+            grid-template-columns: minmax(104px, .9fr) minmax(0, 1.1fr) 44px !important;
             gap: 5px !important;
-            min-height: 96px !important;
+            min-height: 62px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
-            grid-column: 1;
-            grid-row: 1;
             grid-template-columns: 42px minmax(0, 1fr);
             gap: 6px;
           }
@@ -40032,27 +40072,32 @@
             width: 42px !important;
           }
 
-          #profileBackdrop #profileModal .profile-modal-header-metrics {
-            grid-column: 1 / -1;
-            grid-row: 2;
-          }
-
           #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-column: 2;
-            grid-row: 1;
-            grid-template-columns: repeat(2, 44px);
-            gap: 3px;
+            grid-template-columns: 44px;
           }
 
-          #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-toggle,
           #profileBackdrop #profileModal #modalClose {
             width: 44px !important;
             height: 44px !important;
             min-height: 44px !important;
           }
 
+          #profileBackdrop #profileModal .profile-modal-name-row {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            align-items: center !important;
+            gap: 3px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-verified {
+            width: 18px !important;
+            height: 18px !important;
+            flex-basis: 18px !important;
+            font-size: 10px !important;
+          }
+
           #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
-            font-size: 9px !important;
+            font-size: 8px !important;
           }
         }
 
@@ -41535,6 +41580,7 @@
                 </div>
                 <div class="profile-modal-context" aria-live="polite">
                   <span class="pill" id="modalCity">Las Vegas</span>
+                  <button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">Report</button>
                 </div>
               </div>
               <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
@@ -41542,14 +41588,6 @@
           </div>
           <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
           <div class="profile-modal-header-controls">
-            <div class="profile-action-overflow">
-              <button class="profile-action-overflow-toggle" id="profileActionOverflowToggle" type="button" aria-label="More profile actions" aria-haspopup="menu" aria-expanded="false">
-                <span aria-hidden="true">•••</span>
-              </button>
-              <div class="profile-action-overflow-menu" id="profileActionOverflowMenu" role="menu" hidden>
-                <button id="reportBtn" role="menuitem" type="button">Report profile</button>
-              </div>
-            </div>
             <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
               <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
             </button>
@@ -41751,8 +41789,7 @@
     const modalProfileAvatar = document.getElementById("modalProfileAvatar");
     const modalProfileAvatarBorder = document.getElementById("modalProfileAvatarBorder");
     const modalProfileMetrics = document.getElementById("modalProfileMetrics");
-    const profileActionOverflowToggle = document.getElementById("profileActionOverflowToggle");
-    const profileActionOverflowMenu = document.getElementById("profileActionOverflowMenu");
+    const profileReportButton = document.getElementById("reportBtn");
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
@@ -52412,11 +52449,8 @@
       modalCity.textContent = city;
       modalCity.hidden = false;
       modalProfileMetrics.innerHTML = profileActivityMetricsMarkup(profile, city);
-      profileActionOverflowToggle.setAttribute("aria-expanded", "false");
-      profileActionOverflowMenu.hidden = true;
-      const profileReportButton = profileActionOverflowMenu.querySelector("#reportBtn");
       profileReportButton.disabled = false;
-      profileReportButton.textContent = "Report profile";
+      profileReportButton.textContent = "Report";
       profileReportButton.dataset.profile = profile.name;
       modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
@@ -61317,17 +61351,6 @@
     }
 
     profileModal.addEventListener("click", async (event) => {
-      const overflowToggle = event.target.closest("#profileActionOverflowToggle");
-      if (overflowToggle) {
-        const opening = profileActionOverflowMenu.hidden;
-        profileActionOverflowMenu.hidden = !opening;
-        profileActionOverflowToggle.setAttribute("aria-expanded", String(opening));
-        return;
-      }
-      if (!event.target.closest(".profile-action-overflow")) {
-        profileActionOverflowMenu.hidden = true;
-        profileActionOverflowToggle.setAttribute("aria-expanded", "false");
-      }
       if (handleQrClick(event)) return;
       if (handleShareClick(event)) return;
       if (!event.target.closest("[data-qr-popover]")) closeQrPopovers();
@@ -61366,13 +61389,11 @@
       }
       if (actionButton.id === "reportBtn") {
         if (actionButton.disabled) return;
-        profileActionOverflowMenu.hidden = true;
-        profileActionOverflowToggle.setAttribute("aria-expanded", "false");
         const city = citySelect.value;
         const profileName = actionButton.dataset.profile;
         const profile = findProfile(profileName);
         actionButton.disabled = true;
-        actionButton.textContent = "Submitting report";
+        actionButton.textContent = "Submitting";
         try {
           const data = await postOptionalAuthJson("/api/reports", {
             targetType: "dancer_profile",
@@ -61387,19 +61408,10 @@
           showToast("Report submitted for review");
         } catch (error) {
           actionButton.disabled = false;
-          actionButton.textContent = "Report profile";
+          actionButton.textContent = "Report";
           showToast(error.message || "Could not submit report");
         }
       }
-    });
-
-    profileModal.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || profileActionOverflowMenu.hidden) return;
-      event.preventDefault();
-      event.stopPropagation();
-      profileActionOverflowMenu.hidden = true;
-      profileActionOverflowToggle.setAttribute("aria-expanded", "false");
-      profileActionOverflowToggle.focus();
     });
 
     const modalCloseButton = document.getElementById("modalClose");

@@ -90,7 +90,8 @@ test("all schedule states share the same compact header stats, four-action, stat
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
   assert.match(liveActions, /Follow[\s\S]*?Notify[\s\S]*?\$\{goingButton\}[\s\S]*?Share/);
   assert.doesNotMatch(liveActions, /Report profile|profile-report-action/);
-  assert.match(liveApp, /id="profileActionOverflowToggle"[\s\S]*?id="reportBtn"/);
+  assert.match(liveApp, /class="profile-modal-report-link" id="reportBtn"[^>]*aria-label="Report profile">Report<\/button>/);
+  assert.doesNotMatch(liveApp, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.match(liveActions, /isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"/);
   assert.match(profileActions, /hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"/);
   assert.match(
@@ -110,8 +111,8 @@ test("selected actions, dynamic stats, and all existing action handlers remain i
   assert.match(liveApp, /followerCount === 1 \? "Follower" : "Followers"/);
   assert.match(liveApp, /tonightInterestCount\(profile\)\.toLocaleString\(\)/);
   assert.match(liveApp, /profileViewsToday\(profile, city\)\.toLocaleString\(\)/);
-  assert.match(profileActions, /className="profile-header-overflow-menu" role="menu"/);
-  assert.match(profileActions, /role="menuitem"/);
+  assert.match(profileActions, /className="profile-header-report-toggle"/);
+  assert.doesNotMatch(profileActions, /profile-header-overflow|role="menuitem"/);
   assert.match(profileActions, /targetType: "dancer_profile"/);
 });
 
