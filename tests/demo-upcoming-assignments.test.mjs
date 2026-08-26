@@ -8,11 +8,11 @@ const [manager, packageJson, postbuild] = await Promise.all([
   readFile(new URL("../scripts/manage-layout-review-postbuild.mjs", import.meta.url), "utf8"),
 ]);
 
-test("the guarded production operation enforces six Now, two Upcoming, and two unscheduled dancers", () => {
-  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-six-now-two-unscheduled-v1"/);
+test("the guarded production operation enforces six Now, three Upcoming, and one unscheduled dancer", () => {
+  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-six-now-three-upcoming-v1"/);
   assert.match(manager, /const WORKING_NOW_COUNT = 6/);
-  assert.match(manager, /const UPCOMING_COUNT = 2/);
-  assert.match(manager, /const NO_SCHEDULE_COUNT = 2/);
+  assert.match(manager, /const UPCOMING_COUNT = 3/);
+  assert.match(manager, /const NO_SCHEDULE_COUNT = 1/);
   assert.match(manager, /target !== "production"/);
   assert.match(manager, /Production writes require --confirm=/);
   assert.match(packageJson, /"demo:upcoming": "node scripts\/manage-demo-upcoming\.mjs"/);
@@ -26,16 +26,18 @@ test("demo schedule maintenance is explicit and never runs during an ordinary pr
   assert.match(postbuild, /upcomingSyncFlag && upcomingSyncFlag !== DEFAULT_UPCOMING_SYNC_FLAG/);
   assert.match(postbuild, /process\.env\.VERCEL_ENV !== "production"/);
   assert.match(postbuild, /new URL\("\.\/manage-demo-upcoming\.mjs", import\.meta\.url\)/);
-  assert.match(postbuild, /"--mode=apply"[\s\S]*?"--target=production"[\s\S]*?"--confirm=mydancr-six-now-two-unscheduled-v1"/);
+  assert.match(postbuild, /"--mode=apply"[\s\S]*?"--target=production"[\s\S]*?"--confirm=mydancr-six-now-three-upcoming-v1"/);
   assert.match(postbuild, /populationFlag \|\| dealSyncFlag \|\| scheduleSyncFlag/);
   assert.match(postbuild, /if \(!populationFlag && !dealSyncFlag && !scheduleSyncFlag\) \{[\s\S]*?LAYOUT_REVIEW_POPULATION_SKIPPED/);
 });
 
-test("Upcoming assignments preserve exactly six Working Now dancers and leave two without schedules", () => {
+test("Upcoming assignments preserve exactly six Working Now dancers and leave one without a schedule", () => {
   assert.match(manager, /loadWorkingNowDancerIds\(profileIds, now\)/);
   assert.match(manager, /workingNowIds\.size !== WORKING_NOW_COUNT/);
   assert.match(manager, /profiles\.filter\(\(profile\) => !workingNowIds\.has\(String\(profile\.id\)\)\)/);
   assert.match(manager, /slice\(0, UPCOMING_COUNT\)/);
+  assert.match(manager, /clearUpcomingAssignments\(profileIds, now\)/);
+  assert.match(manager, /loadUpcomingAssignments\(profileIds, now\)/);
   assert.match(manager, /noSchedule\.length !== NO_SCHEDULE_COUNT/);
   assert.match(manager, /peppermint-hippo-las-vegas/);
   assert.match(manager, /spearmint-rhino-las-vegas/);

@@ -35,7 +35,7 @@ if (shouldSyncUpcoming) {
       upcomingManagerPath,
       "--mode=apply",
       "--target=production",
-      "--confirm=mydancr-six-now-two-unscheduled-v1",
+      "--confirm=mydancr-six-now-three-upcoming-v1",
     ],
     {
       env: process.env,

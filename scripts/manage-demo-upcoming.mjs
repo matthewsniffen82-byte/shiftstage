@@ -5,12 +5,12 @@ import { createClient } from "@supabase/supabase-js";
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.env.DANCR_ENV_DIR?.trim() || process.cwd());
 
-const OPERATION_CONFIRMATION = "mydancr-six-now-two-unscheduled-v1";
+const OPERATION_CONFIRMATION = "mydancr-six-now-three-upcoming-v1";
 const DATASET_MARKER = "mydancr-layout-review-v1";
 const MANAGED_BY = "manage-demo-upcoming";
 const WORKING_NOW_COUNT = 6;
-const UPCOMING_COUNT = 2;
-const NO_SCHEDULE_COUNT = 2;
+const UPCOMING_COUNT = 3;
+const NO_SCHEDULE_COUNT = 1;
 const EMAIL_DOMAIN = "synthetic.mydancr.invalid";
 const DEMO_PROFILE_SLUGS = Object.freeze(
   Array.from({ length: 10 }, (_, index) => `layout-review-${String(index + 1).padStart(2, "0")}`),
@@ -115,7 +115,7 @@ async function applyAssignments() {
     })
     .slice(0, UPCOMING_COUNT);
 
-  await clearUpcomingAssignments(candidates.map((profile) => profile.id), now);
+  await clearUpcomingAssignments(profileIds, now);
 
   const assignedAt = new Date().toISOString();
   const rows = selectedProfiles.map((profile, index) => {
@@ -158,10 +158,7 @@ async function applyAssignments() {
     throw new Error(`Expected ${UPCOMING_COUNT} inserted assignments; received ${(data || []).length}.`);
   }
 
-  const verification = await loadUpcomingAssignments(
-    candidates.map((profile) => profile.id),
-    now,
-  );
+  const verification = await loadUpcomingAssignments(profileIds, now);
   if (verification.length !== UPCOMING_COUNT) {
     throw new Error(
       `Expected exactly ${UPCOMING_COUNT} Upcoming demo dancers after verification; found ${verification.length}.`,
