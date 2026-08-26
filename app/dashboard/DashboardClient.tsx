@@ -21,6 +21,10 @@ import {
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
 import DancerShiftManager from "./DancerShiftManager";
+import {
+  DANCER_PROFILE_VIDEOS_CHANGED_EVENT,
+  primeVideoPreviewFrame,
+} from "./dancer-profile-media-sync";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -3322,12 +3326,15 @@ function DancerProfilePreview({
     }
 
     let cancelled = false;
-    setIsMediaLoading(true);
-    setMediaError("");
-    setVideos([]);
-    void readJson("/api/dancer/tv/videos", headers)
-      .then((data) => {
-        if (cancelled) return;
+    let refreshTimer = 0;
+    let requestSequence = 0;
+    const loadVideos = async (showLoading = false) => {
+      const requestId = ++requestSequence;
+      if (showLoading) setIsMediaLoading(true);
+      setMediaError("");
+      try {
+        const data = await readJson("/api/dancer/tv/videos", headers);
+        if (cancelled || requestId !== requestSequence) return;
         const savedVideos = Array.isArray(data?.videos) ? data.videos : [];
         setVideos(savedVideos.flatMap((video: Record<string, unknown>) => {
           const id = String(video?.id || "").trim();
@@ -3339,18 +3346,35 @@ function DancerProfilePreview({
             durationSeconds: Math.max(0, Number(video?.durationSeconds || 0)),
           }];
         }));
-      })
-      .catch((error) => {
-        if (cancelled) return;
-        setVideos([]);
+        const hasProcessingVideo = savedVideos.some((video: Record<string, unknown>) => {
+          const status = String(video?.status || "").toLowerCase();
+          return status === "uploading" || status === "moderating";
+        });
+        window.clearTimeout(refreshTimer);
+        if (hasProcessingVideo) {
+          refreshTimer = window.setTimeout(() => void loadVideos(), 1_800);
+        }
+      } catch (error) {
+        if (cancelled || requestId !== requestSequence) return;
         setMediaError(error instanceof Error ? error.message : "Unable to load your saved profile videos.");
-      })
-      .finally(() => {
-        if (!cancelled) setIsMediaLoading(false);
-      });
+      } finally {
+        if (!cancelled && requestId === requestSequence && showLoading) setIsMediaLoading(false);
+      }
+    };
+    const refreshAfterVideoChange = () => {
+      window.clearTimeout(refreshTimer);
+      void loadVideos();
+    };
+
+    setVideos([]);
+    void loadVideos(true);
+    window.addEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
 
     return () => {
       cancelled = true;
+      requestSequence += 1;
+      window.clearTimeout(refreshTimer);
+      window.removeEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
     };
   }, [isOpen]);
 
@@ -3525,7 +3549,16 @@ function DancerProfilePreview({
                           onClick={() => openEditorSection("videos")}
                           type="button"
                         >
-                          {video ? <video aria-hidden="true" muted playsInline preload="metadata" src={video.videoUrl} /> : <span aria-hidden="true">+</span>}
+                          {video ? (
+                            <video
+                              aria-hidden="true"
+                              muted
+                              playsInline
+                              preload="metadata"
+                              src={video.videoUrl}
+                              onLoadedMetadata={(event) => primeVideoPreviewFrame(event.currentTarget)}
+                            />
+                          ) : <span aria-hidden="true">+</span>}
                           {video ? <i aria-hidden="true">▶</i> : null}
                           <small>{video ? `Video ${index + 1}` : `Video ${index + 1}`}</small>
                         </button>
@@ -3605,7 +3638,7 @@ function DancerProfilePreview({
                           type="button"
                         >
                           <SocialPlatformIcon platform={platform.key} />
-                          <span aria-hidden="true">+</span>
+                          <span aria-hidden="true">{hasLink ? "✓" : "+"}</span>
                         </button>
                       );
                     })}
@@ -8989,6 +9022,8 @@ function DashboardStyles() {
       .dancer-profile-builder-social-platform { position:relative; cursor:pointer; }
       .dancer-profile-builder-social-platform > svg { position:relative; z-index:1; }
       .dancer-profile-builder-social-platform > span { position:absolute; z-index:2; top:-2px; right:-2px; width:18px; height:18px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.34); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 3px 9px rgba(0,0,0,.5); font-size:12px; font-weight:950; line-height:1; }
+      .dancer-profile-builder-social-platform.is-added { border-color:rgba(64,220,148,.58) !important; background:rgba(36,176,112,.1) !important; }
+      .dancer-profile-builder-social-platform.is-added > span { border-color:rgba(139,255,199,.55); background:#168558; }
       body.dancr-button-system .public-profile-shell .dancer-profile-builder-social-platform { width:48px !important; min-width:48px !important; height:48px !important; min-height:48px !important; flex:0 0 48px !important; padding:0 !important; border-radius:50% !important; }
       .dancer-social-link-modal-backdrop { position:fixed; z-index:35; inset:0; display:grid; align-items:end; justify-items:center; padding:12px max(12px,env(safe-area-inset-right)) max(12px,calc(92px + env(safe-area-inset-bottom))) max(12px,env(safe-area-inset-left)); background:rgba(0,0,0,.66); backdrop-filter:blur(4px); }
       .dancer-profile-builder-panel.dancer-social-link-modal { position:relative; z-index:1; inset:auto; left:auto; bottom:auto; width:min(100%,460px); max-height:min(72dvh,440px); grid-template-rows:auto minmax(0,1fr); padding:0; border:1px solid rgba(139,92,246,.34); border-radius:20px; background:linear-gradient(180deg,rgba(16,13,25,.995),rgba(7,7,11,.998)); box-shadow:0 24px 80px rgba(0,0,0,.68),0 0 30px rgba(124,58,237,.16); transform:none; }

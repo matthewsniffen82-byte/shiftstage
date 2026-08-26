@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
@@ -10,6 +10,10 @@ import {
   requestDancerTvVideoJson,
   requestDancerTvVideosJson,
 } from "./dashboard-session";
+import {
+  announceDancerProfileVideosChanged,
+  primeVideoPreviewFrame,
+} from "./dancer-profile-media-sync";
 const MAX_VIDEO_DURATION_SECONDS = 30;
 
 type Workspace = {
@@ -66,23 +70,17 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const currentVideoCount = workspace?.videos.length || 0;
   const atVideoLimit = currentVideoCount >= maxVideos;
   const videoPermissionsConfirmed = consentConfirmed && rightsConfirmed;
+  const hasProcessingVideos = workspace?.videos.some((video) => (
+    video.status === "uploading" || video.status === "moderating"
+  )) || false;
 
-  useEffect(() => {
-    loadWorkspace();
-  }, []);
-
-  useEffect(() => () => {
-    queuedPreviewUrlsRef.current.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
-    queuedPreviewUrlsRef.current.clear();
-  }, []);
-
-  async function loadWorkspace() {
+  const loadWorkspace = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!readDashboardAccessToken("dancer")) {
       setStatus("Sign in as a dancer to manage MyDancr TV.");
       setIsLoading(false);
       return;
     }
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     try {
       const data = await requestDancerTvVideosJson({
         cache: "no-store",
@@ -92,9 +90,33 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load MyDancr TV Studio.");
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    void loadWorkspace();
+  }, [loadWorkspace]);
+
+  useEffect(() => {
+    if (!hasProcessingVideos) return;
+    let refreshInFlight = false;
+    const interval = window.setInterval(() => {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      void loadWorkspace({ silent: true })
+        .then(() => announceDancerProfileVideosChanged())
+        .finally(() => {
+          refreshInFlight = false;
+        });
+    }, 1_800);
+    return () => window.clearInterval(interval);
+  }, [hasProcessingVideos, loadWorkspace]);
+
+  useEffect(() => () => {
+    queuedPreviewUrlsRef.current.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+    queuedPreviewUrlsRef.current.clear();
+  }, []);
 
   function queueVideoFiles(files: File[], source: QueuedVideo["source"]) {
     if (!consentConfirmed || !rightsConfirmed) {
@@ -236,7 +258,10 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       ]);
       if (libraryInputRef.current) libraryInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
-      if (submittedCount) await loadWorkspace();
+      if (submittedCount) {
+        await loadWorkspace({ silent: true });
+        announceDancerProfileVideosChanged();
+      }
       setStatus([
         submittedCount ? `${submittedCount} ${submittedCount === 1 ? "video" : "videos"} uploaded and sent through automatic review` : "",
         failedItems.length ? `${failedItems.length} ready to retry` : "",
@@ -264,6 +289,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           remainingVideoSlots: Math.min(current.maxVideos, current.remainingVideoSlots + 1),
         }
         : current);
+      announceDancerProfileVideosChanged();
       setStatus(data.message || "Video removed from MyDancr TV.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to remove video.");
@@ -408,7 +434,14 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             <div className="tv-upload-queue" aria-label="Video upload progress">
               {queuedVideos.map((item, index) => (
                 <article className={`tv-upload-queue-item ${uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item.id}>
-                  <video className="tv-upload-preview" muted playsInline preload="metadata" src={item.previewUrl} />
+                  <video
+                    className="tv-upload-preview"
+                    muted
+                    playsInline
+                    preload="auto"
+                    src={item.previewUrl}
+                    onLoadedMetadata={(event) => primeVideoPreviewFrame(event.currentTarget)}
+                  />
                   <div>
                     <strong>Selected video {index + 1}</strong>
                     <small>{item.stage === "validating" ? "Validating video" : item.stage === "uploading" ? "Uploading securely" : item.stage === "checking" ? "Running automatic review" : item.error ? "Upload failed" : "Waiting to upload"}</small>
@@ -442,7 +475,15 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
             <article className="tv-managed-video" key={video.id}>
-              {video.videoUrl ? <video controls playsInline preload="none" src={video.videoUrl} /> : <div className="tv-video-unavailable">Video unavailable</div>}
+              {video.videoUrl ? (
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  src={video.videoUrl}
+                  onLoadedMetadata={(event) => primeVideoPreviewFrame(event.currentTarget)}
+                />
+              ) : <div className="tv-video-unavailable">Video unavailable</div>}
               <div>
                 <span className={`tv-video-status status-${video.status}`}>{statusLabel(video.status)}</span>
                 {video.moderationDecision ? (

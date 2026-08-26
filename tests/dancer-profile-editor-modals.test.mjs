@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboard, dancerStudio] = await Promise.all([
+const [dashboard, dancerStudio, mediaSync] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/dancer-profile-media-sync.ts", import.meta.url), "utf8"),
 ]);
 
 const identityEditor = dashboard.match(/function DancerSetupPanel\([\s\S]*?(?=\nfunction DancerAvatarPanel)/)?.[0] || "";
@@ -54,6 +55,23 @@ test("video editor keeps both permission gates and hides the technical library c
   assert.doesNotMatch(dancerStudio, /0\/50|\{currentVideoCount\}\/\{maxVideos\}|up to 50|maximum 50/i);
   assert.match(dancerStudio, /currentVideoCount >= maxVideos/);
   assert.match(dancerStudio, /const selectedFiles = files\.slice\(0, availableSlots\)/);
+});
+
+test("approved videos refresh into the builder and video cards render a visible preview frame", () => {
+  assert.match(dancerStudio, /announceDancerProfileVideosChanged\(\)/);
+  assert.match(dancerStudio, /hasProcessingVideos[\s\S]*?window\.setInterval/);
+  assert.match(dashboard, /addEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
+  assert.match(dashboard, /status === "uploading" \|\| status === "moderating"/);
+  assert.match(dashboard, /window\.setTimeout\(\(\) => void loadVideos\(\), 1_800\)/);
+  assert.match(dancerStudio, /onLoadedMetadata=\{\(event\) => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
+  assert.match(dashboard, /onLoadedMetadata=\{\(event\) => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
+  assert.match(mediaSync, /video\.currentTime = Math\.min\(0\.15, Math\.max\(0\.05, video\.duration \/ 100\)\)/);
+});
+
+test("saved social platforms use a populated state instead of retaining an add badge", () => {
+  assert.match(dashboard, /hasLink \? "Edit" : "Add"/);
+  assert.match(dashboard, /\{hasLink \? "✓" : "\+"\}/);
+  assert.match(dashboard, /dancer-profile-builder-social-platform\.is-added/);
 });
 
 test("the three-item counter remains the authoritative profile essentials counter", () => {
