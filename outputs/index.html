@@ -57866,9 +57866,9 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", "Deals")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", "Deals")}</button>`;
       }
-      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deals status at ${venueName}">${actionButtonLabel("qr", "Deals")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deals status at ${venueName}">${actionButtonLabel("qr", "Deals")}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
@@ -57892,13 +57892,13 @@
       const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow });
       const directionsMarkup = venueDirectionsMarkup({
         venue,
-        className: "home-discovery-feed-directions venue-directions-btn",
+        className: "home-discovery-feed-directions venue-directions-btn venue-card-primary-action venue-card-directions-action",
         city
       });
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "tonight_feed",
-        className: "feed-card-action feed-uber-ride home-venue-discovery-uber"
+        className: "feed-card-action feed-uber-ride home-venue-discovery-uber venue-card-primary-action venue-card-ride-action"
       });
       const workingLabel = `${workingNow.length} working now`;
       const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
@@ -57919,15 +57919,15 @@
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
-          <div class="home-venue-discovery-context-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} primary actions">
+          <div class="home-venue-discovery-context-actions venue-card-primary-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} primary actions">
             ${directionsMarkup}
             ${rideMarkup}
           </div>
-          <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} secondary actions">
-            <button class="feed-card-action home-venue-discovery-profile-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
+          <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail venue-card-secondary-actions" aria-label="${safeName} secondary actions">
+            <button class="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
             ${railQrMarkup}
-            <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
-            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Favorite"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Saved" : "Favorite")}</button>
+            <button class="feed-card-action home-dancer-grid-share venue-card-secondary-action venue-card-share-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
+            <button class="feed-card-action venue-card-secondary-action venue-card-favorite-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Favorite"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Saved" : "Favorite")}</button>
           </div>
         </article>
       `;
