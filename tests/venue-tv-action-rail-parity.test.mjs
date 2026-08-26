@@ -29,7 +29,7 @@ test("venue cards retain Deal availability states while TV renders Deals only wh
 test("mobile venue actions use a horizontal discovery row while TV keeps compact glass geometry", () => {
   assert.match(aesthetic, /\.home-tv-feed-profile-action \{[\s\S]*?width: 46px !important;[\s\S]*?height: 46px !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?\.home-tv-feed-profile-action \.action-icon > svg \{[\s\S]*?width: 19px !important;[\s\S]*?height: 19px !important;/);
   assert.match(aesthetic, /\.home-venue-discovery-profile-action \{[\s\S]*?width: 52px !important;[\s\S]*?height: 52px !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?\.home-venue-discovery-profile-action \.action-icon > svg \{[\s\S]*?width: 21px !important;[\s\S]*?height: 21px !important;/);
-  assert.match(aesthetic, /Final mobile Clubs geometry[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?\.home-venue-discovery-action-rail \.feed-card-action,[\s\S]*?width: 100% !important;[\s\S]*?height: 47px !important;[\s\S]*?border-radius: 0 !important/);
-  assert.match(aesthetic, /Final mobile Clubs geometry[\s\S]*?\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?var\(--dancr-color-success\)/);
+  assert.match(aesthetic, /Clubs card presentation repair[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?\.home-venue-discovery-action-rail \.feed-card-action,[\s\S]*?width: 100% !important;[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 11px !important/);
+  assert.match(aesthetic, /Clubs card presentation repair[\s\S]*?\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?rgba\(34, 197, 94, 0\.5\)/);
   assert.match(aesthetic, /Active cashier NFC availability keeps one identical emerald signal on TV[\s\S]*?home-venue-discovery-rail-qr\.is-available,[\s\S]*?home-tv-feed-deal-action\.is-available[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)/);
 });

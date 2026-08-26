@@ -357,7 +357,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   );
   assert.match(
     aesthetic,
-    /Mobile Clubs is a fast discovery list[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important;[\s\S]*?height: clamp\(305px, 80\.8vw, 340px\) !important;[\s\S]*?min-height: 305px !important;[\s\S]*?max-height: 340px !important;/,
+    /Clubs card presentation repair[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(320px, 84vw, 348px\) !important;[\s\S]*?min-height: 320px !important;[\s\S]*?max-height: 348px !important;/,
   );
   assert.match(
     homeSource,
@@ -602,13 +602,11 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /home-discovery-feed-open-profile/);
   assert.doesNotMatch(venueSlide, /home-discovery-feed-position|\$\{index \+ 1\} \/ \$\{total\}/);
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
+  assert.match(venueSlide, /const railQrMarkup = homeVenueDiscoveryQrMarkup\(venue\)/);
+  assert.doesNotMatch(venueSlide, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
   assert.match(
     venueSlide,
-    /const activeDealCount = venue\.activeDeal\?\.id[\s\S]*?const dealIndicatorMarkup = activeDealCount[\s\S]*?data-club-deal-count="\$\{activeDealCount\}"[\s\S]*?homeVenueDiscoveryQrMarkup\(venue\)/,
-  );
-  assert.match(
-    venueSlide,
-    /home-venue-discovery-name-row[\s\S]*?\$\{dealIndicatorMarkup\}[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
+    /home-venue-discovery-name-row[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
   );
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
   assert.match(
@@ -661,7 +659,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-deal-indicator \{[\s\S]*?border: 1px solid var\(--dancr-color-success-strong\);[\s\S]*?text-transform: uppercase;/,
+    /Clubs card presentation repair[\s\S]*?\.home-venue-discovery-deal-indicator \{[\s\S]*?display: none !important;/,
   );
   assert.match(
     homeSource,
@@ -740,7 +738,7 @@ test("Now grid cards keep production actions while Dancers directory cards link 
 test("mobile venue cards use a compact discovery footprint while dancer cards keep their media canvas", () => {
   assert.match(
     aesthetic,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(305px, 80\.8vw, 340px\) !important;[\s\S]*?min-height: 305px !important;[\s\S]*?max-height: 340px !important;[\s\S]*?border-radius: 18px !important;/,
+    /Clubs card presentation repair[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(320px, 84vw, 348px\) !important;[\s\S]*?min-height: 320px !important;[\s\S]*?max-height: 348px !important;[\s\S]*?border-radius: 20px !important;/,
   );
   assert.match(
     homeSource,
@@ -748,7 +746,7 @@ test("mobile venue cards use a compact discovery footprint while dancer cards ke
   );
   assert.match(
     aesthetic,
-    /grid-template-rows: 104px minmax\(0, 1fr\) 46px 48px !important;[\s\S]*?\.home-venue-discovery-art \{[\s\S]*?height: 104px !important;/,
+    /Clubs card presentation repair[\s\S]*?grid-template-rows: 112px minmax\(0, 1fr\) 52px 58px !important;[\s\S]*?\.home-venue-discovery-art \{[\s\S]*?height: 112px !important;/,
   );
 });
 

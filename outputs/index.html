@@ -57768,15 +57768,11 @@
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
       const followsVenue = isFollowingVenue(city, venue.name);
-      const activeDealCount = venue.activeDeal?.id ? (venue.activeDeals?.length || 1) : 0;
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
       const hoursMarkup = operatingStatus.hoursLabel
         ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span></span>`
         : "";
       const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
-      const dealIndicatorMarkup = activeDealCount
-        ? `<span class="home-venue-discovery-deal-indicator" data-club-deal-count="${activeDealCount}">${activeDealCount === 1 ? "Deal" : `${activeDealCount} Deals`}</span>`
-        : "";
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);
       const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow });
       const directionsMarkup = venueDirectionsMarkup({
@@ -57804,7 +57800,6 @@
             <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
             <div class="home-venue-discovery-name-row">
               <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
-              ${dealIndicatorMarkup}
             </div>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>

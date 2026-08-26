@@ -30,7 +30,7 @@ test("venue discovery uses inline one-column cards with visible continuation", (
   );
   assert.match(
     aesthetic,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(305px, 80\.8vw, 340px\) !important;[\s\S]*?min-height: 305px !important;[\s\S]*?max-height: 340px !important;[\s\S]*?border-radius: 18px !important;/,
+    /Clubs card presentation repair[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(320px, 84vw, 348px\) !important;[\s\S]*?min-height: 320px !important;[\s\S]*?max-height: 348px !important;[\s\S]*?border-radius: 20px !important;/,
   );
   assert.doesNotMatch(homeSource, /calc\(100dvh - 180px\)/);
   assert.match(

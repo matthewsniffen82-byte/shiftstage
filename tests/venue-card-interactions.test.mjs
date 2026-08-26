@@ -49,8 +49,9 @@ test("venue cards open the live profile while revenue and customer actions remai
   );
   assert.match(
     venueSwipeRenderer,
-    /const activeDealCount = venue\.activeDeal\?\.id[\s\S]*?homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?\$\{dealIndicatorMarkup\}[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow/,
   );
+  assert.doesNotMatch(venueSwipeRenderer, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
   assert.match(
     venueSwipeRenderer,
     /home-venue-discovery-context-actions[\s\S]*?aria-label="\$\{safeName\} primary actions"[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}/,
@@ -80,25 +81,27 @@ test("mobile club cards compact every data state without replacing interaction s
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
-  assert.match(
-    venueSwipeRenderer,
-    /const activeDealCount = venue\.activeDeal\?\.id \? \(venue\.activeDeals\?\.length \|\| 1\) : 0;[\s\S]*?const dealIndicatorMarkup = activeDealCount[\s\S]*?: "";/,
-  );
+  assert.doesNotMatch(venueSwipeRenderer, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
+  assert.match(venueSwipeRenderer, /const railQrMarkup = homeVenueDiscoveryQrMarkup\(venue\)/);
   assert.match(
     venueSwipeRenderer,
     /venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?Hours · \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/,
   );
   assert.match(
     aesthetic,
-    /Mobile Clubs is a fast discovery list[\s\S]*?height: clamp\(305px, 80\.8vw, 340px\) !important;[\s\S]*?grid-template-rows: 104px minmax\(0, 1fr\) 46px 48px !important;/,
+    /Clubs card presentation repair[\s\S]*?height: clamp\(320px, 84vw, 348px\) !important;[\s\S]*?grid-template-rows: 112px minmax\(0, 1fr\) 52px 58px !important;/,
   );
   assert.match(
     aesthetic,
-    /Final mobile Clubs geometry[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?height: 47px !important;[\s\S]*?border-radius: 0 !important;/,
+    /Clubs card presentation repair[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?height: 92px !important;[\s\S]*?max-height: 92px !important;[\s\S]*?object-fit: contain !important;[\s\S]*?transform: none !important;/,
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?var\(--dancr-color-success\)[\s\S]*?\[data-venue-follow\]:is\(\.is-active, \[aria-pressed="true"\]\) \{[\s\S]*?var\(--dancr-color-brand-primary\)/,
+    /Clubs card presentation repair[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 11px !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /Clubs card presentation repair[\s\S]*?\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?rgba\(34, 197, 94, 0\.5\)[\s\S]*?\[data-venue-follow\]:is\(\.is-active, \[aria-pressed="true"\]\) \{[\s\S]*?rgba\(139, 92, 246, 0\.52\)/,
   );
 });
 
