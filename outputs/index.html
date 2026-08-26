@@ -46869,7 +46869,7 @@
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
         qrButton.setAttribute("aria-label", `Open instructions for the ${config.venueName || "active"} Club Deal`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>How to use</strong><small>View steps</small></span>`;
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>How to use</strong></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({
@@ -47654,7 +47654,6 @@
             <div class="profile-club-deal-copy">
               <strong class="profile-club-deal-label">Active Club Deal</strong>
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
-              <small>${offerCount > 1 ? "Tap to choose an offer and view instructions" : "Tap How to use for instructions"}</small>
             </div>
             <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
@@ -51156,9 +51155,7 @@
       if (unavailableCopy[requirement]) {
         return `<small class="profile-action-requirement is-unavailable">${unavailableCopy[requirement]}</small>`;
       }
-      if (isCustomerSession() || !requirement) return "";
-      const isPublic = requirement === "public";
-      return `<small class="profile-action-requirement ${isPublic ? "is-public" : ""}">${isPublic ? "No sign-in needed" : "Sign in required"}</small>`;
+      return "";
     }
 
     function profileActionButtonMarkup(icon, label, requirement = "") {
@@ -51174,13 +51171,12 @@
       const canMarkGoing = Boolean(profile?.scheduled && profile.shiftId);
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn profile-action-icon-control secondary ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
+        ? `<button class="action-btn going-btn profile-action-icon-control secondary ${isGoingTonight ? "is-going" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
         : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable has-requirement" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle, "no-shift")}</button>`;
-      const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
         <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
-          <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow", "account")}</button>
-          <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notified" : "Notify", "account")}</button>
+          <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow", "account")}</button>
+          <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notified" : "Notify", "account")}</button>
           ${goingButton}
           <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share", "public")}</button>
           <button class="profile-report-action" id="reportBtn" type="button" data-profile="${profile.name}">Report profile</button>

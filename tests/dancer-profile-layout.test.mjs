@@ -213,13 +213,14 @@ test("active full-profile Club Deals render a compact cashier-tap action and use
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
   assert.match(activeDealMarkup, /class="profile-club-deal-label">Active Club Deal<\/strong>/);
   assert.match(activeDealMarkup, /class="profile-club-deal-title">\$\{escapeHtml\(dealTitle\)\}<\/b>/);
-  assert.match(activeDealMarkup, /Tap How to use for instructions/);
+  assert.doesNotMatch(activeDealMarkup, /Tap How to use for instructions|Tap to choose an offer and view instructions/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?View all \$\{offers\.length\}[\s\S]*?Club Deals[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?How to use[\s\S]*?View steps/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?View all \$\{offers\.length\}[\s\S]*?Club Deals[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?How to use/,
   );
+  assert.doesNotMatch(liveApp, /How to use<\/strong><small>View steps/);
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
   assert.doesNotMatch(liveApp, /profile-club-deal-count/);
   assert.match(

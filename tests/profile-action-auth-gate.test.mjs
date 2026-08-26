@@ -219,8 +219,7 @@ test("venue follows are empty and unavailable until a real customer session is a
 
 test("public profiles keep Going visible and enable it for current or upcoming posted shifts", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
-  assert.match(actionsSource, /showSignedOutRequirements = savedLoaded && !token/);
-  assert.match(actionsSource, /profile-action-requirement">Sign in required/);
+  assert.doesNotMatch(actionsSource, /showSignedOutRequirements|Sign in required/);
   assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| shifts\[0\] \|\| null/);
   assert.match(actionsSource, /<button[\s\S]*?profile-action-going[\s\S]*?\{isGoing \? "Going ✓" : "I’m Going"\}[\s\S]*?No shift posted/);
   for (const action of ["follow", "notify"]) {
@@ -245,9 +244,14 @@ test("public profiles keep Going visible and enable it for current or upcoming p
 });
 
 test("the live mobile profile separates profile actions from venue travel actions", () => {
+  const liveActionMarkup = sourceBetween(
+    homeSource,
+    "function profileActionRequirementMarkup(requirement)",
+    "async function refreshProfileGoingState(profile)",
+  );
   assert.match(homeSource, /function profileActionRequirementMarkup\(requirement\)/);
-  assert.match(homeSource, /Sign in required/);
-  assert.match(homeSource, /No sign-in needed/);
+  assert.doesNotMatch(liveActionMarkup, /Sign in required|No sign-in needed/);
+  assert.match(liveActionMarkup, /"no-shift": "No shift posted"/);
   assert.match(
     homeSource,
     /profileActionButtonMarkup\([^)]*"account"[^)]*\)/,

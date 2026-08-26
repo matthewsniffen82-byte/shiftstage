@@ -125,13 +125,11 @@ function DancerProfileActionPreviewIcon({
 export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
   return (
     <div className="live-actions is-no-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
-      <button className="profile-action-secondary profile-action-icon-control profile-action-requires-account profile-action-preview-static" disabled type="button">
+      <button className="profile-action-secondary profile-action-icon-control profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="personPlus" /><span>Follow</span></span>
-        <small className="profile-action-requirement">Sign in required</small>
       </button>
-      <button className="profile-action-secondary profile-action-icon-control profile-action-requires-account profile-action-preview-static" disabled type="button">
+      <button className="profile-action-secondary profile-action-icon-control profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="bell" /><span>Notify</span></span>
-        <small className="profile-action-requirement">Sign in required</small>
       </button>
       <button aria-disabled="true" className="profile-action-secondary profile-action-going profile-action-icon-control profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
@@ -195,7 +193,6 @@ export function DancerProfileActions({
   const hasLiveActions = Boolean(actionShift?.isActive);
   const hasScheduledActions = Boolean(actionShift);
   const isGoing = Boolean(actionShift && saved.goingShiftIds.includes(actionShift.id));
-  const showSignedOutRequirements = savedLoaded && !token;
 
   useEffect(() => {
     let active = true;
@@ -459,7 +456,7 @@ export function DancerProfileActions({
       <div className={`live-actions${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
           aria-pressed={saved.following}
-          className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
+          className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
           type="button"
           onClick={() => {
             if (requireCustomerAccount("follow")) updateFollow(false);
@@ -470,13 +467,10 @@ export function DancerProfileActions({
             <DancerProfileActionPreviewIcon type={saved.following ? "check" : "personPlus"} />
             <span>{saved.following ? "Following" : "Follow"}</span>
           </span>
-          {showSignedOutRequirements ? (
-            <small className="profile-action-requirement">Sign in required</small>
-          ) : null}
         </button>
         <button
           aria-pressed={saved.notificationsEnabled}
-          className={`profile-action-secondary profile-action-icon-control${saved.notificationsEnabled ? " is-selected" : ""}${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
+          className={`profile-action-secondary profile-action-icon-control${saved.notificationsEnabled ? " is-selected" : ""}`}
           disabled={!savedLoaded || followSaving}
           onClick={() => {
             if (requireCustomerAccount("notify")) updateNotifications();
@@ -487,9 +481,6 @@ export function DancerProfileActions({
             <DancerProfileActionPreviewIcon type={saved.notificationsEnabled ? "check" : "bell"} />
             <span>{saved.notificationsEnabled ? "Notified" : "Notify"}</span>
           </span>
-          {showSignedOutRequirements ? (
-            <small className="profile-action-requirement">Sign in required</small>
-          ) : null}
         </button>
         <button
           aria-disabled={!actionShift ? "true" : undefined}
