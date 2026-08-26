@@ -55,6 +55,7 @@ test("mobile venue identity keeps its copy full-width above a dedicated lineup r
 
   assert.match(hierarchy, /grid-template-rows: 96px minmax\(100px, 1fr\) 48px 56px !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-logo \{[\s\S]*?height: 90px !important;/);
+  assert.match(hierarchy, /:is\(\.home-venue-discovery-name-row, \.home-venue-discovery-location, \.home-venue-discovery-meta\) \{[\s\S]*?transform: translateY\(8px\) !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?position: static !important;[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-lineup-label \{[\s\S]*?min-width: 46px !important;[\s\S]*?rgba\(46, 229, 138, 0\.34\)/);
   assert.match(hierarchy, /span:not\(\.action-icon\) \{[\s\S]*?white-space: nowrap !important;[\s\S]*?overflow-wrap: normal !important;[\s\S]*?word-break: normal !important;/);
