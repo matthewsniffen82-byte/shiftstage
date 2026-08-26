@@ -107,7 +107,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /\.action-icon-clock > svg \{[\s\S]*?--profile-icon-offset-x: -\.5px;/);
   assert.match(profilePage, /data-profile-action-icon="personPlus"[\s\S]*?width: 26px;[\s\S]*?data-profile-action-icon="bell"[\s\S]*?width: 22px;/);
   assert.match(profilePage, /button:not\(\.profile-action-icon-control\):not\(\.profile-report-action\)[\s\S]*?grid-template-rows: 18px 9px;/);
-  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 4px;[\s\S]*?row-gap: 0;[\s\S]*?padding: 2px 0 0;/);
+  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 4px;[\s\S]*?row-gap: 0;[\s\S]*?padding: 1px 0 0;/);
   assert.match(liveApp, /#profileBackdrop \.modal-actions \.profile-action-icon-control \.action-icon \{[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(liveApp, /action-icon action-icon-\$\{resolvedType\}/);
   assert.match(liveApp, /data-action-icon="\$\{resolvedType\}"[\s\S]*?aria-hidden="true"/);

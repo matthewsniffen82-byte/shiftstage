@@ -414,23 +414,24 @@ function PublicProfileStyles() {
       .profile-metrics > div { min-width: 0; display: grid; gap: 2px; justify-items: center; padding: 4px; }
       .profile-metrics dd { margin: 0; color: #eee9f5; font-size: clamp(19px, 3.75vw, 24px); font-weight: 900; letter-spacing: .01em; line-height: 1.08; }
       .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; line-height: 1.25; text-align: center; }
-      .profile-social-section { min-height: 0; display: grid; margin-top: 0; margin-bottom: 12px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-social-section { min-height: 0; display: grid; margin: 0 0 2px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .social-list-heading h2 { margin: 0; font-size: 15px; line-height: 1.1; }
-      .social-list { width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+      .social-list { width: fit-content; max-width: 100%; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 4px; margin-inline: auto; overflow-x: auto; scrollbar-width: none; }
+      .social-list::-webkit-scrollbar { display: none; }
       .social-list a { position: relative; width: 44px; min-width: 44px; height: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: transparent; box-shadow: none; text-decoration: none; transition: transform .16s ease; }
-      .social-list a::before { content: ""; position: absolute; inset: 2px; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); transition: border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+      .social-list a::before { content: ""; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); transform: translate(-50%, -50%); transition: border-color .16s ease, background .16s ease, box-shadow .16s ease; }
       .social-list a:hover { transform: translateY(-1px); }
       .social-list a:hover::before { border-color: rgba(126,234,255,.56); background: linear-gradient(135deg, rgba(139,92,246,.22), rgba(34,199,255,.12)); box-shadow: 0 0 18px rgba(34,199,255,.1); }
       .social-list a:focus-visible { outline: none; }
       .social-list a:focus-visible::before { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 2px; }
-      .social-list a svg { position: relative; z-index: 1; width: 18px; height: 18px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .social-list a svg { position: relative; z-index: 1; width: 15px; height: 15px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .social-list a.social-link-instagram svg, .social-list a.social-link-x svg { fill: none; }
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
-      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 0; padding: 2px 0 0; }
+      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 0; padding: 1px 0 0; }
       .live-actions.is-no-live-shift { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 11px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
@@ -451,7 +452,7 @@ function PublicProfileStyles() {
       .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width: 13.75px; height: 13.75px; }
       .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width: 15.25px; height: 15.25px; }
       .profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon { width: 13px; height: 13px; }
-      body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control, body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control { min-height: 50px; align-self: stretch; flex-direction: column; justify-content: flex-start; gap: 1px; padding: 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control, body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control { min-height: 44px; align-self: stretch; flex-direction: column; justify-content: center; gap: 0; padding: 1px 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .live-actions > button.profile-action-icon-control:disabled { cursor: default; }
       .profile-action-icon-control .profile-action-main { flex-direction: column; gap: 2px; overflow: visible; }
       .profile-action-icon-control .profile-action-main > span { overflow: visible; color: #ded8e7; font-size: 10px; line-height: 1.05; text-overflow: clip; }
@@ -470,7 +471,7 @@ function PublicProfileStyles() {
       .profile-action-icon-control.profile-action-unavailable .profile-action-preview-icon { border: 0; color: #756d7d; background: transparent; box-shadow: none; }
       .profile-action-icon-control .profile-action-requirement { max-width: 100%; overflow: hidden; color: #8e8498; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
       .profile-action-share-slot { min-width: 0; grid-column: auto; }
-      .profile-action-share-slot .profile-share { display: block; min-height: 50px; }
+      .profile-action-share-slot .profile-share { display: block; min-height: 44px; }
       .profile-action-share-slot .profile-share button { gap: 6px; }
       .profile-action-share-slot .profile-share svg { fill: none; stroke: currentColor; stroke-width: 1.9; }
       .profile-action-share-slot .profile-share > span { display: block; color: #9fefff; font-size: 9px; text-align: center; }
@@ -481,7 +482,7 @@ function PublicProfileStyles() {
       .profile-directions-button[aria-disabled="true"] { cursor: default; opacity: 1; }
       .profile-directions-button svg { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: #8ee2f8; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-directions-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-report-action { grid-column: 1 / -1; width: auto !important; min-height: 14px !important; justify-self: end; margin-top: -1px; padding: 0 2px !important; border: 0 !important; color: #7f7788 !important; background: transparent !important; box-shadow: none !important; font-size: 8px !important; font-weight: 700 !important; line-height: 1; opacity: .72; text-decoration: none; }
+      .profile-report-action { grid-column: 1 / -1; width: auto !important; min-height: 28px !important; justify-self: end; margin: 0; padding: 0 4px !important; border: 0 !important; color: #8d8497 !important; background: transparent !important; box-shadow: none !important; font-size: 10px !important; font-weight: 750 !important; line-height: 1; opacity: .82; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
       .profile-report-action:hover, .profile-report-action:focus-visible { color: #d4ccd9 !important; outline: none; text-decoration-color: currentColor; }
       .profile-share-dialog-backdrop { position: fixed; z-index: 1750; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.84); backdrop-filter: blur(12px); }
       .profile-share-dialog { position: relative; width: min(430px, 100%); max-height: calc(100dvh - 28px); display: grid; gap: 14px; overflow-y: auto; padding: 24px; border: 1px solid rgba(126,234,255,.42); border-radius: 18px; color: #f7f2ff; background: radial-gradient(circle at 82% 4%, rgba(34,199,255,.14), transparent 15rem), linear-gradient(145deg, #0d0a18, #050507); box-shadow: 0 28px 90px rgba(0,0,0,.74), 0 0 38px rgba(109,40,217,.22); }
@@ -562,18 +563,18 @@ function PublicProfileStyles() {
       .venue-qr-placeholder-copy small { color: rgba(203,196,214,.64); font-size: 9px; font-weight: 850; line-height: 1.12; }
       @media (max-width: 340px) { .venue-qr-unavailable { grid-template-columns: minmax(0, 1fr) 112px; } .venue-qr-placeholder-icon { width: 112px; min-width: 112px; } }
       .profile-schedule-section { margin-top: 24px; }
-      .profile-media-section { display: grid; gap: 4px; margin-top: 10px; padding-bottom: 24px; }
+      .profile-media-section { display: grid; gap: 3px; margin-top: 0; padding-bottom: 24px; }
       .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .profile-section-heading > div { display: grid; gap: 5px; }
       .profile-section-heading > span { color: #9487a5; font-size: 11px; font-weight: 850; }
       .profile-media-tabs { position: sticky; z-index: 20; top: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-self: stretch; gap: 0; padding: 0; border: 0; border-bottom: 1px solid rgba(255,255,255,.1); border-radius: 0; background: rgba(5,5,8,.94); box-shadow: 0 8px 18px rgba(0,0,0,.18); backdrop-filter: blur(16px); }
-      body.dancr-button-system .public-profile-shell .profile-media-tabs button { position: relative; min-width: 0; min-height: 40px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 0 !important; border-radius: 0 !important; color: #968b9f; background: transparent !important; box-shadow: none !important; cursor: pointer; }
+      body.dancr-button-system .public-profile-shell .profile-media-tabs button { position: relative; min-width: 0; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 0 !important; border-radius: 0 !important; color: #968b9f; background: transparent !important; box-shadow: none !important; cursor: pointer; }
       body.dancr-button-system .public-profile-shell .profile-media-tabs button::before { content: none; }
       .profile-media-tab-icon { width: 16px; height: 16px; display: block; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-media-tab-play { fill: currentColor; stroke: none; }
       .profile-media-tab-label { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
       .profile-media-tab-count { min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #cfc7d8; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 950; line-height: 1; }
-      body.dancr-button-system .public-profile-shell .profile-media-tabs button.active { color: #fff !important; background: rgba(126,234,255,.045) !important; box-shadow: inset 0 -2px #7eeaff !important; text-shadow: none; }
+      body.dancr-button-system .public-profile-shell .profile-media-tabs button.active { color: #fff !important; background: rgba(139,92,246,.055) !important; box-shadow: inset 0 -2px #8b5cf6 !important; text-shadow: none; }
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .profile-media-grid { min-height: 108px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
       .profile-media-grid-item { position: relative; width: 100%; min-width: 0; aspect-ratio: 9 / 16; display: block; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 3px; color: #fff; background: #0b0b10; box-shadow: none; cursor: pointer; }

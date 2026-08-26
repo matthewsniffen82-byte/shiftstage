@@ -48183,9 +48183,7 @@
         })
         .filter((platform) => platform.url);
       if (!links.length) {
-        return includeUnapproved
-          ? '<div class="info-tile social-tile" aria-label="External profiles"><div class="meta">No profiles posted</div></div>'
-          : "";
+        return "";
       }
       return `
         <div class="info-tile social-tile" aria-label="External profiles">

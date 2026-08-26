@@ -4634,6 +4634,203 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
   filter: drop-shadow(0 0 7px var(--dancr-color-brand-primary-strong)) !important;
 }
 
+/* Optional dancer-profile engagement content uses its natural height. The
+ * social controls keep a 44px touch target while their visible circles are
+ * deliberately smaller, and an absent social collection contributes no box,
+ * spacer, or reserved row before the media tabs. */
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
+body.dancr-button-system .public-profile-shell .live-actions {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  column-gap: 4px !important;
+  row-gap: 0 !important;
+  margin-top: 0 !important;
+  padding: 1px 0 0 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
+  min-height: 44px !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  padding: 1px 2px !important;
+}
+
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share {
+  min-height: 44px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon,
+body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-icon-frame {
+  width: 20px !important;
+  height: 20px !important;
+  flex-basis: 20px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon > svg,
+body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-preview-icon {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="personPlus"] > svg,
+body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
+body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .profile-action-main > span:last-child,
+body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-main > span:last-child {
+  font-size: 9px !important;
+  line-height: 1 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-report-action,
+body.dancr-button-system .public-profile-shell .live-actions .profile-report-action {
+  position: static !important;
+  grid-column: 1 / -1 !important;
+  width: auto !important;
+  min-height: 28px !important;
+  justify-self: end !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: transparent !important;
+  font-size: 10px !important;
+  font-weight: 750 !important;
+  line-height: 1 !important;
+  opacity: .82 !important;
+  text-decoration: underline !important;
+  text-decoration-color: transparent !important;
+  text-underline-offset: 3px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-report-action:is(:hover, :focus-visible),
+body.dancr-button-system .public-profile-shell .live-actions .profile-report-action:is(:hover, :focus-visible) {
+  color: var(--dancr-color-text-secondary) !important;
+  text-decoration-color: currentColor !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics,
+body.dancr-button-system .public-profile-shell .profile-metrics {
+  min-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics > div,
+body.dancr-button-system .public-profile-shell .profile-metrics > div {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 3px 2px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics dd,
+body.dancr-button-system .public-profile-shell .profile-metrics dd {
+  font-size: clamp(16px, 4vw, 19px) !important;
+  line-height: 1 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics dt,
+body.dancr-button-system .public-profile-shell .profile-metrics dt {
+  font-size: clamp(8px, 2vw, 10px) !important;
+  line-height: 1.05 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .social-tile,
+body.dancr-button-system .public-profile-shell .profile-social-section {
+  min-height: 0 !important;
+  margin: 0 0 2px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .social-links,
+body.dancr-button-system .public-profile-shell .social-list {
+  width: fit-content !important;
+  max-width: 100% !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  margin-inline: auto !important;
+  overflow-x: auto !important;
+  scrollbar-width: none;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .social-links::-webkit-scrollbar,
+body.dancr-button-system .public-profile-shell .social-list::-webkit-scrollbar {
+  display: none;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-link,
+body.dancr-button-system .public-profile-shell .profile-social-section .social-list a {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  flex: 0 0 44px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-link::before,
+body.dancr-button-system .public-profile-shell .profile-social-section .social-list a::before {
+  inset: auto !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-link svg,
+body.dancr-button-system .public-profile-shell .profile-social-section .social-list a svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media,
+body.dancr-button-system .public-profile-shell .profile-media-section {
+  gap: 3px !important;
+  margin-top: 0 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs,
+body.dancr-button-system .public-profile-shell .profile-media-tabs {
+  min-height: 52px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--dancr-color-border-subtle) !important;
+  border-radius: 0 !important;
+  background: var(--dancr-color-surface-translucent) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button,
+body.dancr-button-system .public-profile-shell .profile-media-tabs button {
+  min-height: 52px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active,
+body.dancr-button-system .public-profile-shell .profile-media-tabs button.active {
+  color: var(--dancr-color-text-primary) !important;
+  background: rgba(139, 92, 246, .055) !important;
+  box-shadow: inset 0 -2px var(--dancr-color-brand-primary) !important;
+}
+
 /* Production TV-card branding keeps the moving media as the visual hero.
  * Card framing, idle utilities, playback controls, and progress stay neutral;
  * the beam violet is reserved for profile identity, selection, and keyboard focus.

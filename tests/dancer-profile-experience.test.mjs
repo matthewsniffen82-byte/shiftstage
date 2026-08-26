@@ -69,7 +69,7 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.doesNotMatch(profileCarousel, /profile-media-heading|Photos &amp; TV|approved<\/span>/);
   assert.match(profileCarousel, /className="profile-media-section"[\s\S]*?className="profile-media-tabs"/);
   assert.match(profilePage, /\.profile-media-tabs \{[\s\S]*?position: sticky;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border-radius: 0;/);
-  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.profile-media-tabs button \{[\s\S]*?min-height: 40px;[\s\S]*?border-radius: 0 !important;/);
+  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.profile-media-tabs button \{[\s\S]*?min-height: 52px;[\s\S]*?border-radius: 0 !important;/);
   assert.match(profilePage, /\.profile-media-tab-icon \{ width: 16px; height: 16px;[\s\S]*?flex: 0 0 16px;/);
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
@@ -295,11 +295,11 @@ test("public social icons render without a visible heading or published handles"
   assert.doesNotMatch(socialLinks, /<strong>\{link\.handle\}<\/strong>/);
   assert.doesNotMatch(socialLinks, /social-list-toggle|Show fewer links|more links/);
   assert.match(profilePage, /\.social-links-control \{ display: grid; justify-items: center;/);
-  assert.match(profilePage, /\.profile-social-section \{ min-height: 0;[\s\S]*?margin-top: 0;[\s\S]*?margin-bottom: 12px;[\s\S]*?padding: 0;/);
-  assert.match(profilePage, /\.social-list \{ width: 100%;[\s\S]*?justify-content: center;/);
+  assert.match(profilePage, /\.profile-social-section \{ min-height: 0;[\s\S]*?margin: 0 0 2px;[\s\S]*?padding: 0;/);
+  assert.match(profilePage, /\.social-list \{ width: fit-content;[\s\S]*?flex-wrap: nowrap;[\s\S]*?justify-content: center;[\s\S]*?gap: 4px;/);
   assert.match(profilePage, /\.social-list a \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?justify-content: center;/);
-  assert.match(profilePage, /\.social-list a::before \{[\s\S]*?inset: 2px;[\s\S]*?border-radius: 50%;/);
-  assert.match(profilePage, /\.social-list a svg \{ position: relative; z-index: 1; width: 18px; height: 18px;/);
+  assert.match(profilePage, /\.social-list a::before \{[\s\S]*?width: 32px; height: 32px;[\s\S]*?border-radius: 50%;[\s\S]*?transform: translate\(-50%, -50%\);/);
+  assert.match(profilePage, /\.social-list a svg \{ position: relative; z-index: 1; width: 15px; height: 15px;/);
 });
 
 test("real videos keep distinct metadata", () => {
