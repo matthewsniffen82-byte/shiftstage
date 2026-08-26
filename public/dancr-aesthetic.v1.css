@@ -3846,11 +3846,11 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
   flex: 0 0 17px !important;
 }
 
-/* Share opens publicly. Give it the same top inset as the other icon controls
- * so all four icons and labels share one baseline. */
+/* Share uses the same vertical inset as the other profile actions so its icon
+ * and label sit on the shared row baseline. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-share-action.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
-  padding: 8px 4px !important;
+  padding: 1px 2px !important;
 }
 
 body.dancr-button-system #profileBackdrop .modal-actions :is(
