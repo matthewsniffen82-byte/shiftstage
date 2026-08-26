@@ -28,7 +28,7 @@ test("NFC stickers retain only high-entropy digests and remain MyDancr-provision
   assert.match(service, /createHash\("sha256"\)/);
   assert.match(adminMigration, /rotate_admin_venue_nfc_tag/);
   assert.match(adminRoute, /requireAdmin/);
-  assert.match(tagRoute, /MyDancr supplies and programs venue NFC stickers/);
+  assert.match(tagRoute, /MyDancr supplies and programs venue tap stickers/);
   assert.doesNotMatch(tagRoute, /setVenueNfcTagStatus/);
 });
 
@@ -100,7 +100,7 @@ test("NFC exits use native navigation so mobile browsers can leave immediately",
 
 test("dressing-room authentication stays venue-aware and dancer-only", () => {
   assert.match(account, /fetch\(`\/api\/nfc\/\$\{encodeURIComponent\(venueNfcToken\)\}`/);
-  assert.match(account, /Verified dressing-room NFC/);
+  assert.match(account, /Verified dressing-room tap/);
   assert.match(account, /Connect to \{nfcVenueName\}/);
   assert.match(account, /Venue affiliation activates automatically/);
   assert.match(account, /isNfcAuth \? \(\s*<div className="nfc-dancer-lock"/);
@@ -136,10 +136,10 @@ test("Club Deal checkout explains the complete NFC tap flow without requiring an
   assert.match(dealCard, /Use this deal/);
   assert.match(dealCard, /Tap &ldquo;Use this deal&rdquo; below/);
   assert.match(dealCard, /Go to the cashier/);
-  assert.match(dealCard, /Unlock and tap the MyDancr NFC sticker/);
+  assert.match(dealCard, /Unlock and tap the MyDancr cashier sticker/);
   assert.match(dealCard, /Redemption completes automatically/);
-  assert.match(dealCard, /After selecting, MyDancr does not need to stay open\. Only this venue’s registered NFC sticker can complete redemption\./);
-  assert.match(dealCard, /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. MyDancr opens and completes the redemption automatically\./);
+  assert.match(dealCard, /After selecting, MyDancr does not need to stay open\. Only this venue’s registered cashier sticker can complete redemption\./);
+  assert.match(dealCard, /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr cashier sticker\. MyDancr opens and completes the redemption automatically\./);
   assert.match(dealCard, /intentState === "ready" \? "Deal selected ✓"/);
   assert.match(dealCard, /intentState !== "ready"/);
   assert.doesNotMatch(dealCard, /<strong>Tap cashier sticker<\/strong>|Select before you reach the cashier\./);

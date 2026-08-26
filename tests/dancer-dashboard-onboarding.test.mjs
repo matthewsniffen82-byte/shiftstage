@@ -259,7 +259,7 @@ test("expanded profile status stays visible and uses compact non-repeating contr
   assert.match(dashboard, /<DancerNfcPanel\s+compactAuthorized/);
 });
 
-test("profile visibility is one compact control and NFC management stays behind Manage", () => {
+test("profile visibility is one compact control and tap access stays behind Manage", () => {
   assert.match(dashboard, /<h2>Profile visibility<\/h2>/);
   assert.match(dashboard, /className="visibility-state"[\s\S]*?"Public" : "Incognito"[\s\S]*?aria-hidden="true">·[\s\S]*?"Visible" : "Hidden"/);
   assert.match(dashboard, /Guests can find your approved profile across MyDancr\./);
@@ -272,8 +272,8 @@ test("profile visibility is one compact control and NFC management stays behind 
   const compactNfc = dancerNfcPanel.match(/if \(compactAuthorized && authorized\) \{[\s\S]*?(?=\r?\n  return \(\r?\n    <article)/)?.[0] || "";
   const manageSummary = compactNfc.match(/<summary>[\s\S]*?<\/summary>/)?.[0] || "";
   assert.match(manageSummary, /dancer-nfc-compact-action">Manage/);
-  assert.doesNotMatch(manageSummary, /Remove|Refresh NFC status/);
-  assert.match(compactNfc, /dancer-nfc-compact-body[\s\S]*?affiliationRoster[\s\S]*?Refresh NFC status/);
+  assert.doesNotMatch(manageSummary, /Remove|Refresh access/);
+  assert.match(compactNfc, /dancer-nfc-compact-body[\s\S]*?affiliationRoster[\s\S]*?Refresh access/);
 });
 
 test("step one shows clear save, photo-count, and automatic-check states", () => {

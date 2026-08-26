@@ -33,13 +33,13 @@ test("customer discovery consistently presents venues as clubs", () => {
 });
 
 test("customer profile and Club Deal actions use club language", () => {
-  assert.match(dancerProfile, /className="profile-working-destination"[\s\S]*?<small>Club<\/small>/);
+  assert.match(dancerProfile, /className="profile-working-destination"[\s\S]*?activeShift\.venueName/);
   assert.match(liveShell, /home-venue-discovery-profile-action[\s\S]*?aria-label="Open \$\{safeName\}'s full club profile"[\s\S]*?actionIconMarkup\("clubProfile"\)/);
   assert.match(clubActions, /Follow club/);
   assert.match(clubActions, /Club alerts/);
   assert.match(clubDeal, /Use this deal/);
-  assert.match(clubDeal, /registered MyDancr NFC sticker/);
-  assert.match(nfcTap, /Verified club NFC/);
+  assert.match(clubDeal, /registered MyDancr cashier sticker/);
+  assert.match(nfcTap, /Verified club tap/);
   assert.match(nfcTap, /Confirm Working Now/);
 
   assert.doesNotMatch(dancerProfile, /View venue/);

@@ -79,14 +79,14 @@ test("collapsed setup pills fill their rounded shell with the matching state col
   );
 });
 
-test("Step 4 venue affiliation is completed by the official dressing-room NFC tap", () => {
+test("Step 4 venue affiliation is completed by the official dressing-room tap", () => {
   const order = liveAppSource.match(/function setupOrder\(\) \{[\s\S]*?\n    }/)?.[0] || "";
   const completion = liveAppSource.match(/function completeSetupStep[\s\S]*?\n    }/)?.[0] || "";
   assert.match(order, /\["profile", "review", "payout", "approval"\]/);
-  assert.match(completion, /dressing-room NFC sticker/i);
-  assert.match(liveAppSource, /Authorize venue access/);
+  assert.match(completion, /dressing-room sticker/i);
+  assert.match(liveAppSource, /Approve venue access/);
   assert.match(liveAppSource, /Step 4 · Dressing-room tap/);
-  assert.match(liveAppSource, /official MyDancr dressing-room NFC sticker/i);
+  assert.match(liveAppSource, /official MyDancr dressing-room sticker/i);
   assert.match(liveAppSource, /Manage where you work/);
 });
 

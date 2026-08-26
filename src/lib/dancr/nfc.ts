@@ -96,7 +96,7 @@ export async function listAdminNfcTags(client: DancrClient): Promise<AdminNfcTag
   if (error) throw error;
   return (data || []).map((row: any) => {
     const venue = firstJoined(row.venues);
-    if (!venue) throw new Error("An NFC tag is missing its venue assignment.");
+    if (!venue) throw new Error("A tap sticker is missing its venue assignment.");
     return {
       ...toTagSummary(row),
       venue: {
@@ -137,7 +137,7 @@ export async function rotateAdminVenueNfcTag(
   client: DancrClient,
   input: { adminUserId: string; tagId: string },
 ) {
-  if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid NFC sticker is required.");
+  if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid tap sticker is required.");
   await requireActiveAdmin(client, input.adminUserId);
   const token = crypto.randomBytes(32).toString("base64url");
   const replacementId = crypto.randomUUID();
@@ -155,7 +155,7 @@ export async function setAdminVenueNfcTagStatus(
   client: DancrClient,
   input: { adminUserId: string; tagId: string; status: "active" | "disabled" },
 ) {
-  if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid NFC sticker is required.");
+  if (!UUID_PATTERN.test(input.tagId)) throw new Error("A valid tap sticker is required.");
   await requireActiveAdmin(client, input.adminUserId);
   const { data, error } = await (client as any).rpc("set_admin_venue_nfc_tag_status", {
     p_tag_id: input.tagId,
@@ -163,7 +163,7 @@ export async function setAdminVenueNfcTagStatus(
     p_status: input.status,
   });
   if (error) throw friendlyTagError(error);
-  if (!data) throw new Error("NFC sticker not found.");
+  if (!data) throw new Error("Tap sticker not found.");
   return toTagSummary(data);
 }
 
@@ -190,7 +190,7 @@ export async function resolveNfcTag(client: DancrClient, token: string): Promise
 }
 
 export async function recordNfcTagScan(client: DancrClient, tagId: string) {
-  if (!UUID_PATTERN.test(tagId)) throw new Error("Invalid NFC sticker.");
+  if (!UUID_PATTERN.test(tagId)) throw new Error("Invalid tap sticker.");
   const { data, error } = await (client as any).rpc("record_nfc_tag_scan", {
     p_tag_id: tagId,
   });
@@ -203,7 +203,7 @@ export async function registerDancerFromNfc(
   input: { tagId: string; dancerUserId: string; sessionId: string; request: Request },
 ) {
   if (!UUID_PATTERN.test(input.tagId) || !UUID_PATTERN.test(input.sessionId)) {
-    throw new Error("Invalid NFC tap session.");
+    throw new Error("Invalid phone-tap session.");
   }
   const audit = requestAudit(input.request);
   const { data, error } = await (client as any).rpc("register_dancer_nfc_enrollment", {
@@ -320,7 +320,7 @@ export async function confirmRedemptionFromNfc(
   input: { tagId: string; redemptionToken: string; sessionId: string; request: Request },
 ) {
   if (!UUID_PATTERN.test(input.tagId) || !UUID_PATTERN.test(input.sessionId)) {
-    throw new Error("Invalid NFC tap session.");
+    throw new Error("Invalid phone-tap session.");
   }
   const audit = requestAudit(input.request);
   const { data, error } = await (client as any).rpc("confirm_deal_redemption_from_nfc", {
@@ -339,12 +339,12 @@ export async function confirmRedemptionFromNfc(
 
 function normalizeTagType(value: unknown): NfcTagType {
   if (value === "dressing_room" || value === "cashier") return value;
-  throw new Error("Choose a dressing-room or cashier NFC tag.");
+  throw new Error("Choose a dressing-room or cashier tap sticker.");
 }
 
 function normalizeTagLabel(value: unknown) {
   const label = typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
-  if (label.length < 2 || label.length > 80) throw new Error("NFC tag label must be 2 to 80 characters.");
+  if (label.length < 2 || label.length > 80) throw new Error("Tap-sticker label must be 2 to 80 characters.");
   return label;
 }
 
@@ -405,7 +405,7 @@ function mapDashboardVenue(row: any) {
 
 function friendlyTagError(error: any) {
   if (String(error?.code || "") === "23505") {
-    return new Error("An active NFC tag already uses that label. Rename it or rotate the existing tag.");
+    return new Error("An active tap sticker already uses that label. Rename it or replace the existing sticker.");
   }
   return error;
 }

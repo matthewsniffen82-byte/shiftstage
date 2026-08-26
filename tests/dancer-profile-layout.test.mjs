@@ -51,7 +51,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /className="profile-metrics"/);
   assert.match(profilePage, /\.profile-overview \{[^}]*border: 0;/);
-  assert.match(profilePage, /\.profile-metrics > div \{[^}]*gap: 6px;[^}]*padding: 10px 4px;/);
+  assert.match(profilePage, /\.profile-metrics > div \{[^}]*gap: 3px;[^}]*padding: 6px 4px;/);
   assert.match(profilePage, /\.profile-metrics dd \{[^}]*font-weight: 900;[^}]*line-height: 1\.08;/);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
@@ -66,7 +66,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(liveApp, /class="profile-modal-avatar" id="modalProfileAvatar"/);
   assert.match(liveApp, /class="profile-activity-metrics"/);
   assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?border: 0;/);
-  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 5px;[\s\S]*?padding: 5px;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 3px;[\s\S]*?padding: 4px;/);
   assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics dd \{[\s\S]*?font-weight: 900;[\s\S]*?line-height: 1\.08;/);
   assert.match(liveApp, /id="modalFollowerCount"/);
   assert.match(liveApp, /id="tonightInterestCount"/);
@@ -86,7 +86,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profileActions, /profile-action-icon-control[\s\S]*?DancerProfileActionPreviewIcon type="bell"[\s\S]*?<span>Notify<\/span>/);
   assert.match(profileActions, /profile-action-going profile-action-icon-control/);
   assert.match(profileActions, /className="profile-action-icon-frame" data-profile-action-icon=\{type\}/);
-  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.live-actions > button\.profile-action-icon-control \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
+  assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.live-actions > button\.profile-action-icon-control,[\s\S]*?profile-action-share-slot \.profile-share > button\.profile-action-icon-control \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(profilePage, /\.profile-action-icon-control \.profile-action-preview-icon \{[\s\S]*?width: 24px;[\s\S]*?height: 24px;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(profileActions, /profile-action-preview-icon profile-action-preview-icon-\$\{type\}/);
   assert.match(profilePage, /\.profile-action-preview-icon-personPlus \{[\s\S]*?--profile-icon-offset-x: \.5px;[\s\S]*?--profile-icon-offset-y: -\.5px;/);
@@ -97,7 +97,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /\.action-icon-clock > svg \{[\s\S]*?--profile-icon-offset-x: -\.5px;/);
   assert.match(profilePage, /data-profile-action-icon="personPlus"[\s\S]*?width: 26px;[\s\S]*?data-profile-action-icon="bell"[\s\S]*?width: 22px;/);
   assert.match(profilePage, /button:not\(\.profile-action-icon-control\):not\(\.profile-report-action\)[\s\S]*?grid-template-rows: 18px 9px;/);
-  assert.match(profilePage, /\.live-actions \{[\s\S]*?column-gap: 6px;[\s\S]*?row-gap: 2px;[\s\S]*?padding: 6px 0 5px;/);
+  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 4px;[\s\S]*?row-gap: 0;[\s\S]*?padding: 3px 0 0;/);
   assert.match(liveApp, /#profileBackdrop \.modal-actions \.profile-action-icon-control \.action-icon \{[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(liveApp, /action-icon action-icon-\$\{resolvedType\}/);
   assert.match(liveApp, /data-action-icon="\$\{resolvedType\}"[\s\S]*?aria-hidden="true"/);
@@ -122,11 +122,11 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /id="followBtn"[\s\S]*?profileActionButtonMarkup\(isFollowed \? "check" : "personPlus"/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
   assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
-  assert.match(liveApp, /Club Deals redeem only through a club cashier NFC tap/);
+  assert.match(liveApp, /Club Deals redeem only when you tap your phone at the club cashier/);
   assert.doesNotMatch(profileNavigationActions, /import QRCode from "qrcode"/);
   assert.match(
     profileNavigationActions,
-    /Club\s+Deal redemption happens only through a club cashier NFC tap/,
+    /Deal redemption happens only when you tap your phone at the club cashier/,
   );
   assert.match(
     profileNavigationActions,
@@ -144,7 +144,7 @@ test("every profile combines tonight's shift and Club Deal while only Working No
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
   assert.match(profilePage, /className=\{`profile-tonight-card\$\{activeShift \? " is-now" : ""\}\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /className="profile-shift-card profile-working-card is-now"/);
-  assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<small>Club<\/small>[\s\S]*?Venue-confirmed until/);
+  assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?Venue-confirmed until/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
   assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
@@ -159,7 +159,7 @@ test("every profile combines tonight's shift and Club Deal while only Working No
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
   );
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use at Club"\}/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use deal"\}/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /attributionTokens=\{dealAttributionTokens\}/);
@@ -185,7 +185,7 @@ test("every profile combines tonight's shift and Club Deal while only Working No
   assert.match(liveApp, /modal-grid > \.profile-tonight-card[\s\S]*?border-radius: 15px;[\s\S]*?profile-tonight-deal[\s\S]*?border-top:/);
 });
 
-test("active full-profile Club Deals render a compact cashier NFC action and use one live-status color", () => {
+test("active full-profile Club Deals render a compact cashier-tap action and use one live-status color", () => {
   const activeDealMarkup = liveApp.match(
     /function profileDealTileMarkup\(profile\)[\s\S]*?function profileShareText/,
   )?.[0] || "";
@@ -201,12 +201,12 @@ test("active full-profile Club Deals render a compact cashier NFC action and use
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
   assert.match(activeDealMarkup, /class="profile-club-deal-label">Active Club Deal<\/strong>/);
   assert.match(activeDealMarkup, /class="profile-club-deal-title">\$\{escapeHtml\(dealTitle\)\}<\/b>/);
-  assert.match(activeDealMarkup, /Available tonight at \$\{escapeHtml\(venueName\)\} · Cashier NFC required/);
+  assert.match(activeDealMarkup, /Tap your phone at the cashier/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?View all \$\{offers\.length\}[\s\S]*?Club Deals[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?Use at Club[\s\S]*?Cashier NFC/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?View all \$\{offers\.length\}[\s\S]*?Club Deals[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?Use deal[\s\S]*?Tap at cashier/,
   );
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
   assert.doesNotMatch(liveApp, /profile-club-deal-count/);
@@ -289,7 +289,7 @@ test("Current Shift uses a quieter club row and secondary ride action", () => {
   );
   assert.match(
     liveApp,
-    /Current Shift is a single destination row[\s\S]*?#profileBackdrop \.working-now-tile \.profile-venue-destination\.is-live \{[\s\S]*?min-height: 46px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/,
+    /Current Shift is a single destination row[\s\S]*?#profileBackdrop \.working-now-tile \.profile-venue-destination\.is-live \{[\s\S]*?min-height: 40px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/,
   );
   assert.match(
     liveApp,

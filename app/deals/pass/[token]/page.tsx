@@ -38,9 +38,9 @@ export default async function ClubDealPassPage({ params }: PageProps) {
         <>
           <div className="nfc-retired" aria-hidden="true">)))</div>
           <strong>{legacyPassMessage(redemption.status, isExpired)}</strong>
-          <small>MyDancr Club Deals now redeem through the club&apos;s physical cashier NFC sticker. Choose a current offer in MyDancr before tapping.</small>
+          <small>MyDancr Club Deals now redeem through the club&apos;s physical cashier sticker. Choose a current offer in MyDancr before tapping.</small>
           {dealTerms ? <small>{dealTerms}</small> : null}
-          <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find a current NFC Club Deal</Link>
+          <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find a current Club Deal</Link>
         </>
       </section>
     </main>
@@ -51,7 +51,7 @@ function legacyPassMessage(status: string, isExpired: boolean) {
   if (status === "redeemed") return "This Club Deal has already been redeemed.";
   if (status === "voided") return "This Club Deal is no longer valid.";
   if (isExpired || status === "expired") return "This Club Deal has expired.";
-  return "This older QR pass cannot be redeemed. Use the cashier NFC flow instead.";
+  return "This older QR pass cannot be redeemed. Choose a current deal and tap at the cashier instead.";
 }
 
 function DealPassStyles() {

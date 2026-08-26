@@ -139,7 +139,7 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
       </button>
       <div className="profile-action-share-slot">
         <span className="profile-share">
-          <button className="profile-action-preview-share" disabled={!onShare} onClick={onShare} type="button">
+          <button className="profile-action-preview-share profile-action-icon-control" disabled={!onShare} onClick={onShare} type="button">
             <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share</span></span>
           </button>
         </span>

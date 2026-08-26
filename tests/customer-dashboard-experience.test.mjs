@@ -85,7 +85,7 @@ test("Club Deal wallet and alerts expose real status, expiry, history, and direc
   assert.match(dashboard, /formatNotificationTimestamp\(notification\.createdAt\)/);
   assert.match(dashboard, /destination \? \([\s\S]*?<Link[\s\S]*?onClick=\{\(\) => void markRead\(notificationId\)\}/);
   assert.match(dashboard, /No alerts yet[\s\S]*?Browse dancers/);
-  assert.match(dashboard, /How cashier NFC redemption works/);
+  assert.match(dashboard, /How cashier tap redemption works/);
   assert.match(dashboard, /Choose the exact deal[\s\S]*?Tap at the cashier[\s\S]*?Wait for confirmation/);
   assert.match(dashboard, /There is no QR code to scan/);
 });

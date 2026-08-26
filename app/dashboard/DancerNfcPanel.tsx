@@ -53,14 +53,14 @@ export default function DancerNfcPanel({
     try {
       const data = await requestDancerVenueVerificationJson({
         cache: "no-store",
-        fallbackMessage: "Unable to refresh NFC access.",
+        fallbackMessage: "Unable to refresh venue access.",
       });
       setAffiliations(data.affiliations || []);
       setNfcState({ profileAuthorization: data.profileAuthorization, enrollment: data.enrollment });
       await onAuthorizationChange?.();
-      setStatus("Dressing-room NFC access is current.");
+      setStatus("Dressing-room tap access is current.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to refresh NFC access.");
+      setStatus(error instanceof Error ? error.message : "Unable to refresh venue access.");
     } finally {
       setPendingId("");
     }
@@ -69,7 +69,7 @@ export default function DancerNfcPanel({
   async function removeAffiliation(affiliation: Affiliation) {
     if (!affiliation.id) return;
     const venueName = affiliation.venue?.name || "this venue";
-    if (!window.confirm(`Remove NFC access for ${venueName}? You will need to tap its dressing-room sticker again before going Working Now there.`)) return;
+    if (!window.confirm(`Remove venue access for ${venueName}? You will need to tap its dressing-room sticker again before going Working Now there.`)) return;
     setPendingId(affiliation.id);
     setStatus("");
     try {
@@ -80,7 +80,7 @@ export default function DancerNfcPanel({
         fallbackMessage: "Unable to remove venue access.",
       });
       setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
-      setStatus(data.message || "Venue NFC access removed.");
+      setStatus(data.message || "Venue access removed.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to remove venue access.");
     } finally {
@@ -89,12 +89,12 @@ export default function DancerNfcPanel({
   }
 
   const affiliationRoster = activeAffiliations.length ? (
-    <div className="dancer-nfc-roster" aria-label="NFC-authorized venues">
+    <div className="dancer-nfc-roster" aria-label="Tap-authorized venues">
       {activeAffiliations.map((affiliation) => (
         <section key={affiliation.id || affiliation.venue?.id}>
           <span>
             <strong>{affiliation.venue?.name || "Venue"}</strong>
-            <small>NFC-authorized{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small>
+            <small>Tap approved{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small>
           </span>
           <button type="button" disabled={Boolean(pendingId)} onClick={() => removeAffiliation(affiliation)}>Remove</button>
         </section>
@@ -110,7 +110,7 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-icon"><NfcIcon /></span>
           <span className="dancer-nfc-compact-copy">
             <strong>Venue access</strong>
-            <small>{venueCount ? `${venueCount} NFC-authorized club${venueCount === 1 ? "" : "s"}` : "Dressing-room NFC authorized"}</small>
+            <small>{venueCount ? `${venueCount} approved club${venueCount === 1 ? "" : "s"}` : "Dressing-room tap approved"}</small>
           </span>
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
@@ -122,7 +122,7 @@ export default function DancerNfcPanel({
             <span>A six-hour cooldown follows each session.</span>
           </div>
           <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
-            {pendingId === "refresh" ? "Refreshing…" : "Refresh NFC status"}
+            {pendingId === "refresh" ? "Refreshing…" : "Refresh access"}
           </button>
           {status ? <p className="dancer-nfc-status" role="status">{status}</p> : null}
         </div>
@@ -135,7 +135,7 @@ export default function DancerNfcPanel({
     <article className={`info-panel dancer-nfc-panel ${authorized ? "is-authorized" : ""}`} id="dancer-venue-verification">
       <div className="dancer-nfc-icon"><NfcIcon /></div>
       <div className="dancer-nfc-content">
-        <span className="eyebrow">Dressing-room NFC</span>
+        <span className="eyebrow">Dressing-room tap</span>
         <div className="dancer-nfc-heading">
           <h2>{authorized ? "Profile and venue approved" : pendingEnrollment ? "Tap saved" : "Tap to approve your profile"}</h2>
           <b>{authorized ? "APPROVED" : pendingEnrollment ? "FINISH SETUP" : "TAP REQUIRED"}</b>
@@ -157,7 +157,7 @@ export default function DancerNfcPanel({
           <span>Media safety moderation remains separate{isPublic ? "; your profile is live." : " and must finish before the profile is public."}</span>
         </div>
         <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
-          {pendingId === "refresh" ? "Refreshing…" : "Refresh NFC status"}
+          {pendingId === "refresh" ? "Refreshing…" : "Refresh access"}
         </button>
         {status ? <p className="dancer-nfc-status" role="status">{status}</p> : null}
         <small>Only an active MyDancr-supplied dressing-room sticker can authorize this action.</small>

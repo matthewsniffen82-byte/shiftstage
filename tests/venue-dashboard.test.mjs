@@ -155,9 +155,9 @@ test("venue publication status hides internal requirements while retaining the r
   assert.match(venuePanel, /Review every live or inactive deal, guest terms, agreed fees, and monthly activity/);
 });
 
-test("MyDancr supplies NFC stickers while venue owners receive read-only inventory", () => {
+test("MyDancr supplies tap stickers while venue owners receive read-only inventory", () => {
   assert.match(nfcTagRoute, /requireActiveVenueAccount/);
-  assert.match(nfcTagRoute, /MyDancr supplies and programs venue NFC stickers/);
+  assert.match(nfcTagRoute, /MyDancr supplies and programs venue tap stickers/);
   assert.match(nfcTagRoute, /Only MyDancr can activate, disable, or replace/);
   assert.doesNotMatch(nfcTagRoute, /createVenueNfcTag/);
   assert.doesNotMatch(nfcTagRoute, /rotateVenueNfcTag/);
@@ -168,7 +168,7 @@ test("MyDancr supplies NFC stickers while venue owners receive read-only invento
   assert.match(nfcPanel, /MyDancr supplied hardware/);
   assert.match(nfcPanel, /Check-in & redemption stickers/);
   assert.match(nfcPanel, /Approved dancer roster/);
-  assert.match(nfcPanel, /tap-to-use stickers \(NFC\)/);
+  assert.match(nfcPanel, /tap-to-use stickers/);
   assert.match(nfcPanel, /Dancer check-in/);
   assert.match(nfcPanel, /Guest redemption/);
   assert.doesNotMatch(nfcPanel, /Assigned NFC stickers|NFC-authorized dancer roster|NFC verified|NFC workflow/);
@@ -217,7 +217,7 @@ test("legacy venue and deal QR write APIs return an explicit permanent replaceme
   assert.match(retiredVenueQr, /status: 410/);
   assert.match(retiredVenueQr, /\/api\/venue\/nfc-tags/);
   assert.match(retiredDealQr, /status: 410/);
-  assert.match(retiredDealQr, /cashier NFC stickers/);
+  assert.match(retiredDealQr, /cashier tap stickers/);
 });
 
 test("venue dashboard data remains authenticated, owner-scoped, and backed by real analytics", () => {
@@ -228,8 +228,8 @@ test("venue dashboard data remains authenticated, owner-scoped, and backed by re
   assert.match(dashboard, /Working now/);
 });
 
-test("the compatibility live shell exposes dressing-room NFC and keeps venue QR uploads retired", () => {
+test("the compatibility live shell exposes dressing-room taps and keeps venue QR uploads retired", () => {
   assert.match(liveApp, /dressing-room sticker authorizes dancer venue access/i);
-  assert.match(liveApp, /View assigned NFC stickers/);
+  assert.match(liveApp, /View assigned tap stickers/);
   assert.match(liveApp, /id="venueQrForm" hidden/);
 });

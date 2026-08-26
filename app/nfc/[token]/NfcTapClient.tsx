@@ -56,7 +56,7 @@ export function NfcTapClient({ token }: { token: string }) {
     void fetch(`/api/nfc/${encodeURIComponent(token)}`, { cache: "no-store", credentials: "same-origin" })
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok || !data.ok) throw new Error(data.error || "This NFC tag is unavailable.");
+        if (!response.ok || !data.ok) throw new Error(data.error || "This tap sticker is unavailable.");
         if (cancelled) return;
         setState(data);
         const pendingDealId = pendingIntent && pendingIntent.venueId === data.venue.id ? pendingIntent.dealId : "";
@@ -77,7 +77,7 @@ export function NfcTapClient({ token }: { token: string }) {
       })
       .catch((reason) => {
         if (!cancelled) {
-          setError(reason instanceof Error ? reason.message : "This NFC tag is unavailable.");
+          setError(reason instanceof Error ? reason.message : "This tap sticker is unavailable.");
           setStatus("");
           setPhase("error");
         }
@@ -112,7 +112,7 @@ export function NfcTapClient({ token }: { token: string }) {
         }),
       });
       const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to complete this NFC tap.");
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to complete this phone tap.");
       persistRefreshedBrowserAuthSession(data.session);
       if (state.tag.type === "cashier") clearPendingDealIntent();
       let completedDancerTap = state.tag.type === "dressing_room"
@@ -135,7 +135,7 @@ export function NfcTapClient({ token }: { token: string }) {
       setDancerActivationComplete(completedDancerTap);
       setComplete(true);
       setPhase("redeemed");
-      const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "NFC tap confirmed.");
+      const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "Club tap confirmed.");
       setStatus(completedDancerTap
         ? `${successMessage} Opening your live dancer dashboard…`
         : state.tag.type === "dressing_room"
@@ -147,7 +147,7 @@ export function NfcTapClient({ token }: { token: string }) {
         }, 700);
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to complete this NFC tap.");
+      setError(reason instanceof Error ? reason.message : "Unable to complete this phone tap.");
       setStatus(state?.tag.type === "dressing_room"
         ? "Profile activation was not completed. Step 4 remains open—stay at this sticker and try the tap again."
         : "The tap was not completed. Check the offer and try again at this sticker.");
@@ -187,8 +187,8 @@ export function NfcTapClient({ token }: { token: string }) {
           </svg>
         </a>
         <div className="nfc-symbol"><NfcIcon /></div>
-        <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier NFC redemption" : "Verified club NFC"}</span>
-        <h1>{state?.venue.name || "MyDancr NFC"}</h1>
+        <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier tap redemption" : "Verified club tap"}</span>
+        <h1>{state?.venue.name || "MyDancr tap"}</h1>
         {state ? <p>{state.venue.city}, {state.venue.state} · {state.tag.label}</p> : null}
 
         {state?.tag.type === "dressing_room" && !complete ? (
@@ -219,7 +219,7 @@ export function NfcTapClient({ token }: { token: string }) {
           dancerNeedsSignIn ? (
             <>
               <Link className="nfc-primary" href={`/account?role=dancer&mode=login&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
-                Sign in to use venue NFC
+                Sign in to use venue tap
               </Link>
               <Link className="nfc-secondary" href={`/account?role=dancer&mode=signup&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
                 Create dancer account
@@ -247,7 +247,7 @@ export function NfcTapClient({ token }: { token: string }) {
           </a>
         ) : null}
       </section>
-      <p className="nfc-security">Only use MyDancr NFC stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
+      <p className="nfc-security">Only use MyDancr tap stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
       <style>{`
         .nfc-page{min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;justify-items:center;gap:18px;box-sizing:border-box;padding:max(clamp(28px,6dvh,58px),env(safe-area-inset-top)) 16px max(90px,calc(24px + env(safe-area-inset-bottom)));overflow-anchor:none;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(53,216,255,.08),transparent 30rem),#050507;font-family:var(--font-body,Arial,sans-serif)}
         .nfc-card{position:relative;width:min(430px,calc(100vw - 32px));max-width:100%;display:grid;justify-items:center;align-content:start;gap:13px;box-sizing:border-box;padding:26px 20px;overflow-anchor:none;border:1px solid rgba(255,255,255,.14);border-radius:24px;background:linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985));box-shadow:0 28px 80px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.06)}

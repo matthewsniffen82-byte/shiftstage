@@ -185,7 +185,7 @@ export default function VenueNfcTagPanel({
       <div>
         <span className="eyebrow">MyDancr supplied hardware</span>
         <h2>Check-in & redemption stickers</h2>
-        <p>MyDancr programs and supplies these tap-to-use stickers (NFC). Install each sticker where its label says. The dancer check-in sticker authorizes venue access—no separate manager approval is needed.</p>
+        <p>MyDancr supplies these tap-to-use stickers. Install each sticker where its label says. The dancer check-in sticker approves venue access—no separate manager approval is needed.</p>
       </div>
       <div className="venue-nfc-flow" aria-label="Phone-tap sticker workflow">
         <section><b>1</b><span><strong>Dancer check-in</strong><small>Dancer holds a phone near the check-in sticker → venue access is verified → Working Now starts for six hours. Another tap cannot extend it, and a six-hour cooldown follows.</small></span></section>

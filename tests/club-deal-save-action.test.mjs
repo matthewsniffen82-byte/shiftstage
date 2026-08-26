@@ -15,9 +15,9 @@ test("Club Deals save without requiring customer authentication", () => {
   assert.doesNotMatch(saveFlow, /requireAuth|currentUser|signedIn|sign in/i);
 });
 
-test("preview, NFC selection, and saving are separate intentional actions", () => {
+test("preview, cashier-tap selection, and saving are separate intentional actions", () => {
   assert.match(liveSource, /data-select-deal-pass aria-pressed="false">Use this deal<\/button>/);
-  assert.match(liveSource, /Only this venue’s registered NFC sticker can complete redemption\./);
+  assert.match(liveSource, /Only this venue’s registered cashier sticker can complete redemption\./);
   assert.match(liveSource, /data-save-deal-pass aria-pressed="false">Save for later<\/button>/);
   assert.match(
     liveSource,

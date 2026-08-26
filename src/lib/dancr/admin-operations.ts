@@ -100,7 +100,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       .limit(30)),
     safeCount("Active venues", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true)),
     safeCount("Club Deal intents created today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).gte("generated_at", dayAgo)),
-    safeCount("Cashier NFC redemptions today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("status", "redeemed").gte("redeemed_at", dayAgo)),
+    safeCount("Cashier tap redemptions today", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("status", "redeemed").gte("redeemed_at", dayAgo)),
     safeCount("Suspicious Club Deal activity", () => db.from("qr_redemptions").select("id", { count: "exact", head: true }).eq("suspicious", true).gte("generated_at", dayAgo)),
     safeRows("Missed check-ins", () => db.from("shifts")
       .select("id, shift_date, shift_source, starts_at, ends_at, location_status, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")

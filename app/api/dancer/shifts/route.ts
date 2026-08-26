@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
     if (!venue) {
       return NextResponse.json(
-        { ok: false, error: "Tap this venue's official dressing-room NFC sticker before posting a shift there." },
+        { ok: false, error: "Tap this venue's official MyDancr dressing-room sticker before posting a shift there." },
         { status: 403 },
       );
     }
@@ -108,7 +108,7 @@ export async function PATCH(request: Request) {
       const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
       if (!venue) {
         return NextResponse.json(
-          { ok: false, error: "Tap this venue's official dressing-room NFC sticker before moving a shift there." },
+          { ok: false, error: "Tap this venue's official MyDancr dressing-room sticker before moving a shift there." },
           { status: 403 },
         );
       }

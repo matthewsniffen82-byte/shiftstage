@@ -40,10 +40,10 @@ test("empty schedules collapse to one status line while upcoming schedules retai
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
 });
 
-test("current and upcoming schedules share one compact club destination", () => {
+test("current and upcoming schedules share one compact venue destination", () => {
   assert.match(
     liveApp,
-    /function profileVenueDestinationMarkup\(profile, options = \{\}\)[\s\S]*?class="profile-venue-destination\$\{liveClass\}"[^>]*data-open-venue="\$\{safeVenueName\}"[^>]*aria-label="Open \$\{safeVenueName\} club details"[\s\S]*?class="profile-venue-label">Club<[\s\S]*?class="profile-venue-name">\$\{safeVenueName\}<[\s\S]*?class="profile-venue-cue"/,
+    /function profileVenueDestinationMarkup\(profile, options = \{\}\)[\s\S]*?class="profile-venue-destination\$\{liveClass\}"[^>]*data-open-venue="\$\{safeVenueName\}"[^>]*aria-label="Open \$\{safeVenueName\} club details"[\s\S]*?class="profile-venue-name">\$\{safeVenueName\}<[\s\S]*?class="profile-venue-cue"/,
   );
   assert.match(
     liveApp,
@@ -102,7 +102,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   const followIndex = liveActionsMarkup.indexOf('id="followBtn"');
   const notifyIndex = liveActionsMarkup.indexOf('id="notifyBtn"');
   const goingIndex = liveActionsMarkup.indexOf('${goingButton}');
-  const shareIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-share-action"');
+  const shareIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-share-action profile-action-icon-control"');
   const reportIndex = liveActionsMarkup.indexOf('class="profile-report-action"');
   assert.ok(followIndex > -1 && notifyIndex > followIndex);
   assert.ok(goingIndex > notifyIndex && shareIndex > goingIndex);
@@ -115,14 +115,14 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /id="goingBtn"/);
   assert.match(
     liveApp,
-    /class="action-btn secondary profile-share-action"[\s\S]*?data-profile-share-menu=/,
+    /class="action-btn secondary profile-share-action profile-action-icon-control"[\s\S]*?data-profile-share-menu=/,
   );
   assert.match(liveApp, /class="profile-report-action" id="reportBtn" type="button"/);
   assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);
   assert.match(liveActionsMarkup, /id="notifyBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-share-action[\s\S]*?profile-report-action/);
   assert.doesNotMatch(liveActionsMarkup, /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);
   assert.doesNotMatch(
-    liveActionsMarkup.match(/<button class="action-btn secondary profile-share-action"[^>]*>/)?.[0] || "",
+    liveActionsMarkup.match(/<button class="action-btn secondary profile-share-action profile-action-icon-control"[^>]*>/)?.[0] || "",
     /disabled|aria-disabled/,
   );
   assert.match(
@@ -131,11 +131,11 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(
     liveApp,
-    /Keep profile-level actions separate from the venue travel controls[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
+    /Keep profile-level actions separate from the venue travel controls[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.modal-actions \.profile-share-action \{\s*grid-column: 1 \/ -1 !important;/,
+    liveApp,
+    /#profileBackdrop \.modal-actions \.profile-share-action \{\s*grid-column: auto !important;/,
   );
   assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?const directionsMarkup = dancerProfileDirectionsMarkup\(profile, \{ city \}\)[\s\S]*?const rideMarkup = dancerProfileUberRideMarkup\(profile, \{ city \}\)/);
   assert.match(liveActionsMarkup, /modal-actions \$\{isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"\}/);
@@ -421,7 +421,7 @@ test("inactive profile Club Deals keep a neutral placeholder", () => {
   assert.match(dealMarkup, /profile-club-deal-tile is-inactive/);
   assert.match(dealMarkup, /aria-label="Inactive Club Deal"/);
   assert.match(dealMarkup, /<span class="profile-club-deal-action-copy"><strong>Inactive<\/strong><\/span>/);
-  assert.match(dealMarkup, /Available tonight at \$\{escapeHtml\(venueName\)\} · Cashier NFC required/);
+  assert.match(dealMarkup, /Tap your phone at the cashier/);
   assert.match(liveApp, /#profileBackdrop #profileModal \.modal-body \{[\s\S]*?padding-bottom: 0 !important;/);
   assert.match(liveApp, /\.profile-club-deal-tile\.is-inactive \.profile-club-deal-qr-button \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?place-items: center !important;/);
 });

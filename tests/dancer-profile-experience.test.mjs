@@ -113,7 +113,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.match(profilePage, /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/);
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
   assert.match(profilePage, /presentation="launcher"/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use at Club"\}/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use deal"\}/);
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.doesNotMatch(profilePage, /import \{ VenueQrUnavailable \}|<VenueQrUnavailable/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
@@ -205,7 +205,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /live-actions\$\{hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"\}/);
   assert.match(profileActions, /profile-action-going[\s\S]*?profile-action-unavailable[\s\S]*?No shift posted/);
   assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
-  assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
+  assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\); \}/);
 });
 
 test("reports are bounded, validated, attributable when possible, and logged", () => {

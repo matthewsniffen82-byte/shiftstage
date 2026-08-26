@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     if (error) throw error;
     return noStore({ ok: true, requests: data || [], session: session || null });
   } catch (error) {
-    return apiError(error, "Unable to load NFC support requests.");
+    return apiError(error, "Unable to load tap-sticker support requests.");
   }
 }
 
@@ -37,13 +37,13 @@ export async function POST(request: Request) {
     const tagId = String(body?.tagId || "").trim();
     const notes = String(body?.notes || "").trim();
     if (!REQUEST_TYPES.has(requestType)) {
-      return noStore({ ok: false, error: "Choose why this NFC sticker needs support." }, 400);
+      return noStore({ ok: false, error: "Choose why this tap sticker needs support." }, 400);
     }
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(tagId)) {
-      return noStore({ ok: false, error: "Choose an assigned NFC sticker." }, 400);
+      return noStore({ ok: false, error: "Choose an assigned tap sticker." }, 400);
     }
     if (notes.length > 1000) {
-      return noStore({ ok: false, error: "Keep NFC support notes under 1,000 characters." }, 400);
+      return noStore({ ok: false, error: "Keep tap-sticker support notes under 1,000 characters." }, 400);
     }
 
     const admin = createAdminSupabaseClient();
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       .eq("venue_id", access.venueId)
       .maybeSingle();
     if (tagError) throw tagError;
-    if (!tag) return noStore({ ok: false, error: "This NFC sticker is not assigned to your venue." }, 404);
+    if (!tag) return noStore({ ok: false, error: "This tap sticker is not assigned to your venue." }, 404);
 
     const { data: supportRequest, error: insertError } = await (admin as any)
       .from("venue_nfc_support_requests")
@@ -74,9 +74,9 @@ export async function POST(request: Request) {
       await createOwnSupportMessage(auth.client, {
         userId: auth.user.id,
         role: "venue",
-        subject: `NFC sticker support · ${String(tag.label)}`,
+        subject: `Tap-sticker support · ${String(tag.label)}`,
         body: [
-          `${access.venueName} requested ${requestType} NFC sticker support.`,
+          `${access.venueName} requested ${requestType} tap-sticker support.`,
           `Sticker: ${String(tag.label)} (${String(tag.tag_type).replace("_", " ")})`,
           `Request ID: ${String(supportRequest.id)}`,
           notes ? `Notes: ${notes}` : "Notes: None provided.",
@@ -100,11 +100,11 @@ export async function POST(request: Request) {
     return noStore({
       ok: true,
       supportRequest,
-      message: "NFC support request sent to MyDancr.",
+      message: "Tap-sticker support request sent to MyDancr.",
       session: auth.session || null,
     });
   } catch (error) {
-    return apiError(error, "Unable to send this NFC support request.", 400);
+    return apiError(error, "Unable to send this tap-sticker support request.", 400);
   }
 }
 

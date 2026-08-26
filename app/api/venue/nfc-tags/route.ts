@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const tags = await listVenueNfcTags(createAdminSupabaseClient(), user.id);
     return noStore({ ok: true, tags, session: authContext.session || null });
   } catch (error) {
-    return apiError(error, "Unable to load venue NFC tags.");
+    return apiError(error, "Unable to load venue tap stickers.");
   }
 }
 
@@ -27,11 +27,11 @@ export async function POST(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     return noStore({
       ok: false,
-      error: "MyDancr supplies and programs venue NFC stickers. Contact MyDancr support for a new or replacement sticker.",
+      error: "MyDancr supplies and programs venue tap stickers. Contact MyDancr support for a new or replacement sticker.",
       session: authContext.session || null,
     }, 403);
   } catch (error) {
-    return apiError(error, "Unable to verify venue NFC access.", 403);
+    return apiError(error, "Unable to verify venue tap-sticker access.", 403);
   }
 }
 
@@ -42,11 +42,11 @@ export async function PATCH(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     return noStore({
       ok: false,
-      error: "Only MyDancr can activate, disable, or replace venue NFC stickers. Contact support if a sticker is lost, damaged, or moved.",
+      error: "Only MyDancr can activate, disable, or replace venue tap stickers. Contact support if a sticker is lost, damaged, or moved.",
       session: authContext.session || null,
     }, 403);
   } catch (error) {
-    return apiError(error, "Unable to verify venue NFC access.", 403);
+    return apiError(error, "Unable to verify venue tap-sticker access.", 403);
   }
 }
 

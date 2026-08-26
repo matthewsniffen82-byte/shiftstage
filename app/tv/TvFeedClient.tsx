@@ -768,8 +768,8 @@ function TvClubDealUnavailable({ video }: { video: MyDancrTvVideo }) {
   const detail = video.shift?.isActive
     ? "This club does not have an active tracked offer right now."
     : video.shift
-      ? "NFC Club Deals can unlock after a verified check-in."
-      : "A verified current check-in is required for dancer-attributed NFC redemption.";
+      ? "Club Deals can unlock after a verified check-in."
+      : "A verified current check-in is required for dancer-attributed redemption.";
 
   return (
     <aside className="tv-club-deal-unavailable" aria-label={`Club Deals: ${label}. ${detail}`}>

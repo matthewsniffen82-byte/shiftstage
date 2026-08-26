@@ -42,7 +42,7 @@ const [
   readFile(new URL("../src/lib/dancr/account-provisioning.ts", import.meta.url), "utf8"),
 ]);
 
-test("new dancers stay private until NFC venue authorization while existing approved profiles remain live", () => {
+test("new dancers stay private until venue tap authorization while existing approved profiles remain live", () => {
   assert.match(profileApproval, /function initialDancerApprovalValues/);
   assert.match(profileApproval, /status: "draft"/);
   assert.match(profileApproval, /verification_status: "pending"/);
@@ -53,7 +53,7 @@ test("new dancers stay private until NFC venue authorization while existing appr
   assert.match(profileRoute, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
   assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_onboarding_required/);
-  assert.match(liveApp, /official MyDancr dressing-room NFC sticker/i);
+  assert.match(liveApp, /official MyDancr dressing-room sticker/i);
   assert.match(venueMigration, /venue_approved_at is not null/);
   assert.match(restoreMigration, /'profileDeactivated', false/);
   assert.match(restoreMigration, /is_public = true/);

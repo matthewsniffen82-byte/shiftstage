@@ -114,11 +114,16 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
       <div className="profile-share">
         <button
           aria-haspopup="dialog"
+          className="profile-action-icon-control profile-share-trigger"
           onClick={() => setDialogOpen(true)}
           type="button"
         >
-          <ShareIcon />
-          Share
+          <span className="profile-action-main">
+            <span aria-hidden="true" className="profile-action-icon-frame" data-profile-action-icon="share">
+              <ShareIcon />
+            </span>
+            <span>Share</span>
+          </span>
         </button>
         <span aria-live="polite">{status}</span>
       </div>
@@ -149,7 +154,7 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
             <h2 id="profile-share-dialog-title">{stageName} on MyDancr</h2>
             <p>
               Send the public profile directly or copy its secure link. Club
-              Deal redemption happens only through a club cashier NFC tap.
+              Deal redemption happens only when you tap your phone at the club cashier.
             </p>
 
             <div className="profile-share-dialog-actions">
@@ -173,7 +178,7 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
 
 function ShareIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
+    <svg className="profile-action-preview-icon profile-action-preview-icon-share" aria-hidden="true" viewBox="0 0 24 24">
       <circle cx="18" cy="5" r="3" />
       <circle cx="6" cy="12" r="3" />
       <circle cx="18" cy="19" r="3" />

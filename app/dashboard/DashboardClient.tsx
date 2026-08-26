@@ -1591,9 +1591,9 @@ function CustomerDealPassPanel({
         </div>
         <strong>{activeDeals.length}</strong>
       </div>
-      <section className="customer-nfc-guide" aria-label="How cashier NFC redemption works">
+      <section className="customer-nfc-guide" aria-label="How cashier tap redemption works">
         <div><b>1</b><span><strong>Choose the exact deal</strong><small>Open an offer from a venue or a Working Now dancer before reaching the cashier.</small></span></div>
-        <div><b>2</b><span><strong>Tap at the cashier</strong><small>Keep the deal open and tap the official MyDancr NFC sticker with this signed-in phone.</small></span></div>
+        <div><b>2</b><span><strong>Tap at the cashier</strong><small>Keep the deal open and tap the official MyDancr cashier sticker with this signed-in phone.</small></span></div>
         <div><b>3</b><span><strong>Wait for confirmation</strong><small>The on-screen confirmation records the redemption and the correct dancer attribution.</small></span></div>
       </section>
       <div className="saved-deal-list">
@@ -1613,7 +1613,7 @@ function CustomerDealPassPanel({
         {!activeDeals.length ? (
           <div className="customer-empty-state">
             <strong>No active Club Deals</strong>
-            <p>Choose a Club Deal first, then tap the club&apos;s official cashier NFC sticker. There is no QR code to scan.</p>
+            <p>Choose a Club Deal first, then tap the club&apos;s official cashier sticker. There is no QR code to scan.</p>
             <Link href={homeDiscoveryHref("venues")}>Browse clubs</Link>
           </div>
         ) : null}
@@ -2621,7 +2621,7 @@ function VenueClubDealPanel({
         <div className="venue-deal-control-status">
           <span>{liveCount > 1 ? "Live Club Deals" : liveCount ? "Live Club Deal" : deals.length ? "No live Club Deal" : "Club Deals are inactive"}</span>
           <strong>{liveCount > 1 ? `${liveCount} Club Deals are live` : liveDeal ? String(liveDeal.dealTitle || "Live Club Deal") : deals.length ? `${draftCount} ${draftCount === 1 ? "draft" : "drafts"} ready to finish` : "Create your first Club Deal"}</strong>
-          <small>{liveCount ? "Available on your venue page and assigned cashier NFC stickers." : "Publish a deal when you are ready to accept cashier NFC redemptions."}</small>
+          <small>{liveCount ? "Available on your venue page and assigned cashier stickers." : "Publish a deal when you are ready to accept cashier-tap redemptions."}</small>
           {liveDeals.length > 1 ? (
             <div className="venue-deal-live-list" aria-label="Live Club Deals">
               {liveDeals.map((deal) => (
@@ -2655,7 +2655,7 @@ function VenueClubDealPanel({
         </summary>
         <div className="venue-deal-editor-body">
           <p className="venue-deal-placement-note">
-            Your existing MyDancr cashier NFC sticker automatically opens current live deals—no reprogramming required.
+            Your existing MyDancr cashier sticker automatically opens current live deals—no setup changes required.
           </p>
           <div className="venue-deal-counts" aria-label="Club Deal totals">
             <span><strong>{liveCount}</strong> live</span>
@@ -2840,7 +2840,7 @@ function VenueClubDealPanel({
           <span className="eyebrow">Cashier sticker</span>
           <h3 id="venue-deal-nfc-heading">{liveCount ? "Ready for redemption" : "Waiting for a live deal"}</h3>
           <p>{liveCount ? "Guests can redeem a live deal with any active cashier sticker assigned to your venue." : "Publish a deal to make it available at the cashier."}</p>
-          <small>Sticker status is managed in Assigned NFC access.</small>
+          <small>Sticker status is managed in Assigned tap access.</small>
         </section>
       </section>
       <details className="venue-deal-how">
@@ -3613,7 +3613,7 @@ function DancerOnboardingCommand({
       id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room NFC sticker." : "Complete the profile preview step to unlock club verification.",
+      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room sticker." : "Complete the profile preview step to unlock club verification.",
       locked: !submitted && !isVenueApproved,
     },
   ], [isVenueApproved, natsAccountStatus, payoutSkipped, payoutStepComplete, profileReady, setupDetail, submitted]);
@@ -4265,7 +4265,7 @@ function DancerPanel({
             <div className="dancer-status-metrics" aria-label="Current profile status">
               <Metric label="Stage name" value={persistedDancerStageName(profile) || "Draft"} />
               <Metric label="Status" value="Approved" />
-              <Metric label="Dressing-room NFC" value={isVenueApproved ? "Authorized" : "Tap required"} />
+              <Metric label="Dressing-room tap" value={isVenueApproved ? "Authorized" : "Tap required"} />
               <Metric label="Photo review" value={photoStatusLabel(normalizePhotoStatus(profile?.photo_review_status))} />
             </div>
             <DancerNfcPanel
@@ -4485,10 +4485,10 @@ function DancerLockedAnalyticsPanel() {
         <span>Locked</span>
       </div>
       <p>Locked until profile approval.</p>
-      <small>Once your profile is approved, you&apos;ll see profile views, attributed NFC redemptions, followers, and shift activity here.</small>
+      <small>Once your profile is approved, you&apos;ll see profile views, attributed deal redemptions, followers, and shift activity here.</small>
       <div className="locked-preview-list" aria-label="Analytics preview">
         <span>Profile views</span>
-        <span>NFC redemptions</span>
+        <span>Deal redemptions</span>
         <span>Followers</span>
       </div>
     </article>
@@ -4583,7 +4583,7 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
       </details>
       <details className="dancer-performance-explainer">
         <summary>How Club Deal rewards work</summary>
-        <p>Your dancer credit follows a verified check-in to the guest&apos;s cashier NFC tap. Successful, server-confirmed redemptions earn commission.</p>
+        <p>Your dancer credit follows a verified check-in to the guest&apos;s cashier tap. Successful, server-confirmed redemptions earn commission.</p>
       </details>
     </article>
   );
@@ -4730,7 +4730,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         <summary>How payouts work</summary>
         <div className="dancer-performance-explainer-copy">
           <p>{natsSelected
-            ? "MyDancr validates cashier NFC redemptions, calculates your tiered commission, and sends eligible rewards to your verified payout account. Payouts are managed through NATS."
+            ? "MyDancr validates cashier-tap redemptions, calculates your tiered commission, and sends eligible rewards to your verified payout account. Payouts are managed through NATS."
             : "Qualifying Club Deal activity starts as pending and becomes available after review."}</p>
           <p>{natsSelected
             ? "No guest personal information is included."
@@ -5920,7 +5920,7 @@ function DancerShiftPanel() {
         fallbackMessage: "Unable to post shift.",
       });
       setStatus(`Shift posted. ${data.broadcastRecipients || 0} followers notified.`);
-      setCheckInStatus("Shift posted. During the shift, tap the venue's official dressing-room NFC sticker to appear Working Now.");
+      setCheckInStatus("Shift posted. During the shift, tap the venue's official dressing-room sticker to appear Working Now.");
       setStartsAt("");
       setEndsAt("");
       await loadShifts();
@@ -5936,7 +5936,7 @@ function DancerShiftPanel() {
     setEditVenueId(String(shift.venue_id || ""));
     setEditStartsAt(toDateTimeLocalValue(shift.starts_at));
     setEditEndsAt(toDateTimeLocalValue(shift.ends_at));
-    setStatus("Edit the shift hours, then save. Exact times stay private and are used for check-in and NFC commission eligibility.");
+    setStatus("Edit the shift hours, then save. Exact times stay private and are used for check-in and commission eligibility.");
   }
 
   function stopEditingShift() {
@@ -5972,7 +5972,7 @@ function DancerShiftPanel() {
         }),
         fallbackMessage: "Unable to update shift.",
       });
-      setStatus("Shift updated. During those posted hours, tap the venue's dressing-room NFC sticker to check in.");
+      setStatus("Shift updated. During those posted hours, tap the venue's dressing-room sticker to check in.");
       stopEditingShift();
       await loadShifts();
     } catch (error) {
@@ -6024,7 +6024,7 @@ function DancerShiftPanel() {
         body: JSON.stringify({ shiftId }),
         fallbackMessage: "Unable to check out.",
       });
-      setCheckInStatus("NFC check-in ended. Club Deal commission tracking is stopped.");
+      setCheckInStatus("Club check-in ended. Club Deal commission tracking is stopped.");
       setCheckInTone("success");
       setStatus("Checked out. This shift is no longer Working Now.");
       await loadShifts();
@@ -6057,18 +6057,18 @@ function DancerShiftPanel() {
       <h2>Post Schedule</h2>
       <div className={activeShift ? "shift-checkin-card ready" : "shift-checkin-card"}>
         <span>
-          <strong>{activeShift ? (isCheckedInToActiveShift ? (activeLocationIsVerified ? "NFC check-in active" : "NFC check-in expired") : canCheckInToShift(activeShift) ? "Ready for dressing-room tap" : "Next posted shift") : "No shift ready for check-in"}</strong>
+          <strong>{activeShift ? (isCheckedInToActiveShift ? (activeLocationIsVerified ? "Club check-in active" : "Club check-in expired") : canCheckInToShift(activeShift) ? "Ready for dressing-room tap" : "Next posted shift") : "No shift ready for check-in"}</strong>
           <small>
             {activeShift
               ? isCheckedInToActiveShift
                 ? activeLocationIsVerified
-                  ? `${venueName(activeShift)} is live in Now until this NFC check-in expires or the shift ends.`
+                  ? `${venueName(activeShift)} is live in Now until this club check-in expires or the shift ends.`
                   : `${venueName(activeShift)} is not shown in Working Now. A new dressing-room tap can start one six-hour session only after the cooldown ends.`
-                : `${venueName(activeShift)} is posted. During the shift, tap the venue's official dressing-room NFC sticker to check in.`
+                : `${venueName(activeShift)} is posted. During the shift, tap the venue's official dressing-room sticker to check in.`
               : "Post one or more shifts below. Your public cards only show Working Now when checked in, or the nearest upcoming shift when you are not checked in."}
           </small>
         </span>
-        {activeShift && !isCheckedInToActiveShift ? <b className="check-in-confirmation">Tap NFC at the club</b> : null}
+        {activeShift && !isCheckedInToActiveShift ? <b className="check-in-confirmation">Tap at the club</b> : null}
         {activeShift && isCheckedInToActiveShift ? (
           <button
             type="button"
@@ -6101,7 +6101,7 @@ function DancerShiftPanel() {
         <label>
           Approved venue
           <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={!venues.length || isSaving} required>
-            <option value="">{venues.length ? "Choose NFC-authorized venue" : "No NFC-authorized venues"}</option>
+            <option value="">{venues.length ? "Choose approved venue" : "No tap-approved venues"}</option>
             {venues.map((venue) => (
               <option key={venue.id} value={venue.id}>
                 {venue.name}
@@ -6120,7 +6120,7 @@ function DancerShiftPanel() {
         <button type="submit" disabled={isSaving || !venues.length}>
           {isSaving ? "Posting..." : "Post another shift"}
         </button>
-        {!venues.length ? <p>Tap a venue&apos;s official dressing-room NFC sticker to authorize it before posting a shift there.</p> : null}
+        {!venues.length ? <p>Tap a venue&apos;s official dressing-room sticker to approve it before posting a shift there.</p> : null}
       </form>
       <div className="shift-list-head">
         <strong>Posted shifts</strong>
@@ -6167,7 +6167,7 @@ function DancerShiftPanel() {
                 </span>
                 <em>{dashboardShiftStatus(shift)}</em>
                 <div className="shift-actions">
-                  {canCheckInToShift(shift) ? <b className="check-in-confirmation">Tap dressing-room NFC</b> : null}
+                  {canCheckInToShift(shift) ? <b className="check-in-confirmation">Tap at dressing room</b> : null}
                   {canCheckOutOfShift(shift) ? (
                     <>
                       <button type="button" className="check-in-confirmation" disabled aria-label="Check-in confirmed">
@@ -6225,8 +6225,8 @@ function isShiftCheckInWindowOpen(shift: Record<string, any>) {
 function dashboardShiftStatus(shift: Record<string, any>) {
   if (shift.status === "cancelled") return "Cancelled";
   if (shift.checked_out_at) return "Checked Out";
-  if (isCurrentLocationVerification(shift) && new Date(shift.ends_at).getTime() >= Date.now()) return "NFC checked in";
-  if (shift.checked_in_at && !shift.checked_out_at) return "Tap NFC again";
+  if (isCurrentLocationVerification(shift) && new Date(shift.ends_at).getTime() >= Date.now()) return "Club check-in active";
+  if (shift.checked_in_at && !shift.checked_out_at) return "Tap again";
   return "Not checked in";
 }
 
@@ -8657,7 +8657,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .venue-qr-placeholder-copy { display:grid; gap:2px; text-align:center; }
       .dancer-profile-preview-overlay .venue-qr-placeholder-copy strong { color:rgba(203,196,214,.7); font-size:12px; font-weight:950; line-height:1.08; }
       .dancer-profile-preview-overlay .venue-qr-placeholder-copy small { color:rgba(203,196,214,.64); font-size:9px; font-weight:850; line-height:1.12; }
-      .dancer-profile-preview-overlay .live-actions { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); column-gap:8px; row-gap:3px; padding:9px 0 8px; }
+      .dancer-profile-preview-overlay .live-actions { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:4px; row-gap:0; padding:3px 0 0; }
       .dancer-profile-preview-overlay .live-actions > button, .dancer-profile-preview-overlay .profile-action-share-slot .profile-share button { width:100%; min-height:48px; display:inline-flex; align-items:center; justify-content:center; padding:7px 10px; border:1px solid rgba(148,229,255,.24); border-radius:12px; color:#fff; background:rgba(148,229,255,.075); cursor:pointer; font-size:12px; font-weight:900; text-align:center; }
       .dancer-profile-preview-overlay .live-actions > button:disabled { opacity:.66; cursor:default; }
       .dancer-profile-preview-overlay .live-actions .profile-action-going { flex-direction:column; gap:2px; }
@@ -8674,7 +8674,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width:13.75px; height:13.75px; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width:15.25px; height:15.25px; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon { width:13px; height:13px; }
-      .dancer-profile-preview-overlay .live-actions > button.profile-action-icon-control { min-height:56px; align-self:stretch; flex-direction:column; justify-content:flex-start; gap:1px; padding:2px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+      .dancer-profile-preview-overlay .live-actions > button.profile-action-icon-control, .dancer-profile-preview-overlay .profile-action-share-slot .profile-share > button.profile-action-icon-control { min-height:54px; align-self:stretch; flex-direction:column; justify-content:flex-start; gap:1px; padding:2px; border:0; border-radius:0; background:transparent; box-shadow:none; }
       .dancer-profile-preview-overlay .profile-action-icon-control .profile-action-main { flex-direction:column; gap:2px; overflow:visible; }
       .dancer-profile-preview-overlay .profile-action-icon-control .profile-action-main > span { overflow:visible; color:#ded8e7; font-size:10px; line-height:1.05; text-overflow:clip; white-space:nowrap; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control .profile-action-icon-frame { width:24px; height:24px; flex-basis:24px; }
@@ -8691,17 +8691,17 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-action-icon-control .profile-action-requirement { max-width:100%; overflow:hidden; color:#8e8498; font-size:7px; text-overflow:ellipsis; white-space:nowrap; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-preview-static:disabled { opacity:1; cursor:default; }
       .dancer-profile-preview-overlay .profile-action-share-slot, .dancer-profile-preview-overlay .profile-action-overflow { position:relative; min-width:0; }
-      .dancer-profile-preview-overlay .profile-action-share-slot { grid-column:1 / -1; }
-      .dancer-profile-preview-overlay .profile-action-share-slot .profile-share { display:block; min-height:48px; }
+      .dancer-profile-preview-overlay .profile-action-share-slot { grid-column:auto; }
+      .dancer-profile-preview-overlay .profile-action-share-slot .profile-share { display:block; min-height:54px; }
       .dancer-profile-preview-overlay .profile-action-share-slot .profile-share button { gap:6px; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions > button:not(.profile-action-icon-control):not(.profile-report-action), .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-share-slot .profile-share button.profile-action-preview-share { display:grid; grid-template-rows:18px 9px; align-content:center; justify-items:center; row-gap:1px; column-gap:0; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions > button:not(.profile-action-icon-control):not(.profile-report-action) .profile-action-main, .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-share-slot .profile-share button .profile-action-main { grid-row:1; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions > button:not(.profile-action-icon-control):not(.profile-report-action) .profile-action-requirement { grid-row:2; }
       .dancer-profile-preview-overlay .profile-action-overflow-toggle { width:100%; min-height:48px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:7px 10px; border:1px solid rgba(148,229,255,.18); border-radius:12px; color:#d8d0e4; background:rgba(255,255,255,.04); cursor:default; font-size:12px; font-weight:900; }
       .dancer-profile-preview-overlay .profile-action-overflow-toggle > span:first-child { color:#9fefff; font-size:15px; letter-spacing:.08em; line-height:1; }
-      .dancer-profile-preview-overlay .profile-overview { display:block; margin-top:0; padding:10px 0 4px; border:0; }
+      .dancer-profile-preview-overlay .profile-overview { display:block; margin-top:0; padding:2px 0 0; border:0; }
       .dancer-profile-preview-overlay .profile-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin:0; }
-      .dancer-profile-preview-overlay .profile-metrics > div { min-width:0; display:grid; gap:6px; justify-items:center; padding:10px 4px; }
+      .dancer-profile-preview-overlay .profile-metrics > div { min-width:0; display:grid; gap:3px; justify-items:center; padding:6px 4px; }
       .dancer-profile-preview-overlay .profile-metrics dd { margin:0; color:#eee9f5; font-size:clamp(19px,3.75vw,24px); font-weight:900; letter-spacing:.01em; line-height:1.08; }
       .dancer-profile-preview-overlay .profile-metrics dt { color:#8f849c; font-size:clamp(9px,2.1vw,11px); font-weight:850; line-height:1.25; text-align:center; }
       .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }

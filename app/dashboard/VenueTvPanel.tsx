@@ -61,7 +61,7 @@ export default function VenueTvPanel() {
             <div>
               <span>{video.shift?.isActive ? "Working Now" : "Upcoming shift"}</span>
               <strong>{video.dancer?.stageName || "Dancer"}</strong>
-              {video.shift ? <small>{video.shift.isActive ? "Dressing-room NFC verified" : `Upcoming · ${formatDate(video.shift.shiftDate || video.shift.startsAt)}`}</small> : null}
+              {video.shift ? <small>{video.shift.isActive ? "Dressing-room tap verified" : `Upcoming · ${formatDate(video.shift.shiftDate || video.shift.startsAt)}`}</small> : null}
               <dl>
                 <div><dt>Engaged views</dt><dd>{video.metrics?.engaged_view || 0}</dd></div>
                 <div><dt>Venue visits</dt><dd>{video.metrics?.venue_click || 0}</dd></div>

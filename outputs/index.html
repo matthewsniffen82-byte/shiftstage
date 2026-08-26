@@ -36253,15 +36253,15 @@
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 0;
           margin: 0;
-          padding: 11px 0 10px;
+          padding: 4px 0 2px;
           border: 0;
         }
         #profileBackdrop .profile-activity-metrics > div {
           min-width: 0;
           display: grid;
-          gap: 5px;
+          gap: 3px;
           justify-items: center;
-          padding: 5px;
+          padding: 4px;
         }
         #profileBackdrop .profile-activity-metrics dd {
           margin: 0;
@@ -38205,7 +38205,7 @@
           grid-template-columns: auto minmax(0, 1fr) !important;
           align-items: center !important;
           gap: 9px !important;
-          padding: 6px 8px !important;
+          padding: 4px 8px !important;
         }
 
         #profileBackdrop #profileModal .profile-tonight-card > .schedule-empty {
@@ -38217,7 +38217,7 @@
           display: grid;
           grid-template-columns: minmax(0, 1fr);
           gap: 6px;
-          padding: 0 8px 8px;
+          padding: 0 8px 6px;
         }
 
         #profileBackdrop #profileModal .profile-tonight-travel-actions.is-working-now {
@@ -38227,12 +38227,12 @@
         #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) {
           grid-column: auto !important;
           width: 100% !important;
-          height: 44px !important;
-          min-height: 44px !important;
-          max-height: 44px !important;
+          height: 40px !important;
+          min-height: 40px !important;
+          max-height: 40px !important;
           margin: 0 !important;
           padding: 5px 8px !important;
-          border-radius: 11px !important;
+          border-radius: 10px !important;
           font-size: 11px !important;
         }
 
@@ -38464,7 +38464,7 @@
         #profileBackdrop .working-now-tile .profile-venue-destination.is-live {
           grid-template-columns: 28px minmax(0, 1fr) 16px !important;
           gap: 7px !important;
-          min-height: 46px !important;
+          min-height: 40px !important;
           padding: 3px 6px !important;
           border: 0 !important;
           background: transparent !important;
@@ -38478,14 +38478,14 @@
         /* Keep profile-level actions separate from the venue travel controls
            that now live inside Tonight beside the relevant shift. */
         #profileBackdrop .modal-actions {
-          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-          column-gap: 6px !important;
-          row-gap: 2px !important;
-          padding-block: 6px 5px !important;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          column-gap: 4px !important;
+          row-gap: 0 !important;
+          padding-block: 3px 0 !important;
         }
 
         #profileBackdrop .modal-actions.is-no-live-shift {
-          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         }
 
         #profileBackdrop .modal-actions .action-btn,
@@ -38497,7 +38497,7 @@
         }
 
         #profileBackdrop .modal-actions .profile-share-action {
-          grid-column: 1 / -1 !important;
+          grid-column: auto !important;
         }
 
         #profileBackdrop .modal-actions .going-btn {
@@ -38519,7 +38519,7 @@
         }
 
         body.dancr-button-system #profileBackdrop .modal-actions .action-btn.profile-action-icon-control {
-          min-height: 56px !important;
+          min-height: 54px !important;
           align-self: stretch !important;
           display: flex !important;
           flex-direction: column !important;
@@ -38672,9 +38672,9 @@
         #profileBackdrop .profile-report-action {
           grid-column: 1 / -1 !important;
           width: auto !important;
-          min-height: 28px !important;
+          min-height: 20px !important;
           justify-self: end !important;
-          padding: 3px 2px !important;
+          padding: 0 2px !important;
           border: 0 !important;
           color: #8f8799 !important;
           background: transparent !important;
@@ -39308,7 +39308,7 @@
             </button>
             <button class="role-option account-option auth-account-choice" id="openDancerSignup" type="button">
               <span class="auth-account-choice-number" aria-hidden="true">2</span>
-              <span><strong>Dancer</strong><small>Create a reviewed profile, then tap dressing-room NFC to authorize a venue.</small></span>
+              <span><strong>Dancer</strong><small>Create a reviewed profile, then tap the dressing-room sticker to approve a venue.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
             <button class="role-option account-option auth-account-choice" id="venueSignupBtn" type="button">
@@ -39793,10 +39793,10 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse approved-analytics" id="dancerCommissionSection">
-          <summary><span class="dashboard-collapse-title"><strong>NFC commissions</strong><span>Expand to see commissions earned from cashier NFC redemptions attributed to your profile.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Club Deal commissions</strong><span>Expand to see commissions earned from cashier-tap redemptions attributed to your profile.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
           <div class="dashboard-collapse-body">
-            <p class="value-message" id="dancerCommissionSummary">NFC commissions appear after guests choose your attributed deal and tap the club cashier sticker.</p>
-            <div class="metric-grid" id="dancerCommissionMetrics" aria-label="NFC commission metrics"></div>
+            <p class="value-message" id="dancerCommissionSummary">Club Deal commissions appear after guests choose your attributed deal and tap the club cashier sticker.</p>
+            <div class="metric-grid" id="dancerCommissionMetrics" aria-label="Club Deal commission metrics"></div>
             <div class="rank-notification-list" id="dancerCommissionActivity">Commission activity will appear here.</div>
           </div>
         </details>
@@ -39960,7 +39960,7 @@
           <div class="post-shift-head">
             <span class="eyebrow">Shift posting</span>
             <h3>Shift Manager</h3>
-            <p>Tap the dressing-room NFC tag to go Working Now. Upcoming schedules contain only the venue and date.</p>
+            <p>Tap the dressing-room sticker to go Working Now. Upcoming schedules contain only the venue and date.</p>
           </div>
           <div class="post-shift-value-row" aria-label="Post shift benefits">
             <div><strong>Broadcast</strong><span>followers notified</span></div>
@@ -39979,7 +39979,7 @@
               <input class="dancer-schedule-control" id="shiftDate" type="date" required>
             </div>
             <div class="rule-note" id="shiftDisplayPreview">
-              A secure dressing-room NFC tap starts one six-hour Working Now session. A six-hour cooldown follows, and retaps cannot extend the session. No phone location is collected.
+              A secure dressing-room tap starts one six-hour Working Now session. A six-hour cooldown follows, and retaps cannot extend the session. No phone location is collected.
             </div>
             <div class="rule-note">
               <strong>Tracked Club Deal:</strong> During a verified check-in, guests can create a unique dancer-attributed MyDancr QR. Saving or sharing keeps your credit attached until that QR expires.
@@ -40076,7 +40076,7 @@
         <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
           <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
           <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
-          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dressing-room NFC sticker to authorize venue access and check in a current posted shift.</p>
+          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dressing-room sticker to approve venue access and check in a current posted shift.</p>
           <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
               Venue
@@ -40195,7 +40195,7 @@
         <div class="customer-summary venue-summary">
           <div>
             <span class="eyebrow">Live venue tools</span>
-            <h3>Manage your public venue page, physical NFC access, and live performance.</h3>
+            <h3>Manage your public venue page, tap access, and live performance.</h3>
             <p>The dressing-room sticker authorizes dancer venue access and checks in a current posted shift. The cashier sticker completes the exact Club Deal a guest selected in MyDancr.</p>
           </div>
           <div class="customer-summary-actions">
@@ -40272,9 +40272,9 @@
           </form>
           <section class="auth-card auth-form venue-offer-preview">
             <span class="eyebrow">Physical venue access</span>
-            <h3>NFC stickers</h3>
-            <p>View the dressing-room and cashier NFC stickers programmed and supplied by MyDancr, including their live status and tap activity.</p>
-            <a class="action-btn" href="/dashboard#venue-nfc-tags" style="text-decoration:none">View assigned NFC stickers</a>
+            <h3>Tap stickers</h3>
+            <p>View the dressing-room and cashier tap stickers supplied by MyDancr, including their live status and tap activity.</p>
+            <a class="action-btn" href="/dashboard#venue-nfc-tags" style="text-decoration:none">View assigned tap stickers</a>
           </section>
         </div>
         <div class="rule-note" id="venueDashboardStatus" role="status" aria-live="polite">Loading live venue data…</div>
@@ -40282,7 +40282,7 @@
           <h3>Useful analytics</h3>
           <div class="dashboard-stats">
             <div class="stat"><strong id="venuePageViewsToday">0</strong><span>page views today</span></div>
-            <div class="stat"><strong id="venueDressingRoomNfcTaps">0</strong><span>dressing-room NFC taps · 30 days</span></div>
+            <div class="stat"><strong id="venueDressingRoomNfcTaps">0</strong><span>dressing-room taps · 30 days</span></div>
             <div class="stat"><strong id="venueCashierNfcRedemptions">0</strong><span>cashier redemptions · 30 days</span></div>
             <div class="stat"><strong id="venueGoingSignals">0</strong><span>going signals · 30 days</span></div>
           </div>
@@ -41259,7 +41259,7 @@
       notice.className = "home-card-qr-notice";
       notice.setAttribute("role", "status");
       notice.setAttribute("aria-live", "polite");
-      heading.textContent = label || "Club Deal NFC";
+      heading.textContent = label || "Club Deal tap";
       detail.textContent = message || "No Club Deal is available right now.";
       notice.append(heading, detail);
       notice.style.setProperty(
@@ -43776,7 +43776,7 @@
             <button class="customer-quick-item has-qr" type="button" data-deal-pass="${encodeDealPass(pass)}">
               <span>
                 <strong>${displayText(pass.title)}</strong>
-                <span>${displayText(pass.venueName)} · cashier NFC</span>
+                <span>${displayText(pass.venueName)} · cashier tap</span>
               </span>
               ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
             </button>
@@ -45296,7 +45296,7 @@
     function reviewStepLabel(step) {
       if (step === "profile") return "Step 1 profile";
       if (step === "photos") return "Step 2 photos";
-      return "Step 4 venue NFC";
+      return "Step 4 venue tap";
     }
 
     function hasRejectedDancerReviews() {
@@ -46824,8 +46824,8 @@
         dealId: deal.id,
         attributionToken: sourceType === "dancer_profile" ? attributionToken : "",
         details: sourceType === "dancer_profile"
-          ? `Tap the cashier NFC sticker while this dancer is verified at ${venueName}; her attribution will be validated at redemption.`
-          : `Tap the cashier NFC sticker at ${venueName} to redeem this offer.`,
+          ? `Tap the cashier sticker while this dancer is verified at ${venueName}; her attribution will be validated at redemption.`
+          : `Tap the cashier sticker at ${venueName} to redeem this offer.`,
         url: venueExperienceHref({ slug: venueSlug, name: venueName }),
         nfcIntent: true,
         preparedAt: Date.now()
@@ -46897,8 +46897,8 @@
         if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
-        qrButton.setAttribute("aria-label", `Prepare the ${config.venueName || "active"} Club Deal for cashier NFC`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>Use at Club</strong><small>Cashier NFC</small></span>`;
+        qrButton.setAttribute("aria-label", `Prepare the ${config.venueName || "active"} Club Deal for a cashier tap`);
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>Use deal</strong><small>Tap at cashier</small></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({
@@ -46954,7 +46954,7 @@
         ? `Published while ${pass.dancerName} is working now`
         : `Published by ${pass.venueName}`;
       return `
-        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${pass.venueName} Club Deal for cashier NFC">
+        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${pass.venueName} Club Deal for a cashier tap">
           ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
           <span class="meta">${sourceLabel}</span>
         </button>
@@ -46976,7 +46976,7 @@
       `;
     }
 
-    function saveCustomerDealPass(pass, message = "Club Deal ready for cashier NFC") {
+    function saveCustomerDealPass(pass, message = "Club Deal ready for the cashier tap") {
       if (!pass?.id) return false;
       const existingSavedPass = savedDealPasses.find((item) => item.id === pass.id);
       const wasAlreadySaved = Boolean(existingSavedPass);
@@ -47063,7 +47063,7 @@
       if (!pass?.url) return;
       const shareData = {
         title: `${pass.venueName} Club Deal`,
-        text: `${pass.title} from ${pass.venueName}. Choose Use this deal, then unlock your phone at the cashier and tap the venue's registered MyDancr NFC sticker.`,
+        text: `${pass.title} from ${pass.venueName}. Choose Use this deal, then unlock your phone at the cashier and tap the venue's registered MyDancr cashier sticker.`,
         url: pass.url
       };
       try {
@@ -47140,10 +47140,10 @@
             <div class="deal-pass-steps" aria-label="How to redeem">
               <div class="deal-pass-step"><span>1</span><strong>Tap &ldquo;Use this deal&rdquo; below</strong></div>
               <div class="deal-pass-step"><span>2</span><strong>Go to the cashier</strong></div>
-              <div class="deal-pass-step"><span>3</span><strong>Unlock and tap the MyDancr NFC sticker</strong></div>
+              <div class="deal-pass-step"><span>3</span><strong>Unlock and tap the MyDancr cashier sticker</strong></div>
               <div class="deal-pass-step"><span>4</span><strong>Redemption completes automatically</strong></div>
             </div>
-            <p class="deal-pass-preview-note">After selecting, MyDancr does not need to stay open. Only this venue’s registered NFC sticker can complete redemption.</p>
+            <p class="deal-pass-preview-note">After selecting, MyDancr does not need to stay open. Only this venue’s registered cashier sticker can complete redemption.</p>
             <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
             <div class="deal-pass-actions">
               <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save for later</button>
@@ -47196,7 +47196,7 @@
             sheet.style.setProperty("--deal-pass-stable-height", `${previewHeight}px`);
           }
           syncDealPassOverlayState(overlay, pass);
-          showToast("Deal ready for the cashier NFC tap");
+          showToast("Deal ready for the cashier tap");
         } else {
           syncDealPassOverlayState(overlay, pass, {
             state: "error",
@@ -47312,7 +47312,7 @@
       status.classList.toggle("is-expired", state === "expired");
       if (state === "ready") {
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
-        status.textContent = "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker. MyDancr opens and completes the redemption automatically.";
+        status.textContent = "MyDancr does not need to stay open. At the cashier, unlock your phone and hold it near the registered MyDancr cashier sticker. MyDancr opens and completes the redemption automatically.";
         selectButton.textContent = "Deal selected ✓";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");
@@ -47322,7 +47322,7 @@
         expiry.textContent = readyUntil ? `Ready until ${readyUntil}` : dealPassAvailabilityLabel(pass);
       } else {
         status.textContent = state === "preview" ? "" : override?.message || (state === "expired"
-          ? "Your previous selection expired. Select this deal again before tapping NFC."
+          ? "Your previous selection expired. Select this deal again before tapping at the cashier."
           : "Unable to prepare this deal. Try again.");
         selectButton.textContent = state === "expired" ? "Use this deal again" : state === "error" ? "Try again" : "Use this deal";
         selectButton.disabled = false;
@@ -47359,7 +47359,7 @@
       const termsElement = document.getElementById("dealPassTerms");
       termsElement.hidden = !terms;
       termsElement.textContent = terms ? `Terms: ${terms}` : "";
-      document.getElementById("dealPassImage").setAttribute("aria-label", `Tap ${pass.venueName}'s registered cashier NFC sticker`);
+      document.getElementById("dealPassImage").setAttribute("aria-label", `Tap ${pass.venueName}'s registered cashier sticker`);
       syncDealPassOverlayState(overlay, pass);
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
@@ -47421,7 +47421,7 @@
             <button class="deal-pass-close" type="button" data-close-club-deal-hub aria-label="Close Club Deals">${actionIconMarkup("close")}</button>
             <p class="deal-pass-kicker">Live club offers</p>
             <h3 class="deal-pass-title" id="clubDealHubTitle">Club Deals</h3>
-            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer to preview. Use this deal does not redeem it. At the cashier, unlock your phone and tap the venue’s registered MyDancr NFC sticker.</p>
+            <p class="deal-pass-copy" id="clubDealHubCopy">Choose an offer to preview. Use this deal does not redeem it. At the cashier, unlock your phone and tap the venue’s registered MyDancr cashier sticker.</p>
             <p class="club-deal-hub-status" id="clubDealHubStatus" role="status" aria-live="polite" hidden></p>
             <div class="club-deal-hub-list" id="clubDealHubList"></div>
           </section>
@@ -47448,7 +47448,7 @@
         offerButton.classList.add("is-loading");
         offerButton.setAttribute("aria-busy", "true");
         overlay.setAttribute("aria-busy", "true");
-        status.textContent = "Preparing this deal for the cashier NFC tap…";
+        status.textContent = "Preparing this deal for the cashier tap…";
         status.hidden = false;
         try {
           const pass = await createRevenueDealPass(selection);
@@ -47482,13 +47482,13 @@
       const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. Use this deal does not redeem it. At the cashier, unlock your phone and tap the venue’s registered MyDancr NFC sticker.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. Use this deal does not redeem it. At the cashier, unlock your phone and tap the venue’s registered MyDancr cashier sticker.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");
       document.getElementById("clubDealHubList").innerHTML = offers.map((deal) => {
         const selection = clubDealSelectionConfig(config, deal);
-        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>Cashier NFC tap required at redemption</em></button>`;
+        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>Tap your phone at the cashier to redeem</em></button>`;
       }).join("");
       overlay.hidden = false;
       overlay.classList.add("show");
@@ -47584,14 +47584,14 @@
                   <span class="venue-detail-club-deal-status">Active tonight</span>
                 </div>
                 <h3>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
-                <p>${venue.activeDeals?.length > 1 ? "Choose Half-off admission or Skip the line, then tap the cashier NFC sticker at the club." : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
+                <p>${venue.activeDeals?.length > 1 ? "Choose Half-off admission or Skip the line, then tap the cashier sticker at the club." : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Get Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">
                   ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol")}
                   <span class="venue-detail-club-deal-qr-copy">
                     <strong>${venue.activeDeals?.length > 1 ? "View Club Deals" : "Get Club Deal"}</strong>
-                    <small>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : "Cashier NFC redemption"}</small>
+                    <small>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : "Tap at cashier"}</small>
                   </span>
                 </button>
               </div>
@@ -47683,7 +47683,7 @@
             <div class="profile-club-deal-copy">
               <strong class="profile-club-deal-label">Active Club Deal</strong>
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
-              <small>Available tonight at ${escapeHtml(venueName)} · Cashier NFC required</small>
+              <small>Tap your phone at the cashier</small>
             </div>
             <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
@@ -47916,7 +47916,7 @@
         shiftDate: dateValue
       };
       const upcomingText = displayPublicShiftTime(profile.time, profile);
-      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible physical dressing-room NFC tap changes the card to <strong>Working Now</strong>.`;
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong> at the selected venue. A future date never makes you live; only an eligible dressing-room tap changes the card to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
@@ -48032,18 +48032,18 @@
       const statusCopy = ended
         ? "This Working Now session has ended."
         : checkedIn
-          ? `Dressing-room NFC verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
-          : "Press the button, then hold your phone near the venue's dressing-room NFC tag. The secure tap starts one six-hour Working Now session followed by a six-hour cooldown.";
+          ? `Dressing-room tap verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
+          : "Press the button, then hold your phone near the venue's dressing-room sticker. The secure tap starts one six-hour Working Now session followed by a six-hour cooldown.";
 
       panel.hidden = false;
       panel.innerHTML = `
         <div class="shift-verification-head">
           <span class="shift-status-pill">${displayText(statusLabel)}</span>
-          <span class="shift-verification-copy">${checkedIn ? "6-hour NFC session" : "NFC required"}</span>
+          <span class="shift-verification-copy">${checkedIn ? "6-hour club session" : "Tap required"}</span>
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
         <div class="shift-action-grid">
-          ${!checkedIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="nfc-ready" aria-describedby="shiftCheckInStatus">Tap dressing-room NFC to go Working Now</button>' : ""}
+          ${!checkedIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="nfc-ready" aria-describedby="shiftCheckInStatus">Tap at dressing room to go Working Now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Working Now confirmed" aria-live="polite">✓ Working Now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Working Now</button>' : ""}
         </div>
@@ -48113,15 +48113,15 @@
       if (trigger) {
         trigger.disabled = true;
         trigger.setAttribute("aria-busy", "true");
-        if (triggerLabel) triggerLabel.textContent = action === "end" ? "Ending shift..." : "Ready for NFC tap...";
+        if (triggerLabel) triggerLabel.textContent = action === "end" ? "Ending shift..." : "Ready to tap...";
       }
       try {
         if (!isDancerSession()) {
           throw new Error("Sign in to your dancer account before using Working Now.");
         }
         if (action === "nfc-ready") {
-          setCheckInStatus("Ready to tap. Hold this unlocked phone near the official dressing-room NFC tag. The physical tap starts one six-hour Working Now session followed by a six-hour cooldown.", "success");
-          if (!options.silent) showToast("Ready for dressing-room NFC tap");
+          setCheckInStatus("Ready to tap. Hold this unlocked phone near the official dressing-room sticker. The physical tap starts one six-hour Working Now session followed by a six-hour cooldown.", "success");
+          if (!options.silent) showToast("Ready for dressing-room tap");
           return;
         }
         if (action === "end") {
@@ -48134,7 +48134,7 @@
           actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
         } else {
-          throw new Error("Use the venue's physical dressing-room NFC tag to start Working Now.");
+          throw new Error("Use the venue's physical dressing-room sticker to start Working Now.");
         }
       } catch (error) {
         const message = error.message || "Could not update shift";
@@ -49815,7 +49815,7 @@
       const existingShift = editingShiftId && existing
         ? profilePostedShifts(existing).find((shift) => String(shift.shiftId) === String(editingShiftId))
         : null;
-      shiftCheckInMessage = "Upcoming date posted. Tap the dressing-room NFC tag when you arrive to go Working Now.";
+      shiftCheckInMessage = "Upcoming date posted. Tap the dressing-room sticker when you arrive to go Working Now.";
       shiftCheckInTone = "";
       shiftCheckInCode = "";
       const shiftData = {
@@ -51050,7 +51050,7 @@
       return `
         <button class="profile-venue-destination${liveClass}" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
           ${venueIconMarkup()}
-          <span class="profile-venue-copy"><span class="profile-venue-label">Club</span><span class="profile-venue-name">${safeVenueName}</span></span>
+          <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span></span>
           <span class="profile-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
       `;
@@ -51222,7 +51222,7 @@
           <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notified" : "Notify", "account")}</button>
           ${goingButton}
-          <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
+          <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
           <button class="profile-report-action" id="reportBtn" type="button" data-profile="${profile.name}">Report profile</button>
         </div>
       `;
@@ -52650,7 +52650,7 @@
       document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 4 · Dressing-room tap" : "Venue access";
       document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
-        ? "At the club, tap its official MyDancr dressing-room NFC sticker. The tap authorizes venue access; MyDancr reviews profile content separately."
+        ? "At the club, tap its official MyDancr dressing-room sticker. The tap approves venue access; MyDancr reviews profile content separately."
         : "Use a new personal QR whenever you add or switch clubs. Your approved profile stays live while affiliations change.";
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
@@ -52676,9 +52676,9 @@
       renderShiftPostForm();
       document.getElementById("dancerVenueVerificationStatus").textContent =
         preferredVenue?.managerReady === true
-          ? `Tap ${preferredVenue.name}'s official dressing-room NFC sticker at the club.`
+          ? `Tap ${preferredVenue.name}'s official dressing-room sticker at the club.`
           : preferredVenue
-            ? `${preferredVenue.name} is not ready for dressing-room NFC yet.`
+            ? `${preferredVenue.name} is not ready for dressing-room taps yet.`
             : `Choose an active ${dancerCity} venue.`;
     }
 
@@ -52697,8 +52697,8 @@
       status.textContent = !venue
         ? `Choose an active ${dancerCity} venue.`
         : venue.managerReady === true
-          ? `Tap ${venue.name}'s official dressing-room NFC sticker at the club.`
-          : `${venue.name} is not ready for dressing-room NFC yet.`;
+          ? `Tap ${venue.name}'s official dressing-room sticker at the club.`
+          : `${venue.name} is not ready for dressing-room taps yet.`;
     }
 
     function loadDancerVenueVerification({ quiet = false } = {}) {
@@ -52815,7 +52815,7 @@
         document.getElementById("dancerVenueVerificationQrVenue").textContent = data.verification.venue?.name || "Venue";
         document.getElementById("dancerVenueVerificationQrExpiry").textContent = `Expires ${formatVenueAffiliationTime(data.verification.expiresAt)}`;
         document.getElementById("dancerVenueVerificationQr").hidden = false;
-        status.textContent = data.message || "Tap the official dressing-room NFC sticker at the club.";
+        status.textContent = data.message || "Tap the official dressing-room sticker at the club.";
         startDancerVenueVerificationLifecycle(data.verification);
       } catch (error) {
         const latest = rotate ? await loadDancerVenueVerification({ quiet: true }) : null;
@@ -53341,7 +53341,7 @@
     function completeSetupStep(step, options = {}) {
       if (!canOpenStep(step)) return;
       if (step === "approval" && isDancerSession()) {
-        showToast("Complete this step by tapping the club's official dressing-room NFC sticker.");
+        showToast("Complete this step by tapping the club's official dressing-room sticker.");
         return;
       }
       setupChecklistExpanded = true;
@@ -54716,23 +54716,23 @@
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working now";
         if (title) title.textContent = profile.venue || "Current shift";
-        if (detail) detail.textContent = `Dressing-room NFC verified until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend it.`;
+        if (detail) detail.textContent = `Dressing-room tap verified until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend it.`;
         if (action) action.dataset.dashboardShiftAction = "post-schedule";
         if (actionLabel) actionLabel.textContent = "Manage shift";
       } else if (nextShift) {
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Next shift";
         if (title) title.textContent = nextShift.venue || "Posted shift";
-        if (detail) detail.textContent = `${postedShiftDateTimeLabel(nextShift, city)} · Tap the dressing-room NFC tag when you arrive.`;
+        if (detail) detail.textContent = `${postedShiftDateTimeLabel(nextShift, city)} · Tap the dressing-room sticker when you arrive.`;
         if (action) action.dataset.dashboardShiftAction = "nfc-ready";
-        if (actionLabel) actionLabel.textContent = "Tap NFC when you arrive";
+        if (actionLabel) actionLabel.textContent = "Tap when you arrive";
       } else {
         if (action) action.disabled = false;
         if (kicker) kicker.textContent = "Working Now";
         if (title) title.textContent = "Not working now";
-        if (detail) detail.textContent = "Tap the official dressing-room NFC tag at your venue to start one six-hour session.";
+        if (detail) detail.textContent = "Tap the official dressing-room sticker at your venue to start one six-hour session.";
         if (action) action.dataset.dashboardShiftAction = "nfc-ready";
-        if (actionLabel) actionLabel.textContent = "Tap dressing-room NFC";
+        if (actionLabel) actionLabel.textContent = "Tap at dressing room";
       }
     }
 
@@ -54938,7 +54938,7 @@
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the guests Dancr sends you."
         : reviewSubmitted
-          ? "Your profile is private and ready. Set up commission payouts now or do it later, then tap the club's official dressing-room NFC sticker."
+          ? "Your profile is private and ready. Set up commission payouts now or do it later, then tap the club's official dressing-room sticker."
           : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
@@ -54988,11 +54988,11 @@
           approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so guests can find you when you are working.";
         } else if (reviewSubmitted) {
-          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dressing-room NFC sticker at the venue where you work.";
+          approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dressing-room sticker at the venue where you work.";
           approvalStatusSecondary.textContent = "The dressing-room tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
         } else if (readyForReview) {
           approvalStatusPrimary.textContent = "Ready to preview. Review your public profile and submit it in Step 2.";
-          approvalStatusSecondary.textContent = "Your profile remains private until dressing-room NFC authorization and profile/media review are complete.";
+          approvalStatusSecondary.textContent = "Your profile remains private until the dressing-room tap and profile/media review are complete.";
         } else {
           approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
           approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after venue affiliation.";
@@ -55086,17 +55086,17 @@
         ].join("");
         document.getElementById("dancerCommissionSummary").textContent =
           qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
-            ? `Cashier NFC taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
-            : "NFC commission tracking is ready. Earnings appear when guests choose your attributed deal and tap the cashier sticker.";
+            ? `Cashier taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
+            : "Club Deal commission tracking is ready. Earnings appear when guests choose your attributed deal and tap the cashier sticker.";
         document.getElementById("dancerCommissionMetrics").innerHTML = [
           metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
           metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
           metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
-          metricCardMarkup(compactNumber(qrRedeemed), "Cashier NFC redemptions")
+          metricCardMarkup(compactNumber(qrRedeemed), "Cashier-tap redemptions")
         ].join("");
         document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
           ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No NFC commission activity yet</strong><p>When guests choose your attributed deal and tap the cashier NFC sticker, the commission and venue will show here.</p></span></article>`;
+          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No Club Deal commission activity yet</strong><p>When guests choose your attributed deal and tap the cashier sticker, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = totalSocialClicks
           ? `${bestSocial.name} is your top-performing link this month.`
           : "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
@@ -55170,8 +55170,8 @@
         const pendingCommissionCents = liveDancerDeals?.pendingCommissionCents || 0;
         document.getElementById("dancerCommissionSummary").textContent =
           qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
-            ? `Cashier NFC taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
-            : "Club Deal commission tracking is ready. Earnings appear here when guests select your attributed deal and tap the cashier NFC sticker.";
+            ? `Cashier taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
+            : "Club Deal commission tracking is ready. Earnings appear here when guests select your attributed deal and tap the cashier sticker.";
         document.getElementById("dancerCommissionMetrics").innerHTML = [
           metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
           metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
@@ -55180,7 +55180,7 @@
         ].join("");
         document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
           ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No Club Deal commission activity yet</strong><p>When guests select your attributed deal and redeem it with the cashier NFC sticker, the commission and venue will show here.</p></span></article>`;
+          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No Club Deal commission activity yet</strong><p>When guests select your attributed deal and redeem it with the cashier sticker, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
         document.getElementById("dancerSocialMetrics").innerHTML = [
           metricCardMarkup("0", "Total social clicks"),
@@ -55242,15 +55242,15 @@
           "Direction requests",
           "Average views by club"
         ]);
-        document.getElementById("dancerCommissionSummary").textContent = "NFC commissions unlock after approval and track attributed deal opens, cashier redemptions, earned commission, and pending commission.";
+        document.getElementById("dancerCommissionSummary").textContent = "Club Deal commissions unlock after approval and track attributed deal opens, cashier redemptions, earned commission, and pending commission.";
         document.getElementById("dancerCommissionMetrics").innerHTML = lockedMetricCards([
           "Earned commissions",
           "Pending commissions",
           "Attributed deal opens",
-          "Cashier NFC redemptions"
+          "Cashier-tap redemptions"
         ]);
         document.getElementById("dancerCommissionActivity").innerHTML =
-          `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>NFC commissions locked</strong><p>Commission activity appears here after approval and cashier NFC redemptions.</p></span></article>`;
+          `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>Club Deal commissions locked</strong><p>Commission activity appears here after approval and cashier-tap redemptions.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = "Social growth unlocks after approval across Instagram, Snapchat, TikTok, OnlyFans, and X.";
         document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
           "Total social clicks",
@@ -55390,7 +55390,7 @@
         <div class="rule-note">Confirm the preview is accurate. Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete venue affiliation.</div>
       `;
       const approvalBody = `
-        <div class="info-tile"><strong>Authorize venue access</strong><div class="meta">At the club, tap its official MyDancr dressing-room NFC sticker.</div></div>
+        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">At the club, tap its official MyDancr dressing-room sticker.</div></div>
         <div class="rule-note">This Step 4 tap approves the submitted profile and authorizes the venue. Payout setup is optional and never blocks this tap, check-in, or Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
@@ -58736,7 +58736,7 @@
       return {
         key: "not-available-now",
         label: "Not available now",
-        detail: "A verified current check-in is required before dancer attribution can be carried to a cashier NFC redemption."
+        detail: "A verified current check-in is required before dancer attribution can be carried to a cashier-tap redemption."
       };
     }
 
@@ -59341,7 +59341,7 @@
         event.stopPropagation();
         showCardQrNotice(
           unavailableCardQr,
-          unavailableCardQr.dataset.cardQrLabel || "Club Deal NFC",
+          unavailableCardQr.dataset.cardQrLabel || "Club Deal tap",
           unavailableCardQr.dataset.cardQrMessage || "No Club Deal is available right now."
         );
         return;
@@ -59565,7 +59565,7 @@
             <button class="profile-qr-close" type="button" data-close-profile-share-choice aria-label="Close profile sharing">${actionIconMarkup("close")}</button>
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
-            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Club Deals redeem only through a club cashier NFC tap.</p>
+            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.</p>
             <div class="profile-share-choice-actions">
               <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
               <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
@@ -59611,7 +59611,7 @@
       triggerButton?.setAttribute("aria-expanded", "true");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
       document.getElementById("profileShareChoiceSubtitle").textContent =
-        "Share this public profile, copy its link, or show a QR code. Club Deals redeem only through a club cashier NFC tap.";
+        "Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
@@ -61151,7 +61151,7 @@
         });
         if (result.requiresEmailConfirmation) {
           confirmationSent = true;
-          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Open the newest MyDancr email and tap Confirm email. Then finish your profile and dressing-room NFC step.`);
+          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Open the newest MyDancr email and tap Confirm email. Then finish your profile and dressing-room tap step.`);
           showToast("Confirmation email sent. Open the newest email to continue.");
           return;
         }

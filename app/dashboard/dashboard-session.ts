@@ -219,7 +219,7 @@ export function requestDancerShiftCheckInJson(options: DashboardJsonRequestOptio
   return requestDashboardJson("/api/dancer/shifts/check-in", {
     ...options,
     expectedRole: "dancer",
-    fallbackMessage: options.fallbackMessage || "Unable to update NFC check-in.",
+    fallbackMessage: options.fallbackMessage || "Unable to update the club check-in.",
   });
 }
 
@@ -315,7 +315,7 @@ export function requestVenueNfcTagsJson(options: DashboardJsonRequestOptions = {
   return requestDashboardJson("/api/venue/nfc-tags", {
     ...options,
     expectedRole: "venue",
-    fallbackMessage: options.fallbackMessage || "Unable to load assigned NFC stickers.",
+    fallbackMessage: options.fallbackMessage || "Unable to load assigned tap stickers.",
   });
 }
 
@@ -323,7 +323,7 @@ export function requestVenueNfcSupportJson(options: DashboardJsonRequestOptions 
   return requestDashboardJson("/api/venue/nfc-support", {
     ...options,
     expectedRole: "venue",
-    fallbackMessage: options.fallbackMessage || "Unable to request NFC support.",
+    fallbackMessage: options.fallbackMessage || "Unable to request tap-sticker support.",
   });
 }
 

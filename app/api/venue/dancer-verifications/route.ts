@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return noStoreJson({
       ok: false,
       code: "dressing_room_nfc_required",
-      error: "Manager QR approval is retired. A dancer authorizes venue access by tapping the official dressing-room NFC sticker.",
+      error: "Manager QR approval is retired. A dancer authorizes venue access by tapping the official MyDancr dressing-room sticker.",
     }, 410);
   } catch (error) {
     return affiliationApiError(error, "Unable to approve dancer verification.");

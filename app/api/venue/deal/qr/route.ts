@@ -15,7 +15,7 @@ function retired() {
   return NextResponse.json(
     {
       ok: false,
-      error: "Tracked Club Deal QR assets have been retired. Manage cashier NFC stickers in the venue dashboard.",
+      error: "Tracked Club Deal QR assets have been retired. Manage cashier tap stickers in the venue dashboard.",
       replacement: "/api/venue/nfc-tags",
     },
     { status: 410, headers: { "cache-control": "private, no-store, max-age=0" } },

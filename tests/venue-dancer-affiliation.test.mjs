@@ -51,7 +51,7 @@ test("private venue workspaces can view and remove existing roster affiliations 
   assert.doesNotMatch(privateRosterMigration, /member\.role = 'staff'/);
 });
 
-test("dancer and venue dashboards show the official NFC workflow", () => {
+test("dancer and venue dashboards show the official tap-sticker workflow", () => {
   assert.match(dashboard, /<DancerNfcPanel initialAffiliations=\{affiliations\}/);
   assert.match(dashboard, /<DancerShiftManager \/>/);
   assert.match(dashboard, /<VenueNfcTagPanel/);
@@ -61,7 +61,7 @@ test("dancer and venue dashboards show the official NFC workflow", () => {
   assert.match(dancerPanel, /six-hour cooldown/);
   assert.match(venuePanel, /no separate manager approval is needed/);
   assert.match(venuePanel, /Approved dancer roster/);
-  assert.match(venuePanel, /MyDancr programs and supplies these tap-to-use stickers \(NFC\)/);
+  assert.match(venuePanel, /MyDancr supplies these tap-to-use stickers/);
 });
 
 test("venue roster affiliations expose responsive approved dancer avatars", () => {

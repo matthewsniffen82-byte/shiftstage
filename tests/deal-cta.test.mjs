@@ -49,7 +49,7 @@ test("Club Deal selection snapshots customer-facing terms before atomic NFC conf
   assert.match(atomicNfcMigration, /insert into public\.qr_redemptions/);
   assert.match(atomicNfcMigration, /public\.confirm_deal_redemption_from_nfc/);
   assert.match(atomicNfcMigration, /grant execute[\s\S]*to service_role/);
-  assert.match(tapRoute, /resolveApiError\(error, "Unable to complete this NFC tap\.", status\)/);
+  assert.match(tapRoute, /resolveApiError\(error, "Unable to complete this phone tap\.", status\)/);
   assert.doesNotMatch(tapRoute, /NextResponse\.json\(\{ ok: false, error: message/);
   assert.match(dealRedemptionActions, /issuedDealSnapshot/);
   assert.match(deals, /readIssuedDealSnapshot/);
@@ -62,7 +62,7 @@ test("venue pages, venue cards, dancer profiles, and TV expose real active Club 
   assert.match(venuePage, /getVenueProfile/);
   assert.match(venuePage, /permanentRedirect/);
   assert.match(venueDirectory, /permanentRedirect/);
-  assert.match(dancerPage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use at Club"\}/);
+  assert.match(dancerPage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use deal"\}/);
   assert.match(tvSource, /deals: venueDeals/);
   assert.match(tvSource, /dealAttributionToken/);
   assert.match(tvClient, /ClubDealCard/);
@@ -92,13 +92,13 @@ test("customers explicitly select an exact offer and dancer token until the phys
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
 });
 
-test("Club Deal checkout uses one concise automatic NFC flow across both public experiences", () => {
+test("Club Deal checkout uses one concise automatic cashier-tap flow across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
     assert.match(source, /<strong>Tap &ldquo;Use this deal&rdquo; below<\/strong>/);
     assert.match(source, /Go to the cashier/);
-    assert.match(source, /Unlock and tap the MyDancr NFC sticker/);
+    assert.match(source, /Unlock and tap the MyDancr cashier sticker/);
     assert.match(source, /<strong>Redemption completes automatically<\/strong>/);
-    assert.match(source, /After selecting, MyDancr does not need to stay open\. Only this venue’s registered NFC sticker can complete redemption\./);
+    assert.match(source, /After selecting, MyDancr does not need to stay open\. Only this venue’s registered cashier sticker can complete redemption\./);
     assert.match(source, /Save for later/);
     assert.match(source, /aria-label="Tap cashier sticker"/);
     assert.doesNotMatch(source, /<strong>Tap cashier sticker<\/strong>/);
@@ -113,7 +113,7 @@ test("Club Deal checkout uses one concise automatic NFC flow across both public 
 });
 
 test("selected Club Deals replace preparation controls with one cashier instruction", () => {
-  const cashierInstruction = /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr NFC sticker\. MyDancr opens and completes the redemption automatically\./;
+  const cashierInstruction = /MyDancr does not need to stay open\. At the cashier, unlock your phone and hold it near the registered MyDancr cashier sticker\. MyDancr opens and completes the redemption automatically\./;
 
   assert.match(dealCard, cashierInstruction);
   assert.match(dealCard, /intentState !== "ready" \? \([\s\S]*?club-deal-redemption-steps/);
@@ -180,7 +180,7 @@ test("multiple live non-alcohol offers stay selectable without external liquor b
 test("the canonical live shell uses cashier NFC instead of generating customer QR images", () => {
   assert.match(liveApp, /mydancrPendingNfcDealV2/);
   assert.match(liveApp, /Use at the cashier/);
-  assert.match(liveApp, /tap the venue’s registered MyDancr NFC sticker/i);
+  assert.match(liveApp, /tap the venue’s registered MyDancr cashier sticker/i);
   assert.doesNotMatch(liveApp, /fetch\("\/api\/deals\/redemptions",\s*\{\s*method:\s*"POST"/);
   assert.doesNotMatch(liveApp, /<img src="\$\{pass\.qrImageUrl\}"/);
 });
@@ -207,7 +207,7 @@ test("signed-in customer dashboards retain saved Club Deal state without owning 
 
 test("legacy QR issuance endpoints are explicitly retired instead of silently accepting writes", () => {
   assert.match(retiredPassRoute, /status: 410/);
-  assert.match(retiredPassRoute, /cashier NFC sticker/);
+  assert.match(retiredPassRoute, /cashier sticker/);
   assert.match(retiredVenueQrRoute, /status: 410/);
-  assert.match(retiredVenueQrRoute, /NFC stickers/);
+  assert.match(retiredVenueQrRoute, /tap stickers/);
 });

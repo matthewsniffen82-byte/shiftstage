@@ -8,7 +8,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 
 export default function DealClaimClient({ deal }: { campaignToken: string; deal: ClubDeal }) {
-  const [status, setStatus] = useState("Preparing this offer for cashier NFC…");
+  const [status, setStatus] = useState("Preparing this offer for the cashier tap…");
 
   useEffect(() => {
     try {
@@ -20,9 +20,9 @@ export default function DealClaimClient({ deal }: { campaignToken: string; deal:
         attributionToken: null,
         savedAt: Date.now(),
       }));
-      setStatus("Offer ready. At the club, tap the physical MyDancr cashier NFC sticker to redeem it.");
+      setStatus("Offer ready. At the club, tap the physical MyDancr cashier sticker to redeem it.");
     } catch {
-      setStatus("Open this offer again at the club, then tap the cashier NFC sticker.");
+      setStatus("Open this offer again at the club, then tap the cashier sticker.");
     }
   }, [deal.id, deal.venueId]);
 
@@ -40,7 +40,7 @@ export default function DealClaimClient({ deal }: { campaignToken: string; deal:
       `}</style>
       <section className="deal-claim-card" aria-live="polite">
         <div className="nfc-mark" aria-hidden="true">)))</div>
-        <span>MyDancr cashier NFC</span>
+        <span>MyDancr cashier tap</span>
         <h1>{deal.dealTitle}</h1>
         <p>{status}</p>
         <Link href={homeDiscoveryHref("venues")}>Browse current Club Deals</Link>

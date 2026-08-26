@@ -38,7 +38,7 @@ export async function GET(_request: Request, context: RouteContext) {
       deals,
     });
   } catch (error) {
-    return apiError(error, "Unable to open this venue NFC tag.");
+    return apiError(error, "Unable to open this venue tap.");
   }
 }
 
@@ -87,7 +87,7 @@ export async function POST(request: Request, context: RouteContext) {
         affiliation,
         session: authContext.session || null,
         message: affiliation?.enrollmentStatus === "pending"
-          ? `Your ${tag.venue.name} NFC affiliation is saved. Finish profile setup and media review; it will activate automatically without a venue QR scan.`
+          ? `Your ${tag.venue.name} venue access is saved. Finish profile setup and media review; it will activate automatically.`
            : affiliation?.alreadyWorking
              ? `You are already Working Now at ${affiliation?.venueName || tag.venue.name}. This tap did not extend the six-hour session.`
            : affiliation?.cooldownActive
@@ -139,7 +139,7 @@ export async function POST(request: Request, context: RouteContext) {
             : /invalid|valid|required|missing|expired|incomplete|choose|does not have|cannot include|expiration/i.test(message)
               ? 400
               : 500;
-    const resolved = resolveApiError(error, "Unable to complete this NFC tap.", status);
+    const resolved = resolveApiError(error, "Unable to complete this phone tap.", status);
     console.error("NFC_TAP_FAILED", { message });
     return NextResponse.json(resolved.body, {
       status: resolved.status,
@@ -172,7 +172,7 @@ async function readBody(request: Request): Promise<Record<string, unknown>> {
 
 function inactiveTag() {
   return NextResponse.json(
-    { ok: false, error: "This NFC tag is inactive. Ask venue staff for the current MyDancr tag." },
+    { ok: false, error: "This tap sticker is inactive. Ask venue staff for the current MyDancr sticker." },
     { status: 410, headers: { "cache-control": "private, no-store, max-age=0" } },
   );
 }
@@ -184,5 +184,5 @@ function noStore(body: Record<string, unknown>, status = 200) {
 function safeErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   if (error && typeof error === "object" && "message" in error) return String((error as { message: unknown }).message);
-  return "Unable to complete this NFC tap.";
+  return "Unable to complete this phone tap.";
 }

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     return noStoreJson({
       ok: false,
       code: "dressing_room_nfc_required",
-      error: "Venue approval QR codes are retired. Tap the venue's official MyDancr dressing-room NFC sticker to authorize access and check in.",
+      error: "Venue approval QR codes are retired. Tap the venue's official MyDancr dressing-room sticker to authorize access and check in.",
     }, 410);
   } catch (error) {
     return affiliationApiError(error, "Unable to create venue verification QR.");
@@ -56,7 +56,7 @@ export async function DELETE(request: Request) {
       affiliationId: typeof body.affiliationId === "string" ? body.affiliationId : "",
       reason: "Dancer removed venue affiliation.",
     });
-    return noStoreJson({ ok: true, affiliation, message: "Venue NFC access removed." });
+    return noStoreJson({ ok: true, affiliation, message: "Venue access removed." });
   } catch (error) {
     return affiliationApiError(error, "Unable to remove venue verification.");
   }

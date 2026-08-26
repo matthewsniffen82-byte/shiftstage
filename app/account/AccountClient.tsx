@@ -86,10 +86,10 @@ export default function AccountClient() {
         });
         const data = await response.json() as { ok?: boolean; error?: string; tag?: NfcAccountContext["tag"]; venue?: NfcAccountContext["venue"] };
         if (!response.ok || !data.ok || !data.tag || !data.venue) {
-          throw new Error(data.error || "Unable to load this venue NFC connection.");
+          throw new Error(data.error || "Unable to load this venue tap.");
         }
         if (data.tag.type !== "dressing_room") {
-          throw new Error("This NFC tag is not a dancer venue-access sticker.");
+          throw new Error("This sticker is not set up for dancer venue access.");
         }
         if (cancelled) return;
         setNfcAccountContext({ tag: data.tag, venue: data.venue });
@@ -397,7 +397,7 @@ export default function AccountClient() {
               <div className="nfc-account-mark" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 7.5a6.4 6.4 0 0 1 0 9M10 5a10 10 0 0 1 0 14M13 2.5a13.5 13.5 0 0 1 0 19" /></svg>
               </div>
-              <span className="eyebrow">Verified dressing-room NFC</span>
+              <span className="eyebrow">Verified dressing-room tap</span>
               <h1>Connect to {nfcVenueName}.</h1>
               <p>
                 {mode === "login"
@@ -412,7 +412,7 @@ export default function AccountClient() {
                     ? `${nfcAccountContext.venue.city}, ${nfcAccountContext.venue.state} · ${nfcAccountContext.tag.label}`
                     : nfcContextStatus === "error"
                       ? "Return to the sticker after signing in to verify it again."
-                      : "Secure MyDancr NFC"}</small>
+                      : "Secure MyDancr tap"}</small>
                 </span>
               </div>
               <ol className="nfc-account-steps" aria-label="Venue connection steps">
@@ -426,7 +426,7 @@ export default function AccountClient() {
               <span className="eyebrow">Live account</span>
               <h1>{role === "dancer" ? "Manage your dancer profile." : "Save your night out."}</h1>
               <p>
-                Sign in with a secure Mydancr account to manage saved profiles, private alerts, NFC Club Deals, and dashboard data.
+                Sign in with a secure Mydancr account to manage saved profiles, private alerts, Club Deals, and dashboard data.
               </p>
             </>
           )}
@@ -476,7 +476,7 @@ export default function AccountClient() {
                 </button>
                 <div className="customer-benefit-grid">
                   <div className="customer-benefit-tile">
-                    <strong>NFC Club Deals</strong>
+                    <strong>Tap-to-use Club Deals</strong>
                     <span>Choose an offer, then redeem it by tapping the venue&apos;s cashier sticker.</span>
                   </div>
                   <div className="customer-benefit-tile">

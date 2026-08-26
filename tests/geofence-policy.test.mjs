@@ -52,7 +52,7 @@ const [checkInRoute, shiftsRoute, nfcRoute, migration, shiftManager, liveShell, 
 test("phone-location check-in is retired and cannot activate a dancer", () => {
   assert.match(checkInRoute, /code: "nfc_tap_required"/);
   assert.match(checkInRoute, /status: 410/);
-  assert.match(checkInRoute, /dressing-room NFC tag/);
+  assert.match(checkInRoute, /dressing-room sticker/);
   assert.doesNotMatch(checkInRoute, /process_dancer_location_verification|validateClientLocationReading|latitude|longitude|accuracy/);
   assert.doesNotMatch(checkInRoute, /checked_in_at:/);
 });
@@ -93,7 +93,7 @@ test("database activation is atomic, affiliation-gated, non-extendable, and glob
 });
 
 test("dancer controls explain the physical tap and never request phone coordinates", () => {
-  assert.match(shiftManager, /Tap dressing-room NFC to go Working Now/);
+  assert.match(shiftManager, /Ready to tap: hold your phone near the dressing-room sticker/);
   assert.match(shiftManager, /Retaps cannot extend this six-hour session/);
   assert.match(shiftManager, /six-hour cooldown/);
   assert.match(shiftManager, /Upcoming date/);
@@ -104,7 +104,7 @@ test("dancer controls explain the physical tap and never request phone coordinat
     /async function handleShiftVerificationAction\(action, trigger = null, options = \{\}\)[\s\S]*?(?=\n    function renderDancerManagement)/,
   )?.[0] || "";
   assert.match(verificationHandler, /action === "nfc-ready"/);
-  assert.match(verificationHandler, /Hold this unlocked phone near the official dressing-room NFC tag/);
+  assert.match(verificationHandler, /Hold this unlocked phone near the official dressing-room sticker/);
   assert.match(verificationHandler, /six-hour cooldown/);
   assert.doesNotMatch(verificationHandler, /requestShiftPosition|navigator\.geolocation|latitude|longitude|accuracy/);
   assert.match(liveShell, /id="shiftDate" type="date" required/);

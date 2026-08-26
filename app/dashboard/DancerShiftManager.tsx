@@ -191,10 +191,10 @@ export default function DancerShiftManager() {
           <>
             <span>
               <strong>Not working now</strong>
-              <small>A posted upcoming date does not make you live. Only the venue&apos;s dressing-room NFC tag can put you in Now.</small>
+              <small>A posted upcoming date does not make you live. Tap the venue&apos;s dressing-room sticker when you arrive.</small>
             </span>
             <button type="button" className="check-in-confirmation" disabled={Boolean(cooldownShift)} onClick={() => setTapReady(true)}>
-              Tap dressing-room NFC to go Working Now
+              Tap at dressing room to go Working Now
             </button>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">
@@ -203,7 +203,7 @@ export default function DancerShiftManager() {
             ) : null}
             {tapReady ? (
               <small className="shift-checkin-status is-loading" role="status">
-                Ready to tap: hold your phone near the dressing-room NFC tag. The secure venue page starts one six-hour Working Now session followed by a six-hour cooldown.
+                Ready to tap: hold your phone near the dressing-room sticker. The secure venue page starts one six-hour Working Now session followed by a six-hour cooldown.
               </small>
             ) : null}
           </>
@@ -229,13 +229,13 @@ export default function DancerShiftManager() {
         </label>
         <button type="submit" disabled={saving || !venues.length}>{saving ? "Posting..." : "Post upcoming date"}</button>
         <p>Schedules show only the venue and date. No shift time or phone location is collected.</p>
-        {!venues.length ? <p>Tap a venue&apos;s dressing-room NFC tag once to create an approved affiliation.</p> : null}
+        {!venues.length ? <p>Tap a venue&apos;s dressing-room sticker once to approve that club.</p> : null}
         {status ? <p role="status">{status}</p> : null}
       </form>
 
       <div className="shift-list-head">
         <strong>Upcoming dates</strong>
-        <small>These tell guests where you plan to be. Tap the dressing-room NFC tag when you arrive to appear in Now.</small>
+        <small>These tell guests where you plan to be. Tap the dressing-room sticker when you arrive to appear in Now.</small>
       </div>
       <div className="shift-list">
         {postedDates.map((shift) => (

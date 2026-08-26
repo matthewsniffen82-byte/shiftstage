@@ -40,7 +40,7 @@ export async function PATCH(request: Request) {
     console.info("Dancer shift ended", { shiftId, dancerId: dancer.id, reason: action });
     return NextResponse.json({ ok: true, shift: ended });
   } catch (error) {
-    return apiError(error, "Unable to update NFC check-in.");
+    return apiError(error, "Unable to update club check-in.");
   }
 }
 
@@ -119,7 +119,7 @@ function nfcRequiredResponse() {
   return NextResponse.json({
     ok: false,
     code: "nfc_tap_required",
-    error: "Tap the venue's official MyDancr dressing-room NFC tag to go Working Now. Phone-location check-in is no longer used.",
+    error: "Tap the venue's official MyDancr dressing-room sticker to go Working Now. Phone-location check-in is no longer used.",
   }, { status: 410 });
 }
 

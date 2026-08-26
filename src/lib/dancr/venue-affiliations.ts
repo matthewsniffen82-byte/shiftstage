@@ -442,7 +442,7 @@ export async function assertDancerVenueAffiliationForShift(
   if (activeError) throw activeError;
   if (!active) {
     throw new VenueAffiliationUserError(
-      "Tap this venue's official dressing-room NFC sticker with your signed-in phone before checking in.",
+      "Tap this venue's official MyDancr dressing-room sticker with your signed-in phone before checking in.",
     );
   }
   return active;
