@@ -38563,6 +38563,56 @@
           line-height: 1.1 !important;
         }
 
+        /* Scale the pin and club name together so short venue names occupy the
+           destination row while long names retain clear space for the cue. */
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-short-name {
+          grid-template-columns: 22px minmax(0, 1fr) 16px !important;
+          gap: 8px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-short-name > .venue-dot,
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-short-name > .venue-dot svg {
+          width: 22px !important;
+          height: 22px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-short-name .profile-venue-name {
+          font-size: clamp(18px, 5.4vw, 22px) !important;
+          letter-spacing: -.025em !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-medium-name {
+          grid-template-columns: 20px minmax(0, 1fr) 16px !important;
+          gap: 7px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-medium-name > .venue-dot,
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-medium-name > .venue-dot svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-medium-name .profile-venue-name {
+          font-size: clamp(16px, 4.8vw, 20px) !important;
+          letter-spacing: -.02em !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-long-name {
+          grid-template-columns: 16px minmax(0, 1fr) 16px !important;
+          gap: 5px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-long-name > .venue-dot,
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-long-name > .venue-dot svg {
+          width: 16px !important;
+          height: 16px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-long-name .profile-venue-name {
+          font-size: clamp(14px, 3.8vw, 16px) !important;
+          letter-spacing: -.01em !important;
+        }
+
         /* Upcoming uses the same compact Tonight hierarchy as Working Now,
            with cyan reserved for the future-state signal. */
         #profileBackdrop #profileModal .modal-grid > .schedule-upcoming {
@@ -51221,9 +51271,15 @@
 
     function profileVenueDestinationMarkup(profile, options = {}) {
       const safeVenueName = displayText(profile.venue);
+      const venueNameLength = Array.from(String(profile.venue || "").trim()).length;
+      const venueNameSizeClass = venueNameLength <= 12
+        ? " is-short-name"
+        : venueNameLength <= 20
+          ? " is-medium-name"
+          : " is-long-name";
       const statusClass = options.live ? " is-live" : options.upcoming ? " is-upcoming" : "";
       return `
-        <button class="profile-venue-destination${statusClass}" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
+        <button class="profile-venue-destination${statusClass}${venueNameSizeClass}" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
           ${venueIconMarkup()}
           <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span></span>
           <span class="profile-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>

@@ -346,6 +346,21 @@ test("Current Shift uses a quieter club row and secondary ride action", () => {
   );
 });
 
+test("Working Now scales the venue pin and name to the club-name length", () => {
+  assert.match(
+    liveApp,
+    /const venueNameLength = Array\.from\(String\(profile\.venue \|\| ""\)\.trim\(\)\)\.length;[\s\S]*?venueNameLength <= 12[\s\S]*?" is-short-name"[\s\S]*?venueNameLength <= 20[\s\S]*?" is-medium-name"[\s\S]*?" is-long-name"/,
+  );
+  assert.match(
+    liveApp,
+    /profile-venue-destination\.is-live\.is-short-name \{[\s\S]*?grid-template-columns: 22px minmax\(0, 1fr\) 16px !important;[\s\S]*?profile-venue-destination\.is-live\.is-short-name \.profile-venue-name \{[\s\S]*?font-size: clamp\(18px, 5\.4vw, 22px\) !important;/,
+  );
+  assert.match(
+    liveApp,
+    /profile-venue-destination\.is-live\.is-medium-name \{[\s\S]*?grid-template-columns: 20px minmax\(0, 1fr\) 16px !important;[\s\S]*?profile-venue-destination\.is-live\.is-long-name \{[\s\S]*?grid-template-columns: 16px minmax\(0, 1fr\) 16px !important;/,
+  );
+});
+
 test("Upcoming Shift mirrors the compact current-shift row with cyan status cues", () => {
   assert.match(
     liveApp,
