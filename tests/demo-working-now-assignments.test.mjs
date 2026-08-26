@@ -21,10 +21,12 @@ test("Demo Mode has a distinct locked Working Now shift source", () => {
   assert.match(migration, /nfc_tag_id is null/);
 });
 
-test("the guarded production operation creates exactly six persistent randomized assignments", () => {
-  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-six-working-now-v1"/);
+test("the guarded production operation places exactly six persistent assignments at Echo House", () => {
+  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-six-working-now-echo-house-v1"/);
+  assert.match(manager, /const TARGET_VENUE_NAME = "Echo House"/);
   assert.match(manager, /shuffled\(profiles\)\.slice\(0, 6\)/);
-  assert.match(manager, /selectedVenues\[index % selectedVenues\.length\]/);
+  assert.match(manager, /venue\.name \|\| ""[\s\S]*?TARGET_VENUE_NAME\.toLowerCase\(\)/);
+  assert.match(manager, /const venue = targetVenue/);
   assert.match(manager, /shift_source: "demo_locked"/);
   assert.match(manager, /location_verification_expires_at: LOCKED_UNTIL/);
   assert.match(manager, /commission_tracking_started_at: null/);

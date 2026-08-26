@@ -6,7 +6,8 @@ import { createClient } from "@supabase/supabase-js";
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.env.DANCR_ENV_DIR?.trim() || process.cwd());
 
-const OPERATION_CONFIRMATION = "mydancr-six-working-now-v1";
+const OPERATION_CONFIRMATION = "mydancr-six-working-now-echo-house-v1";
+const TARGET_VENUE_NAME = "Echo House";
 const LOCKED_UNTIL = "2099-12-31T23:59:59.999Z";
 const DEMO_PROFILE_SLUGS = Object.freeze([
   "layout-review-01",
@@ -74,14 +75,19 @@ async function applyAssignments() {
   }
 
   const selectedProfiles = shuffled(profiles).slice(0, 6);
-  const selectedVenues = shuffled(venues);
+  const targetVenue = venues.find(
+    (venue) => String(venue.name || "").trim().toLowerCase() === TARGET_VENUE_NAME.toLowerCase(),
+  );
+  if (!targetVenue) {
+    throw new Error(`${TARGET_VENUE_NAME} must be an active Las Vegas venue.`);
+  }
   const now = new Date().toISOString();
 
   await endCurrentDemoAssignments(now, "demo_assignment_replaced");
   await endExistingLasVegasWorkingNow(now);
 
-  const assignments = selectedProfiles.map((profile, index) => {
-    const venue = selectedVenues[index % selectedVenues.length];
+  const assignments = selectedProfiles.map((profile) => {
+    const venue = targetVenue;
     return {
       dancer_id: profile.id,
       venue_id: venue.id,
@@ -123,6 +129,7 @@ async function applyAssignments() {
   writeResult({
     event: "demo_working_now.applied",
     target,
+    venueName: targetVenue.name,
     lockedUntil: LOCKED_UNTIL,
     assignments: (data || []).map(publicAssignment),
   });
