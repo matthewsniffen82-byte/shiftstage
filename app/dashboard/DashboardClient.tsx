@@ -8802,6 +8802,7 @@ function DashboardStyles() {
       .dancer-profile-builder-media-actions button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(126,234,255,.24); border-radius:12px; color:#effcff; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(34,199,255,.06)); font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
       .dancer-profile-builder-media-actions button span { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; background:rgba(126,234,255,.12); }
       .dancer-profile-builder-social-platform { position:relative; cursor:pointer; }
+      .dancer-profile-builder-social-platform > svg { position:relative; z-index:1; }
       .dancer-profile-builder-social-platform > span { position:absolute; z-index:2; top:-2px; right:-2px; width:18px; height:18px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.34); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 3px 9px rgba(0,0,0,.5); font-size:12px; font-weight:950; line-height:1; }
       body.dancr-button-system .public-profile-shell .dancer-profile-builder-social-platform { width:48px !important; min-width:48px !important; height:48px !important; min-height:48px !important; flex:0 0 48px !important; padding:0 !important; border-radius:50% !important; }
       .dancer-social-link-editor { width:min(100%,460px) !important; margin-inline:auto; padding:10px !important; }

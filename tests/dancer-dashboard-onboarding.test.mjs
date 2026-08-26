@@ -234,6 +234,7 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /Optional\. Add whichever profiles you want, or skip this for now\./);
   assert.match(dashboard, /className=\{`social-link social-link-\$\{platform\.key\} dancer-profile-builder-social-platform/);
   assert.match(dashboard, /<SocialPlatformIcon platform=\{platform\.key\} \/>[\s\S]*?<span aria-hidden="true">\+<\/span>/);
+  assert.match(dashboard, /\.dancer-profile-builder-social-platform > svg \{ position:relative; z-index:1; \}/);
   assert.match(dashboard, /socialEditorContent = editorSections\?\.socials\?\.\(activeSocialPlatform \|\| "instagram"\)/);
   assert.match(dashboard, /hidden=\{activeEditorSection !== "socials"\}/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\[hidden\] \{ display:none; \}/);
