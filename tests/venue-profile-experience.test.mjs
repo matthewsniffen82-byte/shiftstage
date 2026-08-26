@@ -74,7 +74,7 @@ test("venue details reuse the production Dancers grid card for every schedule st
     /function venueDetailPage\(venue\) \{[\s\S]*?(?=\n    function findProfile)/,
   )?.[0] || "";
   const sharedCard = liveApp.match(
-    /function homeDancerGridCard\(profile, city, compactDirectory = false\) \{[\s\S]*?(?=\n    function homeDancerGridSectionMarkup)/,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false, placementClass = ""\) \{[\s\S]*?(?=\n    function homeDancerGridSectionMarkup)/,
   )?.[0] || "";
 
   assert.match(venueGrid, /class="venue-dancer-grid home-dancer-grid home-dancer-three-column"/);

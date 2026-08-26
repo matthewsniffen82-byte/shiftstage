@@ -35946,7 +35946,7 @@
            width. Extra-tall portraits expose more photography while the
            two-pixel gutter keeps the tiles visually connected. */
         #results.home-dancer-grid.home-dancer-three-column {
-          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
           align-items: start !important;
           gap: 2px !important;
         }
@@ -35954,6 +35954,19 @@
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filters,
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filter-empty {
           grid-column: 1 / -1;
+        }
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
+          grid-column: span 2;
+          contain: layout style;
+        }
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card.is-centered-single {
+          grid-column: 3 / span 2;
+        }
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card.is-centered-pair-start {
+          grid-column: 2 / span 2;
+        }
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card.is-centered-pair-end {
+          grid-column: 4 / span 2;
         }
         .dancer-directory-filters {
           width: 100%;
@@ -57879,7 +57892,7 @@
       `;
     }
 
-    function homeDancerGridCard(profile, city, compactDirectory = false) {
+    function homeDancerGridCard(profile, city, compactDirectory = false, placementClass = "") {
       const safeName = escapeHtml(profile.name);
       const profileValue = escapeOptionValue(profile.name);
       const profileReference = escapeOptionValue(profileReferenceValue(profile));
@@ -57914,7 +57927,7 @@
           ? "is-upcoming"
           : "is-open";
       return `
-        <article class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
+        <article class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}${placementClass}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
           <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
@@ -57928,6 +57941,15 @@
       `;
     }
 
+    function homeDancerGridPlacementClass(index, total) {
+      const remainder = total % 3;
+      if (!remainder || index < total - remainder) return "";
+      if (remainder === 1) return " is-centered-single";
+      return index === total - 2
+        ? " is-centered-pair-start"
+        : " is-centered-pair-end";
+    }
+
     function homeDancerGridSectionMarkup(label, className, profiles, city, compactDirectory = false) {
       if (!profiles.length) return "";
       return `
@@ -57935,7 +57957,12 @@
           <strong>${label}</strong>
           <span>${profiles.length}</span>
         </div>
-        ${profiles.map((profile) => homeDancerGridCard(profile, city, compactDirectory)).join("")}
+        ${profiles.map((profile, index) => homeDancerGridCard(
+          profile,
+          city,
+          compactDirectory,
+          compactDirectory ? homeDancerGridPlacementClass(index, profiles.length) : ""
+        )).join("")}
       `;
     }
 
