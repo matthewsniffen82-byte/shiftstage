@@ -9631,7 +9631,7 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-lineup-slot {
-    top: 8px !important;
+    top: -18px !important;
     right: 20px !important;
     min-height: 30px !important;
   }
@@ -9682,7 +9682,7 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide.has-live-lineup
     .home-venue-discovery-name-row {
-    padding-right: var(--home-venue-lineup-reserve, 108px) !important;
+    padding-right: 0 !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack

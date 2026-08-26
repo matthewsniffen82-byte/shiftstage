@@ -55,7 +55,7 @@ test("mobile venue identity stays compact, anchored, and single-line", () => {
 
   assert.match(hierarchy, /grid-template-rows: 96px minmax\(92px, 1fr\) 56px 56px !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-logo \{[\s\S]*?height: 90px !important;/);
-  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?top: 8px !important;[\s\S]*?right: 20px !important;/);
+  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?top: -18px !important;[\s\S]*?right: 20px !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-lineup-label \{[\s\S]*?min-width: 46px !important;[\s\S]*?rgba\(46, 229, 138, 0\.34\)/);
   assert.match(hierarchy, /span:not\(\.action-icon\) \{[\s\S]*?white-space: nowrap !important;[\s\S]*?overflow-wrap: normal !important;[\s\S]*?word-break: normal !important;/);
   assert.match(hierarchy, /\.venue-card-primary-action:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?rgba\(226, 232, 240, 0\.76\)/);
@@ -85,17 +85,14 @@ test("the mobile lineup explains working-now avatars without changing venue acti
   assert.match(lineup, /aria-label="\$\{liveLabel\}"/);
 });
 
-test("mobile Clubs cards reserve the exact width of their five-avatar lineup", () => {
+test("mobile Clubs cards move the five-avatar lineup above the full-width venue name", () => {
   const slide = liveApp.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
   )?.[0] || "";
   const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
 
-  assert.match(slide, /const mobileLineupVisibleCount = Math\.min\(workingNow\.length, 5\)/);
-  assert.match(slide, /Math\.max\(0, mobileLineupVisibleCount - 1\) \* 20/);
-  assert.match(slide, /workingNow\.length > 5 \? 20 : 0/);
-  assert.match(slide, /--home-venue-lineup-reserve:\$\{mobileLineupReserve\}px/);
+  assert.doesNotMatch(slide, /mobileLineupReserve|--home-venue-lineup-reserve/);
   assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?right: 20px !important;/);
-  assert.match(hierarchy, /padding-right: var\(--home-venue-lineup-reserve, 108px\) !important;/);
+  assert.match(hierarchy, /\.home-venue-discovery-slide\.has-live-lineup[\s\S]*?\.home-venue-discovery-name-row \{[\s\S]*?padding-right: 0 !important;/);
   assert.match(hierarchy, /margin-left: -8px !important;/);
 });

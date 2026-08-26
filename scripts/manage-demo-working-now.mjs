@@ -6,9 +6,9 @@ import { createClient } from "@supabase/supabase-js";
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.env.DANCR_ENV_DIR?.trim() || process.cwd());
 
-const OPERATION_CONFIRMATION = "mydancr-six-working-now-echo-house-v1";
-const TARGET_VENUE_NAME = "Echo House";
+const OPERATION_CONFIRMATION = "mydancr-six-working-now-varied-venues-v1";
 const LOCKED_UNTIL = "2099-12-31T23:59:59.999Z";
+const DEMO_ASSIGNMENT_COUNTS = Object.freeze([3, 2, 1]);
 const DEMO_PROFILE_SLUGS = Object.freeze([
   "layout-review-01",
   "layout-review-02",
@@ -70,24 +70,23 @@ async function applyAssignments() {
   if (profiles.length < 6) {
     throw new Error(`Six eligible fictional demo profiles are required; found ${profiles.length}.`);
   }
-  if (!venues.length) {
-    throw new Error("At least one active Las Vegas venue is required.");
+  if (venues.length < DEMO_ASSIGNMENT_COUNTS.length) {
+    throw new Error(`At least ${DEMO_ASSIGNMENT_COUNTS.length} active Las Vegas venues are required.`);
   }
 
   const selectedProfiles = shuffled(profiles).slice(0, 6);
-  const targetVenue = venues.find(
-    (venue) => String(venue.name || "").trim().toLowerCase() === TARGET_VENUE_NAME.toLowerCase(),
+  const selectedVenues = shuffled(venues).slice(0, DEMO_ASSIGNMENT_COUNTS.length);
+  const shuffledCounts = shuffled(DEMO_ASSIGNMENT_COUNTS);
+  const venueAssignments = selectedVenues.flatMap((venue, index) =>
+    Array.from({ length: shuffledCounts[index] }, () => venue),
   );
-  if (!targetVenue) {
-    throw new Error(`${TARGET_VENUE_NAME} must be an active Las Vegas venue.`);
-  }
   const now = new Date().toISOString();
 
   await endCurrentDemoAssignments(now, "demo_assignment_replaced");
   await endExistingLasVegasWorkingNow(now);
 
-  const assignments = selectedProfiles.map((profile) => {
-    const venue = targetVenue;
+  const assignments = selectedProfiles.map((profile, index) => {
+    const venue = venueAssignments[index];
     return {
       dancer_id: profile.id,
       venue_id: venue.id,
@@ -129,7 +128,10 @@ async function applyAssignments() {
   writeResult({
     event: "demo_working_now.applied",
     target,
-    venueName: targetVenue.name,
+    venueDistribution: selectedVenues.map((venue, index) => ({
+      venueName: venue.name,
+      dancerCount: shuffledCounts[index],
+    })),
     lockedUntil: LOCKED_UNTIL,
     assignments: (data || []).map(publicAssignment),
   });

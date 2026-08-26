@@ -58137,10 +58137,6 @@
       const workingNow = localProfiles
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
-      const mobileLineupVisibleCount = Math.min(workingNow.length, 5);
-      const mobileLineupReserve = workingNow.length
-        ? 108 + Math.max(0, mobileLineupVisibleCount - 1) * 20 + (workingNow.length > 5 ? 20 : 0)
-        : 0;
       const followsVenue = isFollowingVenue(city, venue.name);
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
       const hoursMarkup = operatingStatus.hoursLabel
@@ -58165,7 +58161,7 @@
         ? `${safeName} logo`
         : `${safeName} monogram`;
       return `
-        <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}"${mobileLineupReserve ? ` style="--home-venue-lineup-reserve:${mobileLineupReserve}px"` : ""}>
+        <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}" role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>

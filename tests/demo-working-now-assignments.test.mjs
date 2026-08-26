@@ -21,12 +21,15 @@ test("Demo Mode has a distinct locked Working Now shift source", () => {
   assert.match(migration, /nfc_tag_id is null/);
 });
 
-test("the guarded production operation places exactly six persistent assignments at Echo House", () => {
-  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-six-working-now-echo-house-v1"/);
-  assert.match(manager, /const TARGET_VENUE_NAME = "Echo House"/);
+test("the guarded production operation places exactly six persistent assignments across varied venues", () => {
+  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-six-working-now-varied-venues-v1"/);
+  assert.match(manager, /const DEMO_ASSIGNMENT_COUNTS = Object\.freeze\(\[3, 2, 1\]\)/);
   assert.match(manager, /shuffled\(profiles\)\.slice\(0, 6\)/);
-  assert.match(manager, /venue\.name \|\| ""[\s\S]*?TARGET_VENUE_NAME\.toLowerCase\(\)/);
-  assert.match(manager, /const venue = targetVenue/);
+  assert.match(manager, /shuffled\(venues\)\.slice\(0, DEMO_ASSIGNMENT_COUNTS\.length\)/);
+  assert.match(manager, /const shuffledCounts = shuffled\(DEMO_ASSIGNMENT_COUNTS\)/);
+  assert.match(manager, /Array\.from\(\{ length: shuffledCounts\[index\] \}, \(\) => venue\)/);
+  assert.match(manager, /const venue = venueAssignments\[index\]/);
+  assert.match(manager, /venueDistribution: selectedVenues\.map/);
   assert.match(manager, /shift_source: "demo_locked"/);
   assert.match(manager, /location_verification_expires_at: LOCKED_UNTIL/);
   assert.match(manager, /commission_tracking_started_at: null/);
