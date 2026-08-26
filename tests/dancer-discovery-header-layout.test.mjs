@@ -62,6 +62,21 @@ test("existing city, radius, club, Working Now, Upcoming, and filter result logi
   assert.match(liveShell, /if \(dancerDirectoryFilter === "upcoming"\)[\s\S]*?upcomingSortValue\(a, city\)[\s\S]*?dailyRotationScore\(a, city\)/);
 });
 
+test("directory tabs reserve a stable border so every selected state has an outline", () => {
+  assert.match(
+    aesthetic,
+    /> #results\.home-dancer-grid \.dancer-directory-filter \{[\s\S]*?box-sizing: border-box;[\s\S]*?border: 1px solid transparent !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\) \{[\s\S]*?border-color: var\(--dancr-color-live-medium\) !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\) \{[\s\S]*?border-color: var\(--dancr-color-info-strong\) !important;/,
+  );
+});
+
 test("narrow and long-label safeguards keep controls and counts collision-free", () => {
   assert.match(aesthetic, /:is\(\.city-picker-trigger-value, #citySelect\) \{[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap/);
   assert.match(aesthetic, /@media \(max-width: 360px\) \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 104px/);
