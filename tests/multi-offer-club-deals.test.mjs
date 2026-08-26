@@ -107,5 +107,6 @@ test("all public surfaces expose the full offer list while preserving first-deal
   assert.match(tvSource, /deals: venueDeals/);
   assert.match(tvSource, /deal: null,[\s\S]*?deals: \[\]/);
   assert.match(liveApp, /activeDeals: Array\.isArray\(item\.activeDeals\)/);
-  assert.match(liveApp, /venue\.activeDeals\?\.length > 1/);
+  assert.match(liveApp, /activeDealCount = Math\.max\(venue\.activeDeals\?\.length \|\| 0, 1\)/);
+  assert.match(liveApp, /hasMultipleActiveDeals = activeDealCount > 1/);
 });

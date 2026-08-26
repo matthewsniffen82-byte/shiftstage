@@ -35,7 +35,9 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /const venueValue = escapeOptionValue\(venue\.name\)/);
   assert.match(venueDetail, /class="venue-secondary-actions"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
   assert.match(venueDetail, /venueDirectionsMarkup\(\{ venue, className: "venue-address-directions", city \}\)/);
-  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel[\s\S]*?class="info-tile venue-address-tile\$\{details\.address \? "" : " venue-address-tile-no-address"\}"[\s\S]*?class="venue-address-copy"[\s\S]*?Address unavailable[\s\S]*?className: "venue-address-directions"/);
+  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?class="venue-identity-location"[\s\S]*?details\.city[\s\S]*?details\.state[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel/);
+  assert.match(venueDetail, /details\.address \? `<div class="venue-address-line">[\s\S]*?escapeHtml\(details\.address\)[\s\S]*?: ""/);
+  assert.doesNotMatch(venueDetail, /Address unavailable|venue-address-tile-no-address/);
   assert.equal((venueDetail.match(/encodeURIComponent\(details\.address\)/g) || []).length, 0);
   assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?https:\/\/maps\.google\.com\/\?q=\$\{encodeURIComponent\(details\.address\)\}/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Distance<\/strong>/);
@@ -50,8 +52,9 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?venue-address-directions[\s\S]*?\$\{rideMarkup\}/);
   assert.ok(venueDetail.indexOf("${venueOfferMarkup(venue)}") < venueDetail.indexOf("venue-primary-actions"));
   assert.ok(venueDetail.indexOf("venue-primary-actions") < venueDetail.indexOf("venue-secondary-actions"));
-  assert.ok(venueDetail.indexOf("${details.phone ?") < venueDetail.indexOf("venue-action-stack"));
-  assert.ok(venueDetail.indexOf("${details.website ?") < venueDetail.indexOf("venue-action-stack"));
+  assert.ok(venueDetail.indexOf("venue-action-stack") < venueDetail.indexOf("${details.phone || details.website ?"));
+  assert.ok(venueDetail.indexOf("${activityMarkup}") < venueDetail.indexOf("${details.phone || details.website ?"));
+  assert.match(venueDetail, /details\.phone \|\| details\.website \? `[\s\S]*?<details class="venue-contact-details">[\s\S]*?<summary>Club details<\/summary>/);
   assert.match(venueDetail, /class="venue-action-stack"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?class="venue-secondary-actions"/);
   assert.equal((venueDetail.match(/\$\{rideMarkup\}/g) || []).length, 1);
   assert.match(venueDetail, /id="venue-no-shift-posted"[\s\S]*?<span>No Shift Posted<\/span>/);
@@ -107,91 +110,99 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
   )?.[0] || "";
   assert.match(
     venueOffer,
-    /venue\?\.activeDeal[\s\S]*?<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Get Club Deal/,
+    /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Get Club Deal/,
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
-  assert.doesNotMatch(venueOffer, /clubDealCtaMarkup|venue-club-deal-cta|Opens after you tap Get Club Deal/);
-  assert.match(venueOffer, /venue-club-deal-unavailable[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)[\s\S]*?No active Club Deal[\s\S]*?Check back later/);
-  assert.doesNotMatch(venueOffer, /Use Share to send this venue profile|has not published a tracked customer offer/);
+  assert.match(venueOffer, /activeDealCount[\s\S]*?hasMultipleActiveDeals[\s\S]*?\$\{activeDealCount\} Club Deals[\s\S]*?View \$\{activeDealCount\} Club Deals/);
+  assert.match(venueOffer, /customerFacingDealDescription\(venue\.activeDeal\.dealDescription\)/);
+  assert.match(venueOffer, /return "";/);
+  assert.doesNotMatch(venueOffer, /Half-off admission|Skip the line|Tap at cashier/);
+  assert.doesNotMatch(venueOffer, /venue-club-deal-unavailable|No active Club Deal|Check back later/);
+  assert.doesNotMatch(venueOffer, /clubDealQrSymbolMarkup|venue-detail-club-deal-symbol|venue-detail-club-deal-qr-state/);
   assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR|Venue QR/);
 });
 
-test("venue profiles use the dancer full-profile Club Deal box for cashier taps in every state", () => {
+test("venue deal previews collapse without an active deal and adapt to one or multiple offers", () => {
+  const venueOfferSource = liveApp.match(
+    /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
+  )?.[0] || "";
+  const venueOfferMarkup = new Function(
+    "encodeDealPass",
+    "escapeHtml",
+    "customerFacingDealDescription",
+    `${venueOfferSource}; return venueOfferMarkup;`,
+  )(
+    () => "encoded-deal",
+    (value) => String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+    (value) => String(value || "").trim(),
+  );
+
+  assert.equal(venueOfferMarkup({ id: "venue-1", activeDeal: null }), "");
+
+  const longTitle = "Complimentary priority admission for eligible guests arriving before the posted cutoff";
+  const longDescription = "Present this offer in the dedicated deal experience and complete the authoritative cashier confirmation flow at the club.";
+  const singleOffer = venueOfferMarkup({
+    id: "venue-1",
+    name: "Dynamic Club",
+    activeDeal: { id: "deal-1", dealTitle: longTitle, dealDescription: longDescription },
+    activeDeals: [{ id: "deal-1", dealTitle: longTitle, dealDescription: longDescription }],
+  });
+  assert.match(singleOffer, new RegExp(longTitle));
+  assert.match(singleOffer, new RegExp(longDescription));
+  assert.match(singleOffer, /data-club-deal-cta="encoded-deal"/);
+  assert.match(singleOffer, />Get Club Deal</);
+  assert.doesNotMatch(singleOffer, /clubDealQrSymbolMarkup|venue-detail-club-deal-symbol|<svg/i);
+
+  const multipleOffers = venueOfferMarkup({
+    id: "venue-1",
+    name: "Dynamic Club",
+    activeDeal: { id: "deal-1", dealTitle: "First", dealDescription: "First offer" },
+    activeDeals: [
+      { id: "deal-1", dealTitle: "First", dealDescription: "First offer" },
+      { id: "deal-2", dealTitle: "Second", dealDescription: "Second offer" },
+    ],
+  });
+  assert.match(multipleOffers, /2 Club Deals/);
+  assert.match(multipleOffers, /View 2 Club Deals/);
+});
+
+test("venue profiles separate compact deal discovery from NFC redemption", () => {
   const venueOffer = liveApp.match(
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
 
-  assert.match(venueOffer, /is-active-club-deal[\s\S]*?Active tonight[\s\S]*?<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?Get Club Deal[\s\S]*?Tap at cashier[\s\S]*?<\/button>/);
-  assert.match(
-    venueOffer,
-    /venue-club-deal-unavailable[\s\S]*?venue-qr-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)[\s\S]*?<strong>No active Club Deal<\/strong>/,
-  );
-  assert.doesNotMatch(venueOffer, /venue-detail-club-deal-unavailable-icon|actionIconMarkup\("lock"\)/);
-  assert.match(liveApp, /Venue details use the same compact QR box geometry as dancer full profiles[\s\S]*?\.venue-detail-club-deal-qr-state \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?padding: 13px 14px !important;[\s\S]*?border-radius: 14px !important;/);
-  assert.match(liveApp, /Venue details use the same compact QR box geometry as dancer full profiles[\s\S]*?\.venue-detail-club-deal-symbol \{[\s\S]*?width: 72px !important;[\s\S]*?height: 72px !important;[\s\S]*?border-radius: 12px !important;/);
-  assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \{[\s\S]*?color: var\(--dancr-color-text-muted\) !important;[\s\S]*?background: var\(--dancr-color-surface\) !important;/);
-  assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \.venue-detail-club-deal-symbol \{[\s\S]*?border-color: rgba\(148, 163, 184, \.14\) !important;[\s\S]*?background: rgba\(148, 163, 184, \.035\) !important;/);
-  assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \.venue-detail-club-deal-qr-copy :is\(\.eyebrow, strong, small\) \{[\s\S]*?color: inherit !important;/);
-  assert.match(liveApp, /Active venue details keep the frame quiet while making the live Club Deal unmistakable[\s\S]*?\.venue-offer-card\.is-active-club-deal \{[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, \.05\) !important;[\s\S]*?\.venue-detail-club-deal-status \{[\s\S]*?text-transform: uppercase;/);
-  assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-available \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)/);
-  assert.match(liveApp, /#profileBackdrop \.profile-qr-unavailable \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;/);
+  assert.match(venueOffer, /venue-deal-preview-copy[\s\S]*?Active tonight[\s\S]*?venue-detail-club-deal-cta[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"/);
+  assert.doesNotMatch(venueOffer, /NFC|cashier|clubDealQrSymbolMarkup|venue-detail-club-deal-qr-state/);
+  assert.match(liveApp, /const dealPassTrigger = event\.target\.closest\("\[data-club-deal-cta\], \[data-deal-pass\]"\);[\s\S]*?await handleDealPassClick\(event\)/);
+  assert.match(liveApp, /async function handleDealPassClick\(event\)[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\]"\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?openDealPassOverlay\(pass, revenueTrigger\)/);
+  assert.match(aesthetic, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 11px 12px !important;[\s\S]*?\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;/);
+  assert.match(liveApp, /function openDealPassOverlay\(pass, triggerButton = null\)[\s\S]*?const overlay = dealPassOverlay\(\)[\s\S]*?overlay\.hidden = false[\s\S]*?overlay\.classList\.add\("show"\)/);
 });
 
 test("venue profile hierarchy stays compact and carries the restrained venue brand signature", () => {
   const refinement = aesthetic.match(/Production venue-detail refinement keeps one neutral frame[\s\S]*$/)?.[0] || "";
 
   assert.ok(refinement, "the final production venue-detail refinement must exist");
-  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(156px, 35vw, 186px\) !important;/);
-  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?isolation: isolate;/);
-  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(28px, 8vw, 48px\)\) !important;[\s\S]*?height: calc\(100% - clamp\(24px, 6vw, 38px\)\) !important;[\s\S]*?max-width: 480px !important;[\s\S]*?max-height: 158px !important;[\s\S]*?overflow: visible !important;/);
-  assert.match(refinement, /Compact venue heroes keep centered logo geometry[\s\S]*?@media \(max-width: 650px\) \{[\s\S]*?\.venue-detail-logo-shell \{[\s\S]*?left: 50% !important;[\s\S]*?width: calc\(100% - clamp\(86px, 22vw, 108px\)\) !important;/);
+  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(108px, 25vw, 132px\) !important;[\s\S]*?height: clamp\(108px, 25vw, 132px\) !important;/);
+  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?max-height: 116px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(refinement, /\.venue-detail-logo \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?max-height: 100% !important;[\s\S]*?object-fit: contain !important;[\s\S]*?object-position: center center !important;/);
-  assert.match(refinement, /\.venue-detail-logo-shell::before \{[\s\S]*?var\(--dancr-color-brand-primary-soft\)[\s\S]*?var\(--dancr-color-brand-glow-soft\)[\s\S]*?filter: blur\(22px\);[\s\S]*?opacity: 0\.3;/);
-  assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 8px !important;[\s\S]*?padding: 12px 14px 14px !important;/);
+  assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 7px !important;[\s\S]*?padding: 10px 12px 12px !important;/);
   assert.match(refinement, /#venueDetailName \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
-  assert.match(refinement, /\.venue-identity-copy \{[\s\S]*?padding-left: 0;/);
-  assert.doesNotMatch(refinement, /\.venue-identity-copy::before/);
-  assert.match(refinement, /\.venue-address-copy \.meta \{[\s\S]*?overflow: visible !important;[\s\S]*?-webkit-line-clamp: unset !important;/);
+  assert.match(refinement, /\.venue-identity-meta \{[\s\S]*?display: flex;[\s\S]*?flex-wrap: wrap;/);
+  assert.match(refinement, /\.venue-identity-location \{[\s\S]*?display: inline-flex;[\s\S]*?gap: 5px;/);
   assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 1px solid transparent;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
-  assert.match(refinement, /\.venue-status-grid::after \{[\s\S]*?position: absolute;[\s\S]*?inset: 0;[\s\S]*?z-index: 2;[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\);[\s\S]*?border-radius: inherit;[\s\S]*?pointer-events: none;/);
-  assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 64px !important;[\s\S]*?justify-items: center;[\s\S]*?grid-template-rows: 12px 18px 12px;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
-  assert.match(refinement, /\.venue-status-kicker,[\s\S]*?\.venue-quick-stat span \{[\s\S]*?grid-row: 1;[\s\S]*?white-space: nowrap;/);
-  assert.match(refinement, /\.venue-quick-stat strong \{[\s\S]*?grid-row: 2;/);
-  assert.match(refinement, /\.venue-status-grid > \* \+ \* \{[\s\S]*?border-left: 1px solid var\(--dancr-color-border-subtle\) !important;/);
-  assert.match(refinement, /\.venue-operating-status \{[\s\S]*?width: 100%;[\s\S]*?display: block !important;[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: anywhere;/);
-  assert.match(refinement, /\.venue-address-tile \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/);
-  assert.match(refinement, /\.venue-action-stack \{[\s\S]*?display: grid;[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?gap: 8px;/);
-  assert.match(refinement, /\.venue-location-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
-  assert.match(refinement, /\.venue-location-actions \{[\s\S]*?padding: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(refinement, /\.venue-address-directions \{[\s\S]*?width: 100% !important;[\s\S]*?min-height: 48px !important;[\s\S]*?display: inline-flex !important;/);
-  assert.match(refinement, /\.venue-detail-uber \{[\s\S]*?width: 100% !important;[\s\S]*?min-height: 48px !important;[\s\S]*?margin: 0 !important;/);
-  assert.match(refinement, /button\.venue-detail-club-deal-qr-state\.is-available:focus-visible \{[\s\S]*?var\(--dancr-color-success\)[\s\S]*?transparent/);
-  assert.match(refinement, /button\.venue-detail-club-deal-qr-state\.is-available:is\(\.is-loading, :disabled\) \{[\s\S]*?cursor: wait;/);
-  assert.match(refinement, /\.venue-detail-club-deal-qr-state \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(refinement, /\.venue-club-deal-unavailable\.venue-offer-card \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \{[\s\S]*?width: 100% !important;[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(
-    refinement,
-    /\.action-btn\.follow-venue-btn\.is-following \{[\s\S]*?var\(--dancr-color-brand-primary\) 28%,[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?color: var\(--dancr-color-text-primary\) !important;[\s\S]*?var\(--dancr-color-brand-primary\) 6%,[\s\S]*?var\(--dancr-color-surface-raised\) 94%[\s\S]*?var\(--dancr-color-brand-primary\) 8%,[\s\S]*?transparent/,
-  );
+  assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 58px !important;[\s\S]*?grid-template-rows: 11px 18px 10px;/);
   assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
-  assert.match(refinement, /\.venue-secondary-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
-  assert.match(refinement, /\.venue-secondary-actions \{[\s\S]*?padding: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(refinement, /:is\(\.venue-primary-actions, \.venue-secondary-actions\) \.action-icon \{[\s\S]*?width: 20px !important;[\s\S]*?min-width: 20px !important;[\s\S]*?flex: 0 0 20px !important;/);
-  assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: pointer !important;[\s\S]*?pointer-events: auto !important;/);
-  assert.match(refinement, /Travel actions use the same filled neutral treatment[\s\S]*?\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?appearance: none !important;[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(refinement, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?filter: none !important;/);
-  assert.match(refinement, /\.venue-primary-actions > \.is-inactive-demo \{[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: default !important;[\s\S]*?pointer-events: auto !important;/);
-  assert.match(refinement, /\.venue-primary-actions > \.is-travel-unavailable \{[\s\S]*?opacity: 1 !important;[\s\S]*?cursor: default !important;[\s\S]*?pointer-events: none !important;/);
-  assert.match(refinement, /Compact venue travel actions keep both boxes identical[\s\S]*?height: 46px !important;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 7px !important;[\s\S]*?padding: 0 10px !important;[\s\S]*?position: static !important;[\s\S]*?text-align: center !important;/);
-  assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \.action-icon \{[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?filter: none !important;/);
-  assert.match(refinement, /\.venue-activity-empty \{[\s\S]*?grid-template-columns: 38px minmax\(0, 1fr\);[\s\S]*?padding: 12px 13px;/);
-  assert.match(refinement, /\.venue-activity-count \{[\s\S]*?min-width: 28px;[\s\S]*?color: var\(--dancr-color-info\);/);
-  assert.match(refinement, /\.venue-activity-section\.is-working \.venue-activity-count \{[\s\S]*?color: var\(--dancr-color-success\);/);
-  assert.match(refinement, /\.venue-activity-section\.is-upcoming \.venue-activity-count \{[\s\S]*?color: var\(--dancr-color-info\);/);
-  assert.match(refinement, /\.venue-activity-section\.is-open \.section-title \{[\s\S]*?border-left-color: var\(--dancr-color-text-muted\) !important;/);
+  assert.match(refinement, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 11px 12px !important;[\s\S]*?\.venue-deal-preview \.venue-offer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;/);
+  assert.match(refinement, /\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;[\s\S]*?background: var\(--dancr-color-success\);/);
+  assert.match(refinement, /\.venue-location-section \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 7px !important;/);
+  assert.match(refinement, /\.venue-address-line \{[\s\S]*?min-height: 38px;[\s\S]*?overflow-wrap: anywhere;/);
+  assert.match(refinement, /\.venue-address-directions \{[\s\S]*?min-height: 46px !important;/);
+  assert.match(refinement, /\.venue-detail-uber \{[\s\S]*?min-height: 46px !important;/);
+  assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?min-height: 44px !important;/);
+  assert.match(refinement, /\.venue-contact-details summary \{[\s\S]*?min-height: 44px;[\s\S]*?cursor: pointer;/);
+  assert.match(refinement, /padding-bottom: max\(112px, calc\(94px \+ env\(safe-area-inset-bottom, 0px\)\)\) !important;/);
   assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
 });
 

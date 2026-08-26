@@ -5930,8 +5930,13 @@ body.dancr-button-system > .app main.stack > section.stack
  * identity-first hero, truthful live-data sections, and restrained brand and
  * semantic actions. It intentionally excludes all floating navigation. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail {
-  gap: 10px !important;
-  padding-bottom: 16px !important;
+  gap: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay {
+  padding-bottom: max(112px, calc(94px + env(safe-area-inset-bottom, 0px))) !important;
+  scroll-padding-bottom: max(112px, calc(94px + env(safe-area-inset-bottom, 0px))) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero {
@@ -5949,7 +5954,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-main-photo {
   position: relative !important;
   isolation: isolate;
-  min-height: clamp(156px, 35vw, 186px) !important;
+  min-height: clamp(108px, 25vw, 132px) !important;
+  height: clamp(108px, 25vw, 132px) !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -5957,10 +5963,10 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-mai
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
   box-sizing: border-box;
-  width: calc(100% - clamp(28px, 8vw, 48px)) !important;
-  height: calc(100% - clamp(24px, 6vw, 38px)) !important;
-  max-width: 480px !important;
-  max-height: 158px !important;
+  width: calc(100% - clamp(82px, 22vw, 112px)) !important;
+  height: calc(100% - clamp(20px, 5vw, 30px)) !important;
+  max-width: 420px !important;
+  max-height: 116px !important;
   overflow: visible !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -5977,7 +5983,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   body.dancr-button-system #results.venue-profile-overlay .venue-detail
     .venue-detail-logo-shell {
     left: 50% !important;
-    width: calc(100% - clamp(86px, 22vw, 108px)) !important;
+    width: calc(100% - clamp(92px, 25vw, 118px)) !important;
   }
 }
 
@@ -6020,8 +6026,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body {
   display: grid !important;
-  gap: 8px !important;
-  padding: 12px 14px 14px !important;
+  gap: 7px !important;
+  padding: 10px 12px 12px !important;
   border-top: 1px solid color-mix(
     in srgb,
     var(--dancr-color-border-subtle) 72%,
@@ -6053,22 +6059,38 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
 body.dancr-button-system #results.venue-profile-overlay .venue-detail #venueDetailName {
   overflow: visible !important;
   color: var(--dancr-color-brand-core) !important;
-  font-size: clamp(25px, 7vw, 34px) !important;
+  font-size: clamp(24px, 6.6vw, 32px) !important;
   line-height: 1.02 !important;
   text-overflow: clip !important;
   -webkit-line-clamp: unset !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-meta {
-  grid-template-columns: repeat(2, max-content);
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
+  gap: 3px 7px;
   color: var(--dancr-color-text-secondary) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-identity-meta > .meta {
+  .venue-identity-meta .meta {
   color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-location {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-identity-location .action-icon {
+  width: 14px;
+  min-width: 14px;
+  height: 14px;
+  color: var(--dancr-color-text-muted);
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-distance {
@@ -6111,13 +6133,13 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  min-height: 64px !important;
+  min-height: 58px !important;
   display: grid !important;
   align-content: center;
   justify-items: center;
-  grid-template-rows: 12px 18px 12px;
-  gap: 3px !important;
-  padding: 9px 7px !important;
+  grid-template-rows: 11px 18px 10px;
+  gap: 2px !important;
+  padding: 7px 6px !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -6183,7 +6205,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sta
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-quick-stat {
-  min-height: 64px !important;
+  min-height: 58px !important;
   color: var(--dancr-color-text-primary) !important;
   appearance: none;
   box-shadow: none !important;
@@ -6244,13 +6266,13 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
   min-width: 0;
   display: grid;
   grid-column: 1 / -1;
-  gap: 8px;
+  gap: 6px;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-actions {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -6263,7 +6285,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-secondary-actions {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -6275,14 +6297,14 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-secondary-actions .action-btn {
   width: 100% !important;
-  min-height: 48px !important;
+  min-height: 44px !important;
   margin: 0 !important;
-  padding: 10px 12px !important;
+  padding: 8px 10px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
-  border-radius: 15px !important;
+  gap: 7px !important;
+  border-radius: 13px !important;
   border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface-raised) !important;
@@ -6317,26 +6339,26 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-add
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-directions {
   width: 100% !important;
-  min-height: 48px !important;
+  min-height: 46px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
-  padding: 10px 12px !important;
-  border-radius: 15px !important;
+  padding: 9px 11px !important;
+  border-radius: 13px !important;
   font-size: 12.5px !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-uber {
   width: 100% !important;
-  min-height: 48px !important;
+  min-height: 46px !important;
   margin: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
-  padding: 10px 12px !important;
-  border-radius: 15px !important;
+  padding: 9px 11px !important;
+  border-radius: 13px !important;
   font-size: 12.5px !important;
 }
 
@@ -6626,6 +6648,253 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   box-shadow: none !important;
 }
 
+/* The club profile only previews an available deal. Cashier instructions,
+ * NFC state, and redemption remain in the dedicated deal experience opened by
+ * this CTA. Profiles without an applicable deal render no deal module. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-offer-card.venue-deal-preview {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 11px 12px !important;
+  border: 1px solid var(--dancr-color-success-medium) !important;
+  border-radius: 15px !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-success) 5%,
+    var(--dancr-color-surface-subtle)
+  ) !important;
+  box-shadow: inset 0 1px 0 var(--dancr-color-white-soft) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-deal-preview .venue-offer-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-deal-preview-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-heading {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-heading .eyebrow {
+  margin: 0 !important;
+  color: var(--dancr-color-text-secondary) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.14em !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-status {
+  color: var(--dancr-color-success) !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-deal-preview h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0 !important;
+  color: var(--dancr-color-text-primary) !important;
+  font-size: clamp(17px, 4.8vw, 21px) !important;
+  line-height: 1.08 !important;
+  overflow-wrap: anywhere !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-deal-preview p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0 !important;
+  color: var(--dancr-color-text-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.28 !important;
+  overflow-wrap: anywhere !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-actions {
+  display: block !important;
+  min-width: 0;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-cta {
+  box-sizing: border-box;
+  min-width: 112px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border: 1px solid var(--dancr-color-success-strong);
+  border-radius: 13px;
+  color: var(--dancr-color-text-on-bright);
+  background: var(--dancr-color-success);
+  box-shadow: none;
+  font: inherit;
+  cursor: pointer;
+  transition: filter 0.16s ease, transform 0.12s ease;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-cta strong {
+  font-size: 11.5px;
+  line-height: 1.15;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-cta > span {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 0.8;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-cta:is(:hover, :focus-visible) {
+  outline: none;
+  filter: brightness(1.08);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-cta:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dancr-color-success) 18%, transparent);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-cta:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-cta:is(.is-loading, :disabled) {
+  opacity: 0.72;
+  cursor: wait;
+  filter: none;
+  transform: none;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-location-section {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 7px !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-address-line {
+  min-width: 0;
+  min-height: 38px;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 9px 10px;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 12px;
+  color: var(--dancr-color-text-secondary);
+  background: var(--dancr-color-surface-subtle);
+  font-size: 11.5px;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-address-line .action-icon {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  color: var(--dancr-color-text-muted);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-address-line > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-contact-details {
+  min-width: 0;
+  border-top: 1px solid var(--dancr-color-border-subtle);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-contact-details summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 2px;
+  color: var(--dancr-color-text-muted);
+  font-size: 11.5px;
+  font-weight: 850;
+  cursor: pointer;
+  list-style: none;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-contact-details summary::-webkit-details-marker {
+  display: none;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-contact-details summary::after {
+  content: "+";
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 999px;
+  color: var(--dancr-color-text-secondary);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-contact-details[open] summary::after {
+  content: "−";
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-contact-details-content {
+  display: grid;
+  gap: 6px;
+  padding: 3px 2px 9px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-contact-details-content > span {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 8px;
+  color: var(--dancr-color-text-muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .action-btn.follow-venue-btn:not(.is-following) {
   width: 100% !important;
@@ -6839,12 +7108,13 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
 
 @media (max-width: 420px) {
   body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-meta {
-    grid-template-columns: 1fr;
-    gap: 2px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 7px;
   }
 
   body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-distance::before {
-    content: none;
+    content: "·";
   }
 
   body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-tile {
@@ -6853,6 +7123,18 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
 
   body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-directions {
     justify-self: stretch;
+  }
+
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail
+    .venue-deal-preview .venue-offer-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(104px, auto) !important;
+    gap: 8px !important;
+  }
+
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail
+    .venue-detail-club-deal-cta {
+    min-width: 104px;
+    padding-inline: 9px;
   }
 }
 

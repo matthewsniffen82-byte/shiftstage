@@ -48201,6 +48201,8 @@
 
     function venueOfferMarkup(venue) {
       if (venue?.activeDeal && venue?.id) {
+        const activeDealCount = Math.max(venue.activeDeals?.length || 0, 1);
+        const hasMultipleActiveDeals = activeDealCount > 1;
         const config = {
           deal: venue.activeDeal,
           deals: venue.activeDeals,
@@ -48210,42 +48212,27 @@
           sourceType: "club_page"
         };
         return `
-          <article class="venue-offer-card revenue-offer-card is-active-club-deal" id="club-deal">
+          <article class="venue-offer-card revenue-offer-card venue-deal-preview is-active-club-deal" id="club-deal">
             <div class="venue-offer-grid">
-              <div>
+              <div class="venue-deal-preview-copy">
                 <div class="venue-detail-club-deal-heading">
-                  <span class="eyebrow">Club Deals</span>
+                  <span class="eyebrow">Club Deal</span>
                   <span class="venue-detail-club-deal-status">Active tonight</span>
                 </div>
-                <h3>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
-                <p>${venue.activeDeals?.length > 1 ? "Choose Half-off admission or Skip the line, then tap the cashier sticker at the club." : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
+                <h3>${hasMultipleActiveDeals ? `${activeDealCount} Club Deals` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
+                <p>${hasMultipleActiveDeals ? `${activeDealCount} active offers are available tonight.` : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
-                <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Get Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">
-                  ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol")}
-                  <span class="venue-detail-club-deal-qr-copy">
-                    <strong>${venue.activeDeals?.length > 1 ? "View Club Deals" : "Get Club Deal"}</strong>
-                    <small>${venue.activeDeals?.length > 1 ? `${venue.activeDeals.length} live offers` : "Tap at cashier"}</small>
-                  </span>
+                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="${hasMultipleActiveDeals ? `View ${activeDealCount} Club Deals` : `Get Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}`}">
+                  <strong>${hasMultipleActiveDeals ? `View ${activeDealCount} Club Deals` : "Get Club Deal"}</strong>
+                  <span aria-hidden="true">›</span>
                 </button>
               </div>
             </div>
           </article>
         `;
       }
-      if (!venue?.id) return "";
-      return `
-        <article class="venue-offer-card venue-club-deal-unavailable" id="club-deal">
-          <div class="venue-detail-club-deal-qr-state venue-qr-unavailable is-unavailable is-no-active-offer" data-club-deal-state="unavailable" role="status" aria-label="Club Deal unavailable at ${escapeHtml(venue.name)}. Check back later.">
-            ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol venue-qr-placeholder-icon")}
-            <div class="venue-detail-club-deal-qr-copy venue-qr-unavailable-copy">
-              <span class="eyebrow venue-qr-unavailable-label">Club Deal</span>
-              <strong>No active Club Deal</strong>
-              <small>Check back later</small>
-            </div>
-          </div>
-        </article>
-      `;
+      return "";
     }
 
     function dancerProfileClubDealConfig(profile) {
@@ -50908,8 +50895,8 @@
                 <div class="venue-identity-copy">
                   <h2 id="venueDetailName">${details.name}</h2>
                   <div class="venue-identity-meta">
-                    <span class="meta">${details.city}${details.state ? `, ${details.state}` : ""}</span>
-                    <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)} away</span>
+                    <span class="venue-identity-location">${actionIconMarkup("pin")}<span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
+                    <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
                   </div>
                 </div>
               </div>
@@ -50923,14 +50910,7 @@
               </div>
               ${venueOfferMarkup(venue)}
               <div class="venue-info venue-location-section">
-                <div class="info-tile venue-address-tile${details.address ? "" : " venue-address-tile-no-address"}">
-                  <span class="venue-address-copy">
-                    <strong>Address</strong>
-                    <span class="meta">${details.address ? escapeHtml(details.address) : "Address unavailable"}</span>
-                  </span>
-                </div>
-                ${details.phone ? `<div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>` : ""}
-                ${details.website ? `<div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace(/^https?:\/\//, "")}</div></div>` : ""}
+                ${details.address ? `<div class="venue-address-line">${actionIconMarkup("pin")}<span>${escapeHtml(details.address)}</span></div>` : ""}
                 <div class="venue-action-stack" aria-label="Venue actions">
                   <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
                     ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
@@ -50950,6 +50930,15 @@
           </article>
 
           ${activityMarkup}
+          ${details.phone || details.website ? `
+            <details class="venue-contact-details">
+              <summary>Club details</summary>
+              <div class="venue-contact-details-content">
+                ${details.phone ? `<span><strong>Phone</strong><span>${escapeHtml(details.phone)}</span></span>` : ""}
+                ${details.website ? `<span><strong>Website</strong><span>${escapeHtml(String(details.website).replace(/^https?:\/\//, ""))}</span></span>` : ""}
+              </div>
+            </details>
+          ` : ""}
         </div>
       `;
     }
