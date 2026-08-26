@@ -38,7 +38,7 @@ test("Follow and Notify update visible counts immediately, confirm exact databas
   );
   const notifyHandler = sourceBetween(
     "async function saveProfileNotifications",
-    "modalBody\\.addEventListener",
+    "profileModal\\.addEventListener",
   );
 
   assert.match(homeSource, /id="modalFollowerCount" aria-live="polite"/);
@@ -79,7 +79,7 @@ test("I'm Going changes the visible count before the request and reconciles or r
   );
   const goingHandler = sourceBetween(
     "async function saveProfileGoing",
-    "modalBody\\.addEventListener",
+    "profileModal\\.addEventListener",
   );
 
   assert.ok(

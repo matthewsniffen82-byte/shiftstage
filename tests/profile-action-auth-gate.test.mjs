@@ -24,7 +24,7 @@ function sourceBetween(source, start, end) {
 test("account-only live modal actions check for a customer profile while Going and Report stay public", () => {
   const handler = sourceBetween(
     homeSource,
-    'modalBody.addEventListener("click"',
+    'profileModal.addEventListener("click"',
     'const modalCloseButton = document.getElementById("modalClose")',
   );
 
@@ -290,7 +290,7 @@ test("public profiles keep Going visible and enable it for current or upcoming p
   assert.match(actionsSource, /aria-label=\{actionShift \? \(isGoing \? "Remove this shift from your plans" : "Add this shift to your plans"\)/);
   assert.match(actionsSource, /DancerProfileActionPreviewIcon type=\{isGoing \? "check" : "clock"\}/);
   assert.match(actionsSource, /disabled=\{actionShift \? !savedLoaded \|\| goingSaving : true\}/);
-  assert.match(actionsSource, /onClick=\{submitReport\}/);
+  assert.match(actionsSource, /onSubmit=\{submitReportForm\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
   assert.match(actionsSource, /href="\/account\?role=customer&mode=signup"/);
@@ -310,7 +310,7 @@ test("the live mobile profile separates profile actions from venue travel action
   assert.doesNotMatch(liveActionMarkup, /"account"|"public"|"no-shift"/);
   assert.match(
     homeSource,
-    /class="profile-report-action" id="reportBtn" type="button"[\s\S]*?Report profile/,
+    /id="profileActionOverflowToggle"[\s\S]*?id="profileActionOverflowMenu" role="menu" hidden>[\s\S]*?<button id="reportBtn" role="menuitem" type="button">Report profile<\/button>/,
   );
   assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);
   assert.match(

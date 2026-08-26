@@ -74,7 +74,7 @@ test("one through the maximum supported social count renders only real links in 
   assert.match(compactLayout, /\.social-list a svg \{[\s\S]*?width: 16px !important;[\s\S]*?height: 16px !important;/);
 });
 
-test("all schedule states share the same compact four-action, stats, optional-social, and media order", () => {
+test("all schedule states share the same compact header stats, four-action, status, optional-social, and media order", () => {
   const liveGrid = liveApp.match(
     /function profileModalGridMarkup\(profile, options = \{\}\) \{[\s\S]*?(?=\n    function profileActionButtonMarkup)/,
   )?.[0] || "";
@@ -82,11 +82,15 @@ test("all schedule states share the same compact four-action, stats, optional-so
     /function liveProfileModalActionsMarkup\(profile, status\) \{[\s\S]*?(?=\n    async function refreshProfileGoingState)/,
   )?.[0] || "";
   const actionsIndex = liveGrid.indexOf("liveProfileModalActionsMarkup");
-  const statsIndex = liveGrid.indexOf("profileActivityMetricsMarkup");
+  const statusIndex = liveGrid.indexOf('class="${tonightClasses}"');
   const socialIndex = liveGrid.indexOf("${socialMarkup}");
 
-  assert.ok(actionsIndex > -1 && statsIndex > actionsIndex && socialIndex > statsIndex);
-  assert.match(liveActions, /Follow[\s\S]*?Notify[\s\S]*?\$\{goingButton\}[\s\S]*?Share[\s\S]*?Report profile/);
+  assert.ok(actionsIndex > -1 && statusIndex > actionsIndex && socialIndex > statusIndex);
+  assert.doesNotMatch(liveGrid, /profileActivityMetricsMarkup/);
+  assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
+  assert.match(liveActions, /Follow[\s\S]*?Notify[\s\S]*?\$\{goingButton\}[\s\S]*?Share/);
+  assert.doesNotMatch(liveActions, /Report profile|profile-report-action/);
+  assert.match(liveApp, /id="profileActionOverflowToggle"[\s\S]*?id="reportBtn"/);
   assert.match(liveActions, /isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"/);
   assert.match(profileActions, /hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"/);
   assert.match(
@@ -99,15 +103,16 @@ test("selected actions, dynamic stats, and all existing action handlers remain i
   assert.match(profileActions, /aria-pressed=\{saved\.following\}/);
   assert.match(profileActions, /aria-pressed=\{saved\.notificationsEnabled\}/);
   assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
-  assert.match(profileActions, /onClick=\{submitReport\}/);
+  assert.match(profileActions, /export function DancerReportControl/);
+  assert.match(profileActions, /onClick=\{openReport\}/);
+  assert.match(profileActions, /onSubmit=\{submitReportForm\}/);
   assert.match(profileActions, /shareControl/);
   assert.match(liveApp, /followerCount === 1 \? "Follower" : "Followers"/);
   assert.match(liveApp, /tonightInterestCount\(profile\)\.toLocaleString\(\)/);
   assert.match(liveApp, /profileViewsToday\(profile, city\)\.toLocaleString\(\)/);
-  assert.match(
-    compactLayout,
-    /\.profile-report-action \{[\s\S]*?position: static !important;[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;/,
-  );
+  assert.match(profileActions, /className="profile-header-overflow-menu" role="menu"/);
+  assert.match(profileActions, /role="menuitem"/);
+  assert.match(profileActions, /targetType: "dancer_profile"/);
 });
 
 test("stats and media tabs are compact without changing dynamic media behavior", () => {

@@ -110,10 +110,9 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   const notifyIndex = liveActionsMarkup.indexOf('id="notifyBtn"');
   const goingIndex = liveActionsMarkup.indexOf('${goingButton}');
   const shareIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-share-action profile-action-icon-control"');
-  const reportIndex = liveActionsMarkup.indexOf('class="profile-report-action"');
   assert.ok(followIndex > -1 && notifyIndex > followIndex);
   assert.ok(goingIndex > notifyIndex && shareIndex > goingIndex);
-  assert.ok(reportIndex > shareIndex);
+  assert.doesNotMatch(liveActionsMarkup, /profile-report-action|Report profile/);
   assert.match(
     liveApp,
     /class="action-btn follow-primary[\s\S]*?id="followBtn"/,
@@ -124,9 +123,10 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     liveApp,
     /class="action-btn secondary profile-share-action profile-action-icon-control"[\s\S]*?data-profile-share-menu=/,
   );
-  assert.match(liveApp, /class="profile-report-action" id="reportBtn" type="button"/);
+  assert.match(liveApp, /id="profileActionOverflowToggle"[\s\S]*?aria-haspopup="menu"/);
+  assert.match(liveApp, /<button id="reportBtn" role="menuitem" type="button">Report profile<\/button>/);
   assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);
-  assert.match(liveActionsMarkup, /id="notifyBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-share-action[\s\S]*?profile-report-action/);
+  assert.match(liveActionsMarkup, /id="notifyBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-share-action/);
   assert.doesNotMatch(liveActionsMarkup, /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);
   assert.doesNotMatch(
     liveActionsMarkup.match(/<button class="action-btn secondary profile-share-action profile-action-icon-control"[^>]*>/)?.[0] || "",
@@ -162,7 +162,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
-  assert.match(liveApp, /\.profile-report-action \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?justify-self: end !important;[\s\S]*?background: transparent !important;/);
+  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?grid-template-columns: repeat\(2, 44px\)/);
 });
 
 test("profile socials stay secondary, responsive, and absent when no links exist", () => {
@@ -240,11 +240,12 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   assert.doesNotMatch(publicSocialMarkup, />Social links</);
 
   const publicActionsIndex = publicProfilePage.indexOf("<DancerProfileActions");
-  const publicMetricsIndex = publicProfilePage.indexOf('className="profile-overview"');
+  const publicMetricsIndex = publicProfilePage.indexOf('className="profile-header-metrics"');
   const publicSocialIndex = publicProfilePage.indexOf("profile.socialLinks.length ?");
   const publicMediaIndex = publicProfilePage.indexOf("<DancerPhotoCarousel");
-  assert.ok(publicActionsIndex > -1 && publicMetricsIndex > publicActionsIndex);
-  assert.ok(publicSocialIndex > publicMetricsIndex && publicMediaIndex > publicSocialIndex);
+  assert.ok(publicMetricsIndex > -1 && publicActionsIndex > publicMetricsIndex);
+  assert.ok(publicSocialIndex > publicActionsIndex && publicMediaIndex > publicSocialIndex);
+  assert.doesNotMatch(publicProfilePage, /className="profile-overview"/);
 });
 
 test("profile action controls are unboxed and Going highlights only its icon", () => {
@@ -304,17 +305,18 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   const gridFunction = liveApp.match(
     /function profileModalGridMarkup\(profile, options = \{\}\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
-  const dealIndex = gridFunction.indexOf("dealMarkup ?");
-  const actionsIndex = gridFunction.indexOf("liveProfileModalActionsMarkup");
-  const metricsIndex = gridFunction.indexOf("profileActivityMetricsMarkup");
-  const socialIndex = gridFunction.indexOf("${socialMarkup}");
-  const scheduleIndex = gridFunction.indexOf("shiftsMarkup");
+  const renderedMarkup = gridFunction.slice(gridFunction.indexOf("return `"));
+  const actionsIndex = renderedMarkup.indexOf("liveProfileModalActionsMarkup");
+  const scheduleIndex = renderedMarkup.indexOf("shiftsMarkup");
+  const dealIndex = renderedMarkup.indexOf("dealMarkup ?");
+  const socialIndex = renderedMarkup.indexOf("${socialMarkup}");
 
   assert.ok(scheduleIndex > -1);
-  assert.ok(dealIndex > scheduleIndex);
-  assert.ok(actionsIndex > dealIndex);
-  assert.ok(metricsIndex > actionsIndex);
-  assert.ok(socialIndex > metricsIndex);
+  assert.ok(actionsIndex > -1 && scheduleIndex > actionsIndex);
+  assert.ok(dealIndex > scheduleIndex && socialIndex > dealIndex);
+  assert.doesNotMatch(renderedMarkup, /profileActivityMetricsMarkup/);
+  assert.match(liveApp, /id="modalProfileMetrics"/);
+  assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
   assert.match(gridFunction, /<section class="\$\{tonightClasses\}" data-profile-shift-state="\$\{shiftState\}" data-profile-deal-state="\$\{escapeHtml\(dealState\.key\)\}" aria-label="Tonight">[\s\S]*?\$\{dealMarkup \? `<div class="profile-tonight-deal">\$\{dealMarkup\}<\/div>` : ""\}[\s\S]*?<\/section>/);
   assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
   assert.match(liveApp, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);

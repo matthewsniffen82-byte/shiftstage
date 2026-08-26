@@ -39873,6 +39873,189 @@
           height: 16px !important;
         }
 
+        /* Public profile identity and social proof share one compact header.
+           The approved shift/deal card below remains an unchanged component. */
+        #profileBackdrop #profileModal .profile-modal-summary {
+          grid-template-columns: minmax(116px, .95fr) minmax(0, 1.05fr) auto !important;
+          gap: 10px !important;
+          min-height: 72px !important;
+          margin-inline: -14px !important;
+          padding: max(8px, calc(env(safe-area-inset-top, 0px) + 6px)) 14px 8px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-person {
+          min-width: 0;
+          display: grid;
+          grid-template-columns: 48px minmax(0, 1fr);
+          align-items: center;
+          gap: 9px;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
+          min-width: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics {
+          min-width: 0;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          gap: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
+          min-width: 0 !important;
+          gap: 2px !important;
+          padding: 2px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
+          max-width: 100% !important;
+          overflow: hidden !important;
+          font-size: clamp(16px, 3.4vw, 21px) !important;
+          font-variant-numeric: tabular-nums !important;
+          line-height: 1.05 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
+          font-size: clamp(8px, 1.9vw, 10px) !important;
+          line-height: 1.15 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-controls {
+          display: grid;
+          grid-template-columns: repeat(2, 44px);
+          align-items: center;
+          gap: 5px;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-toggle,
+        #profileBackdrop #profileModal #modalClose {
+          position: static !important;
+          inset: auto !important;
+          width: 44px !important;
+          height: 44px !important;
+          min-height: 44px !important;
+          display: inline-grid !important;
+          place-items: center !important;
+          padding: 0 !important;
+          border: 1px solid rgba(180,169,196,.2) !important;
+          border-radius: 50% !important;
+          color: #fff !important;
+          background: rgba(24,24,30,.82) !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-toggle {
+          font-size: 17px !important;
+          letter-spacing: .08em;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-menu {
+          top: calc(100% + 7px) !important;
+          right: 0 !important;
+          bottom: auto !important;
+          width: min(190px, 72vw) !important;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .modal-actions {
+          order: 0;
+          margin-top: 8px !important;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card {
+          order: 1;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .location-status-tile {
+          order: 2;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .social-tile {
+          order: 3;
+        }
+
+        @media (max-width: 520px) {
+          #profileBackdrop #profileModal .profile-modal-summary {
+            grid-template-columns: minmax(112px, .92fr) minmax(0, 1.08fr) auto !important;
+            gap: 6px !important;
+            margin-inline: -12px !important;
+            padding-inline: 12px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-person {
+            grid-template-columns: 46px minmax(0, 1fr);
+            gap: 7px;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-avatar {
+            width: 46px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-summary .modal-identity h2 {
+            font-size: clamp(17px, 5vw, 22px) !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-controls {
+            grid-template-columns: repeat(2, 44px);
+            gap: 3px;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-toggle,
+          #profileBackdrop #profileModal #modalClose {
+            width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+          }
+        }
+
+        @media (max-width: 340px) {
+          #profileBackdrop #profileModal .profile-modal-summary {
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            gap: 5px !important;
+            min-height: 96px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-person {
+            grid-column: 1;
+            grid-row: 1;
+            grid-template-columns: 42px minmax(0, 1fr);
+            gap: 6px;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-avatar {
+            width: 42px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-metrics {
+            grid-column: 1 / -1;
+            grid-row: 2;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-controls {
+            grid-column: 2;
+            grid-row: 1;
+            grid-template-columns: repeat(2, 44px);
+            gap: 3px;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-controls .profile-action-overflow-toggle,
+          #profileBackdrop #profileModal #modalClose {
+            width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
+            font-size: 9px !important;
+          }
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .uber-ride-link {
             transition: none;
@@ -41338,26 +41521,39 @@
     <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
       <section class="profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
         <div class="profile-modal-summary">
-          <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
-            <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
-            <span data-working-now-indicator aria-hidden="true">NOW</span>
-          </div>
-          <div class="modal-identity-stack">
-            <div class="modal-identity">
-              <div class="profile-modal-name-row">
-                <h2 id="modalName">Profile</h2>
-                <span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓</span>
-                <span class="badge" id="modalStatus">Verified</span>
+          <div class="profile-modal-person">
+            <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
+              <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
+              <span data-working-now-indicator aria-hidden="true">NOW</span>
+            </div>
+            <div class="modal-identity-stack">
+              <div class="modal-identity">
+                <div class="profile-modal-name-row">
+                  <h2 id="modalName">Profile</h2>
+                  <span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓</span>
+                  <span class="badge" id="modalStatus">Verified</span>
+                </div>
+                <div class="profile-modal-context" aria-live="polite">
+                  <span class="pill" id="modalCity">Las Vegas</span>
+                </div>
               </div>
-              <div class="profile-modal-context" aria-live="polite">
-                <span class="pill" id="modalCity">Las Vegas</span>
+              <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
+            </div>
+          </div>
+          <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
+          <div class="profile-modal-header-controls">
+            <div class="profile-action-overflow">
+              <button class="profile-action-overflow-toggle" id="profileActionOverflowToggle" type="button" aria-label="More profile actions" aria-haspopup="menu" aria-expanded="false">
+                <span aria-hidden="true">•••</span>
+              </button>
+              <div class="profile-action-overflow-menu" id="profileActionOverflowMenu" role="menu" hidden>
+                <button id="reportBtn" role="menuitem" type="button">Report profile</button>
               </div>
             </div>
-            <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
+            <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
           </div>
-          <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
         </div>
         <div class="modal-body" id="modalBody"></div>
         <section class="profile-modal-media" aria-label="Dancer profile media">
@@ -41554,6 +41750,9 @@
     const modalImage = document.getElementById("modalImage");
     const modalProfileAvatar = document.getElementById("modalProfileAvatar");
     const modalProfileAvatarBorder = document.getElementById("modalProfileAvatarBorder");
+    const modalProfileMetrics = document.getElementById("modalProfileMetrics");
+    const profileActionOverflowToggle = document.getElementById("profileActionOverflowToggle");
+    const profileActionOverflowMenu = document.getElementById("profileActionOverflowMenu");
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
@@ -51999,15 +52198,14 @@
       ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
+          ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
             ${dealMarkup ? `<div class="profile-tonight-deal">${dealMarkup}</div>` : ""}
             ${travelActionsMarkup}
           </section>
-          ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
-          ${profileActivityMetricsMarkup(profile, city)}
-          ${socialMarkup}
           ${profileLocationStatusTile(profile, city)}
+          ${socialMarkup}
         </div>
       `;
     }
@@ -52033,7 +52231,6 @@
           <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notified" : "Notify")}</button>
           ${goingButton}
           <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
-          <button class="profile-report-action" id="reportBtn" type="button" data-profile="${profile.name}">Report profile</button>
         </div>
       `;
     }
@@ -52211,6 +52408,13 @@
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
       modalCity.hidden = false;
+      modalProfileMetrics.innerHTML = profileActivityMetricsMarkup(profile, city);
+      profileActionOverflowToggle.setAttribute("aria-expanded", "false");
+      profileActionOverflowMenu.hidden = true;
+      const profileReportButton = profileActionOverflowMenu.querySelector("#reportBtn");
+      profileReportButton.disabled = false;
+      profileReportButton.textContent = "Report profile";
+      profileReportButton.dataset.profile = profile.name;
       modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
       modalRank.hidden = true;
@@ -61109,7 +61313,18 @@
       }
     }
 
-    modalBody.addEventListener("click", async (event) => {
+    profileModal.addEventListener("click", async (event) => {
+      const overflowToggle = event.target.closest("#profileActionOverflowToggle");
+      if (overflowToggle) {
+        const opening = profileActionOverflowMenu.hidden;
+        profileActionOverflowMenu.hidden = !opening;
+        profileActionOverflowToggle.setAttribute("aria-expanded", String(opening));
+        return;
+      }
+      if (!event.target.closest(".profile-action-overflow")) {
+        profileActionOverflowMenu.hidden = true;
+        profileActionOverflowToggle.setAttribute("aria-expanded", "false");
+      }
       if (handleQrClick(event)) return;
       if (handleShareClick(event)) return;
       if (!event.target.closest("[data-qr-popover]")) closeQrPopovers();
@@ -61148,6 +61363,8 @@
       }
       if (actionButton.id === "reportBtn") {
         if (actionButton.disabled) return;
+        profileActionOverflowMenu.hidden = true;
+        profileActionOverflowToggle.setAttribute("aria-expanded", "false");
         const city = citySelect.value;
         const profileName = actionButton.dataset.profile;
         const profile = findProfile(profileName);
@@ -61171,6 +61388,15 @@
           showToast(error.message || "Could not submit report");
         }
       }
+    });
+
+    profileModal.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || profileActionOverflowMenu.hidden) return;
+      event.preventDefault();
+      event.stopPropagation();
+      profileActionOverflowMenu.hidden = true;
+      profileActionOverflowToggle.setAttribute("aria-expanded", "false");
+      profileActionOverflowToggle.focus();
     });
 
     const modalCloseButton = document.getElementById("modalClose");

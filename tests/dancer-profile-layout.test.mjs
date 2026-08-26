@@ -49,15 +49,17 @@ const [
   ]);
 
 test("full dancer profiles use a compact identity and honest public activity header without a bio", () => {
+  const headerIndex = profilePage.indexOf('className="profile-titlebar"');
+  const metricsIndex = profilePage.indexOf('className="profile-header-metrics"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const metricsIndex = profilePage.indexOf('className="profile-overview"');
+  const statusIndex = profilePage.indexOf('className={`profile-tonight-card');
   const socialsIndex = profilePage.indexOf('className="profile-social-section"');
   assert.match(profilePage, /className="profile-titlebar"/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
-  assert.match(profilePage, /className="profile-metrics"/);
-  assert.match(profilePage, /\.profile-overview \{[^}]*border: 0;/);
-  assert.match(profilePage, /\.profile-metrics > div \{[^}]*gap: 2px;[^}]*padding: 4px;/);
-  assert.match(profilePage, /\.profile-metrics dd \{[^}]*font-weight: 900;[^}]*line-height: 1\.08;/);
+  assert.match(profilePage, /className="profile-header-metrics" aria-label="Profile activity"/);
+  assert.match(profilePage, /\.profile-header-metrics \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(profilePage, /\.profile-header-metrics > div \{[^}]*gap: 2px;[^}]*padding: 2px;/);
+  assert.match(profilePage, /\.profile-header-metrics dd \{[^}]*font-weight: 900;[^}]*line-height: 1\.05;/);
   assert.match(profilePage, /<DancerFollowerMetric \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /profile\.profileViewsToday \|\| 0/);
@@ -65,23 +67,25 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
   assert.match(profilePage, /className="profile-social-section" aria-label="External profiles"/);
   assert.match(profilePage, /<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>/);
-  assert.ok(actionsIndex > -1 && metricsIndex > actionsIndex && socialsIndex > metricsIndex);
+  assert.ok(headerIndex > -1 && metricsIndex > headerIndex);
+  assert.ok(actionsIndex > metricsIndex && statusIndex > actionsIndex && socialsIndex > statusIndex);
+  assert.doesNotMatch(profilePage, /className="profile-overview"|className="profile-metrics"/);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);
 
   assert.match(liveApp, /class="profile-modal-summary"/);
   assert.match(liveApp, /class="profile-modal-avatar" id="modalProfileAvatar"/);
+  assert.match(liveApp, /class="profile-modal-header-metrics" id="modalProfileMetrics"/);
   assert.match(liveApp, /class="profile-activity-metrics"/);
-  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics \{[\s\S]*?border: 0;/);
-  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics > div \{[\s\S]*?gap: 2px;[\s\S]*?padding: 3px 4px;/);
-  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics dd \{[\s\S]*?font-weight: 900;[\s\S]*?line-height: 1\.08;/);
+  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?margin: 0 !important;/);
+  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?gap: 2px !important;[\s\S]*?padding: 2px !important;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics dd \{[\s\S]*?font-weight: 900;/);
+  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics dd \{[\s\S]*?font-size: clamp\(16px, 3\.4vw, 21px\) !important;[\s\S]*?line-height: 1\.05 !important;/);
   assert.match(liveApp, /id="modalFollowerCount"/);
   assert.match(liveApp, /id="tonightInterestCount"/);
   assert.match(liveApp, /id="modalProfileViews"/);
   assert.match(liveApp, /profileViewsToday\(profile, city\)\.toLocaleString\(\)/);
-  assert.match(
-    liveApp,
-    /liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?profileActivityMetricsMarkup\(profile, city\)[\s\S]*?socialMarkup/,
-  );
+  assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
+  assert.match(liveApp, /liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?class="\$\{tonightClasses\}"[\s\S]*?\$\{socialMarkup\}/);
 });
 
 test("profile actions keep profile controls separate from Tonight travel actions", () => {

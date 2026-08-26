@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type PropsWithChildren,
@@ -161,14 +162,202 @@ export function DancerNotificationCount() {
   return <>{new Intl.NumberFormat("en-US").format(notificationCount)}</>;
 }
 
-export function DancerProfileActions({
+export function DancerReportControl({
   dancerId,
   profileName,
+}: {
+  dancerId: string;
+  profileName: string;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportSaving, setReportSaving] = useState(false);
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportError, setReportError] = useState("");
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeMenu = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!reportDialogOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !reportSaving) setReportDialogOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [reportDialogOpen, reportSaving]);
+
+  function openReport() {
+    if (reportSaving || reportSubmitted) return;
+    setMenuOpen(false);
+    setReportError("");
+    setReportDialogOpen(true);
+  }
+
+  async function submitReportForm(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (reportSaving || reportSubmitted) return;
+    if (!reportReason) {
+      setReportError("Choose a reason for the report.");
+      return;
+    }
+    setReportSaving(true);
+    setReportError("");
+    try {
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      const accessToken = readBrowserAccessToken("customer");
+      if (accessToken) headers.authorization = `Bearer ${accessToken}`;
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers,
+        credentials: "same-origin",
+        body: JSON.stringify({
+          targetType: "dancer_profile",
+          targetId: dancerId,
+          targetLabel: profileName,
+          reason: reportReason,
+          details: reportDetails.trim() || null,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to submit report.");
+      }
+      if (!data.report) throw new Error("The report could not be confirmed.");
+      setReportSubmitted(true);
+      setReportDialogOpen(false);
+    } catch (error) {
+      setReportError(
+        error instanceof Error ? error.message : "Unable to submit report.",
+      );
+    } finally {
+      setReportSaving(false);
+    }
+  }
+
+  return (
+    <div className="profile-header-overflow" ref={rootRef}>
+      <button
+        aria-expanded={menuOpen}
+        aria-haspopup="menu"
+        aria-label="More profile actions"
+        className="profile-header-overflow-toggle"
+        onClick={() => setMenuOpen((open) => !open)}
+        type="button"
+      >
+        <span aria-hidden="true">•••</span>
+      </button>
+      {menuOpen ? (
+        <div className="profile-header-overflow-menu" role="menu">
+          <button
+            disabled={reportSaving || reportSubmitted}
+            onClick={openReport}
+            role="menuitem"
+            type="button"
+          >
+            {reportSubmitted ? "Profile reported" : "Report profile"}
+          </button>
+        </div>
+      ) : null}
+      {reportSubmitted ? (
+        <span className="profile-report-confirmation" role="status">Report submitted for review.</span>
+      ) : null}
+      {reportDialogOpen ? (
+        <div
+          className="profile-report-gate"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !reportSaving) {
+              setReportDialogOpen(false);
+            }
+          }}
+        >
+          <section
+            aria-describedby="profile-report-message"
+            aria-labelledby="profile-report-title"
+            aria-modal="true"
+            className="profile-report-dialog"
+            role="dialog"
+          >
+            <button
+              aria-label="Close report form"
+              className="profile-report-close"
+              disabled={reportSaving}
+              onClick={() => setReportDialogOpen(false)}
+              type="button"
+            >
+              ×
+            </button>
+            <span>Safety report</span>
+            <h2 id="profile-report-title">Report {profileName}</h2>
+            <p id="profile-report-message">
+              Tell the moderation team what is wrong. Reports can be submitted without signing in.
+            </p>
+            <form onSubmit={submitReportForm}>
+              <label>
+                Reason
+                <select
+                  autoFocus
+                  onChange={(event) => setReportReason(event.target.value)}
+                  required
+                  value={reportReason}
+                >
+                  <option value="">Choose a reason</option>
+                  {REPORT_REASONS.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Details <small>Optional</small>
+                <textarea
+                  maxLength={1200}
+                  onChange={(event) => setReportDetails(event.target.value)}
+                  placeholder="Add information that will help the moderation team review this profile."
+                  rows={4}
+                  value={reportDetails}
+                />
+              </label>
+              {reportError ? <p className="profile-report-error" role="alert">{reportError}</p> : null}
+              <button disabled={reportSaving} type="submit">
+                {reportSaving ? "Submitting report…" : "Submit report"}
+              </button>
+            </form>
+          </section>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function DancerProfileActions({
+  dancerId,
   shifts,
   shareControl,
 }: {
   dancerId: string;
-  profileName: string;
   shifts: ShiftAction[];
   shareControl?: ReactNode;
 }) {
@@ -186,12 +375,6 @@ export function DancerProfileActions({
   const [savedLoaded, setSavedLoaded] = useState(false);
   const [followSaving, setFollowSaving] = useState(false);
   const [goingSaving, setGoingSaving] = useState(false);
-  const [reportSaving, setReportSaving] = useState(false);
-  const [reportSubmitted, setReportSubmitted] = useState(false);
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [reportDetails, setReportDetails] = useState("");
-  const [reportError, setReportError] = useState("");
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
   const actionShift = useMemo(
@@ -269,12 +452,11 @@ export function DancerProfileActions({
   }, [actionShiftId, dancerId, setGoingCount]);
 
   useEffect(() => {
-    if (!accountRequiredAction && !reportDialogOpen) return;
+    if (!accountRequiredAction) return;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setAccountRequiredAction(null);
-      setReportDialogOpen(false);
     };
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeOnEscape);
@@ -282,7 +464,7 @@ export function DancerProfileActions({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [accountRequiredAction, reportDialogOpen]);
+  }, [accountRequiredAction]);
 
   function requireCustomerAccount(action: AccountAction) {
     if (token) return true;
@@ -387,54 +569,6 @@ export function DancerProfileActions({
     return data;
   }
 
-  function submitReport() {
-    if (reportSaving || reportSubmitted) return;
-    setReportError("");
-    setReportDialogOpen(true);
-  }
-
-  async function submitReportForm(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (reportSaving || reportSubmitted) return;
-    if (!reportReason) {
-      setReportError("Choose a reason for the report.");
-      return;
-    }
-    setReportSaving(true);
-    setReportError("");
-    setStatus("");
-    try {
-      const headers: Record<string, string> = { "content-type": "application/json" };
-      if (token) headers.authorization = `Bearer ${token}`;
-      const response = await fetch("/api/reports", {
-        method: "POST",
-        headers,
-        credentials: "same-origin",
-        body: JSON.stringify({
-          targetType: "dancer_profile",
-          targetId: dancerId,
-          targetLabel: profileName,
-          reason: reportReason,
-          details: reportDetails.trim() || null,
-        }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || "Unable to submit report.");
-      }
-      if (!data.report) throw new Error("The report could not be confirmed.");
-      setReportSubmitted(true);
-      setReportDialogOpen(false);
-      setStatus("Report submitted for review.");
-    } catch (error) {
-      setReportError(
-        error instanceof Error ? error.message : "Unable to submit report.",
-      );
-    } finally {
-      setReportSaving(false);
-    }
-  }
-
   async function postAction(
     path: string,
     body: Record<string, unknown>,
@@ -462,7 +596,7 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className={`live-actions${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving || reportSaving}>
+      <div className={`live-actions${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
         <button
           aria-pressed={saved.following}
           className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
@@ -510,14 +644,6 @@ export function DancerProfileActions({
         ) : (
           <button className="profile-action-secondary profile-action-unavailable" disabled type="button">Share</button>
         )}
-        <button
-          className="profile-report-action"
-          disabled={reportSaving || reportSubmitted}
-          onClick={submitReport}
-          type="button"
-        >
-          {reportSubmitted ? "Profile reported" : reportSaving ? "Submitting report" : "Report profile"}
-        </button>
         {status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </div>
       {accountRequiredAction ? (
@@ -550,71 +676,6 @@ export function DancerProfileActions({
               <Link href="/account?role=customer&mode=signup">Create free account</Link>
               <Link className="secondary" href="/account?role=customer">Already have an account? Sign in</Link>
             </div>
-          </section>
-        </div>
-      ) : null}
-      {reportDialogOpen ? (
-        <div
-          className="profile-report-gate"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !reportSaving) {
-              setReportDialogOpen(false);
-            }
-          }}
-        >
-          <section
-            aria-describedby="profile-report-message"
-            aria-labelledby="profile-report-title"
-            aria-modal="true"
-            className="profile-report-dialog"
-            role="dialog"
-          >
-            <button
-              aria-label="Close report form"
-              className="profile-report-close"
-              disabled={reportSaving}
-              onClick={() => setReportDialogOpen(false)}
-              type="button"
-            >
-              ×
-            </button>
-            <span>Safety report</span>
-            <h2 id="profile-report-title">Report {profileName}</h2>
-            <p id="profile-report-message">
-              Tell the moderation team what is wrong. Reports can be submitted without signing in.
-            </p>
-            <form onSubmit={submitReportForm}>
-              <label>
-                Reason
-                <select
-                  autoFocus
-                  onChange={(event) => setReportReason(event.target.value)}
-                  required
-                  value={reportReason}
-                >
-                  <option value="">Choose a reason</option>
-                  {REPORT_REASONS.map((reason) => (
-                    <option key={reason} value={reason}>
-                      {reason}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Details <small>Optional</small>
-                <textarea
-                  maxLength={1200}
-                  onChange={(event) => setReportDetails(event.target.value)}
-                  placeholder="Add information that will help the moderation team review this profile."
-                  rows={4}
-                  value={reportDetails}
-                />
-              </label>
-              {reportError ? <p className="profile-report-error" role="alert">{reportError}</p> : null}
-              <button disabled={reportSaving} type="submit">
-                {reportSaving ? "Submitting report…" : "Submit report"}
-              </button>
-            </form>
           </section>
         </div>
       ) : null}

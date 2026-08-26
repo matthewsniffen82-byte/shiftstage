@@ -50,21 +50,23 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /className="profile-titlebar-city">\{profile\.city\}<\/span>/);
   assert.doesNotMatch(profilePage, /const nextShift =/);
   assert.match(profilePage, /<ProfileCloseButton/);
+  assert.match(profilePage, /<DancerReportControl dancerId=\{profile\.id\} profileName=\{profile\.stageName\} \/>/);
   assert.match(navigationActions, /className="public-profile-close"/);
-  assert.match(profilePage, /\.profile-titlebar \{ position: relative; z-index: 1;/);
+  assert.match(profilePage, /\.profile-titlebar \{ position: relative; z-index: 10;/);
   assert.doesNotMatch(profilePage, /\.profile-titlebar \{ position: sticky;/);
-  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?gap: 10px;/);
-  assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 42px; height: 42px;/);
+  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 72px;[\s\S]*?grid-template-columns:[\s\S]*?gap: 10px;/);
+  assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 48px; height: 48px;/);
   assert.match(
     profilePage,
-    /@media \(max-width: 600px\) \{[\s\S]*?\.profile-titlebar \{ min-height: 64px; \}[\s\S]*?\.profile-titlebar-avatar \{ width: 48px; height: 48px; flex-basis: 48px; \}/,
+    /@media \(max-width: 600px\) \{[\s\S]*?\.profile-titlebar \{[\s\S]*?min-height: 70px;[\s\S]*?\.profile-titlebar-avatar \{ width: 46px; height: 46px; \}/,
   );
   assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);
   assert.match(
     profilePage,
-    /\.public-profile-close \{ position: absolute; top: max\(8px, env\(safe-area-inset-top\)\); right: 0; width: 40px; min-height: 40px;/,
+    /\.profile-header-overflow-toggle, \.public-profile-close \{ width: 44px; min-height: 44px;/,
   );
-  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?padding: max\(8px, env\(safe-area-inset-top\)\) 52px 8px 0;/);
+  assert.match(profilePage, /\.public-profile-close \{ position: static; font-size: 26px; \}/);
+  assert.match(profilePage, /\.profile-header-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?border-bottom: 0;/);
   assert.doesNotMatch(profileCarousel, /profile-media-heading|Photos &amp; TV|approved<\/span>/);
   assert.match(profileCarousel, /className="profile-media-section"[\s\S]*?className="profile-media-tabs"/);
@@ -87,8 +89,8 @@ test("standalone dancer profiles keep the document scrollbar neutral", () => {
 
 test("the mobile profile keeps nightlife actions and active deals above the media library", () => {
   const identityIndex = profilePage.indexOf('className="profile-titlebar"');
+  const metricsIndex = profilePage.indexOf('className="profile-header-metrics"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
-  const overviewIndex = profilePage.indexOf('className="profile-overview"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
   const scheduleIndex = profilePage.indexOf('className={`profile-tonight-card');
   const dealIndex = profilePage.indexOf('className="profile-tonight-deal"');
@@ -96,16 +98,17 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   const socialIndex = profilePage.indexOf('className="profile-social-section"');
 
   assert.ok(identityIndex > -1);
-  assert.ok(scheduleIndex > identityIndex);
+  assert.ok(metricsIndex > identityIndex);
+  assert.ok(actionsIndex > metricsIndex);
+  assert.ok(scheduleIndex > actionsIndex);
   assert.ok(dealIndex > scheduleIndex);
   assert.ok(travelIndex > dealIndex);
-  assert.ok(actionsIndex > travelIndex);
-  assert.ok(overviewIndex > actionsIndex);
-  assert.ok(socialIndex > overviewIndex);
+  assert.ok(socialIndex > travelIndex);
   assert.ok(mediaIndex > socialIndex);
   assert.match(profilePage, /<DancerFollowerMetric \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
-  assert.match(profilePage, /\{profile\.profileViewsToday \|\| 0\}[\s\S]*?<dt>Views today<\/dt>/);
+  assert.match(profilePage, /format\(profile\.profileViewsToday \|\| 0\)[\s\S]*?<dt>Views today<\/dt>/);
+  assert.doesNotMatch(profilePage, /className="profile-overview"/);
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
   assert.match(profilePage, /shareControl=\{<ProfileShareButton stageName=\{profile\.stageName\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
@@ -186,15 +189,14 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   const notifyIndex = profileActions.indexOf('if (requireCustomerAccount("notify"))');
   const goingIndex = profileActions.indexOf('className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going');
   const shareIndex = profileActions.indexOf('{shareControl ?');
-  const reportIndex = profileActions.indexOf('className="profile-report-action"');
   assert.ok(followButtonIndex > -1 && notifyIndex > followButtonIndex);
   assert.ok(goingIndex > notifyIndex && shareIndex > goingIndex);
-  assert.ok(reportIndex > shareIndex);
   assert.doesNotMatch(profileActions, /rideControl|directionsControl|Working Now only|Venue required/);
   assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
-  assert.doesNotMatch(profileActions, /profile-action-overflow|profile-action-schedule|>Schedule<|>More</);
+  assert.doesNotMatch(profileActions, /profile-action-schedule|>Schedule</);
+  assert.match(profileActions, /className="profile-header-overflow"/);
   assert.match(profileActions, /Report profile/);
-  assert.match(profileActions, /onClick=\{submitReport\}/);
+  assert.match(profileActions, /onClick=\{openReport\}/);
   assert.match(profileActions, /className="profile-report-dialog"/);
   assert.match(profileActions, /<select[\s\S]*required[\s\S]*value=\{reportReason\}/);
   assert.match(profileActions, /<textarea[\s\S]*maxLength=\{1200\}/);

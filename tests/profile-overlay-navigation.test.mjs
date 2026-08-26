@@ -23,9 +23,13 @@ test("mobile navigation cannot cover the fixed profile video viewer", () => {
   );
   assert.match(
     homeSource,
-    /<button class="profile-report-action" id="reportBtn" type="button"[^>]*>Report profile<\/button>/,
+    /<button class="profile-action-overflow-toggle" id="profileActionOverflowToggle"[^>]*aria-haspopup="menu"[^>]*>/,
   );
-  assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions/);
+  assert.match(
+    homeSource,
+    /<div class="profile-action-overflow-menu" id="profileActionOverflowMenu" role="menu" hidden>[\s\S]*?<button id="reportBtn" role="menuitem" type="button">Report profile<\/button>/,
+  );
+  assert.doesNotMatch(homeSource, /<button class="profile-report-action" id="reportBtn"/);
 });
 
 test("mobile navigation cannot cover the fixed profile photo viewer", () => {

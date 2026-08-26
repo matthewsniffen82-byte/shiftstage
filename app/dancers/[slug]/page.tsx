@@ -16,6 +16,7 @@ import {
   DancerFollowStateProvider,
   DancerGoingCount,
   DancerProfileActions,
+  DancerReportControl,
 } from "./DancerProfileActions";
 import { DancerDirectionsButton } from "./DancerDirectionsButton";
 import { DancerPhotoCarousel } from "./DancerPhotoCarousel";
@@ -111,50 +112,78 @@ export default async function DancerPublicPage({ params }: PageProps) {
         <PublicProfileStyles />
 
         <header className="profile-titlebar">
-          <div
-            aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : hasUpcomingShift ? ", upcoming shift posted" : ""}`}
-            className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
-            data-dancer-avatar=""
-            data-upcoming={hasUpcomingShift ? "true" : undefined}
-            data-working-now={activeShift ? "true" : undefined}
-            role="img"
-          >
-            <span aria-hidden="true" data-dancer-avatar-border="">
-              {avatarPhoto ? (
-                <img
-                  alt=""
-                  decoding="async"
-                  height={avatarPhotoHeight || undefined}
-                  sizes="46px"
-                  src={avatarPhoto}
-                  srcSet={avatarPhotoSrcSet || undefined}
-                  style={{
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
-                    width: "100%",
-                  }}
-                  width={avatarPhotoWidth || undefined}
-                />
-              ) : initials(profile.stageName)}
-            </span>
-            {activeShift ? <span aria-hidden="true" data-working-now-indicator="">NOW</span> : null}
-          </div>
-          <div className="profile-titlebar-identity">
-            <div>
-              <h1>{profile.stageName}</h1>
-              <span className="profile-verified" aria-label="Verified dancer">
-                ✓
+          <div className="profile-titlebar-person">
+            <div
+              aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : hasUpcomingShift ? ", upcoming shift posted" : ""}`}
+              className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
+              data-dancer-avatar=""
+              data-upcoming={hasUpcomingShift ? "true" : undefined}
+              data-working-now={activeShift ? "true" : undefined}
+              role="img"
+            >
+              <span aria-hidden="true" data-dancer-avatar-border="">
+                {avatarPhoto ? (
+                  <img
+                    alt=""
+                    decoding="async"
+                    height={avatarPhotoHeight || undefined}
+                    sizes="46px"
+                    src={avatarPhoto}
+                    srcSet={avatarPhotoSrcSet || undefined}
+                    style={{
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
+                      width: "100%",
+                    }}
+                    width={avatarPhotoWidth || undefined}
+                  />
+                ) : initials(profile.stageName)}
               </span>
+              {activeShift ? <span aria-hidden="true" data-working-now-indicator="">NOW</span> : null}
             </div>
-            <div className="profile-titlebar-context">
-              <span className="profile-titlebar-city">{profile.city}</span>
+            <div className="profile-titlebar-identity">
+              <div>
+                <h1>{profile.stageName}</h1>
+                <span className="profile-verified" aria-label="Verified dancer">
+                  ✓
+                </span>
+              </div>
+              <div className="profile-titlebar-context">
+                <span className="profile-titlebar-city">{profile.city}</span>
+              </div>
             </div>
           </div>
-          <ProfileCloseButton
-            fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
-          />
+          <dl className="profile-header-metrics" aria-label="Profile activity">
+            <div>
+              <DancerFollowerMetric />
+            </div>
+            <div>
+              <dd><DancerGoingCount /></dd>
+              <dt>Going</dt>
+            </div>
+            <div>
+              <dd>{new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>
+              <dt>Views today</dt>
+            </div>
+          </dl>
+          <div className="profile-titlebar-controls">
+            <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
+            <ProfileCloseButton
+              fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
+            />
+          </div>
         </header>
+
+        <DancerProfileActions
+          dancerId={profile.id}
+          shareControl={<ProfileShareButton stageName={profile.stageName} />}
+          shifts={profile.upcomingShifts.map((shift) => ({
+            id: shift.id,
+            label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
+            isActive: isActiveNow(shift),
+          }))}
+        />
 
         <section
           aria-label="Tonight"
@@ -263,33 +292,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
           ) : null}
         </section>
 
-        <DancerProfileActions
-          dancerId={profile.id}
-          profileName={profile.stageName}
-          shareControl={<ProfileShareButton stageName={profile.stageName} />}
-          shifts={profile.upcomingShifts.map((shift) => ({
-            id: shift.id,
-            label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
-            isActive: isActiveNow(shift),
-          }))}
-        />
-
-        <section className="profile-overview" aria-label={`${profile.stageName} profile summary`}>
-          <dl className="profile-metrics" aria-label="Profile activity">
-            <div>
-              <DancerFollowerMetric />
-            </div>
-            <div>
-              <dd><DancerGoingCount /></dd>
-              <dt>Going</dt>
-            </div>
-            <div>
-              <dd>{profile.profileViewsToday || 0}</dd>
-              <dt>Views today</dt>
-            </div>
-          </dl>
-        </section>
-
         {profile.socialLinks.length ? (
           <section className="profile-social-section" aria-label="External profiles">
             <SocialLinks dancerId={profile.id} links={profile.socialLinks} showHeading={false} />
@@ -388,11 +390,12 @@ function PublicProfileStyles() {
       html:has(.public-profile-shell)::-webkit-scrollbar-track, body:has(.public-profile-shell)::-webkit-scrollbar-track { border: 0; background: transparent; }
       html:has(.public-profile-shell)::-webkit-scrollbar-thumb, body:has(.public-profile-shell)::-webkit-scrollbar-thumb { border: 0; border-radius: 999px; background: rgba(255,255,255,.28); box-shadow: none; }
       html:has(.public-profile-shell)::-webkit-scrollbar-thumb:hover, html:has(.public-profile-shell)::-webkit-scrollbar-thumb:active, body:has(.public-profile-shell)::-webkit-scrollbar-thumb:hover, body:has(.public-profile-shell)::-webkit-scrollbar-thumb:active { background: rgba(255,255,255,.42); box-shadow: none; }
-      .profile-titlebar { position: relative; z-index: 1; max-width: 760px; min-height: 64px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 0 auto; padding: max(8px, env(safe-area-inset-top)) 52px 8px 0; border-bottom: 0; background: radial-gradient(circle at 14% 0%, rgba(126,234,255,.055), transparent 11rem), linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
-      .profile-titlebar-avatar { width: 42px; height: 42px; position: relative; display: grid; flex: 0 0 42px; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36), 0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
+      .profile-titlebar { position: relative; z-index: 10; max-width: 760px; min-height: 72px; display: grid; grid-template-columns: minmax(116px, .95fr) minmax(0, 1.05fr) auto; align-items: center; gap: 10px; margin: 0 auto; padding: max(8px, env(safe-area-inset-top)) 0 8px; border-bottom: 0; background: radial-gradient(circle at 14% 0%, rgba(126,234,255,.055), transparent 11rem), linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
+      .profile-titlebar-person { min-width: 0; display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 9px; }
+      .profile-titlebar-avatar { width: 48px; height: 48px; position: relative; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36), 0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
       .profile-titlebar-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
       .profile-titlebar-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(1.14) contrast(1.03); }
-      .profile-titlebar-identity { min-width: 0; display: grid; flex: 1 1 auto; gap: 6px; }
+      .profile-titlebar-identity { min-width: 0; display: grid; gap: 6px; }
       .profile-titlebar-identity > div { min-width: 0; display: flex; align-items: center; gap: 7px; }
       .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(20px, 4vw, 26px); line-height: 1.05; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
       .profile-titlebar-identity > .profile-titlebar-context { gap: 6px; overflow: hidden; }
@@ -403,18 +406,25 @@ function PublicProfileStyles() {
       .profile-titlebar-city { min-height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; background: rgba(255,255,255,.035); }
       .profile-titlebar-context a:hover, .profile-titlebar-context a:focus-visible { color: #9fefff; outline: none; text-decoration: underline; text-underline-offset: 3px; }
       .profile-verified { width: 20px; height: 20px; flex: 0 0 20px; display: inline-grid; place-items: center; border-radius: 50%; color: #051019; background: #7eeaff; box-shadow: 0 0 15px rgba(126,234,255,.3); font-size: 12px; font-weight: 950; }
-      .public-profile-close { position: absolute; top: max(8px, env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; flex: 0 0 40px; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
+      .profile-header-metrics { min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; }
+      .profile-header-metrics > div { min-width: 0; display: grid; gap: 2px; justify-items: center; padding: 2px; }
+      .profile-header-metrics dd { max-width: 100%; margin: 0; overflow: hidden; color: #eee9f5; font-size: clamp(16px, 3.4vw, 21px); font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-header-metrics dt { color: #8f849c; font-size: clamp(8px, 1.9vw, 10px); font-weight: 850; line-height: 1.15; text-align: center; }
+      .profile-titlebar-controls { display: grid; grid-template-columns: repeat(2, 44px); align-items: center; gap: 5px; }
+      .profile-header-overflow { position: relative; }
+      .profile-header-overflow-toggle, .public-profile-close { width: 44px; min-height: 44px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); line-height: 1; cursor: pointer; }
+      .profile-header-overflow-toggle { font-size: 17px; letter-spacing: .08em; }
+      .public-profile-close { position: static; font-size: 26px; }
+      .profile-header-overflow-toggle:hover, .profile-header-overflow-toggle:focus-visible,
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
-      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section, .profile-schedule-empty, .profile-tonight-card { width: min(100%, 760px); margin-inline: auto; }
+      .profile-header-overflow-menu { position: absolute; z-index: 40; top: calc(100% + 7px); right: 0; width: min(190px, 72vw); padding: 7px; border: 1px solid rgba(126,234,255,.25); border-radius: 12px; background: rgba(10,8,16,.98); box-shadow: 0 18px 48px rgba(0,0,0,.56); }
+      .profile-header-overflow-menu button { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; color: #d8d0e4; background: rgba(255,255,255,.035); font-size: 12px; font-weight: 850; text-align: left; cursor: pointer; }
+      .profile-header-overflow-menu button:focus-visible { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.28); outline-offset: 1px; }
+      .profile-report-confirmation { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+      .profile-social-section, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section, .profile-schedule-empty, .profile-tonight-card { width: min(100%, 760px); margin-inline: auto; }
       .profile-schedule-empty { min-width: 0; display: flex; align-items: center; gap: 6px; margin-top: 5px; padding: 8px 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #82798c; background: rgba(255,255,255,.025); font-size: 10px; line-height: 1.2; }
       .profile-schedule-empty strong { flex: 0 0 auto; color: #d9d3e0; font-size: 12px; white-space: nowrap; }
       .profile-schedule-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-overview { display: block; margin-top: -2px; margin-bottom: 26px; padding: 0; border: 0; }
-      .profile-overview:has(+ .profile-social-section) { margin-bottom: 18px; }
-      .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
-      .profile-metrics > div { min-width: 0; display: grid; gap: 2px; justify-items: center; padding: 4px; }
-      .profile-metrics dd { max-width: 100%; margin: 0; overflow: hidden; color: #eee9f5; font-size: clamp(19px, 3.75vw, 24px); font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: .01em; line-height: 1.08; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; line-height: 1.25; text-align: center; }
       .profile-social-section { min-height: 0; display: grid; margin: 0 0 22px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
@@ -437,7 +447,7 @@ function PublicProfileStyles() {
       .social-list a.social-link-x { color: #f4f4f6; }
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
-      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 2px; padding: 1px 0 0; }
+      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 2px; margin-top: 8px; padding: 1px 0 0; }
       .live-actions.is-no-live-shift { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 11px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
@@ -698,8 +708,12 @@ function PublicProfileStyles() {
       .profile-report-error { color: #ffb4c8; }
       @media (max-width: 600px) {
         .public-profile-shell { padding: 0 12px max(132px, calc(108px + env(safe-area-inset-bottom))); }
-        .profile-titlebar { min-height: 64px; }
-        .profile-titlebar-avatar { width: 48px; height: 48px; flex-basis: 48px; }
+        .profile-titlebar { grid-template-columns: minmax(112px, .92fr) minmax(0, 1.08fr) auto; gap: 6px; min-height: 70px; }
+        .profile-titlebar-person { grid-template-columns: 46px minmax(0, 1fr); gap: 7px; }
+        .profile-titlebar-avatar { width: 46px; height: 46px; }
+        .profile-titlebar h1 { font-size: clamp(17px, 5vw, 22px); }
+        .profile-titlebar-controls { grid-template-columns: repeat(2, 44px); gap: 3px; }
+        .profile-header-overflow-toggle, .public-profile-close { width: 44px; min-height: 44px; }
         .live-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
         .profile-working-card { padding: 5px; }
@@ -714,6 +728,15 @@ function PublicProfileStyles() {
         .shift-list { grid-template-columns: 1fr; }
       }
       @media (max-width: 340px) {
+        .profile-titlebar { grid-template-columns: minmax(0, 1fr) auto; gap: 5px; min-height: 96px; }
+        .profile-titlebar-person { grid-column: 1; grid-row: 1; }
+        .profile-header-metrics { grid-column: 1 / -1; grid-row: 2; }
+        .profile-titlebar-controls { grid-column: 2; grid-row: 1; grid-template-columns: repeat(2, 44px); gap: 3px; }
+        .profile-titlebar-person { grid-template-columns: 42px minmax(0, 1fr); gap: 6px; }
+        .profile-titlebar-avatar { width: 42px; height: 42px; }
+        .profile-header-overflow-toggle, .public-profile-close { width: 44px; min-height: 44px; }
+        .profile-header-metrics > div { padding-inline: 1px; }
+        .profile-header-metrics dt { font-size: 9px; }
         .club-deal-card { grid-template-columns: 1fr; }
         .profile-media-tab-label { font-size: 11px; }
         .profile-media-viewer-hint { display: none; }
