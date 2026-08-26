@@ -97,8 +97,8 @@ test("onboarding arrives fully collapsed and exposes accessible controls", () =>
   assert.match(dashboard, /role="region"/);
   assert.match(dashboard, /visibleExpandedStepId === id/);
   assert.match(dashboard, /role="status" aria-live="polite"/);
-  assert.match(dashboard, /step\.complete \? "Complete" : step\.locked \? "Locked"/);
-  assert.match(dashboard, /step\.complete \? "✓" : index \+ 1/);
+  assert.match(dashboard, /const controlLabel = step\.locked[\s\S]*?"Locked"[\s\S]*?displayComplete[\s\S]*?"Complete"/);
+  assert.match(dashboard, /dancer-onboarding-step-marker" aria-hidden="true">\{index \+ 1\}/);
 });
 
 test("profile and media workspace uses production avatar face centering and moderation", () => {
@@ -451,7 +451,7 @@ test("pre-approval tools remain hidden while help and account recovery stay avai
   assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-schedule"/);
   assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-performance"/);
   assert.match(dashboard, /\{isApproved \? profileMediaSection : null\}/);
-  assert.match(dashboard, /"Help & account"/);
+  assert.match(dashboard, /"Help & Account"/);
   assert.match(dashboard, /DashboardSignInRecovery/);
   assert.match(dashboard, /body: JSON\.stringify\(\{ mode: "login", role/);
 });
@@ -464,9 +464,9 @@ test("approval transitions in place and saved NFC enrollment finalizes automatic
   assert.doesNotMatch(nfcTapRoute, /venue_dancer_affiliations|manager must scan/i);
 });
 
-test("mobile onboarding remains one-column with reachable 44px-plus controls", () => {
+test("mobile onboarding remains one-column with compact, reachable controls", () => {
   assert.match(dashboard, /@media \(max-width: 860px\) \{ \.dancer-avatar-upload-controls \{ grid-template-columns: 1fr/);
-  assert.match(dashboard, /\.dancer-onboarding-steps button \{ min-height: 82px; grid-template-columns: 34px minmax\(0,1fr\) 28px/);
+  assert.match(dashboard, /\.dancer-onboarding-steps > li > button \{ min-height: 60px; grid-template-columns: 30px minmax\(0,1fr\) auto/);
   assert.match(dashboard, /\.dancer-step-one-checklist \{ grid-template-columns: 1fr/);
   assert.match(dashboard, /\.dancer-step-one-section-button \{ min-height: 72px; grid-template-columns: 30px minmax\(0,1fr\) 26px/);
   assert.match(dashboard, /\.dancer-step-one-footer \{ grid-template-columns: 1fr/);
