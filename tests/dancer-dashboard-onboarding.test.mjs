@@ -405,6 +405,11 @@ test("approved dancers edit their full guest view from inside Profile & media", 
   assert.match(dashboard, /\.dancer-profile-preview-overlay \*, \.dancer-profile-preview-overlay \*::before, \.dancer-profile-preview-overlay \*::after \{ box-sizing:border-box; \}/);
   assert.match(dashboard, /@media \(max-width: 620px\) \{[^\n]*\.dancer-profile-preview-overlay \.profile-titlebar \{ min-height: 64px; \} \.dancer-profile-preview-overlay \.profile-titlebar-avatar \{ width: 48px; height: 48px; flex-basis: 48px; \}/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-schedule-section \.eyebrow \{ color:#f7f2ff; \}/);
+  assert.match(dashboard, /profile-action-icon-frame\[data-profile-action-icon="personPlus"\][\s\S]*?width:26px;[\s\S]*?data-profile-action-icon="bell"[\s\S]*?width:22px;/);
+  assert.match(dashboard, /profile-action-preview-icon-personPlus \{ --profile-icon-offset-x:\.5px; --profile-icon-offset-y:-\.5px; \}/);
+  assert.match(dashboard, /profile-action-preview-icon-bell \{ --profile-icon-offset-y:-1px; \}/);
+  assert.match(dashboard, /profile-action-preview-icon-clock \{ --profile-icon-offset-x:-\.5px; \}/);
+  assert.match(dashboard, /dancer-profile-preview-actions > button:not\(\.profile-action-icon-control\):not\(\.profile-report-action\)[\s\S]*?grid-template-rows:18px 9px;/);
 });
 
 test("the mobile full-profile preview keeps the three-column media grid above navigation", () => {

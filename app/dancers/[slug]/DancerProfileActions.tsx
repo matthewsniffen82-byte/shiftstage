@@ -110,19 +110,17 @@ function DancerProfileActionPreviewIcon({
   type: "bell" | "check" | "clock" | "directions" | "personPlus" | "ride" | "share";
 }) {
   return (
-    <svg
-      aria-hidden="true"
-      className={`profile-action-preview-icon profile-action-preview-icon-${type}`}
-      viewBox="0 0 24 24"
-    >
-      {type === "personPlus" ? <><circle cx="8.5" cy="7.5" r="3.5" /><path d="M3 20a5.5 5.5 0 0 1 11 0M18 8.5v6M15 11.5h6" /></> : null}
-      {type === "check" ? <path d="m5 12 4 4L19 6" /> : null}
-      {type === "bell" ? <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" /><path d="M10 20a2 2 0 0 0 4 0" /></> : null}
-      {type === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : null}
-      {type === "directions" ? <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></> : null}
-      {type === "ride" ? <><path d="m5 11 1.7-4.3A2.7 2.7 0 0 1 9.2 5h5.6a2.7 2.7 0 0 1 2.5 1.7L19 11" /><path d="M4 11h16a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a1 1 0 0 1 1-1ZM6.5 15h.01M17.5 15h.01M6 19v2M18 19v2" /></> : null}
-      {type === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" /></> : null}
-    </svg>
+    <span aria-hidden="true" className="profile-action-icon-frame" data-profile-action-icon={type}>
+      <svg className={`profile-action-preview-icon profile-action-preview-icon-${type}`} viewBox="0 0 24 24">
+        {type === "personPlus" ? <><circle cx="8.5" cy="7.5" r="3.5" /><path d="M3 20a5.5 5.5 0 0 1 11 0M18 8.5v6M15 11.5h6" /></> : null}
+        {type === "check" ? <path d="m5 12 4 4L19 6" /> : null}
+        {type === "bell" ? <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" /><path d="M10 20a2 2 0 0 0 4 0" /></> : null}
+        {type === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : null}
+        {type === "directions" ? <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></> : null}
+        {type === "ride" ? <><path d="m5 11 1.7-4.3A2.7 2.7 0 0 1 9.2 5h5.6a2.7 2.7 0 0 1 2.5 1.7L19 11" /><path d="M4 11h16a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a1 1 0 0 1 1-1ZM6.5 15h.01M17.5 15h.01M6 19v2M18 19v2" /></> : null}
+        {type === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" /></> : null}
+      </svg>
+    </span>
   );
 }
 

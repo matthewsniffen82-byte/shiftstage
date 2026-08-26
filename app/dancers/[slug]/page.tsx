@@ -456,15 +456,24 @@ function PublicProfileStyles() {
       .profile-action-requirement { color: #c7bbd8; font-size: 8px; font-weight: 850; line-height: 1.1; }
       .profile-action-main { min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
       .profile-action-main > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-action-preview-icon { width: 15px; height: 15px; flex: 0 0 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-action-icon-frame { width: 15px; height: 15px; display: inline-grid; flex: 0 0 15px; place-items: center; }
+      .profile-action-preview-icon { --profile-icon-offset-x: 0px; --profile-icon-offset-y: 0px; width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transform: translate(var(--profile-icon-offset-x), var(--profile-icon-offset-y)); transform-origin: center; }
+      .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon, .profile-action-icon-frame[data-profile-action-icon="ride"] .profile-action-preview-icon { width: 16.25px; height: 16.25px; }
+      .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width: 13.75px; height: 13.75px; }
+      .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width: 15.25px; height: 15.25px; }
+      .profile-action-icon-frame[data-profile-action-icon="directions"] .profile-action-preview-icon, .profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon { width: 13px; height: 13px; }
       body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control { min-height: 56px; align-self: stretch; flex-direction: column; justify-content: flex-start; gap: 1px; padding: 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .live-actions > button.profile-action-icon-control:disabled { cursor: default; }
       .profile-action-icon-control .profile-action-main { flex-direction: column; gap: 2px; overflow: visible; }
       .profile-action-icon-control .profile-action-main > span { overflow: visible; color: #ded8e7; font-size: 10px; line-height: 1.05; text-overflow: clip; }
-      .profile-action-icon-control .profile-action-preview-icon { --profile-icon-offset-x: 0px; --profile-icon-offset-y: 0px; width: 24px; height: 24px; flex-basis: 24px; display: block; padding: 0; border: 0; border-radius: 0; color: #d9d2e2; background: transparent; box-shadow: none; transform: translate(var(--profile-icon-offset-x), var(--profile-icon-offset-y)); transform-origin: center; transition: color .16s ease, transform .16s ease; }
+      .profile-action-icon-control .profile-action-icon-frame { width: 24px; height: 24px; flex-basis: 24px; }
+      .profile-action-icon-control .profile-action-preview-icon { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 0; color: #d9d2e2; background: transparent; box-shadow: none; transition: color .16s ease, transform .16s ease; }
       .profile-action-icon-control .profile-action-preview-icon-personPlus { --profile-icon-offset-x: .5px; --profile-icon-offset-y: -.5px; }
       .profile-action-icon-control .profile-action-preview-icon-bell { --profile-icon-offset-y: -1px; }
       .profile-action-icon-control .profile-action-preview-icon-clock { --profile-icon-offset-x: -.5px; }
+      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon { width: 26px; height: 26px; }
+      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width: 22px; height: 22px; }
+      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width: 24px; height: 24px; }
       .profile-action-icon-control:is(:hover, :focus-visible):not(:disabled) .profile-action-preview-icon { color: #fff; transform: translate(var(--profile-icon-offset-x), calc(var(--profile-icon-offset-y) - 1px)) scale(1.02); }
       .profile-action-icon-control.profile-action-going:not(.profile-action-unavailable) .profile-action-preview-icon { color: #a78bfa; background: transparent; box-shadow: none; }
       .profile-action-icon-control:is(.is-selected, .is-going) .profile-action-preview-icon { color: #7cf0b4; background: transparent; box-shadow: none; }
@@ -476,6 +485,9 @@ function PublicProfileStyles() {
       .profile-action-share-slot .profile-share button { gap: 6px; }
       .profile-action-share-slot .profile-share svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; }
       .profile-action-share-slot .profile-share > span { display: block; color: #9fefff; font-size: 9px; text-align: center; }
+      .live-actions > button:not(.profile-action-icon-control):not(.profile-report-action), .profile-action-share-slot .profile-share button { display: grid; grid-template-rows: 18px 9px; align-content: center; justify-items: center; row-gap: 1px; column-gap: 0; }
+      .live-actions > button:not(.profile-action-icon-control):not(.profile-report-action) .profile-action-main, .profile-action-share-slot .profile-share button .profile-action-main { grid-row: 1; }
+      .live-actions > button:not(.profile-action-icon-control):not(.profile-report-action) .profile-action-requirement { grid-row: 2; }
       .profile-action-ride-slot { min-width: 0; }
       .profile-action-ride-slot > a, .profile-action-ride-slot > button { width: 100% !important; min-height: 44px !important; justify-content: center !important; padding-inline: 8px !important; border-radius: 11px !important; font-size: 10px !important; text-align: center !important; }
       .profile-action-ride-slot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
