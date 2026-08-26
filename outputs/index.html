@@ -32034,7 +32034,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=158" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=159" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39890,7 +39890,7 @@
           display: grid;
           grid-template-columns: 60px minmax(0, 1fr);
           align-items: start;
-          gap: 8px;
+          gap: 4px;
         }
 
         #profileBackdrop #profileModal .profile-modal-avatar-column {
@@ -39955,10 +39955,10 @@
 
         #profileBackdrop #profileModal .profile-modal-header-metrics {
           min-width: 0;
-          width: calc(100% - 6px);
-          margin-left: 6px;
+          width: 100%;
+          margin-left: -14px;
           align-self: stretch;
-          transform: translateY(3px);
+          transform: translateY(5px);
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
@@ -40021,8 +40021,13 @@
           position: static !important;
           inset: auto !important;
           width: 36px !important;
+          min-width: 36px !important;
+          max-width: 36px !important;
           height: 36px !important;
           min-height: 36px !important;
+          max-height: 36px !important;
+          aspect-ratio: 1 / 1 !important;
+          justify-self: center !important;
           display: inline-grid !important;
           place-items: center !important;
           padding: 0 !important;
@@ -40073,7 +40078,7 @@
 
           #profileBackdrop #profileModal .profile-modal-person {
             grid-template-columns: 60px minmax(0, 1fr);
-            gap: 8px;
+            gap: 4px;
           }
 
           #profileBackdrop #profileModal .profile-modal-avatar {
@@ -40091,8 +40096,11 @@
 
           #profileBackdrop #profileModal #modalClose {
             width: 36px !important;
+            min-width: 36px !important;
+            max-width: 36px !important;
             height: 36px !important;
             min-height: 36px !important;
+            max-height: 36px !important;
           }
         }
 

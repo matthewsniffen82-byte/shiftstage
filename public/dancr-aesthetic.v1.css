@@ -4037,7 +4037,7 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     display: grid !important;
     grid-template-columns: 60px minmax(0, 1fr) !important;
     align-items: start !important;
-    gap: 8px !important;
+    gap: 4px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
@@ -4103,10 +4103,10 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
     min-width: 0 !important;
-    width: calc(100% - 6px) !important;
-    margin-left: 6px !important;
+    width: 100% !important;
+    margin-left: -14px !important;
     align-self: stretch !important;
-    transform: translateY(3px) !important;
+    transform: translateY(5px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
@@ -10079,7 +10079,7 @@ html:is(
     display: grid !important;
     grid-template-columns: 60px minmax(0, 1fr) !important;
     align-items: start !important;
-    gap: 8px !important;
+    gap: 4px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
@@ -10141,8 +10141,8 @@ html:is(
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
     min-width: 0 !important;
-    width: calc(100% - 6px) !important;
-    margin-left: 6px !important;
+    width: 100% !important;
+    margin-left: -14px !important;
     align-self: stretch !important;
   }
 
@@ -10209,8 +10209,13 @@ html:is(
 
   body.dancr-button-system #profileBackdrop #profileModal #modalClose {
     width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
     height: 36px !important;
     min-height: 36px !important;
+    max-height: 36px !important;
+    aspect-ratio: 1 / 1 !important;
+    justify-self: center !important;
     display: inline-grid !important;
     place-items: center !important;
     padding: 0 !important;

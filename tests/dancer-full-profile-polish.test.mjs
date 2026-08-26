@@ -279,7 +279,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-person \{[\s\S]*?grid-template-columns: 60px minmax\(0, 1fr\) !important;[\s\S]*?align-items: start !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-person \{[\s\S]*?grid-template-columns: 60px minmax\(0, 1fr\) !important;[\s\S]*?align-items: start !important;[\s\S]*?gap: 4px !important;/,
   );
   assert.match(
     compactMobileProfile,
@@ -299,11 +299,11 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?transform: translateY\(3px\) !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?width: 100% !important;[\s\S]*?margin-left: -14px !important;[\s\S]*?transform: translateY\(5px\) !important;/,
   );
   assert.match(
     aesthetic,
-    /#profileBackdrop #profileModal #modalClose \{[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?linear-gradient\(145deg,[\s\S]*?backdrop-filter: blur\(12px\) saturate\(120%\) !important;/,
+    /#profileBackdrop #profileModal #modalClose \{[\s\S]*?width: 36px !important;[\s\S]*?min-width: 36px !important;[\s\S]*?max-width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?max-height: 36px !important;[\s\S]*?aspect-ratio: 1 \/ 1 !important;[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?linear-gradient\(145deg,[\s\S]*?backdrop-filter: blur\(12px\) saturate\(120%\) !important;/,
   );
   assert.match(
     aesthetic,
