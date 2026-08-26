@@ -69,7 +69,7 @@ test("directory tabs reserve a stable border so every selected state has an outl
   );
   assert.match(
     aesthetic,
-    /data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\) \{[\s\S]*?border-color: var\(--dancr-color-live-medium\) !important;/,
+    /data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\) \{[\s\S]*?border-color: var\(--dancr-color-live-strong\) !important;/,
   );
   assert.match(
     aesthetic,
