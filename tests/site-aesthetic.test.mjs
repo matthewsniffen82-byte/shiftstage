@@ -171,11 +171,15 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   );
   assert.match(
     discoveryPalette,
-    /Active All uses the same dimensional state language[\s\S]*?data-dancer-directory-filter="all"\]\.is-active \{[\s\S]*?var\(--dancr-color-brand-primary\) 28%[\s\S]*?var\(--dancr-color-brand-primary\) 16%[\s\S]*?0 7px 18px/,
+    /All uses the same restrained selected-state strength[\s\S]*?data-dancer-directory-filter="all"\]\.is-active \{[\s\S]*?var\(--dancr-color-brand-primary\) 16%[\s\S]*?var\(--dancr-color-brand-primary-soft\)/,
   );
   assert.match(
     discoveryPalette,
     /data-dancer-directory-filter="all"\]\.is-active::before \{[\s\S]*?content: "";[\s\S]*?width: 6px;[\s\S]*?height: 6px;[\s\S]*?border-radius: 999px;[\s\S]*?0 0 8px/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.dancer-directory-filter-status \{[\s\S]*?display: none;[\s\S]*?width: 0;[\s\S]*?height: 0;[\s\S]*?\.dancer-directory-filter\[data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\)[\s\S]*?> \.dancer-directory-filter-status \{[\s\S]*?display: block;[\s\S]*?width: 6px;[\s\S]*?height: 6px;/,
   );
   assert.match(
     discoveryPalette,
