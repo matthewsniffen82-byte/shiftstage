@@ -10,7 +10,7 @@ test("public discovery cannot remain in a permanent loading state", () => {
   assert.match(homeSource, /if \(controller\) controller\.abort\(\)/);
   assert.match(
     homeSource,
-    /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{\s*timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,\s*retries: 1\s*\}\)/,
+    /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{\s*timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,\s*retries: 0\s*\}\)/,
   );
   assert.match(homeSource, /liveMarketState\[city\] = "error"/);
 });

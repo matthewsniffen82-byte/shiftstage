@@ -45570,7 +45570,7 @@
       try {
         const discovery = await fetchJson(`/api/public/discovery?${query}`, {
           timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
-          retries: 1
+          retries: 0
         });
         const applied = applyLiveMarket(
           city,
