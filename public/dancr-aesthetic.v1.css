@@ -4060,7 +4060,7 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     max-width: none !important;
     height: 48px !important;
     display: grid !important;
-    grid-template-rows: 20px 28px !important;
+    grid-template-rows: 19px 29px !important;
     align-content: center !important;
     align-items: stretch !important;
     justify-content: stretch !important;
@@ -4100,48 +4100,39 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     line-height: 1 !important;
   }
 
-  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-report-link {
-    width: 18px !important;
-    min-width: 18px !important;
-    height: 18px !important;
-    min-height: 18px !important;
-    padding: 0 !important;
-  }
-
-  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-report-link svg {
-    width: 12px !important;
-    height: 12px !important;
-  }
-
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
     min-width: 0 !important;
+    width: calc(100% - 6px) !important;
+    margin-left: 6px !important;
     align-self: stretch !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+    width: 100% !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    min-height: 28px !important;
+    column-gap: 5px !important;
+    min-height: 29px !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
     min-width: 0 !important;
-    min-height: 28px !important;
+    min-height: 29px !important;
     display: grid !important;
-    grid-template: 16px 10px / minmax(0, 1fr) !important;
+    grid-template: 17px 11px / minmax(0, 1fr) !important;
     align-content: center !important;
     justify-items: center !important;
     gap: 1px !important;
-    padding: 0 1px !important;
+    padding: 0 3px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
-    font-size: clamp(15px, 3.5vw, 18px) !important;
+    font-size: clamp(17px, 4vw, 20px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
-    font-size: clamp(8px, 2vw, 9px) !important;
+    font-size: clamp(9px, 2.15vw, 10px) !important;
     line-height: 1.1 !important;
   }
 
@@ -10094,7 +10085,7 @@ html:is(
     width: 100% !important;
     height: 48px !important;
     display: grid !important;
-    grid-template-rows: 20px 28px !important;
+    grid-template-rows: 19px 29px !important;
     align-content: center !important;
     align-items: stretch !important;
     justify-content: stretch !important;
@@ -10122,23 +10113,17 @@ html:is(
     font-size: clamp(17px, 4.8vw, 21px) !important;
   }
 
-  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-report-link {
-    width: 18px !important;
-    min-width: 18px !important;
-    height: 18px !important;
-    min-height: 18px !important;
-    margin-left: 1px !important;
-    padding: 0 !important;
-  }
-
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
     min-width: 0 !important;
+    width: calc(100% - 6px) !important;
+    margin-left: 6px !important;
     align-self: stretch !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+    width: 100% !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 0 !important;
+    column-gap: 5px !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -10146,16 +10131,16 @@ html:is(
   body.dancr-button-system #profileBackdrop #profileModal
     .profile-modal-header-metrics .profile-activity-metrics > div {
     min-width: 0 !important;
-    min-height: 28px !important;
+    min-height: 29px !important;
     display: grid !important;
-    grid-template: 16px 10px / minmax(0, 1fr) !important;
+    grid-template: 17px 11px / minmax(0, 1fr) !important;
     grid-auto-flow: row !important;
     align-content: center !important;
     align-items: center !important;
     justify-content: stretch !important;
     justify-items: center !important;
     gap: 1px !important;
-    padding: 0 1px !important;
+    padding: 0 3px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal
@@ -10176,7 +10161,7 @@ html:is(
     .profile-modal-header-metrics .profile-activity-metrics dd {
     grid-row: 1 !important;
     align-self: end !important;
-    font-size: clamp(15px, 3.5vw, 18px) !important;
+    font-size: clamp(17px, 4vw, 20px) !important;
     line-height: 1.05 !important;
   }
 
@@ -10184,7 +10169,7 @@ html:is(
     .profile-modal-header-metrics .profile-activity-metrics dt {
     grid-row: 2 !important;
     align-self: start !important;
-    font-size: clamp(8px, 1.9vw, 9px) !important;
+    font-size: clamp(9px, 2.15vw, 10px) !important;
     line-height: 1.1 !important;
   }
 

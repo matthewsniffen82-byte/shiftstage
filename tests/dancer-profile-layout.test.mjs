@@ -78,9 +78,9 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(liveApp, /class="modal-identity-stack">[\s\S]*?id="modalName"[\s\S]*?class="profile-modal-header-metrics" id="modalProfileMetrics"/);
   assert.match(liveApp, /class="profile-activity-metrics"/);
   assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?margin: 0 !important;/);
-  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?grid-template: 16px 10px \/ minmax\(0, 1fr\) !important;[\s\S]*?grid-auto-flow: row !important;[\s\S]*?gap: 1px !important;[\s\S]*?padding: 0 1px !important;/);
+  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?grid-template: 17px 11px \/ minmax\(0, 1fr\) !important;[\s\S]*?grid-auto-flow: row !important;[\s\S]*?gap: 1px !important;[\s\S]*?padding: 0 3px !important;/);
   assert.match(liveApp, /#profileBackdrop \.profile-activity-metrics dd \{[\s\S]*?font-weight: 900;/);
-  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics dd \{[\s\S]*?font-size: clamp\(15px, 3\.5vw, 18px\) !important;[\s\S]*?line-height: 1\.05 !important;/);
+  assert.match(liveApp, /\.profile-modal-header-metrics \.profile-activity-metrics dd \{[\s\S]*?font-size: clamp\(17px, 4vw, 20px\) !important;[\s\S]*?line-height: 1\.05 !important;/);
   assert.match(liveApp, /id="modalFollowerCount"/);
   assert.match(liveApp, /id="tonightInterestCount"/);
   assert.match(liveApp, /id="modalProfileViews"/);
@@ -89,7 +89,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(liveApp, /liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?class="\$\{tonightClasses\}"[\s\S]*?\$\{socialMarkup\}/);
   assert.match(
     aesthetic,
-    /Keep the mobile profile identity readable[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?display: grid !important;[\s\S]*?grid-template: 16px 10px \/ minmax\(0, 1fr\) !important;[\s\S]*?grid-auto-flow: row !important;/,
+    /Keep the mobile profile identity readable[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?display: grid !important;[\s\S]*?grid-template: 17px 11px \/ minmax\(0, 1fr\) !important;[\s\S]*?grid-auto-flow: row !important;/,
   );
   assert.match(
     aesthetic,

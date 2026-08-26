@@ -21,11 +21,7 @@ test("mobile navigation cannot cover the fixed profile video viewer", () => {
     homeSource,
     /const overlayOpen = !!document\.querySelector\("\.page-panel\.show, \.modal-backdrop\.show,[^"]+"\);[\s\S]*?document\.body\.classList\.toggle\("overlay-open", overlayOpen\);/,
   );
-  assert.match(
-    homeSource,
-    /<button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">[\s\S]*?<svg[\s\S]*?<\/svg>[\s\S]*?<\/button>/,
-  );
-  assert.doesNotMatch(homeSource, /profileActionOverflowToggle|profileActionOverflowMenu|<button class="profile-report-action" id="reportBtn"/);
+  assert.doesNotMatch(homeSource, /profileActionOverflowToggle|profileActionOverflowMenu|profile-modal-report-link|id="reportBtn"/);
 });
 
 test("mobile navigation cannot cover the fixed profile photo viewer", () => {

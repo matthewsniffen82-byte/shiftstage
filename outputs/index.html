@@ -32034,7 +32034,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=156" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=157" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39909,9 +39909,11 @@
 
         #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
           min-width: 0 !important;
+          width: 100% !important;
+          max-width: none !important;
           height: 48px !important;
           display: grid !important;
-          grid-template-rows: 20px 28px !important;
+          grid-template-rows: 19px 29px !important;
           align-content: center !important;
           gap: 0 !important;
         }
@@ -39950,61 +39952,31 @@
           line-height: 1 !important;
         }
 
-        #profileBackdrop #profileModal .profile-modal-report-link {
-          width: 18px;
-          min-width: 18px;
-          height: 18px;
-          min-height: 18px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          margin-left: 1px;
-          padding: 0;
-          border: 0;
-          border-radius: 0;
-          color: #81798b;
-          background: transparent;
-          box-shadow: none;
-          cursor: pointer;
-        }
-
-        #profileBackdrop #profileModal .profile-modal-report-link svg {
-          width: 12px;
-          height: 12px;
-          fill: none;
-          stroke: currentColor;
-          stroke-width: 2;
-          stroke-linecap: round;
-          stroke-linejoin: round;
-        }
-
-        #profileBackdrop #profileModal .profile-modal-report-link:is(:hover, :focus-visible) {
-          color: #c9c1d2;
-          outline: none;
-        }
-
         #profileBackdrop #profileModal .profile-modal-header-metrics {
           min-width: 0;
+          width: calc(100% - 6px);
+          margin-left: 6px;
           align-self: stretch;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+          width: 100% !important;
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-          gap: 0 !important;
+          column-gap: 5px !important;
           margin: 0 !important;
           padding: 0 !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
           min-width: 0 !important;
-          min-height: 28px !important;
+          min-height: 29px !important;
           display: grid !important;
-          grid-template: 16px 10px / minmax(0, 1fr) !important;
+          grid-template: 17px 11px / minmax(0, 1fr) !important;
           grid-auto-flow: row !important;
           align-content: center !important;
           justify-items: center !important;
           gap: 1px !important;
-          padding: 0 1px !important;
+          padding: 0 3px !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
@@ -40013,7 +39985,7 @@
           width: 100% !important;
           max-width: 100% !important;
           overflow: hidden !important;
-          font-size: clamp(15px, 3.5vw, 18px) !important;
+          font-size: clamp(17px, 4vw, 20px) !important;
           font-variant-numeric: tabular-nums !important;
           line-height: 1.05 !important;
           text-align: center !important;
@@ -40027,7 +39999,7 @@
           width: 100% !important;
           max-width: 100% !important;
           overflow: hidden !important;
-          font-size: clamp(8px, 1.9vw, 9px) !important;
+          font-size: clamp(9px, 2.15vw, 10px) !important;
           line-height: 1.15 !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
@@ -41647,9 +41619,6 @@
                   <h2 id="modalName">Profile</h2>
                   <span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓</span>
                   <span class="badge" id="modalStatus">Verified</span>
-                  <button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 4h10l-1.5 3L15 10H5"></path></svg>
-                  </button>
                 </div>
               </div>
               <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
@@ -41858,7 +41827,6 @@
     const modalProfileAvatar = document.getElementById("modalProfileAvatar");
     const modalProfileAvatarBorder = document.getElementById("modalProfileAvatarBorder");
     const modalProfileMetrics = document.getElementById("modalProfileMetrics");
-    const profileReportButton = document.getElementById("reportBtn");
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
@@ -52518,9 +52486,6 @@
       modalCity.textContent = city;
       modalCity.hidden = false;
       modalProfileMetrics.innerHTML = profileActivityMetricsMarkup(profile, city);
-      profileReportButton.disabled = false;
-      profileReportButton.setAttribute("aria-label", "Report profile");
-      profileReportButton.dataset.profile = profile.name;
       modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
       modalRank.hidden = true;

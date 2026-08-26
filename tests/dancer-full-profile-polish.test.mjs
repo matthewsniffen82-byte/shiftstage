@@ -123,7 +123,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     liveApp,
     /class="action-btn secondary profile-share-action profile-action-icon-control"[\s\S]*?data-profile-share-menu=/,
   );
-  assert.match(liveApp, /class="profile-modal-report-link" id="reportBtn"[^>]*aria-label="Report profile">[\s\S]*?<svg[\s\S]*?<\/svg>[\s\S]*?<\/button>/);
+  assert.doesNotMatch(liveApp, /class="profile-modal-report-link"|id="reportBtn"/);
   assert.doesNotMatch(liveApp, /profileReportButton\.textContent\s*=\s*"Report"/);
   assert.doesNotMatch(liveApp, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);
@@ -287,7 +287,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 48px !important;[\s\S]*?grid-template-rows: 20px 28px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 48px !important;[\s\S]*?grid-template-rows: 19px 29px !important;/,
   );
   assert.match(
     compactMobileProfile,
