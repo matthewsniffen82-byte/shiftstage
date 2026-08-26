@@ -143,13 +143,14 @@ test("venue lineups show only dancers working now as compact avatar stacks", () 
     lineupHelper,
     /venueDancers\(city, venue\.name\)[\s\S]*?filter\(\(profile\) => isWorkingTonight\(profile, city\)\)/,
   );
-  assert.match(lineupHelper, /const visibleLimit = options\.mobile \? 5 : 4/);
+  assert.match(lineupHelper, /const visibleLimit = options\.mobile \? 3 : 4/);
   assert.match(lineupHelper, /const remaining = liveProfiles\.length - profiles\.length/);
-  assert.match(lineupHelper, /const remainingMarkup = remaining > 0/);
+  assert.match(lineupHelper, /const remainingMarkup = !options\.mobile && remaining > 0/);
   assert.match(lineupHelper, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
   assert.match(lineupHelper, /role="group" aria-label="\$\{liveLabel\}"/);
   assert.doesNotMatch(lineupHelper, /on the lineup/);
-  assert.match(lineupHelper, /<strong>\$\{liveProfiles\.length\}<\/strong><span>NOW<\/span>/);
+  assert.match(lineupHelper, /const mobileCountLabel = remaining > 0 \? `\+\$\{remaining\}` : String\(liveProfiles\.length\)/);
+  assert.match(lineupHelper, /<strong>\$\{mobileCountLabel\}<\/strong><span>NOW<\/span>/);
   assert.match(venueSlide, /venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow \}\)/);
   assert.match(venueSlide, /home-venue-discovery-slide\$\{workingNow\.length \? " has-live-lineup" : ""\}/);
   assert.doesNotMatch(venueSlide, /workingNowMarkup|home-discovery-feed-status is-now/);
