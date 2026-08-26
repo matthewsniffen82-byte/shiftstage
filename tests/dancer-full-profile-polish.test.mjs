@@ -147,7 +147,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(
     aesthetic,
-    /Share opens publicly[\s\S]*?#profileBackdrop \.modal-actions \.profile-share-action,[\s\S]*?padding: 8px 4px !important;/,
+    /Share opens publicly[\s\S]*?#profileBackdrop #profileModal \.modal-actions \.action-btn\.profile-share-action\.profile-action-icon-control,[\s\S]*?padding: 8px 4px !important;/,
   );
   assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?const directionsMarkup = dancerProfileDirectionsMarkup\(profile, \{ city \}\)[\s\S]*?const rideMarkup = dancerProfileUberRideMarkup\(profile, \{ city \}\)/);
   assert.match(liveActionsMarkup, /modal-actions \$\{isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"\}/);

@@ -3807,7 +3807,7 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
 
 /* Share opens publicly. Give it the same top inset as the other icon controls
  * so all four icons and labels share one baseline. */
-body.dancr-button-system #profileBackdrop .modal-actions .profile-share-action,
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-share-action.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
   padding: 8px 4px !important;
 }
