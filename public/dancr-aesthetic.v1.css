@@ -4020,46 +4020,116 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
   line-height: 1.25 !important;
 }
 
-/* A compact mobile profile summary keeps Tonight and the media tabs above the
- * fold without shrinking any primary tap target below 44px. City now shares
- * the identity line, the repeated active-deal venue copy is omitted in markup,
- * and report remains a quiet utility directly beneath Share. */
+/* The home-profile overlay keeps identity and analytics on one compact plane.
+ * The close control is anchored outside that flow, while the approved status
+ * card below remains an independent, unchanged component. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
-    grid-template-columns: 40px minmax(0, 1fr) !important;
-    gap: 8px !important;
-    min-height: 56px !important;
-    padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 56px 6px 10px !important;
+    position: relative !important;
+    grid-template-columns: minmax(112px, .82fr) minmax(0, 1.18fr) !important;
+    gap: 4px !important;
+    min-height: 60px !important;
+    padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 6px 10px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 7px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
-    width: 40px !important;
-    height: 40px !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
+    width: 100% !important;
+    max-width: none !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
+    min-width: 0 !important;
+    display: grid !important;
+    align-content: center !important;
+    gap: 2px !important;
     overflow: hidden !important;
   }
 
-  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
-    flex: 0 1 auto !important;
+  body.dancr-button-system #profileBackdrop #profileModal :is(.profile-modal-name-row, .profile-modal-context) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    gap: 4px !important;
   }
 
-  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-context {
-    flex: 0 1 auto !important;
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
+    display: flex !important;
+    align-items: center !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-identity h2 {
-    font-size: clamp(19px, 5.6vw, 23px) !important;
+    font-size: clamp(16px, 4.7vw, 20px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal #modalCity {
-    min-height: 20px !important;
-    padding-inline: 7px !important;
+    min-height: 18px !important;
+    padding-inline: 6px !important;
     font-size: 9px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-report-link {
+    min-height: 18px !important;
+    font-size: 8px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
+    min-width: 0 !important;
+    align-self: center !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
+    min-width: 0 !important;
+    min-height: 44px !important;
+    align-content: center !important;
+    justify-items: center !important;
+    gap: 1px !important;
+    padding: 2px 1px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
+    font-size: clamp(17px, 4.2vw, 20px) !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
+    font-size: clamp(8px, 2vw, 9px) !important;
+    line-height: 1.1 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-controls {
+    position: absolute !important;
+    top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
+    right: 5px !important;
+    width: 40px !important;
+    display: grid !important;
+    grid-template-columns: 40px !important;
+    z-index: 4 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalClose {
+    position: static !important;
+    inset: auto !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
   }
 
   body.dancr-button-system .public-profile-shell .profile-titlebar {
@@ -4587,23 +4657,6 @@ body.dancr-button-system .public-profile-shell .profile-social-section::before {
 }
 
 @media (max-width: 759px) {
-  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
-    grid-template-columns: 38px minmax(0, 1fr) !important;
-    gap: 7px !important;
-    min-height: 52px !important;
-    padding: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) 54px 5px 10px !important;
-  }
-
-  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
-    width: 38px !important;
-    height: 38px !important;
-  }
-
-  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
-    width: 100% !important;
-    max-width: none !important;
-  }
-
   body.dancr-button-system #profileBackdrop #profileModal .modal-summary,
   body.dancr-button-system .public-profile-shell .profile-titlebar {
     min-height: 52px !important;

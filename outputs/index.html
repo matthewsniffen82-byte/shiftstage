@@ -39876,20 +39876,21 @@
         /* Public profile identity and social proof share one compact header.
            The approved shift/deal card below remains an unchanged component. */
         #profileBackdrop #profileModal .profile-modal-summary {
-          grid-template-columns: minmax(120px, .95fr) minmax(150px, 1.05fr) 44px !important;
+          position: relative !important;
+          grid-template-columns: minmax(112px, .82fr) minmax(0, 1.18fr) !important;
           align-items: center !important;
-          gap: 6px !important;
-          min-height: 64px !important;
+          gap: 4px !important;
+          min-height: 60px !important;
           margin-inline: -14px !important;
-          padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 14px 6px !important;
+          padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 6px 10px !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-person {
           min-width: 0;
           display: grid;
-          grid-template-columns: 48px minmax(0, 1fr);
+          grid-template-columns: 44px minmax(0, 1fr);
           align-items: center;
-          gap: 9px;
+          gap: 7px;
         }
 
         #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
@@ -39943,6 +39944,7 @@
 
         #profileBackdrop #profileModal .profile-modal-header-metrics {
           min-width: 0;
+          align-self: center;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
@@ -39954,7 +39956,7 @@
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
           min-width: 0 !important;
-          min-height: 42px !important;
+          min-height: 44px !important;
           display: grid !important;
           grid-template-rows: 22px 14px !important;
           align-content: center !important;
@@ -39983,19 +39985,21 @@
         }
 
         #profileBackdrop #profileModal .profile-modal-header-controls {
-          width: 44px;
+          position: absolute !important;
+          top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
+          right: 5px !important;
+          width: 40px;
           display: grid;
-          grid-template-columns: 44px;
-          align-self: start;
-          justify-self: end;
+          grid-template-columns: 40px;
+          z-index: 4;
         }
 
         #profileBackdrop #profileModal #modalClose {
           position: static !important;
           inset: auto !important;
-          width: 44px !important;
-          height: 44px !important;
-          min-height: 44px !important;
+          width: 40px !important;
+          height: 40px !important;
+          min-height: 40px !important;
           display: inline-grid !important;
           place-items: center !important;
           padding: 0 !important;
@@ -40025,20 +40029,20 @@
 
         @media (max-width: 520px) {
           #profileBackdrop #profileModal .profile-modal-summary {
-            grid-template-columns: minmax(108px, .92fr) minmax(0, 1.08fr) 44px !important;
-            gap: 5px !important;
-            min-height: 64px !important;
+            grid-template-columns: minmax(112px, .82fr) minmax(0, 1.18fr) !important;
+            gap: 4px !important;
+            min-height: 60px !important;
             margin-inline: -12px !important;
-            padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 12px 6px !important;
+            padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 6px 10px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
-            grid-template-columns: 46px minmax(0, 1fr);
+            grid-template-columns: 44px minmax(0, 1fr);
             gap: 7px;
           }
 
           #profileBackdrop #profileModal .profile-modal-avatar {
-            width: 46px !important;
+            width: 44px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-summary .modal-identity h2 {
@@ -40046,40 +40050,41 @@
           }
 
           #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: 44px;
+            grid-template-columns: 40px;
           }
 
           #profileBackdrop #profileModal #modalClose {
-            width: 44px !important;
-            height: 44px !important;
-            min-height: 44px !important;
+            width: 40px !important;
+            height: 40px !important;
+            min-height: 40px !important;
           }
         }
 
         @media (max-width: 340px) {
           #profileBackdrop #profileModal .profile-modal-summary {
-            grid-template-columns: minmax(104px, .9fr) minmax(0, 1.1fr) 44px !important;
-            gap: 5px !important;
-            min-height: 62px !important;
+            grid-template-columns: minmax(106px, .8fr) minmax(0, 1.2fr) !important;
+            gap: 3px !important;
+            min-height: 58px !important;
+            padding-right: 44px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
-            grid-template-columns: 42px minmax(0, 1fr);
-            gap: 6px;
+            grid-template-columns: 40px minmax(0, 1fr);
+            gap: 5px;
           }
 
           #profileBackdrop #profileModal .profile-modal-avatar {
-            width: 42px !important;
+            width: 40px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: 44px;
+            grid-template-columns: 38px;
           }
 
           #profileBackdrop #profileModal #modalClose {
-            width: 44px !important;
-            height: 44px !important;
-            min-height: 44px !important;
+            width: 38px !important;
+            height: 38px !important;
+            min-height: 38px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-name-row {

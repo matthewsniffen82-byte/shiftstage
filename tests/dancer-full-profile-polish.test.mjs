@@ -162,7 +162,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
-  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?grid-template-columns: 44px/);
+  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?grid-template-columns: 40px/);
 });
 
 test("profile socials stay secondary, responsive, and absent when no links exist", () => {
@@ -266,19 +266,27 @@ test("profile action controls are unboxed and Going highlights only its icon", (
   );
 });
 
-test("mobile full profiles compact identity, Tonight, actions, and metrics without shrinking tap targets", () => {
+test("mobile full profiles keep identity, analytics, and close control on one compact plane", () => {
   const compactMobileProfile = aesthetic.match(
-    /A compact mobile profile summary[\s\S]*?(?=\/\* Production TV-card branding)/,
+    /The home-profile overlay keeps identity and analytics[\s\S]*?(?=\/\* Production TV-card branding)/,
   )?.[0] || "";
 
   assert.ok(compactMobileProfile, "compact mobile profile CSS must exist");
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-summary \{[\s\S]*?grid-template-columns: 40px minmax\(0, 1fr\) !important;[\s\S]*?min-height: 56px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-summary \{[\s\S]*?grid-template-columns: minmax\(112px, \.82fr\) minmax\(0, 1\.18fr\) !important;[\s\S]*?min-height: 60px !important;[\s\S]*?padding: max\(6px, calc\(env\(safe-area-inset-top, 0px\) \+ 4px\)\) 48px 6px 10px !important;/,
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity \{[\s\S]*?display: flex !important;[\s\S]*?align-items: center !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity \{[\s\S]*?display: grid !important;[\s\S]*?align-content: center !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?top: max\(5px,[\s\S]*?right: 5px !important;[\s\S]*?grid-template-columns: 40px !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?align-self: center !important;/,
   );
   assert.match(
     compactMobileProfile,
@@ -296,7 +304,7 @@ test("mobile full profiles compact identity, Tonight, actions, and metrics witho
     compactMobileProfile,
     /#profileBackdrop #profileModal \.profile-activity-metrics > div,[\s\S]*?gap: 1px !important;[\s\S]*?padding: 2px 4px !important;/,
   );
-  assert.match(compactMobileProfile, /grid-template-columns: 38px minmax\(0, 1fr\) !important;[\s\S]*?min-height: 52px !important;/);
+  assert.doesNotMatch(compactMobileProfile, /grid-template-columns: 38px minmax\(0, 1fr\) !important;/);
   assert.match(compactMobileProfile, /profile-tonight-card\.has-club-deal[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
   assert.doesNotMatch(liveApp, /profile-club-deal-context">Available tonight at/);
 });
