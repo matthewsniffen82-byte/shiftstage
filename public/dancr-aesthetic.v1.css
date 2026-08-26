@@ -7444,9 +7444,402 @@ body.dancer-directory-active > .app main.stack > section.stack
   }
 }
 
-/* Venue cards use the same compact glass action rail as MyDancr TV. Familiar
- * actions remain icon-only; the custom NFC action keeps one short Deals label.
- * This block intentionally excludes every floating and bottom-navigation rule. */
+/* Mobile Clubs is a fast discovery list, so each result uses a compact brand
+ * stage followed by scannable metadata and two action rows. The existing
+ * navigation, deal, travel, share, and favorite controls remain unchanged. */
+@media (max-width: 720px) {
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-discovery-feed.home-venue-discovery-feed {
+    gap: 12px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-discovery-feed.home-venue-discovery-feed
+    > .home-venue-discovery-slide {
+    width: 100% !important;
+    height: clamp(305px, 80.8vw, 340px) !important;
+    min-height: 305px !important;
+    max-height: 340px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 104px minmax(0, 1fr) 46px 48px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border-radius: 18px !important;
+    background:
+      linear-gradient(155deg, #15161a, #050608) padding-box,
+      linear-gradient(145deg, rgba(248, 250, 252, 0.32), rgba(148, 154, 166, 0.07) 43%, rgba(248, 250, 252, 0.2)) border-box !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+      0 12px 26px rgba(0, 0, 0, 0.38) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-art {
+    position: relative !important;
+    z-index: 0 !important;
+    inset: auto !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    height: 104px !important;
+    min-height: 104px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-art .home-venue-discovery-logo-shell {
+    inset: 7px 18px !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-monogram {
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 20px !important;
+    font-size: 21px !important;
+    box-shadow:
+      inset 1px 1px 0 rgba(255, 255, 255, 0.13),
+      inset -1px -1px 0 rgba(0, 0, 0, 0.72),
+      0 12px 28px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-discovery-feed-shade {
+    inset: 0 0 auto !important;
+    width: 100% !important;
+    height: 104px !important;
+    background: linear-gradient(180deg, transparent, rgba(5, 6, 8, 0.16)) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-discovery-feed-copy {
+    position: relative !important;
+    z-index: 3 !important;
+    inset: auto !important;
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-content: center !important;
+    gap: 4px 8px !important;
+    padding: 7px 12px 6px !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: rgba(5, 6, 8, 0.96) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-name-row,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-location,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-meta {
+    grid-column: 1 / -1 !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-name-row {
+    min-width: 0 !important;
+    align-items: center !important;
+    gap: 7px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-name {
+    min-width: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    font-family: var(--font-ui) !important;
+    font-size: clamp(18px, 5vw, 21px) !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.05 !important;
+    text-overflow: ellipsis !important;
+    text-wrap: nowrap !important;
+    white-space: nowrap !important;
+  }
+
+  body.dancr-button-system .home-venue-discovery-deal-indicator {
+    min-height: 20px;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    padding: 0 7px;
+    border: 1px solid var(--dancr-color-success-strong);
+    border-radius: 999px;
+    color: #b8ffd7;
+    background: color-mix(in srgb, var(--dancr-color-success) 24%, rgba(5, 15, 11, 0.9));
+    box-shadow: 0 0 12px var(--dancr-color-success-medium);
+    font-size: 8px;
+    font-weight: 950;
+    letter-spacing: 0.07em;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-location {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 16px !important;
+    gap: 5px !important;
+    color: rgba(248, 250, 252, 0.86) !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-shadow: none !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-location :is(.venue-dot, svg) {
+    width: 14px !important;
+    height: 14px !important;
+    flex: 0 0 14px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-meta {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 17px !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    overflow: hidden !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    :is(.home-venue-discovery-operating-status, .home-venue-discovery-hours) {
+    min-width: 0 !important;
+    min-height: 17px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    color: rgba(225, 221, 232, 0.68) !important;
+    background: transparent !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0 !important;
+    line-height: 17px !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-lineup-slot {
+    position: absolute !important;
+    z-index: 5 !important;
+    top: -15px !important;
+    right: 12px !important;
+    min-height: 28px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-context-actions {
+    position: relative !important;
+    z-index: 4 !important;
+    inset: auto !important;
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    width: auto !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    margin: 0 10px !important;
+    gap: 7px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-context-actions
+    > :is(.home-discovery-feed-directions, .home-venue-discovery-uber) {
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    border-radius: 11px !important;
+    font-size: 10px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail {
+    position: relative !important;
+    z-index: 4 !important;
+    inset: auto !important;
+    grid-column: 1 !important;
+    grid-row: 4 !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    padding: 0 4px !important;
+    overflow: hidden !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+    background: rgba(5, 6, 8, 0.94) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .feed-card-action:not(.home-venue-discovery-rail-qr),
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .feed-card-action,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .home-venue-discovery-rail-qr {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 47px !important;
+    min-height: 47px !important;
+    max-height: 47px !important;
+    display: grid !important;
+    grid-template-rows: 19px auto !important;
+    align-content: center !important;
+    justify-items: center !important;
+    gap: 2px !important;
+    padding: 3px 2px 2px !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    color: rgba(248, 250, 252, 0.82) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 8px !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .feed-card-action + .feed-card-action {
+    border-left: 1px solid rgba(255, 255, 255, 0.055) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail
+    .feed-card-action:not(.home-venue-discovery-rail-qr) > span:not(.action-icon),
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .feed-card-action > span:not(.action-icon) {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    overflow: hidden !important;
+    color: currentColor !important;
+    background: transparent !important;
+    font-size: 8px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .action-icon,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .action-icon > svg {
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 18px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail
+    .feed-card-action:not(.home-venue-discovery-rail-qr.is-available):not(.is-active):not([aria-pressed="true"]) {
+    border-color: transparent !important;
+    color: rgba(248, 250, 252, 0.76) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .home-venue-discovery-rail-qr.is-available {
+    color: #b8ffd7 !important;
+    background: color-mix(in srgb, var(--dancr-color-success) 17%, transparent) !important;
+    box-shadow: inset 0 2px 0 var(--dancr-color-success-strong) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail
+    [data-venue-follow]:is(.is-active, [aria-pressed="true"]) {
+    color: #ddd2ff !important;
+    background: color-mix(in srgb, var(--dancr-color-brand-primary) 18%, transparent) !important;
+    box-shadow: inset 0 2px 0 var(--dancr-color-brand-primary) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .feed-card-action:focus-visible {
+    position: relative !important;
+    z-index: 2 !important;
+    outline: 0 !important;
+    box-shadow: var(--dancr-focus-ring) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-discovery-feed.home-venue-discovery-feed
+    > .home-venue-discovery-slide {
+    grid-template-rows: 96px minmax(0, 1fr) 46px 48px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    :is(.home-venue-discovery-art, .home-discovery-feed-shade) {
+    height: 96px !important;
+    min-height: 96px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-discovery-feed-copy {
+    padding-inline: 10px !important;
+  }
+}
+
+/* MyDancr TV and wider venue cards retain the shared glass action treatment.
+ * The final mobile Clubs override below converts venue controls into the
+ * labeled horizontal discovery row without touching TV or bottom navigation. */
 body.dancr-button-system .home-tv-feed-profile-action,
 body.dancr-button-system .home-venue-discovery-profile-action {
   box-sizing: border-box !important;
@@ -8137,4 +8530,129 @@ html:is(
   -webkit-filter: brightness(1.12) contrast(1.03) !important;
   opacity: 1 !important;
   mix-blend-mode: normal !important;
+}
+
+/* Final mobile Clubs geometry follows the older shared TV action styles in
+ * source order so those legacy circular-rail dimensions cannot win. */
+@media (max-width: 720px) {
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail {
+    position: relative !important;
+    inset: auto !important;
+    grid-column: 1 !important;
+    grid-row: 4 !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    padding: 0 4px !important;
+    overflow: hidden !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+    background: rgba(5, 6, 8, 0.94) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .feed-card-action,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .home-venue-discovery-rail-qr,
+  body.dancr-button-system .home-venue-discovery-profile-action {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 47px !important;
+    min-height: 47px !important;
+    max-height: 47px !important;
+    display: grid !important;
+    grid-template: 19px auto / minmax(0, 1fr) !important;
+    align-content: center !important;
+    justify-items: center !important;
+    gap: 2px !important;
+    padding: 3px 2px 2px !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    color: rgba(248, 250, 252, 0.82) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .feed-card-action > span:not(.action-icon) {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    overflow: hidden !important;
+    color: currentColor !important;
+    background: transparent !important;
+    font-size: 8px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail .home-venue-discovery-rail-qr.is-available {
+    color: #b8ffd7 !important;
+    background: color-mix(in srgb, var(--dancr-color-success) 17%, transparent) !important;
+    box-shadow: inset 0 2px 0 var(--dancr-color-success-strong) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail
+    [data-venue-follow]:is(.is-active, [aria-pressed="true"]) {
+    color: #ddd2ff !important;
+    background: color-mix(in srgb, var(--dancr-color-brand-primary) 18%, transparent) !important;
+    box-shadow: inset 0 2px 0 var(--dancr-color-brand-primary) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail
+    .feed-card-action:not(.home-venue-discovery-rail-qr) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 47px !important;
+    min-height: 47px !important;
+    max-height: 47px !important;
+    grid-template: 19px auto / minmax(0, 1fr) !important;
+    gap: 2px !important;
+    padding: 3px 2px 2px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail
+    .feed-card-action:not(.home-venue-discovery-rail-qr)
+    > span:not(.action-icon) {
+    display: block !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-action-rail
+    .feed-card-action:not(.home-venue-discovery-rail-qr):not(.is-active):not([aria-pressed="true"]) {
+    color: rgba(248, 250, 252, 0.76) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
 }

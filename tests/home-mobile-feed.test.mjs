@@ -356,8 +356,8 @@ test("Venues uses natural one-column cards with a visible next-card continuation
     /#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: grid !important[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important[\s\S]*?overflow: visible !important[\s\S]*?scroll-snap-type: none[\s\S]*?touch-action: pan-y/,
   );
   assert.match(
-    homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: clamp\(420px, calc\(100vh - 230px\), 540px\) !important[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important[\s\S]*?scroll-snap-align: none !important/,
+    aesthetic,
+    /Mobile Clubs is a fast discovery list[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important;[\s\S]*?height: clamp\(305px, 80\.8vw, 340px\) !important;[\s\S]*?min-height: 305px !important;[\s\S]*?max-height: 340px !important;/,
   );
   assert.match(
     homeSource,
@@ -604,7 +604,11 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionIconMarkup\("clubProfile"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionIconMarkup\("share"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
+    /const activeDealCount = venue\.activeDeal\?\.id[\s\S]*?const dealIndicatorMarkup = activeDealCount[\s\S]*?data-club-deal-count="\$\{activeDealCount\}"[\s\S]*?homeVenueDiscoveryQrMarkup\(venue\)/,
+  );
+  assert.match(
+    venueSlide,
+    /home-venue-discovery-name-row[\s\S]*?\$\{dealIndicatorMarkup\}[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
   );
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
   assert.match(
@@ -613,7 +617,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.doesNotMatch(
     venueSlide,
-    /qrMarkup|dealMarkup|home-venue-discovery-deal|Mydancr venue|home-venue-discovery-identity|MYDANCR VENUE/,
+    /home-venue-discovery-club-deal|home-venue-discovery-deal-panel|Mydancr venue|home-venue-discovery-identity|MYDANCR VENUE/,
   );
   assert.doesNotMatch(venueSlide, /const accent|--venue-accent/);
   assert.match(venueSlide, /const directionsMarkup[\s\S]*?venue-directions-btn/);
@@ -640,24 +644,24 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.match(venueArtRule, /linear-gradient\(145deg, #1d1e22 0%, #090a0c 48%, #131418 100%\)/);
   assert.doesNotMatch(venueArtRule, /--venue-accent|124,58,237/);
   assert.match(
-    homeSource,
-    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \{[\s\S]*?top: 68px;[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,
+    aesthetic,
+    /Mobile Clubs is a fast discovery list[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-row: 3 !important;[\s\S]*?height: 46px !important;[\s\S]*?\.home-venue-discovery-context-actions[\s\S]*?> :is\(\.home-discovery-feed-directions, \.home-venue-discovery-uber\) \{[\s\S]*?height: 44px !important;/,
   );
   assert.match(
-    homeSource,
-    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?height: 52px;[\s\S]*?min-height: 52px;[\s\S]*?max-height: 52px;[\s\S]*?place-content: center;[\s\S]*?border-color: rgba\(226,232,240,\.28\);[\s\S]*?color: rgba\(248,250,252,\.96\);[\s\S]*?linear-gradient\(145deg, rgba\(20,21,24,\.96\), rgba\(5,6,8,\.96\)\);[\s\S]*?0 10px 22px rgba\(0,0,0,\.28\);/,
+    aesthetic,
+    /Final mobile Clubs geometry[\s\S]*?\.home-venue-discovery-action-rail \{[\s\S]*?grid-row: 4 !important;[\s\S]*?height: 48px !important;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
-    homeSource,
-    /#results\.home-venue-discovery-feed \.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?place-content: center !important;[\s\S]*?border-color: rgba\(226,232,240,\.28\) !important;[\s\S]*?color: rgba\(248,250,252,\.96\) !important;[\s\S]*?linear-gradient\(145deg,rgba\(20,21,24,\.96\),rgba\(5,6,8,\.96\)\) !important;[\s\S]*?0 10px 22px rgba\(0,0,0,\.28\) !important;/,
+    aesthetic,
+    /\.home-discovery-feed-copy \{[\s\S]*?grid-row: 2 !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;[\s\S]*?padding: 7px 12px 6px !important;/,
   );
   assert.match(
-    homeSource,
-    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \.feed-card-action \{[\s\S]*?border-color: rgba\(226,232,240,\.2\) !important;[\s\S]*?linear-gradient\(180deg,rgba\(255,255,255,\.065\),transparent 44%\),[\s\S]*?rgba\(7,8,10,\.76\) !important;[\s\S]*?inset 0 1px 0 rgba\(255,255,255,\.07\)/,
+    aesthetic,
+    /\.home-venue-discovery-name \{[\s\S]*?overflow: hidden !important;[\s\S]*?text-overflow: ellipsis !important;[\s\S]*?white-space: nowrap !important;/,
   );
   assert.match(
-    homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?linear-gradient\(155deg,#15161a,#050608\) padding-box,[\s\S]*?rgba\(248,250,252,\.38\)[\s\S]*?0 16px 30px rgba\(0,0,0,\.42\) !important;/,
+    aesthetic,
+    /\.home-venue-discovery-deal-indicator \{[\s\S]*?border: 1px solid var\(--dancr-color-success-strong\);[\s\S]*?text-transform: uppercase;/,
   );
   assert.match(
     homeSource,
@@ -665,18 +669,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?bottom: 78px;[\s\S]*?left: 12px;[\s\S]*?padding: 12px;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?backdrop-filter: none/,
-  );
-  assert.match(
-    homeSource,
     /\.home-venue-discovery-lineup-slot:empty \{[\s\S]*?display: none;[\s\S]*?\.home-venue-discovery-meta:empty \{[\s\S]*?display: none;/,
-  );
-  const venueActionVisualRule = homeSource.match(
-    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \.feed-card-action \{[\s\S]*?\n        \}/,
-  )?.[0] || "";
-  assert.doesNotMatch(
-    venueActionVisualRule,
-    /(?:^|\s)(?:width|height|min-height|max-height|padding|margin|position|display|grid|flex|top|right|bottom|left|overflow):/,
   );
 });
 
@@ -744,18 +737,18 @@ test("Now grid cards keep production actions while Dancers directory cards link 
   );
 });
 
-test("mobile dancer and venue discovery cards use the same stable viewport footprint", () => {
+test("mobile venue cards use a compact discovery footprint while dancer cards keep their media canvas", () => {
   assert.match(
-    homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important;[\s\S]*?min-height: 420px !important;[\s\S]*?max-height: 540px !important;[\s\S]*?border-radius: 20px !important;/,
+    aesthetic,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(305px, 80\.8vw, 340px\) !important;[\s\S]*?min-height: 305px !important;[\s\S]*?max-height: 340px !important;[\s\S]*?border-radius: 18px !important;/,
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?box-sizing: border-box !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important;[\s\S]*?min-height: 420px !important;[\s\S]*?max-height: 540px !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 0 !important;[\s\S]*?flex: none !important;[\s\S]*?aspect-ratio: auto !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?contain: layout paint style;/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important;[\s\S]*?min-height: 420px !important;[\s\S]*?max-height: 540px !important;/,
   );
   assert.match(
-    homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-link \{[\s\S]*?height: 100%;[\s\S]*?\.home-dancer-grid-photo \{[\s\S]*?position: absolute;[\s\S]*?inset: 0;[\s\S]*?height: 100%;[\s\S]*?aspect-ratio: auto;/,
+    aesthetic,
+    /grid-template-rows: 104px minmax\(0, 1fr\) 46px 48px !important;[\s\S]*?\.home-venue-discovery-art \{[\s\S]*?height: 104px !important;/,
   );
 });
 
@@ -844,8 +837,8 @@ test("Working Now dancer grid cards expose a functional cashier-tap Club Deal ac
     /\.deal-pass-action\.primary\.is-ready \{[^}]*opacity: 1 !important;[^}]*background: linear-gradient\(135deg, #087443 0%, #0f9f5b 58%, #16a34a 100%\) !important;[^}]*0 0 24px rgba\(34, 197, 94, \.34\)/,
   );
   assert.match(
-    homeSource,
-    /Shared scrolling-card QR rail shell[\s\S]*?\.home-venue-discovery-action-rail \.home-venue-discovery-rail-qr \{[\s\S]*?width: 48px !important;[\s\S]*?height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?opacity: 1 !important;[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,
+    aesthetic,
+    /Final mobile Clubs geometry[\s\S]*?\.home-venue-discovery-action-rail \.home-venue-discovery-rail-qr,[\s\S]*?width: 100% !important;[\s\S]*?height: 47px !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?var\(--dancr-color-success\)/,
   );
   assert.match(
     homeSource,

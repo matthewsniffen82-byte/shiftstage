@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
+const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
 const venuesPageSource = await readFile(new URL("../app/venues/page.tsx", import.meta.url), "utf8");
 
 test("venue cards open the live profile while revenue and customer actions remain independent", () => {
@@ -48,11 +49,11 @@ test("venue cards open the live profile while revenue and customer actions remai
   );
   assert.match(
     venueSwipeRenderer,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionIconMarkup\("clubProfile"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionIconMarkup\("share"\)[\s\S]*?data-venue-follow/,
+    /const activeDealCount = venue\.activeDeal\?\.id[\s\S]*?homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?\$\{dealIndicatorMarkup\}[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow/,
   );
   assert.match(
     venueSwipeRenderer,
-    /home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
+    /home-venue-discovery-context-actions[\s\S]*?aria-label="\$\{safeName\} primary actions"[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}/,
   );
   assert.doesNotMatch(venueSwipeRenderer, /const qrMarkup|home-venue-discovery-club-deal|Mydancr venue/);
   assert.match(
@@ -71,6 +72,33 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.doesNotMatch(
     venueSwipeQrHelper,
     /data-venue-profile-qr|data-external-venue-qr|home-venue-discovery-profile-qr/,
+  );
+});
+
+test("mobile club cards compact every data state without replacing interaction state", () => {
+  const venueSwipeRenderer = homeSource.match(
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+
+  assert.match(
+    venueSwipeRenderer,
+    /const activeDealCount = venue\.activeDeal\?\.id \? \(venue\.activeDeals\?\.length \|\| 1\) : 0;[\s\S]*?const dealIndicatorMarkup = activeDealCount[\s\S]*?: "";/,
+  );
+  assert.match(
+    venueSwipeRenderer,
+    /venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?Hours · \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/,
+  );
+  assert.match(
+    aesthetic,
+    /Mobile Clubs is a fast discovery list[\s\S]*?height: clamp\(305px, 80\.8vw, 340px\) !important;[\s\S]*?grid-template-rows: 104px minmax\(0, 1fr\) 46px 48px !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /Final mobile Clubs geometry[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?height: 47px !important;[\s\S]*?border-radius: 0 !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?var\(--dancr-color-success\)[\s\S]*?\[data-venue-follow\]:is\(\.is-active, \[aria-pressed="true"\]\) \{[\s\S]*?var\(--dancr-color-brand-primary\)/,
   );
 });
 

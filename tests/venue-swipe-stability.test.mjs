@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
+const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
 
 test("venues with missing coordinates remain visible in the selected city", () => {
   const coordinateSource = homeSource.match(
@@ -28,8 +29,8 @@ test("venue discovery uses inline one-column cards with visible continuation", (
     /#results\.home-discovery-feed \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 16px !important;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;/,
   );
   assert.match(
-    homeSource,
-    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: clamp\(420px, calc\(100vh - 230px\), 540px\) !important;[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?scroll-snap-align: none !important;/,
+    aesthetic,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(305px, 80\.8vw, 340px\) !important;[\s\S]*?min-height: 305px !important;[\s\S]*?max-height: 340px !important;[\s\S]*?border-radius: 18px !important;/,
   );
   assert.doesNotMatch(homeSource, /calc\(100dvh - 180px\)/);
   assert.match(

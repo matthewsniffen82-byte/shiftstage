@@ -121,10 +121,14 @@ test("Android venue logos paint above the card shade without changing other plat
     androidMediaLayer,
     /\.home-venue-discovery-logo,[\s\S]*?\.venue-card-logo,[\s\S]*?\.venue-detail-logo[\s\S]*?filter: brightness\(1\.12\) contrast\(1\.03\) !important;/,
   );
-  assert.doesNotMatch(
-    androidMediaLayer,
-    /body\.dancr-button-system :is\([\s\S]*?\.home-venue-discovery-logo[\s\S]*?\) \{[\s\S]*?background:/,
-  );
+  const androidVenueLogoLayer = androidMediaLayer.match(
+    /The venue-card shade is still required for copy legibility[\s\S]*?(?=\/\* Final mobile Clubs geometry)/,
+  )?.[0] || "";
+  const androidVenueLogoRule = androidVenueLogoLayer.match(
+    /body\.dancr-button-system :is\(\s*\.home-venue-discovery-logo,[^)]*\) \{[^}]*\}/,
+  )?.[0] || "";
+  assert.ok(androidVenueLogoRule, "the Android venue logo correction must exist");
+  assert.doesNotMatch(androidVenueLogoRule, /background:/);
 });
 
 test("iPhone compact grid photos avoid filtered momentum-scroll layers", () => {

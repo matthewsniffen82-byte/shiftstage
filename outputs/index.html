@@ -57773,11 +57773,15 @@
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
       const followsVenue = isFollowingVenue(city, venue.name);
+      const activeDealCount = venue.activeDeal?.id ? (venue.activeDeals?.length || 1) : 0;
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
       const hoursMarkup = operatingStatus.hoursLabel
         ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span></span>`
         : "";
       const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
+      const dealIndicatorMarkup = activeDealCount
+        ? `<span class="home-venue-discovery-deal-indicator" data-club-deal-count="${activeDealCount}">${activeDealCount === 1 ? "Deal" : `${activeDealCount} Deals`}</span>`
+        : "";
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);
       const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow });
       const directionsMarkup = venueDirectionsMarkup({
@@ -57805,19 +57809,20 @@
             <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
             <div class="home-venue-discovery-name-row">
               <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
+              ${dealIndicatorMarkup}
             </div>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
-          <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
-            <button class="feed-card-action home-venue-discovery-profile-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionIconMarkup("clubProfile")}</button>
-            ${railQrMarkup}
-            <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s club profile" title="Share">${actionIconMarkup("share")}</button>
-            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionIconMarkup(followsVenue ? "check" : "heart")}</button>
-          </div>
           <div class="home-venue-discovery-context-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} primary actions">
             ${directionsMarkup}
             ${rideMarkup}
+          </div>
+          <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} secondary actions">
+            <button class="feed-card-action home-venue-discovery-profile-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
+            ${railQrMarkup}
+            <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
+            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Favorite"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Saved" : "Favorite")}</button>
           </div>
         </article>
       `;

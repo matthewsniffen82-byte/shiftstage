@@ -34,7 +34,7 @@ test("customer discovery consistently presents venues as clubs", () => {
 
 test("customer profile and Club Deal actions use club language", () => {
   assert.match(dancerProfile, /className="profile-working-destination"[\s\S]*?activeShift\.venueName/);
-  assert.match(liveShell, /home-venue-discovery-profile-action[\s\S]*?aria-label="Open \$\{safeName\}'s full club profile"[\s\S]*?actionIconMarkup\("clubProfile"\)/);
+  assert.match(liveShell, /home-venue-discovery-profile-action[\s\S]*?aria-label="Open \$\{safeName\}'s full club profile"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)/);
   assert.match(clubActions, /Follow club/);
   assert.match(clubActions, /Club alerts/);
   assert.match(clubDeal, /Use this deal/);
