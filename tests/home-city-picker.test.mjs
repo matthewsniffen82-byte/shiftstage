@@ -30,3 +30,12 @@ test("mobile discovery uses compact neutral controls and an inline city panel", 
   assert.match(aesthetic, /\.city-picker-trigger, \.home-filter-toggle[\s\S]*?min-height: 44px/);
   assert.match(aesthetic, /\.dancer-directory-filter\.is-active[\s\S]*?var\(--dancr-color-brand-primary\) 10%[\s\S]*?box-shadow: inset/);
 });
+
+test("mobile location feedback stays concise and clears the floating navigation", () => {
+  assert.match(liveShell, /showToast\("Location updated\."\)/);
+  assert.doesNotMatch(liveShell, /Location found\. Venue distances updated/);
+  assert.match(
+    liveShell,
+    /@media \(max-width: 720px\) \{[\s\S]*?body \.toast \{[\s\S]*?z-index: 110;[\s\S]*?bottom: calc\(92px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?max-width: calc\(100% - 32px\);[\s\S]*?text-align: center;/,
+  );
+});

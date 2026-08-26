@@ -32214,6 +32214,19 @@
       <style>
         main.stack,
         main.stack > * { min-width: 0; max-width: 100%; }
+        @media (max-width: 720px) {
+          body .toast {
+            z-index: 110;
+            bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+            width: fit-content;
+            max-width: calc(100% - 32px);
+            min-height: 40px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            line-height: 1.2;
+            text-align: center;
+          }
+        }
         .home-discovery-controls { width: 100%; min-width: 0; max-width: 100%; grid-template-columns: minmax(180px, .9fr) minmax(0, 2.1fr) !important; align-items: end; gap: 10px !important; padding: 10px !important; overflow: hidden; }
         .home-discovery-controls > *,
         .home-advanced-filters > * { min-width: 0; max-width: 100%; }
@@ -63538,7 +63551,7 @@
         render();
         loadLiveDiscovery(citySelect.value);
         if (customerDashboard.classList.contains("show")) renderDashboard();
-        showToast(`Location found. Venue distances updated for ${nearestCity}.`);
+        showToast("Location updated.");
       } catch (error) {
         showToast(error.message || "Could not read location.");
       } finally {
