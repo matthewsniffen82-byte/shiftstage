@@ -259,7 +259,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /Current Shift is a single destination row[\s\S]*?#profileBackdrop #profileModal \.modal-grid > \.working-now-tile \{[\s\S]*?grid-template-columns: auto minmax\(0, 1fr\) !important;[\s\S]*?gap: 12px !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 6px 8px !important;/,
+    /Current Shift is a single destination row[\s\S]*?#profileBackdrop #profileModal \.profile-tonight-card > \.working-now-tile \{[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\) !important;[\s\S]*?gap: 6px !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 4px 8px !important;/,
   );
   assert.match(
     liveApp,
@@ -313,11 +313,11 @@ test("Working Now uses one full-width live club destination", () => {
 test("Current Shift uses a quieter club row and secondary ride action", () => {
   assert.match(
     liveApp,
-    /Current Shift is a single destination row[\s\S]*?#profileBackdrop #profileModal \.modal-grid > \.working-now-tile \{[\s\S]*?gap: 12px !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 6px 8px !important;/,
+    /Current Shift is a single destination row[\s\S]*?#profileBackdrop #profileModal \.profile-tonight-card > \.working-now-tile \{[\s\S]*?gap: 6px !important;[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 4px 8px !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.working-now-tile > \.profile-schedule-primary \{[\s\S]*?font-size: 11px !important;[\s\S]*?font-weight: 950 !important;[\s\S]*?letter-spacing: \.075em !important;/,
+    /#profileBackdrop \.working-now-tile > \.profile-schedule-primary \{[\s\S]*?font-size: 10px !important;[\s\S]*?font-weight: 900 !important;[\s\S]*?letter-spacing: \.065em !important;/,
   );
   assert.match(
     liveApp,
@@ -325,7 +325,11 @@ test("Current Shift uses a quieter club row and secondary ride action", () => {
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.working-now-tile \.profile-venue-destination\.is-live > \.venue-dot \{[\s\S]*?width: 22px !important;[\s\S]*?height: 22px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop \.working-now-tile \.profile-venue-destination\.is-live > \.venue-dot \{[\s\S]*?width: 18px !important;[\s\S]*?height: 18px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.working-now-tile \.profile-venue-destination\.is-live > \.venue-dot svg \{[\s\S]*?width: 18px !important;[\s\S]*?height: 18px !important;[\s\S]*?background: transparent !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     liveApp,

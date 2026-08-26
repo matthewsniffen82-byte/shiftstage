@@ -31674,7 +31674,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=145" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=146" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -38427,12 +38427,12 @@
 
         /* Current Shift is a single destination row, not a second dashboard
            card. The whole club destination remains tappable. */
-        #profileBackdrop #profileModal .modal-grid > .working-now-tile {
-          grid-template-columns: auto minmax(0, 1fr) !important;
+        #profileBackdrop #profileModal .profile-tonight-card > .working-now-tile {
+          grid-template-columns: max-content minmax(0, 1fr) !important;
           align-items: center !important;
-          gap: 12px !important;
+          gap: 6px !important;
           min-height: 0 !important;
-          padding: 6px 8px !important;
+          padding: 4px 8px !important;
           border-color: rgba(77,236,157,.22) !important;
           background: rgba(77,236,157,.045) !important;
           background-image: none !important;
@@ -38456,9 +38456,9 @@
           width: auto !important;
           padding: 0 2px !important;
           color: #4dec9d !important;
-          font-size: 11px !important;
-          font-weight: 950 !important;
-          letter-spacing: .075em !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          letter-spacing: .065em !important;
           line-height: 1.05 !important;
           text-transform: uppercase !important;
           white-space: nowrap !important;
@@ -38471,19 +38471,19 @@
         }
 
         #profileBackdrop .working-now-tile .profile-venue-destination.is-live {
-          grid-template-columns: 22px minmax(0, 1fr) 16px !important;
+          grid-template-columns: 18px minmax(0, 1fr) 16px !important;
           align-items: center !important;
-          gap: 7px !important;
+          gap: 6px !important;
           min-height: 40px !important;
-          padding: 3px 6px !important;
+          padding: 3px 0 !important;
           border: 0 !important;
           background: transparent !important;
         }
 
         #profileBackdrop .working-now-tile .profile-venue-destination.is-live > .venue-dot {
           align-self: center !important;
-          width: 22px !important;
-          height: 22px !important;
+          width: 18px !important;
+          height: 18px !important;
           border: 0 !important;
           border-radius: 0 !important;
           background: transparent !important;
@@ -38491,8 +38491,13 @@
         }
 
         #profileBackdrop .working-now-tile .profile-venue-destination.is-live > .venue-dot svg {
-          width: 20px !important;
-          height: 20px !important;
+          width: 18px !important;
+          height: 18px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          filter: none !important;
         }
 
         #profileBackdrop .working-now-tile .profile-venue-destination.is-live .profile-venue-copy {

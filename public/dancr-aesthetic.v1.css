@@ -4284,11 +4284,14 @@ body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destinat
 
 /* The compact Working Now row pairs the pin directly with the club name. */
 body.dancr-button-system #profileBackdrop .profile-modal .working-now-tile
-  .profile-venue-destination.is-live > .venue-dot {
+  .profile-venue-destination.is-live > .venue-dot,
+body.dancr-button-system #profileBackdrop .profile-modal .working-now-tile
+  .profile-venue-destination.is-live > .venue-dot svg {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+  filter: none !important;
 }
 
 body.dancr-button-system .home-tv-feed-verified.home-tv-feed-verified.home-tv-feed-verified,
