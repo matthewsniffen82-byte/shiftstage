@@ -235,6 +235,21 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
 });
 
+test("onboarding profile builder shows five picture and video slots plus working add-more targets", () => {
+  assert.match(dashboard, /const isOnboardingEditor = isEditor && Boolean\(builderRequirements\?\.length\) && !isApproved/);
+  assert.match(dashboard, /aria-label="Five picture slots and add more"/);
+  assert.match(dashboard, /const DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS = 5/);
+  assert.match(dashboard, /Array\.from\(\{ length: DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS \}/);
+  assert.match(dashboard, /aria-label=\{photo \? `Edit picture \$\{index \+ 1\}` : `Add picture \$\{index \+ 1\}`\}/);
+  assert.match(dashboard, /<strong>Add more<\/strong><small>Manage pictures<\/small>/);
+  assert.match(dashboard, /aria-label="Five video slots and add more"/);
+  assert.match(dashboard, /Array\.from\(\{ length: DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS \}/);
+  assert.match(dashboard, /aria-label=\{video \? `Edit video \$\{index \+ 1\}` : `Add video \$\{index \+ 1\}`\}/);
+  assert.match(dashboard, /<strong>Add more<\/strong><small>Manage videos<\/small>/);
+  assert.match(dashboard, /isEditor && !isOnboardingEditor/);
+  assert.match(dashboard, /\.dancer-profile-builder-slot-grid \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+});
+
 test("approved dancer dashboard sections arrive collapsed with a clear tool hierarchy", () => {
   assert.doesNotMatch(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+defaultOpen[\s\S]{0,500}?id="dancer-overview"/);
   assert.match(dashboard, /description="Approval, venue access, and public visibility\."\s+emphasis="summary"\s+id="dancer-overview"/);
