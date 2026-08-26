@@ -7564,7 +7564,28 @@ html:is(
  * schedule, and result state while moving the first profile row materially
  * higher on mobile. This scope deliberately excludes TV and Clubs. */
 body.dancer-directory-active > .app > main.stack {
+  --dancer-discovery-content-gutter: 12px;
   gap: 8px !important;
+}
+
+/* City, summary, heading, segmented filters, and cards share one mobile
+ * content gutter. Descendants fill this boundary instead of adding their own
+ * page-level padding or expanding into the viewport edges. */
+@media (max-width: 720px) {
+  body.dancer-directory-active > .app > main.stack
+    > :is(.home-discovery-controls, .home-live-summary, section.stack) {
+    width: calc(100% - (2 * var(--dancer-discovery-content-gutter))) !important;
+    max-width: none !important;
+    margin-inline: var(--dancer-discovery-content-gutter) !important;
+  }
+
+  body.dancer-directory-active > .app main.stack > section.stack
+    > :is(.content-head.discovery-section-head, #results.home-dancer-grid) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+    padding-inline: 0 !important;
+  }
 }
 
 body.dancer-directory-active > .app main.stack > .home-discovery-controls {
@@ -7635,7 +7656,7 @@ body.dancer-directory-active.dancr-button-system > .app main.stack > .home-disco
 body.dancer-directory-active > .app main.stack > .home-live-summary {
   min-height: 16px !important;
   margin-block: -2px -1px !important;
-  padding-inline: 1px !important;
+  padding-inline: 0 !important;
   gap: 4px !important;
   font-size: 11px !important;
 }
@@ -7771,6 +7792,13 @@ body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty)
   > :is(.dancer-directory-filter-label, .dancer-directory-filter-count) {
   color: var(--dancr-color-info) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty)
+  > .dancer-directory-filter-status {
+  background: var(--dancr-color-info) !important;
+  box-shadow: 0 0 8px var(--dancr-color-info-soft) !important;
 }
 
 /* The selected tab already names a single-status result set, so repeating that

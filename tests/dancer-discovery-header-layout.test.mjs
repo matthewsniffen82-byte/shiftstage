@@ -26,9 +26,28 @@ test("directory heading, dynamic total, and segmented filters are compact and ac
   assert.match(aesthetic, /> \.dancer-directory-filters \+ \.home-dancer-grid-heading \{[\s\S]*?display: none !important/);
 });
 
+test("discovery controls, summary, heading, tabs, and cards share one master gutter", () => {
+  assert.match(aesthetic, /--dancer-discovery-content-gutter: 12px/);
+  assert.match(
+    aesthetic,
+    /> :is\(\.home-discovery-controls, \.home-live-summary, section\.stack\) \{[\s\S]*?width: calc\(100% - \(2 \* var\(--dancer-discovery-content-gutter\)\)\) !important;[\s\S]*?margin-inline: var\(--dancer-discovery-content-gutter\) !important/,
+  );
+  assert.match(
+    aesthetic,
+    /> :is\(\.content-head\.discovery-section-head, #results\.home-dancer-grid\) \{[\s\S]*?width: 100% !important;[\s\S]*?margin-inline: 0 !important;[\s\S]*?padding-inline: 0 !important/,
+  );
+  assert.match(liveShell, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
+  assert.doesNotMatch(liveShell, /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]{0,350}?margin-inline: -/);
+});
+
 test("segmented dancer filters use semantic active colors and neutral inactive states", () => {
   assert.match(aesthetic, /data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\)[\s\S]*?var\(--dancr-color-live\)/);
   assert.match(aesthetic, /data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\)[\s\S]*?var\(--dancr-color-info\)/);
+  assert.match(liveShell, /filter\.id === "now" \|\| filter\.id === "upcoming"[\s\S]*?dancer-directory-filter-status/);
+  assert.match(
+    aesthetic,
+    /data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\)[\s\S]*?> \.dancer-directory-filter-status \{[\s\S]*?background: var\(--dancr-color-info\)[\s\S]*?box-shadow: 0 0 8px var\(--dancr-color-info-soft\)/,
+  );
   assert.match(aesthetic, /\.dancer-directory-filter:not\(\.is-active\) \{[\s\S]*?var\(--dancr-color-surface-raised\)/);
   assert.doesNotMatch(liveShell, /data-dancer-directory-filter="now"\]:not\(\.is-empty\):not\(\.is-active\) span \{[\s\S]*?#4dec9d/);
 });

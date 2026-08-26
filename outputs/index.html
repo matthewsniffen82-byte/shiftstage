@@ -35943,7 +35943,7 @@
         }
 
         /* Dancers is a dense, media-first three-column directory at every app
-           width. Extra-tall portraits expose more photography while the
+           width. Each card occupies one mathematically equal column while the
            two-pixel gutter keeps the tiles visually connected. */
         #results.home-dancer-grid.home-dancer-three-column {
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -36175,14 +36175,14 @@
           font-size: clamp(7px, 1.9vw, 9px);
         }
 
-        /* The phone grid keeps the same near-seamless gutter while retaining
-           the outer expansion and scrollbar-safe right rail. Its trailing
-           clearance only lifts the final row above the fixed discovery dock. */
+        /* The phone grid inherits the same content boundary as the controls,
+           summary, heading, and segmented tabs. Its trailing clearance only
+           lifts the final row above the fixed discovery dock. */
         @media (max-width: 420px) {
           #results.home-dancer-grid.home-dancer-three-column {
-            width: calc(100% + 16px) !important;
-            margin-inline: -8px !important;
-            padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+            width: 100% !important;
+            margin-inline: 0 !important;
+            padding-right: 0 !important;
             padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
             gap: 2px !important;
             scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
@@ -58060,7 +58060,7 @@
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
-            const statusDot = filter.id === "now"
+            const statusDot = filter.id === "now" || filter.id === "upcoming"
               ? '<span class="dancer-directory-filter-status" aria-hidden="true"></span>'
               : "";
             return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}</span></button>`;
