@@ -146,6 +146,11 @@ test("video submission persists exactly approve, human-review, or reject outcome
   assert.match(tvSource, /Videos stay private during setup|venue_approved_at/);
   assert.match(tvSource, /video_moderation_provider_error/);
   assert.match(submitRoute, /export const maxDuration = 60/);
+  assert.match(submitRoute, /after\(async \(\) => \{[\s\S]*?retryMyDancrTvAutomatedModeration/);
+  assert.match(submitRoute, /\{ deferModeration: true \}/);
+  assert.match(submitRoute, /uploaded successfully and is queued for automatic safety review/);
+  assert.match(tvSource, /moderation_attempt_count: deferModeration \|\| demoAutoApprove \? 0 : 1/);
+  assert.match(tvSource, /moderation_started_at: demoAutoApprove \? null : submittedAt/);
   assert.match(submitRoute, /passed safety review and will appear whenever your dancer profile is live/);
   assert.match(submitRoute, /sent to an administrator for human review/);
 });
@@ -154,7 +159,7 @@ test("temporary demo mode auto-approves without removing the AI moderation path"
   assert.match(tvSource, /isVideoDemoAutoApproveMode/);
   assert.match(
     tvSource,
-    /const demoAutoApprove = isVideoDemoAutoApproveMode\(\)[\s\S]*?\.eq\("status", "uploading"\)[\s\S]*?if \(demoAutoApprove\) \{\s*return autoApproveMyDancrTvDemoUpload\(admin, moderating, submittedAt, "moderating"\);/,
+    /const demoAutoApprove = isVideoDemoAutoApproveMode\(\)[\s\S]*?\.eq\("status", "uploading"\)[\s\S]*?if \(deferModeration\) return moderating;[\s\S]*?if \(demoAutoApprove\) \{\s*return autoApproveMyDancrTvDemoUpload\(admin, moderating, submittedAt, "moderating"\);/,
   );
   assert.match(
     tvSource,

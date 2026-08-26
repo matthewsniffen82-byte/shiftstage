@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import {
   hideOwnMyDancrTvVideo,
+  retryMyDancrTvAutomatedModeration,
   submitMyDancrTvUpload,
 } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -26,7 +27,23 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     if (body?.action !== "submit") {
       return NextResponse.json({ ok: false, error: "Invalid video action." }, { status: 400 });
     }
-    const video = await submitMyDancrTvUpload(createAdminSupabaseClient(), user.id, id);
+    const video = await submitMyDancrTvUpload(
+      createAdminSupabaseClient(),
+      user.id,
+      id,
+      { deferModeration: true },
+    );
+    after(async () => {
+      try {
+        await retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id);
+      } catch (error) {
+        console.error(JSON.stringify({
+          event: "mydancr_tv.background_moderation_failed",
+          videoId: video.id,
+          message: error instanceof Error ? error.message.slice(0, 500) : "Unknown moderation failure",
+        }));
+      }
+    });
     return NextResponse.json({
       ok: true,
       video,
@@ -55,6 +72,9 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function moderationMessage(video: any) {
+  if (video?.status === "moderating") {
+    return "Your video uploaded successfully and is queued for automatic safety review.";
+  }
   if (video?.status === "approved") {
     return "Your video passed safety review and will appear whenever your dancer profile is live.";
   }

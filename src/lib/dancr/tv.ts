@@ -873,7 +873,12 @@ export async function publishPlatformMyDancrTvUpload(
   return published;
 }
 
-export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, videoId: string) {
+export async function submitMyDancrTvUpload(
+  admin: AdminClient,
+  userId: string,
+  videoId: string,
+  options: { deferModeration?: boolean } = {},
+) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
     .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
@@ -904,6 +909,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
 
   const submittedAt = new Date().toISOString();
   const demoAutoApprove = isVideoDemoAutoApproveMode();
+  const deferModeration = options.deferModeration === true;
   const { data: moderating, error: updateError } = await admin
     .from("mydancr_tv_videos")
     .update({
@@ -917,7 +923,9 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
       moderation_frame_count: 0,
       moderation_model: null,
       moderation_details: {},
-      moderation_attempt_count: demoAutoApprove ? 0 : 1,
+      moderation_attempt_count: deferModeration || demoAutoApprove ? 0 : 1,
+      // Timestamp deferred work as queued so the existing stale-job cron can
+      // recover it if the post-response worker is interrupted before claiming it.
       moderation_started_at: demoAutoApprove ? null : submittedAt,
       moderation_completed_at: null,
     })
@@ -927,12 +935,15 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
     .single();
   if (updateError) throw updateError;
   console.info(JSON.stringify({
-    event: demoAutoApprove
+    event: deferModeration
+      ? "mydancr_tv.video_moderation_queued"
+      : demoAutoApprove
       ? "mydancr_tv.demo_auto_approval_started"
       : "mydancr_tv.video_moderation_started",
     videoId: video.id,
     userId,
   }));
+  if (deferModeration) return moderating;
   if (demoAutoApprove) {
     return autoApproveMyDancrTvDemoUpload(admin, moderating, submittedAt, "moderating");
   }
