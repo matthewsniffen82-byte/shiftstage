@@ -23,7 +23,7 @@ test("mobile navigation cannot cover the fixed profile video viewer", () => {
   );
   assert.match(
     homeSource,
-    /<button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">Report<\/button>/,
+    /<button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">[\s\S]*?<svg[\s\S]*?<\/svg>[\s\S]*?<\/button>/,
   );
   assert.doesNotMatch(homeSource, /profileActionOverflowToggle|profileActionOverflowMenu|<button class="profile-report-action" id="reportBtn"/);
 });

@@ -32034,7 +32034,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=153" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=154" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39918,28 +39918,35 @@
         }
 
         #profileBackdrop #profileModal .profile-modal-report-link {
+          width: 16px;
+          min-width: 16px;
+          height: 20px;
           min-height: 20px;
           display: inline-flex;
           align-items: center;
-          padding: 0 2px;
+          justify-content: center;
+          padding: 0;
           border: 0;
           border-radius: 0;
           color: #81798b;
           background: transparent;
           box-shadow: none;
-          font-size: 8px;
-          font-weight: 800;
-          line-height: 1;
-          text-decoration: underline;
-          text-decoration-color: transparent;
-          text-underline-offset: 2px;
           cursor: pointer;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-report-link svg {
+          width: 12px;
+          height: 12px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
         }
 
         #profileBackdrop #profileModal .profile-modal-report-link:is(:hover, :focus-visible) {
           color: #c9c1d2;
           outline: none;
-          text-decoration-color: currentColor;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics {
@@ -41585,7 +41592,9 @@
                 </div>
                 <div class="profile-modal-context" aria-live="polite">
                   <span class="pill" id="modalCity">Las Vegas</span>
-                  <button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">Report</button>
+                  <button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 4h10l-1.5 3L15 10H5"></path></svg>
+                  </button>
                 </div>
               </div>
               <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
@@ -61402,7 +61411,7 @@
         const profileName = actionButton.dataset.profile;
         const profile = findProfile(profileName);
         actionButton.disabled = true;
-        actionButton.textContent = "Submitting";
+        actionButton.setAttribute("aria-label", "Submitting profile report");
         try {
           const data = await postOptionalAuthJson("/api/reports", {
             targetType: "dancer_profile",
@@ -61412,12 +61421,12 @@
             details: `Reported from ${city} profile modal.`
           });
           if (!data?.report) throw new Error("The report could not be confirmed.");
-          actionButton.textContent = "Profile reported";
+          actionButton.setAttribute("aria-label", "Profile reported");
           recordLiveEvent("profile_action", { dancerName: profileName, source: "report_submitted" });
           showToast("Report submitted for review");
         } catch (error) {
           actionButton.disabled = false;
-          actionButton.textContent = "Report";
+          actionButton.setAttribute("aria-label", "Report profile");
           showToast(error.message || "Could not submit report");
         }
       }

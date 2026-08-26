@@ -4080,8 +4080,16 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-report-link {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 18px !important;
     min-height: 18px !important;
-    font-size: 8px !important;
+    padding: 0 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-report-link svg {
+    width: 12px !important;
+    height: 12px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {

@@ -310,7 +310,7 @@ test("the live mobile profile separates profile actions from venue travel action
   assert.doesNotMatch(liveActionMarkup, /"account"|"public"|"no-shift"/);
   assert.match(
     homeSource,
-    /class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">Report<\/button>/,
+    /class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">[\s\S]*?<svg[\s\S]*?<\/svg>[\s\S]*?<\/button>/,
   );
   assert.doesNotMatch(homeSource, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);
