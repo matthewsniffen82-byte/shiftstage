@@ -219,6 +219,23 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </div>
         )}
 
+        {actionVenue ? (
+          <div
+            aria-label="Venue travel actions"
+            className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming"}`}
+          >
+            <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
+            {activeShift ? (
+              <UberRideButton
+                compact
+                dancerId={profile.id}
+                source="dancer_profile"
+                venue={{ ...actionVenue, isActive: true, isPublic: true }}
+              />
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="profile-tonight-deal">
         {activeShift && activeDeal ? (
           <div
@@ -268,18 +285,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         <DancerProfileActions
           dancerId={profile.id}
-          directionsControl={actionVenue ? (
-            <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
-          ) : null}
           profileName={profile.stageName}
-          rideControl={activeShift && actionVenue ? (
-            <UberRideButton
-              compact
-              dancerId={profile.id}
-              source="dancer_profile"
-              venue={{ ...actionVenue, isActive: true, isPublic: true }}
-            />
-          ) : null}
           shareControl={<ProfileShareButton stageName={profile.stageName} />}
           shifts={profile.upcomingShifts.map((shift) => ({
             id: shift.id,
@@ -458,10 +464,10 @@ function PublicProfileStyles() {
       .profile-action-main > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .profile-action-icon-frame { width: 15px; height: 15px; display: inline-grid; flex: 0 0 15px; place-items: center; }
       .profile-action-preview-icon { --profile-icon-offset-x: 0px; --profile-icon-offset-y: 0px; width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transform: translate(var(--profile-icon-offset-x), var(--profile-icon-offset-y)); transform-origin: center; }
-      .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon, .profile-action-icon-frame[data-profile-action-icon="ride"] .profile-action-preview-icon { width: 16.25px; height: 16.25px; }
+      .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon { width: 16.25px; height: 16.25px; }
       .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width: 13.75px; height: 13.75px; }
       .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width: 15.25px; height: 15.25px; }
-      .profile-action-icon-frame[data-profile-action-icon="directions"] .profile-action-preview-icon, .profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon { width: 13px; height: 13px; }
+      .profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon { width: 13px; height: 13px; }
       body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control { min-height: 56px; align-self: stretch; flex-direction: column; justify-content: flex-start; gap: 1px; padding: 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .live-actions > button.profile-action-icon-control:disabled { cursor: default; }
       .profile-action-icon-control .profile-action-main { flex-direction: column; gap: 2px; overflow: visible; }
@@ -480,18 +486,14 @@ function PublicProfileStyles() {
       .live-actions > button.profile-action-icon-control.profile-action-unavailable:disabled { color: #766e7f; background: transparent; opacity: 1; }
       .profile-action-icon-control.profile-action-unavailable .profile-action-preview-icon { border: 0; color: #756d7d; background: transparent; box-shadow: none; }
       .profile-action-icon-control .profile-action-requirement { max-width: 100%; overflow: hidden; color: #8e8498; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-action-share-slot { min-width: 0; }
+      .profile-action-share-slot { min-width: 0; grid-column: 1 / -1; }
       .profile-action-share-slot .profile-share { display: block; min-height: 44px; }
       .profile-action-share-slot .profile-share button { gap: 6px; }
       .profile-action-share-slot .profile-share svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; }
       .profile-action-share-slot .profile-share > span { display: block; color: #9fefff; font-size: 9px; text-align: center; }
-      .live-actions > button:not(.profile-action-icon-control):not(.profile-report-action), .profile-action-share-slot .profile-share button { display: grid; grid-template-rows: 18px 9px; align-content: center; justify-items: center; row-gap: 1px; column-gap: 0; }
+      .live-actions > button:not(.profile-action-icon-control):not(.profile-report-action), .profile-action-share-slot .profile-share button.profile-action-preview-share { display: grid; grid-template-rows: 18px 9px; align-content: center; justify-items: center; row-gap: 1px; column-gap: 0; }
       .live-actions > button:not(.profile-action-icon-control):not(.profile-report-action) .profile-action-main, .profile-action-share-slot .profile-share button .profile-action-main { grid-row: 1; }
       .live-actions > button:not(.profile-action-icon-control):not(.profile-report-action) .profile-action-requirement { grid-row: 2; }
-      .profile-action-ride-slot { min-width: 0; }
-      .profile-action-ride-slot > a, .profile-action-ride-slot > button { width: 100% !important; min-height: 44px !important; justify-content: center !important; padding-inline: 8px !important; border-radius: 11px !important; font-size: 10px !important; text-align: center !important; }
-      .profile-action-ride-slot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-action-directions-slot { min-width: 0; }
       .profile-directions-button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 10px; font-weight: 900; text-align: center; text-decoration: none; }
       .profile-directions-button[aria-disabled="true"] { cursor: default; opacity: 1; }
       .profile-directions-button svg { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: #8ee2f8; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -639,6 +641,9 @@ function PublicProfileStyles() {
       .profile-tonight-card > .profile-shift-card { width: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .profile-tonight-card > .profile-schedule-section { padding: 14px; }
       .profile-tonight-card > .profile-schedule-empty { padding: 9px 10px; }
+      .profile-tonight-travel-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 0 10px 9px; }
+      .profile-tonight-travel-actions.is-working-now { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 44px !important; min-height: 44px !important; max-height: 44px !important; padding-inline: 8px !important; border-radius: 11px !important; font-size: 11px !important; }
       .profile-tonight-deal { padding: 5px; border-top: 1px solid rgba(255,255,255,.08); }
       .profile-tonight-card.has-club-deal .profile-tonight-deal { border-top-color: rgba(77,236,157,.18); }
       .profile-tonight-deal .profile-active-deal { width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }

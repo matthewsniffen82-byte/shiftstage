@@ -172,7 +172,7 @@ test("working-now profiles show the club's active deal without granting demo com
   assert.match(profilePage, /dancerId=\{dancerAttributionEligible \? profile\.id : null\}/);
 });
 
-test("profile actions keep customer, live-night, travel, and safety controls visible", () => {
+test("profile actions keep customer and safety controls visible while Tonight owns travel", () => {
   assert.match(
     profileActions,
     /className=\{`profile-action-secondary profile-action-icon-control\$\{saved\.following \? " is-selected" : ""\}\$\{showSignedOutRequirements \? " profile-action-requires-account" : ""\}`\}/,
@@ -181,14 +181,13 @@ test("profile actions keep customer, live-night, travel, and safety controls vis
   const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
   const notifyIndex = profileActions.indexOf('if (requireCustomerAccount("notify"))');
   const goingIndex = profileActions.indexOf('className={`profile-action-secondary profile-action-going');
-  const rideIndex = profileActions.indexOf('{hasLiveActions && rideControl ?');
-  const directionsIndex = profileActions.indexOf('{directionsControl ?');
   const shareIndex = profileActions.indexOf('{shareControl ?');
   const reportIndex = profileActions.indexOf('className="profile-report-action"');
   assert.ok(followButtonIndex > -1 && notifyIndex > followButtonIndex);
-  assert.ok(goingIndex > notifyIndex && rideIndex > goingIndex);
-  assert.ok(directionsIndex > rideIndex && shareIndex > directionsIndex);
+  assert.ok(goingIndex > notifyIndex && shareIndex > goingIndex);
   assert.ok(reportIndex > shareIndex);
+  assert.doesNotMatch(profileActions, /rideControl|directionsControl|Working Now only|Venue required/);
+  assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
   assert.doesNotMatch(profileActions, /profile-action-overflow|profile-action-schedule|>Schedule<|>More</);
   assert.match(profileActions, /Report profile/);
   assert.match(profileActions, /onClick=\{submitReport\}/);

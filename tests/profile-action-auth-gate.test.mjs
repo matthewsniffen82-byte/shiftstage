@@ -244,7 +244,7 @@ test("public profiles keep Going visible and enable it for current or upcoming p
   assert.match(profilePageSource, /\.profile-action-requirement \{/);
 });
 
-test("the live mobile profile keeps all six action slots and Report stays discreet", () => {
+test("the live mobile profile separates profile actions from venue travel actions", () => {
   assert.match(homeSource, /function profileActionRequirementMarkup\(requirement\)/);
   assert.match(homeSource, /Sign in required/);
   assert.match(homeSource, /No sign-in needed/);
@@ -266,8 +266,12 @@ test("the live mobile profile keeps all six action slots and Report stays discre
     /async function refreshProfileGoingState\(profile\) \{\s+if \(!profile\?\.shiftId \|\| window\.location\.protocol === "file:"\) return;/,
   );
   assert.match(homeSource, /data-shift-state="posted"/);
-  assert.match(homeSource, /profileActionButtonMarkup\("car", "Ride", "working-now"\)/);
-  assert.match(homeSource, /profileActionButtonMarkup\("pin", "Directions", "venue"\)/);
+  assert.match(homeSource, /function dancerProfileTonightTravelActionsMarkup\(profile, options = \{\}\)/);
+  assert.match(homeSource, /const actions = \[directionsMarkup, rideMarkup\]\.filter\(Boolean\)/);
+  assert.match(homeSource, /profile-tonight-travel-actions \$\{rideMarkup \? "is-working-now" : "is-upcoming"\}/);
+  assert.match(homeSource, /\$\{shiftsMarkup\(profile, status,[\s\S]*?\$\{travelActionsMarkup\}[\s\S]*?<div class="profile-tonight-deal">/);
+  assert.doesNotMatch(homeSource, /profileActionButtonMarkup\("car", "Ride", "working-now"\)/);
+  assert.doesNotMatch(homeSource, /profileActionButtonMarkup\("pin", "Directions", "venue"\)/);
   assert.match(homeSource, /This dancer has no posted shift yet\./);
 });
 

@@ -107,7 +107,7 @@ export function DancerGoingCount() {
 function DancerProfileActionPreviewIcon({
   type,
 }: {
-  type: "bell" | "check" | "clock" | "directions" | "personPlus" | "ride" | "share";
+  type: "bell" | "check" | "clock" | "personPlus" | "share";
 }) {
   return (
     <span aria-hidden="true" className="profile-action-icon-frame" data-profile-action-icon={type}>
@@ -116,8 +116,6 @@ function DancerProfileActionPreviewIcon({
         {type === "check" ? <path d="m5 12 4 4L19 6" /> : null}
         {type === "bell" ? <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" /><path d="M10 20a2 2 0 0 0 4 0" /></> : null}
         {type === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : null}
-        {type === "directions" ? <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></> : null}
-        {type === "ride" ? <><path d="m5 11 1.7-4.3A2.7 2.7 0 0 1 9.2 5h5.6a2.7 2.7 0 0 1 2.5 1.7L19 11" /><path d="M4 11h16a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a1 1 0 0 1 1-1ZM6.5 15h.01M17.5 15h.01M6 19v2M18 19v2" /></> : null}
         {type === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" /></> : null}
       </svg>
     </span>
@@ -139,17 +137,9 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
         <small className="profile-action-requirement">No shift posted</small>
       </button>
-      <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
-        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="ride" /><span>Ride</span></span>
-        <small className="profile-action-requirement">Working Now only</small>
-      </button>
-      <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
-        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="directions" /><span>Directions</span></span>
-        <small className="profile-action-requirement">Venue required</small>
-      </button>
       <div className="profile-action-share-slot">
         <span className="profile-share">
-          <button disabled={!onShare} onClick={onShare} type="button">
+          <button className="profile-action-preview-share" disabled={!onShare} onClick={onShare} type="button">
             <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share</span></span>
           </button>
         </span>
@@ -169,15 +159,11 @@ export function DancerProfileActions({
   profileName,
   shifts,
   shareControl,
-  rideControl,
-  directionsControl,
 }: {
   dancerId: string;
   profileName: string;
   shifts: ShiftAction[];
   shareControl?: ReactNode;
-  rideControl?: ReactNode;
-  directionsControl?: ReactNode;
 }) {
   const {
     setFollowerCount,
@@ -519,22 +505,6 @@ export function DancerProfileActions({
           </span>
           {!actionShift ? <small className="profile-action-requirement">No shift posted</small> : null}
         </button>
-        {hasLiveActions && rideControl ? (
-          <div className="profile-action-ride-slot">{rideControl}</div>
-        ) : (
-          <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account" disabled type="button">
-            <span className="profile-action-main"><DancerProfileActionPreviewIcon type="ride" /><span>Ride</span></span>
-            <small className="profile-action-requirement">Working Now only</small>
-          </button>
-        )}
-        {directionsControl ? (
-          <div className="profile-action-directions-slot">{directionsControl}</div>
-        ) : (
-          <button aria-disabled="true" className="profile-action-secondary profile-action-unavailable profile-action-requires-account" disabled type="button">
-            <span className="profile-action-main"><DancerProfileActionPreviewIcon type="directions" /><span>Directions</span></span>
-            <small className="profile-action-requirement">Venue required</small>
-          </button>
-        )}
         {shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>
         ) : (

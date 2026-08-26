@@ -165,6 +165,7 @@ const [componentSource, componentStyles, dancerPageSource, eventRouteSource, liv
 test("the reusable control uses one universal ride label with a destination-aware dancer CTA", () => {
   assert.match(componentSource, /function rideActionLabel\(source: UberRideSource, venueName: string\)/);
   assert.match(componentSource, /source === "dancer_profile" \? `Get a Ride to \$\{venueName\}` : "Get a Ride"/);
+  assert.match(componentSource, /const visibleLabel = compact \? "Get a Ride" : label/);
   assert.doesNotMatch(componentSource, /"Request Uber"|`Ride to \$\{venueName\}`/);
   assert.match(componentSource, /target="_blank"/);
   assert.match(componentSource, /rel="noopener noreferrer"/);
@@ -174,7 +175,7 @@ test("the reusable control hides private, unpublished, and invalid destinations"
   assert.match(componentSource, /venue\.isActive === false \|\| venue\.isPublic === false/);
   assert.match(componentSource, /if \(!isValidUberDestination\(destination\)\) return null/);
   assert.match(dancerPageSource, /const actionShift = activeShift \|\| upcomingShifts\[0\] \|\| null[\s\S]*?getVenueProfile\(client, actionShift\.venueSlug\)/);
-  assert.match(dancerPageSource, /rideControl=\{activeShift && actionVenue \? \(/);
+  assert.match(dancerPageSource, /profile-tonight-travel-actions[\s\S]*?\{activeShift \? \([\s\S]*?<UberRideButton/);
   assert.match(dancerPageSource, /source="dancer_profile"/);
 });
 

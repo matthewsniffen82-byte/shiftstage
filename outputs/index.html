@@ -37092,7 +37092,7 @@
           opacity: .72 !important;
         }
         #profileBackdrop .modal-actions .profile-share-action {
-          grid-column: auto !important;
+          grid-column: 1 / -1 !important;
           min-height: 50px !important;
         }
         #profileBackdrop .profile-action-overflow {
@@ -38213,6 +38213,29 @@
           padding: 8px 10px !important;
         }
 
+        #profileBackdrop #profileModal .profile-tonight-travel-actions {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 6px;
+          padding: 0 8px 8px;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-working-now {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) {
+          grid-column: auto !important;
+          width: 100% !important;
+          height: 44px !important;
+          min-height: 44px !important;
+          max-height: 44px !important;
+          margin: 0 !important;
+          padding: 5px 8px !important;
+          border-radius: 11px !important;
+          font-size: 11px !important;
+        }
+
         #profileBackdrop #profileModal .profile-tonight-deal {
           padding: 5px;
           border-top: 1px solid rgba(255, 255, 255, .08);
@@ -38452,8 +38475,8 @@
           height: 28px !important;
         }
 
-        /* Keep the same six customer action slots visible in two compact rows.
-           State-specific availability is communicated inside each slot. */
+        /* Keep profile-level actions separate from the venue travel controls
+           that now live inside Tonight beside the relevant shift. */
         #profileBackdrop .modal-actions {
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           column-gap: 6px !important;
@@ -38466,23 +38489,15 @@
         }
 
         #profileBackdrop .modal-actions .action-btn,
-        #profileBackdrop .modal-actions .profile-share-action,
-        #profileBackdrop .profile-primary-ride > :is(a, button),
-        #profileBackdrop .profile-primary-directions-slot > :is(a, button) {
+        #profileBackdrop .modal-actions .profile-share-action {
           min-height: 44px !important;
           padding: 5px 6px !important;
           border-radius: 11px !important;
           font-size: 11px !important;
         }
 
-        #profileBackdrop .profile-primary-ride,
-        #profileBackdrop .profile-primary-directions-slot {
-          min-width: 0 !important;
-        }
-
-        #profileBackdrop .profile-primary-ride > :is(a, button),
-        #profileBackdrop .profile-primary-directions-slot > :is(a, button) {
-          width: 100% !important;
+        #profileBackdrop .modal-actions .profile-share-action {
+          grid-column: 1 / -1 !important;
         }
 
         #profileBackdrop .modal-actions .going-btn {
@@ -51114,7 +51129,7 @@
         className: "profile-uber-ride",
         dancerId: profile.id || "",
         city,
-        displayLabel: "Ride"
+        displayLabel: "Get a Ride"
       });
     }
 
@@ -51132,6 +51147,16 @@
       });
     }
 
+    function dancerProfileTonightTravelActionsMarkup(profile, options = {}) {
+      const city = options.city || selectedCity();
+      if (options.preview || !profile?.scheduled) return "";
+      const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
+      const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
+      const actions = [directionsMarkup, rideMarkup].filter(Boolean);
+      if (!actions.length) return "";
+      return `<div class="profile-tonight-travel-actions ${rideMarkup ? "is-working-now" : "is-upcoming"}" aria-label="Venue travel actions">${actions.join("")}</div>`;
+    }
+
     function profileModalGridMarkup(profile, options = {}) {
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
@@ -51140,6 +51165,10 @@
         ? profileDealTileMarkup(profile, { preview: true })
         : profileDealTileMarkup(profile);
       const dealState = dancerClubDealState(profile);
+      const travelActionsMarkup = dancerProfileTonightTravelActionsMarkup(profile, {
+        city,
+        preview: Boolean(options.preview)
+      });
       const tonightClasses = [
         "profile-tonight-card",
         isWorkingTonight(profile, city) && profile.scheduled ? "is-now" : "",
@@ -51149,6 +51178,7 @@
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
           <section class="${tonightClasses}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
+            ${travelActionsMarkup}
             <div class="profile-tonight-deal">${dealMarkup}</div>
           </section>
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
@@ -51161,9 +51191,7 @@
 
     function profileActionRequirementMarkup(requirement) {
       const unavailableCopy = {
-        "no-shift": "No shift posted",
-        "working-now": "Working Now only",
-        venue: "Venue required"
+        "no-shift": "No shift posted"
       };
       if (unavailableCopy[requirement]) {
         return `<small class="profile-action-requirement is-unavailable">${unavailableCopy[requirement]}</small>`;
@@ -51184,26 +51212,16 @@
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
       const isWorkingNow = isWorkingTonight(profile, city);
       const canMarkGoing = Boolean(profile?.scheduled && profile.shiftId);
-      const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
-      const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
         ? `<button class="action-btn going-btn profile-action-icon-control secondary ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
         : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable has-requirement" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle, "no-shift")}</button>`;
-      const rideAction = rideMarkup
-        ? `<div class="profile-primary-ride">${rideMarkup}</div>`
-        : `<button class="action-btn secondary is-unavailable has-requirement" type="button" aria-disabled="true" disabled>${profileActionButtonMarkup("car", "Ride", "working-now")}</button>`;
-      const directionsAction = directionsMarkup
-        ? `<div class="profile-primary-directions-slot">${directionsMarkup}</div>`
-        : `<button class="action-btn secondary is-unavailable has-requirement" type="button" aria-disabled="true" disabled>${profileActionButtonMarkup("pin", "Directions", "venue")}</button>`;
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
         <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
           <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notified" : "Notify", "account")}</button>
           ${goingButton}
-          ${rideAction}
-          ${directionsAction}
           <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
           <button class="profile-report-action" id="reportBtn" type="button" data-profile="${profile.name}">Report profile</button>
         </div>

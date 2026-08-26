@@ -35,7 +35,7 @@ export function UberRideButton({ venue, source, dancerId, compact = false }: Ube
 
   const venueName = String(venue.name || "this club").trim() || "this club";
   const label = rideActionLabel(source, venueName);
-  const visibleLabel = compact ? "Ride" : label;
+  const visibleLabel = compact ? "Get a Ride" : label;
 
   if (isFictionalVenueTravelPreviewOnly(venue)) {
     return (
