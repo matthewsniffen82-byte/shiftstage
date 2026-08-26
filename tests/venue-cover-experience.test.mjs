@@ -143,8 +143,9 @@ test("venue lineups show only dancers working now as compact avatar stacks", () 
     lineupHelper,
     /venueDancers\(city, venue\.name\)[\s\S]*?filter\(\(profile\) => isWorkingTonight\(profile, city\)\)/,
   );
-  assert.match(lineupHelper, /const visibleLimit = options\.mobile \? 2 : 4/);
+  assert.match(lineupHelper, /const visibleLimit = options\.mobile \? 5 : 4/);
   assert.match(lineupHelper, /const remaining = liveProfiles\.length - profiles\.length/);
+  assert.match(lineupHelper, /const remainingMarkup = remaining > 0/);
   assert.match(lineupHelper, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
   assert.match(lineupHelper, /role="group" aria-label="\$\{liveLabel\}"/);
   assert.doesNotMatch(lineupHelper, /on the lineup/);

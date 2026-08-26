@@ -55,7 +55,7 @@ test("mobile venue identity stays compact, anchored, and single-line", () => {
 
   assert.match(hierarchy, /grid-template-rows: 96px minmax\(92px, 1fr\) 56px 56px !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-logo \{[\s\S]*?height: 90px !important;/);
-  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?top: 8px !important;[\s\S]*?right: 14px !important;/);
+  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?top: 8px !important;[\s\S]*?right: 20px !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-lineup-label \{[\s\S]*?min-width: 46px !important;[\s\S]*?rgba\(46, 229, 138, 0\.34\)/);
   assert.match(hierarchy, /span:not\(\.action-icon\) \{[\s\S]*?white-space: nowrap !important;[\s\S]*?overflow-wrap: normal !important;[\s\S]*?word-break: normal !important;/);
   assert.match(hierarchy, /\.venue-card-primary-action:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?rgba\(226, 232, 240, 0\.76\)/);
@@ -76,9 +76,26 @@ test("the mobile lineup explains working-now avatars without changing venue acti
     /function venueLineupMarkup\(venue, city, options = \{\}\) \{[\s\S]*?(?=\n    function venueCardQrMarkup)/,
   )?.[0] || "";
 
-  assert.match(lineup, /const visibleLimit = options\.mobile \? 2 : 4/);
+  assert.match(lineup, /const visibleLimit = options\.mobile \? 5 : 4/);
+  assert.match(lineup, /const remainingMarkup = remaining > 0/);
+  assert.match(lineup, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
   assert.match(lineup, /classPrefix = options\.mobile \? "home-venue-discovery" : "venue-card"/);
   assert.match(lineup, /\$\{classPrefix\}-lineup-label/);
   assert.match(lineup, /<strong>\$\{liveProfiles\.length\}<\/strong><span>NOW<\/span>/);
   assert.match(lineup, /aria-label="\$\{liveLabel\}"/);
+});
+
+test("mobile Clubs cards reserve the exact width of their five-avatar lineup", () => {
+  const slide = liveApp.match(
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
+  )?.[0] || "";
+  const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
+
+  assert.match(slide, /const mobileLineupVisibleCount = Math\.min\(workingNow\.length, 5\)/);
+  assert.match(slide, /Math\.max\(0, mobileLineupVisibleCount - 1\) \* 20/);
+  assert.match(slide, /workingNow\.length > 5 \? 20 : 0/);
+  assert.match(slide, /--home-venue-lineup-reserve:\$\{mobileLineupReserve\}px/);
+  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?right: 20px !important;/);
+  assert.match(hierarchy, /padding-right: var\(--home-venue-lineup-reserve, 108px\) !important;/);
+  assert.match(hierarchy, /margin-left: -8px !important;/);
 });

@@ -51088,7 +51088,7 @@
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
       if (!liveProfiles.length) return "";
-      const visibleLimit = options.mobile ? 2 : 4;
+      const visibleLimit = options.mobile ? 5 : 4;
       const profiles = liveProfiles.slice(0, visibleLimit);
       const remaining = liveProfiles.length - profiles.length;
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
@@ -51101,7 +51101,7 @@
         );
         return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true"></span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
       }).join("");
-      const remainingMarkup = !options.mobile && remaining > 0
+      const remainingMarkup = remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
         : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
@@ -58123,6 +58123,10 @@
       const workingNow = localProfiles
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
+      const mobileLineupVisibleCount = Math.min(workingNow.length, 5);
+      const mobileLineupReserve = workingNow.length
+        ? 108 + Math.max(0, mobileLineupVisibleCount - 1) * 20 + (workingNow.length > 5 ? 20 : 0)
+        : 0;
       const followsVenue = isFollowingVenue(city, venue.name);
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
       const hoursMarkup = operatingStatus.hoursLabel
@@ -58147,7 +58151,7 @@
         ? `${safeName} logo`
         : `${safeName} monogram`;
       return `
-        <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
+        <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}"${mobileLineupReserve ? ` style="--home-venue-lineup-reserve:${mobileLineupReserve}px"` : ""}>
           <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}" role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
