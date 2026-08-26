@@ -56,8 +56,8 @@ test("video grids show a passive frame from each actual video", () => {
   assert.match(gridMarkup, /src=\{`\$\{item\.videoUrl\}#t=0\.1`\}/);
   assert.doesNotMatch(carousel, /posterUrl: video\.posterUrl \|\| photoMedia/);
   assert.doesNotMatch(profilePage, /posterUrl: video\.dancer\.primaryPhotoUrl/);
-  assert.match(carousel, /className="profile-media-viewer-preload"/);
-  assert.match(carousel, /preload="metadata"/);
+  assert.match(carousel, /\{viewerItems\.map\(\(item, index\) => \(/);
+  assert.match(carousel, /preload=\{Math\.abs\(index - viewerIndex\) <= 1 \? "auto" : "metadata"\}/);
   assert.match(liveApp, /function profileVideoThumbMarkup/);
   assert.match(liveApp, /function profileVideoPreviewUrl\(item\)/);
   assert.match(liveApp, /<video src="\$\{escapeHtml\(previewUrl\)\}"[\s\S]*?muted playsinline preload="metadata"/);

@@ -16,20 +16,14 @@ test("the live profile keeps the grid horizontal and makes full photos verticall
   );
   assert.match(
     liveApp,
-    /const vertical = options\.vertical === true;[\s\S]*?const verticalSwipe =[\s\S]*?Math\.abs\(distanceY\) >= 44[\s\S]*?moveModalPhoto\(vertical \? distanceY < 0 \? 1 : -1 : distanceX < 0 \? 1 : -1, options\)/,
+    /bindHorizontalProfilePhotoSwipe\(modalImage\);[\s\S]*?profilePhotoViewerImage\?\.addEventListener\("scroll"/,
   );
   assert.match(
     liveApp,
-    /element\.addEventListener\("wheel",[\s\S]*?const primaryDelta = vertical \? event\.deltaY : event\.deltaX;[\s\S]*?moveModalPhoto\(primaryDelta > 0 \? 1 : -1, options\)/,
+    /\.profile-photo-viewer-image \{[\s\S]*?overflow-y: auto;[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?touch-action: pan-y;/,
   );
-  assert.match(
-    liveApp,
-    /bindHorizontalProfilePhotoSwipe\(modalImage\);[\s\S]*?bindHorizontalProfilePhotoSwipe\(profilePhotoViewerImage, \{ syncViewer: true, vertical: true \}\)/,
-  );
-  assert.match(
-    liveApp,
-    /\.profile-modal \.modal-image \{ touch-action: pan-y;[\s\S]*?\.profile-photo-viewer-image \{ touch-action: none; overscroll-behavior: none;/,
-  );
+  assert.match(liveApp, /\.profile-photo-viewer-slide \{[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/);
+  assert.match(liveApp, /Math\.round\(profilePhotoViewerImage\.scrollTop \/ profilePhotoViewerImage\.clientHeight\)/);
   assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil/);
 });
 
@@ -65,14 +59,14 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   assert.match(liveApp, /#profileBackdrop \.gallery \.thumb \{[\s\S]*?flex: 0 0 calc\(\(100% - 4px\) \/ 3\) !important;/);
   assert.doesNotMatch(liveApp, /id="modalPhotoSwipeHint"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerSwipeHint"/);
-  assert.match(liveApp, /id="profilePhotoViewerImage"[^>]*tabindex="0"[^>]*aria-label="Selected profile photo\. Swipe up or down to change photos\."/);
+  assert.match(liveApp, /id="profilePhotoViewerImage"[^>]*role="group"[^>]*tabindex="0"[^>]*aria-label="Dancer photos\. Scroll up or down to change photos\."/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerName"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerPosition"/);
   assert.doesNotMatch(liveApp, /class="profile-photo-viewer-copy"/);
   assert.match(liveApp, /id="profilePhotoViewerPrevious"[^>]*aria-label="Previous dancer photo"/);
   assert.match(liveApp, /id="profilePhotoViewerNext"[^>]*aria-label="Next dancer photo"/);
   assert.doesNotMatch(liveApp, /profilePhotoScheduleLabel|Swipe up or down · Photo/);
-  assert.match(liveApp, /\.profile-photo-viewer-image \{[\s\S]*?background-size: cover !important;/);
+  assert.match(liveApp, /\.profile-photo-viewer-slide-image \{[\s\S]*?background-size: cover !important;/);
   assert.match(liveApp, /\.profile-photo-viewer-footer \{[\s\S]*?background: transparent;/);
   assert.match(
     liveApp,
@@ -97,10 +91,11 @@ test("the profile presents approved photos and dancer-only videos as separate th
     /onClick=\{\(event\) => openViewer\(item\.kind, index, event\.currentTarget\)\}/,
   );
   assert.match(publicPhotoCarousel, /aria-label=\{`Open \$\{stageName\} \$\{item\.kind\} \$\{index \+ 1\} of \$\{activeItems\.length\}`\}/);
-  assert.match(publicPhotoCarousel, /activeViewerItem\.kind === "photo"/);
+  assert.match(publicPhotoCarousel, /viewerItems\.map\(\(item, index\) =>/);
+  assert.match(publicPhotoCarousel, /className="profile-media-viewer-slide"/);
   assert.match(
     publicPhotoCarousel,
-    /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?src=\{activeViewerItem\.videoUrl\}/,
+    /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?src=\{item\.videoUrl\}/,
   );
   assert.doesNotMatch(publicPhotoCarousel, /profile-media-feature|inlinePlaying/);
   assert.match(publicPhotoCarousel, /new IntersectionObserver/);
@@ -117,9 +112,9 @@ test("the profile presents approved photos and dancer-only videos as separate th
   );
   assert.match(
     publicProfilePage,
-    /\.profile-media-viewer-stage > img, \.profile-media-viewer-stage > video \{[^}]*object-fit: contain/,
+    /\.profile-media-viewer-slide > img, \.profile-media-viewer-slide > video \{[^}]*object-fit: contain/,
   );
-  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-stage > img \{ object-fit: cover; \}/);
+  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-slide > img \{ object-fit: cover; \}/);
   assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-footer \{ background: transparent; \}/);
   assert.match(publicProfilePage, /<dt>Views today<\/dt>/);
   assert.match(liveApp, /<dt>Views today<\/dt>/);
@@ -149,8 +144,8 @@ test("full-profile photo and video grids use stable tall portrait tiles", () => 
   assert.doesNotMatch(publicPhotoCarousel, /selectedItem|profile-media-feature/);
   assert.match(publicProfilePage, /\.profile-media-grid-item \{[^}]*aspect-ratio: 9 \/ 16;/);
   assert.match(publicProfilePage, /\.profile-media-grid-item img, \.profile-media-grid-item video \{[^}]*object-fit: cover;/);
-  assert.match(publicProfilePage, /\.profile-media-viewer-stage > img, \.profile-media-viewer-stage > video \{[^}]*object-fit: contain;/);
-  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-stage > img \{ object-fit: cover; \}/);
+  assert.match(publicProfilePage, /\.profile-media-viewer-slide > img, \.profile-media-viewer-slide > video \{[^}]*object-fit: contain;/);
+  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-slide > img \{ object-fit: cover; \}/);
 });
 
 
@@ -165,15 +160,15 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
   );
   assert.match(
     publicPhotoCarousel,
-    /data-profile-media-swipe-surface[\s\S]*?onPointerDown=\{handlePointerDown\}[\s\S]*?onPointerMove=\{handlePointerMove\}[\s\S]*?onPointerUp=\{handlePointerEnd\}/,
+    /data-profile-media-snap-feed[\s\S]*?onScroll=\{handleViewerScroll\}[\s\S]*?ref=\{viewerFeed\}/,
   );
   assert.match(
     publicPhotoCarousel,
-    /const mediaSwipe =[\s\S]*?Math\.abs\(distanceY\) >= SWIPE_DISTANCE_PX[\s\S]*?showRelativeViewerItem\(distanceY < 0 \? 1 : -1\)/,
+    /viewerItems\.map\(\(item, index\) =>[\s\S]*?className="profile-media-viewer-slide"[\s\S]*?data-profile-media-viewer-index=\{index\}/,
   );
   assert.match(
     publicPhotoCarousel,
-    /onWheel=\{handleWheel\}[\s\S]*?className="profile-media-viewer-previous"[\s\S]*?className="profile-media-viewer-next"/,
+    /feed\.scrollTo\(\{[\s\S]*?top: nextIndex \* feed\.clientHeight[\s\S]*?className="profile-media-viewer-previous"[\s\S]*?className="profile-media-viewer-next"/,
   );
   assert.match(
     publicProfilePage,
@@ -181,7 +176,7 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
   );
   assert.match(
     publicProfilePage,
-    /\.profile-media-viewer-stage \{[^}]*touch-action: none;/,
+    /\.profile-media-viewer-stage \{[^}]*overflow-y: auto;[^}]*scroll-snap-type: y mandatory;[^}]*touch-action: pan-y;/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -194,6 +189,6 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
   assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?requestViewerFullscreen\(\)/);
   assert.match(publicPhotoCarousel, /element\.requestFullscreen\(\{ navigationUI: "hide" \}\)/);
   assert.match(publicProfilePage, /\.profile-media-viewer:fullscreen/);
-  assert.match(publicPhotoCarousel, /viewer\.kind === "video"[\s\S]*?\{viewerStatus\} · Swipe up or down · Video/);
+  assert.match(publicPhotoCarousel, /viewer\.kind === "video"[\s\S]*?\{viewerStatus\} · Scroll up or down · Video/);
   assert.doesNotMatch(publicPhotoCarousel, /viewer\.kind === "photo"[\s\S]*?profile-media-viewer-copy/);
 });

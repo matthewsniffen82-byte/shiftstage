@@ -2028,7 +2028,7 @@ body.dancr-button-system .home-tv-feed-action:not(
   .home-dancer-grid-link,
   .home-feed-card .dancer-card-link,
   .profile-modal .modal-image,
-  .profile-photo-viewer-image,
+  .profile-photo-viewer-slide-image,
   .public-profile-shell .profile-media-grid-item
 ):focus-visible {
   outline: 2px solid var(--dancr-color-beam-violet) !important;
@@ -2278,10 +2278,10 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
   #profileBackdrop .modal-image.has-custom-photo,
   #profileBackdrop .profile-modal-avatar.has-photo,
   #profileBackdrop .gallery .thumb .portrait.has-custom-photo,
-  .profile-photo-viewer-image,
+  .profile-photo-viewer-slide-image,
   .public-profile-shell .profile-titlebar-avatar img,
   .public-profile-shell .profile-media-grid-item img,
-  .public-profile-shell .profile-media-viewer-stage > img
+  .public-profile-shell .profile-media-viewer-slide > img
 ) {
   filter: brightness(1.14) contrast(1.03) !important;
   -webkit-filter: brightness(1.14) contrast(1.03) !important;
@@ -6999,7 +6999,7 @@ html:is(
   .modal-image.has-custom-photo,
   .profile-modal-avatar.has-photo,
   .gallery .thumb .portrait.has-custom-photo,
-  .profile-photo-viewer-image
+  .profile-photo-viewer-slide-image
 ),
 html:is(
   .is-android,
@@ -7009,7 +7009,7 @@ html:is(
 ) body :is(
   .public-profile-shell .profile-titlebar-avatar img,
   .public-profile-shell .profile-media-grid-item img,
-  .public-profile-shell .profile-media-viewer-stage > img,
+  .public-profile-shell .profile-media-viewer-slide > img,
   .tv-shell .tv-profile-photo-image
 ) {
   filter: brightness(1.14) contrast(1.03) !important;

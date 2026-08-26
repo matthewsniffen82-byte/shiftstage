@@ -36,11 +36,20 @@ test("live profile viewer mirrors MyDancr TV with vertical profile-only video pa
     liveApp,
     /\.profile-tv-viewer-shell \{[^}]*width: 100%;[^}]*max-width: none;[^}]*height: 100%;[^}]*touch-action: none;/,
   );
-  assert.match(liveApp, /id="profileTvViewerVideo" controlslist="nofullscreen noremoteplayback nodownload" disablepictureinpicture/);
+  assert.match(
+    liveApp,
+    /\.profile-tv-viewer-stage \{[^}]*overflow-y: auto;[^}]*scroll-snap-type: y mandatory;[^}]*touch-action: pan-y;/,
+  );
+  assert.match(
+    liveApp,
+    /\.profile-tv-viewer-slide \{[^}]*height: 100%;[^}]*min-height: 100%;[^}]*scroll-snap-align: start;[^}]*scroll-snap-stop: always;/,
+  );
+  assert.match(liveApp, /video\.setAttribute\("controlslist", "nofullscreen noremoteplayback nodownload"\)/);
+  assert.match(liveApp, /video\.setAttribute\("disablepictureinpicture", ""\)/);
   assert.match(liveApp, /data-toggle-profile-tv-playback aria-label="Pause TV video">\$\{modalVideoPlaybackIcon\(false\)\}/);
   assert.match(liveApp, /data-toggle-profile-tv-sound aria-label="Turn TV video sound off">\$\{modalVideoSoundIcon\(false\)\}/);
-  assert.match(liveApp, /let swipeStartY = null;[\s\S]*?clientY[\s\S]*?Math\.abs\(distance\) < 50\) return;[\s\S]*?showRelativeProfileTvVideo/);
-  assert.match(liveApp, /stage\.addEventListener\("wheel"[\s\S]*?event\.deltaY[\s\S]*?showRelativeProfileTvVideo\(event\.deltaY > 0 \? 1 : -1\)/);
+  assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?Math\.round\(stage\.scrollTop \/ stage\.clientHeight\)[\s\S]*?renderProfileTvViewerItem\(index, \{ scroll: false \}\)/);
+  assert.match(liveApp, /function renderProfileTvViewerSlides[\s\S]*?profile-tv-viewer-slide[\s\S]*?stage\.appendChild\(slide\)/);
   assert.match(
     liveApp,
     /async function requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
@@ -65,10 +74,10 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
   assert.match(
     soundControls,
-    /function toggleProfileTvSound\(\) \{[\s\S]*?video\.muted = !video\.muted;[\s\S]*?syncProfileTvSoundControl\(\);[\s\S]*?\n    \}/,
+    /function toggleProfileTvSound\(\) \{[\s\S]*?profileTvViewerMuted = !video\.muted;[\s\S]*?viewerVideo\.muted = profileTvViewerMuted;[\s\S]*?syncProfileTvSoundControl\(\);[\s\S]*?\n    \}/,
   );
   assert.match(viewerFactory, /target\.closest\("\[data-toggle-profile-tv-sound\]"\)[\s\S]*?toggleProfileTvSound\(\)/);
-  assert.match(viewerFactory, /stage\.addEventListener\("touchstart"[\s\S]*?stage\.addEventListener\("touchmove"[\s\S]*?stage\.addEventListener\("touchend"/);
+  assert.match(viewerFactory, /stage\.addEventListener\("scroll"[\s\S]*?requestAnimationFrame/);
   assert.doesNotMatch(
     soundControls,
     /function syncProfileTvSoundControl\(\) \{[\s\S]*?function toggleProfileTvSound\(\)[\s\S]*?if \(button\)/,

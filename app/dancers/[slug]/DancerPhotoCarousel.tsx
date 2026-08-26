@@ -2,10 +2,6 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import type {
-  PointerEvent as ReactPointerEvent,
-  WheelEvent as ReactWheelEvent,
-} from "react";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 
@@ -48,17 +44,6 @@ type ProfileMedia = PhotoMedia | VideoMedia;
 type MediaTab = ProfileMedia["kind"];
 type MediaViewer = { kind: MediaTab; index: number };
 
-type SwipeGesture = {
-  pointerId: number | null;
-  startX: number;
-  startY: number;
-  vertical: boolean;
-  cancelled: boolean;
-};
-
-const SWIPE_DISTANCE_PX = 44;
-const TRACKPAD_LOCK_MS = 320;
-
 export function DancerPhotoCarousel({
   photos,
   videos = [],
@@ -93,13 +78,13 @@ export function DancerPhotoCarousel({
   });
   const [inlineMuted, setInlineMuted] = useVideoSoundPreference();
   const [shareStatus, setShareStatus] = useState("");
-  const gesture = useRef<SwipeGesture>(emptyGesture());
-  const trackpadLockedUntil = useRef(0);
   const deepLinkHandled = useRef(false);
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const viewerRoot = useRef<HTMLDivElement | null>(null);
+  const viewerFeed = useRef<HTMLDivElement | null>(null);
   const viewerOwnsFullscreen = useRef(false);
   const viewerTrigger = useRef<HTMLButtonElement | null>(null);
+  const pendingViewerIndex = useRef(0);
   const lazyLoadSentinel = useRef<HTMLDivElement | null>(null);
   const tabGroupId = useId();
   const activeItems: ProfileMedia[] =
@@ -116,11 +101,6 @@ export function DancerPhotoCarousel({
     ? Math.min(Math.max(viewer.index, 0), Math.max(0, viewerItems.length - 1))
     : 0;
   const activeViewerItem = viewerItems[viewerIndex];
-  const adjacentViewerItems = viewer
-    ? [viewerItems[viewerIndex - 1], viewerItems[viewerIndex + 1]].filter(
-        (item): item is ProfileMedia => Boolean(item),
-      )
-    : [];
   const viewerKind = viewer?.kind;
   const activeTabId = `${tabGroupId}-${activeTab}-tab`;
   const panelId = `${tabGroupId}-panel`;
@@ -140,6 +120,7 @@ export function DancerPhotoCarousel({
       ? Math.min(Math.max(requestedIndex, 0), requestedItems.length - 1)
       : 0;
     deepLinkHandled.current = true;
+    pendingViewerIndex.current = index;
     setActiveTab(requestedKind);
     setViewer({ kind: requestedKind, index });
   }, [photoMedia, videoMedia]);
@@ -192,12 +173,31 @@ export function DancerPhotoCarousel({
     if (!viewerKind) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const focusFrame = window.requestAnimationFrame(() => closeButton.current?.focus());
+    const focusFrame = window.requestAnimationFrame(() => {
+      const feed = viewerFeed.current;
+      if (feed) feed.scrollTop = pendingViewerIndex.current * feed.clientHeight;
+      closeButton.current?.focus();
+    });
     return () => {
       window.cancelAnimationFrame(focusFrame);
       document.body.style.overflow = previousOverflow;
     };
   }, [viewerKind]);
+
+  useEffect(() => {
+    if (!viewerKind) return;
+    const feed = viewerFeed.current;
+    if (!feed) return;
+    const videos = [...feed.querySelectorAll<HTMLVideoElement>("video")];
+    videos.forEach((video, index) => {
+      video.muted = inlineMuted;
+      if (index === viewerIndex && viewerKind === "video") {
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+      }
+    });
+  }, [inlineMuted, viewerIndex, viewerKind]);
 
   useEffect(() => {
     if (!viewerKind) return;
@@ -217,12 +217,17 @@ export function DancerPhotoCarousel({
       if (event.key !== previousKey && event.key !== nextKey) return;
       event.preventDefault();
       const direction = event.key === nextKey ? 1 : -1;
+      const feed = viewerFeed.current;
+      if (!feed) return;
+      const currentIndex = Math.round(feed.scrollTop / Math.max(1, feed.clientHeight));
+      const nextIndex = Math.min(Math.max(currentIndex + direction, 0), itemCount - 1);
+      if (nextIndex === currentIndex) return;
       setShareStatus("");
-      setViewer((current) => {
-        if (!current) return current;
-        const nextIndex = current.index + direction;
-        if (nextIndex < 0 || nextIndex >= itemCount) return current;
-        return { ...current, index: nextIndex };
+      feed.scrollTo({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        top: nextIndex * feed.clientHeight,
       });
     };
     document.addEventListener("keydown", onKeyDown);
@@ -235,6 +240,7 @@ export function DancerPhotoCarousel({
     trigger: HTMLButtonElement,
   ) {
     viewerTrigger.current = trigger;
+    pendingViewerIndex.current = index;
     setShareStatus("");
     flushSync(() => setViewer({ kind, index }));
     void requestViewerFullscreen();
@@ -332,78 +338,34 @@ export function DancerPhotoCarousel({
   }
 
   function showRelativeViewerItem(direction: -1 | 1) {
+    const feed = viewerFeed.current;
+    if (!feed) return;
+    const nextIndex = Math.min(
+      Math.max(viewerIndex + direction, 0),
+      Math.max(0, viewerItems.length - 1),
+    );
+    if (nextIndex === viewerIndex) return;
     setShareStatus("");
-    setViewer((current) => {
-      if (!current) return current;
-      const items = current.kind === "photo" ? photoMedia : videoMedia;
-      const nextIndex = current.index + direction;
-      if (nextIndex < 0 || nextIndex >= items.length) return current;
-      return { ...current, index: nextIndex };
+    feed.scrollTo({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      top: nextIndex * feed.clientHeight,
     });
   }
 
-  function resetGesture() {
-    gesture.current = emptyGesture();
-  }
-
-  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (
-      !event.isPrimary ||
-      (event.pointerType === "mouse" && event.button !== 0) ||
-      (event.target as HTMLElement).closest("button")
-    ) {
-      return;
-    }
-    gesture.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      vertical: false,
-      cancelled: false,
-    };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  }
-
-  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    const current = gesture.current;
-    if (current.pointerId !== event.pointerId || current.cancelled) return;
-    const distanceX = event.clientX - current.startX;
-    const distanceY = event.clientY - current.startY;
-    if (Math.abs(distanceX) < 10 && Math.abs(distanceY) < 10) return;
-    if (Math.abs(distanceX) >= Math.abs(distanceY)) {
-      current.cancelled = true;
-      return;
-    }
-    current.vertical = true;
-    event.preventDefault();
-  }
-
-  function handlePointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
-    const current = gesture.current;
-    if (current.pointerId !== event.pointerId) return;
-    const distanceX = event.clientX - current.startX;
-    const distanceY = event.clientY - current.startY;
-    const mediaSwipe =
-      current.vertical &&
-      Math.abs(distanceY) >= SWIPE_DISTANCE_PX &&
-      Math.abs(distanceY) > Math.abs(distanceX) * 1.2;
-    if (!current.cancelled && mediaSwipe) {
-      event.preventDefault();
-      showRelativeViewerItem(distanceY < 0 ? 1 : -1);
-    }
-    resetGesture();
-  }
-
-  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    if (viewerItems.length < 2) return;
-    const primaryDelta = event.deltaY;
-    const crossDelta = event.deltaX;
-    if (Math.abs(primaryDelta) < 18 || Math.abs(primaryDelta) <= Math.abs(crossDelta)) return;
-    event.preventDefault();
-    const now = Date.now();
-    if (now < trackpadLockedUntil.current) return;
-    trackpadLockedUntil.current = now + TRACKPAD_LOCK_MS;
-    showRelativeViewerItem(primaryDelta > 0 ? 1 : -1);
+  function handleViewerScroll() {
+    const feed = viewerFeed.current;
+    if (!feed || feed.clientHeight <= 0) return;
+    const nextIndex = Math.min(
+      Math.max(Math.round(feed.scrollTop / feed.clientHeight), 0),
+      Math.max(0, viewerItems.length - 1),
+    );
+    setViewer((current) => {
+      if (!current || current.index === nextIndex) return current;
+      return { ...current, index: nextIndex };
+    });
+    setShareStatus("");
   }
 
   return (
@@ -542,45 +504,50 @@ export function DancerPhotoCarousel({
           </button>
           <div
             className="profile-media-viewer-stage"
-            data-profile-media-swipe-surface
-            onPointerCancel={resetGesture}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerEnd}
-            onWheel={handleWheel}
+            data-profile-media-snap-feed
+            onScroll={handleViewerScroll}
+            ref={viewerFeed}
           >
-            {activeViewerItem.kind === "photo" ? (
-              <img
-                alt={`${stageName} photo ${viewerIndex + 1} of ${viewerItems.length}`}
-                decoding="async"
-                draggable={false}
-                height={activeViewerItem.imageHeight || undefined}
-                key={activeViewerItem.id}
-                sizes="100vw"
-                src={activeViewerItem.imageUrl}
-                srcSet={activeViewerItem.imageSrcSet || undefined}
-                width={activeViewerItem.imageWidth || undefined}
-              />
-            ) : (
-              <video
-                aria-label={`${stageName} video ${viewerIndex + 1} of ${viewerItems.length}`}
-                autoPlay
-                controls
-                controlsList="nofullscreen noremoteplayback nodownload"
-                disablePictureInPicture
-                key={activeViewerItem.id}
-                loop
-                muted={inlineMuted}
-                onVolumeChange={(event) => {
-                  if (event.currentTarget.muted !== inlineMuted) {
-                    setInlineMuted(event.currentTarget.muted);
-                  }
-                }}
-                playsInline
-                preload="auto"
-                src={activeViewerItem.videoUrl}
-              />
-            )}
+            {viewerItems.map((item, index) => (
+              <section
+                aria-label={`${stageName} ${item.kind} ${index + 1} of ${viewerItems.length}`}
+                className="profile-media-viewer-slide"
+                data-profile-media-viewer-index={index}
+                key={`${item.kind}-viewer-${item.id}`}
+              >
+                {item.kind === "photo" ? (
+                  <img
+                    alt={`${stageName} photo ${index + 1} of ${viewerItems.length}`}
+                    decoding={index === viewerIndex ? "sync" : "async"}
+                    draggable={false}
+                    height={item.imageHeight || undefined}
+                    loading={Math.abs(index - viewerIndex) <= 1 ? "eager" : "lazy"}
+                    sizes="100vw"
+                    src={item.imageUrl}
+                    srcSet={item.imageSrcSet || undefined}
+                    width={item.imageWidth || undefined}
+                  />
+                ) : (
+                  <video
+                    aria-label={`${stageName} video ${index + 1} of ${viewerItems.length}`}
+                    controls
+                    controlsList="nofullscreen noremoteplayback nodownload"
+                    disablePictureInPicture
+                    loop
+                    muted={inlineMuted}
+                    onVolumeChange={(event) => {
+                      if (event.currentTarget.muted !== inlineMuted) {
+                        setInlineMuted(event.currentTarget.muted);
+                      }
+                    }}
+                    playsInline
+                    poster={item.posterUrl || undefined}
+                    preload={Math.abs(index - viewerIndex) <= 1 ? "auto" : "metadata"}
+                    src={item.videoUrl}
+                  />
+                )}
+              </section>
+            ))}
             <button
               aria-label={`Previous ${viewer.kind}`}
               className="profile-media-viewer-previous"
@@ -605,7 +572,7 @@ export function DancerPhotoCarousel({
               <div className="profile-media-viewer-copy">
                 <strong>{stageName}</strong>
                 <span>
-                  {viewerStatus} · Swipe up or down · Video {viewerIndex + 1} of {viewerItems.length}
+                  {viewerStatus} · Scroll up or down · Video {viewerIndex + 1} of {viewerItems.length}
                 </span>
               </div>
             ) : null}
@@ -624,23 +591,6 @@ export function DancerPhotoCarousel({
               </span>
             </div>
           </div>
-          {adjacentViewerItems.length ? (
-            <div aria-hidden="true" className="profile-media-viewer-preload">
-              {adjacentViewerItems.map((item) =>
-                item.kind === "photo" ? (
-                  <img alt="" key={`preload-photo-${item.id}`} src={item.imageUrl} />
-                ) : (
-                  <video
-                    key={`preload-video-${item.id}`}
-                    muted
-                    playsInline
-                    preload="metadata"
-                    src={item.videoUrl}
-                  />
-                ),
-              )}
-            </div>
-          ) : null}
         </div>
       ) : null}
     </section>
@@ -679,14 +629,4 @@ function clearMediaDeepLink() {
   url.searchParams.delete("media");
   url.searchParams.delete("mediaIndex");
   window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
-}
-
-function emptyGesture(): SwipeGesture {
-  return {
-    pointerId: null,
-    startX: 0,
-    startY: 0,
-    vertical: false,
-    cancelled: false,
-  };
 }

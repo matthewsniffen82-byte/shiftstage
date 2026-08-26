@@ -270,7 +270,8 @@ test("profile videos stay passive and duration-free in the grid, then open the c
   assert.doesNotMatch(liveApp, /<span class="profile-media-thumb-duration"/);
   assert.match(liveApp, /function profileVideoThumbMarkup\(item, index, total, profileName\)[\s\S]*?aria-label="Open \$\{escapeHtml\(profileName\)\} profile video \$\{index \+ 1\} of \$\{total\} full screen, \$\{escapeHtml\(scheduleLabel\)\}"/);
   assert.match(profileCarousel, /openViewer\(item\.kind, index, event\.currentTarget\)/);
-  assert.match(profileCarousel, /autoPlay[\s\S]*?controls[\s\S]*?controlsList="nofullscreen noremoteplayback nodownload"/);
+  assert.match(profileCarousel, /\{viewerItems\.map\(\(item, index\) => \([\s\S]*?controls[\s\S]*?controlsList="nofullscreen noremoteplayback nodownload"/);
+  assert.match(profileCarousel, /index === viewerIndex[\s\S]*?void video\.play\(\)[\s\S]*?video\.pause\(\)/);
   assert.match(profileCarousel, /DANCER_PROFILE_MEDIA_PAGE_SIZE/);
   assert.match(profileCarousel, /new IntersectionObserver/);
   assert.match(profileCarousel, /data-profile-media-lazy-sentinel/);

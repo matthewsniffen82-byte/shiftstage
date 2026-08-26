@@ -29055,18 +29055,43 @@
     }
 
     .profile-photo-viewer-image {
-      background-color: #050507;
-      background-position: center center !important;
-      background-repeat: no-repeat !important;
-      background-size: cover !important;
       border: 0;
       border-radius: 0;
       box-shadow: none;
       height: 100vh;
       height: 100dvh;
       width: 100vw;
-      overscroll-behavior: none;
-      touch-action: none;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+      touch-action: pan-y;
+    }
+
+    .profile-photo-viewer-image::-webkit-scrollbar {
+      display: none;
+    }
+
+    .profile-photo-viewer-slide {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+      background: #050507;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+
+    .profile-photo-viewer-slide-image {
+      width: 100%;
+      height: 100%;
+      background-color: #050507;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      background-size: cover !important;
     }
 
     .profile-photo-viewer-close {
@@ -33814,8 +33839,10 @@
         .profile-tv-viewer { position: fixed; z-index: 1200; inset: 0; display: grid; place-items: center; padding: 0; overscroll-behavior: none; touch-action: none; background: rgba(0,0,0,.96); backdrop-filter: blur(18px); }
         .profile-tv-viewer[hidden] { display: none; }
         .profile-tv-viewer-shell { position: relative; width: 100%; max-width: none; height: 100%; min-height: 0; display: block; overflow: hidden; border: 0; border-radius: 0; background: #000; box-shadow: none; overscroll-behavior: none; touch-action: none; }
-        .profile-tv-viewer-stage { position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; }
-        .profile-tv-viewer-video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: cover; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
+        .profile-tv-viewer-stage { position: relative; width: 100%; height: 100%; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scroll-behavior: smooth; scroll-snap-type: y mandatory; scrollbar-width: none; touch-action: pan-y; }
+        .profile-tv-viewer-stage::-webkit-scrollbar { display: none; }
+        .profile-tv-viewer-slide { position: relative; width: 100%; height: 100%; min-height: 100%; max-height: 100%; overflow: hidden; background: #000; scroll-snap-align: start; scroll-snap-stop: always; }
+        .profile-tv-viewer-video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: cover; background: #000; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
         .profile-tv-viewer-close { position: absolute; z-index: 3; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.72); font-size: 28px; line-height: 1; cursor: pointer; }
         .profile-tv-viewer-previous,
         .profile-tv-viewer-next {
@@ -33862,7 +33889,7 @@
         .profile-tv-viewer-state-control .profile-modal-media-control-icon { width: 20px; height: 20px; }
         .profile-tv-viewer-status { position: absolute; right: 78px; bottom: max(6px, env(safe-area-inset-bottom)); left: max(16px, env(safe-area-inset-left)); min-height: 14px; margin: 0; color: #a7f3d0; font-size: 10px; font-weight: 800; text-shadow: 0 1px 5px #000; }
         .profile-modal .modal-image { touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; -webkit-user-select: none; }
-        .profile-photo-viewer-image { touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
+        .profile-photo-viewer-image { touch-action: pan-y; overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
         .profile-modal .modal-image { cursor: grab; }
         .profile-modal .modal-image.is-swiping,
         .profile-photo-viewer-image.is-swiping { cursor: grabbing; }
@@ -37242,7 +37269,7 @@
         #profileBackdrop .modal-image.has-custom-photo,
         #profileBackdrop .profile-modal-avatar.has-photo,
         #profileBackdrop .gallery .thumb .portrait.has-custom-photo,
-        .profile-photo-viewer-image {
+        .profile-photo-viewer-slide-image {
           filter: brightness(1.14) contrast(1.03) !important;
           -webkit-filter: brightness(1.14) contrast(1.03) !important;
           mix-blend-mode: normal !important;
@@ -40947,7 +40974,7 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
           <div class="profile-photo-viewer-stage">
-            <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="img" tabindex="0" aria-label="Selected profile photo. Swipe up or down to change photos."></div>
+            <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="group" tabindex="0" aria-label="Dancer photos. Scroll up or down to change photos."></div>
             <button class="profile-photo-viewer-previous" id="profilePhotoViewerPrevious" type="button" aria-label="Previous dancer photo">↑</button>
             <button class="profile-photo-viewer-next" id="profilePhotoViewerNext" type="button" aria-label="Next dancer photo">↓</button>
           </div>
@@ -41110,6 +41137,7 @@
     if (profilePhotoViewer) document.body.appendChild(profilePhotoViewer);
     let profilePhotoViewerReturnTarget = null;
     let profilePhotoViewerOwnsFullscreen = false;
+    let profilePhotoViewerScrollFrame = 0;
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
     const modalVerified = document.getElementById("modalVerified");
@@ -50798,7 +50826,7 @@
       );
       profilePhotoViewerImage?.setAttribute(
         "aria-label",
-        `Selected profile photo ${activePhotoIndex + 1} of ${totalPhotos}. Swipe up or down to change photos.`
+        `Dancer photos. Photo ${activePhotoIndex + 1} of ${totalPhotos}. Scroll up or down to change photos.`
       );
       syncModalMediaNavigation("photo", activePhotoIndex, totalPhotos);
     }
@@ -50922,25 +50950,64 @@
     }
 
     function syncProfilePhotoViewerImage() {
-      if (!profilePhotoViewerImage || !modalImage) return;
-      const photoStyle = getComputedStyle(modalImage);
-      profilePhotoViewerImage.style.backgroundImage = photoStyle.backgroundImage;
-      profilePhotoViewerImage.style.backgroundPosition = photoStyle.backgroundPosition;
-      profilePhotoViewerImage.style.backgroundRepeat = photoStyle.backgroundRepeat;
-      profilePhotoViewerImage.style.backgroundSize = photoStyle.backgroundSize;
-      syncProfilePhotoViewerPosition();
+      if (!profilePhotoViewerImage || profilePhotoViewer?.hidden) return;
+      const activePhotoIndex = Math.max(0, Number(modalImage?.dataset.activePhotoIndex || 0));
+      scrollProfilePhotoViewerTo(activePhotoIndex);
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
     }
 
-    function syncProfilePhotoViewerPosition() {
-      const photoThumbs = [...modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])")];
-      const activePhoto = photoThumbs.find((thumb) => thumb.classList.contains("active"));
-      const activePhotoIndex = Math.max(0, Number(activePhoto?.dataset.profilePhotoIndex || 0));
-      const totalPhotos = Math.max(1, modalGallery.profilePhotoItems?.length || photoThumbs.length);
+    function renderProfilePhotoViewerSlides() {
+      if (!profilePhotoViewerImage) return 0;
+      const items = Array.isArray(modalGallery.profilePhotoItems) ? modalGallery.profilePhotoItems : [];
       const profileName = modalName.textContent.trim() || "Dancer";
+      profilePhotoViewerImage.innerHTML = "";
+      items.forEach((item, index) => {
+        const slide = document.createElement("section");
+        slide.className = "profile-photo-viewer-slide";
+        slide.dataset.profilePhotoViewerIndex = String(index);
+        slide.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
+        const image = document.createElement("div");
+        image.className = `profile-photo-viewer-slide-image ${item.photoClass || ""}${item.photoUrl ? " has-custom-photo" : ""}`;
+        image.setAttribute("role", "img");
+        image.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
+        const safeUrl = safeCssUrl(item.photoUrl);
+        if (safeUrl) image.style.backgroundImage = `url('${safeUrl}')`;
+        slide.appendChild(image);
+        profilePhotoViewerImage.appendChild(slide);
+      });
+      return items.length;
+    }
+
+    function syncProfilePhotoViewerPosition(requestedIndex) {
+      const items = Array.isArray(modalGallery.profilePhotoItems) ? modalGallery.profilePhotoItems : [];
+      const totalPhotos = items.length;
+      if (!totalPhotos) return 0;
+      const activePhotoIndex = Math.min(Math.max(Number(requestedIndex) || 0, 0), totalPhotos - 1);
+      const profileName = modalName.textContent.trim() || "Dancer";
+      profilePhotoViewer.dataset.profilePhotoIndex = String(activePhotoIndex);
       profilePhotoViewerPrevious.disabled = activePhotoIndex <= 0;
       profilePhotoViewerNext.disabled = activePhotoIndex >= totalPhotos - 1;
-      profilePhotoViewer?.setAttribute("aria-label", `${profileName} profile photo`);
+      profilePhotoViewer.setAttribute("aria-label", `${profileName} profile photos, photo ${activePhotoIndex + 1} of ${totalPhotos}`);
+
+      while (Number(modalGallery.profileVisiblePhotoCount || 0) <= activePhotoIndex && profileMediaHasMore("photo")) {
+        appendNextProfileMediaBatch("photo", { skipObserve: true });
+      }
+      const item = items[activePhotoIndex];
+      const photoThumb = [...modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])")]
+        .find((thumb) => Number(thumb.dataset.profilePhotoIndex) === Number(item?.index));
+      if (photoThumb && !photoThumb.classList.contains("active")) selectModalMediaThumb(photoThumb);
+      if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
+      return activePhotoIndex;
+    }
+
+    function scrollProfilePhotoViewerTo(requestedIndex, options = {}) {
+      if (!profilePhotoViewerImage) return false;
+      const activePhotoIndex = syncProfilePhotoViewerPosition(requestedIndex);
+      profilePhotoViewerImage.scrollTo({
+        behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        top: activePhotoIndex * profilePhotoViewerImage.clientHeight
+      });
+      return true;
     }
 
     function openPhotoViewerFromElement(element) {
@@ -50948,19 +51015,19 @@
       profilePhotoViewerReturnTarget = document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-      const photoStyle = getComputedStyle(element);
-      profilePhotoViewerImage.style.backgroundImage = photoStyle.backgroundImage;
-      profilePhotoViewerImage.style.backgroundPosition = photoStyle.backgroundPosition;
-      profilePhotoViewerImage.style.backgroundRepeat = photoStyle.backgroundRepeat;
-      profilePhotoViewerImage.style.backgroundSize = photoStyle.backgroundSize;
+      const initialIndex = Math.max(0, Number(modalImage?.dataset.activePhotoIndex || 0));
+      if (!renderProfilePhotoViewerSlides()) return;
       profilePhotoViewer.style.zIndex = "1600";
       profilePhotoViewer.hidden = false;
       document.body.classList.add("profile-photo-viewer-open");
       syncOverlayScrollLock();
-      syncProfilePhotoViewerPosition();
+      syncProfilePhotoViewerPosition(initialIndex);
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
       void requestProfilePhotoViewerFullscreen(profilePhotoViewer);
-      profilePhotoViewerImage.focus({ preventScroll: true });
+      window.requestAnimationFrame(() => {
+        scrollProfilePhotoViewerTo(initialIndex, { instant: true });
+        profilePhotoViewerImage.focus({ preventScroll: true });
+      });
     }
 
     function closeProfilePhotoViewer() {
@@ -50968,6 +51035,9 @@
       exitProfilePhotoViewerFullscreen();
       profilePhotoViewer.hidden = true;
       profilePhotoViewer.style.removeProperty("z-index");
+      window.cancelAnimationFrame(profilePhotoViewerScrollFrame);
+      profilePhotoViewerScrollFrame = 0;
+      profilePhotoViewerImage.innerHTML = "";
       document.body.classList.remove("profile-photo-viewer-open");
       syncOverlayScrollLock();
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
@@ -50979,7 +51049,9 @@
     async function shareProfilePhoto() {
       const photoThumbs = [...modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])")];
       const activePhoto = photoThumbs.find((thumb) => thumb.classList.contains("active"));
-      const activePhotoIndex = Math.max(0, Number(activePhoto?.dataset.profilePhotoIndex || 0));
+      const activePhotoIndex = profilePhotoViewer && !profilePhotoViewer.hidden
+        ? Math.max(0, Number(profilePhotoViewer.dataset.profilePhotoIndex || 0))
+        : Math.max(0, Number(activePhoto?.dataset.profilePhotoIndex || 0));
       const profileName = modalName.textContent.trim() || "Dancer";
       const url = profilePhotoShareUrl(profileName, citySelect.value || selectedCity(), activePhotoIndex);
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
@@ -51002,6 +51074,13 @@
     }
 
     function moveModalPhoto(direction, options = {}) {
+      if (options.syncViewer && profilePhotoViewer && !profilePhotoViewer.hidden) {
+        const currentIndex = Math.max(0, Number(profilePhotoViewer.dataset.profilePhotoIndex || 0));
+        const totalPhotos = modalGallery.profilePhotoItems?.length || 0;
+        const nextIndex = currentIndex + direction;
+        if (nextIndex < 0 || nextIndex >= totalPhotos) return false;
+        return scrollProfilePhotoViewerTo(nextIndex);
+      }
       const selector = options.syncViewer || modalGallery.dataset.mediaTab !== "video"
         ? ".thumb:not([data-profile-tv-index])"
         : ".thumb[data-profile-tv-index]";
@@ -51790,11 +51869,9 @@
         <div class="profile-tv-viewer" id="profileTvViewer" role="dialog" aria-modal="true" aria-label="MyDancr TV video" aria-hidden="true" hidden>
           <div class="profile-tv-viewer-shell">
             <button class="profile-tv-viewer-close" type="button" data-close-profile-tv aria-label="Close full-screen video">×</button>
-            <div class="profile-tv-viewer-stage" id="profileTvViewerStage">
-              <video class="profile-tv-viewer-video" id="profileTvViewerVideo" controlslist="nofullscreen noremoteplayback nodownload" disablepictureinpicture loop playsinline preload="auto"></video>
-              <button class="profile-tv-viewer-previous" type="button" data-previous-profile-tv aria-label="Previous dancer video">↑</button>
-              <button class="profile-tv-viewer-next" type="button" data-next-profile-tv aria-label="Next dancer video">↓</button>
-            </div>
+            <div class="profile-tv-viewer-stage" id="profileTvViewerStage" aria-label="Dancer videos. Scroll up or down to change videos."></div>
+            <button class="profile-tv-viewer-previous" type="button" data-previous-profile-tv aria-label="Previous dancer video">↑</button>
+            <button class="profile-tv-viewer-next" type="button" data-next-profile-tv aria-label="Next dancer video">↓</button>
             <div class="profile-tv-viewer-footer">
               <div class="profile-tv-viewer-copy">
                 <strong id="profileTvViewerName"></strong>
@@ -51812,10 +51889,7 @@
       `);
       overlay = document.getElementById("profileTvViewer");
       const stage = document.getElementById("profileTvViewerStage");
-      const video = document.getElementById("profileTvViewerVideo");
-      let swipeStartY = null;
-      let swipeHandled = false;
-      let wheelLockedUntil = 0;
+      let scrollFrame = 0;
 
       overlay.addEventListener("click", (event) => {
         const target = event.target instanceof Element ? event.target : null;
@@ -51845,45 +51919,22 @@
         }
       });
 
-      stage.addEventListener("touchstart", (event) => {
-        swipeHandled = false;
-        if (event.touches.length !== 1) {
-          swipeStartY = null;
-          return;
-        }
-        swipeStartY = event.changedTouches[0]?.clientY ?? null;
+      stage.addEventListener("scroll", () => {
+        window.cancelAnimationFrame(scrollFrame);
+        scrollFrame = window.requestAnimationFrame(() => {
+          scrollFrame = 0;
+          if (overlay.hidden || stage.clientHeight <= 0) return;
+          const index = Math.round(stage.scrollTop / stage.clientHeight);
+          renderProfileTvViewerItem(index, { scroll: false });
+        });
       }, { passive: true });
-      stage.addEventListener("touchmove", (event) => {
-        if (event.touches.length !== 1) swipeStartY = null;
-      }, { passive: true });
-      stage.addEventListener("touchend", (event) => {
-        if (swipeStartY === null) return;
-        const distance = (event.changedTouches[0]?.clientY ?? 0) - swipeStartY;
-        swipeStartY = null;
-        if (Math.abs(distance) < 50) return;
-        swipeHandled = true;
-        showRelativeProfileTvVideo(distance < 0 ? 1 : -1);
-      }, { passive: true });
-      stage.addEventListener("wheel", (event) => {
-        if (Math.abs(event.deltaY) < 18 || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-        event.preventDefault();
-        const now = Date.now();
-        if (now < wheelLockedUntil) return;
-        wheelLockedUntil = now + 320;
-        showRelativeProfileTvVideo(event.deltaY > 0 ? 1 : -1);
-      }, { passive: false });
-
-      video.addEventListener("click", () => {
-        if (swipeHandled) {
-          swipeHandled = false;
-          return;
-        }
-        toggleProfileTvPlayback();
+      stage.addEventListener("click", (event) => {
+        if (event.target instanceof HTMLVideoElement) toggleProfileTvPlayback();
       });
-      video.addEventListener("dblclick", (event) => event.preventDefault());
-      video.addEventListener("play", syncProfileTvPlaybackControl);
-      video.addEventListener("pause", syncProfileTvPlaybackControl);
-      video.addEventListener("volumechange", syncProfileTvSoundControl);
+      stage.addEventListener("dblclick", (event) => event.preventDefault());
+      stage.addEventListener("play", syncProfileTvPlaybackControl, true);
+      stage.addEventListener("pause", syncProfileTvPlaybackControl, true);
+      stage.addEventListener("volumechange", syncProfileTvSoundControl, true);
       ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
         document.addEventListener(eventName, () => {
           if (profileTvFullscreenElement() !== overlay) profileTvViewerOwnsFullscreen = false;
@@ -51905,31 +51956,80 @@
       return `${minutes}:${String(totalSeconds % 60).padStart(2, "0")}`;
     }
 
-    function renderProfileTvViewerItem(index) {
+    function renderProfileTvViewerSlides(overlay, videos, profileName) {
+      const stage = document.getElementById("profileTvViewerStage");
+      if (!stage) return;
+      stage.innerHTML = "";
+      videos.forEach((item, index) => {
+        const slide = document.createElement("section");
+        slide.className = "profile-tv-viewer-slide";
+        slide.dataset.profileTvViewerIndex = String(index);
+        slide.setAttribute("aria-label", `${profileName} video ${index + 1} of ${videos.length}`);
+        const video = document.createElement("video");
+        video.className = "profile-tv-viewer-video";
+        video.src = item.videoUrl;
+        video.loop = true;
+        video.muted = profileTvViewerMuted;
+        video.defaultMuted = profileTvViewerMuted;
+        video.playsInline = true;
+        video.preload = Math.abs(index - Number(overlay.dataset.videoIndex || 0)) <= 1 ? "auto" : "metadata";
+        video.setAttribute("controlslist", "nofullscreen noremoteplayback nodownload");
+        video.setAttribute("disablepictureinpicture", "");
+        const posterUrl = profileVideoPosterUrl(item);
+        if (posterUrl) video.poster = posterUrl;
+        slide.appendChild(video);
+        stage.appendChild(slide);
+      });
+    }
+
+    function activeProfileTvViewerVideo() {
+      const overlay = document.getElementById("profileTvViewer");
+      const index = Math.max(0, Number(overlay?.dataset.videoIndex || 0));
+      return overlay?.querySelector(`[data-profile-tv-viewer-index="${index}"] .profile-tv-viewer-video`) || null;
+    }
+
+    function renderProfileTvViewerItem(index, options = {}) {
       const overlay = document.getElementById("profileTvViewer");
       const videos = overlay?.profileTvVideos || [];
-      const item = videos[index];
+      const nextIndex = Math.min(Math.max(Number(index) || 0, 0), Math.max(0, videos.length - 1));
+      const item = videos[nextIndex];
       if (!overlay || !item) return;
-      const video = document.getElementById("profileTvViewerVideo");
+      const stage = document.getElementById("profileTvViewerStage");
+      const currentIndex = Number(overlay.dataset.videoIndex || 0);
+      if (currentIndex === nextIndex && options.scroll === false) return;
       const scheduleLabel = profileTvScheduleLabel(item);
       overlay.dataset.videoId = String(item.id || "");
-      overlay.dataset.videoIndex = String(index);
-      document.getElementById("profileTvViewerSchedule").textContent = `${scheduleLabel} · Swipe up or down · Video ${index + 1} of ${videos.length}`;
+      overlay.dataset.videoIndex = String(nextIndex);
+      document.getElementById("profileTvViewerSchedule").textContent = `${scheduleLabel} · Scroll up or down · Video ${nextIndex + 1} of ${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
-      video.pause();
-      video.src = item.videoUrl;
-      video.muted = profileTvViewerMuted;
-      video.load();
-      preloadAdjacentProfileTvVideos(overlay, videos, index);
-      document.querySelector("[data-previous-profile-tv]").disabled = index <= 0;
-      document.querySelector("[data-next-profile-tv]").disabled = index >= videos.length - 1;
+      const viewerVideos = [...overlay.querySelectorAll(".profile-tv-viewer-video")];
+      viewerVideos.forEach((video, videoIndex) => {
+        if (videoIndex === nextIndex) {
+          video.id = "profileTvViewerVideo";
+        } else {
+          video.removeAttribute("id");
+        }
+        video.muted = profileTvViewerMuted;
+        if (videoIndex !== nextIndex) video.pause();
+      });
+      if (options.scroll !== false && stage) {
+        stage.scrollTo({
+          behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+          top: nextIndex * stage.clientHeight
+        });
+      }
+      const video = activeProfileTvViewerVideo();
+      document.querySelector("[data-previous-profile-tv]").disabled = nextIndex <= 0;
+      document.querySelector("[data-next-profile-tv]").disabled = nextIndex >= videos.length - 1;
       document.body.classList.add("profile-tv-viewer-open");
       syncProfileTvPlaybackControl();
       syncProfileTvSoundControl();
-      void video.play().catch(() => {
-        syncProfileTvPlaybackControl();
-        document.getElementById("profileTvViewerStatus").textContent = "Tap Play to start this video.";
-      });
+      if (video) {
+        void video.play().catch(() => {
+          syncProfileTvPlaybackControl();
+          document.getElementById("profileTvViewerStatus").textContent = "Tap Play to start this video.";
+        });
+      }
     }
 
     function showRelativeProfileTvVideo(direction) {
@@ -51938,40 +52038,24 @@
       renderProfileTvViewerItem(currentIndex + direction);
     }
 
-    function preloadAdjacentProfileTvVideos(overlay, videos, index) {
-      let holder = overlay.querySelector("[data-profile-tv-preload]");
-      if (!holder) {
-        holder = document.createElement("div");
-        holder.dataset.profileTvPreload = "";
-        holder.hidden = true;
-        overlay.appendChild(holder);
-      }
-      holder.innerHTML = "";
-      [videos[index - 1], videos[index + 1]].filter(Boolean).forEach((item) => {
-        const preload = document.createElement("video");
-        preload.src = item.videoUrl;
-        preload.muted = true;
-        preload.playsInline = true;
-        preload.preload = "metadata";
-        holder.appendChild(preload);
-      });
-    }
-
     function openProfileTvViewer(item, profileName, videos) {
       const overlay = profileTvViewer();
       overlay.profileTvVideos = Array.isArray(videos) ? videos : [item];
+      const initialIndex = Math.max(0, overlay.profileTvVideos.findIndex((videoItem) => videoItem.id === item.id));
       overlay.profileTvReturnTarget = document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+      overlay.dataset.videoIndex = String(initialIndex);
       overlay.dataset.profileName = String(profileName || "Dancer");
       overlay.setAttribute("aria-label", `${profileName || "Dancer"} MyDancr TV video`);
       document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
+      renderProfileTvViewerSlides(overlay, overlay.profileTvVideos, profileName || "Dancer");
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       document.body.classList.add("profile-tv-viewer-open");
       void requestProfileTvViewerFullscreen(overlay);
-      renderProfileTvViewerItem(Math.max(0, overlay.profileTvVideos.findIndex((videoItem) => videoItem.id === item.id)));
+      window.requestAnimationFrame(() => renderProfileTvViewerItem(initialIndex, { instant: true }));
       overlay.querySelector("[data-close-profile-tv]")?.focus({ preventScroll: true });
       syncOverlayScrollLock();
     }
@@ -51980,26 +52064,22 @@
       const overlay = document.getElementById("profileTvViewer");
       if (!overlay || overlay.hidden) return;
       const returnTarget = overlay.profileTvReturnTarget;
-      const video = document.getElementById("profileTvViewerVideo");
-      video?.pause();
+      const stage = document.getElementById("profileTvViewerStage");
+      stage?.querySelectorAll("video").forEach((video) => video.pause());
       exitProfileTvViewerFullscreen();
       overlay.classList.remove("show");
       overlay.hidden = true;
       overlay.setAttribute("aria-hidden", "true");
       overlay.profileTvVideos = [];
-      overlay.querySelector("[data-profile-tv-preload]")?.remove();
       overlay.profileTvReturnTarget = null;
-      if (video) {
-        video.removeAttribute("src");
-        video.load();
-      }
+      if (stage) stage.innerHTML = "";
       document.body.classList.remove("profile-tv-viewer-open");
       syncOverlayScrollLock();
       if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
     }
 
     function syncProfileTvPlaybackControl() {
-      const video = document.getElementById("profileTvViewerVideo");
+      const video = activeProfileTvViewerVideo();
       const button = document.querySelector("[data-toggle-profile-tv-playback]");
       if (!button) return;
       const paused = Boolean(video?.paused);
@@ -52008,7 +52088,7 @@
     }
 
     function syncProfileTvSoundControl() {
-      const video = document.getElementById("profileTvViewerVideo");
+      const video = activeProfileTvViewerVideo();
       const button = document.querySelector("[data-toggle-profile-tv-sound]");
       if (!button) return;
       const muted = Boolean(video?.muted);
@@ -52018,14 +52098,17 @@
     }
 
     function toggleProfileTvSound() {
-      const video = document.getElementById("profileTvViewerVideo");
+      const video = activeProfileTvViewerVideo();
       if (!video) return;
-      video.muted = !video.muted;
+      profileTvViewerMuted = !video.muted;
+      document.querySelectorAll(".profile-tv-viewer-video").forEach((viewerVideo) => {
+        viewerVideo.muted = profileTvViewerMuted;
+      });
       syncProfileTvSoundControl();
     }
 
     function toggleProfileTvPlayback() {
-      const video = document.getElementById("profileTvViewerVideo");
+      const video = activeProfileTvViewerVideo();
       if (!video) return;
       if (video.paused) {
         void video.play().catch(() => {
@@ -60195,7 +60278,15 @@
     });
 
     bindHorizontalProfilePhotoSwipe(modalImage);
-    bindHorizontalProfilePhotoSwipe(profilePhotoViewerImage, { syncViewer: true, vertical: true });
+    profilePhotoViewerImage?.addEventListener("scroll", () => {
+      window.cancelAnimationFrame(profilePhotoViewerScrollFrame);
+      profilePhotoViewerScrollFrame = window.requestAnimationFrame(() => {
+        profilePhotoViewerScrollFrame = 0;
+        if (profilePhotoViewer.hidden || profilePhotoViewerImage.clientHeight <= 0) return;
+        const activePhotoIndex = Math.round(profilePhotoViewerImage.scrollTop / profilePhotoViewerImage.clientHeight);
+        syncProfilePhotoViewerPosition(activePhotoIndex);
+      });
+    }, { passive: true });
 
     function openSelectedModalMediaViewer() {
       if (modalImage.dataset.activeMediaType !== "video") return false;

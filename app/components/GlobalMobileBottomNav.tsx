@@ -29,6 +29,7 @@ const MOBILE_SWIPE_BLOCKED_SELECTOR = [
   ".tv-strip-list",
   ".tv-video-viewer",
   ".profile-photo-viewer",
+  ".profile-media-viewer",
   ".profile-tv-strip-list",
   ".profile-tv-viewer",
 ].join(", ");

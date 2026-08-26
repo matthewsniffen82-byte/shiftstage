@@ -377,10 +377,11 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?className = "modal-media-video-preview"/);
   assert.match(liveApp, /video\.autoplay = true[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/);
   assert.doesNotMatch(liveApp, /modal-media-video-play/);
-  assert.match(liveApp, /id="profileTvViewer"[\s\S]*?role="dialog"[\s\S]*?profile-tv-viewer-video[\s\S]*?controlslist="nofullscreen noremoteplayback nodownload"[\s\S]*?loop playsinline/);
+  assert.match(liveApp, /id="profileTvViewer"[\s\S]*?role="dialog"[\s\S]*?id="profileTvViewerStage"[\s\S]*?Dancer videos\. Scroll up or down/);
+  assert.match(liveApp, /video\.className = "profile-tv-viewer-video"[\s\S]*?video\.loop = true[\s\S]*?video\.playsInline = true[\s\S]*?video\.setAttribute\("controlslist", "nofullscreen noremoteplayback nodownload"\)/);
   assert.match(liveApp, /data-previous-profile-tv[\s\S]*?data-next-profile-tv[\s\S]*?class="profile-tv-viewer-actions"/);
-  assert.match(liveApp, /touchstart[\s\S]*?clientY[\s\S]*?touchend[\s\S]*?showRelativeProfileTvVideo\(distance < 0 \? 1 : -1\)/);
-  assert.match(liveApp, /function renderProfileTvViewerItem\(index\)[\s\S]*?profileTvVideos[\s\S]*?preloadAdjacentProfileTvVideos/);
+  assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?Math\.round\(stage\.scrollTop \/ stage\.clientHeight\)[\s\S]*?renderProfileTvViewerItem\(index, \{ scroll: false \}\)/);
+  assert.match(liveApp, /function renderProfileTvViewerItem\(index, options = \{\}\)[\s\S]*?profileTvVideos[\s\S]*?stage\.scrollTo/);
   assert.doesNotMatch(liveApp, /profile-tv-viewer-gallery|profileTvViewerGallery/);
   assert.match(liveApp, /requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?requestFullscreen\(\{ navigationUI: "hide" \}\)/);
   assert.match(liveApp, /async function shareProfileTvVideo\(\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(videoId\)\}`[\s\S]*?navigator\.share[\s\S]*?copyText\(url, "Video link copied"\)/);

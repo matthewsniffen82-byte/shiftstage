@@ -591,9 +591,11 @@ function PublicProfileStyles() {
       .profile-media-viewer { position: fixed; z-index: 1600; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; color: #fff; background: rgba(0,0,0,.98); overscroll-behavior: none; touch-action: none; }
       .profile-media-viewer:fullscreen, .profile-media-viewer:-webkit-full-screen { width: 100vw; height: 100vh; height: 100dvh; border: 0; background: #000; }
       .profile-media-viewer-close { position: fixed; z-index: 3; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 50px; height: 50px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: rgba(10,10,14,.78); font-size: 30px; cursor: pointer; backdrop-filter: blur(12px); }
-      .profile-media-viewer-stage { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; }
-      .profile-media-viewer-stage > img, .profile-media-viewer-stage > video { width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: #000; user-select: none; }
-      .profile-media-viewer-stage > img { filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
+      .profile-media-viewer-stage { position: relative; width: 100%; height: 100%; min-height: 0; display: block; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scroll-snap-type: y mandatory; scroll-behavior: smooth; scrollbar-width: none; touch-action: pan-y; }
+      .profile-media-viewer-stage::-webkit-scrollbar { display: none; }
+      .profile-media-viewer-slide { position: relative; width: 100%; height: 100%; min-height: 100%; max-height: 100%; display: grid; place-items: center; overflow: hidden; background: #000; scroll-snap-align: start; scroll-snap-stop: always; }
+      .profile-media-viewer-slide > img, .profile-media-viewer-slide > video { width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: #000; user-select: none; }
+      .profile-media-viewer-slide > img { filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
       .profile-media-viewer-previous, .profile-media-viewer-next { position: absolute; top: 50%; width: 46px; height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(5,5,8,.58); font-size: 34px; transform: translateY(-50%); cursor: pointer; backdrop-filter: blur(8px); }
       .profile-media-viewer-previous { left: 12px; }
       .profile-media-viewer-next { right: 12px; }
@@ -608,10 +610,10 @@ function PublicProfileStyles() {
       .profile-media-viewer-hint { color: #aaa0b8; font-size: 11px; font-weight: 800; }
       .profile-media-viewer { display: block; }
       .profile-media-viewer .profile-media-viewer-stage { width: 100%; height: 100%; }
-      .profile-media-viewer.is-photo .profile-media-viewer-stage > img { object-fit: cover; }
-      .profile-media-viewer.is-video .profile-media-viewer-stage > video { object-fit: cover; }
+      .profile-media-viewer.is-photo .profile-media-viewer-slide > img { object-fit: cover; }
+      .profile-media-viewer.is-video .profile-media-viewer-slide > video { object-fit: cover; }
       .profile-media-viewer .profile-media-viewer-previous,
-      .profile-media-viewer .profile-media-viewer-next { z-index: 2; left: auto; right: max(12px, env(safe-area-inset-right)); width: 48px; height: 48px; border-color: rgba(255,255,255,.2); background: rgba(8,8,12,.68); font-size: 22px; transform: none; }
+      .profile-media-viewer .profile-media-viewer-next { position: fixed; z-index: 2; left: auto; right: max(12px, env(safe-area-inset-right)); width: 48px; height: 48px; border-color: rgba(255,255,255,.2); background: rgba(8,8,12,.68); font-size: 22px; transform: none; }
       .profile-media-viewer .profile-media-viewer-previous { top: 34%; }
       .profile-media-viewer .profile-media-viewer-next { top: calc(34% + 58px); }
       .profile-media-viewer .profile-media-viewer-footer { position: absolute; z-index: 2; inset: 0; min-height: 0; display: block; padding: 0; border: 0; background: linear-gradient(0deg, rgba(0,0,0,.82) 0, rgba(0,0,0,.34) 14%, transparent 38%); pointer-events: none; }
