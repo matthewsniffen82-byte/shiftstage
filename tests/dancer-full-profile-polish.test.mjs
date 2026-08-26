@@ -421,7 +421,7 @@ test("inactive profile Club Deals keep a neutral placeholder", () => {
   assert.match(dealMarkup, /profile-club-deal-tile is-inactive/);
   assert.match(dealMarkup, /aria-label="Inactive Club Deal"/);
   assert.match(dealMarkup, /<span class="profile-club-deal-action-copy"><strong>Inactive<\/strong><\/span>/);
-  assert.match(dealMarkup, /Tap your phone at the cashier/);
+  assert.match(dealMarkup, /Tap How to use for instructions/);
   assert.match(liveApp, /#profileBackdrop #profileModal \.modal-body \{[\s\S]*?padding-bottom: 0 !important;/);
   assert.match(liveApp, /\.profile-club-deal-tile\.is-inactive \.profile-club-deal-qr-button \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?place-items: center !important;/);
 });

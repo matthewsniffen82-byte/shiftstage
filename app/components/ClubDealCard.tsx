@@ -325,7 +325,7 @@ export function ClubDealCard({
           <span className="club-deal-launcher-copy">
             <small>Active Club Deal</small>
             <strong>{activeDeal.dealTitle}</strong>
-            <em>Tap your phone at the cashier</em>
+            <em>{offerDeals.length > 1 ? "Tap to choose an offer and view instructions" : "Tap How to use for instructions"}</em>
           </span>
           <strong className="club-deal-launcher-action">{actionLabel}</strong>
         </button>

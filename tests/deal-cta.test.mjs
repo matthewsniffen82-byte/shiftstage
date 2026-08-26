@@ -62,7 +62,7 @@ test("venue pages, venue cards, dancer profiles, and TV expose real active Club 
   assert.match(venuePage, /getVenueProfile/);
   assert.match(venuePage, /permanentRedirect/);
   assert.match(venueDirectory, /permanentRedirect/);
-  assert.match(dancerPage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use deal"\}/);
+  assert.match(dancerPage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "How to use"\}/);
   assert.match(tvSource, /deals: venueDeals/);
   assert.match(tvSource, /dealAttributionToken/);
   assert.match(tvClient, /ClubDealCard/);

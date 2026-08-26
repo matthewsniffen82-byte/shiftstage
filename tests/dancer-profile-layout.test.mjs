@@ -167,7 +167,7 @@ test("every profile combines tonight's shift and Club Deal while only Working No
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
   );
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "Use deal"\}/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "How to use"\}/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /attributionTokens=\{dealAttributionTokens\}/);
@@ -213,12 +213,12 @@ test("active full-profile Club Deals render a compact cashier-tap action and use
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
   assert.match(activeDealMarkup, /class="profile-club-deal-label">Active Club Deal<\/strong>/);
   assert.match(activeDealMarkup, /class="profile-club-deal-title">\$\{escapeHtml\(dealTitle\)\}<\/b>/);
-  assert.match(activeDealMarkup, /Tap your phone at the cashier/);
+  assert.match(activeDealMarkup, /Tap How to use for instructions/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?View all \$\{offers\.length\}[\s\S]*?Club Deals[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?Use deal[\s\S]*?Tap at cashier/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?View all \$\{offers\.length\}[\s\S]*?Club Deals[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?How to use[\s\S]*?View steps/,
   );
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
   assert.doesNotMatch(liveApp, /profile-club-deal-count/);

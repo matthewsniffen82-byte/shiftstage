@@ -46868,8 +46868,8 @@
         if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
-        qrButton.setAttribute("aria-label", `Prepare the ${config.venueName || "active"} Club Deal for a cashier tap`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>Use deal</strong><small>Tap at cashier</small></span>`;
+        qrButton.setAttribute("aria-label", `Open instructions for the ${config.venueName || "active"} Club Deal`);
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>How to use</strong><small>View steps</small></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({
@@ -47654,7 +47654,7 @@
             <div class="profile-club-deal-copy">
               <strong class="profile-club-deal-label">Active Club Deal</strong>
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
-              <small>Tap your phone at the cashier</small>
+              <small>${offerCount > 1 ? "Tap to choose an offer and view instructions" : "Tap How to use for instructions"}</small>
             </div>
             <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
