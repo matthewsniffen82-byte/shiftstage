@@ -295,6 +295,22 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
+    /#profileBackdrop #profileModal #modalCity \{[\s\S]*?transform: translateY\(3px\) !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?transform: translateY\(3px\) !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#profileBackdrop #profileModal #modalClose \{[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?linear-gradient\(145deg,[\s\S]*?backdrop-filter: blur\(12px\) saturate\(120%\) !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#profileBackdrop #profileModal #modalClose \.icon \{[\s\S]*?width: 15px !important;[\s\S]*?height: 15px !important;[\s\S]*?stroke-width: 1\.85 !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
     /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?align-self: stretch !important;/,
   );
   assert.match(
