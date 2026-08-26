@@ -38157,7 +38157,7 @@
           inset: 0;
           content: "";
           pointer-events: none;
-          border: 2px solid rgba(77, 236, 157, .52);
+          border: 2px solid rgba(77, 236, 157, .32);
           border-radius: inherit;
           box-shadow: none;
         }
@@ -38165,19 +38165,18 @@
         #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-now {
           border-color: transparent;
           background:
-            radial-gradient(circle at 94% 0%, rgba(77, 236, 157, .08), transparent 13rem),
+            radial-gradient(circle at 94% 0%, rgba(77, 236, 157, .045), transparent 13rem),
             rgba(7, 14, 13, .94);
         }
 
         #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.has-club-deal {
           border-color: transparent;
-          box-shadow:
-            0 12px 34px rgba(0, 0, 0, .3),
-            0 0 20px rgba(77, 236, 157, .08);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
         }
 
         #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.has-club-deal::before {
-          border-color: rgba(77, 236, 157, .64);
+          border-color: rgba(77, 236, 157, .38);
+          box-shadow: none;
         }
 
         #profileBackdrop #profileModal .profile-tonight-card > .profile-schedule-card {
@@ -38208,8 +38207,9 @@
         #profileBackdrop #profileModal .profile-tonight-travel-actions {
           display: grid;
           grid-template-columns: minmax(0, 1fr);
-          gap: 4px;
-          padding: 0 8px 4px;
+          gap: 6px;
+          padding: 5px 8px 8px;
+          border-top: 1px solid rgba(255, 255, 255, .06);
         }
 
         #profileBackdrop #profileModal .profile-tonight-travel-actions.is-working-now {
@@ -38219,13 +38219,28 @@
         #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) {
           grid-column: auto !important;
           width: 100% !important;
-          height: 36px !important;
-          min-height: 36px !important;
-          max-height: 36px !important;
+          height: 44px !important;
+          min-height: 44px !important;
+          max-height: 44px !important;
           margin: 0 !important;
-          padding: 3px 7px !important;
-          border-radius: 9px !important;
-          font-size: 10px !important;
+          padding: 4px 10px !important;
+          border: 1px solid rgba(255, 255, 255, .14) !important;
+          border-radius: 10px !important;
+          color: rgba(248, 250, 252, .94) !important;
+          background: rgba(255, 255, 255, .055) !important;
+          background-image: none !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05) !important;
+          font-size: 11px !important;
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-primary-directions {
+          border-color: rgba(142, 226, 248, .24) !important;
+          background: rgba(142, 226, 248, .07) !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) :is(svg, .action-icon, span) {
+          opacity: 1 !important;
         }
 
         #profileBackdrop #profileModal .profile-tonight-deal {
@@ -38441,7 +38456,7 @@
           width: auto !important;
           padding: 0 2px !important;
           color: #4dec9d !important;
-          font-size: 11px !important;
+          font-size: 9px !important;
           line-height: 1.05 !important;
           text-transform: uppercase !important;
           white-space: nowrap !important;
@@ -38465,6 +38480,11 @@
         #profileBackdrop .working-now-tile .profile-venue-destination.is-live > .venue-dot {
           width: 28px !important;
           height: 28px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live .profile-venue-name {
+          font-size: clamp(15px, 4.2vw, 18px) !important;
+          letter-spacing: -.015em !important;
         }
 
         /* Keep profile-level actions separate from the venue travel controls
@@ -38725,8 +38745,18 @@
         }
 
         #profileBackdrop .profile-club-deal-title {
-          font-size: 14px !important;
+          font-size: 15px !important;
           line-height: 1.15 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-context {
+          overflow: hidden !important;
+          color: rgba(221,255,238,.72) !important;
+          font-size: 9px !important;
+          font-weight: 750 !important;
+          line-height: 1.15 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
         }
 
         #profileBackdrop .profile-club-deal-copy small {
@@ -38749,6 +38779,14 @@
         #profileBackdrop .profile-club-deal-qr-button .club-deal-qr-symbol {
           width: 22px !important;
           height: 22px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-active .profile-club-deal-qr-button {
+          border-color: rgba(77,236,157,.38) !important;
+          color: #eafff4 !important;
+          background: rgba(77,236,157,.085) !important;
+          background-image: none !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
         }
 
         #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-title {
@@ -47670,6 +47708,7 @@
             <div class="profile-club-deal-copy">
               <strong class="profile-club-deal-label">Active Club Deal</strong>
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
+              <small class="profile-club-deal-context">Available tonight at ${escapeHtml(venueName)}</small>
             </div>
             <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
@@ -51153,8 +51192,8 @@
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
           <section class="${tonightClasses}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
-            ${travelActionsMarkup}
             <div class="profile-tonight-deal">${dealMarkup}</div>
+            ${travelActionsMarkup}
           </section>
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           ${profileActivityMetricsMarkup(profile, city)}

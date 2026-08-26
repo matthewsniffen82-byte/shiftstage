@@ -218,23 +218,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </div>
         )}
 
-        {actionVenue ? (
-          <div
-            aria-label="Venue travel actions"
-            className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming"}`}
-          >
-            <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
-            {activeShift ? (
-              <UberRideButton
-                compact
-                dancerId={profile.id}
-                source="dancer_profile"
-                venue={{ ...actionVenue, isActive: true, isPublic: true }}
-              />
-            ) : null}
-          </div>
-        ) : null}
-
         <div className="profile-tonight-deal">
         {activeShift && activeDeal ? (
           <div
@@ -252,6 +235,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
               attributionTokens={dealAttributionTokens}
               dancerNote={dancerAttributionEligible}
               presentation="launcher"
+              contextLabel={`Available tonight at ${activeShift.venueName}`}
               ctaLabel={activeDeals.length > 1 ? `View all ${activeDeals.length}` : "How to use"}
               sectionId="club-deal"
             />
@@ -280,6 +264,23 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </div>
         )}
         </div>
+
+        {actionVenue ? (
+          <div
+            aria-label="Venue travel actions"
+            className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming"}`}
+          >
+            <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
+            {activeShift ? (
+              <UberRideButton
+                compact
+                dancerId={profile.id}
+                source="dancer_profile"
+                venue={{ ...actionVenue, isActive: true, isPublic: true }}
+              />
+            ) : null}
+          </div>
+        ) : null}
         </section>
 
         <DancerProfileActions
@@ -529,11 +530,11 @@ function PublicProfileStyles() {
       .profile-working-destination { min-height: 44px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 3px 7px; border-radius: 10px; color: inherit; text-decoration: none; }
       .profile-working-copy { min-width: 0; display: grid; gap: 1px; }
       .profile-working-copy small { color: #8f849c; font-size: 8px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
-      .profile-working-copy strong { overflow: hidden; color: #fff; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-working-copy strong { overflow: hidden; color: #fff; font-size: 15px; letter-spacing: -.01em; text-overflow: ellipsis; white-space: nowrap; }
       .profile-working-copy em { overflow: hidden; color: #9c91aa; font-size: 9px; font-style: normal; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
       .profile-working-cue { color: #7eeaff; font-size: 26px; line-height: 1; }
       .profile-live-state, .eyebrow { width: fit-content; color: #94e5ff; font-size: 10px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
-      .profile-live-state { padding: 6px 9px; border: 1px solid rgba(77,236,157,.48); border-radius: 999px; color: #b7ffd8; background: rgba(77,236,157,.1); letter-spacing: .08em; white-space: nowrap; }
+      .profile-live-state { padding: 5px 8px; border: 1px solid rgba(77,236,157,.42); border-radius: 999px; color: #b7ffd8; background: rgba(77,236,157,.08); font-size: 9px; letter-spacing: .08em; white-space: nowrap; }
       h2 { margin: 0; font-size: clamp(22px, 5vw, 32px); line-height: 1.05; }
       p { margin: 0; color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .profile-active-deal { display: grid; justify-items: stretch; margin-top: 2px; }
@@ -552,7 +553,11 @@ function PublicProfileStyles() {
       .club-deal-copy p, .club-deal-copy small { color: #ded6e8; font-size: 11px; font-weight: 750; line-height: 1.4; }
       .club-deal-action { display: grid; justify-items: end; gap: 8px; }
       .club-deal-action > button, .venue-qr-launcher { min-height: 44px; padding: 0 15px; border: 1px solid rgba(126,234,255,.4); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
-      .profile-active-deal .club-deal-launcher { width: 100%; border-color: rgba(77,236,157,.74); background: linear-gradient(135deg, rgba(7,92,77,.72), rgba(8,72,44,.78)); box-shadow: 0 0 22px rgba(77,236,157,.14); }
+      .profile-active-deal .club-deal-launcher { width: 100%; border-color: rgba(77,236,157,.58); background: linear-gradient(135deg, rgba(7,78,65,.62), rgba(7,56,36,.7)); box-shadow: 0 0 18px rgba(77,236,157,.1); }
+      .profile-active-deal .club-deal-launcher-copy { gap: 2px; }
+      .profile-active-deal .club-deal-launcher-copy > strong { font-size: 15px; }
+      .profile-active-deal .club-deal-launcher-context { overflow: hidden; color: rgba(221,255,238,.72); font-size: 9px; font-style: normal; font-weight: 750; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-active-deal .club-deal-launcher-action { min-height: 32px; border: 1px solid rgba(77,236,157,.38); color: #eafff4; background: rgba(77,236,157,.09); font-size: 10px; }
       .deal-qr-frame { display: grid; justify-items: center; gap: 6px; }
       .deal-qr-frame img { width: 116px; aspect-ratio: 1; border-radius: 10px; background: #fff; }
       .deal-qr-frame span, .club-deal-action em { color: #9fefff; font-size: 10px; font-style: normal; }
@@ -637,14 +642,16 @@ function PublicProfileStyles() {
       @keyframes profile-media-loading { to { transform: translateX(-50%) rotate(360deg); } }
       .profile-schedule-section { display: grid; gap: 14px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
       .profile-tonight-card { margin-top: 8px; overflow: hidden; border: 1px solid rgba(139,92,246,.24); border-radius: 15px; background: linear-gradient(145deg, rgba(13,11,21,.94), rgba(6,7,11,.98)); box-shadow: 0 12px 32px rgba(0,0,0,.26); }
-      .profile-tonight-card.is-now { border-color: rgba(77,236,157,.28); background: radial-gradient(circle at 94% 0%, rgba(77,236,157,.08), transparent 13rem), rgba(7,14,13,.94); }
-      .profile-tonight-card.has-club-deal { border-color: rgba(77,236,157,.46); box-shadow: inset 0 0 0 1px rgba(77,236,157,.38), 0 12px 34px rgba(0,0,0,.3), 0 0 20px rgba(77,236,157,.08); }
+      .profile-tonight-card.is-now { border-color: rgba(77,236,157,.24); background: radial-gradient(circle at 94% 0%, rgba(77,236,157,.045), transparent 13rem), rgba(7,14,13,.94); }
+      .profile-tonight-card.has-club-deal { border-color: rgba(77,236,157,.3); box-shadow: 0 12px 32px rgba(0,0,0,.3); }
       .profile-tonight-card > .profile-shift-card { width: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .profile-tonight-card > .profile-schedule-section { padding: 14px; }
       .profile-tonight-card > .profile-schedule-empty { padding: 9px 10px; }
-      .profile-tonight-travel-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 0 10px 4px; }
+      .profile-tonight-travel-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 5px 10px 8px; border-top: 1px solid rgba(255,255,255,.06); }
       .profile-tonight-travel-actions.is-working-now { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 36px !important; min-height: 36px !important; max-height: 36px !important; padding-inline: 7px !important; border-radius: 9px !important; font-size: 10px !important; }
+      .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 44px !important; min-height: 44px !important; max-height: 44px !important; padding-inline: 10px !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 10px !important; color: rgba(248,250,252,.94) !important; background: rgba(255,255,255,.055) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important; font-size: 11px !important; opacity: 1 !important; }
+      .profile-tonight-travel-actions > .profile-directions-button { border-color: rgba(142,226,248,.24) !important; background: rgba(142,226,248,.07) !important; }
+      .profile-tonight-travel-actions > :is(a, button) :is(svg, span) { opacity: 1 !important; }
       .profile-tonight-deal { padding: 5px; border-top: 1px solid rgba(255,255,255,.08); }
       .profile-tonight-card.has-club-deal .profile-tonight-deal { border-top-color: rgba(77,236,157,.18); }
       .profile-tonight-deal .profile-active-deal { width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }

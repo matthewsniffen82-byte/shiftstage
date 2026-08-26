@@ -143,7 +143,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(
     aesthetic,
-    /Tonight travel controls stay secondary and compact[\s\S]*?\.profile-tonight-travel-actions > :is\(a, button\) \{[\s\S]*?height: 36px !important;[\s\S]*?min-height: 36px !important;[\s\S]*?max-height: 36px !important;[\s\S]*?font-size: 10px !important;/,
+    /Tonight travel controls stay secondary and compact[\s\S]*?\.profile-tonight-travel-actions > :is\(a, button\) \{[\s\S]*?height: 44px !important;[\s\S]*?min-height: 44px !important;[\s\S]*?max-height: 44px !important;[\s\S]*?font-size: 11px !important;/,
   );
   assert.match(
     aesthetic,

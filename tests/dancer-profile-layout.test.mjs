@@ -157,6 +157,7 @@ test("every profile combines tonight's shift and Club Deal while only Working No
   assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
+  assert.match(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
   assert.match(profilePage, /className="profile-active-deal is-inactive"[\s\S]*?aria-label="Inactive Club Deal"/);
   assert.match(profilePage, /\) : \(\s*<div[\s\S]*?activeShift \? "No active deal" : "No active club deal"[\s\S]*?\)\}/);
   assert.match(profilePage, /Deals activate after a verified check-in at \$\{actionShift\.venueName\}\./);
@@ -187,21 +188,22 @@ test("every profile combines tonight's shift and Club Deal while only Working No
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
   assert.match(liveApp, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?shiftsMarkup\(profile, status,[\s\S]*?profile-tonight-deal/);
-  assert.match(liveApp, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?\$\{travelActionsMarkup\}[\s\S]*?profile-tonight-deal/);
+  assert.match(liveApp, /<section class="\$\{tonightClasses\}" aria-label="Tonight">[\s\S]*?profile-tonight-deal[\s\S]*?\$\{travelActionsMarkup\}/);
   assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?\[directionsMarkup, rideMarkup\]\.filter\(Boolean\)[\s\S]*?profile-tonight-travel-actions/);
   assert.doesNotMatch(liveApp.match(/function liveProfileModalActionsMarkup[\s\S]*?async function refreshProfileGoingState/)?.[0] || "", /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);
   assert.match(liveApp, /modal-grid > \.profile-tonight-card[\s\S]*?border-radius: 15px;[\s\S]*?profile-tonight-deal[\s\S]*?border-top:/);
   assert.match(
     liveApp,
-    /profile-tonight-card\.is-now::before[\s\S]*?border: 2px solid rgba\(77, 236, 157, \.52\);[\s\S]*?box-shadow: none;/,
+    /profile-tonight-card\.is-now::before[\s\S]*?border: 2px solid rgba\(77, 236, 157, \.32\);[\s\S]*?box-shadow: none;/,
   );
+  assert.match(liveApp, /profile-tonight-card\.has-club-deal[\s\S]*?box-shadow: 0 12px 32px rgba\(0, 0, 0, \.3\)/);
   assert.match(
     liveApp,
     /profile-tonight-card\.is-now \{[\s\S]*?border-color: transparent;[\s\S]*?profile-tonight-card\.has-club-deal \{[\s\S]*?border-color: transparent;/,
   );
   assert.match(
     liveApp,
-    /profile-tonight-card\.is-now::before[\s\S]*?inset: 0;[\s\S]*?border-radius: inherit;[\s\S]*?profile-tonight-card\.has-club-deal::before[\s\S]*?border-color: rgba\(77, 236, 157, \.64\);/,
+    /profile-tonight-card\.is-now::before[\s\S]*?inset: 0;[\s\S]*?border-radius: inherit;[\s\S]*?profile-tonight-card\.has-club-deal::before[\s\S]*?border-color: rgba\(77, 236, 157, \.38\);/,
   );
 });
 
@@ -221,6 +223,7 @@ test("active full-profile Club Deals render a compact cashier-tap action and use
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
   assert.match(activeDealMarkup, /class="profile-club-deal-label">Active Club Deal<\/strong>/);
   assert.match(activeDealMarkup, /class="profile-club-deal-title">\$\{escapeHtml\(dealTitle\)\}<\/b>/);
+  assert.match(activeDealMarkup, /class="profile-club-deal-context">Available tonight at \$\{escapeHtml\(venueName\)\}<\/small>/);
   assert.doesNotMatch(activeDealMarkup, /Tap How to use for instructions|Tap to choose an offer and view instructions/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
@@ -242,6 +245,10 @@ test("active full-profile Club Deals render a compact cashier-tap action and use
   assert.match(
     liveApp,
     /#profileBackdrop \.profile-club-deal-action-copy strong \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 950;/,
+  );
+  assert.match(
+    liveApp,
+    /profile-tonight-travel-actions > :is\(a, button\)[\s\S]*?height: 44px !important;[\s\S]*?color: rgba\(248, 250, 252, \.94\) !important;/,
   );
 });
 

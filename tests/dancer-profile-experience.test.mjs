@@ -92,12 +92,14 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
   const scheduleIndex = profilePage.indexOf('className={`profile-tonight-card');
   const dealIndex = profilePage.indexOf('className="profile-tonight-deal"');
+  const travelIndex = profilePage.indexOf('aria-label="Venue travel actions"');
   const socialIndex = profilePage.indexOf('className="profile-social-section"');
 
   assert.ok(identityIndex > -1);
   assert.ok(scheduleIndex > identityIndex);
   assert.ok(dealIndex > scheduleIndex);
-  assert.ok(actionsIndex > dealIndex);
+  assert.ok(travelIndex > dealIndex);
+  assert.ok(actionsIndex > travelIndex);
   assert.ok(overviewIndex > actionsIndex);
   assert.ok(socialIndex > overviewIndex);
   assert.ok(mediaIndex > socialIndex);
@@ -113,6 +115,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.match(profilePage, /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/);
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
   assert.match(profilePage, /presentation="launcher"/);
+  assert.match(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
   assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "How to use"\}/);
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.doesNotMatch(profilePage, /import \{ VenueQrUnavailable \}|<VenueQrUnavailable/);

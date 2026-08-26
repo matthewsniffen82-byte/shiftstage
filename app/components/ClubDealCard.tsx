@@ -21,6 +21,7 @@ type ClubDealCardProps = {
   dancerNote?: boolean;
   compact?: boolean;
   presentation?: "card" | "launcher";
+  contextLabel?: string;
   ctaLabel?: string;
   stickyCta?: boolean;
   sectionId?: string;
@@ -38,6 +39,7 @@ export function ClubDealCard({
   dancerNote,
   compact,
   presentation = "card",
+  contextLabel,
   ctaLabel,
   stickyCta = false,
   sectionId,
@@ -325,6 +327,7 @@ export function ClubDealCard({
           <span className="club-deal-launcher-copy">
             <small>Active Club Deal</small>
             <strong>{activeDeal.dealTitle}</strong>
+            {contextLabel ? <em className="club-deal-launcher-context">{contextLabel}</em> : null}
           </span>
           <strong className="club-deal-launcher-action">{actionLabel}</strong>
         </button>
