@@ -627,6 +627,7 @@ function PublicProfileStyles() {
       .profile-media-viewer .profile-media-viewer-previous { top: 34%; }
       .profile-media-viewer .profile-media-viewer-next { top: calc(34% + 58px); }
       .profile-media-viewer .profile-media-viewer-footer { position: absolute; z-index: 2; inset: 0; min-height: 0; display: block; padding: 0; border: 0; background: linear-gradient(0deg, rgba(0,0,0,.82) 0, rgba(0,0,0,.34) 14%, transparent 38%); pointer-events: none; }
+      .profile-media-viewer.is-photo .profile-media-viewer-footer { background: transparent; }
       .profile-media-viewer .profile-media-viewer-copy { position: absolute; right: 82px; bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); left: max(18px, env(safe-area-inset-left)); gap: 4px; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
       .profile-media-viewer .profile-media-viewer-actions { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); min-width: 0; pointer-events: auto; }
       .profile-media-viewer .profile-media-viewer-share { width: 48px; min-width: 48px; min-height: 48px; flex-direction: column; gap: 2px; padding: 0; border-radius: 50%; font-size: 9px; }

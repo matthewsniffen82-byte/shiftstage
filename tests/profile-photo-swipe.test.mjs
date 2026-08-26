@@ -73,6 +73,7 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   assert.match(liveApp, /id="profilePhotoViewerNext"[^>]*aria-label="Next dancer photo"/);
   assert.doesNotMatch(liveApp, /profilePhotoScheduleLabel|Swipe up or down · Photo/);
   assert.match(liveApp, /\.profile-photo-viewer-image \{[\s\S]*?background-size: cover !important;/);
+  assert.match(liveApp, /\.profile-photo-viewer-footer \{[\s\S]*?background: transparent;/);
   assert.match(
     liveApp,
     /async function requestProfilePhotoViewerFullscreen\(overlay\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
@@ -119,6 +120,7 @@ test("the profile presents approved photos and dancer-only videos as separate th
     /\.profile-media-viewer-stage > img, \.profile-media-viewer-stage > video \{[^}]*object-fit: contain/,
   );
   assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-stage > img \{ object-fit: cover; \}/);
+  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-footer \{ background: transparent; \}/);
   assert.match(publicProfilePage, /<dt>Views today<\/dt>/);
   assert.match(liveApp, /<dt>Views today<\/dt>/);
   assert.doesNotMatch(`${publicProfilePage}\n${liveApp}`, /<dt>Notifications<\/dt>/);
