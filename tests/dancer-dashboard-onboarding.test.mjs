@@ -54,6 +54,10 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.match(dashboard, /className="dancer-onboarding-step-panel"/);
   assert.match(dashboard, /step\.id === "dancer-profile-media" \? \(/);
   assert.match(dashboard, /id="dancer-onboarding-profile-review"/);
+  assert.match(dashboard, /<h3>Review and submit profile<\/h3>/);
+  assert.match(dashboard, /buttonLabel="Review full profile"/);
+  assert.doesNotMatch(dashboard, /<article className="dancer-onboarding-preview" aria-label="Guest profile preview">/);
+  assert.doesNotMatch(dashboard, /className="dancer-onboarding-preview-card"/);
   assert.doesNotMatch(dashboard, /step\.id === "dancer-onboarding-preview"/);
   assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" \? venueVerificationContent : null/);
 });
@@ -388,7 +392,6 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /event\.key === "Escape"/);
   assert.match(dashboard, /event\.key !== "Tab"/);
   assert.match(dashboard, /overlayRef\.current\?\.querySelectorAll<HTMLElement>/);
-  assert.match(dashboard, /Avatar moderation is in progress/);
 });
 
 test("approved dancers edit their full guest view from inside Profile & media", () => {

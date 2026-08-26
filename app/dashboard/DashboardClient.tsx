@@ -3583,7 +3583,6 @@ function DancerProfilePreview({
 }
 
 function DancerOnboardingCommand({
-  draftIdentity,
   effectiveStatus,
   finance,
   isVenueApproved,
@@ -3592,7 +3591,6 @@ function DancerOnboardingCommand({
   profileMediaContent,
   venueVerificationContent,
 }: {
-  draftIdentity: DancerIdentityDraft;
   effectiveStatus: string;
   finance?: LoadState["finance"];
   isVenueApproved: boolean;
@@ -3670,9 +3668,6 @@ function DancerOnboardingCommand({
   ], [isVenueApproved, natsAccountStatus, payoutSkipped, payoutStepComplete, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
   const visibleExpandedStepId = expandedStepId || "";
-  const previewImage = avatarUrl || approvedPhotos[0]?.imageUrl || "";
-  const previewName = draftIdentity.stageName.trim() || persistedStageName || "Your stage name";
-  const previewCity = draftIdentity.city.trim() || persistedCity || "Choose your city";
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
@@ -3721,7 +3716,7 @@ function DancerOnboardingCommand({
     window.localStorage.setItem(storageKey, "dancer-profile-media");
     window.requestAnimationFrame(() => {
       document.getElementById("dancer-onboarding-profile-review")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.getElementById("dancer-onboarding-profile-review-button")?.focus({ preventScroll: true });
+      document.querySelector<HTMLButtonElement>("#dancer-onboarding-profile-review .dancer-onboarding-preview-open")?.focus({ preventScroll: true });
     });
   }
 
@@ -3856,41 +3851,30 @@ function DancerOnboardingCommand({
                       profileReady,
                     })}
                     <div className="dancer-onboarding-preview-workspace dancer-onboarding-profile-review" id="dancer-onboarding-profile-review">
-                    <article className="dancer-onboarding-preview" aria-label="Guest profile preview">
-                      <span className="eyebrow">Guest view</span>
-                      <div className="dancer-onboarding-preview-card">
-                        <span className="dancer-onboarding-preview-avatar">
-                          {previewImage ? <img src={previewImage} alt="" /> : previewName.slice(0, 1).toUpperCase()}
-                        </span>
-                        <span>
-                          <strong>{previewName}</strong>
-                          <small>{previewCity}</small>
-                        </span>
-                        <b>{submitted ? "Submitted" : profileReady ? "Ready" : "Draft"}</b>
+                      <div className="dancer-onboarding-review-action">
+                        <span className="eyebrow">Final review</span>
+                        <h3>Review and submit profile</h3>
+                        <p>Check the full profile guests will see, then continue to club verification.</p>
+                        <DancerProfilePreview
+                          buttonClassName="dancer-onboarding-preview-open"
+                          buttonLabel="Review full profile"
+                          profile={profile}
+                        />
                       </div>
-                      <p>{pendingAvatar ? "Avatar moderation is in progress." : avatarUrl ? "Avatar approved." : "Add a clear face avatar."} {approvedPhotos.length ? `${approvedPhotos.length} approved profile ${approvedPhotos.length === 1 ? "photo is" : "photos are"} ready to preview.` : "Add at least one moderated profile photo."}</p>
-                      <DancerProfilePreview
-                        buttonClassName="dancer-onboarding-preview-open"
-                        buttonLabel="Preview full profile"
-                        city={previewCity}
-                        name={previewName}
-                        profile={profile}
-                      />
-                    </article>
-                    {submitted ? (
-                      <div className="dancer-onboarding-complete-note" role="status">
-                        <strong>✓ Step 1 complete</strong>
-                        <span>Your profile is ready. Set up payouts now or later, then complete the dressing-room tap.</span>
-                      </div>
-                    ) : (
-                      <button className="dancer-onboarding-primary" id="dancer-onboarding-profile-review-button" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
-                        {isSubmitting ? "Preparing..." : "Continue to club verification"}
-                      </button>
-                    )}
-                    <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
-                      {status || "Review and submit your completed profile to open club verification."}
-                    </p>
-                  </div>
+                      {submitted ? (
+                        <div className="dancer-onboarding-complete-note" role="status">
+                          <strong>✓ Step 1 complete</strong>
+                          <span>Your profile is ready. Set up payouts now or later, then complete the dressing-room tap.</span>
+                        </div>
+                      ) : (
+                        <button className="dancer-onboarding-primary" id="dancer-onboarding-profile-review-button" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
+                          {isSubmitting ? "Preparing..." : "Continue to club verification"}
+                        </button>
+                      )}
+                      <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
+                        {status || "Review and submit your completed profile to open club verification."}
+                      </p>
+                    </div>
                   </>
                 ) : null}
                 {step.id === "dancer-onboarding-payouts" ? (
@@ -4294,7 +4278,6 @@ function DancerPanel({
       />
       {!isApproved ? (
         <DancerOnboardingCommand
-          draftIdentity={draftIdentity}
           effectiveStatus={effectiveStatus}
           finance={finance}
           isVenueApproved={isVenueApproved}
@@ -8607,7 +8590,9 @@ function DashboardStyles() {
       .dancer-step-one-footer.is-ready { border-color: rgba(76,223,166,.3); background: rgba(25,140,101,.07); }
       .dancer-onboarding-preview-workspace { display: grid; gap: 12px; }
       .dancer-onboarding-profile-review { margin-top: 12px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.09); scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 14px); }
-      .dancer-onboarding-preview { display: grid; gap: 11px; padding: 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #0d0d12; }
+      .dancer-onboarding-review-action { display: grid; gap: 9px; }
+      .dancer-onboarding-review-action h3 { color: #fff; font-size: 17px; }
+      .dancer-onboarding-review-action p { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.45; }
       .dancer-onboarding-complete-note { display: grid; gap: 4px; padding: 13px; border: 1px solid rgba(76,223,166,.28); border-radius: 12px; color: #70efbd; background: rgba(25,140,101,.09); }
       .dancer-onboarding-complete-note span { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
       .dancer-activation-confirmation { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: 52px minmax(0,1fr) 42px; align-items: start; gap: 14px; padding: 18px; border: 1px solid rgba(96,255,188,.28); border-radius: var(--mydancr-dashboard-radius); background: radial-gradient(circle at 0 0,rgba(42,205,137,.14),transparent 25rem),#0a0d0c; box-shadow: 0 18px 42px rgba(0,0,0,.32); }
@@ -8622,14 +8607,8 @@ function DashboardStyles() {
       .dancer-activation-confirmation > button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; color: rgba(255,255,255,.76); background: rgba(255,255,255,.055); cursor: pointer; }
       .dancer-activation-confirmation > button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
       @keyframes dancer-onboarding-panel-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-      .dancer-onboarding-preview-card { min-width: 0; display: grid; grid-template-columns: 62px minmax(0,1fr) auto; align-items: center; gap: 12px; }
-      .dancer-onboarding-preview-avatar, .dancer-avatar-preview { overflow: hidden; display: grid; place-items: center; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #17171d; font-weight: 950; }
-      .dancer-onboarding-preview-avatar { width: 58px; height: 58px; font-size: 22px; }
-      .dancer-onboarding-preview-avatar img, .dancer-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
-      .dancer-onboarding-preview-card > span:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
-      .dancer-onboarding-preview-card strong { overflow: hidden; color: #fff; font-size: 18px; text-overflow: ellipsis; white-space: nowrap; }
-      .dancer-onboarding-preview-card small, .dancer-onboarding-preview p { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
-      .dancer-onboarding-preview-card > b { color: #bfefff; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+      .dancer-avatar-preview { overflow: hidden; display: grid; place-items: center; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #17171d; font-weight: 950; }
+      .dancer-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
       .dancer-onboarding-preview-open { width: 100%; min-height: 46px; border: 1px solid rgba(126,234,255,.34); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.8), rgba(11,148,201,.58)); font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
       .dancer-onboarding-preview-open:disabled { opacity: .48; cursor: not-allowed; }
       .dancer-profile-preview-overlay { position: fixed; z-index: 1498; inset: var(--mydancr-preview-banner-offset,0px) 0 0; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-x: hidden; overflow-y: auto; overscroll-behavior-x: none; overscroll-behavior-y: contain; color: #f7f2ff; background: #050507; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent; }
