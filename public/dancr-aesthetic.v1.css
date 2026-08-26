@@ -9486,19 +9486,48 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed
     > .home-venue-discovery-slide {
-    --venue-primary-height: 64px;
-    --venue-secondary-height: 54px;
-    height: clamp(346px, 92vw, 372px) !important;
-    min-height: 346px !important;
-    max-height: 372px !important;
-    grid-template-rows: 104px minmax(100px, 1fr) 74px 68px !important;
+    --venue-primary-height: 56px;
+    --venue-secondary-height: 50px;
+    height: clamp(314px, 84vw, 338px) !important;
+    min-height: 314px !important;
+    max-height: 338px !important;
+    grid-template-rows: 88px minmax(100px, 1fr) 64px 62px !important;
+    border-color: rgba(226, 232, 240, 0.16) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     :is(.home-venue-discovery-art, .home-discovery-feed-shade) {
-    height: 104px !important;
-    min-height: 104px !important;
+    height: 88px !important;
+    min-height: 88px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-logo {
+    height: 76px !important;
+    max-height: 76px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-discovery-feed-copy {
+    padding: 6px 14px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-lineup-slot {
+    top: 10px !important;
+    right: 14px !important;
+    min-height: 30px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    :is(.home-venue-discovery-lineup-avatar, .home-venue-discovery-lineup-count) {
+    width: 30px !important;
+    height: 30px !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -9506,13 +9535,29 @@ html:is(
     .venue-card-primary-actions {
     grid-row: 3 !important;
     width: auto !important;
-    height: 74px !important;
-    min-height: 74px !important;
-    max-height: 74px !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
     margin: 0 12px !important;
-    padding: 5px 0 !important;
+    padding: 4px 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    isolation: isolate;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-primary-actions::before,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-primary-actions::after {
+    content: none !important;
+    display: none !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -9527,14 +9572,16 @@ html:is(
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 9px !important;
-    padding: 0 12px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    gap: 8px !important;
+    padding: 0 10px !important;
     border: 1px solid rgba(148, 163, 184, 0.22) !important;
-    border-radius: 19px !important;
+    border-radius: 17px !important;
     color: rgba(248, 250, 252, 0.94) !important;
     background: rgba(15, 17, 23, 0.78) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-    font-size: 16px !important;
+    font-size: 15px !important;
     font-weight: 750 !important;
     line-height: 1 !important;
     -webkit-backdrop-filter: blur(14px) saturate(1.06) !important;
@@ -9544,15 +9591,27 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-primary-actions > .venue-card-directions-action {
-    border-color: rgba(85, 199, 245, 0.34) !important;
-    background: linear-gradient(180deg, rgba(22, 34, 43, 0.86), rgba(12, 16, 22, 0.9)) !important;
+    border-color: rgba(85, 199, 245, 0.27) !important;
+    background: linear-gradient(180deg, rgba(19, 28, 35, 0.9), rgba(10, 13, 18, 0.94)) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-primary-actions > .venue-card-ride-action {
-    border-color: rgba(139, 92, 246, 0.38) !important;
-    background: linear-gradient(180deg, rgba(35, 28, 51, 0.86), rgba(15, 15, 24, 0.92)) !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+    background: linear-gradient(180deg, rgba(29, 24, 40, 0.9), rgba(12, 13, 20, 0.94)) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-primary-actions > .venue-card-directions-action .action-icon {
+    color: #72d8ff !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-primary-actions > .venue-card-ride-action .action-icon {
+    color: #b89cff !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -9562,9 +9621,9 @@ html:is(
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-primary-actions > .venue-card-primary-action .action-icon > svg {
     position: static !important;
-    width: 26px !important;
-    height: 26px !important;
-    flex: 0 0 26px !important;
+    width: 24px !important;
+    height: 24px !important;
+    flex: 0 0 24px !important;
     transform: none !important;
   }
 
@@ -9583,17 +9642,17 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-primary-actions > .venue-card-primary-action:is(.is-inactive-demo, .is-travel-unavailable) {
-    border-color: rgba(148, 163, 184, 0.14) !important;
-    color: rgba(203, 213, 225, 0.58) !important;
-    background: rgba(10, 12, 17, 0.88) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    color: rgba(226, 232, 240, 0.64) !important;
+    background: rgba(10, 12, 17, 0.94) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
     opacity: 1 !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-primary-actions > .venue-card-primary-action:is(.is-inactive-demo, .is-travel-unavailable) .action-icon {
-    color: rgba(148, 163, 184, 0.62) !important;
+    color: rgba(173, 184, 200, 0.68) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -9601,13 +9660,13 @@ html:is(
     .venue-card-secondary-actions {
     grid-row: 4 !important;
     width: 100% !important;
-    height: 68px !important;
-    min-height: 68px !important;
-    max-height: 68px !important;
+    height: 62px !important;
+    min-height: 62px !important;
+    max-height: 62px !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(58px, 0.72fr) !important;
     align-items: center !important;
     gap: 8px !important;
-    padding: 5px 12px 9px !important;
+    padding: 4px 12px 8px !important;
     overflow: hidden !important;
     border: 0 !important;
     background: #08090c !important;
@@ -9632,7 +9691,7 @@ html:is(
     padding: 4px 4px 3px !important;
     overflow: hidden !important;
     border: 1px solid rgba(148, 163, 184, 0.14) !important;
-    border-radius: 16px !important;
+    border-radius: 15px !important;
     color: rgba(241, 245, 249, 0.82) !important;
     background: rgba(16, 18, 24, 0.82) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
@@ -9647,9 +9706,9 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-secondary-actions > .venue-card-secondary-action .action-icon > svg {
-    width: 24px !important;
-    height: 24px !important;
-    flex: 0 0 24px !important;
+    width: 22px !important;
+    height: 22px !important;
+    flex: 0 0 22px !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -9662,12 +9721,14 @@ html:is(
     overflow: hidden !important;
     color: currentColor !important;
     background: transparent !important;
-    font-size: 12px !important;
+    font-size: 11.5px !important;
     font-weight: 750 !important;
     line-height: 1 !important;
     text-align: center !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -9705,6 +9766,12 @@ html:is(
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    :is(.home-venue-discovery-operating-status, .home-venue-discovery-hours) {
+    color: rgba(173, 184, 200, 0.72) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     :is(.venue-card-primary-action, .venue-card-secondary-action):focus-visible {
     outline: 0 !important;
     box-shadow: var(--dancr-focus-ring) !important;
@@ -9715,15 +9782,22 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed
     > .home-venue-discovery-slide {
-    height: 346px !important;
-    grid-template-rows: 100px minmax(104px, 1fr) 74px 68px !important;
+    height: 314px !important;
+    grid-template-rows: 86px minmax(102px, 1fr) 64px 62px !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     :is(.home-venue-discovery-art, .home-discovery-feed-shade) {
-    height: 100px !important;
-    min-height: 100px !important;
+    height: 86px !important;
+    min-height: 86px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-logo {
+    height: 74px !important;
+    max-height: 74px !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -9738,7 +9812,7 @@ html:is(
     .venue-card-primary-actions > .venue-card-primary-action {
     gap: 7px !important;
     padding-inline: 8px !important;
-    font-size: 15px !important;
+    font-size: 14px !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -9752,6 +9826,6 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-secondary-actions > .venue-card-secondary-action > span:not(.action-icon) {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
   }
 }
