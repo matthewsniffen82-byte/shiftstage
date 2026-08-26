@@ -293,6 +293,14 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
   assert.match(
     homeSource,
+    /#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-photo::after \{[\s\S]*?background: none;/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-copy \{[\s\S]*?background: transparent;[\s\S]*?text-shadow: 0 2px 7px rgba\(0,0,0,\.96\);/,
+  );
+  assert.match(
+    homeSource,
     /Compact dancer directories end with their final row[\s\S]*?\.discovery-sticky-head \+ #results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?min-height: 0 !important;/,
   );
 });
