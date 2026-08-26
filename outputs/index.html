@@ -38548,8 +38548,26 @@
         }
 
         #profileBackdrop .modal-actions .profile-action-icon-control .action-icon > svg {
+          --profile-icon-offset-x: 0px;
+          --profile-icon-offset-y: 0px;
           width: 24px !important;
           height: 24px !important;
+          display: block !important;
+          transform: translate(var(--profile-icon-offset-x), var(--profile-icon-offset-y)) !important;
+          transform-origin: center !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon-personPlus > svg {
+          --profile-icon-offset-x: .5px;
+          --profile-icon-offset-y: -.5px;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon-bell > svg {
+          --profile-icon-offset-y: -1px;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon-clock > svg {
+          --profile-icon-offset-x: -.5px;
         }
 
         #profileBackdrop .modal-actions .profile-action-icon-control.going-btn:not(.is-unavailable) .action-icon {
@@ -46480,7 +46498,8 @@
         qr: '<svg viewBox="0 0 24 24"><rect x="3.5" y="2.5" width="10" height="19" rx="2"></rect><path d="M7.4 18.5h2.2"></path><path d="M15.5 8.2a4.4 4.4 0 0 1 0 7.6"></path><path d="M18 5.5a7.5 7.5 0 0 1 0 13"></path></svg>',
         lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>'
       };
-      return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
+      const resolvedType = icons[type] ? type : "check";
+      return `<span class="action-icon action-icon-${resolvedType}" aria-hidden="true">${icons[resolvedType]}</span>`;
     }
 
     function clubDealQrSymbolMarkup(className = "") {

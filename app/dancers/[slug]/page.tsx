@@ -461,8 +461,11 @@ function PublicProfileStyles() {
       .live-actions > button.profile-action-icon-control:disabled { cursor: default; }
       .profile-action-icon-control .profile-action-main { flex-direction: column; gap: 2px; overflow: visible; }
       .profile-action-icon-control .profile-action-main > span { overflow: visible; color: #ded8e7; font-size: 10px; line-height: 1.05; text-overflow: clip; }
-      .profile-action-icon-control .profile-action-preview-icon { width: 24px; height: 24px; flex-basis: 24px; padding: 0; border: 0; border-radius: 0; color: #d9d2e2; background: transparent; box-shadow: none; transition: color .16s ease, transform .16s ease; }
-      .profile-action-icon-control:is(:hover, :focus-visible):not(:disabled) .profile-action-preview-icon { color: #fff; transform: translateY(-1px); }
+      .profile-action-icon-control .profile-action-preview-icon { --profile-icon-offset-x: 0px; --profile-icon-offset-y: 0px; width: 24px; height: 24px; flex-basis: 24px; display: block; padding: 0; border: 0; border-radius: 0; color: #d9d2e2; background: transparent; box-shadow: none; transform: translate(var(--profile-icon-offset-x), var(--profile-icon-offset-y)); transform-origin: center; transition: color .16s ease, transform .16s ease; }
+      .profile-action-icon-control .profile-action-preview-icon-personPlus { --profile-icon-offset-x: .5px; --profile-icon-offset-y: -.5px; }
+      .profile-action-icon-control .profile-action-preview-icon-bell { --profile-icon-offset-y: -1px; }
+      .profile-action-icon-control .profile-action-preview-icon-clock { --profile-icon-offset-x: -.5px; }
+      .profile-action-icon-control:is(:hover, :focus-visible):not(:disabled) .profile-action-preview-icon { color: #fff; transform: translate(var(--profile-icon-offset-x), calc(var(--profile-icon-offset-y) - 1px)) scale(1.02); }
       .profile-action-icon-control.profile-action-going:not(.profile-action-unavailable) .profile-action-preview-icon { color: #a78bfa; background: transparent; box-shadow: none; }
       .profile-action-icon-control:is(.is-selected, .is-going) .profile-action-preview-icon { color: #7cf0b4; background: transparent; box-shadow: none; }
       .live-actions > button.profile-action-icon-control.profile-action-unavailable:disabled { color: #766e7f; background: transparent; opacity: 1; }

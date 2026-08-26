@@ -87,8 +87,16 @@ test("profile actions expose live customer actions and keep Club Deal NFC distin
   assert.match(profileActions, /profile-action-going profile-action-icon-control/);
   assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.live-actions > button\.profile-action-icon-control \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(profilePage, /\.profile-action-icon-control \.profile-action-preview-icon \{[\s\S]*?width: 24px;[\s\S]*?height: 24px;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
+  assert.match(profileActions, /profile-action-preview-icon profile-action-preview-icon-\$\{type\}/);
+  assert.match(profilePage, /\.profile-action-preview-icon-personPlus \{[\s\S]*?--profile-icon-offset-x: \.5px;[\s\S]*?--profile-icon-offset-y: -\.5px;/);
+  assert.match(profilePage, /\.profile-action-preview-icon-bell \{[\s\S]*?--profile-icon-offset-y: -1px;/);
+  assert.match(profilePage, /\.profile-action-preview-icon-clock \{[\s\S]*?--profile-icon-offset-x: -\.5px;/);
   assert.match(profilePage, /\.live-actions \{[\s\S]*?column-gap: 6px;[\s\S]*?row-gap: 2px;[\s\S]*?padding: 6px 0 5px;/);
   assert.match(liveApp, /#profileBackdrop \.modal-actions \.profile-action-icon-control \.action-icon \{[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
+  assert.match(liveApp, /action-icon action-icon-\$\{resolvedType\}/);
+  assert.match(liveApp, /\.action-icon-personPlus > svg \{[\s\S]*?--profile-icon-offset-x: \.5px;[\s\S]*?--profile-icon-offset-y: -\.5px;/);
+  assert.match(liveApp, /\.action-icon-bell > svg \{[\s\S]*?--profile-icon-offset-y: -1px;/);
+  assert.match(liveApp, /\.action-icon-clock > svg \{[\s\S]*?--profile-icon-offset-x: -\.5px;/);
   assert.match(liveApp, /action-btn follow-primary profile-action-icon-control/);
   assert.match(liveApp, /action-btn secondary profile-action-icon-control/);
   assert.match(liveApp, /going-btn profile-action-icon-control/);

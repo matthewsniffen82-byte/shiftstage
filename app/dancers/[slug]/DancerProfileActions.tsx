@@ -110,7 +110,11 @@ function DancerProfileActionPreviewIcon({
   type: "bell" | "check" | "clock" | "directions" | "personPlus" | "ride" | "share";
 }) {
   return (
-    <svg aria-hidden="true" className="profile-action-preview-icon" viewBox="0 0 24 24">
+    <svg
+      aria-hidden="true"
+      className={`profile-action-preview-icon profile-action-preview-icon-${type}`}
+      viewBox="0 0 24 24"
+    >
       {type === "personPlus" ? <><circle cx="8.5" cy="7.5" r="3.5" /><path d="M3 20a5.5 5.5 0 0 1 11 0M18 8.5v6M15 11.5h6" /></> : null}
       {type === "check" ? <path d="m5 12 4 4L19 6" /> : null}
       {type === "bell" ? <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" /><path d="M10 20a2 2 0 0 0 4 0" /></> : null}
