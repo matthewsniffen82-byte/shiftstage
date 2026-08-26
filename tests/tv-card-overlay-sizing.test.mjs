@@ -5,31 +5,29 @@ import test from "node:test";
 const homeSource = readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8");
 const fullTvSource = readFileSync(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8");
 
-test("homepage TV overlays use one balanced 52px control system", () => {
+test("homepage TV overlays use a compact safe action system", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-copy \{[\s\S]*?right: 78px;[\s\S]*?gap: 5px;[\s\S]*?padding: 82px 0 18px 16px;/,
+    /\.home-tv-feed-copy \{[\s\S]*?right: 68px;[\s\S]*?gap: 4px;[\s\S]*?padding: 68px 0 14px 14px;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 52px;[\s\S]*?grid-template-columns: 52px minmax\(0, 1fr\);[\s\S]*?font-size: clamp\(22px, 5\.4vw, 28px\);/,
+    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 48px;[\s\S]*?grid-template-columns: 48px minmax\(0, 1fr\);[\s\S]*?font-size: clamp\(20px, 5vw, 26px\);/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-action \{[\s\S]*?width: 52px;[\s\S]*?min-width: 52px;[\s\S]*?max-width: 52px;[\s\S]*?height: 52px;[\s\S]*?min-height: 52px;[\s\S]*?max-height: 52px;/,
+    /\.home-tv-feed-action \{[\s\S]*?width: 46px;[\s\S]*?min-width: 46px;[\s\S]*?max-width: 46px;[\s\S]*?height: 46px;[\s\S]*?min-height: 46px;[\s\S]*?max-height: 46px;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-action \.action-icon \{[\s\S]*?width: 21px !important;[\s\S]*?height: 21px !important;[\s\S]*?flex: 0 0 21px !important;[\s\S]*?place-items: center;/,
+    /\.home-tv-feed-action \.action-icon \{[\s\S]*?width: 19px !important;[\s\S]*?height: 19px !important;[\s\S]*?flex: 0 0 19px !important;[\s\S]*?place-items: center;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-deal-action \{[\s\S]*?width: 52px !important;[\s\S]*?height: 52px !important;[\s\S]*?font-size: 8px;/,
+    /\.home-tv-feed-deal-action \{[\s\S]*?width: 46px !important;[\s\S]*?height: 46px !important;[\s\S]*?font-size: 7px;/,
   );
-  assert.match(
-    homeSource,
-    /\.home-tv-feed-deal-action\.is-unavailable[\s\S]*?color: rgba\(248,250,252,\.82\) !important;/,
-  );
+  assert.match(homeSource, /if \(dealState\.key === "available"\)/);
+  assert.doesNotMatch(fullTvSource, /TvClubDealUnavailable|tv-club-deal-unavailable/);
 });
 
 test("standalone TV cards use the same sound, avatar, and title scale", () => {

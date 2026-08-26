@@ -22,7 +22,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.doesNotMatch(aestheticSource, /body\.dancr-button-system \.home-tv-feed-shade/);
   assert.match(
     homeSource,
-    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 52px;[\s\S]*?grid-template-columns: 52px minmax\(0, 1fr\)[\s\S]*?gap: 10px;[\s\S]*?font-size: clamp\(22px, 5\.4vw, 28px\);[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 52px;[\s\S]*?height: 52px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?gap: 3px;[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?overflow-wrap: anywhere/,
+    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 48px;[\s\S]*?grid-template-columns: 48px minmax\(0, 1fr\)[\s\S]*?gap: 9px;[\s\S]*?font-size: clamp\(20px, 5vw, 26px\);[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 48px;[\s\S]*?height: 48px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?gap: 2px;[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?overflow-wrap: anywhere/,
   );
   assert.match(
     homeSource,
@@ -30,7 +30,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-verified \{[\s\S]*?width: 18px[\s\S]*?height: 18px/,
+    /\.home-tv-feed-verified \{[\s\S]*?width: 17px[\s\S]*?height: 17px/,
   );
   assert.match(
     homeSource,
@@ -98,46 +98,46 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.doesNotMatch(homeSource, /scrubber\.type = "range"|createElement\("input"\)[\s\S]{0,300}?home-tv-feed-scrubber/);
 });
 
-test("TV cards expose separate right-side actions and a standalone seek bar", () => {
+test("TV cards expose one compact priority rail and a standalone seek bar", () => {
   const actionsFactory = homeSource.match(
-    /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+    /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
   const renderFactory = homeSource.match(
     /function renderHomeTvFeedSlide\(slide, item, videoIndex, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedSlide)/,
   )?.[0] || "";
 
-  assert.match(actionsFactory, /createHomeTvFeedActionButton\([\s\S]*?"home-tv-feed-profile-action"[\s\S]*?actionIconMarkup\("profile"\)[\s\S]*?slide\.querySelector\("\.home-tv-feed-dancer"\)\?\.click\(\)[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?createHomeTvFeedActionButton\([\s\S]*?"Report"/);
-  assert.match(actionsFactory, /actions\.append\(profile\)[\s\S]*?actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow\)[\s\S]*?actions\.append\(report, reportMenu\)/);
+  assert.match(actionsFactory, /const sound = createHomeTvFeedSoundButton\(slide\)[\s\S]*?"home-tv-feed-profile-action"[\s\S]*?actionIconMarkup\("profile"\)[\s\S]*?slide\.querySelector\("\.home-tv-feed-dancer"\)\?\.click\(\)[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"/);
+  assert.match(actionsFactory, /const fullscreen = createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?actions\.append\(sound, profile\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow, fullscreen\)[\s\S]*?actions\.append\(overflow, reportMenu\)/);
   assert.doesNotMatch(actionsFactory, /actionIconMarkup\("star"\)|"Applaud"/);
-  assert.doesNotMatch(actionsFactory, /More video actions|home-tv-feed-action-menu|home-tv-feed-menu-action/);
+  assert.match(actionsFactory, /"home-tv-feed-overflow-action"[\s\S]*?"More video options"[\s\S]*?actionIconMarkup\("more"\)/);
+  assert.doesNotMatch(actionsFactory, /actionIconMarkup\("report"\)/);
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
-  assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedProgress\(slide, video\)/);
+  assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedActions\(item, slide, video\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedProgress\(slide, video\)/);
+  assert.doesNotMatch(renderFactory, /createHomeTvFeedSoundButton\(slide\)|createHomeTvFeedFullscreenButton\(slide, video\)/);
   assert.doesNotMatch(renderFactory, /shade|home-tv-feed-shade|linear-gradient/);
-  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 8px;/);
-  assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
+  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 10px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 6px;/);
+  assert.match(homeSource, /\.home-tv-feed-fullscreen \{ position: relative; \}/);
   assert.doesNotMatch(homeSource, /function createHomeTvFeedVideoControls|className = "home-tv-feed-video-controls"/);
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
 });
 
-test("TV cards retain a neutral NFC placeholder until a verified live Club Deal is available", () => {
+test("TV cards render Deals only for an applicable verified live Club Deal", () => {
   const dealStateFactory = homeSource.match(
     /function homeTvFeedDealState\(item\) \{[\s\S]*?(?=\n    function closeHomeTvFeedReportMenus)/,
   )?.[0] || "";
   const actionsFactory = homeSource.match(
-    /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+    /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
 
   assert.match(dealStateFactory, /key: "available"[\s\S]*?key: "no-active-offer"[\s\S]*?key: "available-when-working"[\s\S]*?key: "not-available-now"/);
+  assert.match(actionsFactory, /let deal = null;[\s\S]*?if \(dealState\.key === "available"\)/);
   assert.match(actionsFactory, /deal\.dataset\.cardActionSlot = "qr"/);
-  assert.match(actionsFactory, /deal\.dataset\.cardQrLabel = dealState\.label[\s\S]*?deal\.dataset\.cardQrMessage = dealState\.detail/);
-  assert.match(actionsFactory, /aria-disabled", "true"[\s\S]*?aria-expanded", "false"/);
+  assert.doesNotMatch(actionsFactory, /cardQrLabel|cardQrMessage|aria-disabled/);
+  assert.match(actionsFactory, /if \(deal\) actions\.appendChild\(deal\)/);
   assert.match(actionsFactory, /home-tv-feed-deal-count">Deals/);
   assert.doesNotMatch(actionsFactory, /home-tv-feed-deal-count">NFC/);
-  assert.match(homeSource, /\.home-tv-feed-deal-action\.is-unavailable,[\s\S]*?background: rgba\(18,15,28,\.72\)[\s\S]*?cursor: pointer;/);
-  assert.match(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>/);
-  assert.match(fullTvFeedSource, /function TvClubDealUnavailable[\s\S]*?No Club Deal available[\s\S]*?Unlocks when working[\s\S]*?Not available now/);
-  assert.match(fullTvFeedSource, /className="tv-club-deal-unavailable"[\s\S]*?<NfcIcon \/>[\s\S]*?<small>Club Deals<\/small>/);
+  assert.doesNotMatch(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>|function TvClubDealUnavailable/);
 });
 
 test("TV Club Deal states keep one fixed rounded-square shape", () => {
@@ -148,24 +148,24 @@ test("TV Club Deal states keep one fixed rounded-square shape", () => {
     /\.home-tv-feed-deal-count \{[\s\S]*?\n        \}/,
   )?.[0] || "";
   const actionsFactory = homeSource.match(
-    /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+    /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
 
   assert.match(dealShell, /box-sizing: border-box !important;/);
-  assert.match(dealShell, /width: 52px !important;[\s\S]*?min-width: 52px !important;[\s\S]*?max-width: 52px !important;/);
-  assert.match(dealShell, /height: 52px !important;[\s\S]*?min-height: 52px !important;[\s\S]*?max-height: 52px !important;/);
-  assert.match(dealShell, /padding: 5px 3px !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?overflow: hidden !important;/);
+  assert.match(dealShell, /width: 46px !important;[\s\S]*?min-width: 46px !important;[\s\S]*?max-width: 46px !important;/);
+  assert.match(dealShell, /height: 46px !important;[\s\S]*?min-height: 46px !important;[\s\S]*?max-height: 46px !important;/);
+  assert.match(dealShell, /padding: 5px 3px !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?overflow: hidden !important;/);
   assert.match(dealLabel, /position: static;[\s\S]*?width: 100%;[\s\S]*?background: transparent;/);
-  assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Deals/g) || []).length, 2);
+  assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Deals/g) || []).length, 1);
 });
 
-test("TV Club Deal branding cannot change the shell between active and inactive states", () => {
+test("TV Club Deal branding keeps the active control semantic without introducing inactive presentation", () => {
   const stateStyles = aestheticSource.match(
-    /\/\* TV Club Deal controls share one fixed shell[\s\S]*?(?=\/\* Production venue-detail branding)/,
+    /\/\* An applicable TV Club Deal keeps the compact rail silhouette[\s\S]*?(?=\/\* Production venue-detail branding)/,
   )?.[0] || "";
 
   assert.match(stateStyles, /\.home-tv-feed-deal-action\.is-available \{[\s\S]*?var\(--dancr-color-success-strong\)/);
-  assert.match(stateStyles, /\.home-tv-feed-deal-action\.is-unavailable,[\s\S]*?border-color: rgba\(148, 163, 184, 0\.42\) !important;[\s\S]*?background: rgba\(17, 17, 24, 0\.92\) !important;/);
+  assert.doesNotMatch(stateStyles, /\.home-tv-feed-deal-action\.is-unavailable/);
   assert.doesNotMatch(stateStyles, /\.home-tv-feed-deal-action \{|\b(?:width|height|padding|margin|position|inset|display|grid|flex|gap|overflow|transform):/);
 });
 
@@ -248,7 +248,7 @@ test("TV cards are completely borderless without a violet perimeter", () => {
 test("mobile TV seek and utility controls stay inside the stable card that snaps above navigation", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-copy \{[\s\S]*?padding: 82px 0 28px 14px;/,
+    /@media \(max-width: 760px\) \{[\s\S]*?\.home-tv-feed-copy \{[\s\S]*?padding: 64px 0 24px 12px;/,
   );
   assert.match(
     homeSource,
@@ -295,11 +295,11 @@ test("full-view TV actions and identity clear the device bottom edge together", 
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed:fullscreen \.home-tv-feed-actions,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-actions \{[\s\S]*?bottom: calc\(100px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /#results\.home-tv-feed:fullscreen \.home-tv-feed-actions,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-actions \{[\s\S]*?bottom: calc\(42px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed:fullscreen \.home-tv-feed-fullscreen,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-fullscreen \{[\s\S]*?bottom: calc\(44px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /\.home-tv-feed-fullscreen \{ position: relative; \}/,
   );
 });
 
@@ -319,7 +319,7 @@ test("empty schedules are hidden while real city, venue, and shift context remai
   assert.doesNotMatch(shiftDateFormatter, /hour:|minute:|toLocaleTimeString|formatClock/);
   assert.match(
     homeSource,
-    /if \(scheduleContext\)[\s\S]*?context\.className = "home-tv-feed-context"[\s\S]*?context\.appendChild\(schedule\)[\s\S]*?if \(venueName\)[\s\S]*?venue\.className = "home-tv-feed-venue"[\s\S]*?context\.appendChild\(venue\)[\s\S]*?copy\.appendChild\(context\)/,
+    /if \(scheduleContext \|\| venueName\)[\s\S]*?context\.className = "home-tv-feed-context"[\s\S]*?if \(scheduleContext\)[\s\S]*?context\.appendChild\(schedule\)[\s\S]*?if \(venueName\)[\s\S]*?venue\.className = "home-tv-feed-venue"[\s\S]*?context\.appendChild\(venue\)[\s\S]*?copy\.appendChild\(context\)/,
   );
 });
 
@@ -352,7 +352,7 @@ test("every uploaded video gets a vertically scrollable card with profile access
   assert.match(homeSource, /Sexual or unsafe content[\s\S]*?Other safety concern/);
   assert.doesNotMatch(
     homeSource.match(
-      /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+      /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
     )?.[0] || "",
     /save|bookmark/i,
   );
@@ -442,10 +442,10 @@ test("intentional pauses persist while fullscreen resumes playback and keeps ver
   assert.doesNotMatch(fullscreenToggle, /slide\.requestFullscreen|video\.webkitEnterFullscreen/);
 });
 
-test("TV sound and lower-right fullscreen controls stay consistent and icon-only", () => {
+test("TV sound and fullscreen controls share the compact rail and remain icon-only", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-sound \{[\s\S]*?width: 52px;[\s\S]*?min-width: 52px;[\s\S]*?max-width: 52px;[\s\S]*?height: 52px;[\s\S]*?min-height: 52px;[\s\S]*?max-height: 52px;[\s\S]*?padding: 0;/,
+    /\.home-tv-feed-action \{[\s\S]*?width: 46px;[\s\S]*?min-width: 46px;[\s\S]*?max-width: 46px;[\s\S]*?height: 46px;[\s\S]*?min-height: 46px;[\s\S]*?max-height: 46px;/,
   );
   const soundFactory = homeSource.match(
     /function createHomeTvFeedSoundButton\(slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedFullscreenButton)/,
@@ -453,6 +453,7 @@ test("TV sound and lower-right fullscreen controls stay consistent and icon-only
   const fullscreenFactory = homeSource.match(
     /function createHomeTvFeedFullscreenButton\(slide, video\) \{[\s\S]*?(?=\n    function renderHomeTvFeedSlide)/,
   )?.[0] || "";
+  assert.match(soundFactory, /sound\.className = "home-tv-feed-action home-tv-feed-sound"/);
   assert.match(soundFactory, /sound\.innerHTML = '<svg[\s\S]*?<\/svg>'/);
   assert.match(fullscreenFactory, /button\.className = "home-tv-feed-action home-tv-feed-fullscreen"/);
   assert.match(fullscreenFactory, /button\.innerHTML = \[[\s\S]*?home-tv-feed-video-expand-icon[\s\S]*?home-tv-feed-video-collapse-icon[\s\S]*?\.join\(""\)/);
@@ -463,12 +464,8 @@ test("TV sound and lower-right fullscreen controls stay consistent and icon-only
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("aria-pressed", String\(!homeTvFeedMuted\)\)/,
+    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)[\s\S]*?button\.setAttribute\("aria-pressed", String\(!homeTvFeedMuted\)\)/,
   );
-  const soundSync = homeSource.match(
-    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?(?=\n    function homeTvFeedFullscreenElement)/,
-  )?.[0] || "";
-  assert.doesNotMatch(soundSync, /setAttribute\("title"/);
   assert.doesNotMatch(soundFactory, /showHomeTvFeedFeedback[\s\S]*?Sound off|showHomeTvFeedFeedback[\s\S]*?Sound on/);
   assert.match(
     homeSource,
@@ -495,12 +492,12 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
   assert.match(neutralControls, /drop-shadow\(0 1px 2px var\(--dancr-color-black-strong\)\)/);
   assert.doesNotMatch(neutralControls, /radial-gradient|brand-primary|beam-violet/);
 
-  assert.match(activeControls, /\.home-tv-feed-report-action/);
+  assert.match(activeControls, /\.home-tv-feed-overflow-action/);
   assert.match(activeControls, /\.home-tv-feed-fullscreen/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
   assert.equal(
-    (aestheticSource.match(/\.home-tv-feed-report-action,\s*\.home-tv-feed-fullscreen/g) || []).length,
+    (aestheticSource.match(/\.home-tv-feed-overflow-action,\s*\.home-tv-feed-fullscreen/g) || []).length,
     2,
   );
   assert.match(
@@ -599,8 +596,8 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.doesNotMatch(upcomingPill, /(?:height|padding|border-radius):/);
   assert.match(brandedCards, /var\(--dancr-color-success\)/);
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-upcoming/);
-  assert.match(brandedCards, /\.home-tv-feed-report-action\[aria-expanded="true"\]/);
-  assert.match(brandedCards, /var\(--dancr-color-danger\)/);
+  assert.match(brandedCards, /\.home-tv-feed-overflow-action\[aria-expanded="true"\]/);
+  assert.match(brandedCards, /\.home-tv-feed-report-option:is\(:hover, :focus-visible\)[\s\S]*?var\(--dancr-color-danger-medium\)/);
   assert.doesNotMatch(brandedCards, /home-bottom|global-mobile-bottom-nav|discoveryTabs|home-nav/);
   assert.doesNotMatch(brandedCards, /\.home-tv-feed-video|\.tv-player video/);
   const brandedCardsWithoutAvatarRing = brandedCards
