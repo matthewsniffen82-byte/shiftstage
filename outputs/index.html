@@ -38187,8 +38187,19 @@
             rgba(7, 12, 16, .94);
         }
 
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-no-schedule::before {
+          position: absolute;
+          z-index: 5;
+          inset: 0;
+          content: "";
+          pointer-events: none;
+          border: 2px solid rgba(255, 255, 255, .13);
+          border-radius: inherit;
+          box-shadow: none;
+        }
+
         #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-no-schedule {
-          border-color: rgba(255, 255, 255, .13);
+          border-color: transparent;
           background:
             radial-gradient(circle at 94% 0%, rgba(255, 255, 255, .035), transparent 13rem),
             rgba(9, 9, 13, .94);
@@ -38697,6 +38708,48 @@
 
         #profileBackdrop .profile-tonight-card.is-upcoming .profile-club-deal-copy small {
           display: none !important;
+        }
+
+        /* Working Now is the canonical profile-state box. Upcoming and No
+           Schedule keep its row sizing, padding, dividers, and action rail;
+           only truthful state color and action availability change. */
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card > :is(
+          .working-now-tile,
+          .schedule-upcoming,
+          .schedule-empty
+        ) {
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 52px !important;
+          padding: 4px 8px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-deal {
+          min-height: 70px !important;
+          display: grid !important;
+          align-items: stretch !important;
+          box-sizing: border-box !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-deal > .profile-club-deal-tile {
+          min-height: 60px !important;
+          align-self: stretch !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-no-schedule {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-no-schedule > button {
+          border-color: rgba(255, 255, 255, .08) !important;
+          color: rgba(169, 163, 175, .58) !important;
+          background: rgba(255, 255, 255, .025) !important;
+          box-shadow: none !important;
+          cursor: default !important;
         }
 
         /* Keep profile-level actions separate from the venue travel controls
@@ -51379,7 +51432,15 @@
 
     function dancerProfileTonightTravelActionsMarkup(profile, options = {}) {
       const city = options.city || selectedCity();
-      if (options.preview || !profile?.scheduled) return "";
+      if (options.preview) return "";
+      if (!profile?.scheduled) {
+        return `
+          <div class="profile-tonight-travel-actions is-no-schedule" aria-label="Venue travel actions unavailable">
+            <button class="profile-primary-directions venue-directions-btn is-travel-unavailable" type="button" disabled aria-disabled="true" aria-label="Directions unavailable until a shift is posted">${actionButtonLabel("pin", "Directions")}</button>
+            <button class="uber-ride-link profile-uber-ride is-travel-unavailable" type="button" disabled aria-disabled="true" aria-label="Ride unavailable until a shift is posted">${actionButtonLabel("car", "Get a Ride")}</button>
+          </div>
+        `;
+      }
       const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
       const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
       const actions = [directionsMarkup, rideMarkup].filter(Boolean);

@@ -280,7 +280,38 @@ export default async function DancerPublicPage({ params }: PageProps) {
               venue={{ ...actionVenue, isActive: true, isPublic: true }}
             />
           </div>
-        ) : null}
+        ) : (
+          <div
+            aria-label="Venue travel actions unavailable"
+            className="profile-tonight-travel-actions is-no-schedule"
+          >
+            <button
+              aria-label="Directions unavailable until a shift is posted"
+              className="profile-directions-button profile-travel-placeholder"
+              disabled
+              type="button"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z" />
+                <circle cx="12" cy="9" r="2.4" />
+              </svg>
+              <span>Directions</span>
+            </button>
+            <button
+              aria-label="Ride unavailable until a shift is posted"
+              className="profile-uber-ride profile-travel-placeholder"
+              disabled
+              type="button"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="m5 11 1.7-4.3A2.7 2.7 0 0 1 9.2 5h5.6a2.7 2.7 0 0 1 2.5 1.7L19 11" />
+                <path d="M4 11h16a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a1 1 0 0 1 1-1Z" />
+                <path d="M6.5 15h.01M17.5 15h.01M6 19v2M18 19v2" />
+              </svg>
+              <span>Get a Ride</span>
+            </button>
+          </div>
+        )}
         </section>
 
         <DancerProfileActions
@@ -644,32 +675,38 @@ function PublicProfileStyles() {
       .profile-media-viewer-preload img, .profile-media-viewer-preload video { width: 1px; height: 1px; }
       @keyframes profile-media-loading { to { transform: translateX(-50%) rotate(360deg); } }
       .profile-schedule-section { display: grid; gap: 14px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
-      .profile-tonight-card { margin-top: 8px; overflow: hidden; border: 1px solid rgba(139,92,246,.24); border-radius: 15px; background: linear-gradient(145deg, rgba(13,11,21,.94), rgba(6,7,11,.98)); box-shadow: 0 12px 32px rgba(0,0,0,.26); }
-      .profile-tonight-card.is-now { border-color: rgba(77,236,157,.24); background: radial-gradient(circle at 94% 0%, rgba(77,236,157,.045), transparent 13rem), rgba(7,14,13,.94); }
-      .profile-tonight-card.is-upcoming { border-color: rgba(126,234,255,.46); background: radial-gradient(circle at 94% 0%, rgba(126,234,255,.07), transparent 13rem), rgba(7,12,16,.94); }
-      .profile-tonight-card.is-no-schedule { border-color: rgba(255,255,255,.13); background: radial-gradient(circle at 94% 0%, rgba(255,255,255,.035), transparent 13rem), rgba(9,9,13,.94); }
-      .profile-tonight-card.has-club-deal { border-color: rgba(77,236,157,.3); box-shadow: 0 12px 32px rgba(0,0,0,.3); }
-      .profile-tonight-card > .profile-shift-card { width: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-tonight-card { position: relative; isolation: isolate; margin-top: 8px; overflow: hidden; border: 1px solid transparent; border-radius: 15px; background: linear-gradient(145deg, rgba(13,11,21,.94), rgba(6,7,11,.98)); box-shadow: 0 12px 32px rgba(0,0,0,.26); }
+      .profile-tonight-card::before { position: absolute; z-index: 5; inset: 0; content: ""; pointer-events: none; border: 2px solid rgba(255,255,255,.13); border-radius: inherit; }
+      .profile-tonight-card.is-now { background: radial-gradient(circle at 94% 0%, rgba(77,236,157,.045), transparent 13rem), rgba(7,14,13,.94); }
+      .profile-tonight-card.is-now::before, .profile-tonight-card.has-club-deal::before { border-color: rgba(77,236,157,.38); }
+      .profile-tonight-card.is-upcoming { background: radial-gradient(circle at 94% 0%, rgba(126,234,255,.07), transparent 13rem), rgba(7,12,16,.94); }
+      .profile-tonight-card.is-upcoming::before { border-color: rgba(126,234,255,.46); }
+      .profile-tonight-card.is-no-schedule { background: radial-gradient(circle at 94% 0%, rgba(255,255,255,.035), transparent 13rem), rgba(9,9,13,.94); }
+      .profile-tonight-card.has-club-deal { border-color: transparent; box-shadow: 0 12px 32px rgba(0,0,0,.3); }
+      .profile-tonight-card > .profile-shift-card { width: 100%; min-height: 52px; margin: 0; padding: 4px 8px !important; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .profile-tonight-card > .profile-schedule-section { padding: 14px; }
-      .profile-tonight-card > .profile-schedule-empty { min-height: 52px; display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 12px; padding: 6px 10px; }
+      .profile-tonight-card > .profile-schedule-empty { display: grid; grid-template-columns: max-content minmax(0,1fr); align-items: center; gap: 6px; }
       .profile-empty-state { color: #a9a3af; font-size: 11px; font-weight: 950; letter-spacing: .075em; line-height: 1.05; text-transform: uppercase; white-space: nowrap; }
       .profile-empty-copy { min-width: 0; display: grid; gap: 2px; }
       .profile-empty-copy strong { overflow: hidden; color: #f5f2f7; font-size: 14px; font-weight: 950; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
       .profile-empty-copy em { overflow: hidden; color: #8e8795; font-size: 10px; font-style: normal; font-weight: 750; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
       .profile-tonight-travel-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 5px 10px 8px; border-top: 1px solid rgba(255,255,255,.06); }
-      .profile-tonight-travel-actions:is(.is-working-now, .is-upcoming) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .profile-tonight-travel-actions:is(.is-working-now, .is-upcoming, .is-no-schedule) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 44px !important; min-height: 44px !important; max-height: 44px !important; padding-inline: 10px !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 10px !important; color: rgba(248,250,252,.94) !important; background: rgba(255,255,255,.055) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important; font-size: 11px !important; opacity: 1 !important; }
       .profile-tonight-travel-actions > .profile-directions-button { border-color: rgba(142,226,248,.24) !important; background: rgba(142,226,248,.07) !important; }
       .profile-tonight-travel-actions > :is(a, button) :is(svg, span) { opacity: 1 !important; }
-      .profile-tonight-deal { padding: 5px; border-top: 1px solid rgba(255,255,255,.08); }
+      .profile-tonight-travel-actions > .profile-travel-placeholder { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: rgba(169,163,175,.58) !important; border-color: rgba(255,255,255,.08) !important; background: rgba(255,255,255,.025) !important; box-shadow: none !important; font: inherit; font-size: 11px; font-weight: 900; cursor: default; }
+      .profile-tonight-travel-actions > .profile-travel-placeholder svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-tonight-deal { min-height: 70px; display: grid; align-items: stretch; padding: 5px; border-top: 1px solid rgba(255,255,255,.08); }
       .profile-tonight-card.has-club-deal .profile-tonight-deal { border-top-color: rgba(77,236,157,.18); }
       .profile-tonight-card.is-upcoming .profile-tonight-deal { border-top-color: rgba(126,234,255,.16); }
       .profile-tonight-card.is-no-schedule .profile-tonight-deal { border-top-color: rgba(255,255,255,.07); }
-      .profile-tonight-deal .profile-active-deal { width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-      .profile-tonight-deal .profile-club-deal-placeholder { border: 0; background: transparent; }
-      .profile-upcoming-card { display: grid; padding: 4px 8px !important; }
+      .profile-tonight-deal .profile-active-deal { width: 100%; min-height: 60px; display: grid; align-items: stretch; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-tonight-deal .profile-club-deal-placeholder { width: 100%; min-height: 60px; border: 0; background: transparent; box-shadow: none; }
+      .profile-tonight-deal .club-deal-launcher { width: 100%; min-height: 60px; }
+      .profile-working-card, .profile-upcoming-card { display: grid; padding: 4px 8px !important; }
       .profile-upcoming-list { display: grid; }
-      .profile-upcoming-destination { min-width: 0; display: grid; grid-template-columns: auto minmax(0,1fr) 16px; align-items: center; gap: 9px; min-height: 44px; padding: 4px 6px; color: #fff; text-decoration: none; }
+      .profile-working-destination, .profile-upcoming-destination { min-width: 0; display: grid; grid-template-columns: max-content minmax(0,1fr) 16px; align-items: center; gap: 6px; min-height: 44px; padding: 3px 2px; color: #fff; text-decoration: none; }
       .profile-upcoming-destination + .profile-upcoming-destination { border-top: 1px solid rgba(126,234,255,.12); }
       .profile-upcoming-state { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .03em; line-height: 1.05; text-transform: uppercase; white-space: nowrap; }
       .profile-upcoming-copy { min-width: 0; }

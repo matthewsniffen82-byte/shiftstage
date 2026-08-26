@@ -123,7 +123,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profilePage, /className=\{`profile-tonight-travel-actions\$\{activeShift \? " is-working-now" : " is-upcoming"\}`\}/);
   assert.match(profilePage, /<DancerDirectionsButton dancerId=\{profile\.id\} venue=\{actionVenue\} \/>/);
   assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"/);
-  assert.match(profilePage, /\.profile-tonight-travel-actions:is\(\.is-working-now, \.is-upcoming\) \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
+  assert.match(profilePage, /\.profile-tonight-travel-actions:is\(\.is-working-now, \.is-upcoming, \.is-no-schedule\) \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
   assert.match(liveApp, /personPlus: '<svg[\s\S]*?M18 8\.5v6M15 11\.5h6/);
@@ -391,7 +391,19 @@ test("No Schedule mirrors the compact shift hierarchy with a neutral state", () 
   );
   assert.match(
     profilePage,
-    /\.profile-tonight-card\.is-no-schedule \{[\s\S]*?border-color: rgba\(255,255,255,\.13\);[\s\S]*?\.profile-empty-state \{[\s\S]*?letter-spacing: \.075em;/,
+    /\.profile-tonight-card::before \{[\s\S]*?border: 2px solid rgba\(255,255,255,\.13\);[\s\S]*?\.profile-tonight-card\.is-no-schedule \{[\s\S]*?\.profile-empty-state \{[\s\S]*?letter-spacing: \.075em;/,
+  );
+  assert.match(
+    liveApp,
+    /Working Now is the canonical profile-state box[\s\S]*?\.working-now-tile,[\s\S]*?\.schedule-upcoming,[\s\S]*?\.schedule-empty[\s\S]*?min-height: 52px !important;[\s\S]*?padding: 4px 8px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /if \(!profile\?\.scheduled\) \{[\s\S]*?profile-tonight-travel-actions is-no-schedule[\s\S]*?Directions unavailable until a shift is posted[\s\S]*?Ride unavailable until a shift is posted/,
+  );
+  assert.match(
+    profilePage,
+    /className="profile-tonight-travel-actions is-no-schedule"[\s\S]*?Directions unavailable until a shift is posted[\s\S]*?Ride unavailable until a shift is posted/,
   );
 });
 
