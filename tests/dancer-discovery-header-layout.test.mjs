@@ -42,3 +42,14 @@ test("narrow and long-label safeguards keep controls and counts collision-free",
   assert.match(liveShell, /const empty = counts\[filter\.id\] === 0/);
   assert.match(liveShell, /empty \? " is-empty" : ""/);
 });
+
+test("city and Filters labels share one visual center without resizing their controls", () => {
+  assert.match(
+    aesthetic,
+    /body\.dancer-directory-active\.dancr-button-system[\s\S]*?\.city-picker-trigger-value,[\s\S]*?\.home-filter-toggle > span:not\(\.home-filter-toggle-count\) \{[\s\S]*?align-self: center;[\s\S]*?line-height: 18px !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /:is\(\.city-picker-trigger-icon, \.city-picker-chevron, \.home-filter-toggle-icon\) \{[\s\S]*?display: block;[\s\S]*?align-self: center;/,
+  );
+});

@@ -7535,6 +7535,24 @@ body.dancer-directory-active > .app main.stack > .home-discovery-controls .home-
   padding-inline: 10px !important;
 }
 
+/* Give the city and Filters labels the same internal line box. Their control
+ * shells already share a fixed height; matching the text box removes the
+ * small optical baseline mismatch between the grid and flex implementations. */
+body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+  .city-picker-trigger-value,
+body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+  .home-filter-toggle > span:not(.home-filter-toggle-count) {
+  display: block;
+  align-self: center;
+  line-height: 18px !important;
+}
+
+body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(.city-picker-trigger-icon, .city-picker-chevron, .home-filter-toggle-icon) {
+  display: block;
+  align-self: center;
+}
+
 body.dancer-directory-active > .app main.stack > .home-live-summary {
   min-height: 16px !important;
   margin-block: -2px -1px !important;
