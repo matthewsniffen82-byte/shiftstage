@@ -163,7 +163,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
-  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?grid-template-columns: 40px/);
+  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?grid-template-columns: 36px/);
 });
 
 test("profile socials stay secondary, responsive, and absent when no links exist", () => {
@@ -275,19 +275,27 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   assert.ok(compactMobileProfile, "compact mobile profile CSS must exist");
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-summary \{[\s\S]*?grid-template-columns: minmax\(118px, \.9fr\) minmax\(0, 1\.1fr\) !important;[\s\S]*?min-height: 60px !important;[\s\S]*?padding: max\(6px, calc\(env\(safe-area-inset-top, 0px\) \+ 4px\)\) 48px 6px 10px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-summary \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?min-height: 66px !important;[\s\S]*?padding: max\(7px, calc\(env\(safe-area-inset-top, 0px\) \+ 4px\)\) 46px 7px 10px !important;/,
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity \{[\s\S]*?display: grid !important;[\s\S]*?align-content: center !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-person \{[\s\S]*?grid-template-columns: 60px minmax\(0, 1fr\) !important;[\s\S]*?align-items: start !important;/,
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?top: max\(5px,[\s\S]*?right: 5px !important;[\s\S]*?grid-template-columns: 40px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-avatar-column \{[\s\S]*?grid-template-rows: 48px 14px !important;/,
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?align-self: center !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 48px !important;[\s\S]*?grid-template-rows: 20px 28px !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?top: max\(5px,[\s\S]*?right: 5px !important;[\s\S]*?grid-template-columns: 36px !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?align-self: stretch !important;/,
   );
   assert.match(
     compactMobileProfile,
@@ -327,7 +335,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   assert.match(liveApp, /id="modalProfileMetrics"/);
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
   assert.match(gridFunction, /<section class="\$\{tonightClasses\}" data-profile-shift-state="\$\{shiftState\}" data-profile-deal-state="\$\{escapeHtml\(dealState\.key\)\}" aria-label="Tonight">[\s\S]*?\$\{dealMarkup \? `<div class="profile-tonight-deal">\$\{dealMarkup\}<\/div>` : ""\}[\s\S]*?<\/section>/);
-  assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
+  assert.match(liveApp, /class="profile-modal-avatar-column">[\s\S]*?<span class="pill" id="modalCity">Las Vegas<\/span>/);
   assert.match(liveApp, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
   assert.doesNotMatch(liveApp, /profile-modal-live-status|modalLiveStatus/);
   assert.doesNotMatch(liveApp, /id="modalShiftStatus"|id="modalShiftVenue"/);

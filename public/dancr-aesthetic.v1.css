@@ -4026,42 +4026,59 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
     position: relative !important;
-    grid-template-columns: minmax(118px, .9fr) minmax(0, 1.1fr) !important;
-    gap: 4px !important;
-    min-height: 60px !important;
-    padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 6px 10px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+    min-height: 66px !important;
+    padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 46px 7px 10px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
     min-width: 0 !important;
     display: grid !important;
-    grid-template-columns: 44px minmax(0, 1fr) !important;
+    grid-template-columns: 60px minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 8px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-rows: 48px 14px !important;
+    justify-items: center !important;
     align-items: center !important;
-    gap: 7px !important;
+    gap: 4px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
-    width: 44px !important;
-    height: 44px !important;
+    width: 48px !important;
+    height: 48px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
+    min-width: 0 !important;
     width: 100% !important;
     max-width: none !important;
+    height: 48px !important;
+    display: grid !important;
+    grid-template-rows: 20px 28px !important;
+    align-content: center !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 0 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
     min-width: 0 !important;
     display: grid !important;
-    align-content: center !important;
-    gap: 2px !important;
+    align-content: start !important;
+    gap: 0 !important;
     overflow: hidden !important;
   }
 
-  body.dancr-button-system #profileBackdrop #profileModal :is(.profile-modal-name-row, .profile-modal-context) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
     min-width: 0 !important;
     max-width: 100% !important;
-    gap: 4px !important;
+    gap: 5px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
@@ -4070,18 +4087,22 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-identity h2 {
-    font-size: clamp(16px, 4.7vw, 20px) !important;
+    font-size: clamp(17px, 4.8vw, 21px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal #modalCity {
-    min-height: 18px !important;
-    padding-inline: 6px !important;
-    font-size: 9px !important;
+    width: 60px !important;
+    max-width: 60px !important;
+    min-height: 14px !important;
+    justify-content: center !important;
+    padding-inline: 4px !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-report-link {
-    width: 16px !important;
-    min-width: 16px !important;
+    width: 18px !important;
+    min-width: 18px !important;
     height: 18px !important;
     min-height: 18px !important;
     padding: 0 !important;
@@ -4094,27 +4115,29 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
     min-width: 0 !important;
-    align-self: center !important;
+    align-self: stretch !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    min-height: 44px !important;
+    min-height: 28px !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
     min-width: 0 !important;
-    min-height: 44px !important;
+    min-height: 28px !important;
+    display: grid !important;
+    grid-template: 16px 10px / minmax(0, 1fr) !important;
     align-content: center !important;
     justify-items: center !important;
     gap: 1px !important;
-    padding: 2px 1px !important;
+    padding: 0 1px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
-    font-size: clamp(17px, 4.2vw, 20px) !important;
+    font-size: clamp(15px, 3.5vw, 18px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
@@ -4126,18 +4149,18 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     position: absolute !important;
     top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
     right: 5px !important;
-    width: 40px !important;
+    width: 36px !important;
     display: grid !important;
-    grid-template-columns: 40px !important;
+    grid-template-columns: 36px !important;
     z-index: 4 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal #modalClose {
     position: static !important;
     inset: auto !important;
-    width: 40px !important;
-    height: 40px !important;
-    min-height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
   }
 
   body.dancr-button-system .public-profile-shell .profile-titlebar {
@@ -10015,27 +10038,118 @@ html:is(
   }
 }
 
-/* Keep the compact profile-header metrics stacked. Shared profile-summary
- * rules below the component previously forced these values back onto one
- * horizontal line, clipping the stage name and activity labels on phones. */
+/* Keep the mobile profile identity readable as one composed header: avatar
+ * and city on the left, stage name and stacked analytics on the right, and
+ * the close control outside that content grid. The approved status card is
+ * intentionally outside this scope. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
-    grid-template-columns: minmax(118px, .9fr) minmax(0, 1.1fr) !important;
+    position: relative !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+    min-height: 66px !important;
+    padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 46px 7px 10px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 60px minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 8px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-rows: 48px 14px !important;
+    justify-items: center !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalCity {
+    width: 60px !important;
+    max-width: 60px !important;
+    min-height: 14px !important;
+    justify-content: center !important;
+    padding: 0 4px !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 48px !important;
+    display: grid !important;
+    grid-template-rows: 20px 28px !important;
+    align-content: center !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 0 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
+    min-width: 0 !important;
+    display: grid !important;
+    align-content: start !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-identity h2 {
+    min-width: 0 !important;
+    font-size: clamp(17px, 4.8vw, 21px) !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-report-link {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    margin-left: 1px !important;
+    padding: 0 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
+    min-width: 0 !important;
+    align-self: stretch !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal
     .profile-modal-header-metrics .profile-activity-metrics > div {
     min-width: 0 !important;
-    min-height: 44px !important;
+    min-height: 28px !important;
     display: grid !important;
-    grid-template: 22px 14px / minmax(0, 1fr) !important;
+    grid-template: 16px 10px / minmax(0, 1fr) !important;
     grid-auto-flow: row !important;
     align-content: center !important;
     align-items: center !important;
     justify-content: stretch !important;
     justify-items: center !important;
     gap: 1px !important;
-    padding: 2px 1px !important;
+    padding: 0 1px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal
@@ -10056,7 +10170,7 @@ html:is(
     .profile-modal-header-metrics .profile-activity-metrics dd {
     grid-row: 1 !important;
     align-self: end !important;
-    font-size: clamp(16px, 3.4vw, 19px) !important;
+    font-size: clamp(15px, 3.5vw, 18px) !important;
     line-height: 1.05 !important;
   }
 
@@ -10066,5 +10180,58 @@ html:is(
     align-self: start !important;
     font-size: clamp(8px, 1.9vw, 9px) !important;
     line-height: 1.1 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-controls {
+    position: absolute !important;
+    top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
+    right: 5px !important;
+    width: 36px !important;
+    grid-template-columns: 36px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalClose {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
+    min-height: 64px !important;
+    padding-right: 42px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+    gap: 5px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
+    grid-template-rows: 46px 15px !important;
+    gap: 2px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalCity {
+    width: 56px !important;
+    max-width: 56px !important;
+    font-size: 7px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-controls {
+    width: 36px !important;
+    grid-template-columns: 36px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalClose {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
   }
 }

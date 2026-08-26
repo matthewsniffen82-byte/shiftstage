@@ -32034,7 +32034,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=155" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=156" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39877,31 +39877,50 @@
            The approved shift/deal card below remains an unchanged component. */
         #profileBackdrop #profileModal .profile-modal-summary {
           position: relative !important;
-          grid-template-columns: minmax(118px, .9fr) minmax(0, 1.1fr) !important;
+          grid-template-columns: minmax(0, 1fr) !important;
           align-items: center !important;
-          gap: 4px !important;
-          min-height: 60px !important;
+          gap: 0 !important;
+          min-height: 66px !important;
           margin-inline: -14px !important;
-          padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 6px 10px !important;
+          padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 7px 10px !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-person {
           min-width: 0;
           display: grid;
-          grid-template-columns: 44px minmax(0, 1fr);
+          grid-template-columns: 60px minmax(0, 1fr);
+          align-items: start;
+          gap: 8px;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-avatar-column {
+          min-width: 0;
+          display: grid;
+          grid-template-rows: 48px 14px;
+          justify-items: center;
           align-items: center;
-          gap: 7px;
+          gap: 4px;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-avatar {
+          width: 48px !important;
+          height: 48px !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
           min-width: 0 !important;
+          height: 48px !important;
+          display: grid !important;
+          grid-template-rows: 20px 28px !important;
+          align-content: center !important;
+          gap: 0 !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
           min-width: 0 !important;
           display: grid !important;
-          align-content: center !important;
-          gap: 2px !important;
+          align-content: start !important;
+          gap: 0 !important;
           overflow: hidden !important;
         }
 
@@ -39911,20 +39930,35 @@
           max-width: 100% !important;
         }
 
-        #profileBackdrop #profileModal .profile-modal-summary .profile-modal-context {
+        #profileBackdrop #profileModal .profile-modal-summary .profile-modal-name-row {
           display: flex !important;
           align-items: center !important;
           gap: 5px !important;
         }
 
+        #profileBackdrop #profileModal .profile-modal-summary .modal-identity h2 {
+          font-size: clamp(17px, 4.8vw, 21px) !important;
+        }
+
+        #profileBackdrop #profileModal #modalCity {
+          width: 60px !important;
+          max-width: 60px !important;
+          min-height: 14px !important;
+          justify-content: center !important;
+          padding: 0 4px !important;
+          font-size: 8px !important;
+          line-height: 1 !important;
+        }
+
         #profileBackdrop #profileModal .profile-modal-report-link {
-          width: 16px;
-          min-width: 16px;
-          height: 20px;
-          min-height: 20px;
+          width: 18px;
+          min-width: 18px;
+          height: 18px;
+          min-height: 18px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          margin-left: 1px;
           padding: 0;
           border: 0;
           border-radius: 0;
@@ -39951,7 +39985,7 @@
 
         #profileBackdrop #profileModal .profile-modal-header-metrics {
           min-width: 0;
-          align-self: center;
+          align-self: stretch;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
@@ -39963,14 +39997,14 @@
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
           min-width: 0 !important;
-          min-height: 44px !important;
+          min-height: 28px !important;
           display: grid !important;
-          grid-template: 22px 14px / minmax(0, 1fr) !important;
+          grid-template: 16px 10px / minmax(0, 1fr) !important;
           grid-auto-flow: row !important;
           align-content: center !important;
           justify-items: center !important;
           gap: 1px !important;
-          padding: 2px 1px !important;
+          padding: 0 1px !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
@@ -39979,7 +40013,7 @@
           width: 100% !important;
           max-width: 100% !important;
           overflow: hidden !important;
-          font-size: clamp(16px, 3.4vw, 21px) !important;
+          font-size: clamp(15px, 3.5vw, 18px) !important;
           font-variant-numeric: tabular-nums !important;
           line-height: 1.05 !important;
           text-align: center !important;
@@ -39993,7 +40027,7 @@
           width: 100% !important;
           max-width: 100% !important;
           overflow: hidden !important;
-          font-size: clamp(8px, 1.9vw, 10px) !important;
+          font-size: clamp(8px, 1.9vw, 9px) !important;
           line-height: 1.15 !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
@@ -40003,18 +40037,18 @@
           position: absolute !important;
           top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
           right: 5px !important;
-          width: 40px;
+          width: 36px;
           display: grid;
-          grid-template-columns: 40px;
+          grid-template-columns: 36px;
           z-index: 4;
         }
 
         #profileBackdrop #profileModal #modalClose {
           position: static !important;
           inset: auto !important;
-          width: 40px !important;
-          height: 40px !important;
-          min-height: 40px !important;
+          width: 36px !important;
+          height: 36px !important;
+          min-height: 36px !important;
           display: inline-grid !important;
           place-items: center !important;
           padding: 0 !important;
@@ -40044,62 +40078,75 @@
 
         @media (max-width: 520px) {
           #profileBackdrop #profileModal .profile-modal-summary {
-            grid-template-columns: minmax(118px, .9fr) minmax(0, 1.1fr) !important;
-            gap: 4px !important;
-            min-height: 60px !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 0 !important;
+            min-height: 66px !important;
             margin-inline: -12px !important;
-            padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 6px 10px !important;
+            padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 46px 7px 10px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
-            grid-template-columns: 44px minmax(0, 1fr);
-            gap: 7px;
+            grid-template-columns: 60px minmax(0, 1fr);
+            gap: 8px;
           }
 
           #profileBackdrop #profileModal .profile-modal-avatar {
-            width: 44px !important;
+            width: 48px !important;
+            height: 48px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-summary .modal-identity h2 {
-            font-size: clamp(17px, 5vw, 22px) !important;
+            font-size: clamp(17px, 4.8vw, 21px) !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: 40px;
+            grid-template-columns: 36px;
           }
 
           #profileBackdrop #profileModal #modalClose {
-            width: 40px !important;
-            height: 40px !important;
-            min-height: 40px !important;
+            width: 36px !important;
+            height: 36px !important;
+            min-height: 36px !important;
           }
         }
 
         @media (max-width: 340px) {
           #profileBackdrop #profileModal .profile-modal-summary {
-            grid-template-columns: minmax(106px, .8fr) minmax(0, 1.2fr) !important;
-            gap: 3px !important;
-            min-height: 58px !important;
-            padding-right: 44px !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 0 !important;
+            min-height: 64px !important;
+            padding-right: 42px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
-            grid-template-columns: 40px minmax(0, 1fr);
+            grid-template-columns: 56px minmax(0, 1fr);
             gap: 5px;
           }
 
+          #profileBackdrop #profileModal .profile-modal-avatar-column {
+            grid-template-rows: 46px 15px;
+            gap: 2px;
+          }
+
           #profileBackdrop #profileModal .profile-modal-avatar {
-            width: 40px !important;
+            width: 46px !important;
+            height: 46px !important;
+          }
+
+          #profileBackdrop #profileModal #modalCity {
+            width: 56px !important;
+            max-width: 56px !important;
+            font-size: 7px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: 38px;
+            grid-template-columns: 36px;
           }
 
           #profileBackdrop #profileModal #modalClose {
-            width: 38px !important;
-            height: 38px !important;
-            min-height: 38px !important;
+            width: 36px !important;
+            height: 36px !important;
+            min-height: 36px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-name-row {
@@ -41587,9 +41634,12 @@
       <section class="profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
         <div class="profile-modal-summary">
           <div class="profile-modal-person">
-            <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
-              <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
-              <span data-working-now-indicator aria-hidden="true">NOW</span>
+            <div class="profile-modal-avatar-column">
+              <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
+                <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
+                <span data-working-now-indicator aria-hidden="true">NOW</span>
+              </div>
+              <span class="pill" id="modalCity">Las Vegas</span>
             </div>
             <div class="modal-identity-stack">
               <div class="modal-identity">
@@ -41597,18 +41647,15 @@
                   <h2 id="modalName">Profile</h2>
                   <span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓</span>
                   <span class="badge" id="modalStatus">Verified</span>
-                </div>
-                <div class="profile-modal-context" aria-live="polite">
-                  <span class="pill" id="modalCity">Las Vegas</span>
                   <button class="profile-modal-report-link" id="reportBtn" type="button" aria-label="Report profile">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 4h10l-1.5 3L15 10H5"></path></svg>
                   </button>
                 </div>
               </div>
+              <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
               <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
             </div>
           </div>
-          <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
           <div class="profile-modal-header-controls">
             <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
               <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
