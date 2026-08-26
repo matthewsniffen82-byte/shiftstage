@@ -293,11 +293,11 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-photo::after \{[\s\S]*?background: none;/,
+    /#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-photo::after \{[\s\S]*?background: linear-gradient\(180deg,transparent 46%,rgba\(5,5,8,\.16\) 59%,rgba\(5,5,8,\.96\) 100%\);/,
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-copy \{[\s\S]*?background: transparent;[\s\S]*?text-shadow: 0 2px 7px rgba\(0,0,0,\.96\);/,
+    /#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-copy \{[\s\S]*?background: linear-gradient\(180deg,transparent,rgba\(5,5,8,\.94\) 48%\);[\s\S]*?text-shadow: 0 2px 7px rgba\(0,0,0,\.96\);/,
   );
   assert.match(
     homeSource,
