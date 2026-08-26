@@ -171,6 +171,14 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   );
   assert.match(
     discoveryPalette,
+    /Active All uses the same dimensional state language[\s\S]*?data-dancer-directory-filter="all"\]\.is-active \{[\s\S]*?var\(--dancr-color-brand-primary\) 28%[\s\S]*?var\(--dancr-color-brand-primary\) 16%[\s\S]*?0 7px 18px/,
+  );
+  assert.match(
+    discoveryPalette,
+    /data-dancer-directory-filter="all"\]\.is-active::before \{[\s\S]*?content: "";[\s\S]*?width: 6px;[\s\S]*?height: 6px;[\s\S]*?border-radius: 999px;[\s\S]*?0 0 8px/,
+  );
+  assert.match(
+    discoveryPalette,
     /\.home-dancer-grid-heading\.is-now > strong,[\s\S]*?var\(--dancr-color-live\)[\s\S]*?\.home-dancer-grid-heading\.is-upcoming > strong,[\s\S]*?var\(--dancr-color-info\)[\s\S]*?\.home-dancer-grid-heading\.is-trending > strong,[\s\S]*?var\(--dancr-color-featured\)/,
   );
   assert.match(
