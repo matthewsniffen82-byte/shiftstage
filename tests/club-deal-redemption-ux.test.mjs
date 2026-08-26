@@ -91,3 +91,17 @@ test("mobile redemption presentation is compact, touch-safe, and overflow-safe",
   assert.match(liveApp, /overflow-x: hidden/);
   assert.match(liveApp, /@media \(max-width: 330px\)[\s\S]*?grid-template-columns: 1fr/);
 });
+
+test("terms disclosure and cashier steps stay readable on mobile", () => {
+  for (const source of [dealCard, liveApp]) {
+    assert.match(source, /terms-toggle[\s\S]*?min-height:\s*40px/);
+    assert.match(source, /terms-toggle[\s\S]*?border-radius:\s*999px/);
+    assert.match(source, /terms-toggle[\s\S]*?-webkit-appearance:\s*none/);
+  }
+
+  assert.match(dealCard, /club-deal-redemption-steps>div[^}]*min-height:44px/);
+  assert.match(liveApp, /#dealPassOverlay \.deal-pass-step \{[^}]*min-height: 44px/);
+  assert.match(dealCard, /club-deal-redemption-steps>div[\s\S]*?font-size:11\.5px/);
+  assert.match(liveApp, /#dealPassOverlay \.deal-pass-step[\s\S]*?font-size: \.72rem/);
+  assert.doesNotMatch(dealCard, /club-deal-redemption-steps>div[^}]*font-size:8px/);
+});

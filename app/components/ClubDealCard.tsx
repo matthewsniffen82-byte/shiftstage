@@ -609,18 +609,20 @@ function ClubDealInteractionStyles() {
       .club-deal-benefit { margin:0; padding:10px 11px; border:1px solid rgba(255,255,255,.1); border-radius:13px; color:rgba(255,255,255,.92); background:rgba(255,255,255,.035); font-size:13px; font-weight:850; line-height:1.35; overflow-wrap:anywhere; }
       .club-deal-details { display:grid; justify-items:start; gap:5px; }
       .club-deal-validity { margin:0; color:rgba(255,255,255,.7); font-size:10px; font-weight:800; line-height:1.3; }
-      .club-deal-terms-toggle { min-height:30px; padding:0; border:0; color:#7eeaff; background:transparent; font:inherit; font-size:11px; font-weight:950; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+      .club-deal-terms-toggle { width:fit-content; min-width:0; min-height:40px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 13px; border:1px solid rgba(126,234,255,.22); border-radius:999px; color:#d9f9ff; background:rgba(53,216,255,.06); -webkit-appearance:none; appearance:none; font:inherit; font-size:12px; font-weight:900; line-height:1; text-decoration:none; white-space:nowrap; cursor:pointer; }
+      .club-deal-terms-toggle::after { content:"⌄"; display:inline-block; color:#7eeaff; font-size:15px; line-height:1; transform:translateY(-1px); transition:transform 160ms ease; }
+      .club-deal-terms-toggle[aria-expanded="true"]::after { transform:rotate(180deg) translateY(1px); }
       .club-deal-terms-toggle:focus-visible { outline:2px solid #c4b5fd; outline-offset:3px; }
-      .club-deal-terms { width:100%; margin:0; padding:8px 9px; box-sizing:border-box; border:1px solid rgba(255,255,255,.08); border-radius:10px; color:rgba(255,255,255,.72); background:rgba(0,0,0,.22); font-size:10px; line-height:1.38; overflow-wrap:anywhere; }
+      .club-deal-terms { width:100%; margin:0; padding:10px 11px; box-sizing:border-box; border:1px solid rgba(255,255,255,.08); border-radius:10px; color:rgba(255,255,255,.76); background:rgba(0,0,0,.22); font-size:12px; line-height:1.42; overflow-wrap:anywhere; }
       .club-deal-terms[hidden] { display:none; }
       .club-deal-redemption-guide { display:grid; grid-template-columns:56px minmax(0,1fr); align-items:stretch; gap:8px; }
       .club-deal-nfc-symbol { width:56px; height:56px; display:grid; place-items:center; align-self:center; padding:5px; box-sizing:border-box; border:1px solid rgba(255,255,255,.14); border-radius:14px; color:#f8fdff; background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.18),transparent 56%),rgba(9,9,13,.92); box-shadow:0 10px 22px rgba(0,0,0,.3); }
       .club-deal-nfc-symbol svg { width:42px; height:42px; display:block; place-self:center; padding:8px; box-sizing:border-box; border:1px solid rgba(126,234,255,.72); border-radius:50%; color:#f8fdff; background:radial-gradient(circle at 50% 44%,rgba(53,216,255,.14),transparent 66%),rgba(7,10,15,.88); box-shadow:0 0 0 1px rgba(255,255,255,.035),0 0 14px rgba(53,216,255,.3),inset 0 1px 0 rgba(255,255,255,.14); filter:drop-shadow(0 0 5px rgba(126,234,255,.3)); }
-      .club-deal-redemption-steps { min-width:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
-      .club-deal-redemption-steps>div { min-width:0; display:grid; grid-template-columns:19px minmax(0,1fr); align-items:center; gap:5px; padding:5px 6px; border:1px solid rgba(255,255,255,.09); border-radius:9px; color:rgba(255,255,255,.84); background:rgba(255,255,255,.03); font-size:9px; line-height:1.15; text-align:left; }
-      .club-deal-redemption-steps span { width:19px; height:19px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.14); border-radius:50%; color:#fff; font-size:8px; }
-      .club-deal-redemption-steps strong { min-width:0; overflow-wrap:anywhere; }
-      .club-deal-preview-note { display:grid; gap:2px; margin:0; color:#d9f9ff; font-size:9px; line-height:1.32; text-align:center; }
+      .club-deal-redemption-steps { min-width:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+      .club-deal-redemption-steps>div { min-width:0; min-height:44px; display:grid; grid-template-columns:22px minmax(0,1fr); align-items:center; gap:7px; box-sizing:border-box; padding:7px 8px; border:1px solid rgba(255,255,255,.09); border-radius:10px; color:rgba(255,255,255,.9); background:rgba(255,255,255,.03); font-size:11.5px; line-height:1.24; text-align:left; }
+      .club-deal-redemption-steps span { width:22px; height:22px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.16); border-radius:50%; color:#fff; font-size:10px; font-weight:900; }
+      .club-deal-redemption-steps strong { min-width:0; font-weight:850; overflow-wrap:anywhere; }
+      .club-deal-preview-note { display:grid; gap:2px; margin:0; color:#d9f9ff; font-size:10.5px; line-height:1.35; text-align:center; }
       .club-deal-preview-note strong { font-weight:950; }
       .club-deal-preview-note span { color:rgba(217,249,255,.72); font-weight:800; }
       .club-deal-primary-dock { position:static; z-index:1702; width:100%; display:grid; box-sizing:border-box; margin-top:0; padding:0; border:0; background:transparent; }
@@ -660,14 +662,14 @@ function ClubDealInteractionStyles() {
         .club-deal-dialog { width:min(380px,100%); max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); gap:6px; padding:14px 12px max(14px,env(safe-area-inset-bottom)); border-radius:20px; }
         .club-deal-dialog-close { top:8px; right:8px; width:32px; height:32px; font-size:20px; }
         .club-deal-dialog-header h2,.club-deal-ready-header h2 { font-size:clamp(20px,5.7vw,25px); }
-        .club-deal-benefit { padding:9px 10px; font-size:12px; line-height:1.3; }
+        .club-deal-benefit { padding:9px 10px; font-size:13px; line-height:1.35; }
         .club-deal-redemption-guide { grid-template-columns:52px minmax(0,1fr); gap:6px; }
         .club-deal-nfc-symbol { width:52px; height:52px; }
         .club-deal-nfc-symbol svg { width:38px; height:38px; padding:7px; }
-        .club-deal-redemption-steps { gap:4px; }
-        .club-deal-redemption-steps>div { grid-template-columns:18px minmax(0,1fr); gap:4px; padding:4px 5px; font-size:8px; }
-        .club-deal-redemption-steps span { width:18px; height:18px; font-size:8px; }
-        .club-deal-preview-note { font-size:8px; line-height:1.25; }
+        .club-deal-redemption-steps { gap:5px; }
+        .club-deal-redemption-steps>div { grid-template-columns:21px minmax(0,1fr); gap:6px; padding:6px 7px; font-size:11px; line-height:1.24; }
+        .club-deal-redemption-steps span { width:21px; height:21px; font-size:9px; }
+        .club-deal-preview-note { font-size:10px; line-height:1.32; }
         .club-deal-share-actions { gap:6px; }
         .club-deal-share-actions button { min-height:34px; font-size:10px; }
         .club-deal-dialog .club-deal-checkout-action { min-height:46px !important; }
