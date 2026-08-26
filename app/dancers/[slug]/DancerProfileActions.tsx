@@ -131,9 +131,8 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
       <button className="profile-action-secondary profile-action-icon-control profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="bell" /><span>Notify</span></span>
       </button>
-      <button aria-disabled="true" className="profile-action-secondary profile-action-going profile-action-icon-control profile-action-unavailable profile-action-requires-account profile-action-preview-static" disabled type="button">
+      <button aria-disabled="true" className="profile-action-secondary profile-action-going profile-action-icon-control profile-action-unavailable profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
-        <small className="profile-action-requirement">No shift posted</small>
       </button>
       <div className="profile-action-share-slot">
         <span className="profile-share">
@@ -485,7 +484,7 @@ export function DancerProfileActions({
         <button
           aria-disabled={!actionShift ? "true" : undefined}
           aria-pressed={actionShift ? isGoing : undefined}
-          className={`profile-action-secondary profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable profile-action-requires-account" : ""}`}
+          className={`profile-action-secondary profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable" : ""}`}
           disabled={actionShift ? !savedLoaded || goingSaving : true}
           onClick={() => actionShift && updateGoing(actionShift.id)}
           type="button"
@@ -494,7 +493,6 @@ export function DancerProfileActions({
             <DancerProfileActionPreviewIcon type="clock" />
             <span>{isGoing ? "Going ✓" : "I’m Going"}</span>
           </span>
-          {!actionShift ? <small className="profile-action-requirement">No shift posted</small> : null}
         </button>
         {shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>

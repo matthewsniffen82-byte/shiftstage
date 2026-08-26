@@ -57,7 +57,8 @@ test("both production dancer profile surfaces keep Going visible and enable it f
   assert.doesNotMatch(nextActions, /requireCustomerAccount\("going"\)/);
   assert.match(nextActions, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| shifts\[0\] \|\| null/);
   assert.match(nextActions, /onClick=\{\(\) => actionShift && updateGoing\(actionShift\.id\)\}/);
-  assert.match(nextActions, /profile-action-unavailable[\s\S]*?No shift posted/);
+  assert.match(nextActions, /profile-action-going[\s\S]*?profile-action-unavailable/);
+  assert.doesNotMatch(nextActions, /<small className="profile-action-requirement">No shift posted<\/small>/);
   assert.match(nextActions, /fetch\(`\/api\/customer\/going\?shiftId=/);
   assert.match(nextActions, /credentials: "same-origin"/);
   assert.match(nextActions, /export function DancerGoingCount/);
@@ -68,7 +69,7 @@ test("both production dancer profile surfaces keep Going visible and enable it f
     /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\) &&\s+!requireCustomerAccountForProfileAction\(actionButton\)/,
   );
   assert.match(liveApp, /const canMarkGoing = Boolean\(profile\?\.scheduled && profile\.shiftId\)/);
-  assert.match(liveApp, /data-shift-state="unavailable"[\s\S]*?profileActionButtonMarkup\("clock", goingCopy\.idle, "no-shift"\)/);
+  assert.match(liveApp, /data-shift-state="unavailable"[\s\S]*?profileActionButtonMarkup\("clock", goingCopy\.idle\)/);
   assert.match(liveApp, /await postOptionalAuthJson\("\/api\/customer\/going"/);
 });
 

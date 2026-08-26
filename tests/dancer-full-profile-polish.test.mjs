@@ -139,7 +139,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(
     liveActionsMarkup,
-    /profileActionButtonMarkup\("share", "Share", "public"\)/,
+    /profileActionButtonMarkup\("share", "Share"\)/,
   );
   assert.match(
     aesthetic,

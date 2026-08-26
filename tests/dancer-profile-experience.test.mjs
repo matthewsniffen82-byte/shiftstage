@@ -204,7 +204,8 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /const hasLiveActions = Boolean\(actionShift\?\.isActive\)/);
   assert.match(profileActions, /const hasScheduledActions = Boolean\(actionShift\)/);
   assert.match(profileActions, /live-actions\$\{hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"\}/);
-  assert.match(profileActions, /profile-action-going[\s\S]*?profile-action-unavailable[\s\S]*?No shift posted/);
+  assert.match(profileActions, /profile-action-going[\s\S]*?profile-action-unavailable/);
+  assert.doesNotMatch(profileActions, /<small className="profile-action-requirement">No shift posted<\/small>/);
   assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?No shift posted[\s\S]*?Follow \{profile\.stageName\} for updates/);
   assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\); \}/);
 });
