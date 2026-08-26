@@ -892,7 +892,7 @@ test("dancer grid hierarchy stays readable without changing the production card 
   assert.doesNotMatch(homeSource, /home-dancer-grid-venue\$\{venueStateClass\}/);
   assert.match(
     homeSource,
-    /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} club\$\{allItems\.length === 1 \? "" : "s"\}`[\s\S]*?: `\$\{allItems\.length\} total`/,
+    /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} club\$\{allItems\.length === 1 \? "" : "s"\}`[\s\S]*?: `\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/,
   );
   assert.match(homeSource, /#homeLiveWorking\.is-empty \{[\s\S]*?rgba\(248, 250, 252, 0\.58\)/);
   assert.match(homeSource, /\.home-dancer-grid-venue span \{[\s\S]*?-webkit-line-clamp: 2;/);
@@ -1088,24 +1088,24 @@ test("the consolidated discovery titles use one typography system and consistent
   assert.doesNotMatch(dancerTitleStyle, /font-size|font-family|font-weight|line-height|letter-spacing/);
 });
 
-test("mobile discovery headings share a compact divided hierarchy across Android and iPhone", () => {
+test("mobile discovery headings share a compact hierarchy across Android and iPhone", () => {
   assert.match(
     homeSource,
     /const usesDiscoverySectionHeader =\s*!selectedVenue && \(activeTab === "dancers" \|\| activeTab === "venues"\);[\s\S]*?classList\.toggle\("discovery-section-head", usesDiscoverySectionHeader\)/,
   );
   assert.match(
-    homeSource,
-    /\.content-head\.discovery-section-head \{[\s\S]*?padding-bottom: 13px !important;[\s\S]*?border-bottom: 1px solid rgba\(255, 255, 255, \.1\);[\s\S]*?\.content-head\.discovery-section-head \+ #results \{[\s\S]*?margin-top: -7px !important;/,
+    aesthetic,
+    /body\.dancer-directory-active[\s\S]*?> \.content-head\.discovery-section-head \{[\s\S]*?padding: 0 0 5px !important;[\s\S]*?border-bottom: 0 !important;/,
   );
   assert.match(
-    homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?\.content-head\.discovery-section-head \{[\s\S]*?gap: 8px !important;[\s\S]*?margin-top: 4px !important;[\s\S]*?padding: 2px 0 13px !important;[\s\S]*?font-family: var\(--font-ui\) !important;[\s\S]*?font-size: clamp\(22px, 5\.8vw, 27px\) !important;[\s\S]*?font-weight: 900 !important;/,
+    aesthetic,
+    /body\.dancer-directory-active[\s\S]*?> #tabTitle \{[\s\S]*?font-size: clamp\(20px, 5\.35vw, 24px\) !important;[\s\S]*?line-height: 1\.05 !important;/,
   );
   assert.match(
     homeSource,
     /\.home-dancer-grid-heading\.is-upcoming strong \{[\s\S]*?color: #b9f6ff;[\s\S]*?text-shadow: none;/,
   );
-  assert.match(homeSource, /activeTab === "dancers"[\s\S]*?`\$\{allItems\.length\} total`/);
+  assert.match(homeSource, /activeTab === "dancers"[\s\S]*?`\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/);
   assert.match(
     homeSource,
     /function renderHomeTvFeed\(city\)[\s\S]*?classList\.add\("discovery-section-head", "tv-section-head"\)/,

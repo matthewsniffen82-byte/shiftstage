@@ -7215,6 +7215,235 @@ html:is(
   mix-blend-mode: normal !important;
 }
 
+/* Dancers discovery header: preserve the canonical city, distance, club,
+ * schedule, and result state while moving the first profile row materially
+ * higher on mobile. This scope deliberately excludes TV and Clubs. */
+body.dancer-directory-active > .app > main.stack {
+  gap: 8px !important;
+}
+
+body.dancer-directory-active > .app main.stack > .home-discovery-controls {
+  grid-template-columns: minmax(0, 2.05fr) minmax(96px, 0.95fr) !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+body.dancer-directory-active > .app main.stack > .home-discovery-controls .home-city-filter {
+  gap: 0 !important;
+}
+
+/* Keep the native label/association for assistive technology without spending
+ * a visible row on an eyebrow that repeats the pin and selected city. */
+body.dancer-directory-active > .app main.stack > .home-discovery-controls #citySelectLabel {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+body.dancer-directory-active > .app main.stack > .home-discovery-controls
+  :is(#citySelect, .city-picker-trigger, .home-filter-toggle) {
+  box-sizing: border-box !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  border-radius: 13px !important;
+}
+
+body.dancer-directory-active > .app main.stack > .home-discovery-controls
+  :is(.city-picker-trigger-value, #citySelect) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.dancer-directory-active > .app main.stack > .home-discovery-controls .home-filter-toggle {
+  min-width: 96px !important;
+  padding-inline: 10px !important;
+}
+
+body.dancer-directory-active > .app main.stack > .home-live-summary {
+  min-height: 16px !important;
+  margin-block: -2px -1px !important;
+  padding-inline: 1px !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack {
+  gap: 5px !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > .content-head.discovery-section-head {
+  min-height: 0 !important;
+  margin-top: 0 !important;
+  padding: 0 0 5px !important;
+  border-bottom: 0 !important;
+  gap: 6px !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > .content-head.discovery-section-head > #tabTitle {
+  font-size: clamp(20px, 5.35vw, 24px) !important;
+  line-height: 1.05 !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > .content-head.discovery-section-head > #tabCount {
+  min-height: 0 !important;
+  padding: 0 0 0 6px !important;
+  border: 0 !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 10px !important;
+  white-space: nowrap;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > .content-head.discovery-section-head + #results.home-dancer-grid {
+  margin-top: 0 !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters {
+  box-sizing: border-box;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px !important;
+  margin: 0 0 2px !important;
+  padding: 3px;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 14px;
+  background: var(--dancr-color-surface-subtle);
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter {
+  min-height: 48px !important;
+  padding-inline: 6px !important;
+  gap: 4px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: clamp(10px, 2.8vw, 12px) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter.is-active {
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-brand-primary) !important;
+  box-shadow: inset 0 1px 0 var(--dancr-color-brand-core-soft) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) {
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-live) 16%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-live-medium) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter-status {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 999px;
+  background: var(--dancr-color-live);
+  box-shadow: 0 0 8px var(--dancr-color-live-soft);
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter-count {
+  color: var(--dancr-color-text-muted) !important;
+  font-size: 0.86em !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"]
+  > .dancer-directory-filter-count {
+  color: var(--dancr-color-live) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter.is-active
+  > :is(.dancer-directory-filter-label, .dancer-directory-filter-count) {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty)
+  > .dancer-directory-filter-count {
+  color: var(--dancr-color-live) !important;
+}
+
+/* The selected tab already names a single-status result set, so repeating that
+ * same heading delays the first card without adding context. All keeps its
+ * compact group labels because they still distinguish the sorted sections. */
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid.home-dancer-filtered-view > .home-dancer-grid-heading {
+  display: none !important;
+}
+
+/* Every first visible section already has its status represented by the tab
+ * and by each card. Later headings in All remain as useful group dividers. */
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid > .dancer-directory-filters + .home-dancer-grid-heading {
+  display: none !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading {
+  min-height: 22px;
+  gap: 5px;
+  margin: 2px 0 0 !important;
+  padding: 2px 1px 1px !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading > strong {
+  font-size: clamp(13px, 3.6vw, 15px) !important;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading > span {
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 5px;
+  font-size: 9px;
+}
+
+@media (max-width: 360px) {
+  body.dancer-directory-active > .app main.stack > .home-discovery-controls {
+    grid-template-columns: minmax(0, 1fr) 96px !important;
+  }
+
+  body.dancer-directory-active > .app main.stack > .home-discovery-controls .home-filter-toggle {
+    font-size: 13px !important;
+  }
+
+  body.dancer-directory-active > .app main.stack > section.stack
+    > .content-head.discovery-section-head > #tabTitle {
+    font-size: 20px !important;
+  }
+
+  body.dancer-directory-active > .app main.stack > section.stack
+    > #results.home-dancer-grid .dancer-directory-filter {
+    font-size: 10px !important;
+  }
+}
+
 /* Venue cards use the same compact glass action rail as MyDancr TV. Familiar
  * actions remain icon-only; the custom NFC action keeps one short Deals label.
  * This block intentionally excludes every floating and bottom-navigation rule. */

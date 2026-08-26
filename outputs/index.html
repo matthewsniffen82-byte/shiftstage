@@ -32006,7 +32006,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=149" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=150" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -57946,11 +57946,14 @@
         { id: "upcoming", label: "Upcoming" }
       ];
       return `
-        <div class="dancer-directory-filters" role="group" aria-label="Filter dancers">
+        <div class="dancer-directory-filters" role="tablist" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
-            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" data-dancer-directory-filter="${filter.id}" aria-pressed="${active}">${filter.label}<span>${counts[filter.id]}</span></button>`;
+            const statusDot = filter.id === "now"
+              ? '<span class="dancer-directory-filter-status" aria-hidden="true"></span>'
+              : "";
+            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}</span></button>`;
           }).join("")}
         </div>
       `;
@@ -57998,6 +58001,7 @@
       };
       results.classList.add("card-grid", "home-dancer-grid");
       results.classList.add("home-dancer-three-column");
+      results.classList.toggle("home-dancer-filtered-view", dancerDirectoryFilter !== "all");
       results.setAttribute("aria-label", `Approved dancers in ${city}, grouped by live status and schedule`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
@@ -58370,6 +58374,7 @@
 
     function render() {
       const city = citySelect.value;
+      document.body.classList.toggle("dancer-directory-active", activeTab === "dancers");
       syncCityPickerSelection(city);
       populateVenueSelect(city);
       const tvVenueFilter = selectedHomeTvVenueFilter(city);
@@ -58429,7 +58434,7 @@
       }
       const resultCountLabel = activeTab === "venues"
         ? `${allItems.length} club${allItems.length === 1 ? "" : "s"}`
-        : `${allItems.length} total`;
+        : `${allItems.length} dancer${allItems.length === 1 ? "" : "s"}`;
       setHomeTvFeedCount(loadingDiscovery
         ? activeTab === "venues" ? "Loading clubs..." : "Loading live profiles..."
         : selectedVenue

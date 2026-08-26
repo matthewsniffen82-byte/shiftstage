@@ -59,7 +59,7 @@ test("the consolidated Dancers destination exposes only All, Now, and Upcoming f
   assert.match(homeSource, /\.dancer-directory-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(
     homeSource,
-    /data-dancer-directory-filter="\$\{filter\.id\}" aria-pressed="\$\{active\}"/,
+    /role="tab"[\s\S]*?data-dancer-directory-filter="\$\{filter\.id\}"[\s\S]*?aria-selected="\$\{active\}"[\s\S]*?aria-pressed="\$\{active\}"/,
   );
   assert.match(
     homeSource,
