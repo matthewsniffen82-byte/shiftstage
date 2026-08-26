@@ -157,7 +157,7 @@ test("every profile combines tonight's shift and Club Deal while only Working No
   assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
-  assert.match(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
+  assert.doesNotMatch(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
   assert.match(profilePage, /className="profile-active-deal is-inactive"[\s\S]*?aria-label="Inactive Club Deal"/);
   assert.match(profilePage, /activeShift[\s\S]*?\? "No active deal"[\s\S]*?: actionShift[\s\S]*?\? "Available after check-in"[\s\S]*?: "No active club deal"/);
   assert.match(profilePage, /Deals activate after a verified check-in at \$\{actionShift\.venueName\}\./);
@@ -224,7 +224,7 @@ test("active full-profile Club Deals render a compact cashier-tap action and use
   assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
   assert.match(activeDealMarkup, /class="profile-club-deal-label">Active Club Deal<\/strong>/);
   assert.match(activeDealMarkup, /class="profile-club-deal-title">\$\{escapeHtml\(dealTitle\)\}<\/b>/);
-  assert.match(activeDealMarkup, /class="profile-club-deal-context">Available tonight at \$\{escapeHtml\(venueName\)\}<\/small>/);
+  assert.doesNotMatch(activeDealMarkup, /profile-club-deal-context|Available tonight at/);
   assert.doesNotMatch(activeDealMarkup, /Tap How to use for instructions|Tap to choose an offer and view instructions/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);

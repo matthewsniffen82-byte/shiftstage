@@ -228,6 +228,39 @@ test("profile socials and activity metrics use a compact neutral presentation", 
   assert.doesNotMatch(publicSocialMarkup, />Social links</);
 });
 
+test("mobile full profiles compact identity, Tonight, actions, and metrics without shrinking tap targets", () => {
+  const compactMobileProfile = aesthetic.match(
+    /A compact mobile profile summary[\s\S]*?(?=\/\* Production TV-card branding)/,
+  )?.[0] || "";
+
+  assert.ok(compactMobileProfile, "compact mobile profile CSS must exist");
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-modal-summary \{[\s\S]*?grid-template-columns: 40px minmax\(0, 1fr\) !important;[\s\S]*?min-height: 56px !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity \{[\s\S]*?display: flex !important;[\s\S]*?align-items: center !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-club-deal-qr-button \{[\s\S]*?min-height: 44px !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /\.modal-actions \.action-btn\.profile-action-icon-control,[\s\S]*?min-height: 44px !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /\.modal-actions \.profile-report-action,[\s\S]*?position: absolute !important;[\s\S]*?right: 2px !important;[\s\S]*?grid-column: auto !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-activity-metrics > div,[\s\S]*?gap: 1px !important;[\s\S]*?padding: 2px 4px !important;/,
+  );
+  assert.doesNotMatch(liveApp, /profile-club-deal-context">Available tonight at/);
+});
+
 test("home profile overlay mirrors the public profile information hierarchy", () => {
   const gridFunction = liveApp.match(
     /function profileModalGridMarkup\(profile, options = \{\}\) \{[\s\S]*?\n    \}/,

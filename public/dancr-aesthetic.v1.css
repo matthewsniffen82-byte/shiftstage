@@ -3999,6 +3999,273 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
   line-height: 1.25 !important;
 }
 
+/* A compact mobile profile summary keeps Tonight and the media tabs above the
+ * fold without shrinking any primary tap target below 44px. City now shares
+ * the identity line, the repeated active-deal venue copy is omitted in markup,
+ * and report remains a quiet utility directly beneath Share. */
+@media (max-width: 759px) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    min-height: 56px !important;
+    padding: max(6px, calc(env(safe-area-inset-top, 0px) + 4px)) 56px 6px 10px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    overflow: hidden !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
+    flex: 0 1 auto !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-context {
+    flex: 0 1 auto !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-identity h2 {
+    font-size: clamp(19px, 5.6vw, 23px) !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalCity {
+    min-height: 20px !important;
+    padding-inline: 7px !important;
+    font-size: 9px !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-titlebar {
+    min-height: 56px !important;
+    gap: 8px !important;
+    padding: max(6px, env(safe-area-inset-top)) 48px 6px 0 !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-titlebar-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-titlebar-identity {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    overflow: hidden !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-titlebar-identity > div:first-child {
+    flex: 0 1 auto !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-titlebar-context {
+    flex: 0 1 auto !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-titlebar h1 {
+    font-size: clamp(19px, 5.6vw, 23px) !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-titlebar-city {
+    min-height: 20px !important;
+    padding-inline: 7px !important;
+    font-size: 9px !important;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) .profile-tonight-card {
+    margin-top: 4px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-grid > .working-now-tile {
+    gap: 8px !important;
+    padding: 4px 6px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .working-now-tile .profile-venue-destination.is-live {
+    min-height: 36px !important;
+    padding: 2px 4px !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-tonight-card > .profile-working-card {
+    padding: 4px !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-working-destination {
+    min-height: 40px !important;
+    padding: 2px 6px !important;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) .profile-tonight-deal {
+    padding: 3px 4px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-tile {
+    grid-template-columns: minmax(0, 1fr) 96px !important;
+    gap: 8px !important;
+    padding: 6px 7px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-copy {
+    gap: 2px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-title {
+    font-size: 14px !important;
+    line-height: 1.1 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-qr-button {
+    width: 96px !important;
+    min-width: 96px !important;
+    max-width: 96px !important;
+    min-height: 44px !important;
+    grid-template-columns: 20px minmax(0, 1fr) !important;
+    gap: 5px !important;
+    padding: 5px 7px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-qr-button .club-deal-qr-symbol {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-action-copy strong {
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-active-deal .club-deal-launcher {
+    min-height: 46px !important;
+    gap: 6px !important;
+    padding: 5px 6px 5px 8px !important;
+    border-radius: 11px !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-active-deal .club-deal-launcher-copy {
+    gap: 1px !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-active-deal .club-deal-launcher-copy > strong {
+    font-size: 14px !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-active-deal .club-deal-launcher-action {
+    min-height: 30px !important;
+    padding-inline: 8px !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions,
+  body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions {
+    gap: 4px !important;
+    padding: 3px 8px 5px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
+  body.dancr-button-system .public-profile-shell .live-actions {
+    position: relative !important;
+    padding: 0 0 8px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
+  body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
+  body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
+    min-height: 44px !important;
+    gap: 0 !important;
+    padding: 1px 2px !important;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal .modal-actions, .public-profile-shell .live-actions)
+    .profile-action-icon-control .profile-action-main {
+    gap: 1px !important;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal .modal-actions, .public-profile-shell .live-actions)
+    .profile-action-icon-control .profile-action-main > span:last-child {
+    font-size: 9px !important;
+    line-height: 1 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon,
+  body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-icon-frame {
+    width: 21px !important;
+    height: 21px !important;
+    flex-basis: 21px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon > svg,
+  body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-preview-icon {
+    width: 21px !important;
+    height: 21px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="personPlus"] > svg,
+  body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon {
+    width: 23px !important;
+    height: 23px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
+  body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="clock"] > svg,
+  body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon {
+    width: 21px !important;
+    height: 21px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-report-action,
+  body.dancr-button-system .public-profile-shell .live-actions .profile-report-action {
+    position: absolute !important;
+    right: 2px !important;
+    bottom: 0 !important;
+    grid-column: auto !important;
+    min-height: 8px !important;
+    margin: 0 !important;
+    padding: 0 2px !important;
+    font-size: 7px !important;
+    line-height: 1 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics {
+    margin-top: -1px !important;
+    padding: 0 0 2px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics > div,
+  body.dancr-button-system .public-profile-shell .profile-metrics > div {
+    gap: 1px !important;
+    padding: 2px 4px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics dd,
+  body.dancr-button-system .public-profile-shell .profile-metrics dd {
+    font-size: clamp(18px, 4.2vw, 21px) !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics dt,
+  body.dancr-button-system .public-profile-shell .profile-metrics dt {
+    font-size: clamp(8px, 2vw, 10px) !important;
+    line-height: 1.15 !important;
+  }
+
+  body.dancr-button-system .public-profile-shell .profile-overview {
+    margin-top: -1px !important;
+    padding: 0 0 4px !important;
+  }
+}
+
 /* Production TV-card branding keeps the moving media as the visual hero.
  * Card framing, idle utilities, playback controls, and progress stay neutral;
  * the beam violet is reserved for profile identity, selection, and keyboard focus.

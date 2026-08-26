@@ -47864,13 +47864,11 @@
         const config = dancerProfileClubDealConfig(profile);
         const offerCount = Math.max(1, config?.deals?.length || 1);
         const dealTitle = String(config?.deal?.dealTitle || "Club Deal").trim() || "Club Deal";
-        const venueName = String(config?.venueName || profile?.venue || "the club").trim() || "the club";
         return `
           <div class="info-tile profile-qr-tile profile-club-deal-tile is-active" data-club-deal-state="active" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
             <div class="profile-club-deal-copy">
               <strong class="profile-club-deal-label">Active Club Deal</strong>
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
-              <small class="profile-club-deal-context">Available tonight at ${escapeHtml(venueName)}</small>
             </div>
             <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>

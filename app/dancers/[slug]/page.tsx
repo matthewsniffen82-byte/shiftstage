@@ -232,7 +232,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
               attributionTokens={dealAttributionTokens}
               dancerNote={dancerAttributionEligible}
               presentation="launcher"
-              contextLabel={`Available tonight at ${activeShift.venueName}`}
               ctaLabel={activeDeals.length > 1 ? `View all ${activeDeals.length}` : "How to use"}
               sectionId="club-deal"
             />
