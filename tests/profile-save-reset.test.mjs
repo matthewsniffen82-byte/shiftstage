@@ -148,7 +148,7 @@ test("saved profiles keep every active photo moderation state in the editor", ()
   assert.doesNotMatch(mobileAppSource, /approved-photo-slot-status/);
 });
 
-test("onboarding Step 2 unlocks with one approved photo while extra photos can remain in review", () => {
+test("combined Step 1 can be submitted with one approved photo while extra photos remain in review", () => {
   const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?\r?\n    }\r?\n\r?\n    async function uploadApprovedDancerPhoto/)?.[0] || "";
   const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?\r?\n    }\r?\n\r?\n    async function submitDancerProfileForReview/)?.[0] || "";
   const profileHydration = mobileAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\r?\n    }\r?\n\r?\n    function setDancerSetupField/)?.[0] || "";

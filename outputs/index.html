@@ -45339,8 +45339,8 @@
 
     function reviewStepLabel(step) {
       if (step === "profile") return "Step 1 profile";
-      if (step === "photos") return "Step 2 photos";
-      return "Step 4 venue tap";
+      if (step === "photos") return "Step 1 photos";
+      return "Step 3 venue tap";
     }
 
     function hasRejectedDancerReviews() {
@@ -52667,7 +52667,7 @@
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 4 · Dressing-room tap" : "Venue access";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 3 · Dressing-room tap" : "Venue access";
       document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
         ? "At the club, tap its official MyDancr dressing-room sticker. The tap approves venue access; MyDancr reviews profile content separately."
@@ -53318,16 +53318,18 @@
       return ["requested", "active"].includes(dancerNatsAccountStatus()) || dancerPayoutSetupSkipped();
     }
 
+    function dancerProfileMediaReady() {
+      const profile = activeDancerProfile();
+      const avatarSaved = Boolean(profile?.avatarStoragePath || profile?.avatar_storage_path);
+      return Boolean(dancerSetup.profile && dancerSetup.photos && avatarSaved);
+    }
+
     function setupOrder() {
-      return ["profile", "review", "payout", "approval"];
+      return ["profile", "payout", "approval"];
     }
 
     function isSavedSetupStepComplete(step) {
-      if (step === "profile") {
-        const profile = activeDancerProfile();
-        const avatarSaved = Boolean(profile?.avatarStoragePath || profile?.avatar_storage_path);
-        return Boolean(dancerSetup.profile && dancerSetup.photos && avatarSaved);
-      }
+      if (step === "profile") return dancerProfileMediaReady() && Boolean(dancerSetup.review);
       if (step === "payout") return dancerPayoutStepComplete();
       return Boolean(dancerSetup[step]);
     }
@@ -53340,8 +53342,7 @@
 
     function setupStepDisplayName(step) {
       const labels = {
-        profile: "profile and media",
-        review: "preview and submission",
+        profile: "profile, media, and submission",
         payout: "optional commission payouts",
         approval: "venue affiliation"
       };
@@ -54311,7 +54312,7 @@
         void loadDancerVenueVerification();
       } catch (error) {
         const message = error.message || "Could not submit for review";
-        activeSetupStep = "review";
+        activeSetupStep = "profile";
         profileSubmitNotice = message;
         profileSubmitNoticeTone = "error";
         renderDancerSetup();
@@ -54900,8 +54901,7 @@
       const completedSteps = steps.filter((step) => isSavedSetupStepComplete(step)).length;
       const nextStep = nextIncompleteStep();
       const nextLabels = {
-        profile: "Create profile and add media",
-        review: "Preview and submit",
+        profile: "Create, review, and submit profile",
         payout: "Commission payouts (optional)",
         approval: "Venue affiliation"
       };
@@ -54911,7 +54911,7 @@
       const approved = dancerSetup.approval || dancerCoreApprovalUnlocked(activeProfile) || normalizedReviewStatus(liveDancerBilling?.dancerStatus) === "approved";
       const optionalProfileFixes = approved && hasOptionalProfileFixReviews();
       const rejected = !approved && (isRejectedDancerStatus(activeProfile?.status) || hasRejectedDancerReviews());
-      const readyForReview = isSavedSetupStepComplete("profile");
+      const readyForReview = dancerProfileMediaReady();
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
       const approvalStateLabel = rejected ? "Rejected" : optionalProfileFixes ? "Approved with fixes needed" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
@@ -55402,20 +55402,25 @@
       `;
       const profileBody = `<div class="setup-profile-editor" data-setup-profile-editor>${profileIdentityBody}${photosBody}${profileSocialBody}</div>`;
       const reviewBody = `
-        ${profileReviewNoticeMarkup(reviewSubmitted)}
-        <button class="action-btn secondary" type="button" data-preview-profile>
-          Preview public profile
-        </button>
-        <button class="action-btn" type="button" data-submit-review>Submit profile</button>
-        <div class="rule-note">Confirm the preview is accurate. Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete venue affiliation.</div>
+        <section class="setup-profile-editor-section setup-profile-review-section">
+          <div class="setup-profile-editor-head">
+            <strong>Review and submit</strong>
+            <p>Preview the guest-facing profile, confirm it is accurate, then submit it.</p>
+          </div>
+          ${profileReviewNoticeMarkup(reviewSubmitted)}
+          <button class="action-btn secondary" type="button" data-preview-profile>
+            Preview public profile
+          </button>
+          <button class="action-btn" type="button" data-submit-review>Submit profile</button>
+          <div class="rule-note">Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete venue affiliation.</div>
+        </section>
       `;
       const approvalBody = `
         <div class="info-tile"><strong>Approve venue access</strong><div class="meta">At the club, tap its official MyDancr dressing-room sticker.</div></div>
-        <div class="rule-note">This Step 4 tap approves the submitted profile and authorizes the venue. Payout setup is optional and never blocks this tap, check-in, or Working Now.</div>
+        <div class="rule-note">This Step 3 tap approves the submitted profile and authorizes the venue. Payout setup is optional and never blocks this tap, check-in, or Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
-        setupStepMarkup("profile", "Create profile and add media", profileBody),
-        setupStepMarkup("review", "Preview and submit", reviewBody),
+        setupStepMarkup("profile", "Create & review profile", `${profileBody}${reviewBody}`),
         setupStepMarkup("payout", "Set up commission payouts (optional)", dancerPayoutSetupBodyMarkup()),
         setupStepMarkup("approval", "Confirm venue affiliation", approvalBody)
       ].join("");

@@ -3598,7 +3598,7 @@ function DancerOnboardingCommand({
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
-  profileMediaContent: (controls: { continueToPreview: () => void; profileReady: boolean }) => ReactNode;
+  profileMediaContent: (controls: { continueToReview: () => void; profileReady: boolean }) => ReactNode;
   venueVerificationContent: ReactNode;
 }) {
   const [status, setStatus] = useState("");
@@ -3639,17 +3639,10 @@ function DancerOnboardingCommand({
   const steps = useMemo(() => [
     {
       id: "dancer-profile-media",
-      label: "Create profile & media",
-      complete: profileReady,
-      detail: setupDetail,
-      locked: false,
-    },
-    {
-      id: "dancer-onboarding-preview",
-      label: "Preview & continue",
+      label: "Create & review profile",
       complete: submitted,
-      detail: submitted ? "Your completed profile is ready for club verification." : profileReady ? "Review the full preview, then continue to club verification." : "Complete the saved profile and media requirements first.",
-      locked: !profileReady && !submitted,
+      detail: submitted ? "Your completed profile is ready for club verification." : profileReady ? "Review your full profile, then submit it for club verification." : setupDetail,
+      locked: false,
     },
     {
       id: "dancer-onboarding-payouts",
@@ -3671,7 +3664,7 @@ function DancerOnboardingCommand({
       id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room sticker." : "Complete the profile preview step to unlock club verification.",
+      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room sticker." : "Create, review, and submit your profile to unlock club verification.",
       locked: !submitted && !isVenueApproved,
     },
   ], [isVenueApproved, natsAccountStatus, payoutSkipped, payoutStepComplete, profileReady, setupDetail, submitted]);
@@ -3721,6 +3714,15 @@ function DancerOnboardingCommand({
       return;
     }
     openStep(id);
+  }
+
+  function continueToProfileReview() {
+    setExpandedStepId("dancer-profile-media");
+    window.localStorage.setItem(storageKey, "dancer-profile-media");
+    window.requestAnimationFrame(() => {
+      document.getElementById("dancer-onboarding-profile-review")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("dancer-onboarding-profile-review-button")?.focus({ preventScroll: true });
+    });
   }
 
   async function submitProfile() {
@@ -3806,7 +3808,7 @@ function DancerOnboardingCommand({
           <h2 id="dancer-onboarding-heading">Profile setup</h2>
           <p>Complete your profile, choose whether to set up payouts now, then authorize your first venue at the club.</p>
         </span>
-        <b>{steps.filter((step) => step.complete).length} of 4 complete</b>
+        <b>{steps.filter((step) => step.complete).length} of {steps.length} complete</b>
       </div>
       <ol className="dancer-onboarding-steps" aria-label="Dancer profile approval progress">
         {steps.map((step, index) => {
@@ -3847,12 +3849,13 @@ function DancerOnboardingCommand({
                 id={panelId}
                 role="region"
               >
-                {step.id === "dancer-profile-media" ? profileMediaContent({
-                  continueToPreview: () => openStep("dancer-onboarding-preview"),
-                  profileReady,
-                }) : null}
-                {step.id === "dancer-onboarding-preview" ? (
-                  <div className="dancer-onboarding-preview-workspace">
+                {step.id === "dancer-profile-media" ? (
+                  <>
+                    {profileMediaContent({
+                      continueToReview: continueToProfileReview,
+                      profileReady,
+                    })}
+                    <div className="dancer-onboarding-preview-workspace dancer-onboarding-profile-review" id="dancer-onboarding-profile-review">
                     <article className="dancer-onboarding-preview" aria-label="Guest profile preview">
                       <span className="eyebrow">Guest view</span>
                       <div className="dancer-onboarding-preview-card">
@@ -3876,18 +3879,19 @@ function DancerOnboardingCommand({
                     </article>
                     {submitted ? (
                       <div className="dancer-onboarding-complete-note" role="status">
-                        <strong>✓ Step 2 complete</strong>
+                        <strong>✓ Step 1 complete</strong>
                         <span>Your profile is ready. Set up payouts now or later, then complete the dressing-room tap.</span>
                       </div>
                     ) : (
-                      <button className="dancer-onboarding-primary" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
+                      <button className="dancer-onboarding-primary" id="dancer-onboarding-profile-review-button" type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
                         {isSubmitting ? "Preparing..." : "Continue to club verification"}
                       </button>
                     )}
                     <p className="dancer-onboarding-announcement" role="status" aria-live="polite">
-                      {status || "Confirms your completed profile, then opens club verification."}
+                      {status || "Review and submit your completed profile to open club verification."}
                     </p>
                   </div>
+                  </>
                 ) : null}
                 {step.id === "dancer-onboarding-payouts" ? (
                   <div className="dancer-onboarding-payout-workspace">
@@ -3987,7 +3991,7 @@ function dancerStepOneStateLabel(state: DancerStepOneItemState) {
 
 function DancerOnboardingProfileMediaWorkspace({
   avatarContent,
-  continueToPreview,
+  continueToReview,
   draftIdentity,
   identityContent,
   photoContent,
@@ -3997,7 +4001,7 @@ function DancerOnboardingProfileMediaWorkspace({
   videoContent,
 }: {
   avatarContent: ReactNode;
-  continueToPreview: () => void;
+  continueToReview: () => void;
   draftIdentity: DancerIdentityDraft;
   identityContent: ReactNode;
   photoContent: ReactNode;
@@ -4050,8 +4054,8 @@ function DancerOnboardingProfileMediaWorkspace({
   useEffect(() => {
     if (!continueAfterSave || !profileReady) return;
     setContinueAfterSave(false);
-    continueToPreview();
-  }, [continueAfterSave, continueToPreview, profileReady]);
+    continueToReview();
+  }, [continueAfterSave, continueToReview, profileReady]);
 
   async function saveAndContinue() {
     if (!readyAfterSave) return false;
@@ -4296,10 +4300,10 @@ function DancerPanel({
           isVenueApproved={isVenueApproved}
           onProfileChange={onProfileChange}
           profile={profile}
-          profileMediaContent={({ continueToPreview, profileReady }) => (
+          profileMediaContent={({ continueToReview, profileReady }) => (
             <DancerOnboardingProfileMediaWorkspace
               avatarContent={avatarContent}
-              continueToPreview={continueToPreview}
+              continueToReview={continueToReview}
               draftIdentity={draftIdentity}
               identityContent={identityContent}
               photoContent={photoContent}
@@ -5537,7 +5541,7 @@ function DancerVenueVerificationPanel() {
 
   return (
     <article className="info-panel venue-verification-panel" id="dancer-venue-verification">
-      <span className="eyebrow">{onboardingRequired ? "Step 4 · Dressing-room tap" : "Venue affiliation"}</span>
+      <span className="eyebrow">{onboardingRequired ? "Step 3 · Dressing-room tap" : "Venue affiliation"}</span>
       <h2>{onboardingRequired ? "Verify your first venue" : "Manage where you work"}</h2>
       <p>{onboardingRequired
         ? "Your first verified venue manager scan approves your profile, makes it live, and activates that club affiliation."
@@ -8602,6 +8606,7 @@ function DashboardStyles() {
       .dancer-step-one-footer small { color: var(--mydancr-dashboard-muted); font-size: 10px; }
       .dancer-step-one-footer.is-ready { border-color: rgba(76,223,166,.3); background: rgba(25,140,101,.07); }
       .dancer-onboarding-preview-workspace { display: grid; gap: 12px; }
+      .dancer-onboarding-profile-review { margin-top: 12px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.09); scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 14px); }
       .dancer-onboarding-preview { display: grid; gap: 11px; padding: 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #0d0d12; }
       .dancer-onboarding-complete-note { display: grid; gap: 4px; padding: 13px; border: 1px solid rgba(76,223,166,.28); border-radius: 12px; color: #70efbd; background: rgba(25,140,101,.09); }
       .dancer-onboarding-complete-note span { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }

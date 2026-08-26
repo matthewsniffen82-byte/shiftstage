@@ -23,11 +23,11 @@ test("initial dancers use the canonical premium dashboard shell and loading stat
 });
 
 test("the setup command center exposes the real three-step NFC production flow", () => {
-  assert.match(dashboard, /Create profile & media/);
-  assert.match(dashboard, /Preview & continue/);
+  assert.match(dashboard, /Create & review profile/);
+  assert.doesNotMatch(dashboard, /Preview & continue/);
   assert.match(dashboard, /Dressing-room tap/);
   assert.match(dashboard, /Continue to club verification/);
-  assert.match(dashboard, /Confirms your completed profile, then opens club verification\./);
+  assert.match(dashboard, /Review and submit your completed profile to open club verification\./);
   assert.doesNotMatch(dashboard, /Submit profile for review|Submit completed profile|final approval/);
   assert.match(dashboard, /submitForReview: true/);
   assert.match(dashboard, /dancer-onboarding-nfc/);
@@ -44,7 +44,7 @@ test("initial onboarding nests every production workspace directly under its ste
   const checklist = panel.indexOf("<DancerOnboardingCommand");
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.match(panel, /profileMediaContent=\{\(\{ continueToPreview, profileReady \}\) => \(/);
+  assert.match(panel, /profileMediaContent=\{\(\{ continueToReview, profileReady \}\) => \(/);
   assert.match(panel, /<DancerOnboardingProfileMediaWorkspace/);
   assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
   assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);
@@ -52,7 +52,9 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.match(dashboard, /<span className="eyebrow">Setup checklist<\/span>/);
   assert.match(dashboard, /<h2 id="dancer-onboarding-heading">Profile setup<\/h2>/);
   assert.match(dashboard, /className="dancer-onboarding-step-panel"/);
-  assert.match(dashboard, /step\.id === "dancer-profile-media" \? profileMediaContent\(\{/);
+  assert.match(dashboard, /step\.id === "dancer-profile-media" \? \(/);
+  assert.match(dashboard, /id="dancer-onboarding-profile-review"/);
+  assert.doesNotMatch(dashboard, /step\.id === "dancer-onboarding-preview"/);
   assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" \? venueVerificationContent : null/);
 });
 
@@ -146,8 +148,9 @@ test("step one guides dancers through required work in the live profile layout",
   assert.doesNotMatch(dashboard, /required items ready|Choose from your device or open your camera\. At least one approved photo is required\./);
   assert.match(dashboard, /buttonLabel=\{profileReady \? "Review profile setup" : "Open profile setup"\}/);
   assert.match(dashboard, /saveLabel="Save & continue"/);
-  assert.match(dashboard, /if \(!continueAfterSave \|\| !profileReady\) return;[\s\S]*?continueToPreview\(\)/);
-  assert.match(dashboard, /continueToPreview: \(\) => openStep\("dancer-onboarding-preview"\)/);
+  assert.match(dashboard, /if \(!continueAfterSave \|\| !profileReady\) return;[\s\S]*?continueToReview\(\)/);
+  assert.match(dashboard, /continueToReview: continueToProfileReview/);
+  assert.match(dashboard, /document\.getElementById\("dancer-onboarding-profile-review"\)\?\.scrollIntoView/);
 });
 
 test("profile setup and approved editing share one full-screen save boundary", () => {
