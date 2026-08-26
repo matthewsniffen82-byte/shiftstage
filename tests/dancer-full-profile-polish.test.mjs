@@ -137,6 +137,18 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     liveApp,
     /#profileBackdrop \.modal-actions \.profile-share-action \{\s*grid-column: auto !important;/,
   );
+  assert.match(
+    liveActionsMarkup,
+    /profileActionButtonMarkup\("share", "Share", "public"\)/,
+  );
+  assert.match(
+    aesthetic,
+    /Tonight travel controls stay secondary and compact[\s\S]*?\.profile-tonight-travel-actions > :is\(a, button\) \{[\s\S]*?height: 36px !important;[\s\S]*?min-height: 36px !important;[\s\S]*?max-height: 36px !important;[\s\S]*?font-size: 10px !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /Share opens publicly[\s\S]*?#profileBackdrop \.modal-actions \.profile-share-action,[\s\S]*?padding: 8px 4px !important;/,
+  );
   assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?const directionsMarkup = dancerProfileDirectionsMarkup\(profile, \{ city \}\)[\s\S]*?const rideMarkup = dancerProfileUberRideMarkup\(profile, \{ city \}\)/);
   assert.match(liveActionsMarkup, /modal-actions \$\{isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"\}/);
   assert.match(liveApp, /function dancerProfileUberRideMarkup\(profile, options = \{\}\)[\s\S]*?!isWorkingTonight\(profile, city\)\) return "";/);

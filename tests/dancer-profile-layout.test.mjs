@@ -125,7 +125,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?\{activeShift \? \([\s\S]*?<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"/);
   assert.match(profilePage, /\.profile-tonight-travel-actions\.is-working-now \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
-  assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
+  assert.match(liveApp, /profileActionButtonMarkup\("share", "Share", "public"\)/);
   assert.match(liveApp, /personPlus: '<svg[\s\S]*?M18 8\.5v6M15 11\.5h6/);
   assert.match(liveApp, /id="followBtn"[\s\S]*?profileActionButtonMarkup\(isFollowed \? "check" : "personPlus"/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);

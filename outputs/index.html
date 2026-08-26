@@ -38192,8 +38192,8 @@
         #profileBackdrop #profileModal .profile-tonight-travel-actions {
           display: grid;
           grid-template-columns: minmax(0, 1fr);
-          gap: 6px;
-          padding: 0 8px 6px;
+          gap: 4px;
+          padding: 0 8px 4px;
         }
 
         #profileBackdrop #profileModal .profile-tonight-travel-actions.is-working-now {
@@ -38203,13 +38203,13 @@
         #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) {
           grid-column: auto !important;
           width: 100% !important;
-          height: 40px !important;
-          min-height: 40px !important;
-          max-height: 40px !important;
+          height: 36px !important;
+          min-height: 36px !important;
+          max-height: 36px !important;
           margin: 0 !important;
-          padding: 5px 8px !important;
-          border-radius: 10px !important;
-          font-size: 11px !important;
+          padding: 3px 7px !important;
+          border-radius: 9px !important;
+          font-size: 10px !important;
         }
 
         #profileBackdrop #profileModal .profile-tonight-deal {
@@ -51182,7 +51182,7 @@
           <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notified" : "Notify", "account")}</button>
           ${goingButton}
-          <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
+          <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share", "public")}</button>
           <button class="profile-report-action" id="reportBtn" type="button" data-profile="${profile.name}">Report profile</button>
         </div>
       `;

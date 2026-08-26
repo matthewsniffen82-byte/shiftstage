@@ -3780,6 +3780,38 @@ body.dancr-button-system #profileBackdrop .modal-actions {
   padding-bottom: 0 !important;
 }
 
+/* Tonight travel controls stay secondary and compact. Both profile shells use
+ * identical geometry so Directions and Get a Ride do not overpower the deal. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions,
+body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions {
+  gap: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button),
+body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions > :is(a, button) {
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 3px 7px !important;
+  border-radius: 9px !important;
+  font-size: 10px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) :is(.action-icon, svg),
+body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions > :is(a, button) :is(.action-icon, svg) {
+  width: 17px !important;
+  height: 17px !important;
+  flex: 0 0 17px !important;
+}
+
+/* Share opens publicly. Give it the same top inset as the other icon controls
+ * so all four icons and labels share one baseline. */
+body.dancr-button-system #profileBackdrop .modal-actions .profile-share-action,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
+  padding: 8px 4px !important;
+}
+
 body.dancr-button-system #profileBackdrop .modal-actions :is(
     .action-btn:not(.going-btn),
     .profile-action-overflow-toggle

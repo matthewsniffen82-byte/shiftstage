@@ -642,9 +642,9 @@ function PublicProfileStyles() {
       .profile-tonight-card > .profile-shift-card { width: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .profile-tonight-card > .profile-schedule-section { padding: 14px; }
       .profile-tonight-card > .profile-schedule-empty { padding: 9px 10px; }
-      .profile-tonight-travel-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 0 10px 6px; }
+      .profile-tonight-travel-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 0 10px 4px; }
       .profile-tonight-travel-actions.is-working-now { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 40px !important; min-height: 40px !important; max-height: 40px !important; padding-inline: 8px !important; border-radius: 10px !important; font-size: 11px !important; }
+      .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 36px !important; min-height: 36px !important; max-height: 36px !important; padding-inline: 7px !important; border-radius: 9px !important; font-size: 10px !important; }
       .profile-tonight-deal { padding: 5px; border-top: 1px solid rgba(255,255,255,.08); }
       .profile-tonight-card.has-club-deal .profile-tonight-deal { border-top-color: rgba(77,236,157,.18); }
       .profile-tonight-deal .profile-active-deal { width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
