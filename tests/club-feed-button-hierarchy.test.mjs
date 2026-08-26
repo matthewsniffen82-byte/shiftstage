@@ -61,13 +61,14 @@ test("mobile venue identity stays compact, anchored, and single-line", () => {
   assert.match(hierarchy, /\.venue-card-primary-action:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?rgba\(226, 232, 240, 0\.76\)/);
 });
 
-test("mobile Clubs cards use matte gutters and restrained neutral separation", () => {
+test("mobile Clubs cards use visible matte gutters and neutral separation", () => {
   const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
 
-  assert.match(hierarchy, /border-color: rgba\(203, 213, 225, 0\.13\) !important;/);
-  assert.match(hierarchy, /inset 0 1px 0 rgba\(255, 255, 255, 0\.05\),/);
-  assert.match(hierarchy, /0 13px 26px rgba\(0, 0, 0, 0\.4\) !important;/);
-  assert.match(hierarchy, /> #results\.home-discovery-feed\.home-venue-discovery-feed \{\s+gap: 20px !important;/);
+  assert.match(hierarchy, /border-color: rgba\(203, 213, 225, 0\.2\) !important;/);
+  assert.match(hierarchy, /inset 0 1px 0 rgba\(255, 255, 255, 0\.07\),/);
+  assert.match(hierarchy, /inset 0 -1px 0 rgba\(148, 163, 184, 0\.06\),/);
+  assert.match(hierarchy, /0 16px 30px rgba\(0, 0, 0, 0\.62\) !important;/);
+  assert.match(hierarchy, /> #results\.home-discovery-feed\.home-venue-discovery-feed \{\s+gap: 28px !important;/);
 });
 
 test("the mobile lineup explains working-now avatars without changing venue actions", () => {
