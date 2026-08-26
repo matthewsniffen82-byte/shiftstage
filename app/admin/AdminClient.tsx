@@ -2659,21 +2659,19 @@ function VenueManager({
   async function saveVenuePage(event: React.FormEvent<HTMLFormElement>, venue: Record<string, unknown>) {
     event.preventDefault();
     const venueId = asText(venue.id);
-    const token = readToken();
-    if (!token) return setVenueStatus(venueId, "Admin sign in required.");
     const form = new FormData(event.currentTarget);
     const body = Object.fromEntries(["name", "address", "city", "state", "latitude", "longitude", "phone", "website", "timezone", "opensAt", "closesAt"]
       .map((key) => [key, String(form.get(key) || "").trim()]));
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, "Saving private venue page...");
-      const response = await fetch("/api/admin/venues", {
+      const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, ...body }),
+        fallbackMessage: "Unable to save venue page.",
       });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || "Unable to save venue page.");
+      if (!data.venue) throw new Error("Unable to save venue page.");
       mergeVenue(venueId, data.venue);
       setVenueStatus(venueId, "Private venue page saved. Any prior approval was reset because the page changed.");
     } catch (error) {
@@ -2686,8 +2684,6 @@ function VenueManager({
   async function uploadVenueImage(venue: Record<string, unknown>, kind: "logo" | "cover", file: File | null) {
     const venueId = asText(venue.id);
     if (!file) return setVenueStatus(venueId, `Choose a ${kind} image first.`);
-    const token = readToken();
-    if (!token) return setVenueStatus(venueId, "Admin sign in required.");
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, `Checking and uploading venue ${kind}...`);
@@ -2695,9 +2691,12 @@ function VenueManager({
       body.set("venueId", venueId);
       body.set("kind", kind);
       body.set("file", file);
-      const response = await fetch("/api/admin/venues/media", { method: "POST", headers: { authorization: `Bearer ${token}` }, body });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || `Unable to upload venue ${kind}.`);
+      const data = await requestAdminJson("/api/admin/venues/media", {
+        method: "POST",
+        body,
+        fallbackMessage: `Unable to upload venue ${kind}.`,
+      });
+      if (!data.venue) throw new Error(`Unable to upload venue ${kind}.`);
       mergeVenue(venueId, data.venue);
       setVenueStatus(venueId, `Venue ${kind} uploaded. Any prior approval was reset because the page changed.`);
     } catch (error) {
@@ -2710,17 +2709,15 @@ function VenueManager({
   async function removeVenueImage(venue: Record<string, unknown>, kind: "logo" | "cover") {
     const venueId = asText(venue.id);
     if (!window.confirm(`Remove this venue ${kind}?`)) return;
-    const token = readToken();
-    if (!token) return setVenueStatus(venueId, "Admin sign in required.");
     try {
       setBusyVenueId(venueId);
-      const response = await fetch("/api/admin/venues/media", {
+      const data = await requestAdminJson("/api/admin/venues/media", {
         method: "DELETE",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, kind }),
+        fallbackMessage: `Unable to remove venue ${kind}.`,
       });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || `Unable to remove venue ${kind}.`);
+      if (!data.venue) throw new Error(`Unable to remove venue ${kind}.`);
       mergeVenue(venueId, data.venue);
       setVenueStatus(venueId, `Venue ${kind} removed.`);
     } catch (error) {
@@ -2732,18 +2729,16 @@ function VenueManager({
 
   async function sendVenuePageForReview(venue: Record<string, unknown>) {
     const venueId = asText(venue.id);
-    const token = readToken();
-    if (!token) return setVenueStatus(venueId, "Admin sign in required.");
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, "Sending private page to the venue...");
-      const response = await fetch("/api/admin/venues", {
+      const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, action: "send_for_review" }),
+        fallbackMessage: "Unable to update venue page workflow.",
       });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok || !data?.venue) throw new Error(data?.error || "Unable to update venue page workflow.");
+      if (!data.venue) throw new Error("Unable to update venue page workflow.");
       mergeVenue(venueId, data.venue);
       setVenueStatus(venueId, "Review sent. The venue can now approve the exact page and make it live.");
     } catch (error) {
@@ -2774,24 +2769,16 @@ function VenueManager({
 
   async function hideVenue(venue: Record<string, unknown>) {
     const venueId = asText(venue.id);
-    const token = readToken();
-    if (!token) {
-      setVenueStatus(venueId, "Admin sign in required.");
-      return;
-    }
-
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, "Removing venue from public discovery...");
-      const response = await fetch("/api/admin/venues", {
+      const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, isActive: false }),
+        fallbackMessage: "Unable to update venue.",
       });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.error || "Unable to update venue.");
-      }
+      if (!data.venue) throw new Error("Unable to update venue.");
 
       onVenuesChange(venues.map((item) => (String(item.id) === venueId ? { ...item, ...data.venue } : item)));
       setVenueStatus(venueId, "Venue hidden. MyDancr must prepare a new private draft, obtain venue approval, and publish it again.");
@@ -2804,24 +2791,16 @@ function VenueManager({
 
   async function revokeAccessCode(venueId: string, claimCode: Record<string, unknown>) {
     if (!window.confirm("Revoke this access code? It will stop working immediately.")) return;
-    const token = readToken();
-    if (!token) {
-      setVenueStatus(venueId, "Admin sign in required.");
-      return;
-    }
-
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, "Revoking access code...");
-      const response = await fetch("/api/admin/venue-claim-codes", {
+      const data = await requestAdminJson("/api/admin/venue-claim-codes", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "revoke", codeId: asText(claimCode.id) }),
+        fallbackMessage: "Unable to revoke venue access code.",
       });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.ok || !data?.claimCode) {
-        throw new Error(data?.error || "Unable to revoke venue access code.");
-      }
+      if (!data.claimCode) throw new Error("Unable to revoke venue access code.");
 
       onClaimCodesChange(claimCodes.map((item) => (
         asText(item.id) === asText(data.claimCode.id) ? data.claimCode : item

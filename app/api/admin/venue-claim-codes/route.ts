@@ -14,10 +14,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const claimCodes = await getAdminVenueClaimCodes(createAdminSupabaseClient());
-    return NextResponse.json({ ok: true, claimCodes });
+    return NextResponse.json({ ok: true, claimCodes, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load venue access codes.");
   }
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json();
     const action = body?.action === "issue" || body?.action === "revoke" ? body.action : "";
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       codeId,
       adminId: user.id,
     });
-    return NextResponse.json({ ok: true, claimCode, message: "Venue access code revoked." });
+    return NextResponse.json({ ok: true, claimCode, message: "Venue access code revoked.", session: session || null });
   } catch (error) {
     const userMessage = error instanceof VenueClaimUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_CLAIM_CODE_ADMIN_FAILED", error);

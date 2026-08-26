@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const city = new URL(request.url).searchParams.get("city");
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       getAdminVenueClaimCodes(admin),
     ]);
 
-    return NextResponse.json({ ok: true, venues, claimCodes });
+    return NextResponse.json({ ok: true, venues, claimCodes, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load admin venues.");
   }
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const body = await request.json();
@@ -57,7 +57,7 @@ export async function PATCH(request: Request) {
         venueId,
         body.action,
       );
-      return NextResponse.json({ ok: true, venue });
+      return NextResponse.json({ ok: true, venue, session: session || null });
     }
     if (body?.isActive === true) {
       return NextResponse.json({
@@ -67,7 +67,7 @@ export async function PATCH(request: Request) {
     }
 
     const venue = await updateAdminVenue(createAdminSupabaseClient(), user.id, venueId, body);
-    return NextResponse.json({ ok: true, venue });
+    return NextResponse.json({ ok: true, venue, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to update venue.");
   }

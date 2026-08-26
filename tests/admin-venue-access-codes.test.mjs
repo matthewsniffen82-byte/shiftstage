@@ -13,14 +13,14 @@ test("the routed admin dashboard loads request-bound venue access-code state", (
   assert.match(adminClient, /venueClaimCodes: data\.claimCodes \|\| \[\]/);
   assert.match(adminClient, /claimCodes=\{state\.venueClaimCodes \|\| \[\]\}/);
   assert.match(venueRoute, /getAdminVenueClaimCodes\(admin\)/);
-  assert.match(venueRoute, /return NextResponse\.json\(\{ ok: true, venues, claimCodes \}\)/);
+  assert.match(venueRoute, /return NextResponse\.json\(\{ ok: true, venues, claimCodes, session: session \|\| null \}\)/);
 });
 
 test("approval reveals a request-bound code once and administrators can revoke it", () => {
   assert.match(adminClient, /Approval creates a private venue workspace/);
   assert.match(adminClient, /Approve & send access/);
   assert.match(adminClient, /Copy private access code/);
-  assert.match(adminClient, /fetch\("\/api\/admin\/venue-claim-codes"/);
+  assert.match(adminClient, /requestAdminJson\("\/api\/admin\/venue-claim-codes"/);
   assert.match(adminClient, /JSON\.stringify\(\{ action: "revoke", codeId: asText\(claimCode\.id\) \}\)/);
   assert.match(adminClient, /Revoke access code/);
   assert.match(accessCodeRoute, /requireAdmin\(client, user\.id\)/);

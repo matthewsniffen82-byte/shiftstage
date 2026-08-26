@@ -21,7 +21,7 @@ function imageKind(value: FormDataEntryValue | string | null): VenueImageKind | 
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const form = await request.formData();
     const venueId = String(form.get("venueId") || "").trim();
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       ? await uploadVenueLogoImageByAdmin(admin, user.id, venueId, file)
       : await uploadVenueCoverImageByAdmin(admin, user.id, venueId, file);
     await resetManagedVenuePageReview(admin, user.id, venueId, `${kind} uploaded`);
-    return NextResponse.json({ ok: true, venue });
+    return NextResponse.json({ ok: true, venue, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to upload venue image.");
   }
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json();
     const venueId = typeof body?.venueId === "string" ? body.venueId.trim() : "";
@@ -58,7 +58,7 @@ export async function DELETE(request: Request) {
       ? await deleteVenueLogoImageByAdmin(admin, venueId)
       : await deleteVenueCoverImageByAdmin(admin, venueId);
     await resetManagedVenuePageReview(admin, user.id, venueId, `${kind} removed`);
-    return NextResponse.json({ ok: true, venue });
+    return NextResponse.json({ ok: true, venue, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to remove venue image.");
   }
