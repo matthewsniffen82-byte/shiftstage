@@ -3868,7 +3868,8 @@ body.dancr-button-system #profileBackdrop .modal-actions .profile-action-require
 }
 
 body.dancr-button-system #profileBackdrop .social-tile {
-  padding: 6px 0 4px !important;
+  min-height: 0 !important;
+  padding: 2px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -3876,9 +3877,10 @@ body.dancr-button-system #profileBackdrop .social-tile {
 }
 
 body.dancr-button-system .public-profile-shell .profile-social-section {
-  margin-top: 6px !important;
-  margin-bottom: 4px !important;
-  padding: 6px 0 4px !important;
+  min-height: 0 !important;
+  margin-top: 2px !important;
+  margin-bottom: 2px !important;
+  padding: 2px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;

@@ -292,6 +292,7 @@ test("public social icons render without a visible heading or published handles"
   assert.doesNotMatch(socialLinks, /<strong>\{link\.handle\}<\/strong>/);
   assert.doesNotMatch(socialLinks, /social-list-toggle|Show fewer links|more links/);
   assert.match(profilePage, /\.social-links-control \{ display: grid; justify-items: center;/);
+  assert.match(profilePage, /\.profile-social-section \{ min-height: 0;[\s\S]*?margin-top: 2px;[\s\S]*?margin-bottom: 2px;[\s\S]*?padding: 2px 0;/);
   assert.match(profilePage, /\.social-list \{ width: 100%;[\s\S]*?justify-content: center;/);
   assert.match(profilePage, /\.social-list a \{ width: 44px;[\s\S]*?height: 44px;[\s\S]*?justify-content: center;/);
   assert.match(profilePage, /\.social-list a svg \{ width: 20px; height: 20px;/);

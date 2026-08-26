@@ -164,7 +164,7 @@ test("profile socials and activity metrics use a compact neutral presentation", 
 
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop \.social-tile \{[\s\S]*?padding: 6px 0 4px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop \.social-tile \{[\s\S]*?min-height: 0 !important;[\s\S]*?padding: 2px 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
