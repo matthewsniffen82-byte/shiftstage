@@ -7797,6 +7797,10 @@ body.dancer-directory-active > .app main.stack > section.stack
 body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty)
   > .dancer-directory-filter-status {
+  display: block;
+  width: 6px;
+  height: 6px;
+  flex-basis: 6px;
   background: var(--dancr-color-info) !important;
   box-shadow: 0 0 8px var(--dancr-color-info-soft) !important;
 }

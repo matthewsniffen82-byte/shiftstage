@@ -46,7 +46,7 @@ test("segmented dancer filters use semantic active colors and neutral inactive s
   assert.match(liveShell, /filter\.id === "now" \|\| filter\.id === "upcoming"[\s\S]*?dancer-directory-filter-status/);
   assert.match(
     aesthetic,
-    /data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\)[\s\S]*?> \.dancer-directory-filter-status \{[\s\S]*?background: var\(--dancr-color-info\)[\s\S]*?box-shadow: 0 0 8px var\(--dancr-color-info-soft\)/,
+    /data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\)[\s\S]*?> \.dancer-directory-filter-status \{[\s\S]*?display: block;[\s\S]*?width: 6px;[\s\S]*?height: 6px;[\s\S]*?flex-basis: 6px;[\s\S]*?background: var\(--dancr-color-info\)[\s\S]*?box-shadow: 0 0 8px var\(--dancr-color-info-soft\)/,
   );
   assert.match(aesthetic, /\.dancer-directory-filter:not\(\.is-active\) \{[\s\S]*?var\(--dancr-color-surface-raised\)/);
   assert.doesNotMatch(liveShell, /data-dancer-directory-filter="now"\]:not\(\.is-empty\):not\(\.is-active\) span \{[\s\S]*?#4dec9d/);
