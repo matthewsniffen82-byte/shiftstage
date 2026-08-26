@@ -638,7 +638,7 @@ async function assertDancerPhotoLimit(client: DancrClient, dancerId: string) {
 
   if (error) throw error;
   if ((count || 0) >= MAX_DANCER_PROFILE_PHOTOS) {
-    throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
+    throw new Error("Your profile picture library is full. Delete or replace a picture before adding more.");
   }
 }
 

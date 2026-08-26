@@ -737,7 +737,7 @@ export async function createMyDancrTvUpload(
       .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
     if (countError) throw countError;
     if (Number(activeVideoCount || 0) >= MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
-      throw new Error(`You can upload up to ${MYDANCR_TV_PROFILE_VIDEO_LIMIT} profile videos. Remove one before adding another.`);
+      throw new Error("Your profile video library is full. Remove a video before adding another.");
     }
   }
 

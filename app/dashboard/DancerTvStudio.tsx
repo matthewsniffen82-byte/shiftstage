@@ -105,7 +105,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     const availableSlots = Math.max(0, maxVideos - currentVideoCount - queuedVideos.length);
     const selectedFiles = files.slice(0, availableSlots);
     if (!selectedFiles.length) {
-      setStatus(`All ${maxVideos} profile video slots are occupied. Remove a video before adding another.`);
+      setStatus("Your profile video library is full. Remove a video before adding another.");
       return;
     }
 
@@ -157,7 +157,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
   async function uploadVideoBatch(batch: QueuedVideo[]) {
     if (!readDashboardAccessToken("dancer")) return setStatus("Sign in as a dancer to upload.");
-    if (atVideoLimit) return setStatus(`You can upload up to ${maxVideos} profile videos. Remove one before adding another.`);
+    if (atVideoLimit) return setStatus("Your profile video library is full. Remove a video before adding another.");
     if (!batch.length) return setStatus("Choose MP4, WebM, or MOV videos, or record a new video first.");
     if (!consentConfirmed || !rightsConfirmed) {
       return setStatus("Confirm consent and content rights for every queued video before submitting.");
@@ -279,9 +279,9 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         <div className="tv-studio-embedded-head">
           <div>
             <h2>Profile videos</h2>
-            <p>Vertical or square videos • Up to {maxVideos} • Approval required</p>
+            <p>Videos are optional. Add, replace, or remove them anytime.</p>
           </div>
-          {workspace ? <strong aria-label={`${currentVideoCount} of ${maxVideos} profile video slots used`}>{currentVideoCount}/{maxVideos}</strong> : null}
+          {workspace ? <strong aria-label={`${currentVideoCount} profile videos added`}>{currentVideoCount} added</strong> : null}
         </div>
       ) : (
         <div className="tv-studio-head">
@@ -325,7 +325,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
       {workspace && atVideoLimit ? (
         <div className="tv-studio-limit" role="status">
-          <strong>All {maxVideos} profile video slots are filled</strong>
+          <strong>Your profile video library is full</strong>
           <p>Remove a video below before uploading another.</p>
         </div>
       ) : null}
@@ -406,7 +406,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             </button>
           </div>
           <small className="tv-upload-requirements">
-            Vertical or square MP4/WebM/MOV · 1–30 seconds each · 75 MB maximum each · {queuedVideos.length} selected · {Math.max(0, maxVideos - currentVideoCount - queuedVideos.length)} slots remaining
+            Vertical or square MP4/WebM/MOV · 1–30 seconds each · 75 MB maximum each · {queuedVideos.length} selected
           </small>
           {queuedVideos.length ? (
             <div className="tv-upload-queue" aria-label="Video upload progress">
@@ -441,7 +441,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       <section className="tv-video-manager">
         <div className="tv-manager-title">
           <h3>My videos</h3>
-          <span>{isLoading ? "…" : `${currentVideoCount}/${maxVideos}`}</span>
+          <span>{isLoading ? "…" : `${currentVideoCount} added`}</span>
         </div>
         <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (

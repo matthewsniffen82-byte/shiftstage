@@ -112,7 +112,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);
   assert.match(dashboard, /DancerPhotoPanel/);
   assert.match(dashboard, /DancerTvStudio embedded/);
-  assert.match(dancerStudio, /embedded \? \([\s\S]*?<h2>Profile videos<\/h2>[\s\S]*?Vertical or square videos • Up to \{maxVideos\} • Approval required/);
+  assert.match(dancerStudio, /embedded \? \([\s\S]*?<h2>Profile videos<\/h2>[\s\S]*?Videos are optional\. Add, replace, or remove them anytime\./);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
   assert.match(dancerStudio, /Upload started automatically/);
@@ -218,7 +218,8 @@ test("approved dancers who skipped payout setup get a plain-language call to act
 test("step one uses accessible live-profile add targets that preserve the active editor", () => {
   assert.match(dashboard, /const \[activeEditorSection, setActiveEditorSection\] = useState<DancerProfileEditorSectionId \| null>\(null\)/);
   assert.match(dashboard, /aria-label=\{headerImage \? "Edit avatar" : "Add avatar"\}/);
-  assert.match(dashboard, /"Add stage name"/);
+  assert.match(dashboard, /<small>Avatar<\/small>/);
+  assert.match(dashboard, /"Stage name"/);
   assert.match(dashboard, /"Add city"/);
   assert.match(dashboard, /aria-label="Add profile photos"/);
   assert.match(dashboard, /aria-label="Add profile videos"/);
@@ -230,6 +231,7 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
   assert.match(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
   assert.match(dashboard, /className="social-links-control"[\s\S]*?<h2 id="dancer-profile-builder-social-heading">Social Links<\/h2>/);
+  assert.match(dashboard, /Optional\. Add whichever profiles you want, or skip this for now\./);
   assert.match(dashboard, /className=\{`social-link social-link-\$\{platform\.key\} dancer-profile-builder-social-platform/);
   assert.match(dashboard, /<SocialPlatformIcon platform=\{platform\.key\} \/>[\s\S]*?<span aria-hidden="true">\+<\/span>/);
   assert.match(dashboard, /socialEditorContent = editorSections\?\.socials\?\.\(activeSocialPlatform \|\| "instagram"\)/);
@@ -249,10 +251,12 @@ test("onboarding profile builder shows five picture and video slots plus working
   assert.match(dashboard, /Array\.from\(\{ length: DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS \}/);
   assert.match(dashboard, /aria-label=\{photo \? `Edit picture \$\{index \+ 1\}` : `Add picture \$\{index \+ 1\}`\}/);
   assert.match(dashboard, /<strong>Add more<\/strong><small>Manage pictures<\/small>/);
+  assert.match(dashboard, /Add 1 picture now\. You can add more later\./);
   assert.match(dashboard, /aria-label="Five video slots and add more"/);
   assert.match(dashboard, /Array\.from\(\{ length: DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS \}/);
   assert.match(dashboard, /aria-label=\{video \? `Edit video \$\{index \+ 1\}` : `Add video \$\{index \+ 1\}`\}/);
   assert.match(dashboard, /<strong>Add more<\/strong><small>Manage videos<\/small>/);
+  assert.match(dashboard, /Optional\. You can add videos now or later\./);
   assert.match(dashboard, /isEditor && !isOnboardingEditor/);
   assert.match(dashboard, /\.dancer-profile-builder-slot-grid \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 });
@@ -305,7 +309,9 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
   assert.match(dashboard, /className="dancer-profile-save-action primary-action"/);
   assert.match(dashboard, /aria-label="Reload saved profile" className="dancer-profile-reload-action"/);
   assert.match(dashboard, /\.dancer-profile-form-actions button \{ min-height: 44px !important;[\s\S]*?border-radius: 999px !important;/);
-  assert.match(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\} photos/);
+  assert.match(dashboard, /\$\{photos\.length\} \$\{photos\.length === 1 \? "picture" : "pictures"\} added/);
+  assert.doesNotMatch(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\}/);
+  assert.doesNotMatch(dashboard, /\{remainingPhotoSlots\} \{remainingPhotoSlots === 1 \? "spot" : "spots"\} open/);
   assert.match(dashboard, /pendingPhotos\.length \? `\$\{pendingPhotos\.length\} checking`/);
   assert.match(dashboard, /We are checking this photo\. This page updates automatically/);
   assert.match(dashboard, /This photo cannot be used\. Choose another photo/);

@@ -52,7 +52,7 @@ test("fifty-video limit is enforced by the service and serialized in Postgres", 
     tvSource,
     /\.select\("id", \{ count: "exact", head: true \}\)[\s\S]*?\.eq\("dancer_id", dancer\.id\)[\s\S]*?MYDANCR_TV_PROFILE_SLOT_STATUSES/,
   );
-  assert.match(tvSource, /You can upload up to \$\{MYDANCR_TV_PROFILE_VIDEO_LIMIT\} profile videos\. Remove one before adding another\./);
+  assert.match(tvSource, /Your profile video library is full\. Remove a video before adding another\./);
   assert.match(tvSource, /uploadUrl: upload\.signedUrl/);
   assert.match(tvSource, /remainingVideoSlots: Math\.max\(0, MYDANCR_TV_PROFILE_VIDEO_LIMIT - signedVideos\.length\)/);
   assert.match(limitMigration, /pg_advisory_xact_lock\(hashtextextended\(new\.dancer_id::text, 0\)\)/);
@@ -64,6 +64,7 @@ test("fifty-video limit is enforced by the service and serialized in Postgres", 
 test("the direct studio respects the same fifty-video contract", () => {
   assert.match(dancerStudio, /const maxVideos = workspace\?\.maxVideos \|\| MAX_DANCER_PROFILE_VIDEOS/);
   assert.match(dancerStudio, /const atVideoLimit = currentVideoCount >= maxVideos/);
-  assert.match(dancerStudio, /Remove one before adding another/);
-  assert.match(dancerStudio, /\{currentVideoCount\}\/\{maxVideos\}/);
+  assert.match(dancerStudio, /Your profile video library is full\. Remove a video before adding another\./);
+  assert.match(dancerStudio, /\{currentVideoCount\} added/);
+  assert.doesNotMatch(dancerStudio, /Up to \{maxVideos\}|\{currentVideoCount\}\/\{maxVideos\}|slots remaining/);
 });

@@ -3354,15 +3354,18 @@ function DancerProfilePreview({
           <div className="public-profile-shell dancer-profile-preview-shell">
             <header className="profile-titlebar">
               {isEditor ? (
-                <button
-                  aria-label={headerImage ? "Edit avatar" : "Add avatar"}
-                  className={`profile-titlebar-avatar dancer-profile-builder-avatar${headerImage ? " has-photo" : " is-empty"}`}
-                  onClick={() => openEditorSection("avatar")}
-                  type="button"
-                >
-                  {headerImage ? <img alt="" src={headerImage} /> : <b aria-hidden="true">+</b>}
-                  <i aria-hidden="true">{headerImage ? "✎" : "+"}</i>
-                </button>
+                <span className="dancer-profile-builder-avatar-control">
+                  <button
+                    aria-label={headerImage ? "Edit avatar" : "Add avatar"}
+                    className={`profile-titlebar-avatar dancer-profile-builder-avatar${headerImage ? " has-photo" : " is-empty"}`}
+                    onClick={() => openEditorSection("avatar")}
+                    type="button"
+                  >
+                    {headerImage ? <img alt="" src={headerImage} /> : <b aria-hidden="true">+</b>}
+                    <i aria-hidden="true">{headerImage ? "✎" : "+"}</i>
+                  </button>
+                  <small>Avatar</small>
+                </span>
               ) : (
                 <span className={`profile-titlebar-avatar${headerImage ? " has-photo" : ""}`}>
                   {headerImage ? <img alt="" src={headerImage} /> : previewName.slice(0, 1).toUpperCase()}
@@ -3372,7 +3375,7 @@ function DancerProfilePreview({
                 <div>
                   {isEditor ? (
                     <button className="dancer-profile-builder-identity" onClick={() => openEditorSection("identity")} type="button">
-                      <span className="dancer-profile-builder-name" id="dancer-profile-preview-heading">{name?.trim() || persistedName || "Add stage name"}</span>
+                      <span className="dancer-profile-builder-name" id="dancer-profile-preview-heading">{name?.trim() || persistedName || "Stage name"}</span>
                       <span aria-hidden="true">{name?.trim() || persistedName ? "✎" : "+"}</span>
                     </button>
                   ) : <h1 id="dancer-profile-preview-heading">{previewName}</h1>}
@@ -3393,14 +3396,14 @@ function DancerProfilePreview({
                 ref={closeRef}
                 type="button"
               >
-                ×
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
               </button>
             </header>
             {isOnboardingEditor ? (
               <section className="dancer-profile-builder-media-slots" aria-label="Add profile pictures and videos">
                 <div className="dancer-profile-builder-slot-group">
                   <header>
-                    <span><strong>Pictures</strong><small>Five quick slots; add more anytime</small></span>
+                    <span><strong>Pictures</strong><small>Add 1 picture now. You can add more later.</small></span>
                     <b>{profilePhotoItems.length} added</b>
                   </header>
                   <div className="dancer-profile-builder-slot-grid" aria-label="Five picture slots and add more">
@@ -3426,7 +3429,7 @@ function DancerProfilePreview({
                 </div>
                 <div className="dancer-profile-builder-slot-group">
                   <header>
-                    <span><strong>Videos</strong><small>Five quick slots; add more anytime</small></span>
+                    <span><strong>Videos</strong><small>Optional. You can add videos now or later.</small></span>
                     <b>{videos.length} added</b>
                   </header>
                   <div className="dancer-profile-builder-slot-grid" aria-label="Five video slots and add more">
@@ -3504,6 +3507,7 @@ function DancerProfilePreview({
                 <div className="social-links-control">
                   <div className="social-list-heading">
                     <h2 id="dancer-profile-builder-social-heading">Social Links</h2>
+                    <p>Optional. Add whichever profiles you want, or skip this for now.</p>
                   </div>
                   <div className="social-list dancer-profile-builder-social-platforms" aria-label="Add social links">
                     {SOCIAL_PLATFORMS.map((platform) => {
@@ -3553,7 +3557,7 @@ function DancerProfilePreview({
               >
                 <header>
                   <h2 id={activeEditorSection === "socials" ? "dancer-profile-builder-panel-heading" : undefined}>{activeEditorLabel}</h2>
-                  <button aria-label="Close profile editing panel" onClick={() => { setActiveEditorSection(null); setActiveSocialPlatform(null); }} type="button">×</button>
+                  <button aria-label="Close profile editing panel" onClick={() => { setActiveEditorSection(null); setActiveSocialPlatform(null); }} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
                 </header>
                 <div>{socialEditorContent}</div>
               </section>
@@ -3562,7 +3566,7 @@ function DancerProfilePreview({
               <section className="dancer-profile-builder-panel" data-section={activeEditorSection} id="dancer-profile-builder-panel" tabIndex={-1} aria-labelledby="dancer-profile-builder-panel-heading">
                 <header>
                   <h2 id="dancer-profile-builder-panel-heading">{activeEditorLabel}</h2>
-                  <button aria-label="Close profile editing panel" onClick={() => { setActiveEditorSection(null); setActiveSocialPlatform(null); }} type="button">×</button>
+                  <button aria-label="Close profile editing panel" onClick={() => { setActiveEditorSection(null); setActiveSocialPlatform(null); }} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
                 </header>
                 <div>{activeEditorContent}</div>
               </section>
@@ -4022,7 +4026,7 @@ function DancerOnboardingProfileMediaWorkspace({
         ? "replace"
         : "missing";
   const photoDetail = [
-    `${photos.length} of ${MAX_DANCER_PROFILE_PHOTOS} photos`,
+    `${photos.length} ${photos.length === 1 ? "picture" : "pictures"} added`,
     `${approvedPhotos.length} approved`,
     pendingPhotos.length ? `${pendingPhotos.length} checking` : "",
     rejectedPhotos.length ? `${rejectedPhotos.length} needs replacement` : "",
@@ -6675,7 +6679,7 @@ function DancerPhotoPanel({
     const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length + replacingPrimary - queuedPhotos.length);
     const selectedFiles = files.slice(0, availableProfileSlots);
     if (!selectedFiles.length) {
-      setStatus(`All ${MAX_DANCER_PROFILE_PHOTOS} profile photo slots are occupied. Delete or replace a photo first.`);
+      setStatus("Your profile picture library is full. Delete or replace a picture first.");
       return;
     }
 
@@ -6746,7 +6750,7 @@ function DancerPhotoPanel({
     if (!session?.accessToken) return setStatus("Sign in required.");
     if (!batch.length) return setStatus("Choose profile photos or take a new photo first.");
     if (!batch.some((item) => item.makePrimary) && photos.length + batch.length > MAX_DANCER_PROFILE_PHOTOS) {
-      return setStatus(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
+      return setStatus("Your profile picture library is full. Delete or replace a picture before adding more.");
     }
 
     setIsUploading(true);
@@ -6961,7 +6965,7 @@ function DancerPhotoPanel({
           <span>
             <strong>Add profile photos</strong>
           </span>
-          <b>{remainingPhotoSlots} {remainingPhotoSlots === 1 ? "spot" : "spots"} open</b>
+          <b>{photos.length ? "Add more anytime" : "1 picture needed"}</b>
         </div>
         {hasMainPhoto ? (
           <label className="photo-primary-choice">
@@ -7021,8 +7025,8 @@ function DancerPhotoPanel({
           </label>
         </div>
         <div className="photo-slot-summary">
-          <strong>{photos.length} of {MAX_DANCER_PROFILE_PHOTOS} on your profile</strong>
-          <span>{queuedPhotos.length ? `${queuedPhotos.length} uploading now` : remainingPhotoSlots ? `${remainingPhotoSlots} more available` : "All photo spots are filled"}</span>
+          <strong>{photos.length} {photos.length === 1 ? "picture" : "pictures"} on your profile</strong>
+          <span>{queuedPhotos.length ? `${queuedPhotos.length} uploading now` : remainingPhotoSlots ? "Add more anytime" : "Your picture library is full"}</span>
         </div>
         {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
@@ -8627,6 +8631,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-titlebar-city { min-height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; color: #c8bfd6; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 850; white-space: nowrap; }
       .dancer-profile-preview-overlay .profile-verified { width:20px; height:20px; flex:0 0 20px; display:inline-grid; place-items:center; border-radius:50%; color:#051019; background:#7eeaff; box-shadow:0 0 15px rgba(126,234,255,.3); font-size:12px; font-weight:950; }
       .dancer-profile-preview-overlay .public-profile-close { position: absolute; top: max(8px,env(safe-area-inset-top)); right: 0; width: 40px; min-height: 40px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
+      .dancer-profile-preview-overlay .public-profile-close svg { width:22px; height:22px; display:block; overflow:visible; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
       .dancer-profile-preview-overlay .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13),0 0 22px rgba(34,199,255,.18); }
       .dancer-profile-preview-overlay .profile-overview, .dancer-profile-preview-overlay .profile-social-section, .dancer-profile-preview-overlay .live-actions, .dancer-profile-preview-overlay .profile-deal-availability, .dancer-profile-preview-overlay .profile-media-section, .dancer-profile-preview-overlay .profile-schedule-section, .dancer-profile-preview-overlay .profile-tonight-card { width: min(100%,760px); max-width: 100%; min-width: 0; box-sizing: border-box; margin-inline: auto; }
       .dancer-profile-preview-overlay .profile-media-section { display: grid; gap: 12px; margin-top: 12px; }
@@ -8669,6 +8674,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .dancer-profile-preview-overlay .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .dancer-profile-preview-overlay .social-list-heading h2 { margin: 0; font-size: 15px; line-height: 1.1; }
+      .dancer-profile-preview-overlay .social-list-heading p { max-width:420px; margin:3px 0 0; color:#a9a1b5; font-size:10px; font-weight:760; line-height:1.35; }
       .dancer-profile-preview-overlay .social-list { width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
       .dancer-profile-preview-overlay .social-list :is(a,button) { width: 48px; min-width: 48px; height: 48px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 48px; padding: 0; border: 1px solid rgba(139,92,246,.34); border-radius: 50%; color: #fff; background: linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,199,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); text-decoration: none; transition: border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease; }
       .dancer-profile-preview-overlay .social-list :is(a,button):hover { border-color: rgba(126,234,255,.56); background: linear-gradient(135deg,rgba(139,92,246,.22),rgba(34,199,255,.12)); box-shadow: 0 0 18px rgba(34,199,255,.1); transform: translateY(-1px); }
@@ -8750,6 +8756,8 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .dancer-profile-preview-overlay.is-editor { z-index:1510; }
       .dancer-profile-preview-overlay.is-editor .dancer-profile-preview-shell { padding-bottom: max(156px,calc(env(safe-area-inset-bottom) + 136px)); }
+      .dancer-profile-builder-avatar-control { width:48px; display:grid; flex:0 0 48px; justify-items:center; gap:3px; }
+      .dancer-profile-builder-avatar-control > small { color:#a9a1b5; font-size:8px; font-weight:850; letter-spacing:.04em; line-height:1; }
       .dancer-profile-builder-avatar { appearance:none; padding:0; cursor:pointer; }
       .dancer-profile-builder-avatar.is-empty { overflow:visible !important; border-style:dashed !important; color:#c9f7ff !important; background:linear-gradient(145deg,rgba(124,58,237,.34),rgba(34,199,255,.13)) !important; }
       .dancer-profile-builder-avatar > b { font-size:23px; line-height:1; }
@@ -8814,6 +8822,7 @@ function DashboardStyles() {
       .dancer-profile-builder-panel > header { position:sticky; z-index:2; top:0; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 2px 9px; border-bottom:1px solid rgba(255,255,255,.09); background:rgba(14,11,23,.98); }
       .dancer-profile-builder-panel > header h2 { margin:0; font-size:clamp(20px,5vw,28px); line-height:1.05; }
       .dancer-profile-builder-panel > header button { width:40px; min-width:40px; height:40px; min-height:40px; display:grid; place-items:center; padding:0; border:1px solid rgba(255,255,255,.14); border-radius:50%; color:#fff; background:rgba(255,255,255,.06); font-size:24px; cursor:pointer; }
+      .dancer-profile-builder-panel > header button svg { width:22px; height:22px; display:block; overflow:visible; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
       .dancer-profile-builder-panel > div { min-width:0; max-width:100%; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; padding:10px 0 max(28px,env(safe-area-inset-bottom)); scroll-padding-bottom:max(28px,env(safe-area-inset-bottom)); scrollbar-width:thin; }
       .dancer-profile-builder-panel > div > * { width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
       .dancer-profile-builder-panel .info-panel { grid-column:1 / -1; max-width:100%; box-sizing:border-box; overflow:hidden; padding:12px; }

@@ -893,7 +893,7 @@ async function getOwnDancerProfile(client: DancrClient, userId: string) {
 async function assertDancerPhotoLimit(client: DancrClient, dancerId: string, userId: string) {
   const slots = await occupiedDancerPhotoSlots(client, dancerId, userId);
   if (slots.size >= MAX_DANCER_PROFILE_PHOTOS) {
-    throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
+    throw new Error("Your profile picture library is full. Delete or replace a picture before adding more.");
   }
 }
 
@@ -913,7 +913,7 @@ async function resolveDancerPhotoSortOrder(
   for (let sortOrder = 1; sortOrder <= MAX_DANCER_PROFILE_PHOTOS; sortOrder += 1) {
     if (!used.has(`gallery:${sortOrder}`)) return sortOrder;
   }
-  throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
+  throw new Error("Your profile picture library is full. Delete or replace a picture before adding more.");
 }
 
 async function occupiedDancerPhotoSlots(
