@@ -620,6 +620,7 @@ function PublicProfileStyles() {
       .profile-media-viewer-hint { color: #aaa0b8; font-size: 11px; font-weight: 800; }
       .profile-media-viewer { display: block; }
       .profile-media-viewer .profile-media-viewer-stage { width: 100%; height: 100%; }
+      .profile-media-viewer.is-photo .profile-media-viewer-stage > img { object-fit: cover; }
       .profile-media-viewer.is-video .profile-media-viewer-stage > video { object-fit: cover; }
       .profile-media-viewer .profile-media-viewer-previous,
       .profile-media-viewer .profile-media-viewer-next { z-index: 2; left: auto; right: max(12px, env(safe-area-inset-right)); width: 48px; height: 48px; border-color: rgba(255,255,255,.2); background: rgba(8,8,12,.68); font-size: 22px; transform: none; }

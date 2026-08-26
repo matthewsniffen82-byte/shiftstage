@@ -29058,7 +29058,7 @@
       background-color: #050507;
       background-position: center center !important;
       background-repeat: no-repeat !important;
-      background-size: contain !important;
+      background-size: cover !important;
       border: 0;
       border-radius: 0;
       box-shadow: none;
@@ -29113,25 +29113,6 @@
       pointer-events: none;
     }
 
-    .profile-photo-viewer-copy {
-      position: absolute;
-      right: 82px;
-      bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px));
-      left: max(16px, env(safe-area-inset-left));
-      min-width: 0;
-      display: grid;
-      gap: 3px;
-      text-shadow: 0 2px 8px rgba(0,0,0,.92);
-    }
-
-    .profile-photo-viewer-copy strong {
-      overflow: hidden;
-      color: #fff;
-      font-size: 16px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
     .profile-photo-viewer-share {
       width: 52px !important;
       min-width: 52px !important;
@@ -29178,14 +29159,6 @@
       color: #a7f3d0;
       font-size: 11px;
       font-weight: 800;
-    }
-
-    .profile-photo-viewer-position {
-      margin: 0;
-      color: #9fefff;
-      font-size: 11px;
-      font-weight: 850;
-      pointer-events: none;
     }
 
     .profile-modal .thumb {
@@ -40656,10 +40629,6 @@
             <button class="profile-photo-viewer-next" id="profilePhotoViewerNext" type="button" aria-label="Next dancer photo">↓</button>
           </div>
           <div class="profile-photo-viewer-footer">
-            <div class="profile-photo-viewer-copy">
-              <strong id="profilePhotoViewerName"></strong>
-              <p class="profile-photo-viewer-position" id="profilePhotoViewerPosition"></p>
-            </div>
             <div class="profile-photo-viewer-actions">
               <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
@@ -40814,8 +40783,6 @@
     const profilePhotoViewerShare = document.getElementById("profilePhotoViewerShare");
     const profilePhotoViewerPrevious = document.getElementById("profilePhotoViewerPrevious");
     const profilePhotoViewerNext = document.getElementById("profilePhotoViewerNext");
-    const profilePhotoViewerName = document.getElementById("profilePhotoViewerName");
-    const profilePhotoViewerPosition = document.getElementById("profilePhotoViewerPosition");
     const profilePhotoViewerStatus = document.getElementById("profilePhotoViewerStatus");
     if (profilePhotoViewer) document.body.appendChild(profilePhotoViewer);
     let profilePhotoViewerReturnTarget = null;
@@ -50632,14 +50599,6 @@
       }
     }
 
-    function profilePhotoScheduleLabel() {
-      const workingNow = modalBody?.querySelector(".working-now-tile .profile-schedule-primary")?.textContent?.trim();
-      if (workingNow) return workingNow;
-      const upcoming = modalBody?.querySelector(".schedule-upcoming .profile-schedule-primary")?.textContent?.trim();
-      if (upcoming) return `Upcoming · ${upcoming}`;
-      return "No shift posted";
-    }
-
     function syncProfilePhotoViewerImage() {
       if (!profilePhotoViewerImage || !modalImage) return;
       const photoStyle = getComputedStyle(modalImage);
@@ -50652,14 +50611,11 @@
     }
 
     function syncProfilePhotoViewerPosition() {
-      if (!profilePhotoViewerPosition) return;
       const photoThumbs = [...modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])")];
       const activePhoto = photoThumbs.find((thumb) => thumb.classList.contains("active"));
       const activePhotoIndex = Math.max(0, Number(activePhoto?.dataset.profilePhotoIndex || 0));
       const totalPhotos = Math.max(1, modalGallery.profilePhotoItems?.length || photoThumbs.length);
       const profileName = modalName.textContent.trim() || "Dancer";
-      if (profilePhotoViewerName) profilePhotoViewerName.textContent = profileName;
-      profilePhotoViewerPosition.textContent = `${profilePhotoScheduleLabel()} · Swipe up or down · Photo ${activePhotoIndex + 1} of ${totalPhotos}`;
       profilePhotoViewerPrevious.disabled = activePhotoIndex <= 0;
       profilePhotoViewerNext.disabled = activePhotoIndex >= totalPhotos - 1;
       profilePhotoViewer?.setAttribute("aria-label", `${profileName} profile photo`);

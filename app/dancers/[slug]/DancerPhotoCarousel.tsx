@@ -601,12 +601,14 @@ export function DancerPhotoCarousel({
             </button>
           </div>
           <div className="profile-media-viewer-footer">
-            <div className="profile-media-viewer-copy">
-              <strong>{stageName}</strong>
-              <span>
-                {viewerStatus} · Swipe up or down · {viewer.kind === "photo" ? "Photo" : "Video"} {viewerIndex + 1} of {viewerItems.length}
-              </span>
-            </div>
+            {viewer.kind === "video" ? (
+              <div className="profile-media-viewer-copy">
+                <strong>{stageName}</strong>
+                <span>
+                  {viewerStatus} · Swipe up or down · Video {viewerIndex + 1} of {viewerItems.length}
+                </span>
+              </div>
+            ) : null}
             <div className="profile-media-viewer-actions">
               <button
                 aria-label={activeViewerItem.kind === "video" ? "Share this TV video" : "Share this profile photo"}
