@@ -167,7 +167,7 @@ test("venue-card lineup avatars use one stable circular paint layer while scroll
   );
   assert.match(
     aesthetic,
-    /#results\.venue-card-grid > \.venue-card \.venue-card-lineup-avatar \{[\s\S]*?border-color: transparent !important;[\s\S]*?background-color: transparent !important;/,
+    /#results\.venue-card-grid > \.venue-card \.venue-card-lineup-avatar \{[\s\S]*?border-color: transparent !important;[\s\S]*?background-color: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
   );
   const compactLineupSizeRule = aesthetic.match(
     /:is\(\.home-venue-discovery-lineup-avatar, \.home-venue-discovery-lineup-count\) \{[\s\S]*?\n  \}/,
