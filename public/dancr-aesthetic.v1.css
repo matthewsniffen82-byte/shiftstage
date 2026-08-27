@@ -10708,9 +10708,8 @@ html:is(
   }
 }
 
-/* Keep the stage name and verified badge together as one centered unit. The
- * unit shares the exact axis used by Followers without forcing the badge to
- * the edge of that analytics track. */
+/* Center the visible stage-name + verified-badge pair over Followers. The
+ * badge is part of the composed identity, so the pair reads as one unit. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
     position: relative !important;
@@ -10735,30 +10734,26 @@ html:is(
     margin: 0 !important;
     padding: 0 !important;
     transform: translateX(-50%) !important;
-    display: grid !important;
-    grid-template-columns: 19px auto 19px !important;
-    column-gap: 5px !important;
+    display: flex !important;
+    gap: 5px !important;
     align-items: center !important;
     justify-content: center !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row::before {
-    content: "";
-    grid-column: 1;
-    width: 19px;
-    height: 19px;
+    content: none !important;
+    display: none !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row h2 {
-    grid-column: 2;
+    flex: 0 1 auto !important;
     width: auto !important;
     max-width: 80px !important;
-    text-align: center !important;
+    text-align: left !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row .profile-modal-verified {
     position: static !important;
-    grid-column: 3;
     flex: 0 0 19px !important;
     margin: 0 !important;
     transform: none !important;
