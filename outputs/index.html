@@ -39384,11 +39384,18 @@
         }
 
         #profileBackdrop .profile-club-deal-tile.is-active .profile-club-deal-qr-button {
-          border-color: rgba(77,236,157,.38) !important;
-          color: #eafff4 !important;
-          background: rgba(77,236,157,.085) !important;
+          border-color: var(--dancr-color-success-strong) !important;
+          color: var(--dancr-color-text-primary) !important;
+          background: color-mix(
+            in srgb,
+            var(--dancr-color-success) 64%,
+            var(--dancr-color-background)
+          ) !important;
           background-image: none !important;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
+          box-shadow:
+            0 8px 18px var(--dancr-color-black-soft),
+            0 0 14px var(--dancr-color-success-soft),
+            inset 0 1px 0 var(--dancr-color-white-medium) !important;
         }
 
         #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-title {
@@ -47944,8 +47951,8 @@
         if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
-        qrButton.setAttribute("aria-label", `Open instructions for the ${config.venueName || "active"} Club Deal`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>How to use</strong></span>`;
+        qrButton.setAttribute("aria-label", `View the ${config.venueName || "active"} Club Deal`);
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>View Deal</strong></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({

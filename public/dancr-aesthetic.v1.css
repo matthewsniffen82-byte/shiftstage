@@ -4631,6 +4631,25 @@ body.dancr-button-system .public-profile-shell .club-deal-profile-action {
   font-size: 9px !important;
 }
 
+/* The compact profile action opens deal details; keep it clearly actionable
+ * without competing with the redemption CTA inside the deal sheet. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-tile.is-active .profile-club-deal-qr-button,
+body.dancr-button-system .public-profile-shell .club-deal-profile-action[data-club-deal-state="available"] {
+  border-color: var(--dancr-color-success-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-success) 64%,
+    var(--dancr-color-background)
+  ) !important;
+  background-image: none !important;
+  box-shadow:
+    0 8px 18px var(--dancr-color-black-soft),
+    0 0 14px var(--dancr-color-success-soft),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  text-shadow: none !important;
+}
+
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button),
 body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions > :is(a, button) {
   grid-row: 3 !important;
