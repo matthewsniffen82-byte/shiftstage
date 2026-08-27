@@ -422,21 +422,22 @@ function PublicProfileStyles() {
       .profile-schedule-empty { min-width: 0; display: flex; align-items: center; gap: 6px; margin-top: 5px; padding: 8px 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #82798c; background: rgba(255,255,255,.025); font-size: 10px; line-height: 1.2; }
       .profile-schedule-empty strong { flex: 0 0 auto; color: #d9d3e0; font-size: 12px; white-space: nowrap; }
       .profile-schedule-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-social-section { min-height: 0; display: grid; margin: 0 0 22px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-social-section { min-height: 0; display: grid; margin: 0 0 6px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .social-list-heading h2 { margin: 0; font-size: 15px; line-height: 1.1; }
-      .social-list { width: fit-content; max-width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin-inline: auto; overflow: visible; scrollbar-width: none; }
+      .social-list { width: fit-content; max-width: 100%; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 6px; margin-inline: auto; overflow: visible; scrollbar-width: none; }
       .social-list::-webkit-scrollbar { display: none; }
       .social-list a { position: relative; width: 44px; min-width: 44px; height: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; border: 0; border-radius: 50%; color: #f4f4f6; background: transparent; box-shadow: none; text-decoration: none; transition: transform .16s ease; }
-      .social-list a::before { content: ""; position: absolute; inset: 0; border: 1px solid rgba(226,232,240,.14); border-radius: 50%; background: rgba(17,17,23,.78); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); transition: border-color .16s ease, background .16s ease; }
+      .social-list a::before { content: ""; position: absolute; inset: 3px; border: 1px solid rgba(226,232,240,.11); border-radius: 50%; background: rgba(9,9,13,.86); box-shadow: none; transition: border-color .16s ease, background .16s ease; }
       .social-list a:hover { transform: translateY(-1px); }
-      .social-list a:hover::before { border-color: rgba(226,232,240,.26); background: rgba(24,24,31,.88); box-shadow: none; }
+      .social-list a:hover::before { border-color: rgba(226,232,240,.2); background: rgba(17,17,22,.92); box-shadow: none; }
       .social-list a:focus-visible { outline: none; }
       .social-list a:focus-visible::before { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 2px; }
-      .social-list a svg { position: relative; z-index: 1; width: 16px; height: 16px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-      .social-list a.social-link-instagram svg, .social-list a.social-link-x svg { fill: none; }
+      .social-list a svg { position: relative; z-index: 1; width: 14px; height: 14px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .social-list a.social-link-instagram svg { fill: none; }
+      .social-list a.social-link-x svg { fill: currentColor; stroke: none; }
       .social-list a.social-link-instagram { color: #e4405f; }
       .social-list a.social-link-tiktok { color: #25f4ee; }
       .social-list a.social-link-snapchat { color: #fffc00; }

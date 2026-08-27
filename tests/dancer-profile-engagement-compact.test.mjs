@@ -48,7 +48,7 @@ test("zero-social profiles reserve no social DOM or layout space", () => {
   assert.doesNotMatch(socialFunctionSource, /No profiles posted|social placeholder|empty social/i);
   assert.match(
     compactLayout,
-    /\.profile-social-section \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 0 22px !important;[\s\S]*?padding: 0 !important;/,
+    /\.profile-social-section \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 0 6px !important;[\s\S]*?padding: 0 !important;/,
   );
 });
 
@@ -68,10 +68,10 @@ test("one through the maximum supported social count renders only real links in 
   }
 
   assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
-  assert.match(compactLayout, /\.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: wrap !important;[\s\S]*?gap: 6px !important;/);
+  assert.match(compactLayout, /\.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?gap: 6px !important;/);
   assert.match(compactLayout, /\.social-list a \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;/);
-  assert.match(compactLayout, /\.social-list a::before \{[\s\S]*?inset: 0 !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.14\) !important;/);
-  assert.match(compactLayout, /\.social-list a svg \{[\s\S]*?width: 16px !important;[\s\S]*?height: 16px !important;/);
+  assert.match(compactLayout, /\.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.11\) !important;/);
+  assert.match(compactLayout, /\.social-list a svg \{[\s\S]*?width: 14px !important;[\s\S]*?height: 14px !important;/);
 });
 
 test("all schedule states share the same compact header stats, four-action, status, optional-social, and media order", () => {

@@ -176,7 +176,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
 
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop #profileModal \.social-tile,[\s\S]*?\.public-profile-shell \.profile-social-section \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 0 22px !important;[\s\S]*?padding: 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop #profileModal \.social-tile,[\s\S]*?\.public-profile-shell \.profile-social-section \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 0 6px !important;[\s\S]*?padding: 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
@@ -184,15 +184,15 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop #profileModal \.social-tile \.social-link svg,[\s\S]*?\.public-profile-shell \.profile-social-section \.social-list a svg \{[\s\S]*?width: 16px !important;[\s\S]*?height: 16px !important;/,
+    /#profileBackdrop #profileModal \.social-tile \.social-link svg,[\s\S]*?\.public-profile-shell \.profile-social-section \.social-list a svg \{[\s\S]*?width: 14px !important;[\s\S]*?height: 14px !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /\.social-list \{[\s\S]*?flex-wrap: wrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?gap: 6px !important;[\s\S]*?overflow: visible !important;/,
+    /\.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?gap: 6px !important;[\s\S]*?margin-inline: auto !important;[\s\S]*?overflow: visible !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /\.social-list a::before \{[\s\S]*?inset: 0 !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.14\) !important;[\s\S]*?background: rgba\(17, 17, 23, \.78\) !important;[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, \.035\) !important;/,
+    /\.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.11\) !important;[\s\S]*?background: rgba\(9, 9, 13, \.86\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
@@ -220,8 +220,10 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   );
   assert.match(
     liveProfileBlock,
-    /\.social-tile \.social-links \{[\s\S]*?flex-wrap: wrap !important;[\s\S]*?gap: 6px !important;[\s\S]*?overflow: visible !important;/,
+    /\.social-tile \.social-links \{[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?gap: 6px !important;[\s\S]*?overflow: visible !important;/,
   );
+  assert.match(publicSocialLinks, /M18\.244 2\.25h3\.308l-7\.227 8\.26/);
+  assert.match(liveApp, /x: '<span class="social-icon fill"[\s\S]*?M18\.244 2\.25h3\.308l-7\.227 8\.26/);
   assert.match(publicSocialLinks, /if \(!links\.length\) return null;/);
   assert.match(
     liveApp,

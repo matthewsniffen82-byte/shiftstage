@@ -306,11 +306,11 @@ test("public social icons render without a visible heading or published handles"
   assert.doesNotMatch(socialLinks, /<strong>\{link\.handle\}<\/strong>/);
   assert.doesNotMatch(socialLinks, /social-list-toggle|Show fewer links|more links/);
   assert.match(profilePage, /\.social-links-control \{ display: grid; justify-items: center;/);
-  assert.match(profilePage, /\.profile-social-section \{ min-height: 0;[\s\S]*?margin: 0 0 22px;[\s\S]*?padding: 0;/);
-  assert.match(profilePage, /\.social-list \{ width: fit-content;[\s\S]*?flex-wrap: wrap;[\s\S]*?justify-content: center;[\s\S]*?gap: 6px;/);
+  assert.match(profilePage, /\.profile-social-section \{ min-height: 0;[\s\S]*?margin: 0 0 6px;[\s\S]*?padding: 0;/);
+  assert.match(profilePage, /\.social-list \{ width: fit-content;[\s\S]*?flex-wrap: nowrap;[\s\S]*?justify-content: center;[\s\S]*?gap: 6px;/);
   assert.match(profilePage, /\.social-list a \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?justify-content: center;/);
-  assert.match(profilePage, /\.social-list a::before \{[\s\S]*?inset: 0;[\s\S]*?border: 1px solid rgba\(226,232,240,\.14\);[\s\S]*?border-radius: 50%;/);
-  assert.match(profilePage, /\.social-list a svg \{ position: relative; z-index: 1; width: 16px; height: 16px;/);
+  assert.match(profilePage, /\.social-list a::before \{[\s\S]*?inset: 3px;[\s\S]*?border: 1px solid rgba\(226,232,240,\.11\);[\s\S]*?border-radius: 50%;/);
+  assert.match(profilePage, /\.social-list a svg \{ position: relative; z-index: 1; width: 14px; height: 14px;/);
 });
 
 test("real videos keep distinct metadata", () => {
