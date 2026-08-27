@@ -274,9 +274,9 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
     aesthetic,
     /\.venue-detail-close\[data-auto-focus\]:is\(:focus, :focus-visible\) \{[\s\S]*?outline: 0 !important;/,
   );
-  assert.doesNotMatch(
+  assert.match(
     aesthetic,
-    /\.venue-detail-close\[data-auto-focus\]:is\(:focus, :focus-visible\) \{[^}]*?(?:background|box-shadow):/,
+    /\.venue-detail-close\[data-auto-focus\]:is\(:focus, :focus-visible\) \{[\s\S]*?border-color: rgba\(226, 232, 240, 0\.22\) !important;[\s\S]*?background: linear-gradient\(145deg, rgba\(49, 47, 59, 0\.96\), rgba\(19, 19, 25, 0\.94\)\) !important;[\s\S]*?0 8px 18px rgba\(0, 0, 0, 0\.36\) !important;/,
   );
   assert.match(
     aesthetic,
