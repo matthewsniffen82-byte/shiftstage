@@ -61,6 +61,13 @@ test("validated takedowns disable exact videos, notify uploaders, and enforce re
   assert.match(adminPanel, /Record filed court action/);
 });
 
+test("copyright operations preserve refreshed admin sessions for every legal action", () => {
+  assert.equal((adminRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
+  assert.equal((adminRoute.match(/session: session \|\| null/g) || []).length, 3);
+  assert.equal((adminPanel.match(/requestAdminJson\("\/api\/admin\/dmca"/g) || []).length, 3);
+  assert.doesNotMatch(adminPanel, /readAdminAccessToken|authorization:|fetch\("\/api\/admin\/dmca"/);
+});
+
 test("counter-notices are uploader-authenticated, forwarded, and wait 10 to 14 business days", () => {
   assert.match(counterRoute, /createRequestSupabaseContext/);
   assert.match(dmcaLibrary, /mistakeBeliefConfirmed/);

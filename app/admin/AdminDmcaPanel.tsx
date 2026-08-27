@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { readAdminAccessToken as readToken } from "./admin-session";
+import { requestAdminJson } from "./admin-session";
 
 type Agent = {
   legalName?: string;
@@ -63,20 +63,11 @@ export default function AdminDmcaPanel() {
   }, []);
 
   async function load() {
-    const token = readToken();
-    if (!token) {
-      setStatus("Admin sign in required.");
-      setIsLoading(false);
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const response = await fetch("/api/admin/dmca", {
-        headers: { authorization: `Bearer ${token}` },
+      const data = await requestAdminJson("/api/admin/dmca", {
+        fallbackMessage: "Unable to load copyright operations.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load copyright operations.");
       setCases(data.cases || []);
       setAgent(data.agent || {});
       setStatus("");
@@ -88,11 +79,6 @@ export default function AdminDmcaPanel() {
   }
 
   async function takeAction(dmcaCase: DmcaCase, action: AdminAction) {
-    const token = readToken();
-    if (!token) {
-      setStatus("Admin sign in required.");
-      return;
-    }
     const notes = notesById[dmcaCase.id]?.trim() || "";
     if ((action === "record_court_action" || action === "request_information" || action === "reject") && !notes) {
       setStatus("Add case notes before taking that action.");
@@ -102,16 +88,14 @@ export default function AdminDmcaPanel() {
     setWorkingId(dmcaCase.id);
     setStatus("");
     try {
-      const response = await fetch("/api/admin/dmca", {
+      const data = await requestAdminJson("/api/admin/dmca", {
         method: "PATCH",
         headers: {
-          authorization: `Bearer ${token}`,
           "content-type": "application/json",
         },
         body: JSON.stringify({ caseId: dmcaCase.id, action, notes }),
+        fallbackMessage: "Unable to update copyright case.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update copyright case.");
       setStatus(data.message || "Copyright case updated.");
       setNotesById((current) => ({ ...current, [dmcaCase.id]: "" }));
       await load();
@@ -124,11 +108,6 @@ export default function AdminDmcaPanel() {
 
   async function saveAgent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const token = readToken();
-    if (!token) {
-      setStatus("Admin sign in required.");
-      return;
-    }
     const values = new FormData(event.currentTarget);
     const payload = {
       resource: "agent",
@@ -149,16 +128,14 @@ export default function AdminDmcaPanel() {
     setWorkingId("agent");
     setStatus("");
     try {
-      const response = await fetch("/api/admin/dmca", {
+      const data = await requestAdminJson("/api/admin/dmca", {
         method: "PATCH",
         headers: {
-          authorization: `Bearer ${token}`,
           "content-type": "application/json",
         },
         body: JSON.stringify(payload),
+        fallbackMessage: "Unable to save copyright agent.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save copyright agent.");
       setAgent(data.agent);
       setStatus(data.message || "Copyright agent details saved.");
     } catch (error) {

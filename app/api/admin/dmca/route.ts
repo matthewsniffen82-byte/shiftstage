@@ -24,10 +24,10 @@ const ACTIONS = new Set<DmcaAdminAction>([
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const state = await getAdminDmcaState(createAdminSupabaseClient());
-    return NextResponse.json({ ok: true, ...state });
+    return NextResponse.json({ ok: true, ...state, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load copyright operations.");
   }
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json();
     const admin = createAdminSupabaseClient();
@@ -46,6 +46,7 @@ export async function PATCH(request: Request) {
         ok: true,
         agent,
         message: "Copyright agent details saved.",
+        session: session || null,
       });
     }
 
@@ -64,6 +65,7 @@ export async function PATCH(request: Request) {
       ok: true,
       result,
       message: actionMessage(action),
+      session: session || null,
     });
   } catch (error) {
     return apiError(error, "Unable to update copyright case.", 400);
