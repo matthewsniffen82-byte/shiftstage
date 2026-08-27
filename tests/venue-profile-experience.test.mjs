@@ -188,12 +188,16 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(96px, 22vw, 116px\) !important;[\s\S]*?height: clamp\(96px, 22vw, 116px\) !important;/);
   assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?height: calc\(100% - 8px\) !important;[\s\S]*?max-height: 108px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(refinement, /\.venue-detail-logo \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?max-height: 100% !important;[\s\S]*?object-fit: contain !important;[\s\S]*?object-position: center center !important;/);
+  assert.match(refinement, /\.venue-hero-brand-row \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: 36px minmax\(0, 1fr\) 36px;[\s\S]*?align-items: start;[\s\S]*?gap: 8px;[\s\S]*?padding: 8px 10px 0;/);
+  assert.match(refinement, /\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
+  assert.match(refinement, /@media \(max-width: 650px\) \{[\s\S]*?\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
   assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 6px !important;[\s\S]*?padding: 8px 12px 10px !important;/);
   assert.match(refinement, /#venueDetailName \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
   assert.match(refinement, /\.venue-identity-meta \{[\s\S]*?display: flex;[\s\S]*?flex-wrap: wrap;/);
   assert.match(refinement, /\.venue-identity-location \{[\s\S]*?display: inline-flex;[\s\S]*?gap: 5px;/);
   assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 1px solid transparent;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
   assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 58px !important;[\s\S]*?grid-template-rows: 11px 18px 10px;/);
+  assert.match(refinement, /\.venue-quick-stat \{[\s\S]*?min-height: 58px !important;[\s\S]*?padding: 9px 6px 5px !important;/);
   assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
   assert.match(refinement, /\.venue-quick-stat\.is-working:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-success\) 5%/);
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
@@ -208,7 +212,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /Club-detail action hierarchy[\s\S]*?\.venue-secondary-actions \.action-btn \{[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 11px !important;[\s\S]*?var\(--dancr-color-surface\) 68%/);
   assert.match(refinement, /\.venue-secondary-actions \.follow-venue-btn\.is-following \{[\s\S]*?var\(--dancr-color-brand-primary\) 12%/);
   assert.match(refinement, /\.venue-secondary-actions \.venue-detail-share\.is-confirmed \{[\s\S]*?var\(--dancr-color-success\) 6%/);
-  assert.match(refinement, /\.venue-identity-block \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 36px;[\s\S]*?align-items: start;[\s\S]*?gap: 8px;/);
+  assert.match(refinement, /\.venue-identity-block \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?align-items: start;[\s\S]*?gap: 0;/);
   assert.match(refinement, /\.venue-detail-close \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?justify-self: end !important;[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
   assert.match(refinement, /\.venue-detail-close \.icon \{[\s\S]*?width: 15px !important;[\s\S]*?height: 15px !important;[\s\S]*?stroke-width: 1\.85 !important;/);
   assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 16px;[\s\S]*?padding: 10px 12px 16px;/);
@@ -256,7 +260,11 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     liveApp,
-    /class="venue-identity-block">[\s\S]*?class="venue-identity-copy">[\s\S]*?id="venueDetailName"[\s\S]*?class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>/,
+    /class="venue-hero-brand-row">[\s\S]*?class="venue-main-photo\$\{visual\.attrs\.className\}"[\s\S]*?class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>[\s\S]*?class="venue-hero-body">/,
+  );
+  assert.doesNotMatch(
+    liveApp,
+    /class="venue-identity-block">[\s\S]*?class="close-btn venue-detail-close"/,
   );
   assert.match(
     liveApp,

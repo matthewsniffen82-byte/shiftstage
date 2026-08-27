@@ -6172,6 +6172,30 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-mai
   box-shadow: none !important;
 }
 
+/* Keep the close control in normal card layout while placing it at the true
+ * upper-right edge. Symmetric side rails preserve the centered logo geometry. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row {
+  box-sizing: border-box;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: start;
+  gap: 8px;
+  padding: 8px 10px 0;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-hero-brand-row .venue-main-photo {
+  grid-column: 2;
+  width: 100%;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-hero-brand-row .venue-detail-close {
+  grid-column: 3;
+  grid-row: 1;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
   box-sizing: border-box;
   width: calc(100% - clamp(82px, 22vw, 112px)) !important;
@@ -6188,13 +6212,22 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   isolation: isolate;
 }
 
-/* Compact venue heroes keep their existing centered logo geometry; the close
- * control now belongs to the identity row below rather than this artwork. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-hero-brand-row .venue-detail-logo-shell {
+  width: 100% !important;
+}
+
+/* Compact venue heroes keep their existing centered logo geometry. */
 @media (max-width: 650px) {
   body.dancr-button-system #results.venue-profile-overlay .venue-detail
     .venue-detail-logo-shell {
     left: 50% !important;
     width: calc(100% - clamp(92px, 25vw, 118px)) !important;
+  }
+
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail
+    .venue-hero-brand-row .venue-detail-logo-shell {
+    width: 100% !important;
   }
 }
 
@@ -6259,9 +6292,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-block {
-  grid-template-columns: minmax(0, 1fr) 36px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: 8px;
+  gap: 0;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-copy {
@@ -6420,6 +6453,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sta
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-quick-stat {
   min-height: 58px !important;
+  padding: 9px 6px 5px !important;
   color: var(--dancr-color-text-primary) !important;
   appearance: none;
   box-shadow: none !important;
