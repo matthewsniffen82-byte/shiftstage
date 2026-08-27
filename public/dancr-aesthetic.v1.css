@@ -10714,6 +10714,7 @@ html:is(
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
     position: relative !important;
+    left: 0 !important;
     width: 100% !important;
     max-width: none !important;
     justify-self: stretch !important;
