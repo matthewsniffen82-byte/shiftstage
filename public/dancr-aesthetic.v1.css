@@ -4097,13 +4097,13 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     min-width: 0 !important;
     width: 100% !important;
     max-width: none !important;
-    height: 48px !important;
+    height: 57px !important;
     display: grid !important;
-    grid-template-rows: 19px 29px !important;
+    grid-template-rows: 24px 29px !important;
     align-content: center !important;
     align-items: stretch !important;
     justify-content: stretch !important;
-    gap: 0 !important;
+    gap: 4px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
@@ -4148,9 +4148,9 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     position: relative !important;
     z-index: 1 !important;
     width: calc(100% - 12px) !important;
-    margin-left: -8px !important;
+    margin-left: -4px !important;
     align-self: stretch !important;
-    transform: translateY(11px) !important;
+    transform: none !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
@@ -10530,13 +10530,13 @@ html:is(
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
     min-width: 0 !important;
     width: 100% !important;
-    height: 48px !important;
+    height: 57px !important;
     display: grid !important;
-    grid-template-rows: 19px 29px !important;
+    grid-template-rows: 24px 29px !important;
     align-content: center !important;
     align-items: stretch !important;
     justify-content: stretch !important;
-    gap: 0 !important;
+    gap: 4px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
@@ -10568,9 +10568,9 @@ html:is(
     position: relative !important;
     z-index: 1 !important;
     width: calc(100% - 12px) !important;
-    margin-left: -8px !important;
+    margin-left: -4px !important;
     align-self: stretch !important;
-    transform: translateY(11px) !important;
+    transform: none !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
@@ -10717,8 +10717,9 @@ html:is(
   }
 }
 
-/* Center the visible stage-name + verified-badge pair over Followers. The
- * badge is part of the composed identity, so the pair reads as one unit. */
+/* Keep the stage-name + verified-badge pair in its own row directly above
+ * Followers. Both rows use the same first-column width and offset, so their
+ * centers remain aligned without absolute positioning or overlap. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
     position: relative !important;
@@ -10731,18 +10732,18 @@ html:is(
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
     margin-left: -4px !important;
+    transform: none !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
-    position: absolute !important;
-    top: 0 !important;
-    left: calc(((100% - 22px) / 6) - 4px) !important;
-    width: fit-content !important;
-    max-width: min(128px, calc(100% - 38px)) !important;
+    position: static !important;
+    inset: auto !important;
+    width: calc((100% - 22px) / 3) !important;
+    max-width: none !important;
     min-width: 0 !important;
-    margin: 0 !important;
+    margin: 0 0 0 -4px !important;
     padding: 0 !important;
-    transform: translateX(-50%) !important;
+    transform: none !important;
     display: flex !important;
     gap: 5px !important;
     align-items: center !important;
@@ -10757,7 +10758,7 @@ html:is(
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row h2 {
     flex: 0 1 auto !important;
     width: auto !important;
-    max-width: 80px !important;
+    max-width: calc(100% - 24px) !important;
     text-align: left !important;
   }
 

@@ -305,7 +305,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 48px !important;[\s\S]*?grid-template-rows: 19px 29px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 57px !important;[\s\S]*?grid-template-rows: 24px 29px !important;[\s\S]*?gap: 4px !important;/,
   );
   assert.match(
     compactMobileProfile,
@@ -317,7 +317,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?position: relative !important;[\s\S]*?z-index: 1 !important;[\s\S]*?width: calc\(100% - 12px\) !important;[\s\S]*?margin-left: -8px !important;[\s\S]*?transform: translateY\(11px\) !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?position: relative !important;[\s\S]*?z-index: 1 !important;[\s\S]*?width: calc\(100% - 12px\) !important;[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;/,
   );
   assert.match(
     compactMobileProfile,
@@ -329,15 +329,15 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Center the visible stage-name \+ verified-badge pair over Followers[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?left: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: absolute !important;[\s\S]*?left: calc\(\(\(100% - 22px\) \/ 6\) - 4px\) !important;[\s\S]*?width: fit-content !important;[\s\S]*?max-width: min\(128px, calc\(100% - 38px\)\) !important;[\s\S]*?padding: 0 !important;[\s\S]*?transform: translateX\(-50%\) !important;[\s\S]*?display: flex !important;[\s\S]*?gap: 5px !important;[\s\S]*?justify-content: center !important;/,
+    /Keep the stage-name \+ verified-badge pair in its own row directly above[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?left: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 0 0 -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: flex !important;[\s\S]*?gap: 5px !important;[\s\S]*?justify-content: center !important;/,
   );
   assert.match(
     aesthetic,
-    /Center the visible stage-name \+ verified-badge pair over Followers[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?flex: 0 1 auto !important;[\s\S]*?width: auto !important;[\s\S]*?max-width: 80px !important;[\s\S]*?text-align: left !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: static !important;[\s\S]*?flex: 0 0 19px !important;[\s\S]*?transform: none !important;/,
+    /Keep the stage-name \+ verified-badge pair in its own row directly above[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?flex: 0 1 auto !important;[\s\S]*?width: auto !important;[\s\S]*?max-width: calc\(100% - 24px\) !important;[\s\S]*?text-align: left !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: static !important;[\s\S]*?flex: 0 0 19px !important;[\s\S]*?transform: none !important;/,
   );
   assert.doesNotMatch(
     aesthetic,
-    /Center the visible stage-name \+ verified-badge pair over Followers[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?left: auto !important;/,
+    /Keep the stage-name \+ verified-badge pair in its own row directly above[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: absolute !important;/,
   );
   assert.match(
     aesthetic,
