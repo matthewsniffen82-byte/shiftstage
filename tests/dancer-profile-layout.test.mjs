@@ -391,15 +391,15 @@ test("Upcoming Shift mirrors the compact current-shift row with cyan status cues
   );
   assert.match(
     aesthetic,
-    /Upcoming carries the same truthful state relationship as its cyan avatar[\s\S]*?profile-tonight-card\.is-upcoming \{[\s\S]*?var\(--dancr-color-info\) 11%[\s\S]*?var\(--dancr-color-info\) 8%/,
+    /Upcoming keeps cyan at the edge and in truthful status cues[\s\S]*?profile-tonight-card\.is-upcoming \{[\s\S]*?var\(--dancr-color-info\) 4\.5%[\s\S]*?rgba\(7, 12, 16, \.94\)/,
   );
   assert.match(
     aesthetic,
     /schedule-upcoming > \.profile-schedule-primary,[\s\S]*?profile-upcoming-state \{[\s\S]*?color: var\(--dancr-color-info\) !important;/,
   );
-  assert.match(
-    aesthetic,
-    /profile-tonight-travel-actions\.is-upcoming > :is\(\.profile-primary-directions, \.profile-directions-button\)[\s\S]*?border-color: var\(--dancr-color-info-medium\) !important;[\s\S]*?var\(--dancr-color-info\) 9%/,
+  assert.doesNotMatch(
+    `${liveApp}\n${profilePage}\n${aesthetic}`,
+    /profile-tonight-travel-actions\.is-upcoming > :is\(\.profile-primary-directions, \.profile-directions-button\)|profile-tonight-travel-actions\.is-upcoming > \.profile-(?:primary-directions|directions-button)/,
   );
 });
 

@@ -38507,7 +38507,7 @@
           inset: 0;
           content: "";
           pointer-events: none;
-          border: 2px solid rgba(34, 211, 238, .54);
+          border: 2px solid rgba(34, 211, 238, .38);
           border-radius: inherit;
           box-shadow: none;
         }
@@ -38515,8 +38515,8 @@
         #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-upcoming {
           border-color: transparent;
           background:
-            radial-gradient(circle at 94% 0%, rgba(34, 211, 238, .11), transparent 13rem),
-            linear-gradient(145deg, rgba(8, 27, 32, .96), rgba(6, 11, 15, .98));
+            radial-gradient(circle at 94% 0%, rgba(34, 211, 238, .045), transparent 13rem),
+            rgba(7, 12, 16, .94);
         }
 
         #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-no-schedule::before {
@@ -38609,16 +38609,6 @@
         #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-primary-directions {
           border-color: rgba(226, 232, 240, .18) !important;
           background: rgba(255, 255, 255, .055) !important;
-        }
-
-        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-upcoming > .profile-primary-directions {
-          border-color: rgba(34, 211, 238, .32) !important;
-          background: linear-gradient(180deg, rgba(34, 211, 238, .09), transparent 58%), rgba(7, 18, 22, .9) !important;
-        }
-
-        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-upcoming > .profile-primary-directions :is(svg, .action-icon) {
-          color: #22d3ee !important;
-          stroke: currentColor !important;
         }
 
         #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-uber-ride) :is(svg, .action-icon) {
