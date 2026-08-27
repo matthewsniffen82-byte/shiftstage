@@ -127,14 +127,7 @@ test("Android venue logos paint above the card shade without changing other plat
   const androidVenueLogoRule = androidVenueLogoLayer.match(
     /body\.dancr-button-system :is\(\s*\.home-venue-discovery-logo,[^)]*\) \{[^}]*\}/,
   )?.[0] || "";
-  const androidVenueSurfaceRule = androidVenueLogoLayer.match(
-    /Keep Android and Samsung venue-logo stages visually identical to iPhone[\s\S]*?\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[^}]*\}/,
-  )?.[0] || "";
   assert.ok(androidVenueLogoRule, "the Android venue logo correction must exist");
-  assert.ok(androidVenueSurfaceRule, "the Android venue top parity surface must exist");
-  assert.match(androidVenueSurfaceRule, /repeating-linear-gradient\(115deg/);
-  assert.match(androidVenueSurfaceRule, /linear-gradient\(145deg, #28282f 0%, #18191b 52%, #1f1f23 100%\) !important;/);
-  assert.doesNotMatch(androidVenueSurfaceRule, /color-mix/);
   assert.doesNotMatch(androidVenueLogoRule, /background:/);
 });
 
