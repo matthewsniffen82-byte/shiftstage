@@ -32038,7 +32038,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=161" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=162" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39963,8 +39963,8 @@
           min-width: 0;
           position: relative;
           z-index: 1;
-          width: 100%;
-          margin-left: -14px;
+          width: calc(100% - 12px);
+          margin-left: -8px;
           align-self: stretch;
           transform: translateY(5px);
         }
@@ -40173,6 +40173,15 @@
         @media (prefers-reduced-motion: reduce) {
           .uber-ride-link {
             transition: none;
+          }
+        }
+
+        /* Center analytics in the three visual gaps between the four compact
+           guest actions without changing any action or metric behavior. */
+        @media (max-width: 759px) {
+          #profileBackdrop #profileModal .modal-actions {
+            width: auto !important;
+            margin-inline: 12px !important;
           }
         }
       </style>

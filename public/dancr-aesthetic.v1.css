@@ -4107,8 +4107,8 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     min-width: 0 !important;
     position: relative !important;
     z-index: 1 !important;
-    width: 100% !important;
-    margin-left: -14px !important;
+    width: calc(100% - 12px) !important;
+    margin-left: -8px !important;
     align-self: stretch !important;
     transform: translateY(5px) !important;
   }
@@ -10149,8 +10149,8 @@ html:is(
     min-width: 0 !important;
     position: relative !important;
     z-index: 1 !important;
-    width: 100% !important;
-    margin-left: -14px !important;
+    width: calc(100% - 12px) !important;
+    margin-left: -8px !important;
     align-self: stretch !important;
   }
 
@@ -10285,5 +10285,15 @@ html:is(
     width: 36px !important;
     height: 36px !important;
     min-height: 36px !important;
+  }
+}
+
+/* On mobile, the three analytics columns sit in the visual spaces between the
+ * four guest actions. Insetting the shared action row keeps those controls
+ * cohesive and gives the avatar/status treatment clear breathing room. */
+@media (max-width: 759px) {
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
+    width: auto !important;
+    margin-inline: 12px !important;
   }
 }
