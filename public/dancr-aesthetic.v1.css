@@ -4703,6 +4703,8 @@ body.dancr-button-system .public-profile-shell .profile-social-section::before {
  * boxed buttons. The Going affordance uses color and glow on the icon itself
  * so its full tap target stays accessible without coloring the whole tray. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-secondary.profile-action-icon-control:not([aria-pressed="true"]),
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-going.profile-action-icon-control:not([aria-pressed="true"]),
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
   border-color: transparent !important;

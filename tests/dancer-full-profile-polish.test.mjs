@@ -258,6 +258,10 @@ test("profile action controls are unboxed and Going highlights only its icon", (
     /modal-actions \.action-btn\.profile-action-icon-control,[\s\S]*?profile-action-share-slot \.profile-share > button\.profile-action-icon-control \{[\s\S]*?border-color: transparent !important;[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
+    guestActionsBlock,
+    /live-actions > button\.profile-action-secondary\.profile-action-icon-control:not\(\[aria-pressed="true"\]\),[\s\S]*?live-actions > button\.profile-action-going\.profile-action-icon-control:not\(\[aria-pressed="true"\]\)/,
+  );
+  assert.match(
     aesthetic,
     /four customer actions share one quiet premium tray[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?border-radius: 22px !important;[\s\S]*?background: rgba\(7, 7, 11, \.92\) !important;/,
   );
