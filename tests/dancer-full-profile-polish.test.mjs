@@ -315,11 +315,11 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Align the stage-name track with the first analytics track[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?margin-left: -8px !important;[\s\S]*?grid-template-columns: minmax\(0, calc\(\(100% - 22px\) \/ 3\)\) auto auto !important;[\s\S]*?justify-content: start !important;/,
+    /Keep the complete stage name visible while aligning its start[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?width: calc\(100% - clamp\(8px, 2\.5vw, 12px\)\) !important;[\s\S]*?margin-left: clamp\(8px, 2\.5vw, 12px\) !important;[\s\S]*?display: flex !important;[\s\S]*?justify-content: flex-start !important;/,
   );
   assert.match(
     aesthetic,
-    /#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: 100% !important;[\s\S]*?text-align: center !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: auto !important;[\s\S]*?flex: 0 1 auto !important;[\s\S]*?text-align: left !important;/,
   );
   assert.match(
     aesthetic,

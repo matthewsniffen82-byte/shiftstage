@@ -10502,21 +10502,21 @@ html:is(
   }
 }
 
-/* Align the stage-name track with the first analytics track beneath it. The
- * verified/status affordances remain beside the name without shifting the
- * name away from the Followers column's center line. */
+/* Keep the complete stage name visible while aligning its start with the
+ * Followers label beneath it. The name remains flexible so the verified and
+ * status affordances reserve only the space they actually need. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
-    width: 100% !important;
-    margin-left: -8px !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, calc((100% - 22px) / 3)) auto auto !important;
-    justify-content: start !important;
-    column-gap: 5px !important;
+    width: calc(100% - clamp(8px, 2.5vw, 12px)) !important;
+    margin-left: clamp(8px, 2.5vw, 12px) !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row h2 {
-    width: 100% !important;
-    text-align: center !important;
+    width: auto !important;
+    flex: 0 1 auto !important;
+    text-align: left !important;
   }
 }
