@@ -32038,7 +32038,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=172" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=173" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39922,7 +39922,10 @@
         #profileBackdrop #profileModal .profile-modal-summary .profile-modal-name-row {
           display: flex !important;
           align-items: center !important;
+          justify-content: flex-start !important;
           gap: 5px !important;
+          box-sizing: border-box !important;
+          padding-inline-start: clamp(14px, 4vw, 18px) !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-summary .modal-identity h2 {
@@ -39947,7 +39950,7 @@
           width: calc(100% - 12px);
           margin-left: -8px;
           align-self: stretch;
-          transform: translateY(8px);
+          transform: translateY(11px);
         }
 
         #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {

@@ -317,7 +317,11 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?position: relative !important;[\s\S]*?z-index: 1 !important;[\s\S]*?width: calc\(100% - 12px\) !important;[\s\S]*?margin-left: -8px !important;[\s\S]*?transform: translateY\(8px\) !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?position: relative !important;[\s\S]*?z-index: 1 !important;[\s\S]*?width: calc\(100% - 12px\) !important;[\s\S]*?margin-left: -8px !important;[\s\S]*?transform: translateY\(11px\) !important;/,
+  );
+  assert.match(
+    compactMobileProfile,
+    /#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?justify-content: flex-start !important;[\s\S]*?padding-inline-start: clamp\(14px, 4vw, 18px\) !important;/,
   );
   assert.match(
     aesthetic,

@@ -4120,6 +4120,9 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
     display: flex !important;
     align-items: center !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+    padding-inline-start: clamp(14px, 4vw, 18px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-identity h2 {
@@ -4144,7 +4147,7 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     width: calc(100% - 12px) !important;
     margin-left: -8px !important;
     align-self: stretch !important;
-    transform: translateY(8px) !important;
+    transform: translateY(11px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
@@ -10495,7 +10498,10 @@ html:is(
     max-width: 100% !important;
     display: flex !important;
     align-items: center !important;
+    justify-content: flex-start !important;
     gap: 5px !important;
+    box-sizing: border-box !important;
+    padding-inline-start: clamp(14px, 4vw, 18px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-identity h2 {
@@ -10510,6 +10516,7 @@ html:is(
     width: calc(100% - 12px) !important;
     margin-left: -8px !important;
     align-self: stretch !important;
+    transform: translateY(11px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
