@@ -329,15 +329,19 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Keep the stage name in its own center track directly above Followers[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?inset: 0 auto auto 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 0 0 -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns:[\s\S]*?minmax\(0, 1fr\)[\s\S]*?minmax\(0, calc\(100% - 20px\)\)[\s\S]*?minmax\(0, 1fr\) !important;[\s\S]*?gap: 5px !important;[\s\S]*?justify-content: stretch !important;/,
+    /Keep the stage name centered directly above Followers while anchoring the[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?inset: 0 auto auto 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 0 0 -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 0 !important;[\s\S]*?justify-items: center !important;/,
   );
   assert.match(
     aesthetic,
-    /Keep the stage name in its own center track directly above Followers[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?grid-column: 2 !important;[\s\S]*?justify-self: center !important;[\s\S]*?width: auto !important;[\s\S]*?max-width: 100% !important;[\s\S]*?text-align: center !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: static !important;[\s\S]*?grid-column: 3 !important;[\s\S]*?justify-self: start !important;[\s\S]*?transform: none !important;/,
+    /Keep the stage name centered directly above Followers while anchoring the[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-anchor \{[\s\S]*?position: relative !important;[\s\S]*?display: block !important;[\s\S]*?width: fit-content !important;[\s\S]*?max-width: calc\(100% - 20px\) !important;[\s\S]*?justify-self: center !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: auto !important;[\s\S]*?max-width: 100% !important;[\s\S]*?text-align: center !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 50% auto auto calc\(100% \+ 5px\) !important;[\s\S]*?transform: translateY\(-50%\) !important;/,
+  );
+  assert.match(
+    liveApp,
+    /class="profile-modal-name-row">\s*<div class="profile-modal-name-anchor">\s*<h2 id="modalName">Profile<\/h2>\s*<span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓<\/span>\s*<\/div>/,
   );
   assert.doesNotMatch(
     aesthetic,
-    /Keep the stage name in its own center track directly above Followers[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: absolute !important;/,
+    /Keep the stage name centered directly above Followers while anchoring the[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{\s*position: absolute !important;/,
   );
   assert.match(
     aesthetic,
