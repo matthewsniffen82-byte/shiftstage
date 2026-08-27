@@ -283,7 +283,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-avatar-column \{[\s\S]*?grid-template-rows: 48px 14px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-avatar-column \{[\s\S]*?position: relative !important;[\s\S]*?z-index: 2 !important;[\s\S]*?grid-template-rows: 48px 14px !important;/,
   );
   assert.match(
     compactMobileProfile,
@@ -299,7 +299,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?width: 100% !important;[\s\S]*?margin-left: -14px !important;[\s\S]*?transform: translateY\(5px\) !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?position: relative !important;[\s\S]*?z-index: 1 !important;[\s\S]*?width: 100% !important;[\s\S]*?margin-left: -14px !important;[\s\S]*?transform: translateY\(5px\) !important;/,
   );
   assert.match(
     aesthetic,
