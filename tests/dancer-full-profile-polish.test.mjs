@@ -281,7 +281,7 @@ test("profile action controls are unboxed and available Going highlights only it
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action\.is-going \.action-icon,[\s\S]*?profile-action-going\.profile-action-available\.is-going \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-brand-primary\) !important;/,
+    /going-btn\.is-available-action\.is-going \.action-icon,[\s\S]*?profile-action-going\.profile-action-available\.is-going \.profile-action-icon-frame \{[\s\S]*?color: #c084fc !important;[\s\S]*?drop-shadow\(0 0 4px rgba\(192, 132, 252, \.88\)\)[\s\S]*?drop-shadow\(0 0 9px var\(--dancr-color-brand-primary-strong\)\) !important;[\s\S]*?\.is-going \.profile-action-main > span:last-child \{[\s\S]*?color: #e9d5ff !important;/,
   );
 });
 

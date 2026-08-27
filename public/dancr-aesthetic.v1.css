@@ -4773,12 +4773,19 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action.is-going .action-icon,
 body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available.is-going .profile-action-icon-frame {
-  color: var(--dancr-color-brand-primary) !important;
+  color: #c084fc !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action.is-going .action-icon > svg,
 body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available.is-going .profile-action-preview-icon {
-  filter: drop-shadow(0 0 7px var(--dancr-color-brand-primary-strong)) !important;
+  filter:
+    drop-shadow(0 0 4px rgba(192, 132, 252, .88))
+    drop-shadow(0 0 9px var(--dancr-color-brand-primary-strong)) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action.is-going .profile-action-main > span:last-child,
+body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available.is-going .profile-action-main > span:last-child {
+  color: #e9d5ff !important;
 }
 
 /* Optional dancer-profile engagement content uses natural document flow. The
