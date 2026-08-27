@@ -602,7 +602,8 @@ test("inactive profile Club Deals keep a neutral placeholder", () => {
   assert.match(dealMarkup, /if \(state\.key === "available"\)/);
   assert.match(dealMarkup, /profile-club-deal-tile is-inactive/);
   assert.match(dealMarkup, /aria-label="Inactive Club Deal"/);
-  assert.match(dealMarkup, /const inactiveActionLabel = state\.key === "available-when-working" \? "At check-in" : "Inactive";/);
+  assert.match(dealMarkup, /if \(state\.key === "upcoming-venue"\)[\s\S]*?profile-upcoming-venue-cta/);
+  assert.match(dealMarkup, /const inactiveActionLabel = "Inactive";/);
   assert.match(dealMarkup, /<span class="profile-club-deal-action-copy"><strong>\$\{escapeHtml\(inactiveActionLabel\)\}<\/strong><\/span>/);
   assert.doesNotMatch(dealMarkup, /Tap How to use for instructions|Tap to choose an offer and view instructions/);
   assert.match(liveApp, /#profileBackdrop #profileModal \.modal-body \{[\s\S]*?padding-bottom: 0 !important;/);

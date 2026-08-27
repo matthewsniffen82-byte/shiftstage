@@ -38507,7 +38507,7 @@
           inset: 0;
           content: "";
           pointer-events: none;
-          border: 2px solid rgba(34, 211, 238, .38);
+          border: 2px solid rgba(34, 211, 238, .55);
           border-radius: inherit;
           box-shadow: none;
         }
@@ -39455,6 +39455,50 @@
 
         #profileBackdrop .profile-club-deal-action-copy strong {
           font-size: 10px !important;
+        }
+
+        #profileBackdrop .profile-upcoming-venue-cta {
+          width: 100% !important;
+          min-width: 0 !important;
+          min-height: 60px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          gap: 8px !important;
+          margin: 0 !important;
+          padding: 8px 10px !important;
+          border: 0 !important;
+          border-radius: 10px !important;
+          color: var(--dancr-color-text-primary) !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font: inherit !important;
+          font-size: 12px !important;
+          font-weight: 850 !important;
+          line-height: 1.25 !important;
+          text-align: left !important;
+          cursor: pointer !important;
+        }
+
+        #profileBackdrop .profile-upcoming-venue-cta > span:first-child {
+          min-width: 0 !important;
+        }
+
+        #profileBackdrop .profile-upcoming-venue-cta-cue {
+          flex: 0 0 auto !important;
+          color: var(--dancr-color-info) !important;
+          font-size: 23px !important;
+          line-height: 1 !important;
+        }
+
+        #profileBackdrop .profile-upcoming-venue-cta:hover,
+        #profileBackdrop .profile-upcoming-venue-cta:focus-visible {
+          background: color-mix(in srgb, var(--dancr-color-info) 7%, transparent) !important;
+        }
+
+        #profileBackdrop .profile-upcoming-venue-cta:focus-visible {
+          outline: 2px solid var(--dancr-color-info) !important;
+          outline-offset: -2px !important;
         }
 
         #profileBackdrop .profile-club-deal-action-copy small {
@@ -48733,10 +48777,14 @@
         };
       }
       if (profile?.scheduled) {
+        const venueName = String(profile?.venue || "Club").trim() || "Club";
+        const possessiveVenueName = /s$/i.test(venueName) ? `${venueName}’` : `${venueName}’s`;
         return {
-          key: "available-when-working",
-          label: "Club deal available after check-in",
-          detail: `Deals activate after a verified check-in${profile?.venue ? ` at ${profile.venue}` : ""}.`
+          key: "upcoming-venue",
+          label: profile?.activeDeal?.id
+            ? `Going tonight? View ${possessiveVenueName} Club Deal`
+            : `View ${venueName}`,
+          detail: ""
         };
       }
       return {
@@ -48765,7 +48813,16 @@
           </div>
         `;
       }
-      const inactiveActionLabel = state.key === "available-when-working" ? "At check-in" : "Inactive";
+      if (state.key === "upcoming-venue") {
+        const safeVenueName = displayText(profile?.venue || "");
+        return `
+          <button class="profile-upcoming-venue-cta" type="button" data-open-venue="${safeVenueName}" aria-label="${escapeHtml(state.label)}">
+            <span>${escapeHtml(state.label)}</span>
+            <span class="profile-upcoming-venue-cta-cue" aria-hidden="true">›</span>
+          </button>
+        `;
+      }
+      const inactiveActionLabel = "Inactive";
       return `
         <div class="info-tile profile-qr-tile profile-club-deal-tile is-inactive" data-club-deal-state="${escapeHtml(state.key)}" aria-label="Inactive Club Deal">
           <div class="profile-club-deal-copy">
