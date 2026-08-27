@@ -4110,7 +4110,7 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     width: calc(100% - 12px) !important;
     margin-left: -8px !important;
     align-self: stretch !important;
-    transform: translateY(5px) !important;
+    transform: translateY(8px) !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
