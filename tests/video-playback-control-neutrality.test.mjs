@@ -38,5 +38,5 @@ test("profile video grids defer playback to native full-screen controls", () => 
   assert.match(tvRetryStateRule, /background-image: none !important;/);
   assert.doesNotMatch(tvRetryStateRule, /brand-primary|beam-violet|color-info/);
 
-  assert.match(liveApp, /dancr-aesthetic\.v1\.css\?v=169/);
+  assert.match(liveApp, /dancr-aesthetic\.v1\.css\?v=170/);
 });

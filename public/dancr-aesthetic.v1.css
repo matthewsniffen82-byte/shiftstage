@@ -10583,9 +10583,9 @@ html:is(
 }
 
 /* Center the first analytic in the visual gap between Follow and Notify, then
- * use that same axis for the stage-name group. The name row is slightly wider
- * than the metric column so common stage names remain complete while longer
- * names still truncate cleanly before reaching the close control. */
+ * anchor the content-sized stage-name group to that same axis. Keeping the
+ * heading's limit independent of the flex row prevents percentage sizing from
+ * collapsing a saved stage name to its first character on narrow screens. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
     overflow: visible !important;
@@ -10596,8 +10596,12 @@ html:is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
-    width: calc(((100% - 22px) / 3) + 28px) !important;
-    margin-left: -18px !important;
+    position: relative !important;
+    left: calc(-4px + ((100% - 22px) / 6)) !important;
+    width: max-content !important;
+    max-width: 112px !important;
+    margin-left: 0 !important;
+    transform: translateX(-50%) !important;
     display: flex !important;
     justify-content: center !important;
     gap: 5px !important;
@@ -10605,7 +10609,7 @@ html:is(
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row h2 {
     width: auto !important;
-    max-width: calc(100% - 24px) !important;
+    max-width: clamp(72px, 24vw, 88px) !important;
     flex: 0 1 auto !important;
     text-align: center !important;
   }

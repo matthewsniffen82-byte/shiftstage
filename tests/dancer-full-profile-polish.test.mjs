@@ -325,11 +325,15 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Center the first analytic in the visual gap between Follow and Notify[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?width: calc\(\(\(100% - 22px\) \/ 3\) \+ 28px\) !important;[\s\S]*?margin-left: -18px !important;[\s\S]*?display: flex !important;[\s\S]*?justify-content: center !important;/,
+    /Center the first analytic in the visual gap between Follow and Notify[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: relative !important;[\s\S]*?left: calc\(-4px \+ \(\(100% - 22px\) \/ 6\)\) !important;[\s\S]*?width: max-content !important;[\s\S]*?max-width: 112px !important;[\s\S]*?margin-left: 0 !important;[\s\S]*?transform: translateX\(-50%\) !important;[\s\S]*?display: flex !important;[\s\S]*?justify-content: center !important;/,
   );
   assert.match(
     aesthetic,
-    /#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: auto !important;[\s\S]*?max-width: calc\(100% - 24px\) !important;[\s\S]*?flex: 0 1 auto !important;[\s\S]*?text-align: center !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: auto !important;[\s\S]*?max-width: clamp\(72px, 24vw, 88px\) !important;[\s\S]*?flex: 0 1 auto !important;[\s\S]*?text-align: center !important;/,
+  );
+  assert.doesNotMatch(
+    aesthetic,
+    /#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?max-width: calc\(100% - 24px\) !important;/,
   );
   assert.match(
     aesthetic,
