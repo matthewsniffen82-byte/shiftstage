@@ -10,11 +10,10 @@ import {
   persistAdminSession,
   persistRefreshedAdminSession,
   readAdminAccessToken,
-  readAdminJson,
   requestAdminJson,
 } from "../app/admin/admin-session.ts";
 
-const [adminSource, adminSession, nfcPanel, dmcaPanel, pilotPanel, tvPanel, dealMigration] = await Promise.all([
+const [adminSource, adminSession, nfcPanel, dmcaPanel, pilotPanel, tvPanel, dealMigration, monitoringRoute, operationsRoute, subscriptionsRoute] = await Promise.all([
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/admin-session.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminNfcInventoryPanel.tsx", import.meta.url), "utf8"),
@@ -25,6 +24,9 @@ const [adminSource, adminSession, nfcPanel, dmcaPanel, pilotPanel, tvPanel, deal
     new URL("../supabase/migrations/202606280002_club_deal_qr_attribution.sql", import.meta.url),
     "utf8",
   ),
+  readFile(new URL("../app/api/admin/monitoring/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/operations/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/subscriptions/route.ts", import.meta.url), "utf8"),
 ]);
 
 test("admin authentication is separate from optional dashboard section failures", () => {
@@ -39,7 +41,7 @@ test("admin authentication is separate from optional dashboard section failures"
 });
 
 test("stored sessions must belong to an admin before admin APIs receive their token", () => {
-  assert.match(adminSource, /readAdminAccessToken as readToken/);
+  assert.match(adminSource, /requestAdminJson/);
   assert.match(adminSession, /session\?\.account\?\.role !== "admin"/);
   assert.match(adminSession, /clearBrowserAuthSession\(\)/);
 });
@@ -51,10 +53,19 @@ test("admin session persistence and authenticated JSON errors have one typed bou
   assert.match(adminSession, /persistRefreshedBrowserAuthSession\(session\)/);
   assert.doesNotMatch(adminSession, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
   assert.match(adminSession, /export function persistAdminSession/);
-  assert.match(adminSession, /export async function readAdminJson/);
+  assert.match(adminSession, /export async function requestAdminJson/);
   assert.match(adminSession, /throw new AdminDataRequestError/);
   assert.match(adminSession, /error\.status === 401 \|\| error\.status === 403/);
-  assert.doesNotMatch(adminSource, /function readToken\(|async function readJson\(|class AdminDataRequestError/);
+  assert.doesNotMatch(adminSource, /readAdminAccessToken as readToken|readAdminJson as readJson|function readToken\(|async function readJson\(|class AdminDataRequestError/);
+});
+
+test("every top-level admin workspace load preserves refreshed sessions", () => {
+  assert.equal((adminSource.match(/sections\.map\(\(section\) => requestAdminJson\(section\.path/g) || []).length, 2);
+  assert.doesNotMatch(adminSource, /sections\.map\(\(section\) => readJson/);
+  for (const route of [monitoringRoute, operationsRoute, subscriptionsRoute]) {
+    assert.match(route, /const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/);
+    assert.match(route, /session: session \|\| null/);
+  }
 });
 
 test("the admin session boundary stores only the canonical session and rejects non-admin roles", () => {
@@ -109,6 +120,19 @@ test("the admin session boundary stores only the canonical session and rejects n
 
 test("the admin request boundary classifies authorization failures by HTTP status", async () => {
   const previousFetch = globalThis.fetch;
+  const previousWindow = globalThis.window;
+  const stored = new Map();
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => stored.get(key) ?? null,
+      setItem: (key, value) => stored.set(key, value),
+      removeItem: (key) => stored.delete(key),
+    },
+  };
+  persistAdminSession(
+    { accessToken: "expired-admin-access", refreshToken: "admin-refresh", expiresAt: 12345 },
+    { role: "admin" },
+  );
   globalThis.fetch = async () => new Response(JSON.stringify({ ok: false, error: "Admin sign in required." }), {
     status: 403,
     headers: { "content-type": "application/json" },
@@ -116,13 +140,14 @@ test("the admin request boundary classifies authorization failures by HTTP statu
 
   try {
     await assert.rejects(
-      () => readAdminJson("/api/admin/monitoring", { authorization: "Bearer expired" }),
+      () => requestAdminJson("/api/admin/monitoring"),
       (error) => error instanceof AdminDataRequestError
         && error.message === "Admin sign in required."
         && isAdminAuthenticationError(error),
     );
   } finally {
     globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
   }
 });
 

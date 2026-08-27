@@ -9,13 +9,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const status = new URL(request.url).searchParams.get("status");
     const subscriptions = await getAdminSubscriptions(createAdminSupabaseClient(), status);
 
-    return NextResponse.json({ ok: true, subscriptions });
+    return NextResponse.json({ ok: true, subscriptions, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load admin subscriptions.");
   }

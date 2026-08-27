@@ -9,12 +9,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const monitoring = await getAdminMonitoringStatus(createAdminSupabaseClient());
 
-    return NextResponse.json({ ok: true, monitoring });
+    return NextResponse.json({ ok: true, monitoring, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load admin monitoring.");
   }

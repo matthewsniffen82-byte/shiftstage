@@ -19,8 +19,6 @@ import {
   clearAdminSession,
   isAdminAuthenticationError,
   persistAdminSession,
-  readAdminAccessToken as readToken,
-  readAdminJson as readJson,
   requestAdminJson,
 } from "./admin-session";
 
@@ -295,20 +293,17 @@ export default function AdminClient() {
 
   async function loadWorkspaceData(nextWorkspace: AdminWorkspace) {
     if (nextWorkspace === "home" || loadedWorkspaces[nextWorkspace] || pendingWorkspaceLoadsRef.current.has(nextWorkspace)) return;
-    const token = readToken();
-    if (!token) {
-      clearAdminSession();
-      setState({ authRequired: true, error: "Admin sign in required." });
-      return;
-    }
 
     const sections = adminSectionsForWorkspace(nextWorkspace);
     pendingWorkspaceLoadsRef.current.add(nextWorkspace);
     setLoadingWorkspace(nextWorkspace);
 
     try {
-      const headers = { authorization: `Bearer ${token}` };
-      const results = await Promise.allSettled(sections.map((section) => readJson(section.path, headers)));
+      const results = await Promise.allSettled(
+        sections.map((section) => requestAdminJson(section.path, {
+          fallbackMessage: `${section.label} could not be loaded.`,
+        })),
+      );
       const authenticationFailure = results.find(
         (result) => result.status === "rejected" && isAdminAuthenticationError(result.reason),
       );
@@ -364,18 +359,13 @@ export default function AdminClient() {
     setLoadedWorkspaces({});
     setLoadingWorkspace(null);
     pendingWorkspaceLoadsRef.current.clear();
-    const token = readToken();
-    if (!token) {
-      setState({ authRequired: true, error: "Admin sign in required." });
-      setIsLoading(false);
-      return;
-    }
 
     try {
-      const headers = { authorization: `Bearer ${token}` };
       const sections = adminSectionsForWorkspace("home");
       const results = await Promise.allSettled(
-        sections.map((section) => readJson(section.path, headers)),
+        sections.map((section) => requestAdminJson(section.path, {
+          fallbackMessage: `${section.label} could not be loaded.`,
+        })),
       );
       const authenticationFailure = results.find(
         (result) => result.status === "rejected" && isAdminAuthenticationError(result.reason),

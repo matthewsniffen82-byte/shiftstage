@@ -98,15 +98,6 @@ export async function requestAdminJson(
   return data;
 }
 
-export async function readAdminJson(path: string, headers: Record<string, string>) {
-  const response = await fetch(path, { headers });
-  const data = await response.json().catch(() => null);
-  if (!response.ok || !data?.ok) {
-    throw new AdminDataRequestError(data?.error || "Unable to load admin data.", response.status);
-  }
-  return data;
-}
-
 export function isAdminAuthenticationError(error: unknown) {
   return error instanceof AdminDataRequestError && (error.status === 401 || error.status === 403);
 }
