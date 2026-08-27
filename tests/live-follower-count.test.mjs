@@ -68,7 +68,10 @@ test("the signed-in live profile updates its visible follow metrics immediately 
   assert.match(confirmedState, /followerCount: confirmedFollowerCount\(/);
   assert.match(confirmedState, /notificationCount: confirmedNotificationCount\(/);
   assert.match(mobileSource, /followerCountEl\.textContent = followerCount\.toLocaleString\(\)/);
-  assert.match(mobileSource, /followerLabelEl\.textContent = followerCount === 1 \? "Follower" : "Followers"/);
+  assert.match(
+    mobileSource,
+    /const followerLabel = followerCount === 1 \? "Follower" : "Followers";[\s\S]*?followerLabelEl\.textContent = followerLabel/,
+  );
   assert.doesNotMatch(mobileSource, /id="modalNotificationCount"/);
   assert.doesNotMatch(
     mobileSource.match(/function followerNumber[\s\S]*?\r?\n    }/)?.[0] || "",

@@ -232,7 +232,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   assert.match(liveApp, /<dt>Views today<\/dt>/);
   assert.match(
     liveApp,
-    /followerLabelEl\.textContent = followerCount === 1 \? "Follower" : "Followers"/,
+    /const followerLabel = followerCount === 1 \? "Follower" : "Followers";[\s\S]*?followerLabelEl\.textContent = followerLabel/,
   );
   const publicSocialMarkup = liveApp.match(
     /function socialLinksMarkup\(profile, options = \{\}\) \{[\s\S]*?function approvedDancerShiftVenues/,
@@ -329,19 +329,27 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Keep the stage name centered directly above Followers while anchoring the[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?inset: 0 auto auto 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 0 0 -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 0 !important;[\s\S]*?justify-items: center !important;/,
+    /Align the stage-name start with the rendered Follower\/Followers word below[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?inset: 0 auto auto 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: relative !important;[\s\S]*?inset: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 0 0 -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\) !important;[\s\S]*?gap: 0 !important;/,
   );
   assert.match(
     aesthetic,
-    /Keep the stage name centered directly above Followers while anchoring the[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-anchor \{[\s\S]*?position: relative !important;[\s\S]*?display: block !important;[\s\S]*?width: fit-content !important;[\s\S]*?max-width: calc\(100% - 20px\) !important;[\s\S]*?justify-self: center !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: auto !important;[\s\S]*?max-width: 100% !important;[\s\S]*?text-align: center !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 50% auto auto calc\(100% \+ 5px\) !important;[\s\S]*?transform: translateY\(-50%\) !important;/,
+    /Align the stage-name start with the rendered Follower\/Followers word below[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: attr\(data-follower-label\) !important;[\s\S]*?display: block !important;[\s\S]*?grid-column: 2 !important;[\s\S]*?visibility: hidden !important;[\s\S]*?font-size: 9px !important;[\s\S]*?font-weight: 800 !important;[\s\S]*?white-space: nowrap !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-anchor \{[\s\S]*?position: absolute !important;[\s\S]*?grid-column: 2 !important;[\s\S]*?width: fit-content !important;[\s\S]*?max-width: 66px !important;[\s\S]*?align-self: center !important;[\s\S]*?justify-self: start !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?max-width: 100% !important;[\s\S]*?text-align: left !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 50% auto auto calc\(100% \+ 5px\) !important;[\s\S]*?transform: translateY\(-50%\) !important;/,
   );
   assert.match(
     liveApp,
-    /class="profile-modal-name-row">\s*<div class="profile-modal-name-anchor">\s*<h2 id="modalName">Profile<\/h2>\s*<span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓<\/span>\s*<\/div>/,
+    /class="profile-modal-name-row" data-follower-label="Followers">\s*<div class="profile-modal-name-anchor">\s*<h2 id="modalName">Profile<\/h2>\s*<span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓<\/span>\s*<\/div>/,
+  );
+  assert.match(
+    liveApp,
+    /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\);[\s\S]*?modalName\.closest\("\.profile-modal-name-row"\)\?\.setAttribute\([\s\S]*?"data-follower-label",[\s\S]*?modalProfileMetrics\.querySelector\("#modalFollowerLabel"\)\?\.textContent\?\.trim\(\) \|\| "Followers"/,
+  );
+  assert.match(
+    liveApp,
+    /const followerLabel = followerCount === 1 \? "Follower" : "Followers";[\s\S]*?followerLabelEl\.textContent = followerLabel;[\s\S]*?modalName\.closest\("\.profile-modal-name-row"\)\?\.setAttribute\("data-follower-label", followerLabel\);/,
   );
   assert.doesNotMatch(
     aesthetic,
-    /Keep the stage name centered directly above Followers while anchoring the[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{\s*position: absolute !important;/,
+    /Align the stage-name start with the rendered Follower\/Followers word below[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{\s*position: absolute !important;/,
   );
   assert.match(
     aesthetic,

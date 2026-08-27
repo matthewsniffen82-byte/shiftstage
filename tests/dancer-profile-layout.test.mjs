@@ -156,7 +156,10 @@ test("profile actions keep profile controls separate from Tonight travel actions
     /copy its secure link/,
   );
   assert.match(liveApp, /followerCountEl\.textContent = followerCount\.toLocaleString\(\)/);
-  assert.match(liveApp, /followerLabelEl\.textContent = followerCount === 1 \? "Follower" : "Followers"/);
+  assert.match(
+    liveApp,
+    /const followerLabel = followerCount === 1 \? "Follower" : "Followers";[\s\S]*?followerLabelEl\.textContent = followerLabel/,
+  );
   assert.match(liveApp, /notificationCount: confirmedNotificationCount\(/);
   assert.doesNotMatch(liveApp, /id="modalNotificationCount"/);
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);

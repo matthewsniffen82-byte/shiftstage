@@ -10724,8 +10724,9 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-anch
   gap: 5px;
 }
 
-/* Keep the stage name centered directly above Followers while anchoring the
- * verified badge to the name itself with one consistent gap. */
+/* Align the stage-name start with the rendered Follower/Followers word below.
+ * The hidden guide uses identical label typography, while the verified badge
+ * remains anchored to the name itself with one consistent gap. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
     position: relative !important;
@@ -10742,7 +10743,7 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-anch
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
-    position: static !important;
+    position: relative !important;
     inset: auto !important;
     width: calc((100% - 22px) / 3) !important;
     max-width: none !important;
@@ -10751,30 +10752,46 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-anch
     padding: 0 !important;
     transform: none !important;
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
     gap: 0 !important;
     align-items: center !important;
-    justify-items: center !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row::before {
-    content: none !important;
-    display: none !important;
+    content: attr(data-follower-label) !important;
+    display: block !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    visibility: hidden !important;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-size: 9px !important;
+    font-style: normal !important;
+    font-weight: 800 !important;
+    font-stretch: 100% !important;
+    line-height: 1.1 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-anchor {
-    position: relative !important;
+    position: absolute !important;
+    inset: auto !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
     display: block !important;
     width: fit-content !important;
-    max-width: calc(100% - 20px) !important;
+    max-width: 66px !important;
     min-width: 0 !important;
-    justify-self: center !important;
+    align-self: center !important;
+    justify-self: start !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row h2 {
     width: auto !important;
     max-width: 100% !important;
-    text-align: center !important;
+    text-align: left !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row .profile-modal-verified {
