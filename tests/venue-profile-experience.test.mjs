@@ -175,7 +175,7 @@ test("venue profiles separate compact deal discovery from NFC redemption", () =>
   assert.doesNotMatch(venueOffer, /NFC|cashier|clubDealQrSymbolMarkup|venue-detail-club-deal-qr-state/);
   assert.match(liveApp, /const dealPassTrigger = event\.target\.closest\("\[data-club-deal-cta\], \[data-deal-pass\]"\);[\s\S]*?await handleDealPassClick\(event\)/);
   assert.match(liveApp, /async function handleDealPassClick\(event\)[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\]"\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?openDealPassOverlay\(pass, revenueTrigger\)/);
-  assert.match(aesthetic, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 11px 12px !important;[\s\S]*?\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;/);
+  assert.match(aesthetic, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 8px 10px !important;[\s\S]*?\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;/);
   assert.match(liveApp, /function openDealPassOverlay\(pass, triggerButton = null\)[\s\S]*?const overlay = dealPassOverlay\(\)[\s\S]*?overlay\.hidden = false[\s\S]*?overlay\.classList\.add\("show"\)/);
 });
 
@@ -183,24 +183,27 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   const refinement = aesthetic.match(/Production venue-detail refinement keeps one neutral frame[\s\S]*$/)?.[0] || "";
 
   assert.ok(refinement, "the final production venue-detail refinement must exist");
-  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(108px, 25vw, 132px\) !important;[\s\S]*?height: clamp\(108px, 25vw, 132px\) !important;/);
-  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?max-height: 116px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
+  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(96px, 22vw, 116px\) !important;[\s\S]*?height: clamp\(96px, 22vw, 116px\) !important;/);
+  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?height: calc\(100% - 8px\) !important;[\s\S]*?max-height: 108px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(refinement, /\.venue-detail-logo \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?max-height: 100% !important;[\s\S]*?object-fit: contain !important;[\s\S]*?object-position: center center !important;/);
-  assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 7px !important;[\s\S]*?padding: 10px 12px 12px !important;/);
+  assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 6px !important;[\s\S]*?padding: 8px 12px 10px !important;/);
   assert.match(refinement, /#venueDetailName \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
   assert.match(refinement, /\.venue-identity-meta \{[\s\S]*?display: flex;[\s\S]*?flex-wrap: wrap;/);
   assert.match(refinement, /\.venue-identity-location \{[\s\S]*?display: inline-flex;[\s\S]*?gap: 5px;/);
   assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 1px solid transparent;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
   assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 58px !important;[\s\S]*?grid-template-rows: 11px 18px 10px;/);
   assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
+  assert.match(refinement, /\.venue-quick-stat\.is-working:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-success\) 5%/);
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
-  assert.match(refinement, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 11px 12px !important;[\s\S]*?\.venue-deal-preview \.venue-offer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;/);
+  assert.match(refinement, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 8px 10px !important;[\s\S]*?\.venue-deal-preview \.venue-offer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;[\s\S]*?\.venue-deal-preview-copy \{[\s\S]*?gap: 2px;/);
   assert.match(refinement, /\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;[\s\S]*?background: var\(--dancr-color-success\);/);
   assert.match(refinement, /\.venue-location-section \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 7px !important;/);
-  assert.match(refinement, /\.venue-address-line \{[\s\S]*?min-height: 38px;[\s\S]*?overflow-wrap: anywhere;/);
+  assert.match(refinement, /\.venue-address-line \{[\s\S]*?min-height: 34px;[\s\S]*?padding: 7px 9px;[\s\S]*?overflow-wrap: anywhere;/);
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?min-height: 46px !important;/);
   assert.match(refinement, /\.venue-detail-uber \{[\s\S]*?min-height: 46px !important;/);
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?min-height: 44px !important;/);
+  assert.match(refinement, /\.venue-detail-close \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;[\s\S]*?display: grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
+  assert.match(refinement, /\.venue-hero \+ :is\(\.venue-activity-section, \.venue-activity-empty\) \{[\s\S]*?margin-top: 4px;/);
   assert.match(refinement, /\.venue-contact-details summary \{[\s\S]*?min-height: 44px;[\s\S]*?cursor: pointer;/);
   assert.match(refinement, /padding-bottom: max\(112px, calc\(94px \+ env\(safe-area-inset-bottom, 0px\)\)\) !important;/);
   assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
