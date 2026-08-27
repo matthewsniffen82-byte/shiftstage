@@ -25,17 +25,17 @@ test("stage name and city use the compact editor without changing persistence or
 
 test("avatar editor has one compact requirement and keeps the real upload workflow", () => {
   assert.match(dashboard, /avatar: "Add profile photo"/);
-  assert.match(avatarEditor, /Required · Choose a clear face photo\./);
+  assert.match(avatarEditor, /Required · Use a clear solo face photo of yourself\./);
   assert.match(avatarEditor, />Gallery<\/strong>/);
   assert.match(avatarEditor, />Camera<\/strong>/);
-  assert.match(avatarEditor, /We&apos;ll center and check it automatically\./);
+  assert.match(avatarEditor, /AI checks that only you appear, then centers the photo automatically\./);
   assert.doesNotMatch(avatarEditor, /Profile identity|<h2>Avatar<\/h2>/i);
   assert.match(avatarEditor, /void uploadAvatar\(nextFile\)/);
   assert.match(avatarEditor, /requestDancerAvatarJson/);
 });
 
 test("photo editor shows actual media only and does not advertise capacity", () => {
-  assert.match(photoEditor, /Add at least 1 picture\. You can add more later\./);
+  assert.match(photoEditor, /Add at least 1 solo picture of yourself\. You can add more later\./);
   assert.match(photoEditor, /Your photos/);
   assert.match(photoEditor, /photos\.map\(\(photo, photoIndex\)/);
   assert.doesNotMatch(photoEditor, /<h2>Photos<\/h2>|No profile photos uploaded yet|0\/50|\/\{MAX_DANCER_PROFILE_PHOTOS\}|up to 50|maximum 50/i);
@@ -47,7 +47,7 @@ test("photo editor shows actual media only and does not advertise capacity", () 
 test("video editor keeps both permission gates and hides the technical library capacity", () => {
   assert.match(dancerStudio, /Optional · Add videos now or later\./);
   assert.match(dancerStudio, /Confirm permissions/);
-  assert.match(dancerStudio, /I have permission from every identifiable person shown\./);
+  assert.match(dancerStudio, /I am the only person shown, and this video is of me\./);
   assert.match(dancerStudio, /I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains\./);
   assert.match(dancerStudio, /checked=\{consentConfirmed\}/);
   assert.match(dancerStudio, /checked=\{rightsConfirmed\}/);

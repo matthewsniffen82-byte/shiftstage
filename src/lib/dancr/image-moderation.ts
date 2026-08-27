@@ -10,6 +10,14 @@ import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-validation";
 import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
 import {
+  analyzeDancerMediaIdentity,
+  combineDancerMediaModeration,
+  dancerMediaIdentityCategoryFlags,
+  DancerIdentityReferenceRequiredError,
+  evaluateDancerMediaIdentity,
+  loadApprovedDancerIdentityReference,
+} from "./media-identity";
+import {
   DANCR_IMAGE_MODERATION_MODEL,
   evaluateDancrImageModeration,
   type DancrImageModerationDecision,
@@ -94,6 +102,13 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   if (existing?.status === "error") {
     idempotencyKey = safeIdempotencyKey(`${input.idempotencyKey || image.sha256}:retry:${Date.now()}`);
   }
+  const identityReference = profile.avatar_storage_path
+    ? await loadApprovedDancerIdentityReference(admin, profile.avatar_storage_path)
+    : null;
+  if (!isAvatar && !identityReference) {
+    throw new DancerIdentityReferenceRequiredError();
+  }
+  const identityReferenceRequired = !isAvatar || Boolean(identityReference);
   const publicationImage = isAvatar
     ? await prepareFaceCenteredAvatar(image)
     : image;
@@ -134,14 +149,33 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   let errorCode: string | null = null;
 
   try {
-    const providerResult = await moderateImageWithOpenAI(admin, tempPath);
-    categoryFlags = providerResult.categories || {};
-    evaluation = evaluateDancrImageModeration(providerResult);
+    const [providerResult, identityAnalysis] = await Promise.all([
+      moderateImageWithOpenAI(admin, tempPath),
+      analyzeDancerMediaIdentity({
+        targetImages: [image.buffer],
+        mediaType: "photo",
+        referenceImage: identityReference,
+      }),
+    ]);
+    categoryFlags = {
+      ...(providerResult.categories || {}),
+      ...dancerMediaIdentityCategoryFlags(identityAnalysis),
+    };
+    evaluation = combineDancerMediaModeration(
+      evaluateDancrImageModeration(providerResult),
+      evaluateDancerMediaIdentity(identityAnalysis, {
+        referenceRequired: identityReferenceRequired,
+      }),
+    );
     logModeration("decision_evaluated", {
       recordId: record.id,
       flagged: Boolean(providerResult.flagged),
       categories: providerResult.categories || {},
       categoryScores: providerResult.category_scores || providerResult.categoryScores || {},
+      personCount: identityAnalysis.personCount,
+      singlePersonOnly: identityAnalysis.singlePersonOnly,
+      referenceMatch: identityAnalysis.referenceMatch,
+      identityConfidence: identityAnalysis.confidence,
       decision: evaluation.decision === "review" ? "pending_review" : evaluation.decision,
     });
   } catch (error) {
@@ -257,7 +291,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     completedAt: new Date().toISOString(),
   });
   await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-  await createAutoRejectedPhotoNotification(admin, input.userId, record.id);
+  await createAutoRejectedPhotoNotification(admin, input.userId, record.id, evaluation.reasonCodes);
   logModeration("rejected", { recordId: record.id, reasonCodes: evaluation.reasonCodes });
   logModeration("database_status_written", { recordId: record.id, databaseStatus: "rejected" });
   return {
@@ -265,7 +299,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     moderationRecordId: record.id,
     reasonCodes: evaluation.reasonCodes,
     providerFlagged: evaluation.providerFlagged,
-    message: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
+    message: photoRejectionMessage(evaluation.reasonCodes),
   };
 }
 
@@ -291,19 +325,41 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
   let errorCode: string | null = null;
 
   try {
-    const providerResult = await moderateImageWithOpenAI(admin, tempPath);
-    categoryFlags = providerResult.categories || {};
-    const evaluation = evaluateDancrImageModeration(providerResult);
+    const downloaded = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+    const downloadedImage = moderationImageFromPrivateObject(downloaded);
+    const identityReference = profile.avatar_storage_path
+      ? await loadApprovedDancerIdentityReference(admin, profile.avatar_storage_path)
+      : null;
+    const [providerResult, identityAnalysis] = await Promise.all([
+      moderateImageWithOpenAI(admin, tempPath),
+      analyzeDancerMediaIdentity({
+        targetImages: [downloadedImage.buffer],
+        mediaType: "photo",
+        referenceImage: identityReference,
+      }),
+    ]);
+    categoryFlags = {
+      ...(providerResult.categories || {}),
+      ...dancerMediaIdentityCategoryFlags(identityAnalysis),
+    };
+    const evaluation = combineDancerMediaModeration(
+      evaluateDancrImageModeration(providerResult),
+      evaluateDancerMediaIdentity(identityAnalysis, {
+        referenceRequired: !isAvatar || Boolean(identityReference),
+      }),
+    );
     logModeration("retry_decision_evaluated", {
       recordId: record.id,
       attemptCount,
       flagged: Boolean(providerResult.flagged),
+      personCount: identityAnalysis.personCount,
+      singlePersonOnly: identityAnalysis.singlePersonOnly,
+      referenceMatch: identityAnalysis.referenceMatch,
+      identityConfidence: identityAnalysis.confidence,
       decision: evaluation.decision === "review" ? "pending_review" : evaluation.decision,
     });
 
     if (evaluation.decision === "approved") {
-      const downloaded = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-      const downloadedImage = moderationImageFromPrivateObject(downloaded);
       return approveModeratedUpload(admin, {
         recordId: record.id,
         profileId: profile.id,
@@ -371,14 +427,14 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       completedAt: new Date().toISOString(),
     });
     await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-    await createAutoRejectedPhotoNotification(admin, record.user_id, record.id);
+    await createAutoRejectedPhotoNotification(admin, record.user_id, record.id, evaluation.reasonCodes);
     logModeration("retry_database_status_written", { recordId: record.id, databaseStatus: "rejected", attemptCount });
     return {
       decision: "rejected",
       moderationRecordId: record.id,
       reasonCodes: evaluation.reasonCodes,
       providerFlagged: evaluation.providerFlagged,
-      message: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
+      message: photoRejectionMessage(evaluation.reasonCodes),
     };
   } catch (error) {
     if (isAvatar && isAvatarFaceRequiredError(error)) {
@@ -394,7 +450,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
         completedAt: new Date().toISOString(),
       });
       await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-      await createAutoRejectedPhotoNotification(admin, record.user_id, record.id);
+      await createAutoRejectedPhotoNotification(admin, record.user_id, record.id, ["avatar_face_required"]);
       logModeration("avatar_face_rejected", { recordId: record.id, attemptCount });
       return {
         decision: "rejected",
@@ -440,7 +496,12 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
   }
 }
 
-async function createAutoRejectedPhotoNotification(client: DancrClient, userId: string, moderationRecordId: string) {
+async function createAutoRejectedPhotoNotification(
+  client: DancrClient,
+  userId: string,
+  moderationRecordId: string,
+  reasonCodes: string[],
+) {
   const now = new Date().toISOString();
   await (client as any)
     .from("notifications")
@@ -449,7 +510,7 @@ async function createAutoRejectedPhotoNotification(client: DancrClient, userId: 
       notification_type: "approval_status",
       channel: "in_app",
       title: "Photo not approved",
-      body: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
+      body: photoRejectionMessage(reasonCodes),
       payload: {
         status: "rejected",
         targetType: "photo",
@@ -884,10 +945,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 async function getOwnDancerProfile(client: DancrClient, userId: string) {
-  const { data, error } = await client.from("dancer_profiles").select("id").eq("user_id", userId).maybeSingle();
+  const { data, error } = await client
+    .from("dancer_profiles")
+    .select("id, avatar_storage_path")
+    .eq("user_id", userId)
+    .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("Dancer profile not found.");
-  return data as { id: string };
+  return data as { id: string; avatar_storage_path: string | null };
 }
 
 async function assertDancerPhotoLimit(client: DancrClient, dancerId: string, userId: string) {
@@ -1189,10 +1254,27 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
     reasonCodes: record.reason_codes || [],
     providerFlagged: Boolean(record.provider_flagged),
     message: record.decision === "rejected"
-      ? "This photo does not meet Dancr's photo guidelines. Please upload a different image."
+      ? photoRejectionMessage(record.reason_codes || [])
       : "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
     photo: record.decision === "rejected" ? undefined : pendingModerationPhoto(record.id, record.upload_context),
   };
+}
+
+function photoRejectionMessage(reasonCodes: string[]) {
+  const reasons = new Set((reasonCodes || []).map(String));
+  if (reasons.has("multiple_people_detected")) {
+    return "Only you can appear in a profile photo. Choose a photo with no other people visible.";
+  }
+  if (reasons.has("dancer_identity_mismatch")) {
+    return "The person in this photo must match your approved avatar. Choose a photo of yourself.";
+  }
+  if (reasons.has("dancer_not_visible")) {
+    return "A clear photo of you is required. Choose a photo where you are visible.";
+  }
+  if (reasons.has("dancer_identity_reference_required")) {
+    return "Upload an approved avatar before adding profile photos.";
+  }
+  return "This photo does not meet Dancr's photo guidelines. Please upload a different image.";
 }
 
 function pendingModerationPhoto(recordId: string, uploadContext: unknown): NonNullable<ModeratedPhotoResult["photo"]> {

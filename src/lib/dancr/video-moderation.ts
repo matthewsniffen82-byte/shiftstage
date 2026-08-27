@@ -16,6 +16,12 @@ import {
   getDistributedVideoFrameSampling,
   parseFfmpegDuration,
 } from "./video-frame-sampling";
+import {
+  analyzeDancerMediaIdentity,
+  DANCR_MEDIA_IDENTITY_MODEL,
+  evaluateDancerMediaIdentity,
+  loadApprovedDancerIdentityReference,
+} from "./media-identity";
 
 type AdminClient = SupabaseClient<any, any, any>;
 
@@ -37,6 +43,11 @@ export type MyDancrTvModerationResult = {
     textDecision: DancrImageModerationDecision;
     policyDecision: DancrImageModerationDecision;
     policyConfidence: number;
+    identityDecision: DancrImageModerationDecision;
+    identityConfidence: number;
+    identityReferenceMatch: "match" | "mismatch" | "uncertain" | "not_provided";
+    personCount: number;
+    singlePersonOnly: boolean;
     audioChecked: boolean;
     videoDurationSeconds: number;
     frameSampling: "distributed_across_video";
@@ -80,6 +91,7 @@ export async function moderateStoredMyDancrTvVideo(
     storagePath: string;
     storageMime: string;
     caption: string;
+    dancerAvatarStoragePath: string;
   },
 ): Promise<MyDancrTvModerationResult> {
   const apiKey = getServerEnv("OPENAI_API_KEY");
@@ -89,6 +101,10 @@ export async function moderateStoredMyDancrTvVideo(
   const videoPath = path.join(workspace, `source.${extension}`);
 
   try {
+    const identityReference = await loadApprovedDancerIdentityReference(
+      admin,
+      input.dancerAvatarStoragePath,
+    );
     const videoBuffer = await downloadVideo(admin, input.storagePath);
     await writeFile(videoPath, videoBuffer);
     const videoDurationSeconds = await probeVideoDurationSeconds(videoPath);
@@ -98,11 +114,20 @@ export async function moderateStoredMyDancrTvVideo(
     const frameResults = await moderateFrames(openai, frames);
     const textResult = await moderateText(openai, buildModerationText(input.caption, transcript));
     const policyDecision = await classifyVideoPolicy(openai, frames, input.caption, transcript);
+    const identityAnalysis = await analyzeDancerMediaIdentity({
+      targetImages: frames,
+      mediaType: "video",
+      referenceImage: identityReference,
+    });
+    const identityEvaluation = evaluateDancerMediaIdentity(identityAnalysis, {
+      referenceRequired: true,
+    });
     const frameEvaluations = frameResults.map((result) => evaluateDancrImageModeration(result));
     const textEvaluation = evaluateDancrImageModeration(textResult);
     const evaluations = [...frameEvaluations, textEvaluation];
     const providerDecision = strongestDecision(evaluations.map((evaluation) => evaluation.decision));
-    const decision = combineVideoDecisions(providerDecision, policyDecision);
+    const safetyDecision = combineVideoDecisions(providerDecision, policyDecision);
+    const decision = strongestDecision([safetyDecision, identityEvaluation.decision]);
     const reasonCodes = uniqueReasonCodes([
       ...evaluations.flatMap((evaluation, index) =>
         evaluation.reasonCodes.map((reason) =>
@@ -110,6 +135,7 @@ export async function moderateStoredMyDancrTvVideo(
         ),
       ),
       ...policyDecision.reasonCodes.map((reason) => `policy_${reason}`),
+      ...identityEvaluation.reasonCodes,
     ]);
 
     const result = {
@@ -118,12 +144,17 @@ export async function moderateStoredMyDancrTvVideo(
       categoryScores: maximumCategoryScores(evaluations.map((evaluation) => evaluation.categoryScores)),
       providerFlagged: evaluations.some((evaluation) => evaluation.providerFlagged),
       frameCount: frames.length,
-      moderationModel: `${DANCR_IMAGE_MODERATION_MODEL}+${VIDEO_POLICY_MODEL}`,
+      moderationModel: `${DANCR_IMAGE_MODERATION_MODEL}+${VIDEO_POLICY_MODEL}+${DANCR_MEDIA_IDENTITY_MODEL}`,
       details: {
         frameDecisions: frameEvaluations.map((evaluation) => evaluation.decision),
         textDecision: textEvaluation.decision,
         policyDecision: policyDecision.decision,
         policyConfidence: policyDecision.confidence,
+        identityDecision: identityEvaluation.decision,
+        identityConfidence: identityAnalysis.confidence,
+        identityReferenceMatch: identityAnalysis.referenceMatch,
+        personCount: identityAnalysis.personCount,
+        singlePersonOnly: identityAnalysis.singlePersonOnly,
         audioChecked: Boolean(audioPath),
         videoDurationSeconds: Number(videoDurationSeconds.toFixed(3)),
         frameSampling: "distributed_across_video" as const,
@@ -137,6 +168,11 @@ export async function moderateStoredMyDancrTvVideo(
       frameCount: result.frameCount,
       reasonCodes: result.reasonCodes,
       providerFlagged: result.providerFlagged,
+      identityDecision: result.details.identityDecision,
+      identityConfidence: result.details.identityConfidence,
+      identityReferenceMatch: result.details.identityReferenceMatch,
+      personCount: result.details.personCount,
+      singlePersonOnly: result.details.singlePersonOnly,
       audioChecked: result.details.audioChecked,
       videoDurationSeconds: result.details.videoDurationSeconds,
       frameSampling: result.details.frameSampling,

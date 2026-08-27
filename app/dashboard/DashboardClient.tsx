@@ -5442,7 +5442,7 @@ function DancerAvatarPanel({
   const moderationLabel = pendingAvatar ? "Checking" : avatarUrl ? "Approved" : "Required";
   return (
     <article className="info-panel dancer-avatar-panel">
-      <p className="dancer-profile-editor-intro">Required · Choose a clear face photo.</p>
+      <p className="dancer-profile-editor-intro">Required · Use a clear solo face photo of yourself.</p>
       <div className="dancer-avatar-editor" aria-label="Profile photo preview">
         <span className="dancer-avatar-preview">
           {visibleAvatar ? <img src={visibleAvatar} alt="Selected dancer avatar preview" /> : <b aria-hidden="true">+</b>}
@@ -5489,7 +5489,7 @@ function DancerAvatarPanel({
         {file && !isSaving ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry avatar upload</button> : null}
         {avatarUrl ? <button type="button" disabled={isSaving} onClick={() => void removeAvatar()}>Remove avatar</button> : null}
       </div>
-      <p className="dancer-avatar-guidance">We&apos;ll center and check it automatically.</p>
+      <p className="dancer-avatar-guidance">AI checks that only you appear, then centers the photo automatically.</p>
       {status || pendingAvatar ? <p role="status" aria-live="polite">{status || "We are checking this photo. Your current approved photo stays visible."}</p> : null}
     </article>
   );
@@ -7179,7 +7179,7 @@ function DancerPhotoPanel({
     <article aria-label="Profile photo manager" className="info-panel upload-panel">
       <div className="dancer-photo-upload-form">
         <div className="photo-upload-heading">
-          <span><strong>Add at least 1 picture. You can add more later.</strong></span>
+          <span><strong>Add at least 1 solo picture of yourself. You can add more later.</strong></span>
         </div>
         {hasMainPhoto ? (
           <label className="photo-primary-choice">
@@ -7210,7 +7210,7 @@ function DancerPhotoPanel({
             </span>
             <span className="photo-source-copy">
               <strong>Gallery</strong>
-              <small>Choose one or several photos</small>
+              <small>Choose solo photos of yourself</small>
             </span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
@@ -7233,7 +7233,7 @@ function DancerPhotoPanel({
             </span>
             <span className="photo-source-copy">
               <strong>Camera</strong>
-              <small>Take a new photo now</small>
+              <small>Take a solo photo now</small>
             </span>
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </label>

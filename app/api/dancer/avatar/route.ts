@@ -6,6 +6,7 @@ import {
 } from "@/src/lib/dancr/avatar-face";
 import { deleteOwnDancerAvatar } from "@/src/lib/dancr/dancer";
 import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
+import { isDancerIdentityReferenceRequiredError } from "@/src/lib/dancr/media-identity";
 import { PROFILE_AVATAR_CONTEXT } from "@/src/lib/dancr/photo-slot";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -43,6 +44,9 @@ export async function POST(request: Request) {
     }
     if (isAvatarFaceDetectionUnavailableError(error)) {
       return apiError(error, "Avatar face centering is temporarily unavailable.", 503);
+    }
+    if (isDancerIdentityReferenceRequiredError(error)) {
+      return apiError(error, "Your approved avatar could not be used for identity review. Try uploading it again.", 422);
     }
     if (message.startsWith("Image moderation ")) {
       return apiError(error, "Unable to upload dancer avatar.", 503);

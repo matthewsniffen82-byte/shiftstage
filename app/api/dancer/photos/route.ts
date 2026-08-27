@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
+import { isDancerIdentityReferenceRequiredError } from "@/src/lib/dancr/media-identity";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -34,6 +35,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: result.decision !== "rejected", ...result, session }, { status });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
+    if (isDancerIdentityReferenceRequiredError(error)) {
+      return apiError(error, "Upload an approved avatar before adding profile photos.", 422);
+    }
     if (message.startsWith("Image moderation ")) {
       return apiError(error, "Unable to upload dancer photo.", 503);
     }

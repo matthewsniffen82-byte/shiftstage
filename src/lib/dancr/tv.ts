@@ -17,6 +17,10 @@ import {
   isVideoDemoAutoApproveMode,
 } from "./video-moderation-mode";
 import {
+  DancerIdentityReferenceRequiredError,
+  isDancerIdentityReferenceRequiredError,
+} from "./media-identity";
+import {
   removeArchivedOriginalMedia,
   watermarkStoredVideo,
 } from "./media-watermark";
@@ -60,6 +64,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 ]);
 
 const IDENTITY_PROFILE_FIELDS = ", venue_approved_at";
+const MODERATION_IDENTITY_PROFILE_FIELDS = `${IDENTITY_PROFILE_FIELDS}, avatar_storage_path`;
 const PUBLIC_TV_SELECT =
   `id, storage_path, duration_seconds, width, height, published_at, expires_at, distribution_scope, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
 const UUID_PATTERN =
@@ -699,12 +704,15 @@ export async function createMyDancrTvUpload(
 ) {
   const { data: dancer, error }: any = await admin
     .from("dancer_profiles")
-    .select(`id, user_id, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public`)
+    .select(`id, user_id, stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public`)
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
   if (!isDancerMediaOnboardingEligible(dancer)) {
     throw new Error("Save your stage name and city before uploading profile videos.");
+  }
+  if (!String(dancer.avatar_storage_path || "").trim()) {
+    throw new DancerIdentityReferenceRequiredError();
   }
 
   if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new Error("Upload an MP4, WebM, or MOV video.");
@@ -931,7 +939,7 @@ export async function submitMyDancrTvUpload(
     })
     .eq("id", video.id)
     .eq("status", "uploading")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
   if (updateError) throw updateError;
   console.info(JSON.stringify({
@@ -953,7 +961,7 @@ export async function submitMyDancrTvUpload(
 export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, moderation_attempt_count, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, moderation_attempt_count, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "moderating")
     .maybeSingle();
@@ -969,7 +977,7 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
     })
     .eq("id", video.id)
     .eq("status", "moderating")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) return null;
@@ -1027,7 +1035,7 @@ export async function retrySubmittedMyDancrTvAutomatedModeration(
     })
     .eq("id", video.id)
     .eq("status", "submitted")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) throw new Error("This video is no longer waiting for review.");
@@ -1138,10 +1146,14 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       storagePath: video.storage_path,
       storageMime: video.storage_mime,
       caption: video.caption,
+      dancerAvatarStoragePath: String(
+        one(video.dancer_profiles)?.avatar_storage_path || "",
+      ),
     });
   } catch (error) {
     const completedAt = new Date().toISOString();
     const errorCode = videoModerationErrorCode(error);
+    const identityReferenceMissing = isDancerIdentityReferenceRequiredError(error);
     console.error(JSON.stringify({
       event: "mydancr_tv.ai_moderation_failed",
       videoId: video.id,
@@ -1151,13 +1163,18 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     const { data, error: updateError } = await admin
       .from("mydancr_tv_videos")
       .update({
-        status: "submitted",
-        moderation_decision: "review",
+        status: identityReferenceMissing ? "rejected" : "submitted",
+        moderation_decision: identityReferenceMissing ? "rejected" : "review",
         moderation_reason_codes: [errorCode],
         moderation_provider_flagged: false,
         moderation_details: { errorCode },
         moderation_completed_at: completedAt,
-        review_notes: "Automated safety review was unavailable. Human review is required.",
+        review_notes: identityReferenceMissing
+          ? "Upload an approved avatar before adding profile videos."
+          : "Automated safety review was unavailable. Human review is required.",
+        ...(identityReferenceMissing
+          ? { reviewed_at: completedAt, published_at: null, expires_at: null }
+          : {}),
       })
       .eq("id", video.id)
       .eq("status", "moderating")
@@ -1211,7 +1228,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       : decision === "rejected"
         ? {
             status: "rejected",
-            review_notes: "This video did not meet MyDancr TV safety guidelines.",
+            review_notes: videoModerationReviewNotes(decision, reasonCodes),
             reviewed_by: null,
             reviewed_at: completedAt,
             published_at: null,
@@ -1220,7 +1237,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
           }
         : {
             status: "submitted",
-            review_notes: "Automated safety review requested human review.",
+            review_notes: videoModerationReviewNotes(decision, reasonCodes),
             reviewed_by: null,
             reviewed_at: null,
             published_at: null,
@@ -1251,7 +1268,36 @@ function myDancrTvExpiry() {
   return new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
 }
 
+function videoModerationReviewNotes(
+  decision: "review" | "rejected",
+  reasonCodes: string[],
+) {
+  const reasons = new Set(reasonCodes.map(String));
+  if (reasons.has("multiple_people_detected")) {
+    return "Only you can appear in a profile video. Choose a video with no other people visible.";
+  }
+  if (reasons.has("dancer_identity_mismatch")) {
+    return "The person in this video must match your approved avatar. Choose a video of yourself.";
+  }
+  if (reasons.has("dancer_not_visible")) {
+    return "A clear video of you is required. Choose a video where you are visible.";
+  }
+  if (
+    reasons.has("dancer_identity_uncertain") ||
+    reasons.has("dancer_visibility_uncertain") ||
+    reasons.has("person_count_uncertain")
+  ) {
+    return "AI could not confirm that you are the only person shown. Human review is required.";
+  }
+  return decision === "rejected"
+    ? "This video did not meet MyDancr TV safety guidelines."
+    : "Automated safety review requested human review.";
+}
+
 function videoModerationErrorCode(error: unknown) {
+  if (isDancerIdentityReferenceRequiredError(error)) {
+    return "dancer_identity_reference_required";
+  }
   const message = error instanceof Error ? error.message.toLowerCase() : "";
   if (message.includes("openai_api_key")) return "video_moderation_not_configured";
   if (message.includes("timed out")) return "video_moderation_timeout";

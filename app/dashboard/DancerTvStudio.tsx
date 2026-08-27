@@ -359,7 +359,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           </div>
           <label className="tv-check">
             <input ref={consentInputRef} checked={consentConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
-            <span>I have permission from every identifiable person shown.</span>
+            <span>I am the only person shown, and this video is of me.</span>
           </label>
           <label className="tv-check">
             <input ref={rightsInputRef} checked={rightsConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setRightsConfirmed(event.target.checked)} />

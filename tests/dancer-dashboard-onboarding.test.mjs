@@ -349,7 +349,7 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /aria-label="Choose profile photos from your library"/);
   assert.match(dashboard, /className="photo-source-input"/);
   assert.match(dashboard, />Gallery<\/strong>/);
-  assert.match(dashboard, /Take a new photo now/);
+  assert.match(dashboard, /Take a solo photo now/);
   assert.doesNotMatch(dashboard, /Choose from your phone or take a new photo\. Upload starts automatically\./);
   assert.match(dashboard, /\.photo-preview:not\(\.empty\) \{ filter: brightness\(1\.14\) contrast\(1\.03\); \}/);
   assert.match(dashboard, /\.photo-source-input \{ position: absolute; inset: 0;[\s\S]*?opacity: 0;/);
