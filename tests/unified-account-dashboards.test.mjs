@@ -1203,6 +1203,9 @@ test("MyDancr TV lifecycle requests use the refresh-aware dancer boundary", asyn
   assert.match(dashboardSession, /function requestDancerTvVideoJson/);
   assert.match(dancerTvStudio, /requestDancerTvVideosJson/);
   assert.match(dancerTvStudio, /requestDancerTvVideoJson/);
+  const profilePreview = dashboard.match(/function DancerProfilePreview[\s\S]*?function DancerOnboardingCommand/)?.[0] || "";
+  assert.match(profilePreview, /requestDancerTvVideosJson\(\{[\s\S]*?cache: "no-store"/);
+  assert.doesNotMatch(profilePreview, /dashboardAuthHeaders|readJson\(/);
   assert.doesNotMatch(dancerTvStudio, /fetch\(/);
   assert.doesNotMatch(dancerTvStudio, /currentDashboardAuthHeaders/);
 });

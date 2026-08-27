@@ -34,7 +34,6 @@ import {
   dashboardAuthHeaders,
   dashboardLoadErrorMessage,
   persistDashboardSession,
-  readJson,
   readOptionalJson,
   readSession,
   requestAccountJson,
@@ -47,6 +46,7 @@ import {
   requestDancerProfileVisibilityJson,
   requestDancerShiftCheckInJson,
   requestDancerShiftsJson,
+  requestDancerTvVideosJson,
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestOptionalDashboardJson,
@@ -3322,8 +3322,7 @@ function DancerProfilePreview({
 
   useEffect(() => {
     if (!isOpen) return;
-    const headers = dashboardAuthHeaders(readSession());
-    if (!headers) {
+    if (!readSession()?.accessToken) {
       setIsMediaLoading(false);
       setVideos([]);
       setMediaError("Sign in again to load your saved profile videos.");
@@ -3338,7 +3337,10 @@ function DancerProfilePreview({
       if (showLoading) setIsMediaLoading(true);
       setMediaError("");
       try {
-        const data = await readJson("/api/dancer/tv/videos", headers);
+        const data = await requestDancerTvVideosJson({
+          cache: "no-store",
+          fallbackMessage: "Unable to load your saved profile videos.",
+        });
         if (cancelled || requestId !== requestSequence) return;
         const savedVideos = Array.isArray(data?.videos) ? data.videos : [];
         setVideos(savedVideos.flatMap((video: Record<string, unknown>) => {

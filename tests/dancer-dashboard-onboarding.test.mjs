@@ -399,7 +399,8 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /pending_avatar_review/);
   assert.match(dashboard, /approvedPhotos\.length/);
   assert.match(dashboard, /const photos = approvedPhotos\.map/);
-  assert.match(dashboard, /readJson\("\/api\/dancer\/tv\/videos", headers\)/);
+  assert.match(dashboard, /requestDancerTvVideosJson\(\{[\s\S]*?cache: "no-store"/);
+  assert.doesNotMatch(dashboard, /readJson\("\/api\/dancer\/tv\/videos"/);
   assert.match(dashboard, /String\(video\?\.status \|\| ""\)\.toLowerCase\(\) !== "approved"/);
   assert.match(dashboard, /videos=\{videos\}/);
   assert.match(dashboard, /const socialLinks = dancerPreviewSocialLinks\(profile\)/);
