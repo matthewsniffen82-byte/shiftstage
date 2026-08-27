@@ -10717,9 +10717,9 @@ html:is(
   }
 }
 
-/* Keep the stage-name + verified-badge pair in its own row directly above
- * Followers. Both rows use the same first-column width and offset, so their
- * centers remain aligned without absolute positioning or overlap. */
+/* Keep the stage name in its own center track directly above Followers. The
+ * verified badge occupies the matching right track, so it cannot pull the
+ * name text away from the Followers center line. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
     position: relative !important;
@@ -10744,10 +10744,14 @@ html:is(
     margin: 0 0 0 -4px !important;
     padding: 0 !important;
     transform: none !important;
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, calc(100% - 20px))
+      minmax(0, 1fr) !important;
     gap: 5px !important;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: stretch !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row::before {
@@ -10756,15 +10760,17 @@ html:is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row h2 {
-    flex: 0 1 auto !important;
+    grid-column: 2 !important;
+    justify-self: center !important;
     width: auto !important;
-    max-width: calc(100% - 24px) !important;
-    text-align: left !important;
+    max-width: 100% !important;
+    text-align: center !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row .profile-modal-verified {
     position: static !important;
-    flex: 0 0 19px !important;
+    grid-column: 3 !important;
+    justify-self: start !important;
     margin: 0 !important;
     transform: none !important;
   }

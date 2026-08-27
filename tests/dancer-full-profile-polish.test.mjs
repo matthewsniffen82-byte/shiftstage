@@ -329,15 +329,15 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Keep the stage-name \+ verified-badge pair in its own row directly above[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?inset: 0 auto auto 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 0 0 -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: flex !important;[\s\S]*?gap: 5px !important;[\s\S]*?justify-content: center !important;/,
+    /Keep the stage name in its own center track directly above Followers[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?inset: 0 auto auto 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 0 0 -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns:[\s\S]*?minmax\(0, 1fr\)[\s\S]*?minmax\(0, calc\(100% - 20px\)\)[\s\S]*?minmax\(0, 1fr\) !important;[\s\S]*?gap: 5px !important;[\s\S]*?justify-content: stretch !important;/,
   );
   assert.match(
     aesthetic,
-    /Keep the stage-name \+ verified-badge pair in its own row directly above[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?flex: 0 1 auto !important;[\s\S]*?width: auto !important;[\s\S]*?max-width: calc\(100% - 24px\) !important;[\s\S]*?text-align: left !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: static !important;[\s\S]*?flex: 0 0 19px !important;[\s\S]*?transform: none !important;/,
+    /Keep the stage name in its own center track directly above Followers[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?grid-column: 2 !important;[\s\S]*?justify-self: center !important;[\s\S]*?width: auto !important;[\s\S]*?max-width: 100% !important;[\s\S]*?text-align: center !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: static !important;[\s\S]*?grid-column: 3 !important;[\s\S]*?justify-self: start !important;[\s\S]*?transform: none !important;/,
   );
   assert.doesNotMatch(
     aesthetic,
-    /Keep the stage-name \+ verified-badge pair in its own row directly above[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: absolute !important;/,
+    /Keep the stage name in its own center track directly above Followers[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: absolute !important;/,
   );
   assert.match(
     aesthetic,
