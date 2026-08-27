@@ -12,6 +12,7 @@ const [
   socialLinks,
   tvStrip,
   profileCarousel,
+  dashboardClient,
   liveApp,
 ] = await Promise.all([
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
@@ -38,6 +39,7 @@ const [
     new URL("../app/dancers/[slug]/DancerPhotoCarousel.tsx", import.meta.url),
     "utf8",
   ),
+  readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
@@ -270,6 +272,11 @@ test("profile videos stay passive and duration-free in the grid, then open the c
   assert.match(mediaGrid, /src=\{`\$\{item\.videoUrl\}#t=0\.1`\}/);
   assert.doesNotMatch(mediaGrid, /autoPlay/);
   assert.match(profileCarousel, /className="profile-media-play"/);
+  assert.match(profilePage, /\.profile-media-play \{[^}]*?width: 34px;[^}]*?border: 1px solid rgba\(255,255,255,\.38\);[^}]*?background: rgba\(5,5,9,\.62\);/);
+  assert.match(profilePage, /\.profile-media-play::after \{[^}]*?border-left: 9px solid #fff;/);
+  assert.match(dashboardClient, /\.dancer-profile-preview-overlay \.profile-media-play \{[^}]*?width:34px;[^}]*?border:1px solid rgba\(255,255,255,\.38\);[^}]*?background:rgba\(5,5,9,\.62\);/);
+  assert.match(liveApp, /\.profile-modal \.profile-media-thumb-play \{[^}]*?width: 34px;[^}]*?border: 1px solid rgba\(255,255,255,\.38\);[^}]*?background: rgba\(5,5,9,\.62\);/);
+  assert.match(liveApp, /\.profile-modal \.profile-media-thumb-play::after \{[^}]*?border-left: 9px solid #fff;/);
   assert.doesNotMatch(profileCarousel, /profile-media-duration|formatDuration/);
   assert.doesNotMatch(liveApp, /<span class="profile-media-thumb-duration"/);
   assert.match(liveApp, /function profileVideoThumbMarkup\(item, index, total, profileName\)[\s\S]*?aria-label="Open \$\{escapeHtml\(profileName\)\} profile video \$\{index \+ 1\} of \$\{total\} full screen, \$\{escapeHtml\(scheduleLabel\)\}"/);

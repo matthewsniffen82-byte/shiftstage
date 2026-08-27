@@ -596,8 +596,8 @@ function PublicProfileStyles() {
       .profile-media-poster-placeholder { width: 100%; height: 100%; display: block; background: radial-gradient(circle at 50% 32%, rgba(126,234,255,.18), transparent 28%), linear-gradient(145deg, rgba(109,40,217,.28), rgba(5,5,9,.96)); }
       .profile-media-grid-item:hover { border-color: rgba(126,234,255,.42); }
       .profile-media-grid-item:focus-visible { z-index: 1; outline: 2px solid #7eeaff; outline-offset: 2px; }
-      .profile-media-play { position: absolute; top: 50%; left: 50%; width: 30px; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 7px 22px rgba(0,0,0,.36); transform: translate(-50%, -50%); }
-      .profile-media-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 9px solid #111; transform: translate(-50%, -50%); }
+      .profile-media-play { position: absolute; top: 50%; left: 50%; width: 34px; aspect-ratio: 1; box-sizing: border-box; border: 1px solid rgba(255,255,255,.38); border-radius: 50%; background: rgba(5,5,9,.62); box-shadow: 0 6px 18px rgba(0,0,0,.38); transform: translate(-50%, -50%); pointer-events: none; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+      .profile-media-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 9px solid #fff; transform: translate(-50%, -50%); }
       .profile-media-grid-sentinel { position: relative; grid-column: 1 / -1; height: 28px; pointer-events: none; }
       .profile-media-grid-sentinel::after { position: absolute; top: 5px; left: 50%; width: 14px; height: 14px; content: ""; border: 2px solid rgba(126,234,255,.18); border-top-color: #7eeaff; border-radius: 50%; animation: profile-media-loading 700ms linear infinite; transform: translateX(-50%); }
       .profile-media-grid-status { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
