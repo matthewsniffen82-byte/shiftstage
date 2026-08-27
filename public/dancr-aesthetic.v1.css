@@ -8213,7 +8213,7 @@ body.dancr-button-system > .app main.stack > section.stack
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid
   .dancer-directory-filter[data-dancer-directory-filter="all"].is-active
-  > .dancer-directory-filter-count {
+  > :is(.dancer-directory-filter-label, .dancer-directory-filter-count) {
   color: color-mix(
     in srgb,
     var(--dancr-color-brand-primary) 42%,

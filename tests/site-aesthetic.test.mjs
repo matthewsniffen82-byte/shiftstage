@@ -28,7 +28,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=177" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=178" rel="stylesheet">/,
   );
 });
 
@@ -176,6 +176,10 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   assert.match(
     discoveryPalette,
     /data-dancer-directory-filter="all"\]\.is-active::before \{[\s\S]*?content: "";[\s\S]*?width: 6px;[\s\S]*?height: 6px;[\s\S]*?border-radius: 999px;[\s\S]*?0 0 8px/,
+  );
+  assert.match(
+    discoveryPalette,
+    /data-dancer-directory-filter="all"\]\.is-active[\s\S]*?> :is\(\.dancer-directory-filter-label, \.dancer-directory-filter-count\) \{[\s\S]*?var\(--dancr-color-brand-primary\) 42%/,
   );
   assert.match(
     discoveryPalette,
