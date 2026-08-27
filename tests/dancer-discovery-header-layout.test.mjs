@@ -21,7 +21,7 @@ test("directory heading, dynamic total, and segmented filters are compact and ac
   assert.match(liveShell, /dancer-directory-filter-count">\$\{counts\[filter\.id\]\}<\/span>/);
   assert.match(aesthetic, /#tabTitle \{[\s\S]*?font-size: clamp\(20px, 5\.35vw, 24px\)/);
   assert.match(aesthetic, /#tabCount \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important/);
-  assert.match(aesthetic, /\.dancer-directory-filters \{[\s\S]*?gap: 2px !important;[\s\S]*?padding: 3px;[\s\S]*?border-radius: 14px/);
+  assert.match(aesthetic, /\.dancer-directory-filters \{[\s\S]*?width: 100%;[\s\S]*?gap: 2px !important;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
   assert.match(aesthetic, /\.dancer-directory-filter \{[\s\S]*?min-height: 48px !important/);
   assert.match(aesthetic, /> \.dancer-directory-filters \+ \.home-dancer-grid-heading \{[\s\S]*?display: none !important/);
 });
