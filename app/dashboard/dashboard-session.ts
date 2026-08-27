@@ -140,6 +140,25 @@ export async function requestDashboardJson(
   return data;
 }
 
+export async function requestOptionalDashboardJson<T>(
+  path: string,
+  fallback: T,
+  options: DashboardJsonRequestOptions = {},
+): Promise<any> {
+  try {
+    return await requestDashboardJson(path, {
+      cache: "no-store",
+      ...options,
+    });
+  } catch (error) {
+    console.warn("Dashboard panel did not load", {
+      path,
+      message: error instanceof Error ? error.message : "Request failed",
+    });
+    return fallback;
+  }
+}
+
 export function requestAccountJson(options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson("/api/account", {
     ...options,

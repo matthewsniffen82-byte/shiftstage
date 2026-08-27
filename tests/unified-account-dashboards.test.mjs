@@ -25,6 +25,7 @@ import {
   requestDancerTvVideosJson,
   requestDancerVenueVerificationJson,
   requestDashboardJson,
+  requestOptionalDashboardJson,
   requestVenueDancerVerificationsJson,
   requestVenueFinanceStatement,
   requestVenueNfcSupportJson,
@@ -99,12 +100,13 @@ test("fresh confirmation sessions load the dashboard account and panels in paral
   assert.match(dashboardSession, /expiresAt > Math\.floor\(Date\.now\(\) \/ 1000\) \+ 120/);
   assert.match(
     dashboard,
-    /if \(storedSessionIsFresh\(session\)\) \{[\s\S]*?\[account, panels\] = await Promise\.all\(\[[\s\S]*?readJson\("\/api\/account", initialAuthHeaders\)[\s\S]*?loadDashboardPanels\(initialAuthHeaders\)/,
+    /if \(storedSessionIsFresh\(session\)\) \{[\s\S]*?\[account, panels, agentAccess\] = await Promise\.all\(\[[\s\S]*?requestAccountJson\([\s\S]*?loadDashboardPanels\(\)/,
   );
   assert.match(
     dashboard,
-    /else \{[\s\S]*?account = await readJson\("\/api\/account", initialAuthHeaders\)[\s\S]*?const refreshedHeaders = dashboardAuthHeaders\(readSession\(\)\)[\s\S]*?panels = await loadDashboardPanels\(refreshedHeaders\)/,
+    /else \{[\s\S]*?account = await requestAccountJson\([\s\S]*?\[panels, agentAccess\] = await Promise\.all\(\[[\s\S]*?loadDashboardPanels\(\)/,
   );
+  assert.doesNotMatch(dashboard.slice(0, dashboard.indexOf("const refreshVenueDashboard")), /initialAuthHeaders|refreshedHeaders|readJson\(|readOptionalJson\(/);
 });
 
 test("dashboard session persistence and optional panel failures have one typed boundary", () => {
@@ -118,9 +120,56 @@ test("dashboard session persistence and optional panel failures have one typed b
   assert.doesNotMatch(dashboardSession, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
   assert.match(dashboardSession, /function dashboardAuthHeaders\(session: StoredDashboardSession \| null\)/);
   assert.match(dashboardSession, /function persistResponseSession/);
+  assert.match(dashboardSession, /export async function requestOptionalDashboardJson/);
   assert.match(dashboardSession, /export async function readOptionalJson/);
   assert.match(dashboardSession, /console\.warn\("Dashboard panel did not load"/);
   assert.doesNotMatch(dashboard, /function readSession\(|function dashboardAuthHeaders\(|async function readOptionalJson/);
+});
+
+test("optional dashboard startup requests share session rotation and preserve fallbacks", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  let requestCount = 0;
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async () => {
+    requestCount += 1;
+    if (requestCount === 1) {
+      return new Response(JSON.stringify({
+        ok: true,
+        panel: "loaded",
+        session: { accessToken: "rotated-access", expiresAt: 99999 },
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    return new Response(JSON.stringify({ ok: false, error: "Panel unavailable." }), {
+      status: 503,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "initial-access",
+      refreshToken: "initial-refresh",
+      account: { role: "dancer" },
+    }));
+    const loaded = await requestOptionalDashboardJson("/api/dancer/dashboard", {});
+    assert.equal(loaded.panel, "loaded");
+    assert.equal(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)).accessToken, "rotated-access");
+    assert.deepEqual(
+      await requestOptionalDashboardJson("/api/dancer/reviews", { reviews: [] }),
+      { reviews: [] },
+    );
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
 });
 
 test("venue dashboard subpanels use the shared session boundary and preserve token rotation", () => {

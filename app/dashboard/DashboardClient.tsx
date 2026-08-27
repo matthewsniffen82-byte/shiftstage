@@ -49,6 +49,7 @@ import {
   requestDancerShiftsJson,
   requestDancerVenueVerificationJson,
   requestDashboardJson,
+  requestOptionalDashboardJson,
   requestVenueDancerVerificationsJson,
   requestVenueFinanceStatement,
   storedSessionAccount,
@@ -185,8 +186,7 @@ export default function DashboardClient({
 
     async function load() {
       const session = readSession();
-      const initialAuthHeaders = dashboardAuthHeaders(session);
-      if (!initialAuthHeaders) {
+      if (!session?.accessToken) {
         setState({ error: "Sign in to open this dashboard." });
         setIsLoading(false);
         return;
@@ -197,26 +197,26 @@ export default function DashboardClient({
         setState((current) => ({ ...current, account: cachedAccount }));
       }
 
-      const loadDashboardPanels = async (headers: Record<string, string>) => {
+      const loadDashboardPanels = async () => {
         if (role === "dancer") {
           // This request finalizes a saved eligible NFC enrollment. Load the
           // profile afterward so onboarding never renders from a pre-activation
           // profile snapshot while the NFC state is already complete.
-          const secondary = await readOptionalJson("/api/dancer/dashboard", headers, {});
+          const secondary = await requestOptionalDashboardJson("/api/dancer/dashboard", {});
           const [profile, support, reviews, weeklyReport, rankingEvents] = await Promise.all([
-            readOptionalJson("/api/dancer/profile", headers, { profile: null }),
-            readOptionalJson("/api/support", headers, { threads: [] }),
-            readOptionalJson("/api/dancer/reviews", headers, { reviews: [] }),
-            readOptionalJson("/api/dancer/weekly-report", headers, { report: null }),
-            readOptionalJson("/api/dancer/ranking-events", headers, { events: [] }),
+            requestOptionalDashboardJson("/api/dancer/profile", { profile: null }),
+            requestOptionalDashboardJson("/api/support", { threads: [] }),
+            requestOptionalDashboardJson("/api/dancer/reviews", { reviews: [] }),
+            requestOptionalDashboardJson("/api/dancer/weekly-report", { report: null }),
+            requestOptionalDashboardJson("/api/dancer/ranking-events", { events: [] }),
           ]);
           return [profile, secondary, support, reviews, weeklyReport, rankingEvents];
         }
 
         return Promise.all([
-          readOptionalJson(role === "venue" ? "/api/venue/profile" : "/api/customer/profile", headers, { profile: null }),
-          readOptionalJson(role === "venue" ? "/api/venue/dashboard?period=30d" : "/api/customer/saved", headers, {}),
-          readOptionalJson("/api/support", headers, { threads: [] }),
+          requestOptionalDashboardJson(role === "venue" ? "/api/venue/profile" : "/api/customer/profile", { profile: null }),
+          requestOptionalDashboardJson(role === "venue" ? "/api/venue/dashboard?period=30d" : "/api/customer/saved", {}),
+          requestOptionalDashboardJson("/api/support", { threads: [] }),
           null,
           null,
           null,
@@ -228,27 +228,29 @@ export default function DashboardClient({
         let panels;
         let agentAccess;
         if (storedSessionIsFresh(session)) {
-          const agentAccessPromise = readOptionalJson(
-            "/api/agent/commissions?access=1",
-            initialAuthHeaders,
-            { access: { active: false } },
-          );
-          [account, panels] = await Promise.all([
-            readJson("/api/account", initialAuthHeaders),
-            loadDashboardPanels(initialAuthHeaders),
+          [account, panels, agentAccess] = await Promise.all([
+            requestAccountJson({
+              cache: "no-store",
+              fallbackMessage: "Unable to load account.",
+            }),
+            loadDashboardPanels(),
+            requestOptionalDashboardJson(
+              "/api/agent/commissions?access=1",
+              { access: { active: false } },
+            ),
           ]);
-          agentAccess = await agentAccessPromise;
         } else {
-          account = await readJson("/api/account", initialAuthHeaders);
-          const refreshedHeaders = dashboardAuthHeaders(readSession());
-          if (!refreshedHeaders) throw new Error("Your sign-in could not be refreshed. Sign in again to continue.");
-          const agentAccessPromise = readOptionalJson(
-            "/api/agent/commissions?access=1",
-            refreshedHeaders,
-            { access: { active: false } },
-          );
-          panels = await loadDashboardPanels(refreshedHeaders);
-          agentAccess = await agentAccessPromise;
+          account = await requestAccountJson({
+            cache: "no-store",
+            fallbackMessage: "Unable to load account.",
+          });
+          [panels, agentAccess] = await Promise.all([
+            loadDashboardPanels(),
+            requestOptionalDashboardJson(
+              "/api/agent/commissions?access=1",
+              { access: { active: false } },
+            ),
+          ]);
         }
         const [profile, secondary, support, reviews, weeklyReport, rankingEvents] = panels;
 

@@ -38,8 +38,8 @@ test("dashboard activation finalizes before the post-tap profile snapshot loads"
   const loaderStart = dashboardClient.indexOf("const loadDashboardPanels");
   const loaderEnd = dashboardClient.indexOf("try {", loaderStart);
   const loader = dashboardClient.slice(loaderStart, loaderEnd);
-  const activationLoad = loader.indexOf('await readOptionalJson("/api/dancer/dashboard"');
-  const profileLoad = loader.indexOf('readOptionalJson("/api/dancer/profile"');
+  const activationLoad = loader.indexOf('await requestOptionalDashboardJson("/api/dancer/dashboard"');
+  const profileLoad = loader.indexOf('requestOptionalDashboardJson("/api/dancer/profile"');
 
   assert.ok(activationLoad >= 0, "dancer dashboard should finalize saved NFC enrollment");
   assert.ok(profileLoad > activationLoad, "profile must load after NFC activation finalization");
