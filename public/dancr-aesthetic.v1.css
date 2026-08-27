@@ -3450,11 +3450,11 @@ body.dancr-button-system .public-profile-shell .profile-tonight-card.is-upcoming
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-upcoming::before {
-  border-color: color-mix(in srgb, var(--dancr-color-info) 38%, transparent) !important;
+  border-color: color-mix(in srgb, var(--dancr-color-info) 55%, transparent) !important;
 }
 
 body.dancr-button-system .public-profile-shell .profile-tonight-card.is-upcoming::before {
-  border-color: color-mix(in srgb, var(--dancr-color-info) 38%, transparent) !important;
+  border-color: color-mix(in srgb, var(--dancr-color-info) 55%, transparent) !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .schedule-upcoming > .profile-schedule-primary,
