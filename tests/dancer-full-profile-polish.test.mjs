@@ -273,15 +273,15 @@ test("profile action controls are unboxed and available Going highlights only it
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?background: transparent !important;/,
+    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?color: #d8b4fe !important;[\s\S]*?background: transparent !important;/,
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action \.action-icon > svg,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-preview-icon \{[\s\S]*?drop-shadow\(0 0 5px var\(--dancr-color-brand-primary-medium\)\) !important;/,
+    /going-btn\.is-available-action \.action-icon > svg,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-preview-icon \{[\s\S]*?drop-shadow\(0 0 4px rgba\(216, 180, 254, \.9\)\)[\s\S]*?drop-shadow\(0 0 10px var\(--dancr-color-brand-primary-strong\)\) !important;[\s\S]*?\.is-available-action \.profile-action-main > span:last-child,[\s\S]*?color: #e9d5ff !important;[\s\S]*?text-shadow: 0 0 10px rgba\(168, 85, 247, \.55\) !important;/,
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action\.is-going \.action-icon,[\s\S]*?profile-action-going\.profile-action-available\.is-going \.profile-action-icon-frame \{[\s\S]*?color: #c084fc !important;[\s\S]*?drop-shadow\(0 0 4px rgba\(192, 132, 252, \.88\)\)[\s\S]*?drop-shadow\(0 0 9px var\(--dancr-color-brand-primary-strong\)\) !important;[\s\S]*?\.is-going \.profile-action-main > span:last-child \{[\s\S]*?color: #e9d5ff !important;/,
+    /going-btn\.is-available-action\.is-going \.action-icon,[\s\S]*?profile-action-going\.profile-action-available\.is-going \.profile-action-icon-frame \{[\s\S]*?color: #f0abfc !important;[\s\S]*?drop-shadow\(0 0 5px rgba\(240, 171, 252, \.95\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--dancr-color-brand-primary-strong\)\) !important;[\s\S]*?\.is-going \.profile-action-main > span:last-child \{[\s\S]*?color: #fae8ff !important;/,
   );
 });
 
@@ -329,11 +329,11 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Give the stage name a real first-column track[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: static !important;[\s\S]*?left: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: flex !important;[\s\S]*?justify-content: center !important;/,
+    /Give the stage name a real first-column track[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: relative !important;[\s\S]*?left: auto !important;[\s\S]*?width: calc\(\(100% - 22px\) \/ 3\) !important;[\s\S]*?max-width: none !important;[\s\S]*?margin-left: -4px !important;[\s\S]*?transform: none !important;[\s\S]*?display: flex !important;[\s\S]*?justify-content: center !important;/,
   );
   assert.match(
     aesthetic,
-    /Give the stage name a real first-column track[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: auto !important;[\s\S]*?max-width: calc\(100% - 24px\) !important;[\s\S]*?flex: 0 1 auto !important;[\s\S]*?text-align: center !important;/,
+    /Give the stage name a real first-column track[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?flex: 1 1 100% !important;[\s\S]*?text-align: center !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: absolute !important;[\s\S]*?left: calc\(100% \+ 3px\) !important;[\s\S]*?transform: translateY\(-50%\) !important;/,
   );
   assert.doesNotMatch(
     aesthetic,
