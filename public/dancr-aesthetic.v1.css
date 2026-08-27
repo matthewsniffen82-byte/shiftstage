@@ -7133,10 +7133,20 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   color: var(--dancr-color-text-primary) !important;
 }
 
+/* The club page begins with a compact identity/deal summary, then becomes an
+ * exploration surface. Dancer discovery owns the first content position;
+ * venue information and utility actions follow without changing card/feed UI. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-exploration {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  padding: 10px 12px 16px;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-section {
   display: grid;
   gap: 7px;
-  padding: 2px 0 6px;
+  padding: 2px 0 4px;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -7262,6 +7272,68 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
   box-shadow: none;
 }
 
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-activity-empty.is-compact {
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 9px;
+  padding: 10px 11px;
+  border-radius: 14px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-activity-empty.is-compact .venue-activity-empty-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-activity-empty.is-compact strong {
+  font-size: 14px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-activity-empty.is-compact small {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(.venue-information-section, .venue-location-section) {
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--dancr-color-border-subtle);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-section-heading {
+  margin: 0 !important;
+  color: var(--dancr-color-text-primary) !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-information-section {
+  border-top-color: var(--dancr-color-border-subtle);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-information-section summary {
+  padding-inline: 0;
+  color: var(--dancr-color-text-primary);
+  font-size: 15px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-location-section {
+  gap: 8px !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-empty > span:last-child {
   min-width: 0;
   display: grid;
@@ -7324,8 +7396,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-hero + :is(.venue-activity-section, .venue-activity-empty) {
-  margin-top: 4px;
+  .venue-hero + .venue-detail-exploration {
+  margin-top: 0;
 }
 
 @media (max-width: 420px) {
@@ -8822,9 +8894,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
  * live status; cyan remains exclusive to Upcoming. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber) {
-  height: 46px !important;
-  min-height: 46px !important;
-  max-height: 46px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
   gap: 7px !important;
   padding: 0 11px !important;
   border-color: color-mix(
