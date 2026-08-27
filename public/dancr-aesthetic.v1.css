@@ -1570,13 +1570,14 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   box-shadow: none !important;
 }
 
-/* The customer actions are already defined by five individually bordered
- * controls. Keep their grid unframed so it does not read as a nested card. */
-#profileBackdrop .profile-modal .modal-actions {
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+/* The four customer actions share one quiet premium tray. Individual actions
+ * remain unboxed so the row reads as one cohesive control group. */
+#profileBackdrop .profile-modal .modal-actions,
+.public-profile-shell .live-actions {
+  border: 1px solid rgba(248, 250, 252, .11) !important;
+  border-radius: 22px !important;
+  background: rgba(7, 7, 11, .92) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025) !important;
 }
 
 /* Full profiles keep one quiet, device-independent edge system. Persistent
@@ -4698,9 +4699,9 @@ body.dancr-button-system .public-profile-shell .profile-social-section::before {
   }
 }
 
-/* Guest actions read as a single icon row, not four boxed buttons. The Going
- * affordance uses color and glow on the icon itself so its full tap target can
- * stay accessible without turning the entire action cell into a purple tile. */
+/* Guest actions read as a single icon row inside the shared tray, not four
+ * boxed buttons. The Going affordance uses color and glow on the icon itself
+ * so its full tap target stays accessible without coloring the whole tray. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
@@ -4743,10 +4744,10 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
 body.dancr-button-system .public-profile-shell .live-actions {
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  column-gap: 4px !important;
+  column-gap: 0 !important;
   row-gap: 2px !important;
   margin-top: 0 !important;
-  padding: 1px 0 0 !important;
+  padding: 2px 4px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
@@ -4777,8 +4778,8 @@ body.dancr-button-system .public-profile-shell .profile-action-icon-control .pro
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="personPlus"] > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon {
-  width: 22px !important;
-  height: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
