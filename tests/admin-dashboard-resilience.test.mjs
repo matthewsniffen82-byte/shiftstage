@@ -241,7 +241,10 @@ test("every routed admin subpanel consumes the canonical role-aware session boun
   assert.equal((dmcaPanel.match(/requestAdminJson\("\/api\/admin\/dmca"/g) || []).length, 3);
   assert.doesNotMatch(dmcaPanel, /readAdminAccessToken|authorization:|fetch\("\/api\/admin\/dmca"/);
   assert.match(pilotPanel, /readAdminAccessToken as readAdminToken/);
-  assert.match(tvPanel, /readAdminAccessToken as readToken/);
+  assert.match(tvPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
+  assert.equal((tvPanel.match(/requestAdminJson\("\/api\/admin\/tv\/videos"/g) || []).length, 2);
+  assert.match(tvPanel, /requestAdminJson\(`\/api\/admin\/tv\/videos\?status=/);
+  assert.doesNotMatch(tvPanel, /readAdminAccessToken|authorization:|fetch\("\/api\/admin\/tv\/videos"/);
   for (const panel of [nfcPanel, dmcaPanel, pilotPanel, tvPanel]) {
     assert.doesNotMatch(panel, /const SESSION_KEY|localStorage\.getItem\(SESSION_KEY\)|function readToken\(|function readAdminToken\(|function authHeaders\(/);
   }

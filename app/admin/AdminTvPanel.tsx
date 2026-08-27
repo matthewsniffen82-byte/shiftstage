@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { readAdminAccessToken as readToken } from "./admin-session";
+import { requestAdminJson } from "./admin-session";
 
 type AdminTvVideo = {
   id: string;
@@ -43,21 +43,13 @@ export default function AdminTvPanel() {
   }, [filter]);
 
   async function loadVideos(nextFilter: string) {
-    const token = readToken();
-    if (!token) {
-      setStatus("Admin sign in required.");
-      setIsLoading(false);
-      return;
-    }
     setIsLoading(true);
     setStatus("");
     try {
-      const response = await fetch(`/api/admin/tv/videos?status=${encodeURIComponent(nextFilter)}`, {
-        headers: { authorization: `Bearer ${token}` },
+      const data = await requestAdminJson(`/api/admin/tv/videos?status=${encodeURIComponent(nextFilter)}`, {
         cache: "no-store",
+        fallbackMessage: "Unable to load video moderation.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load video moderation.");
       setVideos(Array.isArray(data.videos) ? data.videos : []);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load video moderation.");
@@ -78,8 +70,6 @@ export default function AdminTvPanel() {
         : `Reject this video and notify ${video.dancer?.stageName || "the dancer"}?`,
     )) return;
 
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     setWorkingId(video.id);
     setWorkingDecision(decision);
     setReviewResults((current) => {
@@ -89,13 +79,12 @@ export default function AdminTvPanel() {
     });
     setStatus(decision === "approved" ? "Approving and publishing…" : "Rejecting and notifying dancer…");
     try {
-      const response = await fetch("/api/admin/tv/videos", {
+      const data = await requestAdminJson("/api/admin/tv/videos", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ videoId: video.id, decision, notes: reviewNotes }),
+        fallbackMessage: "Unable to review video.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to review video.");
       setVideos((current) => current.map((item) => item.id === video.id
           ? {
               ...item,
@@ -134,8 +123,6 @@ export default function AdminTvPanel() {
     if (!window.confirm(`Retry the automated safety review for ${video.dancer?.stageName || "this dancer"}’s video?`)) {
       return;
     }
-    const token = readToken();
-    if (!token) return setStatus("Admin sign in required.");
     setWorkingId(video.id);
     setWorkingDecision("retry");
     setReviewResults((current) => {
@@ -145,13 +132,12 @@ export default function AdminTvPanel() {
     });
     setStatus("Retrying automated safety review…");
     try {
-      const response = await fetch("/api/admin/tv/videos", {
+      const data = await requestAdminJson("/api/admin/tv/videos", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ videoId: video.id, action: "retry_automated_review" }),
+        fallbackMessage: "Unable to retry automated review.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to retry automated review.");
       const successMessage = data.message || "Automated safety review completed.";
       await loadVideos(filter);
       setReviewResults((current) => ({

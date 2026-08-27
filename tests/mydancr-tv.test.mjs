@@ -293,6 +293,8 @@ test("long selected venue names cannot widen the mobile homepage", () => {
 
 test("administrator moderation persists decisions and venue TV is schedule-derived analytics", () => {
   assert.match(adminApi, /requireAdmin\(client, user\.id\)/);
+  assert.equal((adminApi.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
+  assert.equal((adminApi.match(/session: session \|\| null/g) || []).length, 3);
   assert.match(adminApi, /reviewMyDancrTvVideo/);
   assert.match(adminApi, /retrySubmittedMyDancrTvAutomatedModeration/);
   assert.match(adminApi, /body\?\.action === "retry_automated_review"/);
@@ -301,6 +303,9 @@ test("administrator moderation persists decisions and venue TV is schedule-deriv
   assert.match(migration, /insert into public\.admin_actions/);
   assert.match(tvSource, /event: "mydancr_tv\.admin_decision"/);
   assert.match(adminPanel, /Approve and publish/);
+  assert.match(adminPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
+  assert.equal((adminPanel.match(/requestAdminJson\(/g) || []).length, 3);
+  assert.doesNotMatch(adminPanel, /readAdminAccessToken|authorization:|fetch\("\/api\/admin\/tv\/videos"/);
   assert.match(adminPanel, /Reject video/);
   assert.match(adminPanel, /Retry automated review/);
   assert.match(adminPanel, /canRetryAutomatedReview\(video\)/);

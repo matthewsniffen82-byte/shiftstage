@@ -15,11 +15,11 @@ export const maxDuration = 180;
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const status = new URL(request.url).searchParams.get("status") || "submitted";
     const videos = await getAdminMyDancrTvVideos(createAdminSupabaseClient(), status);
-    return NextResponse.json({ ok: true, videos, count: videos.length });
+    return NextResponse.json({ ok: true, videos, count: videos.length, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load MyDancr TV moderation.");
   }
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json();
     const videoId = typeof body?.videoId === "string" ? body.videoId.trim() : "";
@@ -44,6 +44,7 @@ export async function POST(request: Request) {
         ok: true,
         video,
         message: automatedReviewMessage(video),
+        session: session || null,
       });
     }
     const decision = body?.decision === "approved" || body?.decision === "rejected"
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
       message: decision === "approved"
         ? "Video approved and published on MyDancr TV."
         : "Video rejected and the dancer was notified.",
+      session: session || null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
