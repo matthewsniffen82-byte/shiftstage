@@ -163,11 +163,11 @@ test("venue-card lineup avatars use one stable circular paint layer while scroll
   assert.doesNotMatch(lineupBuilder, /customAvatarPhotoAttrs\(/);
   assert.match(
     aesthetic,
-    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?home-venue-discovery-lineup-avatar \.venue-lineup-avatar-photo \{[\s\S]*?animation: none !important;[\s\S]*?-webkit-filter: none !important;[\s\S]*?transform: none !important;[\s\S]*?transition: none !important;/,
+    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results\.venue-card-grid > \.venue-card[\s\S]*?\.venue-card-lineup-avatar \.venue-lineup-avatar-photo,[\s\S]*?animation: none !important;[\s\S]*?-webkit-filter: none !important;[\s\S]*?transform: none !important;[\s\S]*?transition: none !important;/,
   );
   assert.match(
     aesthetic,
-    /home-venue-discovery-lineup-avatar \{[\s\S]*?border-color: transparent !important;[\s\S]*?background-color: transparent !important;/,
+    /#results\.venue-card-grid > \.venue-card \.venue-card-lineup-avatar \{[\s\S]*?border-color: transparent !important;[\s\S]*?background-color: transparent !important;/,
   );
   const compactLineupSizeRule = aesthetic.match(
     /:is\(\.home-venue-discovery-lineup-avatar, \.home-venue-discovery-lineup-count\) \{[\s\S]*?\n  \}/,
