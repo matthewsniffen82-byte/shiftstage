@@ -13,13 +13,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const roster = await getAdminDancerRoster(
       createAdminSupabaseClient(),
       parseAdminDancerRosterQuery(request.url),
     );
-    return NextResponse.json({ ok: true, roster });
+    return NextResponse.json({ ok: true, roster, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load dancer management roster.");
   }

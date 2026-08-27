@@ -3531,16 +3531,11 @@ function normalizeSubmissionSocials(item: Record<string, unknown>) {
 }
 
 async function requestAdminDancerProfile(dancerId: string) {
-  const token = readToken();
-  if (!dancerId || !token) throw new Error("Admin sign in required.");
-
-  const response = await fetch(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
-    headers: { authorization: `Bearer ${token}` },
+  if (!dancerId) throw new Error("Unable to load dancer profile.");
+  const data = await requestAdminJson(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
+    fallbackMessage: "Unable to load dancer profile.",
   });
-  const data = await response.json();
-  if (!response.ok || !data.ok || !data.profile) {
-    throw new Error(data.error || "Unable to load dancer profile.");
-  }
+  if (!data.profile) throw new Error("Unable to load dancer profile.");
   return data.profile as Record<string, unknown>;
 }
 
@@ -3549,21 +3544,17 @@ async function requestAdminDancerContentDeletion(
   kind: "photo" | "social-link",
   targetId: string,
 ) {
-  const token = readToken();
-  if (!dancerId || !targetId || !token) throw new Error("Admin sign in required.");
+  if (!dancerId || !targetId) throw new Error(`Unable to delete dancer ${kind}.`);
 
   const resource = kind === "photo" ? "photos" : "social-links";
-  const response = await fetch(
+  const data = await requestAdminJson(
     `/api/admin/dancers/${encodeURIComponent(dancerId)}/${resource}/${encodeURIComponent(targetId)}`,
     {
       method: "DELETE",
-      headers: { authorization: `Bearer ${token}` },
+      fallbackMessage: `Unable to delete dancer ${kind}.`,
     },
   );
-  const data = await response.json();
-  if (!response.ok || !data.ok || !data.profile) {
-    throw new Error(data.error || `Unable to delete dancer ${kind}.`);
-  }
+  if (!data.profile) throw new Error(`Unable to delete dancer ${kind}.`);
   return data as { profile: Record<string, unknown>; deleted: Record<string, unknown> };
 }
 
@@ -3609,12 +3600,6 @@ function DancerDirectory({
   }, [debouncedQuery, statusFilter, scheduleFilter, moderationFilter, commissionFilter, sourceFilter, cityFilter, venueFilter, sort]);
 
   useEffect(() => {
-    const token = readToken();
-    if (!token) {
-      setStatus("Admin sign in required.");
-      setIsLoadingRoster(false);
-      return;
-    }
     const controller = new AbortController();
     const params = new URLSearchParams({
       q: debouncedQuery,
@@ -3631,13 +3616,12 @@ function DancerDirectory({
     });
     setIsLoadingRoster(true);
     setStatus("");
-    fetch(`/api/admin/dancers?${params.toString()}`, {
-      headers: { authorization: `Bearer ${token}` },
+    requestAdminJson(`/api/admin/dancers?${params.toString()}`, {
       signal: controller.signal,
+      fallbackMessage: "Unable to load dancer roster.",
     })
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok || !data.ok || !data.roster) throw new Error(data.error || "Unable to load dancer roster.");
+      .then((data) => {
+        if (!data.roster) throw new Error("Unable to load dancer roster.");
         if (page > data.roster.totalPages) {
           setPage(Math.max(1, data.roster.totalPages));
           return;
@@ -3656,11 +3640,7 @@ function DancerDirectory({
 
   async function openProfile(item: Record<string, unknown>) {
     const dancerId = asText(item.id);
-    const token = readToken();
-    if (!dancerId || !token) {
-      setStatus("Admin sign in required.");
-      return;
-    }
+    if (!dancerId) return;
 
     setSelectedId(dancerId);
     setProfile(null);
@@ -3679,8 +3659,7 @@ function DancerDirectory({
   async function updateLifecycle(action: "disable" | "reactivate") {
     if (!profile) return;
     const dancerId = asText(profile.id);
-    const token = readToken();
-    if (!token || !dancerId) return;
+    if (!dancerId) return;
     if (lifecycleReason.trim().length < 4) {
       setStatus("Add a short reason before changing profile access.");
       return;
@@ -3688,13 +3667,13 @@ function DancerDirectory({
     setIsUpdatingLifecycle(true);
     setStatus(action === "disable" ? "Disabling profile..." : "Reactivating profile...");
     try {
-      const response = await fetch(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
+      const data = await requestAdminJson(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
         method: "PATCH",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ action, reason: lifecycleReason.trim() }),
+        fallbackMessage: "Unable to update dancer lifecycle.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to update dancer lifecycle.");
+      if (!data.profile) throw new Error("Unable to update dancer lifecycle.");
       setProfile(data.profile);
       onProfileUpdated(data.profile);
       setLifecycleReason("");
@@ -3744,11 +3723,7 @@ function DancerDirectory({
   async function deleteProfile(item: Record<string, unknown>) {
     const dancerId = asText(item.id);
     const stageName = asText(item.stageName || item.stage_name) || "this dancer";
-    const token = readToken();
-    if (!dancerId || !token) {
-      setStatus("Admin sign in required.");
-      return;
-    }
+    if (!dancerId) return;
 
     const confirmed = window.confirm(
       `Permanently delete ${stageName}'s dancer profile, profile photos, any legacy identity files, schedules, and profile activity? Their login account will remain. This cannot be undone.`,
@@ -3763,12 +3738,10 @@ function DancerDirectory({
     setIsDeleting(true);
     setStatus("Deleting profile and stored content...");
     try {
-      const response = await fetch(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
+      const data = await requestAdminJson(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
         method: "DELETE",
-        headers: { authorization: `Bearer ${token}` },
+        fallbackMessage: "Unable to delete dancer profile.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete dancer profile.");
 
       onDeleted(dancerId);
       setRefreshVersion((value) => value + 1);

@@ -11,8 +11,9 @@ const [listRoute, detailRoute, rosterService, approvalsRoute, adminDashboard] = 
 ]);
 
 test("the dancer roster is a protected, paginated production query", () => {
-  assert.match(listRoute, /createRequestSupabaseContext\(request\)/);
+  assert.match(listRoute, /const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/);
   assert.match(listRoute, /await requireAdmin\(client, user\.id\)/);
+  assert.match(listRoute, /\{ ok: true, roster, session: session \|\| null \}/);
   assert.match(listRoute, /parseAdminDancerRosterQuery\(request\.url\)/);
   assert.match(listRoute, /createAdminSupabaseClient\(\)/);
   assert.match(rosterService, /select\([^\n]+\{ count: "exact" \}\)/);
@@ -75,6 +76,14 @@ test("the dashboard exposes a compact responsive roster and operational detail t
   assert.match(adminDashboard, /\.dancer-roster-filters/);
   assert.match(adminDashboard, /\.dancer-roster-data/);
   assert.match(adminDashboard, /@media \(max-width: 680px\)/);
+});
+
+test("dancer management keeps refreshed admin sessions across every roster operation", () => {
+  assert.equal((detailRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 3);
+  assert.equal((detailRoute.match(/session: session \|\| null/g) || []).length, 3);
+  assert.match(adminDashboard, /requestAdminJson\(`\/api\/admin\/dancers\?\$\{params\.toString\(\)\}`/);
+  assert.match(adminDashboard, /requestAdminJson\(`\/api\/admin\/dancers\/\$\{encodeURIComponent\(dancerId\)\}`/);
+  assert.doesNotMatch(adminDashboard, /fetch\(`\/api\/admin\/dancers/);
 });
 
 test("approval loading no longer transfers the complete dancer table", () => {

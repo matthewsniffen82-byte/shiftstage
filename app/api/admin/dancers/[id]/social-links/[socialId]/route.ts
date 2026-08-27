@@ -24,7 +24,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, error: "Invalid dancer or social-link ID." }, { status: 400 });
     }
 
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const admin = createAdminSupabaseClient();
@@ -38,7 +38,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     const profile = await getAdminDancerDetail(admin, id);
-    return NextResponse.json({ ok: true, deleted, profile });
+    return NextResponse.json({ ok: true, deleted, profile, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to delete dancer social link.");
   }

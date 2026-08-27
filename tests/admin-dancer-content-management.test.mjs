@@ -26,12 +26,12 @@ function sourceBetween(source, start, end) {
 test("admin photo and social deletion routes require an active admin and exact UUIDs", () => {
   for (const source of [photoRouteSource, socialRouteSource]) {
     assert.match(source, /const UUID_PATTERN/);
-    assert.match(source, /createRequestSupabaseContext\(request\)/);
+    assert.match(source, /const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/);
     assert.match(source, /await requireAdmin\(client, user\.id\)/);
     assert.match(source, /createAdminSupabaseClient\(\)/);
     assert.match(source, /export async function DELETE/);
     assert.match(source, /getAdminDancerDetail\(admin, id\)/);
-    assert.match(source, /NextResponse\.json\(\{ ok: true, deleted, profile \}\)/);
+    assert.match(source, /NextResponse\.json\(\{ ok: true, deleted, profile, session: session \|\| null \}\)/);
   }
 });
 
@@ -76,6 +76,7 @@ test("every React admin dancer list exposes a full-profile link and content mana
   assert.match(fullProfile, /Delete picture/);
   assert.match(fullProfile, /Delete social link/);
   assert.match(adminDashboardSource, /requestAdminDancerContentDeletion/);
+  assert.match(adminDashboardSource, /requestAdminJson\([\s\S]*?method: "DELETE"/);
   assert.match(adminDashboardSource, /method: "DELETE"/);
 });
 

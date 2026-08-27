@@ -28,7 +28,7 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, error: "Invalid dancer profile ID." }, { status: 400 });
     }
 
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const admin = createAdminSupabaseClient();
@@ -40,7 +40,7 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, profile: { ...profile, operations } });
+    return NextResponse.json({ ok: true, profile: { ...profile, operations }, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load dancer profile.");
   }
@@ -52,7 +52,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!dancerId) {
       return NextResponse.json({ ok: false, error: "Invalid dancer profile ID." }, { status: 400 });
     }
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json();
     const action = body?.action === "disable" || body?.action === "reactivate" ? body.action : "";
@@ -71,7 +71,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       getAdminDancerDetail(admin, dancerId),
       getAdminDancerOperationalDetail(admin, dancerId),
     ]);
-    return NextResponse.json({ ok: true, lifecycle, profile: profile ? { ...profile, operations } : null });
+    return NextResponse.json({ ok: true, lifecycle, profile: profile ? { ...profile, operations } : null, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to update dancer lifecycle.");
   }
@@ -84,7 +84,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, error: "Invalid dancer profile ID." }, { status: 400 });
     }
 
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
     const deleted = await deleteAdminDancerProfile(createAdminSupabaseClient(), {
@@ -95,7 +95,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, deleted });
+    return NextResponse.json({ ok: true, deleted, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to delete dancer profile.");
   }
