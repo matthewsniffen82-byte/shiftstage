@@ -20,11 +20,13 @@ test("the phone editor uses a full-width, compact schedule and Club Deal hierarc
   assert.match(liveApp, /#approvedProfileVideoStatus \{[\s\S]*?margin-right: 62px !important;/);
 });
 
-test("upcoming schedule guidance stays compact without reserving a no-shift deal slot", () => {
+test("upcoming schedule guidance links to the venue without changing deal eligibility", () => {
   assert.match(liveApp, /profile-shift-card schedule-upcoming/);
   assert.match(liveApp, /Upcoming · \$\{escapeHtml\(upcomingDateLabel\)\}/);
   assert.match(liveApp, /function profileDealTileMarkup\(profile\)[\s\S]*?if \(state\.key === "available"\)[\s\S]*?profile-club-deal-tile is-inactive/);
-  assert.match(liveApp, /label: "Club deal available after check-in"[\s\S]*?Deals activate after a verified check-in/);
+  assert.match(liveApp, /key: "upcoming-venue"[\s\S]*?Going tonight\? View \$\{possessiveVenueName\} Club Deal/);
+  assert.match(liveApp, /class="profile-upcoming-venue-cta"[\s\S]*?data-open-venue="\$\{safeVenueName\}"/);
+  assert.doesNotMatch(liveApp, /Club deal available after check-in|Deals activate after a verified check-in/);
   assert.match(liveApp, /label: "No active club deal"[\s\S]*?Deals activate after a verified club check-in\./);
   assert.doesNotMatch(liveApp, /Unlocks after you verify you're working and the venue has an active offer\./);
   assert.doesNotMatch(liveApp, /This is the dancer's next posted shift\. Follow or turn on notifications for schedule updates\./);
