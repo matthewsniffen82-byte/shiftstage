@@ -31,7 +31,7 @@ test("NFC status refresh propagates profile authorization to the dashboard", () 
   assert.match(dashboardClient, /onAuthorizationChange=\{refreshDancerProfile\}/);
   assert.match(dashboardClient, /requestDancerProfileJson\(\{[\s\S]*?cache: "no-store"/);
   assert.match(dashboardSession, /requestDashboardJson\("\/api\/dancer\/profile"/);
-  assert.match(dashboardSession, /fetch\(path, \{ headers, cache: "no-store" \}\)/);
+  assert.match(dashboardSession, /const response = await fetch\(path, \{[\s\S]*?headers: \{ \.\.\.requestHeaders, \.\.\.authHeaders \}/);
 });
 
 test("dashboard activation finalizes before the post-tap profile snapshot loads", () => {

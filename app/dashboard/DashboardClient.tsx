@@ -31,10 +31,8 @@ import VenueTvPanel from "./VenueTvPanel";
 import {
   DASHBOARD_SESSION_KEY as SESSION_KEY,
   clearDashboardSession,
-  dashboardAuthHeaders,
   dashboardLoadErrorMessage,
   persistDashboardSession,
-  readOptionalJson,
   readSession,
   requestAccountJson,
   requestCustomerProfileJson,
@@ -50,6 +48,7 @@ import {
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestOptionalDashboardJson,
+  requestVenueDashboardJson,
   requestVenueDancerVerificationsJson,
   requestVenueFinanceStatement,
   storedSessionAccount,
@@ -313,14 +312,16 @@ export default function DashboardClient({
 
   const refreshVenueDashboard = useCallback(async (showStatus = false) => {
     if (role !== "venue") return;
-    const authHeaders = dashboardAuthHeaders(readSession());
-    if (!authHeaders) return;
+    if (!readSession()?.accessToken) return;
     if (showStatus) {
       setIsVenueRefreshing(true);
       setVenueRefreshStatus("Refreshing live venue data…");
     }
     try {
-      const secondary = await readOptionalJson(`/api/venue/dashboard?period=${analyticsPeriod}`, authHeaders, {});
+      const secondary = await requestVenueDashboardJson(analyticsPeriod, {
+        cache: "no-store",
+        fallbackMessage: "Unable to refresh live venue data.",
+      });
       setState((current) => ({
         ...current,
         profile: secondary.profile || current.profile,

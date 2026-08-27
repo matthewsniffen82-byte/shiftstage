@@ -266,6 +266,17 @@ export function requestVenueTvVideosJson(options: DashboardJsonRequestOptions = 
   });
 }
 
+export function requestVenueDashboardJson(
+  period: "tonight" | "7d" | "30d",
+  options: DashboardJsonRequestOptions = {},
+) {
+  return requestDashboardJson(`/api/venue/dashboard?period=${encodeURIComponent(period)}`, {
+    ...options,
+    expectedRole: "venue",
+    fallbackMessage: options.fallbackMessage || "Unable to refresh live venue data.",
+  });
+}
+
 export function requestVenueTeamJson(options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson("/api/venue/team", {
     ...options,
@@ -372,21 +383,4 @@ export async function requestAgentCommissionStatement() {
     );
   }
   return response.blob();
-}
-
-export async function readJson(path: string, headers: Record<string, string>) {
-  const response = await fetch(path, { headers, cache: "no-store" });
-  const data = await response.json();
-  if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dashboard.");
-  persistResponseSession(data);
-  return data;
-}
-
-export async function readOptionalJson<T>(path: string, headers: Record<string, string>, fallback: T): Promise<T | any> {
-  try {
-    return await readJson(path, headers);
-  } catch (error) {
-    console.warn("Dashboard panel did not load", { path, message: error instanceof Error ? error.message : "Request failed" });
-    return fallback;
-  }
 }

@@ -71,7 +71,8 @@ test("venue invitations are expiring, hashed, email-bound, and service-role rede
 test("venue dashboard live operations refresh real data and expose honest working-now verification", () => {
   assert.match(dashboard, /window\.setInterval\(refreshWhenVisible, 45_000\)/);
   assert.match(dashboard, /document\.addEventListener\("visibilitychange", refreshWhenVisible\)/);
-  assert.match(dashboard, /\/api\/venue\/dashboard\?period=\$\{analyticsPeriod\}/);
+  assert.match(dashboard, /requestVenueDashboardJson\(analyticsPeriod/);
+  assert.doesNotMatch(dashboard, /readOptionalJson\(`\/api\/venue\/dashboard/);
   assert.match(dashboard, /\["tonight", "7d", "30d"\]/);
   assert.match(dashboard, /isPublished \? "LIVE" : "PRIVATE DRAFT"/);
   assert.match(dashboard, /Check-in verified/);

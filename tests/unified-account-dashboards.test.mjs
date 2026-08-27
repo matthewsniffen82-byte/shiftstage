@@ -26,6 +26,7 @@ import {
   requestDancerVenueVerificationJson,
   requestDashboardJson,
   requestOptionalDashboardJson,
+  requestVenueDashboardJson,
   requestVenueDancerVerificationsJson,
   requestVenueFinanceStatement,
   requestVenueNfcSupportJson,
@@ -121,8 +122,8 @@ test("dashboard session persistence and optional panel failures have one typed b
   assert.match(dashboardSession, /function dashboardAuthHeaders\(session: StoredDashboardSession \| null\)/);
   assert.match(dashboardSession, /function persistResponseSession/);
   assert.match(dashboardSession, /export async function requestOptionalDashboardJson/);
-  assert.match(dashboardSession, /export async function readOptionalJson/);
   assert.match(dashboardSession, /console\.warn\("Dashboard panel did not load"/);
+  assert.doesNotMatch(dashboardSession, /export async function readJson|export async function readOptionalJson/);
   assert.doesNotMatch(dashboard, /function readSession\(|function dashboardAuthHeaders\(|async function readOptionalJson/);
 });
 
@@ -1268,6 +1269,57 @@ test("venue TV loading uses the refresh-aware venue boundary", async () => {
   assert.match(venueTvPanel, /requestVenueTvVideosJson/);
   assert.doesNotMatch(venueTvPanel, /fetch\(/);
   assert.doesNotMatch(venueTvPanel, /authorization: `Bearer/);
+});
+
+test("venue live refresh uses the current role-aware session and preserves the last good state on failure", async () => {
+  const stored = new Map();
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  let capturedRequest = null;
+  globalThis.window = {
+    localStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, String(value)); },
+      removeItem(key) { stored.delete(key); },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    capturedRequest = { path, options };
+    return new Response(JSON.stringify({
+      ok: true,
+      workingNow: [{ id: "active-dancer" }],
+      session: { accessToken: "rotated-venue-access", expiresAt: 99999 },
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+
+  try {
+    stored.set(DASHBOARD_SESSION_KEY, JSON.stringify({
+      accessToken: "venue-access",
+      refreshToken: "venue-refresh",
+      account: { role: "venue" },
+    }));
+    const data = await requestVenueDashboardJson("7d", { cache: "no-store" });
+    assert.deepEqual(data.workingNow, [{ id: "active-dancer" }]);
+    assert.deepEqual(capturedRequest, {
+      path: "/api/venue/dashboard?period=7d",
+      options: {
+        cache: "no-store",
+        headers: {
+          authorization: "Bearer venue-access",
+          "x-dancr-refresh-token": "venue-refresh",
+        },
+      },
+    });
+    assert.equal(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)).accessToken, "rotated-venue-access");
+  } finally {
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
+  }
+
+  const venueRefresh = dashboard.match(/const refreshVenueDashboard[\s\S]*?\}, \[analyticsPeriod, role\]\);/)?.[0] || "";
+  assert.match(venueRefresh, /requestVenueDashboardJson\(analyticsPeriod/);
+  assert.doesNotMatch(venueRefresh, /dashboardAuthHeaders|readOptionalJson/);
+  assert.match(venueRefresh, /try \{[\s\S]*?await requestVenueDashboardJson[\s\S]*?setState[\s\S]*?\} catch \(error\)/);
 });
 
 test("venue team actions use one refresh-aware venue boundary", async () => {
