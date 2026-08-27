@@ -10708,11 +10708,12 @@ html:is(
   }
 }
 
-/* Give the stage name a real first-column track instead of positioning a
- * shrink-wrapped row. Its track starts after the avatar and shares the exact
- * width/axis used by Followers, so the avatar can never cover the name. */
+/* Keep the stage name and verified badge together as one centered unit. The
+ * unit shares the exact axis used by Followers without forcing the badge to
+ * the edge of that analytics track. */
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
+    position: relative !important;
     width: 100% !important;
     max-width: none !important;
     justify-self: stretch !important;
@@ -10724,30 +10725,41 @@ html:is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
-    position: relative !important;
-    left: auto !important;
-    width: calc((100% - 22px) / 3) !important;
-    max-width: none !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: calc(((100% - 22px) / 6) - 4px) !important;
+    width: fit-content !important;
+    max-width: min(128px, calc(100% - 38px)) !important;
     min-width: 0 !important;
-    margin-left: -4px !important;
-    transform: none !important;
-    display: flex !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: translateX(-50%) !important;
+    display: grid !important;
+    grid-template-columns: 19px auto 19px !important;
+    column-gap: 5px !important;
+    align-items: center !important;
     justify-content: center !important;
-    gap: 5px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row::before {
+    content: "";
+    grid-column: 1;
+    width: 19px;
+    height: 19px;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row h2 {
-    width: 100% !important;
-    max-width: 100% !important;
-    flex: 1 1 100% !important;
+    grid-column: 2;
+    width: auto !important;
+    max-width: 80px !important;
     text-align: center !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row .profile-modal-verified {
-    position: absolute !important;
-    top: 50% !important;
-    left: calc(100% + 3px) !important;
+    position: static !important;
+    grid-column: 3;
+    flex: 0 0 19px !important;
     margin: 0 !important;
-    transform: translateY(-50%) !important;
+    transform: none !important;
   }
 }
