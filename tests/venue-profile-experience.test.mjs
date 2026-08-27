@@ -202,7 +202,8 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?min-height: 46px !important;/);
   assert.match(refinement, /\.venue-detail-uber \{[\s\S]*?min-height: 46px !important;/);
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?min-height: 44px !important;/);
-  assert.match(refinement, /\.venue-detail-close \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;[\s\S]*?display: grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
+  assert.match(refinement, /\.venue-detail-close \{[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?display: grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
+  assert.match(refinement, /\.venue-detail-close \.icon \{[\s\S]*?width: 15px !important;[\s\S]*?height: 15px !important;[\s\S]*?stroke-width: 1\.85 !important;/);
   assert.match(refinement, /\.venue-hero \+ :is\(\.venue-activity-section, \.venue-activity-empty\) \{[\s\S]*?margin-top: 4px;/);
   assert.match(refinement, /\.venue-contact-details summary \{[\s\S]*?min-height: 44px;[\s\S]*?cursor: pointer;/);
   assert.match(refinement, /padding-bottom: max\(112px, calc\(94px \+ env\(safe-area-inset-bottom, 0px\)\)\) !important;/);
@@ -234,7 +235,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     liveApp,
-    /class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} club profile"/,
+    /class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>/,
   );
   assert.match(
     liveApp,
@@ -274,7 +275,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     aesthetic,
-    /\.venue-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?top: 12px !important;[\s\S]*?right: 4px !important;/,
+    /\.venue-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?top: 12px !important;[\s\S]*?right: 4px !important;[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?min-height: 36px !important;/,
   );
   assert.match(
     liveApp,

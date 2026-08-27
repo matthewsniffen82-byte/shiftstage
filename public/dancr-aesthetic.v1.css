@@ -5700,7 +5700,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-close {
-  border-color: var(--dancr-color-border-strong) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-secondary) !important;
   background: var(--dancr-color-surface-raised) !important;
   box-shadow: none !important;
@@ -5709,7 +5709,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-close[data-auto-focus]:is(:focus, :focus-visible) {
-  border-color: var(--dancr-color-border-strong) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   outline: 0 !important;
   color: var(--dancr-color-text-secondary) !important;
   background: var(--dancr-color-surface-raised) !important;
@@ -7288,9 +7288,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   position: absolute !important;
   top: 12px !important;
   right: 4px !important;
-  width: 44px !important;
-  height: 44px !important;
-  min-height: 44px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
   padding: 0 !important;
   display: grid !important;
   place-items: center !important;
@@ -7299,9 +7299,10 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-close .icon {
-  width: 20px !important;
-  height: 20px !important;
+  width: 15px !important;
+  height: 15px !important;
   margin: 0 !important;
+  stroke-width: 1.85 !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
