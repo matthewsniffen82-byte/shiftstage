@@ -1,10 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import {
-  adminAuthHeaders as authHeaders,
-  persistRefreshedAdminSession as persistRefreshedSession,
-} from "./admin-session";
+import { requestAdminJson } from "./admin-session";
 
 type VenueOption = {
   id: string;
@@ -39,17 +36,12 @@ export default function AdminNfcInventoryPanel() {
   const [isSaving, setIsSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const headers = authHeaders();
-    if (!headers) {
-      setIsLoading(false);
-      return setStatus("Admin sign in required.");
-    }
     setIsLoading(true);
     try {
-      const response = await fetch("/api/admin/nfc-tags", { headers, cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load NFC inventory.");
-      persistRefreshedSession(data.session);
+      const data = await requestAdminJson("/api/admin/nfc-tags", {
+        cache: "no-store",
+        fallbackMessage: "Unable to load NFC inventory.",
+      });
       setVenues(data.venues || []);
       setTags(data.tags || []);
       setVenueId((current) => current || data.venues?.[0]?.id || "");
@@ -67,19 +59,15 @@ export default function AdminNfcInventoryPanel() {
 
   async function provision(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const headers = authHeaders();
-    if (!headers) return setStatus("Admin sign in required.");
     setIsSaving(true);
     setProgrammingUrl("");
     try {
-      const response = await fetch("/api/admin/nfc-tags", {
+      const data = await requestAdminJson("/api/admin/nfc-tags", {
         method: "POST",
-        headers: { ...headers, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, type, label }),
+        fallbackMessage: "Unable to assign NFC sticker.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to assign NFC sticker.");
-      persistRefreshedSession(data.session);
       setProgrammingUrl(data.programmingUrl || "");
       setStatus(data.message || "Sticker assigned.");
       await load();
@@ -92,19 +80,15 @@ export default function AdminNfcInventoryPanel() {
 
   async function update(tag: AdminNfcTag, action: "enable" | "disable" | "rotate") {
     if (action === "rotate" && !window.confirm(`Revoke ${tag.venue.name} · ${tag.label} and issue a replacement programming URL?`)) return;
-    const headers = authHeaders();
-    if (!headers) return setStatus("Admin sign in required.");
     setIsSaving(true);
     setProgrammingUrl("");
     try {
-      const response = await fetch("/api/admin/nfc-tags", {
+      const data = await requestAdminJson("/api/admin/nfc-tags", {
         method: "PATCH",
-        headers: { ...headers, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ tagId: tag.id, action }),
+        fallbackMessage: "Unable to update NFC sticker.",
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update NFC sticker.");
-      persistRefreshedSession(data.session);
       setProgrammingUrl(data.programmingUrl || "");
       setStatus(data.message || "Sticker updated.");
       await load();

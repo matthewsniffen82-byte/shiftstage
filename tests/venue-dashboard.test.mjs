@@ -206,6 +206,9 @@ test("authenticated MyDancr admins provision, disable, and replace physical NFC 
   assert.match(adminNfcRoute, /createAdminVenueNfcTag/);
   assert.match(adminNfcRoute, /rotateAdminVenueNfcTag/);
   assert.match(adminNfcRoute, /setAdminVenueNfcTagStatus/);
+  assert.match(adminNfcPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
+  assert.equal((adminNfcPanel.match(/requestAdminJson\("\/api\/admin\/nfc-tags"/g) || []).length, 3);
+  assert.doesNotMatch(adminNfcPanel, /adminAuthHeaders|persistRefreshedAdminSession|authorization:|fetch\("\/api\/admin\/nfc-tags"/);
   assert.match(adminNfcPanel, /Assign sticker/);
   assert.match(adminNfcPanel, /Shown once — program the physical sticker now/);
   assert.match(adminNfcPanel, /Do not send this URL to venue staff/);

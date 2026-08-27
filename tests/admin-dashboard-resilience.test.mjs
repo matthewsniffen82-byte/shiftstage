@@ -235,8 +235,9 @@ test("admin mutations reject non-admin browser sessions before making a request"
 });
 
 test("every routed admin subpanel consumes the canonical role-aware session boundary", () => {
-  assert.match(nfcPanel, /adminAuthHeaders as authHeaders/);
-  assert.match(nfcPanel, /persistRefreshedAdminSession as persistRefreshedSession/);
+  assert.match(nfcPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
+  assert.equal((nfcPanel.match(/requestAdminJson\("\/api\/admin\/nfc-tags"/g) || []).length, 3);
+  assert.doesNotMatch(nfcPanel, /adminAuthHeaders|persistRefreshedAdminSession|authorization:|fetch\("\/api\/admin\/nfc-tags"/);
   assert.match(dmcaPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
   assert.equal((dmcaPanel.match(/requestAdminJson\("\/api\/admin\/dmca"/g) || []).length, 3);
   assert.doesNotMatch(dmcaPanel, /readAdminAccessToken|authorization:|fetch\("\/api\/admin\/dmca"/);
