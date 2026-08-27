@@ -24,7 +24,7 @@ test("upcoming schedule guidance stays compact without reserving a no-shift deal
   assert.match(liveApp, /profile-shift-card schedule-upcoming/);
   assert.match(liveApp, /Upcoming · \$\{escapeHtml\(upcomingDateLabel\)\}/);
   assert.match(liveApp, /function profileDealTileMarkup\(profile\)[\s\S]*?if \(state\.key === "available"\)[\s\S]*?profile-club-deal-tile is-inactive/);
-  assert.match(liveApp, /label: "Club deal available after check-in"[\s\S]*?Deals activate after a verified check-in/);
+  assert.match(liveApp, /label: "Going tonight\? View the Club Deal"[\s\S]*?Deals activate after a verified check-in/);
   assert.match(liveApp, /label: "No active club deal"[\s\S]*?Deals activate after a verified club check-in\./);
   assert.doesNotMatch(liveApp, /Unlocks after you verify you're working and the venue has an active offer\./);
   assert.doesNotMatch(liveApp, /This is the dancer's next posted shift\. Follow or turn on notifications for schedule updates\./);

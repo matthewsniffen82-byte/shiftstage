@@ -271,7 +271,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           ) : actionShift ? (
             <div className="profile-tonight-deal">
               <p className="profile-deal-availability-line">
-                {activeShift ? "No active club deal" : "Club deal available after check-in"}
+                {activeShift ? "No active club deal" : "Going tonight? View the Club Deal"}
               </p>
             </div>
           ) : null}
