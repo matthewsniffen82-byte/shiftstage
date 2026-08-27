@@ -646,7 +646,7 @@ function PublicProfileStyles() {
       .profile-tonight-card.is-now { background: radial-gradient(circle at 94% 0%, rgba(77,236,157,.045), transparent 13rem), rgba(7,14,13,.94); }
       .profile-tonight-card.is-now::before, .profile-tonight-card.has-club-deal::before { border-color: rgba(77,236,157,.38); }
       .profile-tonight-card.is-upcoming { background: radial-gradient(circle at 94% 0%, rgba(34,211,238,.045), transparent 13rem), rgba(7,12,16,.94); }
-      .profile-tonight-card.is-upcoming::before { border-color: rgba(34,211,238,.38); }
+      .profile-tonight-card.is-upcoming::before { border-color: rgba(34,211,238,.55); }
       .profile-tonight-card.is-no-schedule { background: radial-gradient(circle at 94% 0%, rgba(255,255,255,.035), transparent 13rem), rgba(9,9,13,.94); }
       .profile-tonight-card.has-club-deal { border-color: transparent; box-shadow: 0 12px 32px rgba(0,0,0,.3); }
       .profile-tonight-card > .profile-shift-card { width: 100%; min-height: 52px; margin: 0; padding: 4px 8px !important; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
