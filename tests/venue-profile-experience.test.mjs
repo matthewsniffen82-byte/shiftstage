@@ -202,6 +202,10 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?min-height: 46px !important;/);
   assert.match(refinement, /\.venue-detail-uber \{[\s\S]*?min-height: 46px !important;/);
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?min-height: 44px !important;/);
+  assert.match(refinement, /Club-detail action hierarchy[\s\S]*?\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?height: 46px !important;[\s\S]*?border-radius: 12px !important;[\s\S]*?blur\(12px\)/);
+  assert.match(refinement, /Club-detail action hierarchy[\s\S]*?\.venue-secondary-actions \.action-btn \{[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 11px !important;[\s\S]*?var\(--dancr-color-surface\) 68%/);
+  assert.match(refinement, /\.venue-secondary-actions \.follow-venue-btn\.is-following \{[\s\S]*?var\(--dancr-color-brand-primary\) 12%/);
+  assert.match(refinement, /\.venue-secondary-actions \.venue-detail-share\.is-confirmed \{[\s\S]*?var\(--dancr-color-success\) 6%/);
   assert.match(refinement, /\.venue-detail-close \{[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?display: grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
   assert.match(refinement, /\.venue-detail-close \.icon \{[\s\S]*?width: 15px !important;[\s\S]*?height: 15px !important;[\s\S]*?stroke-width: 1\.85 !important;/);
   assert.match(refinement, /\.venue-hero \+ :is\(\.venue-activity-section, \.venue-activity-empty\) \{[\s\S]*?margin-top: 4px;/);
