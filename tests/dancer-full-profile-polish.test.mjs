@@ -249,7 +249,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   assert.doesNotMatch(publicProfilePage, /className="profile-overview"/);
 });
 
-test("profile action controls are unboxed and Going highlights only its icon", () => {
+test("profile action controls are unboxed and available Going highlights only its icon", () => {
   const guestActionsBlock = aesthetic.match(
     /\/\* Guest actions read as a single icon row[\s\S]*?(?=\/\* Production TV-card branding)/,
   )?.[0] || "";
@@ -271,7 +271,11 @@ test("profile action controls are unboxed and Going highlights only its icon", (
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?background: transparent !important;/,
+    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?background: transparent !important;/,
+  );
+  assert.match(
+    guestActionsBlock,
+    /going-btn\.is-available-action \.action-icon > svg,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-preview-icon \{[\s\S]*?drop-shadow\(0 0 5px var\(--dancr-color-brand-primary-medium\)\) !important;/,
   );
   assert.match(
     guestActionsBlock,
@@ -319,11 +323,11 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Keep the complete stage name visible while aligning its start[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?width: calc\(100% - clamp\(8px, 2\.5vw, 12px\)\) !important;[\s\S]*?margin-left: clamp\(8px, 2\.5vw, 12px\) !important;[\s\S]*?display: flex !important;[\s\S]*?justify-content: flex-start !important;/,
+    /Center the first analytic in the visual gap between Follow and Notify[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?margin-left: -4px !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?width: calc\(\(\(100% - 22px\) \/ 3\) \+ 28px\) !important;[\s\S]*?margin-left: -18px !important;[\s\S]*?display: flex !important;[\s\S]*?justify-content: center !important;/,
   );
   assert.match(
     aesthetic,
-    /#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: auto !important;[\s\S]*?flex: 0 1 auto !important;[\s\S]*?text-align: left !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?width: auto !important;[\s\S]*?max-width: calc\(100% - 24px\) !important;[\s\S]*?flex: 0 1 auto !important;[\s\S]*?text-align: center !important;/,
   );
   assert.match(
     aesthetic,
