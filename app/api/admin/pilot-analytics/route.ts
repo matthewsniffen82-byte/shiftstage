@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const params = new URL(request.url).searchParams;
     const venueId = requiredUuid(params.get("venueId"), "Pilot venue is required.");
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const endDate = requiredText(params.get("endDate"), "Pilot end date is required.");
     validatePilotDateRange(startDate, endDate);
     const analytics = await getAdminPilotAnalytics(createAdminSupabaseClient(), venueId, startDate, endDate);
-    return NextResponse.json({ ok: true, analytics });
+    return NextResponse.json({ ok: true, analytics, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load pilot analytics.", isInputError(error) ? 400 : 500);
   }
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const body = await request.json().catch(() => ({}));
     const venueId = requiredUuid(body.venueId, "Pilot venue is required.");
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       pilotCostCents,
       notes: typeof body.notes === "string" ? body.notes : null,
     });
-    return NextResponse.json({ ok: true, report });
+    return NextResponse.json({ ok: true, report, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to save the pilot night report.", isInputError(error) ? 400 : 500);
   }

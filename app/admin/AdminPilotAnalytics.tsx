@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { AdminPilotAnalytics } from "@/src/lib/dancr/pilot-analytics";
-import { readAdminAccessToken as readAdminToken } from "./admin-session";
+import { requestAdminJson } from "./admin-session";
 
 type VenueRecord = Record<string, unknown>;
 
@@ -46,7 +46,10 @@ export default function AdminPilotAnalytics({
     setError("");
     try {
       const params = new URLSearchParams({ venueId, startDate, endDate });
-      const data = await pilotJson(`/api/admin/pilot-analytics?${params}`, { signal });
+      const data = await requestAdminJson(`/api/admin/pilot-analytics?${params}`, {
+        signal,
+        fallbackMessage: "Unable to load pilot analytics.",
+      });
       setAnalytics(data.analytics || null);
     } catch (loadError) {
       if (loadError instanceof DOMException && loadError.name === "AbortError") return;
@@ -87,10 +90,11 @@ export default function AdminPilotAnalytics({
     setIsSaving(true);
     setError("");
     try {
-      await pilotJson("/api/admin/pilot-analytics", {
+      await requestAdminJson("/api/admin/pilot-analytics", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, serviceDate: reportDate, totalDoorCount, pilotCostCents, notes }),
+        fallbackMessage: "Unable to save nightly pilot totals.",
       });
       await loadAnalytics();
       onActionConfirmed(`Pilot totals saved for ${formatServiceDate(reportDate)}.`);
@@ -343,17 +347,6 @@ function localDate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
-
-async function pilotJson(path: string, init: RequestInit = {}) {
-  const token = readAdminToken();
-  if (!token) throw new Error("Admin sign in required.");
-  const headers = new Headers(init.headers);
-  headers.set("authorization", `Bearer ${token}`);
-  const response = await fetch(path, { ...init, headers });
-  const data = await response.json().catch(() => null);
-  if (!response.ok || !data?.ok) throw new Error(data?.error || "Unable to complete the pilot analytics request.");
-  return data;
 }
 
 function formatRate(value: number | null) {

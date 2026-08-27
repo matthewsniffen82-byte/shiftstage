@@ -10,7 +10,8 @@ const [route, client, migration] = await Promise.all([
 ]);
 
 test("pilot API requires an authenticated administrator and production records", () => {
-  assert.match(route, /createRequestSupabaseContext\(request\)/);
+  assert.equal((route.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
+  assert.equal((route.match(/session: session \|\| null/g) || []).length, 2);
   assert.match(route, /await requireAdmin\(client, user\.id\)/);
   assert.match(route, /getAdminPilotAnalytics\(createAdminSupabaseClient\(\)/);
   assert.match(route, /upsertAdminPilotNightReport\(createAdminSupabaseClient\(\), user\.id/);
@@ -29,6 +30,9 @@ test("pilot night totals are admin-only, constrained, and auditable", () => {
 });
 
 test("pilot dashboard explains and exports proof-of-arrival metrics", () => {
+  assert.match(client, /import \{ requestAdminJson \} from "\.\/admin-session"/);
+  assert.equal((client.match(/requestAdminJson\(/g) || []).length, 2);
+  assert.doesNotMatch(client, /readAdminAccessToken|authorization:|function pilotJson\(|fetch\(/);
   for (const copy of [
     "Verified arrivals",
     "Attributable door share",
