@@ -183,6 +183,9 @@ test("all circular public identity surfaces prefer the approved avatar with main
   assert.match(dancerProfile, /const avatarPhoto = profile\.avatarPhotoUrl \|\| heroPhoto/);
   assert.match(tvFeed, /video\.dancer\.avatarPhotoUrl/);
   assert.match(liveShell, /function publicAvatarPhotoUrl\(profile\)/);
-  assert.match(liveShell, /publicAvatarPhotoUrl\(profile\),[\s\S]*?profile\.avatarPhotoFocalX/);
+  assert.match(
+    liveShell,
+    /const avatarUrl = publicAvatarPhotoUrl\(profile\);[\s\S]*?nativeResponsivePhotoAttrs\([\s\S]*?profile\.avatarPhotoFocalX/,
+  );
   assert.match(liveShell, /item\?\.dancer\?\.avatarPhotoUrl \|\| item\?\.dancer\?\.primaryPhotoUrl/);
 });

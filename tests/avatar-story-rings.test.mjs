@@ -59,7 +59,7 @@ test("the border wrapper cannot change avatar size, spacing, shadows, badges, or
 test("every production circular avatar contains the new border wrapper", () => {
   assert.match(liveShell, /class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar[\s\S]*?id="modalProfileAvatarBorder" data-dancer-avatar-border/);
   assert.match(liveShell, /class="approved-avatar-preview\$\{avatarPreviewAttrs\.className\}"\$\{avatarPreviewAttrs\.style\} data-dancer-avatar[\s\S]*?<span data-dancer-avatar-border/);
-  assert.match(liveShell, /class="\$\{classPrefix\}-lineup-avatar\$\{attrs\.className\}"\$\{attrs\.style\} data-dancer-avatar[^`]+data-dancer-avatar-border/);
+  assert.match(liveShell, /class="\$\{classPrefix\}-lineup-avatar" data-dancer-avatar[^`]+data-dancer-avatar-border/);
   assert.match(liveShell, /dancerPhoto\.setAttribute\("data-dancer-avatar", ""\)[\s\S]*?dancerPhotoBorder\.setAttribute\("data-dancer-avatar-border", ""\)/);
   assert.match(liveShell, /modalProfileAvatarBorder\.textContent = avatarPhotoUrl/);
   assert.match(publicProfile, /data-dancer-avatar=""[\s\S]*?data-dancer-avatar-border=""/);
@@ -134,6 +134,9 @@ test("working-now avatars keep one complete live-teal ring with NOW reserved for
 });
 
 test("venue-card lineup avatars use one stable circular paint layer while scrolling", () => {
+  const lineupBuilder = liveShell.match(
+    /function venueLineupMarkup\(venue, city, options = \{\}\) \{[\s\S]*?(?=\n    function venueCardQrMarkup)/,
+  )?.[0] || "";
   const lineupLayoutRule = wrapperRules.match(
     /body\.dancr-button-system :is\(\s*\.home-venue-discovery-lineup-avatar,\s*\.venue-card-lineup-avatar\s*\) \{[\s\S]*?\n\}/,
   )?.[0] || "";
@@ -150,11 +153,27 @@ test("venue-card lineup avatars use one stable circular paint layer while scroll
   assert.match(lineupLayoutRule, /background-image: none !important;/);
   assert.match(lineupLayoutRule, /box-shadow: none !important;/);
   assert.ok(lineupBorderRule);
-  assert.match(lineupBorderRule, /background-image: var\(--custom-photo, none\) !important;/);
-  assert.match(lineupBorderRule, /background-position: var\(--custom-photo-position, center\) !important;/);
-  assert.match(lineupBorderRule, /background-size: cover !important;/);
+  assert.match(lineupBorderRule, /background-image: none !important;/);
   assert.ok(lineupLiveRule);
   assert.match(lineupLiveRule, /box-shadow: var\(--dancr-shadow-avatar-live\) !important;/);
+  assert.ok(lineupBuilder);
+  assert.match(lineupBuilder, /nativeResponsivePhotoAttrs\(/);
+  assert.match(lineupBuilder, /class="venue-lineup-avatar-photo"/);
+  assert.match(lineupBuilder, /loading="eager" decoding="async"/);
+  assert.doesNotMatch(lineupBuilder, /customAvatarPhotoAttrs\(/);
+  assert.match(
+    aesthetic,
+    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?home-venue-discovery-lineup-avatar \.venue-lineup-avatar-photo \{[\s\S]*?animation: none !important;[\s\S]*?-webkit-filter: none !important;[\s\S]*?transform: none !important;[\s\S]*?transition: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /home-venue-discovery-lineup-avatar \{[\s\S]*?border-color: transparent !important;[\s\S]*?background-color: transparent !important;/,
+  );
+  const compactLineupSizeRule = aesthetic.match(
+    /:is\(\.home-venue-discovery-lineup-avatar, \.home-venue-discovery-lineup-count\) \{[\s\S]*?\n  \}/,
+  )?.[0] || "";
+  assert.ok(compactLineupSizeRule);
+  assert.doesNotMatch(compactLineupSizeRule, /box-shadow:/);
   assert.doesNotMatch(
     `${lineupLayoutRule}\n${lineupBorderRule}\n${lineupLiveRule}`,
     /translateZ|backface-visibility|will-change|mask-image|clip-path/,

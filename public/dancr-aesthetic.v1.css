@@ -1406,8 +1406,8 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-venue
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup-avatar {
-  border-color: rgba(7, 8, 10, 0.96) !important;
-  background-color: #111216 !important;
+  border-color: transparent !important;
+  background-color: transparent !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup-count {
@@ -5213,10 +5213,22 @@ body.dancr-button-system :is(
     .venue-card-lineup-avatar
   ) > [data-dancer-avatar-border] {
   background-color: var(--dancr-color-surface-raised) !important;
-  background-image: var(--custom-photo, none) !important;
-  background-position: var(--custom-photo-position, center) !important;
+  background-image: none !important;
   background-repeat: no-repeat !important;
-  background-size: cover !important;
+}
+
+body.dancr-button-system :is(
+    .home-venue-discovery-lineup-avatar,
+    .venue-card-lineup-avatar
+  ) > [data-dancer-avatar-border] > .venue-lineup-avatar-photo {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system :is(
@@ -9430,6 +9442,26 @@ body.dancr-button-system > .app main.stack > section.stack
     isolation: auto !important;
     opacity: 1 !important;
   }
+
+  /* Native images keep the small live lineup portraits in WebKit's ordinary
+   * paint flow. Avoid animated or filtered avatar layers while an iPhone is
+   * momentum-scrolling the paint-contained venue cards. */
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-lineup-avatar,
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-lineup-avatar > [data-dancer-avatar-border],
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-lineup-avatar .venue-lineup-avatar-photo {
+    animation: none !important;
+    -webkit-filter: none !important;
+    filter: none !important;
+    -webkit-transform: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* The venue-card shade is still required for copy legibility. On Android,
@@ -9695,6 +9727,11 @@ html:is(
     :is(.home-venue-discovery-lineup-avatar, .home-venue-discovery-lineup-count) {
     width: 32px !important;
     height: 32px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-lineup-count {
     box-shadow: 0 7px 18px rgba(0, 0, 0, 0.42) !important;
   }
 

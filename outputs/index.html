@@ -51154,13 +51154,18 @@
       const remaining = liveProfiles.length - profiles.length;
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
       const avatars = profiles.map((profile) => {
-        const attrs = customAvatarPhotoAttrs(
-          publicAvatarPhotoUrl(profile),
-          publicAvatarPhotoSrcSet(profile),
-          profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
-          profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
+        const avatarUrl = publicAvatarPhotoUrl(profile);
+        const nativePhotoAttrs = nativeResponsivePhotoAttrs(
+          avatarUrl,
+          publicAvatarPhotoSrcSet(profile)
         );
-        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true"></span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
+        const avatarPhoto = avatarUrl && nativePhotoAttrs
+          ? `<img class="venue-lineup-avatar-photo" ${nativePhotoAttrs} sizes="32px" width="64" height="64" style="object-position: ${avatarPhotoPosition(
+              profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
+              profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
+            )}" alt="" aria-hidden="true" loading="eager" decoding="async" draggable="false">`
+          : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
+        return `<span class="${classPrefix}-lineup-avatar" data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
       }).join("");
       const remainingMarkup = !options.mobile && remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
