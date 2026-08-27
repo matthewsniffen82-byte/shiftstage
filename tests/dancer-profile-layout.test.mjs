@@ -389,6 +389,18 @@ test("Upcoming Shift mirrors the compact current-shift row with cyan status cues
     liveApp,
     /#profileBackdrop \.schedule-upcoming \.profile-venue-destination\.is-upcoming > \.venue-dot \{[\s\S]*?width: 18px !important;[\s\S]*?height: 18px !important;[\s\S]*?border: 0 !important;[\s\S]*?color: #7eeaff !important;[\s\S]*?background: transparent !important;/,
   );
+  assert.match(
+    aesthetic,
+    /Upcoming carries the same truthful state relationship as its cyan avatar[\s\S]*?profile-tonight-card\.is-upcoming \{[\s\S]*?var\(--dancr-color-info\) 11%[\s\S]*?var\(--dancr-color-info\) 8%/,
+  );
+  assert.match(
+    aesthetic,
+    /schedule-upcoming > \.profile-schedule-primary,[\s\S]*?profile-upcoming-state \{[\s\S]*?color: var\(--dancr-color-info\) !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /profile-tonight-travel-actions\.is-upcoming > :is\(\.profile-primary-directions, \.profile-directions-button\)[\s\S]*?border-color: var\(--dancr-color-info-medium\) !important;[\s\S]*?var\(--dancr-color-info\) 9%/,
+  );
 });
 
 test("No Schedule mirrors the compact shift hierarchy with a neutral state", () => {

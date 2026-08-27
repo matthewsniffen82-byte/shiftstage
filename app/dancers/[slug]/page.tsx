@@ -645,8 +645,8 @@ function PublicProfileStyles() {
       .profile-tonight-card::before { position: absolute; z-index: 5; inset: 0; content: ""; pointer-events: none; border: 2px solid rgba(255,255,255,.13); border-radius: inherit; }
       .profile-tonight-card.is-now { background: radial-gradient(circle at 94% 0%, rgba(77,236,157,.045), transparent 13rem), rgba(7,14,13,.94); }
       .profile-tonight-card.is-now::before, .profile-tonight-card.has-club-deal::before { border-color: rgba(77,236,157,.38); }
-      .profile-tonight-card.is-upcoming { background: radial-gradient(circle at 94% 0%, rgba(126,234,255,.07), transparent 13rem), rgba(7,12,16,.94); }
-      .profile-tonight-card.is-upcoming::before { border-color: rgba(126,234,255,.46); }
+      .profile-tonight-card.is-upcoming { background: radial-gradient(circle at 94% 0%, rgba(34,211,238,.11), transparent 13rem), linear-gradient(145deg, rgba(8,27,32,.96), rgba(6,11,15,.98)); }
+      .profile-tonight-card.is-upcoming::before { border-color: rgba(34,211,238,.54); }
       .profile-tonight-card.is-no-schedule { background: radial-gradient(circle at 94% 0%, rgba(255,255,255,.035), transparent 13rem), rgba(9,9,13,.94); }
       .profile-tonight-card.has-club-deal { border-color: transparent; box-shadow: 0 12px 32px rgba(0,0,0,.3); }
       .profile-tonight-card > .profile-shift-card { width: 100%; min-height: 52px; margin: 0; padding: 4px 8px !important; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
@@ -660,6 +660,8 @@ function PublicProfileStyles() {
       .profile-tonight-travel-actions:is(.is-working-now, .is-upcoming, .is-no-schedule) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 44px !important; min-height: 44px !important; max-height: 44px !important; padding-inline: 10px !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 10px !important; color: rgba(248,250,252,.94) !important; background: rgba(255,255,255,.055) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important; font-size: 11px !important; opacity: 1 !important; }
       .profile-tonight-travel-actions > .profile-directions-button { border-color: rgba(226,232,240,.18) !important; background: linear-gradient(180deg, rgba(255,255,255,.065), transparent 52%), rgba(12,13,16,.86) !important; }
+      .profile-tonight-travel-actions.is-upcoming > .profile-directions-button { border-color: rgba(34,211,238,.32) !important; background: linear-gradient(180deg, rgba(34,211,238,.09), transparent 58%), rgba(7,18,22,.9) !important; }
+      .profile-tonight-travel-actions.is-upcoming > .profile-directions-button svg { color: #22d3ee; stroke: currentColor; }
       .profile-tonight-travel-actions > :is(a, button) :is(svg, span) { opacity: 1 !important; }
       .profile-tonight-travel-actions > .profile-travel-placeholder { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: rgba(169,163,175,.58) !important; border-color: rgba(255,255,255,.08) !important; background: rgba(255,255,255,.025) !important; box-shadow: none !important; font: inherit; font-size: 11px; font-weight: 900; cursor: default; }
       .profile-tonight-travel-actions > .profile-travel-placeholder svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -678,6 +680,7 @@ function PublicProfileStyles() {
       .profile-upcoming-copy { min-width: 0; }
       .profile-upcoming-copy strong { display: block; overflow: hidden; color: #fff; font-size: 14px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
       .profile-upcoming-cue { color: #7eeaff; font-size: 23px; line-height: 1; }
+      .profile-upcoming-destination .profile-venue-pin { color: #22d3ee; stroke: currentColor; }
       .shift-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
       .shift-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 14px; border: 1px solid rgba(255,255,255,.085); border-radius: 14px; color: #f7f2ff; background: rgba(255,255,255,.035); text-decoration: none; }
       .shift-date { grid-column: 1 / -1; color: #94e5ff; font-size: 10px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }

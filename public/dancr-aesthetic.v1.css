@@ -3436,6 +3436,48 @@ body.dancr-button-system .public-profile-shell .profile-schedule-section .shift-
   color: var(--dancr-color-text-primary) !important;
 }
 
+/* Upcoming carries the same truthful state relationship as its cyan avatar
+ * ring. The surface remains restrained so Working Now keeps priority. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-upcoming,
+body.dancr-button-system .public-profile-shell .profile-tonight-card.is-upcoming {
+  border-color: transparent !important;
+  background:
+    radial-gradient(circle at 94% 0%, color-mix(in srgb, var(--dancr-color-info) 11%, transparent), transparent 13rem),
+    linear-gradient(145deg, color-mix(in srgb, var(--dancr-color-info) 8%, #071014), #060b0f) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-upcoming::before,
+body.dancr-button-system .public-profile-shell .profile-tonight-card.is-upcoming::before {
+  border-color: color-mix(in srgb, var(--dancr-color-info) 54%, transparent) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .schedule-upcoming > .profile-schedule-primary,
+body.dancr-button-system .public-profile-shell .profile-upcoming-state {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .schedule-upcoming .profile-venue-destination.is-upcoming > :is(.venue-dot, .profile-venue-cue),
+body.dancr-button-system .public-profile-shell .profile-upcoming-destination :is(.profile-venue-pin, .profile-upcoming-cue) {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions.is-upcoming,
+body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions.is-upcoming {
+  border-top-color: var(--dancr-color-info-soft) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions.is-upcoming > :is(.profile-primary-directions, .profile-directions-button),
+body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions.is-upcoming > :is(.profile-primary-directions, .profile-directions-button) {
+  border-color: var(--dancr-color-info-medium) !important;
+  background: color-mix(in srgb, var(--dancr-color-info) 9%, var(--dancr-color-surface)) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions.is-upcoming > :is(.profile-primary-directions, .profile-directions-button) :is(svg, .action-icon),
+body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions.is-upcoming > :is(.profile-primary-directions, .profile-directions-button) :is(svg, .action-icon) {
+  color: var(--dancr-color-info) !important;
+  stroke: currentColor !important;
+}
+
 body.dancr-button-system #profileBackdrop .profile-schedule-explanation,
 body.dancr-button-system .public-profile-shell .profile-schedule-section :is(p, .shift-time),
 body.dancr-button-system .public-profile-shell .profile-section-heading > span {
