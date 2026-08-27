@@ -4043,7 +4043,7 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
     min-width: 0 !important;
     position: relative !important;
-    z-index: 2 !important;
+    z-index: 5 !important;
     display: grid !important;
     grid-template-rows: 48px 14px !important;
     justify-items: center !important;
@@ -10089,7 +10089,7 @@ html:is(
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
     min-width: 0 !important;
     position: relative !important;
-    z-index: 2 !important;
+    z-index: 5 !important;
     display: grid !important;
     grid-template-rows: 48px 14px !important;
     justify-items: center !important;
