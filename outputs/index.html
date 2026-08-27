@@ -48683,8 +48683,8 @@
                 <p>${hasMultipleActiveDeals ? `${activeDealCount} active offers are available tonight.` : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
-                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="${hasMultipleActiveDeals ? `View ${activeDealCount} Club Deals` : `Get Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}`}">
-                  <strong>${hasMultipleActiveDeals ? `View ${activeDealCount} Club Deals` : "Get Club Deal"}</strong>
+                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="${hasMultipleActiveDeals ? `View ${activeDealCount} Club Deals` : `View Deal: ${escapeHtml(venue.activeDeal.dealTitle)}`}">
+                  <strong>${hasMultipleActiveDeals ? `View ${activeDealCount} Club Deals` : "View Deal"}</strong>
                   <span aria-hidden="true">›</span>
                 </button>
               </div>
@@ -48725,7 +48725,7 @@
       if (available) {
         return {
           key: "available",
-          label: "Get Club Deal",
+          label: "View Deal",
           detail: profile?.dealAttributionToken
             ? "A tracked Club Deal is available during this verified check-in."
             : "This club has an active Club Deal available now."
@@ -58181,9 +58181,9 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", "Deals")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
       }
-      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deals status at ${venueName}">${actionButtonLabel("qr", "Deals")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deals status at ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
@@ -59858,7 +59858,7 @@
       if (available) {
         return {
           key: "available",
-          label: "Get Club Deal",
+          label: "View Deal",
           detail: "A tracked Club Deal is available during this verified check-in."
         };
       }
@@ -59954,7 +59954,7 @@
         const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
         deal.setAttribute("aria-label", `Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} for ${venueName}`);
         deal.title = offerCount > 1 ? `${offerCount} Club Deals` : dealTitle;
-        deal.insertAdjacentHTML("beforeend", '<span class="home-tv-feed-deal-count">Deals</span>');
+        deal.insertAdjacentHTML("beforeend", '<span class="home-tv-feed-deal-count">Club Deals</span>');
         deal.dataset.clubDealCta = encodeDealPass({
           deal: item.deal,
           deals: item.deals,

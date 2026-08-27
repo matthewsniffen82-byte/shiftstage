@@ -110,7 +110,7 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
   )?.[0] || "";
   assert.match(
     venueOffer,
-    /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Get Club Deal/,
+    /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?View Deal/,
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
   assert.match(venueOffer, /activeDealCount[\s\S]*?hasMultipleActiveDeals[\s\S]*?\$\{activeDealCount\} Club Deals[\s\S]*?View \$\{activeDealCount\} Club Deals/);
@@ -150,7 +150,7 @@ test("venue deal previews collapse without an active deal and adapt to one or mu
   assert.match(singleOffer, new RegExp(longTitle));
   assert.match(singleOffer, new RegExp(longDescription));
   assert.match(singleOffer, /data-club-deal-cta="encoded-deal"/);
-  assert.match(singleOffer, />Get Club Deal</);
+  assert.match(singleOffer, />View Deal</);
   assert.doesNotMatch(singleOffer, /clubDealQrSymbolMarkup|venue-detail-club-deal-symbol|<svg/i);
 
   const multipleOffers = venueOfferMarkup({

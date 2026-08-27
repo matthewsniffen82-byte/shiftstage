@@ -554,7 +554,7 @@ function CustomerDashboardTabs() {
     <nav className="customer-dashboard-tabs" aria-label="Guest dashboard sections">
       <a href="#customer-tonight" onClick={(event) => openDashboardSection(event, "customer-tonight")}>Tonight</a>
       <a href="#customer-saved" onClick={(event) => openDashboardSection(event, "customer-saved")}>Saved</a>
-      <a href="#customer-offers" onClick={(event) => openDashboardSection(event, "customer-offers")}>Deals</a>
+      <a href="#customer-offers" onClick={(event) => openDashboardSection(event, "customer-offers")}>Club Deals</a>
       <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}>Alerts</a>
       <a href="#customer-settings" onClick={(event) => openDashboardSection(event, "customer-settings")}>Settings</a>
     </nav>

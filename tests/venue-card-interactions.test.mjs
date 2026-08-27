@@ -65,7 +65,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Deals"\)[\s\S]*?data-card-qr-label="Club Deal unavailable"/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-card-qr-label="Club Deal unavailable"/,
   );
   const venueSwipeQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,

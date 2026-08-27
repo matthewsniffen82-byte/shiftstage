@@ -19,11 +19,11 @@ test("venue-card secondary actions use compact labels and retain accessible name
   assert.doesNotMatch(venueSlide, /actionIconMarkup\("clubProfile"\)|actionIconMarkup\("share"\)/);
 });
 
-test("venue cards retain Deal availability states while TV renders Deals only when active", () => {
-  assert.match(liveShell, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?is-available[\s\S]*?actionButtonLabel\("qr", "Deals"\)[\s\S]*?is-unavailable[\s\S]*?actionButtonLabel\("qr", "Deals"\)/);
-  assert.equal((liveShell.match(/home-tv-feed-deal-count">Deals/g) || []).length, 1);
+test("venue cards retain Club Deal availability states while TV renders the action only when active", () => {
+  assert.match(liveShell, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?is-available[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?is-unavailable[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/);
+  assert.equal((liveShell.match(/home-tv-feed-deal-count">Club Deals/g) || []).length, 1);
   assert.match(liveShell, /if \(dealState\.key === "available"\)/);
-  assert.doesNotMatch(liveShell, /home-tv-feed-deal-count">Club Deals/);
+  assert.doesNotMatch(liveShell, /home-tv-feed-deal-count">Deals</);
 });
 
 test("mobile venue actions use a horizontal discovery row while TV keeps compact glass geometry", () => {
