@@ -67,7 +67,7 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
-    /#profileBackdrop\.modal-backdrop\.show \{\s+z-index: 140 !important;[\s\S]*?#profileBackdrop #modalClose \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 221 !important;[\s\S]*?pointer-events: auto !important;/,
+    /#profileBackdrop\.modal-backdrop\.show \{\s+z-index: 140 !important;[\s\S]*?#profileBackdrop #modalClose \{[\s\S]*?position: absolute !important;[\s\S]*?z-index: 221 !important;[\s\S]*?pointer-events: auto !important;/,
   );
   assert.match(
     homeSource,

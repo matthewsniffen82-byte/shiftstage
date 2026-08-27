@@ -37657,25 +37657,6 @@
           background-image: none !important;
           box-shadow: none !important;
         }
-        .venue-detail-modal-top {
-          position: sticky;
-          top: 0;
-          z-index: 4;
-          height: 0;
-          pointer-events: none;
-        }
-        .venue-detail-close {
-          position: fixed !important;
-          z-index: 221 !important;
-          top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)) !important;
-          right: max(8px, calc((100vw - 720px) / 2 + 8px)) !important;
-          width: 52px !important;
-          min-height: 52px !important;
-          pointer-events: auto !important;
-          touch-action: manipulation !important;
-          -webkit-tap-highlight-color: transparent;
-        }
-
         /* Borderless utility chrome with one restrained elevation shadow. */
         header .topbar {
           border: 0 !important;
@@ -51338,11 +51319,6 @@
 
       return `
         <div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
-          <div class="venue-detail-modal-top">
-            <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${details.name} club profile">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-            </button>
-          </div>
           <article class="venue-hero">
             <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
               <div class="venue-art">
@@ -51363,6 +51339,9 @@
                     <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
                   </div>
                 </div>
+                <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${details.name} club profile">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
               </div>
               <div class="venue-status-grid" aria-label="Tonight at ${escapeHtml(details.name)}">
                 <span class="venue-operating-summary">

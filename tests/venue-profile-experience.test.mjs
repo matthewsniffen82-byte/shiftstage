@@ -206,7 +206,8 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /Club-detail action hierarchy[\s\S]*?\.venue-secondary-actions \.action-btn \{[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 11px !important;[\s\S]*?var\(--dancr-color-surface\) 68%/);
   assert.match(refinement, /\.venue-secondary-actions \.follow-venue-btn\.is-following \{[\s\S]*?var\(--dancr-color-brand-primary\) 12%/);
   assert.match(refinement, /\.venue-secondary-actions \.venue-detail-share\.is-confirmed \{[\s\S]*?var\(--dancr-color-success\) 6%/);
-  assert.match(refinement, /\.venue-detail-close \{[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?display: grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
+  assert.match(refinement, /\.venue-identity-block \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 36px;[\s\S]*?align-items: start;[\s\S]*?gap: 8px;/);
+  assert.match(refinement, /\.venue-detail-close \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?justify-self: end !important;[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
   assert.match(refinement, /\.venue-detail-close \.icon \{[\s\S]*?width: 15px !important;[\s\S]*?height: 15px !important;[\s\S]*?stroke-width: 1\.85 !important;/);
   assert.match(refinement, /\.venue-hero \+ :is\(\.venue-activity-section, \.venue-activity-empty\) \{[\s\S]*?margin-top: 4px;/);
   assert.match(refinement, /\.venue-contact-details summary \{[\s\S]*?min-height: 44px;[\s\S]*?cursor: pointer;/);
@@ -239,7 +240,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     liveApp,
-    /class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>/,
+    /class="venue-identity-block">[\s\S]*?class="venue-identity-copy">[\s\S]*?id="venueDetailName"[\s\S]*?class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>/,
   );
   assert.match(
     liveApp,
@@ -271,7 +272,11 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     aesthetic,
-    /\.venue-detail-close\[data-auto-focus\]:is\(:focus, :focus-visible\) \{[\s\S]*?outline: 0 !important;[\s\S]*?box-shadow: none !important;/,
+    /\.venue-detail-close\[data-auto-focus\]:is\(:focus, :focus-visible\) \{[\s\S]*?outline: 0 !important;/,
+  );
+  assert.doesNotMatch(
+    aesthetic,
+    /\.venue-detail-close\[data-auto-focus\]:is\(:focus, :focus-visible\) \{[^}]*?(?:background|box-shadow):/,
   );
   assert.match(
     aesthetic,
@@ -279,11 +284,11 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     aesthetic,
-    /\.venue-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?top: 12px !important;[\s\S]*?right: 4px !important;[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?min-height: 36px !important;/,
+    /\.venue-detail-close \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?align-self: start !important;[\s\S]*?justify-self: end !important;[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?min-height: 36px !important;/,
   );
-  assert.match(
+  assert.doesNotMatch(
     liveApp,
-    /\.venue-detail-modal-top \{[\s\S]*?position: sticky;[\s\S]*?top: 0;[\s\S]*?height: 0;/,
+    /venue-detail-modal-top/,
   );
 });
 
