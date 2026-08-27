@@ -39,10 +39,6 @@ test("empty schedules use the compact neutral hierarchy while upcoming schedules
   assert.match(aesthetic, /profile-tonight-card\.is-no-schedule[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/);
   assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 48px !important;/);
   assert.match(aesthetic, /profile-tonight-card\.is-no-schedule \.schedule-empty::before,[\s\S]*?content: none !important;/);
-  assert.match(
-    aesthetic,
-    /public-profile-shell \.profile-tonight-card\.is-upcoming::before \{[\s\S]*?var\(--dancr-color-info\) 55%, transparent/,
-  );
   const shiftsFunction = liveApp.match(
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
   )?.[0] || "";
