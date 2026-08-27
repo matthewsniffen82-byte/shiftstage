@@ -172,15 +172,12 @@ test("every profile uses one compact Tonight card while only Working Now activat
   assert.match(profilePage, /className="profile-shift-card profile-working-card is-now"/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
-  assert.match(profilePage, /actionShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, actionShift\.venueId\)/);
+  assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
   assert.doesNotMatch(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
   assert.match(profilePage, /presentation="profileCompact"/);
-  assert.match(profilePage, /\) : actionShift \? \([\s\S]*?className="profile-upcoming-venue-cta"[\s\S]*?upcomingVenueCtaLabel/);
-  assert.match(profilePage, /return `Going tonight\? View \$\{possessiveVenueName\} Club Deal`/);
-  assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(actionShift\.venueSlug\)\}`\}/);
-  assert.doesNotMatch(profilePage, /Club deal available after check-in/);
+  assert.match(profilePage, /\) : actionShift \? \([\s\S]*?className="profile-deal-availability-line"[\s\S]*?"Club deal available after check-in"/);
   assert.doesNotMatch(profilePage, /className="profile-active-deal is-inactive"|Deals activate after a verified club check-in/);
   assert.match(liveApp, /const dealMarkup = profile\?\.scheduled[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?: "";/);
   assert.match(

@@ -69,9 +69,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
   );
   const hasUpcomingShift = !activeShift && upcomingShifts.length > 0;
   const actionShift = activeShift || upcomingShifts[0] || null;
-  const [venueActiveDeals, tvVideos, actionVenue] = await Promise.all([
-    actionShift?.venueId
-      ? getActiveClubDealsForVenue(client, actionShift.venueId)
+  const [activeDeals, tvVideos, actionVenue] = await Promise.all([
+    activeShift?.venueId
+      ? getActiveClubDealsForVenue(client, activeShift.venueId)
       : Promise.resolve([]),
     getPublicMyDancrTvFeed(client, {
       city: profile.city,
@@ -82,11 +82,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
       ? getVenueProfile(client, actionShift.venueSlug)
       : Promise.resolve(null),
   ]);
-  const activeDeals = activeShift ? venueActiveDeals : [];
   const activeDeal = activeDeals[0] || null;
-  const upcomingVenueHasActiveDeal = Boolean(
-    !activeShift && actionShift && venueActiveDeals.length,
-  );
   const dancerAttributionEligible = Boolean(
     activeShift && activeShift.shiftSource !== "demo_locked",
   );
@@ -274,30 +270,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
             </div>
           ) : actionShift ? (
             <div className="profile-tonight-deal">
-              {activeShift ? (
-                <p className="profile-deal-availability-line">No active club deal</p>
-              ) : actionShift.venueSlug ? (
-                <Link
-                  aria-label={upcomingVenueCtaLabel(
-                    actionShift.venueName,
-                    upcomingVenueHasActiveDeal,
-                  )}
-                  className="profile-upcoming-venue-cta"
-                  href={`/venues/${encodeURIComponent(actionShift.venueSlug)}`}
-                >
-                  <span>
-                    {upcomingVenueCtaLabel(
-                      actionShift.venueName,
-                      upcomingVenueHasActiveDeal,
-                    )}
-                  </span>
-                  <span aria-hidden="true" className="profile-upcoming-venue-cta-cue">›</span>
-                </Link>
-              ) : (
-                <p className="profile-deal-availability-line">
-                  {upcomingVenueCtaLabel(actionShift.venueName, upcomingVenueHasActiveDeal)}
-                </p>
-              )}
+              <p className="profile-deal-availability-line">
+                {activeShift ? "No active club deal" : "Club deal available after check-in"}
+              </p>
             </div>
           ) : null}
 
@@ -383,12 +358,6 @@ function formatDateValue(
 
 function isActiveNow(shift: ShiftSummary) {
   return isActiveNfcPresence(shift);
-}
-
-function upcomingVenueCtaLabel(venueName: string, hasActiveDeal: boolean) {
-  if (!hasActiveDeal) return `View ${venueName}`;
-  const possessiveVenueName = /s$/i.test(venueName) ? `${venueName}’` : `${venueName}’s`;
-  return `Going tonight? View ${possessiveVenueName} Club Deal`;
 }
 
 function initials(value: string) {
@@ -701,12 +670,6 @@ function PublicProfileStyles() {
       .profile-tonight-deal .profile-active-deal { width: 100%; min-height: 60px; display: grid; align-items: stretch; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .profile-tonight-deal .profile-club-deal-placeholder { width: 100%; min-height: 60px; border: 0; background: transparent; box-shadow: none; }
       .profile-tonight-deal .club-deal-launcher { width: 100%; min-height: 60px; }
-      .profile-deal-availability-line, .profile-upcoming-venue-cta { min-width: 0; min-height: 60px; margin: 0; display: flex; align-items: center; padding: 8px 10px; border: 0; border-radius: 10px; color: #cbd5e1; background: transparent; font-size: 12px; font-weight: 850; line-height: 1.25; }
-      .profile-upcoming-venue-cta { justify-content: space-between; gap: 8px; color: #f8fafc; text-decoration: none; }
-      .profile-upcoming-venue-cta > span:first-child { min-width: 0; }
-      .profile-upcoming-venue-cta-cue { flex: 0 0 auto; color: #22d3ee; font-size: 23px; line-height: 1; }
-      .profile-upcoming-venue-cta:hover, .profile-upcoming-venue-cta:focus-visible { background: rgba(34,211,238,.07); }
-      .profile-upcoming-venue-cta:focus-visible { outline: 2px solid #22d3ee; outline-offset: -2px; }
       .profile-working-card, .profile-upcoming-card { display: grid; padding: 4px 8px !important; }
       .profile-upcoming-list { display: grid; }
       .profile-working-destination, .profile-upcoming-destination { min-width: 0; display: grid; grid-template-columns: max-content minmax(0,1fr) 16px; align-items: center; gap: 6px; min-height: 44px; padding: 3px 2px; color: #fff; text-decoration: none; }
