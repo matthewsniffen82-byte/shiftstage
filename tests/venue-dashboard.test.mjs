@@ -41,6 +41,18 @@ test("venue dashboard session recovery rotates and persists authentication witho
   assert.doesNotMatch(nfcPanel, /persistRefreshedSession|persistRefreshedDashboardSession|dancrAuthSessionV1/);
 });
 
+test("venue NFC refreshes preserve independent last-good data and user feedback", () => {
+  assert.match(nfcPanel, /const loadInFlightRef = useRef<Promise<void> \| null>\(null\)/);
+  assert.match(nfcPanel, /if \(loadInFlightRef\.current\) return loadInFlightRef\.current/);
+  assert.match(nfcPanel, /async function settleVenueNfcRequest/);
+  assert.match(nfcPanel, /const tagResult = await settleVenueNfcRequest[\s\S]*?const rosterResult = await settleVenueNfcRequest/);
+  assert.match(nfcPanel, /tagResult\.status === "fulfilled"[\s\S]*?setTags/);
+  assert.match(nfcPanel, /rosterResult\.status === "fulfilled"[\s\S]*?setAffiliations/);
+  assert.match(nfcPanel, /if \(silent\) return/);
+  assert.match(nfcPanel, /load\(\{ silent: true \}\)/);
+  assert.doesNotMatch(nfcPanel, /const tagData = await requestVenueNfcTagsJson[\s\S]*?const rosterData = await requestVenueDancerVerificationsJson/);
+});
+
 test("the routed venue dashboard is isolated, closable, and restores the original full workspace identity", () => {
   assert.match(dashboardPage, /DashboardClient/);
   assert.match(dashboard, /dashboard-shell/);

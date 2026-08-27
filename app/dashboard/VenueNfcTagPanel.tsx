@@ -34,6 +34,18 @@ type DancerAffiliation = {
   } | null;
 };
 
+type VenueNfcLoadOptions = {
+  silent?: boolean;
+};
+
+async function settleVenueNfcRequest<T>(request: () => Promise<T>): Promise<PromiseSettledResult<T>> {
+  try {
+    return { status: "fulfilled", value: await request() };
+  } catch (reason) {
+    return { status: "rejected", reason };
+  }
+}
+
 export default function VenueNfcTagPanel({
   initialAffiliations = [],
   canManageRoster = false,
@@ -54,35 +66,55 @@ export default function VenueNfcTagPanel({
   const [supportTagId, setSupportTagId] = useState("");
   const [supportType, setSupportType] = useState<"damaged" | "lost" | "relocate" | "replacement">("damaged");
   const [supportNotes, setSupportNotes] = useState("");
+  const loadInFlightRef = useRef<Promise<void> | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(({ silent = false }: VenueNfcLoadOptions = {}) => {
     if (!readDashboardAccessToken("venue")) {
       setIsLoading(false);
-      return setStatus("Sign in required.");
+      if (!silent) setStatus("Sign in required.");
+      return Promise.resolve();
     }
-    setIsLoading(true);
-    try {
-      const tagData = await requestVenueNfcTagsJson({ cache: "no-store" });
-      const rosterData = await requestVenueDancerVerificationsJson("", {
+    if (loadInFlightRef.current) return loadInFlightRef.current;
+    if (!silent) setIsLoading(true);
+
+    const request = (async () => {
+      const tagResult = await settleVenueNfcRequest(() => requestVenueNfcTagsJson({
+        cache: "no-store",
+        fallbackMessage: "Unable to load assigned stickers.",
+      }));
+      const rosterResult = await settleVenueNfcRequest(() => requestVenueDancerVerificationsJson("", {
         cache: "no-store",
         fallbackMessage: "Unable to load the verified dancer roster.",
-      });
-      setTags(tagData.tags || []);
-      setAffiliations(rosterData.affiliations || []);
-      setStatus(tagData.tags?.length
+      }));
+
+      if (tagResult.status === "fulfilled") setTags(tagResult.value.tags || []);
+      if (rosterResult.status === "fulfilled") setAffiliations(rosterResult.value.affiliations || []);
+      if (silent) return;
+
+      if (tagResult.status === "rejected") {
+        setStatus(tagResult.reason instanceof Error ? tagResult.reason.message : "Unable to load assigned stickers.");
+        return;
+      }
+      if (rosterResult.status === "rejected") {
+        setStatus(rosterResult.reason instanceof Error ? rosterResult.reason.message : "Unable to load the verified dancer roster.");
+        return;
+      }
+      setStatus(tagResult.value.tags?.length
         ? ""
         : "No stickers are assigned yet. MyDancr will program and supply this venue's dancer check-in and guest redemption stickers.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to load assigned stickers.");
-    } finally {
-      setIsLoading(false);
-    }
+    })().finally(() => {
+      loadInFlightRef.current = null;
+      if (!silent) setIsLoading(false);
+    });
+
+    loadInFlightRef.current = request;
+    return request;
   }, []);
 
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    const refresh = () => { if (document.visibilityState === "visible") void load(); };
+    const refresh = () => { if (document.visibilityState === "visible") void load({ silent: true }); };
     const timer = window.setInterval(refresh, 30_000);
     document.addEventListener("visibilitychange", refresh);
     return () => {
