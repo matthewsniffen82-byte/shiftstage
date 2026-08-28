@@ -10800,6 +10800,49 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-anch
   gap: 5px;
 }
 
+/* iPhone WebKit can composite the transparent profile controls as faint
+ * rectangular tiles. Keep the analytics and action hit areas unboxed while
+ * leaving the selected-action color and icon halo untouched. */
+@supports (-webkit-touch-callout: none) {
+  body.dancr-button-system #profileBackdrop #profileModal :is(
+    .profile-modal-header-metrics,
+    .profile-activity-metrics,
+    .profile-activity-metrics > div,
+    .modal-actions,
+    .modal-actions > .action-btn.profile-action-icon-control,
+    .modal-actions > .action-btn.profile-action-icon-control .profile-action-main
+  ),
+  body.dancr-button-system .public-profile-shell :is(
+    .profile-metrics,
+    .profile-metrics > div,
+    .live-actions,
+    .live-actions > button.profile-action-icon-control,
+    .live-actions > button.profile-action-icon-control .profile-action-main,
+    .profile-action-share-slot,
+    .profile-action-share-slot .profile-share,
+    .profile-action-share-slot .profile-share > button.profile-action-icon-control
+  ) {
+    border-color: transparent !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal
+    .modal-actions > .action-btn.profile-action-icon-control,
+  body.dancr-button-system .public-profile-shell
+    .live-actions > button.profile-action-icon-control,
+  body.dancr-button-system .public-profile-shell
+    .profile-action-share-slot .profile-share > button.profile-action-icon-control {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 /* Club Deal actions use one emerald language with two intentional glow levels.
  * Primary profile/detail actions carry the full signal; compact discovery and
  * TV controls retain the same hue with a quieter halo. Geometry is unchanged. */

@@ -121,6 +121,25 @@ test("selected actions, dynamic stats, and all existing action handlers remain i
   assert.match(profileActions, /targetType: "dancer_profile"/);
 });
 
+test("iPhone profiles keep analytics and engagement hit areas visually unboxed", () => {
+  for (const source of [aesthetic, liveApp]) {
+    assert.match(source, /iPhone WebKit can composite (?:the )?transparent profile/);
+    assert.match(
+      source,
+      /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?\.profile-modal-header-metrics,[\s\S]*?\.profile-activity-metrics > div,[\s\S]*?\.modal-actions > \.action-btn\.profile-action-icon-control[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?-webkit-backdrop-filter: none !important;/,
+    );
+    assert.match(
+      source,
+      /\.modal-actions > \.action-btn\.profile-action-icon-control[\s\S]*?-webkit-appearance: none !important;[\s\S]*?-webkit-tap-highlight-color: transparent;/,
+    );
+  }
+
+  assert.match(
+    aesthetic,
+    /going-btn\.is-available-action:not\(\.is-going\) \.action-icon[\s\S]*?box-shadow:[\s\S]*?rgba\(168, 85, 247, \.72\)/,
+  );
+});
+
 test("stats and media tabs are compact without changing dynamic media behavior", () => {
   assert.match(
     compactLayout,

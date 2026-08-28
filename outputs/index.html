@@ -40191,6 +40191,35 @@
           }
         }
 
+        /* iPhone WebKit can composite transparent profile hit areas as faint
+           rectangular tiles. Keep those surfaces clear without changing the
+           selected action's icon color or halo. */
+        @supports (-webkit-touch-callout: none) {
+          body.dancr-button-system #profileBackdrop #profileModal :is(
+            .profile-modal-header-metrics,
+            .profile-activity-metrics,
+            .profile-activity-metrics > div,
+            .modal-actions,
+            .modal-actions > .action-btn.profile-action-icon-control,
+            .modal-actions > .action-btn.profile-action-icon-control .profile-action-main
+          ) {
+            border-color: transparent !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+          }
+
+          body.dancr-button-system #profileBackdrop #profileModal
+            .modal-actions > .action-btn.profile-action-icon-control {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            -webkit-tap-highlight-color: transparent;
+          }
+        }
+
         /* Center analytics in the three visual gaps between the four compact
            guest actions without changing any action or metric behavior. */
         @media (max-width: 759px) {
