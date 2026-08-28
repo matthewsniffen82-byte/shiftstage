@@ -1000,6 +1000,10 @@ function AccountControlsPanel({
   const [isWorking, setIsWorking] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
   const isVenueAccount = accountRole === "venue";
   const isVenueOwner = isVenueAccount && venueAccessRole === "owner";
   const ownsVenueWorkspace = isVenueOwner || (isVenueAccount && state === "disabled" && !venueAccessRole);
@@ -1014,16 +1018,53 @@ function AccountControlsPanel({
     setState(accountState);
   }, [accountState]);
 
-  async function updateAccount(nextState: "active" | "disabled") {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginAccountAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setIsWorking(true);
     setStatus("");
+    return { requestId, controller };
+  }
+
+  function isCurrentAccountAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishAccountAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    if (mountedRef.current) setIsWorking(false);
+  }
+
+  async function updateAccount(nextState: "active" | "disabled") {
+    const action = beginAccountAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     try {
       const data = await requestAccountJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ accountState: nextState }),
         fallbackMessage: "Unable to update account.",
+        signal: controller.signal,
       });
+      if (!isCurrentAccountAction(requestId, controller)) return;
       setState(data.account?.accountState || nextState);
       setStatus(nextState === "disabled"
         ? ownsVenueWorkspace ? "Venue account disabled. The venue is now private and team access is paused." : "Account disabled."
@@ -1032,9 +1073,9 @@ function AccountControlsPanel({
         window.location.replace(nextState === "disabled" ? "/dashboard/venue#venue-account" : "/dashboard/venue");
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to update account.");
+      if (isCurrentAccountAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to update account.");
     } finally {
-      setIsWorking(false);
+      finishAccountAction(requestId);
     }
   }
 
@@ -1049,19 +1090,24 @@ function AccountControlsPanel({
       return;
     }
 
-    setIsWorking(true);
-    setStatus("");
+    const action = beginAccountAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     let accountDeleted = false;
     try {
       await requestAccountJson({
         method: "DELETE",
         fallbackMessage: "Unable to delete account.",
+        signal: controller.signal,
       });
       accountDeleted = true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to delete account.";
-      window.alert(`${message} You have been signed out; sign in again to retry.`);
+      if (isCurrentAccountAction(requestId, controller)) {
+        const message = error instanceof Error ? error.message : "Unable to delete account.";
+        window.alert(`${message} You have been signed out; sign in again to retry.`);
+      }
     } finally {
+      finishAccountAction(requestId);
       if (accountDeleted) {
         try {
           window.sessionStorage.setItem(PUBLIC_DISCOVERY_REFRESH_KEY, String(Date.now()));
@@ -1075,6 +1121,10 @@ function AccountControlsPanel({
   }
 
   function signOut() {
+    actionSequenceRef.current += 1;
+    actionAbortRef.current?.abort();
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
     clearDashboardSession();
     window.location.href = "/";
   }
@@ -1088,7 +1138,7 @@ function AccountControlsPanel({
       <div className="account-actions">
         <div className="account-action-row">
           <span><strong>Sign out</strong><small>End this session on this device.</small></span>
-          <button className="account-action-button" type="button" onClick={signOut}>Sign out</button>
+          <button className="account-action-button" type="button" onClick={signOut} disabled={isWorking}>Sign out</button>
         </div>
         <div className="account-action-row">
           <span>

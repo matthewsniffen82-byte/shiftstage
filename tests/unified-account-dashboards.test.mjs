@@ -443,6 +443,20 @@ test("account state changes and deletion use the shared refresh-aware boundary",
   );
 });
 
+test("account security actions prevent duplicate and post-sign-out work", () => {
+  const controls = dashboard.match(/function AccountControlsPanel[\s\S]*?function CustomerPanel/)?.[0] || "";
+  assert.match(controls, /const mountedRef = useRef\(false\);/);
+  assert.match(controls, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(controls, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(controls, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(controls, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.equal((controls.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.match(controls, /requestId === actionSequenceRef\.current/);
+  assert.match(controls, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\)/);
+  assert.match(controls, /function signOut\(\)[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?clearDashboardSession\(\)/);
+  assert.match(controls, /onClick=\{signOut\} disabled=\{isWorking\}/);
+});
+
 test("dancer profile requests use one role-aware dashboard boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;
