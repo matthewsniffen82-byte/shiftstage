@@ -12,6 +12,7 @@ const [dashboard, dancerStudio, dancerNfcPanel, dancerRoute, avatarRoute, venueR
   readFile(new URL("../app/api/dancer/dashboard/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
 ]);
+const onboardingCommand = dashboard.match(/function DancerOnboardingCommand[\s\S]*?(?=\nfunction DancerOnboardingProfileMediaWorkspace)/)?.[0] || "";
 
 test("initial dancers use the canonical premium dashboard shell and loading state", () => {
   assert.match(dashboard, /dashboard-shell-\$\{role\}/);
@@ -35,6 +36,25 @@ test("the setup command center exposes the real three-step NFC production flow",
   assert.doesNotMatch(dancerRoute, /QRCode\.toDataURL/);
   assert.match(venueRoute, /dressing_room_nfc_required/);
   assert.doesNotMatch(venueRoute, /approveDancerVenueVerification/);
+});
+
+test("onboarding transitions reject duplicate, conflicting, and stale actions", () => {
+  assert.match(onboardingCommand, /const mountedRef = useRef\(false\);/);
+  assert.match(onboardingCommand, /const profileSubmissionSequenceRef = useRef\(0\);/);
+  assert.match(onboardingCommand, /const profileSubmissionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(onboardingCommand, /const profileSubmissionInFlightRef = useRef\(false\);/);
+  assert.match(onboardingCommand, /const payoutLinkSequenceRef = useRef\(0\);/);
+  assert.match(onboardingCommand, /const payoutLinkAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(onboardingCommand, /const payoutLinkInFlightRef = useRef\(false\);/);
+  assert.match(onboardingCommand, /if \(!mountedRef\.current \|\| profileSubmissionInFlightRef\.current\) return null;/);
+  assert.match(onboardingCommand, /if \(!mountedRef\.current \|\| payoutLinkInFlightRef\.current\) return null;/);
+  assert.equal((onboardingCommand.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.match(onboardingCommand, /if \(!isCurrentProfileSubmissionAction\(requestId, controller\)\) return;/);
+  assert.match(onboardingCommand, /if \(!isCurrentPayoutLinkAction\(requestId, controller\)\) return;/);
+  assert.match(onboardingCommand, /\["requested", "active"\]\.includes\(String\(data\.account\?\.status \|\| ""\)\)/);
+  assert.match(onboardingCommand, /function skipPayoutSetup\(\) \{\s*if \(payoutLinkInFlightRef\.current\) return;/);
+  assert.match(onboardingCommand, /className="dancer-onboarding-secondary" disabled=\{isPayoutWorking\}/);
+  assert.match(onboardingCommand, /mountedRef\.current = false;[\s\S]*?profileSubmissionAbortRef\.current\?\.abort\(\);[\s\S]*?payoutLinkAbortRef\.current\?\.abort\(\);/);
 });
 
 test("initial onboarding nests every production workspace directly under its step button", () => {

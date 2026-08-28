@@ -3991,6 +3991,13 @@ function DancerOnboardingCommand({
   const [natsLoginId, setNatsLoginId] = useState("");
   const [natsUsername, setNatsUsername] = useState("");
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
+  const mountedRef = useRef(false);
+  const profileSubmissionSequenceRef = useRef(0);
+  const profileSubmissionAbortRef = useRef<AbortController | null>(null);
+  const profileSubmissionInFlightRef = useRef(false);
+  const payoutLinkSequenceRef = useRef(0);
+  const payoutLinkAbortRef = useRef<AbortController | null>(null);
+  const payoutLinkInFlightRef = useRef(false);
   const persistedStageName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
@@ -4062,6 +4069,21 @@ function DancerOnboardingCommand({
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      profileSubmissionSequenceRef.current += 1;
+      profileSubmissionAbortRef.current?.abort();
+      profileSubmissionAbortRef.current = null;
+      profileSubmissionInFlightRef.current = false;
+      payoutLinkSequenceRef.current += 1;
+      payoutLinkAbortRef.current?.abort();
+      payoutLinkAbortRef.current = null;
+      payoutLinkInFlightRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     setPayoutSkipped(window.localStorage.getItem(payoutSkipKey) === "true");
   }, [payoutSkipKey]);
 
@@ -4111,13 +4133,58 @@ function DancerOnboardingCommand({
     });
   }
 
+  function beginProfileSubmissionAction() {
+    if (!mountedRef.current || profileSubmissionInFlightRef.current) return null;
+    profileSubmissionInFlightRef.current = true;
+    const requestId = ++profileSubmissionSequenceRef.current;
+    profileSubmissionAbortRef.current?.abort();
+    const controller = new AbortController();
+    profileSubmissionAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentProfileSubmissionAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === profileSubmissionSequenceRef.current;
+  }
+
+  function finishProfileSubmissionAction(requestId: number) {
+    if (requestId !== profileSubmissionSequenceRef.current) return false;
+    profileSubmissionAbortRef.current = null;
+    profileSubmissionInFlightRef.current = false;
+    return mountedRef.current;
+  }
+
+  function beginPayoutLinkAction() {
+    if (!mountedRef.current || payoutLinkInFlightRef.current) return null;
+    payoutLinkInFlightRef.current = true;
+    const requestId = ++payoutLinkSequenceRef.current;
+    payoutLinkAbortRef.current?.abort();
+    const controller = new AbortController();
+    payoutLinkAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentPayoutLinkAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === payoutLinkSequenceRef.current;
+  }
+
+  function finishPayoutLinkAction(requestId: number) {
+    if (requestId !== payoutLinkSequenceRef.current) return false;
+    payoutLinkAbortRef.current = null;
+    payoutLinkInFlightRef.current = false;
+    return mountedRef.current;
+  }
+
   async function submitProfile() {
-    if (isSubmitting || !profileReady) return;
+    if (!profileReady) return;
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in again before continuing to club verification.");
       return;
     }
+    const action = beginProfileSubmissionAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setIsSubmitting(true);
     setStatus("Preparing your profile for club verification...");
     try {
@@ -4126,7 +4193,9 @@ function DancerOnboardingCommand({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ submitForReview: true }),
         fallbackMessage: "Unable to submit profile.",
+        signal: controller.signal,
       });
+      if (!isCurrentProfileSubmissionAction(requestId, controller)) return;
       if (!data.profile) throw new Error("Unable to submit profile.");
       const confirmedStatus = effectiveDancerProfileStatus(data.profile);
       if (confirmedStatus !== "pending_review" && confirmedStatus !== "approved") {
@@ -4137,13 +4206,16 @@ function DancerOnboardingCommand({
       setExpandedStepId("dancer-onboarding-payouts");
       setStatus("Profile submitted. Choose whether to set up payouts, then continue to the club tap.");
       window.requestAnimationFrame(() => {
+        if (!isCurrentProfileSubmissionAction(requestId, controller)) return;
         document.getElementById("dancer-onboarding-payouts")?.scrollIntoView({ behavior: "smooth", block: "start" });
         document.getElementById("dancer-onboarding-payouts-button")?.focus({ preventScroll: true });
       });
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to submit profile.");
+      if (isCurrentProfileSubmissionAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to submit profile.");
+      }
     } finally {
-      setIsSubmitting(false);
+      if (finishProfileSubmissionAction(requestId)) setIsSubmitting(false);
     }
   }
 
@@ -4158,6 +4230,7 @@ function DancerOnboardingCommand({
   }
 
   function skipPayoutSetup() {
+    if (payoutLinkInFlightRef.current) return;
     window.localStorage.setItem(payoutSkipKey, "true");
     setPayoutSkipped(true);
     continueToNfc("Payout setup saved for later.");
@@ -4167,22 +4240,32 @@ function DancerOnboardingCommand({
     event.preventDefault();
     const session = readSession();
     if (!session?.accessToken) return setPayoutStatus("Sign in again to set up payouts.");
+    const action = beginPayoutLinkAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setIsPayoutWorking(true);
     setPayoutStatus("Submitting your payout account for verification...");
     try {
-      await requestDancerFinanceJson({
+      const data = await requestDancerFinanceJson({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
         fallbackMessage: "Unable to link the payout account.",
+        signal: controller.signal,
       });
+      if (!isCurrentPayoutLinkAction(requestId, controller)) return;
+      if (!["requested", "active"].includes(String(data.account?.status || ""))) {
+        throw new Error("Payout account verification was not confirmed. Please try again.");
+      }
       window.localStorage.removeItem(payoutSkipKey);
       setPayoutSkipped(false);
       continueToNfc("Payout account submitted for verification. You can complete the club tap now.");
     } catch (error) {
-      setPayoutStatus(error instanceof Error ? error.message : "Unable to link the payout account.");
+      if (isCurrentPayoutLinkAction(requestId, controller)) {
+        setPayoutStatus(error instanceof Error ? error.message : "Unable to link the payout account.");
+      }
     } finally {
-      setIsPayoutWorking(false);
+      if (finishPayoutLinkAction(requestId)) setIsPayoutWorking(false);
     }
   }
 
@@ -4313,7 +4396,7 @@ function DancerOnboardingCommand({
                     </article>
                     <div className="dancer-onboarding-payout-actions">
                       {payoutSubmitted ? <button className="dancer-onboarding-primary" type="button" onClick={() => continueToNfc("Payout setup recorded. Continue with the official club tap.")}>Continue to club tap</button> : null}
-                      <button className="dancer-onboarding-secondary" type="button" onClick={skipPayoutSetup}>Do this later</button>
+                      <button className="dancer-onboarding-secondary" disabled={isPayoutWorking} type="button" onClick={skipPayoutSetup}>Do this later</button>
                     </div>
                     {payoutStatus ? <p className="dancer-onboarding-announcement" role="status" aria-live="polite">{payoutStatus}</p> : null}
                   </div>
