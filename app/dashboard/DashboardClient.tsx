@@ -180,6 +180,11 @@ export default function DashboardClient({
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+
+    function requestOptionalPanel<T>(path: string, fallback: T) {
+      return requestOptionalDashboardJson(path, fallback, { signal: controller.signal });
+    }
 
     async function load() {
       const session = readSession();
@@ -199,21 +204,21 @@ export default function DashboardClient({
           // This request finalizes a saved eligible NFC enrollment. Load the
           // profile afterward so onboarding never renders from a pre-activation
           // profile snapshot while the NFC state is already complete.
-          const secondary = await requestOptionalDashboardJson("/api/dancer/dashboard", {});
+          const secondary = await requestOptionalPanel("/api/dancer/dashboard", {});
           const [profile, support, reviews, weeklyReport, rankingEvents] = await Promise.all([
-            requestOptionalDashboardJson("/api/dancer/profile", { profile: null }),
-            requestOptionalDashboardJson("/api/support", { threads: [] }),
-            requestOptionalDashboardJson("/api/dancer/reviews", { reviews: [] }),
-            requestOptionalDashboardJson("/api/dancer/weekly-report", { report: null }),
-            requestOptionalDashboardJson("/api/dancer/ranking-events", { events: [] }),
+            requestOptionalPanel("/api/dancer/profile", { profile: null }),
+            requestOptionalPanel("/api/support", { threads: [] }),
+            requestOptionalPanel("/api/dancer/reviews", { reviews: [] }),
+            requestOptionalPanel("/api/dancer/weekly-report", { report: null }),
+            requestOptionalPanel("/api/dancer/ranking-events", { events: [] }),
           ]);
           return [profile, secondary, support, reviews, weeklyReport, rankingEvents];
         }
 
         return Promise.all([
-          requestOptionalDashboardJson(role === "venue" ? "/api/venue/profile" : "/api/customer/profile", { profile: null }),
-          requestOptionalDashboardJson(role === "venue" ? "/api/venue/dashboard?period=30d" : "/api/customer/saved", {}),
-          requestOptionalDashboardJson("/api/support", { threads: [] }),
+          requestOptionalPanel(role === "venue" ? "/api/venue/profile" : "/api/customer/profile", { profile: null }),
+          requestOptionalPanel(role === "venue" ? "/api/venue/dashboard?period=30d" : "/api/customer/saved", {}),
+          requestOptionalPanel("/api/support", { threads: [] }),
           null,
           null,
           null,
@@ -229,9 +234,10 @@ export default function DashboardClient({
             requestAccountJson({
               cache: "no-store",
               fallbackMessage: "Unable to load account.",
+              signal: controller.signal,
             }),
             loadDashboardPanels(),
-            requestOptionalDashboardJson(
+            requestOptionalPanel(
               "/api/agent/commissions?access=1",
               { access: { active: false } },
             ),
@@ -240,10 +246,11 @@ export default function DashboardClient({
           account = await requestAccountJson({
             cache: "no-store",
             fallbackMessage: "Unable to load account.",
+            signal: controller.signal,
           });
           [panels, agentAccess] = await Promise.all([
             loadDashboardPanels(),
-            requestOptionalDashboardJson(
+            requestOptionalPanel(
               "/api/agent/commissions?access=1",
               { access: { active: false } },
             ),
@@ -289,6 +296,7 @@ export default function DashboardClient({
     load();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [loadAttempt, role]);
 

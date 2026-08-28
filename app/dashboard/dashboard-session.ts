@@ -151,6 +151,7 @@ export async function requestOptionalDashboardJson<T>(
       ...options,
     });
   } catch (error) {
+    if (options.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
     console.warn("Dashboard panel did not load", {
       path,
       message: error instanceof Error ? error.message : "Request failed",

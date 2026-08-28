@@ -96,6 +96,7 @@ test("normal account navigation cannot reopen a legacy dashboard variant", () =>
 });
 
 test("fresh confirmation sessions load the dashboard account and panels in parallel", () => {
+  const startupLoader = dashboard.slice(0, dashboard.indexOf("const refreshVenueDashboard"));
   assert.match(dashboard, /from "\.\/dashboard-session"/);
   assert.match(dashboardSession, /function storedSessionIsFresh\(session: StoredDashboardSession \| null\)/);
   assert.match(dashboardSession, /expiresAt > Math\.floor\(Date\.now\(\) \/ 1000\) \+ 120/);
@@ -107,7 +108,11 @@ test("fresh confirmation sessions load the dashboard account and panels in paral
     dashboard,
     /else \{[\s\S]*?account = await requestAccountJson\([\s\S]*?\[panels, agentAccess\] = await Promise\.all\(\[[\s\S]*?loadDashboardPanels\(\)/,
   );
-  assert.doesNotMatch(dashboard.slice(0, dashboard.indexOf("const refreshVenueDashboard")), /initialAuthHeaders|refreshedHeaders|readJson\(|readOptionalJson\(/);
+  assert.match(startupLoader, /const controller = new AbortController\(\);/);
+  assert.match(startupLoader, /function requestOptionalPanel<T>[\s\S]*?signal: controller\.signal/);
+  assert.equal((startupLoader.match(/signal: controller\.signal/g) || []).length, 3);
+  assert.match(startupLoader, /return \(\) => \{\s*cancelled = true;\s*controller\.abort\(\);/);
+  assert.doesNotMatch(startupLoader, /initialAuthHeaders|refreshedHeaders|readJson\(|readOptionalJson\(/);
 });
 
 test("dashboard session persistence and optional panel failures have one typed boundary", () => {
@@ -122,6 +127,7 @@ test("dashboard session persistence and optional panel failures have one typed b
   assert.match(dashboardSession, /function dashboardAuthHeaders\(session: StoredDashboardSession \| null\)/);
   assert.match(dashboardSession, /function persistResponseSession/);
   assert.match(dashboardSession, /export async function requestOptionalDashboardJson/);
+  assert.match(dashboardSession, /if \(options\.signal\?\.aborted \|\| \(error instanceof Error && error\.name === "AbortError"\)\) throw error;/);
   assert.match(dashboardSession, /console\.warn\("Dashboard panel did not load"/);
   assert.doesNotMatch(dashboardSession, /export async function readJson|export async function readOptionalJson/);
   assert.doesNotMatch(dashboard, /function readSession\(|function dashboardAuthHeaders\(|async function readOptionalJson/);
@@ -166,6 +172,15 @@ test("optional dashboard startup requests share session rotation and preserve fa
     assert.deepEqual(
       await requestOptionalDashboardJson("/api/dancer/reviews", { reviews: [] }),
       { reviews: [] },
+    );
+    globalThis.fetch = async () => {
+      const error = new Error("Dashboard load cancelled.");
+      error.name = "AbortError";
+      throw error;
+    };
+    await assert.rejects(
+      requestOptionalDashboardJson("/api/dancer/dashboard", {}),
+      (error) => error?.name === "AbortError",
     );
   } finally {
     globalThis.fetch = previousFetch;
