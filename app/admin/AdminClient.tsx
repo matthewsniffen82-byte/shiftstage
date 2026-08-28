@@ -2857,6 +2857,42 @@ function VenueSignupRequestQueue({
     code: string;
     emailDelivered: boolean;
   } | null>(null);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginVenueSignupReview() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentVenueSignupReview(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishVenueSignupReview(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setBusyRequestId("");
+  }
+
   async function reviewRequest(request: Record<string, unknown>, decision: "approved" | "rejected") {
     const requestId = asText(request.id);
     const notes = notesByRequest[requestId]?.trim() || "";
@@ -2865,6 +2901,8 @@ function VenueSignupRequestQueue({
       return;
     }
     if (decision === "rejected" && !window.confirm(`Reject ${asText(request.venueName) || "this venue"}'s access request?`)) return;
+    const review = beginVenueSignupReview();
+    if (!review) return;
 
     setBusyRequestId(requestId);
     setStatusByRequest((current) => ({
@@ -2875,6 +2913,7 @@ function VenueSignupRequestQueue({
     try {
       const data = await requestAdminJson("/api/admin/venue-signup-requests", {
         method: "POST",
+        signal: review.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           requestId,
@@ -2884,6 +2923,7 @@ function VenueSignupRequestQueue({
         }),
         fallbackMessage: "Unable to review the venue request.",
       });
+      if (!isCurrentVenueSignupReview(review)) return;
 
       onRequestsChange(requests.filter((item) => asText(item.id) !== requestId));
       if (decision === "approved" && data.venue?.id) {
@@ -2917,12 +2957,13 @@ function VenueSignupRequestQueue({
       }
       onActionConfirmed(data.message || (decision === "approved" ? "Venue request approved." : "Venue request rejected."));
     } catch (error) {
+      if (!isCurrentVenueSignupReview(review)) return;
       setStatusByRequest((current) => ({
         ...current,
         [requestId]: error instanceof Error ? error.message : "Unable to review the venue request.",
       }));
     } finally {
-      setBusyRequestId("");
+      finishVenueSignupReview(review);
     }
   }
 
@@ -2997,14 +3038,14 @@ function VenueSignupRequestQueue({
                     value={notesByRequest[requestId] || ""}
                     onChange={(event) => setNotesByRequest((current) => ({ ...current, [requestId]: event.target.value }))}
                     placeholder="Required when rejecting; optional internal note when approving"
-                    disabled={isBusy}
+                    disabled={Boolean(busyRequestId)}
                   />
                 </label>
                 <div className="venue-request-actions">
-                  <button type="button" disabled={isBusy} onClick={() => reviewRequest(request, "approved")}>
+                  <button type="button" disabled={Boolean(busyRequestId)} onClick={() => reviewRequest(request, "approved")}>
                     {isBusy ? "Working..." : request.referringAgentId ? "Confirm agent & approve" : "Approve & send access"}
                   </button>
-                  <button className="secondary" type="button" disabled={isBusy} onClick={() => reviewRequest(request, "rejected")}>
+                  <button className="secondary" type="button" disabled={Boolean(busyRequestId)} onClick={() => reviewRequest(request, "rejected")}>
                     Reject request
                   </button>
                 </div>
