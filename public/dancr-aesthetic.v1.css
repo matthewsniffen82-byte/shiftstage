@@ -11105,20 +11105,28 @@ body.dancr-button-system :is(
     .samsung-rendering
   ) body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-art:not(.has-custom-photo),
+  body:is(
+    .is-android,
+    .android-rendering,
+    .is-samsung-browser,
+    .samsung-rendering
+  ).dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art:not(.has-custom-photo) {
     background:
       repeating-linear-gradient(
         115deg,
-        rgba(255, 255, 255, 0.28) 0 1px,
-        rgba(226, 232, 240, 0.11) 1px 2px,
+        rgba(255, 255, 255, 0.34) 0 1px,
+        rgba(226, 232, 240, 0.14) 1px 2px,
         transparent 2px 6px
       ),
-      linear-gradient(112deg, transparent 3%, rgba(255, 255, 255, 0.31) 28%, transparent 50%),
-      radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.16), transparent 50%),
-      linear-gradient(145deg, #62656c 0%, #33363c 66%, #4a4d54 100%) !important;
+      linear-gradient(112deg, transparent 3%, rgba(255, 255, 255, 0.38) 28%, transparent 50%),
+      radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.2), transparent 50%),
+      linear-gradient(145deg, #74777e 0%, #40434a 66%, #585b62 100%) !important;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      inset 0 -1px 0 rgba(226, 232, 240, 0.15) !important;
+      inset 0 1px 0 rgba(255, 255, 255, 0.34),
+      inset 0 -1px 0 rgba(226, 232, 240, 0.18) !important;
   }
 
   html:is(
@@ -11128,8 +11136,16 @@ body.dancr-button-system :is(
     .samsung-rendering
   ) body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-discovery-feed-shade,
+  body:is(
+    .is-android,
+    .android-rendering,
+    .is-samsung-browser,
+    .samsung-rendering
+  ).dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-discovery-feed-shade {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 72%, rgba(15, 17, 22, 0.1)) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 76%, rgba(15, 17, 22, 0.06)) !important;
   }
 }
 
