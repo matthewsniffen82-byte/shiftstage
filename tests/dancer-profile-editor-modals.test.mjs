@@ -34,6 +34,23 @@ test("avatar editor has one compact requirement and keeps the real upload workfl
   assert.match(avatarEditor, /requestDancerAvatarJson/);
 });
 
+test("avatar upload and removal reject duplicate and stale work", () => {
+  assert.match(avatarEditor, /const mountedRef = useRef\(false\);/);
+  assert.match(avatarEditor, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(avatarEditor, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(avatarEditor, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(avatarEditor, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(avatarEditor, /function selectAvatar[\s\S]*?if \(actionInFlightRef\.current\) return;/);
+  assert.match(avatarEditor, /async function removeAvatar\(\) \{\s*if \(actionInFlightRef\.current\) return;/);
+  assert.match(avatarEditor, /const uploadIdentityRef = useRef<\{ signature: string; key: string \} \| null>\(null\);/);
+  assert.match(avatarEditor, /uploadIdentityRef\.current\?\.signature === signature[\s\S]*?uploadIdentityRef\.current[\s\S]*?createAvatarUploadIdentity\(nextFile\)/);
+  assert.match(avatarEditor, /key: `\$\{signature\}:avatar:\$\{crypto\.randomUUID\(\)\}`/);
+  assert.equal((avatarEditor.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.equal((avatarEditor.match(/refreshProfile\(controller\.signal\)/g) || []).length, 2);
+  assert.equal((avatarEditor.match(/if \(!isCurrentAvatarAction\(requestId, controller\)\) return;/g) || []).length, 4);
+  assert.match(avatarEditor, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
+});
+
 test("photo editor shows actual media only and does not advertise capacity", () => {
   assert.match(photoEditor, /Add at least 1 solo picture of yourself\. You can add more later\./);
   assert.match(photoEditor, /Your photos/);

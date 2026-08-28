@@ -5733,29 +5733,69 @@ function DancerAvatarPanel({
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+  const uploadIdentityRef = useRef<{ signature: string; key: string } | null>(null);
   const avatarUrl = String(profile?.avatarPhotoUrl || "");
   const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
+      uploadIdentityRef.current = null;
+    };
+  }, []);
 
   useEffect(() => () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
   function selectAvatar(nextFile: File | null) {
+    if (actionInFlightRef.current) return;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+    uploadIdentityRef.current = nextFile ? createAvatarUploadIdentity(nextFile) : null;
     setFile(nextFile);
     setPreviewUrl(nextFile ? URL.createObjectURL(nextFile) : "");
     setStatus(nextFile ? "Avatar selected. Upload started automatically." : "");
     if (nextFile) void uploadAvatar(nextFile);
   }
 
-  async function refreshProfile() {
+  async function refreshProfile(signal: AbortSignal) {
     const data = await requestDancerProfileJson({
       cache: "no-store",
       fallbackMessage: "Unable to refresh your avatar.",
+      signal,
     });
     if (!data.profile) throw new Error("Unable to refresh your avatar.");
-    onProfileChange?.(data.profile);
     return data.profile as Record<string, unknown>;
+  }
+
+  function beginAvatarAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentAvatarAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishAvatarAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return false;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    return mountedRef.current;
   }
 
   async function uploadAvatar(nextFile: File) {
@@ -5764,9 +5804,17 @@ function DancerAvatarPanel({
     if (!nextFile.type.startsWith("image/")) return setStatus("Choose a JPEG, PNG, WebP, HEIC, or HEIF image.");
     if (nextFile.size > 25 * 1024 * 1024) return setStatus("Avatar photos must be 25 MB or smaller.");
     const formData = new FormData();
-    const uploadKey = `${nextFile.name}:${nextFile.size}:${nextFile.lastModified}:avatar:${Date.now()}`;
+    const signature = avatarFileSignature(nextFile);
+    const uploadIdentity = uploadIdentityRef.current?.signature === signature
+      ? uploadIdentityRef.current
+      : createAvatarUploadIdentity(nextFile);
+    uploadIdentityRef.current = uploadIdentity;
+    const uploadKey = uploadIdentity.key;
     formData.set("file", nextFile);
     formData.set("idempotencyKey", uploadKey);
+    const action = beginAvatarAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setIsSaving(true);
     setUploadProgress(25);
     setStatus("Checking your avatar...");
@@ -5776,10 +5824,15 @@ function DancerAvatarPanel({
         headers: { "idempotency-key": uploadKey },
         body: formData,
         fallbackMessage: "Unable to upload avatar.",
+        signal: controller.signal,
       });
+      if (!isCurrentAvatarAction(requestId, controller)) return;
       setUploadProgress(85);
-      await refreshProfile();
+      const refreshedProfile = await refreshProfile(controller.signal);
+      if (!isCurrentAvatarAction(requestId, controller)) return;
+      onProfileChange?.(refreshedProfile);
       setFile(null);
+      uploadIdentityRef.current = null;
       setPreviewUrl((current) => {
         if (current) URL.revokeObjectURL(current);
         return "";
@@ -5789,30 +5842,53 @@ function DancerAvatarPanel({
         ? "Avatar approved and saved."
         : "Avatar uploaded. We are checking it now; your current approved avatar stays visible.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to upload avatar.");
+      if (isCurrentAvatarAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to upload avatar.");
+      }
     } finally {
-      setIsSaving(false);
-      setUploadProgress(0);
+      if (finishAvatarAction(requestId)) {
+        setIsSaving(false);
+        setUploadProgress(0);
+      }
     }
   }
 
+  function avatarFileSignature(nextFile: File) {
+    return `${nextFile.name}:${nextFile.size}:${nextFile.lastModified}`;
+  }
+
+  function createAvatarUploadIdentity(nextFile: File) {
+    const signature = avatarFileSignature(nextFile);
+    return { signature, key: `${signature}:avatar:${crypto.randomUUID()}` };
+  }
+
   async function removeAvatar() {
+    if (actionInFlightRef.current) return;
     if (!window.confirm("Remove your current avatar? A moderated avatar is required before profile submission.")) return;
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
+    const action = beginAvatarAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setIsSaving(true);
     setStatus("Removing avatar...");
     try {
       await requestDancerAvatarJson({
         method: "DELETE",
         fallbackMessage: "Unable to remove avatar.",
+        signal: controller.signal,
       });
-      await refreshProfile();
+      if (!isCurrentAvatarAction(requestId, controller)) return;
+      const refreshedProfile = await refreshProfile(controller.signal);
+      if (!isCurrentAvatarAction(requestId, controller)) return;
+      onProfileChange?.(refreshedProfile);
       setStatus("Avatar removed.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to remove avatar.");
+      if (isCurrentAvatarAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to remove avatar.");
+      }
     } finally {
-      setIsSaving(false);
+      if (finishAvatarAction(requestId)) setIsSaving(false);
     }
   }
 
