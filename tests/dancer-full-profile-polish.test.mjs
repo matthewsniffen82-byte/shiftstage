@@ -598,6 +598,15 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.match(aesthetic, /\.profile-media-tab-icon \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;[\s\S]*?flex-basis: 20px !important;/);
 });
 
+test("available inactive media tabs remain distinct from disabled media tabs", () => {
+  assert.match(
+    aesthetic,
+    /\.profile-modal-media-tabs button:not\(\.active\):not\(:disabled\),[\s\S]*?\.profile-media-tabs button:not\(\.active\):not\(:disabled\),[\s\S]*?\.profile-media-tab-label, \.profile-media-tab-count[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;/,
+  );
+  assert.match(publicProfilePage, /\.profile-media-tabs button:disabled \{ opacity: \.42; cursor: default; \}/);
+  assert.match(liveApp, /#profileBackdrop \.profile-modal-media-tabs button:disabled \{[\s\S]*?opacity: \.4;/);
+});
+
 test("Working Now profiles do not repeat the Club Confirmed check-in card", () => {
   assert.match(
     liveApp,

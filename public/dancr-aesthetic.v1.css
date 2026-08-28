@@ -5176,6 +5176,16 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button {
   box-shadow: none !important;
 }
 
+/* An available media type stays visibly interactive even while it is not the
+ * current selection. Empty/disabled media types keep their separate reduced
+ * opacity, while beam violet remains reserved for the active underline. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button:not(.active):not(:disabled),
+body.dancr-button-system .public-profile-shell .profile-media-tabs button:not(.active):not(:disabled),
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button:not(.active):not(:disabled) :is(.profile-media-tab-label, .profile-media-tab-count),
+body.dancr-button-system .public-profile-shell .profile-media-tabs button:not(.active):not(:disabled) :is(.profile-media-tab-label, .profile-media-tab-count) {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
 body.dancr-button-system #profileBackdrop #profileModal .profile-media-tab-icon,
 body.dancr-button-system .public-profile-shell .profile-media-tab-icon {
   width: 20px !important;
