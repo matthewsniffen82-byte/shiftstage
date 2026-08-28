@@ -10728,6 +10728,55 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-anch
   gap: 5px;
 }
 
+/* Club Deal actions use one emerald language with two intentional glow levels.
+ * Primary profile/detail actions carry the full signal; compact discovery and
+ * TV controls retain the same hue with a quieter halo. Geometry is unchanged. */
+body.dancr-button-system :is(
+  #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-cta,
+  #profileBackdrop #profileModal .profile-club-deal-tile.is-active .profile-club-deal-qr-button,
+  .public-profile-shell .club-deal-profile-action[data-club-deal-state="available"],
+  .public-profile-shell .club-deal-launcher.club-deal-active-action,
+  .public-profile-shell .club-deal-sticky.club-deal-active-action
+) {
+  border-color: var(--dancr-color-success-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background:
+    linear-gradient(180deg, var(--dancr-color-white-medium), transparent 48%),
+    radial-gradient(circle at 50% -20%, var(--dancr-color-success-medium), transparent 58%),
+    linear-gradient(
+      135deg,
+      var(--dancr-color-success),
+      color-mix(in srgb, var(--dancr-color-success) 58%, var(--dancr-color-background))
+    ) !important;
+  box-shadow:
+    0 8px 18px var(--dancr-color-black-soft),
+    0 0 20px var(--dancr-color-success-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  .home-card-qr-rail-action.is-available,
+  .home-tv-feed-deal-action.is-available,
+  .venue-card-deal-action
+) {
+  border-color: var(--dancr-color-success-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background:
+    linear-gradient(180deg, var(--dancr-color-white-soft), transparent 48%),
+    radial-gradient(circle at 50% -20%, var(--dancr-color-success-soft), transparent 58%),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--dancr-color-success) 74%, var(--dancr-color-background)),
+      color-mix(in srgb, var(--dancr-color-success) 42%, var(--dancr-color-background))
+    ) !important;
+  box-shadow:
+    0 7px 16px var(--dancr-color-black-soft),
+    0 0 12px var(--dancr-color-success-soft),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  text-shadow: none !important;
+}
+
 /* Align the stage-name start with the rendered Follower/Followers word below.
  * The hidden guide uses identical label typography, while the verified badge
  * remains anchored to the name itself with one consistent gap. */

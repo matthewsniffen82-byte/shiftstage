@@ -68,7 +68,7 @@ test("primary, selected, destructive, utility, disabled, and keyboard states rem
 test("venue-card QR revenue actions use the semantic emerald success treatment", () => {
   assert.match(
     liveSource,
-    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-club-deal-cta[\s\S]*?data-feed-venue-qr[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/,
+    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-club-deal-cta[\s\S]*?data-feed-venue-qr[\s\S]*?actionButtonLabel\("qr", offerCount > 1 \? "Club Deals" : "Club Deal"\)/,
   );
   assert.match(
     buttonCss,
@@ -88,7 +88,7 @@ test("venue-card QR revenue actions use the semantic emerald success treatment",
   );
 });
 
-test("every active NFC Club Deal control uses the venue-card glow", () => {
+test("active NFC Club Deal controls use one emerald system with primary and compact glow levels", () => {
   assert.match(
     liveSource,
     /home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?is-available[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass/,
@@ -107,7 +107,7 @@ test("every active NFC Club Deal control uses the venue-card glow", () => {
   );
   assert.match(
     aestheticCss,
-    /\.home-tv-feed-deal-action\.is-available \{[\s\S]*?0 0 18px color-mix\(in srgb, var\(--dancr-color-success\) 30%, transparent\)[\s\S]*?\.home-tv-feed-deal-action\.is-available \.action-icon \{[\s\S]*?0 0 6px color-mix\(in srgb, var\(--dancr-color-success\) 72%, transparent\)/,
+    /Club Deal actions use one emerald language with two intentional glow levels[\s\S]*?venue-detail-club-deal-cta[\s\S]*?profile-club-deal-qr-button[\s\S]*?club-deal-profile-action[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)[\s\S]*?home-card-qr-rail-action\.is-available[\s\S]*?home-tv-feed-deal-action\.is-available[\s\S]*?0 0 12px var\(--dancr-color-success-soft\)/,
   );
 });
 

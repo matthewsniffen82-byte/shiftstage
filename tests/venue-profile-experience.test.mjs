@@ -141,7 +141,7 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
     /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Club Deal/,
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
-  assert.match(venueOffer, /activeDealCount[\s\S]*?hasMultipleActiveDeals[\s\S]*?\$\{activeDealCount\} Club Deals[\s\S]*?View \$\{activeDealCount\} Club Deals/);
+  assert.match(venueOffer, /activeDealCount[\s\S]*?hasMultipleActiveDeals[\s\S]*?\$\{activeDealCount\} Club Deals[\s\S]*?Open \$\{activeDealCount\} Club Deals[\s\S]*?hasMultipleActiveDeals \? "Club Deals" : "Club Deal"/);
   assert.match(venueOffer, /customerFacingDealDescription\(venue\.activeDeal\.dealDescription\)/);
   assert.match(venueOffer, /return "";/);
   assert.doesNotMatch(venueOffer, /Half-off admission|Skip the line|Tap at cashier/);
@@ -191,7 +191,7 @@ test("venue deal previews collapse without an active deal and adapt to one or mu
     ],
   });
   assert.match(multipleOffers, /2 Club Deals/);
-  assert.match(multipleOffers, /View 2 Club Deals/);
+  assert.match(multipleOffers, />Club Deals</);
 });
 
 test("venue profiles separate compact deal discovery from NFC redemption", () => {

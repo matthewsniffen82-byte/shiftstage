@@ -185,7 +185,7 @@ test("every profile uses one compact Tonight card while only Working Now activat
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
   );
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "View Deal"\}/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? "Club Deals" : "Club Deal"\}/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /attributionTokens=\{dealAttributionTokens\}/);
@@ -247,7 +247,7 @@ test("active full-profile Club Deals render a compact cashier-tap action and use
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?View all \$\{offers\.length\}[\s\S]*?Club Deals[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?View Deal/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?offers\.length > 1[\s\S]*?<strong>Club Deals<\/strong>[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?<strong>Club Deal<\/strong>/,
   );
   assert.doesNotMatch(liveApp, /How to use<\/strong><small>View steps/);
   assert.match(

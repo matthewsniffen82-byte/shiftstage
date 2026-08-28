@@ -263,7 +263,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                   attributionTokens={dealAttributionTokens}
                   dancerNote={dancerAttributionEligible}
                   presentation="profileCompact"
-                  ctaLabel={activeDeals.length > 1 ? `View all ${activeDeals.length}` : "View Deal"}
+                  ctaLabel={activeDeals.length > 1 ? "Club Deals" : "Club Deal"}
                   sectionId="club-deal"
                 />
               </div>

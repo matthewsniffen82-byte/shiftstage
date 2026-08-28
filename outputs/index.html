@@ -47938,7 +47938,7 @@
       if (offers.length > 1) {
         qrButton.dataset.clubDealCta = encodedConfig;
         qrButton.setAttribute("aria-label", `Open ${offers.length} Club Deals at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-hub-symbol")}<span class="profile-club-deal-action-copy"><strong>View all ${offers.length}</strong><small>Club Deals</small></span>`;
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-hub-symbol")}<span class="profile-club-deal-action-copy"><strong>Club Deals</strong></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready", "has-multiple-offers");
         return;
@@ -47951,8 +47951,8 @@
         if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
-        qrButton.setAttribute("aria-label", `View the ${config.venueName || "active"} Club Deal`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>View Deal</strong></span>`;
+        qrButton.setAttribute("aria-label", `Open the ${config.venueName || "active"} Club Deal`);
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>Club Deal</strong></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({
@@ -48677,8 +48677,8 @@
                 <p>${hasMultipleActiveDeals ? `${activeDealCount} active offers are available tonight.` : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
-                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="${hasMultipleActiveDeals ? `View ${activeDealCount} Club Deals` : `Open Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}`}">
-                  <strong>${hasMultipleActiveDeals ? `View ${activeDealCount} Club Deals` : "Club Deal"}</strong>
+                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="${hasMultipleActiveDeals ? `Open ${activeDealCount} Club Deals` : `Open Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}`}">
+                  <strong>${hasMultipleActiveDeals ? "Club Deals" : "Club Deal"}</strong>
                   <span aria-hidden="true">›</span>
                 </button>
               </div>
@@ -48719,7 +48719,7 @@
       if (available) {
         return {
           key: "available",
-          label: "View Deal",
+          label: "Club Deal",
           detail: profile?.dealAttributionToken
             ? "A tracked Club Deal is available during this verified check-in."
             : "This club has an active Club Deal available now."
@@ -51211,7 +51211,7 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"}">${actionButtonLabel("qr", "Club Deals")}</button>`;
+        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"}">${actionButtonLabel("qr", offerCount > 1 ? "Club Deals" : "Club Deal")}</button>`;
       }
       return "";
     }
@@ -58218,11 +58218,11 @@
               <small>Club Deal available</small>
               <strong>${safeVenueName}</strong>
             </span>
-            <span class="home-discovery-feed-qr-prompt-action">Club Deals</span>
+            <span class="home-discovery-feed-qr-prompt-action">${qr.offerCount > 1 ? "Club Deals" : "Club Deal"}</span>
           </button>
         `;
       }
-      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr aria-label="Open the live Club Deals">${actionButtonLabel("qr", "Club Deals")}</button>`;
+      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr aria-label="Open the live ${qr.offerCount > 1 ? "Club Deals" : "Club Deal"}">${actionButtonLabel("qr", qr.offerCount > 1 ? "Club Deals" : "Club Deal")}</button>`;
     }
 
     function homeDancerGridQrMarkup(profile) {
@@ -58233,7 +58233,7 @@
         return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deals: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "Club Deals")}</button>`;
       }
       const venueName = escapeHtml(qr.venueName || "this club");
-      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr aria-label="Open Club Deals for ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr aria-label="Open ${qr.offerCount > 1 ? "Club Deals" : "Club Deal"} for ${venueName}">${actionButtonLabel("qr", qr.offerCount > 1 ? "Club Deals" : "Club Deal")}</button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue) {
@@ -58248,7 +58248,7 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", offerCount > 1 ? "Club Deals" : "Club Deal")}</button>`;
       }
       return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deals status at ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
     }
@@ -59925,7 +59925,7 @@
       if (available) {
         return {
           key: "available",
-          label: "View Deal",
+          label: "Club Deal",
           detail: "A tracked Club Deal is available during this verified check-in."
         };
       }
@@ -60021,7 +60021,7 @@
         const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
         deal.setAttribute("aria-label", `Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} for ${venueName}`);
         deal.title = offerCount > 1 ? `${offerCount} Club Deals` : dealTitle;
-        deal.insertAdjacentHTML("beforeend", '<span class="home-tv-feed-deal-count">Club Deals</span>');
+        deal.insertAdjacentHTML("beforeend", `<span class="home-tv-feed-deal-count">${offerCount > 1 ? "Club Deals" : "Club Deal"}</span>`);
         deal.dataset.clubDealCta = encodeDealPass({
           deal: item.deal,
           deals: item.deals,

@@ -62,7 +62,7 @@ test("venue pages, venue cards, dancer profiles, and TV expose real active Club 
   assert.match(venuePage, /getVenueProfile/);
   assert.match(venuePage, /permanentRedirect/);
   assert.match(venueDirectory, /permanentRedirect/);
-  assert.match(dancerPage, /ctaLabel=\{activeDeals\.length > 1 \? `View all \$\{activeDeals\.length\}` : "View Deal"\}/);
+  assert.match(dancerPage, /ctaLabel=\{activeDeals\.length > 1 \? "Club Deals" : "Club Deal"\}/);
   assert.doesNotMatch(dealCard, /<em>\{offerDeals\.length > 1 \? "Tap to choose an offer and view instructions" : "Tap How to use for instructions"\}<\/em>/);
   assert.match(tvSource, /deals: venueDeals/);
   assert.match(tvSource, /dealAttributionToken/);
@@ -71,12 +71,12 @@ test("venue pages, venue cards, dancer profiles, and TV expose real active Club 
 });
 
 test("venue and dancer cards consistently label Club Deal states while TV renders only an active action", () => {
-  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/);
-  assert.match(liveApp, /function homeDancerGridQrMarkup\(profile\)[\s\S]*?data-card-qr-label[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/);
+  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", offerCount > 1 \? "Club Deals" : "Club Deal"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/);
+  assert.match(liveApp, /function homeDancerGridQrMarkup\(profile\)[\s\S]*?data-card-qr-label[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", qr\.offerCount > 1 \? "Club Deals" : "Club Deal"\)/);
   assert.match(liveApp, /function homeTvFeedDealState\(item\)[\s\S]*?key: "no-active-offer"[\s\S]*?key: "available-when-working"[\s\S]*?key: "not-available-now"/);
   assert.match(liveApp, /let deal = null;[\s\S]*?if \(dealState\.key === "available"\)/);
   assert.doesNotMatch(liveApp, /deal\.dataset\.cardQrLabel|deal\.dataset\.cardQrMessage/);
-  assert.match(liveApp, /home-tv-feed-deal-count">Club Deals/);
+  assert.match(liveApp, /home-tv-feed-deal-count">\$\{offerCount > 1 \? "Club Deals" : "Club Deal"\}/);
   assert.doesNotMatch(tvClient, /TvClubDealUnavailable|tv-club-deal-unavailable/);
   assert.match(dealCard, /<strong>Club Deals<\/strong>/);
   assert.doesNotMatch(liveApp, /actionButtonLabel\("qr", "NFC(?: Deal)?"\)|home-tv-feed-deal-count">NFC/);
