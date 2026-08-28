@@ -439,7 +439,7 @@ function PublicProfileStyles() {
       .profile-schedule-empty { min-width: 0; display: flex; align-items: center; gap: 6px; margin-top: 5px; padding: 8px 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #82798c; background: rgba(255,255,255,.025); font-size: 10px; line-height: 1.2; }
       .profile-schedule-empty strong { flex: 0 0 auto; color: #d9d3e0; font-size: 12px; white-space: nowrap; }
       .profile-schedule-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-media-socials { min-height: 0; display: grid; place-items: center; margin: 0; padding: 12px 0 14px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-media-socials { min-height: 0; display: grid; place-items: center; margin: 0; padding: 10px 0 6px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
@@ -594,7 +594,7 @@ function PublicProfileStyles() {
       .venue-qr-placeholder-copy small { color: rgba(203,196,214,.64); font-size: 9px; font-weight: 850; line-height: 1.12; }
       @media (max-width: 340px) { .venue-qr-unavailable { grid-template-columns: minmax(0, 1fr) 112px; } .venue-qr-placeholder-icon { width: 112px; min-width: 112px; } }
       .profile-schedule-section { margin-top: 24px; }
-      .profile-media-section { position: relative; isolation: isolate; display: grid; gap: 3px; margin-top: 0; padding-bottom: 0; overflow: clip; border-radius: 18px; background: rgba(5,5,8,.78); }
+      .profile-media-section { position: relative; isolation: isolate; display: grid; gap: 3px; margin-top: 12px; padding-bottom: 0; overflow: clip; border-radius: 18px; background: rgba(5,5,8,.78); }
       .profile-media-section::after { content: ""; position: absolute; z-index: 40; inset: 0; border: 1px solid rgba(180,169,196,.22); border-radius: inherit; pointer-events: none; }
       .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .profile-section-heading > div { display: grid; gap: 5px; }

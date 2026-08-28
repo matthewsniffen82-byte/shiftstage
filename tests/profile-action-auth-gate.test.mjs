@@ -95,7 +95,7 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
-    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?scroll-padding-bottom: var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?padding-bottom: var\(--profile-bottom-nav-clearance\) !important;/,
+    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?scroll-padding-bottom: var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
   assert.doesNotMatch(homeSource, /--profile-report-clearance: calc\(80px/);
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);

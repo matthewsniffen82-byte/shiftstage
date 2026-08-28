@@ -5013,7 +5013,7 @@ body.dancr-button-system .public-profile-shell .profile-media-socials {
   display: grid !important;
   place-items: center !important;
   margin: 0 !important;
-  padding: 12px 0 14px !important;
+  padding: 10px 0 6px !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -5128,6 +5128,15 @@ body.dancr-button-system .public-profile-shell .profile-media-section {
   overflow: clip !important;
   border-radius: 18px !important;
   background: var(--dancr-color-surface-translucent) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media {
+  margin: 12px 0 var(--profile-bottom-nav-clearance, max(132px, calc(108px + env(safe-area-inset-bottom, 0px)))) !important;
+  padding-bottom: 0 !important;
+}
+
+body.dancr-button-system .public-profile-shell .profile-media-section {
+  margin-top: 12px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media::after,

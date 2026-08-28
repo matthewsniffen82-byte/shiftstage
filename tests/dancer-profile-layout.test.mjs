@@ -332,12 +332,17 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?padding-bottom: var\(--profile-bottom-nav-clearance\) !important;/,
+    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?padding-bottom: 0 !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#profileBackdrop #profileModal \.profile-modal-media \{[\s\S]*?margin: 12px 0 var\(--profile-bottom-nav-clearance, max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\)\) !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
   assert.match(
     profilePage,
     /\.public-profile-shell \{ padding: 0 12px max\(132px, calc\(108px \+ env\(safe-area-inset-bottom\)\)\); \}/,
   );
+  assert.match(profilePage, /\.profile-media-section \{[^}]*margin-top: 12px;/);
   assert.match(
     profilePage,
     /\.club-deal-card \{ grid-template-columns: minmax\(0, 1fr\) 128px; gap: 14px; padding: 14px; \}/,

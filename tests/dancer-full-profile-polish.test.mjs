@@ -181,7 +181,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
 
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop #profileModal \.profile-media-socials,[\s\S]*?\.public-profile-shell \.profile-media-socials \{[\s\S]*?place-items: center !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 12px 0 14px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop #profileModal \.profile-media-socials,[\s\S]*?\.public-profile-shell \.profile-media-socials \{[\s\S]*?place-items: center !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 6px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
@@ -490,7 +490,7 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   );
   assert.match(
     liveApp,
-    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?padding-bottom: var\(--profile-bottom-nav-clearance\) !important;/,
+    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
   assert.doesNotMatch(profilePolishBlock, /\.is-android|\.is-ios|SamsungBrowser|iPhone/);
 });

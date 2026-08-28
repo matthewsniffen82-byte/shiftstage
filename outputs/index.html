@@ -38673,7 +38673,7 @@
 
         /* The full dancer profile is an action-first media library. Keep all
            nightlife actions above a vertical, lazily populated gallery and
-           reserve space for the floating discovery dock below the final row. */
+           reserve scroll space below the media surface for the floating dock. */
         #profileBackdrop .profile-modal {
           --profile-bottom-nav-clearance: max(132px, calc(108px + env(safe-area-inset-bottom, 0px)));
           scroll-padding-bottom: var(--profile-bottom-nav-clearance) !important;
@@ -38749,8 +38749,8 @@
 
         #profileBackdrop .profile-modal-media {
           gap: 3px !important;
-          margin: 2px 0 0 !important;
-          padding-bottom: var(--profile-bottom-nav-clearance) !important;
+          margin: 12px 0 var(--profile-bottom-nav-clearance) !important;
+          padding-bottom: 0 !important;
         }
 
         #profileBackdrop .profile-modal-media-tabs {
