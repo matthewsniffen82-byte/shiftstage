@@ -54,8 +54,11 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.ok(venueDetail.indexOf("${activitySections}") < venueDetail.indexOf("${venueInformationMarkup}"));
   assert.ok(venueDetail.indexOf("${venueInformationMarkup}") < venueDetail.indexOf("venue-location-section"));
   assert.ok(venueDetail.indexOf("venue-location-section") < venueDetail.indexOf("venue-secondary-actions"));
-  assert.match(venueDetail, /const venueInformationRows = \[[\s\S]*?details\.hours[\s\S]*?details\.phone[\s\S]*?details\.website[\s\S]*?\.filter\(Boolean\)\.join\(""\)/);
-  assert.match(venueDetail, /<details class="venue-contact-details venue-information-section">[\s\S]*?<summary>Venue information<\/summary>/);
+  assert.match(liveApp, /function fictionalVenueContactDetails\(venue\) \{[\s\S]*?\(702\) 555-[\s\S]*?\.example[\s\S]*?phone: venue\.phone \|\| fictionalContact\.phone[\s\S]*?website: venue\.website \|\| fictionalContact\.website/);
+  assert.match(venueDetail, /const venuePhoneHref = String\(details\.phone \|\| ""\)[\s\S]*?const venueWebsiteHref = safeExternalHref\(details\.website\)/);
+  assert.match(venueDetail, /const venueInformationRows = \[[\s\S]*?details\.hours[\s\S]*?href="tel:\$\{escapeOptionValue\(venuePhoneHref\)\}"[\s\S]*?href="\$\{escapeOptionValue\(venueWebsiteHref\)\}"[\s\S]*?\.filter\(Boolean\)\.join\(""\)/);
+  assert.match(venueDetail, /<section class="venue-information-section" aria-labelledby="venue-information-heading">[\s\S]*?<h3 class="venue-detail-section-heading" id="venue-information-heading">Venue information<\/h3>[\s\S]*?<div class="venue-contact-details-content">/);
+  assert.doesNotMatch(venueDetail, /<details|<summary/);
   assert.match(venueDetail, /<\/article>[\s\S]*?<div class="venue-detail-exploration">[\s\S]*?\$\{activitySections\}[\s\S]*?\$\{venueInformationMarkup\}[\s\S]*?class="venue-info venue-location-section"/);
   assert.match(venueDetail, /class="venue-action-stack"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?class="venue-secondary-actions"/);
   assert.equal((venueDetail.match(/\$\{rideMarkup\}/g) || []).length, 1);
@@ -66,6 +69,29 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
     venueDetail,
     /otherVenues|Other \$\{city\} venues|other venues|venueCard\(item\)/i,
   );
+});
+
+test("fictional venue profiles show reserved demo phone and website information", () => {
+  const contactSource = liveApp.match(
+    /function fictionalVenueContactDetails\(venue\) \{[\s\S]*?(?=\n    function venueDetails)/,
+  )?.[0] || "";
+  const fictionalVenueContactDetails = new Function(
+    "isFictionalDemoVenue",
+    "slugify",
+    `${contactSource}; return fictionalVenueContactDetails;`,
+  )(
+    (venue) => String(venue?.logoImageUrl || "").startsWith("/venue-logos/fictional/"),
+    (value) => String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+  );
+
+  const demoContact = fictionalVenueContactDetails({
+    name: "Echo House",
+    slug: "talk-of-the-town",
+    logoImageUrl: "/venue-logos/fictional/echo-house.svg",
+  });
+  assert.match(demoContact.phone, /^\(702\) 555-01\d{2}$/);
+  assert.equal(demoContact.website, "https://echo-house.example");
+  assert.deepEqual(fictionalVenueContactDetails({ name: "Published Venue" }), { phone: "", website: "" });
 });
 
 test("venue details reuse the production Dancers grid card for every schedule status", () => {
@@ -219,7 +245,10 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 16px;[\s\S]*?padding: 10px 12px 16px;/);
   assert.match(refinement, /\.venue-activity-empty\.is-compact \{[\s\S]*?grid-template-columns: 34px minmax\(0, 1fr\);[\s\S]*?padding: 10px 11px;/);
   assert.match(refinement, /\.venue-hero \+ \.venue-detail-exploration \{[\s\S]*?margin-top: 0;/);
-  assert.match(refinement, /\.venue-contact-details summary \{[\s\S]*?min-height: 44px;[\s\S]*?cursor: pointer;/);
+  assert.match(refinement, /\.venue-information-section \{[\s\S]*?min-width: 0;[\s\S]*?display: grid;[\s\S]*?gap: 9px;/);
+  assert.match(refinement, /\.venue-contact-details-content > span \{[\s\S]*?grid-template-columns: 62px minmax\(0, 1fr\);/);
+  assert.match(refinement, /\.venue-contact-link:focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-info\);/);
+  assert.doesNotMatch(refinement, /\.venue-contact-details summary|\.venue-contact-details\[open\]/);
   assert.match(refinement, /padding-bottom: max\(112px, calc\(94px \+ env\(safe-area-inset-bottom, 0px\)\)\) !important;/);
   assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
 });
