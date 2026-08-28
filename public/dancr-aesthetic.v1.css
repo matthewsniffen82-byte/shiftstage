@@ -4856,11 +4856,13 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
  * reserved row before the media tabs. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
 body.dancr-button-system .public-profile-shell .live-actions {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  column-gap: 0 !important;
+  --profile-row-inline-start: clamp(24px, 7vw, 28px);
+  grid-template-columns: repeat(4, clamp(52px, 15vw, 56px)) !important;
+  justify-content: start !important;
+  column-gap: clamp(4px, 2vw, 8px) !important;
   row-gap: 2px !important;
   margin-top: 0 !important;
-  padding: 2px 4px !important;
+  padding: 2px 4px 2px var(--profile-row-inline-start) !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
@@ -4994,12 +4996,13 @@ body.dancr-button-system .public-profile-shell .profile-social-section {
 
 body.dancr-button-system #profileBackdrop #profileModal .social-links,
 body.dancr-button-system .public-profile-shell .social-list {
+  --profile-row-inline-start: clamp(24px, 7vw, 28px);
   width: fit-content !important;
   max-width: 100% !important;
   flex-wrap: nowrap !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
   gap: 6px !important;
-  margin-inline: auto !important;
+  margin-inline: var(--profile-row-inline-start) 0 !important;
   overflow: visible !important;
 }
 

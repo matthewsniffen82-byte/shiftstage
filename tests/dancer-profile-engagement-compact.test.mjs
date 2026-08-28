@@ -96,7 +96,7 @@ test("all schedule states share the same compact header stats, four-action, stat
   assert.match(profileActions, /hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"/);
   assert.match(
     compactLayout,
-    /\.modal-actions,[\s\S]*?\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
+    /\.modal-actions,[\s\S]*?\.live-actions \{[\s\S]*?--profile-row-inline-start: clamp\(24px, 7vw, 28px\);[\s\S]*?grid-template-columns: repeat\(4, clamp\(52px, 15vw, 56px\)\) !important;[\s\S]*?justify-content: start !important;/,
   );
 });
 

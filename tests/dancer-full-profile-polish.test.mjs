@@ -192,7 +192,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   );
   assert.match(
     compactProfileBlock,
-    /\.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?gap: 6px !important;[\s\S]*?margin-inline: auto !important;[\s\S]*?overflow: visible !important;/,
+    /\.social-list \{[\s\S]*?--profile-row-inline-start: clamp\(24px, 7vw, 28px\);[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: flex-start !important;[\s\S]*?gap: 6px !important;[\s\S]*?margin-inline: var\(--profile-row-inline-start\) 0 !important;[\s\S]*?overflow: visible !important;/,
   );
   assert.match(
     compactProfileBlock,
@@ -255,7 +255,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   assert.doesNotMatch(publicProfilePage, /className="profile-overview"/);
 });
 
-test("profile action controls are unboxed and available Going highlights only its icon", () => {
+test("profile action controls are unboxed, left grouped, and available Going highlights only its icon", () => {
   const guestActionsBlock = aesthetic.match(
     /\/\* Guest actions read as a single icon row[\s\S]*?(?=\/\* Production TV-card branding)/,
   )?.[0] || "";
@@ -266,6 +266,10 @@ test("profile action controls are unboxed and available Going highlights only it
   assert.match(
     guestActionsBlock,
     /live-actions > button\.profile-action-secondary\.profile-action-icon-control:not\(\[aria-pressed="true"\]\),[\s\S]*?live-actions > button\.profile-action-going\.profile-action-icon-control:not\(\[aria-pressed="true"\]\)/,
+  );
+  assert.match(
+    guestActionsBlock,
+    /#profileBackdrop #profileModal \.modal-actions,[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?--profile-row-inline-start: clamp\(24px, 7vw, 28px\);[\s\S]*?grid-template-columns: repeat\(4, clamp\(52px, 15vw, 56px\)\) !important;[\s\S]*?justify-content: start !important;[\s\S]*?column-gap: clamp\(4px, 2vw, 8px\) !important;[\s\S]*?padding: 2px 4px 2px var\(--profile-row-inline-start\) !important;/,
   );
   assert.match(
     aesthetic,
