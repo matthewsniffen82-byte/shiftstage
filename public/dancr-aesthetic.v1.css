@@ -7228,20 +7228,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-contact-link {
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, currentColor 38%, transparent);
-  text-underline-offset: 3px;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-contact-link:focus-visible {
-  border-radius: 4px;
-  outline: 2px solid var(--dancr-color-info);
-  outline-offset: 2px;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .action-btn.follow-venue-btn:not(.is-following) {
   width: 100% !important;
   border-color: var(--dancr-color-border-subtle) !important;

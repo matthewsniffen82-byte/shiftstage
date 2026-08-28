@@ -51003,28 +51003,14 @@
       editingShiftId = null;
     }
 
-    function fictionalVenueContactDetails(venue) {
-      if (!isFictionalDemoVenue(venue)) return { phone: "", website: "" };
-      const identity = String(venue?.slug || venue?.name || "demo-venue");
-      const lineSuffix = Array.from(identity)
-        .reduce((total, character) => total + character.charCodeAt(0), 0) % 100;
-      return {
-        phone: `(702) 555-${String(100 + lineSuffix).padStart(4, "0")}`,
-        website: `https://${slugify(venue?.name || "demo-venue")}.example`
-      };
-    }
-
     function venueDetails(venue, city) {
       const state = venue.state || stateByCity[city] || "";
-      const fictionalContact = fictionalVenueContactDetails(venue);
       return {
         ...venue,
         city,
         state,
         distanceLabel: venueDistanceLabel(venue, city),
         address: venue.address || "",
-        phone: venue.phone || fictionalContact.phone,
-        website: venue.website || fictionalContact.website,
         hours: venue.hours || ""
       };
     }
@@ -51363,16 +51349,8 @@
           </section>
         ` : ""
       ].filter(Boolean).join("");
-      const venuePhoneHref = String(details.phone || "").replace(/[^\d+]/g, "");
-      const venueWebsiteHref = safeExternalHref(details.website);
       const venueInformationRows = [
-        details.hours ? `<span><strong>Hours</strong><span>${escapeHtml(displayShiftTime(details.hours))}</span></span>` : "",
-        details.phone && venuePhoneHref
-          ? `<span><strong>Phone</strong><a class="venue-contact-link" href="tel:${escapeOptionValue(venuePhoneHref)}">${escapeHtml(details.phone)}</a></span>`
-          : "",
-        details.website && venueWebsiteHref
-          ? `<span><strong>Website</strong><a class="venue-contact-link" href="${escapeOptionValue(venueWebsiteHref)}" target="_blank" rel="noopener noreferrer">${escapeHtml(String(details.website).replace(/^https?:\/\//, "").replace(/\/$/, ""))}</a></span>`
-          : ""
+        details.hours ? `<span><strong>Hours</strong><span>${escapeHtml(displayShiftTime(details.hours))}</span></span>` : ""
       ].filter(Boolean).join("");
       const venueInformationMarkup = venueInformationRows ? `
         <section class="venue-information-section" aria-labelledby="venue-information-heading">

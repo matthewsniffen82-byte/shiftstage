@@ -54,9 +54,9 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.ok(venueDetail.indexOf("${activitySections}") < venueDetail.indexOf("${venueInformationMarkup}"));
   assert.ok(venueDetail.indexOf("${venueInformationMarkup}") < venueDetail.indexOf("venue-location-section"));
   assert.ok(venueDetail.indexOf("venue-location-section") < venueDetail.indexOf("venue-secondary-actions"));
-  assert.match(liveApp, /function fictionalVenueContactDetails\(venue\) \{[\s\S]*?\(702\) 555-[\s\S]*?\.example[\s\S]*?phone: venue\.phone \|\| fictionalContact\.phone[\s\S]*?website: venue\.website \|\| fictionalContact\.website/);
-  assert.match(venueDetail, /const venuePhoneHref = String\(details\.phone \|\| ""\)[\s\S]*?const venueWebsiteHref = safeExternalHref\(details\.website\)/);
-  assert.match(venueDetail, /const venueInformationRows = \[[\s\S]*?details\.hours[\s\S]*?href="tel:\$\{escapeOptionValue\(venuePhoneHref\)\}"[\s\S]*?href="\$\{escapeOptionValue\(venueWebsiteHref\)\}"[\s\S]*?\.filter\(Boolean\)\.join\(""\)/);
+  assert.doesNotMatch(liveApp, /function fictionalVenueContactDetails\(/);
+  assert.match(venueDetail, /const venueInformationRows = \[[\s\S]*?details\.hours \? `<span><strong>Hours<\/strong>[\s\S]*?\.filter\(Boolean\)\.join\(""\)/);
+  assert.doesNotMatch(venueDetail, /details\.(?:phone|website)|venuePhoneHref|venueWebsiteHref|href="tel:|venue-contact-link|<strong>(?:Phone|Website)<\/strong>/);
   assert.match(venueDetail, /<section class="venue-information-section" aria-labelledby="venue-information-heading">[\s\S]*?<h3 class="venue-detail-section-heading" id="venue-information-heading">Venue information<\/h3>[\s\S]*?<div class="venue-contact-details-content">/);
   assert.doesNotMatch(venueDetail, /<details|<summary/);
   assert.match(venueDetail, /<\/article>[\s\S]*?<div class="venue-detail-exploration">[\s\S]*?\$\{activitySections\}[\s\S]*?\$\{venueInformationMarkup\}[\s\S]*?class="venue-info venue-location-section"/);
@@ -71,27 +71,18 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   );
 });
 
-test("fictional venue profiles show reserved demo phone and website information", () => {
-  const contactSource = liveApp.match(
-    /function fictionalVenueContactDetails\(venue\) \{[\s\S]*?(?=\n    function venueDetails)/,
+test("venue information stays visible without customer-facing phone or website fields", () => {
+  const venueDetails = liveApp.match(
+    /function venueDetails\(venue, city\) \{[\s\S]*?(?=\n    function venueOperatingStatus)/,
   )?.[0] || "";
-  const fictionalVenueContactDetails = new Function(
-    "isFictionalDemoVenue",
-    "slugify",
-    `${contactSource}; return fictionalVenueContactDetails;`,
-  )(
-    (venue) => String(venue?.logoImageUrl || "").startsWith("/venue-logos/fictional/"),
-    (value) => String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
-  );
+  const venueDetail = liveApp.match(
+    /function venueDetailPage\(venue\) \{[\s\S]*?(?=\n    function findProfile)/,
+  )?.[0] || "";
 
-  const demoContact = fictionalVenueContactDetails({
-    name: "Echo House",
-    slug: "talk-of-the-town",
-    logoImageUrl: "/venue-logos/fictional/echo-house.svg",
-  });
-  assert.match(demoContact.phone, /^\(702\) 555-01\d{2}$/);
-  assert.equal(demoContact.website, "https://echo-house.example");
-  assert.deepEqual(fictionalVenueContactDetails({ name: "Published Venue" }), { phone: "", website: "" });
+  assert.doesNotMatch(venueDetails, /phone:|website:|fictionalContact/);
+  assert.match(venueDetail, /id="venue-information-heading">Venue information<\/h3>/);
+  assert.match(venueDetail, /<strong>Hours<\/strong>/);
+  assert.doesNotMatch(venueDetail, /<strong>Phone<\/strong>|<strong>Website<\/strong>|href="tel:|target="_blank"/);
 });
 
 test("venue details reuse the production Dancers grid card for every schedule status", () => {
@@ -247,7 +238,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-hero \+ \.venue-detail-exploration \{[\s\S]*?margin-top: 0;/);
   assert.match(refinement, /\.venue-information-section \{[\s\S]*?min-width: 0;[\s\S]*?display: grid;[\s\S]*?gap: 9px;/);
   assert.match(refinement, /\.venue-contact-details-content > span \{[\s\S]*?grid-template-columns: 62px minmax\(0, 1fr\);/);
-  assert.match(refinement, /\.venue-contact-link:focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-info\);/);
+  assert.doesNotMatch(refinement, /\.venue-contact-link/);
   assert.doesNotMatch(refinement, /\.venue-contact-details summary|\.venue-contact-details\[open\]/);
   assert.match(refinement, /padding-bottom: max\(112px, calc\(94px \+ env\(safe-area-inset-bottom, 0px\)\)\) !important;/);
   assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
