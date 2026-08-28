@@ -4896,10 +4896,25 @@ function DancerVisibilityPanel({
   const [isPublic, setIsPublic] = useState(initialVisible);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const mountedRef = useRef(false);
+  const visibilitySequenceRef = useRef(0);
+  const visibilityAbortRef = useRef<AbortController | null>(null);
+  const visibilityInFlightRef = useRef(false);
 
   useEffect(() => {
     setIsPublic(profile?.is_public !== false && profile?.isPublic !== false);
   }, [profile]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      visibilitySequenceRef.current += 1;
+      visibilityAbortRef.current?.abort();
+      visibilityAbortRef.current = null;
+      visibilityInFlightRef.current = false;
+    };
+  }, []);
 
   async function toggleVisibility() {
     const session = readSession();
@@ -4908,6 +4923,12 @@ function DancerVisibilityPanel({
       return;
     }
 
+    if (!mountedRef.current || visibilityInFlightRef.current) return;
+    visibilityInFlightRef.current = true;
+    const requestId = ++visibilitySequenceRef.current;
+    visibilityAbortRef.current?.abort();
+    const controller = new AbortController();
+    visibilityAbortRef.current = controller;
     const nextPublic = !isPublic;
     setIsSaving(true);
     setStatus(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from the site...");
@@ -4917,7 +4938,9 @@ function DancerVisibilityPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ isPublic: nextPublic }),
         fallbackMessage: "Unable to update profile visibility.",
+        signal: controller.signal,
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== visibilitySequenceRef.current) return;
       const savedPublic = data.profile?.is_public === true || data.profile?.isPublic === true;
       if (savedPublic !== nextPublic) throw new Error("Profile visibility did not save. Try again.");
       if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== nextPublic) {
@@ -4931,9 +4954,15 @@ function DancerVisibilityPanel({
           : "Incognito is on. Your profile was verified hidden from guests. You can turn it back on at any time.",
       );
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to update profile visibility.");
+      if (mountedRef.current && !controller.signal.aborted && requestId === visibilitySequenceRef.current) {
+        setStatus(error instanceof Error ? error.message : "Unable to update profile visibility.");
+      }
     } finally {
-      setIsSaving(false);
+      if (requestId === visibilitySequenceRef.current) {
+        visibilityAbortRef.current = null;
+        visibilityInFlightRef.current = false;
+        if (mountedRef.current) setIsSaving(false);
+      }
     }
   }
 

@@ -566,6 +566,19 @@ test("dancer profile requests use one role-aware dashboard boundary", async () =
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/profile\/visibility"/);
 });
 
+test("dancer visibility prevents duplicate and stale privacy changes", () => {
+  const visibilityPanel = dashboard.match(/function DancerVisibilityPanel[\s\S]*?function DancerLockedAnalyticsPanel/)?.[0] || "";
+  assert.match(visibilityPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(visibilityPanel, /const visibilitySequenceRef = useRef\(0\);/);
+  assert.match(visibilityPanel, /const visibilityAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(visibilityPanel, /const visibilityInFlightRef = useRef\(false\);/);
+  assert.match(visibilityPanel, /if \(!mountedRef\.current \|\| visibilityInFlightRef\.current\) return;/);
+  assert.match(visibilityPanel, /signal: controller\.signal/);
+  assert.match(visibilityPanel, /if \(!mountedRef\.current \|\| controller\.signal\.aborted \|\| requestId !== visibilitySequenceRef\.current\) return;/);
+  assert.match(visibilityPanel, /mountedRef\.current = false;[\s\S]*?visibilitySequenceRef\.current \+= 1;[\s\S]*?visibilityAbortRef\.current\?\.abort\(\)/);
+  assert.match(visibilityPanel, /onClick=\{toggleVisibility\} disabled=\{isSaving\}/);
+});
+
 test("dancer payout actions use the refresh-aware role boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;
