@@ -1222,6 +1222,48 @@ function CustomerPanel({
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState("");
   const [isLocating, setIsLocating] = useState(false);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+  const locationSequenceRef = useRef(0);
+  const locationInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
+      locationSequenceRef.current += 1;
+      locationInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginCustomerAction(actionKey: string) {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    setPendingAction(actionKey);
+    setActionStatus("");
+    return { requestId, controller };
+  }
+
+  function isCurrentCustomerAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishCustomerAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    if (mountedRef.current) setPendingAction("");
+  }
 
   async function runCustomerAction(
     actionKey: string,
@@ -1230,8 +1272,9 @@ function CustomerPanel({
     apply: (current: CustomerSavedState) => CustomerSavedState,
     successMessage: string,
   ) {
-    setPendingAction(actionKey);
-    setActionStatus("");
+    const action = beginCustomerAction(actionKey);
+    if (!action) return;
+    const { requestId, controller } = action;
     try {
       await requestDashboardJson(path, {
         method: "POST",
@@ -1239,13 +1282,15 @@ function CustomerPanel({
         body: JSON.stringify(body),
         expectedRole: "customer",
         fallbackMessage: "Unable to update your dashboard.",
+        signal: controller.signal,
       });
+      if (!isCurrentCustomerAction(requestId, controller)) return;
       onSavedChange(apply);
       setActionStatus(successMessage);
     } catch (error) {
-      setActionStatus(error instanceof Error ? error.message : "Unable to update your dashboard.");
+      if (isCurrentCustomerAction(requestId, controller)) setActionStatus(error instanceof Error ? error.message : "Unable to update your dashboard.");
     } finally {
-      setPendingAction("");
+      finishCustomerAction(requestId);
     }
   }
 
@@ -1313,8 +1358,9 @@ function CustomerPanel({
       setActionStatus("Venue directions are unavailable.");
       return;
     }
-    setPendingAction(`directions-${venueId}`);
-    setActionStatus("");
+    const action = beginCustomerAction(`directions-${venueId}`);
+    if (!action) return;
+    const { requestId, controller } = action;
     try {
       await requestDashboardJson("/api/customer/directions", {
         method: "POST",
@@ -1322,12 +1368,14 @@ function CustomerPanel({
         body: JSON.stringify({ venueId, dancerIds: dancerId ? [dancerId] : [] }),
         expectedRole: "customer",
         fallbackMessage: "Unable to open directions.",
+        signal: controller.signal,
       });
+      if (!isCurrentCustomerAction(requestId, controller)) return;
       window.location.assign(customerDirectionsHref(venue));
     } catch (error) {
-      setActionStatus(error instanceof Error ? error.message : "Unable to open directions.");
+      if (isCurrentCustomerAction(requestId, controller)) setActionStatus(error instanceof Error ? error.message : "Unable to open directions.");
     } finally {
-      setPendingAction("");
+      finishCustomerAction(requestId);
     }
   }
 
@@ -1336,15 +1384,22 @@ function CustomerPanel({
       setLocationStatus("Location is not available in this browser.");
       return;
     }
+    if (!mountedRef.current || locationInFlightRef.current) return;
+    locationInFlightRef.current = true;
+    const requestId = ++locationSequenceRef.current;
     setIsLocating(true);
     setLocationStatus("");
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (!mountedRef.current || requestId !== locationSequenceRef.current) return;
+        locationInFlightRef.current = false;
         setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
         setLocationStatus("Distances updated from your current location.");
         setIsLocating(false);
       },
       () => {
+        if (!mountedRef.current || requestId !== locationSequenceRef.current) return;
+        locationInFlightRef.current = false;
         setLocationStatus("Allow location access to show venue distances.");
         setIsLocating(false);
       },
