@@ -80,9 +80,9 @@ test("mobile Clubs cards keep one cross-platform header texture and a prominent 
   )?.[0] || "";
 
   assert.ok(parity, "the cross-platform venue-card refinement must exist");
-  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?repeating-linear-gradient\(115deg,[\s\S]*?linear-gradient\(145deg, #171920 0%, #08090c 66%, #11131a 100%\)/);
-  assert.match(parity, /\.venue-card-deals-action\.is-available \{[\s\S]*?var\(--dancr-color-success\) 76%[\s\S]*?rgba\(18, 146, 81, 0\.98\)[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)/);
-  assert.match(parity, /\.venue-card-deals-action\.is-available \.action-icon \{[\s\S]*?#9fffc4[\s\S]*?drop-shadow\(0 0 7px var\(--dancr-color-success-strong\)\)/);
+  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?repeating-linear-gradient\([\s\S]*?rgba\(248, 250, 252, 0\.12\)[\s\S]*?linear-gradient\(145deg, #252833 0%, #0c0d12 66%, #191b24 100%\)[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.16\)/);
+  assert.match(parity, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(123, 255, 178, 0\.96\)[\s\S]*?rgba\(24, 190, 104, 0\.99\)[\s\S]*?0 0 26px rgba\(16, 185, 129, 0\.48\)/);
+  assert.match(parity, /\.venue-card-deals-action\.is-available \.action-icon \{[\s\S]*?#d8ffe7[\s\S]*?drop-shadow\(0 0 9px var\(--dancr-color-success-strong\)\)/);
   assert.doesNotMatch(parity, /\n\s+(?:width|height|min-height|max-height|padding|margin|grid-template-columns):/);
 });
 

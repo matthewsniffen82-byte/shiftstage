@@ -11013,36 +11013,41 @@ body.dancr-button-system :is(
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art:not(.has-custom-photo) {
     background:
-      repeating-linear-gradient(115deg, rgba(248, 250, 252, 0.04) 0 1px, transparent 1px 5px),
-      linear-gradient(112deg, transparent 8%, rgba(248, 250, 252, 0.055) 28%, transparent 44%),
-      radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.115), transparent 44%),
-      linear-gradient(145deg, #171920 0%, #08090c 66%, #11131a 100%) !important;
+      repeating-linear-gradient(
+        115deg,
+        rgba(248, 250, 252, 0.12) 0 1px,
+        rgba(248, 250, 252, 0.03) 1px 2px,
+        transparent 2px 6px
+      ),
+      linear-gradient(112deg, transparent 5%, rgba(248, 250, 252, 0.16) 28%, transparent 48%),
+      radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.18), transparent 46%),
+      linear-gradient(145deg, #252833 0%, #0c0d12 66%, #191b24 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(248, 250, 252, 0.16),
+      inset 0 -1px 0 rgba(248, 250, 252, 0.08) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-secondary-actions > .venue-card-deals-action.is-available {
-    border-color: color-mix(
-      in srgb,
-      var(--dancr-color-success) 76%,
-      var(--dancr-color-text-primary)
-    ) !important;
+    border-color: rgba(123, 255, 178, 0.96) !important;
     color: var(--dancr-color-text-primary) !important;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.15), transparent 47%),
-      radial-gradient(circle at 50% -16%, rgba(134, 239, 172, 0.32), transparent 62%),
-      linear-gradient(135deg, rgba(18, 146, 81, 0.98), rgba(6, 82, 59, 0.98)) !important;
+      linear-gradient(180deg, rgba(255, 255, 255, 0.26), transparent 48%),
+      radial-gradient(circle at 50% -16%, rgba(134, 239, 172, 0.48), transparent 64%),
+      linear-gradient(135deg, rgba(24, 190, 104, 0.99), rgba(5, 111, 68, 0.99)) !important;
     box-shadow:
       0 8px 18px var(--dancr-color-black-medium),
-      0 0 20px var(--dancr-color-success-medium),
+      0 0 26px rgba(16, 185, 129, 0.48),
       inset 0 1px 0 var(--dancr-color-white-medium) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.58) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-secondary-actions > .venue-card-deals-action.is-available .action-icon {
-    color: #9fffc4 !important;
-    filter: drop-shadow(0 0 7px var(--dancr-color-success-strong)) !important;
+    color: #d8ffe7 !important;
+    filter: drop-shadow(0 0 9px var(--dancr-color-success-strong)) !important;
   }
 }
 
