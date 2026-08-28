@@ -171,6 +171,8 @@ export default function DashboardClient({
   const [analyticsPeriod, setAnalyticsPeriod] = useState<"tonight" | "7d" | "30d">("30d");
   const [isVenueRefreshing, setIsVenueRefreshing] = useState(false);
   const [venueRefreshStatus, setVenueRefreshStatus] = useState("");
+  const venueRefreshAbortRef = useRef<AbortController | null>(null);
+  const venueRefreshRequestRef = useRef(0);
 
   const retryDashboard = useCallback(() => {
     setState((current) => ({ account: current.account }));
@@ -319,15 +321,29 @@ export default function DashboardClient({
   const refreshVenueDashboard = useCallback(async (showStatus = false) => {
     if (role !== "venue") return;
     if (!readSession()?.accessToken) return;
+    venueRefreshAbortRef.current?.abort();
+    const controller = new AbortController();
+    const requestId = venueRefreshRequestRef.current + 1;
+    venueRefreshAbortRef.current = controller;
+    venueRefreshRequestRef.current = requestId;
+    const isCurrentRequest = () => (
+      venueRefreshAbortRef.current === controller
+      && venueRefreshRequestRef.current === requestId
+      && !controller.signal.aborted
+    );
+    setIsVenueRefreshing(showStatus);
     if (showStatus) {
-      setIsVenueRefreshing(true);
       setVenueRefreshStatus("Refreshing live venue data…");
+    } else {
+      setVenueRefreshStatus("");
     }
     try {
       const secondary = await requestVenueDashboardJson(analyticsPeriod, {
         cache: "no-store",
         fallbackMessage: "Unable to refresh live venue data.",
+        signal: controller.signal,
       });
+      if (!isCurrentRequest()) return;
       setState((current) => ({
         ...current,
         profile: secondary.profile || current.profile,
@@ -346,9 +362,14 @@ export default function DashboardClient({
       }));
       if (showStatus) setVenueRefreshStatus("Live venue data is up to date.");
     } catch (error) {
-      if (showStatus) setVenueRefreshStatus(error instanceof Error ? error.message : "Unable to refresh live venue data.");
+      if (isCurrentRequest() && showStatus) {
+        setVenueRefreshStatus(error instanceof Error ? error.message : "Unable to refresh live venue data.");
+      }
     } finally {
-      if (showStatus) setIsVenueRefreshing(false);
+      if (isCurrentRequest()) {
+        venueRefreshAbortRef.current = null;
+        if (showStatus) setIsVenueRefreshing(false);
+      }
     }
   }, [analyticsPeriod, role]);
 
@@ -361,6 +382,9 @@ export default function DashboardClient({
     return () => {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
+      venueRefreshAbortRef.current?.abort();
+      venueRefreshAbortRef.current = null;
+      venueRefreshRequestRef.current += 1;
     };
   }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error]);
 

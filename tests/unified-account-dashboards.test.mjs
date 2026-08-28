@@ -1516,8 +1516,18 @@ test("venue live refresh uses the current role-aware session and preserves the l
 
   const venueRefresh = dashboard.match(/const refreshVenueDashboard[\s\S]*?\}, \[analyticsPeriod, role\]\);/)?.[0] || "";
   assert.match(venueRefresh, /requestVenueDashboardJson\(analyticsPeriod/);
+  assert.match(venueRefresh, /venueRefreshAbortRef\.current\?\.abort\(\);/);
+  assert.match(venueRefresh, /const controller = new AbortController\(\);/);
+  assert.match(venueRefresh, /venueRefreshRequestRef\.current = requestId;/);
+  assert.match(venueRefresh, /signal: controller\.signal/);
+  assert.match(venueRefresh, /if \(!isCurrentRequest\(\)\) return;[\s\S]*?setState/);
+  assert.match(venueRefresh, /if \(isCurrentRequest\(\) && showStatus\)/);
   assert.doesNotMatch(venueRefresh, /dashboardAuthHeaders|readOptionalJson/);
   assert.match(venueRefresh, /try \{[\s\S]*?await requestVenueDashboardJson[\s\S]*?setState[\s\S]*?\} catch \(error\)/);
+
+  const venueRefreshEffect = dashboard.match(/useEffect\(\(\) => \{\s*if \(role !== "venue" \|\| isLoading \|\| state\.error\)[\s\S]*?\}, \[analyticsPeriod, isLoading, refreshVenueDashboard, role, state\.error\]\);/)?.[0] || "";
+  assert.match(venueRefreshEffect, /venueRefreshAbortRef\.current\?\.abort\(\);/);
+  assert.match(venueRefreshEffect, /venueRefreshRequestRef\.current \+= 1;/);
 });
 
 test("venue team actions use one refresh-aware venue boundary", async () => {
