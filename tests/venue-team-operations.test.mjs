@@ -94,6 +94,11 @@ test("physical NFC testing is separate from completed dancer and cashier actions
   assert.match(nfcRoute, /await recordNfcTagScan\(admin, tag\.id\)/);
   assert.match(nfcPanel, /testBaselineRef\.current = tag\.scanCount/);
   assert.match(nfcPanel, /tested\.scanCount > testBaselineRef\.current/);
+  assert.match(nfcPanel, /let checkInFlight = false;[\s\S]*?document\.visibilityState !== "visible" \|\| checkInFlight/);
+  assert.match(nfcPanel, /window\.setInterval\(checkTap, 3_000\)/);
+  assert.match(nfcPanel, /document\.addEventListener\("visibilitychange", checkTap\)/);
+  assert.match(nfcPanel, /document\.removeEventListener\("visibilitychange", checkTap\)/);
+  assert.doesNotMatch(nfcPanel, /window\.setInterval\(\(\) => void checkTap\(\), 3_000\)/);
   assert.match(nfcPanel, /tag\.tapCount/);
 });
 

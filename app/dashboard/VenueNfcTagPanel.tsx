@@ -127,8 +127,11 @@ export default function VenueNfcTagPanel({
     if (!testingTagId) return;
     const startedAt = Date.now();
     let cancelled = false;
+    let checkInFlight = false;
     async function checkTap() {
+      if (cancelled || document.visibilityState !== "visible" || checkInFlight) return;
       if (!readDashboardAccessToken("venue")) return;
+      checkInFlight = true;
       try {
         const data = await requestVenueNfcTagsJson({
           cache: "no-store",
@@ -153,13 +156,17 @@ export default function VenueNfcTagPanel({
           setTestingTagId("");
           setTestStatus(error instanceof Error ? error.message : "Unable to check sticker activity.");
         }
+      } finally {
+        checkInFlight = false;
       }
     }
     void checkTap();
-    const timer = window.setInterval(() => void checkTap(), 3_000);
+    const timer = window.setInterval(checkTap, 3_000);
+    document.addEventListener("visibilitychange", checkTap);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", checkTap);
     };
   }, [testingTagId]);
 
