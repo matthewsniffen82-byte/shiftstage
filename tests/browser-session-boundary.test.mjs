@@ -19,7 +19,6 @@ const [
   tvSource,
   nfcSource,
   dealRedemptionSource,
-  venueClaimSource,
   venueInvitationSource,
   dmcaCounterSource,
   accountSource,
@@ -32,7 +31,6 @@ const [
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/nfc/[token]/NfcTapClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/deals/redeem/[token]/RedeemDealClient.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/venues/[slug]/claim/VenueClaimForm.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/venue-team/invite/[token]/VenueTeamInviteClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dmca/counter/[id]/DmcaCounterForm.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
@@ -209,11 +207,10 @@ test("venue profile follow saves prevent duplicate and stale updates", () => {
   assert.match(venueActionsSource, /if \(mountedRef\.current\) setIsSaving\(false\);/);
 });
 
-test("standalone NFC, redemption, venue access, and DMCA clients use the same session boundary", () => {
+test("standalone NFC, redemption, invitation, and DMCA clients use the same session boundary", () => {
   for (const source of [
     nfcSource,
     dealRedemptionSource,
-    venueClaimSource,
     venueInvitationSource,
     dmcaCounterSource,
   ]) {
@@ -232,9 +229,6 @@ test("standalone NFC, redemption, venue access, and DMCA clients use the same se
   assert.doesNotMatch(dealRedemptionSource, /function readVenueSession\(/);
   assert.match(dealRedemptionSource, /const DEAL_SESSION_KEY = "mydancrDealSessionV1"/);
 
-  assert.match(venueClaimSource, /readBrowserAuthSession\(\)/);
-  assert.match(venueClaimSource, /persistBrowserAuthSession\(nextSession\)/);
-  assert.doesNotMatch(venueClaimSource, /function readSession\(/);
   assert.match(venueInvitationSource, /persistBrowserAuthSession\(\{/);
   assert.match(dmcaCounterSource, /readBrowserAccessToken\(\)/);
   assert.doesNotMatch(dmcaCounterSource, /function readToken\(/);
