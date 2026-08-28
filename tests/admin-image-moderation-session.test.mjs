@@ -16,9 +16,22 @@ test("image moderation uses the refresh-aware role-isolated admin boundary", () 
   assert.doesNotMatch(moderationQueue, /readToken\(\)|fetch\([^\n]*\/api\/admin\/image-moderation/);
 });
 
-test("image moderation refreshes recover from failures and preserve server messages", () => {
+test("image moderation refreshes reject stale results and preserve server messages", () => {
+  assert.match(moderationQueue, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(moderationQueue, /const loadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(moderationQueue, /signal: controller\.signal/);
+  assert.match(moderationQueue, /requestId !== loadSequenceRef\.current/);
   assert.match(moderationQueue, /Array\.isArray\(data\.records\) \? data\.records : \[\]/);
   assert.match(moderationQueue, /catch \(error\)[\s\S]*?error instanceof Error \? error\.message/);
   assert.match(moderationQueue, /finally \{[\s\S]*?setIsLoading\(false\)/);
   assert.match(moderationQueue, /fallbackMessage: "Unable to update moderation record\."/);
+});
+
+test("image moderation decisions are abortable and serialized", () => {
+  assert.match(moderationQueue, /function beginImageModerationAction\(\)/);
+  assert.match(moderationQueue, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(moderationQueue, /signal: request\.controller\.signal/);
+  assert.match(moderationQueue, /function isCurrentImageModerationAction/);
+  assert.match(moderationQueue, /function finishImageModerationAction/);
+  assert.match(moderationQueue, /disabled=\{controlsBusy\}/);
 });

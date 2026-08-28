@@ -2444,37 +2444,93 @@ function ImageModerationQueue({
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+  const controlsBusy = isLoading || isMutating;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      actionSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginImageModerationAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentImageModerationAction(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishImageModerationAction(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsMutating(false);
+  }
 
   async function loadQueue(nextFilter = filter) {
+    if (!mountedRef.current) return;
+    const requestId = loadSequenceRef.current + 1;
+    loadSequenceRef.current = requestId;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     setIsLoading(true);
     setMessage("");
     try {
       const data = await requestAdminJson(`/api/admin/image-moderation?decision=${encodeURIComponent(nextFilter)}`, {
         cache: "no-store",
+        signal: controller.signal,
         fallbackMessage: "Unable to load image moderation queue.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       const nextRecords = Array.isArray(data.records) ? data.records : [];
       onRecordsChange(nextRecords);
       setMessage(`${nextRecords.length} image moderation records loaded.`);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setMessage(error instanceof Error ? error.message : "Unable to load image moderation queue. Check your connection and try again.");
     } finally {
-      setIsLoading(false);
+      if (loadAbortRef.current === controller) loadAbortRef.current = null;
+      if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
     }
   }
 
   async function decide(recordId: string, decision: "approved" | "rejected") {
     const confirmed = window.confirm(decision === "approved" ? "Approve this photo and publish it?" : "Reject this photo and keep it private?");
     if (!confirmed) return;
+    const request = beginImageModerationAction();
+    if (!request) return;
 
+    setIsMutating(true);
     setMessage(decision === "approved" ? "Publishing approved photo..." : "Rejecting photo...");
     try {
       await requestAdminJson("/api/admin/image-moderation", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ recordId, decision, notes: notesById[recordId] || "" }),
         fallbackMessage: "Unable to update moderation record.",
       });
+      if (!isCurrentImageModerationAction(request)) return;
       onRecordsChange(records.filter((record) => String(record.id) !== recordId));
       const confirmation =
         decision === "approved"
@@ -2483,7 +2539,10 @@ function ImageModerationQueue({
       setMessage(confirmation);
       onActionConfirmed(confirmation);
     } catch (error) {
+      if (!isCurrentImageModerationAction(request)) return;
       setMessage(error instanceof Error ? error.message : "Unable to update moderation record. Check your connection and try again.");
+    } finally {
+      finishImageModerationAction(request);
     }
   }
 
@@ -2492,6 +2551,7 @@ function ImageModerationQueue({
       <div className="image-moderation-filters">
         <select
           value={filter}
+          disabled={controlsBusy}
           onChange={(event) => {
             setFilter(event.target.value);
             loadQueue(event.target.value);
@@ -2500,7 +2560,7 @@ function ImageModerationQueue({
           <option value="review">Pending review</option>
           <option value="approved">Approved</option>
         </select>
-        <button type="button" onClick={() => loadQueue()} disabled={isLoading}>
+        <button type="button" onClick={() => loadQueue()} disabled={controlsBusy}>
           {isLoading ? "Loading..." : "Refresh"}
         </button>
       </div>
@@ -2528,12 +2588,13 @@ function ImageModerationQueue({
                   <>
                     <textarea
                       value={notesById[recordId] || ""}
+                      disabled={controlsBusy}
                       onChange={(event) => setNotesById((current) => ({ ...current, [recordId]: event.target.value }))}
                       placeholder="Reviewer notes"
                     />
                     <div className="image-moderation-actions">
-                      <button type="button" onClick={() => decide(recordId, "approved")}>Approve</button>
-                      <button type="button" onClick={() => decide(recordId, "rejected")}>Reject</button>
+                      <button type="button" disabled={controlsBusy} onClick={() => decide(recordId, "approved")}>Approve</button>
+                      <button type="button" disabled={controlsBusy} onClick={() => decide(recordId, "rejected")}>Reject</button>
                     </div>
                   </>
                 ) : null}
