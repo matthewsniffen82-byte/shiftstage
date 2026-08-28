@@ -734,6 +734,10 @@ test("dancer and venue affiliation actions share role-aware refresh boundaries",
   assert.match(dashboardSession, /function requestDancerVenueVerificationJson/);
   assert.match(dashboardSession, /function requestVenueDancerVerificationsJson/);
   assert.match(dancerNfcPanel, /requestDancerVenueVerificationJson/);
+  assert.match(dancerNfcPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.equal((dancerNfcPanel.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.match(dancerNfcPanel, /requestId !== actionSequenceRef\.current/);
+  assert.match(dancerNfcPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);/);
   assert.doesNotMatch(dancerNfcPanel, /fetch\("\/api\/dancer\/venue-verification"/);
   assert.doesNotMatch(dancerNfcPanel, /currentDashboardAuthHeaders/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/venue-verification"/);

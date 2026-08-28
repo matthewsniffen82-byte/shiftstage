@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import NfcIcon from "../components/NfcIcon";
 import { requestDancerVenueVerificationJson } from "./dashboard-session";
 
@@ -41,28 +41,52 @@ export default function DancerNfcPanel({
   const [nfcState, setNfcState] = useState<NfcState>((initialNfcState || {}) as NfcState);
   const [status, setStatus] = useState("");
   const [pendingId, setPendingId] = useState("");
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
   const activeAffiliations = affiliations.filter((item) => item.status === "active");
   const enrollment = nfcState.enrollment;
   const authorized = nfcState.profileAuthorization?.authorized === true || activeAffiliations.length > 0;
   const isPublic = nfcState.profileAuthorization?.isPublic === true;
   const pendingEnrollment = enrollment?.status === "pending";
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+    };
+  }, []);
+
   async function refresh() {
+    if (!mountedRef.current) return;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setPendingId("refresh");
     setStatus("");
     try {
       const data = await requestDancerVenueVerificationJson({
         cache: "no-store",
+        signal: controller.signal,
         fallbackMessage: "Unable to refresh venue access.",
       });
+      if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
       setAffiliations(data.affiliations || []);
       setNfcState({ profileAuthorization: data.profileAuthorization, enrollment: data.enrollment });
       await onAuthorizationChange?.();
+      if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
       setStatus("Dressing-room tap access is current.");
     } catch (error) {
+      if (!mountedRef.current || requestId !== actionSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
       setStatus(error instanceof Error ? error.message : "Unable to refresh venue access.");
     } finally {
-      setPendingId("");
+      if (requestId === actionSequenceRef.current) {
+        actionAbortRef.current = null;
+        if (mountedRef.current) setPendingId("");
+      }
     }
   }
 
@@ -70,6 +94,11 @@ export default function DancerNfcPanel({
     if (!affiliation.id) return;
     const venueName = affiliation.venue?.name || "this venue";
     if (!window.confirm(`Remove venue access for ${venueName}? You will need to tap its dressing-room sticker again before going Working Now there.`)) return;
+    if (!mountedRef.current) return;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setPendingId(affiliation.id);
     setStatus("");
     try {
@@ -77,14 +106,20 @@ export default function DancerNfcPanel({
         method: "DELETE",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ affiliationId: affiliation.id }),
+        signal: controller.signal,
         fallbackMessage: "Unable to remove venue access.",
       });
+      if (!mountedRef.current || requestId !== actionSequenceRef.current) return;
       setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
       setStatus(data.message || "Venue access removed.");
     } catch (error) {
+      if (!mountedRef.current || requestId !== actionSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
       setStatus(error instanceof Error ? error.message : "Unable to remove venue access.");
     } finally {
-      setPendingId("");
+      if (requestId === actionSequenceRef.current) {
+        actionAbortRef.current = null;
+        if (mountedRef.current) setPendingId("");
+      }
     }
   }
 
