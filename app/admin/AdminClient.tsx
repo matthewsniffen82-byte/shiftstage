@@ -3074,6 +3074,42 @@ function VenueManager({
   const [searchQuery, setSearchQuery] = useState("");
   const [statusByVenue, setStatusByVenue] = useState<Record<string, string>>({});
   const [busyVenueId, setBusyVenueId] = useState("");
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+  const controlsBusy = Boolean(busyVenueId);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginVenueAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentVenueAction(action: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !action.controller.signal.aborted && action.requestId === actionSequenceRef.current;
+  }
+
+  function finishVenueAction(action: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === action.controller) actionAbortRef.current = null;
+    if (action.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && action.requestId === actionSequenceRef.current) setBusyVenueId("");
+  }
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const visibleVenues = normalizedSearch
@@ -3103,28 +3139,35 @@ function VenueManager({
     const form = new FormData(event.currentTarget);
     const body = Object.fromEntries(["name", "address", "city", "state", "latitude", "longitude", "phone", "website", "timezone", "opensAt", "closesAt"]
       .map((key) => [key, String(form.get(key) || "").trim()]));
+    const action = beginVenueAction();
+    if (!action) return;
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, "Saving private venue page...");
       const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, ...body }),
         fallbackMessage: "Unable to save venue page.",
       });
+      if (!isCurrentVenueAction(action)) return;
       if (!data.venue) throw new Error("Unable to save venue page.");
       mergeVenue(venueId, data.venue);
       setVenueStatus(venueId, "Private venue page saved. Any prior approval was reset because the page changed.");
     } catch (error) {
+      if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to save venue page.");
     } finally {
-      setBusyVenueId("");
+      finishVenueAction(action);
     }
   }
 
   async function uploadVenueImage(venue: Record<string, unknown>, kind: "logo" | "cover", file: File | null) {
     const venueId = asText(venue.id);
     if (!file) return setVenueStatus(venueId, `Choose a ${kind} image first.`);
+    const action = beginVenueAction();
+    if (!action) return;
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, `Checking and uploading venue ${kind}...`);
@@ -3134,58 +3177,71 @@ function VenueManager({
       body.set("file", file);
       const data = await requestAdminJson("/api/admin/venues/media", {
         method: "POST",
+        signal: action.controller.signal,
         body,
         fallbackMessage: `Unable to upload venue ${kind}.`,
       });
+      if (!isCurrentVenueAction(action)) return;
       if (!data.venue) throw new Error(`Unable to upload venue ${kind}.`);
       mergeVenue(venueId, data.venue);
       setVenueStatus(venueId, `Venue ${kind} uploaded. Any prior approval was reset because the page changed.`);
     } catch (error) {
+      if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to upload venue ${kind}.`);
     } finally {
-      setBusyVenueId("");
+      finishVenueAction(action);
     }
   }
 
   async function removeVenueImage(venue: Record<string, unknown>, kind: "logo" | "cover") {
     const venueId = asText(venue.id);
     if (!window.confirm(`Remove this venue ${kind}?`)) return;
+    const action = beginVenueAction();
+    if (!action) return;
     try {
       setBusyVenueId(venueId);
       const data = await requestAdminJson("/api/admin/venues/media", {
         method: "DELETE",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, kind }),
         fallbackMessage: `Unable to remove venue ${kind}.`,
       });
+      if (!isCurrentVenueAction(action)) return;
       if (!data.venue) throw new Error(`Unable to remove venue ${kind}.`);
       mergeVenue(venueId, data.venue);
       setVenueStatus(venueId, `Venue ${kind} removed.`);
     } catch (error) {
+      if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : `Unable to remove venue ${kind}.`);
     } finally {
-      setBusyVenueId("");
+      finishVenueAction(action);
     }
   }
 
   async function sendVenuePageForReview(venue: Record<string, unknown>) {
     const venueId = asText(venue.id);
+    const action = beginVenueAction();
+    if (!action) return;
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, "Sending private page to the venue...");
       const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, action: "send_for_review" }),
         fallbackMessage: "Unable to update venue page workflow.",
       });
+      if (!isCurrentVenueAction(action)) return;
       if (!data.venue) throw new Error("Unable to update venue page workflow.");
       mergeVenue(venueId, data.venue);
       setVenueStatus(venueId, "Review sent. The venue can now approve the exact page and make it live.");
     } catch (error) {
+      if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue page workflow.");
     } finally {
-      setBusyVenueId("");
+      finishVenueAction(action);
     }
   }
 
@@ -3210,37 +3266,46 @@ function VenueManager({
 
   async function hideVenue(venue: Record<string, unknown>) {
     const venueId = asText(venue.id);
+    const action = beginVenueAction();
+    if (!action) return;
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, "Removing venue from public discovery...");
       const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, isActive: false }),
         fallbackMessage: "Unable to update venue.",
       });
+      if (!isCurrentVenueAction(action)) return;
       if (!data.venue) throw new Error("Unable to update venue.");
 
       onVenuesChange(venues.map((item) => (String(item.id) === venueId ? { ...item, ...data.venue } : item)));
       setVenueStatus(venueId, "Venue hidden. MyDancr must prepare a new private draft, obtain venue approval, and publish it again.");
     } catch (error) {
+      if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to update venue.");
     } finally {
-      setBusyVenueId("");
+      finishVenueAction(action);
     }
   }
 
   async function revokeAccessCode(venueId: string, claimCode: Record<string, unknown>) {
     if (!window.confirm("Revoke this access code? It will stop working immediately.")) return;
+    const action = beginVenueAction();
+    if (!action) return;
     try {
       setBusyVenueId(venueId);
       setVenueStatus(venueId, "Revoking access code...");
       const data = await requestAdminJson("/api/admin/venue-claim-codes", {
         method: "POST",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "revoke", codeId: asText(claimCode.id) }),
         fallbackMessage: "Unable to revoke venue access code.",
       });
+      if (!isCurrentVenueAction(action)) return;
       if (!data.claimCode) throw new Error("Unable to revoke venue access code.");
 
       onClaimCodesChange(claimCodes.map((item) => (
@@ -3248,9 +3313,10 @@ function VenueManager({
       )));
       setVenueStatus(venueId, "Access code revoked.");
     } catch (error) {
+      if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to revoke venue access code.");
     } finally {
-      setBusyVenueId("");
+      finishVenueAction(action);
     }
   }
 
@@ -3262,6 +3328,7 @@ function VenueManager({
         <input
           type="search"
           value={searchQuery}
+          disabled={controlsBusy}
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder="Search name, city, state, or address"
         />
@@ -3276,7 +3343,6 @@ function VenueManager({
           const activeCode = activeCodeForVenue(venueId);
           const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
           const isActive = venue.is_active !== false;
-          const isBusy = busyVenueId === venueId;
           const reviewStatus = asText(venue.page_review_status) || (isActive ? "published" : "admin_draft");
           const requirements = [
             { label: "Venue details", complete: Boolean(asText(venue.name) && asText(venue.address) && asText(venue.city) && asText(venue.state)) },
@@ -3312,7 +3378,7 @@ function VenueManager({
               </summary>
               <div className="venue-admin-actions">
                 <small>{asText(venue.address) || "No address submitted"}</small>
-                {isActive ? <button type="button" disabled={isBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
+                {isActive ? <button type="button" disabled={controlsBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
               </div>
               <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
                 <div className="venue-page-admin-heading">
@@ -3323,18 +3389,18 @@ function VenueManager({
                   <div className="venue-page-change-request"><strong>Venue requested changes</strong><p>{asText(venue.page_review_notes)}</p></div>
                 ) : null}
                 <form className="venue-page-editor" onSubmit={(event) => void saveVenuePage(event, venue)}>
-                  <label>Venue name<input name="name" defaultValue={asText(venue.name)} required readOnly={isActive} /></label>
-                  <label>Public address<input name="address" defaultValue={asText(venue.address)} required readOnly={isActive} /></label>
-                  <label>City<input name="city" defaultValue={asText(venue.city)} required readOnly={isActive} /></label>
-                  <label>State<input name="state" defaultValue={asText(venue.state)} required readOnly={isActive} /></label>
-                  <label>Latitude<input name="latitude" defaultValue={asText(venue.latitude)} inputMode="decimal" max="90" min="-90" required readOnly={isActive} step="0.000001" type="number" /></label>
-                  <label>Longitude<input name="longitude" defaultValue={asText(venue.longitude)} inputMode="decimal" max="180" min="-180" required readOnly={isActive} step="0.000001" type="number" /></label>
-                  <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} required readOnly={isActive} type="tel" /></label>
-                  <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={isActive} inputMode="url" /></label>
-                  <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={isActive} /></label>
-                  <label>Opens<input name="opensAt" defaultValue={asText(venue.opens_at).slice(0, 5)} required readOnly={isActive} type="time" /></label>
-                  <label>Closes<input name="closesAt" defaultValue={asText(venue.closes_at).slice(0, 5)} required readOnly={isActive} type="time" /></label>
-                  {!isActive ? <button type="submit" disabled={isBusy}>Save private page</button> : <small>Published venue details are locked here. Hide the venue before replacing its approved public page.</small>}
+                  <label>Venue name<input name="name" defaultValue={asText(venue.name)} required readOnly={isActive || controlsBusy} /></label>
+                  <label>Public address<input name="address" defaultValue={asText(venue.address)} required readOnly={isActive || controlsBusy} /></label>
+                  <label>City<input name="city" defaultValue={asText(venue.city)} required readOnly={isActive || controlsBusy} /></label>
+                  <label>State<input name="state" defaultValue={asText(venue.state)} required readOnly={isActive || controlsBusy} /></label>
+                  <label>Latitude<input name="latitude" defaultValue={asText(venue.latitude)} inputMode="decimal" max="90" min="-90" required readOnly={isActive || controlsBusy} step="0.000001" type="number" /></label>
+                  <label>Longitude<input name="longitude" defaultValue={asText(venue.longitude)} inputMode="decimal" max="180" min="-180" required readOnly={isActive || controlsBusy} step="0.000001" type="number" /></label>
+                  <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} required readOnly={isActive || controlsBusy} type="tel" /></label>
+                  <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={isActive || controlsBusy} inputMode="url" /></label>
+                  <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={isActive || controlsBusy} /></label>
+                  <label>Opens<input name="opensAt" defaultValue={asText(venue.opens_at).slice(0, 5)} required readOnly={isActive || controlsBusy} type="time" /></label>
+                  <label>Closes<input name="closesAt" defaultValue={asText(venue.closes_at).slice(0, 5)} required readOnly={isActive || controlsBusy} type="time" /></label>
+                  {!isActive ? <button type="submit" disabled={controlsBusy}>Save private page</button> : <small>Published venue details are locked here. Hide the venue before replacing its approved public page.</small>}
                 </form>
                 <div className="venue-page-media-admin">
                   {(["logo", "cover"] as const).map((kind) => {
@@ -3348,9 +3414,9 @@ function VenueManager({
                         <strong>{kind === "logo" ? "Official logo" : "Venue detail cover (optional)"}</strong>
                         <small>{kind === "logo" ? "Use the original high-resolution logo file." : "Use the original camera image for the clearest venue page."}</small>
                         {imageUrl ? <img src={imageUrl} alt={`${asText(venue.name)} ${kind}`} /> : <span>No {kind} uploaded</span>}
-                        {!isActive ? <input accept="image/*,.heic,.heif" name="file" type="file" required /> : null}
-                        {!isActive ? <button type="submit" disabled={isBusy}>{imageUrl ? `Replace ${kind}` : `Upload ${kind}`}</button> : null}
-                        {!isActive && imageUrl ? <button className="secondary" type="button" disabled={isBusy} onClick={() => void removeVenueImage(venue, kind)}>Remove</button> : null}
+                        {!isActive ? <input accept="image/*,.heic,.heif" name="file" type="file" required disabled={controlsBusy} /> : null}
+                        {!isActive ? <button type="submit" disabled={controlsBusy}>{imageUrl ? `Replace ${kind}` : `Upload ${kind}`}</button> : null}
+                        {!isActive && imageUrl ? <button className="secondary" type="button" disabled={controlsBusy} onClick={() => void removeVenueImage(venue, kind)}>Remove</button> : null}
                       </form>
                     );
                   })}
@@ -3366,7 +3432,7 @@ function VenueManager({
                   </div>
                   <a className="venue-page-preview-action" href={venuePagePreviewHref(venue)} rel="noopener noreferrer" target="_blank">Preview full customer page</a>
                   {!isActive && reviewStatus !== "venue_approved" ? (
-                    <button type="button" disabled={isBusy || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send page for venue approval"}</button>
+                    <button type="button" disabled={controlsBusy || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send page for venue approval"}</button>
                   ) : null}
                   {!isReady ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
                 </div>
@@ -3387,7 +3453,7 @@ function VenueManager({
                       </p>
                     </div>
                     <div className="venue-access-actions">
-                      <button className="secondary" type="button" disabled={isBusy} onClick={() => revokeAccessCode(venueId, activeCode)}>
+                      <button className="secondary" type="button" disabled={controlsBusy} onClick={() => revokeAccessCode(venueId, activeCode)}>
                         Revoke access code
                       </button>
                     </div>

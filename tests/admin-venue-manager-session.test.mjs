@@ -34,10 +34,16 @@ test("admin venue management uses the refresh-aware role-isolated session bounda
   assert.equal((venueClaimCodesRoute.match(/session: session \|\| null/g) || []).length, 2);
 });
 
-test("admin venue management retains response validation and always releases its busy state", () => {
+test("admin venue management serializes actions and rejects stale responses", () => {
+  assert.match(venueManager, /function beginVenueAction\(\)/);
+  assert.match(venueManager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(venueManager, /function isCurrentVenueAction/);
+  assert.match(venueManager, /function finishVenueAction/);
+  assert.equal((venueManager.match(/const action = beginVenueAction\(\)/g) || []).length, 6);
+  assert.equal((venueManager.match(/signal: action\.controller\.signal/g) || []).length, 6);
   assert.equal((venueManager.match(/if \(!data\.venue\) throw new Error/g) || []).length, 5);
   assert.match(venueManager, /if \(!data\.claimCode\) throw new Error\("Unable to revoke venue access code\."\)/);
-  assert.equal((venueManager.match(/finally \{[\s\S]*?setBusyVenueId\(""\)/g) || []).length, 6);
+  assert.equal((venueManager.match(/finally \{[\s\S]*?finishVenueAction\(action\)/g) || []).length, 6);
   assert.match(venueManager, /fallbackMessage: "Unable to save venue page\."/);
   assert.match(venueManager, /fallbackMessage: "Unable to revoke venue access code\."/);
 });
