@@ -235,8 +235,8 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?min-height: 46px !important;/);
   assert.match(refinement, /\.venue-detail-uber \{[\s\S]*?min-height: 46px !important;/);
   assert.match(refinement, /\.venue-secondary-actions \.action-btn \{[\s\S]*?min-height: 44px !important;/);
-  assert.match(refinement, /Club-detail action hierarchy[\s\S]*?\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 12px !important;[\s\S]*?blur\(12px\)/);
-  assert.match(refinement, /Club-detail action hierarchy[\s\S]*?\.venue-secondary-actions \.action-btn \{[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 11px !important;[\s\S]*?var\(--dancr-color-surface\) 68%/);
+  assert.match(refinement, /Club-detail action hierarchy[\s\S]*?\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?inset 0 1px 0 rgba\(255, 255, 255, 0\.13\)[\s\S]*?blur\(14px\)/);
+  assert.match(refinement, /Club-detail action hierarchy[\s\S]*?\.venue-secondary-actions \.action-btn \{[\s\S]*?height: 44px !important;[\s\S]*?border-radius: 13px !important;[\s\S]*?var\(--dancr-color-surface\) 72%[\s\S]*?0 6px 16px rgba\(0, 0, 0, 0\.18\)/);
   assert.match(refinement, /\.venue-secondary-actions \.follow-venue-btn\.is-following \{[\s\S]*?var\(--dancr-color-brand-primary\) 12%/);
   assert.match(refinement, /\.venue-secondary-actions \.venue-detail-share\.is-confirmed \{[\s\S]*?var\(--dancr-color-success\) 6%/);
   assert.match(refinement, /\.venue-identity-block \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?align-items: start;[\s\S]*?gap: 0;/);
