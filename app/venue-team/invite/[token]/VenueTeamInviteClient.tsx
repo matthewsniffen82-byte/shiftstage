@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { persistBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 
 type Invitation = {
@@ -17,6 +17,17 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("Checking invitation…");
   const [isWorking, setIsWorking] = useState(false);
+  const mountedRef = useRef(false);
+  const submitAbortRef = useRef<AbortController | null>(null);
+  const submitInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      submitAbortRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -40,9 +51,14 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!invitation) return;
+    if (!invitation || submitInFlightRef.current) return;
+    const controller = new AbortController();
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = controller;
+    submitInFlightRef.current = true;
     setIsWorking(true);
     setStatus(mode === "signup" ? "Creating secure team access…" : "Signing in and accepting…");
+    let redirecting = false;
     try {
       const response = await fetch("/api/auth", {
         method: "POST",
@@ -54,8 +70,10 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
           password,
           venueCode: token,
         }),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok || !data.session?.accessToken) {
         throw new Error(data.error || "Unable to accept this invitation.");
       }
@@ -68,10 +86,17 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
       if (!sessionSaved) {
         throw new Error("Unable to save your venue session in this browser.");
       }
+      redirecting = true;
       window.location.assign("/dashboard/venue");
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted) return;
       setStatus(error instanceof Error ? error.message : "Unable to accept this invitation.");
-      setIsWorking(false);
+    } finally {
+      if (submitAbortRef.current === controller) {
+        submitAbortRef.current = null;
+        submitInFlightRef.current = false;
+        if (mountedRef.current && !redirecting) setIsWorking(false);
+      }
     }
   }
 

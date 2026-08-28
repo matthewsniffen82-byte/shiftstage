@@ -197,3 +197,14 @@ test("venue invitation discovery cancels stale token loads", () => {
   assert.match(venueInvitationSource, /return \(\) => controller\.abort\(\);/);
   assert.doesNotMatch(venueInvitationSource, /let cancelled = false;/);
 });
+
+test("venue invitation acceptance prevents duplicate and stale submissions", () => {
+  assert.match(venueInvitationSource, /const mountedRef = useRef\(false\);/);
+  assert.match(venueInvitationSource, /const submitAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(venueInvitationSource, /const submitInFlightRef = useRef\(false\);/);
+  assert.match(venueInvitationSource, /if \(!invitation \|\| submitInFlightRef\.current\) return;/);
+  assert.match(venueInvitationSource, /fetch\("\/api\/auth", \{[\s\S]*?signal: controller\.signal/);
+  assert.match(venueInvitationSource, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return;/);
+  assert.match(venueInvitationSource, /submitAbortRef\.current\?\.abort\(\);/);
+  assert.match(venueInvitationSource, /if \(mountedRef\.current && !redirecting\) setIsWorking\(false\);/);
+});
