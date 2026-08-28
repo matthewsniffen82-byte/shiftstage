@@ -42,6 +42,9 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
   assert.match(hierarchy, /height: clamp\(300px, 80vw, 324px\) !important;/);
   assert.match(hierarchy, /\.venue-card-primary-actions \{[\s\S]*?height: 48px !important;[\s\S]*?gap: 10px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-primary-action \{[\s\S]*?border-radius: 16px !important;[\s\S]*?linear-gradient\(180deg,[\s\S]*?font-size: 14\.5px !important;/);
+  assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-directions-action \{[\s\S]*?border-color: rgba\(148, 163, 184, 0\.18\) !important;[\s\S]*?rgba\(24, 27, 35, 0\.66\)/);
+  assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-directions-action \.action-icon \{[\s\S]*?rgba\(226, 232, 240, 0\.84\)/);
+  assert.doesNotMatch(hierarchy.match(/\.venue-card-primary-actions > \.venue-card-directions-action \{[\s\S]*?\n  \}/)?.[0] || "", /dancr-color-info|#72d8ff|rgba\(85, 199, 245/);
   assert.match(hierarchy, /\.venue-card-secondary-actions \{[\s\S]*?height: 56px !important;[\s\S]*?repeat\(3, minmax\(0, 1fr\)\) minmax\(58px, 0\.72fr\)/);
   assert.match(hierarchy, /\.venue-card-secondary-actions > \.venue-card-secondary-action[\s\S]*?border-radius: 14px !important;[\s\S]*?linear-gradient\(180deg,/);
   assert.match(hierarchy, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(7, 31, 20, 0\.68\)/);
@@ -83,7 +86,8 @@ test("mobile Clubs cards keep one cross-platform header texture and a prominent 
   assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?repeating-linear-gradient\([\s\S]*?rgba\(248, 250, 252, 0\.12\)[\s\S]*?linear-gradient\(145deg, #252833 0%, #0c0d12 66%, #191b24 100%\)[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.16\)/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(123, 255, 178, 0\.96\)[\s\S]*?rgba\(24, 190, 104, 0\.99\)[\s\S]*?0 0 26px rgba\(16, 185, 129, 0\.48\)/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \.action-icon \{[\s\S]*?#d8ffe7[\s\S]*?drop-shadow\(0 0 9px var\(--dancr-color-success-strong\)\)/);
-  assert.match(parity, /html:is\([\s\S]*?\.is-android,[\s\S]*?\.is-samsung-browser,[\s\S]*?\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?rgba\(255, 255, 255, 0\.22\)[\s\S]*?radial-gradient\(circle at 50% 42%, rgba\(255, 255, 255, 0\.1\), transparent 50%\)[\s\S]*?linear-gradient\(145deg, #45484f 0%, #24262b 66%, #35383e 100%\)/);
+  assert.match(parity, /html:is\([\s\S]*?\.is-android,[\s\S]*?\.is-samsung-browser,[\s\S]*?\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?rgba\(255, 255, 255, 0\.28\)[\s\S]*?radial-gradient\(circle at 50% 42%, rgba\(255, 255, 255, 0\.16\), transparent 50%\)[\s\S]*?linear-gradient\(145deg, #62656c 0%, #33363c 66%, #4a4d54 100%\)/);
+  assert.match(parity, /html:is\([\s\S]*?\.is-android,[\s\S]*?\.is-samsung-browser,[\s\S]*?\.home-discovery-feed-shade \{[\s\S]*?rgba\(255, 255, 255, 0\.04\)[\s\S]*?rgba\(15, 17, 22, 0\.1\)/);
   assert.doesNotMatch(parity, /\n\s+(?:width|height|min-height|max-height|padding|margin|grid-template-columns):/);
 });
 

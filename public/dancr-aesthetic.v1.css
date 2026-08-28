@@ -10463,8 +10463,8 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-primary-actions > .venue-card-directions-action {
-    border-color: rgba(85, 199, 245, 0.25) !important;
-    background: linear-gradient(180deg, rgba(17, 29, 38, 0.64), rgba(8, 12, 17, 0.86)) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    background: linear-gradient(180deg, rgba(24, 27, 35, 0.66), rgba(9, 10, 15, 0.84)) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -10477,7 +10477,7 @@ html:is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-primary-actions > .venue-card-directions-action .action-icon {
-    color: #72d8ff !important;
+    color: rgba(226, 232, 240, 0.84) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -11101,16 +11101,27 @@ body.dancr-button-system :is(
     background:
       repeating-linear-gradient(
         115deg,
-        rgba(255, 255, 255, 0.22) 0 1px,
-        rgba(203, 213, 225, 0.08) 1px 2px,
+        rgba(255, 255, 255, 0.28) 0 1px,
+        rgba(226, 232, 240, 0.11) 1px 2px,
         transparent 2px 6px
       ),
-      linear-gradient(112deg, transparent 3%, rgba(255, 255, 255, 0.24) 28%, transparent 50%),
-      radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.1), transparent 50%),
-      linear-gradient(145deg, #45484f 0%, #24262b 66%, #35383e 100%) !important;
+      linear-gradient(112deg, transparent 3%, rgba(255, 255, 255, 0.31) 28%, transparent 50%),
+      radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.16), transparent 50%),
+      linear-gradient(145deg, #62656c 0%, #33363c 66%, #4a4d54 100%) !important;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.22),
-      inset 0 -1px 0 rgba(203, 213, 225, 0.12) !important;
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 -1px 0 rgba(226, 232, 240, 0.15) !important;
+  }
+
+  html:is(
+    .is-android,
+    .android-rendering,
+    .is-samsung-browser,
+    .samsung-rendering
+  ) body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-discovery-feed-shade {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 72%, rgba(15, 17, 22, 0.1)) !important;
   }
 }
 
