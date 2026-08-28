@@ -161,36 +161,35 @@ export default function VenueNfcTagPanel({
   useEffect(() => {
     if (!testingTagId) return;
     const startedAt = Date.now();
-    let cancelled = false;
     let checkInFlight = false;
+    const controller = new AbortController();
     async function checkTap() {
-      if (cancelled || document.visibilityState !== "visible" || checkInFlight) return;
+      if (controller.signal.aborted || document.visibilityState !== "visible" || checkInFlight) return;
       if (!readDashboardAccessToken("venue")) return;
       checkInFlight = true;
       try {
         const data = await requestVenueNfcTagsJson({
           cache: "no-store",
           fallbackMessage: "Unable to check sticker activity.",
+          signal: controller.signal,
         });
+        if (controller.signal.aborted) return;
         const nextTags = (data.tags || []) as NfcTag[];
-        if (!cancelled) setTags(nextTags);
+        setTags(nextTags);
         const tested = nextTags.find((tag) => tag.id === testingTagId);
         if (tested && tested.scanCount > testBaselineRef.current) {
-          if (!cancelled) {
-            setTestingTagId("");
-            setTestStatus(`Test confirmed. ${tested.label} recorded the phone tap.`);
-          }
+          setTestingTagId("");
+          setTestStatus(`Test confirmed. ${tested.label} recorded the phone tap.`);
           return;
         }
-        if (Date.now() - startedAt >= 60_000 && !cancelled) {
+        if (Date.now() - startedAt >= 60_000) {
           setTestingTagId("");
           setTestStatus("No phone tap was detected within 60 seconds. Unlock the phone, make sure contactless reading is enabled, and try again—or request support.");
         }
       } catch (error) {
-        if (!cancelled) {
-          setTestingTagId("");
-          setTestStatus(error instanceof Error ? error.message : "Unable to check sticker activity.");
-        }
+        if (controller.signal.aborted) return;
+        setTestingTagId("");
+        setTestStatus(error instanceof Error ? error.message : "Unable to check sticker activity.");
       } finally {
         checkInFlight = false;
       }
@@ -199,7 +198,7 @@ export default function VenueNfcTagPanel({
     const timer = window.setInterval(checkTap, 3_000);
     document.addEventListener("visibilitychange", checkTap);
     return () => {
-      cancelled = true;
+      controller.abort();
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", checkTap);
     };
