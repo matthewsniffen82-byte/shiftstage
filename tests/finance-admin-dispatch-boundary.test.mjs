@@ -28,6 +28,19 @@ test("admin finance mutations use the refresh-aware role-isolated request bounda
   assert.match(route, /NextResponse\.json\(\{ ok: true, finance, session: session \|\| null \}\)/);
 });
 
+test("admin finance mutations are abortable and serialized across every command", () => {
+  assert.match(adminClient, /function FinanceManager\([\s\S]*?const mountedRef = useRef\(false\);/);
+  assert.match(adminClient, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(adminClient, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(adminClient, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(adminClient, /function beginFinanceAction\(\)/);
+  assert.match(adminClient, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(adminClient, /function isCurrentFinanceAction/);
+  assert.match(adminClient, /function finishFinanceAction/);
+  assert.equal((adminClient.match(/signal: request\.controller\.signal/g) || []).length, 6);
+  assert.equal((adminClient.match(/const request = beginFinanceAction\(\)/g) || []).length, 6);
+});
+
 test("the dispatcher preserves every supported production finance action", () => {
   for (const action of [
     "run_automation",

@@ -867,6 +867,10 @@ function FinanceManager({
   const [invoiceId, setInvoiceId] = useState("");
   const [paymentTotal, setPaymentTotal] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
   const metrics = (finance?.metrics || {}) as Record<string, unknown>;
   const invoices = Array.isArray(finance?.invoices) ? finance.invoices as Array<Record<string, unknown>> : [];
   const payouts = Array.isArray(finance?.payouts) ? finance.payouts as Array<Record<string, unknown>> : [];
@@ -884,6 +888,15 @@ function FinanceManager({
   const [minimumPayout, setMinimumPayout] = useState("20.00");
   const [payoutsEnabled, setPayoutsEnabled] = useState(false);
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+  useEffect(() => {
     setProvider(asText(payoutSettings.payment_provider) || "stripe");
     setPayoutMode(asText(payoutSettings.payout_mode) || "manual_cashout");
     setHoldDays(String(payoutSettings.earnings_hold_days ?? 7));
@@ -892,25 +905,53 @@ function FinanceManager({
   }, [payoutSettings.payment_provider, payoutSettings.payout_mode, payoutSettings.earnings_hold_days, payoutSettings.minimum_payout_cents, payoutSettings.payouts_enabled]);
   const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(asText(invoice.status)));
 
+  function beginFinanceAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentFinanceAction(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current
+      && !request.controller.signal.aborted
+      && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishFinanceAction(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsRunning(false);
+  }
+
   async function runAction(action: "run_automation" | "process_payouts") {
+    const request = beginFinanceAction();
+    if (!request) return;
     setIsRunning(true);
     setStatus(action === "run_automation" ? "Reconciling club invoices and dancer payouts..." : "Processing payable dancer commissions...");
     try {
       const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action }),
         fallbackMessage: "Finance operation failed.",
       });
+      if (!isCurrentFinanceAction(request)) return;
       const errors = Array.isArray(data.result?.errors) ? data.result.errors.length : 0;
       const baseMessage = errors ? `Finance run completed with ${errors} item requiring attention.` : "Finance reconciliation completed.";
       const message = applyFinanceMutationResponse(data, onFinanceChange, baseMessage);
       setStatus(message);
       onActionConfirmed(message);
     } catch (error) {
+      if (!isCurrentFinanceAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Finance operation failed.");
     } finally {
-      setIsRunning(false);
+      finishFinanceAction(request);
     }
   }
 
@@ -920,15 +961,19 @@ function FinanceManager({
     if (!invoiceId || !Number.isInteger(totalPaidCents) || totalPaidCents <= 0 || !paymentReference.trim()) {
       return setStatus("Choose an invoice and enter the cumulative paid total plus a bank or check reference.");
     }
+    const request = beginFinanceAction();
+    if (!request) return;
     setIsRunning(true);
     setStatus("Reconciling external payment...");
     try {
       const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "record_manual_payment", invoiceId, totalPaidCents, reference: paymentReference.trim() }),
         fallbackMessage: "Unable to record payment.",
       });
+      if (!isCurrentFinanceAction(request)) return;
       const message = applyFinanceMutationResponse(data, onFinanceChange, "External club payment reconciled.");
       setInvoiceId("");
       setPaymentTotal("");
@@ -936,9 +981,10 @@ function FinanceManager({
       setStatus(message);
       onActionConfirmed(message);
     } catch (error) {
+      if (!isCurrentFinanceAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to record payment.");
     } finally {
-      setIsRunning(false);
+      finishFinanceAction(request);
     }
   }
 
@@ -946,49 +992,60 @@ function FinanceManager({
     event.preventDefault();
     const minimumPayoutCents = adminPayoutDollarsToCents(minimumPayout);
     if (minimumPayoutCents === null) return setStatus("Enter a valid minimum payout between $0.01 and $100,000.00.");
+    const request = beginFinanceAction();
+    if (!request) return;
     setIsRunning(true);
     setStatus("Saving audited payout settings...");
     try {
       const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "update_payout_settings", payoutsEnabled, paymentProvider: provider, payoutMode, earningsHoldDays: Number(holdDays), minimumPayoutCents }),
         fallbackMessage: "Unable to save payout settings.",
       });
+      if (!isCurrentFinanceAction(request)) return;
       setStatus(applyFinanceMutationResponse(data, onFinanceChange, "Payout settings saved and audited."));
     } catch (error) {
+      if (!isCurrentFinanceAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to save payout settings.");
-    } finally { setIsRunning(false); }
+    } finally { finishFinanceAction(request); }
   }
 
   async function manageEarning(earningId: string, earningAction: "hold" | "release" | "reverse") {
     const reason = window.prompt(`Required audit reason to ${earningAction} this earning:`)?.trim();
     if (!reason) return;
+    const request = beginFinanceAction();
+    if (!request) return;
     setIsRunning(true);
     try {
       const data = await requestAdminJson("/api/admin/finance", {
-        method: "POST", headers: { "content-type": "application/json" },
+        method: "POST", signal: request.controller.signal, headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "manage_earning", earningId, earningAction, reason }),
         fallbackMessage: "Unable to update earning.",
       });
+      if (!isCurrentFinanceAction(request)) return;
       setStatus(applyFinanceMutationResponse(data, onFinanceChange, `Earning ${earningAction} action recorded.`));
-    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to update earning."); }
-    finally { setIsRunning(false); }
+    } catch (error) { if (isCurrentFinanceAction(request)) setStatus(error instanceof Error ? error.message : "Unable to update earning."); }
+    finally { finishFinanceAction(request); }
   }
 
   async function retryPayout(payoutId: string) {
     const reason = window.prompt("Required audit reason to retry this failed payout:")?.trim();
     if (!reason) return;
+    const request = beginFinanceAction();
+    if (!request) return;
     setIsRunning(true);
     try {
       const data = await requestAdminJson("/api/admin/finance", {
-        method: "POST", headers: { "content-type": "application/json" },
+        method: "POST", signal: request.controller.signal, headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "retry_payout", payoutId, reason }),
         fallbackMessage: "Unable to retry payout.",
       });
+      if (!isCurrentFinanceAction(request)) return;
       setStatus(applyFinanceMutationResponse(data, onFinanceChange, "Safe payout retry reserved for processing."));
-    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to retry payout."); }
-    finally { setIsRunning(false); }
+    } catch (error) { if (isCurrentFinanceAction(request)) setStatus(error instanceof Error ? error.message : "Unable to retry payout."); }
+    finally { finishFinanceAction(request); }
   }
 
   async function manageNats(action: "verify_nats_affiliate" | "disable_nats_affiliate" | "retry_nats_export" | "reconcile_nats_export", targetId: string, resolution?: "confirmed_exported" | "confirmed_not_exported") {
@@ -999,11 +1056,14 @@ function FinanceManager({
         : "Enter the required audit reason:";
     const reason = window.prompt(promptLabel)?.trim();
     if (!reason) return;
+    const request = beginFinanceAction();
+    if (!request) return;
     setIsRunning(true);
     setStatus("Updating the NATS commission ledger...");
     try {
       const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action,
@@ -1013,13 +1073,15 @@ function FinanceManager({
         }),
         fallbackMessage: "Unable to update the NATS commission ledger.",
       });
+      if (!isCurrentFinanceAction(request)) return;
       const message = applyFinanceMutationResponse(data, onFinanceChange, "NATS commission ledger updated.");
       setStatus(message);
       onActionConfirmed(message);
     } catch (error) {
+      if (!isCurrentFinanceAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to update the NATS commission ledger.");
     } finally {
-      setIsRunning(false);
+      finishFinanceAction(request);
     }
   }
   return (
