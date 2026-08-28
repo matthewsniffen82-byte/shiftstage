@@ -74,6 +74,18 @@ test("mobile Clubs cards use visible matte gutters and neutral separation", () =
   assert.match(hierarchy, /> #results\.home-discovery-feed\.home-venue-discovery-feed \{\s+gap: 28px !important;/);
 });
 
+test("mobile Clubs cards keep one cross-platform header texture and a prominent active Deal", () => {
+  const parity = aesthetic.match(
+    /\/\* Paint the mobile Clubs header texture directly[\s\S]*?(?=\/\* Give the mobile dancer identity)/,
+  )?.[0] || "";
+
+  assert.ok(parity, "the cross-platform venue-card refinement must exist");
+  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?repeating-linear-gradient\(115deg,[\s\S]*?linear-gradient\(145deg, #171920 0%, #08090c 66%, #11131a 100%\)/);
+  assert.match(parity, /\.venue-card-deals-action\.is-available \{[\s\S]*?var\(--dancr-color-success\) 76%[\s\S]*?rgba\(18, 146, 81, 0\.98\)[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)/);
+  assert.match(parity, /\.venue-card-deals-action\.is-available \.action-icon \{[\s\S]*?#9fffc4[\s\S]*?drop-shadow\(0 0 7px var\(--dancr-color-success-strong\)\)/);
+  assert.doesNotMatch(parity, /\n\s+(?:width|height|min-height|max-height|padding|margin|grid-template-columns):/);
+});
+
 test("the mobile lineup explains working-now avatars without changing venue actions", () => {
   const lineup = liveApp.match(
     /function venueLineupMarkup\(venue, city, options = \{\}\) \{[\s\S]*?(?=\n    function venueCardQrMarkup)/,
