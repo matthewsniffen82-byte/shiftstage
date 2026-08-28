@@ -125,6 +125,10 @@ test("approved videos refresh into the builder and video cards render a visible 
   assert.match(dashboard, /addEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
   assert.match(dashboard, /status === "uploading" \|\| status === "moderating"/);
   assert.match(dashboard, /window\.setTimeout\(\(\) => void loadVideos\(\), 1_800\)/);
+  assert.match(dashboard, /let requestController: AbortController \| null = null;[\s\S]*?requestController\?\.abort\(\);[\s\S]*?signal: controller\.signal/);
+  assert.match(dashboard, /controller\.signal\.aborted \|\| requestId !== requestSequence/);
+  assert.match(dashboard, /requestController\?\.abort\(\);[\s\S]*?requestController = null;[\s\S]*?removeEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
+  assert.match(dashboard, /requestId === requestSequence\) setIsMediaLoading\(false\)/);
   assert.match(dancerStudio, /onLoadedMetadata=\{\(event\) => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
   assert.match(dashboard, /onLoadedMetadata=\{\(event\) => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
   assert.match(mediaSync, /video\.currentTime = Math\.min\(0\.15, Math\.max\(0\.05, video\.duration \/ 100\)\)/);

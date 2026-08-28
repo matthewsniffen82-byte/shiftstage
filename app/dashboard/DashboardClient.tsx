@@ -3728,16 +3728,21 @@ function DancerProfilePreview({
     let cancelled = false;
     let refreshTimer = 0;
     let requestSequence = 0;
+    let requestController: AbortController | null = null;
     const loadVideos = async (showLoading = false) => {
       const requestId = ++requestSequence;
+      requestController?.abort();
+      const controller = new AbortController();
+      requestController = controller;
       if (showLoading) setIsMediaLoading(true);
       setMediaError("");
       try {
         const data = await requestDancerTvVideosJson({
           cache: "no-store",
           fallbackMessage: "Unable to load your saved profile videos.",
+          signal: controller.signal,
         });
-        if (cancelled || requestId !== requestSequence) return;
+        if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
         const savedVideos = Array.isArray(data?.videos) ? data.videos : [];
         setVideos(savedVideos.flatMap((video: Record<string, unknown>) => {
           const id = String(video?.id || "").trim();
@@ -3758,10 +3763,11 @@ function DancerProfilePreview({
           refreshTimer = window.setTimeout(() => void loadVideos(), 1_800);
         }
       } catch (error) {
-        if (cancelled || requestId !== requestSequence) return;
+        if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
         setMediaError(error instanceof Error ? error.message : "Unable to load your saved profile videos.");
       } finally {
-        if (!cancelled && requestId === requestSequence && showLoading) setIsMediaLoading(false);
+        if (requestController === controller) requestController = null;
+        if (!cancelled && !controller.signal.aborted && requestId === requestSequence) setIsMediaLoading(false);
       }
     };
     const refreshAfterVideoChange = () => {
@@ -3776,6 +3782,8 @@ function DancerProfilePreview({
     return () => {
       cancelled = true;
       requestSequence += 1;
+      requestController?.abort();
+      requestController = null;
       window.clearTimeout(refreshTimer);
       window.removeEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
     };
