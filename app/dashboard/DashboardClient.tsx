@@ -618,16 +618,78 @@ function NotificationPanel({
 } = {}) {
   const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
   const [status, setStatus] = useState("");
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const actionSequenceRef = useRef(0);
+  const actionInFlightRef = useRef(false);
+  const loadQueuedRef = useRef(false);
+
+  const loadNotifications = useCallback(async () => {
+    if (!mountedRef.current) return;
+    if (actionInFlightRef.current) {
+      loadQueuedRef.current = true;
+      return;
+    }
+    loadQueuedRef.current = false;
+    const requestId = ++loadSequenceRef.current;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    try {
+      const data = await requestDashboardJson("/api/notifications", {
+        fallbackMessage: "Unable to load notifications.",
+        signal: controller.signal,
+      });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
+      setNotifications(data.notifications || []);
+    } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
+      setStatus(error instanceof Error ? error.message : "Unable to load notifications.");
+    } finally {
+      if (requestId === loadSequenceRef.current && loadAbortRef.current === controller) loadAbortRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
-    requestDashboardJson("/api/notifications", { fallbackMessage: "Unable to load notifications." })
-      .then((data) => {
-        setNotifications(data.notifications || []);
-      })
-      .catch((error) => setStatus(error instanceof Error ? error.message : "Unable to load notifications."));
-  }, [refreshKey]);
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      loadAbortRef.current = null;
+      actionSequenceRef.current += 1;
+      actionInFlightRef.current = false;
+      loadQueuedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => { void loadNotifications(); }, [loadNotifications, refreshKey]);
+
+  function beginNotificationAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
+    loadQueuedRef.current = true;
+    return requestId;
+  }
+
+  function isCurrentNotificationAction(requestId: number) {
+    return mountedRef.current && requestId === actionSequenceRef.current;
+  }
+
+  function finishNotificationAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return;
+    actionInFlightRef.current = false;
+    if (mountedRef.current && loadQueuedRef.current) void loadNotifications();
+  }
 
   async function markAllRead() {
+    const requestId = beginNotificationAction();
+    if (requestId === null) return;
     try {
       const data = await requestDashboardJson("/api/notifications", {
         method: "PATCH",
@@ -635,14 +697,19 @@ function NotificationPanel({
         body: JSON.stringify({ all: true }),
         fallbackMessage: "Unable to update notifications.",
       });
+      if (!isCurrentNotificationAction(requestId)) return;
       setNotifications((current) => current.map((item) => ({ ...item, readAt: data.readAt })));
       setStatus(`${data.count || 0} marked read.`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to update notifications.");
+      if (isCurrentNotificationAction(requestId)) setStatus(error instanceof Error ? error.message : "Unable to update notifications.");
+    } finally {
+      finishNotificationAction(requestId);
     }
   }
 
   async function markRead(notificationId: string) {
+    const requestId = beginNotificationAction();
+    if (requestId === null) return;
     try {
       const data = await requestDashboardJson("/api/notifications", {
         method: "PATCH",
@@ -650,24 +717,32 @@ function NotificationPanel({
         body: JSON.stringify({ notificationId }),
         fallbackMessage: "Unable to update notification.",
       });
+      if (!isCurrentNotificationAction(requestId)) return;
       setNotifications((current) =>
         current.map((item) => (String(item.id) === notificationId ? { ...item, readAt: data.notification.readAt } : item)),
       );
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to update notification.");
+      if (isCurrentNotificationAction(requestId)) setStatus(error instanceof Error ? error.message : "Unable to update notification.");
+    } finally {
+      finishNotificationAction(requestId);
     }
   }
 
   async function clearNotifications() {
+    const requestId = beginNotificationAction();
+    if (requestId === null) return;
     try {
       const data = await requestDashboardJson("/api/notifications", {
         method: "DELETE",
         fallbackMessage: "Unable to clear notifications.",
       });
+      if (!isCurrentNotificationAction(requestId)) return;
       setNotifications([]);
       setStatus(`${data.count || 0} notifications cleared.`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to clear notifications.");
+      if (isCurrentNotificationAction(requestId)) setStatus(error instanceof Error ? error.message : "Unable to clear notifications.");
+    } finally {
+      finishNotificationAction(requestId);
     }
   }
 

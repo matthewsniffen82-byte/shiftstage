@@ -328,6 +328,23 @@ test("shared dashboard panels use the refresh-aware request boundary", () => {
   assert.doesNotMatch(customerActions, /authorization: `Bearer/);
 });
 
+test("shared notification refreshes and actions ignore stale work", () => {
+  const notificationPanel = dashboard.match(/function NotificationPanel[\s\S]*?function SupportInboxPanel/)?.[0] || "";
+  assert.match(notificationPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(notificationPanel, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(notificationPanel, /const loadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(notificationPanel, /signal: controller\.signal/);
+  assert.match(notificationPanel, /requestId !== loadSequenceRef\.current/);
+  assert.match(notificationPanel, /mountedRef\.current = false;[\s\S]*?loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\);/);
+  assert.match(notificationPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(notificationPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(notificationPanel, /const loadQueuedRef = useRef\(false\);/);
+  assert.match(notificationPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(notificationPanel, /loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\);/);
+  assert.match(notificationPanel, /requestId === actionSequenceRef\.current/);
+  assert.match(notificationPanel, /actionInFlightRef\.current = false;[\s\S]*?loadQueuedRef\.current[\s\S]*?loadNotifications\(\)/);
+});
+
 test("account state changes and deletion use the shared refresh-aware boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;
