@@ -10960,7 +10960,7 @@ body.dancr-button-system :is(
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
     min-height: 102px !important;
-    padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 10px 7px !important;
+    padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 12px 7px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
@@ -11012,6 +11012,7 @@ body.dancr-button-system :is(
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    column-gap: 0 !important;
     justify-content: stretch !important;
   }
 
@@ -11103,7 +11104,7 @@ body.dancr-button-system :is(
 @media (max-width: 340px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
     min-height: 96px !important;
-    padding-right: 8px !important;
+    padding-inline: 12px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {

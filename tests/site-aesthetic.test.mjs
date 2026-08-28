@@ -28,7 +28,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=197" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=198" rel="stylesheet">/,
   );
 });
 
