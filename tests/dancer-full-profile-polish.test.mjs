@@ -341,11 +341,11 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*?\.profile-modal-summary \{[\s\S]*?min-height: 102px !important;[\s\S]*?padding: max\(7px,[\s\S]*?10px 7px !important;[\s\S]*?\.profile-modal-person \{[\s\S]*?grid-template-columns: 72px minmax\(0, 1fr\) !important;[\s\S]*?gap: 8px !important;[\s\S]*?\.profile-modal-avatar \{[\s\S]*?width: 72px !important;[\s\S]*?height: 72px !important;/,
+    /Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*?\.profile-modal-summary \{[\s\S]*?min-height: 102px !important;[\s\S]*?padding: max\(7px,[\s\S]*?10px 7px !important;[\s\S]*?\.profile-modal-person \{[\s\S]*?grid-template-columns: 80px minmax\(0, 1fr\) !important;[\s\S]*?gap: 0 !important;[\s\S]*?\.profile-modal-avatar-column \{[\s\S]*?justify-items: center !important;[\s\S]*?\.profile-modal-avatar \{[\s\S]*?width: 72px !important;[\s\S]*?height: 72px !important;/,
   );
   assert.match(
     prominentMobileHeader,
-    /\.profile-modal-header-metrics \{[\s\S]*?width: 100% !important;[\s\S]*?margin-left: 0 !important;[\s\S]*?transform: none !important;[\s\S]*?\.profile-modal-name-row \{[\s\S]*?width: 100% !important;[\s\S]*?padding: 0 42px 0 0 !important;[\s\S]*?display: flex !important;[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?\.profile-modal-name-anchor \{[\s\S]*?position: static !important;[\s\S]*?display: inline-flex !important;/,
+    /\.profile-modal-header-metrics \{[\s\S]*?width: 100% !important;[\s\S]*?margin-left: 0 !important;[\s\S]*?transform: none !important;[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics dt \{[\s\S]*?overflow: visible !important;[\s\S]*?text-overflow: clip !important;[\s\S]*?\.profile-modal-name-row \{[\s\S]*?width: 100% !important;[\s\S]*?padding: 0 42px 0 0 !important;[\s\S]*?display: flex !important;[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?\.profile-modal-name-anchor \{[\s\S]*?position: static !important;[\s\S]*?display: inline-flex !important;/,
   );
   assert.match(
     liveApp,
@@ -599,6 +599,11 @@ test("profile identity and media controls form a compact balanced top section", 
   );
   assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-label \{[\s\S]*?font-weight: 900;/);
   assert.match(aesthetic, /\.profile-media-tab-icon \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;[\s\S]*?flex-basis: 20px !important;/);
+  assert.match(
+    aesthetic,
+    /\.profile-modal-media,[\s\S]*?\.profile-media-section \{[\s\S]*?box-shadow: 0 12px 28px rgba\(0, 0, 0, \.22\) !important;[\s\S]*?\.profile-modal-media::after,[\s\S]*?\.profile-media-section::after \{[\s\S]*?border: 1px solid rgba\(180, 169, 196, \.38\) !important;/,
+  );
+  assert.match(publicProfilePage, /\.profile-media-section::after \{[\s\S]*?border: 1px solid rgba\(180,169,196,\.38\);/);
 });
 
 test("available inactive media tabs remain distinct from disabled media tabs", () => {

@@ -96,7 +96,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   );
   assert.match(
     profilePage,
-    /The close control occupies only the identity band[\s\S]*?\.profile-titlebar \{[\s\S]*?grid-template-columns: 72px minmax\(0, 1fr\) !important;[\s\S]*?grid-template-rows: 46px 42px !important;[\s\S]*?\.profile-titlebar-person \{ display: contents !important; \}[\s\S]*?\.profile-titlebar-avatar \{[\s\S]*?grid-row: 1 \/ 3 !important;[\s\S]*?width: 72px !important;[\s\S]*?align-self: start !important;[\s\S]*?\.profile-header-metrics \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 2 !important;/,
+    /The close control occupies only the identity band[\s\S]*?\.profile-titlebar \{[\s\S]*?grid-template-columns: 80px minmax\(0, 1fr\) !important;[\s\S]*?grid-template-rows: 46px 42px !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?\.profile-titlebar-person \{ display: contents !important; \}[\s\S]*?\.profile-titlebar-avatar \{[\s\S]*?grid-row: 1 \/ 3 !important;[\s\S]*?width: 72px !important;[\s\S]*?align-self: start !important;[\s\S]*?justify-self: center !important;[\s\S]*?\.profile-header-metrics \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 2 !important;[\s\S]*?\.live-actions \{ grid-template-columns: 80px repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     aesthetic,

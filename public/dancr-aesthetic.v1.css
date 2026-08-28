@@ -5128,6 +5128,7 @@ body.dancr-button-system .public-profile-shell .profile-media-section {
   overflow: clip !important;
   border-radius: 18px !important;
   background: var(--dancr-color-surface-translucent) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .22) !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media {
@@ -5145,7 +5146,7 @@ body.dancr-button-system .public-profile-shell .profile-media-section::after {
   position: absolute !important;
   z-index: 40 !important;
   inset: 0 !important;
-  border: 1px solid rgba(180, 169, 196, .22) !important;
+  border: 1px solid rgba(180, 169, 196, .38) !important;
   border-radius: inherit !important;
   pointer-events: none !important;
 }
@@ -10963,14 +10964,15 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
-    grid-template-columns: 72px minmax(0, 1fr) !important;
-    gap: 8px !important;
+    grid-template-columns: 80px minmax(0, 1fr) !important;
+    gap: 0 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
     display: grid !important;
     grid-template-rows: 72px !important;
     align-items: center !important;
+    justify-items: center !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
@@ -11009,8 +11011,13 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
-    grid-template-columns: repeat(3, 52px) !important;
-    justify-content: space-between !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    justify-content: stretch !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
@@ -11100,8 +11107,8 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
-    grid-template-columns: 64px minmax(0, 1fr) !important;
-    gap: 6px !important;
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+    gap: 0 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {

@@ -161,7 +161,7 @@ test("stats and media tabs are compact without changing dynamic media behavior",
   );
   assert.match(
     compactLayout,
-    /\.profile-modal-media::after,[\s\S]*?\.profile-media-section::after \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?border: 1px solid rgba\(180, 169, 196, \.22\) !important;[\s\S]*?pointer-events: none !important;/,
+    /\.profile-modal-media::after,[\s\S]*?\.profile-media-section::after \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?border: 1px solid rgba\(180, 169, 196, \.38\) !important;[\s\S]*?pointer-events: none !important;/,
   );
   assert.match(profileMedia, /\{photoMedia\.length\}/);
   assert.match(profileMedia, /\{videoMedia\.length\}/);
