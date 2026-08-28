@@ -277,11 +277,11 @@ test("profile action controls are unboxed and available Going highlights only it
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?color: #d8b4fe !important;[\s\S]*?background: transparent !important;/,
+    /going-btn\.is-available-action:not\(\.is-going\) \.action-icon,[\s\S]*?profile-action-going\.profile-action-available:not\(\.is-going\) \.profile-action-icon-frame \{[\s\S]*?width: 26px !important;[\s\S]*?height: 26px !important;[\s\S]*?border: 1px solid rgba\(216, 180, 254, \.82\) !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?color: #f5d0fe !important;[\s\S]*?radial-gradient\(circle, rgba\(168, 85, 247, \.2\) 0%, rgba\(88, 28, 135, \.08\) 72%\)[\s\S]*?0 0 0 2px rgba\(168, 85, 247, \.14\)[\s\S]*?0 0 14px rgba\(168, 85, 247, \.72\)/,
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action \.action-icon > svg,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-preview-icon \{[\s\S]*?drop-shadow\(0 0 4px rgba\(216, 180, 254, \.9\)\)[\s\S]*?drop-shadow\(0 0 10px var\(--dancr-color-brand-primary-strong\)\) !important;[\s\S]*?\.is-available-action \.profile-action-main > span:last-child,[\s\S]*?color: #e9d5ff !important;[\s\S]*?text-shadow: 0 0 10px rgba\(168, 85, 247, \.55\) !important;/,
+    /going-btn\.is-available-action:not\(\.is-going\) \.action-icon > svg,[\s\S]*?profile-action-going\.profile-action-available:not\(\.is-going\) \.profile-action-preview-icon \{[\s\S]*?drop-shadow\(0 0 5px rgba\(245, 208, 254, \.95\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--dancr-color-brand-primary-strong\)\) !important;[\s\S]*?\.is-available-action:not\(\.is-going\) \.profile-action-main > span:last-child,[\s\S]*?color: #f3e8ff !important;[\s\S]*?text-shadow: 0 0 12px rgba\(168, 85, 247, \.72\) !important;/,
   );
   assert.match(
     guestActionsBlock,
