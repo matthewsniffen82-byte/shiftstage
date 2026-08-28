@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import {
@@ -19,24 +19,54 @@ export default function AgentDashboardClient() {
   const [working, setWorking] = useState(false);
   const [loginId, setLoginId] = useState("");
   const [username, setUsername] = useState("");
+  const mountedRef = useRef(false);
+  const dashboardRequestSequenceRef = useRef(0);
+  const dashboardRequestAbortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async () => {
-    if (!readDashboardAccessToken()) throw new Error("Sign in with your designated sales agent account to continue.");
-    const data = await requestAgentCommissionsJson({
-      cache: "no-store",
-    });
-    setDashboard(data.dashboard);
+    if (!mountedRef.current) return false;
+    const requestId = ++dashboardRequestSequenceRef.current;
+    dashboardRequestAbortRef.current?.abort();
+    const controller = new AbortController();
+    dashboardRequestAbortRef.current = controller;
+    try {
+      if (!readDashboardAccessToken()) throw new Error("Sign in with your designated sales agent account to continue.");
+      const data = await requestAgentCommissionsJson({
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!mountedRef.current || requestId !== dashboardRequestSequenceRef.current) return false;
+      setDashboard(data.dashboard);
+      return true;
+    } catch (error) {
+      if (!mountedRef.current || requestId !== dashboardRequestSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return false;
+      setStatus(error instanceof Error ? error.message : "Unable to load agent commissions.");
+      return false;
+    } finally {
+      if (requestId === dashboardRequestSequenceRef.current) {
+        dashboardRequestAbortRef.current = null;
+        if (mountedRef.current) setLoading(false);
+      }
+    }
   }, []);
 
   useEffect(() => {
-    load()
-      .catch((error) => setStatus(error instanceof Error ? error.message : "Unable to load agent commissions."))
-      .finally(() => setLoading(false));
+    mountedRef.current = true;
+    void load();
+    return () => {
+      mountedRef.current = false;
+      dashboardRequestSequenceRef.current += 1;
+      dashboardRequestAbortRef.current?.abort();
+    };
   }, [load]);
 
   async function requestNats(event: FormEvent) {
     event.preventDefault();
-    if (!readDashboardAccessToken()) return;
+    if (!mountedRef.current || !readDashboardAccessToken()) return;
+    const requestId = ++dashboardRequestSequenceRef.current;
+    dashboardRequestAbortRef.current?.abort();
+    const controller = new AbortController();
+    dashboardRequestAbortRef.current = controller;
     setWorking(true);
     setStatus("Submitting the NATS affiliate link for verification…");
     try {
@@ -44,14 +74,20 @@ export default function AgentDashboardClient() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "request_nats_link", loginId, username }),
+        signal: controller.signal,
         fallbackMessage: "Unable to link the NATS account.",
       });
+      if (!mountedRef.current || requestId !== dashboardRequestSequenceRef.current) return;
       setDashboard(data.dashboard);
       setStatus("NATS account submitted for administrator verification.");
     } catch (error) {
+      if (!mountedRef.current || requestId !== dashboardRequestSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
       setStatus(error instanceof Error ? error.message : "Unable to link the NATS account.");
     } finally {
-      setWorking(false);
+      if (requestId === dashboardRequestSequenceRef.current) {
+        dashboardRequestAbortRef.current = null;
+        if (mountedRef.current) setWorking(false);
+      }
     }
   }
 

@@ -1673,6 +1673,10 @@ test("sales agent commission actions use the shared refresh-aware session bounda
   assert.match(dashboardSession, /function requestAgentCommissionStatement/);
   assert.match(agentDashboard, /requestAgentCommissionsJson/);
   assert.match(agentDashboard, /requestAgentCommissionStatement/);
+  assert.match(agentDashboard, /const dashboardRequestSequenceRef = useRef\(0\);/);
+  assert.equal((agentDashboard.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.match(agentDashboard, /requestId !== dashboardRequestSequenceRef\.current/);
+  assert.match(agentDashboard, /mountedRef\.current = false;[\s\S]*?dashboardRequestSequenceRef\.current \+= 1;[\s\S]*?dashboardRequestAbortRef\.current\?\.abort\(\);/);
   assert.doesNotMatch(agentDashboard, /fetch\(|readBrowserAccessToken|authorization: `Bearer/);
 });
 
