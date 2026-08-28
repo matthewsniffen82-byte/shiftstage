@@ -2345,25 +2345,65 @@ function RankingManager() {
   const [rankings, setRankings] = useState<Array<Record<string, unknown>>>([]);
   const [status, setStatus] = useState("");
   const [isWorking, setIsWorking] = useState(false);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginRankingAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentRankingAction(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishRankingAction(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsWorking(false);
+  }
 
   async function recalculate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const request = beginRankingAction();
+    if (!request) return;
     setIsWorking(true);
     setStatus("");
     try {
       const data = await requestAdminJson("/api/admin/rankings/recalculate", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ city }),
         fallbackMessage: "Unable to recalculate rankings.",
       });
+      if (!isCurrentRankingAction(request)) return;
       const nextRankings = Array.isArray(data.rankings) ? data.rankings : [];
       setRankings(nextRankings);
       setStatus(`${nextRankings.length} rankings recalculated.`);
     } catch (error) {
+      if (!isCurrentRankingAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to recalculate rankings. Check your connection and try again.");
     } finally {
-      setIsWorking(false);
+      finishRankingAction(request);
     }
   }
 
@@ -2372,7 +2412,7 @@ function RankingManager() {
       <form onSubmit={recalculate}>
         <label>
           City
-          <input value={city} onChange={(event) => setCity(event.target.value)} required />
+          <input value={city} disabled={isWorking} onChange={(event) => setCity(event.target.value)} required />
         </label>
         <button type="submit" disabled={isWorking}>
           {isWorking ? "Working..." : "Recalculate"}

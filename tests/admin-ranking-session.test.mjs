@@ -16,8 +16,14 @@ test("ranking recalculation uses the refresh-aware role-isolated admin boundary"
   assert.doesNotMatch(rankingManager, /readToken\(\)|fetch\("\/api\/admin\/rankings\/recalculate"/);
 });
 
-test("ranking recalculation always leaves its working state and preserves server errors", () => {
+test("ranking recalculation rejects duplicate and stale work while preserving server errors", () => {
+  assert.match(rankingManager, /function beginRankingAction\(\)/);
+  assert.match(rankingManager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(rankingManager, /signal: request\.controller\.signal/);
+  assert.match(rankingManager, /function isCurrentRankingAction/);
+  assert.match(rankingManager, /function finishRankingAction/);
   assert.match(rankingManager, /catch \(error\)[\s\S]*?error instanceof Error \? error\.message/);
-  assert.match(rankingManager, /finally \{[\s\S]*?setIsWorking\(false\)/);
+  assert.match(rankingManager, /finally \{[\s\S]*?finishRankingAction\(request\)/);
+  assert.match(rankingManager, /setIsWorking\(false\)/);
   assert.match(rankingManager, /Array\.isArray\(data\.rankings\) \? data\.rankings : \[\]/);
 });
