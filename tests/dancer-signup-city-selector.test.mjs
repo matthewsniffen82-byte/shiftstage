@@ -16,8 +16,17 @@ test("available dancer onboarding cities come from active production venues", ()
   assert.match(cityLibrary, /\.from\("venues"\)[\s\S]*?\.select\("city, state"\)[\s\S]*?\.eq\("is_active", true\)/);
   assert.match(cityLibrary, /new Map<string, DancerSignupCity>/);
   assert.match(cityLibrary, /cities\.values\(\)/);
-  assert.match(cityRoute, /getDancerSignupCities\(createAdminSupabaseClient\(\)\)/);
+  assert.match(cityRoute, /getDancerDiscoveryCities\(createAdminSupabaseClient\(\)\)/);
   assert.match(cityRoute, /cache-control/);
+});
+
+test("the public city list adds dynamic dancer and active-club counts without changing signup validation", () => {
+  assert.match(cityLibrary, /export async function getDancerDiscoveryCities/);
+  assert.match(cityLibrary, /\.from\("dancer_profiles"\)[\s\S]*?\.eq\("status", "approved"\)[\s\S]*?\.eq\("verification_status", "approved"\)[\s\S]*?\.eq\("is_public", true\)[\s\S]*?\.is\("disabled_at", null\)/);
+  assert.match(cityLibrary, /venueCount: venueRows\.filter/);
+  assert.match(cityLibrary, /dancerCount: dancerCounts\.get/);
+  assert.match(cityLibrary, /DANCER_DISCOVERY_CITY_STATS_LOAD_FAILED/);
+  assert.match(cityLibrary, /export async function getDancerSignupCities[\s\S]*?getActiveVenueCityRows\(client\)/);
 });
 
 test("dancer account creation defers city selection while profile saves validate it", () => {

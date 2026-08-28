@@ -42106,6 +42106,7 @@
     let dancerSignupCities = [];
     let dancerSignupCitiesState = "idle";
     let dancerSignupCitiesRequest = null;
+    const cityDiscoveryStatsByName = new Map();
     let pendingDancerSignupCity = "";
     let stripeConfirmed = false;
     let activeDashboardType = "customer";
@@ -45998,6 +45999,11 @@
           if (!cities.length) throw new Error("No dancer signup cities are available.");
           dancerSignupCities = cities;
           dancerSignupCities.forEach((city) => {
+            const dancerCount = Number(city.dancerCount);
+            const venueCount = Number(city.venueCount);
+            if (Number.isInteger(dancerCount) && dancerCount >= 0 && Number.isInteger(venueCount) && venueCount >= 0) {
+              cityDiscoveryStatsByName.set(city.value, { dancers: dancerCount, venues: venueCount });
+            }
             if (!markets[city.value]) {
               markets[city.value] = {
                 stats: { dancers: 0, shifts: 0, venues: 0 },
@@ -46006,6 +46012,7 @@
               };
             }
           });
+          renderCityPickerOptions();
           dancerSignupCitiesState = "ready";
           syncDancerSignupCitySelect(pendingDancerSignupCity);
           if (dancerDashboard.classList.contains("show") && !dancerSetup.approval) renderDancerSetupWhenEditorIdle();
@@ -63911,7 +63918,11 @@
     function cityPickerOptionMarkup(city) {
       const safeCity = escapeHtml(city);
       const selected = city === citySelect?.value;
-      return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeCity}</span><span class="city-picker-selected-label" aria-hidden="true">${selected ? "Selected" : ""}</span></button>`;
+      const stats = cityDiscoveryStatsByName.get(city);
+      const statsLabel = stats
+        ? `${stats.dancers.toLocaleString()} ${stats.dancers === 1 ? "dancer" : "dancers"} · ${stats.venues.toLocaleString()} ${stats.venues === 1 ? "club" : "clubs"}`
+        : "";
+      return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeCity}</span>${statsLabel ? `<span class="city-picker-stats">${escapeHtml(statsLabel)}</span>` : ""}</button>`;
     }
 
     function renderCityPickerOptions() {

@@ -9510,12 +9510,20 @@ body.dancr-button-system > .app main.stack > .home-discovery-controls .city-pick
   background: var(--dancr-color-brand-primary) !important;
 }
 
-.city-picker-selected-label {
+.city-picker-option-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.city-picker-stats {
   color: var(--dancr-color-text-muted);
   font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  text-align: right;
+  white-space: nowrap;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
@@ -9646,8 +9654,8 @@ body.dancr-button-system > .app main.stack > section.stack
     height: 9px;
   }
 
-  .city-picker-selected-label {
-    font-size: 9px;
+  .city-picker-stats {
+    font-size: 10px;
   }
 }
 

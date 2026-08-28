@@ -24,6 +24,16 @@ test("city selection expands inline, applies immediately, and remains keyboard a
   assert.match(liveShell, /homeFilterToggle\?\.setAttribute\("aria-expanded", "false"\)[\s\S]*?homeAdvancedFilters\?\.classList\.remove\("is-open"\)/);
 });
 
+test("city options show compact dynamic dancer and club counts without redundant selected copy", () => {
+  assert.match(liveShell, /const cityDiscoveryStatsByName = new Map\(\)/);
+  assert.match(liveShell, /Number\(city\.dancerCount\)[\s\S]*?Number\(city\.venueCount\)[\s\S]*?cityDiscoveryStatsByName\.set/);
+  assert.match(liveShell, /stats\.dancers === 1 \? "dancer" : "dancers"/);
+  assert.match(liveShell, /stats\.venues === 1 \? "club" : "clubs"/);
+  assert.match(liveShell, /class="city-picker-stats"/);
+  assert.doesNotMatch(liveShell, /city-picker-selected-label|selected \? "Selected"/);
+  assert.match(aesthetic, /\.city-picker-stats \{[\s\S]*?text-align: right;[\s\S]*?white-space: nowrap;/);
+});
+
 test("mobile discovery uses compact neutral controls and an inline city panel", () => {
   assert.match(aesthetic, /\.city-picker-inline[\s\S]*?grid-column: 1 \/ -1[\s\S]*?\.city-picker-inline\[hidden\][\s\S]*?display: none !important/);
   assert.match(aesthetic, /\.city-picker-trigger\[aria-expanded="true"\][\s\S]*?var\(--dancr-color-brand-primary\)/);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDancerSignupCities } from "@/src/lib/dancr/signup-cities";
+import { getDancerDiscoveryCities } from "@/src/lib/dancr/signup-cities";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const cities = await getDancerSignupCities(createAdminSupabaseClient());
+    const cities = await getDancerDiscoveryCities(createAdminSupabaseClient());
     return NextResponse.json(
       { ok: true, cities },
       { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } },
