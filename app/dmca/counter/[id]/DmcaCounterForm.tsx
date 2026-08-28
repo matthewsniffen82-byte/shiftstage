@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 
 type DmcaCase = {
@@ -25,6 +25,18 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
   const [status, setStatus] = useState("Loading copyright case…");
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mountedRef = useRef(false);
+  const submitAbortRef = useRef<AbortController | null>(null);
+  const submitInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      submitAbortRef.current?.abort();
+      submitInFlightRef.current = false;
+    };
+  }, []);
 
   const loadCase = useCallback(async (signal: AbortSignal) => {
     const token = readBrowserAccessToken();
@@ -61,6 +73,7 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitInFlightRef.current) return;
     const token = readBrowserAccessToken();
     if (!token) {
       setIsError(true);
@@ -68,6 +81,10 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
       return;
     }
 
+    const controller = new AbortController();
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = controller;
+    submitInFlightRef.current = true;
     setIsSubmitting(true);
     setIsError(false);
     setStatus("");
@@ -93,8 +110,10 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
           "content-type": "application/json",
         },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to submit counter-notice.");
       setStatus(data.message || "Counter-notice submitted.");
       setDmcaCase((current) => current ? {
@@ -104,10 +123,15 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
         restoreEligibleAt: data.counterNotice?.restoreEligibleAt,
       } : current);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted) return;
       setIsError(true);
       setStatus(error instanceof Error ? error.message : "Unable to submit counter-notice.");
     } finally {
-      setIsSubmitting(false);
+      if (submitAbortRef.current === controller) {
+        submitAbortRef.current = null;
+        submitInFlightRef.current = false;
+        if (mountedRef.current) setIsSubmitting(false);
+      }
     }
   }
 

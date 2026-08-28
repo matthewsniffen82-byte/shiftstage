@@ -101,6 +101,17 @@ test("counter-notice case loading cancels stale case requests", () => {
   assert.match(counterForm, /const controller = new AbortController\(\);[\s\S]*?void loadCase\(controller\.signal\);[\s\S]*?return \(\) => controller\.abort\(\);/);
 });
 
+test("counter-notice submissions prevent duplicate and stale requests", () => {
+  assert.match(counterForm, /const mountedRef = useRef\(false\);/);
+  assert.match(counterForm, /const submitAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(counterForm, /const submitInFlightRef = useRef\(false\);/);
+  assert.match(counterForm, /if \(submitInFlightRef\.current\) return;/);
+  assert.match(counterForm, /fetch\(`\/api\/dmca\/cases\/\$\{encodeURIComponent\(caseId\)\}`, \{[\s\S]*?method: "POST"[\s\S]*?signal: controller\.signal/);
+  assert.match(counterForm, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return;/);
+  assert.match(counterForm, /submitAbortRef\.current\?\.abort\(\);/);
+  assert.match(counterForm, /if \(mountedRef\.current\) setIsSubmitting\(false\);/);
+});
+
 test("eligible counter-notices restore content and rescind strikes unless a court filing is recorded", () => {
   assert.match(migration, /create or replace function public\.restore_dmca_case/);
   assert.match(migration, /v_case\.court_filing_received/);
