@@ -33,8 +33,12 @@ export function PublicProfileHeader({
   const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsSaving, setNotificationsSaving] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState("");
   const actionsRef = useRef<HTMLDivElement | null>(null);
+  const mountedRef = useRef(false);
+  const notificationActionAbortRef = useRef<AbortController | null>(null);
+  const notificationActionRequestIdRef = useRef(0);
 
   const role = session?.account?.role;
   const accessToken = session?.accessToken || "";
@@ -44,12 +48,19 @@ export function PublicProfileHeader({
   );
 
   useEffect(() => {
+    mountedRef.current = true;
     const nextSession = readBrowserAuthSession();
     setSession(nextSession);
     setSessionLoaded(true);
-    if (!nextSession?.accessToken || !nextSession.account?.role) return;
-
     const controller = new AbortController();
+    const cleanup = () => {
+      mountedRef.current = false;
+      controller.abort();
+      notificationActionRequestIdRef.current += 1;
+      notificationActionAbortRef.current?.abort();
+    };
+    if (!nextSession?.accessToken || !nextSession.account?.role) return cleanup;
+
     setNotificationsLoading(true);
     fetch("/api/notifications", {
       headers: { authorization: `Bearer ${nextSession.accessToken}` },
@@ -58,22 +69,27 @@ export function PublicProfileHeader({
     })
       .then(async (response) => {
         const data = await response.json();
+        if (!mountedRef.current || controller.signal.aborted) return;
         if (!response.ok || !data.ok) {
           throw new Error(data.error || "Unable to load notifications.");
         }
         setNotifications(normalizeNotifications(data.notifications));
       })
       .catch((error) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (
+          !mountedRef.current ||
+          controller.signal.aborted ||
+          (error instanceof DOMException && error.name === "AbortError")
+        ) return;
         setNotificationStatus(
           error instanceof Error ? error.message : "Unable to load notifications.",
         );
       })
       .finally(() => {
-        if (!controller.signal.aborted) setNotificationsLoading(false);
+        if (mountedRef.current && !controller.signal.aborted) setNotificationsLoading(false);
       });
 
-    return () => controller.abort();
+    return cleanup;
   }, []);
 
   useEffect(() => {
@@ -95,7 +111,12 @@ export function PublicProfileHeader({
   }, [notificationsOpen]);
 
   async function markNotificationRead(notificationId: string) {
-    if (!accessToken) return;
+    if (!accessToken || notificationActionAbortRef.current) return;
+    const controller = new AbortController();
+    const requestId = notificationActionRequestIdRef.current + 1;
+    notificationActionRequestIdRef.current = requestId;
+    notificationActionAbortRef.current = controller;
+    setNotificationsSaving(true);
     setNotificationStatus("");
     try {
       const response = await fetch("/api/notifications", {
@@ -105,8 +126,14 @@ export function PublicProfileHeader({
           "content-type": "application/json",
         },
         body: JSON.stringify({ notificationId }),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== notificationActionRequestIdRef.current
+      ) return;
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to update notification.");
       }
@@ -121,30 +148,61 @@ export function PublicProfileHeader({
         ),
       );
     } catch (error) {
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== notificationActionRequestIdRef.current
+      ) return;
       setNotificationStatus(
         error instanceof Error ? error.message : "Unable to update notification.",
       );
+    } finally {
+      if (notificationActionAbortRef.current === controller) {
+        notificationActionAbortRef.current = null;
+        if (mountedRef.current) setNotificationsSaving(false);
+      }
     }
   }
 
   async function clearNotifications() {
-    if (!accessToken) return;
+    if (!accessToken || notificationActionAbortRef.current) return;
+    const controller = new AbortController();
+    const requestId = notificationActionRequestIdRef.current + 1;
+    notificationActionRequestIdRef.current = requestId;
+    notificationActionAbortRef.current = controller;
+    setNotificationsSaving(true);
     setNotificationStatus("");
     try {
       const response = await fetch("/api/notifications", {
         method: "DELETE",
         headers: { authorization: `Bearer ${accessToken}` },
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== notificationActionRequestIdRef.current
+      ) return;
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to clear notifications.");
       }
       setNotifications([]);
       setNotificationStatus("Notifications cleared.");
     } catch (error) {
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== notificationActionRequestIdRef.current
+      ) return;
       setNotificationStatus(
         error instanceof Error ? error.message : "Unable to clear notifications.",
       );
+    } finally {
+      if (notificationActionAbortRef.current === controller) {
+        notificationActionAbortRef.current = null;
+        if (mountedRef.current) setNotificationsSaving(false);
+      }
     }
   }
 
@@ -209,6 +267,7 @@ export function PublicProfileHeader({
                 {notifications.slice(0, 8).map((notification) => (
                   <button
                     className={notification.readAt ? "read" : ""}
+                    disabled={notificationsSaving}
                     key={notification.id}
                     onClick={() => markNotificationRead(notification.id)}
                     type="button"
@@ -221,6 +280,7 @@ export function PublicProfileHeader({
               {notifications.length ? (
                 <button
                   className="profile-notification-clear"
+                  disabled={notificationsSaving}
                   onClick={clearNotifications}
                   type="button"
                 >

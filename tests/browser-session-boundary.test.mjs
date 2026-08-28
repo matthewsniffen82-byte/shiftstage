@@ -147,6 +147,21 @@ test("public profile, venue, directions, and TV clients share one authenticated-
   assert.match(tvSource, /window\.localStorage\.setItem\(VIEWER_SESSION_KEY, id\)/);
 });
 
+test("public notification actions prevent duplicate and stale updates", () => {
+  for (const source of [headerSource, tvSource]) {
+    assert.match(source, /const \[notificationsSaving, setNotificationsSaving\] = useState\(false\);/);
+    assert.match(source, /const notificationActionAbortRef = useRef<AbortController \| null>\(null\);/);
+    assert.match(source, /const notificationActionRequestIdRef = useRef\(0\);/);
+    assert.match(source, /notificationActionRequestIdRef\.current \+= 1;[\s\S]*?notificationActionAbortRef\.current\?\.abort\(\);/);
+    assert.match(source, /notificationActionAbortRef\.current\) return;/);
+    assert.match(source, /signal: controller\.signal/);
+    assert.match(source, /requestId !== notificationActionRequestIdRef\.current/);
+    assert.match(source, /if \(notificationActionAbortRef\.current === controller\) \{[\s\S]*?setNotificationsSaving\(false\);/);
+    assert.match(source, /disabled=\{notificationsSaving\}/);
+  }
+  assert.match(tvSource, /role !== "customer" && role !== "dancer" && role !== "venue"/);
+});
+
 test("public dancer profile state loads cancel when the dancer or shift changes", () => {
   const stateLoader = dancerActionsSource.match(
     /useEffect\(\(\) => \{[\s\S]*?setSavedLoaded\(false\);[\s\S]*?\}, \[actionShiftId, dancerId, setGoingCount\]\);/,

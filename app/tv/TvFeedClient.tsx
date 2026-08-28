@@ -69,6 +69,7 @@ export default function TvFeedClient({
   const [notifications, setNotifications] = useState<TvNotification[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsSaving, setNotificationsSaving] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState("");
   const feedElement = useRef<HTMLElement | null>(null);
   const headerActionsElement = useRef<HTMLDivElement | null>(null);
@@ -82,6 +83,8 @@ export default function TvFeedClient({
   const mountedRef = useRef(false);
   const feedAbortRef = useRef<AbortController | null>(null);
   const feedRequestIdRef = useRef(0);
+  const notificationActionAbortRef = useRef<AbortController | null>(null);
+  const notificationActionRequestIdRef = useRef(0);
   const viewerSessionId = useMemo(readViewerSessionId, []);
   activeVideoIdRef.current = activeVideoId;
   mutedRef.current = muted;
@@ -92,6 +95,8 @@ export default function TvFeedClient({
       mountedRef.current = false;
       feedRequestIdRef.current += 1;
       feedAbortRef.current?.abort();
+      notificationActionRequestIdRef.current += 1;
+      notificationActionAbortRef.current?.abort();
     };
   }, []);
 
@@ -246,7 +251,7 @@ export default function TvFeedClient({
     const role = nextSession?.account?.role;
     if (
       !nextSession?.accessToken ||
-      (role !== "customer" && role !== "dancer")
+      (role !== "customer" && role !== "dancer" && role !== "venue")
     ) {
       return;
     }
@@ -260,19 +265,24 @@ export default function TvFeedClient({
     })
       .then(async (response) => {
         const data = await response.json();
+        if (!mountedRef.current || controller.signal.aborted) return;
         if (!response.ok || !data.ok) {
           throw new Error(data.error || "Unable to load notifications.");
         }
         setNotifications(normalizeNotifications(data.notifications));
       })
       .catch((error) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (
+          !mountedRef.current ||
+          controller.signal.aborted ||
+          (error instanceof DOMException && error.name === "AbortError")
+        ) return;
         setNotificationStatus(
           error instanceof Error ? error.message : "Unable to load notifications.",
         );
       })
       .finally(() => {
-        if (!controller.signal.aborted) setNotificationsLoading(false);
+        if (mountedRef.current && !controller.signal.aborted) setNotificationsLoading(false);
       });
 
     return () => controller.abort();
@@ -399,7 +409,12 @@ export default function TvFeedClient({
   }
 
   async function markNotificationRead(notificationId: string) {
-    if (!session?.accessToken) return;
+    if (!session?.accessToken || notificationActionAbortRef.current) return;
+    const controller = new AbortController();
+    const requestId = notificationActionRequestIdRef.current + 1;
+    notificationActionRequestIdRef.current = requestId;
+    notificationActionAbortRef.current = controller;
+    setNotificationsSaving(true);
     setNotificationStatus("");
     try {
       const response = await fetch("/api/notifications", {
@@ -409,8 +424,14 @@ export default function TvFeedClient({
           "content-type": "application/json",
         },
         body: JSON.stringify({ notificationId }),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== notificationActionRequestIdRef.current
+      ) return;
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to update notification.");
       }
@@ -422,30 +443,61 @@ export default function TvFeedClient({
         ),
       );
     } catch (error) {
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== notificationActionRequestIdRef.current
+      ) return;
       setNotificationStatus(
         error instanceof Error ? error.message : "Unable to update notification.",
       );
+    } finally {
+      if (notificationActionAbortRef.current === controller) {
+        notificationActionAbortRef.current = null;
+        if (mountedRef.current) setNotificationsSaving(false);
+      }
     }
   }
 
   async function clearNotifications() {
-    if (!session?.accessToken) return;
+    if (!session?.accessToken || notificationActionAbortRef.current) return;
+    const controller = new AbortController();
+    const requestId = notificationActionRequestIdRef.current + 1;
+    notificationActionRequestIdRef.current = requestId;
+    notificationActionAbortRef.current = controller;
+    setNotificationsSaving(true);
     setNotificationStatus("");
     try {
       const response = await fetch("/api/notifications", {
         method: "DELETE",
         headers: { authorization: `Bearer ${session.accessToken}` },
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== notificationActionRequestIdRef.current
+      ) return;
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to clear notifications.");
       }
       setNotifications([]);
       setNotificationStatus("Notifications cleared.");
     } catch (error) {
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== notificationActionRequestIdRef.current
+      ) return;
       setNotificationStatus(
         error instanceof Error ? error.message : "Unable to clear notifications.",
       );
+    } finally {
+      if (notificationActionAbortRef.current === controller) {
+        notificationActionAbortRef.current = null;
+        if (mountedRef.current) setNotificationsSaving(false);
+      }
     }
   }
 
@@ -516,6 +568,7 @@ export default function TvFeedClient({
                   {notifications.slice(0, 8).map((notification) => (
                     <button
                       className={notification.readAt ? "read" : ""}
+                      disabled={notificationsSaving}
                       type="button"
                       key={notification.id}
                       onClick={() => markNotificationRead(notification.id)}
@@ -526,7 +579,7 @@ export default function TvFeedClient({
                   ))}
                 </div>
                 {notifications.length ? (
-                  <button className="tv-notification-clear" type="button" onClick={clearNotifications}>
+                  <button className="tv-notification-clear" type="button" disabled={notificationsSaving} onClick={clearNotifications}>
                     Clear notifications
                   </button>
                 ) : null}
