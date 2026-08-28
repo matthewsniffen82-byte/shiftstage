@@ -21,6 +21,9 @@ test("stage name and city use the compact editor without changing persistence or
   assert.match(identityEditor, /\{unifiedSave \? null : <h2>Setup<\/h2>\}/);
   assert.doesNotMatch(identityEditor, /Add and save your stage name and city/);
   assert.match(identityEditor, /fetch\("\/api\/public\/cities"/);
+  assert.match(identityEditor, /fetch\("\/api\/public\/cities", \{[\s\S]*?signal: controller\.signal/);
+  assert.equal((identityEditor.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
+  assert.match(identityEditor, /return \(\) => controller\.abort\(\);/);
   assert.match(identityEditor, /requestDancerProfileJson\([\s\S]*?method: "PATCH"/);
 });
 

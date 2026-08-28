@@ -67,7 +67,7 @@ test("profile reload and save reject duplicate and stale work", () => {
   assert.match(identityEditor, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(identityEditor, /const actionInFlightRef = useRef\(false\);/);
   assert.match(identityEditor, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
-  assert.equal((identityEditor.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.equal((identityEditor.match(/signal: controller\.signal/g) || []).length, 3);
   assert.equal((identityEditor.match(/if \(!isCurrentProfileAction\(requestId, controller\)\) return(?: false)?;/g) || []).length, 2);
   assert.match(identityEditor, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
   assert.match(identityEditor, /if \(isCurrentProfileAction\(requestId, controller\)\) \{[\s\S]*?DANCER_PROFILE_HARD_RESET_FAILED/);

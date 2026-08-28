@@ -5718,36 +5718,33 @@ function DancerSetupPanel({
   }, [city, draftKey, onDraftChange, stageName]);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function loadCityOptions() {
       try {
         const response = await fetch("/api/public/cities", {
           headers: { accept: "application/json" },
           cache: "no-store",
+          signal: controller.signal,
         });
         const data = await response.json();
+        if (controller.signal.aborted) return;
         if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load available cities.");
         const options = Array.isArray(data.cities)
           ? data.cities.filter((option: any) => Boolean(option?.value && option?.label))
           : [];
         if (!options.length) throw new Error("No dancer signup cities are available.");
-        if (!cancelled) {
-          setCityOptions(options);
-          setCityOptionsStatus("ready");
-        }
+        setCityOptions(options);
+        setCityOptionsStatus("ready");
       } catch {
-        if (!cancelled) {
-          setCityOptions([]);
-          setCityOptionsStatus("error");
-        }
+        if (controller.signal.aborted) return;
+        setCityOptions([]);
+        setCityOptionsStatus("error");
       }
     }
 
     void loadCityOptions();
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
