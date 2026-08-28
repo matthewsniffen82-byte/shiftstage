@@ -1045,6 +1045,17 @@ test("customer preference saves use the refresh-aware customer boundary", async 
   assert.match(preferencesPanel, /requestCustomerProfileJson/);
   assert.doesNotMatch(preferencesPanel, /fetch\("\/api\/customer\/profile"/);
   assert.doesNotMatch(preferencesPanel, /authorization: `Bearer/);
+  assert.match(preferencesPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(preferencesPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(preferencesPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(preferencesPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(preferencesPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(preferencesPanel, /signal: controller\.signal/);
+  assert.match(preferencesPanel, /if \(!isCurrentPreferencesAction\(requestId, controller\)\) return;/);
+  assert.match(preferencesPanel, /CUSTOMER_NOTIFICATION_OPTIONS\.every/);
+  assert.match(preferencesPanel, /Preferences were not confirmed\. Please try again\./);
+  assert.match(preferencesPanel, /disabled=\{isSaving\}/);
+  assert.match(preferencesPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
 });
 
 test("dancer avatar uploads and removals use the refresh-aware dancer boundary", async () => {

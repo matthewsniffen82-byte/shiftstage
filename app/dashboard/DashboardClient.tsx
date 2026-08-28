@@ -3240,6 +3240,21 @@ function CustomerPreferencesPanel({
   const [settings, setSettings] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     setCity(String(profile?.city || "Las Vegas"));
@@ -3255,6 +3270,27 @@ function CustomerPreferencesPanel({
     });
   }, [profile]);
 
+  function beginPreferencesAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentPreferencesAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishPreferencesAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return false;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    return mountedRef.current;
+  }
+
   async function savePreferences(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const session = readSession();
@@ -3263,21 +3299,42 @@ function CustomerPreferencesPanel({
       return;
     }
 
+    const action = beginPreferencesAction();
+    if (!action) return;
+    const { requestId, controller } = action;
+    const submittedCity = city.trim();
+    const submittedSettings = Object.fromEntries(
+      CUSTOMER_NOTIFICATION_OPTIONS.map((option) => [option.key, Boolean(settings[option.key])]),
+    );
     setIsSaving(true);
     setStatus("");
     try {
       const data = await requestCustomerProfileJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ city, notificationSettings: settings }),
+        body: JSON.stringify({ city: submittedCity, notificationSettings: submittedSettings }),
         fallbackMessage: "Unable to save preferences.",
+        signal: controller.signal,
       });
+      if (!isCurrentPreferencesAction(requestId, controller)) return;
+      const confirmedSettings = data.profile?.notificationSettings;
+      const settingsWereSaved = confirmedSettings
+        && typeof confirmedSettings === "object"
+        && !Array.isArray(confirmedSettings)
+        && CUSTOMER_NOTIFICATION_OPTIONS.every((option) => (
+          (confirmedSettings as Record<string, unknown>)[option.key] === Boolean(submittedSettings[option.key])
+        ));
+      if (String(data.profile?.city || "").trim() !== submittedCity || !settingsWereSaved) {
+        throw new Error("Preferences were not confirmed. Please try again.");
+      }
       onProfileChange?.(data.profile);
       setStatus("Preferences saved.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to save preferences.");
+      if (isCurrentPreferencesAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to save preferences.");
+      }
     } finally {
-      setIsSaving(false);
+      if (finishPreferencesAction(requestId)) setIsSaving(false);
     }
   }
 
@@ -3287,12 +3344,13 @@ function CustomerPreferencesPanel({
       <form onSubmit={savePreferences}>
         <label className="city-field">
           City
-          <input value={city} onChange={(event) => setCity(event.target.value)} required />
+          <input value={city} disabled={isSaving} onChange={(event) => setCity(event.target.value)} required />
         </label>
         {CUSTOMER_NOTIFICATION_OPTIONS.map((option) => (
           <label className="check-row" key={option.key}>
             <input
               checked={Boolean(settings[option.key])}
+              disabled={isSaving}
               type="checkbox"
               onChange={(event) => setSettings((current) => ({ ...current, [option.key]: event.target.checked }))}
             />
