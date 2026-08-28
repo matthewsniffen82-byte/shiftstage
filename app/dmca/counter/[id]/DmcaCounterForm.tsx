@@ -26,9 +26,10 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadCase = useCallback(async () => {
+  const loadCase = useCallback(async (signal: AbortSignal) => {
     const token = readBrowserAccessToken();
     if (!token) {
+      if (signal.aborted) return;
       setIsError(true);
       setStatus("Sign in to the uploader account on MyDancr, then reopen this page.");
       return;
@@ -37,20 +38,25 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
     try {
       const response = await fetch(`/api/dmca/cases/${encodeURIComponent(caseId)}`, {
         headers: { authorization: `Bearer ${token}` },
+        signal,
       });
       const data = await response.json();
+      if (signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load copyright case.");
       setDmcaCase(data.case);
       setIsError(false);
       setStatus("");
     } catch (error) {
+      if (signal.aborted) return;
       setIsError(true);
       setStatus(error instanceof Error ? error.message : "Unable to load copyright case.");
     }
   }, [caseId]);
 
   useEffect(() => {
-    loadCase();
+    const controller = new AbortController();
+    void loadCase(controller.signal);
+    return () => controller.abort();
   }, [loadCase]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {

@@ -94,6 +94,13 @@ test("counter-notices are uploader-authenticated, forwarded, and wait 10 to 14 b
   assert.match(counterForm, /United States Federal District Court/);
 });
 
+test("counter-notice case loading cancels stale case requests", () => {
+  assert.match(counterForm, /const loadCase = useCallback\(async \(signal: AbortSignal\) => \{/);
+  assert.match(counterForm, /fetch\(`\/api\/dmca\/cases\/\$\{encodeURIComponent\(caseId\)\}`, \{[\s\S]*?signal,/);
+  assert.equal((counterForm.match(/if \(signal\.aborted\) return;/g) || []).length, 3);
+  assert.match(counterForm, /const controller = new AbortController\(\);[\s\S]*?void loadCase\(controller\.signal\);[\s\S]*?return \(\) => controller\.abort\(\);/);
+});
+
 test("eligible counter-notices restore content and rescind strikes unless a court filing is recorded", () => {
   assert.match(migration, /create or replace function public\.restore_dmca_case/);
   assert.match(migration, /v_case\.court_filing_received/);
