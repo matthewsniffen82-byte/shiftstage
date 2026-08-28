@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { requestAdminJson } from "./admin-session";
 
 type Row = Record<string, any>;
@@ -11,33 +11,64 @@ export default function AdminSalesAgentPanel({ onActionConfirmed }: { onActionCo
   const [sponsorId, setSponsorId] = useState(""); const [depth, setDepth] = useState<3 | 5>(3);
   const [agentStatus, setAgentStatus] = useState("active"); const [venueId, setVenueId] = useState("");
   const [signerId, setSignerId] = useState(""); const [agreement, setAgreement] = useState("");
+  const mountedRef = useRef(false); const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null); const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null); const actionInFlightRef = useRef(false);
   const agents = Array.isArray(program?.agents) ? program.agents : []; const accounts = Array.isArray(program?.accountCandidates) ? program.accountCandidates : [];
   const venues = Array.isArray(program?.venues) ? program.venues : []; const attributions = Array.isArray(program?.attributions) ? program.attributions : [];
   const natsAccounts = Array.isArray(program?.natsAccounts) ? program.natsAccounts : []; const natsExports = Array.isArray(program?.natsExports) ? program.natsExports : [];
   const activeAgents = agents.filter((row: Row) => row.status === "active"); const agentById = new Map(agents.map((row: Row) => [row.id, row]));
 
   const load = useCallback(async () => {
-    const data = await requestAdminJson("/api/admin/sales-agents", {
-      cache: "no-store",
-      fallbackMessage: "Unable to load sales agents.",
-    });
-    setProgram(data.program);
+    const requestId = loadSequenceRef.current + 1; loadSequenceRef.current = requestId;
+    loadAbortRef.current?.abort(); const controller = new AbortController(); loadAbortRef.current = controller;
+    try {
+      const data = await requestAdminJson("/api/admin/sales-agents", {
+        cache: "no-store", signal: controller.signal,
+        fallbackMessage: "Unable to load sales agents.",
+      });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
+      setProgram(data.program); setMessage("");
+    } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
+      setMessage(error instanceof Error ? error.message : "Unable to load sales agents.");
+    } finally {
+      if (loadAbortRef.current === controller) loadAbortRef.current = null;
+    }
   }, []);
-  useEffect(() => { load().catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load sales agents.")); }, [load]);
+  useEffect(() => {
+    mountedRef.current = true; void load();
+    return () => {
+      mountedRef.current = false; loadSequenceRef.current += 1; actionSequenceRef.current += 1;
+      loadAbortRef.current?.abort(); actionAbortRef.current?.abort(); actionInFlightRef.current = false;
+    };
+  }, [load]);
 
   async function submit(event: SyntheticEvent, body: Row, confirmation: string) {
     event.preventDefault();
+    if (!mountedRef.current || actionInFlightRef.current) return;
+    actionInFlightRef.current = true; loadSequenceRef.current += 1; loadAbortRef.current?.abort();
+    const requestId = actionSequenceRef.current + 1; actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort(); const controller = new AbortController(); actionAbortRef.current = controller;
     setWorking(true); setMessage("");
     try {
       const data = await requestAdminJson("/api/admin/sales-agents", {
         method: "POST",
+        signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
         fallbackMessage: "Unable to update sales agents.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setProgram(data.program); setMessage(confirmation); onActionConfirmed(confirmation);
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to update sales agents."); }
-    finally { setWorking(false); }
+    } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
+      setMessage(error instanceof Error ? error.message : "Unable to update sales agents.");
+    } finally {
+      if (actionAbortRef.current === controller) actionAbortRef.current = null;
+      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+      if (mountedRef.current && requestId === actionSequenceRef.current) setWorking(false);
+    }
   }
 
   function natsAction(event: SyntheticEvent, action: string, target: Row, resolution?: string) {

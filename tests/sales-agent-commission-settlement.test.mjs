@@ -73,6 +73,20 @@ test("admin and agent surfaces require authenticated server boundaries and expos
   assert.doesNotMatch(publicConfig, /apiKey|apiUsername|baseUrl/);
 });
 
+test("sales-agent administration cancels stale loads and serializes financial mutations", () => {
+  assert.match(adminPanel, /const mountedRef = useRef\(false\)/);
+  assert.match(adminPanel, /const loadSequenceRef = useRef\(0\)/);
+  assert.match(adminPanel, /const loadAbortRef = useRef<AbortController \| null>\(null\)/);
+  assert.match(adminPanel, /const actionSequenceRef = useRef\(0\)/);
+  assert.match(adminPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\)/);
+  assert.match(adminPanel, /const actionInFlightRef = useRef\(false\)/);
+  assert.match(adminPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return;/);
+  assert.match(adminPanel, /loadSequenceRef\.current \+= 1; loadAbortRef\.current\?\.abort\(\);/);
+  assert.match(adminPanel, /requestId !== loadSequenceRef\.current/);
+  assert.match(adminPanel, /requestId !== actionSequenceRef\.current/);
+  assert.match(adminPanel, /signal: controller\.signal/);
+});
+
 test("each approved agent receives an unguessable club referral link", () => {
   assert.match(referralMigration, /add column if not exists referral_code text/);
   assert.match(referralMigration, /encode\(gen_random_bytes\(18\), 'hex'\)/);
