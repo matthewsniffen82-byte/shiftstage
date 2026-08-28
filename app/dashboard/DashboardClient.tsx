@@ -4330,9 +4330,15 @@ function DancerPanel({
   useEffect(() => {
     if (isApproved || effectiveStatus !== "pending_review") return;
     let cancelled = false;
+    let refreshInFlight = false;
     const refreshProfile = async () => {
+      if (cancelled || document.visibilityState !== "visible" || refreshInFlight) return;
+      refreshInFlight = true;
       const session = readSession();
-      if (!session?.accessToken) return;
+      if (!session?.accessToken) {
+        refreshInFlight = false;
+        return;
+      }
       try {
         const data = await requestDancerProfileJson({
           cache: "no-store",
@@ -4341,12 +4347,17 @@ function DancerPanel({
         if (!cancelled && data.profile) onProfileChange?.(data.profile);
       } catch {
         // The visible dashboard remains usable and the next interval retries quietly.
+      } finally {
+        refreshInFlight = false;
       }
     };
-    const interval = window.setInterval(() => void refreshProfile(), 8_000);
+    void refreshProfile();
+    const interval = window.setInterval(refreshProfile, 8_000);
+    document.addEventListener("visibilitychange", refreshProfile);
     return () => {
       cancelled = true;
       window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshProfile);
     };
   }, [effectiveStatus, isApproved, onProfileChange]);
 

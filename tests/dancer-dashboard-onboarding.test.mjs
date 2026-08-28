@@ -470,7 +470,11 @@ test("pre-approval tools remain hidden while help and account recovery stay avai
 });
 
 test("approval transitions in place and saved NFC enrollment finalizes automatically", () => {
-  assert.match(dashboard, /window\.setInterval\(\(\) => void refreshProfile\(\), 8_000\)/);
+  assert.match(dashboard, /let refreshInFlight = false;[\s\S]*?document\.visibilityState !== "visible" \|\| refreshInFlight/);
+  assert.match(dashboard, /void refreshProfile\(\);[\s\S]*?window\.setInterval\(refreshProfile, 8_000\)/);
+  assert.match(dashboard, /document\.addEventListener\("visibilitychange", refreshProfile\)/);
+  assert.match(dashboard, /document\.removeEventListener\("visibilitychange", refreshProfile\)/);
+  assert.doesNotMatch(dashboard, /window\.setInterval\(\(\) => void refreshProfile\(\), 8_000\)/);
   assert.match(dashboard, /onProfileChange\?\.\(data\.profile\)/);
   assert.match(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
   assert.match(nfcTapRoute, /registerDancerFromNfc/);
