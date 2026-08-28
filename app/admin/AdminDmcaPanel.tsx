@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 
 type Agent = {
@@ -57,57 +57,98 @@ export default function AdminDmcaPanel() {
   const [status, setStatus] = useState("");
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [workingId, setWorkingId] = useState("");
+  const [agentFormVersion, setAgentFormVersion] = useState(0);
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
 
   useEffect(() => {
-    load();
+    mountedRef.current = true;
+    void load();
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      actionSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
   }, []);
 
-  async function load() {
-    setIsLoading(true);
+  async function load({ refreshAgent = true, clearStatus = true } = {}) {
+    const requestId = loadSequenceRef.current + 1;
+    loadSequenceRef.current = requestId;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    if (mountedRef.current) setIsLoading(true);
     try {
       const data = await requestAdminJson("/api/admin/dmca", {
+        signal: controller.signal,
         fallbackMessage: "Unable to load copyright operations.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setCases(data.cases || []);
-      setAgent(data.agent || {});
-      setStatus("");
+      if (refreshAgent) {
+        setAgent(data.agent || {});
+        setAgentFormVersion((current) => current + 1);
+      }
+      if (clearStatus) setStatus("");
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to load copyright operations.");
     } finally {
-      setIsLoading(false);
+      if (loadAbortRef.current === controller) loadAbortRef.current = null;
+      if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
     }
   }
 
   async function takeAction(dmcaCase: DmcaCase, action: AdminAction) {
+    if (!mountedRef.current || actionInFlightRef.current) return;
     const notes = notesById[dmcaCase.id]?.trim() || "";
     if ((action === "record_court_action" || action === "request_information" || action === "reject") && !notes) {
       setStatus("Add case notes before taking that action.");
       return;
     }
 
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setWorkingId(dmcaCase.id);
     setStatus("");
     try {
       const data = await requestAdminJson("/api/admin/dmca", {
         method: "PATCH",
+        signal: controller.signal,
         headers: {
           "content-type": "application/json",
         },
         body: JSON.stringify({ caseId: dmcaCase.id, action, notes }),
         fallbackMessage: "Unable to update copyright case.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(data.message || "Copyright case updated.");
       setNotesById((current) => ({ ...current, [dmcaCase.id]: "" }));
-      await load();
+      await load({ refreshAgent: false, clearStatus: false });
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to update copyright case.");
     } finally {
-      setWorkingId("");
+      if (actionAbortRef.current === controller) actionAbortRef.current = null;
+      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+      if (mountedRef.current && requestId === actionSequenceRef.current) setWorkingId("");
     }
   }
 
   async function saveAgent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!mountedRef.current || actionInFlightRef.current) return;
     const values = new FormData(event.currentTarget);
     const payload = {
       resource: "agent",
@@ -125,23 +166,35 @@ export default function AdminDmcaPanel() {
       registrationRenewalAt: values.get("registrationRenewalAt"),
     };
 
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setWorkingId("agent");
     setStatus("");
     try {
       const data = await requestAdminJson("/api/admin/dmca", {
         method: "PATCH",
+        signal: controller.signal,
         headers: {
           "content-type": "application/json",
         },
         body: JSON.stringify(payload),
         fallbackMessage: "Unable to save copyright agent.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setAgent(data.agent);
+      setAgentFormVersion((current) => current + 1);
       setStatus(data.message || "Copyright agent details saved.");
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to save copyright agent.");
     } finally {
-      setWorkingId("");
+      if (actionAbortRef.current === controller) actionAbortRef.current = null;
+      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+      if (mountedRef.current && requestId === actionSequenceRef.current) setWorkingId("");
     }
   }
 
@@ -160,7 +213,7 @@ export default function AdminDmcaPanel() {
 
       <details className="dmca-agent-settings">
         <summary>Copyright agent settings</summary>
-        <form onSubmit={saveAgent}>
+        <form key={agentFormVersion} onSubmit={saveAgent}>
           <label>Agent legal name<input name="legalName" defaultValue={agent.legalName || ""} required /></label>
           <label>Organization<input name="organization" defaultValue={agent.organization || ""} /></label>
           <label>Email<input name="email" type="email" defaultValue={agent.email || ""} required /></label>
@@ -176,7 +229,7 @@ export default function AdminDmcaPanel() {
             <input name="registeredWithCopyrightOffice" type="checkbox" defaultChecked={agent.registeredWithCopyrightOffice === true} />
             Registered with the U.S. Copyright Office
           </label>
-          <button type="submit" disabled={workingId === "agent"}>
+          <button type="submit" disabled={Boolean(workingId)}>
             {workingId === "agent" ? "Saving…" : "Save copyright agent"}
           </button>
         </form>
@@ -188,7 +241,7 @@ export default function AdminDmcaPanel() {
 
       <div className="dmca-case-list">
         {cases.map((dmcaCase) => {
-          const isWorking = workingId === dmcaCase.id;
+          const actionBusy = Boolean(workingId);
           const eligibleAt = dmcaCase.restoreEligibleAt ? new Date(dmcaCase.restoreEligibleAt) : null;
           const restorationEligible = Boolean(eligibleAt && eligibleAt.getTime() <= Date.now());
           const activeStrikes = (dmcaCase.strikes || []).filter((strike) => strike.active === true).length;
@@ -231,12 +284,12 @@ export default function AdminDmcaPanel() {
                 <div className="dmca-case-actions">
                   {dmcaCase.status === "submitted" || dmcaCase.status === "needs_information" ? (
                     <>
-                      <button type="button" disabled={isWorking} onClick={() => takeAction(dmcaCase, "request_information")}>Request information</button>
-                      <button type="button" disabled={isWorking} onClick={() => takeAction(dmcaCase, "reject")}>Reject notice</button>
+                      <button type="button" disabled={actionBusy} onClick={() => takeAction(dmcaCase, "request_information")}>Request information</button>
+                      <button type="button" disabled={actionBusy} onClick={() => takeAction(dmcaCase, "reject")}>Reject notice</button>
                       <button
                         className="danger-action"
                         type="button"
-                        disabled={isWorking || dmcaCase.targetType !== "tv_video"}
+                        disabled={actionBusy || dmcaCase.targetType !== "tv_video"}
                         onClick={() => takeAction(dmcaCase, "disable")}
                       >
                         Disable reported video
@@ -245,12 +298,12 @@ export default function AdminDmcaPanel() {
                   ) : null}
                   {dmcaCase.status === "countered" ? (
                     <>
-                      <button type="button" disabled={isWorking} onClick={() => takeAction(dmcaCase, "record_court_action")}>Record filed court action</button>
-                      <button type="button" disabled={isWorking || !restorationEligible} onClick={() => takeAction(dmcaCase, "restore")}>Restore after waiting period</button>
+                      <button type="button" disabled={actionBusy} onClick={() => takeAction(dmcaCase, "record_court_action")}>Record filed court action</button>
+                      <button type="button" disabled={actionBusy || !restorationEligible} onClick={() => takeAction(dmcaCase, "restore")}>Restore after waiting period</button>
                     </>
                   ) : null}
                   {dmcaCase.status === "court_hold" ? (
-                    <button type="button" disabled={isWorking} onClick={() => takeAction(dmcaCase, "close")}>Close court-held case</button>
+                    <button type="button" disabled={actionBusy} onClick={() => takeAction(dmcaCase, "close")}>Close court-held case</button>
                   ) : null}
                 </div>
               </div>

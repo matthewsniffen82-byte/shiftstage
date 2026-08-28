@@ -68,6 +68,22 @@ test("every top-level admin workspace load preserves refreshed sessions", () => 
   }
 });
 
+test("copyright administration cancels stale loads and serializes mutations", () => {
+  assert.match(dmcaPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(dmcaPanel, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(dmcaPanel, /const loadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(dmcaPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(dmcaPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(dmcaPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(dmcaPanel, /signal: controller\.signal/);
+  assert.match(dmcaPanel, /requestId !== loadSequenceRef\.current/);
+  assert.match(dmcaPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return;/);
+  assert.match(dmcaPanel, /requestId !== actionSequenceRef\.current/);
+  assert.match(dmcaPanel, /disabled=\{actionBusy\}/);
+  assert.match(dmcaPanel, /<form key=\{agentFormVersion\} onSubmit=\{saveAgent\}>/);
+  assert.match(dmcaPanel, /load\(\{ refreshAgent: false, clearStatus: false \}\)/);
+});
+
 test("the admin session boundary stores only the canonical session and rejects non-admin roles", () => {
   const previousWindow = globalThis.window;
   const stored = new Map();
