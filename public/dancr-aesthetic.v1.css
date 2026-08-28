@@ -6523,7 +6523,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-qui
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-quick-stat strong {
-  grid-row: 2;
+  grid-row: 2 / 4;
   align-self: center;
   font-size: 17px;
   line-height: 1;
