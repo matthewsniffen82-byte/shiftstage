@@ -39622,7 +39622,8 @@
 
         .auth-entry-tab {
           min-height: 48px;
-          border: 0;
+          box-sizing: border-box;
+          border: 1px solid transparent;
           border-radius: 14px;
           color: rgba(244, 244, 248, .66);
           background: transparent;
@@ -39631,10 +39632,15 @@
           cursor: pointer;
         }
 
-        .auth-entry-tab.active {
+        #authPage .auth-entry-tab.active {
           color: #fff;
-          background: linear-gradient(135deg, rgba(88, 30, 214, .96), rgba(64, 19, 165, .92));
-          box-shadow: 0 0 20px rgba(105, 42, 255, .32), inset 0 1px 0 rgba(255, 255, 255, .18);
+          border-color: rgba(139, 92, 246, .56) !important;
+          background: linear-gradient(135deg, rgba(96, 52, 178, .28), rgba(55, 32, 103, .22)) !important;
+          box-shadow: 0 0 12px rgba(124, 58, 237, .16), inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+        }
+
+        #authPage .auth-entry-tab.active:focus-visible {
+          box-shadow: 0 0 0 2px #050507, 0 0 0 4px rgba(167, 139, 250, .45), 0 0 12px rgba(124, 58, 237, .16) !important;
         }
 
         #authPage .auth-selected-role,

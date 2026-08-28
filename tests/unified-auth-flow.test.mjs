@@ -31,6 +31,13 @@ test("the public auth surface has one sign-in and three concise signup paths", (
   assert.match(liveApp, /if \(!loggedIn\) \{[\s\S]*?openAuthRole\("customer"\)/);
 });
 
+test("the auth mode toggle stays visually secondary to the submit action", () => {
+  assert.match(liveApp, /#authPage \.auth-entry-tab\.active \{[\s\S]*?border-color: rgba\(139, 92, 246, \.56\) !important;/);
+  assert.match(liveApp, /#authPage \.auth-entry-tab\.active \{[\s\S]*?background: linear-gradient\(135deg, rgba\(96, 52, 178, \.28\), rgba\(55, 32, 103, \.22\)\) !important;/);
+  assert.match(liveApp, /#authPage \.auth-entry-tab\.active:focus-visible \{[\s\S]*?rgba\(167, 139, 250, \.45\)/);
+  assert.match(liveApp, /#authPage #authSubmit \{[\s\S]*?linear-gradient\(135deg, #5b21b6 0%, #7c3aed 52%, #a855f7 100%\)/);
+});
+
 test("unified sign-in opens the dashboard returned by the production account", () => {
   const handler = liveApp.match(
     /document\.getElementById\("authForm"\)\.addEventListener\("submit"[\s\S]*?\n    \}\);/,
