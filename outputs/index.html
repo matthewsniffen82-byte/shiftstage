@@ -38595,6 +38595,10 @@
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
+        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-upcoming.has-venue-deal-link {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
         #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) {
           grid-column: auto !important;
           width: 100% !important;
@@ -38616,6 +38620,18 @@
         #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-primary-directions {
           border-color: rgba(226, 232, 240, .18) !important;
           background: rgba(255, 255, 255, .055) !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-upcoming-venue-deal {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          border-color: rgba(34, 211, 238, .38) !important;
+          color: #7eeaff !important;
+          background: rgba(34, 211, 238, .1) !important;
+          font-weight: 900;
+          text-decoration: none;
         }
 
         #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-uber-ride) :is(svg, .action-icon) {
@@ -48743,7 +48759,7 @@
         return {
           key: "available-when-working",
           label: "Going tonight? View the Club Deal",
-          detail: `Deals activate after a verified check-in${profile?.venue ? ` at ${profile.venue}` : ""}.`
+          detail: `Open ${profile?.venue || "the venue"}'s page to view its Club Deals.`
         };
       }
       return {
@@ -52324,16 +52340,36 @@
       });
     }
 
+    function dancerProfileUpcomingVenueDealMarkup(profile, options = {}) {
+      const city = options.city || selectedCity();
+      if (options.preview || !profile?.scheduled || isWorkingTonight(profile, city) || !profile?.venue) return "";
+      const resolvedVenue = resolveVenueByName(profile.venue, city);
+      const venue = resolvedVenue || {
+        name: profile.venue,
+        slug: profile.venueSlug || slugify(profile.venue)
+      };
+      const venueName = String(venue.name || profile.venue).trim();
+      if (!venueName) return "";
+      const openVenueAttribute = resolvedVenue
+        ? ` data-open-venue-profile="${escapeOptionValue(venueName)}"`
+        : "";
+      return `<a class="profile-upcoming-venue-deal" href="${venueExperienceHref(venue, city)}"${openVenueAttribute} data-upcoming-venue-deal="venue-page" aria-label="View Club Deals on ${escapeHtml(venueName)}'s venue page">${actionButtonLabel("clubProfile", "View Deal")}</a>`;
+    }
+
     function dancerProfileTonightTravelActionsMarkup(profile, options = {}) {
       const city = options.city || selectedCity();
       if (options.preview) return "";
       if (!profile?.scheduled) return "";
       const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
       const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
-      const actions = [directionsMarkup, rideMarkup].filter(Boolean);
+      // Upcoming profiles may point customers to the venue, but they never
+      // receive a deal trigger or dancer-attribution token.
+      const venueDealMarkup = dancerProfileUpcomingVenueDealMarkup(profile, { city });
+      const actions = [directionsMarkup, rideMarkup, venueDealMarkup].filter(Boolean);
       if (!actions.length) return "";
       const statusClass = isWorkingTonight(profile, city) ? "is-working-now" : "is-upcoming";
-      return `<div class="profile-tonight-travel-actions ${statusClass}" aria-label="Venue travel actions">${actions.join("")}</div>`;
+      const dealLinkClass = venueDealMarkup ? " has-venue-deal-link" : "";
+      return `<div class="profile-tonight-travel-actions ${statusClass}${dealLinkClass}" aria-label="Venue travel actions">${actions.join("")}</div>`;
     }
 
     function profileModalGridMarkup(profile, options = {}) {
@@ -52360,7 +52396,8 @@
         isWorkingTonight(profile, city) && profile.scheduled ? "is-now" : "",
         profile.scheduled && !isWorkingTonight(profile, city) ? "is-upcoming" : "",
         !profile.scheduled ? "is-no-schedule" : "",
-        dealState.key === "available" ? "has-club-deal" : ""
+        dealState.key === "available" ? "has-club-deal" : "",
+        profile.scheduled && !isWorkingTonight(profile, city) && profile.venue ? "has-venue-deal-link" : ""
       ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">

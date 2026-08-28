@@ -4438,7 +4438,9 @@ body.dancr-button-system .public-profile-shell .profile-tonight-card {
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-club-deal,
-body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal {
+body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal,
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-venue-deal-link,
+body.dancr-button-system .public-profile-shell .profile-tonight-card.has-venue-deal-link {
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
 }
 
@@ -4671,6 +4673,26 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > :nth-child(2),
 body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions > :nth-child(2) {
   grid-column: 2 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > :nth-child(3),
+body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions > :nth-child(3) {
+  grid-column: 3 !important;
+}
+
+/* Upcoming dancers can preview a venue's deal page, but cannot originate a
+ * commission-bearing deal scan until they are verified as Working Now. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-upcoming-venue-deal,
+body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions > .profile-upcoming-venue-deal {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  border-color: var(--dancr-color-info-medium) !important;
+  color: var(--dancr-color-info) !important;
+  background: var(--dancr-color-info-soft) !important;
+  font-weight: 900 !important;
+  text-decoration: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-no-schedule .profile-empty-copy,

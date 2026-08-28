@@ -320,10 +320,12 @@ test("the live mobile profile separates profile actions from venue travel action
     /async function refreshProfileGoingState\(profile\) \{\s+if \(!profile\?\.shiftId \|\| window\.location\.protocol === "file:"\) return;/,
   );
   assert.match(homeSource, /data-shift-state="posted"/);
+  assert.match(homeSource, /function dancerProfileUpcomingVenueDealMarkup\(profile, options = \{\}\)/);
+  assert.match(homeSource, /data-upcoming-venue-deal="venue-page"/);
   assert.match(homeSource, /function dancerProfileTonightTravelActionsMarkup\(profile, options = \{\}\)/);
-  assert.match(homeSource, /const actions = \[directionsMarkup, rideMarkup\]\.filter\(Boolean\)/);
+  assert.match(homeSource, /const actions = \[directionsMarkup, rideMarkup, venueDealMarkup\]\.filter\(Boolean\)/);
   assert.match(homeSource, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
-  assert.match(homeSource, /profile-tonight-travel-actions \$\{statusClass\}/);
+  assert.match(homeSource, /profile-tonight-travel-actions \$\{statusClass\}\$\{dealLinkClass\}/);
   assert.match(homeSource, /\$\{shiftsMarkup\(profile, status,[\s\S]*?<div class="profile-tonight-deal">[\s\S]*?\$\{travelActionsMarkup\}/);
   assert.doesNotMatch(homeSource, /profileActionButtonMarkup\("car", "Ride", "working-now"\)/);
   assert.doesNotMatch(homeSource, /profileActionButtonMarkup\("pin", "Directions", "venue"\)/);

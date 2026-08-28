@@ -135,10 +135,11 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.doesNotMatch(profileActions, /DancerProfileActionPreviewIcon type="heart"/);
   assert.match(profileDirections, /dancerIds: \[dancerId\]/);
   assert.match(profileDirections, /source: "dancer_profile"/);
-  assert.match(profilePage, /className=\{`profile-tonight-travel-actions\$\{activeShift \? " is-working-now" : " is-upcoming"\}`\}/);
+  assert.match(profilePage, /className=\{`profile-tonight-travel-actions\$\{activeShift \? " is-working-now" : " is-upcoming has-venue-deal-link"\}`\}/);
   assert.match(profilePage, /<DancerDirectionsButton dancerId=\{profile\.id\} venue=\{actionVenue\} \/>/);
-  assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"/);
+  assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"[\s\S]*?profile-upcoming-venue-deal[\s\S]*?>View Deal</);
   assert.match(profilePage, /\.profile-tonight-travel-actions:is\(\.is-working-now, \.is-upcoming, \.is-no-schedule\) \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
+  assert.match(profilePage, /\.profile-tonight-travel-actions\.is-upcoming\.has-venue-deal-link \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
   assert.match(liveApp, /personPlus: '<svg[\s\S]*?M18 8\.5v6M15 11\.5h6/);
@@ -165,10 +166,10 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
 });
 
-test("every profile uses one compact Tonight card while only Working Now activates a deal", () => {
+test("only Working Now activates dancer deal attribution while Upcoming links to the venue page", () => {
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
-  assert.match(profilePage, /className=\{`profile-tonight-card\$\{activeShift \? " is-now" : ""\}\$\{!activeShift && upcomingShifts\.length \? " is-upcoming" : ""\}\$\{!activeShift && !upcomingShifts\.length \? " is-no-schedule" : ""\}\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
+  assert.match(profilePage, /className=\{`profile-tonight-card\$\{activeShift \? " is-now" : ""\}\$\{!activeShift && upcomingShifts\.length \? " is-upcoming" : ""\}\$\{!activeShift && !upcomingShifts\.length \? " is-no-schedule" : ""\}\$\{activeDeal \? " has-club-deal" : ""\}\$\{!activeShift && actionShift \? " has-venue-deal-link" : ""\}`\}/);
   assert.match(profilePage, /className="profile-shift-card profile-working-card is-now"/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
@@ -185,6 +186,7 @@ test("every profile uses one compact Tonight card while only Working Now activat
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
   );
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
+  assert.match(profilePage, /const dancerAttributionEligible = Boolean\(\s+activeShift && activeShift\.shiftSource !== "demo_locked"/);
   assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? "Club Deals" : "Club Deal"\}/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
@@ -206,7 +208,25 @@ test("every profile uses one compact Tonight card while only Working Now activat
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
   assert.match(liveApp, /<section class="\$\{tonightClasses\}" data-profile-shift-state="\$\{shiftState\}" data-profile-deal-state="\$\{escapeHtml\(dealState\.key\)\}" aria-label="Tonight">[\s\S]*?shiftsMarkup\(profile, status,[\s\S]*?profile-tonight-deal/);
   assert.match(liveApp, /dealMarkup \? `<div class="profile-tonight-deal">\$\{dealMarkup\}<\/div>` : ""[\s\S]*?\$\{travelActionsMarkup\}/);
-  assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?\[directionsMarkup, rideMarkup\]\.filter\(Boolean\)[\s\S]*?profile-tonight-travel-actions/);
+  assert.match(liveApp, /function dancerProfileUpcomingVenueDealMarkup[\s\S]*?!profile\?\.scheduled \|\| isWorkingTonight\(profile, city\)[\s\S]*?data-upcoming-venue-deal="venue-page"[\s\S]*?actionButtonLabel\("clubProfile", "View Deal"\)/);
+  assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?\[directionsMarkup, rideMarkup, venueDealMarkup\]\.filter\(Boolean\)[\s\S]*?profile-tonight-travel-actions/);
+  assert.doesNotMatch(
+    liveApp.match(/function dancerProfileUpcomingVenueDealMarkup[\s\S]*?function dancerProfileTonightTravelActionsMarkup/)?.[0] || "",
+    /data-club-deal-cta|dealAttributionToken|sourceType: "dancer_profile"/,
+  );
+  assert.match(profilePage, /data-upcoming-venue-deal="venue-page"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(actionShift\.venueSlug\)\}`\}[\s\S]*?<span>View Deal<\/span>/);
+  assert.doesNotMatch(
+    profilePage.match(/\{!activeShift && actionShift \? \([\s\S]*?\) : null\}/)?.[0] || "",
+    /ClubDealCard|createDancerDealAttributionToken|data-club-deal-cta/,
+  );
+  assert.match(
+    aesthetic,
+    /profile-tonight-card\.has-venue-deal-link[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /profile-tonight-travel-actions > :nth-child\(3\)[\s\S]*?grid-column: 3 !important;[\s\S]*?profile-upcoming-venue-deal[\s\S]*?color: var\(--dancr-color-info\) !important;/,
+  );
   assert.match(liveApp, /profile\.scheduled && !isWorkingTonight\(profile, city\) \? "is-upcoming" : ""/);
   assert.doesNotMatch(liveApp.match(/function liveProfileModalActionsMarkup[\s\S]*?async function refreshProfileGoingState/)?.[0] || "", /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);
   assert.match(liveApp, /modal-grid > \.profile-tonight-card[\s\S]*?border-radius: 15px;[\s\S]*?profile-tonight-deal[\s\S]*?border-top:/);

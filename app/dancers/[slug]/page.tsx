@@ -187,7 +187,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         <section
           aria-label="Tonight"
-          className={`profile-tonight-card${activeShift ? " is-now" : ""}${!activeShift && upcomingShifts.length ? " is-upcoming" : ""}${!activeShift && !upcomingShifts.length ? " is-no-schedule" : ""}${activeDeal ? " has-club-deal" : ""}`}
+          className={`profile-tonight-card${activeShift ? " is-now" : ""}${!activeShift && upcomingShifts.length ? " is-upcoming" : ""}${!activeShift && !upcomingShifts.length ? " is-no-schedule" : ""}${activeDeal ? " has-club-deal" : ""}${!activeShift && actionShift ? " has-venue-deal-link" : ""}`}
           data-profile-deal-state={activeDeal ? "available" : actionShift ? "available-after-check-in" : "none"}
           data-profile-shift-state={activeShift ? "now" : actionShift ? "upcoming" : "no-schedule"}
         >
@@ -279,7 +279,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           {actionVenue ? (
             <div
               aria-label="Venue travel actions"
-              className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming"}`}
+              className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming has-venue-deal-link"}`}
             >
               <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
               <UberRideButton
@@ -288,6 +288,17 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 source="dancer_profile"
                 venue={{ ...actionVenue, isActive: true, isPublic: true }}
               />
+              {!activeShift && actionShift ? (
+                <Link
+                  aria-label={`View Club Deals on ${actionShift.venueName}'s venue page`}
+                  className="profile-upcoming-venue-deal"
+                  data-upcoming-venue-deal="venue-page"
+                  href={`/venues/${encodeURIComponent(actionShift.venueSlug)}`}
+                >
+                  <VenuePageIcon />
+                  <span>View Deal</span>
+                </Link>
+              ) : null}
             </div>
           ) : null}
         </section>
@@ -374,6 +385,15 @@ function VenuePinIcon() {
     <svg aria-hidden="true" className="profile-venue-pin" viewBox="0 0 24 24">
       <path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z" />
       <circle cx="12" cy="9" r="2.4" />
+    </svg>
+  );
+}
+
+function VenuePageIcon() {
+  return (
+    <svg aria-hidden="true" className="profile-venue-page-icon" viewBox="0 0 24 24">
+      <path d="M5 20V9l7-4 7 4v11" />
+      <path d="M9 20v-6h6v6" />
     </svg>
   );
 }
@@ -658,9 +678,12 @@ function PublicProfileStyles() {
       .profile-empty-copy em { overflow: hidden; color: #8e8795; font-size: 10px; font-style: normal; font-weight: 750; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
       .profile-tonight-travel-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 5px 10px 8px; border-top: 1px solid rgba(255,255,255,.06); }
       .profile-tonight-travel-actions:is(.is-working-now, .is-upcoming, .is-no-schedule) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .profile-tonight-travel-actions.is-upcoming.has-venue-deal-link { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .profile-tonight-travel-actions > :is(a, button) { width: 100% !important; height: 44px !important; min-height: 44px !important; max-height: 44px !important; padding-inline: 10px !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 10px !important; color: rgba(248,250,252,.94) !important; background: rgba(255,255,255,.055) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important; font-size: 11px !important; opacity: 1 !important; }
       .profile-tonight-travel-actions > .profile-directions-button { border-color: rgba(226,232,240,.18) !important; background: linear-gradient(180deg, rgba(255,255,255,.065), transparent 52%), rgba(12,13,16,.86) !important; }
+      .profile-tonight-travel-actions > .profile-upcoming-venue-deal { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(34,211,238,.38) !important; color: #7eeaff !important; background: rgba(34,211,238,.10) !important; font-weight: 900; text-decoration: none; }
       .profile-tonight-travel-actions > :is(a, button) :is(svg, span) { opacity: 1 !important; }
+      .profile-tonight-travel-actions > .profile-upcoming-venue-deal svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-tonight-travel-actions > .profile-travel-placeholder { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: rgba(169,163,175,.58) !important; border-color: rgba(255,255,255,.08) !important; background: rgba(255,255,255,.025) !important; box-shadow: none !important; font: inherit; font-size: 11px; font-weight: 900; cursor: default; }
       .profile-tonight-travel-actions > .profile-travel-placeholder svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-tonight-deal { min-height: 70px; display: grid; align-items: stretch; padding: 5px; border-top: 1px solid rgba(255,255,255,.08); }
