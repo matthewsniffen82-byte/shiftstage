@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import {
   readDashboardAccessToken,
   requestVenueTeamJson,
@@ -22,31 +22,58 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   const [isLoading, setIsLoading] = useState(true);
   const [isWorking, setIsWorking] = useState(false);
   const [invitationUrl, setInvitationUrl] = useState("");
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async (clearStatus = true) => {
+    if (!mountedRef.current) return;
+    const requestId = ++loadSequenceRef.current;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     if (!readDashboardAccessToken("venue")) {
-      setIsLoading(false);
-      return setStatus("Sign in required.");
+      if (requestId === loadSequenceRef.current) {
+        setIsLoading(false);
+        setStatus("Sign in required.");
+        if (loadAbortRef.current === controller) loadAbortRef.current = null;
+      }
+      return;
     }
     setIsLoading(true);
     try {
       const data = await requestVenueTeamJson({
         cache: "no-store",
         fallbackMessage: "Unable to load venue team access.",
+        signal: controller.signal,
       });
+      if (!mountedRef.current || requestId !== loadSequenceRef.current) return;
       setAccess(data.access || null);
       setMembers(data.members || []);
       setInvitations(data.invitations || []);
       setActivity(data.activity || []);
       if (clearStatus) setStatus("");
     } catch (error) {
+      if (!mountedRef.current || requestId !== loadSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
       setStatus(error instanceof Error ? error.message : "Unable to load venue team access.");
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current && requestId === loadSequenceRef.current) {
+        setIsLoading(false);
+        if (loadAbortRef.current === controller) loadAbortRef.current = null;
+      }
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    mountedRef.current = true;
+    void load();
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      loadAbortRef.current = null;
+    };
+  }, [load]);
 
   async function invite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,14 +87,15 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         body: JSON.stringify({ email, role }),
         fallbackMessage: "Unable to invite this team member.",
       });
+      if (!mountedRef.current) return;
       setEmail("");
       setInvitationUrl(data.invitationUrl || "");
       setStatus(data.message || "Invitation created.");
       await load(false);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to invite this team member.");
+      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to invite this team member.");
     } finally {
-      setIsWorking(false);
+      if (mountedRef.current) setIsWorking(false);
     }
   }
 
@@ -82,12 +110,14 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         body: JSON.stringify({ memberId, ...update }),
         fallbackMessage: "Unable to update venue team access.",
       });
+      if (!mountedRef.current) return;
       await load(false);
+      if (!mountedRef.current) return;
       setStatus(update.remove ? "Team access removed." : "Team role updated.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to update venue team access.");
+      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to update venue team access.");
     } finally {
-      setIsWorking(false);
+      if (mountedRef.current) setIsWorking(false);
     }
   }
 
@@ -101,12 +131,14 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         body: JSON.stringify({ invitationId }),
         fallbackMessage: "Unable to revoke this invitation.",
       });
+      if (!mountedRef.current) return;
       await load(false);
+      if (!mountedRef.current) return;
       setStatus("Invitation revoked.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to revoke this invitation.");
+      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to revoke this invitation.");
     } finally {
-      setIsWorking(false);
+      if (mountedRef.current) setIsWorking(false);
     }
   }
 

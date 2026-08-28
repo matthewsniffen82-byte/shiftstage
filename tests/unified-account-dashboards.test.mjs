@@ -1433,6 +1433,11 @@ test("venue team actions use one refresh-aware venue boundary", async () => {
 
   assert.match(dashboardSession, /function requestVenueTeamJson/);
   assert.match(venueTeamPanel, /requestVenueTeamJson/);
+  assert.match(venueTeamPanel, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(venueTeamPanel, /loadAbortRef\.current\?\.abort\(\);/);
+  assert.match(venueTeamPanel, /signal: controller\.signal/);
+  assert.match(venueTeamPanel, /requestId !== loadSequenceRef\.current/);
+  assert.match(venueTeamPanel, /mountedRef\.current = false;[\s\S]*?loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\);/);
   assert.doesNotMatch(venueTeamPanel, /fetch\(/);
   assert.doesNotMatch(venueTeamPanel, /currentDashboardAuthHeaders|persistRefreshedDashboardSession/);
 });
