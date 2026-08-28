@@ -66,7 +66,7 @@ test("profile avatars, gallery thumbnails, and full-screen photos share the rest
 
 test("profile grid photos use the native responsive image path used by dancer discovery", () => {
   const profileThumbRenderer = homeSource.match(
-    /function profilePhotoThumbMarkup\(item, total\) \{[\s\S]*?\n    \}/,
+    /function profilePhotoThumbMarkup\(item, total, galleryIndex = item\.index\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
   assert.ok(profileThumbRenderer, "the profile photo thumbnail renderer must exist");

@@ -50,12 +50,12 @@ test("shared profile-photo links open the exact photo in the full-screen collect
   );
   assert.match(
     liveApp,
-    /function openSharedProfileMedia\(params\)[\s\S]*?selectModalMediaThumb\(photoThumbs\[photoIndex\], \{ syncViewer: true \}\);[\s\S]*?openPhotoViewerFromElement\(modalImage\);/,
+    /function openSharedProfileMedia\(params\)[\s\S]*?selectModalMediaThumb\(photoThumbs\[photoIndex\], \{ syncViewer: true \}\);[\s\S]*?openPhotoViewerFromElement\(modalImage, photoIndex\);/,
   );
   const sharedPhotoHandler = liveApp.match(
     /function openSharedProfileMedia\(params\)[\s\S]*?(?=\n    async function openSharedProfileFromUrl)/,
   )?.[0] || "";
-  assert.match(sharedPhotoHandler, /syncViewer: true[\s\S]*?openPhotoViewerFromElement\(modalImage\)/);
+  assert.match(sharedPhotoHandler, /syncViewer: true[\s\S]*?openPhotoViewerFromElement\(modalImage, photoIndex\)/);
   assert.match(
     liveApp,
     /openProfileModal\(profileReferenceValue\(profile\)\);[\s\S]*?openSharedProfileMedia\(params\);/,

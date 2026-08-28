@@ -51580,9 +51580,11 @@
       if (modalMediaNext) modalMediaNext.disabled = index >= total - 1;
     }
 
-    function setModalPhoto(photoClass, photoUrl = "") {
+    function setModalPhoto(photoClass, photoUrl = "", requestedIndex = null) {
       clearModalVideoPreview();
       const safeUrl = safeCssUrl(photoUrl);
+      const parsedRequestedIndex = Number(requestedIndex);
+      const hasRequestedIndex = requestedIndex !== null && requestedIndex !== "" && Number.isInteger(parsedRequestedIndex);
       modalImage.className = `modal-image ${photoClass}${safeUrl ? " has-custom-photo" : ""}`;
       if (safeUrl) {
         modalImage.style.setProperty("--custom-photo", `url('${safeUrl}')`);
@@ -51591,7 +51593,10 @@
       }
       const thumbs = [...modalGallery.querySelectorAll(".thumb")];
       thumbs.forEach((thumb) => {
-        const isActive = thumb.dataset.photo === photoClass && (thumb.dataset.photoUrl || "") === (photoUrl || "");
+        const isPhotoThumb = !thumb.hasAttribute("data-profile-tv-index");
+        const isActive = isPhotoThumb && (hasRequestedIndex
+          ? Number(thumb.dataset.profilePhotoIndex) === parsedRequestedIndex
+          : thumb.dataset.photo === photoClass && (thumb.dataset.photoUrl || "") === (photoUrl || ""));
         thumb.classList.toggle("active", isActive);
         thumb.setAttribute("aria-pressed", String(isActive));
         if (isActive) {
@@ -51602,7 +51607,9 @@
       });
       const photoThumbs = thumbs.filter((thumb) => !thumb.hasAttribute("data-profile-tv-index"));
       const activePhotoThumb = photoThumbs.find((thumb) => thumb.classList.contains("active"));
-      const activePhotoIndex = Math.max(0, Number(activePhotoThumb?.dataset.profilePhotoIndex || 0));
+      const activePhotoIndex = Math.max(0, hasRequestedIndex
+        ? parsedRequestedIndex
+        : Number(activePhotoThumb?.dataset.profilePhotoIndex || 0));
       const totalPhotos = Math.max(1, modalGallery.profilePhotoItems?.length || photoThumbs.length);
       modalImage.dataset.activePhotoIndex = String(activePhotoIndex);
       modalImage.dataset.activeMediaType = "photo";
@@ -51693,7 +51700,12 @@
         if (!item) return false;
         return setModalVideo(item, modalGallery.profileTvProfileName || "Dancer", videos, videoIndex);
       }
-      setModalPhoto(thumb.dataset.photo, thumb.dataset.photoUrl || "");
+      const photoIndex = Number(thumb.dataset.profilePhotoIndex);
+      setModalPhoto(
+        thumb.dataset.photo,
+        thumb.dataset.photoUrl || "",
+        Number.isInteger(photoIndex) ? photoIndex : null
+      );
       if (options.syncViewer) syncProfilePhotoViewerImage();
       return true;
     }
@@ -51702,7 +51714,7 @@
       return document.fullscreenElement || document.webkitFullscreenElement || null;
     }
 
-    async function requestProfilePhotoViewerFullscreen(overlay) {
+    async function requestProfilePhotoViewerFullscreen(overlay, requestedIndex) {
       if (!overlay || profilePhotoFullscreenElement()) return false;
       const request = typeof overlay.requestFullscreen === "function"
         ? () => overlay.requestFullscreen({ navigationUI: "hide" })
@@ -51713,6 +51725,9 @@
       try {
         await request();
         profilePhotoViewerOwnsFullscreen = profilePhotoFullscreenElement() === overlay;
+        if (profilePhotoViewerOwnsFullscreen) {
+          window.requestAnimationFrame(() => scrollProfilePhotoViewerTo(requestedIndex, { instant: true }));
+        }
         return profilePhotoViewerOwnsFullscreen;
       } catch {
         profilePhotoViewerOwnsFullscreen = false;
@@ -51779,9 +51794,8 @@
       while (Number(modalGallery.profileVisiblePhotoCount || 0) <= activePhotoIndex && profileMediaHasMore("photo")) {
         appendNextProfileMediaBatch("photo", { skipObserve: true });
       }
-      const item = items[activePhotoIndex];
       const photoThumb = [...modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])")]
-        .find((thumb) => Number(thumb.dataset.profilePhotoIndex) === Number(item?.index));
+        .find((thumb) => Number(thumb.dataset.profilePhotoIndex) === activePhotoIndex);
       if (photoThumb && !photoThumb.classList.contains("active")) selectModalMediaThumb(photoThumb);
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
       return activePhotoIndex;
@@ -51790,19 +51804,25 @@
     function scrollProfilePhotoViewerTo(requestedIndex, options = {}) {
       if (!profilePhotoViewerImage) return false;
       const activePhotoIndex = syncProfilePhotoViewerPosition(requestedIndex);
+      const activeSlide = profilePhotoViewerImage.querySelector(
+        `[data-profile-photo-viewer-index="${activePhotoIndex}"]`
+      );
       profilePhotoViewerImage.scrollTo({
         behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-        top: activePhotoIndex * profilePhotoViewerImage.clientHeight
+        top: activeSlide?.offsetTop ?? activePhotoIndex * profilePhotoViewerImage.clientHeight
       });
       return true;
     }
 
-    function openPhotoViewerFromElement(element) {
+    function openPhotoViewerFromElement(element, requestedIndex = null) {
       if (!profilePhotoViewer || !profilePhotoViewerImage || !element) return;
       profilePhotoViewerReturnTarget = document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-      const initialIndex = Math.max(0, Number(modalImage?.dataset.activePhotoIndex || 0));
+      const parsedRequestedIndex = Number(requestedIndex);
+      const initialIndex = Math.max(0, requestedIndex !== null && Number.isInteger(parsedRequestedIndex)
+        ? parsedRequestedIndex
+        : Number(modalImage?.dataset.activePhotoIndex || 0));
       if (!renderProfilePhotoViewerSlides()) return;
       profilePhotoViewer.style.zIndex = "1600";
       profilePhotoViewer.hidden = false;
@@ -51810,7 +51830,7 @@
       syncOverlayScrollLock();
       syncProfilePhotoViewerPosition(initialIndex);
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
-      void requestProfilePhotoViewerFullscreen(profilePhotoViewer);
+      void requestProfilePhotoViewerFullscreen(profilePhotoViewer, initialIndex);
       window.requestAnimationFrame(() => {
         scrollProfilePhotoViewerTo(initialIndex, { instant: true });
         profilePhotoViewerImage.focus({ preventScroll: true });
@@ -52039,13 +52059,13 @@
       }));
     }
 
-    function profilePhotoThumbMarkup(item, total) {
+    function profilePhotoThumbMarkup(item, total, galleryIndex = item.index) {
       const photoAttrs = nativeResponsivePhotoAttrs(item.photoUrl, item.photoSrcSet);
       const photoMarkup = photoAttrs
         ? `<img class="portrait ${item.photoClass} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false">`
         : `<span class="portrait ${item.photoClass}"></span>`;
       return `
-        <button class="thumb ${item.index === 0 ? "active" : ""}" type="button" data-profile-photo-index="${item.index}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${item.index + 1} of ${total} full screen" aria-pressed="${item.index === 0 ? "true" : "false"}">
+        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} full screen" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
           ${photoMarkup}
         </button>
       `;
@@ -52059,7 +52079,7 @@
           : '<div class="lock-row" style="grid-column:1/-1">Photos pending admin approval.</div>';
       }
       const limit = Math.max(1, Number(options.limit) || PROFILE_MEDIA_PAGE_SIZE);
-      return items.slice(0, limit).map((item) => profilePhotoThumbMarkup(item, items.length)).join("");
+      return items.slice(0, limit).map((item, index) => profilePhotoThumbMarkup(item, items.length, index)).join("");
     }
 
     function profileVideoPosterUrl(item) {
@@ -52131,7 +52151,9 @@
         if (end > start) {
           sentinel.insertAdjacentHTML(
             "beforebegin",
-            items.slice(start, end).map((item) => profilePhotoThumbMarkup(item, items.length)).join("")
+            items.slice(start, end).map((item, offset) =>
+              profilePhotoThumbMarkup(item, items.length, start + offset)
+            ).join("")
           );
           modalGallery.profileVisiblePhotoCount = end;
         }
@@ -52727,7 +52749,12 @@
       stage.addEventListener("volumechange", syncProfileTvSoundControl, true);
       ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
         document.addEventListener(eventName, () => {
-          if (profileTvFullscreenElement() !== overlay) profileTvViewerOwnsFullscreen = false;
+          if (profileTvFullscreenElement() !== overlay) {
+            profileTvViewerOwnsFullscreen = false;
+            return;
+          }
+          const activeIndex = Math.max(0, Number(overlay.dataset.videoIndex || 0));
+          window.requestAnimationFrame(() => scrollProfileTvViewerTo(activeIndex, { instant: true }));
         });
       });
       return overlay;
@@ -52778,6 +52805,17 @@
       return overlay?.querySelector(`[data-profile-tv-viewer-index="${index}"] .profile-tv-viewer-video`) || null;
     }
 
+    function scrollProfileTvViewerTo(index, options = {}) {
+      const stage = document.getElementById("profileTvViewerStage");
+      if (!stage) return false;
+      const activeSlide = stage.querySelector(`[data-profile-tv-viewer-index="${index}"]`);
+      stage.scrollTo({
+        behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        top: activeSlide?.offsetTop ?? index * stage.clientHeight
+      });
+      return true;
+    }
+
     function renderProfileTvViewerItem(index, options = {}) {
       const overlay = document.getElementById("profileTvViewer");
       const videos = overlay?.profileTvVideos || [];
@@ -52803,10 +52841,7 @@
         if (videoIndex !== nextIndex) video.pause();
       });
       if (options.scroll !== false && stage) {
-        stage.scrollTo({
-          behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-          top: nextIndex * stage.clientHeight
-        });
+        scrollProfileTvViewerTo(nextIndex, options);
       }
       const video = activeProfileTvViewerVideo();
       document.querySelector("[data-previous-profile-tv]").disabled = nextIndex <= 0;
@@ -52828,10 +52863,16 @@
       renderProfileTvViewerItem(currentIndex + direction);
     }
 
-    function openProfileTvViewer(item, profileName, videos) {
+    function openProfileTvViewer(item, profileName, videos, requestedIndex = null) {
       const overlay = profileTvViewer();
       overlay.profileTvVideos = Array.isArray(videos) ? videos : [item];
-      const initialIndex = Math.max(0, overlay.profileTvVideos.findIndex((videoItem) => videoItem.id === item.id));
+      const parsedRequestedIndex = Number(requestedIndex);
+      const matchingItemIndex = overlay.profileTvVideos.indexOf(item);
+      const matchingIdIndex = overlay.profileTvVideos.findIndex((videoItem) => videoItem.id === item.id);
+      const fallbackIndex = matchingItemIndex >= 0 ? matchingItemIndex : Math.max(0, matchingIdIndex);
+      const initialIndex = requestedIndex !== null && Number.isInteger(parsedRequestedIndex)
+        ? Math.min(Math.max(parsedRequestedIndex, 0), Math.max(0, overlay.profileTvVideos.length - 1))
+        : fallbackIndex;
       overlay.profileTvReturnTarget = document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
@@ -52844,7 +52885,9 @@
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       document.body.classList.add("profile-tv-viewer-open");
-      void requestProfileTvViewerFullscreen(overlay);
+      void requestProfileTvViewerFullscreen(overlay).then((ownsFullscreen) => {
+        if (ownsFullscreen) scrollProfileTvViewerTo(initialIndex, { instant: true });
+      });
       window.requestAnimationFrame(() => renderProfileTvViewerItem(initialIndex, { instant: true }));
       overlay.querySelector("[data-close-profile-tv]")?.focus({ preventScroll: true });
       syncOverlayScrollLock();
@@ -61010,12 +61053,14 @@
       if (!thumb) return;
       if (thumb.hasAttribute("data-profile-tv-index")) {
         const videos = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
-        const item = videos[Number(thumb.dataset.profileTvIndex)];
-        if (item) openProfileTvViewer(item, modalGallery.profileTvProfileName || "Dancer", videos);
+        const videoIndex = Number(thumb.dataset.profileTvIndex);
+        const item = videos[videoIndex];
+        if (item) openProfileTvViewer(item, modalGallery.profileTvProfileName || "Dancer", videos, videoIndex);
         return;
       }
+      const photoIndex = Number(thumb.dataset.profilePhotoIndex);
       selectModalMediaThumb(thumb, { syncViewer: true });
-      openPhotoViewerFromElement(modalImage);
+      openPhotoViewerFromElement(modalImage, Number.isInteger(photoIndex) ? photoIndex : null);
     });
 
     [modalMediaPhotoTab, modalMediaTvTab].forEach((button) => {
@@ -61086,7 +61131,7 @@
       const videoIndex = Number(modalImage.dataset.activeVideoIndex);
       const item = videos[videoIndex];
       if (!item) return false;
-      openProfileTvViewer(item, modalGallery.profileTvProfileName || "Dancer", videos);
+      openProfileTvViewer(item, modalGallery.profileTvProfileName || "Dancer", videos, videoIndex);
       return true;
     }
 
@@ -64094,7 +64139,7 @@
         ? Math.min(Math.max(requestedIndex, 0), photoThumbs.length - 1)
         : 0;
       selectModalMediaThumb(photoThumbs[photoIndex], { syncViewer: true });
-      openPhotoViewerFromElement(modalImage);
+      openPhotoViewerFromElement(modalImage, photoIndex);
     }
 
     async function openSharedProfileFromUrl() {

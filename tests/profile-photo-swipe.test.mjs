@@ -34,7 +34,7 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   );
   assert.match(
     liveApp,
-    /aria-pressed="\$\{item\.index === 0 \? "true" : "false"\}"/,
+    /aria-pressed="\$\{galleryIndex === 0 \? "true" : "false"\}"/,
   );
   assert.match(
     liveApp,
@@ -49,7 +49,7 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   )?.[0] || "";
   assert.ok(galleryClickHandler, "the media grid click handler must exist");
   assert.match(galleryClickHandler, /thumb\.hasAttribute\("data-profile-tv-index"\)[\s\S]*?openProfileTvViewer/);
-  assert.match(galleryClickHandler, /selectModalMediaThumb\(thumb, \{ syncViewer: true \}\);[\s\S]*?openPhotoViewerFromElement\(modalImage\);/);
+  assert.match(galleryClickHandler, /selectModalMediaThumb\(thumb, \{ syncViewer: true \}\);[\s\S]*?openPhotoViewerFromElement\(modalImage, Number\.isInteger\(photoIndex\) \? photoIndex : null\);/);
   assert.match(liveApp, /let profilePhotoViewerReturnTarget = null;/);
   assert.match(liveApp, /returnTarget\?\.isConnected[\s\S]*?returnTarget\.focus\(\{ preventScroll: true \}\)/);
   assert.match(
@@ -70,11 +70,45 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   assert.match(liveApp, /\.profile-photo-viewer-footer \{[\s\S]*?background: transparent;/);
   assert.match(
     liveApp,
-    /async function requestProfilePhotoViewerFullscreen\(overlay\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
+    /async function requestProfilePhotoViewerFullscreen\(overlay, requestedIndex\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
   );
-  assert.match(liveApp, /void requestProfilePhotoViewerFullscreen\(profilePhotoViewer\)/);
+  assert.match(liveApp, /void requestProfilePhotoViewerFullscreen\(profilePhotoViewer, initialIndex\)/);
   assert.match(liveApp, /function exitProfilePhotoViewerFullscreen\(\)[\s\S]*?document\.exitFullscreen[\s\S]*?document\.webkitExitFullscreen/);
 });
+
+test("a tapped profile photo or video is the first full-screen item shown", () => {
+  const galleryClickHandler = liveApp.match(
+    /modalGallery\.addEventListener\("click"[\s\S]*?(?=\n    \[modalMediaPhotoTab, modalMediaTvTab\])/,
+  )?.[0] || "";
+  assert.match(
+    galleryClickHandler,
+    /const videoIndex = Number\(thumb\.dataset\.profileTvIndex\);[\s\S]*?openProfileTvViewer\(item, modalGallery\.profileTvProfileName \|\| "Dancer", videos, videoIndex\)/,
+  );
+  assert.match(
+    galleryClickHandler,
+    /const photoIndex = Number\(thumb\.dataset\.profilePhotoIndex\);[\s\S]*?openPhotoViewerFromElement\(modalImage, Number\.isInteger\(photoIndex\) \? photoIndex : null\)/,
+  );
+  assert.match(
+    liveApp,
+    /function openProfileTvViewer\(item, profileName, videos, requestedIndex = null\)[\s\S]*?requestedIndex !== null && Number\.isInteger\(parsedRequestedIndex\)[\s\S]*?parsedRequestedIndex/,
+  );
+  assert.match(
+    liveApp,
+    /function openPhotoViewerFromElement\(element, requestedIndex = null\)[\s\S]*?requestedIndex !== null && Number\.isInteger\(parsedRequestedIndex\)[\s\S]*?parsedRequestedIndex/,
+  );
+  assert.match(liveApp, /top: activeSlide\?\.offsetTop \?\? index \* stage\.clientHeight/);
+  assert.match(liveApp, /top: activeSlide\?\.offsetTop \?\? activePhotoIndex \* profilePhotoViewerImage\.clientHeight/);
+  assert.match(
+    publicPhotoCarousel,
+    /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?scrollViewerToIndex\(index, \{ instant: true \}\)[\s\S]*?requestViewerFullscreen\(index\)/,
+  );
+  assert.match(
+    publicPhotoCarousel,
+    /await request\(\);[\s\S]*?scrollViewerToIndex\(requestedIndex, \{ instant: true \}\)/,
+  );
+  assert.match(publicPhotoCarousel, /top: slide\?\.offsetTop \?\? index \* feed\.clientHeight/);
+});
+
 test("the profile presents approved photos and dancer-only videos as separate three-column grids", () => {
   assert.match(publicPhotoCarousel, /type MediaTab = ProfileMedia\["kind"\]/);
   assert.match(publicPhotoCarousel, /className="profile-media-tabs"/);
@@ -168,7 +202,7 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
   );
   assert.match(
     publicPhotoCarousel,
-    /feed\.scrollTo\(\{[\s\S]*?top: nextIndex \* feed\.clientHeight[\s\S]*?className="profile-media-viewer-previous"[\s\S]*?className="profile-media-viewer-next"/,
+    /scrollViewerToIndex\(nextIndex\)[\s\S]*?className="profile-media-viewer-previous"[\s\S]*?className="profile-media-viewer-next"/,
   );
   assert.match(
     publicProfilePage,
@@ -186,7 +220,7 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
     publicProfilePage,
     /@media \(max-width: 600px\)[\s\S]*?\.profile-media-viewer-previous, \.profile-media-viewer-next/,
   );
-  assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?requestViewerFullscreen\(\)/);
+  assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?requestViewerFullscreen\(index\)/);
   assert.match(publicPhotoCarousel, /element\.requestFullscreen\(\{ navigationUI: "hide" \}\)/);
   assert.match(publicProfilePage, /\.profile-media-viewer:fullscreen/);
   assert.match(publicPhotoCarousel, /viewer\.kind === "video"[\s\S]*?\{viewerStatus\} · Scroll up or down · Video/);
