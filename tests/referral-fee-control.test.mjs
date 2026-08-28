@@ -47,6 +47,17 @@ test("only an active MyDancr admin can atomically set, schedule, and audit a fee
   assert.match(adminClient, /Agreement history/);
 });
 
+test("admin referral-fee writes are abortable and serialized", () => {
+  const manager = adminClient.match(/function ReferralFeeManager[\s\S]*?(?=function OperationsOverview)/)?.[0] || "";
+  assert.match(manager, /function beginReferralAction\(\)/);
+  assert.match(manager, /function isCurrentReferralAction/);
+  assert.match(manager, /function finishReferralAction/);
+  assert.equal((manager.match(/const request = beginReferralAction\(\)/g) || []).length, 1);
+  assert.equal((manager.match(/const actionRequest = beginReferralAction\(\)/g) || []).length, 1);
+  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 1);
+  assert.equal((manager.match(/signal: actionRequest\.controller\.signal/g) || []).length, 1);
+});
+
 test("venues receive the complete fee agreement as read-only contract information", () => {
   assert.match(venueRoute, /read-only in the venue workspace/);
   assert.match(venueRoute, /status: 403/);

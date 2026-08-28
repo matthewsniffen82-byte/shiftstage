@@ -29,16 +29,17 @@ test("admin finance mutations use the refresh-aware role-isolated request bounda
 });
 
 test("admin finance mutations are abortable and serialized across every command", () => {
-  assert.match(adminClient, /function FinanceManager\([\s\S]*?const mountedRef = useRef\(false\);/);
-  assert.match(adminClient, /const actionSequenceRef = useRef\(0\);/);
-  assert.match(adminClient, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
-  assert.match(adminClient, /const actionInFlightRef = useRef\(false\);/);
-  assert.match(adminClient, /function beginFinanceAction\(\)/);
-  assert.match(adminClient, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
-  assert.match(adminClient, /function isCurrentFinanceAction/);
-  assert.match(adminClient, /function finishFinanceAction/);
-  assert.equal((adminClient.match(/signal: request\.controller\.signal/g) || []).length, 6);
-  assert.equal((adminClient.match(/const request = beginFinanceAction\(\)/g) || []).length, 6);
+  const manager = adminClient.match(/function FinanceManager[\s\S]*?(?=function AdminClubDealManager)/)?.[0] || "";
+  assert.match(manager, /const mountedRef = useRef\(false\);/);
+  assert.match(manager, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(manager, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(manager, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(manager, /function beginFinanceAction\(\)/);
+  assert.match(manager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(manager, /function isCurrentFinanceAction/);
+  assert.match(manager, /function finishFinanceAction/);
+  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 6);
+  assert.equal((manager.match(/const request = beginFinanceAction\(\)/g) || []).length, 6);
 });
 
 test("the dispatcher preserves every supported production finance action", () => {

@@ -24,6 +24,16 @@ test("admin deal operations share the refresh-aware role-isolated request bounda
   assert.doesNotMatch(adminClient, /fetch\((?:"|`)\/api\/admin\/deals/);
 });
 
+test("admin contract deal writes are abortable and serialized", () => {
+  const manager = adminClient.match(/function AdminClubDealManager[\s\S]*?(?=function ReferralFeeManager)/)?.[0] || "";
+  assert.match(manager, /function beginDealAction\(\)/);
+  assert.match(manager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(manager, /function isCurrentDealAction/);
+  assert.match(manager, /function finishDealAction/);
+  assert.equal((manager.match(/const request = beginDealAction\(\)/g) || []).length, 3);
+  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 3);
+});
+
 test("venue-payment settlement keeps its exact audited database operation", () => {
   assert.match(actions, /export async function settleDealRevenueEvent/);
   assert.match(actions, /\.rpc\("settle_deal_revenue_event"/);

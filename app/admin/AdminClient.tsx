@@ -1282,6 +1282,10 @@ function AdminClubDealManager({
   const [isActive, setIsActive] = useState(false);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
   const venueDeals = clubDeals
     .filter((deal) => asText(deal.venueId) === venueId)
     .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
@@ -1289,6 +1293,37 @@ function AdminClubDealManager({
   const terms = asRecordArray(referralFees?.terms);
   const currentTerm = currentAdminReferralTerm(terms.filter((term) => asText(term.venueId) === venueId));
   const openDealRequests = dealRequests.filter((request) => request.status === "pending" || request.status === "under_review");
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginDealAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentDealAction(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishDealAction(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsSaving(false);
+  }
 
   function resetEditor(nextVenueId = venueId) {
     setVenueId(nextVenueId);
@@ -1335,11 +1370,14 @@ function AdminClubDealManager({
     event.preventDefault();
     if (!venueId) return setStatus("Choose the contracted venue first.");
     if (isActive && !currentTerm) return setStatus("Record the signed referral fee agreement before publishing this Club Deal.");
+    const request = beginDealAction();
+    if (!request) return;
     setIsSaving(true);
     setStatus(isActive ? "Publishing the contract Club Deal…" : "Saving the contract Club Deal…");
     try {
       const data = await requestAdminJson("/api/admin/deals", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "upsert_contract_deal",
@@ -1354,6 +1392,7 @@ function AdminClubDealManager({
         }),
         fallbackMessage: "Unable to save the contract Club Deal.",
       });
+      if (!isCurrentDealAction(request)) return;
       onClubDealsChange(data.clubDeals || []);
       onDealRequestsChange(data.dealRequests || dealRequests);
       setDealId(asText(data.deal?.id));
@@ -1362,9 +1401,10 @@ function AdminClubDealManager({
       setStatus(message);
       onActionConfirmed(message);
     } catch (error) {
+      if (!isCurrentDealAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to save the contract Club Deal.");
     } finally {
-      setIsSaving(false);
+      finishDealAction(request);
     }
   }
 
@@ -1372,34 +1412,42 @@ function AdminClubDealManager({
     if (!venueId || !dealId) return setStatus("Choose an unpublished Club Deal first.");
     if (isActive) return setStatus("Pause this Club Deal and save it before deleting it.");
     if (!window.confirm("Delete this unpublished Club Deal? This cannot be undone.")) return;
+    const request = beginDealAction();
+    if (!request) return;
     setIsSaving(true);
     setStatus("Deleting unpublished Club Deal…");
     try {
       const data = await requestAdminJson("/api/admin/deals", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "delete_contract_deal", venueId, dealId }),
         fallbackMessage: "Unable to delete the contract Club Deal.",
       });
+      if (!isCurrentDealAction(request)) return;
       onClubDealsChange(data.clubDeals || []);
       onDealRequestsChange(data.dealRequests || dealRequests);
       resetEditor(venueId);
       onActionConfirmed("Unpublished contract Club Deal deleted.");
     } catch (error) {
+      if (!isCurrentDealAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to delete the contract Club Deal.");
     } finally {
-      setIsSaving(false);
+      finishDealAction(request);
     }
   }
 
   async function rejectDealRequest(dealRequest: Record<string, unknown>) {
     const reason = window.prompt("Why is this Club Deal request not approved? This note will be visible to the venue.")?.trim();
     if (!reason) return;
+    const request = beginDealAction();
+    if (!request) return;
     setIsSaving(true);
     setStatus("Rejecting Club Deal request…");
     try {
       const data = await requestAdminJson("/api/admin/deals", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "review_deal_request",
@@ -1410,14 +1458,16 @@ function AdminClubDealManager({
         }),
         fallbackMessage: "Unable to reject the Club Deal request.",
       });
+      if (!isCurrentDealAction(request)) return;
       onDealRequestsChange(data.dealRequests || []);
       if (requestId === asText(dealRequest.id)) resetEditor();
       setStatus("Club Deal request rejected with an audit note.");
       onActionConfirmed("Club Deal request rejected.");
     } catch (error) {
+      if (!isCurrentDealAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to reject the Club Deal request.");
     } finally {
-      setIsSaving(false);
+      finishDealAction(request);
     }
   }
 
@@ -1448,14 +1498,14 @@ function AdminClubDealManager({
         <form className="admin-club-deal-form" onSubmit={saveDeal}>
           <label>
             Contracted venue
-            <select value={venueId} onChange={(event) => resetEditor(event.target.value)} required>
+            <select value={venueId} disabled={isSaving} onChange={(event) => resetEditor(event.target.value)} required>
               <option value="">Choose venue</option>
               {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)}</option>)}
             </select>
           </label>
           <label>
             Deal offered
-            <select value={dealTitle} onChange={(event) => chooseOffer(event.target.value)}>
+            <select value={dealTitle} disabled={isSaving} onChange={(event) => chooseOffer(event.target.value)}>
               {CLUB_DEAL_OFFER_PRESETS.map((offer) => <option key={offer.key} value={offer.title}>{offer.title}</option>)}
             </select>
           </label>
@@ -1465,15 +1515,15 @@ function AdminClubDealManager({
           </label>
           <label className="wide">
             Contract and guest terms
-            <textarea value={dealTerms} onChange={(event) => setDealTerms(event.target.value)} maxLength={1200} rows={4} />
+            <textarea value={dealTerms} disabled={isSaving} onChange={(event) => setDealTerms(event.target.value)} maxLength={1200} rows={4} />
           </label>
           <label>
             Display order
-            <input type="number" min="0" max="1000" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
+            <input type="number" min="0" max="1000" value={sortOrder} disabled={isSaving} onChange={(event) => setSortOrder(event.target.value)} />
           </label>
           <label className="admin-club-deal-publish-state">
             Publication state
-            <span><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /> Live on MyDancr</span>
+            <span><input type="checkbox" checked={isActive} disabled={isSaving} onChange={(event) => setIsActive(event.target.checked)} /> Live on MyDancr</span>
           </label>
           <div className="admin-club-deal-agreement wide">
             <span>Signed referral fee</span>
@@ -1490,7 +1540,7 @@ function AdminClubDealManager({
         {status ? <p role="status">{status}</p> : null}
         <div className="admin-club-deal-list">
           {venueDeals.map((deal) => (
-            <button className={asText(deal.id) === dealId ? "selected" : ""} key={asText(deal.id)} type="button" onClick={() => editDeal(deal)}>
+            <button className={asText(deal.id) === dealId ? "selected" : ""} key={asText(deal.id)} type="button" disabled={isSaving} onClick={() => editDeal(deal)}>
               <span><strong>{asText(deal.dealTitle) || "Club Deal"}</strong><small>{deal.isActive === true ? "Live" : "Unpublished"}</small></span>
               <em>{formatAdminCents(Number(deal.payoutAmountCents || 0))} / verified guest</em>
             </button>
@@ -1525,9 +1575,44 @@ function ReferralFeeManager({
   const [requestNotes, setRequestNotes] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
   const selectedVenue = venues.find((venue) => asText(venue.id) === venueId);
   const selectedTerms = terms.filter((term) => asText(term.venueId) === venueId);
   const currentTerm = currentAdminReferralTerm(selectedTerms);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginReferralAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentReferralAction(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishReferralAction(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsSaving(false);
+  }
 
   function beginRequestApproval(request: Record<string, unknown>) {
     const requestedVenueId = asText(request.venueId);
@@ -1545,11 +1630,14 @@ function ReferralFeeManager({
     if (!venueId || feeCents === null || !agreementReference.trim() || !effectiveFrom) {
       return setStatus("Choose a venue and enter a valid fee, effective date, and agreement reference.");
     }
+    const request = beginReferralAction();
+    if (!request) return;
     setIsSaving(true);
     setStatus(reviewRequestId ? "Approving fee request and recording agreement…" : "Recording referral fee agreement…");
     try {
       const data = await requestAdminJson("/api/admin/referral-fees", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: reviewRequestId ? "approve_request" : "set_fee",
@@ -1562,6 +1650,7 @@ function ReferralFeeManager({
         }),
         fallbackMessage: "Unable to save the referral fee agreement.",
       });
+      if (!isCurrentReferralAction(request)) return;
       onReferralFeesChange(data.referralFees);
       const message = reviewRequestId ? "Venue fee request approved and agreement recorded." : "Referral fee agreement recorded.";
       setStatus(message);
@@ -1569,9 +1658,10 @@ function ReferralFeeManager({
       setDecisionNote("");
       onActionConfirmed(message);
     } catch (error) {
+      if (!isCurrentReferralAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to save the referral fee agreement.");
     } finally {
-      setIsSaving(false);
+      finishReferralAction(request);
     }
   }
 
@@ -1579,22 +1669,27 @@ function ReferralFeeManager({
     const requestId = asText(request.id);
     const note = (requestNotes[requestId] || "").trim();
     if (note.length < 3) return setStatus("Add a decision note before rejecting a fee request.");
+    const actionRequest = beginReferralAction();
+    if (!actionRequest) return;
     setIsSaving(true);
     setStatus("Rejecting fee request…");
     try {
       const data = await requestAdminJson("/api/admin/referral-fees", {
         method: "POST",
+        signal: actionRequest.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "reject_request", requestId, decisionNote: note }),
         fallbackMessage: "Unable to reject the fee request.",
       });
+      if (!isCurrentReferralAction(actionRequest)) return;
       onReferralFeesChange(data.referralFees);
       setStatus("Venue fee request rejected with an audit note.");
       onActionConfirmed("Venue fee request rejected.");
     } catch (error) {
+      if (!isCurrentReferralAction(actionRequest)) return;
       setStatus(error instanceof Error ? error.message : "Unable to reject the fee request.");
     } finally {
-      setIsSaving(false);
+      finishReferralAction(actionRequest);
     }
   }
 
@@ -1607,29 +1702,29 @@ function ReferralFeeManager({
         <form id="admin-referral-fee-form" className="referral-fee-form" onSubmit={saveAgreement}>
           <label>
             Venue
-            <select required value={venueId} onChange={(event) => { setVenueId(event.target.value); setReviewRequestId(""); }}>
+            <select required value={venueId} disabled={isSaving} onChange={(event) => { setVenueId(event.target.value); setReviewRequestId(""); }}>
               <option value="">Choose venue</option>
               {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)} · {asText(venue.city)}</option>)}
             </select>
           </label>
           <label>
             Fee per verified guest
-            <input required inputMode="decimal" placeholder="20.00" value={fee} onChange={(event) => setFee(event.target.value)} />
+            <input required inputMode="decimal" placeholder="20.00" value={fee} disabled={isSaving} onChange={(event) => setFee(event.target.value)} />
           </label>
           <label>
             Effective date and time
-            <input required type="datetime-local" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
+            <input required type="datetime-local" value={effectiveFrom} disabled={isSaving} onChange={(event) => setEffectiveFrom(event.target.value)} />
           </label>
           <label>
             Signed agreement reference
-            <input required maxLength={160} placeholder="Agreement or amendment ID" value={agreementReference} onChange={(event) => setAgreementReference(event.target.value)} />
+            <input required maxLength={160} placeholder="Agreement or amendment ID" value={agreementReference} disabled={isSaving} onChange={(event) => setAgreementReference(event.target.value)} />
           </label>
           <label className="wide">
             Internal decision note (optional)
-            <textarea maxLength={500} rows={2} value={decisionNote} onChange={(event) => setDecisionNote(event.target.value)} />
+            <textarea maxLength={500} rows={2} value={decisionNote} disabled={isSaving} onChange={(event) => setDecisionNote(event.target.value)} />
           </label>
           <button disabled={isSaving} type="submit">{isSaving ? "Saving…" : reviewRequestId ? "Approve request & set fee" : "Set referral fee"}</button>
-          {reviewRequestId ? <button className="secondary-action" type="button" onClick={() => { setReviewRequestId(""); setDecisionNote(""); }}>Cancel request review</button> : null}
+          {reviewRequestId ? <button className="secondary-action" type="button" disabled={isSaving} onClick={() => { setReviewRequestId(""); setDecisionNote(""); }}>Cancel request review</button> : null}
         </form>
         {selectedVenue ? (
           <div className="referral-fee-current">
@@ -1653,7 +1748,7 @@ function ReferralFeeManager({
                 <small>Requested {formatDate(request.createdAt)}</small>
                 <label>
                   Decision note
-                  <textarea maxLength={500} rows={2} value={requestNotes[requestId] || ""} onChange={(event) => setRequestNotes((current) => ({ ...current, [requestId]: event.target.value }))} />
+                  <textarea maxLength={500} rows={2} value={requestNotes[requestId] || ""} disabled={isSaving} onChange={(event) => setRequestNotes((current) => ({ ...current, [requestId]: event.target.value }))} />
                 </label>
                 <div className="admin-action-row">
                   <button disabled={isSaving} type="button" onClick={() => beginRequestApproval(request)}>Review & approve</button>
