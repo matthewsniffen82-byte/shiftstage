@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AdminPilotAnalytics } from "@/src/lib/dancr/pilot-analytics";
 import { requestAdminJson } from "./admin-session";
 
@@ -29,6 +29,24 @@ export default function AdminPilotAnalytics({
   const [pilotCost, setPilotCost] = useState("0.00");
   const [notes, setNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      actionSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!availableVenues.length) {
@@ -40,30 +58,42 @@ export default function AdminPilotAnalytics({
     }
   }, [availableVenues, venueId]);
 
-  const loadAnalytics = useCallback(async (signal?: AbortSignal) => {
-    if (!venueId) return;
-    setIsLoading(true);
-    setError("");
+  const loadAnalytics = useCallback(async ({ clearError = true } = {}) => {
+    const requestId = loadSequenceRef.current + 1;
+    loadSequenceRef.current = requestId;
+    loadAbortRef.current?.abort();
+    if (!venueId) {
+      if (mountedRef.current) {
+        setAnalytics(null);
+        setIsLoading(false);
+        if (clearError) setError("");
+      }
+      return;
+    }
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    if (mountedRef.current) setIsLoading(true);
+    if (mountedRef.current && clearError) setError("");
     try {
       const params = new URLSearchParams({ venueId, startDate, endDate });
       const data = await requestAdminJson(`/api/admin/pilot-analytics?${params}`, {
-        signal,
+        signal: controller.signal,
         fallbackMessage: "Unable to load pilot analytics.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setAnalytics(data.analytics || null);
     } catch (loadError) {
-      if (loadError instanceof DOMException && loadError.name === "AbortError") return;
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setAnalytics(null);
       setError(loadError instanceof Error ? loadError.message : "Unable to load pilot analytics.");
     } finally {
-      if (!signal?.aborted) setIsLoading(false);
+      if (loadAbortRef.current === controller) loadAbortRef.current = null;
+      if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
     }
   }, [endDate, startDate, venueId]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void loadAnalytics(controller.signal);
-    return () => controller.abort();
+    void loadAnalytics();
   }, [loadAnalytics]);
 
   useEffect(() => {
@@ -75,7 +105,8 @@ export default function AdminPilotAnalytics({
 
   async function saveNightReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!venueId) return;
+    if (!venueId || !mountedRef.current || actionInFlightRef.current) return;
+    const savedReportDate = reportDate;
     const totalDoorCount = Number(doorCount);
     const pilotCostCents = Math.round(Number(pilotCost) * 100);
     if (!Number.isInteger(totalDoorCount) || totalDoorCount < 0) {
@@ -87,21 +118,35 @@ export default function AdminPilotAnalytics({
       return;
     }
 
+    actionInFlightRef.current = true;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setIsSaving(true);
     setError("");
     try {
       await requestAdminJson("/api/admin/pilot-analytics", {
         method: "POST",
+        signal: controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ venueId, serviceDate: reportDate, totalDoorCount, pilotCostCents, notes }),
+        body: JSON.stringify({ venueId, serviceDate: savedReportDate, totalDoorCount, pilotCostCents, notes }),
         fallbackMessage: "Unable to save nightly pilot totals.",
       });
-      await loadAnalytics();
-      onActionConfirmed(`Pilot totals saved for ${formatServiceDate(reportDate)}.`);
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
+      await loadAnalytics({ clearError: false });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
+      onActionConfirmed(`Pilot totals saved for ${formatServiceDate(savedReportDate)}.`);
     } catch (saveError) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setError(saveError instanceof Error ? saveError.message : "Unable to save nightly pilot totals.");
     } finally {
-      setIsSaving(false);
+      if (actionAbortRef.current === controller) actionAbortRef.current = null;
+      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+      if (mountedRef.current && requestId === actionSequenceRef.current) setIsSaving(false);
     }
   }
 
@@ -154,7 +199,7 @@ export default function AdminPilotAnalytics({
       <div className="pilot-filters" aria-label="Pilot analytics filters">
         <label>
           <span>Pilot venue</span>
-          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={!availableVenues.length}>
+          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={isSaving || !availableVenues.length}>
             {!availableVenues.length ? <option value="">No active venues available</option> : null}
             {availableVenues.map((venue) => (
               <option key={String(venue.id)} value={String(venue.id)}>
@@ -165,13 +210,13 @@ export default function AdminPilotAnalytics({
         </label>
         <label>
           <span>Start date</span>
-          <input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} max={endDate} />
+          <input type="date" value={startDate} disabled={isSaving} onChange={(event) => setStartDate(event.target.value)} max={endDate} />
         </label>
         <label>
           <span>End date</span>
-          <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} min={startDate} />
+          <input type="date" value={endDate} disabled={isSaving} onChange={(event) => setEndDate(event.target.value)} min={startDate} />
         </label>
-        <button type="button" onClick={() => void loadAnalytics()} disabled={isLoading || !venueId}>
+        <button type="button" onClick={() => void loadAnalytics()} disabled={isLoading || isSaving || !venueId}>
           {isLoading ? "Refreshing…" : "Refresh"}
         </button>
       </div>
@@ -287,10 +332,10 @@ export default function AdminPilotAnalytics({
             <form className="pilot-card pilot-report-form" onSubmit={saveNightReport}>
               <header><span className="eyebrow">Venue-provided total</span><h3>Record a service night</h3><p>Enter the venue&apos;s full door count. MyDancr matches only verified NFC arrivals from the same service night.</p></header>
               <div className="pilot-form-grid">
-                <label><span>Service date</span><input type="date" value={reportDate} onChange={(event) => setReportDate(event.target.value)} min={startDate} max={endDate} required /></label>
-                <label><span>Total people through door</span><input type="number" inputMode="numeric" min="0" max="1000000" step="1" value={doorCount} onChange={(event) => setDoorCount(event.target.value)} placeholder="Enter venue total" required /></label>
-                <label><span>Pilot cost for this night</span><span className="pilot-money-input"><i>$</i><input type="number" inputMode="decimal" min="0" max="1000000" step="0.01" value={pilotCost} onChange={(event) => setPilotCost(event.target.value)} required /></span></label>
-                <label className="wide"><span>Internal note (optional)</span><textarea maxLength={500} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Event, promotion, weather, or operational context" /></label>
+                <label><span>Service date</span><input type="date" value={reportDate} disabled={isSaving} onChange={(event) => setReportDate(event.target.value)} min={startDate} max={endDate} required /></label>
+                <label><span>Total people through door</span><input type="number" inputMode="numeric" min="0" max="1000000" step="1" value={doorCount} disabled={isSaving} onChange={(event) => setDoorCount(event.target.value)} placeholder="Enter venue total" required /></label>
+                <label><span>Pilot cost for this night</span><span className="pilot-money-input"><i>$</i><input type="number" inputMode="decimal" min="0" max="1000000" step="0.01" value={pilotCost} disabled={isSaving} onChange={(event) => setPilotCost(event.target.value)} required /></span></label>
+                <label className="wide"><span>Internal note (optional)</span><textarea maxLength={500} value={notes} disabled={isSaving} onChange={(event) => setNotes(event.target.value)} placeholder="Event, promotion, weather, or operational context" /></label>
               </div>
               <button type="submit" disabled={isSaving}>{isSaving ? "Saving…" : "Save nightly totals"}</button>
             </form>

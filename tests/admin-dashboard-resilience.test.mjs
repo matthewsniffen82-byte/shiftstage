@@ -113,6 +113,20 @@ test("admin TV moderation cancels stale queues and serializes review decisions",
   assert.match(tvPanel, /disabled=\{Boolean\(workingId\)\}/);
 });
 
+test("pilot analytics cancels stale reports and serializes nightly totals", () => {
+  assert.match(pilotPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(pilotPanel, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(pilotPanel, /const loadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(pilotPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(pilotPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(pilotPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(pilotPanel, /if \(!venueId \|\| !mountedRef\.current \|\| actionInFlightRef\.current\) return;/);
+  assert.match(pilotPanel, /requestId !== loadSequenceRef\.current/);
+  assert.match(pilotPanel, /requestId !== actionSequenceRef\.current/);
+  assert.match(pilotPanel, /loadAnalytics\(\{ clearError: false \}\)/);
+  assert.match(pilotPanel, /signal: controller\.signal/);
+});
+
 test("the admin session boundary stores only the canonical session and rejects non-admin roles", () => {
   const previousWindow = globalThis.window;
   const stored = new Map();
