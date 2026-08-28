@@ -85,6 +85,8 @@ export function DancerPhotoCarousel({
   const viewerOwnsFullscreen = useRef(false);
   const viewerTrigger = useRef<HTMLButtonElement | null>(null);
   const pendingViewerIndex = useRef(0);
+  const viewerOpeningIndex = useRef<number | null>(null);
+  const viewerOpeningFrame = useRef(0);
   const lazyLoadSentinel = useRef<HTMLDivElement | null>(null);
   const tabGroupId = useId();
   const activeItems: ProfileMedia[] =
@@ -121,6 +123,25 @@ export function DancerPhotoCarousel({
     });
     return true;
   }, []);
+  const settleViewerAtIndex = useCallback((index: number) => {
+    if (viewerOpeningIndex.current !== index) return;
+    window.cancelAnimationFrame(viewerOpeningFrame.current);
+    let remainingFrames = 3;
+    const settle = () => {
+      if (viewerOpeningIndex.current !== index) return;
+      scrollViewerToIndex(index, { instant: true });
+      if (remainingFrames > 0) {
+        remainingFrames -= 1;
+        viewerOpeningFrame.current = window.requestAnimationFrame(settle);
+        return;
+      }
+      viewerOpeningFrame.current = 0;
+      pendingViewerIndex.current = index;
+      if (viewerOpeningIndex.current === index) viewerOpeningIndex.current = null;
+      setViewer((current) => current ? { ...current, index } : current);
+    };
+    viewerOpeningFrame.current = window.requestAnimationFrame(settle);
+  }, [scrollViewerToIndex]);
   const currentViewerScrollIndex = useCallback(() => {
     const feed = viewerFeed.current;
     if (!feed) return 0;
@@ -150,9 +171,11 @@ export function DancerPhotoCarousel({
       : 0;
     deepLinkHandled.current = true;
     pendingViewerIndex.current = index;
+    viewerOpeningIndex.current = index;
     setActiveTab(requestedKind);
     setViewer({ kind: requestedKind, index });
-  }, [photoMedia, videoMedia]);
+    settleViewerAtIndex(index);
+  }, [photoMedia, settleViewerAtIndex, videoMedia]);
 
   useEffect(() => {
     if (activeTab === "photo" && !photoMedia.length && videoMedia.length) {
@@ -188,8 +211,9 @@ export function DancerPhotoCarousel({
     const onFullscreenChange = () => {
       if (fullscreenElement() === viewerRoot.current) {
         viewerOwnsFullscreen.current = true;
+        const requestedIndex = viewerOpeningIndex.current ?? pendingViewerIndex.current;
         window.requestAnimationFrame(() => {
-          scrollViewerToIndex(pendingViewerIndex.current, { instant: true });
+          scrollViewerToIndex(requestedIndex, { instant: true });
         });
       } else {
         viewerOwnsFullscreen.current = false;
@@ -208,8 +232,8 @@ export function DancerPhotoCarousel({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const focusFrame = window.requestAnimationFrame(() => {
-      scrollViewerToIndex(pendingViewerIndex.current, { instant: true });
-      closeButton.current?.focus();
+      scrollViewerToIndex(viewerOpeningIndex.current ?? pendingViewerIndex.current, { instant: true });
+      closeButton.current?.focus({ preventScroll: true });
     });
     return () => {
       window.cancelAnimationFrame(focusFrame);
@@ -239,6 +263,9 @@ export function DancerPhotoCarousel({
       if (event.key === "Escape") {
         event.preventDefault();
         exitViewerFullscreen();
+        window.cancelAnimationFrame(viewerOpeningFrame.current);
+        viewerOpeningFrame.current = 0;
+        viewerOpeningIndex.current = null;
         setViewer(null);
         setShareStatus("");
         clearMediaDeepLink();
@@ -267,6 +294,7 @@ export function DancerPhotoCarousel({
   ) {
     viewerTrigger.current = trigger;
     pendingViewerIndex.current = index;
+    viewerOpeningIndex.current = index;
     setShareStatus("");
     flushSync(() => setViewer({ kind, index }));
     window.requestAnimationFrame(() => scrollViewerToIndex(index, { instant: true }));
@@ -275,6 +303,9 @@ export function DancerPhotoCarousel({
 
   function closeViewer() {
     exitViewerFullscreen();
+    window.cancelAnimationFrame(viewerOpeningFrame.current);
+    viewerOpeningFrame.current = 0;
+    viewerOpeningIndex.current = null;
     setViewer(null);
     setShareStatus("");
     clearMediaDeepLink();
@@ -283,23 +314,26 @@ export function DancerPhotoCarousel({
 
   async function requestViewerFullscreen(requestedIndex: number) {
     const element = viewerRoot.current as FullscreenViewerElement | null;
-    if (!element || fullscreenElement()) return;
+    if (!element || fullscreenElement()) {
+      settleViewerAtIndex(requestedIndex);
+      return;
+    }
     const request = typeof element.requestFullscreen === "function"
       ? () => element.requestFullscreen({ navigationUI: "hide" })
       : typeof element.webkitRequestFullscreen === "function"
         ? () => element.webkitRequestFullscreen?.()
         : null;
-    if (!request) return;
+    if (!request) {
+      settleViewerAtIndex(requestedIndex);
+      return;
+    }
     try {
       await request();
       viewerOwnsFullscreen.current = fullscreenElement() === element;
-      if (viewerOwnsFullscreen.current) {
-        window.requestAnimationFrame(() => {
-          scrollViewerToIndex(requestedIndex, { instant: true });
-        });
-      }
     } catch {
       viewerOwnsFullscreen.current = false;
+    } finally {
+      settleViewerAtIndex(requestedIndex);
     }
   }
 
@@ -380,6 +414,10 @@ export function DancerPhotoCarousel({
   }
 
   function handleViewerScroll() {
+    if (viewerOpeningIndex.current !== null) {
+      scrollViewerToIndex(viewerOpeningIndex.current, { instant: true });
+      return;
+    }
     const nextIndex = Math.min(
       Math.max(currentViewerScrollIndex(), 0),
       Math.max(0, viewerItems.length - 1),

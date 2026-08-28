@@ -48,7 +48,7 @@ test("live profile viewer mirrors MyDancr TV with vertical profile-only video pa
   assert.match(liveApp, /video\.setAttribute\("disablepictureinpicture", ""\)/);
   assert.match(liveApp, /data-toggle-profile-tv-playback aria-label="Pause TV video">\$\{modalVideoPlaybackIcon\(false\)\}/);
   assert.match(liveApp, /data-toggle-profile-tv-sound aria-label="Turn TV video sound off">\$\{modalVideoSoundIcon\(false\)\}/);
-  assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?Math\.round\(stage\.scrollTop \/ stage\.clientHeight\)[\s\S]*?renderProfileTvViewerItem\(index, \{ scroll: false \}\)/);
+  assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?profileTvViewerScrollTarget\([\s\S]*?renderProfileTvViewerItem\(target\.index, \{ scroll: false \}\)/);
   assert.match(liveApp, /function renderProfileTvViewerSlides[\s\S]*?profile-tv-viewer-slide[\s\S]*?stage\.appendChild\(slide\)/);
   assert.match(
     liveApp,

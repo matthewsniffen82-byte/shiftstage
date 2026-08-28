@@ -104,9 +104,37 @@ test("a tapped profile photo or video is the first full-screen item shown", () =
   );
   assert.match(
     publicPhotoCarousel,
-    /await request\(\);[\s\S]*?scrollViewerToIndex\(requestedIndex, \{ instant: true \}\)/,
+    /await request\(\);[\s\S]*?finally \{[\s\S]*?settleViewerAtIndex\(requestedIndex\)/,
   );
   assert.match(publicPhotoCarousel, /top: slide\?\.offsetTop \?\? index \* feed\.clientHeight/);
+});
+
+test("fullscreen layout cannot reset a clicked profile video to the first slide", () => {
+  const resolverSource = liveApp.match(
+    /function profileTvViewerScrollTarget\(openingIndexValue, scrollTop, clientHeight\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  assert.ok(resolverSource, "the profile video opening-index resolver must exist");
+  const resolveScrollTarget = Function(
+    `"use strict"; ${resolverSource}; return profileTvViewerScrollTarget;`,
+  )();
+  assert.deepEqual(resolveScrollTarget("2", 0, 800), { index: 2, locked: true });
+  assert.deepEqual(resolveScrollTarget(undefined, 1600, 800), { index: 2, locked: false });
+  assert.match(
+    liveApp,
+    /overlay\.dataset\.openingVideoIndex = String\(initialIndex\)[\s\S]*?requestProfileTvViewerFullscreen\(overlay\)\.then\(\(\) => \{[\s\S]*?settleProfileTvViewerOpening\(overlay, initialIndex\)/,
+  );
+  assert.match(
+    liveApp,
+    /const target = profileTvViewerScrollTarget\([\s\S]*?if \(target\.locked\) \{[\s\S]*?scrollProfileTvViewerTo\(target\.index, \{ instant: true \}\);[\s\S]*?return;/,
+  );
+  assert.match(
+    publicPhotoCarousel,
+    /viewerOpeningIndex\.current = index;[\s\S]*?requestViewerFullscreen\(index\)/,
+  );
+  assert.match(
+    publicPhotoCarousel,
+    /function handleViewerScroll\(\) \{[\s\S]*?viewerOpeningIndex\.current !== null[\s\S]*?scrollViewerToIndex\(viewerOpeningIndex\.current, \{ instant: true \}\);[\s\S]*?return;/,
+  );
 });
 
 test("the profile presents approved photos and dancer-only videos as separate three-column grids", () => {

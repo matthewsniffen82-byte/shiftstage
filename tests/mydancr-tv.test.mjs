@@ -385,7 +385,7 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(liveApp, /id="profileTvViewer"[\s\S]*?role="dialog"[\s\S]*?id="profileTvViewerStage"[\s\S]*?Dancer videos\. Scroll up or down/);
   assert.match(liveApp, /video\.className = "profile-tv-viewer-video"[\s\S]*?video\.loop = true[\s\S]*?video\.playsInline = true[\s\S]*?video\.setAttribute\("controlslist", "nofullscreen noremoteplayback nodownload"\)/);
   assert.match(liveApp, /data-previous-profile-tv[\s\S]*?data-next-profile-tv[\s\S]*?class="profile-tv-viewer-actions"/);
-  assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?Math\.round\(stage\.scrollTop \/ stage\.clientHeight\)[\s\S]*?renderProfileTvViewerItem\(index, \{ scroll: false \}\)/);
+  assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?profileTvViewerScrollTarget\([\s\S]*?renderProfileTvViewerItem\(target\.index, \{ scroll: false \}\)/);
   assert.match(liveApp, /function renderProfileTvViewerItem\(index, options = \{\}\)[\s\S]*?profileTvVideos[\s\S]*?scrollProfileTvViewerTo\(nextIndex, options\)/);
   assert.doesNotMatch(liveApp, /profile-tv-viewer-gallery|profileTvViewerGallery/);
   assert.match(liveApp, /requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?requestFullscreen\(\{ navigationUI: "hide" \}\)/);

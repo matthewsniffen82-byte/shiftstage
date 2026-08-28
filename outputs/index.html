@@ -52674,6 +52674,17 @@
       }
     }
 
+    function profileTvViewerScrollTarget(openingIndexValue, scrollTop, clientHeight) {
+      const openingIndex = Number(openingIndexValue);
+      if (openingIndexValue !== undefined && Number.isInteger(openingIndex)) {
+        return { index: Math.max(0, openingIndex), locked: true };
+      }
+      return {
+        index: Math.max(0, Math.round(Number(scrollTop || 0) / Math.max(1, Number(clientHeight || 0)))),
+        locked: false
+      };
+    }
+
     function profileTvViewer() {
       let overlay = document.getElementById("profileTvViewer");
       if (overlay) return overlay;
@@ -52736,8 +52747,16 @@
         scrollFrame = window.requestAnimationFrame(() => {
           scrollFrame = 0;
           if (overlay.hidden || stage.clientHeight <= 0) return;
-          const index = Math.round(stage.scrollTop / stage.clientHeight);
-          renderProfileTvViewerItem(index, { scroll: false });
+          const target = profileTvViewerScrollTarget(
+            overlay.dataset.openingVideoIndex,
+            stage.scrollTop,
+            stage.clientHeight
+          );
+          if (target.locked) {
+            scrollProfileTvViewerTo(target.index, { instant: true });
+            return;
+          }
+          renderProfileTvViewerItem(target.index, { scroll: false });
         });
       }, { passive: true });
       stage.addEventListener("click", (event) => {
@@ -52753,7 +52772,10 @@
             profileTvViewerOwnsFullscreen = false;
             return;
           }
-          const activeIndex = Math.max(0, Number(overlay.dataset.videoIndex || 0));
+          const openingIndex = Number(overlay.dataset.openingVideoIndex);
+          const activeIndex = overlay.dataset.openingVideoIndex !== undefined && Number.isInteger(openingIndex)
+            ? openingIndex
+            : Math.max(0, Number(overlay.dataset.videoIndex || 0));
           window.requestAnimationFrame(() => scrollProfileTvViewerTo(activeIndex, { instant: true }));
         });
       });
@@ -52814,6 +52836,25 @@
         top: activeSlide?.offsetTop ?? index * stage.clientHeight
       });
       return true;
+    }
+
+    function settleProfileTvViewerOpening(overlay, index) {
+      if (!overlay || overlay.hidden || overlay.dataset.openingVideoIndex !== String(index)) return;
+      window.cancelAnimationFrame(Number(overlay.profileTvOpeningFrame || 0));
+      let remainingFrames = 3;
+      const settle = () => {
+        if (overlay.hidden || overlay.dataset.openingVideoIndex !== String(index)) return;
+        renderProfileTvViewerItem(index, { instant: true });
+        scrollProfileTvViewerTo(index, { instant: true });
+        if (remainingFrames > 0) {
+          remainingFrames -= 1;
+          overlay.profileTvOpeningFrame = window.requestAnimationFrame(settle);
+          return;
+        }
+        overlay.profileTvOpeningFrame = 0;
+        delete overlay.dataset.openingVideoIndex;
+      };
+      overlay.profileTvOpeningFrame = window.requestAnimationFrame(settle);
     }
 
     function renderProfileTvViewerItem(index, options = {}) {
@@ -52877,6 +52918,7 @@
         ? document.activeElement
         : null;
       overlay.dataset.videoIndex = String(initialIndex);
+      overlay.dataset.openingVideoIndex = String(initialIndex);
       overlay.dataset.profileName = String(profileName || "Dancer");
       overlay.setAttribute("aria-label", `${profileName || "Dancer"} MyDancr TV video`);
       document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
@@ -52885,8 +52927,8 @@
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       document.body.classList.add("profile-tv-viewer-open");
-      void requestProfileTvViewerFullscreen(overlay).then((ownsFullscreen) => {
-        if (ownsFullscreen) scrollProfileTvViewerTo(initialIndex, { instant: true });
+      void requestProfileTvViewerFullscreen(overlay).then(() => {
+        settleProfileTvViewerOpening(overlay, initialIndex);
       });
       window.requestAnimationFrame(() => renderProfileTvViewerItem(initialIndex, { instant: true }));
       overlay.querySelector("[data-close-profile-tv]")?.focus({ preventScroll: true });
@@ -52905,6 +52947,9 @@
       overlay.setAttribute("aria-hidden", "true");
       overlay.profileTvVideos = [];
       overlay.profileTvReturnTarget = null;
+      window.cancelAnimationFrame(Number(overlay.profileTvOpeningFrame || 0));
+      overlay.profileTvOpeningFrame = 0;
+      delete overlay.dataset.openingVideoIndex;
       if (stage) stage.innerHTML = "";
       document.body.classList.remove("profile-tv-viewer-open");
       syncOverlayScrollLock();
