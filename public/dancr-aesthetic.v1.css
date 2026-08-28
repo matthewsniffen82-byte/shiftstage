@@ -7112,14 +7112,20 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   width: 100% !important;
   min-width: 0 !important;
   padding: 8px 10px !important;
-  border: 1px solid var(--dancr-color-success-medium) !important;
+  border: 1px solid var(--dancr-color-success-strong) !important;
   border-radius: 15px !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-success) 5%,
-    var(--dancr-color-surface-subtle)
-  ) !important;
-  box-shadow: inset 0 1px 0 var(--dancr-color-white-soft) !important;
+  background:
+    radial-gradient(circle at 94% 0%, var(--dancr-color-success-soft), transparent 13rem),
+    color-mix(
+      in srgb,
+      var(--dancr-color-success) 8%,
+      var(--dancr-color-surface-subtle)
+    ) !important;
+  box-shadow:
+    0 12px 32px var(--dancr-color-black-soft),
+    0 0 18px var(--dancr-color-success-soft),
+    inset 0 0 0 1px var(--dancr-color-success-medium),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
