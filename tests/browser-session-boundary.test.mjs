@@ -147,6 +147,19 @@ test("public profile, venue, directions, and TV clients share one authenticated-
   assert.match(tvSource, /window\.localStorage\.setItem\(VIEWER_SESSION_KEY, id\)/);
 });
 
+test("public dancer profile state loads cancel when the dancer or shift changes", () => {
+  const stateLoader = dancerActionsSource.match(
+    /useEffect\(\(\) => \{[\s\S]*?setSavedLoaded\(false\);[\s\S]*?\}, \[actionShiftId, dancerId, setGoingCount\]\);/,
+  )?.[0] || "";
+
+  assert.match(stateLoader, /const controller = new AbortController\(\);/);
+  assert.match(stateLoader, /fetch\(`\/api\/customer\/going\?shiftId=[\s\S]*?signal: controller\.signal/);
+  assert.match(stateLoader, /fetch\("\/api\/customer\/saved", \{[\s\S]*?signal: controller\.signal/);
+  assert.match(stateLoader, /if \(controller\.signal\.aborted\) return;/);
+  assert.match(stateLoader, /return \(\) => controller\.abort\(\);/);
+  assert.doesNotMatch(stateLoader, /let active = true;/);
+});
+
 test("standalone NFC, redemption, venue access, and DMCA clients use the same session boundary", () => {
   for (const source of [
     nfcSource,

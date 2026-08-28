@@ -354,7 +354,7 @@ export function DancerProfileActions({
   const isGoing = Boolean(actionShift && saved.goingShiftIds.includes(actionShift.id));
 
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
     setSavedLoaded(false);
     setStatus("");
     const accessToken = readBrowserAccessToken("customer");
@@ -362,17 +362,16 @@ export function DancerProfileActions({
     if (!accessToken) {
       if (!actionShiftId) {
         setSavedLoaded(true);
-        return () => {
-          active = false;
-        };
+        return () => controller.abort();
       }
       fetch(`/api/customer/going?shiftId=${encodeURIComponent(actionShiftId)}`, {
         cache: "no-store",
         credentials: "same-origin",
+        signal: controller.signal,
       })
         .then((response) => response.json())
         .then((data) => {
-          if (!active) return;
+          if (controller.signal.aborted) return;
           if (!data.ok) throw new Error(data.error || "Unable to load going status.");
           setSaved((current) => ({
             ...current,
@@ -381,20 +380,21 @@ export function DancerProfileActions({
           setGoingCount(readConfirmedGoingCount(data));
         })
         .catch(() => {
-          if (active) setStatus("Unable to load going status.");
+          if (!controller.signal.aborted) setStatus("Unable to load going status.");
         })
         .finally(() => {
-          if (active) setSavedLoaded(true);
+          if (!controller.signal.aborted) setSavedLoaded(true);
         });
-      return () => {
-        active = false;
-      };
+      return () => controller.abort();
     }
 
-    fetch("/api/customer/saved", { headers: { authorization: `Bearer ${accessToken}` } })
+    fetch("/api/customer/saved", {
+      headers: { authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
+    })
       .then((response) => response.json())
       .then((data) => {
-        if (!active) return;
+        if (controller.signal.aborted) return;
         if (!data.ok) throw new Error(data.error || "Unable to load saved profile actions.");
         const follows = data.saved?.follows || [];
         const goingSignals = data.saved?.goingSignals || [];
@@ -407,15 +407,13 @@ export function DancerProfileActions({
         });
       })
       .catch(() => {
-        if (active) setStatus("Unable to load saved profile actions.");
+        if (!controller.signal.aborted) setStatus("Unable to load saved profile actions.");
       })
       .finally(() => {
-        if (active) setSavedLoaded(true);
+        if (!controller.signal.aborted) setSavedLoaded(true);
       });
 
-    return () => {
-      active = false;
-    };
+    return () => controller.abort();
   }, [actionShiftId, dancerId, setGoingCount]);
 
   useEffect(() => {
