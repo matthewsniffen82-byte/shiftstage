@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 
@@ -17,6 +17,23 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
   const [status, setStatus] = useState("");
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [venueAccessToken, setVenueAccessToken] = useState("");
+  const mountedRef = useRef(false);
+  const redeemAbortRef = useRef<AbortController | null>(null);
+  const redeemRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      redeemRequestIdRef.current += 1;
+      redeemAbortRef.current?.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    setRedemption(initialRedemption);
+    setStatus("");
+  }, [initialRedemption, token]);
 
   useEffect(() => {
     const accessToken = readBrowserAccessToken("venue");
@@ -37,6 +54,11 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
   }, [token]);
 
   async function redeem() {
+    if (redeemAbortRef.current) return;
+    const controller = new AbortController();
+    const requestId = redeemRequestIdRef.current + 1;
+    redeemRequestIdRef.current = requestId;
+    redeemAbortRef.current = controller;
     setStatus("");
     setIsRedeeming(true);
 
@@ -47,16 +69,30 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
       const response = await fetch(`/api/deals/redeem/${encodeURIComponent(token)}`, {
         method: "POST",
         headers: { authorization: `Bearer ${venueAccessToken}` },
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== redeemRequestIdRef.current
+      ) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to redeem this Club Deal.");
 
       setRedemption(data.redemption);
       setStatus("Redeemed. This verified visit was recorded for MyDancr club billing.");
     } catch (error) {
+      if (
+        !mountedRef.current ||
+        controller.signal.aborted ||
+        requestId !== redeemRequestIdRef.current
+      ) return;
       setStatus(error instanceof Error ? error.message : "Unable to redeem this Club Deal.");
     } finally {
-      setIsRedeeming(false);
+      if (redeemAbortRef.current === controller) {
+        redeemAbortRef.current = null;
+        if (mountedRef.current) setIsRedeeming(false);
+      }
     }
   }
 

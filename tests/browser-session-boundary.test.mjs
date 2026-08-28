@@ -240,6 +240,18 @@ test("standalone NFC, redemption, venue access, and DMCA clients use the same se
   assert.doesNotMatch(dmcaCounterSource, /function readToken\(/);
 });
 
+test("cashier deal confirmation prevents duplicate and stale submissions", () => {
+  assert.match(dealRedemptionSource, /const mountedRef = useRef\(false\);/);
+  assert.match(dealRedemptionSource, /const redeemAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(dealRedemptionSource, /const redeemRequestIdRef = useRef\(0\);/);
+  assert.match(dealRedemptionSource, /redeemRequestIdRef\.current \+= 1;[\s\S]*?redeemAbortRef\.current\?\.abort\(\);/);
+  assert.match(dealRedemptionSource, /if \(redeemAbortRef\.current\) return;/);
+  assert.match(dealRedemptionSource, /fetch\(`\/api\/deals\/redeem[\s\S]*?signal: controller\.signal/);
+  assert.match(dealRedemptionSource, /requestId !== redeemRequestIdRef\.current/);
+  assert.match(dealRedemptionSource, /if \(redeemAbortRef\.current === controller\) \{[\s\S]*?setIsRedeeming\(false\);/);
+  assert.match(dealRedemptionSource, /setRedemption\(initialRedemption\);[\s\S]*?\[initialRedemption, token\]/);
+});
+
 test("venue invitation discovery cancels stale token loads", () => {
   assert.match(venueInvitationSource, /fetch\(`\/api\/venue\/team\/invitations\?token=\$\{encodeURIComponent\(token\)\}`, \{[\s\S]*?signal: controller\.signal/);
   assert.equal((venueInvitationSource.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
