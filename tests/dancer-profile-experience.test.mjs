@@ -5,7 +5,6 @@ import test from "node:test";
 const [
   profilePage,
   profileActions,
-  profileHeader,
   tvFeed,
   reportsRoute,
   navigationActions,
@@ -18,10 +17,6 @@ const [
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(
     new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url),
-    "utf8",
-  ),
-  readFile(
-    new URL("../app/components/PublicProfileHeader.tsx", import.meta.url),
     "utf8",
   ),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),

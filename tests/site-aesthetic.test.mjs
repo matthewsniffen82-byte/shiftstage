@@ -8,7 +8,6 @@ const [
   liveApp,
   mobileNavigation,
   tvFeed,
-  venueProfileAesthetic,
 ] = await Promise.all([
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -18,10 +17,6 @@ const [
     "utf8",
   ),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
-  readFile(
-    new URL("../app/venues/[slug]/VenueProfile.module.css", import.meta.url),
-    "utf8",
-  ),
 ]);
 
 test("the shared aesthetic is loaded by both Next pages and the live homepage", () => {
@@ -646,22 +641,6 @@ test("venue detail and full dancer profiles use the same near-black foundation a
   assert.match(
     aesthetic,
     /\.public-profile-shell :is\([\s\S]*?\.profile-titlebar,[\s\S]*?\.profile-social-section,[\s\S]*?\.profile-media-grid-item,[\s\S]*?\.profile-schedule-section,[\s\S]*?\.shift-row[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: none !important;/,
-  );
-  assert.match(
-    venueProfileAesthetic,
-    /--line: var\(--dancr-color-border-subtle, rgba\(248, 250, 252, 0\.12\)\)/,
-  );
-  assert.match(
-    venueProfileAesthetic,
-    /\.shell :global\(\.venue-profile-actions button\),[\s\S]*?border-color: var\(--dancr-color-border-subtle\);/,
-  );
-  assert.match(
-    venueProfileAesthetic,
-    /\.primaryActions > :global\(\.directions-link\),[\s\S]*?border-color: var\(--dancr-color-info-strong\);/,
-  );
-  assert.match(
-    venueProfileAesthetic,
-    /\.primaryActions > :global\(\.club-deal-launcher\),[\s\S]*?border-color: var\(--dancr-color-success-medium\);/,
   );
 });
 

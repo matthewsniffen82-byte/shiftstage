@@ -2,12 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [liveShell, navigation, dancerProfile, clubDeal, clubActions, nfcTap] = await Promise.all([
+const [liveShell, navigation, dancerProfile, clubDeal, nfcTap] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/components/GlobalMobileBottomNav.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/venues/[slug]/VenueProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/nfc/[token]/NfcTapClient.tsx", import.meta.url), "utf8"),
 ]);
 
@@ -35,15 +34,15 @@ test("customer discovery consistently presents venues as clubs", () => {
 test("customer profile and Club Deal actions use club language", () => {
   assert.match(dancerProfile, /className="profile-working-destination"[\s\S]*?activeShift\.venueName/);
   assert.match(liveShell, /home-venue-discovery-profile-action[\s\S]*?aria-label="Open \$\{safeName\}'s full club profile"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)/);
-  assert.match(clubActions, /Follow club/);
-  assert.match(clubActions, /Club alerts/);
+  assert.match(liveShell, /Following club" : "Follow club"/);
+  assert.match(liveShell, /Club alerts on/);
   assert.match(clubDeal, /Use this deal/);
   assert.match(clubDeal, /this venue[’']s registered cashier sticker/);
   assert.match(nfcTap, /Verified club tap/);
   assert.match(nfcTap, /Confirm Working Now/);
 
   assert.doesNotMatch(dancerProfile, /View venue/);
-  assert.doesNotMatch(clubActions, /Follow venue/);
+  assert.doesNotMatch(liveShell, /Following venue" : "Follow venue"/);
   assert.doesNotMatch(clubDeal, /Continue to venue booking/);
   assert.doesNotMatch(clubDeal, /Continue to club booking/);
 });

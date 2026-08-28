@@ -8,7 +8,6 @@ const [
   buttons,
   layout,
   liveShell,
-  venueProfile,
   manifest,
   appIcon,
   dancerShiftManager,
@@ -25,10 +24,6 @@ const [
     ),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
-    readFile(
-      new URL("../app/venues/[slug]/VenueProfile.module.css", import.meta.url),
-      "utf8",
-    ),
     readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"),
     readFile(new URL("../public/mydancr-icon.svg", import.meta.url), "utf8"),
     readFile(new URL("../app/dashboard/DancerShiftManager.tsx", import.meta.url), "utf8"),
@@ -160,7 +155,6 @@ test("interactive, informational, live, success, featured, and danger states con
   assert.match(aesthetic, /var\(--dancr-color-live\)/);
   assert.match(aesthetic, /var\(--dancr-color-featured\)/);
   assert.match(aesthetic, /var\(--dancr-color-danger\)/);
-  assert.match(venueProfile, /var\(--dancr-color-brand-primary\)/);
 });
 
 test("the shared palette does not target the frozen navigation systems", () => {

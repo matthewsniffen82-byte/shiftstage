@@ -2,15 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [homeSource, actionsSource, profilePageSource, reportsRouteSource, profileNavigationSource, venueActionsSource, venueFollowsRouteSource, venueProfileStylesSource] = await Promise.all([
+const [homeSource, actionsSource, profilePageSource, reportsRouteSource, profileNavigationSource, venueFollowsRouteSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/reports/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/ProfileNavigationActions.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/venues/[slug]/VenueProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/customer/venue-follows/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/venues/[slug]/VenueProfile.module.css", import.meta.url), "utf8"),
 ]);
 
 function sourceBetween(source, start, end) {
@@ -184,7 +182,7 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
     '<div class="admin-preview-popover" id="adminPreviewPopover"',
   );
 
-  for (const source of [livePromptMarkup, actionsSource, venueActionsSource]) {
+  for (const source of [livePromptMarkup, actionsSource]) {
     assert.match(source, /Free guest account/i);
     assert.match(source, /Follow your favorites/);
     assert.match(source, /Create free account/);
@@ -221,15 +219,9 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
     profilePageSource,
     /\.profile-account-gate-dialog \{ gap: 10px; padding: 19px; \}/,
   );
-  assert.match(
-    venueProfileStylesSource,
-    /\.shell :global\(\.venue-account-gate-dialog\) \{[\s\S]*?gap: 10px;[\s\S]*?padding: 19px;/,
-  );
-  assert.match(venueActionsSource, /aria-describedby="venue-account-gate-message"/);
-  assert.match(venueActionsSource, /event\.key === "Escape"/);
 });
 
-test("venue follows are empty and unavailable until a real customer session is active", () => {
+test("venue follows stay empty until a real customer session and remain account-scoped", () => {
   assert.match(
     homeSource,
     /const followedVenuesByCity = Object\.fromEntries\(\s+Object\.keys\(markets\)\.map\(\(city\) => \[city, \[\]\]\)\s+\);/,
@@ -250,18 +242,6 @@ test("venue follows are empty and unavailable until a real customer session is a
     homeSource,
     /function logoutAccount\(\{ message = "Logged out" \} = \{\}\) \{\s*saveAuthSession\(null\);[\s\S]*?clearCustomerSavedCollections\(\);/,
   );
-
-  assert.match(venueActionsSource, /const \[following, setFollowing\] = useState\(false\)/);
-  assert.match(
-    venueActionsSource,
-    /if \(!accessToken\) \{\s+setFollowing\(false\);\s+setNotificationsEnabled\(false\);\s+return;/,
-  );
-  assert.match(
-    venueActionsSource,
-    /response\.status === 401 \|\| response\.status === 403[\s\S]*?setToken\(""\);\s+setFollowing\(false\);\s+setNotificationsEnabled\(false\);/,
-  );
-  assert.match(venueActionsSource, /if \(!requireCustomer\(\) \|\| isSaving\) return;/);
-  assert.match(venueActionsSource, /readBrowserAccessToken\("customer"\)/);
 
   assert.match(
     venueFollowsRouteSource,

@@ -12,10 +12,7 @@ import {
 
 const [
   boundarySource,
-  headerSource,
   dancerActionsSource,
-  venueActionsSource,
-  directionsSource,
   tvSource,
   nfcSource,
   dealRedemptionSource,
@@ -24,10 +21,7 @@ const [
   accountSource,
 ] = await Promise.all([
   readFile(new URL("../src/lib/dancr/browser-session.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/components/PublicProfileHeader.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/venues/[slug]/VenueProfileActions.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/venues/[slug]/DirectionsLink.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/nfc/[token]/NfcTapClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/deals/redeem/[token]/RedeemDealClient.tsx", import.meta.url), "utf8"),
@@ -114,16 +108,13 @@ test("the standalone account surface uses the canonical session lifecycle", () =
   assert.doesNotMatch(accountSource, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
 });
 
-test("public profile, venue, directions, and TV clients share one authenticated-session reader", () => {
+test("public dancer and TV clients share one authenticated-session reader", () => {
   assert.match(boundarySource, /export const BROWSER_AUTH_SESSION_KEY = "dancrAuthSessionV1"/);
   assert.match(boundarySource, /typeof window === "undefined"/);
   assert.match(boundarySource, /!Array\.isArray\(parsed\)/);
 
   for (const source of [
-    headerSource,
     dancerActionsSource,
-    venueActionsSource,
-    directionsSource,
     tvSource,
   ]) {
     assert.match(source, /from "@\/src\/lib\/dancr\/browser-session"/);
@@ -131,10 +122,7 @@ test("public profile, venue, directions, and TV clients share one authenticated-
     assert.doesNotMatch(source, /localStorage\.getItem\("dancrAuthSessionV1"\)/);
   }
 
-  assert.match(headerSource, /readBrowserAuthSession\(\)/);
   assert.match(dancerActionsSource, /readBrowserAccessToken\("customer"\)/);
-  assert.match(venueActionsSource, /readBrowserAccessToken\("customer"\)/);
-  assert.match(directionsSource, /readBrowserAccessToken\(\)/);
   assert.match(tvSource, /readBrowserAccessToken\("customer"\)/);
   assert.match(tvSource, /readBrowserAccessToken\(\)/);
   assert.match(tvSource, /readBrowserAuthSession\(\)/);
@@ -146,17 +134,15 @@ test("public profile, venue, directions, and TV clients share one authenticated-
 });
 
 test("public notification actions prevent duplicate and stale updates", () => {
-  for (const source of [headerSource, tvSource]) {
-    assert.match(source, /const \[notificationsSaving, setNotificationsSaving\] = useState\(false\);/);
-    assert.match(source, /const notificationActionAbortRef = useRef<AbortController \| null>\(null\);/);
-    assert.match(source, /const notificationActionRequestIdRef = useRef\(0\);/);
-    assert.match(source, /notificationActionRequestIdRef\.current \+= 1;[\s\S]*?notificationActionAbortRef\.current\?\.abort\(\);/);
-    assert.match(source, /notificationActionAbortRef\.current\) return;/);
-    assert.match(source, /signal: controller\.signal/);
-    assert.match(source, /requestId !== notificationActionRequestIdRef\.current/);
-    assert.match(source, /if \(notificationActionAbortRef\.current === controller\) \{[\s\S]*?setNotificationsSaving\(false\);/);
-    assert.match(source, /disabled=\{notificationsSaving\}/);
-  }
+  assert.match(tvSource, /const \[notificationsSaving, setNotificationsSaving\] = useState\(false\);/);
+  assert.match(tvSource, /const notificationActionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(tvSource, /const notificationActionRequestIdRef = useRef\(0\);/);
+  assert.match(tvSource, /notificationActionRequestIdRef\.current \+= 1;[\s\S]*?notificationActionAbortRef\.current\?\.abort\(\);/);
+  assert.match(tvSource, /notificationActionAbortRef\.current\) return;/);
+  assert.match(tvSource, /signal: controller\.signal/);
+  assert.match(tvSource, /requestId !== notificationActionRequestIdRef\.current/);
+  assert.match(tvSource, /if \(notificationActionAbortRef\.current === controller\) \{[\s\S]*?setNotificationsSaving\(false\);/);
+  assert.match(tvSource, /disabled=\{notificationsSaving\}/);
   assert.match(tvSource, /role !== "customer" && role !== "dancer" && role !== "venue"/);
 });
 
@@ -188,23 +174,6 @@ test("public dancer profile actions prevent duplicate and stale saves", () => {
   assert.match(dancerActionsSource, /goingAbortRef\.current\?\.abort\(\);/);
   assert.match(dancerActionsSource, /if \(mountedRef\.current\) setFollowSaving\(false\);/);
   assert.match(dancerActionsSource, /if \(mountedRef\.current\) setGoingSaving\(false\);/);
-});
-
-test("venue profile saved state ignores responses after the venue changes", () => {
-  assert.match(venueActionsSource, /fetch\("\/api\/customer\/saved", \{[\s\S]*?signal: controller\.signal/);
-  assert.equal((venueActionsSource.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
-  assert.match(venueActionsSource, /return \(\) => controller\.abort\(\);/);
-});
-
-test("venue profile follow saves prevent duplicate and stale updates", () => {
-  assert.match(venueActionsSource, /const mountedRef = useRef\(false\);/);
-  assert.match(venueActionsSource, /const saveAbortRef = useRef<AbortController \| null>\(null\);/);
-  assert.match(venueActionsSource, /const saveInFlightRef = useRef\(false\);/);
-  assert.match(venueActionsSource, /if \(!mountedRef\.current \|\| saveInFlightRef\.current\) return false;/);
-  assert.match(venueActionsSource, /fetch\("\/api\/customer\/venue-follows", \{[\s\S]*?signal: controller\.signal/);
-  assert.match(venueActionsSource, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return false;/);
-  assert.match(venueActionsSource, /useEffect\(\(\) => \(\) => saveAbortRef\.current\?\.abort\(\), \[venueId\]\);/);
-  assert.match(venueActionsSource, /if \(mountedRef\.current\) setIsSaving\(false\);/);
 });
 
 test("standalone NFC, redemption, invitation, and DMCA clients use the same session boundary", () => {
