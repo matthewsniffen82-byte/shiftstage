@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 
 type SavedVenueFollow = {
@@ -23,6 +23,20 @@ export function VenueProfileActions({
   const [isSaving, setIsSaving] = useState(false);
   const [accountGateOpen, setAccountGateOpen] = useState(false);
   const [status, setStatus] = useState("");
+  const mountedRef = useRef(false);
+  const saveAbortRef = useRef<AbortController | null>(null);
+  const saveInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      saveAbortRef.current?.abort();
+      saveInFlightRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => () => saveAbortRef.current?.abort(), [venueId]);
 
   useEffect(() => {
     const accessToken = readBrowserAccessToken("customer");
@@ -137,6 +151,11 @@ export function VenueProfileActions({
     nextFollowing: boolean,
     nextNotificationsEnabled: boolean,
   ) {
+    if (!mountedRef.current || saveInFlightRef.current) return false;
+    const controller = new AbortController();
+    saveAbortRef.current?.abort();
+    saveAbortRef.current = controller;
+    saveInFlightRef.current = true;
     setStatus("");
     setIsSaving(true);
     try {
@@ -151,8 +170,10 @@ export function VenueProfileActions({
           following: nextFollowing,
           notificationsEnabled: nextNotificationsEnabled,
         }),
+        signal: controller.signal,
       });
       const data = await response.json().catch(() => ({}));
+      if (!mountedRef.current || controller.signal.aborted) return false;
       if (!response.ok || !data.ok) {
         if (response.status === 401 || response.status === 403) {
           setToken("");
@@ -171,6 +192,7 @@ export function VenueProfileActions({
       }
       return true;
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted) return false;
       setStatus(
         error instanceof Error
           ? error.message
@@ -178,7 +200,11 @@ export function VenueProfileActions({
       );
       return false;
     } finally {
-      setIsSaving(false);
+      if (saveAbortRef.current === controller) {
+        saveAbortRef.current = null;
+        saveInFlightRef.current = false;
+        if (mountedRef.current) setIsSaving(false);
+      }
     }
   }
 

@@ -166,6 +166,17 @@ test("venue profile saved state ignores responses after the venue changes", () =
   assert.match(venueActionsSource, /return \(\) => controller\.abort\(\);/);
 });
 
+test("venue profile follow saves prevent duplicate and stale updates", () => {
+  assert.match(venueActionsSource, /const mountedRef = useRef\(false\);/);
+  assert.match(venueActionsSource, /const saveAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(venueActionsSource, /const saveInFlightRef = useRef\(false\);/);
+  assert.match(venueActionsSource, /if \(!mountedRef\.current \|\| saveInFlightRef\.current\) return false;/);
+  assert.match(venueActionsSource, /fetch\("\/api\/customer\/venue-follows", \{[\s\S]*?signal: controller\.signal/);
+  assert.match(venueActionsSource, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return false;/);
+  assert.match(venueActionsSource, /useEffect\(\(\) => \(\) => saveAbortRef\.current\?\.abort\(\), \[venueId\]\);/);
+  assert.match(venueActionsSource, /if \(mountedRef\.current\) setIsSaving\(false\);/);
+});
+
 test("standalone NFC, redemption, venue access, and DMCA clients use the same session boundary", () => {
   for (const source of [
     nfcSource,
