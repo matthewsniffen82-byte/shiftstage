@@ -3174,6 +3174,11 @@ function dollarsToCents(value: string) {
 
 function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
   const [status, setStatus] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const mountedRef = useRef(false);
+  const downloadSequenceRef = useRef(0);
+  const downloadAbortRef = useRef<AbortController | null>(null);
+  const downloadInFlightRef = useRef(false);
   const invoices = Array.isArray(finance?.invoices) ? finance.invoices as Array<Record<string, unknown>> : [];
   const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(String(invoice.status)));
   const outstandingCents = openInvoices.reduce(
@@ -3182,16 +3187,58 @@ function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
   );
   const currentMonth = new Date().toISOString().slice(0, 7);
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      downloadSequenceRef.current += 1;
+      downloadAbortRef.current?.abort();
+      downloadAbortRef.current = null;
+      downloadInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginStatementDownload() {
+    if (!mountedRef.current || downloadInFlightRef.current) return null;
+    downloadInFlightRef.current = true;
+    const requestId = ++downloadSequenceRef.current;
+    downloadAbortRef.current?.abort();
+    const controller = new AbortController();
+    downloadAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentStatementDownload(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === downloadSequenceRef.current;
+  }
+
+  function finishStatementDownload(requestId: number) {
+    if (requestId !== downloadSequenceRef.current) return false;
+    downloadAbortRef.current = null;
+    downloadInFlightRef.current = false;
+    return mountedRef.current;
+  }
+
   async function downloadStatement() {
+    const action = beginStatementDownload();
+    if (!action) return;
+    const { requestId, controller } = action;
+    setIsDownloading(true);
     setStatus("Preparing statement...");
     try {
+      const statement = await requestVenueFinanceStatement(currentMonth, { signal: controller.signal });
+      if (!isCurrentStatementDownload(requestId, controller)) return;
       await downloadDashboardBlob(
-        await requestVenueFinanceStatement(currentMonth),
+        statement,
         `mydancr-${currentMonth}-club-statement.csv`,
       );
-      setStatus("Statement downloaded.");
+      if (isCurrentStatementDownload(requestId, controller)) setStatus("Statement downloaded.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to download statement.");
+      if (isCurrentStatementDownload(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to download statement.");
+      }
+    } finally {
+      if (finishStatementDownload(requestId)) setIsDownloading(false);
     }
   }
 
@@ -3223,7 +3270,7 @@ function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
           ))}
         </div>
       ) : <p>No open club invoices.</p>}
-      <button type="button" onClick={downloadStatement}>Download monthly statement</button>
+      <button type="button" disabled={isDownloading} onClick={downloadStatement}>Download monthly statement</button>
       {status ? <p role="status">{status}</p> : null}
     </section>
   );
@@ -5366,15 +5413,23 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
   }
 
   async function downloadStatement() {
-    setStatus("Preparing statement...");
+    const pending = beginDancerPayoutAction("Preparing statement...");
+    if (!pending) return;
+    const { requestId, controller } = pending;
     try {
+      const statement = await requestDancerFinanceStatement(currentMonth, { signal: controller.signal });
+      if (!isCurrentDancerPayoutAction(requestId, controller)) return;
       await downloadDashboardBlob(
-        await requestDancerFinanceStatement(currentMonth),
+        statement,
         `mydancr-${currentMonth}-dancer-commission-statement.csv`,
       );
-      setStatus("Statement downloaded.");
+      if (isCurrentDancerPayoutAction(requestId, controller)) setStatus("Statement downloaded.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to download statement.");
+      if (isCurrentDancerPayoutAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to download statement.");
+      }
+    } finally {
+      finishDancerPayoutAction(requestId);
     }
   }
 
@@ -5480,7 +5535,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
             ))}
           </div>
         ) : <p>No payout requests yet.</p>}
-        <button className="earnings-statement-button" type="button" onClick={downloadStatement}>Download monthly statement</button>
+        <button className="earnings-statement-button" disabled={isWorking} type="button" onClick={downloadStatement}>Download monthly statement</button>
       </section>
       {status ? <p role="status">{status}</p> : null}
     </article>

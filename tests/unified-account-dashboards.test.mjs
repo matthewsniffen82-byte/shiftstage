@@ -643,8 +643,8 @@ test("dancer payout mutations prevent duplicate and stale money actions", () => 
   assert.match(payoutPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(payoutPanel, /const actionInFlightRef = useRef\(false\);/);
   assert.match(payoutPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
-  assert.equal((payoutPanel.match(/signal: controller\.signal/g) || []).length, 2);
-  assert.equal((payoutPanel.match(/if \(!isCurrentDancerPayoutAction\(requestId, controller\)\) return;/g) || []).length, 2);
+  assert.equal((payoutPanel.match(/signal: controller\.signal/g) || []).length, 3);
+  assert.equal((payoutPanel.match(/if \(!isCurrentDancerPayoutAction\(requestId, controller\)\) return;/g) || []).length, 3);
   assert.match(payoutPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\)/);
   assert.match(payoutPanel, /beginDancerPayoutAction\(action === "cash_out"[\s\S]*?"idempotency-key": crypto\.randomUUID\(\)/);
   assert.match(payoutPanel, /if \(!isCurrentDancerPayoutAction\(requestId, controller\)\) return;[\s\S]*?window\.location\.assign\(data\.onboarding\.url\)/);
@@ -759,6 +759,19 @@ test("dancer and venue statements refresh their role-aware sessions before downl
   assert.match(dashboard, /requestDancerFinanceStatement/);
   assert.match(dashboard, /requestVenueFinanceStatement/);
   assert.doesNotMatch(dashboard, /function downloadDashboardFile|fetch\(path, \{ headers: \{ authorization/);
+
+  const venueFinance = dashboard.match(/function VenueFinanceSummary[\s\S]*?(?=\nfunction CustomerPreferencesPanel)/)?.[0] || "";
+  const payoutPanel = dashboard.match(/function DancerPayoutPanel[\s\S]*?async function downloadDashboardBlob/)?.[0] || "";
+  assert.match(dashboardSession, /signal\?: AbortSignal/);
+  assert.match(dashboardSession, /const signalOptions = options\.signal \? \{ signal: options\.signal \} : \{\}/);
+  assert.match(venueFinance, /const downloadInFlightRef = useRef\(false\);/);
+  assert.match(venueFinance, /if \(!mountedRef\.current \|\| downloadInFlightRef\.current\) return null;/);
+  assert.match(venueFinance, /requestVenueFinanceStatement\(currentMonth, \{ signal: controller\.signal \}\)/);
+  assert.match(venueFinance, /disabled=\{isDownloading\}/);
+  assert.match(venueFinance, /mountedRef\.current = false;[\s\S]*?downloadSequenceRef\.current \+= 1;[\s\S]*?downloadAbortRef\.current\?\.abort\(\)/);
+  assert.match(payoutPanel, /beginDancerPayoutAction\("Preparing statement\.\.\."\)/);
+  assert.match(payoutPanel, /requestDancerFinanceStatement\(currentMonth, \{ signal: controller\.signal \}\)/);
+  assert.match(payoutPanel, /className="earnings-statement-button" disabled=\{isWorking\}/);
 });
 
 test("dancer and venue affiliation actions share role-aware refresh boundaries", async () => {

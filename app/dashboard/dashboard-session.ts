@@ -303,18 +303,21 @@ type DashboardFileRequestOptions = {
   expectedRole: string;
   refreshPath: string;
   fallbackMessage: string;
+  signal?: AbortSignal;
 };
 
 async function requestDashboardFile(path: string, options: DashboardFileRequestOptions) {
+  const signalOptions = options.signal ? { signal: options.signal } : {};
   await requestDashboardJson(options.refreshPath, {
     cache: "no-store",
     expectedRole: options.expectedRole,
     fallbackMessage: options.fallbackMessage,
+    ...signalOptions,
   });
   const authHeaders = currentDashboardAuthHeaders(options.expectedRole);
   if (!authHeaders) throw new DashboardDataRequestError("Sign in required.", 401);
 
-  const response = await fetch(path, { headers: authHeaders });
+  const response = await fetch(path, { headers: authHeaders, ...signalOptions });
   if (!response.ok) {
     const data = await response.json().catch(() => null);
     throw new DashboardDataRequestError(
@@ -325,19 +328,21 @@ async function requestDashboardFile(path: string, options: DashboardFileRequestO
   return response.blob();
 }
 
-export function requestDancerFinanceStatement(month: string) {
+export function requestDancerFinanceStatement(month: string, options: { signal?: AbortSignal } = {}) {
   return requestDashboardFile(`/api/dancer/finance/statement?month=${encodeURIComponent(month)}`, {
     expectedRole: "dancer",
     refreshPath: "/api/dancer/finance?access=1",
     fallbackMessage: "Unable to download dancer commission statement.",
+    ...options,
   });
 }
 
-export function requestVenueFinanceStatement(month: string) {
+export function requestVenueFinanceStatement(month: string, options: { signal?: AbortSignal } = {}) {
   return requestDashboardFile(`/api/venue/finance/statement?month=${encodeURIComponent(month)}`, {
     expectedRole: "venue",
     refreshPath: "/api/venue/finance?access=1",
     fallbackMessage: "Unable to download venue statement.",
+    ...options,
   });
 }
 
