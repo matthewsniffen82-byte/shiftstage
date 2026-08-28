@@ -502,6 +502,19 @@ test("venue Club Deal requests prevent duplicate and stale submissions", () => {
   assert.equal((dealRequests.match(/disabled=\{isRequesting\}/g) || []).length, 2);
 });
 
+test("dashboard sign-in recovery prevents duplicate and stale session replacement", () => {
+  const signInRecovery = dashboard.match(/function DashboardSignInRecovery[\s\S]*?function checkInErrorMessage/)?.[0] || "";
+  assert.match(signInRecovery, /const mountedRef = useRef\(false\);/);
+  assert.match(signInRecovery, /const signInSequenceRef = useRef\(0\);/);
+  assert.match(signInRecovery, /const signInAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(signInRecovery, /const signInInFlightRef = useRef\(false\);/);
+  assert.match(signInRecovery, /if \(!mountedRef\.current \|\| signInInFlightRef\.current\) return;/);
+  assert.match(signInRecovery, /signal: controller\.signal/);
+  assert.match(signInRecovery, /if \(!mountedRef\.current \|\| controller\.signal\.aborted \|\| requestId !== signInSequenceRef\.current\) return;/);
+  assert.match(signInRecovery, /mountedRef\.current = false;[\s\S]*?signInSequenceRef\.current \+= 1;[\s\S]*?signInAbortRef\.current\?\.abort\(\)/);
+  assert.equal((signInRecovery.match(/disabled=\{isSubmitting\}/g) || []).length, 3);
+});
+
 test("dancer profile requests use one role-aware dashboard boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;

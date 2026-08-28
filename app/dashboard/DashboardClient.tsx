@@ -8105,11 +8105,31 @@ function DashboardSignInRecovery({
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mountedRef = useRef(false);
+  const signInSequenceRef = useRef(0);
+  const signInAbortRef = useRef<AbortController | null>(null);
+  const signInInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      signInSequenceRef.current += 1;
+      signInAbortRef.current?.abort();
+      signInAbortRef.current = null;
+      signInInFlightRef.current = false;
+    };
+  }, []);
 
   async function signIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (!mountedRef.current || signInInFlightRef.current) return;
 
+    signInInFlightRef.current = true;
+    const requestId = ++signInSequenceRef.current;
+    signInAbortRef.current?.abort();
+    const controller = new AbortController();
+    signInAbortRef.current = controller;
     setIsSubmitting(true);
     setStatus("");
     try {
@@ -8117,8 +8137,10 @@ function DashboardSignInRecovery({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ mode: "login", role, email: email.trim(), password }),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted || requestId !== signInSequenceRef.current) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
       if (data.account?.role !== role || !data.session?.accessToken || !data.session?.refreshToken) {
         throw new Error(`Use a ${role} account to open this dashboard.`);
@@ -8130,9 +8152,15 @@ function DashboardSignInRecovery({
       setStatus(`Signed in. Opening your ${role} dashboard...`);
       onSignedIn();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to sign in.");
+      if (mountedRef.current && !controller.signal.aborted && requestId === signInSequenceRef.current) {
+        setStatus(error instanceof Error ? error.message : "Unable to sign in.");
+      }
     } finally {
-      setIsSubmitting(false);
+      if (requestId === signInSequenceRef.current) {
+        signInAbortRef.current = null;
+        signInInFlightRef.current = false;
+        if (mountedRef.current) setIsSubmitting(false);
+      }
     }
   }
 
@@ -8151,6 +8179,7 @@ function DashboardSignInRecovery({
         {role === "venue" ? "Venue" : "Dancer"} account email
         <input
           autoComplete="email"
+          disabled={isSubmitting}
           inputMode="email"
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -8162,6 +8191,7 @@ function DashboardSignInRecovery({
         Password
         <input
           autoComplete="current-password"
+          disabled={isSubmitting}
           minLength={8}
           onChange={(event) => setPassword(event.target.value)}
           required
