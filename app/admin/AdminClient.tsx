@@ -2742,27 +2742,67 @@ function ReportManager({
 }) {
   const [statusById, setStatusById] = useState<Record<string, string>>({});
   const [busyReportId, setBusyReportId] = useState("");
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginReportAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentReportAction(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishReportAction(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setBusyReportId("");
+  }
 
   if (!reports.length) return <p className="empty">No open reports.</p>;
 
   async function updateReport(reportId: string, action: "resolved" | "removed") {
+    const request = beginReportAction();
+    if (!request) return;
     setBusyReportId(reportId);
     setStatusById((current) => ({ ...current, [reportId]: "Saving..." }));
     try {
       await requestAdminJson("/api/admin/reports", {
         method: "PATCH",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ reportId, action }),
         fallbackMessage: "Unable to update report.",
       });
+      if (!isCurrentReportAction(request)) return;
       onReportsChange(reports.filter((report) => String(report.id) !== reportId));
     } catch (error) {
+      if (!isCurrentReportAction(request)) return;
       setStatusById((current) => ({
         ...current,
         [reportId]: error instanceof Error ? error.message : "Unable to update report. Check your connection and try again.",
       }));
     } finally {
-      setBusyReportId("");
+      finishReportAction(request);
     }
   }
 
@@ -2776,10 +2816,10 @@ function ReportManager({
             <span>{String(report.reason || "Reason pending")}</span>
             {report.details ? <p>{String(report.details)}</p> : null}
             <div>
-              <button type="button" onClick={() => updateReport(reportId, "resolved")} disabled={busyReportId === reportId}>
+              <button type="button" onClick={() => updateReport(reportId, "resolved")} disabled={Boolean(busyReportId)}>
                 {busyReportId === reportId ? "Saving..." : "Resolve"}
               </button>
-              <button type="button" onClick={() => updateReport(reportId, "removed")} disabled={busyReportId === reportId}>
+              <button type="button" onClick={() => updateReport(reportId, "removed")} disabled={Boolean(busyReportId)}>
                 Remove
               </button>
             </div>

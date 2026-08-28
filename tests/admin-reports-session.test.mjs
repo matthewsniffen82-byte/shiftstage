@@ -17,9 +17,14 @@ test("admin reports use the refresh-aware role-isolated admin boundary", () => {
 });
 
 test("admin report decisions recover from failures and prevent duplicate submission", () => {
+  assert.match(reportManager, /function beginReportAction\(\)/);
+  assert.match(reportManager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(reportManager, /signal: request\.controller\.signal/);
+  assert.match(reportManager, /function isCurrentReportAction/);
+  assert.match(reportManager, /function finishReportAction/);
   assert.match(reportManager, /fallbackMessage: "Unable to update report\."/);
   assert.match(reportManager, /catch \(error\)[\s\S]*?error instanceof Error \? error\.message/);
-  assert.match(reportManager, /finally \{[\s\S]*?setBusyReportId\(""\)/);
-  assert.equal((reportManager.match(/disabled=\{busyReportId === reportId\}/g) || []).length, 2);
+  assert.match(reportManager, /finally \{[\s\S]*?finishReportAction\(request\)/);
+  assert.equal((reportManager.match(/disabled=\{Boolean\(busyReportId\)\}/g) || []).length, 2);
   assert.match(reportManager, /busyReportId === reportId \? "Saving\.\.\." : "Resolve"/);
 });
