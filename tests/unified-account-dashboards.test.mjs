@@ -472,6 +472,20 @@ test("customer saved actions and location callbacks ignore stale work", () => {
   assert.equal((customerPanel.match(/if \(!mountedRef\.current \|\| requestId !== locationSequenceRef\.current\) return;/g) || []).length, 2);
 });
 
+test("venue publication review prevents duplicate and stale decisions", () => {
+  const venuePanel = dashboard.match(/function VenuePanel[\s\S]*?function upsertVenueDeal/)?.[0] || "";
+  assert.match(venuePanel, /const mountedRef = useRef\(false\);/);
+  assert.match(venuePanel, /const publicationSequenceRef = useRef\(0\);/);
+  assert.match(venuePanel, /const publicationAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(venuePanel, /const publicationInFlightRef = useRef\(false\);/);
+  assert.match(venuePanel, /if \(!mountedRef\.current \|\| publicationInFlightRef\.current\) return;/);
+  assert.match(venuePanel, /signal: controller\.signal/);
+  assert.match(venuePanel, /if \(!mountedRef\.current \|\| controller\.signal\.aborted \|\| requestId !== publicationSequenceRef\.current\) return;/);
+  assert.match(venuePanel, /mountedRef\.current = false;[\s\S]*?publicationSequenceRef\.current \+= 1;[\s\S]*?publicationAbortRef\.current\?\.abort\(\)/);
+  assert.match(venuePanel, /disabled=\{isPublishingVenue \|\| reviewNotes\.trim\(\)\.length < 10\}/);
+  assert.match(venuePanel, /disabled=\{isPublishingVenue\}[\s\S]*?submitVenueReview\("approved"\)/);
+});
+
 test("dancer profile requests use one role-aware dashboard boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;

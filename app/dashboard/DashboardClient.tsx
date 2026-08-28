@@ -2155,14 +2155,35 @@ function VenuePanel({
   const [reviewNotes, setReviewNotes] = useState("");
   const [notificationRevision, setNotificationRevision] = useState(0);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => initialVenueWorkspace(profile?.isActive === true));
+  const mountedRef = useRef(false);
+  const publicationSequenceRef = useRef(0);
+  const publicationAbortRef = useRef<AbortController | null>(null);
+  const publicationInFlightRef = useRef(false);
 
   useEffect(() => {
     const hashWorkspace = venueWorkspaceForSection(window.location.hash.replace(/^#/, ""));
     if (hashWorkspace) setActiveWorkspace(hashWorkspace);
   }, []);
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      publicationSequenceRef.current += 1;
+      publicationAbortRef.current?.abort();
+      publicationAbortRef.current = null;
+      publicationInFlightRef.current = false;
+    };
+  }, []);
+
   async function submitVenueReview(decision: "approved" | "changes_requested") {
     if (decision === "approved" && !window.confirm("Approve this venue information and commercial package and make the venue live on MyDancr?")) return;
+    if (!mountedRef.current || publicationInFlightRef.current) return;
+    publicationInFlightRef.current = true;
+    const requestId = ++publicationSequenceRef.current;
+    publicationAbortRef.current?.abort();
+    const controller = new AbortController();
+    publicationAbortRef.current = controller;
     setIsPublishingVenue(true);
     setPublicationStatus(decision === "approved" ? "Approving and publishing venue page..." : "Sending change request...");
     try {
@@ -2172,16 +2193,24 @@ function VenuePanel({
         body: JSON.stringify({ decision, notes: reviewNotes }),
         expectedRole: "venue",
         fallbackMessage: "Unable to record venue page review.",
+        signal: controller.signal,
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== publicationSequenceRef.current) return;
       onProfileChange(data.profile);
       onPublicationChange(data.publication);
       if (decision === "approved") setNotificationRevision((current) => current + 1);
       if (decision === "changes_requested") setReviewNotes("");
       setPublicationStatus(data.message || "Venue page review saved.");
     } catch (error) {
-      setPublicationStatus(error instanceof Error ? error.message : "Unable to record venue page review.");
+      if (mountedRef.current && !controller.signal.aborted && requestId === publicationSequenceRef.current) {
+        setPublicationStatus(error instanceof Error ? error.message : "Unable to record venue page review.");
+      }
     } finally {
-      setIsPublishingVenue(false);
+      if (requestId === publicationSequenceRef.current) {
+        publicationAbortRef.current = null;
+        publicationInFlightRef.current = false;
+        if (mountedRef.current) setIsPublishingVenue(false);
+      }
     }
   }
 
