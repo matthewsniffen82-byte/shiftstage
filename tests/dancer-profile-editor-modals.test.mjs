@@ -11,6 +11,7 @@ const [dashboard, dancerStudio, mediaSync] = await Promise.all([
 const identityEditor = dashboard.match(/function DancerSetupPanel\([\s\S]*?(?=\nfunction DancerAvatarPanel)/)?.[0] || "";
 const avatarEditor = dashboard.match(/function DancerAvatarPanel\([\s\S]*?(?=\nfunction DancerShiftPanel)/)?.[0] || "";
 const photoEditor = dashboard.match(/function DancerPhotoPanel\([\s\S]*?(?=\nfunction normalizePhotoStatus)/)?.[0] || "";
+const videoUpload = dancerStudio.match(/async function uploadVideoBatch\([\s\S]*?(?=\n  async function removeVideo)/)?.[0] || "";
 
 test("stage name and city use the compact editor without changing persistence or market data", () => {
   assert.match(dashboard, /identity: "Stage name & city"/);
@@ -92,6 +93,22 @@ test("video editor keeps both permission gates and hides the technical library c
   assert.match(dancerStudio, /const selectedFiles = files\.slice\(0, availableSlots\)/);
 });
 
+test("video uploads, retries, and removal reject duplicate and stale work", () => {
+  assert.match(dancerStudio, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(dancerStudio, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(dancerStudio, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(dancerStudio, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(dancerStudio, /function queueVideoFiles[\s\S]*?if \(actionInFlightRef\.current\) return;/);
+  assert.match(dancerStudio, /async function removeVideo\(videoId: string\) \{\s*if \(actionInFlightRef\.current\) return;/);
+  assert.match(dancerStudio, /const uploadId = crypto\.randomUUID\(\);[\s\S]*?uploadId,/);
+  assert.match(videoUpload, /uploadId: item\.uploadId/);
+  assert.match(videoUpload, /!data\.upload\.alreadySubmitted && !data\.upload\.uploadComplete/);
+  assert.match(videoUpload, /if \(!data\.upload\.alreadySubmitted\)/);
+  assert.doesNotMatch(videoUpload, /method: "DELETE"/);
+  assert.equal((videoUpload.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.match(dancerStudio, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
+});
+
 test("approved videos refresh into the builder and video cards render a visible preview frame", () => {
   assert.match(dancerStudio, /announceDancerProfileVideosChanged\(\)/);
   assert.match(dancerStudio, /hasProcessingVideos[\s\S]*?window\.setInterval/);
@@ -104,7 +121,7 @@ test("approved videos refresh into the builder and video cards render a visible 
   assert.match(dancerStudio, /document\.addEventListener\("visibilitychange", refresh\)/);
   assert.match(dancerStudio, /if \(updated && !cancelled\) announceDancerProfileVideosChanged\(\)/);
   assert.doesNotMatch(dancerStudio, /\.then\(\(\) => announceDancerProfileVideosChanged\(\)\)/);
-  assert.match(dancerStudio, /method: "DELETE"[\s\S]*?workspaceRequestIdRef\.current \+= 1;[\s\S]*?setWorkspace/);
+  assert.match(dancerStudio, /async function removeVideo[\s\S]*?beginVideoAction\(\)[\s\S]*?method: "DELETE"[\s\S]*?isCurrentVideoAction\(requestId, controller\)[\s\S]*?setWorkspace/);
   assert.match(dashboard, /addEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
   assert.match(dashboard, /status === "uploading" \|\| status === "moderating"/);
   assert.match(dashboard, /window\.setTimeout\(\(\) => void loadVideos\(\), 1_800\)/);

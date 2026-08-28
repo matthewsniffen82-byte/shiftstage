@@ -150,6 +150,7 @@ test("video submission persists exactly approve, human-review, or reject outcome
   assert.match(tvSource, /video_moderation_provider_error/);
   assert.match(submitRoute, /export const maxDuration = 60/);
   assert.match(submitRoute, /after\(async \(\) => \{[\s\S]*?retryMyDancrTvAutomatedModeration/);
+  assert.match(submitRoute, /if \(!\("submissionAlreadyAccepted" in video\) \|\| video\.submissionAlreadyAccepted !== true\) \{[\s\S]*?after\(async \(\) =>/);
   assert.match(submitRoute, /\{ deferModeration: true \}/);
   assert.match(submitRoute, /uploaded successfully and is queued for automatic safety review/);
   assert.match(tvSource, /moderation_attempt_count: deferModeration \|\| demoAutoApprove \? 0 : 1/);

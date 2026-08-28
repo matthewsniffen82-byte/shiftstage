@@ -699,6 +699,7 @@ export async function createMyDancrTvUpload(
     height: number;
     consentConfirmed: boolean;
     rightsConfirmed: boolean;
+    uploadId?: string;
     distributionScope?: "profile_and_feed" | "feed_only";
   },
 ) {
@@ -736,6 +737,62 @@ export async function createMyDancrTvUpload(
   }
 
   const distributionScope = input.distributionScope === "feed_only" ? "feed_only" : "profile_and_feed";
+  const requestedVideoId = String(input.uploadId || "").trim();
+  if (requestedVideoId && !MYDANCR_TV_VIDEO_ID_PATTERN.test(requestedVideoId)) {
+    throw new Error("Invalid video upload identity.");
+  }
+  if (requestedVideoId) {
+    const { data: existing, error: existingError } = await admin
+      .from("mydancr_tv_videos")
+      .select("id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope")
+      .eq("id", requestedVideoId)
+      .eq("submitted_by", userId)
+      .maybeSingle();
+    if (existingError) throw existingError;
+    if (existing) {
+      assertMatchingMyDancrTvUpload(existing, dancer.id, input, distributionScope);
+      if (existing.status !== "uploading") {
+        if (MYDANCR_TV_COMPLETED_UPLOAD_STATUSES.has(String(existing.status))) {
+          return {
+            videoId: existing.id,
+            path: existing.storage_path,
+            token: "",
+            uploadUrl: "",
+            uploadComplete: true,
+            alreadySubmitted: true,
+          };
+        }
+        throw new Error("This video upload is no longer active. Choose the video again.");
+      }
+
+      const uploadComplete = await myDancrTvUploadObjectExists(admin, existing);
+      if (uploadComplete) {
+        return {
+          videoId: existing.id,
+          path: existing.storage_path,
+          token: "",
+          uploadUrl: "",
+          uploadComplete: true,
+          alreadySubmitted: false,
+        };
+      }
+      const { data: resumedUpload, error: resumedUploadError } = await admin.storage
+        .from(MYDANCR_TV_BUCKET)
+        .createSignedUploadUrl(existing.storage_path);
+      if (resumedUploadError || !resumedUpload?.token) {
+        throw resumedUploadError || new Error("Unable to resume the video upload.");
+      }
+      return {
+        videoId: existing.id,
+        path: resumedUpload.path || existing.storage_path,
+        token: resumedUpload.token,
+        uploadUrl: resumedUpload.signedUrl,
+        uploadComplete: false,
+        alreadySubmitted: false,
+      };
+    }
+  }
+
   if (distributionScope === "profile_and_feed") {
     const { count: activeVideoCount, error: countError } = await admin
       .from("mydancr_tv_videos")
@@ -749,7 +806,7 @@ export async function createMyDancrTvUpload(
     }
   }
 
-  const videoId = crypto.randomUUID();
+  const videoId = requestedVideoId || crypto.randomUUID();
   const extension = input.mimeType === "video/webm" ? "webm" : input.mimeType === "video/quicktime" ? "mov" : "mp4";
   const storagePath = `${userId}/${dancer.id}/${videoId}.${extension}`;
   const { data: video, error: insertError } = await admin
@@ -791,7 +848,66 @@ export async function createMyDancrTvUpload(
     path: upload.path || storagePath,
     token: upload.token,
     uploadUrl: upload.signedUrl,
+    uploadComplete: false,
+    alreadySubmitted: false,
   };
+}
+
+const MYDANCR_TV_VIDEO_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const MYDANCR_TV_COMPLETED_UPLOAD_STATUSES = new Set([
+  "moderating",
+  "submitted",
+  "approved",
+  "rejected",
+]);
+
+function assertMatchingMyDancrTvUpload(
+  existing: any,
+  dancerId: string,
+  input: {
+    mimeType: string;
+    fileSize: number;
+    durationSeconds: number;
+    width: number;
+    height: number;
+  },
+  distributionScope: "profile_and_feed" | "feed_only",
+) {
+  const durationMatches = Math.abs(Number(existing.duration_seconds) - input.durationSeconds) < 0.05;
+  if (
+    existing.dancer_id !== dancerId ||
+    existing.storage_mime !== input.mimeType ||
+    Number(existing.file_size_bytes) !== input.fileSize ||
+    !durationMatches ||
+    Number(existing.width) !== input.width ||
+    Number(existing.height) !== input.height ||
+    existing.distribution_scope !== distributionScope
+  ) {
+    throw new Error("This video retry does not match the original upload.");
+  }
+}
+
+async function myDancrTvUploadObjectExists(admin: AdminClient, video: any) {
+  const lastSlash = String(video.storage_path).lastIndexOf("/");
+  const directory = String(video.storage_path).slice(0, lastSlash);
+  const filename = String(video.storage_path).slice(lastSlash + 1);
+  const { data: objects, error } = await admin.storage
+    .from(MYDANCR_TV_BUCKET)
+    .list(directory, { search: filename, limit: 10 });
+  if (error) throw error;
+  const object = (objects || []).find((item: any) => item.name === filename);
+  if (!object) return false;
+  const storedSize = Number(object.metadata?.size || 0);
+  const storedMime = String(object.metadata?.mimetype || object.metadata?.contentType || "");
+  if (storedSize && storedSize !== Number(video.file_size_bytes)) {
+    throw new Error("The uploaded video size could not be verified.");
+  }
+  if (storedMime && storedMime !== video.storage_mime) {
+    throw new Error("The uploaded video type could not be verified.");
+  }
+  return true;
 }
 
 export async function publishPlatformMyDancrTvUpload(
@@ -895,7 +1011,12 @@ export async function submitMyDancrTvUpload(
     .maybeSingle();
   if (error) throw error;
   if (!video) throw new Error("Video upload not found.");
-  if (video.status !== "uploading") throw new Error("This video has already been submitted.");
+  if (video.status !== "uploading") {
+    if (MYDANCR_TV_COMPLETED_UPLOAD_STATUSES.has(String(video.status))) {
+      return { ...video, submissionAlreadyAccepted: true };
+    }
+    throw new Error("This video has already been submitted.");
+  }
 
   const lastSlash = video.storage_path.lastIndexOf("/");
   const directory = video.storage_path.slice(0, lastSlash);

@@ -33,17 +33,19 @@ export async function PATCH(request: Request, { params }: RouteProps) {
       id,
       { deferModeration: true },
     );
-    after(async () => {
-      try {
-        await retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id);
-      } catch (error) {
-        console.error(JSON.stringify({
-          event: "mydancr_tv.background_moderation_failed",
-          videoId: video.id,
-          message: error instanceof Error ? error.message.slice(0, 500) : "Unknown moderation failure",
-        }));
-      }
-    });
+    if (!("submissionAlreadyAccepted" in video) || video.submissionAlreadyAccepted !== true) {
+      after(async () => {
+        try {
+          await retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id);
+        } catch (error) {
+          console.error(JSON.stringify({
+            event: "mydancr_tv.background_moderation_failed",
+            videoId: video.id,
+            message: error instanceof Error ? error.message.slice(0, 500) : "Unknown moderation failure",
+          }));
+        }
+      });
+    }
     return NextResponse.json({
       ok: true,
       video,

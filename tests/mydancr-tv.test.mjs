@@ -92,6 +92,19 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.doesNotMatch(dancerStudio, /sample video|placeholder video|mock/i);
 });
 
+test("dancer video retries resume one server upload without duplicating moderation", () => {
+  const prepareUpload = tvSource.match(/export async function createMyDancrTvUpload[\s\S]*?(?=\nexport async function publishPlatformMyDancrTvUpload)/)?.[0] || "";
+  const submitUpload = tvSource.match(/export async function submitMyDancrTvUpload[\s\S]*?(?=\nexport async function retryMyDancrTvAutomatedModeration)/)?.[0] || "";
+  assert.match(dancerApi, /uploadId: typeof body\?\.uploadId === "string" \? body\.uploadId : ""/);
+  assert.match(prepareUpload, /const requestedVideoId = String\(input\.uploadId \|\| ""\)\.trim\(\)/);
+  assert.match(prepareUpload, /\.eq\("id", requestedVideoId\)[\s\S]*?\.eq\("submitted_by", userId\)/);
+  assert.ok(prepareUpload.indexOf("if (requestedVideoId)") < prepareUpload.indexOf("activeVideoCount"));
+  assert.match(prepareUpload, /myDancrTvUploadObjectExists\(admin, existing\)/);
+  assert.match(prepareUpload, /alreadySubmitted: true/);
+  assert.match(prepareUpload, /uploadComplete: true/);
+  assert.match(submitUpload, /MYDANCR_TV_COMPLETED_UPLOAD_STATUSES\.has\(String\(video\.status\)\)[\s\S]*?submissionAlreadyAccepted: true/);
+});
+
 test("phone camera uploads accept QuickTime video in storage and moderation", () => {
   assert.match(tvSource, /MYDANCR_TV_MIME_TYPES = new Set\(\["video\/mp4", "video\/webm", "video\/quicktime"\]\)/);
   assert.match(tvSource, /input\.mimeType === "video\/quicktime" \? "mov"/);

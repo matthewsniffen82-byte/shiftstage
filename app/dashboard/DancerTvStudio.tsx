@@ -43,6 +43,7 @@ type ManagedVideo = {
 
 type QueuedVideo = {
   id: string;
+  uploadId: string;
   file: File;
   previewUrl: string;
   source: "library" | "camera";
@@ -69,6 +70,9 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const workspaceRequestIdRef = useRef(0);
   const workspaceAbortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
   const maxVideos = workspace?.maxVideos || MAX_DANCER_PROFILE_VIDEOS;
   const currentVideoCount = workspace?.videos.length || 0;
   const atVideoLimit = currentVideoCount >= maxVideos;
@@ -78,7 +82,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   )) || false;
 
   const loadWorkspace = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
-    if (!mountedRef.current) return false;
+    if (!mountedRef.current || actionInFlightRef.current) return false;
     const requestId = ++workspaceRequestIdRef.current;
     workspaceAbortRef.current?.abort();
     const controller = new AbortController();
@@ -124,6 +128,10 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       workspaceRequestIdRef.current += 1;
       workspaceAbortRef.current?.abort();
       workspaceAbortRef.current = null;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
       queuedPreviewUrls.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
       queuedPreviewUrls.clear();
     };
@@ -153,7 +161,47 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     };
   }, [hasProcessingVideos, loadWorkspace]);
 
+  function beginVideoAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    workspaceRequestIdRef.current += 1;
+    workspaceAbortRef.current?.abort();
+    workspaceAbortRef.current = null;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentVideoAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishVideoAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return false;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    return mountedRef.current;
+  }
+
+  async function refreshWorkspaceForAction(requestId: number, controller: AbortController) {
+    try {
+      const data = await requestDancerTvVideosJson({
+        cache: "no-store",
+        signal: controller.signal,
+        fallbackMessage: "Unable to refresh MyDancr TV Studio.",
+      });
+      if (!isCurrentVideoAction(requestId, controller)) return false;
+      setWorkspace(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function queueVideoFiles(files: File[], source: QueuedVideo["source"]) {
+    if (actionInFlightRef.current) return;
     if (!consentConfirmed || !rightsConfirmed) {
       setStatus("Confirm both permissions before choosing videos. Your selection will upload automatically.");
       return;
@@ -170,8 +218,10 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       const previewUrl = URL.createObjectURL(file);
       queuedPreviewUrlsRef.current.add(previewUrl);
       const validType = file.type.startsWith("video/");
+      const uploadId = crypto.randomUUID();
       return {
-        id: `${file.name}:${file.size}:${file.lastModified}:${crypto.randomUUID()}`,
+        id: `${file.name}:${file.size}:${file.lastModified}:${uploadId}`,
+        uploadId,
         file,
         previewUrl,
         source,
@@ -188,7 +238,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   }
 
   function openVideoSource(input: HTMLInputElement | null) {
-    if (isSubmitting) return;
+    if (actionInFlightRef.current) return;
     if (!videoPermissionsConfirmed) {
       setStatus("Check both permission boxes first.");
       const missingPermission = !consentConfirmed ? consentInputRef.current : rightsInputRef.current;
@@ -203,13 +253,27 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     setQueuedVideos((current) => current.map((item) => item.id === id ? { ...item, ...changes } : item));
   }
 
-  function removeQueuedVideo(id: string) {
+  async function removeQueuedVideo(itemToRemove: QueuedVideo) {
+    const action = beginVideoAction();
+    if (!action) return;
+    const { requestId, controller } = action;
+    setIsSubmitting(true);
     setQueuedVideos((current) => current.filter((item) => {
-      if (item.id !== id) return true;
+      if (item.id !== itemToRemove.id) return true;
       queuedPreviewUrlsRef.current.delete(item.previewUrl);
       URL.revokeObjectURL(item.previewUrl);
       return false;
     }));
+    try {
+      await requestDancerTvVideoJson(itemToRemove.uploadId, {
+        method: "DELETE",
+        signal: controller.signal,
+      });
+    } catch {
+      // The queue item may not have reached the server yet.
+    } finally {
+      if (finishVideoAction(requestId)) setIsSubmitting(false);
+    }
   }
 
   async function uploadVideoBatch(batch: QueuedVideo[]) {
@@ -219,19 +283,23 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     if (!consentConfirmed || !rightsConfirmed) {
       return setStatus("Confirm consent and content rights for every queued video before submitting.");
     }
+    const action = beginVideoAction();
+    if (!action) return;
+    const { requestId, controller } = action;
 
     setIsSubmitting(true);
     const failedItems: QueuedVideo[] = [];
     let submittedCount = 0;
     try {
       for (let index = 0; index < batch.length; index += 1) {
+        if (!isCurrentVideoAction(requestId, controller)) return;
         const item = batch[index];
-        let preparedVideoId = "";
         setUploadingQueueItemId(item.id);
         updateQueuedVideo(item.id, { stage: "validating", progress: 10, error: undefined });
         setStatus(`Checking video ${index + 1} of ${batch.length}...`);
         try {
           const metadata = await readVideoMetadata(item.file);
+          if (!isCurrentVideoAction(requestId, controller)) return;
           updateQueuedVideo(item.id, { stage: "uploading", progress: 30 });
           const data = await requestDancerTvVideosJson({
             method: "POST",
@@ -244,39 +312,47 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               height: metadata.height,
               consentConfirmed,
               rightsConfirmed,
+              uploadId: item.uploadId,
             }),
             fallbackMessage: "Unable to prepare upload.",
+            signal: controller.signal,
           });
-          preparedVideoId = String(data.upload.videoId || "");
+          if (!isCurrentVideoAction(requestId, controller)) return;
+          const preparedVideoId = String(data.upload.videoId || "");
+          if (!preparedVideoId) throw new Error("Unable to prepare upload.");
 
-          setStatus(`Uploading video ${index + 1} of ${batch.length} securely...`);
-          const supabase = createBrowserSupabaseClient();
-          const { error: uploadError } = await supabase.storage
-            .from("mydancr-tv-videos")
-            .uploadToSignedUrl(data.upload.path, data.upload.token, item.file, {
-              contentType: item.file.type,
-              upsert: false,
+          if (!data.upload.alreadySubmitted && !data.upload.uploadComplete) {
+            if (!data.upload.path || !data.upload.token) throw new Error("Unable to prepare upload.");
+            setStatus(`Uploading video ${index + 1} of ${batch.length} securely...`);
+            const supabase = createBrowserSupabaseClient();
+            const { error: uploadError } = await supabase.storage
+              .from("mydancr-tv-videos")
+              .uploadToSignedUrl(data.upload.path, data.upload.token, item.file, {
+                contentType: item.file.type,
+                upsert: false,
+              });
+            if (!isCurrentVideoAction(requestId, controller)) return;
+            if (uploadError) throw uploadError;
+          }
+
+          if (!data.upload.alreadySubmitted) {
+            updateQueuedVideo(item.id, { stage: "checking", progress: 85 });
+            setStatus(`Running safety review for video ${index + 1} of ${batch.length}...`);
+            await requestDancerTvVideoJson(preparedVideoId, {
+              method: "PATCH",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ action: "submit" }),
+              fallbackMessage: "Unable to submit video for review.",
+              signal: controller.signal,
             });
-          if (uploadError) throw uploadError;
-
-          updateQueuedVideo(item.id, { stage: "checking", progress: 85 });
-          setStatus(`Running safety review for video ${index + 1} of ${batch.length}...`);
-          const submitted = await requestDancerTvVideoJson(preparedVideoId, {
-            method: "PATCH",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ action: "submit" }),
-            fallbackMessage: "Unable to submit video for review.",
-          });
+            if (!isCurrentVideoAction(requestId, controller)) return;
+          }
 
           submittedCount += 1;
           queuedPreviewUrlsRef.current.delete(item.previewUrl);
           URL.revokeObjectURL(item.previewUrl);
         } catch (error) {
-          if (preparedVideoId) {
-            await requestDancerTvVideoJson(preparedVideoId, {
-              method: "DELETE",
-            }).catch(() => undefined);
-          }
+          if (!isCurrentVideoAction(requestId, controller)) return;
           failedItems.push({
             ...item,
             stage: "failed",
@@ -286,6 +362,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         }
       }
 
+      if (!isCurrentVideoAction(requestId, controller)) return;
       const processedIds = new Set(batch.map((item) => item.id));
       setQueuedVideos((current) => [
         ...current.filter((item) => !processedIds.has(item.id)),
@@ -294,7 +371,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       if (libraryInputRef.current) libraryInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
       if (submittedCount) {
-        await loadWorkspace({ silent: true });
+        await refreshWorkspaceForAction(requestId, controller);
+        if (!isCurrentVideoAction(requestId, controller)) return;
         announceDancerProfileVideosChanged();
       }
       setStatus([
@@ -302,24 +380,29 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         failedItems.length ? `${failedItems.length} ready to retry` : "",
       ].filter(Boolean).join(". ") || "No videos were uploaded.");
     } finally {
-      setUploadingQueueItemId("");
-      setIsSubmitting(false);
+      if (finishVideoAction(requestId)) {
+        setUploadingQueueItemId("");
+        setIsSubmitting(false);
+      }
     }
   }
 
   async function removeVideo(videoId: string) {
+    if (actionInFlightRef.current) return;
     if (!window.confirm("Remove this video from MyDancr TV?")) return;
     if (!readDashboardAccessToken("dancer")) return setStatus("Sign in required.");
+    const action = beginVideoAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setRemovingId(videoId);
     setStatus("");
     try {
       const data = await requestDancerTvVideoJson(videoId, {
         method: "DELETE",
         fallbackMessage: "Unable to remove video.",
+        signal: controller.signal,
       });
-      workspaceRequestIdRef.current += 1;
-      workspaceAbortRef.current?.abort();
-      workspaceAbortRef.current = null;
+      if (!isCurrentVideoAction(requestId, controller)) return;
       setWorkspace((current) => current
         ? {
           ...current,
@@ -330,11 +413,15 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       announceDancerProfileVideosChanged();
       setStatus(data.message || "Video removed from MyDancr TV.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to remove video.");
+      if (isCurrentVideoAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to remove video.");
+      }
     } finally {
-      setRemovingId("");
+      if (finishVideoAction(requestId)) setRemovingId("");
     }
   }
+
+  const videoActionBusy = isSubmitting || Boolean(removingId);
 
   const content = (
     <>
@@ -396,11 +483,11 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
             <strong>Confirm permissions</strong>
           </div>
           <label className="tv-check">
-            <input ref={consentInputRef} checked={consentConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
+            <input ref={consentInputRef} checked={consentConfirmed} disabled={videoActionBusy} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
             <span>I am the only person shown, and this video is of me.</span>
           </label>
           <label className="tv-check">
-            <input ref={rightsInputRef} checked={rightsConfirmed} disabled={isSubmitting} type="checkbox" onChange={(event) => setRightsConfirmed(event.target.checked)} />
+            <input ref={rightsInputRef} checked={rightsConfirmed} disabled={videoActionBusy} type="checkbox" onChange={(event) => setRightsConfirmed(event.target.checked)} />
             <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
           </label>
           <div className="tv-video-source-grid">
@@ -408,7 +495,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               ref={libraryInputRef}
               accept="video/mp4,video/webm,video/quicktime,.mov"
               className="tv-video-source-input"
-              disabled={isSubmitting}
+              disabled={videoActionBusy}
               multiple
               tabIndex={-1}
               type="file"
@@ -418,10 +505,10 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               }}
             />
             <button
-              aria-disabled={!videoPermissionsConfirmed || isSubmitting}
+              aria-disabled={!videoPermissionsConfirmed || videoActionBusy}
               aria-label="Choose profile videos from your library"
               className={`tv-video-source-action${!videoPermissionsConfirmed ? " is-awaiting-permissions" : ""}`}
-              disabled={isSubmitting}
+              disabled={videoActionBusy}
               type="button"
               onClick={() => openVideoSource(libraryInputRef.current)}
             >
@@ -439,7 +526,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               accept="video/*"
               capture="environment"
               className="tv-video-source-input"
-              disabled={isSubmitting}
+              disabled={videoActionBusy}
               tabIndex={-1}
               type="file"
               onChange={(event) => {
@@ -448,10 +535,10 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               }}
             />
             <button
-              aria-disabled={!videoPermissionsConfirmed || isSubmitting}
+              aria-disabled={!videoPermissionsConfirmed || videoActionBusy}
               aria-label="Record a new profile video"
               className={`tv-video-source-action${!videoPermissionsConfirmed ? " is-awaiting-permissions" : ""}`}
-              disabled={isSubmitting}
+              disabled={videoActionBusy}
               type="button"
               onClick={() => openVideoSource(cameraInputRef.current)}
             >
@@ -486,8 +573,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                     {item.stage !== "failed" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
                     {item.error ? <p>{item.error}</p> : null}
                     <span className="tv-queue-actions">
-                      {item.error ? <button disabled={isSubmitting} onClick={() => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
-                      <button disabled={isSubmitting} onClick={() => removeQueuedVideo(item.id)} type="button">Remove</button>
+                      {item.error ? <button disabled={videoActionBusy} onClick={() => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+                      <button disabled={videoActionBusy} onClick={() => void removeQueuedVideo(item)} type="button">Remove</button>
                     </span>
                   </div>
                 </article>
@@ -540,7 +627,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                   </dl>
                 ) : null}
                 {video.status === "approved" && workspace.profileEligible ? <Link href={`/tv/${video.id}`}>Open live video</Link> : null}
-                <button type="button" disabled={removingId === video.id} onClick={() => removeVideo(video.id)}>
+                <button type="button" disabled={videoActionBusy} onClick={() => removeVideo(video.id)}>
                   {removingId === video.id ? "Removing…" : "Remove video"}
                 </button>
               </div>
