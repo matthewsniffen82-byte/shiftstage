@@ -107,6 +107,10 @@ test("NFC exits use native navigation so mobile browsers can leave immediately",
 
 test("dressing-room authentication stays venue-aware and dancer-only", () => {
   assert.match(account, /fetch\(`\/api\/nfc\/\$\{encodeURIComponent\(venueNfcToken\)\}`/);
+  assert.match(account, /fetch\(`\/api\/nfc\/\$\{encodeURIComponent\(venueNfcToken\)\}`, \{[\s\S]*?signal: controller\.signal/);
+  assert.equal((account.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
+  assert.match(account, /return \(\) => controller\.abort\(\);/);
+  assert.doesNotMatch(account, /let cancelled = false;/);
   assert.match(account, /Verified dressing-room tap/);
   assert.match(account, /Connect to \{nfcVenueName\}/);
   assert.match(account, /Venue affiliation activates automatically/);

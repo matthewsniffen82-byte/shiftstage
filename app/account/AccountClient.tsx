@@ -74,7 +74,7 @@ export default function AccountClient() {
 
   useEffect(() => {
     if (!venueNfcToken) return;
-    let cancelled = false;
+    const controller = new AbortController();
     setNfcContextStatus("loading");
 
     async function loadNfcAccountContext() {
@@ -83,26 +83,27 @@ export default function AccountClient() {
           headers: { accept: "application/json" },
           cache: "no-store",
           credentials: "same-origin",
+          signal: controller.signal,
         });
         const data = await response.json() as { ok?: boolean; error?: string; tag?: NfcAccountContext["tag"]; venue?: NfcAccountContext["venue"] };
+        if (controller.signal.aborted) return;
         if (!response.ok || !data.ok || !data.tag || !data.venue) {
           throw new Error(data.error || "Unable to load this venue tap.");
         }
         if (data.tag.type !== "dressing_room") {
           throw new Error("This sticker is not set up for dancer venue access.");
         }
-        if (cancelled) return;
         setNfcAccountContext({ tag: data.tag, venue: data.venue });
         setNfcContextStatus("ready");
       } catch {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         setNfcAccountContext(null);
         setNfcContextStatus("error");
       }
     }
 
     void loadNfcAccountContext();
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, [venueNfcToken]);
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
