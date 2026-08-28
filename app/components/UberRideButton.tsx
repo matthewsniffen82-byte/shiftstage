@@ -9,7 +9,6 @@ import {
 } from "@/src/lib/dancr/uber";
 import { trackUberRideLinkClicked } from "@/src/lib/dancr/uber-analytics";
 import type { UberRideSource } from "@/src/lib/dancr/uber-types";
-import { isFictionalVenueTravelPreviewOnly } from "@/src/lib/dancr/venue-branding";
 
 type UberRideVenue = PublicVenueDestination & {
   id: string;
@@ -36,25 +35,6 @@ export function UberRideButton({ venue, source, dancerId, compact = false }: Ube
   const venueName = String(venue.name || "this club").trim() || "this club";
   const label = rideActionLabel(source, venueName);
   const visibleLabel = compact ? "Get a Ride" : label;
-
-  if (isFictionalVenueTravelPreviewOnly(venue)) {
-    return (
-      <button
-        aria-disabled="true"
-        aria-label={`${label}. Preview only.`}
-        className={`${styles.button} ${sourceClass[source]}`}
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-        }}
-        tabIndex={-1}
-        type="button"
-      >
-        <RideIcon />
-        <span>{visibleLabel}</span>
-      </button>
-    );
-  }
 
   const destination = publicVenueUberDestination(venue);
   if (!isValidUberDestination(destination)) return null;

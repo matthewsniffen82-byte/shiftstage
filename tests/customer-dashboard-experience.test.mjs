@@ -53,15 +53,11 @@ test("Your Night and Saved cards use live customer records and production action
   assert.match(dashboard, /No followed dancers yet[\s\S]*?No favorite dancers yet[\s\S]*?No followed clubs yet/);
 });
 
-test("fictional club direction controls remain visually active while demo navigation is blocked", () => {
-  assert.match(dashboard, /import \{ isFictionalVenueTravelPreviewOnly \}/);
-  assert.match(dashboard, /async function openDirections[\s\S]*?if \(isFictionalVenueTravelPreviewOnly\(venue\)\) return;/);
-  assert.match(dashboard, /function CustomerDirectionsButton[\s\S]*?const previewOnly = isFictionalVenueTravelPreviewOnly\(venue\)/);
-  assert.match(dashboard, /aria-disabled=\{previewOnly \? "true" : undefined\}/);
-  assert.match(dashboard, /disabled=\{!previewOnly && pending\}/);
-  assert.match(dashboard, /if \(previewOnly\) \{[\s\S]*?event\.preventDefault\(\);[\s\S]*?event\.stopPropagation\(\);[\s\S]*?return;/);
-  assert.match(dashboard, /tabIndex=\{previewOnly \? -1 : undefined\}/);
-  assert.match(dashboard, /\.customer-card-actions button\[aria-disabled="true"\] \{ opacity: 1; cursor: default; \}/);
+test("fictional club direction controls navigate to the shared MyDancr destination", () => {
+  assert.match(dashboard, /import \{ fictionalVenueTravelAddress \}/);
+  assert.doesNotMatch(dashboard, /isFictionalVenueTravelPreviewOnly|previewOnly/);
+  assert.match(dashboard, /function CustomerDirectionsButton[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{\(\) => void onDirections\(venue, dancerId\)\}/);
+  assert.match(dashboard, /function customerDirectionsHref[\s\S]*?const fictionalAddress = fictionalVenueTravelAddress\(venue\)[\s\S]*?const query = fictionalAddress \|\|/);
 });
 
 test("saved customer data includes approved responsive imagery and the next real posted shift", () => {

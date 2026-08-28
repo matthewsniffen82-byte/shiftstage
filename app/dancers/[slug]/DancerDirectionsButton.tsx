@@ -2,7 +2,6 @@
 
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { formatPublicVenueAddress } from "@/src/lib/dancr/uber";
-import { isFictionalVenueTravelPreviewOnly } from "@/src/lib/dancr/venue-branding";
 
 type DancerDirectionsVenue = {
   id: string;
@@ -22,25 +21,6 @@ export function DancerDirectionsButton({
 }) {
   const address = formatPublicVenueAddress(venue);
   const label = `Directions to ${venue.name}`;
-
-  if (isFictionalVenueTravelPreviewOnly(venue)) {
-    return (
-      <button
-        aria-disabled="true"
-        aria-label={`${label}. Preview only.`}
-        className="profile-directions-button"
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-        }}
-        tabIndex={-1}
-        type="button"
-      >
-        <DirectionsIcon />
-        <span>Directions</span>
-      </button>
-    );
-  }
 
   if (!address) {
     return (

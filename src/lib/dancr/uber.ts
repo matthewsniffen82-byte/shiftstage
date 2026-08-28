@@ -1,3 +1,5 @@
+import { fictionalVenueTravelAddress } from "./venue-branding.ts";
+
 export const UBER_UNIVERSAL_LINK = "https://m.uber.com/looking";
 
 export type UberDestination = {
@@ -58,17 +60,22 @@ export function publicVenueUberDestination(
   const formattedAddress = formatPublicVenueAddress(venue);
   if (!name || !formattedAddress) return null;
 
+  const isFictionalDestination = Boolean(fictionalVenueTravelAddress(venue));
+
   return {
     name,
     formattedAddress,
-    latitude: venue.latitude,
-    longitude: venue.longitude,
+    latitude: isFictionalDestination ? null : venue.latitude,
+    longitude: isFictionalDestination ? null : venue.longitude,
   };
 }
 
 export function formatPublicVenueAddress(
   venue: PublicVenueDestination,
 ): string {
+  const fictionalAddress = fictionalVenueTravelAddress(venue);
+  if (fictionalAddress) return fictionalAddress;
+
   const explicit = cleanText(venue?.formattedAddress);
   if (explicit) return explicit;
 

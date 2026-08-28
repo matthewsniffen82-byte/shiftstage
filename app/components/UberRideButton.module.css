@@ -21,6 +21,7 @@
   line-height: 1;
   text-decoration: none;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition:
     background 160ms ease,
     border-color 160ms ease,
@@ -28,7 +29,7 @@
     transform 120ms ease;
 }
 
-.button:is(:hover, :focus-visible) {
+.button:focus-visible {
   border-color: var(--dancr-color-brand-primary-strong, rgba(124, 58, 237, 0.72));
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 52%),
@@ -113,12 +114,24 @@
   filter: none;
 }
 
-.dancerProfile:hover {
-  border-color: rgba(226, 232, 240, 0.28);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.085), transparent 52%),
-    rgba(18, 19, 23, 0.9);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+@media (hover: hover) and (pointer: fine) {
+  .button:hover {
+    border-color: var(--dancr-color-brand-primary-strong, rgba(124, 58, 237, 0.72));
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 52%),
+      color-mix(in srgb, var(--dancr-color-brand-primary, #7c3aed) 16%, rgba(17, 17, 24, 0.88));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      0 12px 26px rgba(0, 0, 0, 0.3);
+  }
+
+  .dancerProfile:hover {
+    border-color: rgba(226, 232, 240, 0.28);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.085), transparent 52%),
+      rgba(18, 19, 23, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
 }
 
 .tonightFeed {

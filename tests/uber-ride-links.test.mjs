@@ -6,6 +6,7 @@ import {
   UBER_UNIVERSAL_LINK,
   buildUberRideUrl,
   formatPublicVenueAddress,
+  publicVenueUberDestination,
 } from "../src/lib/dancr/uber.ts";
 
 function parameters(input) {
@@ -152,6 +153,29 @@ test("public venue address fields form one postal destination when needed", () =
   );
 });
 
+test("fictional venues use the shared MyDancr destination without stale real coordinates", () => {
+  const venue = {
+    slug: "talk-of-the-town",
+    name: "Echo House",
+    address: "123 Previous Venue Address",
+    city: "Las Vegas",
+    state: "NV",
+    latitude: 36.2,
+    longitude: -115.1,
+  };
+
+  assert.equal(
+    formatPublicVenueAddress(venue),
+    "0000 MyDancr Ave, Las Vegas, NV 55555",
+  );
+  assert.deepEqual(publicVenueUberDestination(venue), {
+    name: "Echo House",
+    formattedAddress: "0000 MyDancr Ave, Las Vegas, NV 55555",
+    latitude: null,
+    longitude: null,
+  });
+});
+
 const [componentSource, componentStyles, dancerPageSource, eventRouteSource, liveShellSource, docsSource, sharedAesthetic] = await Promise.all([
   readFile(new URL("../app/components/UberRideButton.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/components/UberRideButton.module.css", import.meta.url), "utf8"),
@@ -207,12 +231,16 @@ test("venue and dancer profiles expose their required primary ride actions", () 
 
 test("Get a Ride stays neutral glass at rest and reserves violet fill for general interaction", () => {
   assert.match(componentStyles, /\.button \{[\s\S]*?var\(--dancr-color-brand-primary-medium[\s\S]*?rgba\(17, 17, 24, 0\.82\)[\s\S]*?backdrop-filter: blur\(16px\)/);
-  assert.match(componentStyles, /\.button:is\(:hover, :focus-visible\)[\s\S]*?brand-primary[\s\S]*?16%/);
+  assert.match(componentStyles, /\.button:focus-visible[\s\S]*?brand-primary[\s\S]*?16%/);
+  assert.match(componentStyles, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?\.button:hover[\s\S]*?brand-primary[\s\S]*?16%/);
+  assert.match(componentStyles, /-webkit-tap-highlight-color: transparent/);
   assert.match(componentStyles, /\.button:active[\s\S]*?brand-primary[\s\S]*?24%/);
   assert.match(componentStyles, /\.icon \{[\s\S]*?var\(--dancr-color-brand-core/);
   assert.doesNotMatch(componentStyles, /linear-gradient\(135deg, #6d28d9, #4c1d95\)/);
   assert.match(liveShellSource, /\.uber-ride-link \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?rgba\(17,17,24,\.82\)[\s\S]*?backdrop-filter: blur\(16px\)/);
-  assert.match(liveShellSource, /\.uber-ride-link:is\(:hover, :focus-visible\)[\s\S]*?brand-primary\) 16%/);
+  assert.match(liveShellSource, /\.uber-ride-link:focus-visible[\s\S]*?brand-primary\) 16%/);
+  assert.match(liveShellSource, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?\.uber-ride-link:hover[\s\S]*?brand-primary\) 16%/);
+  assert.match(liveShellSource, /\.uber-ride-link \{[\s\S]*?-webkit-tap-highlight-color: transparent/);
   assert.match(liveShellSource, /\.uber-ride-link:active[\s\S]*?brand-primary\) 24%/);
   assert.doesNotMatch(liveShellSource, /linear-gradient\(135deg, #6d28d9, #4c1d95\)/);
   assert.match(componentStyles, /\.dancerProfile \.icon \{[\s\S]*?rgba\(226, 232, 240, 0\.82\) !important/);
@@ -221,10 +249,12 @@ test("Get a Ride stays neutral glass at rest and reserves violet fill for genera
   assert.doesNotMatch(liveShellSource, /\.profile-tonight-travel-actions > \.profile-primary-directions \{[\s\S]*?rgba\(142, 226, 248/);
 });
 
-test("venue travel actions keep compact labels and explicit address-unavailable states", () => {
-  assert.match(liveShellSource, /function isFictionalDemoTravelPreviewOnly\(venue\)[\s\S]*?return isFictionalDemoVenue\(venue\)/);
-  assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?isFictionalDemoTravelPreviewOnly\(venue\)[\s\S]*?data-demo-travel="directions"/);
-  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?isFictionalDemoTravelPreviewOnly\(venue\)[\s\S]*?data-demo-travel="uber"/);
+test("venue travel actions use the fictional destination while preserving true unavailable states", () => {
+  assert.match(liveShellSource, /const FICTIONAL_DEMO_VENUE_TRAVEL_ADDRESS = "0000 MyDancr Ave, Las Vegas, NV 55555"/);
+  assert.match(liveShellSource, /function fictionalDemoVenueTravelAddress\(venue\)[\s\S]*?isFictionalDemoVenue\(venue\) \? FICTIONAL_DEMO_VENUE_TRAVEL_ADDRESS : ""/);
+  assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?const destinationAddress = fictionalDemoVenueTravelAddress\(venue\)[\s\S]*?https:\/\/maps\.google\.com\/\?q=\$\{encodeURIComponent\(destinationAddress\)\}/);
+  assert.match(liveShellSource, /function publicVenueUberDestination[\s\S]*?const fictionalAddress = fictionalDemoVenueTravelAddress\(venue\)[\s\S]*?latitude: fictionalAddress \? null : venue\.latitude[\s\S]*?longitude: fictionalAddress \? null : venue\.longitude/);
+  assert.doesNotMatch(liveShellSource, /data-demo-travel|isFictionalDemoTravelPreviewOnly/);
   assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?data-travel-unavailable="directions" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("pin", escapeHtml\(label\)\)/);
   assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="uber" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("car", escapeHtml\(label\)\)/);
   assert.match(liveShellSource, /Uber is unavailable because this club has not published a usable address\./);
@@ -238,6 +268,8 @@ test("venue travel actions keep compact labels and explicit address-unavailable 
   assert.match(sharedAesthetic, /> \.home-discovery-feed-directions:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-text-primary\)[\s\S]*?var\(--dancr-color-surface-raised\)/);
   assert.match(sharedAesthetic, /> \.home-venue-discovery-uber:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?var\(--dancr-color-surface-raised\) 82%[\s\S]*?backdrop-filter: blur\(16px\)/);
   assert.match(sharedAesthetic, /> \.home-venue-discovery-uber:is\(\.is-inactive-demo, \.is-travel-unavailable\)[\s\S]*?\.action-icon \{[\s\S]*?var\(--dancr-color-brand-core\)[\s\S]*?filter: none/);
+  assert.match(sharedAesthetic, /\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\) \{[\s\S]*?-webkit-tap-highlight-color: transparent !important;[\s\S]*?touch-action: manipulation/);
+  assert.match(sharedAesthetic, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?\.venue-primary-actions > :is\(\.venue-address-directions, \.venue-detail-uber\):hover/);
 });
 
 test("Uber ride analytics are first-party, constrained, and documented", () => {

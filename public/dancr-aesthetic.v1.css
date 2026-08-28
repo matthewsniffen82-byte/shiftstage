@@ -6880,7 +6880,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):is(:hover, :focus-visible) {
+  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):focus-visible {
   border-color: var(--dancr-color-border-strong) !important;
   background: color-mix(in srgb, var(--dancr-color-text-primary) 7%, var(--dancr-color-surface-raised)) !important;
 }
@@ -6907,7 +6907,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-secondary-actions .action-btn:is(:hover, :focus-visible) {
+  .venue-secondary-actions .action-btn:focus-visible {
   border-color: var(--dancr-color-border-strong) !important;
   background: color-mix(
     in srgb,
@@ -9177,6 +9177,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
     0 10px 24px rgba(0, 0, 0, 0.38) !important;
   -webkit-backdrop-filter: blur(16px) saturate(1.1) !important;
   backdrop-filter: blur(16px) saturate(1.1) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -9193,7 +9195,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):is(:hover, :focus-visible) {
+  .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):focus-visible {
   border-color: color-mix(
     in srgb,
     var(--dancr-color-text-primary) 25%,
@@ -9256,6 +9258,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
     0 8px 18px rgba(0, 0, 0, 0.28) !important;
   -webkit-backdrop-filter: blur(14px) saturate(1.06) !important;
   backdrop-filter: blur(14px) saturate(1.06) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -9272,7 +9276,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-secondary-actions .action-btn:is(:hover, :focus-visible) {
+  .venue-secondary-actions .action-btn:focus-visible {
   border-color: color-mix(
     in srgb,
     var(--dancr-color-text-primary) 20%,
@@ -9305,6 +9309,34 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
     var(--dancr-color-success) 6%,
     var(--dancr-color-surface)
   ) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail
+    .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber):hover {
+    border-color: color-mix(
+      in srgb,
+      var(--dancr-color-text-primary) 25%,
+      var(--dancr-color-border-subtle)
+    ) !important;
+    color: var(--dancr-color-text-primary) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+      color-mix(in srgb, var(--dancr-color-surface-raised) 88%, transparent) !important;
+  }
+
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail
+    .venue-secondary-actions .action-btn:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--dancr-color-text-primary) 20%,
+      var(--dancr-color-border-subtle)
+    ) !important;
+    color: var(--dancr-color-text-primary) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.01)),
+      color-mix(in srgb, var(--dancr-color-surface) 80%, transparent) !important;
+  }
 }
 
 /* Shared form-field color and focus system. Keep fields neutral at rest and

@@ -39,7 +39,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /details\.address \? `<div class="venue-address-line">[\s\S]*?escapeHtml\(details\.address\)[\s\S]*?: ""/);
   assert.doesNotMatch(venueDetail, /Address unavailable|venue-address-tile-no-address/);
   assert.equal((venueDetail.match(/encodeURIComponent\(details\.address\)/g) || []).length, 0);
-  assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?https:\/\/maps\.google\.com\/\?q=\$\{encodeURIComponent\(details\.address\)\}/);
+  assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?https:\/\/maps\.google\.com\/\?q=\$\{encodeURIComponent\(destinationAddress\)\}/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Distance<\/strong>/);
   assert.doesNotMatch(venueDetail, /details\.description|venue-confirmed shifts|nightlife venue in/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Hours/);

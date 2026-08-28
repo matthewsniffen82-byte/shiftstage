@@ -32038,7 +32038,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=205" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=206" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -38194,10 +38194,11 @@
           text-align: center;
           text-decoration: none !important;
           touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
           transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .12s ease;
         }
 
-        .uber-ride-link:is(:hover, :focus-visible) {
+        .uber-ride-link:focus-visible {
           border-color: var(--dancr-color-brand-primary-strong) !important;
           background:
             linear-gradient(180deg, rgba(255,255,255,.1), transparent 52%),
@@ -38205,6 +38206,18 @@
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,.14),
             0 12px 26px rgba(0,0,0,.3) !important;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .uber-ride-link:hover {
+            border-color: var(--dancr-color-brand-primary-strong) !important;
+            background:
+              linear-gradient(180deg, rgba(255,255,255,.1), transparent 52%),
+              color-mix(in srgb, var(--dancr-color-brand-primary) 16%, rgba(17,17,24,.88)) !important;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,.14),
+              0 12px 26px rgba(0,0,0,.3) !important;
+          }
         }
 
         .uber-ride-link:active {
@@ -42564,22 +42577,25 @@
       if (!venue) return null;
       const details = venueDetails(venue, city);
       const name = String(venue.name || details.name || "").trim();
-      const formattedAddress = String(venue.address || details.address || "").trim();
+      const fictionalAddress = fictionalDemoVenueTravelAddress(venue);
+      const formattedAddress = fictionalAddress || String(venue.address || details.address || "").trim();
       if (!name || !formattedAddress) return null;
       return {
         name,
         formattedAddress,
-        latitude: venue.latitude,
-        longitude: venue.longitude
+        latitude: fictionalAddress ? null : venue.latitude,
+        longitude: fictionalAddress ? null : venue.longitude
       };
     }
+
+    const FICTIONAL_DEMO_VENUE_TRAVEL_ADDRESS = "0000 MyDancr Ave, Las Vegas, NV 55555";
 
     function isFictionalDemoVenue(venue) {
       return String(venue?.logoImageUrl || "").trim().startsWith("/venue-logos/fictional/");
     }
 
-    function isFictionalDemoTravelPreviewOnly(venue) {
-      return isFictionalDemoVenue(venue);
+    function fictionalDemoVenueTravelAddress(venue) {
+      return isFictionalDemoVenue(venue) ? FICTIONAL_DEMO_VENUE_TRAVEL_ADDRESS : "";
     }
 
     function venueDirectionsMarkup({ venue, className, label = "Directions", city = selectedCity(), dancerId = "" }) {
@@ -42587,13 +42603,11 @@
       const safeName = escapeHtml(venue?.name || details.name || "this club");
       const venueValue = escapeOptionValue(venue?.name || details.name || "");
       const dancerValue = escapeOptionValue(dancerId);
-      if (isFictionalDemoTravelPreviewOnly(venue)) {
-        return `<button class="${className} is-inactive-demo" type="button" data-demo-travel="directions" tabindex="-1" aria-disabled="true" aria-label="${escapeHtml(label)}. Preview only.">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
-      }
-      if (!String(details.address || "").trim()) {
+      const destinationAddress = fictionalDemoVenueTravelAddress(venue) || String(details.address || "").trim();
+      if (!destinationAddress) {
         return `<button class="${className} is-travel-unavailable" type="button" data-travel-unavailable="directions" disabled aria-disabled="true" aria-label="Directions unavailable for ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
       }
-      return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}"${dancerValue ? ` data-dancer-id="${dancerValue}"` : ""} aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
+      return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(destinationAddress)}" target="_blank" rel="noreferrer" data-venue="${venueValue}"${dancerValue ? ` data-dancer-id="${dancerValue}"` : ""} aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
     }
 
     function rideActionLabel(source, venueName) {
@@ -42606,9 +42620,6 @@
       const label = rideActionLabel(source, venue?.name);
       const visibleLabel = String(displayLabel || label).trim() || label;
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
-      if (isFictionalDemoTravelPreviewOnly(venue)) {
-        return `<button class="${classes} is-inactive-demo" type="button" data-demo-travel="uber" tabindex="-1" aria-disabled="true" aria-label="${escapeHtml(label)}. Preview only.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</button>`;
-      }
       if (!destination) {
         const safeName = escapeHtml(venue?.name || "this club");
         return `<button class="${classes} is-travel-unavailable" type="button" data-travel-unavailable="uber" disabled aria-disabled="true" aria-label="Uber unavailable for ${safeName}">${actionButtonLabel("car", escapeHtml(label))}</button>`;
@@ -42633,14 +42644,6 @@
       if (!link) return;
       event.stopPropagation();
       recordUberRideLinkClick(link);
-    }, true);
-
-    document.addEventListener("click", (event) => {
-      const demoTravelButton = event.target.closest?.("[data-demo-travel]");
-      if (!demoTravelButton) return;
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
     }, true);
 
     document.addEventListener("click", (event) => {

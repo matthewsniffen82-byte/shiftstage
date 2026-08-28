@@ -11,7 +11,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
-import { isFictionalVenueTravelPreviewOnly } from "@/src/lib/dancr/venue-branding";
+import { fictionalVenueTravelAddress } from "@/src/lib/dancr/venue-branding";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import {
   CLUB_DEAL_OFFER_PRESETS,
@@ -1393,8 +1393,6 @@ function CustomerPanel({
   }
 
   async function openDirections(venue: SavedVenueSummary, dancerId?: string | null) {
-    if (isFictionalVenueTravelPreviewOnly(venue)) return;
-
     const venueId = String(venue.id || "");
     if (!venueId) {
       setActionStatus("Venue directions are unavailable.");
@@ -1789,22 +1787,11 @@ function CustomerDirectionsButton({
   pending: boolean;
   venue: SavedVenueSummary;
 }) {
-  const previewOnly = isFictionalVenueTravelPreviewOnly(venue);
-
   return (
     <button
-      aria-disabled={previewOnly ? "true" : undefined}
-      aria-label={previewOnly ? "Directions. Preview only." : "Directions"}
-      disabled={!previewOnly && pending}
-      onClick={(event) => {
-        if (previewOnly) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-        void onDirections(venue, dancerId);
-      }}
-      tabIndex={previewOnly ? -1 : undefined}
+      aria-label="Directions"
+      disabled={pending}
+      onClick={() => void onDirections(venue, dancerId)}
       type="button"
     >
       Directions
@@ -1970,11 +1957,12 @@ function customerVenueHref(venue: SavedVenueSummary) {
 }
 
 function customerDirectionsHref(venue: SavedVenueSummary) {
+  const fictionalAddress = fictionalVenueTravelAddress(venue);
   const latitude = Number(venue.latitude);
   const longitude = Number(venue.longitude);
-  const query = Number.isFinite(latitude) && Number.isFinite(longitude)
+  const query = fictionalAddress || (Number.isFinite(latitude) && Number.isFinite(longitude)
     ? `${latitude},${longitude}`
-    : [venue.name, venue.address, venue.city, venue.state].filter(Boolean).join(", ");
+    : [venue.name, venue.address, venue.city, venue.state].filter(Boolean).join(", "));
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
