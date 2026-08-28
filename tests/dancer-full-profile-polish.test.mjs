@@ -244,7 +244,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   assert.doesNotMatch(publicProfilePage, /className="profile-overview"/);
 });
 
-test("profile action controls are unboxed, evenly distributed, and available Going highlights only its icon", () => {
+test("profile action controls are unboxed, follow the header columns, and available Going highlights only its icon", () => {
   const guestActionsBlock = aesthetic.match(
     /\/\* Guest actions read as a single icon row[\s\S]*?(?=\/\* Production TV-card branding)/,
   )?.[0] || "";
@@ -259,6 +259,10 @@ test("profile action controls are unboxed, evenly distributed, and available Goi
   assert.match(
     guestActionsBlock,
     /#profileBackdrop #profileModal \.modal-actions,[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?width: min\(100%, 760px\) !important;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?margin: 0 auto 12px !important;[\s\S]*?padding: 4px 0 0 !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /The action row then follows the same header grid:[\s\S]*?#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 60px !important;[\s\S]*?grid-template-rows: 24px 29px !important;[\s\S]*?align-content: start !important;[\s\S]*?gap: 7px !important;[\s\S]*?#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?grid-template-columns: 52px repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?padding: 4px 46px 0 0 !important;/,
   );
   assert.doesNotMatch(
     aesthetic,

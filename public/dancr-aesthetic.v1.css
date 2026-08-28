@@ -10914,9 +10914,23 @@ body.dancr-button-system :is(
 }
 
 /* Align the stage-name start with the rendered Follower/Followers word below.
- * The hidden guide uses identical label typography, while the verified badge
- * remains anchored to the name itself with one consistent gap. */
+ * The identity stack shares its top edge with the avatar and leaves a little
+ * more air before analytics. The action row then follows the same header grid:
+ * avatar / Follow, Followers / Notify, Going / I'm Going, Views / Share. */
 @media (max-width: 759px) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
+    height: 60px !important;
+    grid-template-rows: 24px 29px !important;
+    align-content: start !important;
+    gap: 7px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
+    grid-template-columns: 52px repeat(3, minmax(0, 1fr)) !important;
+    column-gap: 0 !important;
+    padding: 4px 46px 0 0 !important;
+  }
+
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
     position: relative !important;
     inset: 0 auto auto 0 !important;
