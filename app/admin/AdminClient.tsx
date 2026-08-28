@@ -3703,6 +3703,7 @@ function ApprovalQueue({
               <AdminDancerFullProfile
                 profile={selectedProfile}
                 activeTab="all"
+                actionBusy={controlsBusy}
                 deletingContentKey={deletingContentKey}
                 onDeletePhoto={(targetId, label) => deleteProfileContent("photo", targetId, label)}
                 onDeleteSocial={(targetId, label) => deleteProfileContent("social-link", targetId, label)}
@@ -4190,11 +4191,48 @@ function DancerDirectory({
   const [selectedId, setSelectedId] = useState("");
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [status, setStatus] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isUpdatingLifecycle, setIsUpdatingLifecycle] = useState(false);
   const [lifecycleReason, setLifecycleReason] = useState("");
   const [detailTab, setDetailTab] = useState("overview");
-  const [deletingContentKey, setDeletingContentKey] = useState("");
+  const [actionBusyKey, setActionBusyKey] = useState("");
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+  const controlsBusy = Boolean(actionBusyKey);
+  const isDeleting = actionBusyKey.startsWith("delete-profile:");
+  const deletingContentKey = actionBusyKey.startsWith("photo:") || actionBusyKey.startsWith("social-link:") ? actionBusyKey : "";
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginDirectoryAction(key: string): ApprovalActionRequest | null {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    setActionBusyKey(key);
+    return { controller, requestId };
+  }
+
+  function isCurrentDirectoryAction(action: ApprovalActionRequest) {
+    return mountedRef.current && !action.controller.signal.aborted && action.requestId === actionSequenceRef.current;
+  }
+
+  function finishDirectoryAction(action: ApprovalActionRequest) {
+    if (actionAbortRef.current === action.controller) actionAbortRef.current = null;
+    if (action.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && action.requestId === actionSequenceRef.current) setActionBusyKey("");
+  }
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
@@ -4247,6 +4285,8 @@ function DancerDirectory({
   async function openProfile(item: Record<string, unknown>) {
     const dancerId = asText(item.id);
     if (!dancerId) return;
+    const action = beginDirectoryAction(`profile:${dancerId}`);
+    if (!action) return;
 
     setSelectedId(dancerId);
     setProfile(null);
@@ -4254,11 +4294,15 @@ function DancerDirectory({
     setLifecycleReason("");
     setStatus("Loading full profile...");
     try {
-      const detail = await requestAdminDancerProfile(dancerId);
+      const detail = await requestAdminDancerProfile(dancerId, action.controller.signal);
+      if (!isCurrentDirectoryAction(action)) return;
       setProfile(detail);
       setStatus("");
     } catch (error) {
+      if (!isCurrentDirectoryAction(action)) return;
       setStatus(error instanceof Error ? error.message : "Unable to load dancer profile.");
+    } finally {
+      finishDirectoryAction(action);
     }
   }
 
@@ -4270,16 +4314,19 @@ function DancerDirectory({
       setStatus("Add a short reason before changing profile access.");
       return;
     }
-    setIsUpdatingLifecycle(true);
+    const request = beginDirectoryAction(`lifecycle:${dancerId}`);
+    if (!request) return;
     setStatus(action === "disable" ? "Disabling profile..." : "Reactivating profile...");
     try {
       const data = await requestAdminJson(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
         method: "PATCH",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action, reason: lifecycleReason.trim() }),
         fallbackMessage: "Unable to update dancer lifecycle.",
       });
       if (!data.profile) throw new Error("Unable to update dancer lifecycle.");
+      if (!isCurrentDirectoryAction(request)) return;
       setProfile(data.profile);
       onProfileUpdated(data.profile);
       setLifecycleReason("");
@@ -4287,9 +4334,10 @@ function DancerDirectory({
       setStatus("");
       onActionConfirmed(action === "disable" ? "Dancer profile disabled and hidden." : "Dancer profile reactivated using its saved approval state.");
     } catch (error) {
+      if (!isCurrentDirectoryAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to update dancer lifecycle.");
     } finally {
-      setIsUpdatingLifecycle(false);
+      finishDirectoryAction(request);
     }
   }
 
@@ -4303,24 +4351,27 @@ function DancerDirectory({
     if (!confirmed) return;
 
     const key = `${kind}:${targetId}`;
-    setDeletingContentKey(key);
+    const action = beginDirectoryAction(key);
+    if (!action) return;
     setStatus(`Deleting ${kind === "photo" ? "picture" : "social link"}...`);
     try {
-      const updated = await requestAdminDancerContentDeletion(dancerId, kind, targetId);
+      const updated = await requestAdminDancerContentDeletion(dancerId, kind, targetId, action.controller.signal);
+      if (!isCurrentDirectoryAction(action)) return;
       setProfile(updated.profile);
       onProfileUpdated(updated.profile);
       setRefreshVersion((value) => value + 1);
       setStatus("");
       onActionConfirmed(`${label} deleted from ${stageName}'s profile.`);
     } catch (error) {
+      if (!isCurrentDirectoryAction(action)) return;
       setStatus(error instanceof Error ? error.message : `Unable to delete ${label}.`);
     } finally {
-      setDeletingContentKey("");
+      finishDirectoryAction(action);
     }
   }
 
   function closeProfile() {
-    if (isDeleting || deletingContentKey) return;
+    if (controlsBusy) return;
     setSelectedId("");
     setProfile(null);
     setStatus("");
@@ -4341,13 +4392,16 @@ function DancerDirectory({
       return;
     }
 
-    setIsDeleting(true);
+    const action = beginDirectoryAction(`delete-profile:${dancerId}`);
+    if (!action) return;
     setStatus("Deleting profile and stored content...");
     try {
       const data = await requestAdminJson(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
         method: "DELETE",
+        signal: action.controller.signal,
         fallbackMessage: "Unable to delete dancer profile.",
       });
+      if (!isCurrentDirectoryAction(action)) return;
 
       onDeleted(dancerId);
       setRefreshVersion((value) => value + 1);
@@ -4361,9 +4415,10 @@ function DancerDirectory({
       setProfile(null);
       setStatus("");
     } catch (error) {
+      if (!isCurrentDirectoryAction(action)) return;
       setStatus(error instanceof Error ? error.message : "Unable to delete dancer profile.");
     } finally {
-      setIsDeleting(false);
+      finishDirectoryAction(action);
     }
   }
 
@@ -4395,7 +4450,7 @@ function DancerDirectory({
         const stageName = item.stageName || "Stage name not submitted";
         return (
           <article className="dancer-directory-row" key={dancerId}>
-            <button className="dancer-directory-profile-link" type="button" onClick={() => openProfile(item as unknown as Record<string, unknown>)}>
+            <button className="dancer-directory-profile-link" type="button" disabled={controlsBusy} onClick={() => openProfile(item as unknown as Record<string, unknown>)}>
               <span className="dancer-roster-avatar">{item.avatarUrl ? <img src={item.avatarUrl} srcSet={item.avatarSrcSet || undefined} alt="" /> : <span>{stageName.slice(0, 1).toUpperCase()}</span>}</span>
               <span className="dancer-roster-identity"><strong>{stageName}</strong><small>{item.email || "No account email"}</small><small>{item.city}{item.venue ? ` · ${item.venue.name}` : " · No active club"}</small></span>
               <span className="dancer-roster-badges"><RosterBadge value={item.status} /><RosterBadge value={item.schedule.state} />{item.isDemo ? <RosterBadge value="demo" /> : null}{item.openReports ? <RosterBadge value={`${item.openReports} open report${item.openReports === 1 ? "" : "s"}`} tone="danger" /> : null}</span>
@@ -4407,7 +4462,7 @@ function DancerDirectory({
               <span><small>Last activity</small><strong>{formatDate(item.lastActivityAt)}</strong></span>
             </div>
             <div className="dancer-directory-actions">
-              <button className="secondary-action" type="button" onClick={() => openProfile(item as unknown as Record<string, unknown>)}>
+              <button className="secondary-action" type="button" disabled={controlsBusy} onClick={() => openProfile(item as unknown as Record<string, unknown>)}>
                 View full profile &amp; management
               </button>
             </div>
@@ -4424,7 +4479,7 @@ function DancerDirectory({
               type="button"
               onClick={closeProfile}
               aria-label="Close full profile"
-              disabled={isDeleting || Boolean(deletingContentKey)}
+              disabled={controlsBusy}
             >
               ×
             </button>
@@ -4433,11 +4488,12 @@ function DancerDirectory({
             {profile ? (
               <>
               <nav className="admin-dancer-tabs" aria-label="Dancer management sections">
-                {[["overview", "Overview"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["commissions", "Club Deals & commissions"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} onClick={() => setDetailTab(id)}>{label}</button>)}
+                {[["overview", "Overview"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["commissions", "Club Deals & commissions"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} disabled={controlsBusy} onClick={() => setDetailTab(id)}>{label}</button>)}
               </nav>
               <AdminDancerFullProfile
                 profile={profile}
                 activeTab={detailTab}
+                actionBusy={controlsBusy}
                 deletingContentKey={deletingContentKey}
                 onDeletePhoto={(targetId, label) => deleteProfileContent("photo", targetId, label)}
                 onDeleteSocial={(targetId, label) => deleteProfileContent("social-link", targetId, label)}
@@ -4448,10 +4504,10 @@ function DancerDirectory({
               <div className="admin-profile-delete-zone">
                 <strong>Profile access and retention</strong>
                 <p>Disable a profile for a reversible hold. Permanent deletion is reserved for verified deletion requests or required data removal.</p>
-                <label><span>Required action reason</span><textarea value={lifecycleReason} onChange={(event) => setLifecycleReason(event.target.value)} maxLength={500} placeholder="Why this profile is being disabled or reactivated" /></label>
+                <label><span>Required action reason</span><textarea value={lifecycleReason} disabled={controlsBusy} onChange={(event) => setLifecycleReason(event.target.value)} maxLength={500} placeholder="Why this profile is being disabled or reactivated" /></label>
                 <div className="admin-profile-lifecycle-actions">
-                  {asText(profile.status) === "disabled" ? <button className="secondary-action" type="button" onClick={() => updateLifecycle("reactivate")} disabled={isUpdatingLifecycle}>Reactivate profile</button> : <button className="danger-action" type="button" onClick={() => updateLifecycle("disable")} disabled={isUpdatingLifecycle}>Disable profile</button>}
-                  <details><summary>Permanent deletion</summary><p>This removes profile data and stored media. The login account remains.</p><button className="danger-action" type="button" onClick={() => deleteProfile(profile)} disabled={isDeleting}>{isDeleting ? "Deleting profile..." : "Permanently delete profile"}</button></details>
+                  {asText(profile.status) === "disabled" ? <button className="secondary-action" type="button" onClick={() => updateLifecycle("reactivate")} disabled={controlsBusy}>Reactivate profile</button> : <button className="danger-action" type="button" onClick={() => updateLifecycle("disable")} disabled={controlsBusy}>Disable profile</button>}
+                  <details><summary>Permanent deletion</summary><p>This removes profile data and stored media. The login account remains.</p><button className="danger-action" type="button" onClick={() => deleteProfile(profile)} disabled={controlsBusy}>{isDeleting ? "Deleting profile..." : "Permanently delete profile"}</button></details>
                 </div>
               </div>
             ) : null}
@@ -4473,12 +4529,14 @@ function RosterBadge({ value, tone = "neutral" }: { value: string; tone?: "neutr
 function AdminDancerFullProfile({
   profile,
   activeTab,
+  actionBusy,
   deletingContentKey,
   onDeletePhoto,
   onDeleteSocial,
 }: {
   profile: Record<string, unknown>;
   activeTab: string;
+  actionBusy: boolean;
   deletingContentKey: string;
   onDeletePhoto: (targetId: string, label: string) => void;
   onDeleteSocial: (targetId: string, label: string) => void;
@@ -4553,7 +4611,7 @@ function AdminDancerFullProfile({
                     className="danger-action"
                     type="button"
                     onClick={() => onDeletePhoto(photoId, label)}
-                    disabled={!photoId || deletingContentKey === `photo:${photoId}`}
+                    disabled={!photoId || actionBusy}
                   >
                     {deletingContentKey === `photo:${photoId}` ? "Deleting picture..." : "Delete picture"}
                   </button>
@@ -4582,7 +4640,7 @@ function AdminDancerFullProfile({
                     className="danger-action"
                     type="button"
                     onClick={() => onDeleteSocial(socialId, `${label} social link`)}
-                    disabled={!socialId || deletingContentKey === `social-link:${socialId}`}
+                    disabled={!socialId || actionBusy}
                   >
                     {deletingContentKey === `social-link:${socialId}` ? "Deleting social..." : "Delete social link"}
                   </button>

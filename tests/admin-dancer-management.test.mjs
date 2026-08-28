@@ -116,3 +116,19 @@ test("approval profile and content actions share one abortable single-flight bou
   assert.match(submissionDetails, /activeActionRef\.current\?\.controller\.abort\(\)/);
   assert.match(submissionDetails, /disabled=\{actionBusy\}/);
 });
+
+test("the dancer directory serializes profile loads and destructive actions", () => {
+  const directory = adminDashboard.match(/function DancerDirectory[\s\S]*?(?=function RosterSelect)/)?.[0] || "";
+  assert.match(directory, /function beginDirectoryAction\(key: string\)/);
+  assert.match(directory, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(directory, /function isCurrentDirectoryAction/);
+  assert.match(directory, /function finishDirectoryAction/);
+  assert.equal((directory.match(/const action = beginDirectoryAction\(/g) || []).length, 3);
+  assert.match(directory, /const request = beginDirectoryAction\(`lifecycle:/);
+  assert.match(directory, /requestAdminDancerProfile\(dancerId, action\.controller\.signal\)/);
+  assert.match(directory, /requestAdminDancerContentDeletion\(dancerId, kind, targetId, action\.controller\.signal\)/);
+  assert.match(directory, /method: "PATCH",\s+signal: request\.controller\.signal/);
+  assert.match(directory, /method: "DELETE",\s+signal: action\.controller\.signal/);
+  assert.match(directory, /actionAbortRef\.current\?\.abort\(\)/);
+  assert.match(directory, /if \(controlsBusy\) return;/);
+});
