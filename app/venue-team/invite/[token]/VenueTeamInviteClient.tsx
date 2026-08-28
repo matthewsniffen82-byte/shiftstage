@@ -19,20 +19,23 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
   const [isWorking, setIsWorking] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/venue/team/invitations?token=${encodeURIComponent(token)}`, { cache: "no-store" })
+    const controller = new AbortController();
+    fetch(`/api/venue/team/invitations?token=${encodeURIComponent(token)}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
       .then(async (response) => {
         const data = await response.json();
+        if (controller.signal.aborted) return;
         if (!response.ok || !data.ok) throw new Error(data.error || "Unable to open this invitation.");
-        if (!cancelled) {
-          setInvitation(data.invitation);
-          setStatus("");
-        }
+        setInvitation(data.invitation);
+        setStatus("");
       })
       .catch((error) => {
-        if (!cancelled) setStatus(error instanceof Error ? error.message : "Unable to open this invitation.");
+        if (controller.signal.aborted) return;
+        setStatus(error instanceof Error ? error.message : "Unable to open this invitation.");
       });
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, [token]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {

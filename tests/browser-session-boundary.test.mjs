@@ -177,3 +177,10 @@ test("standalone NFC, redemption, venue access, and DMCA clients use the same se
   assert.match(dmcaCounterSource, /readBrowserAccessToken\(\)/);
   assert.doesNotMatch(dmcaCounterSource, /function readToken\(/);
 });
+
+test("venue invitation discovery cancels stale token loads", () => {
+  assert.match(venueInvitationSource, /fetch\(`\/api\/venue\/team\/invitations\?token=\$\{encodeURIComponent\(token\)\}`, \{[\s\S]*?signal: controller\.signal/);
+  assert.equal((venueInvitationSource.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
+  assert.match(venueInvitationSource, /return \(\) => controller\.abort\(\);/);
+  assert.doesNotMatch(venueInvitationSource, /let cancelled = false;/);
+});
