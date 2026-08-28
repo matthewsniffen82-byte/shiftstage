@@ -368,6 +368,11 @@ export function DancerProfileActions({
   const [goingSaving, setGoingSaving] = useState(false);
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
+  const mountedRef = useRef(false);
+  const followAbortRef = useRef<AbortController | null>(null);
+  const followInFlightRef = useRef(false);
+  const goingAbortRef = useRef<AbortController | null>(null);
+  const goingInFlightRef = useRef(false);
   const actionShift = useMemo(
     () => shifts.find((shift) => shift.isActive) || shifts[0] || null,
     [shifts],
@@ -376,6 +381,17 @@ export function DancerProfileActions({
   const hasLiveActions = Boolean(actionShift?.isActive);
   const hasScheduledActions = Boolean(actionShift);
   const isGoing = Boolean(actionShift && saved.goingShiftIds.includes(actionShift.id));
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      followAbortRef.current?.abort();
+      followInFlightRef.current = false;
+      goingAbortRef.current?.abort();
+      goingInFlightRef.current = false;
+    };
+  }, [actionShiftId, dancerId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -462,7 +478,11 @@ export function DancerProfileActions({
   }
 
   async function updateFollow(notificationsEnabled = saved.notificationsEnabled) {
-    if (!savedLoaded || followSaving) return;
+    if (!mountedRef.current || !savedLoaded || followInFlightRef.current) return;
+    const controller = new AbortController();
+    followAbortRef.current?.abort();
+    followAbortRef.current = controller;
+    followInFlightRef.current = true;
     const previousFollowing = saved.following;
     const requestedFollowing = !previousFollowing;
     setFollowSaving(true);
@@ -472,7 +492,8 @@ export function DancerProfileActions({
         dancerId,
         following: requestedFollowing,
         notificationsEnabled: requestedFollowing && notificationsEnabled,
-      }, "follow");
+      }, "follow", controller.signal);
+      if (!mountedRef.current || controller.signal.aborted) return;
       const following = typeof data.following === "boolean" ? data.following : requestedFollowing;
       const savedNotificationsEnabled = following && data.notificationsEnabled === true;
       const confirmedFollowerCount = readConfirmedFollowerCount(data);
@@ -488,12 +509,20 @@ export function DancerProfileActions({
     } catch {
       // postAction displays the production API error beside the controls.
     } finally {
-      setFollowSaving(false);
+      if (followAbortRef.current === controller) {
+        followAbortRef.current = null;
+        followInFlightRef.current = false;
+        if (mountedRef.current) setFollowSaving(false);
+      }
     }
   }
 
   async function updateNotifications() {
-    if (!savedLoaded || followSaving) return;
+    if (!mountedRef.current || !savedLoaded || followInFlightRef.current) return;
+    const controller = new AbortController();
+    followAbortRef.current?.abort();
+    followAbortRef.current = controller;
+    followInFlightRef.current = true;
     const requestedNotificationsEnabled = !saved.notificationsEnabled;
     setFollowSaving(true);
 
@@ -502,7 +531,8 @@ export function DancerProfileActions({
         dancerId,
         following: true,
         notificationsEnabled: requestedNotificationsEnabled,
-      }, "notify");
+      }, "notify", controller.signal);
+      if (!mountedRef.current || controller.signal.aborted) return;
       const following = typeof data.following === "boolean" ? data.following : true;
       const notificationsEnabled = following && data.notificationsEnabled === true;
       const confirmedFollowerCount = readConfirmedFollowerCount(data);
@@ -514,16 +544,25 @@ export function DancerProfileActions({
     } catch {
       // postAction displays the production API error beside the controls.
     } finally {
-      setFollowSaving(false);
+      if (followAbortRef.current === controller) {
+        followAbortRef.current = null;
+        followInFlightRef.current = false;
+        if (mountedRef.current) setFollowSaving(false);
+      }
     }
   }
 
   async function updateGoing(shiftId: string) {
-    if (!savedLoaded || goingSaving) return;
+    if (!mountedRef.current || !savedLoaded || goingInFlightRef.current) return;
+    const controller = new AbortController();
+    goingAbortRef.current?.abort();
+    goingAbortRef.current = controller;
+    goingInFlightRef.current = true;
     const going = !saved.goingShiftIds.includes(shiftId);
     setGoingSaving(true);
     try {
-      const data = await postGoingAction(shiftId, going);
+      const data = await postGoingAction(shiftId, going, controller.signal);
+      if (!mountedRef.current || controller.signal.aborted) return;
       setSaved((current) => ({
         ...current,
         goingShiftIds: data.going === true
@@ -535,11 +574,15 @@ export function DancerProfileActions({
     } catch {
       // postGoingAction displays the production API error beside the controls.
     } finally {
-      setGoingSaving(false);
+      if (goingAbortRef.current === controller) {
+        goingAbortRef.current = null;
+        goingInFlightRef.current = false;
+        if (mountedRef.current) setGoingSaving(false);
+      }
     }
   }
 
-  async function postGoingAction(shiftId: string, going: boolean) {
+  async function postGoingAction(shiftId: string, going: boolean, signal: AbortSignal) {
     setStatus("");
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (token) headers.authorization = `Bearer ${token}`;
@@ -548,8 +591,10 @@ export function DancerProfileActions({
       headers,
       body: JSON.stringify({ shiftId, going }),
       credentials: "same-origin",
+      signal,
     });
     const data = await response.json();
+    if (!mountedRef.current || signal.aborted) throw new DOMException("Aborted", "AbortError");
     if (!response.ok || !data.ok) {
       const message = data.error || "Unable to update going status.";
       setStatus(message);
@@ -562,14 +607,17 @@ export function DancerProfileActions({
     path: string,
     body: Record<string, unknown>,
     action: AccountAction,
+    signal: AbortSignal,
   ) {
     setStatus("");
     const response = await fetch(path, {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       body: JSON.stringify(body),
+      signal,
     });
     const data = await response.json();
+    if (!mountedRef.current || signal.aborted) throw new DOMException("Aborted", "AbortError");
     if (!response.ok || !data.ok) {
       if (response.status === 401) {
         setToken("");

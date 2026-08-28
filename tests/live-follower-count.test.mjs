@@ -33,7 +33,7 @@ test("successful follow and unfollow responses update the visible follower count
 });
 
 test("failed or duplicate follow requests cannot change the visible count", () => {
-  assert.match(actionsSource, /if \(!savedLoaded \|\| followSaving\) return/);
+  assert.match(actionsSource, /if \(!mountedRef\.current \|\| !savedLoaded \|\| followInFlightRef\.current\) return/);
   assert.match(actionsSource, /disabled=\{!savedLoaded \|\| followSaving\}/);
   assert.match(actionsSource, /const data = await postAction[\s\S]*?setFollowerCount\(confirmedFollowerCount\)/);
 });

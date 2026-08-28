@@ -160,6 +160,23 @@ test("public dancer profile state loads cancel when the dancer or shift changes"
   assert.doesNotMatch(stateLoader, /let active = true;/);
 });
 
+test("public dancer profile actions prevent duplicate and stale saves", () => {
+  assert.match(dancerActionsSource, /const mountedRef = useRef\(false\);/);
+  assert.match(dancerActionsSource, /const followAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(dancerActionsSource, /const followInFlightRef = useRef\(false\);/);
+  assert.match(dancerActionsSource, /const goingAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(dancerActionsSource, /const goingInFlightRef = useRef\(false\);/);
+  assert.match(dancerActionsSource, /if \(!mountedRef\.current \|\| !savedLoaded \|\| followInFlightRef\.current\) return;/);
+  assert.match(dancerActionsSource, /if \(!mountedRef\.current \|\| !savedLoaded \|\| goingInFlightRef\.current\) return;/);
+  assert.match(dancerActionsSource, /fetch\("\/api\/customer\/going", \{[\s\S]*?signal,/);
+  assert.match(dancerActionsSource, /const response = await fetch\(path, \{[\s\S]*?signal,/);
+  assert.match(dancerActionsSource, /if \(!mountedRef\.current \|\| signal\.aborted\) throw new DOMException\("Aborted", "AbortError"\);/);
+  assert.match(dancerActionsSource, /followAbortRef\.current\?\.abort\(\);/);
+  assert.match(dancerActionsSource, /goingAbortRef\.current\?\.abort\(\);/);
+  assert.match(dancerActionsSource, /if \(mountedRef\.current\) setFollowSaving\(false\);/);
+  assert.match(dancerActionsSource, /if \(mountedRef\.current\) setGoingSaving\(false\);/);
+});
+
 test("venue profile saved state ignores responses after the venue changes", () => {
   assert.match(venueActionsSource, /fetch\("\/api\/customer\/saved", \{[\s\S]*?signal: controller\.signal/);
   assert.equal((venueActionsSource.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
