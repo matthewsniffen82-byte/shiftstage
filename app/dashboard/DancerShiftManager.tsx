@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   isActiveNfcPresence,
   isNfcPresenceNearExpiry,
@@ -31,22 +31,49 @@ export default function DancerShiftManager() {
   const [editingId, setEditingId] = useState("");
   const [editVenueId, setEditVenueId] = useState("");
   const [editDate, setEditDate] = useState("");
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async () => {
-    const data = await requestDancerShiftsJson({
-      cache: "no-store",
-      fallbackMessage: "Unable to load shifts.",
-    });
-    const nextVenues = Array.isArray(data.venues) ? data.venues : [];
-    setVenues(nextVenues);
-    setShifts(Array.isArray(data.shifts) ? data.shifts : []);
-    setVenueId((current) => nextVenues.some((venue: VenueOption) => venue.id === current)
-      ? current
-      : String(nextVenues[0]?.id || ""));
+    if (!mountedRef.current) return false;
+    const requestId = ++loadSequenceRef.current;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    try {
+      const data = await requestDancerShiftsJson({
+        cache: "no-store",
+        fallbackMessage: "Unable to load shifts.",
+        signal: controller.signal,
+      });
+      if (!mountedRef.current || requestId !== loadSequenceRef.current) return false;
+      const nextVenues = Array.isArray(data.venues) ? data.venues : [];
+      setVenues(nextVenues);
+      setShifts(Array.isArray(data.shifts) ? data.shifts : []);
+      setVenueId((current) => nextVenues.some((venue: VenueOption) => venue.id === current)
+        ? current
+        : String(nextVenues[0]?.id || ""));
+      return true;
+    } catch (error) {
+      if (!mountedRef.current || requestId !== loadSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return false;
+      throw error;
+    } finally {
+      if (loadAbortRef.current === controller) loadAbortRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
-    void load().catch((error) => setStatus(error instanceof Error ? error.message : "Unable to load shifts."));
+    mountedRef.current = true;
+    void load().catch((error) => {
+      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to load shifts.");
+    });
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      loadAbortRef.current = null;
+    };
   }, [load]);
 
   const activeShift = useMemo(
@@ -76,7 +103,7 @@ export default function DancerShiftManager() {
       return;
     }
     await saveRequest("POST", { venueId, shiftDate }, "Upcoming date posted.");
-    setShiftDate("");
+    if (mountedRef.current) setShiftDate("");
   }
 
   async function saveEdit(shiftId: string) {
@@ -85,7 +112,7 @@ export default function DancerShiftManager() {
       return;
     }
     await saveRequest("PATCH", { shiftId, venueId: editVenueId, shiftDate: editDate }, "Upcoming date updated.");
-    setEditingId("");
+    if (mountedRef.current) setEditingId("");
   }
 
   async function cancelDate(shiftId: string) {
@@ -98,6 +125,9 @@ export default function DancerShiftManager() {
     setSaving(true);
     setWorkingNowStatusKind("");
     setWorkingNowStatus("Ending Working Now...");
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
     try {
       await requestDancerShiftCheckInJson({
         method: "DELETE",
@@ -105,26 +135,32 @@ export default function DancerShiftManager() {
         body: JSON.stringify({ shiftId: activeShift.id }),
         fallbackMessage: "Unable to end Working Now.",
       });
+      if (!mountedRef.current) return;
       setWorkingNowStatusKind("success");
       setWorkingNowStatus("Working Now ended. Guests no longer see you in Working Now.");
       try {
         await load();
       } catch {
-        setWorkingNowStatus("Working Now ended. Refresh the dashboard to update the schedule card.");
+        if (mountedRef.current) setWorkingNowStatus("Working Now ended. Refresh the dashboard to update the schedule card.");
       }
     } catch (error) {
-      setWorkingNowStatusKind("error");
-      setWorkingNowStatus(error instanceof DashboardDataRequestError && error.status === 401
-        ? "Sign in again before ending Working Now."
-        : error instanceof Error ? error.message : "Unable to end Working Now.");
+      if (mountedRef.current) {
+        setWorkingNowStatusKind("error");
+        setWorkingNowStatus(error instanceof DashboardDataRequestError && error.status === 401
+          ? "Sign in again before ending Working Now."
+          : error instanceof Error ? error.message : "Unable to end Working Now.");
+      }
     } finally {
-      setSaving(false);
+      if (mountedRef.current) setSaving(false);
     }
   }
 
   async function saveRequest(method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, success: string) {
     setSaving(true);
     setStatus("");
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
     try {
       await requestDancerShiftsJson({
         method,
@@ -132,12 +168,13 @@ export default function DancerShiftManager() {
         body: JSON.stringify(body),
         fallbackMessage: "Unable to save changes.",
       });
+      if (!mountedRef.current) return;
       setStatus(success);
       await load();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to save changes.");
+      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to save changes.");
     } finally {
-      setSaving(false);
+      if (mountedRef.current) setSaving(false);
     }
   }
 

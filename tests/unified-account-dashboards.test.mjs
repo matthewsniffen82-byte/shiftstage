@@ -828,6 +828,10 @@ test("dancer schedule actions use refresh-aware role boundaries", async () => {
   assert.match(shiftPanel, /requestDancerShiftCheckInJson/);
   assert.match(dancerShiftManager, /requestDancerShiftsJson/);
   assert.match(dancerShiftManager, /requestDancerShiftCheckInJson/);
+  assert.match(dancerShiftManager, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(dancerShiftManager, /signal: controller\.signal/);
+  assert.match(dancerShiftManager, /requestId !== loadSequenceRef\.current/);
+  assert.match(dancerShiftManager, /mountedRef\.current = false;[\s\S]*?loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\);/);
   assert.doesNotMatch(shiftPanel, /fetch\("\/api\/dancer\/shifts/);
   assert.doesNotMatch(shiftPanel, /authorization: `Bearer/);
   assert.doesNotMatch(dancerShiftManager, /fetch\(/);
