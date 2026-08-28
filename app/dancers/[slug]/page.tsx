@@ -594,7 +594,8 @@ function PublicProfileStyles() {
       .venue-qr-placeholder-copy small { color: rgba(203,196,214,.64); font-size: 9px; font-weight: 850; line-height: 1.12; }
       @media (max-width: 340px) { .venue-qr-unavailable { grid-template-columns: minmax(0, 1fr) 112px; } .venue-qr-placeholder-icon { width: 112px; min-width: 112px; } }
       .profile-schedule-section { margin-top: 24px; }
-      .profile-media-section { display: grid; gap: 3px; margin-top: 0; padding-bottom: 24px; }
+      .profile-media-section { position: relative; isolation: isolate; display: grid; gap: 3px; margin-top: 0; padding-bottom: 0; overflow: clip; border-radius: 18px; background: rgba(5,5,8,.78); }
+      .profile-media-section::after { content: ""; position: absolute; z-index: 40; inset: 0; border: 1px solid rgba(180,169,196,.22); border-radius: inherit; pointer-events: none; }
       .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .profile-section-heading > div { display: grid; gap: 5px; }
       .profile-section-heading > span { color: #9487a5; font-size: 11px; font-weight: 850; }

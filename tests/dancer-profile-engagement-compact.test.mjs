@@ -155,6 +155,14 @@ test("stats and media tabs are compact without changing dynamic media behavior",
   );
   assert.match(compactLayout, /\.profile-media-tab-icon \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;/);
   assert.match(compactLayout, /button\.active,[\s\S]*?box-shadow: inset 0 -2px var\(--dancr-color-brand-primary\) !important;/);
+  assert.match(
+    compactLayout,
+    /\.profile-modal-media,[\s\S]*?\.profile-media-section \{[\s\S]*?position: relative !important;[\s\S]*?isolation: isolate !important;[\s\S]*?padding-bottom: 0 !important;[\s\S]*?overflow: clip !important;[\s\S]*?border-radius: 18px !important;[\s\S]*?background: var\(--dancr-color-surface-translucent\) !important;/,
+  );
+  assert.match(
+    compactLayout,
+    /\.profile-modal-media::after,[\s\S]*?\.profile-media-section::after \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?border: 1px solid rgba\(180, 169, 196, \.22\) !important;[\s\S]*?pointer-events: none !important;/,
+  );
   assert.match(profileMedia, /\{photoMedia\.length\}/);
   assert.match(profileMedia, /\{videoMedia\.length\}/);
   assert.match(profileMedia, /setActiveTab\("photo"\)/);

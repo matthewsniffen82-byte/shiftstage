@@ -5119,9 +5119,26 @@ body.dancr-button-system .public-profile-shell .social-link-x {
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media,
 body.dancr-button-system .public-profile-shell .profile-media-section {
+  position: relative !important;
+  isolation: isolate !important;
   display: grid !important;
   gap: 3px !important;
   margin-top: 0 !important;
+  padding-bottom: 0 !important;
+  overflow: clip !important;
+  border-radius: 18px !important;
+  background: var(--dancr-color-surface-translucent) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media::after,
+body.dancr-button-system .public-profile-shell .profile-media-section::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 40 !important;
+  inset: 0 !important;
+  border: 1px solid rgba(180, 169, 196, .22) !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-grid > .profile-tonight-card,
