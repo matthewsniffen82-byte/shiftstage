@@ -990,7 +990,7 @@ test("dancer avatar uploads and removals use the refresh-aware dancer boundary",
     globalThis.window = previousWindow;
   }
 
-  const avatarPanel = dashboard.match(/function DancerAvatarPanel[\s\S]*?function DancerVenueVerificationPanel/)?.[0] || "";
+  const avatarPanel = dashboard.match(/function DancerAvatarPanel[\s\S]*?function DancerShiftPanel/)?.[0] || "";
   assert.match(dashboardSession, /function requestDancerAvatarJson/);
   assert.match(avatarPanel, /requestDancerAvatarJson/);
   assert.doesNotMatch(avatarPanel, /fetch\("\/api\/dancer\/avatar"/);

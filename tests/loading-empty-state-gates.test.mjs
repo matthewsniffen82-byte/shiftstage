@@ -5,14 +5,14 @@ import test from "node:test";
 const [
   liveShell,
   dancerTvStudio,
-  dashboardClient,
+  dancerNfcPanel,
   venueNfcPanel,
   venueTeamPanel,
   adminNfcPanel,
 ] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerNfcPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/VenueTeamPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminNfcInventoryPanel.tsx", import.meta.url), "utf8"),
@@ -25,9 +25,10 @@ test("secondary account panels do not claim data is empty while requests are loa
   );
   assert.doesNotMatch(dancerTvStudio, /No videos submitted yet\./);
   assert.match(
-    dashboardClient,
-    /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?disabled=\{isLoading \|\| isSaving \|\| !venues\.length\}[\s\S]*?\{!isLoading && !activeAffiliations\.length \? <small>No venue has verified your profile yet\.<\/small>/,
+    dancerNfcPanel,
+    /const affiliationRoster = activeAffiliations\.length \? \([\s\S]*?\) : null;/,
   );
+  assert.doesNotMatch(dancerNfcPanel, /No venue has verified your profile yet\./);
   assert.match(
     venueNfcPanel,
     /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?: !isLoading \? <p>No dancers have used this venue&apos;s dancer check-in sticker yet\.<\/p>/,

@@ -9,7 +9,7 @@ const [dashboard, dancerStudio, mediaSync] = await Promise.all([
 ]);
 
 const identityEditor = dashboard.match(/function DancerSetupPanel\([\s\S]*?(?=\nfunction DancerAvatarPanel)/)?.[0] || "";
-const avatarEditor = dashboard.match(/function DancerAvatarPanel\([\s\S]*?(?=\nfunction DancerVenueVerificationPanel)/)?.[0] || "";
+const avatarEditor = dashboard.match(/function DancerAvatarPanel\([\s\S]*?(?=\nfunction DancerShiftPanel)/)?.[0] || "";
 const photoEditor = dashboard.match(/function DancerPhotoPanel\([\s\S]*?(?=\nfunction normalizePhotoStatus)/)?.[0] || "";
 
 test("stage name and city use the compact editor without changing persistence or market data", () => {
