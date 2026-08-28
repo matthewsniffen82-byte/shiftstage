@@ -9515,8 +9515,38 @@ body.dancr-button-system > .app main.stack > section.stack
     font-size: clamp(9px, 2.55vw, 11px) !important;
   }
 
+  body > .app main.stack > .home-discovery-controls .city-picker-inline.is-open {
+    padding: 8px !important;
+    border-radius: 12px;
+  }
+
   .city-picker-options {
     grid-template-columns: minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  .city-picker-option {
+    min-height: 44px !important;
+    height: 44px !important;
+    grid-template-columns: 22px minmax(0, 1fr) auto !important;
+    gap: 10px !important;
+    padding: 5px 10px !important;
+    border-radius: 12px !important;
+    font-size: 15px !important;
+  }
+
+  .city-picker-option .venue-picker-radio {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .city-picker-option[aria-selected="true"] .venue-picker-radio::after {
+    width: 10px;
+    height: 10px;
+  }
+
+  .city-picker-selected-label {
+    font-size: 9px;
   }
 }
 

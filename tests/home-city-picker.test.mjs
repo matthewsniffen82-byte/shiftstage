@@ -28,6 +28,9 @@ test("mobile discovery uses compact neutral controls and an inline city panel", 
   assert.match(aesthetic, /\.city-picker-inline[\s\S]*?grid-column: 1 \/ -1[\s\S]*?\.city-picker-inline\[hidden\][\s\S]*?display: none !important/);
   assert.match(aesthetic, /\.city-picker-trigger\[aria-expanded="true"\][\s\S]*?var\(--dancr-color-brand-primary\)/);
   assert.match(aesthetic, /\.city-picker-trigger, \.home-filter-toggle[\s\S]*?min-height: 44px/);
+  assert.match(aesthetic, /@media \(max-width: 640px\) \{[\s\S]*?\.city-picker-inline\.is-open \{[\s\S]*?padding: 8px !important;[\s\S]*?\.city-picker-options \{[\s\S]*?gap: 4px !important;/);
+  assert.match(aesthetic, /@media \(max-width: 640px\) \{[\s\S]*?\.city-picker-option \{[\s\S]*?min-height: 44px !important;[\s\S]*?height: 44px !important;[\s\S]*?font-size: 15px !important;/);
+  assert.match(aesthetic, /\.city-picker-option \.venue-picker-radio \{[\s\S]*?width: 22px !important;[\s\S]*?height: 22px !important;/);
   assert.match(aesthetic, /\.dancer-directory-filter\.is-active[\s\S]*?var\(--dancr-color-brand-primary\) 10%[\s\S]*?box-shadow: inset/);
 });
 
