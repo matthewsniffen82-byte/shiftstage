@@ -4757,10 +4757,13 @@ body.dancr-button-system #profileBackdrop #profileModal .social-tile,
 body.dancr-button-system .public-profile-shell .profile-social-section {
   margin-block: 0 4px !important;
   padding-block: 0 !important;
+  row-gap: 0 !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .social-tile::before,
-body.dancr-button-system .public-profile-shell .profile-social-section::before {
+body.dancr-button-system #profileBackdrop #profileModal .social-tile::after,
+body.dancr-button-system .public-profile-shell .profile-social-section::before,
+body.dancr-button-system .public-profile-shell .profile-social-section::after {
   content: none !important;
   display: none !important;
 }
@@ -4856,15 +4859,15 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
  * reserved row before the media tabs. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
 body.dancr-button-system .public-profile-shell .live-actions {
-  --profile-row-inline-start: clamp(24px, 7vw, 28px);
+  --profile-row-inline-start: clamp(16px, 5vw, 20px);
   width: fit-content !important;
   max-width: calc(100% - var(--profile-row-inline-start)) !important;
   box-sizing: border-box !important;
-  grid-template-columns: repeat(4, clamp(52px, 15vw, 56px)) !important;
+  grid-template-columns: repeat(4, clamp(48px, 13vw, 52px)) !important;
   justify-content: start !important;
   justify-self: start !important;
   align-self: start !important;
-  column-gap: clamp(4px, 2vw, 8px) !important;
+  column-gap: clamp(2px, 1vw, 4px) !important;
   row-gap: 2px !important;
   margin-top: 0 !important;
   margin-inline: var(--profile-row-inline-start) 0 !important;
@@ -5002,14 +5005,14 @@ body.dancr-button-system .public-profile-shell .profile-social-section {
 
 body.dancr-button-system #profileBackdrop #profileModal .social-links,
 body.dancr-button-system .public-profile-shell .social-list {
-  --profile-row-inline-start: clamp(24px, 7vw, 28px);
+  --profile-row-inline-start: clamp(16px, 5vw, 20px);
   width: fit-content !important;
   max-width: calc(100% - var(--profile-row-inline-start)) !important;
   flex-wrap: nowrap !important;
   justify-content: flex-start !important;
   justify-self: start !important;
   align-self: start !important;
-  gap: 6px !important;
+  gap: 4px !important;
   margin-inline: var(--profile-row-inline-start) 0 !important;
   overflow: visible !important;
 }

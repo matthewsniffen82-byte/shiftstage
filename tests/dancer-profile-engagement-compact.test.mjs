@@ -68,7 +68,7 @@ test("one through the maximum supported social count renders only real links in 
   }
 
   assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
-  assert.match(compactLayout, /\.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?gap: 6px !important;/);
+  assert.match(compactLayout, /\.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?gap: 4px !important;/);
   assert.match(compactLayout, /\.social-list a \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;/);
   assert.match(compactLayout, /\.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.11\) !important;/);
   assert.match(compactLayout, /\.social-list a svg \{[\s\S]*?width: 14px !important;[\s\S]*?height: 14px !important;/);
@@ -96,7 +96,7 @@ test("all schedule states share the same compact header stats, four-action, stat
   assert.match(profileActions, /hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"/);
   assert.match(
     compactLayout,
-    /\.modal-actions,[\s\S]*?\.live-actions \{[\s\S]*?--profile-row-inline-start: clamp\(24px, 7vw, 28px\);[\s\S]*?grid-template-columns: repeat\(4, clamp\(52px, 15vw, 56px\)\) !important;[\s\S]*?justify-content: start !important;/,
+    /\.modal-actions,[\s\S]*?\.live-actions \{[\s\S]*?--profile-row-inline-start: clamp\(16px, 5vw, 20px\);[\s\S]*?grid-template-columns: repeat\(4, clamp\(48px, 13vw, 52px\)\) !important;[\s\S]*?justify-content: start !important;/,
   );
 });
 
