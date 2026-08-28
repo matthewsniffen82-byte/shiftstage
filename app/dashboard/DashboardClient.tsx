@@ -7214,6 +7214,10 @@ function VenueDealReadOnlyPanel({
   const [requestStatusTone, setRequestStatusTone] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [confirmedRequestId, setConfirmedRequestId] = useState("");
   const [isRequesting, setIsRequesting] = useState(false);
+  const mountedRef = useRef(false);
+  const requestSequenceRef = useRef(0);
+  const requestAbortRef = useRef<AbortController | null>(null);
+  const requestInFlightRef = useRef(false);
   const liveDeals = deals.filter((deal) => deal.isActive === true);
   const displayedDeals = [...liveDeals, ...deals.filter((deal) => deal.isActive !== true)];
   const currentFee = referralFee?.current && typeof referralFee.current === "object"
@@ -7226,8 +7230,25 @@ function VenueDealReadOnlyPanel({
     ? referralFee.history as Array<Record<string, unknown>>
     : [];
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      requestSequenceRef.current += 1;
+      requestAbortRef.current?.abort();
+      requestAbortRef.current = null;
+      requestInFlightRef.current = false;
+    };
+  }, []);
+
   async function submitDealRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!mountedRef.current || requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
+    const requestId = ++requestSequenceRef.current;
+    requestAbortRef.current?.abort();
+    const controller = new AbortController();
+    requestAbortRef.current = controller;
     setIsRequesting(true);
     setRequestStatusTone("sending");
     setConfirmedRequestId("");
@@ -7239,7 +7260,9 @@ function VenueDealReadOnlyPanel({
         body: JSON.stringify({ offerKey: requestedOfferKey, requestNotes }),
         expectedRole: "venue",
         fallbackMessage: "Unable to send this Club Deal request.",
+        signal: controller.signal,
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== requestSequenceRef.current) return;
       const confirmedId = String(data.dealRequest?.id || "").trim();
       const confirmedRequests = Array.isArray(data.requests) ? data.requests : [];
       const requestWasPersisted = confirmedId
@@ -7255,10 +7278,16 @@ function VenueDealReadOnlyPanel({
       setRequestStatusTone("success");
       setRequestStatus(`MyDancr received your ${confirmedOfferTitle} request. It is saved and pending review.`);
     } catch (error) {
-      setRequestStatusTone("error");
-      setRequestStatus(error instanceof Error ? error.message : "Unable to send this Club Deal request.");
+      if (mountedRef.current && !controller.signal.aborted && requestId === requestSequenceRef.current) {
+        setRequestStatusTone("error");
+        setRequestStatus(error instanceof Error ? error.message : "Unable to send this Club Deal request.");
+      }
     } finally {
-      setIsRequesting(false);
+      if (requestId === requestSequenceRef.current) {
+        requestAbortRef.current = null;
+        requestInFlightRef.current = false;
+        if (mountedRef.current) setIsRequesting(false);
+      }
     }
   }
 

@@ -486,6 +486,19 @@ test("venue publication review prevents duplicate and stale decisions", () => {
   assert.match(venuePanel, /disabled=\{isPublishingVenue\}[\s\S]*?submitVenueReview\("approved"\)/);
 });
 
+test("venue Club Deal requests prevent duplicate and stale submissions", () => {
+  const dealRequests = dashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?function readOptionalNumber/)?.[0] || "";
+  assert.match(dealRequests, /const mountedRef = useRef\(false\);/);
+  assert.match(dealRequests, /const requestSequenceRef = useRef\(0\);/);
+  assert.match(dealRequests, /const requestAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(dealRequests, /const requestInFlightRef = useRef\(false\);/);
+  assert.match(dealRequests, /if \(!mountedRef\.current \|\| requestInFlightRef\.current\) return;/);
+  assert.match(dealRequests, /signal: controller\.signal/);
+  assert.match(dealRequests, /if \(!mountedRef\.current \|\| controller\.signal\.aborted \|\| requestId !== requestSequenceRef\.current\) return;/);
+  assert.match(dealRequests, /mountedRef\.current = false;[\s\S]*?requestSequenceRef\.current \+= 1;[\s\S]*?requestAbortRef\.current\?\.abort\(\)/);
+  assert.equal((dealRequests.match(/disabled=\{isRequesting\}/g) || []).length, 2);
+});
+
 test("dancer profile requests use one role-aware dashboard boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;
