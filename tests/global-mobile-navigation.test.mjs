@@ -82,11 +82,11 @@ test("iPhone and Android keep the same compact floating glass dock", () => {
   );
   assert.match(
     navigationSource,
-    /Safari's reported safe area creates a second visual lift[\s\S]*?@supports \(-webkit-touch-callout: none\) \{[\s\S]*?\.global-mobile-bottom-nav \{[\s\S]*?bottom: 8px;[\s\S]*?\.global-mobile-swipe-indicator \{[\s\S]*?bottom: 91px;/,
+    /Safari's reported safe area creates a second visual lift[\s\S]*?@supports \(-webkit-touch-callout: none\) \{[\s\S]*?\.global-mobile-bottom-nav \{[\s\S]*?bottom: 14px;[\s\S]*?\.global-mobile-swipe-indicator \{[\s\S]*?bottom: 97px;/,
   );
   assert.match(
     homeSource,
-    /Safari's reported safe area creates a second visual lift[\s\S]*?@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#discoveryTabs \{[\s\S]*?bottom: 8px;/,
+    /Safari's reported safe area creates a second visual lift[\s\S]*?@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#discoveryTabs \{[\s\S]*?bottom: 14px;/,
   );
 });
 

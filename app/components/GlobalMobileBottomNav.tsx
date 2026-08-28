@@ -507,14 +507,15 @@ export function GlobalMobileBottomNav() {
           }
 
           /* Safari's reported safe area creates a second visual lift for this
-             dock, placing it above Android's established 8px bottom float. */
+             dock. Use a small explicit iPhone offset so it clears the home
+             indicator without inheriting the full safe-area height. */
           @supports (-webkit-touch-callout: none) {
             .global-mobile-bottom-nav {
-              bottom: 8px;
+              bottom: 14px;
             }
 
             .global-mobile-swipe-indicator {
-              bottom: 91px;
+              bottom: 97px;
             }
           }
 
