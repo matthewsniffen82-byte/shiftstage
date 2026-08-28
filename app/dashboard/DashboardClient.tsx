@@ -828,11 +828,45 @@ function SupportInboxPanel({
   const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [busyThreadId, setBusyThreadId] = useState("");
   const [sendConfirmation, setSendConfirmation] = useState(false);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionInFlightRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     setThreads(initialThreads);
   }, [initialThreads]);
+
+  function beginSupportAction(threadId = "") {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    if (threadId) setBusyThreadId(threadId);
+    else setIsSending(true);
+    return requestId;
+  }
+
+  function isCurrentSupportAction(requestId: number) {
+    return mountedRef.current && requestId === actionSequenceRef.current;
+  }
+
+  function finishSupportAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return;
+    actionInFlightRef.current = false;
+    if (!mountedRef.current) return;
+    setIsSending(false);
+    setBusyThreadId("");
+  }
 
   async function sendMessage(payload: { message: string; subject?: string; threadId?: string }) {
     const data = await requestDashboardJson("/api/support", {
@@ -846,20 +880,22 @@ function SupportInboxPanel({
 
   async function startThread(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setIsSending(true);
+    const requestId = beginSupportAction();
+    if (requestId === null) return;
     setSendConfirmation(false);
     setStatus("");
     try {
       const thread = await sendMessage({ subject, message });
+      if (!isCurrentSupportAction(requestId)) return;
       if (thread) setThreads((current) => [thread, ...current.filter((item) => String(item.id) !== String(thread.id))]);
       setSubject("");
       setMessage("");
       setStatus("Message sent to admin.");
       setSendConfirmation(true);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to send message.");
+      if (isCurrentSupportAction(requestId)) setStatus(error instanceof Error ? error.message : "Unable to send message.");
     } finally {
-      setIsSending(false);
+      finishSupportAction(requestId);
     }
   }
 
@@ -870,14 +906,19 @@ function SupportInboxPanel({
       return;
     }
 
+    const requestId = beginSupportAction(threadId);
+    if (requestId === null) return;
     setStatus("");
     try {
       const thread = await sendMessage({ threadId, message: body });
+      if (!isCurrentSupportAction(requestId)) return;
       if (thread) setThreads((current) => [thread, ...current.filter((item) => String(item.id) !== String(thread.id))]);
       setReplyByThread((current) => ({ ...current, [threadId]: "" }));
       setStatus("Reply sent to admin.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to send reply.");
+      if (isCurrentSupportAction(requestId)) setStatus(error instanceof Error ? error.message : "Unable to send reply.");
+    } finally {
+      finishSupportAction(requestId);
     }
   }
 
@@ -896,7 +937,7 @@ function SupportInboxPanel({
           Message
           <textarea value={message} onChange={(event) => { setMessage(event.target.value); setSendConfirmation(false); }} rows={4} placeholder="Add the details" required />
         </label>
-        <button className={sendConfirmation ? "support-send-button is-sent" : "support-send-button"} type="submit" disabled={isSending}>
+        <button className={sendConfirmation ? "support-send-button is-sent" : "support-send-button"} type="submit" disabled={isSending || Boolean(busyThreadId)}>
           {isSending ? "Sending..." : sendConfirmation ? "✓ Message sent" : "Send message"}
         </button>
       </form>
@@ -930,7 +971,7 @@ function SupportInboxPanel({
                   placeholder="Reply to admin"
                 />
               </label>
-              <button type="button" onClick={() => replyToThread(threadId)}>
+              <button type="button" disabled={isSending || Boolean(busyThreadId)} onClick={() => replyToThread(threadId)}>
                 Send reply
               </button>
             </details>

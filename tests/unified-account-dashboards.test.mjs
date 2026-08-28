@@ -345,6 +345,20 @@ test("shared notification refreshes and actions ignore stale work", () => {
   assert.match(notificationPanel, /actionInFlightRef\.current = false;[\s\S]*?loadQueuedRef\.current[\s\S]*?loadNotifications\(\)/);
 });
 
+test("shared support messages prevent duplicate and stale sends", () => {
+  const supportPanel = dashboard.match(/function SupportInboxPanel[\s\S]*?function AccountControlsPanel/)?.[0] || "";
+  assert.match(supportPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(supportPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(supportPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(supportPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(supportPanel, /requestId === actionSequenceRef\.current/);
+  assert.match(supportPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionInFlightRef\.current = false;/);
+  assert.equal((supportPanel.match(/const requestId = beginSupportAction/g) || []).length, 2);
+  assert.equal((supportPanel.match(/if \(!isCurrentSupportAction\(requestId\)\) return;/g) || []).length, 2);
+  assert.equal((supportPanel.match(/finishSupportAction\(requestId\)/g) || []).length, 2);
+  assert.equal((supportPanel.match(/disabled=\{isSending \|\| Boolean\(busyThreadId\)\}/g) || []).length, 2);
+});
+
 test("account state changes and deletion use the shared refresh-aware boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;
