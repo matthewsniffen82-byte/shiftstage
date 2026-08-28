@@ -491,11 +491,13 @@ test("pre-approval tools remain hidden while help and account recovery stay avai
 
 test("approval transitions in place and saved NFC enrollment finalizes automatically", () => {
   assert.match(dashboard, /let refreshInFlight = false;[\s\S]*?document\.visibilityState !== "visible" \|\| refreshInFlight/);
+  assert.match(dashboard, /const controller = new AbortController\(\);[\s\S]*?controller\.signal\.aborted[\s\S]*?signal: controller\.signal/);
   assert.match(dashboard, /void refreshProfile\(\);[\s\S]*?window\.setInterval\(refreshProfile, 8_000\)/);
   assert.match(dashboard, /document\.addEventListener\("visibilitychange", refreshProfile\)/);
-  assert.match(dashboard, /document\.removeEventListener\("visibilitychange", refreshProfile\)/);
+  assert.match(dashboard, /controller\.abort\(\);[\s\S]*?document\.removeEventListener\("visibilitychange", refreshProfile\)/);
   assert.doesNotMatch(dashboard, /window\.setInterval\(\(\) => void refreshProfile\(\), 8_000\)/);
   assert.match(dashboard, /onProfileChange\?\.\(data\.profile\)/);
+  assert.match(dashboard, /const updateProfile = useCallback\([\s\S]*?setState\(\(current\) => \(\{ \.\.\.current, profile \}\)\);[\s\S]*?\}, \[\]\);/);
   assert.match(dashboardRoute, /finalizePendingDancerNfcEnrollment/);
   assert.match(nfcTapRoute, /registerDancerFromNfc/);
   assert.doesNotMatch(nfcTapRoute, /venue_dancer_affiliations|manager must scan/i);

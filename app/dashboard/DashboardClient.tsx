@@ -405,14 +405,14 @@ export default function DashboardClient({
     return () => window.cancelAnimationFrame(frame);
   }, [initialSection, isLoading, role, state.error]);
 
-  function updateProfile(profile: Record<string, unknown> | null | undefined) {
+  const updateProfile = useCallback((profile: Record<string, unknown> | null | undefined) => {
     if (!profile) return;
     setState((current) => ({ ...current, profile }));
-  }
+  }, []);
 
-  function updateSaved(update: (saved: CustomerSavedState) => CustomerSavedState) {
+  const updateSaved = useCallback((update: (saved: CustomerSavedState) => CustomerSavedState) => {
     setState((current) => ({ ...current, saved: update(current.saved || {}) }));
-  }
+  }, []);
 
   const title = useMemo(() => {
     if (role === "dancer") return "Complete your profile";
@@ -4809,8 +4809,9 @@ function DancerPanel({
     if (isApproved || effectiveStatus !== "pending_review") return;
     let cancelled = false;
     let refreshInFlight = false;
+    const controller = new AbortController();
     const refreshProfile = async () => {
-      if (cancelled || document.visibilityState !== "visible" || refreshInFlight) return;
+      if (cancelled || controller.signal.aborted || document.visibilityState !== "visible" || refreshInFlight) return;
       refreshInFlight = true;
       const session = readSession();
       if (!session?.accessToken) {
@@ -4821,8 +4822,9 @@ function DancerPanel({
         const data = await requestDancerProfileJson({
           cache: "no-store",
           fallbackMessage: "Unable to refresh dancer profile.",
+          signal: controller.signal,
         });
-        if (!cancelled && data.profile) onProfileChange?.(data.profile);
+        if (!cancelled && !controller.signal.aborted && data.profile) onProfileChange?.(data.profile);
       } catch {
         // The visible dashboard remains usable and the next interval retries quietly.
       } finally {
@@ -4834,6 +4836,7 @@ function DancerPanel({
     document.addEventListener("visibilitychange", refreshProfile);
     return () => {
       cancelled = true;
+      controller.abort();
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refreshProfile);
     };
