@@ -52,12 +52,16 @@ export function NfcTapClient({ token }: { token: string }) {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    void fetch(`/api/nfc/${encodeURIComponent(token)}`, { cache: "no-store", credentials: "same-origin" })
+    const controller = new AbortController();
+    void fetch(`/api/nfc/${encodeURIComponent(token)}`, {
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: controller.signal,
+    })
       .then(async (response) => {
         const data = await response.json();
+        if (controller.signal.aborted) return;
         if (!response.ok || !data.ok) throw new Error(data.error || "This tap sticker is unavailable.");
-        if (cancelled) return;
         setState(data);
         const pendingDealId = pendingIntent && pendingIntent.venueId === data.venue.id ? pendingIntent.dealId : "";
         const preferred = pendingDealId
@@ -76,13 +80,12 @@ export function NfcTapClient({ token }: { token: string }) {
             : "This club has no active Club Deals right now.");
       })
       .catch((reason) => {
-        if (!cancelled) {
-          setError(reason instanceof Error ? reason.message : "This tap sticker is unavailable.");
-          setStatus("");
-          setPhase("error");
-        }
+        if (controller.signal.aborted) return;
+        setError(reason instanceof Error ? reason.message : "This tap sticker is unavailable.");
+        setStatus("");
+        setPhase("error");
       });
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, [pendingIntent, token]);
 
   const submitTap = useCallback(async () => {

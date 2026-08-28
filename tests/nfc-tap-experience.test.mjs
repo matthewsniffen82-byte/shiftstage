@@ -66,6 +66,13 @@ test("new and existing dancers use the same submitted-profile NFC flow without m
   assert.match(client, /window\.location\.replace\("\/dashboard\/dancer\?nfc=complete"\)/);
 });
 
+test("NFC sticker discovery cancels stale reads when the landing page changes", () => {
+  assert.match(client, /fetch\(`\/api\/nfc\/\$\{encodeURIComponent\(token\)\}`, \{[\s\S]*?signal: controller\.signal/);
+  assert.equal((client.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
+  assert.match(client, /return \(\) => controller\.abort\(\);/);
+  assert.doesNotMatch(client, /let cancelled = false;/);
+});
+
 test("Step 3 eligibility matches the submitted onboarding requirements", () => {
   assert.match(activationMigration, /create or replace function public\.approve_dancer_venue_affiliation_from_nfc/);
   assert.match(activationMigration, /create or replace function public\.register_dancer_nfc_enrollment/);
