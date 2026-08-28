@@ -84,6 +84,20 @@ test("copyright administration cancels stale loads and serializes mutations", ()
   assert.match(dmcaPanel, /load\(\{ refreshAgent: false, clearStatus: false \}\)/);
 });
 
+test("admin NFC inventory cancels stale loads and serializes sticker mutations", () => {
+  assert.match(nfcPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(nfcPanel, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(nfcPanel, /const loadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(nfcPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(nfcPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(nfcPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(nfcPanel, /loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\);/);
+  assert.match(nfcPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return;/);
+  assert.match(nfcPanel, /requestId !== actionSequenceRef\.current/);
+  assert.match(nfcPanel, /load\(\{ clearStatus: false \}\)/);
+  assert.match(nfcPanel, /signal: controller\.signal/);
+});
+
 test("the admin session boundary stores only the canonical session and rejects non-admin roles", () => {
   const previousWindow = globalThis.window;
   const stored = new Map();

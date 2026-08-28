@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 
 type VenueOption = {
@@ -34,76 +34,132 @@ export default function AdminNfcInventoryPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [programmingUrl, setProgrammingUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
+  const load = useCallback(async ({ clearStatus = true } = {}) => {
+    const requestId = loadSequenceRef.current + 1;
+    loadSequenceRef.current = requestId;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    if (mountedRef.current) setIsLoading(true);
     try {
       const data = await requestAdminJson("/api/admin/nfc-tags", {
         cache: "no-store",
+        signal: controller.signal,
         fallbackMessage: "Unable to load NFC inventory.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setVenues(data.venues || []);
       setTags(data.tags || []);
       setVenueId((current) => current || data.venues?.[0]?.id || "");
-      setStatus("");
+      if (clearStatus) setStatus("");
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to load NFC inventory.");
     } finally {
-      setIsLoading(false);
+      if (loadAbortRef.current === controller) loadAbortRef.current = null;
+      if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    mountedRef.current = true;
+    void load();
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      actionSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, [load]);
 
   const activeCount = useMemo(() => tags.filter((tag) => tag.status === "active").length, [tags]);
 
   async function provision(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!mountedRef.current || actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setIsSaving(true);
     setProgrammingUrl("");
     try {
       const data = await requestAdminJson("/api/admin/nfc-tags", {
         method: "POST",
+        signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, type, label }),
         fallbackMessage: "Unable to assign NFC sticker.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setProgrammingUrl(data.programmingUrl || "");
       setStatus(data.message || "Sticker assigned.");
-      await load();
+      await load({ clearStatus: false });
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to assign NFC sticker.");
     } finally {
-      setIsSaving(false);
+      if (actionAbortRef.current === controller) actionAbortRef.current = null;
+      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+      if (mountedRef.current && requestId === actionSequenceRef.current) setIsSaving(false);
     }
   }
 
   async function update(tag: AdminNfcTag, action: "enable" | "disable" | "rotate") {
     if (action === "rotate" && !window.confirm(`Revoke ${tag.venue.name} · ${tag.label} and issue a replacement programming URL?`)) return;
+    if (!mountedRef.current || actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setIsSaving(true);
     setProgrammingUrl("");
     try {
       const data = await requestAdminJson("/api/admin/nfc-tags", {
         method: "PATCH",
+        signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ tagId: tag.id, action }),
         fallbackMessage: "Unable to update NFC sticker.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setProgrammingUrl(data.programmingUrl || "");
       setStatus(data.message || "Sticker updated.");
-      await load();
+      await load({ clearStatus: false });
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to update NFC sticker.");
     } finally {
-      setIsSaving(false);
+      if (actionAbortRef.current === controller) actionAbortRef.current = null;
+      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+      if (mountedRef.current && requestId === actionSequenceRef.current) setIsSaving(false);
     }
   }
 
   async function copyProgrammingUrl() {
     try {
       await navigator.clipboard.writeText(programmingUrl);
+      if (!mountedRef.current) return;
       setStatus("Programming URL copied. Write one NDEF URL record, test it, then lock the sticker read-only.");
     } catch {
+      if (!mountedRef.current) return;
       setStatus("Copy failed. Select the programming URL manually.");
     }
   }
@@ -124,7 +180,7 @@ export default function AdminNfcInventoryPanel() {
           </select>
         </label>
         <label>Placement
-          <select value={type} onChange={(event) => {
+          <select value={type} disabled={isSaving} onChange={(event) => {
             const next = event.target.value as AdminNfcTag["type"];
             setType(next);
             setLabel(next === "dressing_room" ? "Dressing room" : "Main cashier");
@@ -134,7 +190,7 @@ export default function AdminNfcInventoryPanel() {
           </select>
         </label>
         <label>Sticker label
-          <input value={label} onChange={(event) => setLabel(event.target.value)} minLength={2} maxLength={80} required />
+          <input value={label} disabled={isSaving} onChange={(event) => setLabel(event.target.value)} minLength={2} maxLength={80} required />
         </label>
         <button type="submit" disabled={isSaving || !venueId}>{isSaving ? "Working…" : "Assign sticker"}</button>
       </form>
