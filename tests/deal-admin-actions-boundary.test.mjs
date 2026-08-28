@@ -34,6 +34,20 @@ test("admin contract deal writes are abortable and serialized", () => {
   assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 3);
 });
 
+test("admin deal activity rejects stale filters and serializes financial mutations", () => {
+  const manager = adminClient.match(/function DealActivityManager[\s\S]*?(?=function RankingManager)/)?.[0] || "";
+  assert.match(manager, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(manager, /const loadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(manager, /function beginDealActivityAction\(\)/);
+  assert.match(manager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(manager, /function isCurrentDealActivityAction/);
+  assert.match(manager, /function finishDealActivityAction/);
+  assert.equal((manager.match(/const request = beginDealActivityAction\(\)/g) || []).length, 2);
+  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 2);
+  assert.match(manager, /signal: controller\.signal/);
+  assert.match(manager, /requestId !== loadSequenceRef\.current/);
+});
+
 test("venue-payment settlement keeps its exact audited database operation", () => {
   assert.match(actions, /export async function settleDealRevenueEvent/);
   assert.match(actions, /\.rpc\("settle_deal_revenue_event"/);

@@ -2076,10 +2076,57 @@ function DealActivityManager({
   const [commissionStatus, setCommissionStatus] = useState("");
   const [suspicious, setSuspicious] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
   const [message, setMessage] = useState("");
   const [paymentReferences, setPaymentReferences] = useState<Record<string, string>>({});
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+  const controlsBusy = isLoading || isMutating;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      actionSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginDealActivityAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentDealActivityAction(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishDealActivityAction(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsMutating(false);
+  }
 
   async function loadFiltered() {
+    if (!mountedRef.current) return;
+    const requestId = loadSequenceRef.current + 1;
+    loadSequenceRef.current = requestId;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     setIsLoading(true);
     setMessage("");
     const params = new URLSearchParams();
@@ -2093,30 +2140,43 @@ function DealActivityManager({
 
     try {
       const data = await requestAdminJson(`/api/admin/deals?${params.toString()}`, {
+        signal: controller.signal,
         fallbackMessage: "Unable to load deal activity.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       onActivityChange(data.activity || []);
       setMessage(`${data.activity?.length || 0} records loaded.`);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setMessage(error instanceof Error ? error.message : "Unable to load deal activity.");
     } finally {
-      setIsLoading(false);
+      if (loadAbortRef.current === controller) loadAbortRef.current = null;
+      if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
     }
   }
 
   async function voidRedemption(redemptionId: string) {
+    const request = beginDealActivityAction();
+    if (!request) return;
+    setIsMutating(true);
     setMessage("Voiding redemption...");
     try {
       await requestAdminJson("/api/admin/deals", {
         method: "PATCH",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ redemptionId }),
         fallbackMessage: "Unable to void redemption.",
       });
-      onActivityChange(activity.map((item) => (String(item.id) === redemptionId ? { ...item, status: "voided", suspicious: true } : item)));
+      if (!isCurrentDealActivityAction(request)) return;
+      await loadFiltered();
+      if (!isCurrentDealActivityAction(request)) return;
       setMessage("Redemption voided.");
     } catch (error) {
+      if (!isCurrentDealActivityAction(request)) return;
       setMessage(error instanceof Error ? error.message : "Unable to void redemption.");
+    } finally {
+      finishDealActivityAction(request);
     }
   }
 
@@ -2128,10 +2188,14 @@ function DealActivityManager({
       return;
     }
 
+    const request = beginDealActivityAction();
+    if (!request) return;
+    setIsMutating(true);
     setMessage("Recording venue payment...");
     try {
       await requestAdminJson("/api/admin/deals", {
         method: "PATCH",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "venue_payment_received",
@@ -2140,11 +2204,16 @@ function DealActivityManager({
         }),
         fallbackMessage: "Unable to record settlement.",
       });
+      if (!isCurrentDealActivityAction(request)) return;
       await loadFiltered();
+      if (!isCurrentDealActivityAction(request)) return;
       setPaymentReferences((current) => ({ ...current, [referenceKey]: "" }));
       setMessage("Venue payment recorded.");
     } catch (error) {
+      if (!isCurrentDealActivityAction(request)) return;
       setMessage(error instanceof Error ? error.message : "Unable to record settlement.");
+    } finally {
+      finishDealActivityAction(request);
     }
   }
 
@@ -2153,19 +2222,19 @@ function DealActivityManager({
       <div className="deal-filters">
         <label>
           Club ID
-          <input value={venueId} onChange={(event) => setVenueId(event.target.value)} placeholder="Optional" />
+          <input value={venueId} disabled={controlsBusy} onChange={(event) => setVenueId(event.target.value)} placeholder="Optional" />
         </label>
         <label>
           Dancer ID
-          <input value={dancerId} onChange={(event) => setDancerId(event.target.value)} placeholder="Optional" />
+          <input value={dancerId} disabled={controlsBusy} onChange={(event) => setDancerId(event.target.value)} placeholder="Optional" />
         </label>
         <label>
           Deal ID
-          <input value={dealId} onChange={(event) => setDealId(event.target.value)} placeholder="Optional" />
+          <input value={dealId} disabled={controlsBusy} onChange={(event) => setDealId(event.target.value)} placeholder="Optional" />
         </label>
         <label>
           Source
-          <select value={sourceType} onChange={(event) => setSourceType(event.target.value)}>
+          <select value={sourceType} disabled={controlsBusy} onChange={(event) => setSourceType(event.target.value)}>
             <option value="">All sources</option>
             <option value="club_page">Club page</option>
             <option value="dancer_profile">Dancer profile</option>
@@ -2173,7 +2242,7 @@ function DealActivityManager({
         </label>
         <label>
           Status
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select value={status} disabled={controlsBusy} onChange={(event) => setStatus(event.target.value)}>
             <option value="">All statuses</option>
             <option value="generated">Generated</option>
             <option value="redeemed">Redeemed</option>
@@ -2183,7 +2252,7 @@ function DealActivityManager({
         </label>
         <label>
           Commission
-          <select value={commissionStatus} onChange={(event) => setCommissionStatus(event.target.value)}>
+          <select value={commissionStatus} disabled={controlsBusy} onChange={(event) => setCommissionStatus(event.target.value)}>
             <option value="">All commissions</option>
             <option value="pending">Pending</option>
             <option value="available">Available</option>
@@ -2195,12 +2264,12 @@ function DealActivityManager({
         </label>
         <label>
           Suspicious
-          <select value={suspicious} onChange={(event) => setSuspicious(event.target.value)}>
+          <select value={suspicious} disabled={controlsBusy} onChange={(event) => setSuspicious(event.target.value)}>
             <option value="">All activity</option>
             <option value="true">Flagged only</option>
           </select>
         </label>
-        <button type="button" onClick={loadFiltered} disabled={isLoading}>
+        <button type="button" onClick={loadFiltered} disabled={controlsBusy}>
           {isLoading ? "Loading..." : "Filter"}
         </button>
       </div>
@@ -2231,6 +2300,7 @@ function DealActivityManager({
                         aria-label="Venue payment reference"
                         placeholder="Venue invoice/payment reference"
                         value={paymentReferences[venueReferenceKey] || ""}
+                        disabled={isMutating}
                         onChange={(event) => setPaymentReferences((current) => ({
                           ...current,
                           [venueReferenceKey]: event.target.value,
@@ -2238,6 +2308,7 @@ function DealActivityManager({
                       />
                       <button
                         type="button"
+                        disabled={isMutating}
                         onClick={() => settleVenueBalance(revenueEventId)}
                       >
                         Record venue payment
@@ -2256,7 +2327,7 @@ function DealActivityManager({
               ) : null}
               {item.suspicious ? <span>Flagged suspicious</span> : null}
               {item.status === "generated" ? (
-                <button type="button" onClick={() => voidRedemption(String(item.id))}>
+                <button type="button" disabled={isMutating} onClick={() => voidRedemption(String(item.id))}>
                   Void unused QR
                 </button>
               ) : null}
