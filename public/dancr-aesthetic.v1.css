@@ -4779,6 +4779,10 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
   width: 26px !important;
   height: 26px !important;
   flex-basis: 26px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
   border: 1px solid rgba(216, 180, 254, .82) !important;
   border-radius: 50% !important;
   color: #f5d0fe !important;
@@ -4791,6 +4795,10 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action:not(.is-going) .action-icon > svg,
 body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available:not(.is-going) .profile-action-preview-icon {
+  --profile-icon-offset-x: 0px !important;
+  --profile-icon-offset-y: 0px !important;
+  display: block !important;
+  margin: 0 !important;
   color: inherit !important;
   filter:
     drop-shadow(0 0 5px rgba(245, 208, 254, .95))
