@@ -5399,7 +5399,10 @@ function DancerSetupPanel({
   const [isResetting, setIsResetting] = useState(false);
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
-  const saveInFlightRef = useRef(false);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
   const draftHydratedRef = useRef(false);
   const draftDirtyRef = useRef(false);
   const draftKey = `mydancr:dancer-profile-draft:${String(profile?.id || "profile")}`;
@@ -5408,6 +5411,17 @@ function DancerSetupPanel({
 
   useEffect(() => {
     console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v14");
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -5490,19 +5504,42 @@ function DancerSetupPanel({
   useEffect(() => {
     deletedPhotoIdsRef.current = [...deletedPhotoIds];
     deletedPhotoStoragePathsRef.current = [...deletedPhotoStoragePaths];
-    if ((deletedPhotoIds.length || deletedPhotoStoragePaths.length) && saveStatus === "saved" && !saveInFlightRef.current) {
+    if ((deletedPhotoIds.length || deletedPhotoStoragePaths.length) && saveStatus === "saved" && !actionInFlightRef.current) {
       setSaveStatus("idle");
     }
   }, [deletedPhotoIds, deletedPhotoStoragePaths, saveStatus]);
 
+  function beginProfileAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentProfileAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishProfileAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return false;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    return mountedRef.current;
+  }
+
   async function hardResetProfile() {
-    if (isResetting || saveInFlightRef.current) return;
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
       return;
     }
 
+    const action = beginProfileAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     console.log("PUBLIC_PROFILE_STATE_BEFORE_RESET", {
       dancerId: profile?.id || null,
       status: profile?.status ?? null,
@@ -5518,7 +5555,9 @@ function DancerSetupPanel({
         method: "GET",
         cache: "no-store",
         fallbackMessage: "Unable to reload the saved profile.",
+        signal: controller.signal,
       });
+      if (!isCurrentProfileAction(requestId, controller)) return;
       if (!data.profile) throw new Error("Unable to reload the saved profile.");
 
       console.log("PUBLIC_PROFILE_STATE_AFTER_RESET", {
@@ -5538,16 +5577,17 @@ function DancerSetupPanel({
       setSaveStatus("idle");
       setStatus("Latest saved profile reloaded.");
     } catch (error) {
-      console.error("DANCER_PROFILE_HARD_RESET_FAILED", error);
-      setStatus(error instanceof Error ? error.message : "Unable to reload the saved profile.");
+      if (isCurrentProfileAction(requestId, controller)) {
+        console.error("DANCER_PROFILE_HARD_RESET_FAILED", error);
+        setStatus(error instanceof Error ? error.message : "Unable to reload the saved profile.");
+      }
     } finally {
-      setIsResetting(false);
+      if (finishProfileAction(requestId)) setIsResetting(false);
     }
   }
 
   async function saveProfile(event?: React.FormEvent<HTMLFormElement>) {
     event?.preventDefault();
-    if (saveInFlightRef.current) return false;
 
     const session = readSession();
     if (!session?.accessToken) {
@@ -5556,7 +5596,9 @@ function DancerSetupPanel({
       return false;
     }
 
-    saveInFlightRef.current = true;
+    const action = beginProfileAction();
+    if (!action) return false;
+    const { requestId, controller } = action;
     setSaveStatus("saving");
     setStatus("Saving...");
     const idsToDelete = [...deletedPhotoIdsRef.current];
@@ -5584,7 +5626,9 @@ function DancerSetupPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
         fallbackMessage: "Unable to save profile.",
+        signal: controller.signal,
       });
+      if (!isCurrentProfileAction(requestId, controller)) return false;
 
       const refreshedPhotoRows = [
         ...(Array.isArray(data.profile?.dancer_photos) ? data.profile.dancer_photos : []),
@@ -5615,12 +5659,14 @@ function DancerSetupPanel({
         : "Saved Profile");
       return true;
     } catch (error) {
-      console.error("EDIT_PROFILE_SAVE_FAILED", error);
-      setSaveStatus("error");
-      setStatus(error instanceof Error ? error.message : "Profile could not be saved.");
+      if (isCurrentProfileAction(requestId, controller)) {
+        console.error("EDIT_PROFILE_SAVE_FAILED", error);
+        setSaveStatus("error");
+        setStatus(error instanceof Error ? error.message : "Profile could not be saved.");
+      }
       return false;
     } finally {
-      saveInFlightRef.current = false;
+      finishProfileAction(requestId);
     }
   }
 

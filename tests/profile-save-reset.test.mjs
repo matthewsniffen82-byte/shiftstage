@@ -60,6 +60,20 @@ test("Hard Reset is a read-only database reload", () => {
   assert.equal(effectiveStatus({ status: "approved", verification_status: "rejected" }), "rejected");
 });
 
+test("profile reload and save reject duplicate and stale work", () => {
+  const identityEditor = dashboardSource.match(/function DancerSetupPanel\([\s\S]*?(?=\nfunction DancerAvatarPanel)/)?.[0] || "";
+  assert.match(identityEditor, /const mountedRef = useRef\(false\);/);
+  assert.match(identityEditor, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(identityEditor, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(identityEditor, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(identityEditor, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.equal((identityEditor.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.equal((identityEditor.match(/if \(!isCurrentProfileAction\(requestId, controller\)\) return(?: false)?;/g) || []).length, 2);
+  assert.match(identityEditor, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
+  assert.match(identityEditor, /if \(isCurrentProfileAction\(requestId, controller\)\) \{[\s\S]*?DANCER_PROFILE_HARD_RESET_FAILED/);
+  assert.match(identityEditor, /if \(isCurrentProfileAction\(requestId, controller\)\) \{[\s\S]*?EDIT_PROFILE_SAVE_FAILED/);
+});
+
 test("fresh database photos replace stale editor photos", () => {
   assert.match(dashboardSource, /relabelPhotoItems\(dancerPhotoItemsFromProfile\(profile, deletedPhotoIds\)\)/);
   assert.doesNotMatch(dashboardSource, /mergePhotoItems\(current, dancerPhotoItemsFromProfile\(profile\)\)/);
