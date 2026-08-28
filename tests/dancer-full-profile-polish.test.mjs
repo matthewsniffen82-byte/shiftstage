@@ -273,6 +273,10 @@ test("profile action controls are unboxed, left grouped, and available Going hig
   );
   assert.match(
     aesthetic,
+    /three analytics columns sit in the visual spaces between the[\s\S]*?#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?margin-inline: 12px !important;[\s\S]*?padding-left: calc\(var\(--profile-row-inline-start\) - 12px\) !important;/,
+  );
+  assert.match(
+    aesthetic,
     /four customer actions share one quiet premium tray[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?border-radius: 22px !important;[\s\S]*?background: rgba\(7, 7, 11, \.92\) !important;/,
   );
   assert.match(

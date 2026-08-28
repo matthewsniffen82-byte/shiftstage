@@ -10745,6 +10745,7 @@ html:is(
   body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
     width: auto !important;
     margin-inline: 12px !important;
+    padding-left: calc(var(--profile-row-inline-start) - 12px) !important;
   }
 }
 
