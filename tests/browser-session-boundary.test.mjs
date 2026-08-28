@@ -160,6 +160,12 @@ test("public dancer profile state loads cancel when the dancer or shift changes"
   assert.doesNotMatch(stateLoader, /let active = true;/);
 });
 
+test("venue profile saved state ignores responses after the venue changes", () => {
+  assert.match(venueActionsSource, /fetch\("\/api\/customer\/saved", \{[\s\S]*?signal: controller\.signal/);
+  assert.equal((venueActionsSource.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
+  assert.match(venueActionsSource, /return \(\) => controller\.abort\(\);/);
+});
+
 test("standalone NFC, redemption, venue access, and DMCA clients use the same session boundary", () => {
   for (const source of [
     nfcSource,

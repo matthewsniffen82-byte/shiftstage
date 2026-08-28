@@ -42,6 +42,7 @@ export function VenueProfileActions({
     })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
+        if (controller.signal.aborted) return;
         if (!response.ok || !data.ok) {
           if (response.status === 401 || response.status === 403) {
             setToken("");
@@ -57,7 +58,7 @@ export function VenueProfileActions({
         setNotificationsEnabled(Boolean(follow?.notificationsEnabled));
       })
       .catch((error) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (controller.signal.aborted) return;
         setStatus(
           error instanceof Error
             ? error.message
