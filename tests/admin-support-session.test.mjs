@@ -17,9 +17,14 @@ test("admin support uses the refresh-aware role-isolated admin boundary", () => 
 });
 
 test("admin support replies recover from failures and prevent duplicate submission", () => {
+  assert.match(supportInbox, /function beginSupportAction\(\)/);
+  assert.match(supportInbox, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(supportInbox, /signal: request\.controller\.signal/);
+  assert.match(supportInbox, /function isCurrentSupportAction/);
+  assert.match(supportInbox, /function finishSupportAction/);
   assert.match(supportInbox, /fallbackMessage: "Unable to send reply\."/);
   assert.match(supportInbox, /catch \(error\)[\s\S]*?error instanceof Error \? error\.message/);
-  assert.match(supportInbox, /finally \{[\s\S]*?setBusyThreadId\(""\)/);
-  assert.match(supportInbox, /disabled=\{busyThreadId === threadId\}/);
+  assert.match(supportInbox, /finally \{[\s\S]*?finishSupportAction\(request\)/);
+  assert.match(supportInbox, /disabled=\{Boolean\(busyThreadId\)\}/);
   assert.match(supportInbox, /busyThreadId === threadId \? "Sending reply\.\.\." : "Reply to account"/);
 });

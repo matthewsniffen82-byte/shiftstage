@@ -2618,6 +2618,41 @@ function AdminSupportInbox({
   const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
   const [statusByThread, setStatusByThread] = useState<Record<string, string>>({});
   const [busyThreadId, setBusyThreadId] = useState("");
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginSupportAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentSupportAction(request: { controller: AbortController; requestId: number }) {
+    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
+  }
+
+  function finishSupportAction(request: { controller: AbortController; requestId: number }) {
+    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
+    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && request.requestId === actionSequenceRef.current) setBusyThreadId("");
+  }
 
   async function reply(threadId: string) {
     const message = (replyByThread[threadId] || "").trim();
@@ -2625,26 +2660,31 @@ function AdminSupportInbox({
       setStatusByThread((current) => ({ ...current, [threadId]: "Enter a reply first." }));
       return;
     }
+    const request = beginSupportAction();
+    if (!request) return;
 
     setBusyThreadId(threadId);
     setStatusByThread((current) => ({ ...current, [threadId]: "Sending reply..." }));
     try {
       const data = await requestAdminJson("/api/admin/support", {
         method: "POST",
+        signal: request.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ threadId, message }),
         fallbackMessage: "Unable to send reply.",
       });
+      if (!isCurrentSupportAction(request)) return;
       onThreadsChange([data.thread, ...threads.filter((thread) => String(thread.id) !== threadId)]);
       setReplyByThread((current) => ({ ...current, [threadId]: "" }));
       setStatusByThread((current) => ({ ...current, [threadId]: "Reply sent." }));
     } catch (error) {
+      if (!isCurrentSupportAction(request)) return;
       setStatusByThread((current) => ({
         ...current,
         [threadId]: error instanceof Error ? error.message : "Unable to send reply. Check your connection and try again.",
       }));
     } finally {
-      setBusyThreadId("");
+      finishSupportAction(request);
     }
   }
 
@@ -2678,10 +2718,11 @@ function AdminSupportInbox({
             </div>
             <textarea
               value={replyByThread[threadId] || ""}
+              disabled={Boolean(busyThreadId)}
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
               placeholder="Reply to this guest, dancer, or venue"
             />
-            <button type="button" onClick={() => reply(threadId)} disabled={busyThreadId === threadId}>
+            <button type="button" onClick={() => reply(threadId)} disabled={Boolean(busyThreadId)}>
               {busyThreadId === threadId ? "Sending reply..." : "Reply to account"}
             </button>
             {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
