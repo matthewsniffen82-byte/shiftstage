@@ -79,9 +79,21 @@ export default function TvFeedClient({
   const engagedTimers = useRef<Record<string, number>>({});
   const completedVideos = useRef(new Set<string>());
   const loadedAuthenticatedFeed = useRef(false);
+  const mountedRef = useRef(false);
+  const feedAbortRef = useRef<AbortController | null>(null);
+  const feedRequestIdRef = useRef(0);
   const viewerSessionId = useMemo(readViewerSessionId, []);
   activeVideoIdRef.current = activeVideoId;
   mutedRef.current = muted;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      feedRequestIdRef.current += 1;
+      feedAbortRef.current?.abort();
+    };
+  }, []);
 
   const trackEvent = useCallback((videoId: string, eventType: string) => {
     const token = readBrowserAccessToken();
@@ -168,6 +180,12 @@ export default function TvFeedClient({
   }, [videos]);
 
   const loadFeed = useCallback(async (nextFilter: string, nextCity: string, selectedVideoId = "") => {
+    if (!mountedRef.current) return false;
+    const controller = new AbortController();
+    const requestId = feedRequestIdRef.current + 1;
+    feedRequestIdRef.current = requestId;
+    feedAbortRef.current?.abort();
+    feedAbortRef.current = controller;
     setIsLoading(true);
     setStatus("");
     try {
@@ -183,8 +201,10 @@ export default function TvFeedClient({
       const response = await fetch(`/api/public/tv?${params.toString()}`, {
         headers: token ? { authorization: `Bearer ${token}` } : undefined,
         cache: "no-store",
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted || requestId !== feedRequestIdRef.current) return false;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load MyDancr TV.");
       const cityVideos = Array.isArray(data.videos)
         ? data.videos.filter(
@@ -207,10 +227,16 @@ export default function TvFeedClient({
       }
       url.searchParams.delete("video");
       window.history.replaceState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
+      return true;
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== feedRequestIdRef.current) return false;
       setStatus(error instanceof Error ? error.message : "Unable to load MyDancr TV.");
+      return false;
     } finally {
-      setIsLoading(false);
+      if (feedAbortRef.current === controller) {
+        feedAbortRef.current = null;
+        if (mountedRef.current) setIsLoading(false);
+      }
     }
   }, [initialDancerId, initialVenueId]);
 
@@ -272,8 +298,9 @@ export default function TvFeedClient({
 
   useEffect(() => {
     if (initialFilter !== "following" || loadedAuthenticatedFeed.current) return;
-    loadedAuthenticatedFeed.current = true;
-    loadFeed("following", initialCity, initialSelectedVideoId);
+    void loadFeed("following", initialCity, initialSelectedVideoId).then((loaded) => {
+      if (loaded) loadedAuthenticatedFeed.current = true;
+    });
   }, [initialCity, initialFilter, initialSelectedVideoId, loadFeed]);
 
   useEffect(() => {

@@ -270,6 +270,29 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /loadProfileMyDancrTv/);
 });
 
+test("TV feed filters reject stale and post-navigation responses", () => {
+  assert.match(feedClient, /const mountedRef = useRef\(false\);/);
+  assert.match(feedClient, /const feedAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(feedClient, /const feedRequestIdRef = useRef\(0\);/);
+  assert.match(feedClient, /feedAbortRef\.current\?\.abort\(\);/);
+  assert.match(
+    feedClient,
+    /fetch\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`, \{[\s\S]*?signal: controller\.signal/,
+  );
+  assert.match(
+    feedClient,
+    /if \(!mountedRef\.current \|\| controller\.signal\.aborted \|\| requestId !== feedRequestIdRef\.current\) return false;/,
+  );
+  assert.match(
+    feedClient,
+    /if \(feedAbortRef\.current === controller\) \{[\s\S]*?if \(mountedRef\.current\) setIsLoading\(false\);/,
+  );
+  assert.match(
+    feedClient,
+    /void loadFeed\("following", initialCity, initialSelectedVideoId\)\.then\(\(loaded\) => \{[\s\S]*?if \(loaded\) loadedAuthenticatedFeed\.current = true;/,
+  );
+});
+
 test("the vertical TV feed locks exactly one stable video into the available viewport", () => {
   assert.match(feedClient, /const feedElement = useRef<HTMLElement \| null>\(null\)/);
   assert.match(feedClient, /\{ root: feed, threshold: \[0\.75, 0\.9\] \}/);
