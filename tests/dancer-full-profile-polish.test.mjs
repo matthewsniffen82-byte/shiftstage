@@ -181,7 +181,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
 
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop #profileModal \.profile-media-socials,[\s\S]*?\.public-profile-shell \.profile-media-socials \{[\s\S]*?place-items: center !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 6px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop #profileModal \.profile-media-socials,[\s\S]*?\.public-profile-shell \.profile-media-socials \{[\s\S]*?place-items: center !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,

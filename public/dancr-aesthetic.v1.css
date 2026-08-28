@@ -5013,7 +5013,7 @@ body.dancr-button-system .public-profile-shell .profile-media-socials {
   display: grid !important;
   place-items: center !important;
   margin: 0 !important;
-  padding: 10px 0 6px !important;
+  padding: 10px 0 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;

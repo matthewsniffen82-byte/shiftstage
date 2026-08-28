@@ -49,7 +49,7 @@ test("zero-social profiles reserve no social DOM or layout space", () => {
   assert.doesNotMatch(socialFunctionSource, /No profiles posted|social placeholder|empty social/i);
   assert.match(
     compactLayout,
-    /\.profile-media-socials \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 6px !important;/,
+    /\.profile-media-socials \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 0 !important;/,
   );
 });
 
