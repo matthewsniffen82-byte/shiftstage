@@ -209,6 +209,13 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /<textarea[\s\S]*maxLength=\{1200\}/);
   assert.match(profileActions, /onSubmit=\{submitReportForm\}/);
   assert.match(profileActions, /details: reportDetails\.trim\(\) \|\| null/);
+  assert.match(profileActions, /const reportAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(profileActions, /const reportInFlightRef = useRef\(false\);/);
+  assert.match(profileActions, /if \(reportInFlightRef\.current \|\| reportSubmitted\) return;/);
+  assert.match(profileActions, /fetch\("\/api\/reports", \{[\s\S]*?signal: controller\.signal/);
+  assert.match(profileActions, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return;/);
+  assert.match(profileActions, /reportAbortRef\.current\?\.abort\(\);/);
+  assert.match(profileActions, /if \(mountedRef\.current\) setReportSaving\(false\);/);
   assert.doesNotMatch(
     profileActions,
     /reason: "Profile report"[\s\S]*details: "Reported from the public dancer profile\."/,

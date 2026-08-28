@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type PropsWithChildren,
@@ -174,6 +175,18 @@ export function DancerReportControl({
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [reportError, setReportError] = useState("");
+  const mountedRef = useRef(false);
+  const reportAbortRef = useRef<AbortController | null>(null);
+  const reportInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      reportAbortRef.current?.abort();
+      reportInFlightRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!reportDialogOpen) return;
@@ -197,11 +210,15 @@ export function DancerReportControl({
 
   async function submitReportForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (reportSaving || reportSubmitted) return;
+    if (reportInFlightRef.current || reportSubmitted) return;
     if (!reportReason) {
       setReportError("Choose a reason for the report.");
       return;
     }
+    const controller = new AbortController();
+    reportAbortRef.current?.abort();
+    reportAbortRef.current = controller;
+    reportInFlightRef.current = true;
     setReportSaving(true);
     setReportError("");
     try {
@@ -219,8 +236,10 @@ export function DancerReportControl({
           reason: reportReason,
           details: reportDetails.trim() || null,
         }),
+        signal: controller.signal,
       });
       const data = await response.json().catch(() => ({}));
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to submit report.");
       }
@@ -228,11 +247,16 @@ export function DancerReportControl({
       setReportSubmitted(true);
       setReportDialogOpen(false);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted) return;
       setReportError(
         error instanceof Error ? error.message : "Unable to submit report.",
       );
     } finally {
-      setReportSaving(false);
+      if (reportAbortRef.current === controller) {
+        reportAbortRef.current = null;
+        reportInFlightRef.current = false;
+        if (mountedRef.current) setReportSaving(false);
+      }
     }
   }
 
