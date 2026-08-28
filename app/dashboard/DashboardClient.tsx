@@ -832,6 +832,7 @@ function SupportInboxPanel({
   const [sendConfirmation, setSendConfirmation] = useState(false);
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
 
   useEffect(() => {
@@ -839,6 +840,8 @@ function SupportInboxPanel({
     return () => {
       mountedRef.current = false;
       actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
       actionInFlightRef.current = false;
     };
   }, []);
@@ -851,49 +854,55 @@ function SupportInboxPanel({
     if (!mountedRef.current || actionInFlightRef.current) return null;
     actionInFlightRef.current = true;
     const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     if (threadId) setBusyThreadId(threadId);
     else setIsSending(true);
-    return requestId;
+    return { requestId, controller };
   }
 
-  function isCurrentSupportAction(requestId: number) {
-    return mountedRef.current && requestId === actionSequenceRef.current;
+  function isCurrentSupportAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
   }
 
   function finishSupportAction(requestId: number) {
     if (requestId !== actionSequenceRef.current) return;
+    actionAbortRef.current = null;
     actionInFlightRef.current = false;
     if (!mountedRef.current) return;
     setIsSending(false);
     setBusyThreadId("");
   }
 
-  async function sendMessage(payload: { message: string; subject?: string; threadId?: string }) {
+  async function sendMessage(payload: { message: string; subject?: string; threadId?: string }, signal: AbortSignal) {
     const data = await requestDashboardJson("/api/support", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
       fallbackMessage: "Unable to send message.",
+      signal,
     });
     return data.thread;
   }
 
   async function startThread(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const requestId = beginSupportAction();
-    if (requestId === null) return;
+    const action = beginSupportAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setSendConfirmation(false);
     setStatus("");
     try {
-      const thread = await sendMessage({ subject, message });
-      if (!isCurrentSupportAction(requestId)) return;
+      const thread = await sendMessage({ subject, message }, controller.signal);
+      if (!isCurrentSupportAction(requestId, controller)) return;
       if (thread) setThreads((current) => [thread, ...current.filter((item) => String(item.id) !== String(thread.id))]);
       setSubject("");
       setMessage("");
       setStatus("Message sent to admin.");
       setSendConfirmation(true);
     } catch (error) {
-      if (isCurrentSupportAction(requestId)) setStatus(error instanceof Error ? error.message : "Unable to send message.");
+      if (isCurrentSupportAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to send message.");
     } finally {
       finishSupportAction(requestId);
     }
@@ -906,17 +915,18 @@ function SupportInboxPanel({
       return;
     }
 
-    const requestId = beginSupportAction(threadId);
-    if (requestId === null) return;
+    const action = beginSupportAction(threadId);
+    if (!action) return;
+    const { requestId, controller } = action;
     setStatus("");
     try {
-      const thread = await sendMessage({ threadId, message: body });
-      if (!isCurrentSupportAction(requestId)) return;
+      const thread = await sendMessage({ threadId, message: body }, controller.signal);
+      if (!isCurrentSupportAction(requestId, controller)) return;
       if (thread) setThreads((current) => [thread, ...current.filter((item) => String(item.id) !== String(thread.id))]);
       setReplyByThread((current) => ({ ...current, [threadId]: "" }));
       setStatus("Reply sent to admin.");
     } catch (error) {
-      if (isCurrentSupportAction(requestId)) setStatus(error instanceof Error ? error.message : "Unable to send reply.");
+      if (isCurrentSupportAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to send reply.");
     } finally {
       finishSupportAction(requestId);
     }
