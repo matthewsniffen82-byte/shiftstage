@@ -1573,14 +1573,14 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   box-shadow: none !important;
 }
 
-/* The four customer actions share one quiet premium tray. Individual actions
- * remain unboxed so the row reads as one cohesive control group. */
+/* Profile actions sit directly on the profile surface. The group itself is
+ * compact; the Working Now / Club Deal card remains the full-width module. */
 #profileBackdrop .profile-modal .modal-actions,
 .public-profile-shell .live-actions {
-  border: 1px solid rgba(248, 250, 252, .11) !important;
-  border-radius: 22px !important;
-  background: rgba(7, 7, 11, .92) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Full profiles keep one quiet, device-independent edge system. Persistent
@@ -4857,12 +4857,18 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
 body.dancr-button-system .public-profile-shell .live-actions {
   --profile-row-inline-start: clamp(24px, 7vw, 28px);
+  width: fit-content !important;
+  max-width: calc(100% - var(--profile-row-inline-start)) !important;
+  box-sizing: border-box !important;
   grid-template-columns: repeat(4, clamp(52px, 15vw, 56px)) !important;
   justify-content: start !important;
+  justify-self: start !important;
+  align-self: start !important;
   column-gap: clamp(4px, 2vw, 8px) !important;
   row-gap: 2px !important;
   margin-top: 0 !important;
-  padding: 2px 4px 2px var(--profile-row-inline-start) !important;
+  margin-inline: var(--profile-row-inline-start) 0 !important;
+  padding: 2px 0 !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
@@ -4998,9 +5004,11 @@ body.dancr-button-system #profileBackdrop #profileModal .social-links,
 body.dancr-button-system .public-profile-shell .social-list {
   --profile-row-inline-start: clamp(24px, 7vw, 28px);
   width: fit-content !important;
-  max-width: 100% !important;
+  max-width: calc(100% - var(--profile-row-inline-start)) !important;
   flex-wrap: nowrap !important;
   justify-content: flex-start !important;
+  justify-self: start !important;
+  align-self: start !important;
   gap: 6px !important;
   margin-inline: var(--profile-row-inline-start) 0 !important;
   overflow: visible !important;
@@ -10735,17 +10743,6 @@ html:is(
     width: 36px !important;
     height: 36px !important;
     min-height: 36px !important;
-  }
-}
-
-/* On mobile, the three analytics columns sit in the visual spaces between the
- * four guest actions. Insetting the shared action row keeps those controls
- * cohesive and gives the avatar/status treatment clear breathing room. */
-@media (max-width: 759px) {
-  body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
-    width: auto !important;
-    margin-inline: 12px !important;
-    padding-left: calc(var(--profile-row-inline-start) - 12px) !important;
   }
 }
 

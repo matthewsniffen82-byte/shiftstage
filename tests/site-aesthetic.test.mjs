@@ -28,7 +28,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=190" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=191" rel="stylesheet">/,
   );
 });
 
@@ -621,7 +621,7 @@ test("venue detail and full dancer profiles use the same near-black foundation a
   );
   assert.match(
     aesthetic,
-    /four customer actions share one quiet premium tray[\s\S]*?#profileBackdrop \.profile-modal \.modal-actions,[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, \.11\) !important;[\s\S]*?border-radius: 22px !important;[\s\S]*?background: rgba\(7, 7, 11, \.92\) !important;[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, \.025\) !important;/,
+    /Profile actions sit directly on the profile surface[\s\S]*?#profileBackdrop \.profile-modal \.modal-actions,[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   const profileFoundation = aesthetic.match(
     /body\.dancr-button-system #profileBackdrop\.modal-backdrop,[\s\S]*?(?=\/\* Approved venue media)/,

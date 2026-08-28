@@ -269,15 +269,19 @@ test("profile action controls are unboxed, left grouped, and available Going hig
   );
   assert.match(
     guestActionsBlock,
-    /#profileBackdrop #profileModal \.modal-actions,[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?--profile-row-inline-start: clamp\(24px, 7vw, 28px\);[\s\S]*?grid-template-columns: repeat\(4, clamp\(52px, 15vw, 56px\)\) !important;[\s\S]*?justify-content: start !important;[\s\S]*?column-gap: clamp\(4px, 2vw, 8px\) !important;[\s\S]*?padding: 2px 4px 2px var\(--profile-row-inline-start\) !important;/,
+    /#profileBackdrop #profileModal \.modal-actions,[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?--profile-row-inline-start: clamp\(24px, 7vw, 28px\);[\s\S]*?width: fit-content !important;[\s\S]*?max-width: calc\(100% - var\(--profile-row-inline-start\)\) !important;[\s\S]*?grid-template-columns: repeat\(4, clamp\(52px, 15vw, 56px\)\) !important;[\s\S]*?justify-content: start !important;[\s\S]*?justify-self: start !important;[\s\S]*?column-gap: clamp\(4px, 2vw, 8px\) !important;[\s\S]*?margin-inline: var\(--profile-row-inline-start\) 0 !important;[\s\S]*?padding: 2px 0 !important;/,
+  );
+  assert.doesNotMatch(
+    aesthetic,
+    /#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?width: auto !important;[\s\S]*?margin-inline: 12px !important;/,
   );
   assert.match(
     aesthetic,
-    /three analytics columns sit in the visual spaces between the[\s\S]*?#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?margin-inline: 12px !important;[\s\S]*?padding-left: calc\(var\(--profile-row-inline-start\) - 12px\) !important;/,
+    /Profile actions sit directly on the profile surface[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
-    aesthetic,
-    /four customer actions share one quiet premium tray[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?border-radius: 22px !important;[\s\S]*?background: rgba\(7, 7, 11, \.92\) !important;/,
+    guestActionsBlock,
+    /#profileBackdrop #profileModal \.social-links,[\s\S]*?\.public-profile-shell \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?max-width: calc\(100% - var\(--profile-row-inline-start\)\) !important;[\s\S]*?justify-content: flex-start !important;[\s\S]*?justify-self: start !important;[\s\S]*?gap: 6px !important;[\s\S]*?margin-inline: var\(--profile-row-inline-start\) 0 !important;/,
   );
   assert.match(
     guestActionsBlock,
@@ -335,9 +339,9 @@ test("mobile full profiles keep identity, analytics, and close control on one co
     compactMobileProfile,
     /#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?justify-content: flex-start !important;[\s\S]*?padding-inline-start: clamp\(14px, 4vw, 18px\) !important;/,
   );
-  assert.match(
+  assert.doesNotMatch(
     aesthetic,
-    /three analytics columns sit in the visual spaces between the[\s\S]*?#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?width: auto !important;[\s\S]*?margin-inline: 12px !important;/,
+    /three analytics columns sit in the visual spaces between the[\s\S]*?#profileBackdrop #profileModal \.modal-actions/,
   );
   assert.match(
     aesthetic,
