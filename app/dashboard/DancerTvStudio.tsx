@@ -67,6 +67,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const rightsInputRef = useRef<HTMLInputElement>(null);
   const queuedPreviewUrlsRef = useRef<Set<string>>(new Set());
   const workspaceRequestIdRef = useRef(0);
+  const workspaceAbortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(false);
   const maxVideos = workspace?.maxVideos || MAX_DANCER_PROFILE_VIDEOS;
   const currentVideoCount = workspace?.videos.length || 0;
   const atVideoLimit = currentVideoCount >= maxVideos;
@@ -76,35 +78,55 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   )) || false;
 
   const loadWorkspace = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!mountedRef.current) return false;
+    const requestId = ++workspaceRequestIdRef.current;
+    workspaceAbortRef.current?.abort();
+    const controller = new AbortController();
+    workspaceAbortRef.current = controller;
     if (!readDashboardAccessToken("dancer")) {
       if (!silent) {
         setStatus("Sign in as a dancer to manage MyDancr TV.");
         setIsLoading(false);
       }
+      if (requestId === workspaceRequestIdRef.current) workspaceAbortRef.current = null;
       return false;
     }
-    const requestId = ++workspaceRequestIdRef.current;
     if (!silent) setIsLoading(true);
     try {
       const data = await requestDancerTvVideosJson({
         cache: "no-store",
+        signal: controller.signal,
         fallbackMessage: "Unable to load MyDancr TV Studio.",
       });
-      if (requestId !== workspaceRequestIdRef.current) return false;
+      if (!mountedRef.current || requestId !== workspaceRequestIdRef.current) return false;
       setWorkspace(data);
       return true;
     } catch (error) {
-      if (!silent && requestId === workspaceRequestIdRef.current) {
+      if (!mountedRef.current || requestId !== workspaceRequestIdRef.current || (error instanceof DOMException && error.name === "AbortError")) return false;
+      if (!silent) {
         setStatus(error instanceof Error ? error.message : "Unable to load MyDancr TV Studio.");
       }
       return false;
     } finally {
-      if (!silent) setIsLoading(false);
+      if (requestId === workspaceRequestIdRef.current) {
+        workspaceAbortRef.current = null;
+        if (mountedRef.current && !silent) setIsLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
+    const queuedPreviewUrls = queuedPreviewUrlsRef.current;
+    mountedRef.current = true;
     void loadWorkspace();
+    return () => {
+      mountedRef.current = false;
+      workspaceRequestIdRef.current += 1;
+      workspaceAbortRef.current?.abort();
+      workspaceAbortRef.current = null;
+      queuedPreviewUrls.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+      queuedPreviewUrls.clear();
+    };
   }, [loadWorkspace]);
 
   useEffect(() => {
@@ -130,12 +152,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       document.removeEventListener("visibilitychange", refresh);
     };
   }, [hasProcessingVideos, loadWorkspace]);
-
-  useEffect(() => () => {
-    workspaceRequestIdRef.current += 1;
-    queuedPreviewUrlsRef.current.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
-    queuedPreviewUrlsRef.current.clear();
-  }, []);
 
   function queueVideoFiles(files: File[], source: QueuedVideo["source"]) {
     if (!consentConfirmed || !rightsConfirmed) {
@@ -302,6 +318,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         fallbackMessage: "Unable to remove video.",
       });
       workspaceRequestIdRef.current += 1;
+      workspaceAbortRef.current?.abort();
+      workspaceAbortRef.current = null;
       setWorkspace((current) => current
         ? {
           ...current,

@@ -61,7 +61,10 @@ test("approved videos refresh into the builder and video cards render a visible 
   assert.match(dancerStudio, /announceDancerProfileVideosChanged\(\)/);
   assert.match(dancerStudio, /hasProcessingVideos[\s\S]*?window\.setInterval/);
   assert.match(dancerStudio, /const workspaceRequestIdRef = useRef\(0\)/);
-  assert.match(dancerStudio, /if \(requestId !== workspaceRequestIdRef\.current\) return false/);
+  assert.match(dancerStudio, /const workspaceAbortRef = useRef<AbortController \| null>\(null\)/);
+  assert.match(dancerStudio, /signal: controller\.signal/);
+  assert.match(dancerStudio, /if \(!mountedRef\.current \|\| requestId !== workspaceRequestIdRef\.current\) return false/);
+  assert.match(dancerStudio, /mountedRef\.current = false;[\s\S]*?workspaceRequestIdRef\.current \+= 1;[\s\S]*?workspaceAbortRef\.current\?\.abort\(\)/);
   assert.match(dancerStudio, /document\.visibilityState !== "visible"/);
   assert.match(dancerStudio, /document\.addEventListener\("visibilitychange", refresh\)/);
   assert.match(dancerStudio, /if \(updated && !cancelled\) announceDancerProfileVideosChanged\(\)/);
