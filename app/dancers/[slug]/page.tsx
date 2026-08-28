@@ -127,7 +127,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                     alt=""
                     decoding="async"
                     height={avatarPhotoHeight || undefined}
-                    sizes="46px"
+                    sizes="72px"
                     src={avatarPhoto}
                     srcSet={avatarPhotoSrcSet || undefined}
                     style={{
@@ -763,6 +763,23 @@ function PublicProfileStyles() {
         .club-deal-card { grid-template-columns: 1fr; }
         .profile-media-tab-label { font-size: 11px; }
         .profile-media-viewer-hint { display: none; }
+      }
+      /* The close control occupies only the identity band, leaving the lower
+         analytics row the full width beside a more prominent avatar. */
+      @media (max-width: 600px) {
+        body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: 72px minmax(0, 1fr) !important; grid-template-rows: 46px 42px !important; align-items: stretch !important; column-gap: 8px !important; row-gap: 4px !important; min-height: 102px !important; padding: max(7px, env(safe-area-inset-top)) 0 7px !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-person { display: contents !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-avatar { grid-column: 1 !important; grid-row: 1 / 3 !important; width: 72px !important; height: 72px !important; align-self: start !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-identity { grid-column: 2 !important; grid-row: 1 !important; align-content: start !important; padding-right: 48px !important; overflow: visible !important; }
+        body.dancr-button-system .public-profile-shell .profile-header-metrics { grid-column: 2 !important; grid-row: 2 !important; width: 100% !important; align-self: stretch !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-controls { position: absolute !important; top: max(3px, env(safe-area-inset-top)) !important; right: 0 !important; width: 44px !important; }
+        body.dancr-button-system .public-profile-shell .live-actions { grid-template-columns: 80px repeat(3, minmax(0, 1fr)) !important; }
+      }
+      @media (max-width: 340px) {
+        body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: 64px minmax(0, 1fr) !important; grid-template-rows: 44px 40px !important; min-height: 96px !important; column-gap: 6px !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-avatar { width: 64px !important; height: 64px !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-identity { padding-right: 44px !important; }
+        body.dancr-button-system .public-profile-shell .live-actions { grid-template-columns: 70px repeat(3, minmax(0, 1fr)) !important; }
       }
     `}</style>
   );

@@ -62,6 +62,8 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
     profilePage,
     /@media \(max-width: 600px\) \{[\s\S]*?body\.dancr-button-system \.public-profile-shell \.profile-titlebar \{[\s\S]*?min-height: 64px !important;[\s\S]*?\.profile-titlebar-avatar \{ width: 46px; height: 46px; \}/,
   );
+  assert.match(profilePage, /The close control occupies only the identity band[\s\S]*?\.profile-titlebar-avatar \{[\s\S]*?width: 72px !important; height: 72px !important;/);
+  assert.match(profilePage, /\.profile-titlebar-controls \{ position: absolute !important; top: max\(3px, env\(safe-area-inset-top\)\) !important; right: 0 !important;/);
   assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);
   assert.match(
     profilePage,

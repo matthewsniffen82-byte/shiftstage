@@ -10953,36 +10953,42 @@ body.dancr-button-system :is(
   text-shadow: none !important;
 }
 
-/* Align the stage-name start with the rendered Follower/Followers word below.
- * The stage name shares the avatar's visual top edge. Header analytics and
- * actions use the same four evenly spaced tracks: avatar / Follow, Followers /
- * Notify, Going / I'm Going, and Views / Share. */
+/* Give the mobile dancer identity a stronger portrait hierarchy. The close
+ * control occupies only the upper identity band, so analytics can use the full
+ * width beside the avatar instead of reserving a fourth column for the X. */
 @media (max-width: 759px) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
+    min-height: 102px !important;
+    padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 10px 7px !important;
+  }
+
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
-    width: calc(100% - 4px) !important;
-    margin-left: 4px !important;
-    grid-template-columns: repeat(4, 52px) !important;
-    justify-content: space-between !important;
-    gap: 0 !important;
+    grid-template-columns: 72px minmax(0, 1fr) !important;
+    gap: 8px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
-    grid-column: 1 !important;
+    display: grid !important;
+    grid-template-rows: 72px !important;
+    align-items: center !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
+    width: 72px !important;
+    height: 72px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
-    grid-column: 2 / -1 !important;
-    height: 60px !important;
-    grid-template-rows: 24px 29px !important;
+    height: 88px !important;
+    grid-template-rows: 40px 42px !important;
     align-content: start !important;
-    gap: 7px !important;
+    gap: 6px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
-    grid-template-columns: repeat(4, 52px) !important;
-    justify-content: space-between !important;
+    grid-template-columns: 80px repeat(3, minmax(0, 1fr)) !important;
     column-gap: 0 !important;
-    padding: 4px 46px 0 0 !important;
+    padding: 4px 0 0 !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
@@ -10992,6 +10998,8 @@ body.dancr-button-system :is(
     max-width: none !important;
     justify-self: stretch !important;
     overflow: visible !important;
+    align-content: start !important;
+    gap: 2px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
@@ -11008,44 +11016,27 @@ body.dancr-button-system :is(
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
     position: relative !important;
     inset: auto !important;
-    width: 52px !important;
+    width: 100% !important;
     max-width: none !important;
     min-width: 0 !important;
     margin: 0 !important;
-    padding: 0 !important;
-    transform: translateY(3px) !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
-    gap: 0 !important;
+    padding: 0 42px 0 0 !important;
+    transform: none !important;
+    display: flex !important;
+    gap: 5px !important;
     align-items: center !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row::before {
-    content: attr(data-follower-label) !important;
-    display: block !important;
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-    visibility: hidden !important;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-    font-size: 9px !important;
-    font-style: normal !important;
-    font-weight: 800 !important;
-    font-stretch: 100% !important;
-    line-height: 1.1 !important;
-    letter-spacing: normal !important;
-    text-transform: none !important;
-    white-space: nowrap !important;
-    pointer-events: none !important;
+    content: none !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-anchor {
-    position: absolute !important;
+    position: static !important;
     inset: auto !important;
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-    display: block !important;
-    width: fit-content !important;
-    max-width: 66px !important;
+    display: inline-flex !important;
+    width: auto !important;
+    max-width: 100% !important;
     min-width: 0 !important;
     align-self: center !important;
     justify-self: start !important;
@@ -11058,9 +11049,76 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row .profile-modal-verified {
-    position: absolute !important;
-    inset: 50% auto auto calc(100% + 5px) !important;
+    position: static !important;
+    inset: auto !important;
     margin: 0 !important;
-    transform: translateY(-50%) !important;
+    transform: none !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-context {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding-right: 42px !important;
+    overflow: hidden !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-city-icon {
+    width: 14px !important;
+    height: 14px !important;
+    flex: 0 0 14px !important;
+    fill: none !important;
+    stroke: var(--dancr-color-text-muted) !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalCity {
+    width: auto !important;
+    max-width: 100% !important;
+    min-height: 14px !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    font-size: 10px !important;
+    transform: none !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-controls {
+    top: max(3px, calc(env(safe-area-inset-top, 0px) + 1px)) !important;
+  }
+}
+
+@media (max-width: 340px) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
+    min-height: 96px !important;
+    padding-right: 8px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
+    grid-template-columns: 64px minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
+    grid-template-rows: 64px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
+    height: 84px !important;
+    grid-template-rows: 38px 40px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
+    grid-template-columns: 70px repeat(3, minmax(0, 1fr)) !important;
   }
 }

@@ -262,7 +262,7 @@ test("profile action controls are unboxed, follow the header columns, and availa
   );
   assert.match(
     aesthetic,
-    /actions use the same four evenly spaced tracks:[\s\S]*?#profileBackdrop #profileModal \.profile-modal-person \{[\s\S]*?width: calc\(100% - 4px\) !important;[\s\S]*?margin-left: 4px !important;[\s\S]*?grid-template-columns: repeat\(4, 52px\) !important;[\s\S]*?justify-content: space-between !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?grid-column: 2 \/ -1 !important;[\s\S]*?height: 60px !important;[\s\S]*?grid-template-rows: 24px 29px !important;[\s\S]*?align-content: start !important;[\s\S]*?gap: 7px !important;[\s\S]*?#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, 52px\) !important;[\s\S]*?justify-content: space-between !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?padding: 4px 46px 0 0 !important;/,
+    /Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*?#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 88px !important;[\s\S]*?grid-template-rows: 40px 42px !important;[\s\S]*?align-content: start !important;[\s\S]*?gap: 6px !important;[\s\S]*?#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?grid-template-columns: 80px repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?padding: 4px 0 0 !important;/,
   );
   assert.doesNotMatch(
     aesthetic,
@@ -297,6 +297,9 @@ test("profile action controls are unboxed, follow the header columns, and availa
 test("mobile full profiles keep identity, analytics, and close control on one compact plane", () => {
   const compactMobileProfile = aesthetic.match(
     /The home-profile overlay keeps identity and analytics[\s\S]*?(?=\/\* Production TV-card branding)/,
+  )?.[0] || "";
+  const prominentMobileHeader = aesthetic.match(
+    /\/\* Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*$/,
   )?.[0] || "";
 
   assert.ok(compactMobileProfile, "compact mobile profile CSS must exist");
@@ -338,11 +341,11 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Align the stage-name start with the rendered Follower\/Followers word below[\s\S]*?\.profile-modal-summary \.modal-identity \{[\s\S]*?position: relative !important;[\s\S]*?inset: 0 auto auto 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \{[\s\S]*?width: 100% !important;[\s\S]*?margin-left: 0 !important;[\s\S]*?transform: none !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-header-metrics \.profile-activity-metrics \{[\s\S]*?grid-template-columns: repeat\(3, 52px\) !important;[\s\S]*?justify-content: space-between !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row \{[\s\S]*?position: relative !important;[\s\S]*?inset: auto !important;[\s\S]*?width: 52px !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 !important;[\s\S]*?transform: translateY\(3px\) !important;[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\) !important;[\s\S]*?gap: 0 !important;/,
+    /Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*?\.profile-modal-summary \{[\s\S]*?min-height: 102px !important;[\s\S]*?padding: max\(7px,[\s\S]*?10px 7px !important;[\s\S]*?\.profile-modal-person \{[\s\S]*?grid-template-columns: 72px minmax\(0, 1fr\) !important;[\s\S]*?gap: 8px !important;[\s\S]*?\.profile-modal-avatar \{[\s\S]*?width: 72px !important;[\s\S]*?height: 72px !important;/,
   );
   assert.match(
-    aesthetic,
-    /Align the stage-name start with the rendered Follower\/Followers word below[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: attr\(data-follower-label\) !important;[\s\S]*?display: block !important;[\s\S]*?grid-column: 2 !important;[\s\S]*?visibility: hidden !important;[\s\S]*?font-size: 9px !important;[\s\S]*?font-weight: 800 !important;[\s\S]*?white-space: nowrap !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-anchor \{[\s\S]*?position: absolute !important;[\s\S]*?grid-column: 2 !important;[\s\S]*?width: fit-content !important;[\s\S]*?max-width: 66px !important;[\s\S]*?align-self: center !important;[\s\S]*?justify-self: start !important;[\s\S]*?#profileBackdrop #profileModal \.profile-modal-name-row h2 \{[\s\S]*?max-width: 100% !important;[\s\S]*?text-align: left !important;[\s\S]*?\.profile-modal-name-row \.profile-modal-verified \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 50% auto auto calc\(100% \+ 5px\) !important;[\s\S]*?transform: translateY\(-50%\) !important;/,
+    prominentMobileHeader,
+    /\.profile-modal-header-metrics \{[\s\S]*?width: 100% !important;[\s\S]*?margin-left: 0 !important;[\s\S]*?transform: none !important;[\s\S]*?\.profile-modal-name-row \{[\s\S]*?width: 100% !important;[\s\S]*?padding: 0 42px 0 0 !important;[\s\S]*?display: flex !important;[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?\.profile-modal-name-anchor \{[\s\S]*?position: static !important;[\s\S]*?display: inline-flex !important;/,
   );
   assert.match(
     liveApp,
@@ -412,7 +415,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   assert.match(liveApp, /id="modalProfileMetrics"/);
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
   assert.match(gridFunction, /<section class="\$\{tonightClasses\}" data-profile-shift-state="\$\{shiftState\}" data-profile-deal-state="\$\{escapeHtml\(dealState\.key\)\}" aria-label="Tonight">[\s\S]*?\$\{dealMarkup \? `<div class="profile-tonight-deal">\$\{dealMarkup\}<\/div>` : ""\}[\s\S]*?<\/section>/);
-  assert.match(liveApp, /class="profile-modal-avatar-column">[\s\S]*?<span class="pill" id="modalCity">Las Vegas<\/span>/);
+  assert.match(liveApp, /class="profile-modal-avatar-column">[\s\S]*?id="modalProfileAvatar"[\s\S]*?<div class="modal-identity-stack">[\s\S]*?class="profile-modal-context">[\s\S]*?class="profile-modal-city-icon"[\s\S]*?<span class="pill" id="modalCity">Las Vegas<\/span>/);
   assert.match(liveApp, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
   assert.doesNotMatch(liveApp, /profile-modal-live-status|modalLiveStatus/);
   assert.doesNotMatch(liveApp, /id="modalShiftStatus"|id="modalShiftVenue"/);

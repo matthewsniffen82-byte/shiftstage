@@ -76,7 +76,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);
 
   assert.match(liveApp, /class="profile-modal-summary"/);
-  assert.match(liveApp, /class="profile-modal-avatar-column">[\s\S]*?id="modalProfileAvatar"[\s\S]*?id="modalCity"/);
+  assert.match(liveApp, /class="profile-modal-avatar-column">[\s\S]*?id="modalProfileAvatar"[\s\S]*?class="modal-identity-stack">[\s\S]*?class="profile-modal-context">[\s\S]*?id="modalCity"/);
   assert.match(liveApp, /class="profile-modal-avatar" id="modalProfileAvatar"/);
   assert.match(liveApp, /class="modal-identity-stack">[\s\S]*?id="modalName"[\s\S]*?class="profile-modal-header-metrics" id="modalProfileMetrics"/);
   assert.match(liveApp, /class="profile-activity-metrics"/);
@@ -93,6 +93,10 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(
     aesthetic,
     /Keep the mobile profile identity readable[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics > div \{[\s\S]*?display: grid !important;[\s\S]*?grid-template: 17px 11px \/ minmax\(0, 1fr\) !important;[\s\S]*?grid-auto-flow: row !important;/,
+  );
+  assert.match(
+    profilePage,
+    /The close control occupies only the identity band[\s\S]*?\.profile-titlebar \{[\s\S]*?grid-template-columns: 72px minmax\(0, 1fr\) !important;[\s\S]*?grid-template-rows: 46px 42px !important;[\s\S]*?\.profile-titlebar-person \{ display: contents !important; \}[\s\S]*?\.profile-titlebar-avatar \{[\s\S]*?grid-row: 1 \/ 3 !important;[\s\S]*?width: 72px !important;[\s\S]*?align-self: start !important;[\s\S]*?\.profile-header-metrics \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 2 !important;/,
   );
   assert.match(
     aesthetic,
