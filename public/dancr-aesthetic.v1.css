@@ -7109,8 +7109,10 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
  * this CTA. Profiles without an applicable deal render no deal module. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-offer-card.venue-deal-preview {
+  position: relative !important;
   width: 100% !important;
   min-width: 0 !important;
+  overflow: hidden !important;
   padding: 8px 10px !important;
   border: 1px solid var(--dancr-color-success-strong) !important;
   border-radius: 15px !important;
@@ -7126,6 +7128,20 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
     0 0 18px var(--dancr-color-success-soft),
     inset 0 0 0 1px var(--dancr-color-success-medium),
     inset 0 1px 0 var(--dancr-color-white-soft) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-offer-card.venue-deal-preview::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--dancr-color-success);
+  pointer-events: none;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail

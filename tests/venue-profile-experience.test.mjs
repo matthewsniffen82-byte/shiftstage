@@ -226,6 +226,10 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
     refinement,
     /\.venue-offer-card\.venue-deal-preview \{[\s\S]*?border: 1px solid var\(--dancr-color-success-strong\) !important;[\s\S]*?radial-gradient\(circle at 94% 0%, var\(--dancr-color-success-soft\), transparent 13rem\)[\s\S]*?var\(--dancr-color-success\) 8%[\s\S]*?0 0 18px var\(--dancr-color-success-soft\)[\s\S]*?inset 0 0 0 1px var\(--dancr-color-success-medium\)/,
   );
+  assert.match(
+    refinement,
+    /\.venue-offer-card\.venue-deal-preview::before \{[\s\S]*?top: 12px;[\s\S]*?bottom: 12px;[\s\S]*?left: 0;[\s\S]*?width: 2px;[\s\S]*?background: var\(--dancr-color-success\);/,
+  );
   assert.match(refinement, /\.venue-location-section \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 7px !important;/);
   assert.match(refinement, /\.venue-address-line \{[\s\S]*?min-height: 34px;[\s\S]*?padding: 7px 9px;[\s\S]*?overflow-wrap: anywhere;/);
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?min-height: 46px !important;/);
