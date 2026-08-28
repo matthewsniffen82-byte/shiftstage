@@ -506,6 +506,18 @@ export function GlobalMobileBottomNav() {
             }
           }
 
+          /* Safari's reported safe area creates a second visual lift for this
+             dock, placing it above Android's established 8px bottom float. */
+          @supports (-webkit-touch-callout: none) {
+            .global-mobile-bottom-nav {
+              bottom: 8px;
+            }
+
+            .global-mobile-swipe-indicator {
+              bottom: 91px;
+            }
+          }
+
           .global-mobile-bottom-nav.is-introducing {
             animation: mobile-nav-dock-intro 680ms cubic-bezier(0.16, 1, 0.3, 1)
               both;

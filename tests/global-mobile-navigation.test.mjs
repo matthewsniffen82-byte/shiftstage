@@ -80,6 +80,14 @@ test("iPhone and Android keep the same compact floating glass dock", () => {
     homeSource,
     /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(18,18,23,.88\)[\s\S]*?rgba\(4,4,7,.82\)/,
   );
+  assert.match(
+    navigationSource,
+    /Safari's reported safe area creates a second visual lift[\s\S]*?@supports \(-webkit-touch-callout: none\) \{[\s\S]*?\.global-mobile-bottom-nav \{[\s\S]*?bottom: 8px;[\s\S]*?\.global-mobile-swipe-indicator \{[\s\S]*?bottom: 91px;/,
+  );
+  assert.match(
+    homeSource,
+    /Safari's reported safe area creates a second visual lift[\s\S]*?@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#discoveryTabs \{[\s\S]*?bottom: 8px;/,
+  );
 });
 
 test("iPhone uses direct touch navigation without extending the dock", () => {
