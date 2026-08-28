@@ -60,6 +60,13 @@ test("video editor keeps both permission gates and hides the technical library c
 test("approved videos refresh into the builder and video cards render a visible preview frame", () => {
   assert.match(dancerStudio, /announceDancerProfileVideosChanged\(\)/);
   assert.match(dancerStudio, /hasProcessingVideos[\s\S]*?window\.setInterval/);
+  assert.match(dancerStudio, /const workspaceRequestIdRef = useRef\(0\)/);
+  assert.match(dancerStudio, /if \(requestId !== workspaceRequestIdRef\.current\) return false/);
+  assert.match(dancerStudio, /document\.visibilityState !== "visible"/);
+  assert.match(dancerStudio, /document\.addEventListener\("visibilitychange", refresh\)/);
+  assert.match(dancerStudio, /if \(updated && !cancelled\) announceDancerProfileVideosChanged\(\)/);
+  assert.doesNotMatch(dancerStudio, /\.then\(\(\) => announceDancerProfileVideosChanged\(\)\)/);
+  assert.match(dancerStudio, /method: "DELETE"[\s\S]*?workspaceRequestIdRef\.current \+= 1;[\s\S]*?setWorkspace/);
   assert.match(dashboard, /addEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
   assert.match(dashboard, /status === "uploading" \|\| status === "moderating"/);
   assert.match(dashboard, /window\.setTimeout\(\(\) => void loadVideos\(\), 1_800\)/);

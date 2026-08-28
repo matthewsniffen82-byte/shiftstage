@@ -66,6 +66,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const consentInputRef = useRef<HTMLInputElement>(null);
   const rightsInputRef = useRef<HTMLInputElement>(null);
   const queuedPreviewUrlsRef = useRef<Set<string>>(new Set());
+  const workspaceRequestIdRef = useRef(0);
   const maxVideos = workspace?.maxVideos || MAX_DANCER_PROFILE_VIDEOS;
   const currentVideoCount = workspace?.videos.length || 0;
   const atVideoLimit = currentVideoCount >= maxVideos;
@@ -76,19 +77,27 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
   const loadWorkspace = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!readDashboardAccessToken("dancer")) {
-      setStatus("Sign in as a dancer to manage MyDancr TV.");
-      setIsLoading(false);
-      return;
+      if (!silent) {
+        setStatus("Sign in as a dancer to manage MyDancr TV.");
+        setIsLoading(false);
+      }
+      return false;
     }
+    const requestId = ++workspaceRequestIdRef.current;
     if (!silent) setIsLoading(true);
     try {
       const data = await requestDancerTvVideosJson({
         cache: "no-store",
         fallbackMessage: "Unable to load MyDancr TV Studio.",
       });
+      if (requestId !== workspaceRequestIdRef.current) return false;
       setWorkspace(data);
+      return true;
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to load MyDancr TV Studio.");
+      if (!silent && requestId === workspaceRequestIdRef.current) {
+        setStatus(error instanceof Error ? error.message : "Unable to load MyDancr TV Studio.");
+      }
+      return false;
     } finally {
       if (!silent) setIsLoading(false);
     }
@@ -100,20 +109,30 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
   useEffect(() => {
     if (!hasProcessingVideos) return;
+    let cancelled = false;
     let refreshInFlight = false;
-    const interval = window.setInterval(() => {
-      if (refreshInFlight) return;
+    const refresh = () => {
+      if (cancelled || document.visibilityState !== "visible" || refreshInFlight) return;
       refreshInFlight = true;
       void loadWorkspace({ silent: true })
-        .then(() => announceDancerProfileVideosChanged())
+        .then((updated) => {
+          if (updated && !cancelled) announceDancerProfileVideosChanged();
+        })
         .finally(() => {
           refreshInFlight = false;
         });
-    }, 1_800);
-    return () => window.clearInterval(interval);
+    };
+    const interval = window.setInterval(refresh, 1_800);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, [hasProcessingVideos, loadWorkspace]);
 
   useEffect(() => () => {
+    workspaceRequestIdRef.current += 1;
     queuedPreviewUrlsRef.current.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
     queuedPreviewUrlsRef.current.clear();
   }, []);
@@ -282,6 +301,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         method: "DELETE",
         fallbackMessage: "Unable to remove video.",
       });
+      workspaceRequestIdRef.current += 1;
       setWorkspace((current) => current
         ? {
           ...current,
