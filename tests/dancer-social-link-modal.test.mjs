@@ -48,10 +48,22 @@ test("the modal preserves the existing persistence and normalization pipeline", 
   assert.match(modal, /handle: toSocialHandle\(value\)/);
   assert.match(modal, /url: toSocialUrl\(platform\.key, value\)/);
   assert.match(modal, /isActive: Boolean\(value\)/);
-  assert.match(modal, /if \(savePendingRef\.current\) return false/);
-  assert.match(modal, /savePendingRef\.current = true/);
   assert.match(modal, /const saved = await saveSocials\(undefined, nextSocials\)/);
   assert.match(modal, /if \(data\.profile\) onProfileChange\?\.\(data\.profile\)/);
+});
+
+test("social saves and removals reject duplicate and stale work", () => {
+  assert.match(modal, /const mountedRef = useRef\(false\);/);
+  assert.match(modal, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(modal, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(modal, /if \(!mountedRef\.current \|\| savePendingRef\.current\) return null;/);
+  assert.match(modal, /savePendingRef\.current = true;/);
+  assert.match(modal, /signal: controller\.signal/);
+  assert.match(modal, /if \(!isCurrentSocialAction\(requestId, controller\)\) return false;/);
+  assert.match(modal, /if \(isCurrentSocialAction\(requestId, controller\)\) \{[\s\S]*?setStatus/);
+  assert.match(modal, /if \(finishSocialAction\(requestId\)\) setIsSaving\(false\);/);
+  assert.match(modal, /async function removeSelectedSocial\(\) \{\s*if \(!hasExistingLink \|\| savePendingRef\.current\) return;/);
+  assert.match(modal, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?savePendingRef\.current = false;/);
 });
 
 test("the social editor is compact, keyboard reachable, and isolated from the background", () => {

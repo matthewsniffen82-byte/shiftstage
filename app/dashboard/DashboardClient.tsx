@@ -6556,6 +6556,9 @@ function SocialLinkModal({
   const draftHydratedRef = useRef(false);
   const draftDirtyRef = useRef(false);
   const savePendingRef = useRef(false);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
   const draftKey = `mydancr:dancer-social-draft:${String(profile?.id || "profile")}`;
   const editorSaveRef = useRef<() => Promise<boolean>>(async () => true);
   const persistedSocials = useMemo(() => socialValuesFromProfile(profile), [profile]);
@@ -6563,6 +6566,17 @@ function SocialLinkModal({
   const persistedValue = persistedSocials[selectedPlatform.key] || "";
   const hasExistingLink = Boolean(persistedValue.trim());
   editorSaveRef.current = () => saveSocials();
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      savePendingRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!unifiedSave) return;
@@ -6598,16 +6612,38 @@ function SocialLinkModal({
     }
   }, [draftKey, socials]);
 
+  function beginSocialAction() {
+    if (!mountedRef.current || savePendingRef.current) return null;
+    savePendingRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentSocialAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishSocialAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return false;
+    actionAbortRef.current = null;
+    savePendingRef.current = false;
+    return mountedRef.current;
+  }
+
   async function saveSocials(event?: React.FormEvent<HTMLFormElement>, values = socials) {
     event?.preventDefault();
-    if (savePendingRef.current) return false;
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
       return false;
     }
 
-    savePendingRef.current = true;
+    const action = beginSocialAction();
+    if (!action) return false;
+    const { requestId, controller } = action;
     setIsSaving(true);
     setStatus("");
     try {
@@ -6626,18 +6662,21 @@ function SocialLinkModal({
           }),
         }),
         fallbackMessage: "Unable to save socials.",
+        signal: controller.signal,
       });
+      if (!isCurrentSocialAction(requestId, controller)) return false;
       if (data.profile) onProfileChange?.(data.profile);
       draftDirtyRef.current = false;
       window.localStorage.removeItem(draftKey);
       setStatus("Social links saved.");
       return true;
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to save socials.");
+      if (isCurrentSocialAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to save socials.");
+      }
       return false;
     } finally {
-      savePendingRef.current = false;
-      setIsSaving(false);
+      if (finishSocialAction(requestId)) setIsSaving(false);
     }
   }
 
