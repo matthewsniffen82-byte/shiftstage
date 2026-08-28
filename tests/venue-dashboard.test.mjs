@@ -42,15 +42,31 @@ test("venue dashboard session recovery rotates and persists authentication witho
 });
 
 test("venue NFC refreshes preserve independent last-good data and user feedback", () => {
+  assert.match(nfcPanel, /const mountedRef = useRef\(false\)/);
   assert.match(nfcPanel, /const loadInFlightRef = useRef<Promise<void> \| null>\(null\)/);
+  assert.match(nfcPanel, /const loadSequenceRef = useRef\(0\)/);
+  assert.match(nfcPanel, /const loadAbortRef = useRef<AbortController \| null>\(null\)/);
   assert.match(nfcPanel, /if \(loadInFlightRef\.current\) return loadInFlightRef\.current/);
+  assert.match(nfcPanel, /signal: controller\.signal/);
+  assert.match(nfcPanel, /requestId !== loadSequenceRef\.current/);
   assert.match(nfcPanel, /async function settleVenueNfcRequest/);
   assert.match(nfcPanel, /const tagResult = await settleVenueNfcRequest[\s\S]*?const rosterResult = await settleVenueNfcRequest/);
   assert.match(nfcPanel, /tagResult\.status === "fulfilled"[\s\S]*?setTags/);
   assert.match(nfcPanel, /rosterResult\.status === "fulfilled"[\s\S]*?setAffiliations/);
   assert.match(nfcPanel, /if \(silent\) return/);
   assert.match(nfcPanel, /load\(\{ silent: true \}\)/);
+  assert.match(nfcPanel, /mountedRef\.current = false;[\s\S]*?loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\)/);
   assert.doesNotMatch(nfcPanel, /const tagData = await requestVenueNfcTagsJson[\s\S]*?const rosterData = await requestVenueDancerVerificationsJson/);
+});
+
+test("venue NFC mutations cannot be overwritten by older refreshes", () => {
+  assert.match(nfcPanel, /const savingRef = useRef\(false\)/);
+  assert.match(nfcPanel, /const actionSequenceRef = useRef\(0\)/);
+  assert.match(nfcPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\)/);
+  assert.match(nfcPanel, /if \(!mountedRef\.current \|\| savingRef\.current\) return Promise\.resolve\(\)/);
+  assert.match(nfcPanel, /savingRef\.current = true;[\s\S]*?loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\)/);
+  assert.match(nfcPanel, /requestId !== actionSequenceRef\.current/);
+  assert.match(nfcPanel, /savingRef\.current = false/);
 });
 
 test("the routed venue dashboard is isolated, closable, and restores the original full workspace identity", () => {

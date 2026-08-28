@@ -66,26 +66,45 @@ export default function VenueNfcTagPanel({
   const [supportTagId, setSupportTagId] = useState("");
   const [supportType, setSupportType] = useState<"damaged" | "lost" | "relocate" | "replacement">("damaged");
   const [supportNotes, setSupportNotes] = useState("");
+  const mountedRef = useRef(false);
   const loadInFlightRef = useRef<Promise<void> | null>(null);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const savingRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(({ silent = false }: VenueNfcLoadOptions = {}) => {
+    if (!mountedRef.current || savingRef.current) return Promise.resolve();
     if (!readDashboardAccessToken("venue")) {
+      loadSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      loadAbortRef.current = null;
+      loadInFlightRef.current = null;
       setIsLoading(false);
       if (!silent) setStatus("Sign in required.");
       return Promise.resolve();
     }
     if (loadInFlightRef.current) return loadInFlightRef.current;
+    const requestId = ++loadSequenceRef.current;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     if (!silent) setIsLoading(true);
 
     const request = (async () => {
       const tagResult = await settleVenueNfcRequest(() => requestVenueNfcTagsJson({
         cache: "no-store",
         fallbackMessage: "Unable to load assigned stickers.",
+        signal: controller.signal,
       }));
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       const rosterResult = await settleVenueNfcRequest(() => requestVenueDancerVerificationsJson("", {
         cache: "no-store",
         fallbackMessage: "Unable to load the verified dancer roster.",
+        signal: controller.signal,
       }));
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
 
       if (tagResult.status === "fulfilled") setTags(tagResult.value.tags || []);
       if (rosterResult.status === "fulfilled") setAffiliations(rosterResult.value.affiliations || []);
@@ -103,15 +122,31 @@ export default function VenueNfcTagPanel({
         ? ""
         : "No stickers are assigned yet. MyDancr will program and supply this venue's dancer check-in and guest redemption stickers.");
     })().finally(() => {
+      if (requestId !== loadSequenceRef.current) return;
+      loadAbortRef.current = null;
       loadInFlightRef.current = null;
-      if (!silent) setIsLoading(false);
+      if (mountedRef.current && !silent) setIsLoading(false);
     });
 
     loadInFlightRef.current = request;
     return request;
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    mountedRef.current = true;
+    void load();
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      loadAbortRef.current = null;
+      loadInFlightRef.current = null;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      savingRef.current = false;
+    };
+  }, [load]);
 
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === "visible") void load({ silent: true }); };
@@ -174,6 +209,17 @@ export default function VenueNfcTagPanel({
     const dancerName = affiliation.dancer?.stageName || "this dancer";
     if (!window.confirm(`Remove ${dancerName} from this venue's approved dancer roster? They must use the dancer check-in sticker again before they can check in here.`)) return;
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
+    if (!mountedRef.current) return;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    savingRef.current = true;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
+    loadInFlightRef.current = null;
+    setIsLoading(false);
     setIsSaving(true);
     try {
       await requestVenueDancerVerificationsJson("", {
@@ -181,13 +227,20 @@ export default function VenueNfcTagPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ affiliationId: affiliation.id, reason: "Venue removed dancer check-in access." }),
         fallbackMessage: "Unable to remove check-in access.",
+        signal: controller.signal,
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
       setStatus(`${dancerName} was removed. Using the dancer check-in sticker again restores access.`);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to remove check-in access.");
     } finally {
-      setIsSaving(false);
+      if (requestId === actionSequenceRef.current) {
+        actionAbortRef.current = null;
+        savingRef.current = false;
+        if (mountedRef.current) setIsSaving(false);
+      }
     }
   }
 
@@ -200,20 +253,38 @@ export default function VenueNfcTagPanel({
   async function sendSupportRequest() {
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     if (!supportTagId) return setStatus("Choose an assigned sticker.");
+    if (!mountedRef.current) return;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    savingRef.current = true;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
+    loadInFlightRef.current = null;
+    setIsLoading(false);
     setIsSaving(true);
     try {
       const data = await requestVenueNfcSupportJson({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ tagId: supportTagId, requestType: supportType, notes: supportNotes }),
+        signal: controller.signal,
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(data.message || "Sticker support request sent.");
       setSupportTagId("");
       setSupportNotes("");
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to request sticker support.");
     } finally {
-      setIsSaving(false);
+      if (requestId === actionSequenceRef.current) {
+        actionAbortRef.current = null;
+        savingRef.current = false;
+        if (mountedRef.current) setIsSaving(false);
+      }
     }
   }
 
