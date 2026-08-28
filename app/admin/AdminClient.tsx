@@ -3475,6 +3475,8 @@ function VenueManager({
   );
 }
 
+type ApprovalActionRequest = { controller: AbortController; requestId: number };
+
 function ApprovalQueue({
   items,
   openById,
@@ -3499,18 +3501,62 @@ function ApprovalQueue({
   const [selectedProfile, setSelectedProfile] = useState<Record<string, unknown> | null>(null);
   const [selectedProfileStatus, setSelectedProfileStatus] = useState("");
   const [deletingContentKey, setDeletingContentKey] = useState("");
+  const [actionBusyKey, setActionBusyKey] = useState("");
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+  const controlsBusy = Boolean(actionBusyKey);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginApprovalAction(): ApprovalActionRequest | null {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentApprovalAction(action: ApprovalActionRequest) {
+    return mountedRef.current && !action.controller.signal.aborted && action.requestId === actionSequenceRef.current;
+  }
+
+  function finishApprovalAction(action: ApprovalActionRequest) {
+    if (actionAbortRef.current === action.controller) actionAbortRef.current = null;
+    if (action.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+    if (mountedRef.current && action.requestId === actionSequenceRef.current) setActionBusyKey("");
+  }
 
   if (!items.length) return <p className="empty">No real pending dancer applications.</p>;
 
   async function openFullProfile(item: Record<string, unknown>) {
+    const action = beginApprovalAction();
+    if (!action) return;
+    setActionBusyKey(`profile:${asText(item.id)}`);
     setSelectedProfile(item);
     setSelectedProfileStatus("Loading full profile...");
     try {
-      const detail = await requestAdminDancerProfile(asText(item.id));
+      const detail = await requestAdminDancerProfile(asText(item.id), action.controller.signal);
+      if (!isCurrentApprovalAction(action)) return;
       setSelectedProfile(detail);
       setSelectedProfileStatus("");
     } catch (error) {
+      if (!isCurrentApprovalAction(action)) return;
       setSelectedProfileStatus(error instanceof Error ? error.message : "Unable to load dancer profile.");
+    } finally {
+      finishApprovalAction(action);
     }
   }
 
@@ -3521,42 +3567,56 @@ function ApprovalQueue({
       `Permanently delete ${label} from ${asText(selectedProfile.stageName || selectedProfile.stage_name) || "this dancer"}'s profile? This cannot be undone.`,
     );
     if (!confirmed) return;
+    const action = beginApprovalAction();
+    if (!action) return;
 
     const key = `${kind}:${targetId}`;
+    setActionBusyKey(key);
     setDeletingContentKey(key);
     setSelectedProfileStatus(`Deleting ${kind === "photo" ? "picture" : "social link"}...`);
     try {
-      const updated = await requestAdminDancerContentDeletion(dancerId, kind, targetId);
+      const updated = await requestAdminDancerContentDeletion(dancerId, kind, targetId, action.controller.signal);
+      if (!isCurrentApprovalAction(action)) return;
       setSelectedProfile(updated.profile);
       onProfileUpdated(updated.profile);
       setSelectedProfileStatus("");
       onActionConfirmed(`${label} deleted from the dancer profile.`);
     } catch (error) {
+      if (!isCurrentApprovalAction(action)) return;
       setSelectedProfileStatus(error instanceof Error ? error.message : `Unable to delete ${label}.`);
     } finally {
-      setDeletingContentKey("");
+      if (isCurrentApprovalAction(action)) setDeletingContentKey("");
+      finishApprovalAction(action);
     }
   }
 
   async function rejectProfile(dancerId: string) {
+    const action = beginApprovalAction();
+    if (!action) return;
+    setActionBusyKey(`reject:${dancerId}`);
     setStatusById((current) => ({ ...current, [dancerId]: "Saving..." }));
     try {
       await requestAdminJson("/api/admin/approvals", {
         method: "POST",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ dancerId, status: "rejected", notes: notesById[dancerId] || null }),
         fallbackMessage: "Unable to review profile.",
       });
+      if (!isCurrentApprovalAction(action)) return;
 
       const confirmation = "Dancer profile rejected successfully.";
       setStatusById((current) => ({ ...current, [dancerId]: confirmation }));
       onActionConfirmed(confirmation);
       onReviewed(dancerId);
     } catch (error) {
+      if (!isCurrentApprovalAction(action)) return;
       setStatusById((current) => ({
         ...current,
         [dancerId]: error instanceof Error ? error.message : "Unable to review profile. Check your connection and try again.",
       }));
+    } finally {
+      finishApprovalAction(action);
     }
   }
 
@@ -3576,7 +3636,7 @@ function ApprovalQueue({
           <div className="approval-row" key={dancerId}>
             <div className="approval-summary">
               <span>
-                <button className="admin-profile-name-link" type="button" onClick={() => openFullProfile(item)}>
+                <button className="admin-profile-name-link" type="button" disabled={controlsBusy} onClick={() => openFullProfile(item)}>
                   {stageName || "Stage name not submitted"}
                 </button>
                 <small>{[city || "City not submitted", status || "pending"].join(" - ")}</small>
@@ -3584,6 +3644,7 @@ function ApprovalQueue({
               <button
                 className="secondary-action"
                 type="button"
+                disabled={controlsBusy}
                 onClick={() => onToggleOpen(dancerId)}
               >
                 {isOpen ? "Hide submission" : "View submission"}
@@ -3595,6 +3656,11 @@ function ApprovalQueue({
                 onKeepOpen={() => onKeepOpen(dancerId)}
                 onSocialReviewed={onSocialReviewed}
                 onActionConfirmed={onActionConfirmed}
+                actionBusy={controlsBusy}
+                beginAction={beginApprovalAction}
+                isCurrentAction={isCurrentApprovalAction}
+                finishAction={finishApprovalAction}
+                onActionStarted={setActionBusyKey}
               />
             ) : null}
             {hasPendingItems ? <p className="approval-blocked">Review pending items first: {pendingItems.join(", ")}.</p> : null}
@@ -3602,13 +3668,14 @@ function ApprovalQueue({
               placeholder="Review notes"
               rows={2}
               value={notesById[dancerId] || ""}
+              disabled={controlsBusy}
               onChange={(event) => setNotesById((current) => ({ ...current, [dancerId]: event.target.value }))}
             />
             <div className="approval-actions">
-              <button className="secondary-action" type="button" onClick={() => openFullProfile(item)}>
+              <button className="secondary-action" type="button" disabled={controlsBusy} onClick={() => openFullProfile(item)}>
                 View full profile
               </button>
-              <button type="button" onClick={() => rejectProfile(dancerId)} disabled={isSaving}>
+              <button type="button" onClick={() => rejectProfile(dancerId)} disabled={controlsBusy}>
                 {isSaving ? "Saving..." : "Reject profile"}
               </button>
             </div>
@@ -3618,7 +3685,7 @@ function ApprovalQueue({
       })}
       {selectedProfile ? (
         <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label="Full dancer profile" onClick={() => {
-          if (!deletingContentKey) setSelectedProfile(null);
+          if (!controlsBusy) setSelectedProfile(null);
         }}>
           <div className="admin-preview-modal admin-profile-modal" onClick={(event) => event.stopPropagation()}>
             <button
@@ -3626,7 +3693,7 @@ function ApprovalQueue({
               type="button"
               onClick={() => setSelectedProfile(null)}
               aria-label="Close full profile"
-              disabled={Boolean(deletingContentKey)}
+              disabled={controlsBusy}
             >
               ×
             </button>
@@ -3664,11 +3731,21 @@ function SubmissionDetails({
   onKeepOpen,
   onSocialReviewed,
   onActionConfirmed,
+  actionBusy,
+  beginAction,
+  isCurrentAction,
+  finishAction,
+  onActionStarted,
 }: {
   item: Record<string, unknown>;
   onKeepOpen: () => void;
   onSocialReviewed: (dancerId: string, targetId: string, status: "approved" | "rejected", notes: string) => void;
   onActionConfirmed: (message: string) => void;
+  actionBusy: boolean;
+  beginAction: () => ApprovalActionRequest | null;
+  isCurrentAction: (action: ApprovalActionRequest) => boolean;
+  finishAction: (action: ApprovalActionRequest) => void;
+  onActionStarted: (key: string) => void;
 }) {
   const photos = labelSubmittedPhotos(asRecordArray(item.photos));
   const socials = normalizeSubmissionSocials(item);
@@ -3680,6 +3757,12 @@ function SubmissionDetails({
   const [feedbackByKey, setFeedbackByKey] = useState<Record<string, ReviewFeedback>>({});
   const [workingByKey, setWorkingByKey] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<AdminPreview | null>(null);
+  const activeActionRef = useRef<ApprovalActionRequest | null>(null);
+
+  useEffect(() => () => {
+    activeActionRef.current?.controller.abort();
+    activeActionRef.current = null;
+  }, []);
 
   function openPreview(event: MouseEvent<HTMLAnchorElement>, nextPreview: AdminPreview) {
     event.preventDefault();
@@ -3706,6 +3789,10 @@ function SubmissionDetails({
       }));
       return;
     }
+    const action = beginAction();
+    if (!action) return;
+    activeActionRef.current = action;
+    onActionStarted(key);
 
     setWorkingByKey((current) => ({ ...current, [key]: true }));
     setFeedbackByKey((current) => ({
@@ -3716,6 +3803,7 @@ function SubmissionDetails({
     try {
       const data = await requestAdminJson("/api/admin/approvals", {
         method: "POST",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "review_content",
@@ -3728,6 +3816,7 @@ function SubmissionDetails({
         }),
         fallbackMessage: "Unable to save this review.",
       });
+      if (!isCurrentAction(action)) return;
 
       const responseStatus = asText(data.review?.status);
       const savedStatus = responseStatus === "approved" || responseStatus === "rejected" ? responseStatus : status;
@@ -3743,6 +3832,7 @@ function SubmissionDetails({
       onActionConfirmed(confirmation);
       onKeepOpen();
     } catch (error) {
+      if (!isCurrentAction(action)) return;
       setFeedbackByKey((current) => ({
         ...current,
         [key]: {
@@ -3751,8 +3841,12 @@ function SubmissionDetails({
         },
       }));
     } finally {
-      onKeepOpen();
-      setWorkingByKey((current) => ({ ...current, [key]: false }));
+      if (activeActionRef.current === action) activeActionRef.current = null;
+      if (isCurrentAction(action)) {
+        onKeepOpen();
+        setWorkingByKey((current) => ({ ...current, [key]: false }));
+      }
+      finishAction(action);
     }
   }
 
@@ -3804,14 +3898,15 @@ function SubmissionDetails({
                   <textarea
                     placeholder="Reason for disapproval"
                     value={reasonByKey[key] || ""}
+                    disabled={actionBusy}
                     onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
                   />
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
-                    <button type="button" onClick={(event) => reviewContent(event, "photo", targetId, "approved", label)} disabled={!targetId || isWorking}>
+                    <button type="button" onClick={(event) => reviewContent(event, "photo", targetId, "approved", label)} disabled={!targetId || actionBusy}>
                       {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve picture"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "photo", targetId, "rejected", label)} disabled={!targetId || isWorking}>
+                    <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "photo", targetId, "rejected", label)} disabled={!targetId || actionBusy}>
                       {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
@@ -3864,13 +3959,14 @@ function SubmissionDetails({
                   <textarea
                     placeholder="Reason for disapproval"
                     value={reasonByKey[key] || ""}
+                    disabled={actionBusy}
                     onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
                   />
                   <div className="content-review-actions">
-                    <button type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "approved", social.label)} disabled={!targetId || isWorking || isApproved}>
+                    <button type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "approved", social.label)} disabled={!targetId || actionBusy || isApproved}>
                       {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve social"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "rejected", social.label)} disabled={!targetId || isWorking}>
+                    <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "rejected", social.label)} disabled={!targetId || actionBusy}>
                       {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
@@ -4037,9 +4133,10 @@ function normalizeSubmissionSocials(item: Record<string, unknown>) {
     .filter((social) => social.platform && (social.handle || social.url));
 }
 
-async function requestAdminDancerProfile(dancerId: string) {
+async function requestAdminDancerProfile(dancerId: string, signal?: AbortSignal) {
   if (!dancerId) throw new Error("Unable to load dancer profile.");
   const data = await requestAdminJson(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
+    signal,
     fallbackMessage: "Unable to load dancer profile.",
   });
   if (!data.profile) throw new Error("Unable to load dancer profile.");
@@ -4050,6 +4147,7 @@ async function requestAdminDancerContentDeletion(
   dancerId: string,
   kind: "photo" | "social-link",
   targetId: string,
+  signal?: AbortSignal,
 ) {
   if (!dancerId || !targetId) throw new Error(`Unable to delete dancer ${kind}.`);
 
@@ -4058,6 +4156,7 @@ async function requestAdminDancerContentDeletion(
     `/api/admin/dancers/${encodeURIComponent(dancerId)}/${resource}/${encodeURIComponent(targetId)}`,
     {
       method: "DELETE",
+      signal,
       fallbackMessage: `Unable to delete dancer ${kind}.`,
     },
   );

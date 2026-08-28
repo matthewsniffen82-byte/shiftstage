@@ -100,3 +100,19 @@ test("approval decisions use the refresh-aware role-isolated admin boundary", ()
   assert.equal((adminDashboard.match(/requestAdminJson\("\/api\/admin\/approvals"/g) || []).length, 2);
   assert.doesNotMatch(adminDashboard, /fetch\("\/api\/admin\/approvals"/);
 });
+
+test("approval profile and content actions share one abortable single-flight boundary", () => {
+  const approvalQueue = adminDashboard.match(/function ApprovalQueue[\s\S]*?(?=type AdminPreview)/)?.[0] || "";
+  const submissionDetails = adminDashboard.match(/function SubmissionDetails[\s\S]*?(?=function ReviewFeedbackMessage)/)?.[0] || "";
+  assert.match(approvalQueue, /function beginApprovalAction\(\)/);
+  assert.match(approvalQueue, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(approvalQueue, /function isCurrentApprovalAction/);
+  assert.match(approvalQueue, /function finishApprovalAction/);
+  assert.equal((approvalQueue.match(/const action = beginApprovalAction\(\)/g) || []).length, 3);
+  assert.match(approvalQueue, /requestAdminDancerProfile\(asText\(item\.id\), action\.controller\.signal\)/);
+  assert.match(approvalQueue, /requestAdminDancerContentDeletion\(dancerId, kind, targetId, action\.controller\.signal\)/);
+  assert.match(submissionDetails, /const action = beginAction\(\)/);
+  assert.match(submissionDetails, /signal: action\.controller\.signal/);
+  assert.match(submissionDetails, /activeActionRef\.current\?\.controller\.abort\(\)/);
+  assert.match(submissionDetails, /disabled=\{actionBusy\}/);
+});

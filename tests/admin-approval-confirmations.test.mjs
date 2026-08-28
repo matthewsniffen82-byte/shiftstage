@@ -36,7 +36,7 @@ test("content decisions stay visible without collapsing the dancer approval", ()
   assert.match(reviewContent, /onActionConfirmed\(confirmation\)/);
   assert.doesNotMatch(reviewContent, /onContentReviewed|loadAdmin/);
   assert.doesNotMatch(adminSource, /onRefresh=\{\(\) => loadAdmin/);
-  assert.match(adminSource, /disabled=\{!targetId \|\| isWorking\}/);
+  assert.match(adminSource, /disabled=\{!targetId \|\| actionBusy\}/);
   assert.match(adminSource, /<ReviewFeedbackMessage feedback=\{feedback\} \/>/);
   assert.match(adminSource, /role=\{feedback\.tone === "error" \? "alert" : "status"\}/);
 });
@@ -63,7 +63,7 @@ test("approved socials stay in the submitted list and visibly retain their decis
   assert.match(reviewedSocial, /reviewStatus: status/);
   assert.match(adminSource, /submitted-social-review \$\{isApproved \? "is-approved" : isDisapproved \? "is-rejected" : ""\}/);
   assert.match(adminSource, /\{social\.label\} \/ \{isApproved \? "✓ Approved" : isDisapproved \? "Disapproved" : "Pending review"\}/);
-  assert.match(adminSource, /reviewContent\(event, "social_link"[\s\S]*?disabled=\{!targetId \|\| isWorking \|\| isApproved\}/);
+  assert.match(adminSource, /reviewContent\(event, "social_link"[\s\S]*?disabled=\{!targetId \|\| actionBusy \|\| isApproved\}/);
   assert.match(adminSource, /\.submitted-social-review\.is-approved/);
   assert.match(adminSource, /\.submitted-social-review-status\.is-approved/);
 });

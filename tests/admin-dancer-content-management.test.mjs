@@ -76,6 +76,8 @@ test("every React admin dancer list exposes a full-profile link and content mana
   assert.match(fullProfile, /Delete picture/);
   assert.match(fullProfile, /Delete social link/);
   assert.match(adminDashboardSource, /requestAdminDancerContentDeletion/);
+  assert.match(adminDashboardSource, /requestAdminDancerProfile\(dancerId: string, signal\?: AbortSignal\)/);
+  assert.match(adminDashboardSource, /targetId: string,[\s\S]*?signal\?: AbortSignal/);
   assert.match(adminDashboardSource, /requestAdminJson\([\s\S]*?method: "DELETE"/);
   assert.match(adminDashboardSource, /method: "DELETE"/);
 });
