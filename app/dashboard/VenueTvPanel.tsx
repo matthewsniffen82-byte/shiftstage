@@ -20,27 +20,38 @@ export default function VenueTvPanel() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadVideos();
-  }, []);
+    const controller = new AbortController();
+    let cancelled = false;
 
-  async function loadVideos() {
-    const token = readDashboardAccessToken("venue");
-    if (!token) {
-      setStatus("Venue sign in required.");
-      setIsLoading(false);
-      return;
+    async function loadVideos() {
+      const token = readDashboardAccessToken("venue");
+      if (!token) {
+        if (!cancelled) {
+          setStatus("Venue sign in required.");
+          setIsLoading(false);
+        }
+        return;
+      }
+      try {
+        const data = await requestVenueTvVideosJson({
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!cancelled) setVideos(data.videos || []);
+      } catch (error) {
+        if (cancelled || (error instanceof DOMException && error.name === "AbortError")) return;
+        setStatus(error instanceof Error ? error.message : "Unable to load venue videos.");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     }
-    try {
-      const data = await requestVenueTvVideosJson({
-        cache: "no-store",
-      });
-      setVideos(data.videos || []);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to load venue videos.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+
+    void loadVideos();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
 
   return (
     <article className="info-panel venue-tv-panel">

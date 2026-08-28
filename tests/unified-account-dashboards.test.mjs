@@ -1267,6 +1267,10 @@ test("venue TV loading uses the refresh-aware venue boundary", async () => {
 
   assert.match(dashboardSession, /function requestVenueTvVideosJson/);
   assert.match(venueTvPanel, /requestVenueTvVideosJson/);
+  assert.match(venueTvPanel, /const controller = new AbortController\(\);/);
+  assert.match(venueTvPanel, /signal: controller\.signal/);
+  assert.match(venueTvPanel, /cancelled = true;[\s\S]*?controller\.abort\(\);/);
+  assert.match(venueTvPanel, /if \(!cancelled\) setVideos\(data\.videos \|\| \[\]\);/);
   assert.doesNotMatch(venueTvPanel, /fetch\(/);
   assert.doesNotMatch(venueTvPanel, /authorization: `Bearer/);
 });
