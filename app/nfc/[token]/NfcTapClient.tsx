@@ -42,13 +42,22 @@ export function NfcTapClient({ token }: { token: string }) {
   const [selectedDealId, setSelectedDealId] = useState("");
   const [auth, setAuth] = useState({ role: "", accessToken: "", refreshToken: "" });
   const autoSubmittedRef = useRef(false);
+  const mountedRef = useRef(false);
+  const tapAbortRef = useRef<AbortController | null>(null);
+  const tapInFlightRef = useRef(false);
   const redirectTimerRef = useRef<number | null>(null);
   const pendingIntent = useMemo(() => readPendingDealIntent(), []);
 
   useEffect(() => setAuth(readNfcAuthSession()), []);
 
-  useEffect(() => () => {
-    if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      tapAbortRef.current?.abort();
+      tapInFlightRef.current = false;
+      if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -89,7 +98,11 @@ export function NfcTapClient({ token }: { token: string }) {
   }, [pendingIntent, token]);
 
   const submitTap = useCallback(async () => {
-    if (!state || isSubmitting) return;
+    if (!mountedRef.current || !state || tapInFlightRef.current) return;
+    const controller = new AbortController();
+    tapAbortRef.current?.abort();
+    tapAbortRef.current = controller;
+    tapInFlightRef.current = true;
     setIsSubmitting(true);
     setError("");
     setStatus("Verifying this tap with MyDancr…");
@@ -113,8 +126,10 @@ export function NfcTapClient({ token }: { token: string }) {
           dancerId: intent?.dancerId || null,
           attributionToken: intent?.attributionToken || null,
         }),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to complete this phone tap.");
       persistRefreshedBrowserAuthSession(data.session);
       if (state.tag.type === "cashier") clearPendingDealIntent();
@@ -125,8 +140,10 @@ export function NfcTapClient({ token }: { token: string }) {
           headers,
           cache: "no-store",
           credentials: "same-origin",
+          signal: controller.signal,
         });
         const verification = await verificationResponse.json();
+        if (!mountedRef.current || controller.signal.aborted) return;
         completedDancerTap = verificationResponse.ok
           && verification.ok === true
           && (
@@ -150,15 +167,20 @@ export function NfcTapClient({ token }: { token: string }) {
         }, 700);
       }
     } catch (reason) {
+      if (!mountedRef.current || controller.signal.aborted) return;
       setError(reason instanceof Error ? reason.message : "Unable to complete this phone tap.");
       setStatus(state?.tag.type === "dressing_room"
         ? "Profile activation was not completed. Step 3 remains open—stay at this sticker and try the tap again."
         : "The tap was not completed. Check the offer and try again at this sticker.");
       setPhase("error");
     } finally {
-      setIsSubmitting(false);
+      if (tapAbortRef.current === controller) {
+        tapAbortRef.current = null;
+        tapInFlightRef.current = false;
+        if (mountedRef.current) setIsSubmitting(false);
+      }
     }
-  }, [isSubmitting, pendingIntent, selectedDealId, state, token]);
+  }, [pendingIntent, selectedDealId, state, token]);
 
   useEffect(() => {
     if (autoSubmittedRef.current || !state || complete) return;

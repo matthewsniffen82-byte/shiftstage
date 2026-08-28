@@ -73,6 +73,19 @@ test("NFC sticker discovery cancels stale reads when the landing page changes", 
   assert.doesNotMatch(client, /let cancelled = false;/);
 });
 
+test("NFC transactions prevent duplicate and stale phone-tap work", () => {
+  assert.match(client, /const mountedRef = useRef\(false\);/);
+  assert.match(client, /const tapAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(client, /const tapInFlightRef = useRef\(false\);/);
+  assert.match(client, /if \(!mountedRef\.current \|\| !state \|\| tapInFlightRef\.current\) return;/);
+  assert.match(client, /fetch\(`\/api\/nfc\/\$\{encodeURIComponent\(token\)\}`, \{[\s\S]*?method: "POST"[\s\S]*?signal: controller\.signal/);
+  assert.match(client, /fetch\("\/api\/dancer\/dashboard", \{[\s\S]*?signal: controller\.signal/);
+  assert.match(client, /tapAbortRef\.current\?\.abort\(\);/);
+  assert.match(client, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return;/);
+  assert.match(client, /if \(mountedRef\.current\) setIsSubmitting\(false\);/);
+  assert.doesNotMatch(client, /\[isSubmitting, pendingIntent, selectedDealId, state, token\]/);
+});
+
 test("Step 3 eligibility matches the submitted onboarding requirements", () => {
   assert.match(activationMigration, /create or replace function public\.approve_dancer_venue_affiliation_from_nfc/);
   assert.match(activationMigration, /create or replace function public\.register_dancer_nfc_enrollment/);
