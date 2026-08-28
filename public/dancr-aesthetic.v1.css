@@ -10954,11 +10954,24 @@ body.dancr-button-system :is(
 }
 
 /* Align the stage-name start with the rendered Follower/Followers word below.
- * The identity stack shares its top edge with the avatar and leaves a little
- * more air before analytics. The action row then follows the same header grid:
- * avatar / Follow, Followers / Notify, Going / I'm Going, Views / Share. */
+ * The stage name shares the avatar's visual top edge. Header analytics and
+ * actions use the same four evenly spaced tracks: avatar / Follow, Followers /
+ * Notify, Going / I'm Going, and Views / Share. */
 @media (max-width: 759px) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
+    width: calc(100% - 4px) !important;
+    margin-left: 4px !important;
+    grid-template-columns: repeat(4, 52px) !important;
+    justify-content: space-between !important;
+    gap: 0 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
+    grid-column: 1 !important;
+  }
+
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
+    grid-column: 2 / -1 !important;
     height: 60px !important;
     grid-template-rows: 24px 29px !important;
     align-content: start !important;
@@ -10966,7 +10979,8 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
-    grid-template-columns: 52px repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, 52px) !important;
+    justify-content: space-between !important;
     column-gap: 0 !important;
     padding: 4px 46px 0 0 !important;
   }
@@ -10981,19 +10995,25 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
-    margin-left: -4px !important;
+    width: 100% !important;
+    margin-left: 0 !important;
     transform: none !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+    grid-template-columns: repeat(3, 52px) !important;
+    justify-content: space-between !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
     position: relative !important;
     inset: auto !important;
-    width: calc((100% - 22px) / 3) !important;
+    width: 52px !important;
     max-width: none !important;
     min-width: 0 !important;
-    margin: 0 0 0 -4px !important;
+    margin: 0 !important;
     padding: 0 !important;
-    transform: none !important;
+    transform: translateY(3px) !important;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
     gap: 0 !important;
