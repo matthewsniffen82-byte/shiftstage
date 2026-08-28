@@ -12,7 +12,7 @@ const [liveApp, aesthetic, profilePage, profileActions, socialLinks, profileMedi
 ]);
 
 const compactLayout = aesthetic.match(
-  /\/\* Optional dancer-profile engagement content uses natural document flow\.[\s\S]*?(?=\/\* Production TV-card branding)/,
+  /\/\* Full-profile engagement uses one unboxed four-column action row\.[\s\S]*?(?=\/\* Production TV-card branding)/,
 )?.[0] || "";
 
 const socialFunctionSource = liveApp.match(
@@ -41,14 +41,15 @@ test("zero-social profiles reserve no social DOM or layout space", () => {
   assert.match(socialLinks, /if \(!links\.length\) return null;/);
   assert.match(
     profilePage,
-    /\{profile\.socialLinks\.length \? \([\s\S]*?className="profile-social-section"[\s\S]*?: null\}/,
+    /socialContent=\{profile\.socialLinks\.length \? \([\s\S]*?<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>[\s\S]*?: null\}/,
   );
+  assert.match(profileMedia, /\{socialContent \? \([\s\S]*?className="profile-media-socials"[\s\S]*?: null\}/);
   assert.equal(renderSocialLinks({ socials: {} }), "");
   assert.equal(renderSocialLinks({ socials: {} }, { preview: true }), "");
   assert.doesNotMatch(socialFunctionSource, /No profiles posted|social placeholder|empty social/i);
   assert.match(
     compactLayout,
-    /\.profile-social-section \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 0 6px !important;[\s\S]*?padding: 0 !important;/,
+    /\.profile-media-socials \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 12px 0 14px !important;/,
   );
 });
 
@@ -68,13 +69,13 @@ test("one through the maximum supported social count renders only real links in 
   }
 
   assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
-  assert.match(compactLayout, /\.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?gap: 4px !important;/);
-  assert.match(compactLayout, /\.social-list a \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;/);
-  assert.match(compactLayout, /\.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.11\) !important;/);
-  assert.match(compactLayout, /\.social-list a svg \{[\s\S]*?width: 14px !important;[\s\S]*?height: 14px !important;/);
+  assert.match(compactLayout, /\.profile-media-socials \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?gap: clamp\(4px, 1\.8vw, 8px\) !important;/);
+  assert.match(compactLayout, /\.profile-media-socials \.social-list a \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;/);
+  assert.match(compactLayout, /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.11\) !important;/);
+  assert.match(compactLayout, /\.profile-media-socials \.social-list a svg \{[\s\S]*?width: 19px !important;[\s\S]*?height: 19px !important;/);
 });
 
-test("all schedule states share the same compact header stats, four-action, status, optional-social, and media order", () => {
+test("all schedule states share the same compact header, four actions, status, and unified media order", () => {
   const liveGrid = liveApp.match(
     /function profileModalGridMarkup\(profile, options = \{\}\) \{[\s\S]*?(?=\n    function profileActionButtonMarkup)/,
   )?.[0] || "";
@@ -83,9 +84,13 @@ test("all schedule states share the same compact header stats, four-action, stat
   )?.[0] || "";
   const actionsIndex = liveGrid.indexOf("liveProfileModalActionsMarkup");
   const statusIndex = liveGrid.indexOf('class="${tonightClasses}"');
-  const socialIndex = liveGrid.indexOf("${socialMarkup}");
+  const mediaSocialIndex = liveApp.indexOf('class="profile-media-socials" id="modalMediaSocials"');
+  const mediaTabsIndex = liveApp.indexOf('class="profile-modal-media-tabs"');
 
-  assert.ok(actionsIndex > -1 && statusIndex > actionsIndex && socialIndex > statusIndex);
+  assert.ok(actionsIndex > -1 && statusIndex > actionsIndex);
+  assert.ok(mediaSocialIndex > -1 && mediaTabsIndex > mediaSocialIndex);
+  assert.doesNotMatch(liveGrid, /\$\{socialMarkup\}/);
+  assert.match(liveApp, /modalMediaSocials\.innerHTML = liveSocialMarkup;[\s\S]*?modalMediaSocials\.hidden = !liveSocialMarkup;/);
   assert.doesNotMatch(liveGrid, /profileActivityMetricsMarkup/);
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
   assert.match(liveActions, /Follow[\s\S]*?Notify[\s\S]*?\$\{goingButton\}[\s\S]*?Share/);
@@ -96,7 +101,7 @@ test("all schedule states share the same compact header stats, four-action, stat
   assert.match(profileActions, /hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"/);
   assert.match(
     compactLayout,
-    /\.modal-actions,[\s\S]*?\.live-actions \{[\s\S]*?--profile-row-inline-start: clamp\(16px, 5vw, 20px\);[\s\S]*?grid-template-columns: repeat\(4, clamp\(48px, 13vw, 52px\)\) !important;[\s\S]*?justify-content: start !important;/,
+    /\.modal-actions,[\s\S]*?\.live-actions \{[\s\S]*?width: min\(100%, 760px\) !important;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?margin: 0 auto 12px !important;/,
   );
 });
 
@@ -129,6 +134,7 @@ test("stats and media tabs are compact without changing dynamic media behavior",
     compactLayout,
     /\.profile-modal-media-tabs button,[\s\S]*?\.profile-media-tabs button \{[\s\S]*?min-height: 52px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
+  assert.match(compactLayout, /\.profile-media-tab-icon \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;/);
   assert.match(compactLayout, /button\.active,[\s\S]*?box-shadow: inset 0 -2px var\(--dancr-color-brand-primary\) !important;/);
   assert.match(profileMedia, /\{photoMedia\.length\}/);
   assert.match(profileMedia, /\{videoMedia\.length\}/);

@@ -74,7 +74,7 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profileCarousel, /className="profile-media-section"[\s\S]*?className="profile-media-tabs"/);
   assert.match(profilePage, /\.profile-media-tabs \{[\s\S]*?position: sticky;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border-radius: 0;/);
   assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.profile-media-tabs button \{[\s\S]*?min-height: 52px;[\s\S]*?border-radius: 0 !important;/);
-  assert.match(profilePage, /\.profile-media-tab-icon \{ width: 16px; height: 16px;[\s\S]*?flex: 0 0 16px;/);
+  assert.match(profilePage, /\.profile-media-tab-icon \{ width: 20px; height: 20px;[\s\S]*?flex: 0 0 20px;/);
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 
@@ -97,7 +97,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   const scheduleIndex = profilePage.indexOf('className={`profile-tonight-card');
   const dealIndex = profilePage.indexOf('className="profile-tonight-deal"');
   const travelIndex = profilePage.indexOf('aria-label="Venue travel actions"');
-  const socialIndex = profilePage.indexOf('className="profile-social-section"');
+  const socialIndex = profilePage.indexOf("socialContent={profile.socialLinks.length");
 
   assert.ok(identityIndex > -1);
   assert.ok(metricsIndex > identityIndex);
@@ -105,8 +105,9 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.ok(scheduleIndex > actionsIndex);
   assert.ok(dealIndex > scheduleIndex);
   assert.ok(travelIndex > dealIndex);
-  assert.ok(socialIndex > travelIndex);
-  assert.ok(mediaIndex > socialIndex);
+  assert.ok(mediaIndex > travelIndex);
+  assert.ok(socialIndex > mediaIndex);
+  assert.match(profileCarousel, /className="profile-media-socials"[\s\S]*?className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
   assert.match(profilePage, /<DancerFollowerMetric \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /format\(profile\.profileViewsToday \|\| 0\)[\s\S]*?<dt>Views today<\/dt>/);
@@ -296,7 +297,8 @@ test("public social icons render without a visible heading or published handles"
   assert.match(socialLinks, /showHeading = true/);
   assert.match(socialLinks, /\{showHeading \? \([\s\S]*?<h2 id="profile-social-heading">\{heading\}<\/h2>/);
   assert.match(profilePage, /showHeading=\{false\}/);
-  assert.match(profilePage, /className="profile-social-section" aria-label="External profiles"/);
+  assert.doesNotMatch(profilePage, /className="profile-social-section"/);
+  assert.match(profileCarousel, /className="profile-media-socials" aria-label="External profiles"/);
   assert.doesNotMatch(profilePage, /aria-labelledby="profile-social-heading"/);
   assert.match(socialLinks, /rel="noopener noreferrer"/);
   assert.match(socialLinks, /opens in a new tab/);
@@ -306,11 +308,11 @@ test("public social icons render without a visible heading or published handles"
   assert.doesNotMatch(socialLinks, /<strong>\{link\.handle\}<\/strong>/);
   assert.doesNotMatch(socialLinks, /social-list-toggle|Show fewer links|more links/);
   assert.match(profilePage, /\.social-links-control \{ display: grid; justify-items: center;/);
-  assert.match(profilePage, /\.profile-social-section \{ min-height: 0;[\s\S]*?margin: 0 0 6px;[\s\S]*?padding: 0;/);
+  assert.match(profilePage, /\.profile-media-socials \{ min-height: 0;[\s\S]*?margin: 0;[\s\S]*?padding: 12px 0 14px;/);
   assert.match(profilePage, /\.social-list \{ width: fit-content;[\s\S]*?flex-wrap: nowrap;[\s\S]*?justify-content: center;[\s\S]*?gap: 6px;/);
   assert.match(profilePage, /\.social-list a \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?justify-content: center;/);
   assert.match(profilePage, /\.social-list a::before \{[\s\S]*?inset: 3px;[\s\S]*?border: 1px solid rgba\(226,232,240,\.11\);[\s\S]*?border-radius: 50%;/);
-  assert.match(profilePage, /\.social-list a svg \{ position: relative; z-index: 1; width: 14px; height: 14px;/);
+  assert.match(profilePage, /\.social-list a svg \{ position: relative; z-index: 1; width: 19px; height: 19px;/);
 });
 
 test("real videos keep distinct metadata", () => {

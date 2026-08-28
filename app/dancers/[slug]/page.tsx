@@ -303,12 +303,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
           ) : null}
         </section>
 
-        {profile.socialLinks.length ? (
-          <section className="profile-social-section" aria-label="External profiles">
-            <SocialLinks dancerId={profile.id} links={profile.socialLinks} showHeading={false} />
-          </section>
-        ) : null}
-
         <DancerPhotoCarousel
           photos={gallery.map((photo) => ({
             id: photo.id,
@@ -322,6 +316,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
             videoUrl: video.videoUrl,
             durationSeconds: video.durationSeconds,
           }))}
+          socialContent={profile.socialLinks.length ? (
+            <SocialLinks dancerId={profile.id} links={profile.socialLinks} showHeading={false} />
+          ) : null}
           stageName={profile.stageName}
           viewerStatus={activeShift
             ? "Working Now"
@@ -438,11 +435,11 @@ function PublicProfileStyles() {
       .public-profile-close { position: static; width: 44px; min-height: 44px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
       .profile-report-confirmation { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-      .profile-social-section, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section, .profile-schedule-empty, .profile-tonight-card { width: min(100%, 760px); margin-inline: auto; }
+      .profile-media-socials, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section, .profile-schedule-empty, .profile-tonight-card { width: min(100%, 760px); margin-inline: auto; }
       .profile-schedule-empty { min-width: 0; display: flex; align-items: center; gap: 6px; margin-top: 5px; padding: 8px 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #82798c; background: rgba(255,255,255,.025); font-size: 10px; line-height: 1.2; }
       .profile-schedule-empty strong { flex: 0 0 auto; color: #d9d3e0; font-size: 12px; white-space: nowrap; }
       .profile-schedule-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-social-section { min-height: 0; display: grid; margin: 0 0 6px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .profile-media-socials { min-height: 0; display: grid; place-items: center; margin: 0; padding: 12px 0 14px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .social-links-control { display: grid; justify-items: center; gap: 0; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
@@ -455,7 +452,7 @@ function PublicProfileStyles() {
       .social-list a:hover::before { border-color: rgba(226,232,240,.2); background: rgba(17,17,22,.92); box-shadow: none; }
       .social-list a:focus-visible { outline: none; }
       .social-list a:focus-visible::before { border-color: #7eeaff; outline: 2px solid rgba(126,234,255,.72); outline-offset: 2px; }
-      .social-list a svg { position: relative; z-index: 1; width: 14px; height: 14px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .social-list a svg { position: relative; z-index: 1; width: 19px; height: 19px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .social-list a.social-link-instagram svg { fill: none; }
       .social-list a.social-link-x svg { fill: currentColor; stroke: none; }
       .social-list a.social-link-instagram { color: #e4405f; }
@@ -465,7 +462,7 @@ function PublicProfileStyles() {
       .social-list a.social-link-x { color: #f4f4f6; }
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
-      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 2px; margin-top: 8px; padding: 1px 0 0; }
+      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 0; row-gap: 2px; margin: 0 auto 12px; padding: 4px 0 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .live-actions.is-no-live-shift { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 11px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
@@ -486,18 +483,18 @@ function PublicProfileStyles() {
       .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width: 13.75px; height: 13.75px; }
       .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width: 15.25px; height: 15.25px; }
       .profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon { width: 13px; height: 13px; }
-      body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control, body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control { min-height: 44px; align-self: stretch; flex-direction: column; justify-content: center; gap: 0; padding: 1px 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control, body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control { min-height: 58px; align-self: stretch; flex-direction: column; justify-content: center; gap: 0; padding: 3px 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
       .live-actions > button.profile-action-icon-control:disabled { cursor: default; }
       .profile-action-icon-control .profile-action-main { flex-direction: column; gap: 2px; overflow: visible; }
-      .profile-action-icon-control .profile-action-main > span { overflow: visible; color: #ded8e7; font-size: 10px; line-height: 1.05; text-overflow: clip; }
-      .profile-action-icon-control .profile-action-icon-frame { width: 24px; height: 24px; flex-basis: 24px; }
-      .profile-action-icon-control .profile-action-preview-icon { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 0; color: #d9d2e2; background: transparent; box-shadow: none; transition: color .16s ease, transform .16s ease; }
+      .profile-action-icon-control .profile-action-main > span { overflow: visible; color: #ded8e7; font-size: clamp(12px, 3.35vw, 13px); font-weight: 700; line-height: 1.05; text-overflow: clip; }
+      .profile-action-icon-control .profile-action-icon-frame { width: 27px; height: 27px; flex-basis: 27px; }
+      .profile-action-icon-control .profile-action-preview-icon { width: 27px; height: 27px; padding: 0; border: 0; border-radius: 0; color: #d9d2e2; background: transparent; box-shadow: none; transition: color .16s ease, transform .16s ease; }
       .profile-action-icon-control .profile-action-preview-icon-personPlus { --profile-icon-offset-x: .5px; --profile-icon-offset-y: -.5px; }
       .profile-action-icon-control .profile-action-preview-icon-bell { --profile-icon-offset-y: -1px; }
       .profile-action-icon-control .profile-action-preview-icon-clock { --profile-icon-offset-x: -.5px; }
-      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon { width: 26px; height: 26px; }
-      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width: 22px; height: 22px; }
-      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width: 24px; height: 24px; }
+      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon { width: 28px; height: 28px; }
+      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width: 26px; height: 26px; }
+      .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width: 27px; height: 27px; }
       .profile-action-icon-control:is(:hover, :focus-visible):not(:disabled) .profile-action-preview-icon { color: #fff; transform: translate(var(--profile-icon-offset-x), calc(var(--profile-icon-offset-y) - 1px)) scale(1.02); }
       .profile-action-icon-control.profile-action-going:not(.profile-action-unavailable) .profile-action-preview-icon { color: #a78bfa; background: transparent; box-shadow: none; }
       .profile-action-icon-control:is(.is-selected, .is-going) .profile-action-preview-icon { color: #7cf0b4; background: transparent; box-shadow: none; }
@@ -505,7 +502,7 @@ function PublicProfileStyles() {
       .profile-action-icon-control.profile-action-unavailable .profile-action-preview-icon { border: 0; color: #756d7d; background: transparent; box-shadow: none; }
       .profile-action-icon-control .profile-action-requirement { max-width: 100%; overflow: hidden; color: #8e8498; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
       .profile-action-share-slot { min-width: 0; grid-column: auto; }
-      .profile-action-share-slot .profile-share { display: block; min-height: 44px; }
+      .profile-action-share-slot .profile-share { display: block; min-height: 58px; }
       .profile-action-share-slot .profile-share button { gap: 6px; }
       .profile-action-share-slot .profile-share svg { fill: none; stroke: currentColor; stroke-width: 1.9; }
       .profile-action-share-slot .profile-share > span { display: block; color: #9fefff; font-size: 9px; text-align: center; }
@@ -604,7 +601,7 @@ function PublicProfileStyles() {
       .profile-media-tabs { position: sticky; z-index: 20; top: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-self: stretch; gap: 0; padding: 0; border: 0; border-bottom: 1px solid rgba(255,255,255,.1); border-radius: 0; background: rgba(5,5,8,.94); box-shadow: 0 8px 18px rgba(0,0,0,.18); backdrop-filter: blur(16px); }
       body.dancr-button-system .public-profile-shell .profile-media-tabs button { position: relative; min-width: 0; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 0 !important; border-radius: 0 !important; color: #968b9f; background: transparent !important; box-shadow: none !important; cursor: pointer; }
       body.dancr-button-system .public-profile-shell .profile-media-tabs button::before { content: none; }
-      .profile-media-tab-icon { width: 16px; height: 16px; display: block; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-media-tab-icon { width: 20px; height: 20px; display: block; flex: 0 0 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-media-tab-play { fill: currentColor; stroke: none; }
       .profile-media-tab-label { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
       .profile-media-tab-count { min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #cfc7d8; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 950; line-height: 1; }

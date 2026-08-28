@@ -53,7 +53,8 @@ test("full dancer profiles use a compact identity and honest public activity hea
   const metricsIndex = profilePage.indexOf('className="profile-header-metrics"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
   const statusIndex = profilePage.indexOf('className={`profile-tonight-card');
-  const socialsIndex = profilePage.indexOf('className="profile-social-section"');
+  const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
+  const socialsIndex = profilePage.indexOf("socialContent={profile.socialLinks.length");
   assert.match(profilePage, /className="profile-titlebar"/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /className="profile-header-metrics" aria-label="Profile activity"/);
@@ -65,10 +66,12 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(profilePage, /profile\.profileViewsToday \|\| 0/);
   assert.match(profilePage, /<dt>Views today<\/dt>/);
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
-  assert.match(profilePage, /className="profile-social-section" aria-label="External profiles"/);
+  assert.doesNotMatch(profilePage, /className="profile-social-section"/);
+  assert.match(profileMedia, /className="profile-media-socials" aria-label="External profiles"/);
   assert.match(profilePage, /<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>/);
   assert.ok(headerIndex > -1 && metricsIndex > headerIndex);
-  assert.ok(actionsIndex > metricsIndex && statusIndex > actionsIndex && socialsIndex > statusIndex);
+  assert.ok(actionsIndex > metricsIndex && statusIndex > actionsIndex && mediaIndex > statusIndex && socialsIndex > mediaIndex);
+  assert.match(profileMedia, /className="profile-media-socials"[\s\S]*?className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
   assert.doesNotMatch(profilePage, /className="profile-overview"|className="profile-metrics"/);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);
 
@@ -110,7 +113,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profileActions, /profile-action-going profile-action-icon-control/);
   assert.match(profileActions, /className="profile-action-icon-frame" data-profile-action-icon=\{type\}/);
   assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.live-actions > button\.profile-action-icon-control,[\s\S]*?profile-action-share-slot \.profile-share > button\.profile-action-icon-control \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
-  assert.match(profilePage, /\.profile-action-icon-control \.profile-action-preview-icon \{[\s\S]*?width: 24px;[\s\S]*?height: 24px;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
+  assert.match(profilePage, /\.profile-action-icon-control \.profile-action-preview-icon \{[\s\S]*?width: 27px;[\s\S]*?height: 27px;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
   assert.match(profileActions, /profile-action-preview-icon profile-action-preview-icon-\$\{type\}/);
   assert.match(profilePage, /\.profile-action-preview-icon-personPlus \{[\s\S]*?--profile-icon-offset-x: \.5px;[\s\S]*?--profile-icon-offset-y: -\.5px;/);
   assert.match(profilePage, /\.profile-action-preview-icon-bell \{[\s\S]*?--profile-icon-offset-y: -1px;/);
@@ -118,9 +121,9 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /\.action-icon-personPlus > svg \{[\s\S]*?--profile-icon-offset-x: \.5px;[\s\S]*?--profile-icon-offset-y: -\.5px;/);
   assert.match(liveApp, /\.action-icon-bell > svg \{[\s\S]*?--profile-icon-offset-y: -1px;/);
   assert.match(liveApp, /\.action-icon-clock > svg \{[\s\S]*?--profile-icon-offset-x: -\.5px;/);
-  assert.match(profilePage, /data-profile-action-icon="personPlus"[\s\S]*?width: 26px;[\s\S]*?data-profile-action-icon="bell"[\s\S]*?width: 22px;/);
+  assert.match(profilePage, /data-profile-action-icon="personPlus"[\s\S]*?width: 28px;[\s\S]*?data-profile-action-icon="bell"[\s\S]*?width: 26px;/);
   assert.match(profilePage, /button:not\(\.profile-action-icon-control\):not\(\.profile-report-action\)[\s\S]*?grid-template-rows: 18px 9px;/);
-  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 4px;[\s\S]*?row-gap: 2px;[\s\S]*?padding: 1px 0 0;/);
+  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 0;[\s\S]*?row-gap: 2px;[\s\S]*?margin: 0 auto 12px;[\s\S]*?padding: 4px 0 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
   assert.match(liveApp, /#profileBackdrop \.modal-actions \.profile-action-icon-control \.action-icon \{[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(liveApp, /action-icon action-icon-\$\{resolvedType\}/);
   assert.match(liveApp, /data-action-icon="\$\{resolvedType\}"[\s\S]*?aria-hidden="true"/);

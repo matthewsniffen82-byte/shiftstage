@@ -4853,69 +4853,82 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
   color: #fae8ff !important;
 }
 
-/* Optional dancer-profile engagement content uses natural document flow. The
- * social controls remain accessible 44px targets but read as quiet external
- * metadata, and an absent social collection contributes no box, spacer, or
- * reserved row before the media tabs. */
+/* Full-profile engagement uses one unboxed four-column action row. Social
+ * destinations are the quiet first utility row inside the existing media
+ * region; their 44px hit areas contain a 38px visible circle. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
 body.dancr-button-system .public-profile-shell .live-actions {
-  --profile-row-inline-start: clamp(16px, 5vw, 20px);
-  width: fit-content !important;
-  max-width: calc(100% - var(--profile-row-inline-start)) !important;
+  width: min(100%, 760px) !important;
+  max-width: 100% !important;
   box-sizing: border-box !important;
-  grid-template-columns: repeat(4, clamp(48px, 13vw, 52px)) !important;
-  justify-content: start !important;
-  justify-self: start !important;
-  align-self: start !important;
-  column-gap: clamp(2px, 1vw, 4px) !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  justify-content: stretch !important;
+  justify-self: stretch !important;
+  align-self: stretch !important;
+  column-gap: 0 !important;
   row-gap: 2px !important;
-  margin-top: 0 !important;
-  margin-inline: var(--profile-row-inline-start) 0 !important;
-  padding: 2px 0 !important;
+  margin: 0 auto 12px !important;
+  padding: 4px 0 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
-  min-height: 44px !important;
+  min-height: 58px !important;
   justify-content: center !important;
   gap: 0 !important;
-  padding: 1px 2px !important;
+  padding: 3px 2px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share {
-  min-height: 44px !important;
+  min-height: 58px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-icon-frame {
-  width: 20px !important;
-  height: 20px !important;
-  flex-basis: 20px !important;
+  width: 27px !important;
+  height: 27px !important;
+  flex-basis: 27px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-preview-icon {
-  width: 20px !important;
-  height: 20px !important;
+  width: 27px !important;
+  height: 27px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="personPlus"] > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon {
-  width: 20px !important;
-  height: 20px !important;
+  width: 28px !important;
+  height: 28px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon {
-  width: 19px !important;
-  height: 19px !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action .action-icon,
+body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available .profile-action-icon-frame {
+  width: 28px !important;
+  height: 28px !important;
+  flex-basis: 28px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .profile-action-main > span:last-child,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-main > span:last-child {
-  font-size: 9px !important;
-  line-height: 1 !important;
+  font-size: clamp(12px, 3.35vw, 13px) !important;
+  font-weight: 700 !important;
+  line-height: 1.05 !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-report-action,
@@ -4993,37 +5006,55 @@ body.dancr-button-system .public-profile-shell .profile-metrics dt {
   line-height: 1.05 !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .social-tile,
-body.dancr-button-system .public-profile-shell .profile-social-section {
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials,
+body.dancr-button-system .public-profile-shell .profile-media-socials {
+  width: 100% !important;
   min-height: 0 !important;
-  margin: 0 0 6px !important;
-  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  margin: 0 !important;
+  padding: 12px 0 14px !important;
   border: 0 !important;
+  border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .social-links,
-body.dancr-button-system .public-profile-shell .social-list {
-  --profile-row-inline-start: clamp(16px, 5vw, 20px);
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials[hidden] {
+  display: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-tile {
   width: fit-content !important;
-  max-width: calc(100% - var(--profile-row-inline-start)) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-links,
+body.dancr-button-system .public-profile-shell .profile-media-socials .social-list {
+  width: fit-content !important;
+  max-width: 100% !important;
   flex-wrap: nowrap !important;
-  justify-content: flex-start !important;
-  justify-self: start !important;
-  align-self: start !important;
-  gap: 4px !important;
-  margin-inline: var(--profile-row-inline-start) 0 !important;
+  justify-content: center !important;
+  justify-self: center !important;
+  align-self: center !important;
+  gap: clamp(4px, 1.8vw, 8px) !important;
+  margin-inline: auto !important;
   overflow: visible !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .social-links::-webkit-scrollbar,
-body.dancr-button-system .public-profile-shell .social-list::-webkit-scrollbar {
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-links::-webkit-scrollbar,
+body.dancr-button-system .public-profile-shell .profile-media-socials .social-list::-webkit-scrollbar {
   display: none;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-link,
-body.dancr-button-system .public-profile-shell .profile-social-section .social-list a {
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-link,
+body.dancr-button-system .public-profile-shell .profile-media-socials .social-list a {
   position: relative !important;
   width: 44px !important;
   height: 44px !important;
@@ -5036,8 +5067,8 @@ body.dancr-button-system .public-profile-shell .profile-social-section .social-l
   box-shadow: none !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-link::before,
-body.dancr-button-system .public-profile-shell .profile-social-section .social-list a::before {
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-link::before,
+body.dancr-button-system .public-profile-shell .profile-media-socials .social-list a::before {
   inset: 3px !important;
   width: auto !important;
   height: auto !important;
@@ -5048,17 +5079,17 @@ body.dancr-button-system .public-profile-shell .profile-social-section .social-l
   transform: none !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-link:hover::before,
-body.dancr-button-system .public-profile-shell .profile-social-section .social-list a:hover::before {
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-link:hover::before,
+body.dancr-button-system .public-profile-shell .profile-media-socials .social-list a:hover::before {
   border-color: rgba(226, 232, 240, .2) !important;
   background: rgba(17, 17, 22, .92) !important;
   box-shadow: none !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-link svg,
-body.dancr-button-system .public-profile-shell .profile-social-section .social-list a svg {
-  width: 14px !important;
-  height: 14px !important;
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-link svg,
+body.dancr-button-system .public-profile-shell .profile-media-socials .social-list a svg {
+  width: 19px !important;
+  height: 19px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-instagram,
@@ -5088,7 +5119,13 @@ body.dancr-button-system .public-profile-shell .social-link-x {
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media,
 body.dancr-button-system .public-profile-shell .profile-media-section {
+  display: grid !important;
   gap: 3px !important;
+  margin-top: 0 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-grid > .profile-tonight-card,
+body.dancr-button-system .public-profile-shell .profile-tonight-card {
   margin-top: 0 !important;
 }
 
@@ -5111,6 +5148,13 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button {
   background: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-tab-icon,
+body.dancr-button-system .public-profile-shell .profile-media-tab-icon {
+  width: 20px !important;
+  height: 20px !important;
+  flex-basis: 20px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active,

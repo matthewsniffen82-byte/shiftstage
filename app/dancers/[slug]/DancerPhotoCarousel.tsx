@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
@@ -20,6 +20,7 @@ type DancerPhotoCarouselProps = {
     durationSeconds: number;
   }>;
   stageName: string;
+  socialContent?: ReactNode;
   viewerStatus?: string;
 };
 
@@ -48,6 +49,7 @@ export function DancerPhotoCarousel({
   photos,
   videos = [],
   stageName,
+  socialContent,
   viewerStatus = "No shift posted",
 }: DancerPhotoCarouselProps) {
   const photoMedia = useMemo<PhotoMedia[]>(
@@ -436,6 +438,11 @@ export function DancerPhotoCarousel({
       className="profile-media-section"
       data-dancer-media-tabs
     >
+      {socialContent ? (
+        <div className="profile-media-socials" aria-label="External profiles">
+          {socialContent}
+        </div>
+      ) : null}
       <div
         aria-label={`${stageName} media type`}
         className="profile-media-tabs"

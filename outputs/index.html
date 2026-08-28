@@ -32038,7 +32038,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=192" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=193" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -41688,7 +41688,8 @@
           </div>
         </div>
         <div class="modal-body" id="modalBody"></div>
-        <section class="profile-modal-media" aria-label="Dancer profile media">
+        <section class="profile-modal-media" aria-label="Dancer profile content">
+          <div class="profile-media-socials" id="modalMediaSocials" aria-label="External profiles" hidden></div>
           <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">
             <button class="active" id="modalMediaPhotoTab" type="button" role="tab" aria-label="Photos" title="Photos" aria-selected="true" aria-controls="modalGallery" data-profile-media-tab="photo">
               <svg class="profile-media-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="8.5" cy="9" r="1.5"></circle><path d="m5 17 4.5-4.5 3.2 3.2 2.2-2.2L19 17"></path></svg>
@@ -41900,6 +41901,7 @@
     const modalCity = document.getElementById("modalCity");
     const modalRank = document.getElementById("modalRank");
     const modalGallery = document.getElementById("modalGallery");
+    const modalMediaSocials = document.getElementById("modalMediaSocials");
     const modalMediaPhotoTab = document.getElementById("modalMediaPhotoTab");
     const modalMediaTvTab = document.getElementById("modalMediaTvTab");
     const modalMediaPhotoCount = document.getElementById("modalMediaPhotoCount");
@@ -52354,7 +52356,9 @@
     function profileModalGridMarkup(profile, options = {}) {
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
-      const socialMarkup = options.socialMarkup || socialLinksMarkup(profile, { preview: Boolean(options.preview) });
+      const previewSocialMarkup = options.preview
+        ? options.socialMarkup || socialLinksMarkup(profile, { preview: true })
+        : "";
       const dealState = dancerClubDealState(profile);
       const dealMarkup = profile?.scheduled
         ? options.preview
@@ -52387,7 +52391,7 @@
             ${travelActionsMarkup}
           </section>
           ${profileLocationStatusTile(profile, city)}
-          ${socialMarkup}
+          ${previewSocialMarkup}
         </div>
       `;
     }
@@ -52630,6 +52634,11 @@
       modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo${modalIsWorkingNow ? ", working now" : modalHasUpcomingShift ? ", upcoming shift posted" : ""}`);
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
+      const liveSocialMarkup = isPending && !isPrivatePreview
+        ? ""
+        : socialLinksMarkup(profile, { preview: isPrivatePreview });
+      modalMediaSocials.innerHTML = liveSocialMarkup;
+      modalMediaSocials.hidden = !liveSocialMarkup;
 
       if (isPending && !isPrivatePreview) {
         modalBody.innerHTML = `
