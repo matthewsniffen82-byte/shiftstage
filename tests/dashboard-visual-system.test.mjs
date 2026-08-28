@@ -69,7 +69,7 @@ test("customer and venue dashboards avoid double-bordered nested panels", () => 
 });
 
 test("venue dashboard uses one state-aware three-destination workspace", () => {
-  const venuePanel = routedDashboards.match(/function VenuePanel[\s\S]*?function VenueClubDealPanel/)?.[0] || "";
+  const venuePanel = routedDashboards.match(/function VenuePanel[\s\S]*?function dealTypeLabel/)?.[0] || "";
   const commandIndex = venuePanel.indexOf('className="venue-command-panel"');
   const tabsIndex = venuePanel.indexOf('className="venue-workspace-tabs"');
   const tonightIndex = venuePanel.indexOf('id="venue-workspace-tonight"');

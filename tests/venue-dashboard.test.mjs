@@ -93,7 +93,7 @@ test("the primary venue dashboard opens the shared routed workspace immediately"
 });
 
 test("venue operations prioritize tonight, Club Deals, phone-tap stickers, and then reporting", () => {
-  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.match(venuePanel, /Tonight/);
   assert.match(venuePanel, /title="Current Club Deals"/);
   assert.match(venuePanel, /venue-current-deals-link[\s\S]*?openVenueSection\(event, "venue-club-deals"\)/);
@@ -106,7 +106,7 @@ test("venue operations prioritize tonight, Club Deals, phone-tap stickers, and t
 });
 
 test("venue owners navigate one simplified state-aware workspace without losing any controls", () => {
-  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Tonight"[\s\S]*?\["venue", "Venue page"[\s\S]*?\["business", "Business"/);
   assert.match(venuePanel, /"Roster · deals · check-in"[\s\S]*?"Preview · review · MyDancr TV"[\s\S]*?"Analytics · team · account"/);
   assert.match(venuePanel, /aria-label=\{`\$\{label\}\. \$\{contents\}\. \$\{status\}\.`\}/);
@@ -122,7 +122,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
 });
 
 test("working-now actions are neutral when empty and emerald only for a live roster", () => {
-  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.match(venuePanel, /venue-working-now-link\$\{workingNow\.length \? " is-live" : ""\}/);
   assert.match(venuePanel, /Open working-now roster/);
   assert.match(venuePanel, /View \$\{workingNow\.length\} working now/);
@@ -132,9 +132,10 @@ test("working-now actions are neutral when empty and emerald only for a live ros
 });
 
 test("venue Club Deals are read-only and venue write routes enforce the contract boundary", () => {
-  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.match(venuePanel, /<VenueDealReadOnlyPanel/);
   assert.doesNotMatch(venuePanel, /<VenueClubDealPanel/);
+  assert.doesNotMatch(dashboard, /function VenueClubDealPanel|requestDashboardJson\("\/api\/venue\/deal"/);
   assert.match(venueDealRoute, /MYDANCR_MANAGED_DEAL_MESSAGE/);
   assert.equal((venueDealRoute.match(/status: 403/g) || []).length, 2);
   assert.doesNotMatch(venueDealRoute, /updateVenueDealForAccount|deleteVenueDealForAccount/);
@@ -164,7 +165,7 @@ test("venue dashboards expose the complete MyDancr-managed contract ledger", () 
 });
 
 test("Club Deal previews never open an unpublished public venue URL", () => {
-  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
   assert.match(venuePanel, /isVenuePublished=\{isPublished\}/);
   assert.match(venueDealPanel, /liveDeals\.length && isVenuePublished && venueSlug/);
@@ -175,7 +176,7 @@ test("Club Deal previews never open an unpublished public venue URL", () => {
 });
 
 test("venue publication status hides internal requirements while retaining the read-only deal record", () => {
-  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.doesNotMatch(venuePanel, /setupRequirements|setupCompletedCount|venue-publication-requirement-label|venue-readonly-fields|VenueMediaPreview/);
   assert.match(venuePanel, /Ready to review/);
   assert.match(venuePanel, /Changes in progress/);
@@ -206,7 +207,7 @@ test("MyDancr supplies tap stickers while venue owners receive read-only invento
 });
 
 test("venue-facing NFC language explains the physical actions in plain language", () => {
-  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction VenueClubDealPanel)/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
   assert.match(venuePanel, /Verified dancer check-ins/);
   assert.match(venuePanel, /Check-in verified/);

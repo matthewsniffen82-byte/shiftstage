@@ -186,7 +186,6 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /profile\?\.logoImageUrl/);
   assert.match(dashboard, /venue-review-logo-image/);
   assert.match(dashboard, /is-compact-logo-source/);
-  assert.match(dashboard, /readOnly/);
   assert.doesNotMatch(dashboard, /Venue card preview|openVenueCardPreview|venue-card-preview-/);
   assert.doesNotMatch(dashboard, /const setupRequirements/);
   assert.doesNotMatch(dashboard, /setupCompletedCount/);

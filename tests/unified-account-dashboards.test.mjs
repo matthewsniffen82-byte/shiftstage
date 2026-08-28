@@ -491,7 +491,7 @@ test("customer saved actions and location callbacks ignore stale work", () => {
 });
 
 test("venue publication review prevents duplicate and stale decisions", () => {
-  const venuePanel = dashboard.match(/function VenuePanel[\s\S]*?function upsertVenueDeal/)?.[0] || "";
+  const venuePanel = dashboard.match(/function VenuePanel[\s\S]*?function dealTypeLabel/)?.[0] || "";
   assert.match(venuePanel, /const mountedRef = useRef\(false\);/);
   assert.match(venuePanel, /const publicationSequenceRef = useRef\(0\);/);
   assert.match(venuePanel, /const publicationAbortRef = useRef<AbortController \| null>\(null\);/);
