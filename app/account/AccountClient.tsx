@@ -59,6 +59,26 @@ export default function AccountClient() {
   const passwordRecoveryEmailRef = useRef<HTMLInputElement | null>(null);
   const recoveryAccountNameRef = useRef<HTMLInputElement | null>(null);
   const recoveryTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const mountedRef = useRef(false);
+  const authAbortRef = useRef<AbortController | null>(null);
+  const authInFlightRef = useRef(false);
+  const passwordResetAbortRef = useRef<AbortController | null>(null);
+  const passwordResetInFlightRef = useRef(false);
+  const loginRecoveryAbortRef = useRef<AbortController | null>(null);
+  const loginRecoveryInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      authAbortRef.current?.abort();
+      authInFlightRef.current = false;
+      passwordResetAbortRef.current?.abort();
+      passwordResetInFlightRef.current = false;
+      loginRecoveryAbortRef.current?.abort();
+      loginRecoveryInFlightRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isVenueAccessRedirect) return;
@@ -111,6 +131,14 @@ export default function AccountClient() {
   const isDancerSignup = role === "dancer" && mode === "signup";
 
   const closeRecovery = useCallback(() => {
+    passwordResetAbortRef.current?.abort();
+    passwordResetAbortRef.current = null;
+    passwordResetInFlightRef.current = false;
+    loginRecoveryAbortRef.current?.abort();
+    loginRecoveryAbortRef.current = null;
+    loginRecoveryInFlightRef.current = false;
+    setIsResettingPassword(false);
+    setIsSendingLoginHelp(false);
     setRecoveryView(null);
     window.setTimeout(() => recoveryTriggerRef.current?.focus({ preventScroll: true }), 0);
   }, []);
@@ -162,6 +190,18 @@ export default function AccountClient() {
   }, [closeRecovery, recoveryView]);
 
   function clearFields() {
+    authAbortRef.current?.abort();
+    authAbortRef.current = null;
+    authInFlightRef.current = false;
+    passwordResetAbortRef.current?.abort();
+    passwordResetAbortRef.current = null;
+    passwordResetInFlightRef.current = false;
+    loginRecoveryAbortRef.current?.abort();
+    loginRecoveryAbortRef.current = null;
+    loginRecoveryInFlightRef.current = false;
+    setIsSubmitting(false);
+    setIsResettingPassword(false);
+    setIsSendingLoginHelp(false);
     setEmail("");
     setPassword("");
     setConfirmPassword("");
@@ -226,6 +266,7 @@ export default function AccountClient() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!mountedRef.current || authInFlightRef.current) return;
     setStatus("");
 
     if (mode === "signup" && role === "customer" && password !== confirmPassword) {
@@ -233,6 +274,10 @@ export default function AccountClient() {
       return;
     }
 
+    const controller = new AbortController();
+    authAbortRef.current?.abort();
+    authAbortRef.current = controller;
+    authInFlightRef.current = true;
     setIsSubmitting(true);
     if (mode === "login") {
       setStatus(role === "dancer" ? "Signing in to your dancer account..." : "Signing in to your guest account...");
@@ -254,8 +299,10 @@ export default function AccountClient() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(friendlyAuthErrorMessage(data.error, "Unable to sign in."));
 
       if (mode === "signup") {
@@ -290,13 +337,19 @@ export default function AccountClient() {
         : "";
       router.push(safeReturnTo || destination);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted) return;
       setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to sign in."));
     } finally {
-      setIsSubmitting(false);
+      if (authAbortRef.current === controller) {
+        authAbortRef.current = null;
+        authInFlightRef.current = false;
+        if (mountedRef.current) setIsSubmitting(false);
+      }
     }
   }
 
   async function sendPasswordReset() {
+    if (!mountedRef.current || passwordResetInFlightRef.current) return;
     setRecoveryStatus("");
 
     if (!email.trim()) {
@@ -304,6 +357,10 @@ export default function AccountClient() {
       return;
     }
 
+    const controller = new AbortController();
+    passwordResetAbortRef.current?.abort();
+    passwordResetAbortRef.current = controller;
+    passwordResetInFlightRef.current = true;
     setIsResettingPassword(true);
 
     try {
@@ -320,18 +377,30 @@ export default function AccountClient() {
               ? undefined
               : `${window.location.origin}/auth/callback?dancr_reset=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(resetReturnTo)}`,
         }),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(friendlyAuthErrorMessage(data.error, "Unable to send reset email."));
       setRecoveryStatus("If that email has a MyDancr account, we sent a secure reset link. Check the newest email and your spam folder.");
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted) return;
       setRecoveryStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to send reset email."));
     } finally {
-      setIsResettingPassword(false);
+      if (passwordResetAbortRef.current === controller) {
+        passwordResetAbortRef.current = null;
+        passwordResetInFlightRef.current = false;
+        if (mountedRef.current) setIsResettingPassword(false);
+      }
     }
   }
 
   async function submitLoginRecovery() {
+    if (!mountedRef.current || loginRecoveryInFlightRef.current) return;
+    const controller = new AbortController();
+    loginRecoveryAbortRef.current?.abort();
+    loginRecoveryAbortRef.current = controller;
+    loginRecoveryInFlightRef.current = true;
     setRecoveryStatus("");
     setIsSendingLoginHelp(true);
     try {
@@ -345,15 +414,22 @@ export default function AccountClient() {
           contactEmail: recoveryContactEmail,
           details: recoveryDetails,
         }),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to submit account recovery request.");
       setRecoveryStatus(`${data.message} Reference: ${data.reference}.`);
       setRecoveryDetails("");
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted) return;
       setRecoveryStatus(error instanceof Error ? error.message : "Unable to submit account recovery request.");
     } finally {
-      setIsSendingLoginHelp(false);
+      if (loginRecoveryAbortRef.current === controller) {
+        loginRecoveryAbortRef.current = null;
+        loginRecoveryInFlightRef.current = false;
+        if (mountedRef.current) setIsSendingLoginHelp(false);
+      }
     }
   }
 

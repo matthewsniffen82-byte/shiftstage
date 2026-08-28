@@ -66,6 +66,26 @@ test("the unified public sign-in has an account-aware forgotten-email form", () 
   assert.doesNotMatch(liveApp, /Mydancr .* login help[\s\S]{0,300}mailto:support@mydancr\.com/);
 });
 
+test("standalone account actions prevent duplicate and stale submissions", () => {
+  assert.match(accountPage, /const mountedRef = useRef\(false\);/);
+  assert.match(accountPage, /const authAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(accountPage, /const authInFlightRef = useRef\(false\);/);
+  assert.match(accountPage, /const passwordResetAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(accountPage, /const passwordResetInFlightRef = useRef\(false\);/);
+  assert.match(accountPage, /const loginRecoveryAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(accountPage, /const loginRecoveryInFlightRef = useRef\(false\);/);
+  assert.match(accountPage, /if \(!mountedRef\.current \|\| authInFlightRef\.current\) return;/);
+  assert.match(accountPage, /if \(!mountedRef\.current \|\| passwordResetInFlightRef\.current\) return;/);
+  assert.match(accountPage, /if \(!mountedRef\.current \|\| loginRecoveryInFlightRef\.current\) return;/);
+  assert.equal((accountPage.match(/signal: controller\.signal/g) || []).length, 4);
+  assert.match(accountPage, /authAbortRef\.current\?\.abort\(\);/);
+  assert.match(accountPage, /passwordResetAbortRef\.current\?\.abort\(\);/);
+  assert.match(accountPage, /loginRecoveryAbortRef\.current\?\.abort\(\);/);
+  assert.match(accountPage, /if \(mountedRef\.current\) setIsSubmitting\(false\);/);
+  assert.match(accountPage, /if \(mountedRef\.current\) setIsResettingPassword\(false\);/);
+  assert.match(accountPage, /if \(mountedRef\.current\) setIsSendingLoginHelp\(false\);/);
+});
+
 test("password and email recovery actions remain readable on narrow screens", () => {
   assert.match(liveApp, /id="customerForgotPasswordBtn"[^>]*>Forgot password\?<\/button>/);
   assert.match(liveApp, /id="customerForgotLoginBtn"[^>]*>Forgot email\?<\/button>/);
