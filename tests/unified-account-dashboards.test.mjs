@@ -958,6 +958,21 @@ test("dancer schedule actions use refresh-aware role boundaries", async () => {
   assert.doesNotMatch(dancerShiftManager, /readDashboardAccessToken/);
 });
 
+test("dancer schedule loads and mutations reject duplicate and stale work", () => {
+  const shiftPanel = dashboard.match(/function DancerShiftPanel\(\)[\s\S]*?function canCheckInToShift/)?.[0] || "";
+  assert.match(shiftPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(shiftPanel, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(shiftPanel, /const loadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(shiftPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(shiftPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(shiftPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(shiftPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.equal((shiftPanel.match(/signal: controller\.signal/g) || []).length, 5);
+  assert.equal((shiftPanel.match(/if \(!isCurrentShiftAction\(requestId, controller\)\) return;/g) || []).length, 4);
+  assert.match(shiftPanel, /if \(!mountedRef\.current \|\| controller\.signal\.aborted \|\| requestId !== loadSequenceRef\.current\) return;/);
+  assert.match(shiftPanel, /mountedRef\.current = false;[\s\S]*?loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\);[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\)/);
+});
+
 test("customer preference saves use the refresh-aware customer boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;

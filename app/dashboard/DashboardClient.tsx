@@ -5843,21 +5843,55 @@ function DancerShiftPanel() {
   const [editVenueId, setEditVenueId] = useState("");
   const [editStartsAt, setEditStartsAt] = useState("");
   const [editEndsAt, setEditEndsAt] = useState("");
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
 
   const loadShifts = useCallback(async () => {
-    const data = await requestDancerShiftsJson({
-      cache: "no-store",
-      fallbackMessage: "Unable to load posted shifts.",
-    });
-    const approvedVenues = Array.isArray(data.venues) ? data.venues : [];
-    setShifts(data.shifts || []);
-    setVenues(approvedVenues);
-    setVenueId((current) => approvedVenues.some((venue: { id: string }) => venue.id === current)
-      ? current
-      : String(approvedVenues[0]?.id || ""));
-    setEditVenueId((current) => !current || approvedVenues.some((venue: { id: string }) => venue.id === current)
-      ? current
-      : "");
+    if (!mountedRef.current) return;
+    const requestId = ++loadSequenceRef.current;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    try {
+      const data = await requestDancerShiftsJson({
+        cache: "no-store",
+        fallbackMessage: "Unable to load posted shifts.",
+        signal: controller.signal,
+      });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
+      const approvedVenues = Array.isArray(data.venues) ? data.venues : [];
+      setShifts(data.shifts || []);
+      setVenues(approvedVenues);
+      setVenueId((current) => approvedVenues.some((venue: { id: string }) => venue.id === current)
+        ? current
+        : String(approvedVenues[0]?.id || ""));
+      setEditVenueId((current) => !current || approvedVenues.some((venue: { id: string }) => venue.id === current)
+        ? current
+        : "");
+    } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
+      throw error;
+    } finally {
+      if (requestId === loadSequenceRef.current && loadAbortRef.current === controller) loadAbortRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      loadAbortRef.current = null;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -5867,6 +5901,30 @@ function DancerShiftPanel() {
       setStatus(error instanceof Error ? error.message : "Unable to load posted shifts.");
     });
   }, [loadShifts]);
+
+  function beginShiftAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentShiftAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishShiftAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return false;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    return mountedRef.current;
+  }
 
   async function postShift(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -5881,6 +5939,9 @@ function DancerShiftPanel() {
       return;
     }
 
+    const action = beginShiftAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setIsSaving(true);
     setStatus("");
     try {
@@ -5893,16 +5954,18 @@ function DancerShiftPanel() {
           endsAt: new Date(endsAt).toISOString(),
         }),
         fallbackMessage: "Unable to post shift.",
+        signal: controller.signal,
       });
+      if (!isCurrentShiftAction(requestId, controller)) return;
       setStatus(`Shift posted. ${data.broadcastRecipients || 0} followers notified.`);
       setCheckInStatus("Shift posted. During the shift, tap the venue's official dressing-room sticker to appear Working Now.");
       setStartsAt("");
       setEndsAt("");
       await loadShifts();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to post shift.");
+      if (isCurrentShiftAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to post shift.");
     } finally {
-      setIsSaving(false);
+      if (finishShiftAction(requestId)) setIsSaving(false);
     }
   }
 
@@ -5933,6 +5996,9 @@ function DancerShiftPanel() {
       return;
     }
 
+    const action = beginShiftAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setIsSaving(true);
     setStatus("");
     try {
@@ -5946,14 +6012,16 @@ function DancerShiftPanel() {
           endsAt: new Date(editEndsAt).toISOString(),
         }),
         fallbackMessage: "Unable to update shift.",
+        signal: controller.signal,
       });
+      if (!isCurrentShiftAction(requestId, controller)) return;
       setStatus("Shift updated. During those posted hours, tap the venue's dressing-room sticker to check in.");
       stopEditingShift();
       await loadShifts();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to update shift.");
+      if (isCurrentShiftAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to update shift.");
     } finally {
-      setIsSaving(false);
+      if (finishShiftAction(requestId)) setIsSaving(false);
     }
   }
 
@@ -5964,6 +6032,9 @@ function DancerShiftPanel() {
       return;
     }
 
+    const action = beginShiftAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setDeletingShiftId(shiftId);
     try {
       const data = await requestDancerShiftsJson({
@@ -5971,15 +6042,17 @@ function DancerShiftPanel() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ shiftId, status: "cancelled" }),
         fallbackMessage: "Unable to cancel shift.",
+        signal: controller.signal,
       });
+      if (!isCurrentShiftAction(requestId, controller)) return;
 
       setShifts((current) => current.filter((shift) => String(shift.id) !== shiftId));
       if (editingShiftId === shiftId) stopEditingShift();
       setStatus(`Shift cancelled. ${data.cancellationRecipients || 0} guests notified.`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to cancel shift.");
+      if (isCurrentShiftAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to cancel shift.");
     } finally {
-      setDeletingShiftId("");
+      if (finishShiftAction(requestId)) setDeletingShiftId("");
     }
   }
 
@@ -5990,6 +6063,9 @@ function DancerShiftPanel() {
       return;
     }
 
+    const action = beginShiftAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setActiveCheckInId(shiftId);
     setStatus("");
     try {
@@ -5998,18 +6074,22 @@ function DancerShiftPanel() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ shiftId }),
         fallbackMessage: "Unable to check out.",
+        signal: controller.signal,
       });
+      if (!isCurrentShiftAction(requestId, controller)) return;
       setCheckInStatus("Club check-in ended. Club Deal commission tracking is stopped.");
       setCheckInTone("success");
       setStatus("Checked out. This shift is no longer Working Now.");
       await loadShifts();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to check out.";
-      setCheckInStatus(message);
-      setCheckInTone("error");
-      setStatus(message);
+      if (isCurrentShiftAction(requestId, controller)) {
+        const message = error instanceof Error ? error.message : "Unable to check out.";
+        setCheckInStatus(message);
+        setCheckInTone("error");
+        setStatus(message);
+      }
     } finally {
-      setActiveCheckInId("");
+      if (finishShiftAction(requestId)) setActiveCheckInId("");
     }
   }
 
