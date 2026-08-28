@@ -6613,7 +6613,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-qui
   min-height: 70px !important;
   padding: 9px 8px !important;
   color: var(--dancr-color-text-primary) !important;
+  -webkit-appearance: none;
   appearance: none;
+  -webkit-tap-highlight-color: transparent;
   box-shadow: none !important;
 }
 
@@ -6622,8 +6624,10 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail button.ven
   transition: background-color 160ms ease;
 }
 
-body.dancr-button-system #results.venue-profile-overlay .venue-detail button.venue-quick-stat:hover {
-  background: var(--dancr-color-white-soft) !important;
+@media (hover: hover) and (pointer: fine) {
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail button.venue-quick-stat:hover {
+    background: var(--dancr-color-white-soft) !important;
+  }
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail button.venue-quick-stat:focus-visible {
@@ -6646,15 +6650,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-quick-stat.is-working strong {
   color: var(--dancr-color-success) !important;
   text-shadow: 0 0 12px color-mix(in srgb, var(--dancr-color-success) 28%, transparent);
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-quick-stat.is-working:not(.is-empty) {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--dancr-color-success) 5%, transparent),
-    transparent 72%
-  ) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail

@@ -214,10 +214,11 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-identity-location \{[\s\S]*?display: inline-flex;[\s\S]*?gap: 5px;/);
   assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 1px solid transparent;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
   assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 70px !important;[\s\S]*?grid-template-rows: 12px 21px 12px;[\s\S]*?gap: 4px !important;[\s\S]*?padding: 9px 8px !important;/);
-  assert.match(refinement, /\.venue-quick-stat \{[\s\S]*?min-height: 70px !important;[\s\S]*?padding: 9px 8px !important;/);
+  assert.match(refinement, /\.venue-quick-stat \{[\s\S]*?min-height: 70px !important;[\s\S]*?padding: 9px 8px !important;[\s\S]*?-webkit-appearance: none;[\s\S]*?-webkit-tap-highlight-color: transparent;/);
+  assert.match(refinement, /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?button\.venue-quick-stat:hover \{[\s\S]*?var\(--dancr-color-white-soft\)/);
   assert.match(refinement, /\.venue-quick-stat strong \{[\s\S]*?grid-row: 2 \/ 4;[\s\S]*?align-self: center;/);
   assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
-  assert.match(refinement, /\.venue-quick-stat\.is-working:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-success\) 5%/);
+  assert.doesNotMatch(refinement, /\.venue-quick-stat\.is-working:not\(\.is-empty\)\s*\{/);
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
   assert.match(refinement, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 8px 10px !important;[\s\S]*?\.venue-deal-preview \.venue-offer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;[\s\S]*?\.venue-deal-preview-copy \{[\s\S]*?gap: 2px;/);
   assert.match(refinement, /\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;[\s\S]*?background: var\(--dancr-color-success\);/);
