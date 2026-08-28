@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 
 type AdminTvVideo = {
@@ -37,28 +37,56 @@ export default function AdminTvPanel() {
   const [workingId, setWorkingId] = useState("");
   const [workingDecision, setWorkingDecision] = useState<"approved" | "rejected" | "retry" | "">("");
   const [reviewResults, setReviewResults] = useState<Record<string, ReviewResult>>({});
+  const mountedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const loadAbortRef = useRef<AbortController | null>(null);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
 
   useEffect(() => {
-    loadVideos(filter);
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      loadSequenceRef.current += 1;
+      actionSequenceRef.current += 1;
+      loadAbortRef.current?.abort();
+      actionAbortRef.current?.abort();
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    void loadVideos(filter);
   }, [filter]);
 
-  async function loadVideos(nextFilter: string) {
-    setIsLoading(true);
-    setStatus("");
+  async function loadVideos(nextFilter: string, { clearStatus = true } = {}) {
+    const requestId = loadSequenceRef.current + 1;
+    loadSequenceRef.current = requestId;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    if (mountedRef.current) setIsLoading(true);
+    if (mountedRef.current && clearStatus) setStatus("");
     try {
       const data = await requestAdminJson(`/api/admin/tv/videos?status=${encodeURIComponent(nextFilter)}`, {
         cache: "no-store",
+        signal: controller.signal,
         fallbackMessage: "Unable to load video moderation.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setVideos(Array.isArray(data.videos) ? data.videos : []);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to load video moderation.");
     } finally {
-      setIsLoading(false);
+      if (loadAbortRef.current === controller) loadAbortRef.current = null;
+      if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
     }
   }
 
   async function review(video: AdminTvVideo, decision: "approved" | "rejected") {
+    if (!mountedRef.current || actionInFlightRef.current) return;
     const reviewNotes = (notes[video.id] || "").trim();
     if (decision === "rejected" && reviewNotes.length < 3) {
       setStatus("Enter a rejection reason so the dancer knows what needs to change.");
@@ -70,6 +98,14 @@ export default function AdminTvPanel() {
         : `Reject this video and notify ${video.dancer?.stageName || "the dancer"}?`,
     )) return;
 
+    actionInFlightRef.current = true;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setWorkingId(video.id);
     setWorkingDecision(decision);
     setReviewResults((current) => {
@@ -81,10 +117,12 @@ export default function AdminTvPanel() {
     try {
       const data = await requestAdminJson("/api/admin/tv/videos", {
         method: "POST",
+        signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ videoId: video.id, decision, notes: reviewNotes }),
         fallbackMessage: "Unable to review video.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setVideos((current) => current.map((item) => item.id === video.id
           ? {
               ...item,
@@ -107,6 +145,7 @@ export default function AdminTvPanel() {
       }));
       setStatus(successMessage);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       const errorMessage = error instanceof Error ? error.message : "Unable to review video.";
       setReviewResults((current) => ({
         ...current,
@@ -114,15 +153,28 @@ export default function AdminTvPanel() {
       }));
       setStatus(errorMessage);
     } finally {
-      setWorkingId("");
-      setWorkingDecision("");
+      if (actionAbortRef.current === controller) actionAbortRef.current = null;
+      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+      if (mountedRef.current && requestId === actionSequenceRef.current) {
+        setWorkingId("");
+        setWorkingDecision("");
+      }
     }
   }
 
   async function retryAutomatedReview(video: AdminTvVideo) {
+    if (!mountedRef.current || actionInFlightRef.current) return;
     if (!window.confirm(`Retry the automated safety review for ${video.dancer?.stageName || "this dancer"}’s video?`)) {
       return;
     }
+    actionInFlightRef.current = true;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    const requestId = actionSequenceRef.current + 1;
+    actionSequenceRef.current = requestId;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setWorkingId(video.id);
     setWorkingDecision("retry");
     setReviewResults((current) => {
@@ -134,18 +186,22 @@ export default function AdminTvPanel() {
     try {
       const data = await requestAdminJson("/api/admin/tv/videos", {
         method: "POST",
+        signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ videoId: video.id, action: "retry_automated_review" }),
         fallbackMessage: "Unable to retry automated review.",
       });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       const successMessage = data.message || "Automated safety review completed.";
-      await loadVideos(filter);
+      await loadVideos(filter, { clearStatus: false });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setReviewResults((current) => ({
         ...current,
         [video.id]: { decision: "retry", message: successMessage },
       }));
       setStatus(successMessage);
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       const errorMessage = error instanceof Error ? error.message : "Unable to retry automated review.";
       setReviewResults((current) => ({
         ...current,
@@ -153,8 +209,12 @@ export default function AdminTvPanel() {
       }));
       setStatus(errorMessage);
     } finally {
-      setWorkingId("");
-      setWorkingDecision("");
+      if (actionAbortRef.current === controller) actionAbortRef.current = null;
+      if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
+      if (mountedRef.current && requestId === actionSequenceRef.current) {
+        setWorkingId("");
+        setWorkingDecision("");
+      }
     }
   }
 
@@ -176,7 +236,7 @@ export default function AdminTvPanel() {
         </div>
         <label>
           Queue
-          <select value={filter} onChange={(event) => setFilter(event.target.value)}>
+          <select value={filter} disabled={Boolean(workingId)} onChange={(event) => setFilter(event.target.value)}>
             <option value="all">All videos</option>
             <option value="submitted">Needs review</option>
             <option value="approved">Approved</option>
@@ -231,14 +291,14 @@ export default function AdminTvPanel() {
                     />
                   </label>
                   <div className="admin-tv-actions">
-                    <button type="button" disabled={workingId === video.id} onClick={() => review(video, "approved")}>
+                    <button type="button" disabled={Boolean(workingId)} onClick={() => review(video, "approved")}>
                       {workingId === video.id && workingDecision === "approved" ? "Publishing…" : "Approve and publish"}
                     </button>
-                    <button className="reject" type="button" disabled={workingId === video.id} onClick={() => review(video, "rejected")}>
+                    <button className="reject" type="button" disabled={Boolean(workingId)} onClick={() => review(video, "rejected")}>
                       {workingId === video.id && workingDecision === "rejected" ? "Rejecting…" : "Reject video"}
                     </button>
                     {canRetryAutomatedReview(video) ? (
-                      <button className="retry" type="button" disabled={workingId === video.id} onClick={() => retryAutomatedReview(video)}>
+                      <button className="retry" type="button" disabled={Boolean(workingId)} onClick={() => retryAutomatedReview(video)}>
                         {workingId === video.id && workingDecision === "retry" ? "Reviewing…" : "Retry automated review"}
                       </button>
                     ) : null}

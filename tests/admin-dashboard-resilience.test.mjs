@@ -98,6 +98,21 @@ test("admin NFC inventory cancels stale loads and serializes sticker mutations",
   assert.match(nfcPanel, /signal: controller\.signal/);
 });
 
+test("admin TV moderation cancels stale queues and serializes review decisions", () => {
+  assert.match(tvPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(tvPanel, /const loadSequenceRef = useRef\(0\);/);
+  assert.match(tvPanel, /const loadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(tvPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(tvPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(tvPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(tvPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return;/);
+  assert.match(tvPanel, /loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\);/);
+  assert.match(tvPanel, /requestId !== loadSequenceRef\.current/);
+  assert.match(tvPanel, /requestId !== actionSequenceRef\.current/);
+  assert.match(tvPanel, /loadVideos\(filter, \{ clearStatus: false \}\)/);
+  assert.match(tvPanel, /disabled=\{Boolean\(workingId\)\}/);
+});
+
 test("the admin session boundary stores only the canonical session and rejects non-admin roles", () => {
   const previousWindow = globalThis.window;
   const stored = new Map();
