@@ -5074,6 +5074,10 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
   const [historyView, setHistoryView] = useState<"earnings" | "payouts">("earnings");
   const [isWorking, setIsWorking] = useState(false);
   const [localFinance, setLocalFinance] = useState(finance);
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
   useEffect(() => setLocalFinance(finance), [finance]);
   const currentFinance = localFinance || finance;
   const payouts = Array.isArray(currentFinance?.payouts) ? currentFinance.payouts as Array<Record<string, unknown>> : [];
@@ -5104,11 +5108,46 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
     if (result === "setup_error") setStatus("Payout setup could not be completed. Please try again.");
   }, []);
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
+    };
+  }, []);
+
+  function beginDancerPayoutAction(pendingStatus: string) {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    setIsWorking(true);
+    setStatus(pendingStatus);
+    return { requestId, controller };
+  }
+
+  function isCurrentDancerPayoutAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishDancerPayoutAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    if (mountedRef.current) setIsWorking(false);
+  }
+
   async function payoutAction(action: "connect_onboarding" | "cash_out") {
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
-    setIsWorking(true);
-    setStatus(action === "cash_out" ? "Checking available earnings..." : "Opening secure payout setup...");
+    const pending = beginDancerPayoutAction(action === "cash_out" ? "Checking available earnings..." : "Opening secure payout setup...");
+    if (!pending) return;
+    const { requestId, controller } = pending;
     try {
       const data = await requestDancerFinanceJson({
         method: "POST",
@@ -5118,14 +5157,16 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         },
         body: JSON.stringify({ action }),
         fallbackMessage: "Unable to update payouts.",
+        signal: controller.signal,
       });
+      if (!isCurrentDancerPayoutAction(requestId, controller)) return;
       if (data.onboarding?.url) window.location.assign(data.onboarding.url);
       if (data.finance) setLocalFinance(data.finance);
       if (action === "cash_out") setStatus("Cash-out request reserved. Status will update after verified provider confirmation.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to update payouts.");
+      if (isCurrentDancerPayoutAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to update payouts.");
     } finally {
-      setIsWorking(false);
+      finishDancerPayoutAction(requestId);
     }
   }
 
@@ -5133,21 +5174,24 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
     event.preventDefault();
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
-    setIsWorking(true);
-    setStatus("Submitting your payout account for verification...");
+    const pending = beginDancerPayoutAction("Submitting your payout account for verification...");
+    if (!pending) return;
+    const { requestId, controller } = pending;
     try {
       const data = await requestDancerFinanceJson({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
         fallbackMessage: "Unable to link the payout account.",
+        signal: controller.signal,
       });
+      if (!isCurrentDancerPayoutAction(requestId, controller)) return;
       if (data.finance) setLocalFinance(data.finance);
       setStatus("Payout account submitted. MyDancr will activate it after matching the provider record.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to link the payout account.");
+      if (isCurrentDancerPayoutAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to link the payout account.");
     } finally {
-      setIsWorking(false);
+      finishDancerPayoutAction(requestId);
     }
   }
 

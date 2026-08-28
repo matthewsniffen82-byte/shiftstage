@@ -610,6 +610,22 @@ test("dancer payout actions use the refresh-aware role boundary", async () => {
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/finance"/);
 });
 
+test("dancer payout mutations prevent duplicate and stale money actions", () => {
+  const payoutPanel = dashboard.match(/function DancerPayoutPanel[\s\S]*?async function downloadDashboardBlob/)?.[0] || "";
+  assert.match(payoutPanel, /const mountedRef = useRef\(false\);/);
+  assert.match(payoutPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(payoutPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(payoutPanel, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(payoutPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.equal((payoutPanel.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.equal((payoutPanel.match(/if \(!isCurrentDancerPayoutAction\(requestId, controller\)\) return;/g) || []).length, 2);
+  assert.match(payoutPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\)/);
+  assert.match(payoutPanel, /beginDancerPayoutAction\(action === "cash_out"[\s\S]*?"idempotency-key": crypto\.randomUUID\(\)/);
+  assert.match(payoutPanel, /if \(!isCurrentDancerPayoutAction\(requestId, controller\)\) return;[\s\S]*?window\.location\.assign\(data\.onboarding\.url\)/);
+  assert.match(payoutPanel, /disabled=\{isWorking \|\| !natsConfigured\}/);
+  assert.match(payoutPanel, /disabled=\{isWorking \|\| !payoutsEnabled\}/);
+});
+
 test("dancer and venue statements refresh their role-aware sessions before downloading", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;
