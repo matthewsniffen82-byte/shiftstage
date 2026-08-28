@@ -46,6 +46,17 @@ test("public DMCA notices require the statutory claimant identity and declaratio
   assert.match(migration, /create table if not exists public\.dmca_cases/);
 });
 
+test("public DMCA notice submissions prevent duplicate and stale requests", () => {
+  assert.match(noticeForm, /const mountedRef = useRef\(false\);/);
+  assert.match(noticeForm, /const submitAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(noticeForm, /const submitInFlightRef = useRef\(false\);/);
+  assert.match(noticeForm, /if \(submitInFlightRef\.current\) return;/);
+  assert.match(noticeForm, /fetch\("\/api\/dmca\/notices", \{[\s\S]*?signal: controller\.signal/);
+  assert.match(noticeForm, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return;/);
+  assert.match(noticeForm, /submitAbortRef\.current\?\.abort\(\);/);
+  assert.match(noticeForm, /if \(mountedRef\.current\) setIsSubmitting\(false\);/);
+});
+
 test("validated takedowns disable exact videos, notify uploaders, and enforce repeat-infringer strikes", () => {
   assert.match(migration, /create or replace function public\.apply_dmca_takedown/);
   assert.match(migration, /update public\.mydancr_tv_videos[\s\S]*?status = 'hidden'/);

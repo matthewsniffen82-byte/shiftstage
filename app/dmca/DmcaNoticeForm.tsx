@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 type SubmittedNotice = {
   id: string;
@@ -12,9 +12,26 @@ export default function DmcaNoticeForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState("");
   const [notice, setNotice] = useState<SubmittedNotice | null>(null);
+  const mountedRef = useRef(false);
+  const submitAbortRef = useRef<AbortController | null>(null);
+  const submitInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      submitAbortRef.current?.abort();
+      submitInFlightRef.current = false;
+    };
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitInFlightRef.current) return;
+    const controller = new AbortController();
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = controller;
+    submitInFlightRef.current = true;
     setIsSubmitting(true);
     setStatus("");
     setNotice(null);
@@ -42,16 +59,23 @@ export default function DmcaNoticeForm() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
       const data = await response.json();
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to submit copyright notice.");
       setNotice(data.notice);
       setStatus(data.message || "Copyright notice submitted.");
       form.reset();
     } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted) return;
       setStatus(error instanceof Error ? error.message : "Unable to submit copyright notice.");
     } finally {
-      setIsSubmitting(false);
+      if (submitAbortRef.current === controller) {
+        submitAbortRef.current = null;
+        submitInFlightRef.current = false;
+        if (mountedRef.current) setIsSubmitting(false);
+      }
     }
   }
 
