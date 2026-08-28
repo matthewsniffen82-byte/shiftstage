@@ -61,6 +61,24 @@ test("photo editor shows actual media only and does not advertise capacity", () 
   assert.match(photoEditor, /requestDancerPhotosJson/);
 });
 
+test("photo uploads, arrangement, and deletion reject duplicate and stale work", () => {
+  assert.match(photoEditor, /const mountedRef = useRef\(false\);/);
+  assert.match(photoEditor, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(photoEditor, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(photoEditor, /const actionInFlightRef = useRef\(false\);/);
+  assert.match(photoEditor, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
+  assert.match(photoEditor, /function queuePhotos[\s\S]*?if \(actionInFlightRef\.current\) return;/);
+  assert.match(photoEditor, /async function deletePhoto\(photo: DancerPhotoItem\) \{\s*if \(actionInFlightRef\.current\) return;/);
+  assert.match(photoEditor, /const uploadKey = `\$\{item\.id\}:\$\{makePrimary \? "primary" : "gallery"\}`/);
+  assert.match(photoEditor, /uploadSortOrder = uploadSortOrder \?\? \(makePrimary \? 0 : nextGalleryPhotoSortOrder\(workingPhotos\)\)/);
+  assert.doesNotMatch(photoEditor, /Date\.now\(\)/);
+  assert.match(photoEditor, /persistQueuedPhotoDeletions\(controller\.signal\)/);
+  assert.match(photoEditor, /if \(signal\.aborted \|\| !mountedRef\.current\) return;/);
+  assert.equal((photoEditor.match(/signal: controller\.signal/g) || []).length, 5);
+  assert.equal((photoEditor.match(/finishPhotoAction\(requestId\)/g) || []).length, 3);
+  assert.match(photoEditor, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
+});
+
 test("video editor keeps both permission gates and hides the technical library capacity", () => {
   assert.match(dancerStudio, /Optional · Add videos now or later\./);
   assert.match(dancerStudio, /Confirm permissions/);

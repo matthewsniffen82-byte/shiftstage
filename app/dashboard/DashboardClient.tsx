@@ -6797,6 +6797,7 @@ type DancerPhotoQueueItem = {
   makePrimary: boolean;
   stage: "queued" | "uploading" | "checking" | "failed";
   progress: number;
+  uploadSortOrder?: number;
   error?: string;
 };
 
@@ -6830,6 +6831,21 @@ function DancerPhotoPanel({
   const galleryPhotoInputRef = useRef<HTMLInputElement>(null);
   const cameraPhotoInputRef = useRef<HTMLInputElement>(null);
   const queuedPreviewUrlsRef = useRef<Set<string>>(new Set());
+  const mountedRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const actionInFlightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      actionInFlightRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     deletedPhotoIdsRef.current = [...deletedPhotoIds];
@@ -6848,6 +6864,7 @@ function DancerPhotoPanel({
   }, []);
 
   function queuePhotos(files: File[], source: DancerPhotoQueueItem["source"]) {
+    if (actionInFlightRef.current) return;
     window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
     const replacingPrimary = isPrimary && photos.some((photo) => photo.isPrimary) ? 1 : 0;
     const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length + replacingPrimary - queuedPhotos.length);
@@ -6886,6 +6903,7 @@ function DancerPhotoPanel({
   }
 
   function removeQueuedPhoto(id: string) {
+    if (actionInFlightRef.current) return;
     setQueuedPhotos((current) => current.filter((item) => {
       if (item.id !== id) return true;
       queuedPreviewUrlsRef.current.delete(item.previewUrl);
@@ -6894,7 +6912,28 @@ function DancerPhotoPanel({
     }));
   }
 
-  async function persistQueuedPhotoDeletions() {
+  function beginPhotoAction() {
+    if (!mountedRef.current || actionInFlightRef.current) return null;
+    actionInFlightRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    return { requestId, controller };
+  }
+
+  function isCurrentPhotoAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishPhotoAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return false;
+    actionAbortRef.current = null;
+    actionInFlightRef.current = false;
+    return mountedRef.current;
+  }
+
+  async function persistQueuedPhotoDeletions(signal: AbortSignal) {
     const idsToDelete = [...deletedPhotoIdsRef.current];
     if (!idsToDelete.length) return;
 
@@ -6904,7 +6943,9 @@ function DancerPhotoPanel({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ deletedPhotoIds: idsToDelete }),
       fallbackMessage: "Unable to save deleted photos before upload.",
+      signal,
     });
+    if (signal.aborted || !mountedRef.current) return;
 
     const confirmedIds = new Set((data.deletedPhotoIds || []).map((id: unknown) => String(id)));
     const unconfirmedIds = idsToDelete.filter((id) => !confirmedIds.has(id));
@@ -6926,18 +6967,25 @@ function DancerPhotoPanel({
     if (!batch.some((item) => item.makePrimary) && photos.length + batch.length > MAX_DANCER_PROFILE_PHOTOS) {
       return setStatus("Your profile picture library is full. Delete or replace a picture before adding more.");
     }
+    const action = beginPhotoAction();
+    if (!action) return;
+    const { requestId, controller } = action;
 
     setIsUploading(true);
     setStatus(`Preparing ${batch.length} ${batch.length === 1 ? "photo" : "photos"}...`);
     const failedItems: DancerPhotoQueueItem[] = [];
+    const rejectedItemIds = new Set<string>();
     let workingPhotos = [...photos];
     let acceptedCount = 0;
     let rejectedCount = 0;
     try {
-      await persistQueuedPhotoDeletions();
+      await persistQueuedPhotoDeletions(controller.signal);
+      if (!isCurrentPhotoAction(requestId, controller)) return;
       for (let index = 0; index < batch.length; index += 1) {
+        if (!isCurrentPhotoAction(requestId, controller)) return;
         const item = batch[index];
         const makePrimary = item.makePrimary;
+        let uploadSortOrder = item.uploadSortOrder;
         setUploadingQueueItemId(item.id);
         updateQueuedPhoto(item.id, { stage: "uploading", progress: 25, error: undefined });
         setStatus(`Checking photo ${index + 1} of ${batch.length}...`);
@@ -6945,8 +6993,9 @@ function DancerPhotoPanel({
           if (!makePrimary && workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
             throw new Error("No profile photo slot is available for this photo.");
           }
-          const uploadSortOrder = makePrimary ? 0 : nextGalleryPhotoSortOrder(workingPhotos);
-          const uploadKey = `${item.file.name}:${item.file.size}:${item.file.lastModified}:${makePrimary ? "primary" : "gallery"}:${Date.now()}:${crypto.randomUUID()}`;
+          uploadSortOrder = uploadSortOrder ?? (makePrimary ? 0 : nextGalleryPhotoSortOrder(workingPhotos));
+          const uploadKey = `${item.id}:${makePrimary ? "primary" : "gallery"}`;
+          updateQueuedPhoto(item.id, { uploadSortOrder });
           const formData = new FormData();
           formData.set("file", item.file);
           formData.set("isPrimary", String(makePrimary));
@@ -6959,7 +7008,9 @@ function DancerPhotoPanel({
             headers: { "idempotency-key": uploadKey },
             body: formData,
             fallbackMessage: "Unable to upload photo.",
+            signal: controller.signal,
           });
+          if (!isCurrentPhotoAction(requestId, controller)) return;
           updateQueuedPhoto(item.id, { stage: "checking", progress: 85 });
           const uploadStatus = normalizePhotoStatus(data.photo?.reviewStatus || data.photo?.review_status || data.decision);
           const approved = uploadStatus === "approved";
@@ -6975,6 +7026,7 @@ function DancerPhotoPanel({
           };
           if (uploadStatus === "rejected") {
             rejectedCount += 1;
+            rejectedItemIds.add(item.id);
             queuedPreviewUrlsRef.current.delete(item.previewUrl);
             URL.revokeObjectURL(item.previewUrl);
           } else {
@@ -6987,11 +7039,12 @@ function DancerPhotoPanel({
             }
           }
         } catch (error) {
+          if (!isCurrentPhotoAction(requestId, controller)) return;
           const message = error instanceof Error ? error.message : "Unable to upload photo.";
           const friendlyMessage = message.includes("valid JPEG, PNG, or WebP") || message.includes("HEIC or HEIF")
             ? "That photo could not be converted. Choose another photo or set your phone camera to Most Compatible."
             : message;
-          failedItems.push({ ...item, stage: "failed", progress: 0, error: friendlyMessage });
+          failedItems.push({ ...item, uploadSortOrder, stage: "failed", progress: 0, error: friendlyMessage });
         }
       }
 
@@ -6999,7 +7052,9 @@ function DancerPhotoPanel({
         const refreshData = await requestDancerProfileJson({
           cache: "no-store",
           fallbackMessage: "Unable to refresh uploaded photos.",
+          signal: controller.signal,
         });
+        if (!isCurrentPhotoAction(requestId, controller)) return;
         if (refreshData.profile) {
           const refreshedPhotos = preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(refreshData.profile), workingPhotos);
           workingPhotos = relabelPhotoItems(mergePhotoItems(refreshedPhotos, workingPhotos.filter((photo) => photo.status === "pending")));
@@ -7008,6 +7063,7 @@ function DancerPhotoPanel({
         }
       }
 
+      if (!isCurrentPhotoAction(requestId, controller)) return;
       const processedIds = new Set(batch.map((item) => item.id));
       setQueuedPhotos((current) => [
         ...current.filter((item) => !processedIds.has(item.id)),
@@ -7021,10 +7077,24 @@ function DancerPhotoPanel({
         failedItems.length ? `${failedItems.length} ready to retry` : "",
       ].filter(Boolean).join(". ");
       setStatus(summary || "No photos were uploaded.");
+    } catch (error) {
+      if (isCurrentPhotoAction(requestId, controller)) {
+        const message = error instanceof Error ? error.message : "Unable to upload photos.";
+        const failedById = new Map(failedItems.map((item) => [item.id, item]));
+        const batchIds = new Set(batch.map((item) => item.id));
+        setQueuedPhotos((current) => current.flatMap((item) => {
+          if (rejectedItemIds.has(item.id)) return [];
+          if (!batchIds.has(item.id)) return [item];
+          return [failedById.get(item.id) || { ...item, stage: "failed", progress: 0, error: message }];
+        }));
+        setStatus(message);
+      }
     } finally {
-      setUploadingQueueItemId("");
-      setIsUploading(false);
-      window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
+      if (finishPhotoAction(requestId)) {
+        setUploadingQueueItemId("");
+        setIsUploading(false);
+        window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
+      }
     }
   }
 
@@ -7035,6 +7105,9 @@ function DancerPhotoPanel({
     }
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
+    const action = beginPhotoAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     const previousPhotos = photos;
     const arranged = relabelPhotoItems(nextOrder.map((photo, index) => ({
       ...photo,
@@ -7053,17 +7126,21 @@ function DancerPhotoPanel({
           galleryPhotoUrls: arranged.slice(1).map((photo) => photo.imageUrl),
         }),
         fallbackMessage: "Unable to save photo order.",
+        signal: controller.signal,
       });
+      if (!isCurrentPhotoAction(requestId, controller)) return;
       if (!data.profile) throw new Error("Unable to save photo order.");
       const refreshedPhotos = relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile));
       setPhotos(refreshedPhotos);
       onProfileChange?.(data.profile);
       setStatus("Photo order saved.");
     } catch (error) {
-      setPhotos(previousPhotos);
-      setStatus(error instanceof Error ? error.message : "Unable to save photo order.");
+      if (isCurrentPhotoAction(requestId, controller)) {
+        setPhotos(previousPhotos);
+        setStatus(error instanceof Error ? error.message : "Unable to save photo order.");
+      }
     } finally {
-      setIsArranging(false);
+      if (finishPhotoAction(requestId)) setIsArranging(false);
     }
   }
 
@@ -7083,9 +7160,13 @@ function DancerPhotoPanel({
   }
 
   async function deletePhoto(photo: DancerPhotoItem) {
+    if (actionInFlightRef.current) return;
     if (!window.confirm("Delete this photo from your profile?")) return;
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
+    const action = beginPhotoAction();
+    if (!action) return;
+    const { requestId, controller } = action;
 
     setDeletingPhotoIds((current) => new Set(current).add(photo.id));
     setStatus("Deleting photo...");
@@ -7095,7 +7176,9 @@ function DancerPhotoPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ photoId: photo.id }),
         fallbackMessage: "Unable to delete photo.",
+        signal: controller.signal,
       });
+      if (!isCurrentPhotoAction(requestId, controller)) return;
 
       setPhotos((current) => relabelPhotoItems(current.filter((item) => item.id !== photo.id)));
       deletedPhotoIdsRef.current = deletedPhotoIdsRef.current.filter((id) => id !== photo.id);
@@ -7108,7 +7191,9 @@ function DancerPhotoPanel({
       const refreshData = await requestDancerProfileJson({
         cache: "no-store",
         fallbackMessage: "Unable to verify the deleted photo.",
+        signal: controller.signal,
       });
+      if (!isCurrentPhotoAction(requestId, controller)) return;
       if (refreshData.profile) {
         const refreshedPhotos = dancerPhotoItemsFromProfile(refreshData.profile);
         if (refreshedPhotos.some((item) => item.id === photo.id)) {
@@ -7118,17 +7203,22 @@ function DancerPhotoPanel({
         onProfileChange?.(refreshData.profile);
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
+      if (isCurrentPhotoAction(requestId, controller)) {
+        setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
+      }
     } finally {
-      setDeletingPhotoIds((current) => {
-        const next = new Set(current);
-        next.delete(photo.id);
-        return next;
-      });
+      if (finishPhotoAction(requestId)) {
+        setDeletingPhotoIds((current) => {
+          const next = new Set(current);
+          next.delete(photo.id);
+          return next;
+        });
+      }
     }
   }
 
   const hasMainPhoto = photos.some((photo) => photo.isPrimary);
+  const photoActionBusy = isUploading || isArranging || deletingPhotoIds.size > 0;
 
   return (
     <article aria-label="Profile photo manager" className="info-panel upload-panel">
@@ -7138,7 +7228,7 @@ function DancerPhotoPanel({
         </div>
         {hasMainPhoto ? (
           <label className="photo-primary-choice">
-            <input checked={isPrimary} disabled={isUploading} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
+            <input checked={isPrimary} disabled={photoActionBusy} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
             <span>
               <strong>Replace my main photo</strong>
               <small>The next photo you choose will become your main photo.</small>
@@ -7146,12 +7236,12 @@ function DancerPhotoPanel({
           </label>
         ) : null}
         <div className="photo-source-grid">
-          <label className={`photo-source-action${isUploading ? " is-disabled" : ""}`}>
+          <label className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}>
             <input
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
               aria-label="Choose profile photos from your library"
               className="photo-source-input"
-              disabled={isUploading}
+              disabled={photoActionBusy}
               multiple
               ref={galleryPhotoInputRef}
               type="file"
@@ -7169,13 +7259,13 @@ function DancerPhotoPanel({
             </span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
-          <label className={`photo-source-action${isUploading ? " is-disabled" : ""}`}>
+          <label className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}>
             <input
               accept="image/*"
               aria-label="Take a new profile photo"
               capture="environment"
               className="photo-source-input"
-              disabled={isUploading}
+              disabled={photoActionBusy}
               ref={cameraPhotoInputRef}
               type="file"
               onChange={(event) => {
@@ -7206,8 +7296,8 @@ function DancerPhotoPanel({
                 {item.stage !== "failed" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
                 <em>{item.error || (item.source === "camera" ? "Taken with your phone camera." : "Selected from your phone.")}</em>
                 <span className="photo-queue-actions">
-                  {item.error ? <button className="photo-retry-button" disabled={isUploading} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
-                  <button className="photo-delete-button" disabled={isUploading} onClick={() => removeQueuedPhoto(item.id)} type="button">Remove</button>
+                  {item.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+                  <button className="photo-delete-button" disabled={photoActionBusy} onClick={() => removeQueuedPhoto(item.id)} type="button">Remove</button>
                 </span>
               </span>
             </div>
@@ -7233,13 +7323,13 @@ function DancerPhotoPanel({
                 <small>{photoStatusLabel(photo.status)}</small>
                 <em>{photo.note}</em>
                 <span className="photo-card-actions">
-                  {isApprovedGalleryPhoto ? <button className="photo-main-action primary-action" disabled={isArranging} type="button" onClick={() => makePhotoPrimary(photo.id)}>Make main</button> : null}
-                  {canMoveEarlier ? <button aria-label={`Move ${photo.label} earlier`} className="photo-order-action" disabled={isArranging} title="Move earlier" type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>↑</button> : null}
-                  {canMoveLater ? <button aria-label={`Move ${photo.label} later`} className="photo-order-action" disabled={isArranging} title="Move later" type="button" onClick={() => moveGalleryPhoto(photo.id, 1)}>↓</button> : null}
+                  {isApprovedGalleryPhoto ? <button className="photo-main-action primary-action" disabled={photoActionBusy} type="button" onClick={() => makePhotoPrimary(photo.id)}>Make main</button> : null}
+                  {canMoveEarlier ? <button aria-label={`Move ${photo.label} earlier`} className="photo-order-action" disabled={photoActionBusy} title="Move earlier" type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>↑</button> : null}
+                  {canMoveLater ? <button aria-label={`Move ${photo.label} later`} className="photo-order-action" disabled={photoActionBusy} title="Move later" type="button" onClick={() => moveGalleryPhoto(photo.id, 1)}>↓</button> : null}
                   <button
                     className="photo-card-remove-action"
                     type="button"
-                    disabled={deletingPhotoIds.has(photo.id) || isArranging}
+                    disabled={photoActionBusy}
                     onClick={() => deletePhoto(photo)}
                   >
                     {deletingPhotoIds.has(photo.id) ? "Deleting..." : "Delete"}
