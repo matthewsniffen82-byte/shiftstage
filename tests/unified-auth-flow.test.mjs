@@ -22,6 +22,8 @@ test("the public auth surface has one sign-in and three concise signup paths", (
   assert.match(liveApp, /id="authForm" data-auth-view="unified"/);
   assert.doesNotMatch(liveApp, /id="dancerLoginForm"|id="venueLoginSubmit"/);
   assert.match(liveApp, /id="customerSignupBtn"[\s\S]*?<strong>Guest<\/strong>/);
+  assert.match(liveApp, /id="customerSignupBtn"[\s\S]*?class="auth-account-choice-icon"/);
+  assert.doesNotMatch(liveApp, /class="auth-account-choice-number"/);
   assert.match(liveApp, /Save dancers, clubs, Club Deals, and alerts privately\./);
   assert.match(liveApp, /id="openDancerSignup"[\s\S]*?<strong>Dancer<\/strong>/);
   assert.match(liveApp, /id="venueSignupBtn"[\s\S]*?<strong>Club<\/strong>/);
@@ -49,7 +51,8 @@ test("confirmation cooldowns begin only after a successful email send", () => {
 });
 
 test("dancer and venue signups explain their real approval requirements", () => {
-  assert.match(liveApp, /class="dancer-signup-progress"[\s\S]*?Create account[\s\S]*?Confirm email[\s\S]*?Complete profile and dressing-room tap/);
+  assert.match(liveApp, /class="dancer-signup-progress"[\s\S]*?aria-valuemax="3"[\s\S]*?Step 1 of 3[\s\S]*?Account login/);
+  assert.match(liveApp, /Dancer signup: create account, then confirm email and complete profile verification/);
   assert.match(liveApp, /id="dancerPassword"[^>]*autocomplete="new-password"[^>]*minlength="8"/);
   assert.match(liveApp, /Free account\. Your profile becomes public after setup and verification\./);
   assert.doesNotMatch(liveApp, /Your account is free\. Your public profile goes live only after/);

@@ -39659,6 +39659,14 @@
           line-height: 1.45;
         }
 
+        #authPage .auth-selected-role {
+          padding: 0 2px;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+        }
+
         #authPage .auth-role-grid {
           display: grid;
           grid-template-columns: 1fr;
@@ -39692,15 +39700,26 @@
           outline: none;
         }
 
-        .auth-account-choice-number {
+        .auth-account-choice-icon {
           width: 42px;
           aspect-ratio: 1;
           display: grid;
           place-items: center;
           border-radius: 50%;
-          color: #fff;
-          background: rgba(91, 33, 218, .85);
-          font-weight: 950;
+          color: #b895ff;
+          border: 1px solid rgba(139, 92, 246, .46);
+          background: rgba(78, 35, 153, .24);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 0 16px rgba(103, 47, 218, .12);
+        }
+
+        .auth-account-choice-icon svg {
+          width: 23px;
+          height: 23px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.9;
+          stroke-linecap: round;
+          stroke-linejoin: round;
         }
 
         .auth-account-choice > span:nth-child(2) {
@@ -39734,54 +39753,66 @@
         }
 
         .auth-back-to-types {
-          width: 100%;
+          width: auto !important;
           min-height: 44px;
-          border: 0;
+          justify-self: start;
+          padding: 0 2px !important;
+          border: 0 !important;
           color: rgba(225, 225, 236, .76);
-          background: transparent;
+          background: transparent !important;
+          box-shadow: none !important;
           font: inherit;
+          font-size: 13px;
           font-weight: 850;
           cursor: pointer;
         }
 
         .dancer-signup-progress {
-          list-style: none;
-          margin: 0 0 20px;
-          padding: 0;
+          margin: 0 0 18px;
+          display: grid;
+          gap: 10px;
+        }
+
+        .dancer-signup-progress-copy {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .dancer-signup-progress-copy span {
+          color: #b895ff;
+          font-size: 12px;
+          font-weight: 950;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+        }
+
+        .dancer-signup-progress-copy strong {
+          color: #fff;
+          font-size: 14px;
+        }
+
+        .dancer-signup-progress-track {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 8px;
+          gap: 6px;
         }
 
-        .dancer-signup-progress li {
-          min-width: 0;
-          display: grid;
-          align-content: start;
-          gap: 8px;
-          color: rgba(224, 224, 235, .58);
-          font-size: 11px;
-          line-height: 1.25;
+        .dancer-signup-progress-track i {
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(149, 143, 168, .2);
         }
 
-        .dancer-signup-progress li span {
-          width: 28px;
-          aspect-ratio: 1;
-          display: grid;
-          place-items: center;
-          border-radius: 50%;
-          border: 1px solid rgba(165, 165, 187, .28);
-          background: rgba(35, 35, 47, .8);
-          font-weight: 950;
+        .dancer-signup-progress-track i.active {
+          background: linear-gradient(90deg, #6d28d9, #a855f7);
+          box-shadow: 0 0 12px rgba(139, 92, 246, .42);
         }
 
-        .dancer-signup-progress li.active {
-          color: #fff;
-        }
-
-        .dancer-signup-progress li.active span {
-          border-color: rgba(132, 78, 255, .9);
-          background: #531ed1;
-          box-shadow: 0 0 17px rgba(96, 35, 241, .38);
+        #dancerSignupPage .dancer-signup-card {
+          width: min(100%, 640px);
+          margin-inline: auto;
         }
 
         @media (max-width: 480px) {
@@ -39795,9 +39826,48 @@
             border-radius: 22px;
           }
 
-          .dancer-signup-progress li strong {
-            overflow-wrap: anywhere;
+          #dancerSignupPage .dancer-signup-card {
+            padding: 16px;
+            border-radius: 22px;
           }
+        }
+
+        /* Keep recovery controls visually secondary to the primary auth action. */
+        #authPage .auth-help-row {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 18px;
+        }
+
+        #authPage .auth-help-row .forgot-password-link {
+          width: auto !important;
+          min-height: 40px !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          color: rgba(215, 211, 226, .72) !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font-size: 12px !important;
+          text-align: left;
+        }
+
+        #authPage .auth-help-row .forgot-password-link:hover,
+        #authPage .auth-help-row .forgot-password-link:focus-visible,
+        #authPage .auth-back-to-types:hover,
+        #authPage .auth-back-to-types:focus-visible {
+          color: #fff !important;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+
+        #authPage #authSubmit {
+          border-color: rgba(167, 112, 255, .78) !important;
+          background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #a855f7 100%) !important;
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, .06) inset, 0 12px 28px rgba(91, 33, 182, .28), 0 0 24px rgba(139, 92, 246, .3) !important;
         }
 
         /* Dancer profile socials stay secondary to MyDancr actions and media.
@@ -40415,17 +40485,23 @@
           </div>
           <div class="role-options auth-role-grid" id="authOverview" aria-label="Choose account type" hidden>
             <button class="role-option account-option auth-account-choice" id="customerSignupBtn" type="button">
-              <span class="auth-account-choice-number" aria-hidden="true">1</span>
+              <span class="auth-account-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </span>
               <span><strong>Guest</strong><small>Save dancers, clubs, Club Deals, and alerts privately.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
             <button class="role-option account-option auth-account-choice" id="openDancerSignup" type="button">
-              <span class="auth-account-choice-number" aria-hidden="true">2</span>
+              <span class="auth-account-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m12 2 1.35 4.15L17.5 7.5l-4.15 1.35L12 13l-1.35-4.15L6.5 7.5l4.15-1.35L12 2Z"></path><path d="m18 14 .75 2.25L21 17l-2.25.75L18 20l-.75-2.25L15 17l2.25-.75L18 14Z"></path><path d="m5 14 .55 1.45L7 16l-1.45.55L5 18l-.55-1.45L3 16l1.45-.55L5 14Z"></path></svg>
+              </span>
               <span><strong>Dancer</strong><small>Create a reviewed profile, then tap the dressing-room sticker to approve a venue.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
             <button class="role-option account-option auth-account-choice" id="venueSignupBtn" type="button">
-              <span class="auth-account-choice-number" aria-hidden="true">3</span>
+              <span class="auth-account-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 21V6l8-4 8 4v15"></path><path d="M2 21h20"></path><path d="M8 9h2M14 9h2M8 13h2M14 13h2M10 21v-4h4v4"></path></svg>
+              </span>
               <span><strong>Club</strong><small>Request approval to list your club, build its page, and publish it on MyDancr.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
@@ -40461,7 +40537,7 @@
                 </button>
               </div>
             </div>
-            <div class="rule-note auth-signup-note" id="customerSignupNote" hidden>Your guest account is private. We’ll email you a confirmation link after you create it.</div>
+            <div class="rule-note auth-signup-note" id="customerSignupNote" hidden>Private by default. Check your email to confirm after creating it.</div>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
@@ -40679,19 +40755,21 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
-        <div class="auth-card">
-          <ol class="dancer-signup-progress" aria-label="Dancer approval steps">
-            <li class="active"><span>1</span><strong>Create account</strong></li>
-            <li><span>2</span><strong>Confirm email</strong></li>
-            <li><span>3</span><strong>Complete profile and dressing-room tap</strong></li>
-          </ol>
+        <div class="auth-card dancer-signup-card">
+          <div class="dancer-signup-progress" role="progressbar" aria-label="Dancer signup: create account, then confirm email and complete profile verification" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
+            <div class="dancer-signup-progress-copy">
+              <span>Step 1 of 3</span>
+              <strong>Account login</strong>
+            </div>
+            <div class="dancer-signup-progress-track" aria-hidden="true"><i class="active"></i><i></i><i></i></div>
+          </div>
           <form class="auth-form" id="dancerSignupForm">
             <input id="dancerStageName" type="hidden" value="">
             <input id="dancerLegalName" type="hidden" value="">
             <input id="dancerCity" type="hidden" value="">
             <div class="field">
               <label for="dancerEmail">Email</label>
-              <input id="dancerEmail" type="email" value="" autocomplete="email" required>
+              <input id="dancerEmail" type="email" value="" autocomplete="email" placeholder="you@example.com" required>
             </div>
             <div class="field">
               <label for="dancerPassword">Password</label>
@@ -53508,7 +53586,7 @@
       document.getElementById("authRoleSubtitle").textContent = isCreate
         ? "Pick the account that matches how you use MyDancr."
         : "Use the email and password for your guest, dancer, or venue account.";
-      document.querySelector(".auth-selected-role").hidden = false;
+      document.querySelector(".auth-selected-role").hidden = isCreate;
       document.getElementById("authOverview").hidden = !isCreate;
       document.getElementById("authForm").hidden = isCreate;
       document.getElementById("venueLoginForm").hidden = true;
@@ -53747,7 +53825,7 @@
       const selectedRoleHead = document.querySelector(".auth-selected-role");
       if (selectedRoleHead) selectedRoleHead.hidden = isSignup;
       const customerFormHead = document.querySelector(".customer-form-head");
-      if (customerFormHead) customerFormHead.hidden = !isSignup;
+      if (customerFormHead) customerFormHead.hidden = true;
       const label = document.getElementById("customerAuthModeLabel");
       if (label) label.textContent = isSignup ? "Create your private guest account" : "Sign in";
       const formHead = document.getElementById("customerAuthModeDescription");
