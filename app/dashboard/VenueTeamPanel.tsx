@@ -25,6 +25,9 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
+  const workingRef = useRef(false);
+  const actionSequenceRef = useRef(0);
+  const actionAbortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async (clearStatus = true) => {
     if (!mountedRef.current) return;
@@ -72,13 +75,45 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       loadSequenceRef.current += 1;
       loadAbortRef.current?.abort();
       loadAbortRef.current = null;
+      actionSequenceRef.current += 1;
+      actionAbortRef.current?.abort();
+      actionAbortRef.current = null;
+      workingRef.current = false;
     };
   }, [load]);
+
+  function beginAction() {
+    if (!mountedRef.current || workingRef.current) return null;
+    workingRef.current = true;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
+    setIsLoading(false);
+    setIsWorking(true);
+    return { requestId, controller };
+  }
+
+  function isCurrentAction(requestId: number, controller: AbortController) {
+    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
+  }
+
+  function finishAction(requestId: number) {
+    if (requestId !== actionSequenceRef.current) return;
+    actionAbortRef.current = null;
+    workingRef.current = false;
+    if (mountedRef.current) setIsWorking(false);
+  }
 
   async function invite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
-    setIsWorking(true);
+    const action = beginAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     setInvitationUrl("");
     try {
       const data = await requestVenueTeamJson({
@@ -86,59 +121,66 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, role }),
         fallbackMessage: "Unable to invite this team member.",
+        signal: controller.signal,
       });
-      if (!mountedRef.current) return;
+      if (!isCurrentAction(requestId, controller)) return;
       setEmail("");
       setInvitationUrl(data.invitationUrl || "");
       setStatus(data.message || "Invitation created.");
       await load(false);
     } catch (error) {
-      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to invite this team member.");
+      if (isCurrentAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to invite this team member.");
     } finally {
-      if (mountedRef.current) setIsWorking(false);
+      finishAction(requestId);
     }
   }
 
   async function updateMember(memberId: string, update: { role?: "manager" | "staff"; remove?: boolean }) {
     if (update.remove && !window.confirm("Remove this person's venue dashboard access?")) return;
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
-    setIsWorking(true);
+    const action = beginAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     try {
       await requestVenueTeamJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ memberId, ...update }),
         fallbackMessage: "Unable to update venue team access.",
+        signal: controller.signal,
       });
-      if (!mountedRef.current) return;
+      if (!isCurrentAction(requestId, controller)) return;
       await load(false);
-      if (!mountedRef.current) return;
+      if (!isCurrentAction(requestId, controller)) return;
       setStatus(update.remove ? "Team access removed." : "Team role updated.");
     } catch (error) {
-      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to update venue team access.");
+      if (isCurrentAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to update venue team access.");
     } finally {
-      if (mountedRef.current) setIsWorking(false);
+      finishAction(requestId);
     }
   }
 
   async function revokeInvitation(invitationId: string) {
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
-    setIsWorking(true);
+    const action = beginAction();
+    if (!action) return;
+    const { requestId, controller } = action;
     try {
       await requestVenueTeamJson({
         method: "DELETE",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ invitationId }),
         fallbackMessage: "Unable to revoke this invitation.",
+        signal: controller.signal,
       });
-      if (!mountedRef.current) return;
+      if (!isCurrentAction(requestId, controller)) return;
       await load(false);
-      if (!mountedRef.current) return;
+      if (!isCurrentAction(requestId, controller)) return;
       setStatus("Invitation revoked.");
     } catch (error) {
-      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to revoke this invitation.");
+      if (isCurrentAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to revoke this invitation.");
     } finally {
-      if (mountedRef.current) setIsWorking(false);
+      finishAction(requestId);
     }
   }
 
@@ -146,9 +188,9 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
     if (!invitationUrl) return;
     try {
       await navigator.clipboard.writeText(invitationUrl);
-      setStatus("Secure invitation link copied.");
+      if (mountedRef.current) setStatus("Secure invitation link copied.");
     } catch {
-      setStatus("Your browser blocked copying. Open the secure invitation link and copy it from the address bar.");
+      if (mountedRef.current) setStatus("Your browser blocked copying. Open the secure invitation link and copy it from the address bar.");
     }
   }
 

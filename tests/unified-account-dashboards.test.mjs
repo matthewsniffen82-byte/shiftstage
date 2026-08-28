@@ -1443,9 +1443,15 @@ test("venue team actions use one refresh-aware venue boundary", async () => {
   assert.match(venueTeamPanel, /requestVenueTeamJson/);
   assert.match(venueTeamPanel, /const loadSequenceRef = useRef\(0\);/);
   assert.match(venueTeamPanel, /loadAbortRef\.current\?\.abort\(\);/);
-  assert.match(venueTeamPanel, /signal: controller\.signal/);
+  assert.equal((venueTeamPanel.match(/signal: controller\.signal/g) || []).length, 4);
   assert.match(venueTeamPanel, /requestId !== loadSequenceRef\.current/);
   assert.match(venueTeamPanel, /mountedRef\.current = false;[\s\S]*?loadSequenceRef\.current \+= 1;[\s\S]*?loadAbortRef\.current\?\.abort\(\);/);
+  assert.match(venueTeamPanel, /const workingRef = useRef\(false\);/);
+  assert.match(venueTeamPanel, /const actionSequenceRef = useRef\(0\);/);
+  assert.match(venueTeamPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(venueTeamPanel, /if \(!mountedRef\.current \|\| workingRef\.current\) return null;/);
+  assert.match(venueTeamPanel, /requestId === actionSequenceRef\.current/);
+  assert.match(venueTeamPanel, /actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);/);
   assert.doesNotMatch(venueTeamPanel, /fetch\(/);
   assert.doesNotMatch(venueTeamPanel, /currentDashboardAuthHeaders|persistRefreshedDashboardSession/);
 });
