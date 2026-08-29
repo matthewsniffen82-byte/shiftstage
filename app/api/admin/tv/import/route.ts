@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import {
   createMyDancrTvUpload,
   hideOwnMyDancrTvVideo,
@@ -21,6 +21,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+const MAX_IMPORT_BODY_BYTES = 32_768;
+
 type ImportVideoInput = {
   fileSize: number;
   durationSeconds: number;
@@ -40,13 +42,13 @@ type PreparedUpload = {
 export async function POST(request: Request) {
   try {
     authorizeImportRequest(request);
-    const body = await request.json();
+    const body = await readImportBody(request);
     const action = body?.action;
     if (action === "prepare") return prepareImport(body);
     if (action === "finalize") return finalizeImport(body);
     return NextResponse.json({ ok: false, error: "Choose a supported import action." }, { status: 400 });
   } catch (error) {
-    return apiError(error, "Unable to import MyDancr TV media.", 400);
+    return apiError(error, "Unable to import MyDancr TV media.");
   }
 }
 
@@ -63,7 +65,7 @@ async function prepareImport(body: any) {
     .eq("slug", dancerSlug)
     .maybeSingle();
   if (dancerError) throw dancerError;
-  if (!dancer?.user_id) throw new Error("The requested dancer profile is unavailable.");
+  if (!dancer?.user_id) throw invalid("The requested dancer profile is unavailable.");
 
   const markerPrefix = importMarker(batchId);
   const { count: existingBatchCount, error: batchError } = await admin
@@ -73,7 +75,7 @@ async function prepareImport(body: any) {
     .like("review_notes", `${markerPrefix}%`);
   if (batchError) throw batchError;
   if (Number(existingBatchCount || 0) > 0) {
-    throw new Error("This import batch has already been prepared.");
+    throw invalid("This import batch has already been prepared.", 409);
   }
 
   const { data: activeVideos, error: activeError } = await admin
@@ -88,7 +90,7 @@ async function prepareImport(body: any) {
     (video) => video.distributionScope === "profile_and_feed",
   ).length;
   if (!replaceExisting && activeCount + requestedProfileVideoCount > MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
-    throw new Error(`This profile has ${activeCount} occupied video slots; replace existing videos or reduce this batch.`);
+    throw invalid(`This profile has ${activeCount} occupied video slots; replace existing videos or reduce this batch.`, 409);
   }
 
   if (replaceExisting) {
@@ -158,7 +160,7 @@ async function finalizeImport(body: any) {
     .maybeSingle();
   if (rowError) throw rowError;
   if (!row || (!String(row.review_notes || "").startsWith(markerPrefix) && !recoverPreparedVideo)) {
-    throw new Error("The requested import video does not belong to this batch.");
+    throw invalid("The requested import video does not belong to this batch.");
   }
 
   let result: any = row;
@@ -207,7 +209,7 @@ async function finalizeImport(body: any) {
 
 function parseVideos(value: unknown): ImportVideoInput[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > PLATFORM_IMPORT_BATCH_LIMIT) {
-    throw new Error(`Choose between 1 and ${PLATFORM_IMPORT_BATCH_LIMIT} videos.`);
+    throw invalid(`Choose between 1 and ${PLATFORM_IMPORT_BATCH_LIMIT} videos.`);
   }
   return value.map((raw: any) => {
     const video = {
@@ -218,15 +220,15 @@ function parseVideos(value: unknown): ImportVideoInput[] {
       mimeType: typeof raw?.mimeType === "string" ? raw.mimeType.trim() : "",
       distributionScope: raw?.distributionScope === "feed_only" ? "feed_only" as const : "profile_and_feed" as const,
     };
-    if (!MYDANCR_TV_MIME_TYPES.has(video.mimeType)) throw new Error("Upload an MP4 or WebM video.");
+    if (!MYDANCR_TV_MIME_TYPES.has(video.mimeType)) throw invalid("Upload an MP4 or WebM video.");
     if (!Number.isSafeInteger(video.fileSize) || video.fileSize < 1 || video.fileSize > MYDANCR_TV_MAX_BYTES) {
-      throw new Error("Video files must be 75 MB or smaller.");
+      throw invalid("Video files must be 75 MB or smaller.");
     }
     if (!Number.isFinite(video.durationSeconds) || video.durationSeconds < 1 || video.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
-    throw new Error("Videos must be between 1 and 30 seconds.");
+      throw invalid("Videos must be between 1 and 30 seconds.");
     }
     if (!Number.isSafeInteger(video.width) || !Number.isSafeInteger(video.height) || video.width < 240 || video.height < video.width || video.height > 7680) {
-      throw new Error("Upload a vertical or square video at least 240 pixels wide.");
+      throw invalid("Upload a vertical or square video at least 240 pixels wide.");
     }
     return video;
   });
@@ -249,36 +251,36 @@ async function activeAdminUserId(admin: ReturnType<typeof createAdminSupabaseCli
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  if (!data?.id) throw new Error("An active administrator is required to approve this video.");
+  if (!data?.id) throw forbidden("An active administrator is required to approve this video.");
   return data.id;
 }
 
 function authorizeImportRequest(request: Request) {
   const expected = process.env.DANCR_MEDIA_IMPORT_KEY || "";
   const provided = request.headers.get("x-mydancr-media-import-key") || "";
-  if (expected.length < 32 || provided.length !== expected.length) throw new Error("Media import access denied.");
+  if (expected.length < 32 || provided.length !== expected.length) throw forbidden("Media import access denied.");
   const expectedBuffer = Buffer.from(expected);
   const providedBuffer = Buffer.from(provided);
   if (expectedBuffer.length !== providedBuffer.length || !timingSafeEqual(expectedBuffer, providedBuffer)) {
-    throw new Error("Media import access denied.");
+    throw forbidden("Media import access denied.");
   }
 }
 
 function cleanBatchId(value: unknown) {
   const batchId = typeof value === "string" ? value.trim().toLowerCase() : "";
-  if (!/^[a-z0-9][a-z0-9-]{7,79}$/.test(batchId)) throw new Error("Use a valid import batch ID.");
+  if (!/^[a-z0-9][a-z0-9-]{7,79}$/.test(batchId)) throw invalid("Use a valid import batch ID.");
   return batchId;
 }
 
 function cleanSlug(value: unknown) {
   const slug = typeof value === "string" ? value.trim().toLowerCase() : "";
-  if (!/^[a-z0-9][a-z0-9-]{1,119}$/.test(slug)) throw new Error("Use a valid dancer profile slug.");
+  if (!/^[a-z0-9][a-z0-9-]{1,119}$/.test(slug)) throw invalid("Use a valid dancer profile slug.");
   return slug;
 }
 
 function cleanUuid(value: unknown) {
   const uuid = typeof value === "string" ? value.trim() : "";
-  if (!UUID_PATTERN.test(uuid)) throw new Error("Use a valid video ID.");
+  if (!UUID_PATTERN.test(uuid)) throw invalid("Use a valid video ID.");
   return uuid;
 }
 
@@ -289,3 +291,30 @@ function importMarker(batchId: string) {
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PLATFORM_IMPORT_BATCH_LIMIT = 30;
+
+async function readImportBody(request: Request): Promise<Record<string, unknown>> {
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_IMPORT_BODY_BYTES) {
+    throw invalid("Import request is too large.", 413);
+  }
+  const raw = await request.text();
+  if (Buffer.byteLength(raw, "utf8") > MAX_IMPORT_BODY_BYTES) throw invalid("Import request is too large.", 413);
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw invalid("Invalid import request.");
+    }
+    return parsed as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof PublicApiError) throw error;
+    throw invalid("Invalid import request.");
+  }
+}
+
+function invalid(message: string, status = 400) {
+  return new PublicApiError(status === 409 ? "CONFLICT" : "INVALID_REQUEST", message, status);
+}
+
+function forbidden(message: string) {
+  return new PublicApiError("FORBIDDEN", message, 403);
+}

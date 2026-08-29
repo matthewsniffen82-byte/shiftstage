@@ -13,6 +13,7 @@ test("platform TV imports use a constant-time production secret", () => {
   assert.match(route, /timingSafeEqual/);
   assert.match(route, /x-mydancr-media-import-key/);
   assert.match(env, /DANCR_MEDIA_IMPORT_KEY=/);
+  assert.match(route, /throw forbidden\("Media import access denied\."\)/);
 });
 
 test("platform TV imports use the production upload and watermark pipeline with owner-authorized publication", () => {
@@ -31,6 +32,15 @@ test("platform TV replacement and import batches are bounded and idempotent", ()
   assert.match(route, /platform-import:/);
   assert.match(route, /already been prepared/);
   assert.match(route, /cleanupPreparedUploads/);
+  assert.match(route, /const MAX_IMPORT_BODY_BYTES = 32_768/);
+  assert.match(route, /Buffer\.byteLength\(raw, "utf8"\) > MAX_IMPORT_BODY_BYTES/);
+});
+
+test("platform TV import exposes only typed operator errors", () => {
+  assert.match(route, /return apiError\(error, "Unable to import MyDancr TV media\."\)/);
+  assert.doesNotMatch(route, /apiError\(error, "Unable to import MyDancr TV media\.", 400\)/);
+  assert.doesNotMatch(route, /throw new Error/);
+  assert.match(route, /new PublicApiError/);
 });
 
 test("platform import bookkeeping never becomes a public video caption", () => {
