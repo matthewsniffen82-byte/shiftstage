@@ -11062,7 +11062,7 @@ body.dancr-button-system :is(
 
 /* The legacy .venue glass rule applies backdrop blur to the entire card. That
  * whole-card compositor can darken opaque child artwork in Android Chromium,
- * so venue discovery cards opt out and paint the shared graphite-indigo
+ * so venue discovery cards opt out and paint the shared charcoal-plum
  * header directly. The header stays distinct from the black body while the
  * published Club Deal keeps its compact geometry and conversion emphasis. */
 @media (max-width: 720px) {
@@ -11075,7 +11075,7 @@ body.dancr-button-system :is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art:not(.has-custom-photo) {
-    background-color: #171a28 !important;
+    background-color: #302e33 !important;
     background-image:
       repeating-linear-gradient(
         115deg,
@@ -11083,23 +11083,23 @@ body.dancr-button-system :is(
         rgba(248, 250, 252, 0.018) 1px 2px,
         transparent 2px 6px
       ),
-      linear-gradient(112deg, transparent 5%, rgba(196, 181, 253, 0.11) 28%, transparent 48%),
-      radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.22), transparent 48%),
+      linear-gradient(112deg, transparent 5%, rgba(226, 217, 232, 0.09) 28%, transparent 48%),
+      radial-gradient(circle at 50% 42%, rgba(171, 111, 196, 0.15), transparent 48%),
       linear-gradient(
         145deg,
-        #262a3d 0%,
-        #151824 66%,
-        #202337 100%
+        #49454b 0%,
+        #2a282d 66%,
+        #3a363c 100%
       ) !important;
     box-shadow:
       inset 0 1px 0 rgba(248, 250, 252, 0.12),
-      inset 0 -1px 0 rgba(167, 139, 250, 0.18) !important;
+      inset 0 -1px 0 rgba(184, 128, 219, 0.22) !important;
   }
 
-  /* Android retains the shared direct-paint path above, but Chromium compresses
-   * the compact graphite-indigo header toward the black card body. Lift the
-   * graphite-violet center and lower edge without changing the iPhone surface,
-   * stacking an opacity layer, or applying a whole-card filter. */
+  /* Android retains the shared charcoal-plum material above, but Chromium
+   * compresses it toward the black card body. Use a neutral luminance lift for
+   * visual parity with iPhone while keeping blue out of the fill and avoiding
+   * an opacity layer or whole-card filter. */
   html.is-android body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art:not(.has-custom-photo),
@@ -11124,7 +11124,7 @@ body.dancr-button-system :is(
   body.samsung-rendering.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art:not(.has-custom-photo) {
-    background-color: #302d47 !important;
+    background-color: #343137 !important;
     background-image:
       repeating-linear-gradient(
         115deg,
@@ -11132,11 +11132,11 @@ body.dancr-button-system :is(
         rgba(248, 250, 252, 0.04) 1px 2px,
         transparent 2px 6px
       ),
-      radial-gradient(ellipse 62% 94% at 50% 48%, rgba(241, 238, 255, 0.25) 0%, rgba(167, 139, 250, 0.28) 34%, transparent 70%),
-      linear-gradient(90deg, #222038 0%, #38334f 24%, #4d4968 50%, #38334f 76%, #222038 100%) !important;
+      radial-gradient(ellipse 62% 94% at 50% 48%, rgba(244, 239, 245, 0.21) 0%, rgba(184, 128, 219, 0.18) 34%, transparent 70%),
+      linear-gradient(90deg, #242226 0%, #3b373d 24%, #504a50 50%, #3b373d 76%, #242226 100%) !important;
     box-shadow:
       inset 0 1px 0 rgba(248, 250, 252, 0.16),
-      inset 0 -2px 0 rgba(167, 139, 250, 0.30) !important;
+      inset 0 -2px 0 rgba(184, 128, 219, 0.28) !important;
   }
 
   /* Do not rely solely on UA-derived Android classes for this material. Mobile
@@ -11148,7 +11148,7 @@ body.dancr-button-system :is(
     body.dancr-button-system > .app main.stack > section.stack
       > #results.home-venue-discovery-feed > .home-venue-discovery-slide
       .home-venue-discovery-art:not(.has-custom-photo) {
-      background-color: #302d47 !important;
+      background-color: #343137 !important;
       background-image:
         repeating-linear-gradient(
           115deg,
@@ -11156,11 +11156,11 @@ body.dancr-button-system :is(
           rgba(248, 250, 252, 0.04) 1px 2px,
           transparent 2px 6px
         ),
-        radial-gradient(ellipse 62% 94% at 50% 48%, rgba(241, 238, 255, 0.25) 0%, rgba(167, 139, 250, 0.28) 34%, transparent 70%),
-        linear-gradient(90deg, #222038 0%, #38334f 24%, #4d4968 50%, #38334f 76%, #222038 100%) !important;
+        radial-gradient(ellipse 62% 94% at 50% 48%, rgba(244, 239, 245, 0.21) 0%, rgba(184, 128, 219, 0.18) 34%, transparent 70%),
+        linear-gradient(90deg, #242226 0%, #3b373d 24%, #504a50 50%, #3b373d 76%, #242226 100%) !important;
       box-shadow:
         inset 0 1px 0 rgba(248, 250, 252, 0.16),
-        inset 0 -2px 0 rgba(167, 139, 250, 0.30) !important;
+        inset 0 -2px 0 rgba(184, 128, 219, 0.28) !important;
     }
 
     body.dancr-button-system > .app main.stack > section.stack
