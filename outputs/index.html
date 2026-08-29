@@ -32827,13 +32827,22 @@
           display: grid;
           place-items: center;
           padding: 0;
-          border: 1px solid rgba(255,255,255,.2);
+          border: 1px solid rgba(255,255,255,.22);
           border-radius: 999px;
           color: #fff;
-          background: rgba(5,5,10,.58);
-          box-shadow: 0 8px 22px rgba(0,0,0,.28);
-          backdrop-filter: blur(12px);
+          background:
+            linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.025) 45%,transparent 72%),
+            rgba(5,5,10,.52);
+          box-shadow: 0 9px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.09);
+          backdrop-filter: blur(14px) saturate(1.12);
+          -webkit-backdrop-filter: blur(14px) saturate(1.12);
           touch-action: manipulation;
+        }
+        .home-tv-feed-close {
+          position: absolute;
+          z-index: 9;
+          top: max(12px, env(safe-area-inset-top));
+          right: max(12px, env(safe-area-inset-right));
         }
         .home-tv-feed-action:hover,
         .home-tv-feed-action:not(.home-tv-feed-sound)[aria-pressed="true"],
@@ -32851,6 +32860,10 @@
           stroke-width: 2;
           stroke-linecap: round;
           stroke-linejoin: round;
+        }
+        .home-tv-feed-action svg .is-fill {
+          fill: currentColor;
+          stroke: none;
         }
         .home-tv-feed-action .action-icon {
           width: 19px !important;
@@ -34162,7 +34175,11 @@
         .profile-tv-viewer-stage::-webkit-scrollbar { display: none; }
         .profile-tv-viewer-slide { position: relative; width: 100%; height: 100%; min-height: 100%; max-height: 100%; overflow: hidden; background: #000; scroll-snap-align: start; scroll-snap-stop: always; }
         .profile-tv-viewer-video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: cover; background: #000; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-        .profile-tv-viewer-close { position: absolute; z-index: 3; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.72); font-size: 28px; line-height: 1; cursor: pointer; }
+        .profile-tv-viewer-close { position: absolute; z-index: 3; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; color: #fff; background: linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.025) 45%,transparent 72%),rgba(5,5,10,.52); box-shadow: 0 9px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.09); backdrop-filter: blur(14px) saturate(1.12); -webkit-backdrop-filter: blur(14px) saturate(1.12); font-size: 28px; line-height: 1; cursor: pointer; }
+        .profile-tv-viewer-close .profile-modal-media-control-icon,
+        .profile-tv-viewer-actions .profile-modal-media-control-icon { display: block; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+        .profile-tv-viewer-close .profile-modal-media-control-icon { width: 20px; height: 20px; }
+        .profile-tv-viewer-actions .profile-modal-media-control-icon .is-fill { fill: currentColor; stroke: none; }
         .profile-tv-viewer-previous,
         .profile-tv-viewer-next {
           position: absolute;
@@ -34203,7 +34220,11 @@
         .profile-tv-viewer-copy strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
         .profile-tv-viewer-copy span { color: #9fefff; font-size: 11px; font-weight: 850; }
         .profile-tv-viewer-actions { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(76px, calc(env(safe-area-inset-bottom) + 68px)); display: grid; grid-template-columns: 52px; gap: 8px; pointer-events: auto; }
-        .profile-tv-viewer-actions button { width: 52px; min-width: 52px; min-height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50%; color: #fff; background: rgba(8,8,12,.68); font-size: 9px; font-weight: 900; cursor: pointer; backdrop-filter: blur(8px); }
+        .profile-tv-viewer-actions button { width: 52px; min-width: 52px; min-height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; color: #fff; background: linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.025) 45%,transparent 72%),rgba(5,5,10,.52); box-shadow: 0 9px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.09); font-size: 9px; font-weight: 900; cursor: pointer; backdrop-filter: blur(14px) saturate(1.12); -webkit-backdrop-filter: blur(14px) saturate(1.12); }
+        .profile-tv-viewer-close:hover,
+        .profile-tv-viewer-close:focus-visible,
+        .profile-tv-viewer-actions button:hover,
+        .profile-tv-viewer-actions button:focus-visible { border-color: rgba(126,234,255,.58); background: linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.035) 48%,transparent 74%),rgba(22,16,35,.62); box-shadow: 0 9px 24px rgba(0,0,0,.34), 0 0 16px rgba(124,58,237,.16), inset 0 1px 0 rgba(255,255,255,.12); }
         .profile-tv-viewer-actions .profile-tv-viewer-state-control { width: 52px; min-width: 52px; max-width: 52px; padding: 0; justify-self: center; }
         .profile-tv-viewer-state-control .profile-modal-media-control-icon { width: 20px; height: 20px; }
         .profile-tv-viewer-status { position: absolute; right: 78px; bottom: max(6px, env(safe-area-inset-bottom)); left: max(16px, env(safe-area-inset-left)); min-height: 14px; margin: 0; color: #a7f3d0; font-size: 10px; font-weight: 800; text-shadow: 0 1px 5px #000; }
@@ -42139,6 +42160,9 @@
     let homeTvFeedLandingPending = false;
     let homeTvFeedWasFullscreen = false;
     let homeTvFeedFullscreenReturnScrollY = 0;
+    let homeTvFeedReturnDestination = "dancers";
+    let homeTvFeedReturnScrollY = 0;
+    let homeTvFeedReturnVenueName = null;
     const homeTvFeedSnapMedia = window.matchMedia("(max-width: 720px)");
     let homeTvPageScrollRail = null;
     let homeTvPageScrollThumb = null;
@@ -52849,7 +52873,7 @@
       document.body.insertAdjacentHTML("beforeend", `
         <div class="profile-tv-viewer" id="profileTvViewer" role="dialog" aria-modal="true" aria-label="MyDancr TV video" aria-hidden="true" hidden>
           <div class="profile-tv-viewer-shell">
-            <button class="profile-tv-viewer-close" type="button" data-close-profile-tv aria-label="Close full-screen video">×</button>
+            <button class="profile-tv-viewer-close" type="button" data-close-profile-tv aria-label="Close full-screen video"><svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
             <div class="profile-tv-viewer-stage" id="profileTvViewerStage" aria-label="Dancer videos. Scroll up or down to change videos."></div>
             <button class="profile-tv-viewer-previous" type="button" data-previous-profile-tv aria-label="Previous dancer video">↑</button>
             <button class="profile-tv-viewer-next" type="button" data-next-profile-tv aria-label="Next dancer video">↓</button>
@@ -59596,6 +59620,18 @@
       slide.classList.add("is-paused");
     }
 
+    function syncHomeTvFeedPlaybackButton(slide, video) {
+      const button = slide?.querySelector("[data-home-tv-playback]");
+      if (!button || !video) return;
+      const paused = video.paused;
+      const label = paused ? "Play MyDancr TV video" : "Pause MyDancr TV video";
+      button.setAttribute("aria-label", label);
+      button.title = label;
+      button.innerHTML = paused
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="m8 5 11 7-11 7V5Z"></path></svg>'
+        : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"></path></svg>';
+    }
+
     function homeTvFeedUsesSnapViewport() {
       return homeTvFeedSnapMedia.matches;
     }
@@ -59975,11 +60011,13 @@
       });
       video.addEventListener("play", () => {
         slide.classList.remove("is-paused", "is-autoplay-blocked");
+        syncHomeTvFeedPlaybackButton(slide, video);
         syncHomeTvFeedProgress(video, slide);
         scheduleHomeTvFeedEngagedView(videoId, video);
       });
       video.addEventListener("pause", () => {
         slide.classList.add("is-paused");
+        syncHomeTvFeedPlaybackButton(slide, video);
         syncHomeTvFeedProgress(video, slide);
         clearHomeTvFeedEngagedTimer(videoId);
       });
@@ -60117,6 +60155,49 @@
       return button;
     }
 
+    function closeHomeTvFeedView() {
+      const destination = homeTvFeedReturnDestination === "venues" ? "venues" : "dancers";
+      const returnScrollY = Math.max(0, Number(homeTvFeedReturnScrollY) || 0);
+      if (destination === "venues") selectedVenueName = homeTvFeedReturnVenueName;
+      activateHomeDestination(destination, { scroll: false });
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          window.scrollTo({ top: returnScrollY, left: 0, behavior: "auto" });
+        });
+      });
+    }
+
+    function createHomeTvFeedCloseButton() {
+      const close = createHomeTvFeedActionButton(
+        "home-tv-feed-close",
+        "Close MyDancr TV",
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>'
+      );
+      close.dataset.homeTvClose = "true";
+      close.addEventListener("click", (event) => {
+        event.stopPropagation();
+        closeHomeTvFeedReportMenus();
+        closeHomeTvFeedView();
+      });
+      return close;
+    }
+
+    function createHomeTvFeedPlaybackButton(slide, video) {
+      const playback = createHomeTvFeedActionButton(
+        "home-tv-feed-playback-action",
+        "Pause MyDancr TV video",
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"></path></svg>'
+      );
+      playback.dataset.homeTvPlayback = "true";
+      playback.addEventListener("click", () => {
+        closeHomeTvFeedReportMenus();
+        toggleHomeTvFeedPlayback(video);
+        syncHomeTvFeedPlaybackButton(slide, video);
+      });
+      syncHomeTvFeedPlaybackButton(slide, video);
+      return playback;
+    }
+
     function homeTvFeedDealState(item) {
       const workingNow = item?.shift?.isActive === true;
       const available = Boolean(
@@ -60171,6 +60252,7 @@
       actions.setAttribute("aria-label", "Video actions");
 
       const sound = createHomeTvFeedSoundButton(slide);
+      const playback = createHomeTvFeedPlaybackButton(slide, video);
 
       const profile = createHomeTvFeedActionButton(
         "home-tv-feed-profile-action",
@@ -60289,7 +60371,7 @@
         overflow.focus({ preventScroll: true });
       });
       const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
-      actions.append(sound, profile);
+      actions.append(sound, playback, profile);
       if (deal) actions.appendChild(deal);
       actions.append(share, follow, fullscreen);
       actions.append(overflow, reportMenu);
@@ -60364,6 +60446,7 @@
         fallback,
         video,
         playback,
+        createHomeTvFeedCloseButton(),
         createHomeTvFeedActions(item, slide, video),
         createHomeTvFeedCopy(item, scheduleContext),
         createHomeTvFeedProgress(slide, video),
@@ -63745,6 +63828,11 @@
       const nextDestinationIndex = homeDestinationOrder.indexOf(nextTab);
       const transitionDirection = Math.sign(nextDestinationIndex - previousDestinationIndex);
       const leavingAnotherDestination = activeTab !== "dancers";
+      if (nextTab === "tv" && activeTab !== "tv") {
+        homeTvFeedReturnDestination = activeTab === "venues" ? "venues" : "dancers";
+        homeTvFeedReturnScrollY = window.scrollY || 0;
+        homeTvFeedReturnVenueName = activeTab === "venues" ? selectedVenueName : null;
+      }
       if (nextTab === "dancers") {
         dancerDirectoryFilter = dancerDirectoryFilters.includes(options.dancerFilter)
           ? options.dancerFilter

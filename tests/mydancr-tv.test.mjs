@@ -445,3 +445,26 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(venuePage, /permanentRedirect/);
   assert.doesNotMatch(venuePage, /TvVideoStrip|watchAllHref|href=\{`\/tv/);
 });
+
+test("live-shell MyDancr TV has separate glass close and playback controls", () => {
+  assert.match(
+    liveApp,
+    /\.home-tv-feed-action \{[\s\S]*?rgba\(5,5,10,\.52\);[\s\S]*?backdrop-filter: blur\(14px\) saturate\(1\.12\);[\s\S]*?-webkit-backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
+  );
+  assert.match(
+    liveApp,
+    /function createHomeTvFeedCloseButton\(\)[\s\S]*?"home-tv-feed-close"[\s\S]*?"Close MyDancr TV"[\s\S]*?closeHomeTvFeedView\(\)/,
+  );
+  assert.match(
+    liveApp,
+    /function createHomeTvFeedPlaybackButton\(slide, video\)[\s\S]*?dataset\.homeTvPlayback = "true"[\s\S]*?toggleHomeTvFeedPlayback\(video\)[\s\S]*?syncHomeTvFeedPlaybackButton\(slide, video\)/,
+  );
+  assert.match(
+    liveApp,
+    /const children = \[[\s\S]*?createHomeTvFeedCloseButton\(\)[\s\S]*?createHomeTvFeedActions\(item, slide, video\)/,
+  );
+  assert.match(
+    liveApp,
+    /if \(nextTab === "tv" && activeTab !== "tv"\)[\s\S]*?homeTvFeedReturnDestination[\s\S]*?homeTvFeedReturnScrollY = window\.scrollY \|\| 0[\s\S]*?homeTvFeedReturnVenueName = activeTab === "venues" \? selectedVenueName : null/,
+  );
+});

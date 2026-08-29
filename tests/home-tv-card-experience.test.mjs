@@ -106,14 +106,14 @@ test("TV cards expose one compact priority rail and a standalone seek bar", () =
     /function renderHomeTvFeedSlide\(slide, item, videoIndex, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedSlide)/,
   )?.[0] || "";
 
-  assert.match(actionsFactory, /const sound = createHomeTvFeedSoundButton\(slide\)[\s\S]*?"home-tv-feed-profile-action"[\s\S]*?actionIconMarkup\("profile"\)[\s\S]*?slide\.querySelector\("\.home-tv-feed-dancer"\)\?\.click\(\)[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"/);
-  assert.match(actionsFactory, /const fullscreen = createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?actions\.append\(sound, profile\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow, fullscreen\)[\s\S]*?actions\.append\(overflow, reportMenu\)/);
+  assert.match(actionsFactory, /const sound = createHomeTvFeedSoundButton\(slide\)[\s\S]*?const playback = createHomeTvFeedPlaybackButton\(slide, video\)[\s\S]*?"home-tv-feed-profile-action"[\s\S]*?actionIconMarkup\("profile"\)[\s\S]*?slide\.querySelector\("\.home-tv-feed-dancer"\)\?\.click\(\)[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"/);
+  assert.match(actionsFactory, /const fullscreen = createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?actions\.append\(sound, playback, profile\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow, fullscreen\)[\s\S]*?actions\.append\(overflow, reportMenu\)/);
   assert.doesNotMatch(actionsFactory, /actionIconMarkup\("star"\)|"Applaud"/);
   assert.match(actionsFactory, /"home-tv-feed-overflow-action"[\s\S]*?"More video options"[\s\S]*?actionIconMarkup\("more"\)/);
   assert.doesNotMatch(actionsFactory, /actionIconMarkup\("report"\)/);
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
-  assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedActions\(item, slide, video\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedProgress\(slide, video\)/);
+  assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedCloseButton\(\),[\s\S]*?createHomeTvFeedActions\(item, slide, video\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedProgress\(slide, video\)/);
   assert.doesNotMatch(renderFactory, /createHomeTvFeedSoundButton\(slide\)|createHomeTvFeedFullscreenButton\(slide, video\)/);
   assert.doesNotMatch(renderFactory, /shade|home-tv-feed-shade|linear-gradient/);
   assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 10px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 6px;/);

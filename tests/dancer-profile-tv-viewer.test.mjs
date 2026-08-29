@@ -84,6 +84,21 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
 });
 
+test("profile video controls use the same premium translucent glass treatment as MyDancr TV", () => {
+  assert.match(
+    liveApp,
+    /\.profile-tv-viewer-close \{[^}]*rgba\(5,5,10,\.52\)[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);[^}]*-webkit-backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
+  );
+  assert.match(
+    liveApp,
+    /\.profile-tv-viewer-actions button \{[^}]*rgba\(5,5,10,\.52\)[^}]*inset 0 1px 0 rgba\(255,255,255,\.09\)[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
+  );
+  assert.match(
+    liveApp,
+    /class="profile-tv-viewer-close"[^>]*aria-label="Close full-screen video"><svg[^>]*><path d="M6 6l12 12M18 6 6 18"><\/path><\/svg><\/button>/,
+  );
+});
+
 test("profile grid thumbnails stay passive while the full viewer has no thumbnail strip", () => {
   const loader =
     liveApp.match(
