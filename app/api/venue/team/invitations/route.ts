@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { redeemVenueTeamInvitation, resolveVenueTeamInvitation } from "@/src/lib/dancr/venue-team";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -7,6 +8,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_INVITATION_BODY_BYTES = 4_096;
 
 export async function GET(request: Request) {
   try {
@@ -21,7 +23,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { user, session } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_INVITATION_BODY_BYTES,
+      invalidMessage: "Invalid venue invitation request.",
+      tooLargeMessage: "Venue invitation request is too large.",
+    });
     const admin = createAdminSupabaseClient();
     const account = await requireActiveVenueAccount(admin, user.id);
     const email = String(account.email || user.email || "").trim().toLowerCase();

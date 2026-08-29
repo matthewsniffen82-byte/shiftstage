@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createOwnSupportMessage } from "@/src/lib/dancr/support";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
@@ -10,6 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const REQUEST_TYPES = new Set(["damaged", "lost", "relocate", "replacement"]);
+const MAX_NFC_SUPPORT_BODY_BYTES = 4_096;
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +34,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const auth = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_NFC_SUPPORT_BODY_BYTES,
+      invalidMessage: "Invalid tap-sticker support request.",
+      tooLargeMessage: "Tap-sticker support request is too large.",
+    });
     const requestType = String(body?.requestType || "").trim();
     const tagId = String(body?.tagId || "").trim();
     const notes = String(body?.notes || "").trim();

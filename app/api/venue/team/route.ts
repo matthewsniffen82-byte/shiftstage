@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
 import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import {
@@ -13,6 +14,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_TEAM_ACTION_BODY_BYTES = 4_096;
 
 export async function GET(request: Request) {
   try {
@@ -27,12 +29,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { user, session } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readTeamActionBody(request);
     const admin = createAdminSupabaseClient();
     const result = await createVenueTeamInvitation(admin, {
       actorUserId: user.id,
-      email: body?.email,
-      role: body?.role,
+      email: typeof body.email === "string" ? body.email : "",
+      role: readAssignableRole(body.role),
       expiresInDays: 7,
     });
     const invitationUrl = new URL(`/venue-team/invite/${encodeURIComponent(result.token)}`, publicAppUrl()).toString();
@@ -85,11 +87,11 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const { user, session } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readTeamActionBody(request);
     const member = await updateVenueTeamMember(createAdminSupabaseClient(), {
       actorUserId: user.id,
-      memberId: body?.memberId,
-      role: body?.role,
+      memberId: typeof body.memberId === "string" ? body.memberId : "",
+      role: body.remove === true ? undefined : readAssignableRole(body.role),
       remove: body?.remove === true,
     });
     return noStore({ ok: true, member, session: session || null });
@@ -101,10 +103,10 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { user, session } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readTeamActionBody(request);
     await revokeVenueTeamInvitation(createAdminSupabaseClient(), {
       actorUserId: user.id,
-      invitationId: body?.invitationId,
+      invitationId: typeof body.invitationId === "string" ? body.invitationId : "",
     });
     return noStore({ ok: true, session: session || null });
   } catch (error) {
@@ -117,4 +119,17 @@ function noStore(body: Record<string, unknown>, status = 200) {
     status,
     headers: { "cache-control": "private, no-store, max-age=0" },
   });
+}
+
+function readTeamActionBody(request: Request) {
+  return readBoundedJsonObject(request, {
+    maxBytes: MAX_TEAM_ACTION_BODY_BYTES,
+    invalidMessage: "Invalid venue team request.",
+    tooLargeMessage: "Venue team request is too large.",
+  });
+}
+
+function readAssignableRole(value: unknown): "manager" | "staff" {
+  if (value === "manager" || value === "staff") return value;
+  throw new Error("Venue team role must be manager or staff.");
 }

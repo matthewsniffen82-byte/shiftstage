@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { getVenueForAccount, updateVenueForAccount } from "@/src/lib/dancr/venue";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -9,6 +10,7 @@ import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_VENUE_PROFILE_BODY_BYTES = 16_384;
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +34,11 @@ export async function PATCH(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireActiveVenueAccount(client, user.id);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_VENUE_PROFILE_BODY_BYTES,
+      invalidMessage: "Invalid venue profile request.",
+      tooLargeMessage: "Venue profile request is too large.",
+    });
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_profile");
     const profile = await updateVenueForAccount(admin, user.id, {

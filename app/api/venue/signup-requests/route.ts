@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createVenueSignupRequest,
   VenueSignupRequestUserError,
@@ -8,10 +9,15 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_SIGNUP_REQUEST_BODY_BYTES = 16_384;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_SIGNUP_REQUEST_BODY_BYTES,
+      invalidMessage: "Invalid venue signup request.",
+      tooLargeMessage: "Venue signup request is too large.",
+    });
 
     // A hidden honeypot field absorbs automated submissions without disclosing the filter.
     if (typeof body?.companyFax === "string" && body.companyFax.trim()) {

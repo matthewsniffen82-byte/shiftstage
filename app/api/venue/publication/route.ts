@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { reviewVenuePageForAccount } from "@/src/lib/dancr/venue";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
@@ -9,6 +10,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_PUBLICATION_BODY_BYTES = 8_192;
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +18,11 @@ export async function POST(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_profile");
-    const body = await request.json().catch(() => null);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_PUBLICATION_BODY_BYTES,
+      invalidMessage: "Invalid venue page review request.",
+      tooLargeMessage: "Venue page review request is too large.",
+    });
     const decision = body?.decision === "approved" || body?.decision === "changes_requested"
       ? body.decision
       : null;

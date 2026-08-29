@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   AccountRecoveryRateLimitError,
   enforceAccountRecoveryRateLimit,
@@ -12,12 +13,17 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_ACCESS_CODE_BODY_BYTES = 2_048;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_ACCESS_CODE_BODY_BYTES,
+      invalidMessage: "Invalid venue access request.",
+      tooLargeMessage: "Venue access request is too large.",
+    });
     const code = typeof body?.code === "string" ? body.code.trim() : "";
-    if (!code) {
+    if (!code || code.length > 256) {
       return NextResponse.json({ ok: false, error: "Enter the private venue access code from MyDancr." }, { status: 400 });
     }
 

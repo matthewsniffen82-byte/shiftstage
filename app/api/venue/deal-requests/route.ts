@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createVenueClubDealRequest,
   getVenueClubDealRequests,
@@ -11,6 +12,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_DEAL_REQUEST_BODY_BYTES = 8_192;
 
 export async function GET(request: Request) {
   try {
@@ -27,7 +29,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const auth = await createRequestSupabaseContext(request);
-    const body = await request.json().catch(() => ({}));
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_DEAL_REQUEST_BODY_BYTES,
+      invalidMessage: "Invalid Club Deal request.",
+      tooLargeMessage: "Club Deal request is too large.",
+    });
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, auth.user.id, "request_deals");
     const dealRequest = await createVenueClubDealRequest(admin, {
