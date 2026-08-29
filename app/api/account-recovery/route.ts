@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   AccountRecoveryRateLimitError,
   enforceAccountRecoveryRateLimit,
@@ -14,12 +15,17 @@ export const dynamic = "force-dynamic";
 const RECOVERY_MESSAGE = "Your request was received. MyDancr support will contact you at the email you provided after ownership is verified.";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ROLES = new Set<AccountRecoveryRole>(["customer", "dancer", "venue"]);
+const MAX_RECOVERY_BODY_BYTES = 4_096;
 
 class AccountRecoveryInputError extends Error {}
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_RECOVERY_BODY_BYTES,
+      invalidMessage: "Invalid account recovery request.",
+      tooLargeMessage: "Account recovery request is too large.",
+    });
     const role = readRole(body.role);
     const accountName = boundedText(body.accountName, "Account name is required.", 2, 80);
     const city = boundedText(body.city, "City is required.", 2, 80);

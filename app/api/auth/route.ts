@@ -1,5 +1,8 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { isAuthError } from "@supabase/supabase-js";
+import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueForAccount } from "@/src/lib/dancr/venue";
@@ -13,6 +16,10 @@ import {
   AccountRecoveryRateLimitError,
   enforceAccountRecoveryRateLimit,
 } from "@/src/lib/dancr/account-recovery";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -22,11 +29,22 @@ export const dynamic = "force-dynamic";
 type AuthRole = "customer" | "dancer" | "venue" | "admin";
 type AuthMode = "login" | "signup" | "reset_password";
 
+const MAX_AUTH_BODY_BYTES = 8_192;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(request: Request) {
+  let requestedMode: AuthMode | null = null;
+  let requestedRole: AuthRole | null = null;
   try {
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_AUTH_BODY_BYTES,
+      invalidMessage: "Invalid authentication request.",
+      tooLargeMessage: "Authentication request is too large.",
+    });
     const mode = readMode(body.mode);
     const role = readRole(body.role);
+    requestedMode = mode;
+    requestedRole = role;
     const credential = readAuthCredential(body, role);
     const email = credential.email;
     const client = createServerSupabaseClient();
@@ -57,12 +75,13 @@ export async function POST(request: Request) {
       });
     }
 
-    const password = readRequired(body.password, "Password is required.");
+    await enforceAuthAttemptRateLimit(request, mode, role, email);
+    const password = readRequired(body.password, "Password is required.", 1_024);
 
     if (mode === "login") {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      if (!data.user) throw new Error("Sign in required.");
+      if (!data.user) throw new Error("Authentication provider returned no user.");
 
       const venueInvitationToken = role === "venue" && typeof body.venueCode === "string" && body.venueCode.startsWith("vti_")
         ? body.venueCode
@@ -80,7 +99,7 @@ export async function POST(request: Request) {
     }
 
     if (password.length < 8) {
-      throw new Error("Password must be at least 8 characters.");
+      throw invalid("Password must be at least 8 characters.");
     }
 
     if (role === "admin") {
@@ -121,7 +140,7 @@ export async function POST(request: Request) {
         client,
         email,
         password,
-        venueCode: readRequired(body.venueCode, "Venue access code is required."),
+        venueCode: readRequired(body.venueCode, "Venue access code is required.", 256),
       }));
     }
 
@@ -173,12 +192,30 @@ export async function POST(request: Request) {
         { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
       );
     }
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many sign-in or signup attempts. Please wait and try again." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     const rateLimitMessage = authRateLimitMessage(error);
     if (rateLimitMessage) {
       return NextResponse.json({ ok: false, error: rateLimitMessage }, { status: 429 });
     }
 
-    return apiError(error, "Unable to authenticate.", 400);
+    if (isAuthError(error)) {
+      console.warn("AUTH_PROVIDER_REQUEST_REJECTED", {
+        mode: requestedMode,
+        role: requestedRole,
+        code: error.code || "auth_error",
+      });
+      const message = requestedMode === "login"
+        ? "Email or password is incorrect."
+        : "Unable to create this account. Check the information or sign in if you already have an account.";
+      return NextResponse.json({ ok: false, error: message }, { status: 400 });
+    }
+
+    return apiError(error, "Unable to authenticate.");
   }
 }
 
@@ -191,18 +228,18 @@ async function authResponse(
   const admin = createAdminSupabaseClient();
   const account = await getAccountByUserId(admin, userId);
   if (!account?.role) {
-    throw new Error("This account is not ready for sign in. Contact support for help.");
+    throw conflict("This account is not ready for sign in. Contact support for help.");
   }
   if (account.accountState === "deleted") {
-    throw new Error("This account has been deleted.");
+    throw forbidden("This account has been deleted.");
   }
   if (expectedRole && account.role !== expectedRole) {
-    throw new Error("Account role does not match this login.");
+    throw forbidden("Account role does not match this login.");
   }
   if (account.role === "venue" && account.accountState === "active") {
     const venue = await getVenueForAccount(admin, userId);
     if (!venue) {
-      throw new Error("No venue is connected to this account. Use your venue access code during sign up.");
+      throw conflict("No venue is connected to this account. Use your venue access code during sign up.");
     }
   }
 
@@ -233,7 +270,7 @@ async function createVenueSignupAccount(input: {
     : null;
   const ownerAccess = teamInvitation ? null : await resolveVenueSignupCode(admin, input.venueCode);
   const venue = teamInvitation?.venue || ownerAccess?.venue;
-  if (!venue) throw new Error("This venue access invitation is invalid.");
+  if (!venue) throw invalid("This venue access invitation is invalid.");
   let createdUserId = "";
   let accessRedeemed = false;
 
@@ -315,21 +352,21 @@ async function createVenueSignupAccount(input: {
 
 function readMode(value: unknown): AuthMode {
   if (value === "login" || value === "signup" || value === "reset_password") return value;
-  throw new Error("Auth mode must be login, signup, or reset_password.");
+  throw invalid("Auth mode must be login, signup, or reset_password.");
 }
 
 function readRole(value: unknown): AuthRole {
   if (value === "customer" || value === "dancer" || value === "venue" || value === "admin") return value;
-  throw new Error("Role must be customer, dancer, venue, or admin.");
+  throw invalid("Role must be customer, dancer, venue, or admin.");
 }
 
 function readAuthCredential(body: Record<string, unknown>, role: AuthRole) {
   if (role !== "admin") {
-    return { email: readRequired(body.email, "Email is required.").toLowerCase(), username: "" };
+    return { email: readEmail(body.email), username: "" };
   }
 
-  const username = readOptional(body.username) || readOptional(body.email);
-  if (!username) throw new Error("Admin username is required.");
+  const username = readOptional(body.username, 120) || readOptional(body.email, 254);
+  if (!username) throw invalid("Admin username is required.");
 
   return {
     email: adminAuthEmail(username),
@@ -340,19 +377,30 @@ function readAuthCredential(body: Record<string, unknown>, role: AuthRole) {
 function validateAdminSignupCode(value: unknown) {
   const expected = process.env.DANCR_ADMIN_SIGNUP_CODE || process.env.DANCR_ADMIN_SEED_KEY;
   if (!expected) throw new Error("Admin signup code is not configured.");
-  if (readRequired(value, "Admin code is required.") !== expected) {
-    throw new Error("Admin code is invalid.");
+  const provided = readRequired(value, "Admin code is required.", 256);
+  const expectedDigest = createHash("sha256").update(expected).digest();
+  const providedDigest = createHash("sha256").update(provided).digest();
+  if (!timingSafeEqual(expectedDigest, providedDigest)) {
+    throw forbidden("Admin code is invalid.");
   }
 }
 
-function readRequired(value: unknown, message: string) {
-  const text = readOptional(value);
-  if (!text) throw new Error(message);
+function readRequired(value: unknown, message: string, maxLength = 2_048) {
+  const text = readOptional(value, maxLength);
+  if (!text) throw invalid(message);
   return text;
 }
 
-function readOptional(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
+function readOptional(value: unknown, maxLength = 2_048) {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (text.length > maxLength) throw invalid("Authentication field is too long.");
+  return text;
+}
+
+function readEmail(value: unknown) {
+  const email = readRequired(value, "Email is required.", 254).toLowerCase();
+  if (!EMAIL_PATTERN.test(email)) throw invalid("Enter a valid email address.");
+  return email;
 }
 
 function adminAuthEmail(username: string) {
@@ -362,7 +410,7 @@ function adminAuthEmail(username: string) {
   const slug = normalized
     .replace(/[^a-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  if (!slug) throw new Error("Admin username is required.");
+  if (!slug) throw invalid("Admin username is required.");
 
   return `${slug}@admin.mydancr.local`;
 }
@@ -373,7 +421,7 @@ function customerDisplayName(email: string) {
 
 function safeEmailRedirectTo(value: unknown) {
   const fallback = `${publicAppUrl()}/auth/callback`;
-  const text = readOptional(value);
+  const text = readOptional(value, 2_048);
   if (!text) return fallback;
 
   try {
@@ -401,4 +449,33 @@ function authRateLimitMessage(error: unknown) {
   if (!/rate limit/i.test(message)) return "";
 
   return "Too many confirmation emails were sent. Please wait a few minutes, then try again, or use the newest confirmation email already in your inbox.";
+}
+
+async function enforceAuthAttemptRateLimit(
+  request: Request,
+  mode: Exclude<AuthMode, "reset_password">,
+  role: AuthRole,
+  email: string,
+) {
+  const limits = mode === "login"
+    ? { windowSeconds: 15 * 60, ipLimit: 60, subjectLimit: 15 }
+    : { windowSeconds: 60 * 60, ipLimit: 20, subjectLimit: 5 };
+  await enforcePublicRequestRateLimit(createAdminSupabaseClient(), {
+    namespace: `auth_${mode}`,
+    request,
+    subject: `${role}:${email}`,
+    ...limits,
+  });
+}
+
+function invalid(message: string) {
+  return new PublicApiError("INVALID_REQUEST", message, 400);
+}
+
+function forbidden(message: string) {
+  return new PublicApiError("FORBIDDEN", message, 403);
+}
+
+function conflict(message: string) {
+  return new PublicApiError("CONFLICT", message, 409);
 }
