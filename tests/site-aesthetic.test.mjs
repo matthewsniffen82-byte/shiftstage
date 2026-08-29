@@ -27,6 +27,15 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   );
 });
 
+test("the live homepage declares its authored dark scheme before CSS loads", () => {
+  assert.match(
+    liveApp,
+    /<meta name="viewport"[^>]*>\s*<meta name="color-scheme" content="only dark">/,
+  );
+  assert.match(liveApp, /:root \{\s*color-scheme: only dark;/);
+  assert.doesNotMatch(liveApp, /:root \{\s*color-scheme: dark;/);
+});
+
 test("scrollable production surfaces use one quiet neutral scrollbar", () => {
   assert.match(
     aesthetic,
