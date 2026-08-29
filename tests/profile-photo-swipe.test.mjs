@@ -70,9 +70,17 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   assert.match(liveApp, /\.profile-photo-viewer-footer \{[\s\S]*?background: transparent;/);
   assert.match(
     liveApp,
-    /async function requestProfilePhotoViewerFullscreen\(overlay, requestedIndex\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
+    /async function requestProfilePhotoViewerFullscreen\(overlay, requestedIndex\)[\s\S]*?const targets = root === overlay \? \[root\] : \[root, overlay\][\s\S]*?target\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?target\.requestFullscreen\(\)[\s\S]*?target\.webkitRequestFullscreen\(\)/,
   );
-  assert.match(liveApp, /void requestProfilePhotoViewerFullscreen\(profilePhotoViewer, initialIndex\)/);
+  assert.match(
+    liveApp,
+    /function openPhotoViewerFromElement\(element, requestedIndex = null\)[\s\S]*?profilePhotoViewer\.hidden = false;[\s\S]*?void requestProfilePhotoViewerFullscreen\(profilePhotoViewer, initialIndex\);[\s\S]*?renderProfilePhotoViewerSlides\(\)/,
+  );
+  assert.match(
+    liveApp,
+    /profilePhotoViewerImage\?\.addEventListener\("click",[\s\S]*?profilePhotoFullscreenElement\(\)[\s\S]*?requestProfilePhotoViewerFullscreen\(profilePhotoViewer, activePhotoIndex\)/,
+  );
+  assert.match(liveApp, /profilePhotoViewerHasFullscreen\(overlay[\s\S]*?document\.documentElement/);
   assert.match(liveApp, /function exitProfilePhotoViewerFullscreen\(\)[\s\S]*?document\.exitFullscreen[\s\S]*?document\.webkitExitFullscreen/);
 });
 
@@ -249,7 +257,11 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
     /@media \(max-width: 600px\)[\s\S]*?\.profile-media-viewer-previous, \.profile-media-viewer-next/,
   );
   assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?requestViewerFullscreen\(index\)/);
-  assert.match(publicPhotoCarousel, /element\.requestFullscreen\(\{ navigationUI: "hide" \}\)/);
+  assert.match(
+    publicPhotoCarousel,
+    /const targets = root === element \? \[root\] : \[root, element\][\s\S]*?target\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?target\.requestFullscreen\(\)[\s\S]*?target\.webkitRequestFullscreen/,
+  );
+  assert.match(publicPhotoCarousel, /function viewerHasFullscreen\([\s\S]*?document\.documentElement/);
   assert.match(publicProfilePage, /\.profile-media-viewer:fullscreen/);
   assert.match(publicPhotoCarousel, /viewer\.kind === "video"[\s\S]*?\{viewerStatus\} · Scroll up or down · Video/);
   assert.doesNotMatch(publicPhotoCarousel, /viewer\.kind === "photo"[\s\S]*?profile-media-viewer-copy/);

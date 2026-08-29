@@ -51881,25 +51881,45 @@
       return document.fullscreenElement || document.webkitFullscreenElement || null;
     }
 
+    function profilePhotoViewerHasFullscreen(overlay, fullscreenElement = profilePhotoFullscreenElement()) {
+      return Boolean(fullscreenElement) && (
+        fullscreenElement === overlay || fullscreenElement === document.documentElement
+      );
+    }
+
     async function requestProfilePhotoViewerFullscreen(overlay, requestedIndex) {
-      if (!overlay || profilePhotoFullscreenElement()) return false;
-      const request = typeof overlay.requestFullscreen === "function"
-        ? () => overlay.requestFullscreen({ navigationUI: "hide" })
-        : typeof overlay.webkitRequestFullscreen === "function"
-          ? () => overlay.webkitRequestFullscreen()
-          : null;
-      if (!request) return false;
-      try {
-        await request();
-        profilePhotoViewerOwnsFullscreen = profilePhotoFullscreenElement() === overlay;
-        if (profilePhotoViewerOwnsFullscreen) {
-          window.requestAnimationFrame(() => scrollProfilePhotoViewerTo(requestedIndex, { instant: true }));
-        }
+      if (!overlay) return false;
+      const activeFullscreenElement = profilePhotoFullscreenElement();
+      if (activeFullscreenElement) {
+        profilePhotoViewerOwnsFullscreen = profilePhotoViewerHasFullscreen(overlay, activeFullscreenElement);
         return profilePhotoViewerOwnsFullscreen;
-      } catch {
-        profilePhotoViewerOwnsFullscreen = false;
-        return false;
       }
+      const root = document.documentElement;
+      const targets = root === overlay ? [root] : [root, overlay];
+      for (const target of targets) {
+        const requests = [];
+        if (typeof target.requestFullscreen === "function") {
+          requests.push(() => target.requestFullscreen({ navigationUI: "hide" }));
+          requests.push(() => target.requestFullscreen());
+        }
+        if (typeof target.webkitRequestFullscreen === "function") {
+          requests.push(() => target.webkitRequestFullscreen());
+        }
+        for (const request of requests) {
+          try {
+            await request();
+          } catch {
+            continue;
+          }
+          profilePhotoViewerOwnsFullscreen = profilePhotoViewerHasFullscreen(overlay);
+          if (profilePhotoViewerOwnsFullscreen) {
+            window.requestAnimationFrame(() => scrollProfilePhotoViewerTo(requestedIndex, { instant: true }));
+            return true;
+          }
+        }
+      }
+      profilePhotoViewerOwnsFullscreen = false;
+      return false;
     }
 
     function exitProfilePhotoViewerFullscreen() {
@@ -51983,6 +52003,8 @@
 
     function openPhotoViewerFromElement(element, requestedIndex = null) {
       if (!profilePhotoViewer || !profilePhotoViewerImage || !element) return;
+      const items = Array.isArray(modalGallery.profilePhotoItems) ? modalGallery.profilePhotoItems : [];
+      if (!items.length) return;
       profilePhotoViewerReturnTarget = document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
@@ -51990,14 +52012,14 @@
       const initialIndex = Math.max(0, requestedIndex !== null && Number.isInteger(parsedRequestedIndex)
         ? parsedRequestedIndex
         : Number(modalImage?.dataset.activePhotoIndex || 0));
-      if (!renderProfilePhotoViewerSlides()) return;
       profilePhotoViewer.style.zIndex = "1600";
       profilePhotoViewer.hidden = false;
+      void requestProfilePhotoViewerFullscreen(profilePhotoViewer, initialIndex);
+      renderProfilePhotoViewerSlides();
       document.body.classList.add("profile-photo-viewer-open");
       syncOverlayScrollLock();
       syncProfilePhotoViewerPosition(initialIndex);
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
-      void requestProfilePhotoViewerFullscreen(profilePhotoViewer, initialIndex);
       window.requestAnimationFrame(() => {
         scrollProfilePhotoViewerTo(initialIndex, { instant: true });
         profilePhotoViewerImage.focus({ preventScroll: true });
@@ -61451,6 +61473,11 @@
       event.preventDefault();
       moveModalPhoto(event.key === "ArrowDown" ? 1 : -1, { syncViewer: true });
     });
+    profilePhotoViewerImage?.addEventListener("click", () => {
+      if (profilePhotoViewer?.hidden || profilePhotoFullscreenElement()) return;
+      const activePhotoIndex = Math.max(0, Number(profilePhotoViewer.dataset.profilePhotoIndex || 0));
+      void requestProfilePhotoViewerFullscreen(profilePhotoViewer, activePhotoIndex);
+    });
     profilePhotoViewerPrevious?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -61463,7 +61490,7 @@
     });
     ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
       document.addEventListener(eventName, () => {
-        if (profilePhotoFullscreenElement() !== profilePhotoViewer) {
+        if (!profilePhotoViewerHasFullscreen(profilePhotoViewer)) {
           profilePhotoViewerOwnsFullscreen = false;
         }
       });

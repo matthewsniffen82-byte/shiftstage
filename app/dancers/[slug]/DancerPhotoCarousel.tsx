@@ -211,7 +211,7 @@ export function DancerPhotoCarousel({
 
   useEffect(() => {
     const onFullscreenChange = () => {
-      if (fullscreenElement() === viewerRoot.current) {
+      if (viewerHasFullscreen(viewerRoot.current)) {
         viewerOwnsFullscreen.current = true;
         const requestedIndex = viewerOpeningIndex.current ?? pendingViewerIndex.current;
         window.requestAnimationFrame(() => {
@@ -316,23 +316,38 @@ export function DancerPhotoCarousel({
 
   async function requestViewerFullscreen(requestedIndex: number) {
     const element = viewerRoot.current as FullscreenViewerElement | null;
-    if (!element || fullscreenElement()) {
+    if (!element) {
       settleViewerAtIndex(requestedIndex);
       return;
     }
-    const request = typeof element.requestFullscreen === "function"
-      ? () => element.requestFullscreen({ navigationUI: "hide" })
-      : typeof element.webkitRequestFullscreen === "function"
-        ? () => element.webkitRequestFullscreen?.()
-        : null;
-    if (!request) {
+    const activeFullscreenElement = fullscreenElement();
+    if (activeFullscreenElement) {
+      viewerOwnsFullscreen.current = viewerHasFullscreen(element, activeFullscreenElement);
       settleViewerAtIndex(requestedIndex);
       return;
     }
+    const root = document.documentElement as FullscreenViewerElement;
+    const targets = root === element ? [root] : [root, element];
     try {
-      await request();
-      viewerOwnsFullscreen.current = fullscreenElement() === element;
-    } catch {
+      for (const target of targets) {
+        const requests: Array<() => Promise<void> | void> = [];
+        if (typeof target.requestFullscreen === "function") {
+          requests.push(() => target.requestFullscreen({ navigationUI: "hide" }));
+          requests.push(() => target.requestFullscreen());
+        }
+        if (typeof target.webkitRequestFullscreen === "function") {
+          requests.push(() => target.webkitRequestFullscreen?.());
+        }
+        for (const request of requests) {
+          try {
+            await request();
+          } catch {
+            continue;
+          }
+          viewerOwnsFullscreen.current = viewerHasFullscreen(element);
+          if (viewerOwnsFullscreen.current) return;
+        }
+      }
       viewerOwnsFullscreen.current = false;
     } finally {
       settleViewerAtIndex(requestedIndex);
@@ -591,6 +606,9 @@ export function DancerPhotoCarousel({
                     draggable={false}
                     height={item.imageHeight || undefined}
                     loading={Math.abs(index - viewerIndex) <= 1 ? "eager" : "lazy"}
+                    onClick={() => {
+                      if (!fullscreenElement()) void requestViewerFullscreen(viewerIndex);
+                    }}
                     sizes="100vw"
                     src={item.imageUrl}
                     srcSet={item.imageSrcSet || undefined}
@@ -671,7 +689,7 @@ type FullscreenViewerDocument = Document & {
   webkitFullscreenElement?: Element | null;
 };
 
-type FullscreenViewerElement = HTMLDivElement & {
+type FullscreenViewerElement = HTMLElement & {
   webkitRequestFullscreen?: () => Promise<void> | void;
 };
 
@@ -679,6 +697,15 @@ function fullscreenElement() {
   return document.fullscreenElement ||
     (document as FullscreenViewerDocument).webkitFullscreenElement ||
     null;
+}
+
+function viewerHasFullscreen(
+  viewer: Element | null,
+  activeFullscreenElement = fullscreenElement(),
+) {
+  return Boolean(viewer && activeFullscreenElement) && (
+    activeFullscreenElement === viewer || activeFullscreenElement === document.documentElement
+  );
 }
 
 function ShareIcon() {
