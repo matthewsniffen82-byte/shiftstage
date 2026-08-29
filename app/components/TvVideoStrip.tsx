@@ -242,7 +242,10 @@ export function TvVideoStrip({
               ref={closeButton}
               onClick={() => setActiveVideo(null)}
             >
-              ×
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M6 6l12 12" />
+                <path d="M18 6 6 18" />
+              </svg>
             </button>
             <div
               className="tv-video-viewer-stage"
@@ -486,8 +489,9 @@ function TvVideoStripStyles() {
       .tv-video-viewer-shell { position: relative; width: 100%; max-width: none; height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 0; border-radius: 0; background: #000; box-shadow: none; overscroll-behavior: none; touch-action: none; }
       .tv-video-viewer-stage { position: relative; min-height: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; }
       .tv-video-viewer-stage > video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
-      .tv-video-viewer-close { position: absolute; z-index: 3; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.72); font-size: 28px; line-height: 1; cursor: pointer; }
-      .tv-video-viewer-previous, .tv-video-viewer-next { position: absolute; z-index: 2; top: 50%; width: 46px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.62); font-size: 34px; line-height: 1; transform: translateY(-50%); cursor: pointer; }
+      .tv-video-viewer-close { position: absolute; z-index: 3; top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)); right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px)); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50%; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); line-height: 1; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
+      .tv-video-viewer-close svg { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+      .tv-video-viewer-previous, .tv-video-viewer-next { position: absolute; z-index: 2; top: 50%; width: 46px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; color: rgba(255,255,255,.88); background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-size: 34px; line-height: 1; transform: translateY(-50%); cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
       .tv-video-viewer-previous { left: 12px; }
       .tv-video-viewer-next { right: 12px; }
       .tv-video-viewer-previous:disabled, .tv-video-viewer-next:disabled { opacity: .28; cursor: default; }
@@ -496,7 +500,8 @@ function TvVideoStripStyles() {
       .tv-video-viewer-footer strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
       .tv-video-viewer-footer span { color: #9fefff; font-size: 11px; font-weight: 850; }
       .tv-video-viewer-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-      .tv-video-viewer-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(126,234,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.12); font-weight: 900; cursor: pointer; }
+      .tv-video-viewer-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-weight: 900; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
+      .tv-video-viewer-close:hover, .tv-video-viewer-close:focus-visible, .tv-video-viewer-previous:hover:not(:disabled), .tv-video-viewer-previous:focus-visible:not(:disabled), .tv-video-viewer-next:hover:not(:disabled), .tv-video-viewer-next:focus-visible:not(:disabled), .tv-video-viewer-actions button:hover, .tv-video-viewer-actions button:focus-visible { border-color: rgba(255,255,255,.4); background-color: rgba(18,18,26,.62); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 0 2px rgba(126,234,255,.16), 0 12px 28px rgba(0,0,0,.36); }
       .tv-video-viewer-actions .tv-video-viewer-state-control { width: 42px; min-width: 42px; max-width: 42px; padding: 0; justify-self: center; }
       .tv-video-viewer-state-control svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .tv-video-viewer-state-control svg .is-fill { fill: currentColor; stroke: none; }

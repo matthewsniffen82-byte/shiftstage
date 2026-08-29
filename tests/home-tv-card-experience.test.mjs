@@ -301,6 +301,26 @@ test("full-view TV actions and identity clear the device bottom edge together", 
     homeSource,
     /\.home-tv-feed-fullscreen \{ position: relative; \}/,
   );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-full-view-close \{[\s\S]*?display: none;[\s\S]*?backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-full-view-close\[hidden\] \{[\s\S]*?display: none !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed:fullscreen \.home-tv-feed-full-view-close,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed \.home-tv-feed-full-view-close \{[\s\S]*?display: grid;/,
+  );
+  assert.match(
+    homeSource,
+    /function createHomeTvFeedFullViewCloseButton\(slide, video\)[\s\S]*?"home-tv-feed-full-view-close"[\s\S]*?button\.hidden = !homeTvFeedIsImmersive\(\)[\s\S]*?if \(!homeTvFeedIsImmersive\(\)\) return;[\s\S]*?toggleHomeTvFeedFullscreen\(slide, video\)/,
+  );
+  assert.match(
+    homeSource,
+    /function syncHomeTvFeedFullscreenButtons\(\)[\s\S]*?\[data-home-tv-full-view-close\][\s\S]*?button\.hidden = !feedIsFullscreen/,
+  );
 });
 
 test("empty schedules are hidden while real city, venue, and shift context remains", () => {
@@ -451,7 +471,7 @@ test("TV sound and fullscreen controls share the compact rail and remain icon-on
     /function createHomeTvFeedSoundButton\(slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedFullscreenButton)/,
   )?.[0] || "";
   const fullscreenFactory = homeSource.match(
-    /function createHomeTvFeedFullscreenButton\(slide, video\) \{[\s\S]*?(?=\n    function renderHomeTvFeedSlide)/,
+    /function createHomeTvFeedFullscreenButton\(slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedFullViewCloseButton)/,
   )?.[0] || "";
   assert.match(soundFactory, /sound\.className = "home-tv-feed-action home-tv-feed-sound"/);
   assert.match(soundFactory, /sound\.innerHTML = '<svg[\s\S]*?<\/svg>'/);

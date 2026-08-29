@@ -84,6 +84,37 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
 });
 
+test("dancer profile viewers reuse translucent TV glass without adding controls", () => {
+  const liveViewerActions = liveApp.match(
+    /<div class="profile-tv-viewer-actions">[\s\S]*?<\/div>/,
+  )?.[0] || "";
+  assert.match(
+    profileTvStrip,
+    /\.tv-video-viewer-close \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*background-image: linear-gradient\(155deg,[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
+  );
+  assert.match(profileTvStrip, /className="tv-video-viewer-close"[\s\S]*?<svg aria-hidden="true" viewBox="0 0 24 24">/);
+  assert.match(
+    profileTvStrip,
+    /\.tv-video-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
+  );
+  assert.equal((profileTvStrip.match(/className="tv-video-viewer-state-control"/g) || []).length, 2);
+  assert.equal((profileTvStrip.match(/<button type="button" onClick=\{\(\) => shareVideo\(activeVideo\)\}>Share<\/button>/g) || []).length, 1);
+
+  assert.match(
+    liveApp,
+    /\.profile-tv-viewer-close \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
+  );
+  assert.match(liveApp, /data-close-profile-tv aria-label="Close full-screen video">\$\{actionIconMarkup\("close"\)\}<\/button>/);
+  assert.match(
+    liveApp,
+    /\.profile-tv-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
+  );
+  assert.equal((liveViewerActions.match(/<button/g) || []).length, 3);
+  assert.match(liveViewerActions, /data-toggle-profile-tv-playback/);
+  assert.match(liveViewerActions, /data-toggle-profile-tv-sound/);
+  assert.match(liveViewerActions, /data-share-profile-tv/);
+});
+
 test("profile grid thumbnails stay passive while the full viewer has no thumbnail strip", () => {
   const loader =
     liveApp.match(
