@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   isAvatarFaceDetectionUnavailableError,
   isAvatarFaceRequiredError,
@@ -28,7 +29,11 @@ const MAX_RECENTER_BODY_BYTES = 4_096;
 export async function POST(request: Request) {
   try {
     authorizeMaintenanceRequest(request);
-    const body = await readRecenterBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_RECENTER_BODY_BYTES,
+      invalidMessage: "Invalid avatar maintenance request.",
+      tooLargeMessage: "Avatar maintenance request is too large.",
+    });
     const dancerSlug = cleanSlug(body?.dancerSlug);
     const admin = createAdminSupabaseClient();
     const { data: dancer, error: dancerError } = await admin
@@ -164,27 +169,6 @@ function cleanSlug(value: unknown) {
     throw invalid("Use a valid dancer profile slug.");
   }
   return slug;
-}
-
-async function readRecenterBody(request: Request): Promise<Record<string, unknown>> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_RECENTER_BODY_BYTES) {
-    throw invalid("Avatar maintenance request is too large.", 413);
-  }
-  const raw = await request.text();
-  if (Buffer.byteLength(raw, "utf8") > MAX_RECENTER_BODY_BYTES) {
-    throw invalid("Avatar maintenance request is too large.", 413);
-  }
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw invalid("Invalid avatar maintenance request.");
-    }
-    return parsed as Record<string, unknown>;
-  } catch (error) {
-    if (error instanceof PublicApiError) throw error;
-    throw invalid("Invalid avatar maintenance request.");
-  }
 }
 
 function invalid(message: string, status = 400) {

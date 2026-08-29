@@ -33,7 +33,9 @@ test("platform TV replacement and import batches are bounded and idempotent", ()
   assert.match(route, /already been prepared/);
   assert.match(route, /cleanupPreparedUploads/);
   assert.match(route, /const MAX_IMPORT_BODY_BYTES = 32_768/);
-  assert.match(route, /Buffer\.byteLength\(raw, "utf8"\) > MAX_IMPORT_BODY_BYTES/);
+  assert.match(route, /readBoundedJsonObject\(request, \{/);
+  assert.match(route, /maxBytes: MAX_IMPORT_BODY_BYTES/);
+  assert.match(route, /tooLargeMessage: "Import request is too large\."/);
 });
 
 test("platform TV import exposes only typed operator errors", () => {

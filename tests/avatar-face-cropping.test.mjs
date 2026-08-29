@@ -115,9 +115,11 @@ test("existing approved avatars can be securely reprocessed from an original app
 
 test("avatar maintenance bounds metadata and keeps infrastructure failures private", () => {
   assert.match(recenterRouteSource, /const MAX_RECENTER_BODY_BYTES = 4_096/);
+  assert.match(recenterRouteSource, /readBoundedJsonObject\(request, \{/);
+  assert.match(recenterRouteSource, /maxBytes: MAX_RECENTER_BODY_BYTES/);
   assert.match(
     recenterRouteSource,
-    /Buffer\.byteLength\(raw, "utf8"\) > MAX_RECENTER_BODY_BYTES/,
+    /tooLargeMessage: "Avatar maintenance request is too large\."/,
   );
   assert.match(recenterRouteSource, /throw forbidden\("Avatar maintenance access denied\."\)/);
   assert.match(recenterRouteSource, /new PublicApiError\("NOT_FOUND"/);

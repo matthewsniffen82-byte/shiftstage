@@ -9,10 +9,9 @@ const route = await readFile(
 
 test("NFC tap requests reject oversized bodies before processing", () => {
   assert.match(route, /const MAX_NFC_BODY_BYTES = 4_096/);
-  assert.match(route, /declaredLength > MAX_NFC_BODY_BYTES/);
-  assert.match(route, /raw\.length > MAX_NFC_BODY_BYTES/);
-  assert.match(route, /"Tap request is too large\.", 413/);
-  assert.match(route, /if \(error instanceof PublicApiError\) throw error/);
+  assert.match(route, /readBoundedJsonObject\(request, \{/);
+  assert.match(route, /maxBytes: MAX_NFC_BODY_BYTES/);
+  assert.match(route, /tooLargeMessage: "Tap request is too large\."/);
 });
 
 test("NFC tap requests preserve the strict session and tag boundaries", () => {

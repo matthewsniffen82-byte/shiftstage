@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { apiError, PublicApiError } from "@/src/lib/api";
+import { apiError } from "@/src/lib/api";
 import { resolveApiError } from "@/src/lib/api-error-policy";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   CashierDealRedemptionError,
   completeCashierDealRedemption,
@@ -46,7 +47,11 @@ export async function GET(_request: Request, context: RouteContext) {
 export async function POST(request: Request, context: RouteContext) {
   try {
     const { token } = await context.params;
-    const body = await readBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_NFC_BODY_BYTES,
+      invalidMessage: "Invalid tap request.",
+      tooLargeMessage: "Tap request is too large.",
+    });
     const sessionId = typeof body.sessionId === "string" ? body.sessionId.trim() : "";
     if (!UUID_PATTERN.test(sessionId)) {
       return NextResponse.json({ ok: false, error: "A valid tap session is required." }, { status: 400 });
@@ -160,25 +165,6 @@ function formatTapTime(value: unknown) {
     minute: "2-digit",
     timeZoneName: "short",
   }).format(parsed);
-}
-
-async function readBody(request: Request): Promise<Record<string, unknown>> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_NFC_BODY_BYTES) {
-    throw new PublicApiError("INVALID_REQUEST", "Tap request is too large.", 413);
-  }
-
-  try {
-    const raw = await request.text();
-    if (raw.length > MAX_NFC_BODY_BYTES) {
-      throw new PublicApiError("INVALID_REQUEST", "Tap request is too large.", 413);
-    }
-    const value = JSON.parse(raw);
-    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  } catch (error) {
-    if (error instanceof PublicApiError) throw error;
-    return {};
-  }
 }
 
 function inactiveTag() {

@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createMyDancrTvUpload,
   hideOwnMyDancrTvVideo,
@@ -42,7 +43,11 @@ type PreparedUpload = {
 export async function POST(request: Request) {
   try {
     authorizeImportRequest(request);
-    const body = await readImportBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_IMPORT_BODY_BYTES,
+      invalidMessage: "Invalid import request.",
+      tooLargeMessage: "Import request is too large.",
+    });
     const action = body?.action;
     if (action === "prepare") return prepareImport(body);
     if (action === "finalize") return finalizeImport(body);
@@ -291,25 +296,6 @@ function importMarker(batchId: string) {
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PLATFORM_IMPORT_BATCH_LIMIT = 30;
-
-async function readImportBody(request: Request): Promise<Record<string, unknown>> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_IMPORT_BODY_BYTES) {
-    throw invalid("Import request is too large.", 413);
-  }
-  const raw = await request.text();
-  if (Buffer.byteLength(raw, "utf8") > MAX_IMPORT_BODY_BYTES) throw invalid("Import request is too large.", 413);
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw invalid("Invalid import request.");
-    }
-    return parsed as Record<string, unknown>;
-  } catch (error) {
-    if (error instanceof PublicApiError) throw error;
-    throw invalid("Invalid import request.");
-  }
-}
 
 function invalid(message: string, status = 400) {
   return new PublicApiError(status === 409 ? "CONFLICT" : "INVALID_REQUEST", message, status);
