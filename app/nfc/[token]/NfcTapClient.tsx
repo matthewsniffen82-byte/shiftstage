@@ -46,7 +46,7 @@ export function NfcTapClient({ token }: { token: string }) {
   const tapAbortRef = useRef<AbortController | null>(null);
   const tapInFlightRef = useRef(false);
   const redirectTimerRef = useRef<number | null>(null);
-  const pendingIntent = useMemo(() => readPendingDealIntent(), []);
+  const pendingIntent = useMemo(() => readPendingDealIntent(token), [token]);
 
   useEffect(() => setAuth(readNfcAuthSession()), []);
 
@@ -59,6 +59,25 @@ export function NfcTapClient({ token }: { token: string }) {
       if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    tapAbortRef.current?.abort();
+    tapAbortRef.current = null;
+    tapInFlightRef.current = false;
+    autoSubmittedRef.current = false;
+    if (redirectTimerRef.current !== null) {
+      window.clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    setState(null);
+    setError("");
+    setStatus("Reading club tag…");
+    setPhase("reading");
+    setIsSubmitting(false);
+    setComplete(false);
+    setDancerActivationComplete(false);
+    setSelectedDealId("");
+  }, [token]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -305,7 +324,8 @@ function readOrCreateTapSessionId() {
   }
 }
 
-function readPendingDealIntent(): PendingDealIntent | null {
+function readPendingDealIntent(routeToken: string): PendingDealIntent | null {
+  if (!routeToken) return null;
   try {
     const value = JSON.parse(window.localStorage.getItem(DEAL_INTENT_KEY) || "null");
     if (!value || typeof value !== "object" || Date.now() - Number(value.savedAt || 0) > 12 * 60 * 60 * 1000) return null;

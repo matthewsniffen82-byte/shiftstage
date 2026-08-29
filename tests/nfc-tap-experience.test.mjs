@@ -86,6 +86,13 @@ test("NFC transactions prevent duplicate and stale phone-tap work", () => {
   assert.doesNotMatch(client, /\[isSubmitting, pendingIntent, selectedDealId, state, token\]/);
 });
 
+test("changing NFC route tokens cancels old transactions and resets the tap state", () => {
+  assert.match(client, /const pendingIntent = useMemo\(\(\) => readPendingDealIntent\(token\), \[token\]\);/);
+  assert.match(client, /useEffect\(\(\) => \{\s+tapAbortRef\.current\?\.abort\(\);[\s\S]*?autoSubmittedRef\.current = false;/);
+  assert.match(client, /setStatus\("Reading club tag…"\);[\s\S]*?setPhase\("reading"\);/);
+  assert.match(client, /setComplete\(false\);[\s\S]*?setSelectedDealId\(""\);\s+\}, \[token\]\);/);
+});
+
 test("Step 3 eligibility matches the submitted onboarding requirements", () => {
   assert.match(activationMigration, /create or replace function public\.approve_dancer_venue_affiliation_from_nfc/);
   assert.match(activationMigration, /create or replace function public\.register_dancer_nfc_enrollment/);
