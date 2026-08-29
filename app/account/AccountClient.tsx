@@ -11,6 +11,7 @@ import {
   type BrowserSessionRole,
 } from "@/src/lib/dancr/browser-session";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
 
 type AuthRole = "customer" | "dancer";
 type AuthMode = "login" | "signup";
@@ -85,8 +86,8 @@ export default function AccountClient() {
     const destination = new URL("/", window.location.origin);
     destination.searchParams.set("venueAccess", "1");
     destination.searchParams.set("venueMode", searchParams.get("mode") === "signup" ? "signup" : "login");
-    const returnTo = searchParams.get("return_to") || "";
-    if (returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+    const returnTo = safeLocalReturnPath(searchParams.get("return_to"));
+    if (returnTo) {
       destination.searchParams.set("return_to", returnTo);
     }
     window.location.replace(destination.toString());
@@ -293,10 +294,7 @@ export default function AccountClient() {
     const payload: Record<string, string> = { mode, role, email, password };
     if (mode === "signup" && role === "customer") payload.city = city;
     if (mode === "signup" && typeof window !== "undefined") {
-      const requestedReturnTo = searchParams.get("return_to") || "";
-      const safeReturnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
-        ? requestedReturnTo
-        : "";
+      const safeReturnTo = safeLocalReturnPath(searchParams.get("return_to"));
       const returnTo = role === "dancer" ? safeReturnTo || "/dashboard/dancer" : "/";
       payload.emailRedirectTo = `${window.location.origin}/auth/callback?dancr_confirm=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`;
     }
@@ -338,10 +336,7 @@ export default function AccountClient() {
       }
       setExistingSessionRole(data.account?.role || role);
       setStatus(role === "dancer" ? "Signed in. Opening your dancer dashboard..." : "Signed in. Opening your dashboard...");
-      const requestedReturnTo = searchParams.get("return_to") || "";
-      const safeReturnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
-        ? requestedReturnTo
-        : "";
+      const safeReturnTo = safeLocalReturnPath(searchParams.get("return_to"));
       router.push(safeReturnTo || destination);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted) return;

@@ -64443,6 +64443,25 @@
       return true;
     }
 
+    function safeLocalReturnPath(value) {
+      const requested = String(value || "").trim();
+      if (
+        !requested.startsWith("/")
+        || requested.startsWith("//")
+        || requested.includes("\\")
+        || /^\/%(?:2f|5c)/i.test(requested)
+        || /[\u0000-\u001f\u007f]/.test(requested)
+      ) return "";
+      try {
+        const base = new URL("https://return.mydancr.invalid");
+        const destination = new URL(requested, base);
+        if (destination.origin !== base.origin) return "";
+        return `${destination.pathname}${destination.search}${destination.hash}`;
+      } catch (error) {
+        return "";
+      }
+    }
+
     function handleVenueAccessDeepLink() {
       const url = new URL(window.location.href);
       const legacySignup = url.searchParams.get("venueSignup") === "1";
@@ -64452,10 +64471,7 @@
       if (!legacySignup && !venueAccessRequested && !venueRequestRequested) return false;
 
       const mode = legacySignup || url.searchParams.get("venueMode") === "signup" ? "signup" : "login";
-      const requestedReturnTo = String(url.searchParams.get("return_to") || "");
-      const safeReturnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
-        ? requestedReturnTo
-        : "";
+      const safeReturnTo = safeLocalReturnPath(url.searchParams.get("return_to"));
       url.searchParams.delete("venueSignup");
       url.searchParams.delete("venueAccess");
       url.searchParams.delete("venueRequest");

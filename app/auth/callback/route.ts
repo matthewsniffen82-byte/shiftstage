@@ -1,6 +1,7 @@
 import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { BROWSER_AUTH_SESSION_KEY } from "@/src/lib/dancr/browser-session";
+import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
 
 function callbackRedirectPath(request: Request, callbackSession: Awaited<ReturnType<typeof readCallbackSession>>) {
   const url = new URL(request.url);
-  const explicitReturnTo = safeReturnPath(url.searchParams.get("return_to"));
+  const explicitReturnTo = safeLocalReturnPath(url.searchParams.get("return_to"));
   const accountRole = callbackSession?.account?.role;
   const role = callbackRole(request, callbackSession);
 
@@ -51,7 +52,7 @@ function callbackRedirectPath(request: Request, callbackSession: Awaited<ReturnT
 
 function callbackRole(request: Request, callbackSession: Awaited<ReturnType<typeof readCallbackSession>>) {
   const url = new URL(request.url);
-  const explicitReturnTo = safeReturnPath(url.searchParams.get("return_to"));
+  const explicitReturnTo = safeLocalReturnPath(url.searchParams.get("return_to"));
   return (
     readCallbackRole(callbackSession?.account?.role) ||
     readCallbackRole(url.searchParams.get("role")) ||
@@ -67,16 +68,6 @@ function isPasswordResetCallback(request: Request) {
     url.searchParams.get("reset_target") === "account_password" ||
     url.searchParams.get("type") === "recovery"
   );
-}
-
-function safeReturnPath(value: string | null) {
-  if (!value) return "";
-  try {
-    const path = value.startsWith("http") ? new URL(value).pathname : value;
-    return path.startsWith("/") && !path.startsWith("//") ? path : "";
-  } catch {
-    return "";
-  }
 }
 
 function isLiveAppDestination(value: string) {
