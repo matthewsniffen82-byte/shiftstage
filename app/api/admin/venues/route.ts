@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAdminVenues, requireAdmin, transitionAdminManagedVenuePage, updateAdminVenue } from "@/src/lib/dancr/admin";
 import { getAdminVenueClaimCodes } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -7,6 +8,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_VENUE_ADMIN_BODY_BYTES = 32_768;
 
 export async function GET(request: Request) {
   try {
@@ -44,7 +46,11 @@ export async function PATCH(request: Request) {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_VENUE_ADMIN_BODY_BYTES,
+      invalidMessage: "Invalid venue admin request.",
+      tooLargeMessage: "Venue admin request is too large.",
+    });
     const venueId = typeof body?.venueId === "string" ? body.venueId.trim() : "";
 
     if (!venueId) {

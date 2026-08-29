@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   applyDmcaAdminAction,
@@ -21,6 +22,7 @@ const ACTIONS = new Set<DmcaAdminAction>([
   "restore",
   "close",
 ]);
+const MAX_DMCA_ADMIN_BODY_BYTES = 32_768;
 
 export async function GET(request: Request) {
   try {
@@ -37,7 +39,11 @@ export async function PATCH(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_DMCA_ADMIN_BODY_BYTES,
+      invalidMessage: "Invalid copyright admin request.",
+      tooLargeMessage: "Copyright admin request is too large.",
+    });
     const admin = createAdminSupabaseClient();
 
     if (body?.resource === "agent") {

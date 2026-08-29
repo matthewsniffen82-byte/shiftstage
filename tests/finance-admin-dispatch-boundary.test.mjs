@@ -13,7 +13,9 @@ const [adminClient, dispatch, input, result, route] = await Promise.all([
 test("admin finance transport authenticates before delegating one parsed request", () => {
   assert.match(route, /await requireAdmin\(client, user\.id\)/);
   assert.equal((route.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
-  assert.match(route, /const body = await request\.json\(\)\.catch\(\(\) => \(\{\}\)\)/);
+  assert.match(route, /const body = await readBoundedJsonObject\(request, \{/);
+  assert.match(route, /MAX_FINANCE_ADMIN_BODY_BYTES = 16_384/);
+  assert.doesNotMatch(route, /request\.json\(/);
   assert.match(route, /dispatchAdminFinanceAction\(admin, user\.id, body\)/);
   assert.match(route, /NextResponse\.json\(\{ \.\.\.result\.body, session: session \|\| null \}, \{ status: result\.status \}\)/);
   assert.doesNotMatch(route, /body\.action ===/);

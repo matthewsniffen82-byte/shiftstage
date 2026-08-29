@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin, resetManagedVenuePageReview } from "@/src/lib/dancr/admin";
 import {
   settleDealRevenueEvent,
@@ -20,6 +21,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_DEAL_ADMIN_BODY_BYTES = 32_768;
 
 export async function GET(request: Request) {
   try {
@@ -52,7 +54,7 @@ export async function POST(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    const body = await request.json().catch(() => ({}));
+    const body = await readDealAdminBody(request);
     const admin = createAdminSupabaseClient();
 
     if (body.action === "upsert_contract_deal") {
@@ -132,7 +134,7 @@ export async function PATCH(request: Request) {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
-    const body = await request.json();
+    const body = await readDealAdminBody(request);
     const settlementAction = body?.action === "venue_payment_received" ? body.action : null;
     if (settlementAction === "venue_payment_received") {
       const revenueEventId = typeof body?.revenueEventId === "string" ? body.revenueEventId.trim() : "";
@@ -171,4 +173,12 @@ export async function PATCH(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to update deal activity.");
   }
+}
+
+function readDealAdminBody(request: Request) {
+  return readBoundedJsonObject(request, {
+    maxBytes: MAX_DEAL_ADMIN_BODY_BYTES,
+    invalidMessage: "Invalid Club Deal admin request.",
+    tooLargeMessage: "Club Deal admin request is too large.",
+  });
 }

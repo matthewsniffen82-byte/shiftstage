@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   disableNatsAgentAffiliateLink, reconcileNatsAgentCommissionExport,
@@ -11,6 +12,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_SALES_AGENT_ADMIN_BODY_BYTES = 8_192;
 
 export async function GET(request: Request) {
   try {
@@ -23,7 +25,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request); await requireAdmin(client, user.id);
-    const body = await request.json().catch(() => ({})); const admin = createAdminSupabaseClient();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_SALES_AGENT_ADMIN_BODY_BYTES,
+      invalidMessage: "Invalid sales agent admin request.",
+      tooLargeMessage: "Sales agent admin request is too large.",
+    }); const admin = createAdminSupabaseClient();
     if (body.action === "set_agent") await setAdminSalesAgent(admin, {
       adminUserId: user.id, userId: required(body.userId, "Account is required."),
       sponsorAgentId: optional(body.sponsorAgentId), commissionDepthLimit: Number(body.commissionDepthLimit) === 5 ? 5 : 3,

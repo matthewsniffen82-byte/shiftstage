@@ -11,6 +11,16 @@ const routePaths = [
   "../app/api/admin/support/route.ts",
   "../app/api/admin/tv/videos/route.ts",
   "../app/api/admin/nfc-tags/route.ts",
+  "../app/api/admin/deals/route.ts",
+  "../app/api/admin/dmca/route.ts",
+  "../app/api/admin/finance/route.ts",
+  "../app/api/admin/pilot-analytics/route.ts",
+  "../app/api/admin/referral-fees/route.ts",
+  "../app/api/admin/sales-agents/route.ts",
+  "../app/api/admin/venue-claim-codes/route.ts",
+  "../app/api/admin/venue-signup-requests/route.ts",
+  "../app/api/admin/venues/media/route.ts",
+  "../app/api/admin/venues/route.ts",
 ];
 const sources = await Promise.all(routePaths.map((path) => readFile(new URL(path, import.meta.url), "utf8")));
 
@@ -31,4 +41,11 @@ test("video moderation preserves bounded-body status codes", () => {
   const videoReview = sources[6];
   assert.match(videoReview, /error instanceof PublicApiError/);
   assert.match(videoReview, /return apiError\(error,/);
+});
+
+test("admin venue request wrappers preserve bounded-body status codes", () => {
+  for (const index of [14, 15]) {
+    assert.match(sources[index], /error instanceof PublicApiError/, routePaths[index]);
+    assert.match(sources[index], /return apiError\(error,/, routePaths[index]);
+  }
 });

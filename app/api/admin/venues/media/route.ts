@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin, resetManagedVenuePageReview } from "@/src/lib/dancr/admin";
 import {
   deleteVenueCoverImageByAdmin,
@@ -12,6 +13,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_VENUE_MEDIA_ACTION_BODY_BYTES = 4_096;
 
 type VenueImageKind = "logo" | "cover";
 
@@ -46,7 +48,11 @@ export async function DELETE(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_VENUE_MEDIA_ACTION_BODY_BYTES,
+      invalidMessage: "Invalid venue media request.",
+      tooLargeMessage: "Venue media request is too large.",
+    });
     const venueId = typeof body?.venueId === "string" ? body.venueId.trim() : "";
     const kind = imageKind(typeof body?.kind === "string" ? body.kind : null);
     if (!venueId || !kind) {

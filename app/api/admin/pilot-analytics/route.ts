@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   getAdminPilotAnalytics,
@@ -11,6 +12,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_PILOT_REPORT_BODY_BYTES = 16_384;
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +34,11 @@ export async function POST(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    const body = await request.json().catch(() => ({}));
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_PILOT_REPORT_BODY_BYTES,
+      invalidMessage: "Invalid pilot report request.",
+      tooLargeMessage: "Pilot report request is too large.",
+    });
     const venueId = requiredUuid(body.venueId, "Pilot venue is required.");
     const serviceDate = requiredText(body.serviceDate, "Service date is required.");
     const totalDoorCount = Number(body.totalDoorCount);

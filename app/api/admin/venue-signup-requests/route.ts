@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   getAdminVenueSignupRequests,
@@ -11,6 +12,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_SIGNUP_REVIEW_BODY_BYTES = 16_384;
 
 export async function GET(request: Request) {
   try {
@@ -31,7 +33,11 @@ export async function POST(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_SIGNUP_REVIEW_BODY_BYTES,
+      invalidMessage: "Invalid venue signup review request.",
+      tooLargeMessage: "Venue signup review request is too large.",
+    });
     const decision = body?.decision === "approved" || body?.decision === "rejected"
       ? body.decision
       : "";
@@ -63,6 +69,9 @@ export async function POST(request: Request) {
       session: session || null,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
+    if (error instanceof PublicApiError) {
+      return apiError(error, "Unable to review the venue signup request.");
+    }
     const userMessage = error instanceof VenueSignupRequestUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_REVIEW_FAILED", error);
     return apiError(
