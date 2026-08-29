@@ -26,3 +26,10 @@ test("public venue access codes have explicit field and body limits", () => {
   assert.match(accessPreview, /MAX_ACCESS_CODE_BODY_BYTES = 2_048/);
   assert.match(accessPreview, /code\.length > 256/);
 });
+
+test("public venue writes preserve bounded-body status codes", () => {
+  for (const index of [6, 7]) {
+    assert.match(sources[index], /error instanceof PublicApiError/, routePaths[index]);
+    assert.match(sources[index], /return apiError\(error,/, routePaths[index]);
+  }
+});

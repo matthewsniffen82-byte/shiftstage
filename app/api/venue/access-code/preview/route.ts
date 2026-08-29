@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   AccountRecoveryRateLimitError,
@@ -47,6 +47,9 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof PublicApiError) {
+      return apiError(error, "Unable to verify this venue access code.");
+    }
     if (error instanceof AccountRecoveryRateLimitError) {
       return NextResponse.json(
         { ok: false, error: "Too many access-code checks. Wait a few minutes, then try again." },

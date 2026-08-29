@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createVenueSignupRequest,
@@ -44,6 +44,9 @@ export async function POST(request: Request) {
       { status: 201, headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
+    if (error instanceof PublicApiError) {
+      return apiError(error, "Unable to submit the venue request.");
+    }
     const userMessage = error instanceof VenueSignupRequestUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_FAILED", error);
     const status = userMessage.startsWith("Too many venue requests") ? 429 : userMessage ? 400 : 500;
