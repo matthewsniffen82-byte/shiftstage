@@ -52918,7 +52918,6 @@
                 <span id="profileTvViewerSchedule"></span>
               </div>
               <div class="profile-tv-viewer-actions">
-                <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-playback aria-label="Pause TV video">${modalVideoPlaybackIcon(false)}</button>
                 <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-sound aria-label="Turn TV video sound off">${modalVideoSoundIcon(false)}</button>
                 <button type="button" data-share-profile-tv aria-label="Share this profile video">${actionIconMarkup("share")}</button>
               </div>
@@ -52936,10 +52935,6 @@
         if (!target) return;
         if (target === overlay || target.closest("[data-close-profile-tv]")) {
           closeProfileTvViewer();
-          return;
-        }
-        if (target.closest("[data-toggle-profile-tv-playback]")) {
-          toggleProfileTvPlayback();
           return;
         }
         if (target.closest("[data-toggle-profile-tv-sound]")) {
@@ -52980,8 +52975,6 @@
         if (event.target instanceof HTMLVideoElement) toggleProfileTvPlayback();
       });
       stage.addEventListener("dblclick", (event) => event.preventDefault());
-      stage.addEventListener("play", syncProfileTvPlaybackControl, true);
-      stage.addEventListener("pause", syncProfileTvPlaybackControl, true);
       stage.addEventListener("volumechange", syncProfileTvSoundControl, true);
       ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
         document.addEventListener(eventName, () => {
@@ -53105,12 +53098,10 @@
       document.querySelector("[data-previous-profile-tv]").disabled = nextIndex <= 0;
       document.querySelector("[data-next-profile-tv]").disabled = nextIndex >= videos.length - 1;
       document.body.classList.add("profile-tv-viewer-open");
-      syncProfileTvPlaybackControl();
       syncProfileTvSoundControl();
       if (video) {
         void video.play().catch(() => {
-          syncProfileTvPlaybackControl();
-          document.getElementById("profileTvViewerStatus").textContent = "Tap Play to start this video.";
+          document.getElementById("profileTvViewerStatus").textContent = "Tap the video to start it.";
         });
       }
     }
@@ -53173,15 +53164,6 @@
       if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
     }
 
-    function syncProfileTvPlaybackControl() {
-      const video = activeProfileTvViewerVideo();
-      const button = document.querySelector("[data-toggle-profile-tv-playback]");
-      if (!button) return;
-      const paused = Boolean(video?.paused);
-      button.innerHTML = modalVideoPlaybackIcon(paused);
-      button.setAttribute("aria-label", paused ? "Play TV video" : "Pause TV video");
-    }
-
     function syncProfileTvSoundControl() {
       const video = activeProfileTvViewerVideo();
       const button = document.querySelector("[data-toggle-profile-tv-sound]");
@@ -53207,7 +53189,7 @@
       if (!video) return;
       if (video.paused) {
         void video.play().catch(() => {
-          document.getElementById("profileTvViewerStatus").textContent = "Tap Play again to start this video.";
+          document.getElementById("profileTvViewerStatus").textContent = "Tap the video again to start it.";
         });
       } else {
         video.pause();

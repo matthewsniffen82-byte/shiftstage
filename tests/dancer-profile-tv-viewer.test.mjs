@@ -22,8 +22,8 @@ test("profile videos have only thumbnail and fixed full-screen viewer sizes", ()
   assert.match(profileTvStrip, /\.tv-video-viewer-stage \{[^}]*touch-action: none;/);
   assert.match(profileTvStrip, /controlsList="nofullscreen noremoteplayback nodownload"/);
   assert.match(profileTvStrip, /disablePictureInPicture/);
-  assert.match(profileTvStrip, /<PlaybackStateIcon paused=\{viewerPaused\} \/>/);
   assert.match(profileTvStrip, /<SoundStateIcon muted=\{viewerMuted\} \/>/);
+  assert.doesNotMatch(profileTvStrip, /PlaybackStateIcon|aria-label=\{viewerPaused \? "Play video" : "Pause video"\}/);
   assert.doesNotMatch(profileTvStrip, /\{viewerPaused \? "Play" : "Pause"\}/);
   assert.doesNotMatch(profileTvStrip, /\{viewerMuted \? "Sound on" : "Sound off"\}/);
   assert.doesNotMatch(profileTvStrip, /requestFullscreen|:fullscreen|enterDeviceFullscreen/);
@@ -48,8 +48,8 @@ test("live profile viewer mirrors MyDancr TV with vertical profile-only video pa
   );
   assert.match(liveApp, /video\.setAttribute\("controlslist", "nofullscreen noremoteplayback nodownload"\)/);
   assert.match(liveApp, /video\.setAttribute\("disablepictureinpicture", ""\)/);
-  assert.match(liveApp, /data-toggle-profile-tv-playback aria-label="Pause TV video">\$\{modalVideoPlaybackIcon\(false\)\}/);
   assert.match(liveApp, /data-toggle-profile-tv-sound aria-label="Turn TV video sound off">\$\{modalVideoSoundIcon\(false\)\}/);
+  assert.doesNotMatch(liveApp, /data-toggle-profile-tv-playback/);
   assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?profileTvViewerScrollTarget\([\s\S]*?renderProfileTvViewerItem\(target\.index, \{ scroll: false \}\)/);
   assert.match(liveApp, /function renderProfileTvViewerSlides[\s\S]*?profile-tv-viewer-slide[\s\S]*?stage\.appendChild\(slide\)/);
   assert.match(
@@ -123,8 +123,9 @@ test("dancer profile viewers reuse translucent TV glass without adding controls"
     profileTvStrip,
     /\.tv-video-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
   );
-  assert.equal((profileTvStrip.match(/className="tv-video-viewer-state-control"/g) || []).length, 2);
+  assert.equal((profileTvStrip.match(/className="tv-video-viewer-state-control"/g) || []).length, 1);
   assert.equal((profileTvStrip.match(/<button type="button" onClick=\{\(\) => shareVideo\(activeVideo\)\}>Share<\/button>/g) || []).length, 1);
+  assert.match(profileTvStrip, /\.tv-video-viewer-actions \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 
   assert.match(
     liveApp,
@@ -135,8 +136,8 @@ test("dancer profile viewers reuse translucent TV glass without adding controls"
     liveApp,
     /\.profile-tv-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
   );
-  assert.equal((liveViewerActions.match(/<button/g) || []).length, 3);
-  assert.match(liveViewerActions, /data-toggle-profile-tv-playback/);
+  assert.equal((liveViewerActions.match(/<button/g) || []).length, 2);
+  assert.doesNotMatch(liveViewerActions, /data-toggle-profile-tv-playback/);
   assert.match(liveViewerActions, /data-toggle-profile-tv-sound/);
   assert.match(liveViewerActions, /data-share-profile-tv/);
 });

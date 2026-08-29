@@ -133,7 +133,7 @@ export function TvVideoStrip({
     }
 
     setViewerPaused(true);
-    setViewerStatus("Tap Play to start this video.");
+    setViewerStatus("Tap the video to start it.");
   }
 
   function toggleViewerSound() {
@@ -317,14 +317,6 @@ export function TvVideoStrip({
               </div>
               <div className="tv-video-viewer-actions">
                 <button
-                  aria-label={viewerPaused ? "Play video" : "Pause video"}
-                  className="tv-video-viewer-state-control"
-                  type="button"
-                  onClick={toggleViewerPlayback}
-                >
-                  <PlaybackStateIcon paused={viewerPaused} />
-                </button>
-                <button
                   aria-label={viewerMuted ? "Turn sound on" : "Mute video"}
                   className="tv-video-viewer-state-control"
                   type="button"
@@ -434,18 +426,6 @@ function formatVideoDate(publishedAt: string) {
   }).format(date);
 }
 
-function PlaybackStateIcon({ paused }: { paused: boolean }) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
-      {paused ? (
-        <path className="is-fill" d="m9 7 8 5-8 5Z" />
-      ) : (
-        <path className="is-fill" d="M7 6h3v12H7zM14 6h3v12h-3z" />
-      )}
-    </svg>
-  );
-}
-
 function SoundStateIcon({ muted }: { muted: boolean }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -499,7 +479,7 @@ function TvVideoStripStyles() {
       .tv-video-viewer-footer > div:first-child { min-width: 0; display: grid; gap: 3px; }
       .tv-video-viewer-footer strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
       .tv-video-viewer-footer span { color: #9fefff; font-size: 11px; font-weight: 850; }
-      .tv-video-viewer-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .tv-video-viewer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .tv-video-viewer-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-weight: 900; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
       .tv-video-viewer-close:hover, .tv-video-viewer-close:focus-visible, .tv-video-viewer-previous:hover:not(:disabled), .tv-video-viewer-previous:focus-visible:not(:disabled), .tv-video-viewer-next:hover:not(:disabled), .tv-video-viewer-next:focus-visible:not(:disabled), .tv-video-viewer-actions button:hover, .tv-video-viewer-actions button:focus-visible { border-color: rgba(255,255,255,.4); background-color: rgba(18,18,26,.62); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 0 2px rgba(126,234,255,.16), 0 12px 28px rgba(0,0,0,.36); }
       .tv-video-viewer-actions .tv-video-viewer-state-control { width: 42px; min-width: 42px; max-width: 42px; padding: 0; justify-self: center; }
