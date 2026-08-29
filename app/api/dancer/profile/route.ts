@@ -385,14 +385,13 @@ export async function PATCH(request: Request) {
       invalidMessage: "Invalid dancer profile request.",
       tooLargeMessage: "Dancer profile request is too large.",
     });
-    const db = client as any;
-
-    const { profile, error: profileError, supportsIsPublic } = await loadProfileForSave(db, user.id);
+    const { profile, error: profileError, supportsIsPublic } = await loadProfileForSave(client, user.id);
 
     if (profileError) throw profileError;
     if (!profile) {
       return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
     }
+    const db = createAdminSupabaseClient() as any;
     const protectedFieldsBefore = publicProfileState(profile);
     console.log("PROTECTED_FIELDS_BEFORE_SAVE", {
       profileId: profile.id,
@@ -500,7 +499,7 @@ export async function PATCH(request: Request) {
         socials: Array.isArray(body.socials),
       },
     });
-    const adminDb = createAdminSupabaseClient();
+    const adminDb = db;
     const submittedPhotoUrls = readProfilePhotoUrls(body);
     const { data: editorProfileBeforeSave, error: editorProfileBeforeSaveError } = await loadDancerProfile(client, user.id);
     if (editorProfileBeforeSaveError) throw editorProfileBeforeSaveError;

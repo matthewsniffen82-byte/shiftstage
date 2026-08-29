@@ -4,112 +4,8 @@ import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
 import { removeResponsiveImage } from "./responsive-image";
 import { removeArchivedOriginalMedia } from "./media-watermark";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
-import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
 
 type DancrClient = SupabaseClient;
-
-export type DancerProfileInput = {
-  dancerId: string;
-  stageName: string;
-  city: string;
-};
-
-export type UploadDancerPhotoInput = {
-  dancerId: string;
-  file: Blob;
-  fileName: string;
-  contentType?: string;
-  isPrimary?: boolean;
-  sortOrder?: number;
-  altText?: string;
-  replaceExisting?: boolean;
-};
-
-export async function updateDancerProfile(client: DancrClient, input: DancerProfileInput) {
-  const { error } = await client
-    .from("dancer_profiles")
-    .update({
-      stage_name: input.stageName,
-      city: input.city,
-    })
-    .eq("id", input.dancerId);
-
-  if (error) throw error;
-}
-
-export async function updateSocialLink(
-  client: DancrClient,
-  dancerId: string,
-  platform: SocialPlatform,
-  handle: string,
-  url: string,
-) {
-  const { error } = await client.from("social_links").upsert({
-    dancer_id: dancerId,
-    platform,
-    handle,
-    url,
-  });
-
-  if (error) throw error;
-}
-
-export async function uploadDancerPhoto(client: DancrClient, input: UploadDancerPhotoInput) {
-  if (!input.replaceExisting) {
-    await assertDancerPhotoLimit(client, input.dancerId);
-  }
-
-  const userId = await getCurrentUserId(client);
-  const storagePath = `${userId}/${input.dancerId}/${makeStorageFileName(input.fileName)}`;
-
-  const { error: uploadError } = await client.storage.from("dancer-photos").upload(storagePath, input.file, {
-    contentType: input.contentType,
-    upsert: false,
-  });
-
-  if (uploadError) throw uploadError;
-
-  const { data, error } = await client
-    .from("dancer_photos")
-    .insert({
-      dancer_id: input.dancerId,
-      storage_path: storagePath,
-      is_primary: input.isPrimary || false,
-      sort_order: input.sortOrder || 0,
-      alt_text: input.altText,
-      review_status: "pending",
-    })
-    .select("id, storage_path")
-    .single();
-
-  if (error) throw error;
-
-  const { error: profileError } = await client
-    .from("dancer_profiles")
-    .update({ photo_review_status: "pending" })
-    .eq("id", input.dancerId);
-
-  if (profileError) throw profileError;
-
-  return data;
-}
-
-export async function uploadOwnDancerPhoto(
-  client: DancrClient,
-  userId: string,
-  input: Omit<UploadDancerPhotoInput, "dancerId">,
-) {
-  const profile = await getOwnDancerProfile(client, userId);
-  const photo = await uploadDancerPhoto(client, {
-    ...input,
-    dancerId: profile.id,
-  });
-
-  return {
-    ...photo,
-    imageUrl: getDancerPhotoUrl(client, photo.storage_path),
-  };
-}
 
 export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, photoId: string, adminClient: DancrClient = client) {
   const profile = await getOwnDancerProfile(client, userId);
@@ -630,18 +526,6 @@ async function countRowsAll(client: DancrClient, table: string, idColumn: string
   return count || 0;
 }
 
-async function assertDancerPhotoLimit(client: DancrClient, dancerId: string) {
-  const { count, error } = await client
-    .from("dancer_photos")
-    .select("id", { count: "exact", head: true })
-    .eq("dancer_id", dancerId);
-
-  if (error) throw error;
-  if ((count || 0) >= MAX_DANCER_PROFILE_PHOTOS) {
-    throw new Error("Your profile picture library is full. Delete or replace a picture before adding more.");
-  }
-}
-
 async function countNotificationSubscribers(client: DancrClient, dancerId: string) {
   const { count, error } = await client
     .from("follows")
@@ -712,25 +596,4 @@ async function getTrendingSnapshot(client: DancrClient, dancerId: string) {
     previousRank: data?.previous_rank || null,
     rankChangeSinceYesterday: data?.previous_rank && data?.rank ? data.previous_rank - data.rank : null,
   };
-}
-
-async function getCurrentUserId(client: DancrClient) {
-  const { data, error } = await client.auth.getUser();
-  if (error) throw error;
-  if (!data.user) throw new Error("You must be signed in to upload files.");
-  return data.user.id;
-}
-
-function makeStorageFileName(fileName: string) {
-  const safeName = fileName
-    .toLowerCase()
-    .replace(/[^a-z0-9.]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-
-  const id = typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-  return `${id}-${safeName || "upload"}`;
 }
