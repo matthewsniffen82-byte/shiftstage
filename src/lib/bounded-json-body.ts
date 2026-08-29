@@ -10,16 +10,7 @@ export async function readBoundedJsonObject(
   request: Request,
   options: BoundedJsonObjectOptions,
 ): Promise<Record<string, unknown>> {
-  if (!Number.isSafeInteger(options.maxBytes) || options.maxBytes < 1) {
-    throw new Error("Bounded JSON body limit is misconfigured.");
-  }
-
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > options.maxBytes) {
-    throw tooLarge(options.tooLargeMessage);
-  }
-
-  const bytes = await readBytes(request.body, options.maxBytes, options.tooLargeMessage);
+  const bytes = await readBoundedRequestBytes(request, options.maxBytes, options.tooLargeMessage);
   let raw: string;
   try {
     raw = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -37,6 +28,23 @@ export async function readBoundedJsonObject(
     if (error instanceof PublicApiError) throw error;
     throw invalid(options.invalidMessage);
   }
+}
+
+export async function readBoundedRequestBytes(
+  request: Request,
+  maxBytes: number,
+  tooLargeMessage: string,
+) {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) {
+    throw new Error("Bounded request body limit is misconfigured.");
+  }
+
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    throw tooLarge(tooLargeMessage);
+  }
+
+  return readBytes(request.body, maxBytes, tooLargeMessage);
 }
 
 async function readBytes(

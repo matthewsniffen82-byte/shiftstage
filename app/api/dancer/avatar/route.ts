@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedFormData } from "@/src/lib/bounded-form-data";
 import {
   isAvatarFaceDetectionUnavailableError,
   isAvatarFaceRequiredError,
@@ -8,16 +9,22 @@ import { deleteOwnDancerAvatar } from "@/src/lib/dancr/dancer";
 import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
 import { isDancerIdentityReferenceRequiredError } from "@/src/lib/dancr/media-identity";
 import { PROFILE_AVATAR_CONTEXT } from "@/src/lib/dancr/photo-slot";
+import { MAX_DANCR_RAW_UPLOAD_BYTES } from "@/src/lib/dancr/image-validation";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_AVATAR_UPLOAD_BODY_BYTES = MAX_DANCR_RAW_UPLOAD_BYTES + 64 * 1024;
 
 export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    const formData = await request.formData();
+    const formData = await readBoundedFormData(request, {
+      maxBytes: MAX_AVATAR_UPLOAD_BODY_BYTES,
+      invalidMessage: "Invalid avatar upload request.",
+      tooLargeMessage: "Avatar upload request is too large.",
+    });
     const file = formData.get("file");
     if (!(file instanceof Blob)) {
       return NextResponse.json({ ok: false, error: "Avatar image is required." }, { status: 400 });
