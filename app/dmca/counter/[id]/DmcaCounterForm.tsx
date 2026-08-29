@@ -66,6 +66,13 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
   }, [caseId]);
 
   useEffect(() => {
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = null;
+    submitInFlightRef.current = false;
+    setDmcaCase(null);
+    setIsSubmitting(false);
+    setIsError(false);
+    setStatus("Loading copyright case…");
     const controller = new AbortController();
     void loadCase(controller.signal);
     return () => controller.abort();

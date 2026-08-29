@@ -98,6 +98,7 @@ test("counter-notice case loading cancels stale case requests", () => {
   assert.match(counterForm, /const loadCase = useCallback\(async \(signal: AbortSignal\) => \{/);
   assert.match(counterForm, /fetch\(`\/api\/dmca\/cases\/\$\{encodeURIComponent\(caseId\)\}`, \{[\s\S]*?signal,/);
   assert.equal((counterForm.match(/if \(signal\.aborted\) return;/g) || []).length, 3);
+  assert.match(counterForm, /useEffect\(\(\) => \{\s+submitAbortRef\.current\?\.abort\(\);[\s\S]*?setDmcaCase\(null\);[\s\S]*?setStatus\("Loading copyright case…"\);/);
   assert.match(counterForm, /const controller = new AbortController\(\);[\s\S]*?void loadCase\(controller\.signal\);[\s\S]*?return \(\) => controller\.abort\(\);/);
 });
 
