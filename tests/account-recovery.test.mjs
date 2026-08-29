@@ -86,6 +86,12 @@ test("standalone account actions prevent duplicate and stale submissions", () =>
   assert.match(accountPage, /if \(mountedRef\.current\) setIsSendingLoginHelp\(false\);/);
 });
 
+test("standalone account route changes reset stale authentication work", () => {
+  assert.match(accountPage, /useEffect\(\(\) => \{\s+setRole\(initialRole\);\s+setMode\(initialMode\);\s+clearFields\(\);\s+\}, \[clearFields, initialMode, initialRole, venueNfcToken\]\);/);
+  assert.match(accountPage, /const clearFields = useCallback\(\(\) => \{[\s\S]*?authAbortRef\.current\?\.abort\(\);[\s\S]*?passwordResetAbortRef\.current\?\.abort\(\);[\s\S]*?loginRecoveryAbortRef\.current\?\.abort\(\);[\s\S]*?\}, \[\]\);/);
+  assert.match(accountPage, /useEffect\(\(\) => \{\s+setNfcAccountContext\(null\);\s+setNfcContextStatus\(venueNfcToken \? "loading" : "idle"\);\s+if \(!venueNfcToken\) return;/);
+});
+
 test("password and email recovery actions remain readable on narrow screens", () => {
   assert.match(liveApp, /id="customerForgotPasswordBtn"[^>]*>Forgot password\?<\/button>/);
   assert.match(liveApp, /id="customerForgotLoginBtn"[^>]*>Forgot email\?<\/button>/);

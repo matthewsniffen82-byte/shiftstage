@@ -93,9 +93,10 @@ export default function AccountClient() {
   }, [isVenueAccessRedirect, searchParams]);
 
   useEffect(() => {
+    setNfcAccountContext(null);
+    setNfcContextStatus(venueNfcToken ? "loading" : "idle");
     if (!venueNfcToken) return;
     const controller = new AbortController();
-    setNfcContextStatus("loading");
 
     async function loadNfcAccountContext() {
       try {
@@ -189,7 +190,7 @@ export default function AccountClient() {
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [closeRecovery, recoveryView]);
 
-  function clearFields() {
+  const clearFields = useCallback(() => {
     authAbortRef.current?.abort();
     authAbortRef.current = null;
     authInFlightRef.current = false;
@@ -215,7 +216,13 @@ export default function AccountClient() {
     setRecoveryContactEmail("");
     setRecoveryDetails("");
     setRecoveryStatus("");
-  }
+  }, []);
+
+  useEffect(() => {
+    setRole(initialRole);
+    setMode(initialMode);
+    clearFields();
+  }, [clearFields, initialMode, initialRole, venueNfcToken]);
 
   function openRecovery(view: Exclude<RecoveryView, null>, event: ReactMouseEvent<HTMLButtonElement>) {
     const trigger = event.currentTarget;
