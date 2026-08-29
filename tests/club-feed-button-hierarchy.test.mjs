@@ -83,13 +83,11 @@ test("mobile Clubs cards keep one cross-platform header texture and a prominent 
   )?.[0] || "";
 
   assert.ok(parity, "the cross-platform venue-card refinement must exist");
-  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: var\(--dancr-mobile-venue-header-base, #0c0d12\) !important;[\s\S]*?rgba\(248, 250, 252, 0\.12\)[\s\S]*?var\(--dancr-mobile-venue-header-start, #252833\)[\s\S]*?var\(--dancr-mobile-venue-header-mid, #0c0d12\)[\s\S]*?var\(--dancr-mobile-venue-header-end, #191b24\)[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.16\)/);
-  assert.match(parity, /\.home-discovery-feed-shade \{[\s\S]*?var\(--dancr-mobile-venue-header-shade, rgba\(5, 6, 9, 0\.22\)\)/);
+  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #30343b !important;[\s\S]*?rgba\(248, 250, 252, 0\.12\)[\s\S]*?#5d616a 0%[\s\S]*?#30343c 66%[\s\S]*?#484c55 100%[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.16\)/);
+  assert.match(parity, /\.home-discovery-feed-shade \{[\s\S]*?rgba\(15, 17, 22, 0\.05\)/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(123, 255, 178, 0\.96\)[\s\S]*?rgba\(24, 190, 104, 0\.99\)[\s\S]*?0 0 26px rgba\(16, 185, 129, 0\.48\)/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \.action-icon \{[\s\S]*?#d8ffe7[\s\S]*?drop-shadow\(0 0 9px var\(--dancr-color-success-strong\)\)/);
-  assert.doesNotMatch(parity, /@supports not \(-webkit-touch-callout: none\)|html:is\(|body:is\(/);
-  assert.match(liveApp, /if \(isAndroid \|\| isSamsung\) \{[\s\S]*?--dancr-mobile-venue-header-base", "#30343b"[\s\S]*?--dancr-mobile-venue-header-start", "#5d616a"[\s\S]*?--dancr-mobile-venue-header-mid", "#30343c"[\s\S]*?--dancr-mobile-venue-header-end", "#484c55"[\s\S]*?--dancr-mobile-venue-header-shade", "rgba\(15, 17, 22, 0\.05\)"/);
-  assert.match(liveApp, /const isSamsung = \/SamsungBrowser\/i\.test\(ua\);/);
+  assert.doesNotMatch(parity, /--dancr-mobile-venue-header|@supports not \(-webkit-touch-callout: none\)|html:is\(|body:is\(/);
   assert.doesNotMatch(parity, /\n\s+(?:width|height|min-height|max-height|padding|margin|grid-template-columns):/);
 });
 
