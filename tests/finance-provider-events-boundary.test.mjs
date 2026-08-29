@@ -42,6 +42,13 @@ test("provider webhooks remain idempotently claimed and explicitly finalized", (
   assert.match(events, /failureReason\.slice\(0, 500\)/);
 });
 
+test("Stripe webhook failures keep provider and database details private", () => {
+  assert.match(route, /STRIPE_WEBHOOK_SIGNATURE_REJECTED[\s\S]*?error: "Invalid Stripe webhook\."/);
+  assert.match(route, /STRIPE_WEBHOOK_PROCESSING_FAILED[\s\S]*?error: "Unable to process Stripe webhook\."/);
+  assert.match(route, /function internalWebhookError\(error: unknown\)[\s\S]*?\.slice\(0, 500\)/);
+  assert.doesNotMatch(route, /error: error instanceof Error \? error\.message/);
+});
+
 test("payout completion and reversal preserve ledger and recovery controls", () => {
   assert.match(events, /from "\.\/finance-audit-log"/);
   assert.match(events, /rpc\("complete_dancer_payout_batch"/);

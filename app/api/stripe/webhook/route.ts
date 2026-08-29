@@ -33,8 +33,11 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(await request.text(), signature, getServerEnv("STRIPE_WEBHOOK_SECRET"));
   } catch (error) {
+    console.warn("STRIPE_WEBHOOK_SIGNATURE_REJECTED", {
+      message: internalWebhookError(error),
+    });
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Invalid Stripe webhook." },
+      { ok: false, error: "Invalid Stripe webhook." },
       { status: 400 },
     );
   }
@@ -90,15 +93,20 @@ export async function POST(request: Request) {
         }
         await finishPaymentProviderWebhook(admin, "stripe", event.id);
       } catch (error) {
-        await finishPaymentProviderWebhook(admin, "stripe", event.id, error instanceof Error ? error.message : "Webhook processing failed.");
+        await finishPaymentProviderWebhook(admin, "stripe", event.id, internalWebhookError(error));
         throw error;
       }
     }
 
     return NextResponse.json({ ok: true, received: true });
   } catch (error) {
+    console.error("STRIPE_WEBHOOK_PROCESSING_FAILED", {
+      eventId: event.id,
+      eventType: event.type,
+      message: internalWebhookError(error),
+    });
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to process Stripe webhook." },
+      { ok: false, error: "Unable to process Stripe webhook." },
       { status: 500 },
     );
   }
@@ -119,4 +127,8 @@ function isFinanceEvent(type: string) {
     "transfer.created",
     "transfer.reversed",
   ].includes(type);
+}
+
+function internalWebhookError(error: unknown) {
+  return (error instanceof Error ? error.message : "Webhook processing failed.").slice(0, 500);
 }
