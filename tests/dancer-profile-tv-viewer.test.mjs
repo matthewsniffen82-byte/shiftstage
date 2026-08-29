@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [profileTvStrip, liveApp] = await Promise.all([
+const [profileTvStrip, liveApp, aestheticCss, buttonCss] = await Promise.all([
   readFile(new URL("../app/components/TvVideoStrip.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-button-system.v1.css", import.meta.url), "utf8"),
 ]);
 
 test("profile videos have only thumbnail and fixed full-screen viewer sizes", () => {
@@ -88,6 +90,30 @@ test("dancer profile viewers reuse translucent TV glass without adding controls"
   const liveViewerActions = liveApp.match(
     /<div class="profile-tv-viewer-actions">[\s\S]*?<\/div>/,
   )?.[0] || "";
+  const sharedTvGlass = aestheticCss.match(
+    /\/\* TV utility controls remain neutral[\s\S]*?(?=\/\* Active applause)/,
+  )?.[0] || "";
+  const quietMediaPaging = buttonCss.match(
+    /\/\* Media paging stays visually quiet[\s\S]*?(?=\.dancr-button-system :is\(\s*\.profile-modal-media-previous,[\s\S]*?:disabled)/,
+  )?.[0] || "";
+
+  assert.match(sharedTvGlass, /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\)/);
+  for (const selector of [
+    ".profile-tv-viewer-close",
+    ".profile-tv-viewer-previous",
+    ".profile-tv-viewer-next",
+    ".profile-tv-viewer-actions button",
+    ".tv-video-viewer-close",
+    ".tv-video-viewer-previous",
+    ".tv-video-viewer-next",
+    ".tv-video-viewer-actions button",
+  ]) {
+    assert.match(sharedTvGlass, new RegExp(selector.replaceAll(".", "\\.")));
+  }
+  assert.match(sharedTvGlass, /background-color: var\(--dancr-color-black-soft\) !important;/);
+  assert.match(sharedTvGlass, /backdrop-filter: blur\(14px\) saturate\(1\.08\) !important;/);
+  assert.doesNotMatch(quietMediaPaging, /profile-tv-viewer-(?:previous|next)/);
+
   assert.match(
     profileTvStrip,
     /\.tv-video-viewer-close \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*background-image: linear-gradient\(155deg,[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,

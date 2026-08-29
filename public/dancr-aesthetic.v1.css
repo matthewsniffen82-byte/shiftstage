@@ -1949,7 +1949,15 @@ body.dancr-button-system :is(
  * bright video without turning the action rail into solid charcoal. */
 body.dancr-button-system :is(
   .home-tv-feed-sound,
-  .home-tv-feed-action:not(.home-tv-feed-deal-action)
+  .home-tv-feed-action:not(.home-tv-feed-deal-action),
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions button,
+  .tv-video-viewer-close,
+  .tv-video-viewer-previous,
+  .tv-video-viewer-next,
+  .tv-video-viewer-actions button
 ),
 .tv-shell .tv-sound {
   border-color: var(--dancr-color-white-medium) !important;
@@ -1967,7 +1975,15 @@ body.dancr-button-system :is(
 
 body.dancr-button-system :is(
   .home-tv-feed-sound,
-  .home-tv-feed-action:not(.home-tv-feed-deal-action)
+  .home-tv-feed-action:not(.home-tv-feed-deal-action),
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions button,
+  .tv-video-viewer-close,
+  .tv-video-viewer-previous,
+  .tv-video-viewer-next,
+  .tv-video-viewer-actions button
 ) svg,
 .tv-shell .tv-sound svg {
   -webkit-filter: drop-shadow(0 1px 2px var(--dancr-color-black-strong)) !important;
@@ -1976,7 +1992,15 @@ body.dancr-button-system :is(
 
 body.dancr-button-system :is(
   .home-tv-feed-sound,
-  .home-tv-feed-action:not(.home-tv-feed-deal-action)
+  .home-tv-feed-action:not(.home-tv-feed-deal-action),
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions button,
+  .tv-video-viewer-close,
+  .tv-video-viewer-previous,
+  .tv-video-viewer-next,
+  .tv-video-viewer-actions button
 ):hover,
 .tv-shell .tv-sound:hover {
   border-color: var(--dancr-color-white-medium) !important;
@@ -2353,6 +2377,14 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
 ) :is(
   .home-tv-feed-sound,
   .home-tv-feed-action:not(.home-tv-feed-deal-action),
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions button,
+  .tv-video-viewer-close,
+  .tv-video-viewer-previous,
+  .tv-video-viewer-next,
+  .tv-video-viewer-actions button,
   .tv-shell .tv-sound
 ) {
   border-color: var(--dancr-color-white-medium) !important;
@@ -2377,6 +2409,14 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
 ) :is(
   .home-tv-feed-sound,
   .home-tv-feed-action:not(.home-tv-feed-deal-action),
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions button,
+  .tv-video-viewer-close,
+  .tv-video-viewer-previous,
+  .tv-video-viewer-next,
+  .tv-video-viewer-actions button,
   .tv-shell .tv-sound
 ) svg {
   -webkit-filter: drop-shadow(0 1px 2px var(--dancr-color-black-strong)) !important;
@@ -5552,7 +5592,15 @@ body.dancr-button-system :is(.home-tv-feed-position, .home-tv-feed-media-positio
 
 body.dancr-button-system :is(
     .home-tv-feed-sound,
-    .home-tv-feed-action:not(.home-tv-feed-deal-action)
+    .home-tv-feed-action:not(.home-tv-feed-deal-action),
+    .profile-tv-viewer-close,
+    .profile-tv-viewer-previous,
+    .profile-tv-viewer-next,
+    .profile-tv-viewer-actions button,
+    .tv-video-viewer-close,
+    .tv-video-viewer-previous,
+    .tv-video-viewer-next,
+    .tv-video-viewer-actions button
   ),
 .tv-shell .tv-sound {
   border-color: var(--dancr-color-white-medium) !important;
@@ -5588,7 +5636,15 @@ body.dancr-button-system :is(
     .home-tv-feed-venue,
     .home-tv-feed-sound,
     .home-tv-feed-action,
-    .home-tv-feed-report-option
+    .home-tv-feed-report-option,
+    .profile-tv-viewer-close,
+    .profile-tv-viewer-previous,
+    .profile-tv-viewer-next,
+    .profile-tv-viewer-actions button,
+    .tv-video-viewer-close,
+    .tv-video-viewer-previous,
+    .tv-video-viewer-next,
+    .tv-video-viewer-actions button
   ):focus-visible,
 .tv-shell :is(.tv-card-stage-link, .tv-card-venue-line, .tv-sound, .tv-playback-retry):focus-visible {
   border-color: var(--dancr-color-brand-primary-strong) !important;

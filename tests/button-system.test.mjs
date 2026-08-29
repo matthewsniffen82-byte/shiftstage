@@ -127,7 +127,7 @@ test("profile media thumbnails and play controls retain their gallery-specific s
   assert.match(buttonCss, /Media paging stays visually quiet while preserving a full mobile tap target/);
   assert.match(
     buttonCss,
-    /\.profile-modal-media-previous,[\s\S]*?\.profile-tv-viewer-next[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 12px !important;[\s\S]*?background: rgba\(0, 0, 0, 0\.06\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;/,
+    /\.profile-modal-media-previous,[\s\S]*?\.profile-modal-media-next[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 12px !important;[\s\S]*?background: rgba\(0, 0, 0, 0\.06\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     buttonCss,

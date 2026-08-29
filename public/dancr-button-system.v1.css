@@ -463,9 +463,7 @@
 /* Media paging stays visually quiet while preserving a full mobile tap target. */
 .dancr-button-system :is(
   .profile-modal-media-previous,
-  .profile-modal-media-next,
-  .profile-tv-viewer-previous,
-  .profile-tv-viewer-next
+  .profile-modal-media-next
 ) {
   border: 0 !important;
   border-radius: 12px !important;
@@ -479,9 +477,7 @@
 
 .dancr-button-system :is(
   .profile-modal-media-previous,
-  .profile-modal-media-next,
-  .profile-tv-viewer-previous,
-  .profile-tv-viewer-next
+  .profile-modal-media-next
 ):hover {
   border: 0 !important;
   background: rgba(0, 0, 0, 0.16) !important;
@@ -491,9 +487,7 @@
 
 .dancr-button-system :is(
   .profile-modal-media-previous,
-  .profile-modal-media-next,
-  .profile-tv-viewer-previous,
-  .profile-tv-viewer-next
+  .profile-modal-media-next
 ):focus-visible {
   border: 0 !important;
   background: rgba(0, 0, 0, 0.22) !important;
