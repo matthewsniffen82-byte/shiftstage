@@ -11098,7 +11098,8 @@ body.dancr-button-system :is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art:not(.has-custom-photo) {
-    background:
+    background-color: var(--dancr-mobile-venue-header-base, #0c0d12) !important;
+    background-image:
       repeating-linear-gradient(
         115deg,
         rgba(248, 250, 252, 0.12) 0 1px,
@@ -11107,10 +11108,25 @@ body.dancr-button-system :is(
       ),
       linear-gradient(112deg, transparent 5%, rgba(248, 250, 252, 0.16) 28%, transparent 48%),
       radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.18), transparent 46%),
-      linear-gradient(145deg, #252833 0%, #0c0d12 66%, #191b24 100%) !important;
+      linear-gradient(
+        145deg,
+        var(--dancr-mobile-venue-header-start, #252833) 0%,
+        var(--dancr-mobile-venue-header-mid, #0c0d12) 66%,
+        var(--dancr-mobile-venue-header-end, #191b24) 100%
+      ) !important;
     box-shadow:
       inset 0 1px 0 rgba(248, 250, 252, 0.16),
       inset 0 -1px 0 rgba(248, 250, 252, 0.08) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-discovery-feed-shade {
+    background: linear-gradient(
+      180deg,
+      transparent 62%,
+      var(--dancr-mobile-venue-header-shade, rgba(5, 6, 9, 0.22))
+    ) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -11136,36 +11152,6 @@ body.dancr-button-system :is(
     filter: drop-shadow(0 0 9px var(--dancr-color-success-strong)) !important;
   }
 
-  /* Chromium-based Android browsers paint the shared metal gradient darker
-   * than iOS WebKit. Use feature detection instead of UA classes so every
-   * Android browser receives the same restrained graphite lift while the
-   * existing iPhone treatment remains unchanged. */
-  @supports not (-webkit-touch-callout: none) {
-    body.dancr-button-system > .app main.stack > section.stack
-      > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-      .home-venue-discovery-art:not(.has-custom-photo) {
-      background-color: #2b2e34 !important;
-      background-image:
-        repeating-linear-gradient(
-          115deg,
-          rgba(248, 250, 252, 0.18) 0 1px,
-          rgba(248, 250, 252, 0.06) 1px 2px,
-          transparent 2px 6px
-        ),
-        linear-gradient(112deg, transparent 4%, rgba(248, 250, 252, 0.24) 28%, transparent 49%),
-        radial-gradient(circle at 50% 42%, rgba(248, 250, 252, 0.1), transparent 48%),
-        linear-gradient(145deg, #4f525a 0%, #24272d 66%, #3a3d44 100%) !important;
-      box-shadow:
-        inset 0 1px 0 rgba(248, 250, 252, 0.24),
-        inset 0 -1px 0 rgba(248, 250, 252, 0.1) !important;
-    }
-
-    body.dancr-button-system > .app main.stack > section.stack
-      > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-      .home-discovery-feed-shade {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 70%, rgba(15, 17, 22, 0.08)) !important;
-    }
-  }
 }
 
 /* Give the mobile dancer identity a stronger portrait hierarchy. The close
