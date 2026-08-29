@@ -77,17 +77,17 @@ test("mobile Clubs cards use visible matte gutters and neutral separation", () =
   assert.match(hierarchy, /> #results\.home-discovery-feed\.home-venue-discovery-feed \{\s+gap: 28px !important;/);
 });
 
-test("mobile Clubs cards keep one cross-platform header texture and a prominent active Deal", () => {
+test("mobile Clubs cards keep one contrasting graphite-indigo header texture and a prominent active Deal", () => {
   const parity = aesthetic.match(
     /\/\* The legacy \.venue glass rule applies backdrop blur[\s\S]*?(?=\/\* Give the mobile dancer identity)/,
   )?.[0] || "";
 
   assert.ok(parity, "the cross-platform venue-card refinement must exist");
   assert.match(parity, /> #results\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?-webkit-backdrop-filter: none !important;[\s\S]*?backdrop-filter: none !important;/);
-  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #30343b !important;[\s\S]*?rgba\(248, 250, 252, 0\.12\)[\s\S]*?#5d616a 0%[\s\S]*?#30343c 66%[\s\S]*?#484c55 100%[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.16\)/);
+  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #171a28 !important;[\s\S]*?rgba\(248, 250, 252, 0\.075\)[\s\S]*?rgba\(139, 92, 246, 0\.22\)[\s\S]*?#262a3d 0%[\s\S]*?#151824 66%[\s\S]*?#202337 100%[\s\S]*?inset 0 -1px 0 rgba\(167, 139, 250, 0\.18\)/);
   assert.match(parity, /\.home-discovery-feed-shade \{[\s\S]*?rgba\(15, 17, 22, 0\.05\)/);
-  assert.match(parity, /Android retains the shared direct-paint path[\s\S]*?html\.is-android body\.dancr-button-system[\s\S]*?html\.is-samsung-browser body\.dancr-button-system[\s\S]*?body\.is-android\.dancr-button-system[\s\S]*?body\.is-samsung-browser\.dancr-button-system[\s\S]*?\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #555861 !important;[\s\S]*?rgba\(248, 250, 252, 0\.20\)[\s\S]*?rgba\(241, 238, 255, 0\.32\)[\s\S]*?rgba\(167, 139, 250, 0\.22\)[\s\S]*?#42454d 0%[\s\S]*?#757983 50%[\s\S]*?#42454d 100%/);
-  assert.match(parity, /Do not rely solely on UA-derived Android classes[\s\S]*?@supports not \(-webkit-touch-callout: none\) \{[\s\S]*?\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #555861 !important;[\s\S]*?#757983 50%[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/);
+  assert.match(parity, /Android retains the shared direct-paint path[\s\S]*?html\.is-android body\.dancr-button-system[\s\S]*?html\.is-samsung-browser body\.dancr-button-system[\s\S]*?body\.is-android\.dancr-button-system[\s\S]*?body\.is-samsung-browser\.dancr-button-system[\s\S]*?\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #24263a !important;[\s\S]*?rgba\(248, 250, 252, 0\.11\)[\s\S]*?rgba\(241, 238, 255, 0\.20\)[\s\S]*?rgba\(167, 139, 250, 0\.23\)[\s\S]*?#171927 0%[\s\S]*?#373951 50%[\s\S]*?#171927 100%/);
+  assert.match(parity, /Do not rely solely on UA-derived Android classes[\s\S]*?@supports not \(-webkit-touch-callout: none\) \{[\s\S]*?\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #24263a !important;[\s\S]*?#373951 50%[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/);
   assert.match(parity, /fictional SVGs already contain their own soft neon treatment[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(123, 255, 178, 0\.96\)[\s\S]*?rgba\(24, 190, 104, 0\.99\)[\s\S]*?0 0 26px rgba\(16, 185, 129, 0\.48\)/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \.action-icon \{[\s\S]*?#d8ffe7[\s\S]*?drop-shadow\(0 0 9px var\(--dancr-color-success-strong\)\)/);
