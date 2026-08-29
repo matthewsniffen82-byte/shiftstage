@@ -11135,6 +11135,35 @@ body.dancr-button-system :is(
       linear-gradient(90deg, #42454d 0%, #63666f 24%, #757983 50%, #63666f 76%, #42454d 100%) !important;
   }
 
+  /* Do not rely solely on UA-derived Android classes for this material. Mobile
+   * Chromium does not implement WebKit's touch-callout property, while iPhone
+   * WebKit does. This narrow capability fallback paints only fictional venue
+   * logo headers, so Samsung/Chrome receive the graphite material even when
+   * their Android identity is unavailable to the bootstrap script. */
+  @supports not (-webkit-touch-callout: none) {
+    body.dancr-button-system > .app main.stack > section.stack
+      > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+      .home-venue-discovery-art:not(.has-custom-photo) {
+      background-color: #555861 !important;
+      background-image:
+        repeating-linear-gradient(
+          115deg,
+          rgba(248, 250, 252, 0.20) 0 1px,
+          rgba(248, 250, 252, 0.06) 1px 2px,
+          transparent 2px 6px
+        ),
+        radial-gradient(ellipse 62% 94% at 50% 48%, rgba(241, 238, 255, 0.32) 0%, rgba(167, 139, 250, 0.22) 34%, transparent 70%),
+        linear-gradient(90deg, #42454d 0%, #63666f 24%, #757983 50%, #63666f 76%, #42454d 100%) !important;
+    }
+
+    body.dancr-button-system > .app main.stack > section.stack
+      > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+      .home-venue-discovery-logo {
+      filter: none !important;
+      -webkit-filter: none !important;
+    }
+  }
+
   /* The fictional SVGs already contain their own soft neon treatment. Avoid
    * Android's nested SVG/CSS shadow compositor, which turns that glow muddy. */
   html.is-android body.dancr-button-system > .app main.stack > section.stack
