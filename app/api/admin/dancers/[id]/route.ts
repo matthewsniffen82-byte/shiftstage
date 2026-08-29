@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   deleteAdminDancerProfile,
   getAdminDancerDetail,
@@ -16,6 +17,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_DANCER_LIFECYCLE_BODY_BYTES = 4_096;
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -54,7 +56,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_DANCER_LIFECYCLE_BODY_BYTES,
+      invalidMessage: "Invalid dancer lifecycle request.",
+      tooLargeMessage: "Dancer lifecycle request is too large.",
+    });
     const action = body?.action === "disable" || body?.action === "reactivate" ? body.action : "";
     const reason = typeof body?.reason === "string" ? body.reason.trim() : "";
     if (!action) {

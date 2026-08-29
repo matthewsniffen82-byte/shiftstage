@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getApprovalQueue, requireAdmin, reviewDancerProfile, reviewSubmissionContent } from "@/src/lib/dancr/admin";
 import type { ReviewStatus } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -9,6 +10,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const REVIEW_STATUSES = new Set(["approved", "rejected"]);
+const MAX_APPROVAL_BODY_BYTES = 16_384;
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +34,11 @@ export async function POST(request: Request) {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_APPROVAL_BODY_BYTES,
+      invalidMessage: "Invalid approval request.",
+      tooLargeMessage: "Approval request is too large.",
+    });
     const dancerId = typeof body?.dancerId === "string" ? body.dancerId.trim() : "";
     const status = typeof body?.status === "string" ? body.status.trim() : "";
     const notes = typeof body?.notes === "string" ? body.notes.trim() : null;

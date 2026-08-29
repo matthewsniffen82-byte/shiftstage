@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   getAdminMyDancrTvVideos,
@@ -12,6 +13,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
+const MAX_VIDEO_REVIEW_BODY_BYTES = 8_192;
 
 export async function GET(request: Request) {
   try {
@@ -29,7 +31,11 @@ export async function POST(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_VIDEO_REVIEW_BODY_BYTES,
+      invalidMessage: "Invalid video review request.",
+      tooLargeMessage: "Video review request is too large.",
+    });
     const videoId = typeof body?.videoId === "string" ? body.videoId.trim() : "";
     if (!UUID_PATTERN.test(videoId)) {
       return NextResponse.json({ ok: false, error: "Choose a valid video." }, { status: 400 });
@@ -70,6 +76,9 @@ export async function POST(request: Request) {
       session: session || null,
     });
   } catch (error) {
+    if (error instanceof PublicApiError) {
+      return apiError(error, "Unable to review MyDancr TV video.");
+    }
     const message = error instanceof Error ? error.message : "";
     if (VIDEO_REVIEW_CLIENT_ERRORS.has(message)) {
       return apiError(error, "Unable to review MyDancr TV video.", 400);

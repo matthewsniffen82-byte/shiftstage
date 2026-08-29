@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAdminVenues, requireAdmin } from "@/src/lib/dancr/admin";
 import {
   createAdminVenueNfcTag,
@@ -13,6 +14,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_NFC_ADMIN_BODY_BYTES = 4_096;
 
 export async function GET(request: Request) {
   try {
@@ -124,12 +126,11 @@ export async function PATCH(request: Request) {
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
-  try {
-    const value = await request.json();
-    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  } catch {
-    return {};
-  }
+  return readBoundedJsonObject(request, {
+    maxBytes: MAX_NFC_ADMIN_BODY_BYTES,
+    invalidMessage: "Invalid NFC inventory request.",
+    tooLargeMessage: "NFC inventory request is too large.",
+  });
 }
 
 function noStore(body: Record<string, unknown>, status = 200) {

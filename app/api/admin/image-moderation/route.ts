@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   APPROVED_PHOTO_BUCKET,
@@ -24,6 +25,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const REVIEW_DECISIONS = new Set(["approved", "rejected"]);
+const MAX_IMAGE_REVIEW_BODY_BYTES = 8_192;
 
 export async function GET(request: Request) {
   try {
@@ -59,7 +61,11 @@ export async function POST(request: Request) {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const admin = createAdminSupabaseClient() as any;
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_IMAGE_REVIEW_BODY_BYTES,
+      invalidMessage: "Invalid image moderation request.",
+      tooLargeMessage: "Image moderation request is too large.",
+    });
     const recordId = typeof body?.recordId === "string" ? body.recordId.trim() : "";
     const decision = typeof body?.decision === "string" ? body.decision.trim() : "";
     const notes = typeof body?.notes === "string" ? body.notes.trim() : "";
