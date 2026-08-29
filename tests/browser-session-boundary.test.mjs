@@ -219,6 +219,7 @@ test("venue invitation discovery cancels stale token loads", () => {
   assert.match(venueInvitationSource, /fetch\(`\/api\/venue\/team\/invitations\?token=\$\{encodeURIComponent\(token\)\}`, \{[\s\S]*?signal: controller\.signal/);
   assert.equal((venueInvitationSource.match(/if \(controller\.signal\.aborted\) return;/g) || []).length, 2);
   assert.match(venueInvitationSource, /return \(\) => controller\.abort\(\);/);
+  assert.match(venueInvitationSource, /useEffect\(\(\) => \{\s+submitAbortRef\.current\?\.abort\(\);[\s\S]*?setInvitation\(null\);[\s\S]*?setPassword\(""\);[\s\S]*?setStatus\("Checking invitation…"\);/);
   assert.doesNotMatch(venueInvitationSource, /let cancelled = false;/);
 });
 
@@ -231,4 +232,6 @@ test("venue invitation acceptance prevents duplicate and stale submissions", () 
   assert.match(venueInvitationSource, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return;/);
   assert.match(venueInvitationSource, /submitAbortRef\.current\?\.abort\(\);/);
   assert.match(venueInvitationSource, /if \(mountedRef\.current && !redirecting\) setIsWorking\(false\);/);
+  assert.match(venueInvitationSource, /disabled=\{isWorking\} role="tab"/);
+  assert.match(venueInvitationSource, /value=\{password\} disabled=\{isWorking\}/);
 });

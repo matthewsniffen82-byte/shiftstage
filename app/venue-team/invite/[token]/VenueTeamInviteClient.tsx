@@ -26,10 +26,18 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
     return () => {
       mountedRef.current = false;
       submitAbortRef.current?.abort();
+      submitInFlightRef.current = false;
     };
   }, []);
 
   useEffect(() => {
+    submitAbortRef.current?.abort();
+    submitAbortRef.current = null;
+    submitInFlightRef.current = false;
+    setInvitation(null);
+    setPassword("");
+    setIsWorking(false);
+    setStatus("Checking invitation…");
     const controller = new AbortController();
     fetch(`/api/venue/team/invitations?token=${encodeURIComponent(token)}`, {
       cache: "no-store",
@@ -112,12 +120,12 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
               {invitation.email} has been invited as <strong>{invitation.role}</strong> for {invitation.venue.name} in {invitation.venue.city}{invitation.venue.state ? `, ${invitation.venue.state}` : ""}.
             </p>
             <div className="venue-team-mode" role="tablist" aria-label="Account access mode">
-              <button aria-selected={mode === "signup"} className={mode === "signup" ? "active" : ""} role="tab" type="button" onClick={() => setMode("signup")}>Create account</button>
-              <button aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} role="tab" type="button" onClick={() => setMode("login")}>I have an account</button>
+              <button aria-selected={mode === "signup"} className={mode === "signup" ? "active" : ""} disabled={isWorking} role="tab" type="button" onClick={() => setMode("signup")}>Create account</button>
+              <button aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={isWorking} role="tab" type="button" onClick={() => setMode("login")}>I have an account</button>
             </div>
             <form onSubmit={submit}>
               <label>Email<input value={invitation.email} readOnly type="email" /></label>
-              <label>Password<input value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} /></label>
+              <label>Password<input value={password} disabled={isWorking} onChange={(event) => setPassword(event.target.value)} minLength={8} required type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} /></label>
               <button className="venue-team-primary" disabled={isWorking} type="submit">
                 {isWorking ? "Please wait…" : mode === "signup" ? "Create account and join" : "Sign in and join"}
               </button>
