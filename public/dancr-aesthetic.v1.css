@@ -6575,15 +6575,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
   min-width: 0;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-identity-location .action-icon {
-  width: 14px;
-  min-width: 14px;
-  height: 14px;
-  color: var(--dancr-color-text-muted);
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-distance {
@@ -7344,7 +7335,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   min-height: 34px;
   display: flex;
   align-items: flex-start;
-  gap: 7px;
   padding: 7px 9px;
   border: 1px solid var(--dancr-color-border-subtle);
   border-radius: 12px;
@@ -7353,14 +7343,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   font-size: 11.5px;
   font-weight: 750;
   line-height: 1.3;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-address-line .action-icon {
-  width: 16px;
-  min-width: 16px;
-  height: 16px;
-  color: var(--dancr-color-text-muted);
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail

@@ -185,7 +185,7 @@ test("form fields use neutral borders and a crisp tokenized focus ring", () => {
   );
   assert.match(
     liveShell,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=211" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=212" rel="stylesheet">/,
   );
 });
 

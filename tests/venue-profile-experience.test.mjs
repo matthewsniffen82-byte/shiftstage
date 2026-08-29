@@ -35,8 +35,10 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /const venueValue = escapeOptionValue\(venue\.name\)/);
   assert.match(venueDetail, /class="venue-secondary-actions"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
   assert.match(venueDetail, /venueDirectionsMarkup\(\{ venue, className: "venue-address-directions", city \}\)/);
-  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?class="venue-identity-location"[\s\S]*?details\.city[\s\S]*?details\.state[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel/);
-  assert.match(venueDetail, /details\.address \? `<div class="venue-address-line">[\s\S]*?escapeHtml\(details\.address\)[\s\S]*?: ""/);
+  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?class="venue-identity-location"><span class="meta">[\s\S]*?details\.city[\s\S]*?details\.state[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel/);
+  assert.match(venueDetail, /details\.address \? `<div class="venue-address-line"><span>[\s\S]*?escapeHtml\(details\.address\)[\s\S]*?: ""/);
+  assert.equal((venueDetail.match(/actionIconMarkup\("pin"\)/g) || []).length, 0);
+  assert.equal((venueDetail.match(/venueDirectionsMarkup\(/g) || []).length, 1);
   assert.doesNotMatch(venueDetail, /Address unavailable|venue-address-tile-no-address/);
   assert.equal((venueDetail.match(/encodeURIComponent\(details\.address\)/g) || []).length, 0);
   assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?https:\/\/maps\.google\.com\/\?q=\$\{encodeURIComponent\(destinationAddress\)\}/);

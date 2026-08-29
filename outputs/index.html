@@ -32038,7 +32038,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=211" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=212" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -51597,7 +51597,7 @@
                 <div class="venue-identity-copy">
                   <h2 id="venueDetailName">${details.name}</h2>
                   <div class="venue-identity-meta">
-                    <span class="venue-identity-location">${actionIconMarkup("pin")}<span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
+                    <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
                     <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
                   </div>
                 </div>
@@ -51619,7 +51619,7 @@
             ${venueInformationMarkup}
             <section class="venue-info venue-location-section" aria-labelledby="venue-location-heading">
               <h3 class="venue-detail-section-heading" id="venue-location-heading">Location</h3>
-              ${details.address ? `<div class="venue-address-line">${actionIconMarkup("pin")}<span>${escapeHtml(details.address)}</span></div>` : ""}
+              ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
               <div class="venue-action-stack" aria-label="Venue actions">
                 <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
                   ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
