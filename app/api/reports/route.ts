@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { getBearerToken } from "@/src/lib/supabase/request";
 
@@ -11,6 +15,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 const MAX_TARGET_LABEL_LENGTH = 160;
 const MAX_REASON_LENGTH = 120;
 const MAX_DETAILS_LENGTH = 2000;
+const MAX_REPORT_BODY_BYTES = 4_096;
 
 async function reporterIdForRequest(client: ReturnType<typeof createAdminSupabaseClient>, request: Request) {
   const token = getBearerToken(request);
@@ -24,7 +29,7 @@ async function reporterIdForRequest(client: ReturnType<typeof createAdminSupabas
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readReportBody(request);
     const targetType = typeof body?.targetType === "string" ? body.targetType.trim() : "";
     const submittedTargetId = typeof body?.targetId === "string" && body.targetId.trim() ? body.targetId.trim() : null;
     const targetId = submittedTargetId && UUID_PATTERN.test(submittedTargetId) ? submittedTargetId : null;
@@ -61,6 +66,14 @@ export async function POST(request: Request) {
     }
 
     const client = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(client, {
+      namespace: "content_report",
+      request,
+      subject: `${targetType}:${targetId || targetLabel}`,
+      windowSeconds: 10 * 60,
+      ipLimit: 8,
+      subjectLimit: 2,
+    });
     const reporterId = await reporterIdForRequest(client, request);
 
     const { data, error } = await (client as any)
@@ -101,6 +114,37 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many reports were submitted. Please wait and try again." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to submit report.");
   }
+}
+
+async function readReportBody(request: Request): Promise<Record<string, unknown>> {
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_REPORT_BODY_BYTES) {
+    throw invalid("Report payload is too large.");
+  }
+
+  const raw = await request.text();
+  if (raw.length > MAX_REPORT_BODY_BYTES) throw invalid("Report payload is too large.");
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw invalid("Invalid report payload.");
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw invalid("Invalid report payload.");
+  }
+  return parsed as Record<string, unknown>;
+}
+
+function invalid(message: string) {
+  return new PublicApiError("INVALID_REQUEST", message, 400);
 }
