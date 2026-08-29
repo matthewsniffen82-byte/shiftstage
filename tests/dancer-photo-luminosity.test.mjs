@@ -105,30 +105,20 @@ test("Android's final media layer outranks the coarse-pointer filter reset", () 
   );
 });
 
-test("Android venue logos paint above the card shade without changing other platforms", () => {
+test("venue-card heroes avoid Android-only logo correction and whole-card backdrop compositing", () => {
   assert.match(
     homeSource,
     /home-venue-discovery-art is-venue-logo-artwork\$\{logoMarkup \? " has-venue-logo" : ""\}/,
   );
-  const androidMediaLayer = aestheticSource.match(
-    /Android media luminance recovery must remain the final media layer[\s\S]*$/,
-  )?.[0] || "";
   assert.match(
-    androidMediaLayer,
-    /\.home-venue-discovery-art\.has-venue-logo \{[\s\S]*?z-index: 2 !important;/,
+    aestheticSource,
+    /The legacy \.venue glass rule applies backdrop blur[\s\S]*?> #results\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?-webkit-backdrop-filter: none !important;[\s\S]*?backdrop-filter: none !important;/,
   );
-  assert.match(
-    androidMediaLayer,
-    /\.home-venue-discovery-logo,[\s\S]*?\.venue-card-logo,[\s\S]*?\.venue-detail-logo[\s\S]*?filter: brightness\(1\.12\) contrast\(1\.03\) !important;/,
+  assert.doesNotMatch(
+    aestheticSource,
+    /\.home-venue-discovery-logo,[\s\S]*?\.venue-card-logo,[\s\S]*?\.venue-detail-logo[\s\S]*?brightness\(1\.12\)/,
   );
-  const androidVenueLogoLayer = androidMediaLayer.match(
-    /The venue-card shade is still required for copy legibility[\s\S]*?(?=\/\* Final mobile Clubs geometry)/,
-  )?.[0] || "";
-  const androidVenueLogoRule = androidVenueLogoLayer.match(
-    /body\.dancr-button-system :is\(\s*\.home-venue-discovery-logo,[^)]*\) \{[^}]*\}/,
-  )?.[0] || "";
-  assert.ok(androidVenueLogoRule, "the Android venue logo correction must exist");
-  assert.doesNotMatch(androidVenueLogoRule, /background:/);
+  assert.doesNotMatch(aestheticSource, /\.home-venue-discovery-art\.has-venue-logo \{[\s\S]*?z-index: 2 !important;/);
 });
 
 test("iPhone compact grid photos avoid filtered momentum-scroll layers", () => {

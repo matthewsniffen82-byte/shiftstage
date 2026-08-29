@@ -79,10 +79,11 @@ test("mobile Clubs cards use visible matte gutters and neutral separation", () =
 
 test("mobile Clubs cards keep one cross-platform header texture and a prominent active Deal", () => {
   const parity = aesthetic.match(
-    /\/\* Paint the mobile Clubs header texture directly[\s\S]*?(?=\/\* Give the mobile dancer identity)/,
+    /\/\* The legacy \.venue glass rule applies backdrop blur[\s\S]*?(?=\/\* Give the mobile dancer identity)/,
   )?.[0] || "";
 
   assert.ok(parity, "the cross-platform venue-card refinement must exist");
+  assert.match(parity, /> #results\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?-webkit-backdrop-filter: none !important;[\s\S]*?backdrop-filter: none !important;/);
   assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #30343b !important;[\s\S]*?rgba\(248, 250, 252, 0\.12\)[\s\S]*?#5d616a 0%[\s\S]*?#30343c 66%[\s\S]*?#484c55 100%[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.16\)/);
   assert.match(parity, /\.home-discovery-feed-shade \{[\s\S]*?rgba\(15, 17, 22, 0\.05\)/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(123, 255, 178, 0\.96\)[\s\S]*?rgba\(24, 190, 104, 0\.99\)[\s\S]*?0 0 26px rgba\(16, 185, 129, 0\.48\)/);
