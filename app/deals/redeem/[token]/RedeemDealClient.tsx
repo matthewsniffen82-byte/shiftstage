@@ -31,8 +31,12 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
   }, []);
 
   useEffect(() => {
+    redeemRequestIdRef.current += 1;
+    redeemAbortRef.current?.abort();
+    redeemAbortRef.current = null;
     setRedemption(initialRedemption);
     setStatus("");
+    setIsRedeeming(false);
   }, [initialRedemption, token]);
 
   useEffect(() => {

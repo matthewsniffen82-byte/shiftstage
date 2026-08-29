@@ -212,7 +212,7 @@ test("cashier deal confirmation prevents duplicate and stale submissions", () =>
   assert.match(dealRedemptionSource, /fetch\(`\/api\/deals\/redeem[\s\S]*?signal: controller\.signal/);
   assert.match(dealRedemptionSource, /requestId !== redeemRequestIdRef\.current/);
   assert.match(dealRedemptionSource, /if \(redeemAbortRef\.current === controller\) \{[\s\S]*?setIsRedeeming\(false\);/);
-  assert.match(dealRedemptionSource, /setRedemption\(initialRedemption\);[\s\S]*?\[initialRedemption, token\]/);
+  assert.match(dealRedemptionSource, /useEffect\(\(\) => \{\s+redeemRequestIdRef\.current \+= 1;[\s\S]*?redeemAbortRef\.current\?\.abort\(\);[\s\S]*?setRedemption\(initialRedemption\);[\s\S]*?setIsRedeeming\(false\);\s+\}, \[initialRedemption, token\]\);/);
 });
 
 test("venue invitation discovery cancels stale token loads", () => {
