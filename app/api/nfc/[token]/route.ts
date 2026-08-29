@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { resolveApiError } from "@/src/lib/api-error-policy";
 import {
   CashierDealRedemptionError,
@@ -20,6 +20,7 @@ export const dynamic = "force-dynamic";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_NFC_BODY_BYTES = 4_096;
 
 type RouteContext = { params: Promise<{ token: string }> };
 
@@ -162,10 +163,20 @@ function formatTapTime(value: unknown) {
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_NFC_BODY_BYTES) {
+    throw new PublicApiError("INVALID_REQUEST", "Tap request is too large.", 413);
+  }
+
   try {
-    const value = await request.json();
+    const raw = await request.text();
+    if (raw.length > MAX_NFC_BODY_BYTES) {
+      throw new PublicApiError("INVALID_REQUEST", "Tap request is too large.", 413);
+    }
+    const value = JSON.parse(raw);
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  } catch {
+  } catch (error) {
+    if (error instanceof PublicApiError) throw error;
     return {};
   }
 }
