@@ -13,7 +13,8 @@ test("public analytics accepts only bounded, typed event input", () => {
   assert.match(eventRoute, /if \(!eventTypes\.has\(type\)\) throw invalid\("Unknown event type\."\)/);
   assert.match(eventRoute, /sessionId\.length < 8/);
   assert.match(eventRoute, /UUID_PATTERN\.test\(id\)/);
-  assert.match(eventRoute, /raw\.length > MAX_EVENT_BODY_BYTES/);
+  assert.match(eventRoute, /readBoundedJsonObject\(request, \{/);
+  assert.match(eventRoute, /maxBytes: MAX_EVENT_BODY_BYTES/);
 });
 
 test("public analytics derives viewer identity from a verified bearer token", () => {

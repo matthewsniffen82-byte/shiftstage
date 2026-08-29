@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -12,7 +13,11 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 export async function POST(request: Request) {
   try {
-    const body = await readEventBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_EVENT_BODY_BYTES,
+      invalidMessage: "Invalid event payload.",
+      tooLargeMessage: "Event payload is too large.",
+    });
     const venueId = readUuid(body.venueId, "Venue id");
     const dancerId = readOptionalUuid(body.dancerId, "Dancer id");
     const eventType = readAllowed(body.eventType, EVENT_TYPES, "Event type");
@@ -44,27 +49,6 @@ export async function POST(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to record venue analytics.");
   }
-}
-
-async function readEventBody(request: Request): Promise<Record<string, unknown>> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_EVENT_BODY_BYTES) {
-    throw invalid("Event payload is too large.");
-  }
-
-  const raw = await request.text();
-  if (raw.length > MAX_EVENT_BODY_BYTES) throw invalid("Event payload is too large.");
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw invalid("Invalid event payload.");
-  }
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw invalid("Invalid event payload.");
-  }
-  return parsed as Record<string, unknown>;
 }
 
 function readUuid(value: unknown, label: string) {

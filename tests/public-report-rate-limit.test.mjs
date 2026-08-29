@@ -9,7 +9,8 @@ const [route, limiter] = await Promise.all([
 
 test("anonymous content reports have bounded payloads and durable throttling", () => {
   assert.match(route, /const MAX_REPORT_BODY_BYTES = 4_096/);
-  assert.match(route, /raw\.length > MAX_REPORT_BODY_BYTES/);
+  assert.match(route, /readBoundedJsonObject\(request, \{/);
+  assert.match(route, /maxBytes: MAX_REPORT_BODY_BYTES/);
   assert.match(route, /enforcePublicRequestRateLimit\(client, \{/);
   assert.match(route, /namespace: "content_report"/);
   assert.match(route, /ipLimit: 8/);

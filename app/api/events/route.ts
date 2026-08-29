@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { getBearerToken } from "@/src/lib/supabase/request";
 
@@ -31,7 +32,11 @@ type AdminClient = ReturnType<typeof createAdminSupabaseClient>;
 
 export async function POST(request: Request) {
   try {
-    const body = await readEventBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_EVENT_BODY_BYTES,
+      invalidMessage: "Invalid event payload.",
+      tooLargeMessage: "Event payload is too large.",
+    }) as EventBody;
     const client = createAdminSupabaseClient();
     const type = optionalText(body.type, "type", 40);
     const sessionId = optionalSessionId(body.sessionId);
@@ -107,27 +112,6 @@ export async function POST(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to record event.");
   }
-}
-
-async function readEventBody(request: Request): Promise<EventBody> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_EVENT_BODY_BYTES) {
-    throw invalid("Event payload is too large.");
-  }
-
-  const raw = await request.text();
-  if (raw.length > MAX_EVENT_BODY_BYTES) throw invalid("Event payload is too large.");
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw invalid("Invalid event payload.");
-  }
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw invalid("Invalid event payload.");
-  }
-  return parsed as EventBody;
 }
 
 function optionalText(value: unknown, label: string, maxLength: number) {

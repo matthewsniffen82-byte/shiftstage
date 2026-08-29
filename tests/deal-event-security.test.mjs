@@ -9,7 +9,8 @@ const route = await readFile(
 
 test("public Club Deal events accept only bounded typed input", () => {
   assert.match(route, /const MAX_EVENT_BODY_BYTES = 2_048/);
-  assert.match(route, /raw\.length > MAX_EVENT_BODY_BYTES/);
+  assert.match(route, /readBoundedJsonObject\(request, \{/);
+  assert.match(route, /maxBytes: MAX_EVENT_BODY_BYTES/);
   assert.match(route, /TOKEN_PATTERN\.test\(token\)/);
   assert.match(route, /EVENT_TYPES\.has\(eventType/);
   assert.match(route, /submittedSessionId && !UUID_PATTERN\.test\(submittedSessionId\)/);

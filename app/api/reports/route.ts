@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   enforcePublicRequestRateLimit,
   PublicRequestRateLimitError,
@@ -29,7 +30,11 @@ async function reporterIdForRequest(client: ReturnType<typeof createAdminSupabas
 
 export async function POST(request: Request) {
   try {
-    const body = await readReportBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_REPORT_BODY_BYTES,
+      invalidMessage: "Invalid report payload.",
+      tooLargeMessage: "Report payload is too large.",
+    });
     const targetType = typeof body?.targetType === "string" ? body.targetType.trim() : "";
     const submittedTargetId = typeof body?.targetId === "string" && body.targetId.trim() ? body.targetId.trim() : null;
     const targetId = submittedTargetId && UUID_PATTERN.test(submittedTargetId) ? submittedTargetId : null;
@@ -122,27 +127,6 @@ export async function POST(request: Request) {
     }
     return apiError(error, "Unable to submit report.");
   }
-}
-
-async function readReportBody(request: Request): Promise<Record<string, unknown>> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_REPORT_BODY_BYTES) {
-    throw invalid("Report payload is too large.");
-  }
-
-  const raw = await request.text();
-  if (raw.length > MAX_REPORT_BODY_BYTES) throw invalid("Report payload is too large.");
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw invalid("Invalid report payload.");
-  }
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw invalid("Invalid report payload.");
-  }
-  return parsed as Record<string, unknown>;
 }
 
 function invalid(message: string) {

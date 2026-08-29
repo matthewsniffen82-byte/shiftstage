@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { apiError, PublicApiError } from "@/src/lib/api";
+import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   MYDANCR_TV_EVENT_SOURCES,
   MYDANCR_TV_EVENT_TYPES,
@@ -23,7 +24,11 @@ export async function POST(request: Request, { params }: RouteProps) {
     if (!UUID_PATTERN.test(id)) {
       return NextResponse.json({ ok: false, error: "Invalid MyDancr TV video." }, { status: 400 });
     }
-    const body = await readEventBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_TV_EVENT_BODY_BYTES,
+      invalidMessage: "Invalid MyDancr TV event payload.",
+      tooLargeMessage: "MyDancr TV event is too large.",
+    });
     const eventType = typeof body?.eventType === "string" ? body.eventType : "";
     const source = typeof body?.source === "string" ? body.source : "tv_feed";
     const sessionId = typeof body?.sessionId === "string" ? body.sessionId.trim() : "";
@@ -46,26 +51,6 @@ export async function POST(request: Request, { params }: RouteProps) {
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return apiError(error, "Unable to record MyDancr TV activity.");
-  }
-}
-
-async function readEventBody(request: Request): Promise<Record<string, unknown>> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_TV_EVENT_BODY_BYTES) {
-    throw new PublicApiError("INVALID_REQUEST", "MyDancr TV event is too large.", 413);
-  }
-
-  const raw = await request.text();
-  if (raw.length > MAX_TV_EVENT_BODY_BYTES) {
-    throw new PublicApiError("INVALID_REQUEST", "MyDancr TV event is too large.", 413);
-  }
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed as Record<string, unknown>
-      : {};
-  } catch {
-    return {};
   }
 }
 

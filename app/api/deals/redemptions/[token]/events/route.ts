@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   recordDealRedemptionEvent,
   type DealLifecycleEventType,
@@ -34,7 +35,11 @@ export async function POST(request: Request, { params }: RouteProps) {
       return NextResponse.json({ ok: false, error: "Invalid QR token." }, { status: 400 });
     }
 
-    const body = await readEventBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_EVENT_BODY_BYTES,
+      invalidMessage: "Invalid QR event payload.",
+      tooLargeMessage: "QR event payload is too large.",
+    });
     const eventType = typeof body?.eventType === "string"
       ? body.eventType.trim() as DealLifecycleEventType
       : "";
@@ -71,23 +76,6 @@ export async function POST(request: Request, { params }: RouteProps) {
       );
     }
     return apiError(error, "Unable to record QR activity.");
-  }
-}
-
-async function readEventBody(request: Request): Promise<Record<string, unknown>> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_EVENT_BODY_BYTES) {
-    return {};
-  }
-  const raw = await request.text();
-  if (raw.length > MAX_EVENT_BODY_BYTES) return {};
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed as Record<string, unknown>
-      : {};
-  } catch {
-    return {};
   }
 }
 

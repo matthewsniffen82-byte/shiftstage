@@ -9,9 +9,9 @@ const route = await readFile(
 
 test("public TV events reject oversized bodies before recording", () => {
   assert.match(route, /const MAX_TV_EVENT_BODY_BYTES = 2_048/);
-  assert.match(route, /declaredLength > MAX_TV_EVENT_BODY_BYTES/);
-  assert.match(route, /raw\.length > MAX_TV_EVENT_BODY_BYTES/);
-  assert.match(route, /"MyDancr TV event is too large\.", 413/);
+  assert.match(route, /readBoundedJsonObject\(request, \{/);
+  assert.match(route, /maxBytes: MAX_TV_EVENT_BODY_BYTES/);
+  assert.match(route, /tooLargeMessage: "MyDancr TV event is too large\."/);
 });
 
 test("public TV events keep existing typed identity and eligibility checks", () => {

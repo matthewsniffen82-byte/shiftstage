@@ -9,7 +9,8 @@ const route = await readFile(
 
 test("public venue events accept only bounded typed input", () => {
   assert.match(route, /const MAX_EVENT_BODY_BYTES = 2_048/);
-  assert.match(route, /raw\.length > MAX_EVENT_BODY_BYTES/);
+  assert.match(route, /readBoundedJsonObject\(request, \{/);
+  assert.match(route, /maxBytes: MAX_EVENT_BODY_BYTES/);
   assert.match(route, /UUID_PATTERN\.test\(text\)/);
   assert.match(route, /new PublicApiError\("INVALID_REQUEST", message, 400\)/);
 });
