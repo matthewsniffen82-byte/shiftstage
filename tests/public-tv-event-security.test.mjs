@@ -23,3 +23,11 @@ test("public TV events keep existing typed identity and eligibility checks", () 
   assert.match(route, /recordMyDancrTvEvent\(admin, \{/);
   assert.match(route, /return apiError\(error, "Unable to record MyDancr TV activity\."\)/);
 });
+
+test("public TV events throttle service-role writes by IP, video, event, and session", () => {
+  assert.match(route, /enforcePublicRequestRateLimit\(admin, \{/);
+  assert.match(route, /namespace: "tv_events"/);
+  assert.match(route, /subject: `\$\{id\}:\$\{eventType\}:\$\{sessionId\}`/);
+  assert.match(route, /error instanceof PublicRequestRateLimitError/);
+  assert.match(route, /status: 429/);
+});

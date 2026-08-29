@@ -28,3 +28,11 @@ test("public venue events keep unexpected storage failures private", () => {
   assert.doesNotMatch(route, /apiError\(error, "Unable to record venue analytics\.", 400\)/);
   assert.doesNotMatch(route, /throw new Error/);
 });
+
+test("public venue events throttle service-role writes by IP and viewer session", () => {
+  assert.match(route, /enforcePublicRequestRateLimit\(client, \{/);
+  assert.match(route, /namespace: "venue_events"/);
+  assert.match(route, /subject: `\$\{venueId\}:\$\{eventType\}:\$\{sessionId\}`/);
+  assert.match(route, /error instanceof PublicRequestRateLimitError/);
+  assert.match(route, /status: 429/);
+});

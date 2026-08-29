@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
+import {
   MYDANCR_TV_EVENT_SOURCES,
   MYDANCR_TV_EVENT_TYPES,
   recordMyDancrTvEvent,
@@ -40,6 +44,14 @@ export async function POST(request: Request, { params }: RouteProps) {
     }
 
     const admin = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(admin, {
+      namespace: "tv_events",
+      request,
+      subject: `${id}:${eventType}:${sessionId}`,
+      windowSeconds: 60,
+      ipLimit: 180,
+      subjectLimit: 20,
+    });
     const viewerId = await optionalViewerId(admin, request);
     const result = await recordMyDancrTvEvent(admin, {
       videoId: id,
@@ -50,6 +62,12 @@ export async function POST(request: Request, { params }: RouteProps) {
     });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many MyDancr TV activity requests. Please wait and try again." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to record MyDancr TV activity.");
   }
 }

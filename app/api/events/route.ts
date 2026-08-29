@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { getBearerToken } from "@/src/lib/supabase/request";
 
@@ -40,10 +44,18 @@ export async function POST(request: Request) {
     const client = createAdminSupabaseClient();
     const type = optionalText(body.type, "type", 40);
     const sessionId = optionalSessionId(body.sessionId);
-    const viewerId = await optionalViewerId(client, request);
 
     if (!type) throw invalid("Missing type.");
     if (!eventTypes.has(type)) throw invalid("Unknown event type.");
+    await enforcePublicRequestRateLimit(client, {
+      namespace: "analytics_events",
+      request,
+      subject: analyticsRateLimitSubject(type, sessionId, body),
+      windowSeconds: 60,
+      ipLimit: 120,
+      subjectLimit: 300,
+    });
+    const viewerId = await optionalViewerId(client, request);
 
     if (type === "profile_view" || type === "profile_action") {
       const dancerId = await resolveDancerId(client, body);
@@ -110,8 +122,23 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many analytics requests. Please wait and try again." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to record event.");
   }
+}
+
+function analyticsRateLimitSubject(type: string, sessionId: string | null, body: EventBody) {
+  const target = typeof body.dancerId === "string"
+    ? body.dancerId
+    : typeof body.venueId === "string"
+      ? body.venueId
+      : "anonymous";
+  return `${type}:${sessionId || target}`.slice(0, 300);
 }
 
 function optionalText(value: unknown, label: string, maxLength: number) {

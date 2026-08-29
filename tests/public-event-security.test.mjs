@@ -31,3 +31,11 @@ test("public analytics verifies public records and keeps operational errors priv
   assert.match(eventRoute, /return apiError\(error, "Unable to record event\."\)/);
   assert.doesNotMatch(eventRoute, /error instanceof Error \? error\.message/);
 });
+
+test("public analytics throttles service-role writes by IP and session or target", () => {
+  assert.match(eventRoute, /enforcePublicRequestRateLimit\(client, \{/);
+  assert.match(eventRoute, /namespace: "analytics_events"/);
+  assert.match(eventRoute, /subject: analyticsRateLimitSubject\(type, sessionId, body\)/);
+  assert.match(eventRoute, /error instanceof PublicRequestRateLimitError/);
+  assert.match(eventRoute, /status: 429/);
+});

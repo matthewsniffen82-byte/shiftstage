@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -28,6 +32,14 @@ export async function POST(request: Request) {
     }
 
     const client = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(client, {
+      namespace: "venue_events",
+      request,
+      subject: `${venueId}:${eventType}:${sessionId}`,
+      windowSeconds: 60,
+      ipLimit: 120,
+      subjectLimit: 12,
+    });
     await requirePublicVenue(client, venueId);
     if (dancerId) await requirePublicDancer(client, dancerId);
     const { error } = await client.from("venue_page_events").upsert(
@@ -47,6 +59,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many venue analytics requests. Please wait and try again." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to record venue analytics.");
   }
 }
