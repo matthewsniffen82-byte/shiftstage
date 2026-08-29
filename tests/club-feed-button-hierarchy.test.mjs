@@ -83,11 +83,11 @@ test("mobile Clubs cards keep one cross-platform header texture and a prominent 
   )?.[0] || "";
 
   assert.ok(parity, "the cross-platform venue-card refinement must exist");
-  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?background-color: #34373d !important;[\s\S]*?rgba\(248, 250, 252, 0\.17\)[\s\S]*?linear-gradient\(145deg, #565960 0%, #2f3238 66%, #464950 100%\)[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.22\)/);
-  assert.match(parity, /\.home-discovery-feed-shade \{[\s\S]*?rgba\(255, 255, 255, 0\.035\)[\s\S]*?rgba\(18, 20, 25, 0\.1\)/);
+  assert.match(parity, /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?repeating-linear-gradient\([\s\S]*?rgba\(248, 250, 252, 0\.12\)[\s\S]*?linear-gradient\(145deg, #252833 0%, #0c0d12 66%, #191b24 100%\)[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.16\)/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(123, 255, 178, 0\.96\)[\s\S]*?rgba\(24, 190, 104, 0\.99\)[\s\S]*?0 0 26px rgba\(16, 185, 129, 0\.48\)/);
   assert.match(parity, /\.venue-card-deals-action\.is-available \.action-icon \{[\s\S]*?#d8ffe7[\s\S]*?drop-shadow\(0 0 9px var\(--dancr-color-success-strong\)\)/);
-  assert.doesNotMatch(parity, /html:is\(|body:is\(|\.is-android|\.android-rendering|\.is-samsung-browser|\.samsung-rendering/);
+  assert.match(parity, /html:is\([\s\S]*?\.is-android,[\s\S]*?\.is-samsung-browser,[\s\S]*?body:is\([\s\S]*?\.android-rendering,[\s\S]*?\.samsung-rendering[\s\S]*?\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?rgba\(255, 255, 255, 0\.34\)[\s\S]*?radial-gradient\(circle at 50% 42%, rgba\(255, 255, 255, 0\.2\), transparent 50%\)[\s\S]*?linear-gradient\(145deg, #74777e 0%, #40434a 66%, #585b62 100%\)/);
+  assert.match(parity, /html:is\([\s\S]*?\.is-android,[\s\S]*?\.is-samsung-browser,[\s\S]*?body:is\([\s\S]*?\.android-rendering,[\s\S]*?\.samsung-rendering[\s\S]*?\.home-discovery-feed-shade \{[\s\S]*?rgba\(255, 255, 255, 0\.07\)[\s\S]*?rgba\(15, 17, 22, 0\.06\)/);
   assert.doesNotMatch(parity, /\n\s+(?:width|height|min-height|max-height|padding|margin|grid-template-columns):/);
 });
 
