@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   hideOwnMyDancrTvVideo,
   retryMyDancrTvAutomatedModeration,
@@ -11,6 +12,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+const MAX_TV_ACTION_BODY_BYTES = 2_048;
 
 type RouteProps = {
   params: Promise<{ id: string }>;
@@ -23,7 +25,11 @@ export async function PATCH(request: Request, { params }: RouteProps) {
       return NextResponse.json({ ok: false, error: "Invalid MyDancr TV video." }, { status: 400 });
     }
     const { user } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_TV_ACTION_BODY_BYTES,
+      invalidMessage: "Invalid video action request.",
+      tooLargeMessage: "Video action request is too large.",
+    });
     if (body?.action !== "submit") {
       return NextResponse.json({ ok: false, error: "Invalid video action." }, { status: 400 });
     }

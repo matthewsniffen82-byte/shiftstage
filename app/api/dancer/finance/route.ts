@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import {
   createDancerConnectOnboarding,
@@ -15,6 +16,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_PAYOUT_ACTION_BODY_BYTES = 4_096;
 
 export async function GET(request: Request) {
   try {
@@ -47,7 +49,11 @@ export async function POST(request: Request) {
     const { client, user } = authContext;
     const denied = await requireActiveDancer(client, user.id);
     if (denied) return denied;
-    const body = await request.json().catch(() => ({}));
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_PAYOUT_ACTION_BODY_BYTES,
+      invalidMessage: "Invalid payout request.",
+      tooLargeMessage: "Payout request is too large.",
+    });
     if (body.action === "request_nats_link") {
       if (!getNatsRuntimeConfig().selected) {
         return NextResponse.json({ ok: false, error: "Payout account setup is not currently available." }, { status: 409 });

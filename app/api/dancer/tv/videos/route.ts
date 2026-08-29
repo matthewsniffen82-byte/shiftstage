@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createMyDancrTvUpload,
   getDancerMyDancrTvWorkspace,
@@ -9,6 +10,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_TV_UPLOAD_METADATA_BYTES = 4_096;
 
 export async function GET(request: Request) {
   try {
@@ -23,7 +25,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { user } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_TV_UPLOAD_METADATA_BYTES,
+      invalidMessage: "Invalid MyDancr TV upload request.",
+      tooLargeMessage: "MyDancr TV upload request is too large.",
+    });
     const upload = await createMyDancrTvUpload(createAdminSupabaseClient(), user.id, {
       mimeType: typeof body?.mimeType === "string" ? body.mimeType : "",
       fileSize: Number(body?.fileSize),

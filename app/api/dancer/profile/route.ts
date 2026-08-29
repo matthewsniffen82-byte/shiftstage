@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
 import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
@@ -20,6 +21,7 @@ export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
 const PROFILE_SAVE_VERSION = "canonical-profile-approval-v14";
+const MAX_DANCER_PROFILE_BODY_BYTES = 65_536;
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
@@ -378,7 +380,11 @@ export async function PATCH(request: Request) {
   try {
     setSaveStage("authenticate");
     const { client, user } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_DANCER_PROFILE_BODY_BYTES,
+      invalidMessage: "Invalid dancer profile request.",
+      tooLargeMessage: "Dancer profile request is too large.",
+    });
     const db = client as any;
 
     const { profile, error: profileError, supportsIsPublic } = await loadProfileForSave(db, user.id);
@@ -710,12 +716,14 @@ export async function PATCH(request: Request) {
     if (error instanceof Error && (error.message === "Sign in required." || error.message === "Dancer profile not found.")) {
       return withProfileSaveVersion(apiError(error, "Unable to update dancer profile."));
     }
+    if (error instanceof PublicApiError) {
+      return withProfileSaveVersion(apiError(error, "Unable to update dancer profile."));
+    }
     const status = error instanceof ProfileInputError ? 400 : 500;
     return withProfileSaveVersion(NextResponse.json({
       ok: false,
       error: error instanceof ProfileInputError ? error.message : safeProfileSaveError(saveStage, error),
       saveStage,
-      errorCode: typeof error?.code === "string" ? error.code : null,
     }, { status }));
   }
 }

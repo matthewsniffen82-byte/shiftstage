@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
 import { isDancerIdentityReferenceRequiredError } from "@/src/lib/dancr/media-identity";
@@ -8,6 +9,8 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_PHOTO_ACTION_BODY_BYTES = 2_048;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request) {
   try {
@@ -48,11 +51,15 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
-    const body = await request.json().catch(() => ({}));
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_PHOTO_ACTION_BODY_BYTES,
+      invalidMessage: "Invalid photo deletion request.",
+      tooLargeMessage: "Photo deletion request is too large.",
+    });
     const photoId = typeof body?.photoId === "string" ? body.photoId.trim() : "";
 
-    if (!photoId) {
-      return NextResponse.json({ ok: false, error: "Photo id is required." }, { status: 400 });
+    if (!UUID_PATTERN.test(photoId)) {
+      return NextResponse.json({ ok: false, error: "Valid photo id is required." }, { status: 400 });
     }
 
     const photo = await deleteOwnDancerPhoto(client, user.id, photoId, createAdminSupabaseClient());

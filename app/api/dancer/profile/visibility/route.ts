@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { isCoreVerificationApproved } from "@/src/lib/dancr/profile-approval";
@@ -6,6 +8,7 @@ import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_VISIBILITY_BODY_BYTES = 2_048;
 
 type VisibilityRequest = {
   isPublic: boolean;
@@ -59,12 +62,16 @@ async function verifyPublicVisibility(
 
 export async function PATCH(request: Request) {
   try {
-    const body = await request.json().catch(() => null);
+    const { user, session } = await createRequestSupabaseContext(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_VISIBILITY_BODY_BYTES,
+      invalidMessage: "Invalid profile visibility request.",
+      tooLargeMessage: "Profile visibility request is too large.",
+    });
     if (!isVisibilityRequest(body)) {
       return json({ ok: false, error: "isPublic must be a boolean." }, 400);
     }
 
-    const { user, session } = await createRequestSupabaseContext(request);
     const db = createAdminSupabaseClient() as any;
     const { data: currentProfile, error: currentProfileError } = await db
       .from("dancer_profiles")
@@ -134,6 +141,11 @@ export async function PATCH(request: Request) {
       session,
     });
   } catch (error: any) {
+    if (error instanceof PublicApiError) {
+      const response = apiError(error, "Unable to update profile visibility.");
+      response.headers.set("cache-control", "no-store");
+      return response;
+    }
     if (error instanceof Error && error.message === "Sign in required.") {
       return json({ ok: false, error: error.message }, 401);
     }
