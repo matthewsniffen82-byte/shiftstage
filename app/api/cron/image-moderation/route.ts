@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { authorizeCronRequest } from "@/src/lib/dancr/cron-auth";
 import { processImageModerationRetryRecord } from "@/src/lib/dancr/image-moderation";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
@@ -67,18 +68,6 @@ async function claimRetryRecord(admin: any, recordId: string) {
 
   if (error) throw error;
   return data;
-}
-
-function authorizeCronRequest(request: Request) {
-  const secret = process.env.CRON_SECRET || "";
-  if (!secret) {
-    return NextResponse.json({ ok: false, error: "CRON_SECRET is not configured." }, { status: 503 });
-  }
-  const expected = `Bearer ${secret}`;
-  if (request.headers.get("authorization") !== expected) {
-    return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
-  }
-  return null;
 }
 
 function safeWorkerError(error: unknown) {

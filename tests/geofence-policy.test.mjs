@@ -130,6 +130,6 @@ test("expired NFC sessions are reconciled by requests and authenticated cron", (
   assert.match(lifecycle, /checked_out_at: endedAt/);
   assert.match(lifecycle, /location_verification_expires_at: endedAt/);
   assert.match(lifecycle, /nfc_window_expired/);
-  assert.match(cronRoute, /process\.env\.CRON_SECRET/);
+  assert.match(cronRoute, /authorizeCronRequest\(request\)/);
   assert.match(cronRoute, /reconcileExpiredDancerShifts/);
 });

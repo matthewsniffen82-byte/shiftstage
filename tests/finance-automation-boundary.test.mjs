@@ -86,10 +86,8 @@ test("full reconciliation preserves task order, response fields, and bounded err
   assert.match(automation, /Finance operation failed\./);
 });
 
-test("cron authentication and generic failure handling stay unchanged", () => {
-  assert.match(cronRoute, /if \(!secret\)/);
-  assert.match(cronRoute, /authorization/);
-  assert.match(cronRoute, /`Bearer \$\{secret\}`/);
+test("cron authentication uses the shared guard and keeps generic failure handling", () => {
+  assert.match(cronRoute, /authorizeCronRequest\(request\)/);
   assert.match(cronRoute, /QR finance automation completed/);
   assert.match(cronRoute, /QR finance automation failed\./);
 });
