@@ -14,6 +14,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,160}$/;
+const MAX_EVENT_BODY_BYTES = 2_048;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EVENT_TYPES = new Set<DealLifecycleEventType>([
@@ -33,16 +34,19 @@ export async function POST(request: Request, { params }: RouteProps) {
       return NextResponse.json({ ok: false, error: "Invalid QR token." }, { status: 400 });
     }
 
-    const body = await request.json().catch(() => ({}));
+    const body = await readEventBody(request);
     const eventType = typeof body?.eventType === "string"
       ? body.eventType.trim() as DealLifecycleEventType
       : "";
     if (!EVENT_TYPES.has(eventType as DealLifecycleEventType)) {
       return NextResponse.json({ ok: false, error: "Invalid QR event." }, { status: 400 });
     }
-    const sessionId = typeof body?.sessionId === "string" && UUID_PATTERN.test(body.sessionId.trim())
+    const submittedSessionId = typeof body?.sessionId === "string" && body.sessionId.trim()
       ? body.sessionId.trim()
       : null;
+    if (submittedSessionId && !UUID_PATTERN.test(submittedSessionId)) {
+      return NextResponse.json({ ok: false, error: "Invalid QR event session." }, { status: 400 });
+    }
 
     const admin = createAdminSupabaseClient();
     await enforceEventRateLimit(admin, request, token, eventType);
@@ -52,7 +56,7 @@ export async function POST(request: Request, { params }: RouteProps) {
       token,
       eventType as DealLifecycleEventType,
       request,
-      { actorUserId, sessionId },
+      { actorUserId, sessionId: submittedSessionId },
     );
     if (!event) {
       return NextResponse.json({ ok: false, error: "Club Deal not found." }, { status: 404 });
@@ -60,7 +64,30 @@ export async function POST(request: Request, { params }: RouteProps) {
 
     return NextResponse.json({ ok: true, event });
   } catch (error) {
-    return apiError(error, "Unable to record QR activity.", 400);
+    if (error instanceof DealEventRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many QR activity requests. Try again in a few minutes." },
+        { status: 429, headers: { "retry-after": "300" } },
+      );
+    }
+    return apiError(error, "Unable to record QR activity.");
+  }
+}
+
+async function readEventBody(request: Request): Promise<Record<string, unknown>> {
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_EVENT_BODY_BYTES) {
+    return {};
+  }
+  const raw = await request.text();
+  if (raw.length > MAX_EVENT_BODY_BYTES) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
   }
 }
 
@@ -100,6 +127,13 @@ async function enforceEventRateLimit(
     .gte("occurred_at", since);
   if (error) throw error;
   if ((count || 0) >= 12) {
-    throw new Error("Too many QR activity requests. Try again in a few minutes.");
+    throw new DealEventRateLimitError();
+  }
+}
+
+class DealEventRateLimitError extends Error {
+  constructor() {
+    super("QR event rate limit exceeded.");
+    this.name = "DealEventRateLimitError";
   }
 }
