@@ -112,3 +112,19 @@ test("existing approved avatars can be securely reprocessed from an original app
   assert.match(recenterRouteSource, /restoreDancerAvatar/);
   assert.match(recenterRouteSource, /removeResponsiveImage/);
 });
+
+test("avatar maintenance bounds metadata and keeps infrastructure failures private", () => {
+  assert.match(recenterRouteSource, /const MAX_RECENTER_BODY_BYTES = 4_096/);
+  assert.match(
+    recenterRouteSource,
+    /Buffer\.byteLength\(raw, "utf8"\) > MAX_RECENTER_BODY_BYTES/,
+  );
+  assert.match(recenterRouteSource, /throw forbidden\("Avatar maintenance access denied\."\)/);
+  assert.match(recenterRouteSource, /new PublicApiError\("NOT_FOUND"/);
+  assert.match(recenterRouteSource, /new PublicApiError\([\s\S]*?"CONFLICT"/);
+  assert.match(recenterRouteSource, /return apiError\(error, "Unable to recenter dancer avatar\."\)/);
+  assert.doesNotMatch(
+    recenterRouteSource,
+    /apiError\(error, "Unable to recenter dancer avatar\.", 400\)/,
+  );
+});

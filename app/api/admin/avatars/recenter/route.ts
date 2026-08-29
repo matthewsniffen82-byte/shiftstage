@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import {
   isAvatarFaceDetectionUnavailableError,
   isAvatarFaceRequiredError,
@@ -23,10 +23,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+const MAX_RECENTER_BODY_BYTES = 4_096;
+
 export async function POST(request: Request) {
   try {
     authorizeMaintenanceRequest(request);
-    const body = await request.json();
+    const body = await readRecenterBody(request);
     const dancerSlug = cleanSlug(body?.dancerSlug);
     const admin = createAdminSupabaseClient();
     const { data: dancer, error: dancerError } = await admin
@@ -35,11 +37,17 @@ export async function POST(request: Request) {
       .eq("slug", dancerSlug)
       .maybeSingle();
     if (dancerError) throw dancerError;
-    if (!dancer?.id || !dancer?.user_id) throw new Error("The requested dancer profile is unavailable.");
+    if (!dancer?.id || !dancer?.user_id) {
+      throw new PublicApiError("NOT_FOUND", "The requested dancer profile is unavailable.", 404);
+    }
 
     const previousPath = String(dancer.avatar_storage_path || "").trim();
     if (!previousPath || /^https?:\/\//i.test(previousPath)) {
-      throw new Error("The requested dancer does not have a stored avatar to recenter.");
+      throw new PublicApiError(
+        "CONFLICT",
+        "The requested dancer does not have a stored avatar to recenter.",
+        409,
+      );
     }
     const { data: sourcePhoto, error: sourcePhotoError } = await admin
       .from("dancer_photos")
@@ -130,7 +138,7 @@ export async function POST(request: Request) {
     if (isAvatarFaceDetectionUnavailableError(error)) {
       return apiError(error, "Avatar face centering is temporarily unavailable.", 503);
     }
-    return apiError(error, "Unable to recenter dancer avatar.", 400);
+    return apiError(error, "Unable to recenter dancer avatar.");
   }
 }
 
@@ -138,7 +146,7 @@ function authorizeMaintenanceRequest(request: Request) {
   const expected = process.env.DANCR_MEDIA_IMPORT_KEY || "";
   const provided = request.headers.get("x-mydancr-media-import-key") || "";
   if (expected.length < 32 || provided.length !== expected.length) {
-    throw new Error("Avatar maintenance access denied.");
+    throw forbidden("Avatar maintenance access denied.");
   }
   const expectedBuffer = Buffer.from(expected);
   const providedBuffer = Buffer.from(provided);
@@ -146,14 +154,43 @@ function authorizeMaintenanceRequest(request: Request) {
     expectedBuffer.length !== providedBuffer.length ||
     !timingSafeEqual(expectedBuffer, providedBuffer)
   ) {
-    throw new Error("Avatar maintenance access denied.");
+    throw forbidden("Avatar maintenance access denied.");
   }
 }
 
 function cleanSlug(value: unknown) {
   const slug = typeof value === "string" ? value.trim().toLowerCase() : "";
   if (!/^[a-z0-9][a-z0-9-]{1,119}$/.test(slug)) {
-    throw new Error("Use a valid dancer profile slug.");
+    throw invalid("Use a valid dancer profile slug.");
   }
   return slug;
+}
+
+async function readRecenterBody(request: Request): Promise<Record<string, unknown>> {
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_RECENTER_BODY_BYTES) {
+    throw invalid("Avatar maintenance request is too large.", 413);
+  }
+  const raw = await request.text();
+  if (Buffer.byteLength(raw, "utf8") > MAX_RECENTER_BODY_BYTES) {
+    throw invalid("Avatar maintenance request is too large.", 413);
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw invalid("Invalid avatar maintenance request.");
+    }
+    return parsed as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof PublicApiError) throw error;
+    throw invalid("Invalid avatar maintenance request.");
+  }
+}
+
+function invalid(message: string, status = 400) {
+  return new PublicApiError("INVALID_REQUEST", message, status);
+}
+
+function forbidden(message: string) {
+  return new PublicApiError("FORBIDDEN", message, 403);
 }
