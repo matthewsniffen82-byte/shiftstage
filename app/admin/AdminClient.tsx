@@ -49,8 +49,11 @@ type AdminActionNotice = {
   message: string;
 };
 
-const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
 type AdminWorkspace = "home" | "approvals" | "people" | "clubs" | "money" | "more";
+type AdminClientRequest = { controller: AbortController; requestId: number };
+type AdminWorkspaceRequest = AdminClientRequest & { generation: number; workspace: AdminWorkspace };
+
+const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
 
 const ADMIN_WORKSPACES: Array<{ id: AdminWorkspace; label: string }> = [
   { id: "home", label: "Home" },
@@ -164,10 +167,26 @@ export default function AdminClient() {
   const [loadedWorkspaces, setLoadedWorkspaces] = useState<Partial<Record<AdminWorkspace, boolean>>>({});
   const [loadingWorkspace, setLoadingWorkspace] = useState<AdminWorkspace | null>(null);
   const openApprovalIdsRef = useRef<Record<string, boolean>>({});
-  const pendingWorkspaceLoadsRef = useRef<Set<AdminWorkspace>>(new Set());
+  const mountedRef = useRef(false);
+  const dataGenerationRef = useRef(0);
+  const adminLoadAbortRef = useRef<AbortController | null>(null);
+  const workspaceLoadSequenceRef = useRef(0);
+  const workspaceLoadRef = useRef<AdminWorkspaceRequest | null>(null);
+  const authActionSequenceRef = useRef(0);
+  const authActionAbortRef = useRef<AbortController | null>(null);
+  const authActionInFlightRef = useRef(false);
+  const authBusy = isSigningIn || isResettingPassword;
 
   useEffect(() => {
-    loadAdmin();
+    mountedRef.current = true;
+    void loadAdmin();
+    return () => {
+      mountedRef.current = false;
+      invalidateAdminDataRequests();
+      cancelAuthAction();
+    };
+    // This one-time lifecycle boundary reads stable refs and state setters; rerunning it would restart the admin session load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -186,6 +205,49 @@ export default function AdminClient() {
 
   function confirmAdminAction(message: string) {
     setActionNotice({ id: Date.now(), message });
+  }
+
+  function cancelWorkspaceLoad() {
+    workspaceLoadSequenceRef.current += 1;
+    const active = workspaceLoadRef.current;
+    active?.controller.abort();
+    workspaceLoadRef.current = null;
+    if (mountedRef.current) setLoadingWorkspace(null);
+  }
+
+  function invalidateAdminDataRequests() {
+    dataGenerationRef.current += 1;
+    adminLoadAbortRef.current?.abort();
+    adminLoadAbortRef.current = null;
+    cancelWorkspaceLoad();
+    return dataGenerationRef.current;
+  }
+
+  function beginAuthAction(): AdminClientRequest | null {
+    if (!mountedRef.current || authActionInFlightRef.current) return null;
+    authActionInFlightRef.current = true;
+    const requestId = authActionSequenceRef.current + 1;
+    authActionSequenceRef.current = requestId;
+    authActionAbortRef.current?.abort();
+    const controller = new AbortController();
+    authActionAbortRef.current = controller;
+    return { controller, requestId };
+  }
+
+  function isCurrentAuthAction(action: AdminClientRequest) {
+    return mountedRef.current && !action.controller.signal.aborted && action.requestId === authActionSequenceRef.current;
+  }
+
+  function finishAuthAction(action: AdminClientRequest) {
+    if (authActionAbortRef.current === action.controller) authActionAbortRef.current = null;
+    if (action.requestId === authActionSequenceRef.current) authActionInFlightRef.current = false;
+  }
+
+  function cancelAuthAction() {
+    authActionSequenceRef.current += 1;
+    authActionAbortRef.current?.abort();
+    authActionAbortRef.current = null;
+    authActionInFlightRef.current = false;
   }
 
   function openWorkspace(nextWorkspace: AdminWorkspace) {
@@ -208,28 +270,34 @@ export default function AdminClient() {
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const action = beginAuthAction();
+    if (!action) return;
     setIsSigningIn(true);
-    setState({});
+    setState({ authRequired: true });
 
     try {
       const response = await fetch("/api/auth", {
         method: "POST",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ mode, role: "admin", username, password, adminCode }),
       });
       const data = await response.json();
+      if (!isCurrentAuthAction(action)) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
       if (!data.session?.accessToken) throw new Error("Admin sign in requires a live session.");
 
       persistAdminSession(data.session, data.account);
       await loadAdmin();
     } catch (error) {
+      if (!isCurrentAuthAction(action)) return;
       setState({
         authRequired: true,
         error: error instanceof Error ? error.message : "Unable to sign in.",
       });
     } finally {
-      setIsSigningIn(false);
+      if (isCurrentAuthAction(action)) setIsSigningIn(false);
+      finishAuthAction(action);
     }
   }
 
@@ -239,12 +307,15 @@ export default function AdminClient() {
       return;
     }
 
+    const action = beginAuthAction();
+    if (!action) return;
     setIsResettingPassword(true);
-    setState({});
+    setState({ authRequired: true });
 
     try {
       const response = await fetch("/api/auth", {
         method: "POST",
+        signal: action.controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           mode: "reset_password",
@@ -257,23 +328,28 @@ export default function AdminClient() {
         }),
       });
       const data = await response.json();
+      if (!isCurrentAuthAction(action)) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to send reset email.");
       setState({
         authRequired: true,
         error: "Password reset email sent. Open the newest Mydancr email to continue.",
       });
     } catch (error) {
+      if (!isCurrentAuthAction(action)) return;
       setState({
         authRequired: true,
         error: error instanceof Error ? error.message : "Unable to send reset email.",
       });
     } finally {
-      setIsResettingPassword(false);
+      if (isCurrentAuthAction(action)) setIsResettingPassword(false);
+      finishAuthAction(action);
     }
   }
 
   function signOut() {
     setIsSigningOut(true);
+    invalidateAdminDataRequests();
+    cancelAuthAction();
     clearAdminSession();
     window.sessionStorage.removeItem(OPEN_APPROVALS_SESSION_KEY);
     openApprovalIdsRef.current = {};
@@ -285,35 +361,59 @@ export default function AdminClient() {
     setWorkspace("home");
     setLoadedWorkspaces({});
     setLoadingWorkspace(null);
-    pendingWorkspaceLoadsRef.current.clear();
     setActionNotice(null);
     setState({ authRequired: true, error: "Admin session ended. Sign in to continue." });
+    setIsSigningIn(false);
+    setIsResettingPassword(false);
     setIsSigningOut(false);
   }
 
   async function loadWorkspaceData(nextWorkspace: AdminWorkspace) {
-    if (nextWorkspace === "home" || loadedWorkspaces[nextWorkspace] || pendingWorkspaceLoadsRef.current.has(nextWorkspace)) return;
+    if (nextWorkspace === "home" || loadedWorkspaces[nextWorkspace]) {
+      cancelWorkspaceLoad();
+      return;
+    }
+    if (workspaceLoadRef.current?.workspace === nextWorkspace) return;
 
+    cancelWorkspaceLoad();
     const sections = adminSectionsForWorkspace(nextWorkspace);
-    pendingWorkspaceLoadsRef.current.add(nextWorkspace);
+    const requestId = workspaceLoadSequenceRef.current + 1;
+    workspaceLoadSequenceRef.current = requestId;
+    const controller = new AbortController();
+    const request: AdminWorkspaceRequest = {
+      controller,
+      generation: dataGenerationRef.current,
+      requestId,
+      workspace: nextWorkspace,
+    };
+    workspaceLoadRef.current = request;
     setLoadingWorkspace(nextWorkspace);
+
+    const isCurrentRequest = () => mountedRef.current
+      && !controller.signal.aborted
+      && workspaceLoadRef.current === request
+      && request.generation === dataGenerationRef.current;
 
     try {
       const results = await Promise.allSettled(
         sections.map((section) => requestAdminJson(section.path, {
+          signal: controller.signal,
           fallbackMessage: `${section.label} could not be loaded.`,
         })),
       );
+      if (!isCurrentRequest()) return;
       const authenticationFailure = results.find(
         (result) => result.status === "rejected" && isAdminAuthenticationError(result.reason),
       );
       if (authenticationFailure?.status === "rejected") {
+        const message = authenticationFailure.reason instanceof Error
+          ? authenticationFailure.reason.message
+          : "Admin sign in required.";
+        invalidateAdminDataRequests();
         clearAdminSession();
         setState({
           authRequired: true,
-          error: authenticationFailure.reason instanceof Error
-            ? authenticationFailure.reason.message
-            : "Admin sign in required.",
+          error: message,
         });
         return;
       }
@@ -339,6 +439,7 @@ export default function AdminClient() {
       }));
       setLoadedWorkspaces((current) => ({ ...current, [nextWorkspace]: true }));
     } catch (error) {
+      if (!isCurrentRequest()) return;
       setState((current) => ({
         ...current,
         warnings: [
@@ -348,25 +449,36 @@ export default function AdminClient() {
       }));
       setLoadedWorkspaces((current) => ({ ...current, [nextWorkspace]: true }));
     } finally {
-      pendingWorkspaceLoadsRef.current.delete(nextWorkspace);
-      setLoadingWorkspace((current) => (current === nextWorkspace ? null : current));
+      if (workspaceLoadRef.current === request) {
+        workspaceLoadRef.current = null;
+        if (mountedRef.current) setLoadingWorkspace((current) => (current === nextWorkspace ? null : current));
+      }
     }
   }
 
   async function loadAdmin() {
+    const generation = invalidateAdminDataRequests();
+    const controller = new AbortController();
+    adminLoadAbortRef.current = controller;
+    const isCurrentRequest = () => mountedRef.current
+      && !controller.signal.aborted
+      && adminLoadAbortRef.current === controller
+      && generation === dataGenerationRef.current;
+
     setIsLoading(true);
     setWorkspace("home");
     setLoadedWorkspaces({});
     setLoadingWorkspace(null);
-    pendingWorkspaceLoadsRef.current.clear();
 
     try {
       const sections = adminSectionsForWorkspace("home");
       const results = await Promise.allSettled(
         sections.map((section) => requestAdminJson(section.path, {
+          signal: controller.signal,
           fallbackMessage: `${section.label} could not be loaded.`,
         })),
       );
+      if (!isCurrentRequest()) return;
       const authenticationFailure = results.find(
         (result) => result.status === "rejected" && isAdminAuthenticationError(result.reason),
       );
@@ -420,12 +532,15 @@ export default function AdminClient() {
       setState(nextState);
       setLoadedWorkspaces({ home: true });
     } catch (error) {
+      if (!isCurrentRequest()) return;
       setState({
         authRequired: false,
         warnings: [error instanceof Error ? error.message : "Unable to load admin dashboard."],
       });
     } finally {
-      setIsLoading(false);
+      const isCurrent = isCurrentRequest();
+      if (adminLoadAbortRef.current === controller) adminLoadAbortRef.current = null;
+      if (isCurrent) setIsLoading(false);
     }
   }
 
@@ -477,16 +592,16 @@ export default function AdminClient() {
       ) : needsSignIn ? (
         <form className="admin-panel sign-in" onSubmit={signIn}>
           <div className="segmented" aria-label="Admin auth mode">
-            <button className={mode === "login" ? "active" : ""} type="button" onClick={() => setMode("login")}>
+            <button className={mode === "login" ? "active" : ""} type="button" disabled={authBusy} onClick={() => setMode("login")}>
               Sign in
             </button>
-            <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => setMode("signup")}>
+            <button className={mode === "signup" ? "active" : ""} type="button" disabled={authBusy} onClick={() => setMode("signup")}>
               Create
             </button>
           </div>
           <label>
             Admin username
-            <input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required />
+            <input value={username} disabled={authBusy} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required />
           </label>
           <label>
             Password
@@ -494,6 +609,7 @@ export default function AdminClient() {
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
+                disabled={authBusy}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 minLength={6}
@@ -503,6 +619,7 @@ export default function AdminClient() {
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
                 type="button"
+                disabled={authBusy}
                 onClick={() => setShowPassword((value) => !value)}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -518,6 +635,7 @@ export default function AdminClient() {
               <input
                 type="password"
                 value={adminCode}
+                disabled={authBusy}
                 onChange={(event) => setAdminCode(event.target.value)}
                 autoComplete="one-time-code"
                 required
@@ -525,11 +643,11 @@ export default function AdminClient() {
             </label>
           ) : null}
           {mode === "login" ? (
-            <button className="forgot-password" type="button" onClick={sendPasswordReset} disabled={isResettingPassword}>
+            <button className="forgot-password" type="button" onClick={sendPasswordReset} disabled={authBusy}>
               {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
             </button>
           ) : null}
-          <button type="submit" disabled={isSigningIn}>
+          <button type="submit" disabled={authBusy}>
             {isSigningIn ? "Working..." : mode === "signup" ? "Create admin account" : "Sign in"}
           </button>
         </form>

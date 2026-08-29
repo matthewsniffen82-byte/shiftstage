@@ -68,6 +68,24 @@ test("every top-level admin workspace load preserves refreshed sessions", () => 
   }
 });
 
+test("the top-level admin shell cancels stale loads and serializes authentication", () => {
+  const shell = adminSource.match(/export default function AdminClient[\s\S]*?(?=function AdminDashboardLoadingState)/)?.[0] || "";
+  assert.match(shell, /const mountedRef = useRef\(false\);/);
+  assert.match(shell, /const dataGenerationRef = useRef\(0\);/);
+  assert.match(shell, /const adminLoadAbortRef = useRef<AbortController \| null>\(null\);/);
+  assert.match(shell, /const workspaceLoadRef = useRef<AdminWorkspaceRequest \| null>\(null\);/);
+  assert.match(shell, /const authActionInFlightRef = useRef\(false\);/);
+  assert.match(shell, /function invalidateAdminDataRequests\(\)/);
+  assert.match(shell, /function cancelWorkspaceLoad\(\)/);
+  assert.match(shell, /if \(!mountedRef\.current \|\| authActionInFlightRef\.current\) return null;/);
+  assert.equal((shell.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.equal((shell.match(/signal: action\.controller\.signal/g) || []).length, 2);
+  assert.match(shell, /workspaceLoadRef\.current === request/);
+  assert.match(shell, /generation === dataGenerationRef\.current/);
+  assert.match(shell, /invalidateAdminDataRequests\(\);\s+cancelAuthAction\(\);\s+clearAdminSession\(\)/);
+  assert.match(shell, /disabled=\{authBusy\}/);
+});
+
 test("copyright administration cancels stale loads and serializes mutations", () => {
   assert.match(dmcaPanel, /const mountedRef = useRef\(false\);/);
   assert.match(dmcaPanel, /const loadSequenceRef = useRef\(0\);/);
