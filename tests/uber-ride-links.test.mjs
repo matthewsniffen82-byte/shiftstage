@@ -208,7 +208,8 @@ test("clicking the reusable control records the typed event and isolates card na
   assert.match(componentSource, /venueId: venue\.id/);
   assert.match(componentSource, /dancerId: source === "venue_page" \? null : dancerId/);
   assert.match(eventRouteSource, /type === "uber_ride_link_clicked"/);
-  assert.match(eventRouteSource, /session_id: uberAnalyticsSessionId\(source, sessionId, body\.timestamp\)/);
+  assert.match(eventRouteSource, /const timestamp = optionalText\(body\.timestamp, "timestamp", 64\)/);
+  assert.match(eventRouteSource, /session_id: uberAnalyticsSessionId\(source, sessionId, timestamp\)/);
 });
 
 test("eligible live-shell dancer and venue cards expose compact ride links without parent navigation", () => {

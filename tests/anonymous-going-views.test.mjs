@@ -77,6 +77,8 @@ test("dancer profile views count signed-in and signed-out visitors", () => {
   assert.match(profileViewTracker, /recordEvent\(\{ type: "profile_view", dancerId/);
   assert.doesNotMatch(profileViewTracker, /authorization|accessToken|Sign in required/);
   assert.match(eventsRoute, /viewer_id: viewerId/);
+  assert.match(eventsRoute, /const viewerId = await optionalViewerId\(client, request\)/);
+  assert.doesNotMatch(eventsRoute, /body\.viewerId/);
   assert.match(eventsRoute, /session_id: sessionId/);
   assert.match(liveApp, /recordLiveEvent\("profile_view", \{ dancerName: profileName/);
 });

@@ -1,9 +1,28 @@
 import { NextResponse } from "next/server";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { getBearerToken } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const MAX_EVENT_BODY_BYTES = 4_096;
+const MAX_SESSION_ID_LENGTH = 120;
+const MAX_SOURCE_LENGTH = 80;
+const MAX_NAME_LENGTH = 120;
+const MAX_SLUG_LENGTH = 140;
+const MAX_CITY_LENGTH = 80;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const eventTypes = new Set([
+  "profile_view",
+  "profile_action",
+  "schedule_view",
+  "schedule_action",
+  "direction_request",
+  "social_click",
+  "uber_ride_link_clicked",
+]);
 const socialPlatforms = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
 const uberRideSources = new Set(["venue_page", "dancer_profile", "tonight_feed"]);
 
@@ -12,37 +31,40 @@ type AdminClient = ReturnType<typeof createAdminSupabaseClient>;
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as EventBody;
+    const body = await readEventBody(request);
     const client = createAdminSupabaseClient();
-    const type = text(body.type);
-    const sessionId = text(body.sessionId);
-    const viewerId = text(body.viewerId);
+    const type = optionalText(body.type, "type", 40);
+    const sessionId = optionalSessionId(body.sessionId);
+    const viewerId = await optionalViewerId(client, request);
 
-    if (!type) return missing("type");
+    if (!type) throw invalid("Missing type.");
+    if (!eventTypes.has(type)) throw invalid("Unknown event type.");
 
     if (type === "profile_view" || type === "profile_action") {
       const dancerId = await resolveDancerId(client, body);
-      if (!dancerId) return missing("dancerId or dancerName");
+      if (!dancerId) throw invalid("Missing dancerId or dancerName.");
+      const source = optionalText(body.source, "source", MAX_SOURCE_LENGTH)
+        || (type === "profile_action" ? "profile_action" : "web");
       const { error } = await client.from("profile_views").insert({
         dancer_id: dancerId,
         viewer_id: viewerId,
-        source: text(body.source) || (type === "profile_action" ? "profile_action" : "web"),
+        source,
         session_id: sessionId,
       });
       if (error) throw error;
     } else if (type === "schedule_view" || type === "schedule_action") {
       const dancerId = await resolveDancerId(client, body);
-      if (!dancerId) return missing("dancerId or dancerName");
+      if (!dancerId) throw invalid("Missing dancerId or dancerName.");
       const { error } = await client.from("schedule_views").insert({
         dancer_id: dancerId,
-        shift_id: text(body.shiftId),
+        shift_id: optionalUuid(body.shiftId, "shiftId"),
         viewer_id: viewerId,
         session_id: sessionId,
       });
       if (error) throw error;
     } else if (type === "direction_request") {
       const venueId = await resolveVenueId(client, body);
-      if (!venueId) return missing("venueId or venueName");
+      if (!venueId) throw invalid("Missing venueId or venueName.");
       const dancerId = await resolveDancerId(client, body);
       const { error } = await client.from("direction_requests").insert({
         dancer_id: dancerId,
@@ -53,9 +75,9 @@ export async function POST(request: Request) {
       if (error) throw error;
     } else if (type === "social_click") {
       const dancerId = await resolveDancerId(client, body);
-      const platform = text(body.platform);
-      if (!dancerId) return missing("dancerId or dancerName");
-      if (!platform || !socialPlatforms.has(platform)) return missing("valid platform");
+      const platform = optionalText(body.platform, "platform", 24);
+      if (!dancerId) throw invalid("Missing dancerId or dancerName.");
+      if (!platform || !socialPlatforms.has(platform)) throw invalid("Missing valid platform.");
       const { error } = await client.from("social_clicks").insert({
         dancer_id: dancerId,
         platform,
@@ -65,38 +87,70 @@ export async function POST(request: Request) {
       if (error) throw error;
     } else if (type === "uber_ride_link_clicked") {
       const venueId = await resolveVenueId(client, body);
-      const source = text(body.source);
-      if (!venueId) return missing("venueId or venueName");
-      if (!source || !uberRideSources.has(source)) return missing("valid source");
-      const dancerId = text(body.dancerId)
+      const source = optionalText(body.source, "source", MAX_SOURCE_LENGTH);
+      if (!venueId) throw invalid("Missing venueId or venueName.");
+      if (!source || !uberRideSources.has(source)) throw invalid("Missing valid source.");
+      const dancerId = optionalText(body.dancerId, "dancerId", 64)
         ? await resolveDancerId(client, body)
         : null;
+      const timestamp = optionalText(body.timestamp, "timestamp", 64);
       const { error } = await client.from("direction_requests").insert({
         venue_id: venueId,
         dancer_id: dancerId,
         requester_id: viewerId,
-        session_id: uberAnalyticsSessionId(source, sessionId, body.timestamp),
+        session_id: uberAnalyticsSessionId(source, sessionId, timestamp),
       });
       if (error) throw error;
-    } else {
-      return NextResponse.json({ ok: false, error: "Unknown event type." }, { status: 400 });
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to record event." },
-      { status: 500 },
-    );
+    return apiError(error, "Unable to record event.");
   }
 }
 
-function text(value: unknown) {
-  return typeof value === "string" && value.trim() ? value.trim() : null;
+async function readEventBody(request: Request): Promise<EventBody> {
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_EVENT_BODY_BYTES) {
+    throw invalid("Event payload is too large.");
+  }
+
+  const raw = await request.text();
+  if (raw.length > MAX_EVENT_BODY_BYTES) throw invalid("Event payload is too large.");
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw invalid("Invalid event payload.");
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw invalid("Invalid event payload.");
+  }
+  return parsed as EventBody;
 }
 
-function uberAnalyticsSessionId(source: string, sessionId: string | null, timestamp: unknown) {
-  const parsed = typeof timestamp === "string" ? Date.parse(timestamp) : Number.NaN;
+function optionalText(value: unknown, label: string, maxLength: number) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const normalized = value.trim();
+  if (normalized.length > maxLength) throw invalid(`Invalid ${label}.`);
+  return normalized;
+}
+
+function optionalSessionId(value: unknown) {
+  const sessionId = optionalText(value, "sessionId", MAX_SESSION_ID_LENGTH);
+  if (sessionId && sessionId.length < 8) throw invalid("Invalid sessionId.");
+  return sessionId;
+}
+
+function optionalUuid(value: unknown, label: string) {
+  const id = optionalText(value, label, 64);
+  if (id && !UUID_PATTERN.test(id)) throw invalid(`Invalid ${label}.`);
+  return id;
+}
+
+function uberAnalyticsSessionId(source: string, sessionId: string | null, timestamp: string | null) {
+  const parsed = timestamp ? Date.parse(timestamp) : Number.NaN;
   const now = Date.now();
   const eventTime = Number.isFinite(parsed) && Math.abs(parsed - now) <= 24 * 60 * 60 * 1000
     ? new Date(parsed).toISOString()
@@ -114,16 +168,27 @@ function slugify(value: string) {
 }
 
 async function resolveDancerId(client: AdminClient, body: EventBody) {
-  const explicitId = text(body.dancerId);
-  if (explicitId) return explicitId;
+  const explicitId = optionalUuid(body.dancerId, "dancerId");
+  if (explicitId) {
+    const { data, error } = await client
+      .from("dancer_profiles")
+      .select("id")
+      .eq("id", explicitId)
+      .eq("status", "approved")
+      .eq("is_public", true)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as { id?: string } | null)?.id || null;
+  }
 
-  const city = text(body.city) || "Las Vegas";
-  const explicitSlug = text(body.dancerSlug);
-  const name = text(body.dancerName) || text(body.profileName);
+  const city = optionalText(body.city, "city", MAX_CITY_LENGTH) || "Las Vegas";
+  const explicitSlug = optionalText(body.dancerSlug, "dancerSlug", MAX_SLUG_LENGTH);
+  const name = optionalText(body.dancerName, "dancerName", MAX_NAME_LENGTH)
+    || optionalText(body.profileName, "profileName", MAX_NAME_LENGTH);
   const slug = explicitSlug || (name ? slugify(name) : null);
 
   if (slug) {
-    const { data } = await client
+    const { data, error } = await client
       .from("dancer_profiles")
       .select("id")
       .eq("city", city)
@@ -131,12 +196,13 @@ async function resolveDancerId(client: AdminClient, body: EventBody) {
       .eq("status", "approved")
       .eq("is_public", true)
       .maybeSingle();
+    if (error) throw error;
     const row = data as { id?: string } | null;
     if (row?.id) return row.id;
   }
 
   if (name) {
-    const { data } = await client
+    const { data, error } = await client
       .from("dancer_profiles")
       .select("id")
       .eq("city", city)
@@ -144,6 +210,7 @@ async function resolveDancerId(client: AdminClient, body: EventBody) {
       .eq("status", "approved")
       .eq("is_public", true)
       .maybeSingle();
+    if (error) throw error;
     const row = data as { id?: string } | null;
     if (row?.id) return row.id;
   }
@@ -152,32 +219,45 @@ async function resolveDancerId(client: AdminClient, body: EventBody) {
 }
 
 async function resolveVenueId(client: AdminClient, body: EventBody) {
-  const explicitId = text(body.venueId);
-  if (explicitId) return explicitId;
+  const explicitId = optionalUuid(body.venueId, "venueId");
+  if (explicitId) {
+    const { data, error } = await client
+      .from("venues")
+      .select("id")
+      .eq("id", explicitId)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as { id?: string } | null)?.id || null;
+  }
 
-  const city = text(body.city) || "Las Vegas";
-  const explicitSlug = text(body.venueSlug);
-  const name = text(body.venueName);
+  const city = optionalText(body.city, "city", MAX_CITY_LENGTH) || "Las Vegas";
+  const explicitSlug = optionalText(body.venueSlug, "venueSlug", MAX_SLUG_LENGTH);
+  const name = optionalText(body.venueName, "venueName", MAX_NAME_LENGTH);
   const slug = explicitSlug || (name ? slugify(name) : null);
 
   if (slug) {
-    const { data } = await client
+    const { data, error } = await client
       .from("venues")
       .select("id")
       .eq("city", city)
       .eq("slug", slug)
+      .eq("is_active", true)
       .maybeSingle();
+    if (error) throw error;
     const row = data as { id?: string } | null;
     if (row?.id) return row.id;
   }
 
   if (name) {
-    const { data } = await client
+    const { data, error } = await client
       .from("venues")
       .select("id")
       .eq("city", city)
       .ilike("name", name)
+      .eq("is_active", true)
       .maybeSingle();
+    if (error) throw error;
     const row = data as { id?: string } | null;
     if (row?.id) return row.id;
   }
@@ -185,6 +265,13 @@ async function resolveVenueId(client: AdminClient, body: EventBody) {
   return null;
 }
 
-function missing(name: string) {
-  return NextResponse.json({ ok: false, error: `Missing ${name}.` }, { status: 400 });
+async function optionalViewerId(client: AdminClient, request: Request) {
+  const token = getBearerToken(request);
+  if (!token) return null;
+  const { data, error } = await client.auth.getUser(token);
+  return error ? null : data.user?.id || null;
+}
+
+function invalid(message: string) {
+  return new PublicApiError("INVALID_REQUEST", message, 400);
 }
