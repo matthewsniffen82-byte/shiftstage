@@ -82,7 +82,8 @@ test("the retired provider cannot be selected for new financial records", () => 
 
 test("webhooks are signature verified and idempotently recorded without secrets", () => {
   const webhook = read("app/api/stripe/webhook/route.ts");
-  assert.match(webhook, /constructEvent\(await request\.text\(\), signature, getServerEnv\("STRIPE_WEBHOOK_SECRET"\)\)/);
+  assert.match(webhook, /readBoundedRequestBytes\([\s\S]*?MAX_STRIPE_WEBHOOK_BODY_BYTES/);
+  assert.match(webhook, /constructEvent\([\s\S]*?Buffer\.from\(payload\.buffer/);
   assert.match(migration, /unique \(payment_provider, provider_event_id\)/);
   assert.match(migration, /rename to payment_provider_webhook_events/);
   assert.doesNotMatch(migration, /create table if not exists public\.payment_provider_webhook_events/);

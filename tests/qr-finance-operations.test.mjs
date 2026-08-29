@@ -90,7 +90,8 @@ test("Stripe webhook idempotently reconciles invoices, payout accounts, and reve
     webhook.indexOf('if (!signature)') < webhook.indexOf("const stripe = getStripe()"),
     "unsigned webhook requests must fail before Stripe configuration is loaded",
   );
-  assert.match(webhook, /constructEvent\(await request\.text\(\), signature, getServerEnv\("STRIPE_WEBHOOK_SECRET"\)\)/);
+  assert.match(webhook, /readBoundedRequestBytes\([\s\S]*?MAX_STRIPE_WEBHOOK_BODY_BYTES/);
+  assert.match(webhook, /constructEvent\([\s\S]*?Buffer\.from\(payload\.buffer/);
   assert.match(webhook, /recordPaymentProviderWebhook/);
   assert.match(webhook, /finishPaymentProviderWebhook/);
   assert.match(webhook, /invoice\.payment_failed/);

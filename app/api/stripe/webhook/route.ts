@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/src/lib/api";
+import { readBoundedRequestBytes } from "@/src/lib/bounded-json-body";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   markStripeSubscriptionDeleted,
@@ -20,6 +22,7 @@ import type Stripe from "stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_STRIPE_WEBHOOK_BODY_BYTES = 1024 * 1024;
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -28,10 +31,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Missing Stripe signature." }, { status: 400 });
   }
 
+  let payload: Uint8Array;
+  try {
+    payload = await readBoundedRequestBytes(
+      request,
+      MAX_STRIPE_WEBHOOK_BODY_BYTES,
+      "Stripe webhook is too large.",
+    );
+  } catch (error) {
+    return apiError(error, "Unable to read Stripe webhook.");
+  }
+
   const stripe = getStripe();
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(await request.text(), signature, getServerEnv("STRIPE_WEBHOOK_SECRET"));
+    event = stripe.webhooks.constructEvent(
+      Buffer.from(payload.buffer, payload.byteOffset, payload.byteLength),
+      signature,
+      getServerEnv("STRIPE_WEBHOOK_SECRET"),
+    );
   } catch (error) {
     console.warn("STRIPE_WEBHOOK_SIGNATURE_REJECTED", {
       message: internalWebhookError(error),
