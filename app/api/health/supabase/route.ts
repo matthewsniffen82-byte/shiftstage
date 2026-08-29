@@ -20,29 +20,22 @@ export async function GET() {
     );
 
     if (!response.ok) {
-      return NextResponse.json(
-        {
-          ok: false,
-          service: "supabase",
-          error: await formatSupabaseResponse(response),
-          env: getSupabaseEnvStatus(),
-        },
-        { status: 500 },
-      );
+      console.error("SUPABASE_HEALTH_PROBE_FAILED", await formatSupabaseResponse(response));
+      return unhealthySupabaseResponse();
     }
 
     return NextResponse.json({ ok: true, service: "supabase" });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        service: "supabase",
-        error: formatUnexpectedError(error),
-        env: getSupabaseEnvStatus(),
-      },
-      { status: 500 },
-    );
+    console.error("SUPABASE_HEALTH_PROBE_FAILED", formatUnexpectedError(error));
+    return unhealthySupabaseResponse();
   }
+}
+
+function unhealthySupabaseResponse() {
+  return NextResponse.json(
+    { ok: false, service: "supabase", error: "Supabase health check failed." },
+    { status: 503, headers: { "cache-control": "private, no-store" } },
+  );
 }
 
 async function formatSupabaseResponse(response: Response) {
@@ -73,13 +66,5 @@ function formatUnexpectedError(error: unknown) {
 
   return {
     message: String(error || "Unknown health check error."),
-  };
-}
-
-function getSupabaseEnvStatus() {
-  return {
-    NEXT_PUBLIC_SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
-    SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
   };
 }
