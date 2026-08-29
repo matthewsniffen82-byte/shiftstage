@@ -11075,31 +11075,31 @@ body.dancr-button-system :is(
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art:not(.has-custom-photo) {
-    background-color: #302e33 !important;
+    background-color: #18171b !important;
     background-image:
       repeating-linear-gradient(
         115deg,
-        rgba(248, 250, 252, 0.075) 0 1px,
-        rgba(248, 250, 252, 0.018) 1px 2px,
+        rgba(248, 250, 252, 0.055) 0 1px,
+        rgba(248, 250, 252, 0.012) 1px 2px,
         transparent 2px 6px
       ),
-      linear-gradient(112deg, transparent 5%, rgba(248, 250, 252, 0.08) 28%, transparent 48%),
-      radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.16), transparent 48%),
+      linear-gradient(112deg, transparent 5%, rgba(248, 250, 252, 0.04) 28%, transparent 48%),
+      radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.13), transparent 48%),
       linear-gradient(
         145deg,
-        #49454b 0%,
-        #2a282d 66%,
-        #3a363c 100%
+        #28262b 0%,
+        #111015 66%,
+        #1e1b21 100%
       ) !important;
     box-shadow:
-      inset 0 1px 0 rgba(248, 250, 252, 0.12),
-      inset 0 -1px 0 rgba(167, 139, 250, 0.22) !important;
+      inset 0 1px 0 rgba(248, 250, 252, 0.08),
+      inset 0 -1px 0 rgba(167, 139, 250, 0.20) !important;
   }
 
   /* Android retains the shared charcoal-violet material above, but Chromium
-   * compresses it toward the black card body. Use a neutral luminance lift for
-   * visual parity with iPhone while keeping blue out of the fill and avoiding
-   * an opacity layer or whole-card filter. */
+   * compresses it toward the black card body. Its neutral luminance lift is
+   * intentionally brighter in CSS so the rendered result matches the darker
+   * iPhone/WebKit base without changing the fill hue or using a filter. */
   html.is-android body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art:not(.has-custom-photo),
