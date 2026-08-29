@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   cancelAnonymousGoing,
   cancelGoing,
@@ -8,6 +9,10 @@ import {
   markGoing,
 } from "@/src/lib/dancr/customer";
 import { isPublicDancerProfileEligible } from "@/src/lib/dancr/profile-approval";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   createRequestSupabaseContext,
@@ -21,6 +26,7 @@ const VISITOR_COOKIE = "dancr_going_visitor";
 const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const VISITOR_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
+const MAX_GOING_BODY_BYTES = 4_096;
 
 type GoingIdentity = {
   customerId: string | null;
@@ -56,7 +62,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_GOING_BODY_BYTES,
+      invalidMessage: "Invalid going request.",
+      tooLargeMessage: "Going request is too large.",
+    });
     const shiftId = typeof body?.shiftId === "string" ? body.shiftId.trim() : "";
     const going = body?.going !== false;
 
@@ -67,6 +77,14 @@ export async function POST(request: Request) {
     const admin = createAdminSupabaseClient();
     await requirePublicShift(admin, shiftId);
     const identity = await resolveGoingIdentity(request, true);
+    await enforcePublicRequestRateLimit(admin, {
+      namespace: "customer_going",
+      request,
+      subject: `${shiftId}:${identity.customerId || identity.visitorTokenHash || "anonymous"}`,
+      windowSeconds: 60 * 60,
+      ipLimit: 180,
+      subjectLimit: 60,
+    });
 
     if (identity.customerId) {
       if (going) await markGoing(admin, identity.customerId, shiftId);
@@ -94,6 +112,12 @@ export async function POST(request: Request) {
     }
     return response;
   } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to update going signal.");
   }
 }

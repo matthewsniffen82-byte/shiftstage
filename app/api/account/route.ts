@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAccountByUserId, setAccountState } from "@/src/lib/dancr/auth";
 import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
 import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
@@ -10,8 +11,8 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PATCHABLE_STATES = new Set<AccountState>(["active", "disabled"]);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_ACCOUNT_BODY_BYTES = 8_192;
 
 export async function GET(request: Request) {
   try {
@@ -31,12 +32,16 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_ACCOUNT_BODY_BYTES,
+      invalidMessage: "Invalid account update request.",
+      tooLargeMessage: "Account update request is too large.",
+    });
     const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body?.password === "string" ? body.password : "";
 
     if (email) {
-      if (!EMAIL_PATTERN.test(email)) {
+      if (email.length > 254 || !EMAIL_PATTERN.test(email)) {
         return NextResponse.json({ ok: false, error: "Enter a valid email address." }, { status: 400 });
       }
 
@@ -45,7 +50,8 @@ export async function PATCH(request: Request) {
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo });
 
       if (error) {
-        return NextResponse.json({ ok: false, error: error.message || "Unable to update email." }, { status: 400 });
+        console.warn("ACCOUNT_EMAIL_UPDATE_REJECTED", { userId: user.id, code: error.code || "auth_error" });
+        return NextResponse.json({ ok: false, error: "Unable to update email. Check the address and try again." }, { status: 400 });
       }
 
       const account = await getAccountByUserId(client, user.id);
@@ -61,11 +67,15 @@ export async function PATCH(request: Request) {
       if (password.length < 8) {
         return NextResponse.json({ ok: false, error: "Password must be at least 8 characters." }, { status: 400 });
       }
+      if (password.length > 1_024) {
+        return NextResponse.json({ ok: false, error: "Password is too long." }, { status: 400 });
+      }
 
       const { error } = await client.auth.updateUser({ password });
 
       if (error) {
-        return NextResponse.json({ ok: false, error: error.message || "Unable to update password." }, { status: 400 });
+        console.warn("ACCOUNT_PASSWORD_UPDATE_REJECTED", { userId: user.id, code: error.code || "auth_error" });
+        return NextResponse.json({ ok: false, error: "Unable to update password. Check the password and try again." }, { status: 400 });
       }
 
       const { error: signOutError } = await client.auth.signOut({ scope: "others" });
@@ -103,11 +113,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: true, account, session, message: "Password updated. Other sessions were signed out." });
     }
 
-    const accountState = body?.accountState;
-
-    if (!PATCHABLE_STATES.has(accountState)) {
+    if (body.accountState !== "active" && body.accountState !== "disabled") {
       return NextResponse.json({ ok: false, error: "Account state must be active or disabled." }, { status: 400 });
     }
+    const accountState: AccountState = body.accountState;
 
     const account = await setAccountState(client, user.id, accountState, createAdminSupabaseClient());
     console.info(JSON.stringify({
