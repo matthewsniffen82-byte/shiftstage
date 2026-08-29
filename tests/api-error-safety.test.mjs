@@ -36,8 +36,9 @@ test("intentional typed public errors preserve safe actionable feedback", async 
   });
 });
 
-test("legacy validation errors remain actionable while routes migrate to typed errors", async () => {
+test("untyped client-status errors cannot expose provider-like messages", async () => {
   const result = resolveApiError(new Error("Choose a valid city."), "Unable to choose this city.", 400);
   assert.equal(result.status, 400);
-  assert.deepEqual(result.body, { ok: false, error: "Choose a valid city." });
+  assert.deepEqual(result.body, { ok: false, error: "Unable to choose this city." });
+  assert.equal(result.shouldLog, true);
 });
