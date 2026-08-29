@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createDmcaNotice,
   DmcaUserError,
@@ -9,6 +10,7 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_DMCA_NOTICE_BODY_BYTES = 65_536;
 
 export async function GET() {
   try {
@@ -22,7 +24,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_DMCA_NOTICE_BODY_BYTES,
+      invalidMessage: "Invalid copyright notice request.",
+      tooLargeMessage: "Copyright notice request is too large.",
+    });
     const notice = await createDmcaNotice(
       createAdminSupabaseClient(),
       body,
@@ -37,6 +43,9 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
+    if (error instanceof PublicApiError) {
+      return apiError(error, "Unable to submit copyright notice.");
+    }
     const message = error instanceof DmcaUserError ? error.message : "";
     if (!message) console.error("Unable to submit copyright notice", error);
     return apiError(

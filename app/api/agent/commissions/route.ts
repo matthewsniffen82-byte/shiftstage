@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getNatsRuntimeConfig } from "@/src/lib/dancr/nats";
 import { requestNatsAgentAffiliateLink } from "@/src/lib/dancr/nats-agent-affiliate-actions";
 import { agentStatementCsv, getAgentCommissionDashboard } from "@/src/lib/dancr/sales-agents";
@@ -8,6 +9,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_AGENT_ACTION_BODY_BYTES = 2_048;
 
 export async function GET(request: Request) {
   try {
@@ -50,7 +52,11 @@ export async function POST(request: Request) {
   try {
     const authContext = await createRequestSupabaseContext(request);
     const { user } = authContext;
-    const body = await request.json().catch(() => ({}));
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_AGENT_ACTION_BODY_BYTES,
+      invalidMessage: "Invalid sales agent request.",
+      tooLargeMessage: "Sales agent request is too large.",
+    });
     if (body.action !== "request_nats_link") {
       return NextResponse.json({ ok: false, error: "Unsupported sales agent action." }, { status: 400 });
     }

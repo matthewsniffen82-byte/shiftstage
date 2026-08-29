@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   DmcaUserError,
   getUploaderDmcaCase,
@@ -10,6 +11,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_DMCA_COUNTER_BODY_BYTES = 32_768;
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,7 +30,11 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const { user } = await createRequestSupabaseContext(request);
     const { id } = await context.params;
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_DMCA_COUNTER_BODY_BYTES,
+      invalidMessage: "Invalid counter-notice request.",
+      tooLargeMessage: "Counter-notice request is too large.",
+    });
     const counterNotice = await submitDmcaCounterNotice(
       createAdminSupabaseClient(),
       user.id,
@@ -49,6 +55,9 @@ export async function POST(request: Request, context: RouteContext) {
 }
 
 function dmcaCaseError(error: unknown, fallback: string) {
+  if (error instanceof PublicApiError) {
+    return apiError(error, fallback);
+  }
   if (error instanceof Error && error.message === "Sign in required.") {
     return apiError(error, fallback);
   }

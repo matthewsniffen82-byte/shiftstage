@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createOwnSupportMessage,
   isSupportUserRole,
@@ -11,6 +12,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_SUPPORT_MESSAGE_BODY_BYTES = 24_576;
 
 export async function GET(request: Request) {
   try {
@@ -34,7 +36,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Support messaging is available for guest, dancer, and venue accounts." }, { status: 403 });
     }
 
-    const body = await request.json();
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_SUPPORT_MESSAGE_BODY_BYTES,
+      invalidMessage: "Invalid support message request.",
+      tooLargeMessage: "Support message request is too large.",
+    });
     const thread = await createOwnSupportMessage(
       client,
       {
