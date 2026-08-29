@@ -32786,6 +32786,14 @@
           transform: translate(-50%,-50%) scale(.88);
           transition: opacity .18s ease, transform .18s ease;
         }
+        .home-tv-feed-playback svg {
+          width: 30px;
+          height: 30px;
+          display: block;
+          fill: currentColor;
+          stroke: none;
+        }
+        .home-tv-feed-playback.show,
         .home-tv-feed-slide.is-active[data-user-paused="true"] .home-tv-feed-playback,
         .home-tv-feed-slide.is-active.is-autoplay-blocked .home-tv-feed-playback {
           opacity: 1;
@@ -34236,13 +34244,17 @@
         .profile-tv-viewer-copy strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
         .profile-tv-viewer-copy span { color: #9fefff; font-size: 11px; font-weight: 850; }
         .profile-tv-viewer-actions { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(76px, calc(env(safe-area-inset-bottom) + 68px)); display: grid; grid-template-columns: 52px; gap: 8px; pointer-events: auto; }
-        .profile-tv-viewer-actions button { width: 52px; min-width: 52px; min-height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50%; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-size: 9px; font-weight: 900; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
+        .profile-tv-viewer-actions button { width: 52px !important; min-width: 52px !important; max-width: 52px !important; height: 52px !important; min-height: 52px !important; max-height: 52px !important; aspect-ratio: 1; display: grid; place-items: center; padding: 0 !important; border: 1px solid rgba(255,255,255,.24); border-radius: 50% !important; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-size: 9px; font-weight: 900; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
         .profile-tv-viewer-close:hover,
         .profile-tv-viewer-close:focus-visible,
         .profile-tv-viewer-actions button:hover,
         .profile-tv-viewer-actions button:focus-visible { border-color: rgba(255,255,255,.4); background-color: rgba(18,18,26,.62); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 0 2px rgba(126,234,255,.16), 0 12px 28px rgba(0,0,0,.36); }
         .profile-tv-viewer-actions .profile-tv-viewer-state-control { width: 52px; min-width: 52px; max-width: 52px; padding: 0; justify-self: center; }
         .profile-tv-viewer-state-control .profile-modal-media-control-icon { width: 20px; height: 20px; }
+        .profile-tv-viewer-share svg { width: 21px; height: 21px; }
+        .profile-tv-playback-feedback { position: absolute; z-index: 4; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(.86); transition: opacity .18s ease, transform .18s ease; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+        .profile-tv-playback-feedback.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .profile-tv-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
         .profile-tv-viewer-status { position: absolute; right: 78px; bottom: max(6px, env(safe-area-inset-bottom)); left: max(16px, env(safe-area-inset-left)); min-height: 14px; margin: 0; color: #a7f3d0; font-size: 10px; font-weight: 800; text-shadow: 0 1px 5px #000; }
         .profile-modal .modal-image { touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; -webkit-user-select: none; }
         .profile-photo-viewer-image { touch-action: pan-y; overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
@@ -36791,6 +36803,37 @@
           width: 100% !important;
           height: 100% !important;
           object-fit: cover !important;
+        }
+        #profileBackdrop .profile-modal-playback-feedback {
+          position: absolute;
+          z-index: 8;
+          top: 50%;
+          left: 50%;
+          width: 64px;
+          height: 64px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(255,255,255,.28);
+          border-radius: 50%;
+          color: #fff;
+          background: rgba(0,0,0,.58);
+          box-shadow: 0 10px 30px rgba(0,0,0,.42);
+          opacity: 0;
+          pointer-events: none;
+          transform: translate(-50%, -50%) scale(.86);
+          transition: opacity .18s ease, transform .18s ease;
+          -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
+        }
+        #profileBackdrop .profile-modal-playback-feedback.show {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+        #profileBackdrop .profile-modal-playback-feedback svg {
+          width: 29px;
+          height: 29px;
+          fill: currentColor;
+          stroke: none;
         }
         #profileBackdrop .profile-modal-video-controls {
           position: absolute;
@@ -41872,6 +41915,7 @@
             <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
             <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
             <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
+            <span class="profile-modal-playback-feedback" id="modalVideoPlaybackFeedback" aria-hidden="true"></span>
             <div class="profile-modal-video-controls is-visible" id="modalVideoControls" data-modal-video-controls role="group" aria-label="Video controls" hidden>
               <button id="modalVideoPlayback" type="button" aria-label="Play TV video">
                 <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="m9 7 8 5-8 5Z"></path></svg>
@@ -42079,10 +42123,12 @@
     const modalMediaExpand = document.getElementById("modalMediaExpand");
     const modalVideoControls = document.getElementById("modalVideoControls");
     const modalVideoPlayback = document.getElementById("modalVideoPlayback");
+    const modalVideoPlaybackFeedback = document.getElementById("modalVideoPlaybackFeedback");
     const modalVideoSound = document.getElementById("modalVideoSound");
     const modalVideoProgress = document.getElementById("modalVideoProgress");
     const modalVideoTime = document.getElementById("modalVideoTime");
     let modalVideoControlsHideTimer = 0;
+    let modalVideoPlaybackFeedbackTimer = 0;
     let modalProfileVideoMuted = true;
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
@@ -51618,6 +51664,22 @@
         : '<svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="M7 6h3v12H7zM14 6h3v12h-3z"></path></svg>';
     }
 
+    function clearModalVideoPlaybackFeedback() {
+      if (modalVideoPlaybackFeedbackTimer) window.clearTimeout(modalVideoPlaybackFeedbackTimer);
+      modalVideoPlaybackFeedbackTimer = 0;
+      modalVideoPlaybackFeedback.classList.remove("show");
+    }
+
+    function showModalVideoPlaybackFeedback(paused) {
+      clearModalVideoPlaybackFeedback();
+      modalVideoPlaybackFeedback.innerHTML = modalVideoPlaybackIcon(paused);
+      modalVideoPlaybackFeedback.classList.add("show");
+      modalVideoPlaybackFeedbackTimer = window.setTimeout(() => {
+        modalVideoPlaybackFeedback.classList.remove("show");
+        modalVideoPlaybackFeedbackTimer = 0;
+      }, 850);
+    }
+
     function modalVideoSoundIcon(muted) {
       const soundWaves = muted
         ? '<path d="m17 9 4 6"></path><path d="m21 9-4 6"></path>'
@@ -51646,6 +51708,7 @@
 
     function clearModalVideoPreview() {
       clearModalVideoControlsHideTimer();
+      clearModalVideoPlaybackFeedback();
       modalImage.querySelector(".modal-media-video-preview")?.remove();
       modalImage.classList.remove("is-video-media", "is-video-controls-visible");
       delete modalImage.dataset.activeVideoIndex;
@@ -51664,6 +51727,24 @@
 
     function activeModalVideo() {
       return modalImage.querySelector(".modal-media-video-preview > video");
+    }
+
+    function toggleModalVideoPlayback() {
+      const video = activeModalVideo();
+      if (!video) return;
+      if (video.paused) {
+        showModalVideoPlaybackFeedback(false);
+        setModalVideoControlsVisible(true, { autoHide: true });
+        void video.play().catch(() => {
+          showModalVideoPlaybackFeedback(true);
+          syncModalVideoControls();
+          setModalVideoControlsVisible(true);
+        });
+        return;
+      }
+      video.pause();
+      showModalVideoPlaybackFeedback(true);
+      setModalVideoControlsVisible(true);
     }
 
     function syncModalVideoControls() {
@@ -51852,7 +51933,7 @@
       modalImage.dataset.activePhotoIndex = String(activeIndex);
       modalImage.setAttribute(
         "aria-label",
-        `${profileName} profile video autoplaying muted, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Tap the video to show or hide playback controls. Use the full-screen button for immersive playback or swipe left or right to change media.`
+        `${profileName} profile video autoplaying muted, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Tap the video to play or pause. Use the full-screen button for immersive playback or swipe left or right to change media.`
       );
       syncModalMediaNavigation("video", index, videos.length);
       return true;
@@ -52852,6 +52933,7 @@
 
     let profileTvViewerOwnsFullscreen = false;
     let profileTvViewerMuted = false;
+    let profileTvPlaybackFeedbackTimer = 0;
 
     function profileTvFullscreenElement() {
       return document.fullscreenElement || document.webkitFullscreenElement || null;
@@ -52910,6 +52992,7 @@
           <div class="profile-tv-viewer-shell">
             <button class="profile-tv-viewer-close" type="button" data-close-profile-tv aria-label="Close full-screen video">${actionIconMarkup("close")}</button>
             <div class="profile-tv-viewer-stage" id="profileTvViewerStage" aria-label="Dancer videos. Scroll up or down to change videos."></div>
+            <span class="profile-tv-playback-feedback" id="profileTvPlaybackFeedback" aria-hidden="true"></span>
             <button class="profile-tv-viewer-previous" type="button" data-previous-profile-tv aria-label="Previous dancer video">↑</button>
             <button class="profile-tv-viewer-next" type="button" data-next-profile-tv aria-label="Next dancer video">↓</button>
             <div class="profile-tv-viewer-footer">
@@ -52919,7 +53002,7 @@
               </div>
               <div class="profile-tv-viewer-actions">
                 <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-sound aria-label="Turn TV video sound off">${modalVideoSoundIcon(false)}</button>
-                <button type="button" data-share-profile-tv aria-label="Share this profile video">${actionIconMarkup("share")}</button>
+                <button class="profile-tv-viewer-share" type="button" data-share-profile-tv aria-label="Share this profile video">${actionIconMarkup("share")}</button>
               </div>
               <p class="profile-tv-viewer-status" id="profileTvViewerStatus" aria-live="polite"></p>
             </div>
@@ -53076,6 +53159,7 @@
       const stage = document.getElementById("profileTvViewerStage");
       const currentIndex = Number(overlay.dataset.videoIndex || 0);
       if (currentIndex === nextIndex && options.scroll === false) return;
+      if (currentIndex !== nextIndex) clearProfileTvPlaybackFeedback();
       const scheduleLabel = profileTvScheduleLabel(item);
       overlay.dataset.videoId = String(item.id || "");
       overlay.dataset.videoIndex = String(nextIndex);
@@ -53149,6 +53233,7 @@
       const returnTarget = overlay.profileTvReturnTarget;
       const stage = document.getElementById("profileTvViewerStage");
       stage?.querySelectorAll("video").forEach((video) => video.pause());
+      clearProfileTvPlaybackFeedback();
       exitProfileTvViewerFullscreen();
       overlay.classList.remove("show");
       overlay.hidden = true;
@@ -53184,15 +53269,36 @@
       syncProfileTvSoundControl();
     }
 
+    function clearProfileTvPlaybackFeedback() {
+      if (profileTvPlaybackFeedbackTimer) window.clearTimeout(profileTvPlaybackFeedbackTimer);
+      profileTvPlaybackFeedbackTimer = 0;
+      document.getElementById("profileTvPlaybackFeedback")?.classList.remove("show");
+    }
+
+    function showProfileTvPlaybackFeedback(paused) {
+      const feedback = document.getElementById("profileTvPlaybackFeedback");
+      if (!feedback) return;
+      clearProfileTvPlaybackFeedback();
+      feedback.innerHTML = modalVideoPlaybackIcon(paused);
+      feedback.classList.add("show");
+      profileTvPlaybackFeedbackTimer = window.setTimeout(() => {
+        feedback.classList.remove("show");
+        profileTvPlaybackFeedbackTimer = 0;
+      }, 850);
+    }
+
     function toggleProfileTvPlayback() {
       const video = activeProfileTvViewerVideo();
       if (!video) return;
       if (video.paused) {
+        showProfileTvPlaybackFeedback(false);
         void video.play().catch(() => {
+          showProfileTvPlaybackFeedback(true);
           document.getElementById("profileTvViewerStatus").textContent = "Tap the video again to start it.";
         });
       } else {
         video.pause();
+        showProfileTvPlaybackFeedback(true);
       }
     }
 
@@ -59628,6 +59734,7 @@
       if (!videoId) return;
       if (video.paused) {
         delete slide.dataset.userPaused;
+        showHomeTvFeedPlaybackFeedback(slide, false);
         activateHomeTvFeedVideo(videoId);
         return;
       }
@@ -59638,6 +59745,19 @@
       video.removeAttribute("autoplay");
       video.pause();
       slide.classList.add("is-paused");
+      showHomeTvFeedPlaybackFeedback(slide, true);
+    }
+
+    function showHomeTvFeedPlaybackFeedback(slide, paused) {
+      const playback = slide?.querySelector(".home-tv-feed-playback");
+      if (!playback) return;
+      if (playback.feedbackTimer) window.clearTimeout(playback.feedbackTimer);
+      playback.innerHTML = modalVideoPlaybackIcon(paused);
+      playback.classList.add("show");
+      playback.feedbackTimer = window.setTimeout(() => {
+        playback.classList.remove("show");
+        playback.feedbackTimer = 0;
+      }, 850);
     }
 
     function homeTvFeedUsesSnapViewport() {
@@ -60411,7 +60531,7 @@
       const video = createHomeTvFeedVideo(item, videoIndex, slide, totalVideos);
       const playback = document.createElement("span");
       playback.className = "home-tv-feed-playback";
-      playback.textContent = "▶";
+      playback.innerHTML = modalVideoPlaybackIcon(true);
       playback.setAttribute("aria-hidden", "true");
       const applause = document.createElement("span");
       applause.className = "home-tv-feed-applause";
@@ -61338,17 +61458,7 @@
     modalVideoPlayback?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const video = activeModalVideo();
-      if (!video) return;
-      if (video.paused) {
-        setModalVideoControlsVisible(true, { autoHide: true });
-        void video.play().catch(() => {
-          syncModalVideoControls();
-          setModalVideoControlsVisible(true);
-        });
-      } else {
-        video.pause();
-      }
+      toggleModalVideoPlayback();
     });
     modalVideoSound?.addEventListener("click", (event) => {
       event.preventDefault();
@@ -61418,13 +61528,7 @@
     modalImage?.addEventListener("click", (event) => {
       if (event.target.closest("button, input, [data-modal-video-controls]")) return;
       if (modalImage.dataset.activeMediaType === "video") {
-        const video = activeModalVideo();
-        if (video?.paused) {
-          setModalVideoControlsVisible(true);
-          return;
-        }
-        const controlsAreVisible = modalVideoControls.classList.contains("is-visible");
-        setModalVideoControlsVisible(!controlsAreVisible, { autoHide: !controlsAreVisible });
+        toggleModalVideoPlayback();
         return;
       }
     });
@@ -61441,13 +61545,7 @@
         moveModalPhoto(event.key === "ArrowRight" ? 1 : -1);
       } else if ((event.key === "Enter" || event.key === " ") && modalImage.dataset.activeMediaType === "video") {
         event.preventDefault();
-        const video = activeModalVideo();
-        if (video?.paused) {
-          setModalVideoControlsVisible(true);
-          return;
-        }
-        const controlsAreVisible = modalVideoControls.classList.contains("is-visible");
-        setModalVideoControlsVisible(!controlsAreVisible, { autoHide: !controlsAreVisible });
+        toggleModalVideoPlayback();
       }
     });
     profilePhotoViewerImage?.addEventListener("keydown", (event) => {

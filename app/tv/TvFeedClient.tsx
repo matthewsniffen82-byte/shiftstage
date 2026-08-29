@@ -63,6 +63,11 @@ export default function TvFeedClient({
   const [activeVideoId, setActiveVideoId] = useState(initialSelectedVideoId || initialVideos[0]?.id || "");
   const [muted, setMuted] = useVideoSoundPreference();
   const [autoplayBlockedVideoId, setAutoplayBlockedVideoId] = useState("");
+  const [playbackFeedback, setPlaybackFeedback] = useState<{
+    videoId: string;
+    paused: boolean;
+    key: number;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [session, setSession] = useState<BrowserAuthSession | null>(null);
@@ -77,6 +82,8 @@ export default function TvFeedClient({
   const activeVideoIdRef = useRef(activeVideoId);
   const mutedRef = useRef(muted);
   const manuallyPausedVideoId = useRef("");
+  const playbackFeedbackTimer = useRef(0);
+  const playbackFeedbackKey = useRef(0);
   const engagedTimers = useRef<Record<string, number>>({});
   const completedVideos = useRef(new Set<string>());
   const loadedAuthenticatedFeed = useRef(false);
@@ -389,7 +396,17 @@ export default function TvFeedClient({
 
   useEffect(() => () => {
     Object.values(engagedTimers.current).forEach((timer) => window.clearTimeout(timer));
+    window.clearTimeout(playbackFeedbackTimer.current);
   }, []);
+
+  function showPlaybackFeedback(videoId: string, paused: boolean) {
+    window.clearTimeout(playbackFeedbackTimer.current);
+    playbackFeedbackKey.current += 1;
+    setPlaybackFeedback({ videoId, paused, key: playbackFeedbackKey.current });
+    playbackFeedbackTimer.current = window.setTimeout(() => {
+      setPlaybackFeedback((current) => current?.videoId === videoId ? null : current);
+    }, 850);
+  }
 
   function changeFilter(nextFilter: string) {
     if (nextFilter === filter && videos.length) return;
@@ -400,12 +417,14 @@ export default function TvFeedClient({
   function toggleVideoPlayback(videoId: string, element: HTMLVideoElement) {
     if (element.paused) {
       manuallyPausedVideoId.current = "";
+      showPlaybackFeedback(videoId, false);
       void attemptVideoPlayback(videoId, element);
       return;
     }
     manuallyPausedVideoId.current = videoId;
     setAutoplayBlockedVideoId("");
     element.pause();
+    showPlaybackFeedback(videoId, true);
   }
 
   async function markNotificationRead(notificationId: string) {
@@ -709,6 +728,11 @@ export default function TvFeedClient({
                     }
                   }}
                 />
+                {playbackFeedback?.videoId === video.id ? (
+                  <span className="tv-playback-feedback" key={playbackFeedback.key} aria-hidden="true">
+                    <PlaybackFeedbackIcon paused={playbackFeedback.paused} />
+                  </span>
+                ) : null}
                 {autoplayBlockedVideoId === video.id ? (
                   <button
                     className="tv-playback-retry"
@@ -905,6 +929,16 @@ function PlayIcon() {
   );
 }
 
+function PlaybackFeedbackIcon({ paused }: { paused: boolean }) {
+  return paused ? (
+    <PlayIcon />
+  ) : (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 6h3v12H7zM14 6h3v12h-3z" />
+    </svg>
+  );
+}
+
 function myDancrTvCityLabel(city: string) {
   return city.trim() || "Las Vegas";
 }
@@ -1017,6 +1051,8 @@ function TvStyles() {
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
       .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
+      .tv-playback-feedback { position: absolute; z-index: 7; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: tv-playback-feedback 850ms ease both; backdrop-filter: blur(10px); }
+      .tv-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
       .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; width: 58px; min-width: 58px; max-width: 58px; height: 58px; min-height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f5f4f7; background: rgba(25,25,30,.9); box-shadow: 0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07); transform: translate(-50%, -50%); cursor: pointer; }
       .tv-playback-retry svg { width: 27px; height: 27px; fill: currentColor; stroke: none; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
@@ -1029,6 +1065,7 @@ function TvStyles() {
       .tv-profile-details { min-width: 0; display: grid; gap: 5px; }
       .tv-card-info-stack { min-width: 0; display: grid; gap: 3px; }
       .tv-profile-body h2 { min-width: 0; margin: 0 0 2px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: clamp(20px, 3vw, 28px); font-weight: 900; line-height: 1.04; text-shadow: 0 2px 12px rgba(0,0,0,.72); }
+      @keyframes tv-playback-feedback { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.82); } 18%, 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(.94); } }
       .tv-card-stage-link { width: fit-content; min-width: 0; max-width: 100%; display: block; color: inherit; text-decoration: none; }
       .tv-card-stage-identity { min-width: 0; display: grid; gap: 4px; }
       .tv-card-stage-row { min-width: 0; display: flex; align-items: center; gap: 6px; }

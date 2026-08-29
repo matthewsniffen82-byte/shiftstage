@@ -16,12 +16,15 @@ export function TvVideoStrip({
   const [activeVideo, setActiveVideo] = useState<MyDancrTvVideo | null>(null);
   const [viewerStatus, setViewerStatus] = useState("");
   const [viewerPaused, setViewerPaused] = useState(false);
+  const [playbackFeedback, setPlaybackFeedback] = useState<{ paused: boolean; key: number } | null>(null);
   const [viewerMuted, setViewerMuted] = useVideoSoundPreference();
   const viewerVideo = useRef<HTMLVideoElement | null>(null);
   const previewCards = useRef<Record<string, HTMLButtonElement | null>>({});
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const swipeStartX = useRef<number | null>(null);
   const swipeHandled = useRef(false);
+  const playbackFeedbackTimer = useRef(0);
+  const playbackFeedbackKey = useRef(0);
   const activeIndex = activeVideo
     ? videos.findIndex((video) => video.id === activeVideo.id)
     : -1;
@@ -67,6 +70,8 @@ export function TvVideoStrip({
     };
   }, [activeVideo, videos]);
 
+  useEffect(() => () => window.clearTimeout(playbackFeedbackTimer.current), []);
+
   useEffect(() => {
     if (!activeVideo) return;
     const previousOverflow = document.body.style.overflow;
@@ -106,19 +111,20 @@ export function TvVideoStrip({
     const video = viewerVideo.current;
     if (!video) return;
     if (video.paused) {
-      await playViewerVideo(video);
+      if (await playViewerVideo(video)) showPlaybackFeedback(false);
       return;
     }
     video.pause();
+    showPlaybackFeedback(true);
   }
 
   async function playViewerVideo(video: HTMLVideoElement) {
     try {
       await video.play();
       setViewerStatus("");
-      return;
+      return true;
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
+      if (error instanceof DOMException && error.name === "AbortError") return false;
     }
 
     if (!video.muted) {
@@ -126,14 +132,22 @@ export function TvVideoStrip({
       try {
         await video.play();
         setViewerStatus("");
-        return;
+        return true;
       } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (error instanceof DOMException && error.name === "AbortError") return false;
       }
     }
 
     setViewerPaused(true);
     setViewerStatus("Tap the video to start it.");
+    return false;
+  }
+
+  function showPlaybackFeedback(paused: boolean) {
+    window.clearTimeout(playbackFeedbackTimer.current);
+    playbackFeedbackKey.current += 1;
+    setPlaybackFeedback({ paused, key: playbackFeedbackKey.current });
+    playbackFeedbackTimer.current = window.setTimeout(() => setPlaybackFeedback(null), 850);
   }
 
   function toggleViewerSound() {
@@ -291,6 +305,11 @@ export function TvVideoStrip({
                 onPause={() => setViewerPaused(true)}
                 onPlay={() => setViewerPaused(false)}
               />
+              {playbackFeedback ? (
+                <span className="tv-video-playback-feedback" key={playbackFeedback.key} aria-hidden="true">
+                  <PlaybackFeedbackIcon paused={playbackFeedback.paused} />
+                </span>
+              ) : null}
               <button
                 className="tv-video-viewer-previous"
                 type="button"
@@ -324,7 +343,14 @@ export function TvVideoStrip({
                 >
                   <SoundStateIcon muted={viewerMuted} />
                 </button>
-                <button type="button" onClick={() => shareVideo(activeVideo)}>Share</button>
+                <button
+                  aria-label="Share this profile video"
+                  className="tv-video-viewer-share"
+                  type="button"
+                  onClick={() => shareVideo(activeVideo)}
+                >
+                  <ShareIcon />
+                </button>
               </div>
               <p aria-live="polite">{viewerStatus}</p>
               <div className="tv-video-viewer-gallery" aria-label={`${activeVideo.dancer.stageName} videos`}>
@@ -445,6 +471,25 @@ function SoundStateIcon({ muted }: { muted: boolean }) {
   );
 }
 
+function PlaybackFeedbackIcon({ paused }: { paused: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d={paused ? "m9 7 8 5-8 5Z" : "M7 6h3v12H7zM14 6h3v12h-3z"} />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
+    </svg>
+  );
+}
+
 function TvVideoStripStyles() {
   return (
     <style>{`
@@ -469,6 +514,8 @@ function TvVideoStripStyles() {
       .tv-video-viewer-shell { position: relative; width: 100%; max-width: none; height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 0; border-radius: 0; background: #000; box-shadow: none; overscroll-behavior: none; touch-action: none; }
       .tv-video-viewer-stage { position: relative; min-height: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; }
       .tv-video-viewer-stage > video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
+      .tv-video-playback-feedback { position: absolute; z-index: 4; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: tv-video-playback-feedback 850ms ease both; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+      .tv-video-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
       .tv-video-viewer-close { position: absolute; z-index: 3; top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)); right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px)); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50%; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); line-height: 1; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
       .tv-video-viewer-close svg { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
       .tv-video-viewer-previous, .tv-video-viewer-next { position: absolute; z-index: 2; top: 50%; width: 46px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; color: rgba(255,255,255,.88); background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-size: 34px; line-height: 1; transform: translateY(-50%); cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
@@ -479,18 +526,20 @@ function TvVideoStripStyles() {
       .tv-video-viewer-footer > div:first-child { min-width: 0; display: grid; gap: 3px; }
       .tv-video-viewer-footer strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
       .tv-video-viewer-footer span { color: #9fefff; font-size: 11px; font-weight: 850; }
-      .tv-video-viewer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-      .tv-video-viewer-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-weight: 900; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
+      .tv-video-viewer-actions { display: grid; grid-template-columns: repeat(2, 52px); gap: 8px; }
+      .tv-video-viewer-actions button { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50% !important; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-weight: 900; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
       .tv-video-viewer-close:hover, .tv-video-viewer-close:focus-visible, .tv-video-viewer-previous:hover:not(:disabled), .tv-video-viewer-previous:focus-visible:not(:disabled), .tv-video-viewer-next:hover:not(:disabled), .tv-video-viewer-next:focus-visible:not(:disabled), .tv-video-viewer-actions button:hover, .tv-video-viewer-actions button:focus-visible { border-color: rgba(255,255,255,.4); background-color: rgba(18,18,26,.62); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 0 2px rgba(126,234,255,.16), 0 12px 28px rgba(0,0,0,.36); }
-      .tv-video-viewer-actions .tv-video-viewer-state-control { width: 42px; min-width: 42px; max-width: 42px; padding: 0; justify-self: center; }
+      .tv-video-viewer-actions .tv-video-viewer-state-control { justify-self: center; }
       .tv-video-viewer-state-control svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .tv-video-viewer-state-control svg .is-fill { fill: currentColor; stroke: none; }
+      .tv-video-viewer-share svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .tv-video-viewer-footer p { min-height: 16px; grid-column: 1 / -1; margin: 0; color: #a7f3d0; font-size: 11px; font-weight: 800; }
       .tv-video-viewer-gallery { grid-column: 1 / -1; display: grid; grid-auto-flow: column; grid-auto-columns: 72px; gap: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; }
       .tv-video-viewer-gallery button { position: relative; width: 72px; height: 78px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 9px; background: #000; scroll-snap-align: center; cursor: pointer; }
       .tv-video-viewer-gallery button.active { border-color: var(--dancr-color-text-secondary); box-shadow: 0 0 0 1px var(--dancr-color-white-medium); }
       .tv-video-viewer-gallery video { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
       .tv-video-viewer-gallery span { position: absolute; right: 4px; bottom: 4px; min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); font-size: 10px; font-weight: 950; }
+      @keyframes tv-video-playback-feedback { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.82); } 18%, 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(.94); } }
       @media (max-width: 620px) {
         .tv-strip-list { grid-auto-columns: minmax(150px, 42vw); }
         .tv-strip-card, .tv-strip-card video { min-height: 270px; }

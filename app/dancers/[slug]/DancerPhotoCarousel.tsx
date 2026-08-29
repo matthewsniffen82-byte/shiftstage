@@ -44,6 +44,7 @@ type VideoMedia = {
 type ProfileMedia = PhotoMedia | VideoMedia;
 type MediaTab = ProfileMedia["kind"];
 type MediaViewer = { kind: MediaTab; index: number };
+type PlaybackFeedback = { index: number; paused: boolean; key: number };
 
 export function DancerPhotoCarousel({
   photos,
@@ -80,6 +81,7 @@ export function DancerPhotoCarousel({
   });
   const [inlineMuted, setInlineMuted] = useVideoSoundPreference();
   const [shareStatus, setShareStatus] = useState("");
+  const [playbackFeedback, setPlaybackFeedback] = useState<PlaybackFeedback | null>(null);
   const deepLinkHandled = useRef(false);
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const viewerRoot = useRef<HTMLDivElement | null>(null);
@@ -89,6 +91,10 @@ export function DancerPhotoCarousel({
   const pendingViewerIndex = useRef(0);
   const viewerOpeningIndex = useRef<number | null>(null);
   const viewerOpeningFrame = useRef(0);
+  const playbackTapIndex = useRef<number | null>(null);
+  const playbackTapTimer = useRef(0);
+  const playbackFeedbackTimer = useRef(0);
+  const playbackFeedbackKey = useRef(0);
   const lazyLoadSentinel = useRef<HTMLDivElement | null>(null);
   const tabGroupId = useId();
   const activeItems: ProfileMedia[] =
@@ -243,6 +249,11 @@ export function DancerPhotoCarousel({
     };
   }, [scrollViewerToIndex, viewerKind]);
 
+  useEffect(() => () => {
+    window.clearTimeout(playbackTapTimer.current);
+    window.clearTimeout(playbackFeedbackTimer.current);
+  }, []);
+
   useEffect(() => {
     if (!viewerKind) return;
     const feed = viewerFeed.current;
@@ -310,8 +321,26 @@ export function DancerPhotoCarousel({
     viewerOpeningIndex.current = null;
     setViewer(null);
     setShareStatus("");
+    setPlaybackFeedback(null);
+    playbackTapIndex.current = null;
+    window.clearTimeout(playbackTapTimer.current);
+    window.clearTimeout(playbackFeedbackTimer.current);
     clearMediaDeepLink();
     window.requestAnimationFrame(() => viewerTrigger.current?.focus());
+  }
+
+  function showPlaybackFeedback(index: number, paused: boolean) {
+    window.clearTimeout(playbackFeedbackTimer.current);
+    playbackFeedbackKey.current += 1;
+    setPlaybackFeedback({ index, paused, key: playbackFeedbackKey.current });
+    playbackFeedbackTimer.current = window.setTimeout(() => setPlaybackFeedback(null), 850);
+  }
+
+  function handleViewerPlaybackChange(index: number, paused: boolean) {
+    if (playbackTapIndex.current !== index) return;
+    playbackTapIndex.current = null;
+    window.clearTimeout(playbackTapTimer.current);
+    showPlaybackFeedback(index, paused);
   }
 
   async function requestViewerFullscreen(requestedIndex: number) {
@@ -622,6 +651,15 @@ export function DancerPhotoCarousel({
                     disablePictureInPicture
                     loop
                     muted={inlineMuted}
+                    onPause={() => handleViewerPlaybackChange(index, true)}
+                    onPlay={() => handleViewerPlaybackChange(index, false)}
+                    onPointerDown={() => {
+                      playbackTapIndex.current = index;
+                      window.clearTimeout(playbackTapTimer.current);
+                      playbackTapTimer.current = window.setTimeout(() => {
+                        if (playbackTapIndex.current === index) playbackTapIndex.current = null;
+                      }, 500);
+                    }}
                     onVolumeChange={(event) => {
                       if (event.currentTarget.muted !== inlineMuted) {
                         setInlineMuted(event.currentTarget.muted);
@@ -633,6 +671,15 @@ export function DancerPhotoCarousel({
                     src={item.videoUrl}
                   />
                 )}
+                {item.kind === "video" && playbackFeedback?.index === index ? (
+                  <span
+                    aria-hidden="true"
+                    className="profile-media-playback-feedback"
+                    key={playbackFeedback.key}
+                  >
+                    <PlaybackFeedbackIcon paused={playbackFeedback.paused} />
+                  </span>
+                ) : null}
               </section>
             ))}
             <button
@@ -671,7 +718,6 @@ export function DancerPhotoCarousel({
                 type="button"
               >
                 <ShareIcon />
-                Share
               </button>
               <span aria-live="polite" className="profile-media-viewer-share-status">
                 {shareStatus}
@@ -715,6 +761,14 @@ function ShareIcon() {
       <circle cx="6" cy="12" r="3" />
       <circle cx="18" cy="19" r="3" />
       <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
+    </svg>
+  );
+}
+
+function PlaybackFeedbackIcon({ paused }: { paused: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d={paused ? "m9 7 8 5-8 5Z" : "M7 6h3v12H7zM14 6h3v12h-3z"} />
     </svg>
   );
 }

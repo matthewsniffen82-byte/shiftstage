@@ -628,6 +628,8 @@ function PublicProfileStyles() {
       .profile-media-viewer-stage::-webkit-scrollbar { display: none; }
       .profile-media-viewer-slide { position: relative; width: 100%; height: 100%; min-height: 100%; max-height: 100%; display: grid; place-items: center; overflow: hidden; background: #000; scroll-snap-align: start; scroll-snap-stop: always; }
       .profile-media-viewer-slide > img, .profile-media-viewer-slide > video { width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: #000; user-select: none; }
+      .profile-media-playback-feedback { position: absolute; z-index: 3; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: profile-media-playback-feedback 850ms ease both; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+      .profile-media-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
       .profile-media-viewer-slide > img { filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
       .profile-media-viewer-previous, .profile-media-viewer-next { position: absolute; top: 50%; width: 46px; height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(5,5,8,.58); font-size: 34px; transform: translateY(-50%); cursor: pointer; backdrop-filter: blur(8px); }
       .profile-media-viewer-previous { left: 12px; }
@@ -653,11 +655,13 @@ function PublicProfileStyles() {
       .profile-media-viewer.is-photo .profile-media-viewer-footer { background: transparent; }
       .profile-media-viewer .profile-media-viewer-copy { position: absolute; right: 82px; bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); left: max(18px, env(safe-area-inset-left)); gap: 4px; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
       .profile-media-viewer .profile-media-viewer-actions { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); min-width: 0; pointer-events: auto; }
-      .profile-media-viewer .profile-media-viewer-share { width: 48px; min-width: 48px; min-height: 48px; flex-direction: column; gap: 2px; padding: 0; border-radius: 50%; font-size: 9px; }
+      .profile-media-viewer .profile-media-viewer-share { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; padding: 0; border-radius: 50% !important; }
+      .profile-media-viewer .profile-media-viewer-share svg { width: 21px; height: 21px; }
       .profile-media-viewer .profile-media-viewer-share-status { position: absolute; right: 56px; bottom: 4px; width: max-content; max-width: 180px; text-shadow: 0 1px 5px #000; }
       .profile-media-viewer-preload { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
       .profile-media-viewer-preload img, .profile-media-viewer-preload video { width: 1px; height: 1px; }
       @keyframes profile-media-loading { to { transform: translateX(-50%) rotate(360deg); } }
+      @keyframes profile-media-playback-feedback { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.82); } 18%, 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(.94); } }
       .profile-schedule-section { display: grid; gap: 14px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
       .profile-tonight-card { position: relative; isolation: isolate; margin-top: 8px; overflow: hidden; border: 1px solid transparent; border-radius: 15px; background: linear-gradient(145deg, rgba(13,11,21,.94), rgba(6,7,11,.98)); box-shadow: 0 12px 32px rgba(0,0,0,.26); }
       .profile-tonight-card::before { position: absolute; z-index: 5; inset: 0; content: ""; pointer-events: none; border: 2px solid rgba(255,255,255,.13); border-radius: inherit; }

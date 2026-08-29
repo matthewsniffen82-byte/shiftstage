@@ -124,8 +124,13 @@ test("dancer profile viewers reuse translucent TV glass without adding controls"
     /\.tv-video-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
   );
   assert.equal((profileTvStrip.match(/className="tv-video-viewer-state-control"/g) || []).length, 1);
-  assert.equal((profileTvStrip.match(/<button type="button" onClick=\{\(\) => shareVideo\(activeVideo\)\}>Share<\/button>/g) || []).length, 1);
-  assert.match(profileTvStrip, /\.tv-video-viewer-actions \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.equal((profileTvStrip.match(/className="tv-video-viewer-share"/g) || []).length, 1);
+  assert.match(profileTvStrip, /aria-label="Share this profile video"[\s\S]*?onClick=\{\(\) => shareVideo\(activeVideo\)\}[\s\S]*?<ShareIcon \/>/);
+  assert.match(profileTvStrip, /\.tv-video-viewer-actions \{[^}]*grid-template-columns: repeat\(2, 52px\)/);
+  assert.match(
+    profileTvStrip,
+    /\.tv-video-viewer-actions button \{[^}]*width: 52px;[^}]*height: 52px;[^}]*border-radius: 50% !important;/,
+  );
 
   assert.match(
     liveApp,
@@ -139,7 +144,11 @@ test("dancer profile viewers reuse translucent TV glass without adding controls"
   assert.equal((liveViewerActions.match(/<button/g) || []).length, 2);
   assert.doesNotMatch(liveViewerActions, /data-toggle-profile-tv-playback/);
   assert.match(liveViewerActions, /data-toggle-profile-tv-sound/);
-  assert.match(liveViewerActions, /data-share-profile-tv/);
+  assert.match(liveViewerActions, /class="profile-tv-viewer-share"[^>]*data-share-profile-tv/);
+  assert.match(
+    liveApp,
+    /\.profile-tv-viewer-actions button \{[^}]*width: 52px !important;[^}]*height: 52px !important;[^}]*border-radius: 50% !important;/,
+  );
 });
 
 test("profile grid thumbnails stay passive while the full viewer has no thumbnail strip", () => {
@@ -161,7 +170,7 @@ test("profile grid thumbnails stay passive while the full viewer has no thumbnai
     /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?video\.autoplay = true[\s\S]*?video\.muted = modalProfileVideoMuted[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/,
   );
   assert.doesNotMatch(liveApp, /modal-media-video-play/);
-  assert.match(liveApp, /Tap the video to show or hide playback controls\. Use the full-screen button for immersive playback/);
+  assert.match(liveApp, /Tap the video to play or pause\. Use the full-screen button for immersive playback/);
   assert.match(
     liveApp,
     /#profileBackdrop \.profile-modal-media-previous,[\s\S]*?width: 44px;[\s\S]*?border: 0;[\s\S]*?background: rgba\(0,0,0,\.06\);[\s\S]*?box-shadow: none;[\s\S]*?font-size: 22px;[\s\S]*?opacity: \.64;[\s\S]*?backdrop-filter: none/,
