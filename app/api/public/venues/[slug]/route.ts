@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/src/lib/api";
 import { getVenueProfile, isApprovedPublicDancerRow } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
@@ -51,10 +52,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     return NextResponse.json({ ok: true, venue, upcomingShifts });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to load venue profile." },
-      { status: 500 },
-    );
+    return apiError(error, "Unable to load venue profile.", 500);
   }
 }
 

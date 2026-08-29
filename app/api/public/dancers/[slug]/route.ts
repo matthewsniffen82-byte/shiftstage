@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/src/lib/api";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import type { DancerProfile, ShiftSummary } from "@/src/lib/dancr/types";
@@ -21,10 +22,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     return NextResponse.json({ ok: true, profile: toPublicDancerProfile(profile) });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to load dancer profile." },
-      { status: 500 },
-    );
+    return apiError(error, "Unable to load dancer profile.", 500);
   }
 }
 
