@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { endDancerShift } from "@/src/lib/dancr/shift-lifecycle";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const MAX_SHIFT_ACTION_BODY_BYTES = 2_048;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST() {
   return nfcRequiredResponse();
@@ -14,7 +19,7 @@ export async function POST() {
 export async function PATCH(request: Request) {
   try {
     const { user } = await createRequestSupabaseContext(request);
-    const body = await readJsonBody(request);
+    const body = await readShiftActionBody(request);
     const action = typeof body.action === "string" ? body.action : "";
     const shiftId = readShiftId(body);
     if (!shiftId) return missingShiftIdResponse();
@@ -47,7 +52,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { user } = await createRequestSupabaseContext(request);
-    const body = await readJsonBody(request);
+    const body = await readShiftActionBody(request);
     const shiftId = readShiftId(body);
     if (!shiftId) return missingShiftIdResponse();
 
@@ -98,17 +103,17 @@ async function getOwnShift(client: any, dancerId: string, shiftId: string) {
   return data;
 }
 
-async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
-  try {
-    const body = await request.json();
-    return body && typeof body === "object" && !Array.isArray(body) ? body : {};
-  } catch {
-    return {};
-  }
+function readShiftActionBody(request: Request) {
+  return readBoundedJsonObject(request, {
+    maxBytes: MAX_SHIFT_ACTION_BODY_BYTES,
+    invalidMessage: "Invalid shift action request.",
+    tooLargeMessage: "Shift action request is too large.",
+  });
 }
 
 function readShiftId(body: Record<string, unknown>) {
-  return typeof body.shiftId === "string" ? body.shiftId.trim() : "";
+  const shiftId = typeof body.shiftId === "string" ? body.shiftId.trim() : "";
+  return UUID_PATTERN.test(shiftId) ? shiftId : "";
 }
 
 function missingShiftIdResponse() {

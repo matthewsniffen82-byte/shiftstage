@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deliverNotificationRows } from "@/src/lib/dancr/notification-delivery";
 import { getScheduleDateWindow, isValidScheduleDate, localDateInTimeZone } from "@/src/lib/dancr/schedule";
 import {
@@ -14,6 +15,10 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const MAX_SHIFT_BODY_BYTES = 4_096;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function GET(request: Request) {
   try {
@@ -42,25 +47,26 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readShiftBody(request);
     const dancer = await getOwnDancerProfile(client as any, user.id);
 
     if (dancer.status !== "approved") {
       return NextResponse.json({ ok: false, error: "Profile approval required before posting shifts." }, { status: 403 });
     }
 
-    if (!body?.venueId) {
+    const venueId = readUuid(body.venueId);
+    if (!venueId) {
       return NextResponse.json({ ok: false, error: "Choose a venue." }, { status: 400 });
     }
 
-    const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
+    const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, venueId);
     if (!venue) {
       return NextResponse.json(
         { ok: false, error: "Tap this venue's official MyDancr dressing-room sticker before posting a shift there." },
         { status: 403 },
       );
     }
-    const timezone = typeof body.timezone === "string" ? body.timezone : venue.timezone;
+    const timezone = venue.timezone;
     const shiftDate = requestedShiftDate(body, timezone);
     if (!shiftDate || !isValidScheduleDate(shiftDate, timezone)) {
       return NextResponse.json({ ok: false, error: "Choose a valid upcoming date." }, { status: 400 });
@@ -69,14 +75,14 @@ export async function POST(request: Request) {
 
     const data = await createScheduledDancerShift(client as any, {
       dancerId: dancer.id,
-      venueId: body.venueId,
+      venueId,
       shiftDate,
       startsAt: window.startsAt,
       endsAt: window.endsAt,
       timezone,
     });
 
-    const broadcastRecipients = await broadcastShiftPosted(dancer, data.id, body.venueId, shiftDate);
+    const broadcastRecipients = await broadcastShiftPosted(dancer, data.id, venueId, shiftDate);
     await recordDancerShiftBroadcast(client as any, dancer.id, data.id, broadcastRecipients);
 
     return NextResponse.json({ ok: true, shiftId: data.id, broadcastRecipients });
@@ -88,14 +94,15 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    const body = await request.json();
+    const body = await readShiftBody(request);
 
-    if (!body?.shiftId) {
+    const shiftId = readUuid(body.shiftId);
+    if (!shiftId) {
       return NextResponse.json({ ok: false, error: "Missing shiftId." }, { status: 400 });
     }
 
     const dancer = await getOwnDancerProfile(client as any, user.id);
-    const existingShift = await getOwnShift(client as any, dancer.id, body.shiftId);
+    const existingShift = await getOwnShift(client as any, dancer.id, shiftId);
     if (existingShift.shift_source === "demo_locked") {
       return NextResponse.json(
         { ok: false, error: "Demo Mode Working Now assignments are managed centrally." },
@@ -104,19 +111,25 @@ export async function PATCH(request: Request) {
     }
     const update: DancerShiftUpdate = {};
     let nextTimezone = existingShift.timezone || "America/Los_Angeles";
-    if (typeof body.venueId === "string") {
-      const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
+    if (body.venueId !== undefined) {
+      const venueId = readUuid(body.venueId);
+      if (!venueId) {
+        return NextResponse.json({ ok: false, error: "Choose a valid venue." }, { status: 400 });
+      }
+      const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, venueId);
       if (!venue) {
         return NextResponse.json(
           { ok: false, error: "Tap this venue's official MyDancr dressing-room sticker before moving a shift there." },
           { status: 403 },
         );
       }
-      update.venue_id = body.venueId;
+      update.venue_id = venueId;
       update.timezone = venue.timezone;
       nextTimezone = venue.timezone;
     }
-    if (["posted", "cancelled", "draft"].includes(body.status)) update.status = body.status;
+    if (body.status === "posted" || body.status === "cancelled" || body.status === "draft") {
+      update.status = body.status;
+    }
 
     const editingSchedule = typeof body.shiftDate === "string" || typeof body.startsAt === "string" || typeof body.venueId === "string";
     if (editingSchedule) {
@@ -145,7 +158,7 @@ export async function PATCH(request: Request) {
     }
 
     const cancellingShift = update.status === "cancelled" && existingShift.status !== "cancelled";
-    await updateOwnedDancerShift(client as any, dancer.id, body.shiftId, update);
+    await updateOwnedDancerShift(client as any, dancer.id, shiftId, update);
 
     const cancellationRecipients = cancellingShift
       ? await broadcastShiftCancelled(dancer, existingShift)
@@ -169,6 +182,19 @@ async function getOwnShift(client: any, dancerId: string, shiftId: string) {
   if (!data) throw new Error("Shift not found.");
 
   return data;
+}
+
+function readShiftBody(request: Request) {
+  return readBoundedJsonObject(request, {
+    maxBytes: MAX_SHIFT_BODY_BYTES,
+    invalidMessage: "Invalid dancer shift request.",
+    tooLargeMessage: "Dancer shift request is too large.",
+  });
+}
+
+function readUuid(value: unknown) {
+  const candidate = typeof value === "string" ? value.trim() : "";
+  return UUID_PATTERN.test(candidate) ? candidate : "";
 }
 
 async function getApprovedShiftVenues(client: any, dancerId: string) {

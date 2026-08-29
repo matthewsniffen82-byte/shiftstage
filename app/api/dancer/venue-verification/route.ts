@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getDancerNfcDashboardState } from "@/src/lib/dancr/nfc";
 import {
@@ -11,6 +12,8 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const MAX_AFFILIATION_BODY_BYTES = 2_048;
 
 export async function GET(request: Request) {
   try {
@@ -50,7 +53,11 @@ export async function DELETE(request: Request) {
     if (!account || account.role !== "dancer" || account.accountState !== "active") {
       return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
     }
-    const body = await readBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_AFFILIATION_BODY_BYTES,
+      invalidMessage: "Invalid venue affiliation request.",
+      tooLargeMessage: "Venue affiliation request is too large.",
+    });
     const affiliation = await revokeDancerVenueAffiliation(createAdminSupabaseClient(), {
       actorUserId: user.id,
       affiliationId: typeof body.affiliationId === "string" ? body.affiliationId : "",
@@ -59,15 +66,6 @@ export async function DELETE(request: Request) {
     return noStoreJson({ ok: true, affiliation, message: "Venue access removed." });
   } catch (error) {
     return affiliationApiError(error, "Unable to remove venue verification.");
-  }
-}
-
-async function readBody(request: Request): Promise<Record<string, unknown>> {
-  try {
-    const body = await request.json();
-    return body && typeof body === "object" && !Array.isArray(body) ? body : {};
-  } catch {
-    return {};
   }
 }
 

@@ -17,7 +17,8 @@ test("the dancer shift API exposes only active NFC-authorized venues", () => {
 });
 
 test("posting and moving a shift require that exact dancer-venue affiliation", () => {
-  assert.equal((shiftRoute.match(/getAffiliatedVenueForShift\(createAdminSupabaseClient\(\) as any, dancer\.id, body\.venueId\)/g) || []).length, 2);
+  assert.equal((shiftRoute.match(/getAffiliatedVenueForShift\(createAdminSupabaseClient\(\) as any, dancer\.id, venueId\)/g) || []).length, 2);
+  assert.match(shiftRoute, /const venueId = readUuid\(body\.venueId\)/);
   assert.match(shiftRoute, /Tap this venue's official MyDancr dressing-room sticker before posting a shift there\./);
   assert.match(shiftRoute, /Tap this venue's official MyDancr dressing-room sticker before moving a shift there\./);
   assert.doesNotMatch(shiftRoute, /getVenueForShift/);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import {
   getVenueDancerVerificationState,
@@ -13,6 +14,8 @@ import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const MAX_AFFILIATION_BODY_BYTES = 2_048;
 
 export async function GET(request: Request) {
   try {
@@ -47,7 +50,11 @@ export async function DELETE(request: Request) {
     await requireActiveVenueAccount(client, user.id);
     const admin = createAdminSupabaseClient();
     const access = await requireVenueAccess(admin, user.id, "manage_roster");
-    const body = await readBody(request);
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_AFFILIATION_BODY_BYTES,
+      invalidMessage: "Invalid dancer affiliation request.",
+      tooLargeMessage: "Dancer affiliation request is too large.",
+    });
     const affiliation = await revokeDancerVenueAffiliation(admin, {
       actorUserId: user.id,
       affiliationId: typeof body.affiliationId === "string" ? body.affiliationId : "",
@@ -69,15 +76,6 @@ export async function DELETE(request: Request) {
     });
   } catch (error) {
     return affiliationApiError(error, "Unable to remove dancer verification.");
-  }
-}
-
-async function readBody(request: Request): Promise<Record<string, unknown>> {
-  try {
-    const body = await request.json();
-    return body && typeof body === "object" && !Array.isArray(body) ? body : {};
-  } catch {
-    return {};
   }
 }
 
