@@ -29490,7 +29490,8 @@
       pointer-events: none;
     }
 
-    .profile-photo-viewer-share {
+    .profile-photo-viewer-share,
+    .profile-photo-viewer-like {
       width: 52px !important;
       min-width: 52px !important;
       height: 52px !important;
@@ -29517,12 +29518,27 @@
       bottom: max(76px, calc(env(safe-area-inset-bottom) + 68px));
       display: grid;
       grid-template-columns: 52px;
+      gap: 8px;
       pointer-events: auto;
     }
 
-    .profile-photo-viewer-share .icon {
+    .profile-photo-viewer-share .icon,
+    .profile-photo-viewer-like .icon {
       width: 18px !important;
       height: 18px !important;
+    }
+
+    .profile-photo-viewer-like.is-liked,
+    .profile-tv-viewer-like.is-liked {
+      border-color: rgba(244,114,182,.68) !important;
+      color: #f9a8d4 !important;
+      background-color: rgba(190,24,93,.42) !important;
+    }
+
+    .profile-photo-viewer-like.is-liked svg,
+    .profile-tv-viewer-like.is-liked svg,
+    .home-tv-feed-like-action[aria-pressed="true"] svg {
+      fill: currentColor !important;
     }
 
     .profile-photo-viewer-status {
@@ -32891,6 +32907,19 @@
         .home-tv-feed-action .action-auth-marker {
           display: none;
         }
+        .home-tv-feed-like-action {
+          gap: 0;
+          padding: 4px 0 2px;
+          color: #fff;
+          font-size: 8px;
+          font-weight: 950;
+          line-height: 1;
+        }
+        .home-tv-feed-like-action[aria-pressed="true"] {
+          border-color: rgba(244,114,182,.68) !important;
+          color: #f9a8d4 !important;
+          background: rgba(190,24,93,.42) !important;
+        }
         .home-tv-feed-fullscreen { position: relative; }
         .home-tv-feed-fullscreen .home-tv-feed-video-collapse-icon,
         .home-tv-feed-fullscreen[aria-pressed="true"] .home-tv-feed-video-expand-icon {
@@ -34272,7 +34301,8 @@
         .profile-tv-viewer-actions button:focus-visible { border-color: rgba(255,255,255,.4); background-color: rgba(18,18,26,.62); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 0 2px rgba(126,234,255,.16), 0 12px 28px rgba(0,0,0,.36); }
         .profile-tv-viewer-actions .profile-tv-viewer-state-control { width: 52px; min-width: 52px; max-width: 52px; padding: 0; justify-self: center; }
         .profile-tv-viewer-state-control .profile-modal-media-control-icon { width: 20px; height: 20px; }
-        .profile-tv-viewer-share svg { width: 21px; height: 21px; }
+        .profile-tv-viewer-share svg, .profile-tv-viewer-like svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+        .profile-tv-viewer-like { gap: 0; padding: 5px 0 3px !important; line-height: 1; }
         .profile-tv-playback-feedback { position: absolute; z-index: 4; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(.86); transition: opacity .18s ease, transform .18s ease; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
         .profile-tv-playback-feedback.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         .profile-tv-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
@@ -42055,6 +42085,10 @@
           </div>
           <div class="profile-photo-viewer-footer">
             <div class="profile-photo-viewer-actions">
+              <button class="profile-photo-viewer-like" id="profilePhotoViewerLike" type="button" aria-label="Like this profile photo" aria-pressed="false">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>
+                <span data-media-like-count>0</span>
+              </button>
               <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
                 <span>Share</span>
@@ -42222,6 +42256,7 @@
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
+    const profilePhotoViewerLike = document.getElementById("profilePhotoViewerLike");
     const profilePhotoViewerShare = document.getElementById("profilePhotoViewerShare");
     const profilePhotoViewerPrevious = document.getElementById("profilePhotoViewerPrevious");
     const profilePhotoViewerNext = document.getElementById("profilePhotoViewerNext");
@@ -42355,7 +42390,8 @@
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
-    const homeTvFeedApplaudedVideos = new Set();
+    const publicMediaLikeStates = new Map();
+    const publicMediaLikeLoads = new Map();
     const homeTvFeedEngagedTimers = new Map();
     let homeDiscoveryFeedOpen = false;
     let homeDiscoveryFeedObserver = null;
@@ -44568,6 +44604,8 @@
         avatarPhotoSrcSet: item.avatarPhotoSrcSet || item.primaryPhotoSrcSet || "",
         galleryPhotoUrls,
         galleryPhotoSrcSets: Array.isArray(item.galleryPhotoSrcSets) ? item.galleryPhotoSrcSets : [],
+        galleryPhotoIds: Array.isArray(item.galleryPhotoIds) ? item.galleryPhotoIds : [],
+        galleryPhotoLikeCounts: Array.isArray(item.galleryPhotoLikeCounts) ? item.galleryPhotoLikeCounts : [],
         socialLinks,
         socials,
         shiftLabel: item.shiftLabel || "",
@@ -44680,7 +44718,9 @@
           reviews,
           submittedPhotos: photos,
           mainPhotoUrl: primaryPhoto,
-          galleryPhotoUrls: photos.map((photo) => photo.imageUrl).filter(Boolean)
+          galleryPhotoUrls: photos.map((photo) => photo.imageUrl).filter(Boolean),
+          galleryPhotoIds: photos.filter((photo) => photo.imageUrl).map((photo) => photo.id || ""),
+          galleryPhotoLikeCounts: photos.filter((photo) => photo.imageUrl).map((photo) => safePublicMediaLikeCount(photo.likeCount || photo.like_count))
         };
         const existing = market.dancers.find((profile) => profile.id === item.id || profile.slug === profileData.slug || profile.name === item.stageName);
         if (existing) Object.assign(existing, profileData);
@@ -45752,6 +45792,7 @@
         directionRequests30: liveMetricNumber(analytics.directionRequests30Days, 0),
         goingTonightClicks: liveMetricNumber(analytics.goingSignals30Days, 0),
         favoritesAdded: liveMetricNumber(analytics.favoritesAdded30Days, 0),
+        mediaLikes: liveMetricNumber(analytics.mediaLikes, 0),
         notificationOpens: liveMetricNumber(analytics.notificationsOpened30Days, 0),
         instagramClicks: liveMetricNumber(social.instagram, 0),
         snapchatClicks: liveMetricNumber(social.snapchat, 0),
@@ -47201,6 +47242,7 @@
       const venueRank = 0;
       const notificationOpens = firstRealMetric(profile, ["notificationsOpened30Days", "notificationOpens"]);
       const favoritesAdded = firstRealMetric(profile, ["favoritesAdded30Days", "favoritesAdded"]);
+      const mediaLikes = firstRealMetric(profile, ["mediaLikes"]);
       const interestedClicks = firstRealMetric(profile, ["interestedClicks"]);
       const clubPageClicks = firstRealMetric(profile, ["clubPageClicks"]);
       const profileShares = firstRealMetric(profile, ["profileShares"]);
@@ -47230,6 +47272,7 @@
         newFollowers,
         notificationOpens,
         favoritesAdded,
+        mediaLikes,
         goingTonightClicks
       });
       const rankingNotifications = buildRankingNotifications(profile, city, {
@@ -52204,10 +52247,17 @@
       if (!totalPhotos) return 0;
       const activePhotoIndex = Math.min(Math.max(Number(requestedIndex) || 0, 0), totalPhotos - 1);
       const profileName = modalName.textContent.trim() || "Dancer";
+      const activeItem = items[activePhotoIndex];
       profilePhotoViewer.dataset.profilePhotoIndex = String(activePhotoIndex);
       profilePhotoViewerPrevious.disabled = activePhotoIndex <= 0;
       profilePhotoViewerNext.disabled = activePhotoIndex >= totalPhotos - 1;
       profilePhotoViewer.setAttribute("aria-label", `${profileName} profile photos, photo ${activePhotoIndex + 1} of ${totalPhotos}`);
+      preparePublicMediaLikeButton(
+        profilePhotoViewerLike,
+        "photo",
+        String(activeItem?.id || ""),
+        activeItem?.likeCount
+      );
       syncProfilePhotoViewerWindow(activePhotoIndex);
 
       while (Number(modalGallery.profileVisiblePhotoCount || 0) <= activePhotoIndex && profileMediaHasMore("photo")) {
@@ -52248,6 +52298,11 @@
       profilePhotoViewer.hidden = false;
       void requestProfilePhotoViewerFullscreen(profilePhotoViewer, initialIndex);
       renderProfilePhotoViewerSlides();
+      void loadPublicMediaLikes(items.map((item) => ({
+        mediaType: "photo",
+        mediaId: String(item.id || ""),
+        likeCount: item.likeCount
+      })));
       document.body.classList.add("profile-photo-viewer-open");
       syncOverlayScrollLock();
       syncProfilePhotoViewerPosition(initialIndex);
@@ -52452,6 +52507,26 @@
       return galleryIndex >= 0 ? profile?.galleryPhotoSrcSets?.[galleryIndex] || "" : "";
     }
 
+    function profilePhotoLikeMetadata(profile, photoUrl) {
+      const normalizedUrl = String(photoUrl || "").trim();
+      const submittedPhoto = (profile?.submittedPhotos || []).find((photo) =>
+        [photo.imageUrl, photo.image_url, photo.url].some((url) => String(url || "").trim() === normalizedUrl)
+      );
+      if (submittedPhoto?.id) {
+        return {
+          mediaId: String(submittedPhoto.id),
+          likeCount: safePublicMediaLikeCount(submittedPhoto.likeCount || submittedPhoto.like_count)
+        };
+      }
+      const galleryIndex = (profile?.galleryPhotoUrls || []).findIndex(
+        (url) => String(url || "").trim() === normalizedUrl
+      );
+      return galleryIndex >= 0 ? {
+        mediaId: String(profile?.galleryPhotoIds?.[galleryIndex] || ""),
+        likeCount: safePublicMediaLikeCount(profile?.galleryPhotoLikeCounts?.[galleryIndex])
+      } : { mediaId: "", likeCount: 0 };
+    }
+
     function publicProfilePhotoSrcSet(profile) {
       return profilePhotoSrcSet(profile, publicProfilePhotoUrl(profile));
     }
@@ -52472,12 +52547,17 @@
       const galleryOffsets = uploadedUrls.length
         ? uploadedUrls.map((photoUrl, offset) => ({ offset, photoUrl }))
         : [0, 1, 2, 3].map((offset) => ({ offset, photoUrl: customPhotoUrl(profile, offset) }));
-      return galleryOffsets.map(({ offset, photoUrl }) => ({
-        index: offset,
-        photoClass: portraitClass(baseIndex + offset),
-        photoUrl,
-        photoSrcSet: profilePhotoSrcSet(profile, photoUrl)
-      }));
+      return galleryOffsets.map(({ offset, photoUrl }) => {
+        const like = profilePhotoLikeMetadata(profile, photoUrl);
+        return {
+          index: offset,
+          id: like.mediaId,
+          likeCount: like.likeCount,
+          photoClass: portraitClass(baseIndex + offset),
+          photoUrl,
+          photoSrcSet: profilePhotoSrcSet(profile, photoUrl)
+        };
+      });
     }
 
     function profilePhotoThumbMarkup(item, total, galleryIndex = item.index) {
@@ -53165,6 +53245,7 @@
                 <span id="profileTvViewerSchedule"></span>
               </div>
               <div class="profile-tv-viewer-actions">
+                <button class="profile-tv-viewer-like" type="button" data-like-profile-tv aria-label="Like this profile video" aria-pressed="false">${actionIconMarkup("heart")}<span data-media-like-count>0</span></button>
                 <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-sound aria-label="Turn TV video sound off">${modalVideoSoundIcon(false)}</button>
                 <button class="profile-tv-viewer-share" type="button" data-share-profile-tv aria-label="Share this profile video">${actionIconMarkup("share")}</button>
               </div>
@@ -53186,6 +53267,11 @@
         }
         if (target.closest("[data-toggle-profile-tv-sound]")) {
           toggleProfileTvSound();
+          return;
+        }
+        if (target.closest("[data-like-profile-tv]")) {
+          const videoId = overlay.dataset.videoId || "";
+          if (videoId) void togglePublicMediaLike("video", videoId, document.getElementById("profileTvViewerStatus"));
           return;
         }
         if (target.closest("[data-previous-profile-tv]")) {
@@ -53358,6 +53444,12 @@
       if (currentIndex !== nextIndex) delete overlay.dataset.loadedVideoIndex;
       document.getElementById("profileTvViewerSchedule").textContent = `${scheduleLabel} · Scroll up or down · Video ${nextIndex + 1} of ${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
+      preparePublicMediaLikeButton(
+        overlay.querySelector("[data-like-profile-tv]"),
+        "video",
+        String(item.id || ""),
+        item.likeCount
+      );
       const viewerVideos = [...overlay.querySelectorAll(".profile-tv-viewer-video")];
       syncProfileTvVideoLoading(overlay, nextIndex);
       viewerVideos.forEach((video, videoIndex) => {
@@ -53414,6 +53506,11 @@
       overlay.setAttribute("aria-label", `${profileName || "Dancer"} MyDancr TV video`);
       document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
       renderProfileTvViewerSlides(overlay, overlay.profileTvVideos, profileName || "Dancer");
+      void loadPublicMediaLikes(overlay.profileTvVideos.map((videoItem) => ({
+        mediaType: "video",
+        mediaId: String(videoItem.id || ""),
+        likeCount: videoItem.likeCount
+      })));
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
@@ -56872,7 +56969,8 @@
           metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
           metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests · strongest value metric"),
           metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Now clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.favoritesAdded), "Favorites added")
+          metricCardMarkup(compactNumber(dashboardMetrics.favoritesAdded), "Favorites added"),
+          metricCardMarkup(compactNumber(dashboardMetrics.mediaLikes), "Media likes")
         ].join("");
         document.getElementById("dancerCustomerImpact").innerHTML = `${compactNumber(highIntentActions)} <span>actions</span>`;
         document.getElementById("dancerCustomerImpactDetail").textContent = highIntentActions
@@ -59708,6 +59806,133 @@
       }).then((response) => response.ok).catch(() => false);
     }
 
+    function publicMediaLikeKey(mediaType, mediaId) {
+      return `${mediaType}:${mediaId}`;
+    }
+
+    function safePublicMediaLikeCount(value) {
+      const count = Number(value);
+      return Number.isSafeInteger(count) && count >= 0 ? count : 0;
+    }
+
+    function compactPublicMediaLikeCount(value) {
+      return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 })
+        .format(safePublicMediaLikeCount(value));
+    }
+
+    function publicMediaLikeState(mediaType, mediaId, initialCount = 0) {
+      const key = publicMediaLikeKey(mediaType, mediaId);
+      if (!publicMediaLikeStates.has(key)) {
+        publicMediaLikeStates.set(key, {
+          liked: false,
+          likeCount: safePublicMediaLikeCount(initialCount),
+          pending: false,
+          loaded: false
+        });
+      }
+      return publicMediaLikeStates.get(key);
+    }
+
+    function syncPublicMediaLikeButtons(mediaType, mediaId) {
+      const state = publicMediaLikeState(mediaType, mediaId);
+      document.querySelectorAll("[data-media-like-type][data-media-like-id]").forEach((button) => {
+        if (button.dataset.mediaLikeType !== mediaType || button.dataset.mediaLikeId !== mediaId) return;
+        const mediaLabel = mediaType === "photo" ? "photo" : "video";
+        button.classList.toggle("is-liked", state.liked);
+        button.setAttribute("aria-pressed", String(state.liked));
+        button.setAttribute("aria-label", `${state.liked ? "Unlike" : "Like"} this ${mediaLabel}. ${state.likeCount} ${state.likeCount === 1 ? "like" : "likes"}.`);
+        button.disabled = state.pending;
+        const count = button.querySelector("[data-media-like-count]");
+        if (count) count.textContent = compactPublicMediaLikeCount(state.likeCount);
+      });
+    }
+
+    function preparePublicMediaLikeButton(button, mediaType, mediaId, initialCount = 0) {
+      if (!button) return false;
+      if (!mediaId) {
+        button.hidden = true;
+        return false;
+      }
+      button.hidden = false;
+      button.dataset.mediaLikeType = mediaType;
+      button.dataset.mediaLikeId = mediaId;
+      publicMediaLikeState(mediaType, mediaId, initialCount);
+      syncPublicMediaLikeButtons(mediaType, mediaId);
+      return true;
+    }
+
+    async function loadPublicMediaLikes(items) {
+      if (window.location.protocol === "file:") return;
+      const pendingItems = [...new Map((items || [])
+        .filter((item) => item?.mediaId && (item.mediaType === "photo" || item.mediaType === "video"))
+        .map((item) => {
+          const key = publicMediaLikeKey(item.mediaType, item.mediaId);
+          const state = publicMediaLikeState(item.mediaType, item.mediaId, item.likeCount);
+          return [key, { ...item, key, state }];
+        })).values()]
+        .filter((item) => !item.state.loaded && !publicMediaLikeLoads.has(item.key));
+      for (let index = 0; index < pendingItems.length; index += 50) {
+        const group = pendingItems.slice(index, index + 50);
+        const params = new URLSearchParams();
+        group.forEach((item) => params.append(item.mediaType, item.mediaId));
+        const request = fetch(`/api/public/media-likes?${params.toString()}`, {
+          cache: "no-store",
+          credentials: "same-origin"
+        }).then(async (response) => {
+          const payload = await response.json();
+          if (!response.ok || !payload.ok || !Array.isArray(payload.likes)) {
+            throw new Error(payload.error || "Unable to load likes.");
+          }
+          payload.likes.forEach((item) => {
+            const key = publicMediaLikeKey(item.mediaType, item.mediaId);
+            publicMediaLikeStates.set(key, {
+              liked: item.liked === true,
+              likeCount: safePublicMediaLikeCount(item.likeCount),
+              pending: false,
+              loaded: true
+            });
+            syncPublicMediaLikeButtons(item.mediaType, item.mediaId);
+          });
+        }).catch(() => false).finally(() => {
+          group.forEach((item) => publicMediaLikeLoads.delete(item.key));
+        });
+        group.forEach((item) => publicMediaLikeLoads.set(item.key, request));
+        await request;
+      }
+    }
+
+    async function togglePublicMediaLike(mediaType, mediaId, statusTarget = null) {
+      const state = publicMediaLikeState(mediaType, mediaId);
+      if (!mediaId || state.pending) return state;
+      const previous = { ...state };
+      state.liked = !state.liked;
+      state.likeCount = Math.max(0, state.likeCount + (state.liked ? 1 : -1));
+      state.pending = true;
+      syncPublicMediaLikeButtons(mediaType, mediaId);
+      if (statusTarget) statusTarget.textContent = "";
+      try {
+        const response = await fetch("/api/public/media-likes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ mediaType, mediaId, liked: state.liked })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to update like.");
+        state.liked = payload.liked === true;
+        state.likeCount = safePublicMediaLikeCount(payload.likeCount);
+        state.loaded = true;
+        if (statusTarget) statusTarget.textContent = state.liked ? "Liked." : "Like removed.";
+      } catch {
+        Object.assign(state, previous);
+        if (statusTarget) statusTarget.textContent = "Unable to update this like.";
+      } finally {
+        state.pending = false;
+        syncPublicMediaLikeButtons(mediaType, mediaId);
+      }
+      return state;
+    }
+
     function clearHomeTvFeedEngagedTimer(videoId) {
       const timer = homeTvFeedEngagedTimers.get(videoId);
       if (timer) window.clearTimeout(timer);
@@ -59863,18 +60088,22 @@
       }, 1100);
     }
 
-    function applaudHomeTvFeedVideo(item, slide) {
+    async function applaudHomeTvFeedVideo(item, slide) {
       const videoId = String(item?.id || "");
       if (!videoId || !slide) return;
-      const alreadyApplauded = homeTvFeedApplaudedVideos.has(videoId);
-      homeTvFeedApplaudedVideos.add(videoId);
-      slide.querySelector("[data-home-tv-applause]")?.setAttribute("aria-pressed", "true");
+      const state = publicMediaLikeState("video", videoId, item.likeCount);
+      const alreadyLiked = state.liked;
       slide.classList.remove("is-applauding");
       void slide.offsetWidth;
       slide.classList.add("is-applauding");
       window.setTimeout(() => slide.classList.remove("is-applauding"), 720);
-      showHomeTvFeedFeedback(slide, alreadyApplauded ? "Already applauded" : "Applauded");
-      if (!alreadyApplauded) void trackHomeTvFeedEvent(videoId, "applause");
+      if (alreadyLiked) {
+        showHomeTvFeedFeedback(slide, "Already liked");
+        return;
+      }
+      const result = await togglePublicMediaLike("video", videoId);
+      showHomeTvFeedFeedback(slide, result.liked ? "Liked" : "Unable to like");
+      if (result.liked) void trackHomeTvFeedEvent(videoId, "applause");
     }
 
     async function shareHomeTvFeedVideo(item, slide, button) {
@@ -60663,6 +60892,18 @@
         slide.querySelector(".home-tv-feed-dancer")?.click();
       });
 
+      const like = createHomeTvFeedActionButton(
+        "home-tv-feed-like-action",
+        "Like",
+        `${actionIconMarkup("heart")}<span data-media-like-count>${compactPublicMediaLikeCount(item.likeCount)}</span>`
+      );
+      preparePublicMediaLikeButton(like, "video", videoId, item.likeCount);
+      like.addEventListener("click", async () => {
+        closeHomeTvFeedReportMenus();
+        const result = await togglePublicMediaLike("video", videoId);
+        showHomeTvFeedFeedback(slide, result.liked ? "Liked" : "Like removed");
+      });
+
       const share = createHomeTvFeedActionButton(
         "home-tv-feed-share-action",
         "Share",
@@ -60769,6 +61010,7 @@
       });
       const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
       actions.append(sound, profile);
+      actions.appendChild(like);
       if (deal) actions.appendChild(deal);
       actions.append(share, follow, fullscreen);
       actions.append(overflow, reportMenu);
@@ -61020,6 +61262,11 @@
       );
       results.dataset.homeTvFeedKey = feedKey;
       syncHomeTvFeedSoundButtons();
+      void loadPublicMediaLikes(homeTvFeedVideos.map((item) => ({
+        mediaType: "video",
+        mediaId: String(item.id || ""),
+        likeCount: item.likeCount
+      })));
       window.requestAnimationFrame(setupHomeTvFeedObserver);
       settleHomeTvFeedLanding({ complete: true });
     }
@@ -62276,6 +62523,15 @@
       void shareProfilePhoto();
     });
     profilePhotoViewerShare?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    }, { passive: true });
+    profilePhotoViewerLike?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const mediaId = profilePhotoViewerLike.dataset.mediaLikeId || "";
+      if (mediaId) void togglePublicMediaLike("photo", mediaId, profilePhotoViewerStatus);
+    });
+    profilePhotoViewerLike?.addEventListener("pointerdown", (event) => {
       event.stopPropagation();
     }, { passive: true });
     profilePhotoViewer?.addEventListener("click", (event) => {

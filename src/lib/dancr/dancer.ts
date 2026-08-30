@@ -350,6 +350,7 @@ export async function getDancerDashboardAnalytics(
     totalFollowers,
     notificationSubscribers,
     profileViewsToday,
+    mediaLikes,
   ] = await Promise.all([
     countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", since),
     countRows(client, "schedule_views", "dancer_id", dancerId, "viewed_at", since),
@@ -361,6 +362,7 @@ export async function getDancerDashboardAnalytics(
     countRowsAll(client, "follows", "dancer_id", dancerId),
     countNotificationSubscribers(client, dancerId),
     countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", today),
+    countDancerMediaLikes(client, dancerId),
   ]);
 
   const [followersGained, favoritesAdded] = await Promise.all([
@@ -382,10 +384,22 @@ export async function getDancerDashboardAnalytics(
     directionRequests30Days: directionRequests,
     goingSignals30Days: goingSignals,
     favoritesAdded30Days: favoritesAdded,
+    mediaLikes,
     socialClicks30Days: socialClicks,
     notificationsSent30Days: notifications.sent,
     notificationsOpened30Days: notifications.opened,
   };
+}
+
+async function countDancerMediaLikes(client: DancrClient, dancerId: string) {
+  const [photoResult, videoResult] = await Promise.all([
+    client.from("dancer_photos").select("like_count").eq("dancer_id", dancerId),
+    client.from("mydancr_tv_videos").select("like_count").eq("dancer_id", dancerId),
+  ]);
+  if (photoResult.error) throw photoResult.error;
+  if (videoResult.error) throw videoResult.error;
+  return [...(photoResult.data || []), ...(videoResult.data || [])]
+    .reduce((total, row: any) => total + Math.max(0, Number(row.like_count) || 0), 0);
 }
 
 export async function getOwnDancerDashboardAnalytics(client: DancrClient, userId: string) {

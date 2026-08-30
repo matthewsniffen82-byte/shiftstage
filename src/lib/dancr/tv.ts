@@ -70,7 +70,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 const IDENTITY_PROFILE_FIELDS = ", venue_approved_at";
 const MODERATION_IDENTITY_PROFILE_FIELDS = `${IDENTITY_PROFILE_FIELDS}, avatar_storage_path`;
 const PUBLIC_TV_SELECT =
-  `id, storage_path, duration_seconds, width, height, published_at, expires_at, distribution_scope, moderation_details, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
+  `id, storage_path, duration_seconds, width, height, published_at, expires_at, like_count, distribution_scope, moderation_details, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -89,6 +89,7 @@ type FeedOptions = {
 
 export type MyDancrTvVideo = {
   id: string;
+  likeCount: number;
   videoUrl: string;
   posterUrl?: string | null;
   durationSeconds: number;
@@ -398,6 +399,7 @@ function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
 
   return {
     id: row.id,
+    likeCount: safePublicCount(row.like_count),
     storagePath: row.storage_path,
     posterStoragePath: normalizedVideoPosterStoragePath(row),
     durationSeconds: Number(row.duration_seconds || 0),
@@ -426,6 +428,11 @@ function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
     dealAttributionToken: null,
     dealAttributionTokens: {},
   };
+}
+
+function safePublicCount(value: unknown) {
+  const count = Number(value);
+  return Number.isSafeInteger(count) && count >= 0 ? count : 0;
 }
 
 type PublicTvShiftContext = Pick<NormalizedFeedRow, "venue" | "shift">;

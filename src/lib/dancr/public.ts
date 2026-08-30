@@ -77,7 +77,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         avatar_storage_path,
         is_public,
         trending_scores(rank),
-        dancer_photos(storage_path, is_primary, review_status, sort_order),
+        dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count),
         social_links(id, platform, handle, url, is_active),
         shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
       `,
@@ -108,7 +108,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           photo_review_status,
           avatar_storage_path,
           trending_scores(rank),
-          dancer_photos(storage_path, is_primary, review_status, sort_order),
+          dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count),
           social_links(id, platform, handle, url, is_active),
           shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
         `,
@@ -152,7 +152,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         avatar_storage_path,
         is_public,
         trending_scores(rank),
-        dancer_photos(storage_path, is_primary, review_status, sort_order),
+        dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count),
         social_links(id, platform, handle, url, is_active),
         shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
       `,
@@ -187,7 +187,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
           photo_review_status,
           avatar_storage_path,
           trending_scores(rank),
-          dancer_photos(storage_path, is_primary, review_status, sort_order),
+          dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count),
           social_links(id, platform, handle, url, is_active),
           shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
         `,
@@ -307,6 +307,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
       );
       return {
         id: photo.id,
+        likeCount: safeMetricCount(photo.like_count),
         focalX: image?.imageFocalX ?? 50,
         focalY: image?.imageFocalY ?? 50,
         imageUrl: image?.imageUrl || "",
@@ -329,7 +330,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
 async function getApprovedDancerPhotos(client: DancrClient, dancerId: string) {
   const { data, error } = await client
     .from("dancer_photos")
-    .select("id, storage_path, is_primary, sort_order, review_status, created_at")
+    .select("id, storage_path, is_primary, sort_order, review_status, created_at, like_count")
     .eq("dancer_id", dancerId)
     .eq("review_status", "approved")
     .order("is_primary", { ascending: false })
@@ -490,6 +491,8 @@ function buildDancerCard(
       galleryPhotoSrcSets: approvedPhotos.map(
         (photo) => photo.imageSrcSet || null,
       ),
+      galleryPhotoIds: approvedPhotos.map((photo) => photo.id),
+      galleryPhotoLikeCounts: approvedPhotos.map((photo) => photo.likeCount),
       socialLinks: approvedSocialLinks(row),
       currentRank: score?.rank || null,
       venueName: venue?.name || null,
@@ -607,11 +610,14 @@ function approvedDancerPhotoSources(client: DancrClient, row: any) {
     if (left.is_primary !== right.is_primary) return left.is_primary ? -1 : 1;
     return Number(left.sort_order || 0) - Number(right.sort_order || 0);
   });
-  return ordered
-    .map((photo: any) =>
-      responsivePublicImage(client, "dancer-photos", photo.storage_path),
-    )
-    .filter((photo): photo is NonNullable<typeof photo> => Boolean(photo));
+  return ordered.flatMap((photo: any) => {
+    const image = responsivePublicImage(client, "dancer-photos", photo.storage_path);
+    return image ? [{
+      ...image,
+      id: String(photo.id || ""),
+      likeCount: safeMetricCount(photo.like_count),
+    }] : [];
+  });
 }
 
 function approvedSocialLinks(row: any) {

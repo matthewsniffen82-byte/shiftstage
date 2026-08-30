@@ -205,6 +205,8 @@ export type DancerCard = {
   avatarPhotoHeight?: number | null;
   galleryPhotoUrls?: string[];
   galleryPhotoSrcSets?: Array<string | null>;
+  galleryPhotoIds?: string[];
+  galleryPhotoLikeCounts?: number[];
   socialLinks?: SocialLink[];
   currentRank: number | null;
   venueName: string | null;
@@ -236,6 +238,7 @@ export type DancerProfile = DancerCard & {
 
 export type DancerPhoto = {
   id: string;
+  likeCount?: number;
   imageUrl: string;
   focalX?: number;
   focalY?: number;
@@ -355,6 +358,7 @@ export type DancerDashboardAnalytics = {
   directionRequests30Days: number;
   goingSignals30Days: number;
   favoritesAdded30Days: number;
+  mediaLikes: number;
   socialClicks30Days: Record<SocialPlatform, number>;
   notificationsSent30Days: number;
   notificationsOpened30Days: number;

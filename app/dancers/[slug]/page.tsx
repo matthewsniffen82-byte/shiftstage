@@ -308,12 +308,14 @@ export default async function DancerPublicPage({ params }: PageProps) {
             imageSrcSet: photo.imageSrcSet,
             imageWidth: photo.imageWidth,
             imageHeight: photo.imageHeight,
+            likeCount: photo.likeCount || 0,
           }))}
           videos={tvVideos.map((video) => ({
             id: video.id,
             videoUrl: video.videoUrl,
             posterUrl: video.posterUrl || null,
             durationSeconds: video.durationSeconds,
+            likeCount: video.likeCount,
           }))}
           socialContent={profile.socialLinks.length ? (
             <SocialLinks dancerId={profile.id} links={profile.socialLinks} showHeading={false} />
@@ -643,9 +645,13 @@ function PublicProfileStyles() {
       .profile-media-viewer-footer { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px max(18px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); border-top: 1px solid rgba(255,255,255,.1); background: #07070a; }
       .profile-media-viewer-copy { min-width: 0; display: grid; gap: 3px; }
       .profile-media-viewer-copy span { color: #aaa0b8; font-size: 12px; }
-      .profile-media-viewer-actions { min-width: 92px; display: grid; justify-items: end; gap: 3px; }
+      .profile-media-viewer-actions { min-width: 92px; display: grid; justify-items: end; gap: 8px; }
       .profile-media-viewer-share { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; backdrop-filter: blur(10px); }
-      .profile-media-viewer-share svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
+      .profile-media-viewer-like { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; backdrop-filter: blur(10px); }
+      .profile-media-viewer-share svg, .profile-media-viewer-like svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
+      .profile-media-viewer-like.is-liked { border-color: rgba(244,114,182,.68); color: #f9a8d4; background: rgba(190,24,93,.3); }
+      .profile-media-viewer-like.is-liked svg { fill: currentColor; }
+      .profile-media-viewer-like:disabled { opacity: .64; cursor: wait; }
       .profile-media-viewer-share-status { min-height: 14px; color: #a7f3d0; font-size: 10px; font-weight: 800; text-align: right; }
       .profile-media-viewer-hint { color: #aaa0b8; font-size: 11px; font-weight: 800; }
       .profile-media-viewer { display: block; }
@@ -660,8 +666,9 @@ function PublicProfileStyles() {
       .profile-media-viewer.is-photo .profile-media-viewer-footer { background: transparent; }
       .profile-media-viewer .profile-media-viewer-copy { position: absolute; right: 82px; bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); left: max(18px, env(safe-area-inset-left)); gap: 4px; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
       .profile-media-viewer .profile-media-viewer-actions { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); min-width: 0; pointer-events: auto; }
-      .profile-media-viewer .profile-media-viewer-share { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; padding: 0; border-radius: 50% !important; }
-      .profile-media-viewer .profile-media-viewer-share svg { width: 21px; height: 21px; }
+      .profile-media-viewer .profile-media-viewer-share { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 6px 0 4px; border-radius: 50% !important; font-size: 9px; line-height: 1; }
+      .profile-media-viewer .profile-media-viewer-like { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 6px 0 4px; border-radius: 50% !important; font-size: 9px; line-height: 1; }
+      .profile-media-viewer .profile-media-viewer-share svg, .profile-media-viewer .profile-media-viewer-like svg { width: 21px; height: 21px; }
       .profile-media-viewer .profile-media-viewer-share-status { position: absolute; right: 56px; bottom: 4px; width: max-content; max-width: 180px; text-shadow: 0 1px 5px #000; }
       .profile-media-viewer-preload { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
       .profile-media-viewer-preload img, .profile-media-viewer-preload video { width: 1px; height: 1px; }

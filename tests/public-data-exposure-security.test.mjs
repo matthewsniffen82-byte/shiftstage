@@ -36,7 +36,7 @@ test("public venue lists expose location and branding without contact or retired
 
 test("public dancer and venue mappers omit ownership, precise proximity, and QR storage data", () => {
   assert.match(publicService, /stage_name/);
-  assert.match(publicService, /dancer_photos\(storage_path, is_primary, review_status, sort_order\)/);
+  assert.match(publicService, /dancer_photos\(id, storage_path, is_primary, review_status, sort_order, like_count\)/);
   assert.match(publicService, /social_links\(id, platform, handle, url, is_active\)/);
   assert.match(publicService, /address, latitude, longitude/);
   assert.doesNotMatch(

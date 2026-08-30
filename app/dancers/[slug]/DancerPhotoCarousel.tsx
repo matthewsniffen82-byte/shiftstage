@@ -11,8 +11,10 @@ import {
   useState,
 } from "react";
 import { flushSync } from "react-dom";
+import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
+import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 
 type DancerPhotoCarouselProps = {
@@ -22,12 +24,14 @@ type DancerPhotoCarouselProps = {
     imageSrcSet?: string | null;
     imageWidth?: number | null;
     imageHeight?: number | null;
+    likeCount?: number;
   }>;
   videos?: Array<{
     id: string;
     videoUrl: string;
     posterUrl?: string | null;
     durationSeconds: number;
+    likeCount?: number;
   }>;
   stageName: string;
   socialContent?: ReactNode;
@@ -41,6 +45,7 @@ type PhotoMedia = {
   imageSrcSet?: string | null;
   imageWidth?: number | null;
   imageHeight?: number | null;
+  likeCount?: number;
 };
 
 type VideoMedia = {
@@ -49,6 +54,7 @@ type VideoMedia = {
   videoUrl: string;
   posterUrl: string | null;
   durationSeconds: number;
+  likeCount?: number;
 };
 
 type ProfileMedia = PhotoMedia | VideoMedia;
@@ -81,6 +87,11 @@ export function DancerPhotoCarousel({
         })),
     [videos],
   );
+  const mediaLikeSeeds = useMemo(() => [
+    ...photoMedia.map((item) => ({ mediaType: "photo" as const, mediaId: item.id, likeCount: item.likeCount })),
+    ...videoMedia.map((item) => ({ mediaType: "video" as const, mediaId: item.id, likeCount: item.likeCount })),
+  ], [photoMedia, videoMedia]);
+  const { stateFor: mediaLikeStateFor, toggle: toggleMediaLike } = useAnonymousMediaLikes(mediaLikeSeeds);
   const [activeTab, setActiveTab] = useState<MediaTab>(
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
@@ -748,6 +759,24 @@ export function DancerPhotoCarousel({
               </div>
             ) : null}
             <div className="profile-media-viewer-actions">
+              {(() => {
+                const like = mediaLikeStateFor(activeViewerItem.kind, activeViewerItem.id);
+                return (
+                  <MediaLikeButton
+                    className="profile-media-viewer-like"
+                    liked={like.liked}
+                    likeCount={like.likeCount}
+                    mediaType={activeViewerItem.kind}
+                    pending={like.pending}
+                    onToggle={() => {
+                      setShareStatus("");
+                      void toggleMediaLike(activeViewerItem.kind, activeViewerItem.id).catch(() => {
+                        setShareStatus("Unable to update this like.");
+                      });
+                    }}
+                  />
+                );
+              })()}
               <button
                 aria-label={activeViewerItem.kind === "video" ? "Share this TV video" : "Share this profile photo"}
                 className="profile-media-viewer-share"

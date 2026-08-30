@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
+import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 
 export function TvVideoStrip({
   title,
@@ -20,6 +22,12 @@ export function TvVideoStrip({
   const [playbackFeedback, setPlaybackFeedback] = useState<{ paused: boolean; key: number } | null>(null);
   const [viewerMuted, setViewerMuted] = useVideoSoundPreference();
   const allowVideoWarmup = useAdaptiveVideoWarmup();
+  const mediaLikeSeeds = useMemo(() => videos.map((video) => ({
+    mediaType: "video" as const,
+    mediaId: video.id,
+    likeCount: video.likeCount,
+  })), [videos]);
+  const { stateFor: mediaLikeStateFor, toggle: toggleMediaLike } = useAnonymousMediaLikes(mediaLikeSeeds);
   const [viewerReadyVideoId, setViewerReadyVideoId] = useState("");
   const viewerVideo = useRef<HTMLVideoElement | null>(null);
   const previewCards = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -348,6 +356,24 @@ export function TvVideoStrip({
                 <span>{tvProfileShiftLabel(activeVideo).label} · Video {activeIndex + 1} of {videos.length}</span>
               </div>
               <div className="tv-video-viewer-actions">
+                {(() => {
+                  const like = mediaLikeStateFor("video", activeVideo.id);
+                  return (
+                    <MediaLikeButton
+                      className="tv-video-viewer-like"
+                      liked={like.liked}
+                      likeCount={like.likeCount}
+                      mediaType="video"
+                      pending={like.pending}
+                      onToggle={() => {
+                        setViewerStatus("");
+                        void toggleMediaLike("video", activeVideo.id).catch(() => {
+                          setViewerStatus("Unable to update this like.");
+                        });
+                      }}
+                    />
+                  );
+                })()}
                 <button
                   aria-label={viewerMuted ? "Turn sound on" : "Mute video"}
                   className="tv-video-viewer-state-control"
@@ -557,10 +583,14 @@ function TvVideoStripStyles() {
       .tv-video-viewer-footer > div:first-child { min-width: 0; display: grid; gap: 3px; }
       .tv-video-viewer-footer strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
       .tv-video-viewer-footer span { color: #9fefff; font-size: 11px; font-weight: 850; }
-      .tv-video-viewer-actions { display: grid; grid-template-columns: repeat(2, 52px); gap: 8px; }
+      .tv-video-viewer-actions { display: grid; grid-template-columns: repeat(3, 52px); gap: 8px; }
       .tv-video-viewer-actions button { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50% !important; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); font-weight: 900; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
       .tv-video-viewer-close:hover, .tv-video-viewer-close:focus-visible, .tv-video-viewer-previous:hover:not(:disabled), .tv-video-viewer-previous:focus-visible:not(:disabled), .tv-video-viewer-next:hover:not(:disabled), .tv-video-viewer-next:focus-visible:not(:disabled), .tv-video-viewer-actions button:hover, .tv-video-viewer-actions button:focus-visible { border-color: rgba(255,255,255,.4); background-color: rgba(18,18,26,.62); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 0 2px rgba(126,234,255,.16), 0 12px 28px rgba(0,0,0,.36); }
       .tv-video-viewer-actions .tv-video-viewer-state-control { justify-self: center; }
+      .tv-video-viewer-like { gap: 0 !important; padding: 5px 0 3px !important; font-size: 9px; line-height: 1; }
+      .tv-video-viewer-like svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-video-viewer-like.is-liked { border-color: rgba(244,114,182,.68); color: #f9a8d4; background-color: rgba(190,24,93,.42); }
+      .tv-video-viewer-like.is-liked svg { fill: currentColor; }
       .tv-video-viewer-state-control svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .tv-video-viewer-state-control svg .is-fill { fill: currentColor; stroke: none; }
       .tv-video-viewer-share svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }

@@ -86,7 +86,7 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
 });
 
-test("dancer profile viewers reuse translucent TV glass without adding controls", () => {
+test("dancer profile viewers reuse translucent TV glass with anonymous media likes", () => {
   const liveViewerActions = liveApp.match(
     /<div class="profile-tv-viewer-actions">[\s\S]*?<\/div>/,
   )?.[0] || "";
@@ -124,9 +124,10 @@ test("dancer profile viewers reuse translucent TV glass without adding controls"
     /\.tv-video-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
   );
   assert.equal((profileTvStrip.match(/className="tv-video-viewer-state-control"/g) || []).length, 1);
+  assert.equal((profileTvStrip.match(/className="tv-video-viewer-like"/g) || []).length, 1);
   assert.equal((profileTvStrip.match(/className="tv-video-viewer-share"/g) || []).length, 1);
   assert.match(profileTvStrip, /aria-label="Share this profile video"[\s\S]*?onClick=\{\(\) => shareVideo\(activeVideo\)\}[\s\S]*?<ShareIcon \/>/);
-  assert.match(profileTvStrip, /\.tv-video-viewer-actions \{[^}]*grid-template-columns: repeat\(2, 52px\)/);
+  assert.match(profileTvStrip, /\.tv-video-viewer-actions \{[^}]*grid-template-columns: repeat\(3, 52px\)/);
   assert.match(
     profileTvStrip,
     /\.tv-video-viewer-actions button \{[^}]*width: 52px;[^}]*height: 52px;[^}]*border-radius: 50% !important;/,
@@ -141,9 +142,10 @@ test("dancer profile viewers reuse translucent TV glass without adding controls"
     liveApp,
     /\.profile-tv-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
   );
-  assert.equal((liveViewerActions.match(/<button/g) || []).length, 2);
+  assert.equal((liveViewerActions.match(/<button/g) || []).length, 3);
   assert.doesNotMatch(liveViewerActions, /data-toggle-profile-tv-playback/);
   assert.match(liveViewerActions, /data-toggle-profile-tv-sound/);
+  assert.match(liveViewerActions, /data-like-profile-tv/);
   assert.match(liveViewerActions, /class="profile-tv-viewer-share"[^>]*data-share-profile-tv/);
   assert.match(
     liveApp,

@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import {
   readBrowserAccessToken,
   readBrowserAuthSession,
@@ -20,6 +21,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
+import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 
 const VIEWER_SESSION_KEY = "mydancrTvViewerSessionV1";
 const FILTERS = [
@@ -96,6 +98,12 @@ export default function TvFeedClient({
   const notificationActionAbortRef = useRef<AbortController | null>(null);
   const notificationActionRequestIdRef = useRef(0);
   const viewerSessionId = useMemo(readViewerSessionId, []);
+  const mediaLikeSeeds = useMemo(() => videos.map((video) => ({
+    mediaType: "video" as const,
+    mediaId: video.id,
+    likeCount: video.likeCount,
+  })), [videos]);
+  const { stateFor: mediaLikeStateFor, toggle: toggleMediaLike } = useAnonymousMediaLikes(mediaLikeSeeds);
   activeVideoIdRef.current = activeVideoId;
   mutedRef.current = muted;
   const activeVideoIndex = videos.findIndex((video) => video.id === activeVideoId);
@@ -857,14 +865,32 @@ export default function TvFeedClient({
                   </div>
                 </div>
               </div>
-              <button
-                className="tv-sound"
-                type="button"
-                aria-label={muted ? "Turn sound on" : "Mute video"}
-                onClick={() => setMuted((value) => !value)}
-              >
-                <SoundIcon muted={muted} />
-              </button>
+              <div className="tv-media-actions">
+                <button
+                  className="tv-sound"
+                  type="button"
+                  aria-label={muted ? "Turn sound on" : "Mute video"}
+                  onClick={() => setMuted((value) => !value)}
+                >
+                  <SoundIcon muted={muted} />
+                </button>
+                {(() => {
+                  const like = mediaLikeStateFor("video", video.id);
+                  return (
+                    <MediaLikeButton
+                      className="tv-like"
+                      liked={like.liked}
+                      likeCount={like.likeCount}
+                      mediaType="video"
+                      pending={like.pending}
+                      onToggle={() => {
+                        setStatus("");
+                        void toggleMediaLike("video", video.id).catch(() => setStatus("Unable to update this like."));
+                      }}
+                    />
+                  );
+                })()}
+              </div>
             </div>
           </article>
         ))}
@@ -1080,8 +1106,13 @@ function TvStyles() {
       .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; width: 58px; min-width: 58px; max-width: 58px; height: 58px; min-height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f5f4f7; background: rgba(25,25,30,.9); box-shadow: 0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07); transform: translate(-50%, -50%); cursor: pointer; }
       .tv-playback-retry svg { width: 27px; height: 27px; fill: currentColor; stroke: none; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
-      .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); cursor: pointer; }
-      .tv-sound svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-media-actions { position: absolute; z-index: 5; top: 12px; right: 12px; display: grid; gap: 8px; }
+      .tv-sound { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 5px 0 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); font-size: 9px; font-weight: 900; line-height: 1; cursor: pointer; }
+      .tv-like { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 5px 0 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); font-size: 9px; font-weight: 900; line-height: 1; cursor: pointer; }
+      .tv-sound svg, .tv-like svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-like.is-liked { border-color: rgba(244,114,182,.68); color: #f9a8d4; background: rgba(190,24,93,.42); }
+      .tv-like.is-liked svg { fill: currentColor; }
+      .tv-like:disabled { opacity: .64; cursor: wait; }
       .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: end; gap: 10px; padding: 76px 18px 18px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
       .tv-profile-photo { position: relative; width: 52px; height: 52px; display: grid; place-items: center; overflow: hidden; padding: 2px; border: 0; border-radius: 50%; color: #fff; background: #fff; box-shadow: none; font-size: 17px; font-weight: 950; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
       .tv-profile-photo.has-photo { background: #fff; filter: none; opacity: 1; mix-blend-mode: normal; }
