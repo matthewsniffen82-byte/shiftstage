@@ -45,6 +45,17 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
   assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-directions-action \{[\s\S]*?border-color: rgba\(148, 163, 184, 0\.18\) !important;[\s\S]*?rgba\(24, 27, 35, 0\.66\)/);
   assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-directions-action \.action-icon \{[\s\S]*?rgba\(226, 232, 240, 0\.84\)/);
   assert.doesNotMatch(hierarchy.match(/\.venue-card-primary-actions > \.venue-card-directions-action \{[\s\S]*?\n  \}/)?.[0] || "", /dancr-color-info|#72d8ff|rgba\(85, 199, 245/);
+  const rideActionRule = hierarchy.match(
+    /\.venue-card-primary-actions > \.venue-card-ride-action \{[\s\S]*?\n  \}/,
+  )?.[0] || "";
+  const rideIconRule = hierarchy.match(
+    /\.venue-card-primary-actions > \.venue-card-ride-action \.action-icon \{[\s\S]*?\n  \}/,
+  )?.[0] || "";
+  assert.match(rideActionRule, /border-color: rgba\(148, 163, 184, 0\.18\) !important;/);
+  assert.match(rideActionRule, /rgba\(24, 27, 35, 0\.66\)/);
+  assert.match(rideIconRule, /color: rgba\(226, 232, 240, 0\.84\) !important;/);
+  assert.doesNotMatch(rideActionRule, /139, 92, 246|31, 24, 45|brand-primary/);
+  assert.doesNotMatch(rideIconRule, /#b89cff|brand-primary/);
   assert.match(hierarchy, /\.venue-card-secondary-actions \{[\s\S]*?height: 56px !important;[\s\S]*?repeat\(3, minmax\(0, 1fr\)\) minmax\(58px, 0\.72fr\)/);
   assert.match(hierarchy, /\.venue-card-secondary-actions > \.venue-card-secondary-action[\s\S]*?border-radius: 14px !important;[\s\S]*?linear-gradient\(180deg,/);
   assert.match(hierarchy, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(7, 31, 20, 0\.68\)/);
