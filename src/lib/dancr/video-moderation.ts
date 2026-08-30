@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { spawn } from "node:child_process";
 import { createReadStream } from "node:fs";
@@ -6,7 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
 import OpenAI from "openai";
-import { getServerEnv } from "../env";
+import { getServerEnv } from "../server-env";
 import {
   DANCR_IMAGE_MODERATION_MODEL,
   evaluateDancrImageModeration,

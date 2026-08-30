@@ -1,7 +1,9 @@
+import "server-only";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
 import OpenAI from "openai";
-import { getServerEnv } from "../env";
+import { getServerEnv } from "../server-env";
 import {
   isAvatarFaceRequiredError,
   prepareFaceCenteredAvatar,

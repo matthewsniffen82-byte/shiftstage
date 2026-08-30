@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import type { Json, NotificationType } from "./types";

@@ -1,26 +1,19 @@
 import { NextResponse } from "next/server";
-import { getPublicEnv, getServerEnv } from "../../../../src/lib/env";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const env = getPublicEnv();
-    const serviceRoleKey = getServerEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const response = await fetch(
-      `${env.supabaseUrl.replace(/\/$/, "")}/rest/v1/dancer_profiles?select=id,is_public&limit=1`,
-      {
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
-        cache: "no-store",
-      },
-    );
+    const admin = createAdminSupabaseClient();
+    const { error } = await admin
+      .from("dancer_profiles")
+      .select("id")
+      .limit(1);
 
-    if (!response.ok) {
-      console.error("SUPABASE_HEALTH_PROBE_FAILED", await formatSupabaseResponse(response));
+    if (error) {
+      console.error("SUPABASE_HEALTH_PROBE_FAILED", formatSupabaseError(error));
       return unhealthySupabaseResponse();
     }
 
@@ -38,21 +31,10 @@ function unhealthySupabaseResponse() {
   );
 }
 
-async function formatSupabaseResponse(response: Response) {
-  const body = await response.text();
-  let parsed: unknown = null;
-
-  try {
-    parsed = body ? JSON.parse(body) : null;
-  } catch {
-    parsed = body;
-  }
-
+function formatSupabaseError(error: { code?: unknown } | null | undefined) {
   return {
     message: "Supabase REST health probe failed.",
-    status: response.status,
-    statusText: response.statusText,
-    body: parsed,
+    code: String(error?.code || "unknown"),
   };
 }
 

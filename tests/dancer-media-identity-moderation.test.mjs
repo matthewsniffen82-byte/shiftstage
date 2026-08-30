@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   evaluateDancerMediaIdentity,
   parseDancerMediaIdentityAnalysis,
-} from "../src/lib/dancr/media-identity.ts";
+} from "../src/lib/dancr/media-identity-core.ts";
 
 const [identitySource, imageModeration, videoModeration, tvSource, dashboard, studio] =
   await Promise.all([

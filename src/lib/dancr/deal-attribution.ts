@@ -1,5 +1,7 @@
+import "server-only";
+
 import { createHmac, timingSafeEqual } from "crypto";
-import { getServerEnv } from "@/src/lib/env";
+import { getServerEnv } from "@/src/lib/server-env";
 
 const ATTRIBUTION_VERSION = 1;
 const ATTRIBUTION_TOKEN_LIFETIME_MS = 60 * 60 * 1000;

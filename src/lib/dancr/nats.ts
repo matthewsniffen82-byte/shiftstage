@@ -1,3 +1,5 @@
+import "server-only";
+
 export type CommissionSettlementProvider = "mydancr" | "nats";
 
 export type NatsRuntimeConfig = {

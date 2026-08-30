@@ -19,6 +19,7 @@ import {
   uploadResponsiveImage,
 } from "@/src/lib/dancr/responsive-image";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { getOptionalServerEnv } from "@/src/lib/server-env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -148,7 +149,7 @@ export async function POST(request: Request) {
 }
 
 function authorizeMaintenanceRequest(request: Request) {
-  const expected = process.env.DANCR_MEDIA_IMPORT_KEY || "";
+  const expected = getOptionalServerEnv("DANCR_MEDIA_IMPORT_KEY") || "";
   const provided = request.headers.get("x-mydancr-media-import-key") || "";
   if (expected.length < 32 || provided.length !== expected.length) {
     throw forbidden("Avatar maintenance access denied.");

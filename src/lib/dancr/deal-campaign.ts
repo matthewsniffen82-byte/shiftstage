@@ -1,5 +1,7 @@
+import "server-only";
+
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { getServerEnv } from "@/src/lib/env";
+import { getServerEnv } from "@/src/lib/server-env";
 
 const CAMPAIGN_VERSION = 1;
 const UUID_PATTERN =

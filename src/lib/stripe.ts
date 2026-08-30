@@ -1,7 +1,7 @@
 import "server-only";
 
 import Stripe from "stripe";
-import { getServerEnv } from "./env";
+import { getServerEnv } from "./server-env";
 
 let stripe: Stripe | null = null;
 

@@ -31,7 +31,9 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /publicProfileVisible !== isPublic/);
   assert.match(routeSource, /visibility,/);
   assert.match(routeSource, /session,/);
-  assert.match(supabaseHealthSource, /dancer_profiles\?select=id,is_public&limit=1/);
+  assert.match(supabaseHealthSource, /createAdminSupabaseClient\(\)/);
+  assert.match(supabaseHealthSource, /\.from\("dancer_profiles"\)[\s\S]*?\.select\("id"\)[\s\S]*?\.limit\(1\)/);
+  assert.doesNotMatch(supabaseHealthSource, /is_public|SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(dashboardSource, /requestDancerProfileVisibilityJson\(/);
   assert.match(dashboardSessionSource, /requestDashboardJson\("\/api\/dancer\/profile\/visibility"/);
   assert.match(dashboardSessionSource, /"x-dancr-refresh-token"/);

@@ -6,7 +6,7 @@ const {
   AvatarFaceRequiredError,
   computeAvatarCandidateCrops,
   parseAvatarCandidateSelection,
-} = await import(new URL("../src/lib/dancr/avatar-face.ts", import.meta.url));
+} = await import(new URL("../src/lib/dancr/avatar-face-core.ts", import.meta.url));
 
 const [avatarFaceSource, moderationSource, avatarRouteSource, recenterRouteSource] = await Promise.all([
   readFile(new URL("../src/lib/dancr/avatar-face.ts", import.meta.url), "utf8"),

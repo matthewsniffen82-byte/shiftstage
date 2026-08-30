@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireVenueAccess } from "./venue-access";

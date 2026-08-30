@@ -22,6 +22,7 @@ import {
 } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
+import { getOptionalServerEnv } from "@/src/lib/server-env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -381,7 +382,8 @@ function readAuthCredential(body: Record<string, unknown>, role: AuthRole) {
 }
 
 function validateAdminSignupCode(value: unknown) {
-  const expected = process.env.DANCR_ADMIN_SIGNUP_CODE || process.env.DANCR_ADMIN_SEED_KEY;
+  const expected = getOptionalServerEnv("DANCR_ADMIN_SIGNUP_CODE")
+    || getOptionalServerEnv("DANCR_ADMIN_SEED_KEY");
   if (!expected) throw new Error("Admin signup code is not configured.");
   const provided = readRequired(value, "Admin code is required.", 256);
   const expectedDigest = createHash("sha256").update(expected).digest();

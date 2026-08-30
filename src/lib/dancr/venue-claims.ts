@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deliverNotificationRows } from "./notification-delivery";
