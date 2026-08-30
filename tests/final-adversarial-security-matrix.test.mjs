@@ -52,8 +52,9 @@ test("the final review distinguishes live probes from production-safe regression
 });
 
 test("the discovered least-privilege gap is isolated for a separate remediation step", () => {
-  assert.match(review, /One low-severity least-privilege finding remains/i);
-  assert.match(review, /57 legacy INSERT, UPDATE, or DELETE grants across 19 tables/i);
-  assert.match(review, /must be removed in a separate, isolated follow-up security step/i);
+  assert.match(review, /One low-severity least-privilege finding remained/i);
+  assert.match(review, /57 INSERT, UPDATE, or DELETE grants across 22 tables/i);
+  assert.match(review, /56 operations across 21 tables as unnecessary/i);
+  assert.match(review, /202608300006_minimize_authenticated_dml_grants\.sql/i);
   assert.doesNotMatch(review, /no findings/i);
 });

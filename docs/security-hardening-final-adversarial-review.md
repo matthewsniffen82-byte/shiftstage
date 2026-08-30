@@ -12,7 +12,7 @@ Supabase project: `hfmzwadzabmgxkjzmqun`
 
 The final safe adversarial review found no confirmed critical, high, or medium vulnerability. The deployed application rejected forged and unauthenticated privileged requests, direct public-key access did not expose private rows or storage objects, public response checks found no private-field leakage, and the focused adversarial regression suite passed 60 of 60 tests.
 
-One low-severity least-privilege finding remains: the `authenticated` database role has 57 legacy INSERT, UPDATE, or DELETE grants across 19 tables for operations that have no corresponding RLS write policy. RLS currently fails closed for every one of those operations, so the review did not find a usable write path. The grants are nevertheless unnecessary defense-in-depth exposure and must be removed in a separate, isolated follow-up security step. They are not bundled into this review commit.
+One low-severity least-privilege finding remained at the reviewed baseline: the `authenticated` database role had 57 INSERT, UPDATE, or DELETE grants across 22 tables for operations without a corresponding RLS write policy. RLS failed closed for all 57 operations, so the review did not find a usable write path. The follow-up flow trace classified 56 operations across 21 tables as unnecessary and identified the remaining operation as the intended owner-scoped notification-clearing flow whose DELETE policy was missing.
 
 ## Safe test method
 
@@ -75,6 +75,6 @@ The complete project test, typecheck, lint, and production-build gates must also
 
 These limits are deliberate production-safety constraints, not claims that the corresponding attacks were executed live.
 
-## Follow-up required
+## Follow-up remediation
 
-Create one isolated least-privilege database step that revokes only browser-role DML grants with no legitimate RLS write policy, verifies every intended browser flow, applies the migration, and confirms direct public-key and authenticated-role denial. Do not combine that remediation with unrelated changes.
+Migration `202608300006_minimize_authenticated_dml_grants.sql` is the isolated remediation for this finding. It revokes the 56 unused browser-role operations, preserves all legitimate read and support-message privileges, and adds only the authenticated `recipient_id = auth.uid()` DELETE policy required by the existing clear-notifications route.
