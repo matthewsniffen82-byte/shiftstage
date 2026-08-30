@@ -42365,6 +42365,9 @@
     const homeDiscoveryFeedQrPromptsShown = new Set();
     const HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000;
     const HOME_DISCOVERY_REFRESH_MS = 30000;
+    const PROFILE_NAVIGATION_PREFETCH_TTL_MS = 20 * 1000;
+    const PROFILE_NAVIGATION_PREFETCH_LIMIT = 4;
+    const profileNavigationPrefetchCache = new Map();
     const PUBLIC_DISCOVERY_REFRESH_KEY = "mydancrPublicDiscoveryRefreshV1";
     let savedScrollY = 0;
     let tonightExpanded = false;
@@ -53498,21 +53501,90 @@
       }
     }
 
+    function publicProfileForNavigation(reference, city = citySelect.value) {
+      const normalizedReference = String(reference || "").trim();
+      if (!normalizedReference) return null;
+      const profiles = markets[city]?.dancers?.filter(isApprovedPublicProfile) || [];
+      return profiles.find((item) => (
+        String(item.id || "") === normalizedReference ||
+        String(item.slug || "") === normalizedReference
+      )) || profiles.find((item) => item.name === normalizedReference) || null;
+    }
+
+    function pruneProfileNavigationPrefetchCache(now = Date.now()) {
+      profileNavigationPrefetchCache.forEach((entry, key) => {
+        if (!entry || entry.expiresAt <= now) profileNavigationPrefetchCache.delete(key);
+      });
+      while (profileNavigationPrefetchCache.size >= PROFILE_NAVIGATION_PREFETCH_LIMIT) {
+        const oldestKey = profileNavigationPrefetchCache.keys().next().value;
+        if (!oldestKey) break;
+        profileNavigationPrefetchCache.delete(oldestKey);
+      }
+    }
+
+    function requestProfileTvPayload(profile, city = citySelect.value) {
+      if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return Promise.resolve(null);
+      const now = Date.now();
+      const key = `${city}:${profile.id}`;
+      const cached = profileNavigationPrefetchCache.get(key);
+      if (cached?.expiresAt > now) return cached.promise;
+      pruneProfileNavigationPrefetchCache(now);
+      const params = new URLSearchParams({
+        city,
+        dancer: profile.id,
+        limit: String(MAX_DANCER_PROFILE_VIDEOS)
+      });
+      const promise = fetch(`/api/public/tv?${params.toString()}`, { cache: "no-store" })
+        .then(async (response) => {
+          const payload = await response.json();
+          return response.ok && payload?.ok ? payload : null;
+        })
+        .catch(() => null);
+      profileNavigationPrefetchCache.set(key, {
+        expiresAt: now + PROFILE_NAVIGATION_PREFETCH_TTL_MS,
+        promise
+      });
+      void promise.then((payload) => {
+        if (payload || profileNavigationPrefetchCache.get(key)?.promise !== promise) return;
+        profileNavigationPrefetchCache.delete(key);
+      });
+      return promise;
+    }
+
+    function prefetchProfileNavigation(reference, city = citySelect.value) {
+      if (!canWarmAdjacentVideo()) return;
+      const profile = publicProfileForNavigation(reference, city);
+      if (profile) void requestProfileTvPayload(profile, city);
+    }
+
+    function prefetchProfileNavigationFromElement(element) {
+      if (!(element instanceof Element)) return;
+      const target = element.closest(
+        "[data-profile-reference], [data-grid-profile-action], .venue-shift-row, .home-tv-feed-dancer"
+      );
+      if (!target) return;
+      const reference = target.dataset.profileReference ||
+        target.dataset.gridProfileAction ||
+        target.dataset.profile ||
+        "";
+      const city = target.dataset.profileCity || citySelect.value;
+      prefetchProfileNavigation(reference, city);
+    }
+
     async function loadProfileMyDancrTv(profile) {
       if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return;
       const requestProfileId = profile.id;
+      const requestCity = citySelect.value;
       modalGallery.dataset.profileMediaProfile = requestProfileId;
       modalGallery.querySelectorAll("[data-profile-tv-index]").forEach((thumb) => thumb.remove());
       modalGallery.profileTvVideos = [];
       modalGallery.profileVisibleVideoCount = 0;
       modalGallery.profileTvProfileName = profile.name || "Dancer";
       try {
-        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(citySelect.value)}&dancer=${encodeURIComponent(profile.id)}&limit=${MAX_DANCER_PROFILE_VIDEOS}`, { cache: "no-store" });
-        const payload = await response.json();
+        const payload = await requestProfileTvPayload(profile, requestCity);
         if (
           modalGallery.dataset.profileMediaProfile !== requestProfileId ||
-          !response.ok ||
-          !payload.ok ||
+          !payload?.ok ||
           !payload.videos?.length
         ) return;
         const videos = payload.videos.slice(0, MAX_DANCER_PROFILE_VIDEOS);
@@ -58619,6 +58691,7 @@
         else slide.removeAttribute("aria-current");
       });
       scheduleHomeDiscoveryFeedQrPrompt(activeSlide);
+      prefetchProfileNavigationFromElement(activeSlide);
     }
 
     function setupHomeDiscoveryFeedObserver() {
@@ -59046,6 +59119,9 @@
       }
       homeDancerGridRenderKey = nextRenderKey;
       results.innerHTML = gridMarkup;
+      window.requestAnimationFrame(() => {
+        prefetchProfileNavigationFromElement(results.querySelector(".home-dancer-grid-card"));
+      });
     }
 
     function homeDiscoveryFeedSlide(profile, index, total, tab) {
@@ -60407,6 +60483,8 @@
       const dancer = document.createElement("a");
       dancer.className = "home-tv-feed-dancer";
       dancer.href = profileHref;
+      dancer.dataset.profileReference = dancerSlug;
+      dancer.dataset.profileCity = dancerCity;
       dancer.setAttribute("aria-label", `Open ${dancerName}'s live profile`);
       dancer.addEventListener("click", openDancerProfile);
       const dancerPhoto = document.createElement("span");
@@ -61063,6 +61141,14 @@
         window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
       });
     }
+
+    const handleProfileNavigationIntent = (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      prefetchProfileNavigationFromElement(target);
+    };
+    results.addEventListener("pointerover", handleProfileNavigationIntent, { passive: true });
+    results.addEventListener("focusin", handleProfileNavigationIntent);
+    results.addEventListener("touchstart", handleProfileNavigationIntent, { passive: true });
 
     results.addEventListener("click", async (event) => {
       if (!event.target.closest(".home-tv-feed-actions")) closeHomeTvFeedReportMenus();
