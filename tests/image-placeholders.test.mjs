@@ -13,11 +13,13 @@ const [liveShell, aesthetic, profilePage, profileCarousel, dashboard] = await Pr
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
-test("the critical hero reserves its final box and reveals over a lightweight placeholder", () => {
+test("the critical hero reserves its final box and paints without waiting for application JavaScript", () => {
   assert.match(
     liveShell,
-    /class="hero-art"[\s\S]*?width="1590"[\s\S]*?height="889"[\s\S]*?data-image-state="loading"[\s\S]*?onload="this\.dataset\.imageState='ready'"[\s\S]*?onerror="this\.dataset\.imageState='error'"/,
+    /class="hero-art"[\s\S]*?width="1590"[\s\S]*?height="889"[\s\S]*?data-image-state="ready"/,
   );
+  const heroTag = liveShell.match(/<img\s+class="hero-art"[\s\S]*?>/)?.[0] || "";
+  assert.doesNotMatch(heroTag, /onload=|onerror=|data-image-state="loading"/);
   assert.match(
     liveShell,
     /Final hero fit:[\s\S]*?aspect-ratio: 1672 \/ 941 !important;[\s\S]*?radial-gradient\(circle at 74% 22%[\s\S]*?linear-gradient\(145deg,#101018,#050507\)/,

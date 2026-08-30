@@ -8,6 +8,7 @@ import {
   createActiveEditProfileScript,
   createRootContentSecurityPolicy,
 } from "../src/lib/security/root-content-security-policy.mjs";
+import { externalizeLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
 
 export const runtime = "nodejs";
 // The live shell is a checked-in production artifact. Rendering this route at
@@ -34,8 +35,12 @@ export async function GET() {
   const html = await readFile(htmlPath, "utf8");
   const normalizedHtml = html.replace(/\r\n?/g, "\n");
   const liveShellSha256 = createHash("sha256").update(normalizedHtml).digest("hex");
+  const withExternalAppScript = externalizeLiveShellAppScript(
+    normalizedHtml,
+    `/live-shell.js?v=${liveShellSha256}`,
+  );
   const activeEditProfileMarker = `<script>${createActiveEditProfileScript(liveShellSha256)}</script>`;
-  const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
+  const withBase = withExternalAppScript.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
   const withLiveProfileAssets = withBase.replace(
     "</head>",
     `<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><link rel="stylesheet" href="/third-party-social-link-warning.css?v=3"><link rel="stylesheet" href="/profile-video-scroll-controls.css?v=4"><script src="/profile-video-progress-line.js?v=1" defer></script><script src="/video-sound-preference.js?v=1" defer></script><script src="/video-autoplay-recovery.js?v=3" defer></script><script src="/third-party-social-link-warning.js?v=1" defer></script>${ADMIN_AUTH_ENTRY_STYLES}</head>`,

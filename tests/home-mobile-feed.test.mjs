@@ -419,7 +419,7 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   );
   assert.match(
     homeSource,
-    /const loadingDiscovery = liveDiscoveryIsLoading\(city\);[\s\S]*?setHomeTvFeedCount\(loadingDiscovery[\s\S]*?activeTab === "venues" \? "Clubs" : "Dancers"/,
+    /const loadingDiscovery = liveDiscoveryIsLoading\(city\);[\s\S]*?const unavailableDiscovery = liveMarketState\[city\] === "error";[\s\S]*?setHomeTvFeedCount\(unavailableDiscovery[\s\S]*?loadingDiscovery[\s\S]*?activeTab === "venues" \? "Clubs" : "Dancers"/,
   );
   assert.match(
     homeSource,
@@ -444,7 +444,7 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   assert.doesNotMatch(homeSource, /<div class="locked" role="status">\$\{escapeHtml\(loadingLabel\)\}<\/div>/);
   assert.match(
     homeSource,
-    /const count = loading && \["tonight", "dancers", "venues"\]\.includes\(tabName\) \? "\.\.\."/,
+    /const liveTab = \["tonight", "dancers", "venues"\]\.includes\(tabName\);[\s\S]*?const count = liveTab && \(loading \|\| unavailable\) \? "\.\.\."/,
   );
 });
 

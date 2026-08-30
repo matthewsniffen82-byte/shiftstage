@@ -20,6 +20,7 @@ test("the deployed root route is content-addressed to the current live HTML", ()
   assert.match(rootRouteSource, /html\.replace\(\/\\r\\n\?\/g, "\\n"\)/);
   assert.match(rootRouteSource, /createHash\("sha256"\)\.update\(normalizedHtml\)\.digest\("hex"\)/);
   assert.match(rootRouteSource, /createActiveEditProfileScript\(liveShellSha256\)/);
+  assert.match(rootRouteSource, /externalizeLiveShellAppScript\([\s\S]*?`\/live-shell\.js\?v=\$\{liveShellSha256\}`/);
   assert.match(rootCspSource, /data-live-shell-version/);
   assert.match(rootRouteSource, /"x-dancr-live-shell-version": liveShellSha256/);
   assert.match(rootRouteSource, /import \{ LIVE_SHELL_SHA256 \} from "\.\.\/src\/generated\/live-shell-version"/);

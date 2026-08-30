@@ -230,7 +230,7 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   assert.doesNotMatch(discoveryPalette, /home-bottom|home-nav-|global-mobile-bottom-nav/);
   assert.doesNotMatch(discoveryPalette, /\.hero|reference-hero|hero-art/);
 
-  assert.match(liveApp, /classList\.toggle\("is-active", !loading && workingNowCount > 0\)/);
+  assert.match(liveApp, /classList\.toggle\("is-active", !loading && !unavailable && workingNowCount > 0\)/);
   assert.match(liveApp, /const empty = counts\[filter\.id\] === 0;/);
   assert.match(
     liveApp,

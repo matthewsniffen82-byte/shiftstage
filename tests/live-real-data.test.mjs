@@ -44,7 +44,8 @@ test("discovery begins empty and only production venue results populate it", () 
   assert.match(legacySource, /market\.venues = dedupePublicVenues\(\[\.\.\.liveVenues, \.\.\.privatePreviewVenues\]\)/);
   assert.match(legacySource, /privatePreviewVenues = venuePreviewRequested\(\)[\s\S]*?isDashboardPreview === true/);
   assert.match(legacySource, /function dedupePublicVenues\(venues\)/);
-  assert.match(legacySource, /markets\[city\]\.dancers = \[\]/);
+  assert.doesNotMatch(legacySource, /markets\[city\]\.dancers = \[\]/);
+  assert.match(legacySource, /liveMarketState\[city\] = hasCurrentResults \? "ready" : "error"/);
 });
 
 test("completed shift summaries use persisted production event tables", () => {

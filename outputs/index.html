@@ -32124,9 +32124,7 @@
           loading="eager"
           decoding="sync"
           fetchpriority="high"
-          data-image-state="loading"
-          onload="this.dataset.imageState='ready'"
-          onerror="this.dataset.imageState='error'"
+          data-image-state="ready"
         >
         <div class="hero-copy">
           <h2><span>Know who's</span><span>working.</span><strong>Plan your night.</strong></h2>
@@ -46209,7 +46207,8 @@
       return liveDancers.length || liveVenues.length;
     }
 
-    const LIVE_JSON_REQUEST_TIMEOUT_MS = 7000;
+    const LIVE_JSON_REQUEST_TIMEOUT_MS = 12000;
+    const PUBLIC_DISCOVERY_REQUEST_RETRIES = 1;
 
     async function fetchJson(url, options = {}) {
       const timeoutMs = Number(options.timeoutMs) > 0
@@ -46356,7 +46355,7 @@
       try {
         const discovery = await fetchJson(`/api/public/discovery?${query}`, {
           timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
-          retries: 0
+          retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
         });
         const applied = applyLiveMarket(
           city,
@@ -46377,13 +46376,14 @@
           console.warn("Live discovery refresh failed; keeping the current public results", error);
           return;
         }
-        liveMarketState[city] = "error";
-        if (markets[city]) {
-          markets[city].dancers = [];
-          markets[city].stats.dancers = 0;
-          markets[city].stats.shifts = 0;
-        }
-        console.warn("Live discovery unavailable; public dancer profiles hidden", error);
+        const hasCurrentResults = Boolean(markets[city]?.dancers?.length || markets[city]?.venues?.length);
+        liveMarketState[city] = hasCurrentResults ? "ready" : "error";
+        console.warn(
+          hasCurrentResults
+            ? "Live discovery unavailable; keeping the current public results"
+            : "Live discovery unavailable; public dancer profiles hidden",
+          error
+        );
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -58588,6 +58588,7 @@
 
     function updateTabCounts(city) {
       const loading = liveDiscoveryIsLoading(city);
+      const unavailable = liveMarketState[city] === "error";
       const counts = {
         tonight: getItems(city, "tonight").length,
         dancers: getItems(city, "dancers").length,
@@ -58596,7 +58597,8 @@
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const tabName = tab.dataset.tab;
         const label = tab.dataset.tabLabel || tab.textContent.trim();
-        const count = loading && ["tonight", "dancers", "venues"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
+        const liveTab = ["tonight", "dancers", "venues"].includes(tabName);
+        const count = liveTab && (loading || unavailable) ? "..." : (counts[tabName] ?? 0);
         tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
     }
@@ -58610,14 +58612,17 @@
       const radiusLabel = distanceSelect?.value || "25 mi";
       const venueLabel = venueName === "all" ? "All clubs" : venueName;
       const loading = liveDiscoveryIsLoading(city);
+      const unavailable = liveMarketState[city] === "error";
       const workingSummary = document.getElementById("homeLiveWorking");
       document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
-      workingSummary.textContent = loading
+      workingSummary.textContent = unavailable
+        ? "Live results unavailable"
+        : loading
         ? "Live schedule"
         : `${workingNowCount} working now`;
       summary.toggleAttribute("aria-busy", loading);
-      workingSummary.classList.toggle("is-empty", !loading && workingNowCount === 0);
-      workingSummary.classList.toggle("is-active", !loading && workingNowCount > 0);
+      workingSummary.classList.toggle("is-empty", !loading && !unavailable && workingNowCount === 0);
+      workingSummary.classList.toggle("is-active", !loading && !unavailable && workingNowCount > 0);
       syncHomeFilterToggleState();
     }
 
@@ -59537,6 +59542,7 @@
       deactivateHomeTvFeed();
 
       const loadingDiscovery = liveDiscoveryIsLoading(city);
+      const unavailableDiscovery = liveMarketState[city] === "error";
       const allItems = getItems(city, activeTab);
       const items = allItems;
       const venueFilter = selectedVenueFilter();
@@ -59574,7 +59580,9 @@
       const resultCountLabel = activeTab === "venues"
         ? `${allItems.length} club${allItems.length === 1 ? "" : "s"}`
         : `${allItems.length} dancer${allItems.length === 1 ? "" : "s"}`;
-      setHomeTvFeedCount(loadingDiscovery
+      setHomeTvFeedCount(unavailableDiscovery
+        ? "Unavailable"
+        : loadingDiscovery
         ? activeTab === "venues" ? "Clubs" : "Dancers"
         : selectedVenue
         ? city
