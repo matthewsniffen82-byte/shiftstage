@@ -42,8 +42,33 @@ test("public media grids lazy-render in batches of twelve without a load button"
   assert.match(liveApp, /function appendNextProfileMediaBatch/);
   assert.match(liveApp, /function observeProfileMediaSentinel/);
   assert.match(liveApp, /root: profileModal, rootMargin: "480px 0px"/);
+  assert.match(liveApp, /const PROFILE_MEDIA_BATCH_SCROLL_STEP = 96/);
+  assert.match(liveApp, /profileMediaLastAppendScrollTop = Math\.max\(0, Number\(profileModal\?\.scrollTop \|\| 0\)\)/);
+  assert.match(liveApp, /scrollTop < profileMediaLastAppendScrollTop \+ PROFILE_MEDIA_BATCH_SCROLL_STEP/);
+  assert.match(liveApp, /profileModal\?\.addEventListener\("scroll", queueProfileMediaObserverAfterScroll, \{ passive: true \}\)/);
   assert.match(liveApp, /action-first media library[\s\S]*?profile-media-lazy-sentinel \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?height: 28px !important;/);
   assert.doesNotMatch(liveApp, /profile-media-load-more|>Load more</i);
+});
+
+test("fifty-photo viewers keep only the active media window network-active", () => {
+  const reactViewer = carousel.slice(
+    carousel.indexOf("{viewerItems.map"),
+    carousel.indexOf('<div className="profile-media-viewer-footer">'),
+  );
+  assert.match(reactViewer, /src=\{Math\.abs\(index - viewerIndex\) <= 1 \? item\.imageUrl : undefined\}/);
+  assert.match(reactViewer, /srcSet=\{Math\.abs\(index - viewerIndex\) <= 1 \? item\.imageSrcSet \|\| undefined : undefined\}/);
+
+  const legacyViewer = liveApp.slice(
+    liveApp.indexOf("function renderProfilePhotoViewerSlides()"),
+    liveApp.indexOf("function closeProfilePhotoViewer()"),
+  );
+  assert.match(legacyViewer, /image\.dataset\.profilePhotoUrl = String\(item\.photoUrl \|\| ""\)\.trim\(\)/);
+  assert.match(legacyViewer, /function syncProfilePhotoViewerWindow\(activePhotoIndex\)/);
+  assert.match(legacyViewer, /Math\.abs\(index - activePhotoIndex\) > 1/);
+  assert.match(legacyViewer, /image\.style\.removeProperty\("background-image"\)/);
+  assert.match(legacyViewer, /syncProfilePhotoViewerWindow\(activePhotoIndex\)/);
+  const initialRenderer = legacyViewer.slice(0, legacyViewer.indexOf("function syncProfilePhotoViewerWindow"));
+  assert.doesNotMatch(initialRenderer, /style\.backgroundImage/);
 });
 
 test("video grids show a passive frame from each actual video", () => {

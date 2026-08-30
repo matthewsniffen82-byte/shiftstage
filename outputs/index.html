@@ -42542,7 +42542,10 @@
     const MAX_DANCER_PROFILE_PHOTOS = 50;
     const MAX_DANCER_PROFILE_VIDEOS = 50;
     const PROFILE_MEDIA_PAGE_SIZE = 12;
+    const PROFILE_MEDIA_BATCH_SCROLL_STEP = 96;
     let profileMediaObserver = null;
+    let profileMediaObserverScrollFrame = 0;
+    let profileMediaLastAppendScrollTop = 0;
     console.log("PHOTO_NUMBERING_FIX_VERSION", "2026-07-13-v1");
 
     const stateByCity = {
@@ -52200,16 +52203,27 @@
         slide.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
         const image = document.createElement("div");
         image.className = `profile-photo-viewer-slide-image ${item.photoClass || ""}${item.photoUrl ? " has-custom-photo" : ""}`;
+        image.dataset.profilePhotoUrl = String(item.photoUrl || "").trim();
         image.setAttribute("role", "img");
         image.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
-        const safeUrl = safeCssUrl(item.photoUrl);
-        if (safeUrl) {
-          image.style.backgroundImage = `url('${safeUrl}'), radial-gradient(circle at 50% 32%, rgba(126,234,255,.1), transparent 26%), linear-gradient(145deg, rgba(109,40,217,.18), #020204 68%)`;
-        }
         slide.appendChild(image);
         profilePhotoViewerImage.appendChild(slide);
       });
       return items.length;
+    }
+
+    function syncProfilePhotoViewerWindow(activePhotoIndex) {
+      if (!profilePhotoViewerImage) return;
+      profilePhotoViewerImage.querySelectorAll(".profile-photo-viewer-slide-image").forEach((image, index) => {
+        if (Math.abs(index - activePhotoIndex) > 1) {
+          image.style.removeProperty("background-image");
+          return;
+        }
+        const safeUrl = safeCssUrl(image.dataset.profilePhotoUrl);
+        if (safeUrl) {
+          image.style.backgroundImage = `url('${safeUrl}'), radial-gradient(circle at 50% 32%, rgba(126,234,255,.1), transparent 26%), linear-gradient(145deg, rgba(109,40,217,.18), #020204 68%)`;
+        }
+      });
     }
 
     function syncProfilePhotoViewerPosition(requestedIndex) {
@@ -52222,6 +52236,7 @@
       profilePhotoViewerPrevious.disabled = activePhotoIndex <= 0;
       profilePhotoViewerNext.disabled = activePhotoIndex >= totalPhotos - 1;
       profilePhotoViewer.setAttribute("aria-label", `${profileName} profile photos, photo ${activePhotoIndex + 1} of ${totalPhotos}`);
+      syncProfilePhotoViewerWindow(activePhotoIndex);
 
       while (Number(modalGallery.profileVisiblePhotoCount || 0) <= activePhotoIndex && profileMediaHasMore("photo")) {
         appendNextProfileMediaBatch("photo", { skipObserve: true });
@@ -52558,6 +52573,7 @@
 
     function appendNextProfileMediaBatch(tab = modalGallery.dataset.mediaTab, options = {}) {
       const sentinel = profileMediaSentinel();
+      let appended = false;
       if (tab === "video") {
         const items = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
         const start = Number(modalGallery.profileVisibleVideoCount || 0);
@@ -52570,6 +52586,7 @@
             ).join("")
           );
           modalGallery.profileVisibleVideoCount = end;
+          appended = true;
         }
       } else {
         const items = Array.isArray(modalGallery.profilePhotoItems) ? modalGallery.profilePhotoItems : [];
@@ -52583,7 +52600,11 @@
             ).join("")
           );
           modalGallery.profileVisiblePhotoCount = end;
+          appended = true;
         }
+      }
+      if (appended) {
+        profileMediaLastAppendScrollTop = Math.max(0, Number(profileModal?.scrollTop || 0));
       }
       sentinel.hidden = !profileMediaHasMore(tab);
       if (!options.skipObserve) window.requestAnimationFrame(observeProfileMediaSentinel);
@@ -52599,10 +52620,24 @@
       profileMediaObserver = new IntersectionObserver((entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
         profileMediaObserver?.disconnect();
+        profileMediaObserver = null;
+        const scrollTop = Math.max(0, Number(profileModal?.scrollTop || 0));
+        if (scrollTop < profileMediaLastAppendScrollTop + PROFILE_MEDIA_BATCH_SCROLL_STEP) return;
         appendNextProfileMediaBatch(tab);
       }, { root: profileModal, rootMargin: "480px 0px" });
       profileMediaObserver.observe(sentinel);
     }
+
+    function queueProfileMediaObserverAfterScroll() {
+      if (profileMediaObserverScrollFrame) return;
+      profileMediaObserverScrollFrame = window.requestAnimationFrame(() => {
+        profileMediaObserverScrollFrame = 0;
+        if (!profileBackdrop.classList.contains("show") || !profileMediaHasMore()) return;
+        observeProfileMediaSentinel();
+      });
+    }
+
+    profileModal?.addEventListener("scroll", queueProfileMediaObserverAfterScroll, { passive: true });
 
     function initializeProfileMediaLibrary(profile, baseIndex, options = {}) {
       profileMediaObserver?.disconnect();
@@ -52613,6 +52648,7 @@
       modalGallery.profileVisibleVideoCount = 0;
       modalGallery.innerHTML = "";
       appendNextProfileMediaBatch("photo", { skipObserve: true });
+      profileMediaLastAppendScrollTop = 0;
       profileMediaSentinel();
     }
 
@@ -53652,6 +53688,8 @@
     function closeProfileModal() {
       profileMediaObserver?.disconnect();
       profileMediaObserver = null;
+      window.cancelAnimationFrame(profileMediaObserverScrollFrame);
+      profileMediaObserverScrollFrame = 0;
       modalImage?.querySelector("video")?.pause();
       clearModalVideoPreview();
       [

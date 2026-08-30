@@ -665,8 +665,8 @@ export function DancerPhotoCarousel({
                     onLoad={markImageReady}
                     ref={settleImageElement}
                     sizes="100vw"
-                    src={item.imageUrl}
-                    srcSet={item.imageSrcSet || undefined}
+                    src={Math.abs(index - viewerIndex) <= 1 ? item.imageUrl : undefined}
+                    srcSet={Math.abs(index - viewerIndex) <= 1 ? item.imageSrcSet || undefined : undefined}
                     width={item.imageWidth || undefined}
                   />
                 ) : (
