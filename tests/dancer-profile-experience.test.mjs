@@ -279,10 +279,10 @@ test("profile videos stay passive and duration-free in the grid, then open the c
   assert.doesNotMatch(mediaGrid, /<video[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
   assert.doesNotMatch(mediaGrid, /autoPlay/);
   assert.match(profileCarousel, /className="profile-media-play"/);
-  assert.match(profilePage, /\.profile-media-play \{[^}]*?width: 34px;[^}]*?border: 1px solid rgba\(255,255,255,\.38\);[^}]*?background: rgba\(5,5,9,\.62\);/);
+  assert.match(profilePage, /\.profile-media-play \{[^}]*?z-index: 2;[^}]*?width: 34px;[^}]*?border: 1px solid rgba\(255,255,255,\.38\);[^}]*?background: rgba\(5,5,9,\.62\);/);
   assert.match(profilePage, /\.profile-media-play::after \{[^}]*?border-left: 9px solid #fff;/);
   assert.match(dashboardClient, /\.dancer-profile-preview-overlay \.profile-media-play \{[^}]*?width:34px;[^}]*?border:1px solid rgba\(255,255,255,\.38\);[^}]*?background:rgba\(5,5,9,\.62\);/);
-  assert.match(liveApp, /\.profile-modal \.profile-media-thumb-play \{[^}]*?width: 34px;[^}]*?border: 1px solid rgba\(255,255,255,\.38\);[^}]*?background: rgba\(5,5,9,\.62\);/);
+  assert.match(liveApp, /\.profile-modal \.profile-media-thumb-play \{[^}]*?z-index: 2;[^}]*?width: 34px;[^}]*?border: 1px solid rgba\(255,255,255,\.38\);[^}]*?background: rgba\(5,5,9,\.62\);/);
   assert.match(liveApp, /\.profile-modal \.profile-media-thumb-play::after \{[^}]*?border-left: 9px solid #fff;/);
   assert.doesNotMatch(profileCarousel, /profile-media-duration|formatDuration/);
   assert.doesNotMatch(liveApp, /<span class="profile-media-thumb-duration"/);
