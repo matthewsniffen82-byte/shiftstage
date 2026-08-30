@@ -4,6 +4,10 @@ import path from "node:path";
 import { myDancrPreviewBannerHtml } from "./components/MyDancrPreviewBanner";
 
 import { LIVE_SHELL_SHA256 } from "../src/generated/live-shell-version";
+import {
+  createActiveEditProfileScript,
+  createRootContentSecurityPolicy,
+} from "../src/lib/security/root-content-security-policy.mjs";
 
 export const runtime = "nodejs";
 // The live shell is a checked-in production artifact. Rendering this route at
@@ -30,7 +34,7 @@ export async function GET() {
   const html = await readFile(htmlPath, "utf8");
   const normalizedHtml = html.replace(/\r\n?/g, "\n");
   const liveShellSha256 = createHash("sha256").update(normalizedHtml).digest("hex");
-  const activeEditProfileMarker = `<script>console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v14");document.documentElement.setAttribute("data-active-edit-profile-version","canonical-profile-approval-v14");document.documentElement.setAttribute("data-live-shell-version","${liveShellSha256}");</script>`;
+  const activeEditProfileMarker = `<script>${createActiveEditProfileScript(liveShellSha256)}</script>`;
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
   const withLiveProfileAssets = withBase.replace(
     "</head>",
@@ -44,11 +48,13 @@ export async function GET() {
     '<section class="recovery-popover" id="passwordRecoveryCard"',
     `${ADMIN_AUTH_ENTRY_HTML}<section class="recovery-popover" id="passwordRecoveryCard"`,
   );
+  const contentSecurityPolicy = createRootContentSecurityPolicy(withAdminAuthEntry);
 
   return new Response(withAdminAuthEntry, {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
+      "content-security-policy": contentSecurityPolicy,
       "x-dancr-live-shell-version": liveShellSha256,
       "x-dancr-live-shell-build-version": LIVE_SHELL_SHA256,
     },

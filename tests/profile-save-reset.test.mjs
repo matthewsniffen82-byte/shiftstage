@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, imageModerationAdminSource, photoSlotSource, visibilityMigrationSource, approvalSource, accountAuthSource, adminSource, visibilityRouteSource, accountRouteSource, accountProvisioningSource] = await Promise.all([
+const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, rootRouteSource, rootCspSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, imageModerationAdminSource, photoSlotSource, visibilityMigrationSource, approvalSource, accountAuthSource, adminSource, visibilityRouteSource, accountRouteSource, accountProvisioningSource] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/security/root-content-security-policy.mjs", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/dancer.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8"),
@@ -309,8 +310,9 @@ test("save integrity verifies the editor snapshot instead of hidden history rows
 });
 
 test("the live entry point and visibility query support the production schema", () => {
-  assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /canonical-profile-approval-v14/);
+  assert.match(rootRouteSource, /createActiveEditProfileScript\(liveShellSha256\)/);
+  assert.match(rootCspSource, /ACTIVE_EDIT_PROFILE_VERSION/);
+  assert.match(rootCspSource, /canonical-profile-approval-v14/);
   assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "canonical-profile-approval-v14"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
