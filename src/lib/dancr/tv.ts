@@ -24,6 +24,7 @@ import {
   removeArchivedOriginalMedia,
   watermarkStoredVideo,
 } from "./media-watermark";
+import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -890,6 +891,7 @@ function assertMatchingMyDancrTvUpload(
 }
 
 async function myDancrTvUploadObjectExists(admin: AdminClient, video: any) {
+  assertMyDancrTvStoragePath(video);
   const lastSlash = String(video.storage_path).lastIndexOf("/");
   const directory = String(video.storage_path).slice(0, lastSlash);
   const filename = String(video.storage_path).slice(lastSlash + 1);
@@ -917,12 +919,13 @@ export async function publishPlatformMyDancrTvUpload(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
   if (!video) throw new Error("Video upload not found.");
   if (video.status !== "uploading") throw new Error("This platform video has already been published.");
+  assertMyDancrTvStoragePath(video);
   if (!isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
     throw new Error("The dancer profile is not eligible for media onboarding.");
   }
@@ -952,12 +955,21 @@ export async function publishPlatformMyDancrTvUpload(
     throw new Error("The uploaded video type could not be verified.");
   }
 
+  const verified = await inspectStoredMyDancrTvVideo(admin, {
+    bucket: MYDANCR_TV_BUCKET,
+    expectedBytes: Number(video.file_size_bytes),
+    maxBytes: MYDANCR_TV_MAX_BYTES,
+    maxDurationSeconds: MYDANCR_TV_MAX_DURATION_SECONDS,
+    mimeType: video.storage_mime,
+    storagePath: video.storage_path,
+  });
+
   await watermarkStoredVideo(admin, {
     publicBucket: MYDANCR_TV_BUCKET,
     storagePath: video.storage_path,
     storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
-    width: Number(video.width),
-    height: Number(video.height),
+    width: verified.width,
+    height: verified.height,
   });
 
   const publishedAt = new Date().toISOString();
@@ -981,6 +993,10 @@ export async function publishPlatformMyDancrTvUpload(
       moderation_attempt_count: 0,
       moderation_started_at: publishedAt,
       moderation_completed_at: publishedAt,
+      duration_seconds: verified.durationSeconds,
+      file_size_bytes: verified.fileSizeBytes,
+      width: verified.width,
+      height: verified.height,
     })
     .eq("id", video.id)
     .eq("submitted_by", video.submitted_by)
@@ -1006,7 +1022,7 @@ export async function submitMyDancrTvUpload(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -1018,6 +1034,7 @@ export async function submitMyDancrTvUpload(
     }
     throw new Error("This video has already been submitted.");
   }
+  assertMyDancrTvStoragePath(video);
 
   const lastSlash = video.storage_path.lastIndexOf("/");
   const directory = video.storage_path.slice(0, lastSlash);
@@ -1036,6 +1053,15 @@ export async function submitMyDancrTvUpload(
   if (storedMime && storedMime !== video.storage_mime) {
     throw new Error("The uploaded video type could not be verified.");
   }
+
+  const verified = await inspectStoredMyDancrTvVideo(admin, {
+    bucket: MYDANCR_TV_BUCKET,
+    expectedBytes: Number(video.file_size_bytes),
+    maxBytes: MYDANCR_TV_MAX_BYTES,
+    maxDurationSeconds: MYDANCR_TV_MAX_DURATION_SECONDS,
+    mimeType: video.storage_mime,
+    storagePath: video.storage_path,
+  });
 
   const submittedAt = new Date().toISOString();
   const demoAutoApprove = isVideoDemoAutoApproveMode();
@@ -1058,6 +1084,10 @@ export async function submitMyDancrTvUpload(
       // recover it if the post-response worker is interrupted before claiming it.
       moderation_started_at: demoAutoApprove ? null : submittedAt,
       moderation_completed_at: null,
+      duration_seconds: verified.durationSeconds,
+      file_size_bytes: verified.fileSizeBytes,
+      width: verified.width,
+      height: verified.height,
     })
     .eq("id", video.id)
     .eq("submitted_by", userId)
@@ -1441,12 +1471,13 @@ const RETRYABLE_VIDEO_MODERATION_REASON_CODES = new Set([
 export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, submitted_by, storage_path, status")
+    .select("id, dancer_id, submitted_by, storage_path, storage_mime, status")
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
   if (error) throw error;
   if (!video) throw new Error("Video not found.");
+  assertMyDancrTvStoragePath(video);
   await admin.storage.from(MYDANCR_TV_BUCKET).remove([video.storage_path]);
   await removeArchivedOriginalMedia(
     admin,
@@ -1463,6 +1494,22 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
   if (updateError) throw updateError;
   console.info(JSON.stringify({ event: "mydancr_tv.video_hidden", videoId, userId }));
   return data;
+}
+
+function assertMyDancrTvStoragePath(video: any) {
+  const extension = video.storage_mime === "video/webm"
+    ? "webm"
+    : video.storage_mime === "video/quicktime"
+      ? "mov"
+      : video.storage_mime === "video/mp4"
+        ? "mp4"
+        : "";
+  const expectedPath = extension
+    ? `${video.submitted_by}/${video.dancer_id}/${video.id}.${extension}`
+    : "";
+  if (!expectedPath || video.storage_path !== expectedPath) {
+    throw new Error("The video storage path could not be verified.");
+  }
 }
 
 export async function getAdminMyDancrTvVideos(admin: AdminClient, status = "submitted") {
