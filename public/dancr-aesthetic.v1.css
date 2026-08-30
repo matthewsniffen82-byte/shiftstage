@@ -3329,10 +3329,10 @@ body.dancr-button-system #profileBackdrop #modalClose {
 
 body.dancr-button-system #profileBackdrop #modalClose:is(:hover, :focus-visible),
 body.dancr-button-system .public-profile-shell .public-profile-close:is(:hover, :focus-visible) {
-  border-color: var(--dancr-color-brand-primary) !important;
+  border-color: var(--dancr-color-border) !important;
   color: var(--dancr-color-text-primary) !important;
   outline: 0 !important;
-  box-shadow: var(--dancr-focus-ring) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #modalClose:is(:hover, :focus-visible) {
@@ -3340,6 +3340,11 @@ body.dancr-button-system #profileBackdrop #modalClose:is(:hover, :focus-visible)
 }
 
 body.dancr-button-system #profileBackdrop #modalClose:focus-visible {
+  outline: 2px solid var(--dancr-color-text-secondary) !important;
+  outline-offset: 2px !important;
+}
+
+body.dancr-button-system .public-profile-shell .public-profile-close:focus-visible {
   outline: 2px solid var(--dancr-color-text-secondary) !important;
   outline-offset: 2px !important;
 }
@@ -6013,12 +6018,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-close:focus-visible:not([data-auto-focus]) {
-  border-color: var(--dancr-color-info) !important;
-  outline: 2px solid var(--dancr-color-info) !important;
+  border-color: var(--dancr-color-border) !important;
+  outline: 2px solid var(--dancr-color-text-secondary) !important;
   outline-offset: 2px !important;
-  color: var(--dancr-color-text) !important;
+  color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface-raised) !important;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--dancr-color-info) 14%, transparent) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay {
@@ -11411,4 +11416,53 @@ body.dancr-button-system :is(
   body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
     grid-template-columns: 70px repeat(3, minmax(0, 1fr)) !important;
   }
+}
+
+/* Dismiss controls are navigation utilities, not branded actions. Keep every
+ * X neutral at rest, on touch focus, and during keyboard focus so opening a
+ * modal never paints a violet ring or glow around its close control. */
+body.dancr-button-system :is(
+  button.close-btn,
+  button[class*="close" i],
+  a[class*="close" i],
+  button[aria-label^="close" i],
+  a[aria-label^="close" i],
+  button[aria-label^="dismiss" i],
+  a[aria-label^="dismiss" i]
+) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  button.close-btn,
+  button[class*="close" i],
+  a[class*="close" i],
+  button[aria-label^="close" i],
+  a[aria-label^="close" i],
+  button[aria-label^="dismiss" i],
+  a[aria-label^="dismiss" i]
+):is(:hover, :focus-visible) {
+  border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  button.close-btn,
+  button[class*="close" i],
+  a[class*="close" i],
+  button[aria-label^="close" i],
+  a[aria-label^="close" i],
+  button[aria-label^="dismiss" i],
+  a[aria-label^="dismiss" i]
+):focus-visible {
+  outline: 2px solid var(--dancr-color-text-secondary) !important;
+  outline-offset: 2px !important;
 }

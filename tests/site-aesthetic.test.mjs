@@ -23,7 +23,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=229" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=230" rel="stylesheet">/,
   );
 });
 
@@ -869,4 +869,36 @@ test("the frozen bottom navigation is outside the shared aesthetic contract", ()
   );
   assert.match(mobileNavigation, /className="global-mobile-bottom-nav"/);
   assert.match(liveApp, /<nav class="tabs" id="discoveryTabs"/);
+});
+
+test("every X-out control stays neutral without a violet focus halo", () => {
+  const dismissControlRules = aesthetic.match(
+    /Dismiss controls are navigation utilities, not branded actions[\s\S]*$/,
+  )?.[0] || "";
+
+  for (const selector of [
+    'button.close-btn',
+    'button[class*="close" i]',
+    'a[class*="close" i]',
+    'button[aria-label^="close" i]',
+    'a[aria-label^="close" i]',
+    'button[aria-label^="dismiss" i]',
+    'a[aria-label^="dismiss" i]',
+  ]) {
+    assert.ok(dismissControlRules.includes(selector), `${selector} must use the neutral dismiss-control treatment`);
+  }
+
+  assert.match(
+    dismissControlRules,
+    /border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background-color: var\(--dancr-color-surface-raised\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    dismissControlRules,
+    /:focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-text-secondary\) !important;[\s\S]*?outline-offset: 2px !important;/,
+  );
+  assert.doesNotMatch(dismissControlRules, /var\(--dancr-(?:focus-ring|color-brand|color-beam|color-info)/);
+  assert.match(
+    liveApp,
+    /id="accountRequiredClose"[^>]*aria-label="Close account prompt"/,
+  );
 });

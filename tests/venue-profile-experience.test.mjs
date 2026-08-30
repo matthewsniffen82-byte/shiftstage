@@ -336,7 +336,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     aesthetic,
-    /\.venue-detail-close:focus-visible:not\(\[data-auto-focus\]\) \{[\s\S]*?border-color: var\(--dancr-color-info\) !important;[\s\S]*?outline: 2px solid var\(--dancr-color-info\) !important;/,
+    /\.venue-detail-close:focus-visible:not\(\[data-auto-focus\]\) \{[\s\S]*?border-color: var\(--dancr-color-border\) !important;[\s\S]*?outline: 2px solid var\(--dancr-color-text-secondary\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     aesthetic,
