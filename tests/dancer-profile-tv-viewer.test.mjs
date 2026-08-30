@@ -164,7 +164,8 @@ test("profile grid thumbnails stay passive while the full viewer has no thumbnai
   assert.match(loader, /modalGallery\.dataset\.profileMediaProfile !== requestProfileId/);
   assert.match(loader, /appendNextProfileMediaBatch\("video"/);
   assert.match(liveApp, /function profileVideoThumbMarkup[\s\S]*?profileVideoPosterUrl\(item\)/);
-  assert.match(liveApp, /muted playsinline preload="none" tabindex="-1"/);
+  assert.match(liveApp, /<img class="portrait profile-media-thumb-poster-image" src="\$\{escapeHtml\(posterUrl\)\}"[\s\S]*?loading="lazy"[\s\S]*?data-image-state="loading"/);
+  assert.doesNotMatch(liveApp, /<video poster="\$\{escapeHtml\(posterUrl\)\}" muted playsinline preload="none"/);
   assert.doesNotMatch(liveApp, /function profileVideoPreviewUrl\(item\)/);
   assert.doesNotMatch(loader, /createElement\("video"\)|video\.src = item\.videoUrl/);
   assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)/);

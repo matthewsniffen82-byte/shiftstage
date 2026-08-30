@@ -29577,6 +29577,7 @@
     }
 
     .profile-modal .thumb .portrait,
+    .profile-modal .thumb > img,
     .profile-modal .thumb > video {
       width: 100% !important;
       height: 100% !important;
@@ -52595,7 +52596,7 @@
       const scheduleLabel = profileTvScheduleLabel(item);
       const posterUrl = profileVideoPosterUrl(item);
       const previewMarkup = posterUrl
-        ? `<video poster="${escapeHtml(posterUrl)}" muted playsinline preload="none" tabindex="-1" aria-hidden="true"></video>`
+        ? `<img class="portrait profile-media-thumb-poster-image" src="${escapeHtml(posterUrl)}" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading" onload="this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'">`
         : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
       return `
         <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} full screen, ${escapeHtml(scheduleLabel)}">

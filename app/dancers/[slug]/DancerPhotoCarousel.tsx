@@ -598,15 +598,22 @@ export function DancerPhotoCarousel({
               />
             ) : (
               <>
-                <video
-                  aria-hidden="true"
-                  draggable={false}
-                  muted
-                  playsInline
-                  poster={item.posterUrl || undefined}
-                  preload="none"
-                  tabIndex={-1}
-                />
+                {item.posterUrl ? (
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    data-image-state="loading"
+                    decoding="async"
+                    draggable={false}
+                    loading="lazy"
+                    onError={markImageUnavailable}
+                    onLoad={markImageReady}
+                    ref={settleImageElement}
+                    src={item.posterUrl}
+                  />
+                ) : (
+                  <span aria-hidden="true" className="profile-media-poster-placeholder" />
+                )}
                 <span aria-hidden="true" className="profile-media-play" />
               </>
             )}

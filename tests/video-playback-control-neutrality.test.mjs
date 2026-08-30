@@ -20,7 +20,7 @@ const liveApp = await readFile(
 );
 
 test("profile video grids defer playback to native full-screen controls", () => {
-  assert.match(profileCarousel, /<video[\s\S]*?muted[\s\S]*?playsInline[\s\S]*?preload="none"[\s\S]*?className="profile-media-play"/);
+  assert.match(profileCarousel, /<img[\s\S]*?src=\{item\.posterUrl\}[\s\S]*?className="profile-media-play"/);
   assert.match(profileCarousel, /viewerItems\.map\(\(item, index\) =>[\s\S]*?controls[\s\S]*?src=\{index === viewerIndex/);
   assert.match(profileCarousel, /index === viewerIndex[\s\S]*?video\.play\(\)[\s\S]*?video\.pause\(\)/);
   assert.match(profileCarousel, /preload=\{index === viewerIndex[\s\S]*?\? "auto"[\s\S]*?\? "metadata"[\s\S]*?: "none"\}/);

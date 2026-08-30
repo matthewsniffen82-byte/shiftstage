@@ -94,7 +94,8 @@ test("public video payloads expose protected poster URLs without storage metadat
 
 test("profile, feed, strip, and live-shell players use the real video poster", () => {
   assert.match(profilePage, /posterUrl: video\.posterUrl \|\| null/);
-  assert.match(profileCarousel, /poster=\{item\.posterUrl \|\| undefined\}/);
+  assert.match(profileCarousel, /src=\{item\.posterUrl\}/);
+  assert.match(profileCarousel, /poster=\{Math\.abs\(index - viewerIndex\) <= 2 \? item\.posterUrl \|\| undefined : undefined\}/);
   assert.match(tvFeed, /poster=\{video\.posterUrl \|\| undefined\}/);
   assert.ok((videoStrip.match(/poster=\{(?:activeVideo|video)\.posterUrl \|\| undefined\}/g) || []).length >= 2);
   assert.match(videoStrip, /poster=\{Math\.abs\(index - activeIndex\) <= 2 \? video\.posterUrl \|\| undefined : undefined\}/);

@@ -273,10 +273,10 @@ test("profile videos stay passive and duration-free in the grid, then open the c
     profileCarousel.indexOf("{visibleItems.map"),
     profileCarousel.indexOf("{viewer && activeViewerItem"),
   );
-  const mediaGridVideo = mediaGrid.match(/<video[\s\S]*?\/>/)?.[0] || "";
+  const mediaGridPoster = mediaGrid.match(/<img[\s\S]*?src=\{item\.posterUrl\}[\s\S]*?\/>/)?.[0] || "";
   assert.match(profileCarousel, /className=\{`profile-media-grid-item is-\$\{item\.kind\}`\}/);
-  assert.match(mediaGridVideo, /<video[\s\S]*?muted[\s\S]*?playsInline[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
-  assert.doesNotMatch(mediaGridVideo, /src=\{/);
+  assert.match(mediaGridPoster, /<img[\s\S]*?data-image-state="loading"[\s\S]*?loading="lazy"[\s\S]*?src=\{item\.posterUrl\}/);
+  assert.doesNotMatch(mediaGrid, /<video[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
   assert.doesNotMatch(mediaGrid, /autoPlay/);
   assert.match(profileCarousel, /className="profile-media-play"/);
   assert.match(profilePage, /\.profile-media-play \{[^}]*?width: 34px;[^}]*?border: 1px solid rgba\(255,255,255,\.38\);[^}]*?background: rgba\(5,5,9,\.62\);/);
