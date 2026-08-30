@@ -45,8 +45,24 @@ test("mobile discovery uses compact neutral controls and an inline city panel", 
   assert.match(aesthetic, /\.dancer-directory-filter\.is-active[\s\S]*?var\(--dancr-color-brand-primary\) 10%[\s\S]*?box-shadow: inset/);
 });
 
+test("location matching never relabels a remote visitor as the nearest supported city", () => {
+  assert.match(liveShell, /const MAX_LOCATION_MARKET_DISTANCE_MILES = 50;/);
+  assert.match(
+    liveShell,
+    /function nearestCityForCoordinates\(coords\)[\s\S]*?\.sort\(\(a, b\) => a\.miles - b\.miles\)\[0\] \|\| null;/,
+  );
+  assert.match(
+    liveShell,
+    /const requestedLocation = await requestVenuePosition\(\);[\s\S]*?const nearestMarket = nearestCityForCoordinates\(requestedLocation\);[\s\S]*?nearestMarket\.miles > MAX_LOCATION_MARKET_DISTANCE_MILES[\s\S]*?userLocation = null;[\s\S]*?No MyDancr city within \$\{MAX_LOCATION_MARKET_DISTANCE_MILES\} mi\. \$\{selectedCity\(\)\} remains selected\.[\s\S]*?return;/,
+  );
+  assert.match(
+    liveShell,
+    /userLocation = requestedLocation;[\s\S]*?citySelect\.value = nearestMarket\.city;[\s\S]*?syncCityPickerSelection\(nearestMarket\.city\);[\s\S]*?\$\{nearestMarket\.city\} selected from your location\./,
+  );
+  assert.doesNotMatch(liveShell, /showToast\("Location updated\."\)/);
+});
+
 test("mobile location feedback stays concise and clears the floating navigation", () => {
-  assert.match(liveShell, /showToast\("Location updated\."\)/);
   assert.doesNotMatch(liveShell, /Location found\. Venue distances updated/);
   assert.match(
     liveShell,

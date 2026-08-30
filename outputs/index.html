@@ -42316,6 +42316,7 @@
       Atlanta: { latitude: 33.749, longitude: -84.388 },
       "New York": { latitude: 40.7128, longitude: -74.006 }
     };
+    const MAX_LOCATION_MARKET_DISTANCE_MILES = 50;
     let userLocation = null;
     const authPage = document.getElementById("authPage");
     const passwordRecoveryCard = document.getElementById("passwordRecoveryCard");
@@ -47489,7 +47490,7 @@
       return Object.entries(cityCoordinates)
         .map(([city, coordinates]) => ({ city, miles: distanceMilesBetween(coords, coordinates) }))
         .filter((item) => Number.isFinite(item.miles))
-        .sort((a, b) => a.miles - b.miles)[0]?.city || selectedCity();
+        .sort((a, b) => a.miles - b.miles)[0] || null;
     }
 
     function requestVenuePosition() {
@@ -65067,9 +65068,16 @@
       if (label) label.textContent = "Checking location...";
       try {
         showToast("Checking your location...");
-        userLocation = await requestVenuePosition();
-        const nearestCity = nearestCityForCoordinates(userLocation);
-        citySelect.value = nearestCity;
+        const requestedLocation = await requestVenuePosition();
+        const nearestMarket = nearestCityForCoordinates(requestedLocation);
+        if (!nearestMarket || nearestMarket.miles > MAX_LOCATION_MARKET_DISTANCE_MILES) {
+          userLocation = null;
+          showToast(`No MyDancr city within ${MAX_LOCATION_MARKET_DISTANCE_MILES} mi. ${selectedCity()} remains selected.`);
+          return;
+        }
+        userLocation = requestedLocation;
+        citySelect.value = nearestMarket.city;
+        syncCityPickerSelection(nearestMarket.city);
         tonightExpanded = false;
         dancersExpanded = false;
         dashboardTonightExpanded = false;
@@ -65080,7 +65088,7 @@
         render();
         loadLiveDiscovery(citySelect.value);
         if (customerDashboard.classList.contains("show")) renderDashboard();
-        showToast("Location updated.");
+        showToast(`${nearestMarket.city} selected from your location.`);
       } catch (error) {
         showToast(error.message || "Could not read location.");
       } finally {
