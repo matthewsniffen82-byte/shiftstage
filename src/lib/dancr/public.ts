@@ -221,7 +221,6 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         avatar_storage_path,
         is_public,
         trending_scores(rank),
-        dancer_photos(id, storage_path, is_primary, sort_order, review_status),
         social_links(id, platform, handle, url, is_active),
         shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
       `,
@@ -250,7 +249,6 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
           photo_review_status,
           avatar_storage_path,
           trending_scores(rank),
-          dancer_photos(id, storage_path, is_primary, sort_order, review_status),
           social_links(id, platform, handle, url, is_active),
           shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
         `,
@@ -266,9 +264,26 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
 
   const row: any = data;
   if (!isApprovedPublicDancerRow(row)) return null;
-  const approvedPhotos = await getApprovedDancerPhotos(client, row.id);
-  const card = await toDancerCard(client, { ...row, dancer_photos: approvedPhotos });
-  const goingCount = await countDancerGoingSignals(client, row.id);
+  const [
+    approvedPhotos,
+    followerCount,
+    notificationCount,
+    profileViewsToday,
+    goingCount,
+  ] = await Promise.all([
+    getApprovedDancerPhotos(client, row.id),
+    countDancerFollowers(client, row.id),
+    countDancerNotificationSubscribers(client, row.id),
+    countDancerProfileViewsToday(client, row.id),
+    countDancerGoingSignals(client, row.id),
+  ]);
+  const card = {
+    ...buildDancerCard(client, { ...row, dancer_photos: approvedPhotos }).card,
+    followerCount,
+    notificationCount,
+    profileViewsToday,
+    goingCount,
+  };
 
   return {
     ...card,
@@ -400,18 +415,6 @@ async function countDancerGoingSignals(client: DancrClient, dancerId: string): P
     .eq("shifts.dancer_id", dancerId)
     .eq("shifts.status", "posted")
     .gt("shifts.ends_at", new Date().toISOString());
-
-  if (error) throw error;
-  return count || 0;
-}
-
-async function countShiftGoingSignals(client: DancrClient, shiftId: string | null): Promise<number> {
-  if (!shiftId) return 0;
-
-  const { count, error } = await client
-    .from("going_signals")
-    .select("*", { count: "exact", head: true })
-    .eq("shift_id", shiftId);
 
   if (error) throw error;
   return count || 0;
@@ -643,24 +646,6 @@ export async function getPublicVenuePopularity(
   }
 
   return popularityByVenue;
-}
-
-async function toDancerCard(client: DancrClient, row: any, options: DancerCardOptions = {}): Promise<DancerCard> {
-  const { card, shift } = buildDancerCard(client, row, options);
-  const [followerCount, notificationCount, profileViewsToday, goingCount] = await Promise.all([
-    countDancerFollowers(client, row.id),
-    countDancerNotificationSubscribers(client, row.id),
-    countDancerProfileViewsToday(client, row.id),
-    countShiftGoingSignals(client, shift?.id || null),
-  ]);
-
-  return {
-    ...card,
-    followerCount,
-    notificationCount,
-    profileViewsToday,
-    goingCount,
-  };
 }
 
 function approvedDancerPhotoSources(client: DancrClient, row: any) {

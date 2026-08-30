@@ -12,10 +12,10 @@ const [legacySource, publicSource, typesSource, goingRouteSource, shiftLifecycle
 
 test("public live cards expose the exact database going count for their selected shift", () => {
   assert.match(typesSource, /goingCount\?: number/);
-  assert.match(publicSource, /async function countShiftGoingSignals/);
-  assert.match(publicSource, /\.from\("going_signals"\)[\s\S]*?\.eq\("shift_id", shiftId\)/);
-  assert.match(publicSource, /countShiftGoingSignals\(client, shift\?\.id \|\| null\)/);
-  assert.match(publicSource, /goingCount,/);
+  assert.match(publicSource, /async function hydrateDancerCardMetrics/);
+  assert.match(publicSource, /\.from\("going_signals"\)[\s\S]*?\.in\("shift_id", shiftIds\)/);
+  assert.match(publicSource, /goingCounts\.set\(signal\.shift_id/);
+  assert.match(publicSource, /goingCount: card\.shiftId \? goingCounts\.get\(card\.shiftId\) \|\| 0 : 0/);
 });
 
 test("the live profile never manufactures engagement or ranking values", () => {

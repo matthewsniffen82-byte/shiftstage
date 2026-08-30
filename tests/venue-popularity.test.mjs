@@ -8,7 +8,8 @@ const [discoveryRoute, publicService] = await Promise.all([
 ]);
 
 test("public discovery loads real venue popularity through one batched service call", () => {
-  assert.match(discoveryRoute, /const venueIds = \(venueResult\.data \|\| \[\]\)\.map\(\(venue\) => venue\.id\)/);
+  assert.match(discoveryRoute, /const venueRows = venueResult\.data \|\| \[\]/);
+  assert.match(discoveryRoute, /const venueIds = venueRows\.map\(\(venue\) => venue\.id\)/);
   assert.match(
     discoveryRoute,
     /Promise\.all\(\[[\s\S]*?getActiveClubDealListsForVenues\(client, venueIds\)[\s\S]*?getPublicVenuePopularity\(client, venueIds\)/,

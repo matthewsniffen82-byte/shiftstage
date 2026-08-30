@@ -312,13 +312,13 @@ export async function getPublicMyDancrTvFeed(
     0,
     Math.min(MYDANCR_TV_PROFILE_VIDEO_LIMIT, Math.max(1, options.limit || 12)),
   );
-  const signedVideos = await signPublicVideos(admin, deduped);
-  const deals = await getActiveClubDealListsForVenues(
-    admin,
-    signedVideos
-      .filter((video) => video.shift?.isActive && video.venue)
-      .map((video) => video.venue?.id || ""),
-  );
+  const activeVenueIds = deduped
+    .filter((video) => video.shift?.isActive && video.venue)
+    .map((video) => video.venue?.id || "");
+  const [signedVideos, deals] = await Promise.all([
+    signPublicVideos(admin, deduped),
+    getActiveClubDealListsForVenues(admin, activeVenueIds),
+  ]);
   return signedVideos.map((video) => {
     const venueDeals = video.shift?.isActive && video.venue ? deals.get(video.venue.id) || [] : [];
     const deal = venueDeals[0] || null;

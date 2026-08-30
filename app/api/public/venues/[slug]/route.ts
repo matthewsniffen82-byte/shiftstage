@@ -14,20 +14,22 @@ export async function GET(_request: Request, context: RouteContext) {
   try {
     const { slug } = await context.params;
     const client = createAdminSupabaseClient();
-    const venue = await getVenueProfile(client, slug);
+    const [venue, { data, error }] = await Promise.all([
+      getVenueProfile(client, slug),
+      client
+        .from("shifts")
+        .select("id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, venues!inner(slug, is_active), dancer_profiles(id, slug, stage_name, status, approved_at, venue_approved_at, disabled_at, verification_status, photo_review_status, is_public)")
+        .eq("venues.slug", slug)
+        .eq("venues.is_active", true)
+        .eq("status", "posted")
+        .eq("shift_source", "scheduled")
+        .gte("ends_at", new Date().toISOString())
+        .order("starts_at", { ascending: true }),
+    ]);
 
     if (!venue) {
       return NextResponse.json({ ok: false, error: "Venue not found." }, { status: 404 });
     }
-
-    const { data, error } = await client
-      .from("shifts")
-      .select("id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, status, approved_at, venue_approved_at, disabled_at, verification_status, photo_review_status, is_public)")
-      .eq("venue_id", venue.id)
-      .eq("status", "posted")
-      .eq("shift_source", "scheduled")
-      .gte("ends_at", new Date().toISOString())
-      .order("starts_at", { ascending: true });
 
     if (error) throw error;
 

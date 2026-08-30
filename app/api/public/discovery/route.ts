@@ -30,26 +30,31 @@ export async function GET(request: Request) {
     }
 
     const client = createAdminSupabaseClient();
-    const [discovery, venueResult] = await Promise.all([
-      getLiveDancerDiscovery(client, city),
-      client
+    const discoveryPromise = getLiveDancerDiscovery(client, city);
+    const venueDataPromise = (async () => {
+      const venueResult = await client
         .from("venues")
         .select(
-          "id, slug, name, city, state, address, phone, website, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, qr_code_storage_path, qr_code_label, owner_user_id",
+          "id, slug, name, city, state, address, phone, website, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, qr_code_storage_path, qr_code_label",
         )
         .eq("is_active", true)
         .eq("city", city)
-        .order("name", { ascending: true }),
+        .order("name", { ascending: true });
+      if (venueResult.error) throw venueResult.error;
+      const venueRows = venueResult.data || [];
+      const venueIds = venueRows.map((venue) => venue.id);
+      const [activeDeals, venuePopularityById] = await Promise.all([
+        getActiveClubDealListsForVenues(client, venueIds),
+        getPublicVenuePopularity(client, venueIds),
+      ]);
+      return { venueRows, activeDeals, venuePopularityById };
+    })();
+    const [discovery, { venueRows, activeDeals, venuePopularityById }] = await Promise.all([
+      discoveryPromise,
+      venueDataPromise,
     ]);
 
-    if (venueResult.error) throw venueResult.error;
-    const venueIds = (venueResult.data || []).map((venue) => venue.id);
-    const [activeDeals, venuePopularityById] = await Promise.all([
-      getActiveClubDealListsForVenues(client, venueIds),
-      getPublicVenuePopularity(client, venueIds),
-    ]);
-
-    const venues = (venueResult.data || []).map((venue) => {
+    const venues = venueRows.map((venue) => {
       const coverImage = responsivePublicImage(
         client,
         "venue-cover-images",
