@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { unfollowVenue } from "@/src/lib/dancr/customer";
+import { requirePublicVenue } from "@/src/lib/dancr/resource-authorization";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -31,6 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, following: false, notificationsEnabled: false });
     }
 
+    await requirePublicVenue(createAdminSupabaseClient(), venueId);
     const { error } = await (client as any).from("venue_follows").upsert({
       customer_id: user.id,
       venue_id: venueId,

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { favoriteDancer, unfavoriteDancer } from "@/src/lib/dancr/customer";
+import { requirePublicDancer } from "@/src/lib/dancr/resource-authorization";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
     }
 
     if (favorite) {
+      await requirePublicDancer(createAdminSupabaseClient(), dancerId);
       await favoriteDancer(client, user.id, dancerId);
     } else {
       await unfavoriteDancer(client, user.id, dancerId);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { followDancer, setDancerNotifications, unfollowDancer } from "@/src/lib/dancr/customer";
+import { requirePublicDancer } from "@/src/lib/dancr/resource-authorization";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
       });
     }
 
+    await requirePublicDancer(createAdminSupabaseClient(), dancerId);
     if (notificationsEnabled) {
       await followDancer(client, user.id, dancerId);
     } else {

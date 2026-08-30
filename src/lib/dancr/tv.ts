@@ -983,6 +983,7 @@ export async function publishPlatformMyDancrTvUpload(
       moderation_completed_at: publishedAt,
     })
     .eq("id", video.id)
+    .eq("submitted_by", video.submitted_by)
     .eq("status", "uploading")
     .select("id, status, distribution_scope, submitted_at, reviewed_at, published_at")
     .single();
@@ -1059,6 +1060,7 @@ export async function submitMyDancrTvUpload(
       moderation_completed_at: null,
     })
     .eq("id", video.id)
+    .eq("submitted_by", userId)
     .eq("status", "uploading")
     .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
@@ -1455,6 +1457,7 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
     .from("mydancr_tv_videos")
     .update({ status: "hidden", venue_featured: false })
     .eq("id", videoId)
+    .eq("submitted_by", userId)
     .select("id, status")
     .single();
   if (updateError) throw updateError;

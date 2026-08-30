@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { recordDirectionRequest } from "@/src/lib/dancr/customer";
+import { requirePublicDancersAtVenue } from "@/src/lib/dancr/resource-authorization";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -39,6 +41,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid sessionId." }, { status: 400 });
     }
 
+    await requirePublicDancersAtVenue(createAdminSupabaseClient(), venueId, dancerIds);
     const directionRequests = await recordDirectionRequest(client, user.id, { venueId, dancerIds, sessionId });
 
     return NextResponse.json({ ok: true, directionRequests });

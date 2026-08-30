@@ -15,12 +15,10 @@ test("public venue events accept only bounded typed input", () => {
   assert.match(route, /new PublicApiError\("INVALID_REQUEST", message, 400\)/);
 });
 
-test("public venue events reject analytics for unpublished records", () => {
-  assert.match(route, /await requirePublicVenue\(client, venueId\)/);
-  assert.match(route, /if \(dancerId\) await requirePublicDancer\(client, dancerId\)/);
-  assert.match(route, /\.eq\("is_active", true\)/);
-  assert.match(route, /\.eq\("status", "approved"\)/);
-  assert.match(route, /\.eq\("is_public", true\)/);
+test("public venue events authorize the dancer and venue as one relationship", () => {
+  assert.match(route, /requirePublicDancersAtVenue\(client, venueId, dancerId \? \[dancerId\] : \[\]\)/);
+  assert.doesNotMatch(route, /async function requirePublicVenue/);
+  assert.doesNotMatch(route, /async function requirePublicDancer/);
 });
 
 test("public venue events keep unexpected storage failures private", () => {

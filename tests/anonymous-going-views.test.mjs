@@ -89,7 +89,7 @@ test("venue profile views count signed-in and signed-out visitors once per sessi
     venueMigration,
     /unique \(venue_id, event_type, source, session_id, occurred_on\)/,
   );
-  assert.doesNotMatch(venueEventsRoute, /authorization|accessToken|Sign in required/);
+  assert.doesNotMatch(venueEventsRoute, /createRequestSupabaseContext|getBearerToken|accessToken|Sign in required/);
   assert.match(venueTrackingComponent, /export function VenuePageView/);
   assert.match(venueTrackingComponent, /eventType: "page_view"/);
   assert.match(

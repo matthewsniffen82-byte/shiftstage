@@ -5,6 +5,10 @@ import {
   enforcePublicRequestRateLimit,
   PublicRequestRateLimitError,
 } from "@/src/lib/dancr/public-request-rate-limit";
+import {
+  requirePublicDancersAtVenue,
+  requirePublicShiftForDancer,
+} from "@/src/lib/dancr/resource-authorization";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { getBearerToken } from "@/src/lib/supabase/request";
 
@@ -72,9 +76,11 @@ export async function POST(request: Request) {
     } else if (type === "schedule_view" || type === "schedule_action") {
       const dancerId = await resolveDancerId(client, body);
       if (!dancerId) throw invalid("Missing dancerId or dancerName.");
+      const shiftId = optionalUuid(body.shiftId, "shiftId");
+      if (shiftId) await requirePublicShiftForDancer(client, dancerId, shiftId);
       const { error } = await client.from("schedule_views").insert({
         dancer_id: dancerId,
-        shift_id: optionalUuid(body.shiftId, "shiftId"),
+        shift_id: shiftId,
         viewer_id: viewerId,
         session_id: sessionId,
       });
@@ -83,6 +89,7 @@ export async function POST(request: Request) {
       const venueId = await resolveVenueId(client, body);
       if (!venueId) throw invalid("Missing venueId or venueName.");
       const dancerId = await resolveDancerId(client, body);
+      await requirePublicDancersAtVenue(client, venueId, dancerId ? [dancerId] : []);
       const { error } = await client.from("direction_requests").insert({
         dancer_id: dancerId,
         venue_id: venueId,
@@ -110,6 +117,7 @@ export async function POST(request: Request) {
       const dancerId = optionalText(body.dancerId, "dancerId", 64)
         ? await resolveDancerId(client, body)
         : null;
+      await requirePublicDancersAtVenue(client, venueId, dancerId ? [dancerId] : []);
       const timestamp = optionalText(body.timestamp, "timestamp", 64);
       const { error } = await client.from("direction_requests").insert({
         venue_id: venueId,
@@ -186,7 +194,9 @@ async function resolveDancerId(client: AdminClient, body: EventBody) {
       .select("id")
       .eq("id", explicitId)
       .eq("status", "approved")
+      .eq("verification_status", "approved")
       .eq("is_public", true)
+      .is("disabled_at", null)
       .maybeSingle();
     if (error) throw error;
     return (data as { id?: string } | null)?.id || null;
@@ -205,7 +215,9 @@ async function resolveDancerId(client: AdminClient, body: EventBody) {
       .eq("city", city)
       .eq("slug", slug)
       .eq("status", "approved")
+      .eq("verification_status", "approved")
       .eq("is_public", true)
+      .is("disabled_at", null)
       .maybeSingle();
     if (error) throw error;
     const row = data as { id?: string } | null;
@@ -219,7 +231,9 @@ async function resolveDancerId(client: AdminClient, body: EventBody) {
       .eq("city", city)
       .ilike("stage_name", name)
       .eq("status", "approved")
+      .eq("verification_status", "approved")
       .eq("is_public", true)
+      .is("disabled_at", null)
       .maybeSingle();
     if (error) throw error;
     const row = data as { id?: string } | null;

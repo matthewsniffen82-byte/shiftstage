@@ -5,6 +5,9 @@ import {
   enforcePublicRequestRateLimit,
   PublicRequestRateLimitError,
 } from "@/src/lib/dancr/public-request-rate-limit";
+import {
+  requirePublicDancersAtVenue,
+} from "@/src/lib/dancr/resource-authorization";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -40,8 +43,7 @@ export async function POST(request: Request) {
       ipLimit: 120,
       subjectLimit: 12,
     });
-    await requirePublicVenue(client, venueId);
-    if (dancerId) await requirePublicDancer(client, dancerId);
+    await requirePublicDancersAtVenue(client, venueId, dancerId ? [dancerId] : []);
     const { error } = await client.from("venue_page_events").upsert(
       {
         venue_id: venueId,
@@ -84,35 +86,6 @@ function readAllowed(value: unknown, allowed: Set<string>, label: string) {
   const text = typeof value === "string" ? value.trim() : "";
   if (!allowed.has(text)) throw invalid(`${label} is invalid.`);
   return text;
-}
-
-async function requirePublicVenue(
-  client: ReturnType<typeof createAdminSupabaseClient>,
-  venueId: string,
-) {
-  const { data, error } = await client
-    .from("venues")
-    .select("id")
-    .eq("id", venueId)
-    .eq("is_active", true)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) throw invalid("Venue is unavailable.");
-}
-
-async function requirePublicDancer(
-  client: ReturnType<typeof createAdminSupabaseClient>,
-  dancerId: string,
-) {
-  const { data, error } = await client
-    .from("dancer_profiles")
-    .select("id")
-    .eq("id", dancerId)
-    .eq("status", "approved")
-    .eq("is_public", true)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) throw invalid("Dancer is unavailable.");
 }
 
 function invalid(message: string) {
