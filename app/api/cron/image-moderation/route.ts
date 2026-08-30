@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorizeCronRequest } from "@/src/lib/dancr/cron-auth";
 import { processImageModerationRetryRecord } from "@/src/lib/dancr/image-moderation";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -37,9 +38,8 @@ export async function GET(request: Request) {
         console.error("IMAGE_MODERATION_RETRY_WORKER_FAILED", {
           imageId: claimed.image_id,
           moderationRecordId: claimed.id,
-          storagePath: claimed.temporary_storage_path,
           attemptNumber: Number(claimed.attempt_count || 0) + 1,
-          ...safeWorkerError(error),
+          ...safeErrorMetadata(error),
         });
         results.push({ recordId: claimed.id, ok: false });
       }
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ ok: true, processed: results.length, results });
   } catch (error) {
-    console.error("IMAGE_MODERATION_RETRY_CRON_FAILED", safeWorkerError(error));
+    console.error("IMAGE_MODERATION_RETRY_CRON_FAILED", safeErrorMetadata(error));
     return NextResponse.json({ ok: false, error: "Image moderation retry worker failed." }, { status: 500 });
   }
 }
@@ -68,17 +68,4 @@ async function claimRetryRecord(admin: any, recordId: string) {
 
   if (error) throw error;
   return data;
-}
-
-function safeWorkerError(error: unknown) {
-  const anyError = error as any;
-  return {
-    errorName: error instanceof Error ? error.name : undefined,
-    errorMessage: error instanceof Error ? error.message.slice(0, 500) : String(error || "").slice(0, 500),
-    errorStatus: Number(anyError?.status || anyError?.response?.status || 0) || undefined,
-    errorCode: anyError?.code || anyError?.error?.code || undefined,
-    errorType: anyError?.type || anyError?.error?.type || undefined,
-    responseData: anyError?.response?.data ? JSON.stringify(anyError.response.data).slice(0, 500) : undefined,
-    stack: error instanceof Error ? error.stack?.slice(0, 1000) : undefined,
-  };
 }

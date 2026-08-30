@@ -27,6 +27,7 @@ import {
   watermarkStoredVideo,
 } from "./media-watermark";
 import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -1299,7 +1300,7 @@ async function autoApproveMyDancrTvDemoUpload(
     console.error(JSON.stringify({
       event: "mydancr_tv.demo_watermark_failed",
       videoId: video.id,
-      message: error instanceof Error ? error.message.slice(0, 500) : "Unknown watermark failure",
+      ...safeErrorMetadata(error),
     }));
   }
 
@@ -1320,7 +1321,6 @@ async function autoApproveMyDancrTvDemoUpload(
   console.info(JSON.stringify({
     event: "mydancr_tv.demo_auto_approved",
     videoId: video.id,
-    userId: video.submitted_by,
     watermarkApplied,
   }));
   return data;
@@ -1346,7 +1346,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       event: "mydancr_tv.ai_moderation_failed",
       videoId: video.id,
       errorCode,
-      message: error instanceof Error ? error.message.slice(0, 500) : "Unknown moderation failure",
+      ...safeErrorMetadata(error),
     }));
     const { data, error: updateError } = await admin
       .from("mydancr_tv_videos")
@@ -1391,7 +1391,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       console.error(JSON.stringify({
         event: "public_media.video_watermark_failed",
         videoId: video.id,
-        message: error instanceof Error ? error.message.slice(0, 500) : "Unknown watermark failure",
+        ...safeErrorMetadata(error),
       }));
     }
   }
@@ -1537,7 +1537,7 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
     .select("id, status")
     .single();
   if (updateError) throw updateError;
-  console.info(JSON.stringify({ event: "mydancr_tv.video_hidden", videoId, userId }));
+  console.info(JSON.stringify({ event: "mydancr_tv.video_hidden", videoId }));
   return data;
 }
 

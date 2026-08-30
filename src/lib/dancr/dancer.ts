@@ -4,6 +4,7 @@ import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
 import { removeResponsiveImage } from "./responsive-image";
 import { removeArchivedOriginalMedia } from "./media-watermark";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -22,12 +23,11 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     const photoReviewStatusMayChange = String(photo.review_status || "").toLowerCase() === "pending";
 
     console.log("PHOTO_DELETE_CLICKED", {
-      id: photo.id,
-      storagePath: photo.storage_path,
+      kind: "approved_photo",
       urlPresent: false,
     });
     console.log("PHOTO_DELETE_BY_ID", {
-      requestedPhotoId: photo.id,
+      requestedCount: 1,
     });
     const { data: deletedRows, error: deleteError } = await adminClient
       .from("dancer_photos")
@@ -38,9 +38,8 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     if (deleteError) throw deleteError;
     const deletedIds = (deletedRows || []).map((row: any) => row.id);
     console.log("PHOTO_DELETE_RESULT", {
-      requestedPhotoId: photo.id,
-      requestedIds: [photo.id],
-      deletedIds,
+      requestedCount: 1,
+      deletedCount: deletedIds.length,
       exactIdOnly: true,
       error: null,
     });
@@ -51,7 +50,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     await deleteLinkedModerationRecords(adminClient, userId, photoIds, photo.storage_path).catch((error: any) => {
       console.warn("PHOTO_MODERATION_HISTORY_CLEANUP_WARNING", {
         requestedPhotoId: photo.id,
-        message: error?.message || "Unable to clean moderation history.",
+        ...safeErrorMetadata(error),
       });
     });
 
@@ -76,18 +75,18 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id).catch((error: any) => {
         console.warn("PHOTO_REVIEW_STATUS_REFRESH_WARNING", {
           dancerId: profile.id,
-          message: error?.message || "Unable to refresh photo review status.",
+          ...safeErrorMetadata(error),
         });
       });
     }
     const remainingIds = await getOwnPhotoIds(adminClient, profile.id).catch((error: any) => {
       console.warn("PHOTO_REMAINING_IDS_READ_WARNING", {
         dancerId: profile.id,
-        message: error?.message || "Unable to read remaining photo ids.",
+        ...safeErrorMetadata(error),
       });
       return [];
     });
-    console.log("PROFILE_IMAGES_AFTER_SAVE", { dancerId: profile.id, remainingPhotoIds: remainingIds });
+    console.log("PROFILE_IMAGES_AFTER_SAVE", { remainingPhotoCount: remainingIds.length });
     return {
       id: photo.id,
       kind: "approved_photo",
@@ -108,12 +107,11 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   if (!moderationRecord) throw new Error("Photo not found.");
 
   console.log("PHOTO_DELETE_CLICKED", {
-    id: moderationRecord.id,
-    storagePath: moderationRecord.temporary_storage_path || moderationRecord.final_storage_path,
+    kind: "moderation_record",
     urlPresent: false,
   });
   console.log("PHOTO_DELETE_BY_ID", {
-    requestedPhotoId: moderationRecord.id,
+    requestedCount: 1,
   });
   const { data: deletedModerationRows, error: deleteModerationError } = await (adminClient as any)
     .from("image_moderation_records")
@@ -124,9 +122,8 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   if (deleteModerationError) throw deleteModerationError;
   const deletedIds = (deletedModerationRows || []).map((row: any) => row.id);
   console.log("PHOTO_DELETE_RESULT", {
-    requestedPhotoId: moderationRecord.id,
-    requestedIds: [moderationRecord.id],
-    deletedIds,
+    requestedCount: 1,
+    deletedCount: deletedIds.length,
     error: null,
   });
   if (!deletedIds.includes(moderationRecord.id)) {
@@ -218,7 +215,6 @@ export async function deleteOwnDancerAvatar(
 
   console.info(JSON.stringify({
     event: "dancer.avatar_deleted",
-    dancerId: profile.id,
     clearedModerationRecords: recordIds.length,
   }));
   return {

@@ -9,6 +9,7 @@ import {
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -134,7 +135,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("PUBLIC_DISCOVERY_LOAD_FAILED", {
       city,
-      message: error instanceof Error ? error.message : String(error),
+      ...safeErrorMetadata(error),
     });
     return NextResponse.json(
       { ok: false, error: "Unable to load live discovery." },

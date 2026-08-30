@@ -5,6 +5,7 @@ import {
   restoreEligibleDmcaCases,
 } from "@/src/lib/dancr/dmca";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
       results,
     });
   } catch (error) {
-    console.error("DMCA restoration worker failed", error);
+    console.error("DMCA restoration worker failed", safeErrorMetadata(error));
     return NextResponse.json(
       { ok: false, error: "Copyright restoration worker failed." },
       { status: 500 },

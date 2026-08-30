@@ -24,5 +24,6 @@ function success(body: Record<string, unknown>): AdminFinanceSuccessResult {
 }
 
 function defaultRefreshFailureLogger(error: unknown) {
-  console.error("ADMIN_FINANCE_POST_WRITE_REFRESH_FAILED", { error });
+  console.error("ADMIN_FINANCE_POST_WRITE_REFRESH_FAILED", safeErrorMetadata(error));
 }
+import { safeErrorMetadata } from "../security/safe-error-metadata.ts";

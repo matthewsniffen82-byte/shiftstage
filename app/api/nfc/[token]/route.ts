@@ -19,6 +19,7 @@ import {
 } from "@/src/lib/dancr/nfc";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -170,7 +171,7 @@ export async function POST(request: Request, context: RouteContext) {
               ? 400
               : 500;
     const resolved = resolveApiError(error, "Unable to complete this phone tap.", status);
-    console.error("NFC_TAP_FAILED", { message });
+    console.error("NFC_TAP_FAILED", safeErrorMetadata(error));
     return NextResponse.json(resolved.body, {
       status: resolved.status,
       headers: { "cache-control": "private, no-store, max-age=0" },

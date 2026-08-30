@@ -8,6 +8,7 @@ import {
 } from "@/src/lib/dancr/account-recovery";
 import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
     }
     console.error(JSON.stringify({
       event: "account_recovery.email_lookup_request_failed",
-      message: error instanceof Error ? error.message : "Unknown error",
+      ...safeErrorMetadata(error),
     }));
     return apiError(new Error("Unable to submit account recovery request."), "Unable to submit account recovery request.");
   }

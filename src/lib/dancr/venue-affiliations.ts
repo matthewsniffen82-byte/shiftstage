@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireVenueAccess } from "./venue-access";
 import { deliverNotificationRows } from "./notification-delivery";
 import { responsivePublicImage } from "./responsive-image";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -247,7 +248,7 @@ export async function rotateDancerVenueVerification(
       tokenId,
       dancerId: dancer.id,
       venueId,
-      message: eventError.message,
+      ...safeErrorMetadata(eventError),
     });
   }
 
@@ -320,7 +321,7 @@ export async function approveDancerVenueVerification(
   await deliverNotificationRows(client, [notification]).catch((notificationError) => {
     console.warn("DANCER_VENUE_APPROVAL_NOTIFICATION_FAILED", {
       affiliationId: data.id,
-      message: notificationError instanceof Error ? notificationError.message : String(notificationError),
+      ...safeErrorMetadata(notificationError),
     });
   });
 
@@ -358,7 +359,7 @@ async function persistVenueAffiliationApprovalNotification(
   console.error("DANCER_VENUE_APPROVAL_IN_APP_NOTIFICATION_FAILED", {
     affiliationId: notification.payload.affiliationId,
     notificationId: notification.id,
-    message: lastError instanceof Error ? lastError.message : String(lastError),
+    ...safeErrorMetadata(lastError),
   });
   throw new Error("Venue affiliation was approved, but the dancer notification could not be saved.");
 }
@@ -405,7 +406,7 @@ export async function revokeDancerVenueAffiliation(
     }]).catch((notificationError) => {
       console.warn("DANCER_VENUE_REVOCATION_NOTIFICATION_FAILED", {
         affiliationId,
-        message: notificationError instanceof Error ? notificationError.message : String(notificationError),
+        ...safeErrorMetadata(notificationError),
       });
     });
   }

@@ -10,6 +10,7 @@ import {
   VenueClaimUserError,
 } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
     }
     console.error(JSON.stringify({
       event: "venue_access.preview_failed",
-      message: error instanceof Error ? error.message : "Unknown error",
+      ...safeErrorMetadata(error),
     }));
     return apiError(new Error("Unable to verify this venue access code."), "Unable to verify this venue access code.");
   }

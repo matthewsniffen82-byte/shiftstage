@@ -7,6 +7,7 @@ import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import type { AccountState } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +51,7 @@ export async function PATCH(request: Request) {
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo });
 
       if (error) {
-        console.warn("ACCOUNT_EMAIL_UPDATE_REJECTED", { userId: user.id, code: error.code || "auth_error" });
+        console.warn("ACCOUNT_EMAIL_UPDATE_REJECTED", safeErrorMetadata(error));
         return NextResponse.json({ ok: false, error: "Unable to update email. Check the address and try again." }, { status: 400 });
       }
 
@@ -74,7 +75,7 @@ export async function PATCH(request: Request) {
       const { error } = await client.auth.updateUser({ password });
 
       if (error) {
-        console.warn("ACCOUNT_PASSWORD_UPDATE_REJECTED", { userId: user.id, code: error.code || "auth_error" });
+        console.warn("ACCOUNT_PASSWORD_UPDATE_REJECTED", safeErrorMetadata(error));
         return NextResponse.json({ ok: false, error: "Unable to update password. Check the password and try again." }, { status: 400 });
       }
 
@@ -82,8 +83,7 @@ export async function PATCH(request: Request) {
       if (signOutError) {
         console.warn(JSON.stringify({
           event: "account.password_other_sessions_revoke_failed",
-          userId: user.id,
-          message: signOutError.message,
+          ...safeErrorMetadata(signOutError),
         }));
       }
 
@@ -103,8 +103,6 @@ export async function PATCH(request: Request) {
         if (!delivery.delivered) {
           console.warn(JSON.stringify({
             event: "account.password_change_alert_delivery_failed",
-            userId: user.id,
-            reason: delivery.reason,
           }));
         }
       }

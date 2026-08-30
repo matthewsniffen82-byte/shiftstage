@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveApiError } from "./api-error-policy";
+import { safeErrorMetadata } from "./security/safe-error-metadata";
 
 export { PublicApiError, type PublicApiErrorCode } from "./api-error-policy";
 
@@ -10,7 +11,7 @@ export function apiError(error: unknown, fallback: string, status = 500) {
     console.error("API_REQUEST_FAILED", {
       fallback,
       status: resolved.status,
-      message: resolved.internalMessage,
+      ...safeErrorMetadata(error),
     });
   }
 

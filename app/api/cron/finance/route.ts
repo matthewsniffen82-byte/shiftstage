@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorizeCronRequest } from "@/src/lib/dancr/cron-auth";
 import { runQrFinanceAutomation } from "@/src/lib/dancr/finance-automation";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
     console.info("QR finance automation completed", result);
     return NextResponse.json({ ok: true, result });
   } catch (error) {
-    console.error("QR finance automation failed", error);
+    console.error("QR finance automation failed", safeErrorMetadata(error));
     return NextResponse.json({ ok: false, error: "QR finance automation failed." }, { status: 500 });
   }
 }

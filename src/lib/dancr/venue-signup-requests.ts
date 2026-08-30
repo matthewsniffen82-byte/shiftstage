@@ -5,6 +5,7 @@ import {
   createVenueSignupCredential,
   hashVenueClaimRequestIp,
 } from "./venue-claims";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -205,7 +206,7 @@ export async function reviewVenueSignupRequest(
     }).catch((deliveryError) => {
       console.warn("VENUE_SIGNUP_REQUEST_EMAIL_FAILED", {
         requestId,
-        message: deliveryError instanceof Error ? deliveryError.message : String(deliveryError),
+        ...safeErrorMetadata(deliveryError),
       });
       return { delivered: false, reason: "delivery_failed" };
     });

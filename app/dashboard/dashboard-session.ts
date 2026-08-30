@@ -6,6 +6,7 @@ import {
   readBrowserAuthSession,
   revokeBrowserAuthSession,
 } from "../../src/lib/dancr/browser-session.ts";
+import { safeErrorMetadata } from "../../src/lib/security/safe-error-metadata.ts";
 
 export type DashboardSessionAccount = {
   displayName?: string | null;
@@ -159,7 +160,7 @@ export async function requestOptionalDashboardJson<T>(
     if (options.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
     console.warn("Dashboard panel did not load", {
       path,
-      message: error instanceof Error ? error.message : "Request failed",
+      ...safeErrorMetadata(error),
     });
     return fallback;
   }

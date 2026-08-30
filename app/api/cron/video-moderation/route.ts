@@ -6,6 +6,7 @@ import {
 } from "@/src/lib/dancr/tv";
 import { isVideoDemoAutoApproveMode } from "@/src/lib/dancr/video-moderation-mode";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
             ? "mydancr_tv.demo_auto_approval_retry_failed"
             : "mydancr_tv.ai_moderation_retry_failed",
           videoId: video.id,
-          message: error instanceof Error ? error.message.slice(0, 500) : "Unknown retry failure",
+          ...safeErrorMetadata(error),
         }));
         results.push({ videoId: video.id, ok: false });
       }
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
       event: demoAutoApprove
         ? "mydancr_tv.demo_auto_approval_cron_failed"
         : "mydancr_tv.ai_moderation_cron_failed",
-      message: error instanceof Error ? error.message.slice(0, 500) : "Unknown worker failure",
+      ...safeErrorMetadata(error),
     }));
     return NextResponse.json(
       { ok: false, error: "Video moderation recovery worker failed." },

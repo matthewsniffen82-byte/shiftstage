@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDancerDiscoveryCities } from "@/src/lib/dancr/signup-cities";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export async function GET() {
     );
   } catch (error) {
     console.error("DANCER_SIGNUP_CITIES_LOAD_FAILED", {
-      message: error instanceof Error ? error.message : "Unknown database error",
+      ...safeErrorMetadata(error),
     });
     return NextResponse.json(
       { ok: false, error: "Unable to load available cities." },

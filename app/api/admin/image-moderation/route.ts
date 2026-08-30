@@ -20,6 +20,7 @@ import {
 import { removeArchivedOriginalMedia } from "@/src/lib/dancr/media-watermark";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -214,7 +215,7 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
         console.warn("IMAGE_MODERATION_SUPERSEDED_SLOT_CLEANUP_FAILED", {
           recordId: record.id,
           dancerId: profile.id,
-          message: deleteError.message,
+          ...safeErrorMetadata(deleteError),
         });
       } else {
         const supersededPaths = (supersededPhotos || []).map((item: any) => item.storage_path).filter(Boolean);

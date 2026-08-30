@@ -11,6 +11,7 @@ import {
 } from "@/src/lib/dancr/venue-team";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,9 +57,10 @@ export async function POST(request: Request) {
         ].join("\n"),
       });
     } catch (deliveryError) {
+      console.warn("VENUE_TEAM_INVITATION_DELIVERY_FAILED", safeErrorMetadata(deliveryError));
       delivery = {
         delivered: false,
-        reason: deliveryError instanceof Error ? deliveryError.message : "Email delivery was unavailable.",
+        reason: "Email delivery was unavailable.",
       };
     }
     if (!delivery.delivered) {
@@ -66,7 +68,6 @@ export async function POST(request: Request) {
         event: "venue.team_invitation_delivery_failed",
         venueId: result.access.venueId,
         invitationId: result.invitation.id,
-        reason: delivery.reason,
       }));
     }
     return noStore({

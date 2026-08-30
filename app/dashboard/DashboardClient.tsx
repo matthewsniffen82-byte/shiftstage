@@ -12,6 +12,7 @@ import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
 import { fictionalVenueTravelAddress } from "@/src/lib/dancr/venue-branding";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import DancerNfcPanel from "./DancerNfcPanel";
@@ -5264,14 +5265,6 @@ function DancerSetupPanel({
       if (!isCurrentProfileAction(requestId, controller)) return;
       if (!data.profile) throw new Error("Unable to reload the saved profile.");
 
-      console.log("PUBLIC_PROFILE_STATE_AFTER_RESET", {
-        dancerId: data.profile.id || null,
-        status: data.profile.status ?? null,
-        isPublic: data.profile.is_public ?? data.profile.isPublic ?? null,
-        approvedAt: data.profile.approved_at ?? null,
-        verificationStatus: data.profile.verification_status ?? null,
-        photoReviewStatus: data.profile.photo_review_status ?? null,
-      });
       deletedPhotoIdsRef.current = [];
       deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsSaved?.();
@@ -5282,7 +5275,7 @@ function DancerSetupPanel({
       setStatus("Latest saved profile reloaded.");
     } catch (error) {
       if (isCurrentProfileAction(requestId, controller)) {
-        console.error("DANCER_PROFILE_HARD_RESET_FAILED", error);
+        console.error("DANCER_PROFILE_HARD_RESET_FAILED", safeErrorMetadata(error));
         setStatus(error instanceof Error ? error.message : "Unable to reload the saved profile.");
       }
     } finally {
@@ -5316,13 +5309,13 @@ function DancerSetupPanel({
         deletedPhotoStoragePaths: storagePathsToDelete,
       };
       console.log("EDIT_PROFILE_BEFORE_SAVE", {
-        deletedPhotoIds: idsToDelete,
-        profilePhotoIds: Array.isArray(profile?.dancer_photos) ? (profile.dancer_photos as Array<any>).map((photo) => photo.id) : [],
+        deletedPhotoCount: idsToDelete.length,
+        profilePhotoCount: Array.isArray(profile?.dancer_photos) ? profile.dancer_photos.length : 0,
       });
       console.log("EDIT_PROFILE_SAVE_PAYLOAD", {
-        stageName: Boolean(stageName),
-        city,
-        deletedPhotoIds: idsToDelete,
+        hasStageName: Boolean(stageName),
+        hasCity: Boolean(city),
+        deletedPhotoCount: idsToDelete.length,
         deletedPhotoStoragePathCount: storagePathsToDelete.length,
       });
       const data = await requestDancerProfileJson({
@@ -5343,9 +5336,9 @@ function DancerSetupPanel({
       const confirmedDeletedIds = new Set((Array.isArray(data.deletedPhotoIds) ? data.deletedPhotoIds : []).map((id: unknown) => String(id)));
       const unconfirmedDeletedIds = idsToDelete.filter((id) => !confirmedDeletedIds.has(id));
       console.log("EDIT_PROFILE_REFETCHED_PHOTOS", {
-        photoIds: Array.from(refreshedPhotoIds),
-        requestedDeletedIds: idsToDelete,
-        confirmedDeletedIds: Array.from(confirmedDeletedIds),
+        photoCount: refreshedPhotoIds.size,
+        requestedDeletedCount: idsToDelete.length,
+        confirmedDeletedCount: confirmedDeletedIds.size,
       });
       if (incorrectlyRestoredIds.length) throw new Error("DELETED_PHOTO_RETURNED_AFTER_SAVE");
       if (unconfirmedDeletedIds.length) throw new Error("PROFILE_PHOTO_DELETE_COUNT_MISMATCH");
@@ -5364,7 +5357,7 @@ function DancerSetupPanel({
       return true;
     } catch (error) {
       if (isCurrentProfileAction(requestId, controller)) {
-        console.error("EDIT_PROFILE_SAVE_FAILED", error);
+        console.error("EDIT_PROFILE_SAVE_FAILED", safeErrorMetadata(error));
         setSaveStatus("error");
         setStatus(error instanceof Error ? error.message : "Profile could not be saved.");
       }

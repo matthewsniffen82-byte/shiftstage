@@ -264,9 +264,7 @@ export async function watermarkStoredVideo(
     if (posterError) throw posterError;
     console.info(JSON.stringify({
       event: "public_media.video_watermarked",
-      storagePath: input.storagePath,
       bytes: watermarked.length,
-      posterStoragePath,
       posterBytes: poster.length,
     }));
     return { posterStoragePath };

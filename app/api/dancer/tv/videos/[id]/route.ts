@@ -12,6 +12,7 @@ import {
 } from "@/src/lib/dancr/media-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export async function PATCH(request: Request, { params }: RouteProps) {
           console.error(JSON.stringify({
             event: "mydancr_tv.background_moderation_failed",
             videoId: video.id,
-            message: error instanceof Error ? error.message.slice(0, 500) : "Unknown moderation failure",
+            ...safeErrorMetadata(error),
           }));
         }
       });

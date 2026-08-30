@@ -12,6 +12,7 @@ import { getActiveClubDealListsForVenues, getActiveClubDealsForVenue } from "./d
 import { getVenueReferralFeeState } from "./referral-fees";
 import { getVenueById, getVenuePublicationState } from "./venue";
 import { getStripe } from "../stripe";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -111,6 +112,11 @@ export async function requireAdmin(client: DancrClient, userId: string) {
 
   if (error) throw error;
   if (!data || data.role !== "admin" || data.account_state !== "active") {
+    console.warn(JSON.stringify({
+      event: "security.admin_authorization_denied",
+      accountFound: Boolean(data),
+      activeAccount: data?.account_state === "active",
+    }));
     throw new Error("Admin access required.");
   }
 }
@@ -246,7 +252,7 @@ export async function deleteAdminDancerProfile(
     } catch (error) {
       console.error("ADMIN_DANCER_DELETE_SUBSCRIPTION_CANCEL_FAILED", {
         dancerId: dancer.id,
-        message: error instanceof Error ? error.message : "Unknown Stripe error.",
+        ...safeErrorMetadata(error),
       });
       throw new Error("Unable to cancel this dancer's active subscription. The profile was not deleted.");
     }
@@ -272,7 +278,10 @@ export async function deleteAdminDancerProfile(
       .delete()
       .eq("user_id", dancer.user_id)
       .in("id", moderationIds);
-    if (error) warnings.push(`Moderation history cleanup failed: ${error.message}`);
+    if (error) {
+      console.warn("ADMIN_DANCER_DELETE_MODERATION_CLEANUP_FAILED", safeErrorMetadata(error));
+      warnings.push("Moderation history cleanup failed.");
+    }
   }
 
   const approvedPhotoPaths = uniqueStoragePaths([
@@ -294,7 +303,7 @@ export async function deleteAdminDancerProfile(
   await removeBucketPaths(client, "dancr-image-moderation-temp", moderationTemporaryPaths, warnings);
   await removeBucketPaths(client, "dancr-image-moderation-review", moderationTemporaryPaths, warnings);
   if (verificationListing.error) {
-    warnings.push(`Verification file listing failed: ${verificationListing.error}`);
+    warnings.push("Verification file listing failed.");
   } else {
     await removeBucketPaths(client, "verification-documents", verificationListing.paths, warnings);
   }
@@ -308,7 +317,8 @@ export async function deleteAdminDancerProfile(
       notes: `${dancer.stage_name} (${dancer.slug}); login account retained`,
     });
   } catch (error) {
-    warnings.push(`Audit log failed: ${error instanceof Error ? error.message : "Unknown error."}`);
+    console.warn("ADMIN_DANCER_DELETE_AUDIT_LOG_FAILED", safeErrorMetadata(error));
+    warnings.push("Audit log failed.");
   }
 
   if (warnings.length) {
@@ -1434,7 +1444,13 @@ async function countTable(client: DancrClient, table: string) {
     .from(table)
     .select("id", { count: "exact", head: true });
 
-  if (error) return { ok: false, count: null, error: error.message };
+  if (error) {
+    console.warn("ADMIN_MONITORING_COUNT_FAILED", {
+      table,
+      ...safeErrorMetadata(error),
+    });
+    return { ok: false, count: null, error: "Monitoring query failed." };
+  }
   return { ok: true, count: count || 0 };
 }
 
@@ -1442,7 +1458,7 @@ async function listBucketPaths(
   client: DancrClient,
   bucketName: string,
   prefix: string,
-): Promise<{ paths: string[]; error: string | null }> {
+): Promise<{ paths: string[]; error: boolean }> {
   const bucket = client.storage.from(bucketName);
   const paths: string[] = [];
   const pageSize = 100;
@@ -1453,7 +1469,13 @@ async function listBucketPaths(
       offset,
       sortBy: { column: "name", order: "asc" },
     });
-    if (error) return { paths, error: error.message };
+    if (error) {
+      console.warn("ADMIN_STORAGE_LIST_FAILED", {
+        bucketName,
+        ...safeErrorMetadata(error),
+      });
+      return { paths, error: true };
+    }
 
     const rows = data || [];
     for (const row of rows) {
@@ -1462,7 +1484,7 @@ async function listBucketPaths(
     if (rows.length < pageSize) break;
   }
 
-  return { paths: uniqueStoragePaths(paths), error: null };
+  return { paths: uniqueStoragePaths(paths), error: false };
 }
 
 async function removeBucketPaths(
@@ -1475,7 +1497,13 @@ async function removeBucketPaths(
   for (let index = 0; index < uniquePaths.length; index += 100) {
     const batch = uniquePaths.slice(index, index + 100);
     const { error } = await client.storage.from(bucketName).remove(batch);
-    if (error) warnings.push(`${bucketName} cleanup failed: ${error.message}`);
+    if (error) {
+      console.warn("ADMIN_STORAGE_CLEANUP_FAILED", {
+        bucketName,
+        ...safeErrorMetadata(error),
+      });
+      warnings.push(`${bucketName} cleanup failed.`);
+    }
   }
 }
 

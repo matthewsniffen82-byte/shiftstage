@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Json } from "./types";
 import { requireVenueAccess, type VenueTeamRole } from "./venue-access";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 type AssignableVenueRole = Exclude<VenueTeamRole, "owner">;
@@ -309,7 +310,7 @@ export async function recordVenueActivity(client: DancrClient, input: {
     console.error("VENUE_ACTIVITY_LOG_FAILED", {
       venueId: input.venueId,
       action: input.action,
-      error: error.message || String(error),
+      ...safeErrorMetadata(error),
     });
     return false;
   }

@@ -7,6 +7,7 @@ import {
   getPublicDmcaAgent,
 } from "@/src/lib/dancr/dmca";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ export async function GET() {
     const agent = await getPublicDmcaAgent(createAdminSupabaseClient());
     return NextResponse.json({ ok: true, agent });
   } catch (error) {
-    console.error("Unable to load public copyright contact", error);
+    console.error("Unable to load public copyright contact", safeErrorMetadata(error));
     return apiError(new Error("Unable to load copyright contact."), "Unable to load copyright contact.");
   }
 }
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       return apiError(error, "Unable to submit copyright notice.");
     }
     const message = error instanceof DmcaUserError ? error.message : "";
-    if (!message) console.error("Unable to submit copyright notice", error);
+    if (!message) console.error("Unable to submit copyright notice", safeErrorMetadata(error));
     return apiError(
       new Error(message || "Unable to submit copyright notice."),
       "Unable to submit copyright notice.",

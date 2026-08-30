@@ -17,6 +17,7 @@ import {
   syncStripeInvoice,
 } from "@/src/lib/dancr/finance-provider-events";
 import { getServerEnv } from "@/src/lib/server-env";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.warn("STRIPE_WEBHOOK_SIGNATURE_REJECTED", {
-      message: internalWebhookError(error),
+      ...safeErrorMetadata(error),
     });
     return NextResponse.json(
       { ok: false, error: "Invalid Stripe webhook." },
@@ -130,7 +131,7 @@ export async function POST(request: Request) {
     console.error("STRIPE_WEBHOOK_PROCESSING_FAILED", {
       eventId: event.id,
       eventType: event.type,
-      message: internalWebhookError(error),
+      ...safeErrorMetadata(error),
     });
     return NextResponse.json(
       { ok: false, error: "Unable to process Stripe webhook." },
@@ -166,5 +167,6 @@ function isFinanceEvent(type: string) {
 }
 
 function internalWebhookError(error: unknown) {
-  return (error instanceof Error ? error.message : "Webhook processing failed.").slice(0, 500);
+  const metadata = safeErrorMetadata(error);
+  return JSON.stringify({ event: "stripe_webhook_processing_failed", ...metadata }).slice(0, 500);
 }

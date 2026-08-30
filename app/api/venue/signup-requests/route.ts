@@ -6,6 +6,7 @@ import {
   VenueSignupRequestUserError,
 } from "@/src/lib/dancr/venue-signup-requests";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
       return apiError(error, "Unable to submit the venue request.");
     }
     const userMessage = error instanceof VenueSignupRequestUserError ? error.message : "";
-    if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_FAILED", error);
+    if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_FAILED", safeErrorMetadata(error));
     const status = userMessage.startsWith("Too many venue requests") ? 429 : userMessage ? 400 : 500;
     return apiError(
       new Error(userMessage || "Unable to submit the venue request."),

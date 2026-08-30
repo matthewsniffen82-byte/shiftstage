@@ -16,6 +16,7 @@ import { DancerSignupCityInputError, requireDancerSignupCity } from "@/src/lib/d
 import { safeSocialProfileUrl, socialProfileHandle } from "@/src/lib/dancr/social-profile-url";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -156,8 +157,7 @@ async function loadProfileForSave(db: any, userId: string) {
   }
 
   console.warn("DANCER_PROFILE_VISIBILITY_COLUMN_MISSING", {
-    code: current.error.code,
-    message: current.error.message,
+    ...safeErrorMetadata(current.error),
   });
   const legacy = await db
     .from("dancer_profiles")
@@ -395,10 +395,8 @@ export async function PATCH(request: Request) {
     const db = createAdminSupabaseClient() as any;
     const protectedFieldsBefore = publicProfileState(profile);
     console.log("PROTECTED_FIELDS_BEFORE_SAVE", {
-      profileId: profile.id,
-      ...protectedFieldsBefore,
+      fields: Object.keys(protectedFieldsBefore),
     });
-    console.log("PUBLIC_PROFILE_STATE_BEFORE_SAVE", protectedFieldsBefore);
 
     const update: Record<string, string | boolean> = {};
     if (Object.prototype.hasOwnProperty.call(body, "stageName")) {
@@ -487,7 +485,7 @@ export async function PATCH(request: Request) {
     console.log("PROFILE_SAVE_PAYLOAD", {
       hasMainPhotoUrl: typeof body?.mainPhotoUrl === "string" && Boolean(body.mainPhotoUrl.trim()),
       galleryPhotoUrlCount: Array.isArray(body?.galleryPhotoUrls) ? body.galleryPhotoUrls.length : 0,
-      deletedPhotoIds,
+      deletedPhotoCount: deletedPhotoIds.length,
       fields: {
         stageName: typeof body.stageName === "string",
         city: typeof body.city === "string",
@@ -510,8 +508,8 @@ export async function PATCH(request: Request) {
       ...pendingPhotoReviewsBeforeSave.map((photo: any) => String(photo.id || "")),
     ].filter((id) => id && !deletedPhotoIds.includes(id)));
     console.log("EDIT_PROFILE_EXPECTED_PHOTOS_AFTER_SAVE", {
-      expectedPhotoIds: Array.from(expectedRemainingPhotoIds),
-      deletedPhotoIds,
+      expectedPhotoCount: expectedRemainingPhotoIds.size,
+      deletedPhotoCount: deletedPhotoIds.length,
     });
     setSaveStage("delete_photos");
     const deletedPhotoStoragePaths = deletedPhotoIds.length
@@ -573,7 +571,7 @@ export async function PATCH(request: Request) {
       await removeSupersededPendingPhotoRows(adminDb as any, profile.id).catch((error: any) => {
         console.warn("PROFILE_PHOTO_HISTORY_CLEANUP_WARNING", {
           dancerId: profile.id,
-          message: error?.message || "Unable to clean superseded photo rows.",
+          ...safeErrorMetadata(error),
         });
         return false;
       });
@@ -599,9 +597,8 @@ export async function PATCH(request: Request) {
       .order("is_primary", { ascending: false })
       .order("sort_order", { ascending: true });
     if (databasePhotosAfterSaveError) throw databasePhotosAfterSaveError;
-    console.log("PROFILE_IMAGES_AFTER_SAVE", databasePhotosAfterSave || []);
     console.log("EDIT_PROFILE_DATABASE_PHOTOS_AFTER_SAVE", {
-      photoIds: (databasePhotosAfterSave || []).map((photo: any) => photo.id),
+      photoCount: (databasePhotosAfterSave || []).length,
     });
 
     const {
@@ -614,10 +611,8 @@ export async function PATCH(request: Request) {
 
     const protectedFieldsAfter = publicProfileState(protectedProfileAfter);
     console.log("PROTECTED_FIELDS_AFTER_SAVE", {
-      profileId: profile.id,
-      ...protectedFieldsAfter,
+      fields: Object.keys(protectedFieldsAfter),
     });
-    console.log("PUBLIC_PROFILE_STATE_AFTER_SAVE", protectedFieldsAfter);
 
     if (
       body.submitForReview === true
@@ -639,15 +634,12 @@ export async function PATCH(request: Request) {
     );
     if (allProtectedChanges.length && !unexpectedProtectedChanges.length) {
       console.log("EXPECTED_PROTECTED_FIELD_CHANGES", {
-        protectedChanges: allProtectedChanges,
+        fields: allProtectedChanges.map((change) => change.field),
       });
     }
     if (unexpectedProtectedChanges.length) {
       console.error("UNEXPECTED_PROTECTED_FIELD_CHANGES", {
-        protectedChanges: unexpectedProtectedChanges.map((change) => change.field),
-        changes: unexpectedProtectedChanges,
-        before: protectedFieldsBefore,
-        after: protectedFieldsAfter,
+        fields: unexpectedProtectedChanges.map((change) => change.field),
       });
       const protectedError = new Error(
         `PROTECTED_FIELDS_CHANGED: ${unexpectedProtectedChanges.map((change) => change.field).join(",")}`,
@@ -682,9 +674,9 @@ export async function PATCH(request: Request) {
 
     const confirmedIds = [...new Set(confirmedDeletedPhotoIds)];
     console.log("EDIT_PROFILE_SAVE_DELETION_CONFIRMED", {
-      requestedIds: deletedPhotoIds,
-      deletedIds: confirmedIds,
-      remainingPhotoIds: Array.from(remainingPhotoIds),
+      requestedCount: deletedPhotoIds.length,
+      deletedCount: confirmedIds.length,
+      remainingPhotoCount: remainingPhotoIds.size,
     });
 
     return withProfileSaveVersion(NextResponse.json({
@@ -700,12 +692,7 @@ export async function PATCH(request: Request) {
   } catch (error: any) {
     console.error("DANCER_PROFILE_SAVE_ERROR", {
       stage: saveStage,
-      message: error?.message,
-      code: error?.code,
-      details: error?.details,
-      hint: error?.hint,
-      status: error?.status,
-      stack: error?.stack,
+      ...safeErrorMetadata(error),
     });
     if (error instanceof Error && (error.message === "Sign in required." || error.message === "Dancer profile not found.")) {
       return withProfileSaveVersion(apiError(error, "Unable to update dancer profile."));
@@ -968,7 +955,7 @@ async function saveProfilePhotoUrls(
   console.log("PROFILE_SAVE_PHOTO_URL_FILTER", {
     submittedCount: rawPhotoUrls.length,
     keptCount: photoUrls.length,
-    deletedPhotoIds,
+    deletedPhotoCount: deletedPhotoIds.length,
     deletedPhotoPathCount: deletedPaths.size,
   });
   if (!photoUrls.length) return;

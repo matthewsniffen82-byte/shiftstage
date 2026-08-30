@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { isActiveNfcPresence } from "./shift-presence";
 
 type DancrClient = SupabaseClient;
@@ -204,7 +205,8 @@ async function safeCount(section: string, query: () => PromiseLike<any>): Promis
     if (result.error) throw result.error;
     return { count: Number(result.count || 0) };
   } catch (error) {
-    return { count: 0, warning: { section, message: errorMessage(error) } };
+    logOperationalQueryFailure(section, error);
+    return { count: 0, warning: { section, message: operationalWarningMessage() } };
   }
 }
 
@@ -214,7 +216,8 @@ async function safeRows(section: string, query: () => PromiseLike<any>): Promise
     if (result.error) throw result.error;
     return { rows: Array.isArray(result.data) ? result.data : [] };
   } catch (error) {
-    return { rows: [], warning: { section, message: errorMessage(error) } };
+    logOperationalQueryFailure(section, error);
+    return { rows: [], warning: { section, message: operationalWarningMessage() } };
   }
 }
 
@@ -250,8 +253,13 @@ function summarizeRevenue(
   return summary;
 }
 
-function errorMessage(error: unknown) {
-  if (error instanceof Error) return error.message.slice(0, 240);
-  if (error && typeof error === "object" && "message" in error) return String((error as { message: unknown }).message).slice(0, 240);
+function logOperationalQueryFailure(section: string, error: unknown) {
+  console.warn("ADMIN_OPERATIONS_QUERY_FAILED", {
+    section,
+    ...safeErrorMetadata(error),
+  });
+}
+
+function operationalWarningMessage() {
   return "Unable to query this operational dataset.";
 }

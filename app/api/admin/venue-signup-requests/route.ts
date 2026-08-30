@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/dancr/venue-signup-requests";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    console.error("VENUE_SIGNUP_REQUEST_LOAD_FAILED", error);
+    console.error("VENUE_SIGNUP_REQUEST_LOAD_FAILED", safeErrorMetadata(error));
     return apiError(error, "Unable to load venue signup requests.");
   }
 }
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
       return apiError(error, "Unable to review the venue signup request.");
     }
     const userMessage = error instanceof VenueSignupRequestUserError ? error.message : "";
-    if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_REVIEW_FAILED", error);
+    if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_REVIEW_FAILED", safeErrorMetadata(error));
     return apiError(
       new Error(userMessage || "Unable to review the venue signup request."),
       "Unable to review the venue signup request.",

@@ -3,6 +3,7 @@ import "server-only";
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deliverNotificationRows } from "./notification-delivery";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -296,7 +297,6 @@ export async function createVenueOwnershipClaim(
     console.info("VENUE_OWNERSHIP_CLAIM_SUBMITTED", {
       claimId: data.id,
       venueId,
-      claimantUserId: input.userId,
     });
     return mapClaim(data);
   } catch (error) {
@@ -342,7 +342,10 @@ export async function getAdminVenueOwnershipClaims(client: DancrClient) {
         .from(PROOF_BUCKET)
         .createSignedUrl(row.proof_storage_path, 15 * 60);
       if (signedError) {
-        console.warn("VENUE_CLAIM_PROOF_SIGNING_FAILED", { claimId: row.id, message: signedError.message });
+        console.warn("VENUE_CLAIM_PROOF_SIGNING_FAILED", {
+          claimId: row.id,
+          ...safeErrorMetadata(signedError),
+        });
       } else {
         proofUrl = signed.signedUrl;
       }
@@ -350,7 +353,10 @@ export async function getAdminVenueOwnershipClaims(client: DancrClient) {
 
     const { data: authUser, error: authError } = await client.auth.admin.getUserById(row.claimant_user_id);
     if (authError) {
-      console.warn("VENUE_CLAIM_EMAIL_STATUS_FAILED", { claimId: row.id, message: authError.message });
+      console.warn("VENUE_CLAIM_EMAIL_STATUS_FAILED", {
+        claimId: row.id,
+        ...safeErrorMetadata(authError),
+      });
     }
     return {
       ...claim,
@@ -415,7 +421,7 @@ export async function reviewVenueOwnershipClaim(
   const notificationDelivery = await deliverNotificationRows(client, [notification]).catch((deliveryError) => {
     console.warn("VENUE_CLAIM_NOTIFICATION_DELIVERY_FAILED", {
       claimId,
-      message: deliveryError instanceof Error ? deliveryError.message : String(deliveryError),
+      ...safeErrorMetadata(deliveryError),
     });
     return { push: 0, email: 0 };
   });
@@ -423,7 +429,10 @@ export async function reviewVenueOwnershipClaim(
   if (pending.proof_storage_path) {
     const { error: removeError } = await client.storage.from(PROOF_BUCKET).remove([pending.proof_storage_path]);
     if (removeError) {
-      console.warn("VENUE_CLAIM_PROOF_CLEANUP_FAILED", { claimId, message: removeError.message });
+      console.warn("VENUE_CLAIM_PROOF_CLEANUP_FAILED", {
+        claimId,
+        ...safeErrorMetadata(removeError),
+      });
     } else {
       await (client as any)
         .from("venue_ownership_claims")
@@ -436,7 +445,6 @@ export async function reviewVenueOwnershipClaim(
     claimId,
     venueId: reviewed.venueId,
     status: input.status,
-    adminId: input.adminId,
   });
   return { ...reviewed, notificationDelivery };
 }

@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
 import OpenAI from "openai";
 import { getServerEnv } from "../server-env";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 import {
   isAvatarFaceRequiredError,
   prepareFaceCenteredAvatar,
@@ -121,20 +122,17 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     : input.uploadContext?.startsWith("profile_")
     ? profilePhotoUploadContext(Boolean(input.isPrimary), resolvedSortOrder)
     : input.uploadContext || profilePhotoUploadContext(Boolean(input.isPrimary), resolvedSortOrder);
-  logModeration("moderation_started", { userId: input.userId, uploadContext });
+  logModeration("moderation_started", { uploadContext });
 
   await uploadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, image);
   logModeration("uploaded_successfully", {
-    userId: input.userId,
     uploadContext,
-    temporaryStoragePath: tempPath,
     contentType: image.contentType,
     size: image.buffer.byteLength,
   });
   console.log("STORAGE_IMAGE_RECORD", {
     imageId: "pending_record_creation",
     bucket: MODERATION_TEMP_BUCKET,
-    storagePath: tempPath,
     mimeType: image.contentType,
     fileSize: image.buffer.byteLength,
   });
@@ -186,7 +184,6 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     const providerError = sanitizeProviderError(error);
     console.error("DANCR_MODERATION_ERROR", {
       imageId: record.id,
-      storagePath: tempPath,
       diagnosticCode,
       ...providerError,
     });
@@ -199,9 +196,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       status: providerError.status,
       code: providerError.code,
       type: providerError.type,
-      message: providerError.message,
-      response: providerError.response,
-      stack: providerError.stack,
+      requestId: providerError.requestId,
     });
     logModeration(errorCode === "provider_timeout" ? "provider_timeout" : "provider_error", {
       recordId: record.id,
@@ -220,7 +215,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       attemptCount: 1,
       nextAttemptAt: null,
       lastErrorCode: diagnosticCode,
-      lastErrorMessage: safeErrorMessage(error),
+      lastErrorMessage: diagnosticCode,
     });
     logModeration("database_status_written", {
       recordId: record.id,
@@ -707,13 +702,11 @@ export async function restoreDancerAvatar(
 
 export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Promise<any> {
   const apiKeyPresent = Boolean(process.env.OPENAI_API_KEY);
-  console.log("OPENAI_KEY_PRESENT", apiKeyPresent);
   logModeration("openai_key_present", { present: apiKeyPresent });
   if (!apiKeyPresent) throw new Error("MODERATION_AUTH_KEY_MISSING");
   const apiKey = getServerEnv("OPENAI_API_KEY");
   console.log("OPENAI_CONFIGURATION", {
     apiKeyPresent: Boolean(apiKey),
-    apiKeySuffix: apiKey ? apiKey.slice(-4) : null,
     model: DANCR_IMAGE_MODERATION_MODEL,
   });
   const openai = new OpenAI({ apiKey });
@@ -821,16 +814,14 @@ async function verifyStorageObjectExists(client: DancrClient, bucket: string, st
     console.error("STORAGE_IMAGE_RECORD", {
       imageId: "moderation_temp",
       bucket,
-      storagePath,
       exists: false,
-      error: error?.message || "No storage object returned",
+      errorCode: safeErrorMetadata(error).code || "STORAGE_OBJECT_UNAVAILABLE",
     });
-    throw new Error(`STORAGE_IMAGE_MISSING: ${error?.message || "No storage object returned"}`);
+    throw new Error("STORAGE_IMAGE_MISSING");
   }
   console.log("STORAGE_IMAGE_RECORD", {
     imageId: "moderation_temp",
     bucket,
-    storagePath,
     exists: true,
     mimeType: data.type || null,
     fileSize: data.size,
@@ -846,7 +837,6 @@ async function createModerationSignedUrl(client: DancrClient, tempPath: string) 
   }
   logModeration("signed_url_created", {
     storageBucket: MODERATION_TEMP_BUCKET,
-    storagePath: tempPath,
     imageUrlType: signedUrlType(data.signedUrl),
     signedUrlCreated: true,
   });
@@ -860,13 +850,11 @@ async function probeSignedImageUrl(imageUrl: string, tempPath: string) {
   const startedAt = Date.now();
   const probe = await fetch(imageUrl, { method: "GET" });
   const contentType = probe.headers.get("content-type") || "";
-  const failedBody = !probe.ok ? await probe.text().catch(() => "") : "";
   console.log("IMAGE_PROBE_RESULT", {
     status: probe.status,
     ok: probe.ok,
     contentType,
     contentLength: probe.headers.get("content-length"),
-    failedBodyPreview: failedBody.slice(0, 200),
   });
   console.log("IMAGE_URL_PROBE", {
     status: probe.status,
@@ -875,7 +863,6 @@ async function probeSignedImageUrl(imageUrl: string, tempPath: string) {
   });
   logModeration("signed_image_probe", {
     storageBucket: MODERATION_TEMP_BUCKET,
-    storagePath: tempPath,
     status: probe.status,
     ok: probe.ok,
     contentType,
@@ -1128,7 +1115,10 @@ async function findCurrentPhotoSlot(client: DancrClient, dancerId: string, isPri
 async function safeDeleteDancerPhotoRow(client: DancrClient, photoId: string) {
   try {
     const { error } = await client.from("dancer_photos").delete().eq("id", photoId);
-    if (error) logModeration("photo_row_cleanup_error", { photoId, error: error.message });
+    if (error) logModeration("photo_row_cleanup_error", {
+      photoId,
+      ...safeErrorMetadata(error),
+    });
   } catch {
     logModeration("photo_row_cleanup_error", { photoId });
   }
@@ -1197,9 +1187,9 @@ async function logStoredModerationStatus(client: DancrClient, recordId: string, 
     console.error("DATABASE_STATUS_RESULT", {
       expected,
       stored: null,
-      error: error.message,
+      ...safeErrorMetadata(error),
     });
-    throw new Error(`DATABASE_UPDATE_FAILED: ${error.message}`);
+    throw new Error("DATABASE_UPDATE_FAILED");
   }
   console.log("DATABASE_STATUS_RESULT", {
     expected,
@@ -1385,31 +1375,11 @@ function sanitizeModerationResponse(response: any) {
 }
 
 function sanitizeProviderError(error: unknown) {
-  const anyError = error as any;
-  return {
-    errorName: error instanceof Error ? error.name : undefined,
-    status: Number(anyError?.status || anyError?.response?.status || 0) || undefined,
-    code: anyError?.code || anyError?.error?.code || undefined,
-    type: anyError?.type || anyError?.error?.type || undefined,
-    cause: anyError?.cause ? String(anyError.cause).slice(0, 240) : undefined,
-    response: anyError?.response?.data ? JSON.stringify(anyError.response.data).slice(0, 500) : undefined,
-    message: error instanceof Error ? error.message.slice(0, 240) : String(error || "").slice(0, 240),
-    stack: error instanceof Error ? error.stack?.slice(0, 1000) : undefined,
-  };
+  return safeErrorMetadata(error);
 }
 
 function openAIRequestFailureDetails(error: unknown) {
-  const anyError = error as any;
-  return {
-    status: Number(anyError?.status || anyError?.response?.status || 0) || undefined,
-    code: anyError?.code || anyError?.error?.code || undefined,
-    type: anyError?.type || anyError?.error?.type || undefined,
-    message: error instanceof Error ? error.message.slice(0, 500) : String(error || "").slice(0, 500),
-    requestId: anyError?.request_id || anyError?.headers?.["x-request-id"],
-    responseData: anyError?.response?.data ? JSON.stringify(anyError.response.data).slice(0, 500) : undefined,
-    cause: anyError?.cause ? String(anyError.cause).slice(0, 500) : undefined,
-    stack: error instanceof Error ? error.stack?.slice(0, 1000) : undefined,
-  };
+  return safeErrorMetadata(error);
 }
 
 function didReachOpenAI(errorCode: string | null) {

@@ -11,6 +11,7 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,6 +91,6 @@ function affiliationApiError(error: unknown, fallback: string) {
   if (error instanceof VenueAffiliationUserError) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 403 });
   }
-  console.error("VENUE_DANCER_VERIFICATION_FAILED", error);
+  console.error("VENUE_DANCER_VERIFICATION_FAILED", safeErrorMetadata(error));
   return apiError(error, fallback);
 }

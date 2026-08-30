@@ -5,6 +5,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { isCoreVerificationApproved } from "@/src/lib/dancr/profile-approval";
 import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -156,8 +157,7 @@ export async function PATCH(request: Request) {
       (code === "42703" || code === "PGRST204") && message.toLowerCase().includes("is_public");
 
     console.error("DANCER_PROFILE_VISIBILITY_UPDATE_FAILED", {
-      code: code || null,
-      message: message || "Unknown profile visibility error.",
+      ...safeErrorMetadata(error),
     });
 
     return json(

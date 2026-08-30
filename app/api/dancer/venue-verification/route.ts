@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/dancr/venue-affiliations";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -84,6 +85,6 @@ function affiliationApiError(error: unknown, fallback: string) {
       { status, headers: status === 429 ? { "retry-after": "3600" } : undefined },
     );
   }
-  console.error("DANCER_VENUE_VERIFICATION_FAILED", error);
+  console.error("DANCER_VENUE_VERIFICATION_FAILED", safeErrorMetadata(error));
   return apiError(error, fallback);
 }

@@ -2,6 +2,7 @@ import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { BROWSER_AUTH_SESSION_KEY } from "@/src/lib/dancr/browser-session";
 import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -266,8 +267,7 @@ async function readCallbackSession(request: Request) {
     };
   } catch (error) {
     console.error("AUTH_CALLBACK_ACCOUNT_SYNC_FAILED", {
-      userId: authData.user.id,
-      message: error instanceof Error ? error.message : String(error),
+      ...safeErrorMetadata(error),
     });
     return {
       accessToken: authData.session?.access_token,

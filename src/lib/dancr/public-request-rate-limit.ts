@@ -46,7 +46,9 @@ export async function enforcePublicRequestRateLimit(client: SupabaseClient, inpu
   if (!error) {
     const decision = data && typeof data === "object" ? data as Record<string, unknown> : {};
     if (decision.allowed !== true) {
-      throw new PublicRequestRateLimitError(readRetryAfter(decision.retry_after_seconds, input.windowSeconds));
+      const retryAfterSeconds = readRetryAfter(decision.retry_after_seconds, input.windowSeconds);
+      logRateLimitViolation(input.namespace, retryAfterSeconds);
+      throw new PublicRequestRateLimitError(retryAfterSeconds);
     }
     return;
   }
@@ -94,6 +96,7 @@ async function enforceCompatibilityRateLimit(
   if (ipResult.error) throw ipResult.error;
   if (subjectResult.error) throw subjectResult.error;
   if ((ipResult.count || 0) >= input.ipLimit || (subjectResult.count || 0) >= input.subjectLimit) {
+    logRateLimitViolation(input.namespace, input.windowSeconds);
     throw new PublicRequestRateLimitError(input.windowSeconds);
   }
 
@@ -102,6 +105,14 @@ async function enforceCompatibilityRateLimit(
     throttleRecord(subjectTargetType, subjectTargetId, input.namespace),
   ]);
   if (error) throw error;
+}
+
+function logRateLimitViolation(namespace: string, retryAfterSeconds: number) {
+  console.warn(JSON.stringify({
+    event: "security.rate_limit_exceeded",
+    namespace,
+    retryAfterSeconds,
+  }));
 }
 
 function readRetryAfter(value: unknown, fallback: number) {

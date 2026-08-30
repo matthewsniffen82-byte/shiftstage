@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendTransactionalEmail } from "./notification-delivery";
 import { publicAppUrl } from "./public-app-url";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -448,8 +449,7 @@ export async function applyDmcaAdminAction(
       if (uploaderError) {
         console.error("Unable to load the DMCA uploader email", {
           caseId,
-          uploaderId: data.uploaderId,
-          uploaderError,
+          ...safeErrorMetadata(uploaderError),
         });
       } else if (uploader?.email) {
         const counterUrl = `${publicAppUrl()}/dmca/counter/${encodeURIComponent(caseId)}`;
@@ -563,11 +563,14 @@ export async function restoreEligibleDmcaCases(client: DancrClient, limit = 25) 
       await notifyClaimantOfRestoration(dmcaCase.claimant_email, dmcaCase.id);
       results.push({ caseId: dmcaCase.id, restored: true });
     } catch (error) {
-      console.error("DMCA automatic restoration failed", { caseId: dmcaCase.id, error });
+      console.error("DMCA automatic restoration failed", {
+        caseId: dmcaCase.id,
+        ...safeErrorMetadata(error),
+      });
       results.push({
         caseId: dmcaCase.id,
         restored: false,
-        error: error instanceof Error ? error.message : "Restoration failed.",
+        error: "Restoration failed.",
       });
     }
   }

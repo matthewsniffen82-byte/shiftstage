@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,13 +14,13 @@ export async function GET() {
       .limit(1);
 
     if (error) {
-      console.error("SUPABASE_HEALTH_PROBE_FAILED", formatSupabaseError(error));
+      console.error("SUPABASE_HEALTH_PROBE_FAILED", safeErrorMetadata(error));
       return unhealthySupabaseResponse();
     }
 
     return NextResponse.json({ ok: true, service: "supabase" });
   } catch (error) {
-    console.error("SUPABASE_HEALTH_PROBE_FAILED", formatUnexpectedError(error));
+    console.error("SUPABASE_HEALTH_PROBE_FAILED", safeErrorMetadata(error));
     return unhealthySupabaseResponse();
   }
 }
@@ -29,24 +30,4 @@ function unhealthySupabaseResponse() {
     { ok: false, service: "supabase", error: "Supabase health check failed." },
     { status: 503, headers: { "cache-control": "private, no-store" } },
   );
-}
-
-function formatSupabaseError(error: { code?: unknown } | null | undefined) {
-  return {
-    message: "Supabase REST health probe failed.",
-    code: String(error?.code || "unknown"),
-  };
-}
-
-function formatUnexpectedError(error: unknown) {
-  if (error instanceof Error) {
-    return {
-      message: error.message || error.name || "Unknown error.",
-      name: error.name,
-    };
-  }
-
-  return {
-    message: String(error || "Unknown health check error."),
-  };
 }

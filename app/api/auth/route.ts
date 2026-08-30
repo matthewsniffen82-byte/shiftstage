@@ -26,6 +26,7 @@ import {
   getBearerToken,
 } from "@/src/lib/supabase/request";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
 
 export const runtime = "nodejs";
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
         if (rateLimitMessage) throw error;
         console.error("ACCOUNT_PASSWORD_RESET_DELIVERY_FAILED", {
           role,
-          errorCode: typeof (error as { code?: unknown }).code === "string" ? (error as { code: string }).code : "provider_error",
+          ...safeErrorMetadata(error),
         });
       }
 
@@ -258,7 +259,7 @@ export async function POST(request: Request) {
       console.warn("AUTH_PROVIDER_REQUEST_REJECTED", {
         mode: requestedMode,
         role: requestedRole,
-        code: error.code || "auth_error",
+        ...safeErrorMetadata(error),
       });
       const message = requestedMode === "login"
         ? "Email or password is incorrect."
@@ -406,8 +407,7 @@ async function createVenueSignupAccount(input: {
       const { error: cleanupError } = await admin.auth.admin.deleteUser(createdUserId);
       if (cleanupError) {
         console.error("VENUE_SIGNUP_ORPHAN_ACCOUNT_CLEANUP_FAILED", {
-          userId: createdUserId,
-          message: cleanupError.message,
+          ...safeErrorMetadata(cleanupError),
         });
       }
     }

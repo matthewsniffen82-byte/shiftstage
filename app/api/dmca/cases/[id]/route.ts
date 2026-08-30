@@ -8,6 +8,7 @@ import {
 } from "@/src/lib/dancr/dmca";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +65,6 @@ function dmcaCaseError(error: unknown, fallback: string) {
   if (error instanceof DmcaUserError) {
     return apiError(error, fallback, 400);
   }
-  console.error(fallback, error);
+  console.error(fallback, safeErrorMetadata(error));
   return apiError(new Error(fallback), fallback);
 }

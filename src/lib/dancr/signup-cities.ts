@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -38,7 +39,7 @@ export async function getDancerDiscoveryCities(client: DancrClient): Promise<Dan
 
   if (dancerError) {
     console.warn("DANCER_DISCOVERY_CITY_STATS_LOAD_FAILED", {
-      message: dancerError.message || "Unknown database error",
+      ...safeErrorMetadata(dancerError),
     });
     return cities;
   }
