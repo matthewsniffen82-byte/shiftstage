@@ -114,7 +114,8 @@ test("TV cards expose one compact priority rail and a standalone seek bar", () =
   assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedActions\(item, slide, video\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedProgress\(slide, video\)/);
   assert.doesNotMatch(renderFactory, /createHomeTvFeedSoundButton\(slide\)|createHomeTvFeedFullscreenButton\(slide, video\)/);
   assert.doesNotMatch(renderFactory, /shade|home-tv-feed-shade|linear-gradient/);
-  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 10px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?justify-items: end;[\s\S]*?gap: 6px;/);
+  assert.match(homeSource, /\.home-tv-feed-slide \{[\s\S]*?--home-tv-action-control-size: 46px;/);
+  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 10px;[\s\S]*?bottom: 76px;[\s\S]*?width: var\(--home-tv-action-control-size\);[\s\S]*?display: grid;[\s\S]*?justify-items: center;[\s\S]*?gap: 6px;/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{ position: relative; \}/);
   assert.doesNotMatch(homeSource, /function createHomeTvFeedVideoControls|className = "home-tv-feed-video-controls"/);
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
@@ -150,8 +151,8 @@ test("TV Club Deal states keep one fixed rounded-square shape", () => {
   )?.[0] || "";
 
   assert.match(dealShell, /box-sizing: border-box !important;/);
-  assert.match(dealShell, /width: 46px !important;[\s\S]*?min-width: 46px !important;[\s\S]*?max-width: 46px !important;/);
-  assert.match(dealShell, /height: 46px !important;[\s\S]*?min-height: 46px !important;[\s\S]*?max-height: 46px !important;/);
+  assert.match(dealShell, /width: var\(--home-tv-action-control-size\) !important;[\s\S]*?min-width: var\(--home-tv-action-control-size\) !important;[\s\S]*?max-width: var\(--home-tv-action-control-size\) !important;/);
+  assert.match(dealShell, /height: var\(--home-tv-action-control-size\) !important;[\s\S]*?min-height: var\(--home-tv-action-control-size\) !important;[\s\S]*?max-height: var\(--home-tv-action-control-size\) !important;/);
   assert.match(dealShell, /padding: 5px 3px !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?overflow: hidden !important;/);
   assert.match(dealLabel, /position: static;[\s\S]*?width: 100%;[\s\S]*?background: transparent;/);
   assert.equal((actionsFactory.match(/home-tv-feed-deal-count">\$\{offerCount > 1 \? "Club Deals" : "Club Deal"\}/g) || []).length, 1);
@@ -463,7 +464,11 @@ test("intentional pauses persist while fullscreen resumes playback and keeps ver
 test("TV sound and fullscreen controls share the compact rail and remain icon-only", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-action \{[\s\S]*?width: 46px;[\s\S]*?min-width: 46px;[\s\S]*?max-width: 46px;[\s\S]*?height: 46px;[\s\S]*?min-height: 46px;[\s\S]*?max-height: 46px;/,
+    /\.home-tv-feed-action \{[\s\S]*?width: var\(--home-tv-action-control-size\);[\s\S]*?min-width: var\(--home-tv-action-control-size\);[\s\S]*?max-width: var\(--home-tv-action-control-size\);[\s\S]*?height: var\(--home-tv-action-control-size\);[\s\S]*?min-height: var\(--home-tv-action-control-size\);[\s\S]*?max-height: var\(--home-tv-action-control-size\);/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-like-action \{[\s\S]*?width: var\(--home-tv-action-control-size\) !important;[\s\S]*?height: var\(--home-tv-action-control-size\) !important;[\s\S]*?border-radius: 50% !important;/,
   );
   const soundFactory = homeSource.match(
     /function createHomeTvFeedSoundButton\(slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedFullscreenButton)/,

@@ -16,7 +16,11 @@ test("homepage TV overlays use a compact safe action system", () => {
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-action \{[\s\S]*?width: 46px;[\s\S]*?min-width: 46px;[\s\S]*?max-width: 46px;[\s\S]*?height: 46px;[\s\S]*?min-height: 46px;[\s\S]*?max-height: 46px;/,
+    /\.home-tv-feed-slide \{[\s\S]*?--home-tv-action-control-size: 46px;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-action \{[\s\S]*?width: var\(--home-tv-action-control-size\);[\s\S]*?min-width: var\(--home-tv-action-control-size\);[\s\S]*?max-width: var\(--home-tv-action-control-size\);[\s\S]*?height: var\(--home-tv-action-control-size\);[\s\S]*?min-height: var\(--home-tv-action-control-size\);[\s\S]*?max-height: var\(--home-tv-action-control-size\);/,
   );
   assert.match(
     homeSource,
@@ -24,7 +28,7 @@ test("homepage TV overlays use a compact safe action system", () => {
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-deal-action \{[\s\S]*?width: 46px !important;[\s\S]*?height: 46px !important;[\s\S]*?font-size: 7px;/,
+    /\.home-tv-feed-deal-action \{[\s\S]*?width: var\(--home-tv-action-control-size\) !important;[\s\S]*?height: var\(--home-tv-action-control-size\) !important;[\s\S]*?font-size: 7px;/,
   );
   assert.match(homeSource, /if \(dealState\.key === "available"\)/);
   assert.doesNotMatch(fullTvSource, /TvClubDealUnavailable|tv-club-deal-unavailable/);

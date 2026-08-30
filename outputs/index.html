@@ -32476,6 +32476,7 @@
           .home-tv-feed-loading::before { animation: none; }
         }
         .home-tv-feed-slide {
+          --home-tv-action-control-size: 46px;
           position: relative;
           box-sizing: border-box;
           width: 100%;
@@ -32863,17 +32864,18 @@
           z-index: 7;
           right: 10px;
           bottom: 76px;
+          width: var(--home-tv-action-control-size);
           display: grid;
-          justify-items: end;
+          justify-items: center;
           gap: 6px;
         }
         .home-tv-feed-action {
-          width: 46px;
-          min-width: 46px;
-          max-width: 46px;
-          height: 46px;
-          min-height: 46px;
-          max-height: 46px;
+          width: var(--home-tv-action-control-size);
+          min-width: var(--home-tv-action-control-size);
+          max-width: var(--home-tv-action-control-size);
+          height: var(--home-tv-action-control-size);
+          min-height: var(--home-tv-action-control-size);
+          max-height: var(--home-tv-action-control-size);
           display: grid;
           place-items: center;
           padding: 0;
@@ -32913,12 +32915,12 @@
           display: none;
         }
         .home-tv-feed-like-action {
-          width: 52px !important;
-          min-width: 52px !important;
-          max-width: 52px !important;
-          height: 52px !important;
-          min-height: 52px !important;
-          max-height: 52px !important;
+          width: var(--home-tv-action-control-size) !important;
+          min-width: var(--home-tv-action-control-size) !important;
+          max-width: var(--home-tv-action-control-size) !important;
+          height: var(--home-tv-action-control-size) !important;
+          min-height: var(--home-tv-action-control-size) !important;
+          max-height: var(--home-tv-action-control-size) !important;
           aspect-ratio: 1;
           gap: 0;
           padding: 4px 0 2px;
@@ -32973,12 +32975,12 @@
         .home-tv-feed-deal-action {
           position: relative;
           box-sizing: border-box !important;
-          width: 46px !important;
-          min-width: 46px !important;
-          max-width: 46px !important;
-          height: 46px !important;
-          min-height: 46px !important;
-          max-height: 46px !important;
+          width: var(--home-tv-action-control-size) !important;
+          min-width: var(--home-tv-action-control-size) !important;
+          max-width: var(--home-tv-action-control-size) !important;
+          height: var(--home-tv-action-control-size) !important;
+          min-height: var(--home-tv-action-control-size) !important;
+          max-height: var(--home-tv-action-control-size) !important;
           display: grid !important;
           grid-template-rows: 19px 9px !important;
           align-content: center !important;
