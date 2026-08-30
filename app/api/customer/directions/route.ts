@@ -16,7 +16,7 @@ const MAX_DIRECTION_BODY_BYTES = 8_192;
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { user } = await createRequestSupabaseContext(request);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_DIRECTION_BODY_BYTES,
       invalidMessage: "Invalid direction request.",
@@ -41,8 +41,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid sessionId." }, { status: 400 });
     }
 
-    await requirePublicDancersAtVenue(createAdminSupabaseClient(), venueId, dancerIds);
-    const directionRequests = await recordDirectionRequest(client, user.id, { venueId, dancerIds, sessionId });
+    const adminClient = createAdminSupabaseClient();
+    await requirePublicDancersAtVenue(adminClient, venueId, dancerIds);
+    const directionRequests = await recordDirectionRequest(adminClient, user.id, { venueId, dancerIds, sessionId });
 
     return NextResponse.json({ ok: true, directionRequests });
   } catch (error) {

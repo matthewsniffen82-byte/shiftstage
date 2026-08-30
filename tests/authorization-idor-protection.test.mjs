@@ -40,7 +40,7 @@ test("customer resource writes verify server-side public targets before mutating
   assertGuardBefore(favoriteRoute, "requirePublicDancer(createAdminSupabaseClient(), dancerId)", "await favoriteDancer(client, user.id, dancerId)");
   assertGuardBefore(followRoute, "requirePublicDancer(createAdminSupabaseClient(), dancerId)", "await followDancer(client, user.id, dancerId)");
   assertGuardBefore(venueFollowRoute, "requirePublicVenue(createAdminSupabaseClient(), venueId)", '.from("venue_follows").upsert');
-  assertGuardBefore(directionRoute, "requirePublicDancersAtVenue(createAdminSupabaseClient(), venueId, dancerIds)", "recordDirectionRequest(client, user.id");
+  assertGuardBefore(directionRoute, "requirePublicDancersAtVenue(adminClient, venueId, dancerIds)", "recordDirectionRequest(adminClient, user.id");
 });
 
 test("analytics identifiers are checked as related resources before privileged writes", () => {
