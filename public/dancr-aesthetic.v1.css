@@ -8404,11 +8404,12 @@ body.dancer-directory-active > .app main.stack > section.stack
   display: none !important;
 }
 
-/* Every first visible section already has its status represented by the tab
- * and by each card. Later headings in All remain as useful group dividers. */
+/* All presents three status groups, so its first Working Now heading remains
+ * visible and follows the same hierarchy as Upcoming and No Schedule. */
 body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid > .dancer-directory-filters + .home-dancer-grid-heading {
-  display: none !important;
+  > #results.home-dancer-grid:not(.home-dancer-filtered-view)
+  > .dancer-directory-filters + .home-dancer-grid-heading {
+  display: flex !important;
 }
 
 body.dancer-directory-active > .app main.stack > section.stack

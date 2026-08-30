@@ -23,7 +23,14 @@ test("directory heading, dynamic total, and segmented filters are compact and ac
   assert.match(aesthetic, /#tabCount \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important/);
   assert.match(aesthetic, /\.dancer-directory-filters \{[\s\S]*?width: 100%;[\s\S]*?gap: 2px !important;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
   assert.match(aesthetic, /\.dancer-directory-filter \{[\s\S]*?min-height: 48px !important/);
-  assert.match(aesthetic, /> \.dancer-directory-filters \+ \.home-dancer-grid-heading \{[\s\S]*?display: none !important/);
+  assert.match(
+    aesthetic,
+    /#results\.home-dancer-grid\.home-dancer-filtered-view > \.home-dancer-grid-heading \{[\s\S]*?display: none !important/,
+  );
+  assert.match(
+    aesthetic,
+    /#results\.home-dancer-grid:not\(\.home-dancer-filtered-view\)[\s\S]*?> \.dancer-directory-filters \+ \.home-dancer-grid-heading \{[\s\S]*?display: flex !important/,
+  );
 });
 
 test("discovery controls, summary, heading, tabs, and cards share one master gutter", () => {
