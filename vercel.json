@@ -1,5 +1,6 @@
 {
   "framework": "nextjs",
+  "installCommand": "npx --yes npm@11.19.1 ci",
   "buildCommand": "npm run build",
   "crons": [
     {
