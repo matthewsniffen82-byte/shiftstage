@@ -529,49 +529,24 @@ async function hydrateDancerCardMetrics(client: DancrClient, cards: DancerCard[]
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [follows, profileViews, goingSignals] = await Promise.all([
-    fetchAllMetricRows((from, to) =>
-      client
-        .from("follows")
-        .select("dancer_id, notifications_enabled")
-        .in("dancer_id", dancerIds)
-        .range(from, to),
-    ),
-    fetchAllMetricRows((from, to) =>
-      client
-        .from("profile_views")
-        .select("dancer_id")
-        .in("dancer_id", dancerIds)
-        .gte("viewed_at", today.toISOString())
-        .range(from, to),
-    ),
-    shiftIds.length
-      ? fetchAllMetricRows((from, to) =>
-          client
-            .from("going_signals")
-            .select("shift_id")
-            .in("shift_id", shiftIds)
-            .range(from, to),
-        )
-      : Promise.resolve([]),
-  ]);
+  const { data, error } = await (client as any).rpc("get_public_dancer_metric_counts", {
+    p_dancer_ids: dancerIds,
+    p_shift_ids: shiftIds,
+    p_profile_views_since: today.toISOString(),
+  });
+  if (error) throw error;
 
   const followerCounts = new Map<string, number>();
   const notificationCounts = new Map<string, number>();
   const profileViewCounts = new Map<string, number>();
   const goingCounts = new Map<string, number>();
 
-  for (const follow of follows) {
-    followerCounts.set(follow.dancer_id, (followerCounts.get(follow.dancer_id) || 0) + 1);
-    if (follow.notifications_enabled === true) {
-      notificationCounts.set(follow.dancer_id, (notificationCounts.get(follow.dancer_id) || 0) + 1);
-    }
-  }
-  for (const view of profileViews) {
-    profileViewCounts.set(view.dancer_id, (profileViewCounts.get(view.dancer_id) || 0) + 1);
-  }
-  for (const signal of goingSignals) {
-    goingCounts.set(signal.shift_id, (goingCounts.get(signal.shift_id) || 0) + 1);
+  for (const row of data || []) {
+    const total = safeMetricCount(row.total);
+    if (row.metric === "followers") followerCounts.set(row.entity_id, total);
+    if (row.metric === "notifications") notificationCounts.set(row.entity_id, total);
+    if (row.metric === "profile_views") profileViewCounts.set(row.entity_id, total);
+    if (row.metric === "going") goingCounts.set(row.entity_id, total);
   }
 
   return cards.map((card) => ({
@@ -583,17 +558,9 @@ async function hydrateDancerCardMetrics(client: DancrClient, cards: DancerCard[]
   }));
 }
 
-async function fetchAllMetricRows(buildQuery: (from: number, to: number) => any): Promise<any[]> {
-  const pageSize = 1000;
-  const rows: any[] = [];
-
-  for (let from = 0; ; from += pageSize) {
-    const { data, error } = await buildQuery(from, from + pageSize - 1);
-    if (error) throw error;
-    const page = data || [];
-    rows.push(...page);
-    if (page.length < pageSize) return rows;
-  }
+function safeMetricCount(value: unknown) {
+  const count = Number(value);
+  return Number.isSafeInteger(count) && count >= 0 ? count : 0;
 }
 
 export type PublicVenuePopularity = {
@@ -616,44 +583,19 @@ export async function getPublicVenuePopularity(
   if (!uniqueVenueIds.length) return popularityByVenue;
 
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const [follows, directionRequests, profileViews] = await Promise.all([
-    fetchAllMetricRows((from, to) =>
-      client
-        .from("venue_follows")
-        .select("venue_id")
-        .in("venue_id", uniqueVenueIds)
-        .range(from, to),
-    ),
-    fetchAllMetricRows((from, to) =>
-      client
-        .from("direction_requests")
-        .select("venue_id")
-        .in("venue_id", uniqueVenueIds)
-        .gte("requested_at", since)
-        .range(from, to),
-    ),
-    fetchAllMetricRows((from, to) =>
-      client
-        .from("venue_page_events")
-        .select("venue_id")
-        .in("venue_id", uniqueVenueIds)
-        .eq("event_type", "page_view")
-        .gte("occurred_at", since)
-        .range(from, to),
-    ),
-  ]);
+  const { data, error } = await (client as any).rpc("get_public_venue_metric_counts", {
+    p_venue_ids: uniqueVenueIds,
+    p_activity_since: since,
+  });
+  if (error) throw error;
 
-  for (const follow of follows) {
-    const popularity = popularityByVenue.get(follow.venue_id);
-    if (popularity) popularity.followerCount += 1;
-  }
-  for (const request of directionRequests) {
-    const popularity = popularityByVenue.get(request.venue_id);
-    if (popularity) popularity.directionRequests30d += 1;
-  }
-  for (const view of profileViews) {
-    const popularity = popularityByVenue.get(view.venue_id);
-    if (popularity) popularity.profileViews30d += 1;
+  for (const row of data || []) {
+    const popularity = popularityByVenue.get(row.entity_id);
+    if (!popularity) continue;
+    const total = safeMetricCount(row.total);
+    if (row.metric === "followers") popularity.followerCount = total;
+    if (row.metric === "directions") popularity.directionRequests30d = total;
+    if (row.metric === "profile_views") popularity.profileViews30d = total;
   }
 
   return popularityByVenue;

@@ -30,12 +30,14 @@ test("home discovery uses one short-lived cached production endpoint", () => {
   assert.match(publicCacheSource, /max-age=10, s-maxage=10, stale-while-revalidate=20/);
 });
 
-test("live-card metrics are fetched in batches instead of once per dancer", () => {
+test("live-card metrics use one bounded aggregate instead of row paging or per-dancer queries", () => {
   assert.match(publicServiceSource, /async function hydrateDancerCardMetrics/);
-  assert.match(publicServiceSource, /\.from\("follows"\)[\s\S]*?\.in\("dancer_id", dancerIds\)/);
-  assert.match(publicServiceSource, /\.from\("profile_views"\)[\s\S]*?\.in\("dancer_id", dancerIds\)/);
-  assert.match(publicServiceSource, /\.from\("going_signals"\)[\s\S]*?\.in\("shift_id", shiftIds\)/);
-  assert.match(publicServiceSource, /async function fetchAllMetricRows/);
+  assert.match(
+    publicServiceSource,
+    /\.rpc\("get_public_dancer_metric_counts", \{[\s\S]*?p_dancer_ids: dancerIds,[\s\S]*?p_shift_ids: shiftIds/,
+  );
+  assert.doesNotMatch(publicServiceSource, /fetchAllMetricRows/);
+  assert.doesNotMatch(publicServiceSource, /\.from\("follows"\)[\s\S]*?\.range\(/);
 });
 
 test("the consolidated tonight list still requires a confirmed active check-in", () => {

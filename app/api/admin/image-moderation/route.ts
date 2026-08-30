@@ -27,6 +27,7 @@ export const dynamic = "force-dynamic";
 
 const REVIEW_DECISIONS = new Set(["approved", "rejected"]);
 const MAX_IMAGE_REVIEW_BODY_BYTES = 8_192;
+const MAX_IMAGE_REVIEW_PAGE = 1_000;
 
 export async function GET(request: Request) {
   try {
@@ -36,7 +37,10 @@ export async function GET(request: Request) {
     const admin = createAdminSupabaseClient() as any;
     const url = new URL(request.url);
     const decision = url.searchParams.get("decision") || "review";
-    const page = Math.max(0, Number.parseInt(url.searchParams.get("page") || "0", 10) || 0);
+    const page = Math.min(
+      MAX_IMAGE_REVIEW_PAGE,
+      Math.max(0, Number.parseInt(url.searchParams.get("page") || "0", 10) || 0),
+    );
     const pageSize = Math.min(50, Math.max(1, Number.parseInt(url.searchParams.get("pageSize") || "12", 10) || 12));
 
     let query = admin

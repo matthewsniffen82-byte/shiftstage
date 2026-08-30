@@ -13,8 +13,8 @@ const [legacySource, publicSource, typesSource, goingRouteSource, shiftLifecycle
 test("public live cards expose the exact database going count for their selected shift", () => {
   assert.match(typesSource, /goingCount\?: number/);
   assert.match(publicSource, /async function hydrateDancerCardMetrics/);
-  assert.match(publicSource, /\.from\("going_signals"\)[\s\S]*?\.in\("shift_id", shiftIds\)/);
-  assert.match(publicSource, /goingCounts\.set\(signal\.shift_id/);
+  assert.match(publicSource, /\.rpc\("get_public_dancer_metric_counts"[\s\S]*?p_shift_ids: shiftIds/);
+  assert.match(publicSource, /row\.metric === "going"\) goingCounts\.set\(row\.entity_id, total\)/);
   assert.match(publicSource, /goingCount: card\.shiftId \? goingCounts\.get\(card\.shiftId\) \|\| 0 : 0/);
 });
 

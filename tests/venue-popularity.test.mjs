@@ -20,21 +20,14 @@ test("public discovery loads real venue popularity through one batched service c
   );
 });
 
-test("venue popularity comes from paginated production engagement data", () => {
+test("venue popularity comes from one bounded production aggregate", () => {
   assert.match(publicService, /export async function getPublicVenuePopularity/);
   assert.match(
     publicService,
-    /fetchAllMetricRows\(\(from, to\) =>[\s\S]*?\.from\("venue_follows"\)[\s\S]*?\.select\("venue_id"\)[\s\S]*?\.in\("venue_id", uniqueVenueIds\)[\s\S]*?\.range\(from, to\)/,
+    /\.rpc\("get_public_venue_metric_counts", \{[\s\S]*?p_venue_ids: uniqueVenueIds,[\s\S]*?p_activity_since: since/,
   );
-  assert.match(
-    publicService,
-    /\.from\("direction_requests"\)[\s\S]*?\.gte\("requested_at", since\)[\s\S]*?\.range\(from, to\)/,
-  );
-  assert.match(
-    publicService,
-    /\.from\("venue_page_events"\)[\s\S]*?\.eq\("event_type", "page_view"\)[\s\S]*?\.gte\("occurred_at", since\)[\s\S]*?\.range\(from, to\)/,
-  );
-  assert.match(publicService, /popularity\.followerCount \+= 1/);
-  assert.match(publicService, /popularity\.directionRequests30d \+= 1/);
-  assert.match(publicService, /popularity\.profileViews30d \+= 1/);
+  assert.doesNotMatch(publicService, /fetchAllMetricRows/);
+  assert.match(publicService, /row\.metric === "followers"\) popularity\.followerCount = total/);
+  assert.match(publicService, /row\.metric === "directions"\) popularity\.directionRequests30d = total/);
+  assert.match(publicService, /row\.metric === "profile_views"\) popularity\.profileViews30d = total/);
 });
