@@ -13,6 +13,7 @@ import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerSignupCityInputError, requireDancerSignupCity } from "@/src/lib/dancr/signup-cities";
+import { safeSocialProfileUrl, socialProfileHandle } from "@/src/lib/dancr/social-profile-url";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -434,13 +435,7 @@ export async function PATCH(request: Request) {
     if (Array.isArray(body.socials)) {
       const submittedRows = body.socials
         .filter((social: any) => SOCIAL_PLATFORMS.has(social?.platform))
-        .map((social: any) => ({
-          dancer_id: profile.id,
-          platform: social.platform as SocialPlatform,
-          handle: String(social.handle || "").trim(),
-          url: String(social.url || "").trim(),
-          is_active: social.isActive !== false,
-        }));
+        .map((social: any) => normalizeSubmittedSocial(profile.id, social));
       const rows = submittedRows.filter((social: any) => social.is_active && (social.handle || social.url));
 
       if (rows.length) {
@@ -727,6 +722,36 @@ export async function PATCH(request: Request) {
   }
 }
 
+function normalizeSubmittedSocial(dancerId: string, social: any) {
+  const platform = social.platform as SocialPlatform;
+  const isActive = social.isActive !== false;
+  const submittedValue = String(social.url || social.handle || "").trim();
+  if (!isActive || !submittedValue) {
+    return { dancer_id: dancerId, platform, handle: "", url: "", is_active: isActive };
+  }
+
+  const url = safeSocialProfileUrl(platform, submittedValue);
+  if (!url) {
+    throw new ProfileInputError(`${socialPlatformLabel(platform)} must be a valid profile link or username.`);
+  }
+
+  return {
+    dancer_id: dancerId,
+    platform,
+    handle: socialProfileHandle(platform, url),
+    url,
+    is_active: true,
+  };
+}
+
+function socialPlatformLabel(platform: SocialPlatform) {
+  if (platform === "tiktok") return "TikTok";
+  if (platform === "snapchat") return "Snapchat";
+  if (platform === "onlyfans") return "OnlyFans";
+  if (platform === "x") return "X";
+  return "Instagram";
+}
+
 function loadDancerProfile(client: any, userId: string) {
   return client
     .from("dancer_profiles")
@@ -738,6 +763,15 @@ function loadDancerProfile(client: any, userId: string) {
 function withoutDancerBio<T extends Record<string, any>>(profile: T): Omit<T, "bio"> {
   const profileWithoutBio: Record<string, any> = { ...profile };
   delete profileWithoutBio.bio;
+  if (Array.isArray(profileWithoutBio.social_links)) {
+    profileWithoutBio.social_links = profileWithoutBio.social_links.map((link: any) => {
+      const platform = link.platform as SocialPlatform;
+      const url = safeSocialProfileUrl(platform, link.url);
+      return url
+        ? { ...link, handle: socialProfileHandle(platform, url), url }
+        : { ...link, handle: "", url: "", is_active: false };
+    });
+  }
   return profileWithoutBio as Omit<T, "bio">;
 }
 

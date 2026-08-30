@@ -4,6 +4,7 @@ import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import {
   CLUB_DEAL_OFFER_PRESETS,
   defaultClubDealOfferPreset,
@@ -4238,8 +4239,9 @@ function normalizeSubmissionSocials(item: Record<string, unknown>) {
     .filter((social) => social.isActive !== false && social.is_active !== false)
     .map((social) => {
       const platform = asText(social.platform || social.type).toLowerCase();
-      const url = asText(social.url || social.href);
-      const handle = asText(social.handle || social.username || social.value) || socialHandleFromUrl(url);
+      const submittedUrl = asText(social.url || social.href);
+      const url = safeSocialProfileUrl(platform, submittedUrl) || "";
+      const handle = asText(social.handle || social.username || social.value) || socialHandleFromUrl(submittedUrl);
       return {
         id: asText(social.id),
         platform,
@@ -4748,9 +4750,10 @@ function AdminDancerFullProfile({
             {socials.map((social, index) => {
               const socialId = asText(social.id);
               const label = asText(social.platform) || "Social link";
+              const socialUrl = safeSocialProfileUrl(asText(social.platform), asText(social.url));
               return (
                 <div className="submission-link admin-managed-content" key={socialId || index}>
-                  <a className="admin-managed-content-link" href={asText(social.url) || "#"} target="_blank" rel="noreferrer">
+                  <a className="admin-managed-content-link" href={socialUrl || undefined} target="_blank" rel="noopener noreferrer">
                     <strong>{label}</strong>
                     <small>{asText(social.handle) || asText(social.url)}</small>
                     <small>{asText(social.reviewStatus || social.review_status) || "pending"}</small>

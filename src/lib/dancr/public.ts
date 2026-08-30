@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DancerCard, DancerProfile, ShiftSummary, VenueSummary } from "./types";
+import type { DancerCard, DancerProfile, ShiftSummary, SocialPlatform, VenueSummary } from "./types";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
+import { safeSocialProfileUrl, socialProfileHandle } from "./social-profile-url";
 import { verifiedVenueLogoUrl } from "./venue-branding";
 import { isActiveNfcPresence } from "./shift-presence";
 
@@ -293,12 +294,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
     }),
     socialLinks: (row.social_links || [])
       .filter((link: any) => link.is_active !== false)
-      .map((link: any) => ({
-        id: link.id,
-        platform: link.platform,
-        handle: link.handle,
-        url: link.url,
-      })),
+      .flatMap(safePublicSocialLink),
     upcomingShifts: (row.shifts || [])
       .filter((shift: any) => shift.status === "posted" && isShiftPubliclyVisible(shift))
       .map(toShiftSummary),
@@ -683,12 +679,19 @@ function approvedDancerPhotoSources(client: DancrClient, row: any) {
 function approvedSocialLinks(row: any) {
   return (row.social_links || [])
     .filter((link: any) => link.is_active !== false && link.url)
-    .map((link: any) => ({
-      id: link.id,
-      platform: link.platform,
-      handle: link.handle,
-      url: link.url,
-    }));
+    .flatMap(safePublicSocialLink);
+}
+
+function safePublicSocialLink(link: any) {
+  const platform = link.platform as SocialPlatform;
+  const url = safeSocialProfileUrl(platform, link.url);
+  if (!url) return [];
+  return [{
+    id: String(link.id || ""),
+    platform,
+    handle: socialProfileHandle(platform, url),
+    url,
+  }];
 }
 
 function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
