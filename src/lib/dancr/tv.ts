@@ -21,6 +21,7 @@ import {
   isDancerIdentityReferenceRequiredError,
 } from "./media-identity";
 import {
+  myDancrTvPosterStoragePath,
   removeArchivedOriginalMedia,
   watermarkStoredVideo,
 } from "./media-watermark";
@@ -67,7 +68,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 const IDENTITY_PROFILE_FIELDS = ", venue_approved_at";
 const MODERATION_IDENTITY_PROFILE_FIELDS = `${IDENTITY_PROFILE_FIELDS}, avatar_storage_path`;
 const PUBLIC_TV_SELECT =
-  `id, storage_path, duration_seconds, width, height, published_at, expires_at, distribution_scope, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
+  `id, storage_path, duration_seconds, width, height, published_at, expires_at, distribution_scope, moderation_details, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -87,6 +88,7 @@ type FeedOptions = {
 export type MyDancrTvVideo = {
   id: string;
   videoUrl: string;
+  posterUrl?: string | null;
   durationSeconds: number;
   width: number;
   height: number;
@@ -383,6 +385,7 @@ function tvCitiesMatch(left: string, right: string) {
 
 type NormalizedFeedRow = Omit<MyDancrTvVideo, "videoUrl"> & {
   storagePath: string;
+  posterStoragePath: string | null;
   dancerPhotoPath: string | null;
 };
 
@@ -394,6 +397,7 @@ function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
   return {
     id: row.id,
     storagePath: row.storage_path,
+    posterStoragePath: normalizedVideoPosterStoragePath(row),
     durationSeconds: Number(row.duration_seconds || 0),
     width: Number(row.width || 0),
     height: Number(row.height || 0),
@@ -560,7 +564,10 @@ async function signPublicVideos(
   ] = await Promise.all([
     admin.storage
       .from(MYDANCR_TV_BUCKET)
-      .createSignedUrls(rows.map((row) => row.storagePath), MYDANCR_TV_SIGNED_URL_SECONDS),
+      .createSignedUrls([
+        ...rows.map((row) => row.storagePath),
+        ...rows.flatMap((row) => row.posterStoragePath ? [row.posterStoragePath] : []),
+      ], MYDANCR_TV_SIGNED_URL_SECONDS),
     admin
       .from("dancer_photos")
       .select("dancer_id, storage_path")
@@ -597,10 +604,18 @@ async function signPublicVideos(
     const avatarPhoto = avatarPath
       ? responsivePublicImage(admin, "dancer-photos", avatarPath)
       : primaryPhoto;
-    const { storagePath: _storagePath, dancerPhotoPath: _dancerPhotoPath, ...publicVideo } = row;
+    const {
+      storagePath: _storagePath,
+      posterStoragePath: _posterStoragePath,
+      dancerPhotoPath: _dancerPhotoPath,
+      ...publicVideo
+    } = row;
     return {
       ...publicVideo,
       videoUrl,
+      posterUrl: row.posterStoragePath
+        ? signedByPath.get(row.posterStoragePath) || null
+        : null,
       dancer: {
         ...publicVideo.dancer,
         primaryPhotoUrl: primaryPhoto?.imageUrl || null,
@@ -612,6 +627,19 @@ async function signPublicVideos(
       },
     };
   });
+}
+
+function normalizedVideoPosterStoragePath(row: any) {
+  const configuredPath = String(
+    row?.moderation_details?.posterStoragePath || "",
+  ).trim();
+  if (!configuredPath) return null;
+  try {
+    const expectedPath = myDancrTvPosterStoragePath(String(row.storage_path || ""));
+    return configuredPath === expectedPath ? expectedPath : null;
+  } catch {
+    return null;
+  }
 }
 
 function diversifyFeed(rows: NormalizedFeedRow[], selectedVideoId = "") {
@@ -964,7 +992,7 @@ export async function publishPlatformMyDancrTvUpload(
     storagePath: video.storage_path,
   });
 
-  await watermarkStoredVideo(admin, {
+  const { posterStoragePath } = await watermarkStoredVideo(admin, {
     publicBucket: MYDANCR_TV_BUCKET,
     storagePath: video.storage_path,
     storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
@@ -989,7 +1017,11 @@ export async function publishPlatformMyDancrTvUpload(
       moderation_provider_flagged: false,
       moderation_frame_count: 0,
       moderation_model: "platform_owner_approval",
-      moderation_details: { mode: "platform_owner_approval", bypassedAutomatedModeration: true },
+      moderation_details: {
+        mode: "platform_owner_approval",
+        bypassedAutomatedModeration: true,
+        posterStoragePath,
+      },
       moderation_attempt_count: 0,
       moderation_started_at: publishedAt,
       moderation_completed_at: publishedAt,
@@ -1252,14 +1284,16 @@ async function autoApproveMyDancrTvDemoUpload(
 
   const completedAt = new Date().toISOString();
   let watermarkApplied = true;
+  let posterStoragePath: string | null = null;
   try {
-    await watermarkStoredVideo(admin, {
+    const media = await watermarkStoredVideo(admin, {
       publicBucket: MYDANCR_TV_BUCKET,
       storagePath: video.storage_path,
       storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
       width: Number(video.width),
       height: Number(video.height),
     });
+    posterStoragePath = media.posterStoragePath;
   } catch (error) {
     watermarkApplied = false;
     console.error(JSON.stringify({
@@ -1276,6 +1310,7 @@ async function autoApproveMyDancrTvDemoUpload(
       completedAt,
       expiresAt: myDancrTvExpiry(),
       watermarkApplied,
+      posterStoragePath,
     }))
     .eq("id", video.id)
     .eq("status", expectedStatus)
@@ -1339,15 +1374,17 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
 
   let decision = moderation.decision;
   let reasonCodes = moderation.reasonCodes;
+  let posterStoragePath: string | null = null;
   if (decision === "approved") {
     try {
-      await watermarkStoredVideo(admin, {
+      const media = await watermarkStoredVideo(admin, {
         publicBucket: MYDANCR_TV_BUCKET,
         storagePath: video.storage_path,
         storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
         width: Number(video.width),
         height: Number(video.height),
       });
+      posterStoragePath = media.posterStoragePath;
     } catch (error) {
       decision = "review";
       reasonCodes = [...reasonCodes, "public_watermark_processing_failed"];
@@ -1367,7 +1404,10 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     moderation_provider_flagged: moderation.providerFlagged,
     moderation_frame_count: moderation.frameCount,
     moderation_model: moderation.moderationModel,
-    moderation_details: moderation.details,
+    moderation_details: {
+      ...moderation.details,
+      ...(posterStoragePath ? { posterStoragePath } : {}),
+    },
     moderation_completed_at: completedAt,
     ...(decision === "approved"
       ? {
@@ -1478,7 +1518,10 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
   if (error) throw error;
   if (!video) throw new Error("Video not found.");
   assertMyDancrTvStoragePath(video);
-  await admin.storage.from(MYDANCR_TV_BUCKET).remove([video.storage_path]);
+  await admin.storage.from(MYDANCR_TV_BUCKET).remove([
+    video.storage_path,
+    myDancrTvPosterStoragePath(video.storage_path),
+  ]);
   await removeArchivedOriginalMedia(
     admin,
     MYDANCR_TV_BUCKET,
@@ -1543,7 +1586,7 @@ export async function reviewMyDancrTvVideo(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, status, storage_path, storage_mime, duration_seconds, width, height, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, status, storage_path, storage_mime, duration_seconds, width, height, moderation_details, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
@@ -1559,14 +1602,16 @@ export async function reviewMyDancrTvVideo(
   if (decision === "rejected" && notes.trim().length < 3) {
     throw new Error("Add a clear rejection reason for the dancer.");
   }
+  let posterStoragePath: string | null = null;
   if (decision === "approved") {
-    await watermarkStoredVideo(admin, {
+    const media = await watermarkStoredVideo(admin, {
       publicBucket: MYDANCR_TV_BUCKET,
       storagePath: video.storage_path,
       storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
       width: Number(video.width),
       height: Number(video.height),
     });
+    posterStoragePath = media.posterStoragePath;
   }
 
   const reviewedAt = new Date().toISOString();
@@ -1579,6 +1624,10 @@ export async function reviewMyDancrTvVideo(
         reviewed_at: reviewedAt,
         published_at: reviewedAt,
         expires_at: expiresAt,
+        moderation_details: {
+          ...(video.moderation_details || {}),
+          posterStoragePath,
+        },
       }
     : {
         status: "rejected",
@@ -1626,6 +1675,7 @@ export async function getVenueMyDancrTvVideos(admin: AdminClient, ownerUserId: s
     videos: videos.map((video) => ({
       id: video.id,
       videoUrl: video.videoUrl,
+      posterUrl: video.posterUrl || null,
       status: "approved",
       dancer: video.dancer,
       shift: video.shift,

@@ -77,7 +77,8 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
     /function createHomeTvFeedVideo\(item, index, slide, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedCopy)/,
   )?.[0] || "";
   assert.doesNotMatch(mediaFallbackFactory, /primaryPhotoUrl|backgroundImage|url\(/);
-  assert.doesNotMatch(videoFactory, /primaryPhotoUrl|\.poster\s*=/);
+  assert.doesNotMatch(videoFactory, /primaryPhotoUrl/);
+  assert.match(videoFactory, /item\?\.posterUrl \|\| item\?\.poster_url[\s\S]*?video\.poster = posterUrl/);
   assert.match(mediaFallbackFactory, /status\.hidden = true/);
   assert.doesNotMatch(mediaFallbackFactory, /Loading video/);
   assert.match(videoFactory, /video\.addEventListener\("loadeddata"[\s\S]*?classList\.remove\("is-media-loading", "is-media-unavailable"\)/);

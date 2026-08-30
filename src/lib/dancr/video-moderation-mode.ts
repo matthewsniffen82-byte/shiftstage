@@ -22,6 +22,7 @@ export function demoVideoAutoApprovalValues(input: {
   completedAt: string;
   expiresAt: string;
   watermarkApplied: boolean;
+  posterStoragePath?: string | null;
 }) {
   return {
     status: "approved" as const,
@@ -40,6 +41,9 @@ export function demoVideoAutoApprovalValues(input: {
       mode: "demo_auto_approve",
       aiModerationSkipped: true,
       watermarkApplied: input.watermarkApplied,
+      ...(input.posterStoragePath
+        ? { posterStoragePath: input.posterStoragePath }
+        : {}),
     },
     moderation_started_at: null,
     moderation_completed_at: input.completedAt,

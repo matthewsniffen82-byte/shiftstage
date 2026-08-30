@@ -227,7 +227,7 @@ export function TvVideoStrip({
               onMouseEnter={(event) => playPreviewCard(event.currentTarget)}
               onMouseLeave={(event) => pausePreviewCard(event.currentTarget)}
             >
-              <video aria-hidden="true" loop muted playsInline preload="metadata" src={video.videoUrl} />
+              <video aria-hidden="true" loop muted playsInline poster={video.posterUrl || undefined} preload="metadata" src={video.videoUrl} />
               <div>
                 {showDancerName ? <strong>{video.dancer.stageName}</strong> : null}
                 <span className={`tv-strip-schedule ${schedule.className}`}>{schedule.label}</span>
@@ -286,6 +286,7 @@ export function TvVideoStrip({
                 loop
                 muted={viewerMuted}
                 playsInline
+                poster={activeVideo.posterUrl || undefined}
                 preload="auto"
                 ref={viewerVideo}
                 src={activeVideo.videoUrl}
@@ -367,7 +368,7 @@ export function TvVideoStrip({
                       setActiveVideo(video);
                     }}
                   >
-                    <video aria-hidden="true" muted playsInline preload="metadata" src={video.videoUrl} />
+                    <video aria-hidden="true" muted playsInline poster={video.posterUrl || undefined} preload="metadata" src={video.videoUrl} />
                     <span>{index + 1}</span>
                   </button>
                 ))}
@@ -499,9 +500,9 @@ function TvVideoStripStyles() {
       .tv-strip-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .tv-strip-head h2 { margin: 0; font-size: clamp(22px, 4vw, 34px); }
       .tv-strip-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(190px, 240px); gap: 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; padding-bottom: 4px; }
-      .tv-strip-card { position: relative; min-height: 330px; padding: 0; overflow: hidden; border: 1px solid rgba(139,92,246,.3); border-radius: 10px; color: #fff; background: #08080b; font: inherit; text-align: left; scroll-snap-align: start; cursor: pointer; }
+      .tv-strip-card { position: relative; min-height: 330px; padding: 0; overflow: hidden; border: 1px solid rgba(139,92,246,.3); border-radius: 10px; color: #fff; background: radial-gradient(circle at 50% 28%,rgba(126,234,255,.1),transparent 30%),linear-gradient(145deg,rgba(109,40,217,.2),#020204 72%); font: inherit; text-align: left; scroll-snap-align: start; cursor: pointer; }
       .tv-strip-card:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
-      .tv-strip-card video { width: 100%; height: 100%; min-height: 330px; display: block; object-fit: cover; background: #000; }
+      .tv-strip-card video { width: 100%; height: 100%; min-height: 330px; display: block; object-fit: cover; background: transparent; }
       .tv-strip-card::after { content: ""; position: absolute; inset: 42% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.92)); }
       .tv-strip-card > div { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 12px; display: grid; gap: 5px; }
       .tv-strip-card strong { overflow: hidden; color: #fff; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
@@ -512,8 +513,8 @@ function TvVideoStripStyles() {
       .tv-strip-open { width: fit-content; color: #fff; font-size: 10px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
       .tv-video-viewer { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 0; overscroll-behavior: none; touch-action: none; background: rgba(0,0,0,.96); backdrop-filter: blur(18px); }
       .tv-video-viewer-shell { position: relative; width: 100%; max-width: none; height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 0; border-radius: 0; background: #000; box-shadow: none; overscroll-behavior: none; touch-action: none; }
-      .tv-video-viewer-stage { position: relative; min-height: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; }
-      .tv-video-viewer-stage > video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
+      .tv-video-viewer-stage { position: relative; min-height: 0; overflow: hidden; background: radial-gradient(circle at 50% 28%,rgba(126,234,255,.1),transparent 30%),linear-gradient(145deg,rgba(109,40,217,.2),#020204 72%); overscroll-behavior: none; touch-action: none; }
+      .tv-video-viewer-stage > video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: transparent; touch-action: none; user-select: none; -webkit-user-select: none; }
       .tv-video-playback-feedback { position: absolute; z-index: 4; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: tv-video-playback-feedback 850ms ease both; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
       .tv-video-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
       .tv-video-viewer-close { position: absolute; z-index: 3; top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)); right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px)); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50%; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); line-height: 1; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }

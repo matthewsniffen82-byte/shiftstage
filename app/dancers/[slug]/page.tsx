@@ -315,6 +315,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           videos={tvVideos.map((video) => ({
             id: video.id,
             videoUrl: video.videoUrl,
+            posterUrl: video.posterUrl || null,
             durationSeconds: video.durationSeconds,
           }))}
           socialContent={profile.socialLinks.length ? (
@@ -611,7 +612,7 @@ function PublicProfileStyles() {
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .profile-media-grid { min-height: 108px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
       .profile-media-grid-item { position: relative; width: 100%; min-width: 0; aspect-ratio: 9 / 16; display: block; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 3px; color: #fff; background: #0b0b10; box-shadow: none; cursor: pointer; }
-      .profile-media-grid-item.is-photo::before { position: absolute; z-index: 0; inset: 0; content: ""; background: radial-gradient(circle at 68% 20%, rgba(126,234,255,.12), transparent 34%), radial-gradient(circle at 20% 82%, rgba(139,92,246,.2), transparent 42%), linear-gradient(145deg,#111118,#07070b); }
+      .profile-media-grid-item:is(.is-photo,.is-video)::before { position: absolute; z-index: 0; inset: 0; content: ""; background: radial-gradient(circle at 68% 20%, rgba(126,234,255,.12), transparent 34%), radial-gradient(circle at 20% 82%, rgba(139,92,246,.2), transparent 42%), linear-gradient(145deg,#111118,#07070b); }
       .profile-media-grid-item img, .profile-media-grid-item video { position: relative; z-index: 1; width: 100%; height: 100%; display: block; object-fit: cover; background: transparent; pointer-events: none; }
       .profile-media-grid-item img { filter: brightness(1.14) contrast(1.03); opacity: 0; mix-blend-mode: normal; }
       .profile-media-grid-item img[data-image-state="ready"] { opacity: 1; }

@@ -686,6 +686,7 @@ export default function TvFeedClient({
                   loop
                   muted={muted}
                   playsInline
+                  poster={video.posterUrl || undefined}
                   preload={
                     video.id === activeVideoId ? "auto" : "none"
                   }
@@ -1049,7 +1050,7 @@ function TvStyles() {
       .tv-slide { height: 100%; min-height: 100%; max-height: 100%; padding: 8px 0; display: grid; place-items: center; overflow: hidden; contain: layout paint; scroll-snap-align: start; scroll-snap-stop: always; }
       .tv-player { position: relative; width: min(100%, 620px); height: 100%; min-height: 0; max-height: none; overflow: hidden; border: 0; outline: 0; border-radius: 20px; background: #000; box-shadow: 0 26px 80px rgba(0,0,0,.56); filter: none; }
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
-      .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
+      .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: transparent; cursor: pointer; }
       .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
       .tv-playback-feedback { position: absolute; z-index: 7; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: tv-playback-feedback 850ms ease both; backdrop-filter: blur(10px); }
       .tv-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }

@@ -29610,7 +29610,7 @@
       inset: 0;
       display: grid;
       place-items: center;
-      background: #000;
+      background: radial-gradient(circle at 50% 30%, rgba(126,234,255,.1), transparent 28%), linear-gradient(145deg, rgba(109,40,217,.2), #020204 70%);
     }
 
     .profile-modal .modal-media-video-preview > video {
@@ -29618,7 +29618,7 @@
       height: 100%;
       display: block;
       object-fit: cover;
-      background: #000;
+      background: transparent;
       pointer-events: none;
     }
 
@@ -32533,7 +32533,7 @@
           user-select: none;
           -webkit-user-select: none;
         }
-        .home-tv-feed-slide.is-media-loading .home-tv-feed-video,
+        .home-tv-feed-slide.is-media-loading:not(.has-media-poster) .home-tv-feed-video,
         .home-tv-feed-slide.is-media-unavailable .home-tv-feed-video {
           opacity: 0;
         }
@@ -36323,7 +36323,7 @@
           display: block !important;
           object-fit: cover;
           object-position: center top;
-          background: #0b0b10 !important;
+          background: radial-gradient(circle at 50% 28%, rgba(126,234,255,.1), transparent 30%), linear-gradient(145deg, rgba(109,40,217,.2), #020204 72%) !important;
         }
         .venue-dancer-grid .home-dancer-grid-photo::after {
           background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);
@@ -52030,6 +52030,8 @@
       video.defaultMuted = modalProfileVideoMuted;
       video.playsInline = true;
       video.preload = "metadata";
+      const posterUrl = profileVideoPosterUrl(item);
+      if (posterUrl) video.poster = posterUrl;
       video.setAttribute("autoplay", "");
       video.setAttribute("aria-hidden", "true");
       ["loadedmetadata", "durationchange", "timeupdate", "volumechange"].forEach((eventName) => {
@@ -60218,6 +60220,8 @@
       video.setAttribute("webkit-playsinline", "");
       if (homeTvFeedMuted) video.setAttribute("muted", "");
       if (index === 0) video.setAttribute("autoplay", "");
+      const posterUrl = String(item?.posterUrl || item?.poster_url || "").trim();
+      if (posterUrl) video.poster = posterUrl;
       video.preload = index === 0 ? "auto" : "none";
       video.controlsList = "nodownload noremoteplayback nofullscreen";
       video.disablePictureInPicture = true;
@@ -60673,6 +60677,7 @@
       const previousVideoId = String(slide.dataset.videoId || "");
       if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
+      slide.classList.toggle("has-media-poster", Boolean(item?.posterUrl || item?.poster_url));
       delete slide.dataset.userPaused;
       slide.classList.remove("is-media-unavailable", "is-applauding", "is-autoplay-blocked");
       slide.classList.add("is-media-loading", "is-paused");

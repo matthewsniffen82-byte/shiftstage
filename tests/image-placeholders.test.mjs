@@ -69,7 +69,7 @@ test("profile photo grids and viewers reveal decoded images over stable placehol
   assert.match(profilePage, /\.profile-media-grid-item \{[\s\S]*?aspect-ratio: 9 \/ 16;/);
   assert.match(
     profilePage,
-    /\.profile-media-grid-item\.is-photo::before[\s\S]*?radial-gradient[\s\S]*?\.profile-media-grid-item img\[data-image-state="ready"\] \{ opacity: 1;/,
+    /\.profile-media-grid-item:is\(\.is-photo,\.is-video\)::before[\s\S]*?radial-gradient[\s\S]*?\.profile-media-grid-item img\[data-image-state="ready"\] \{ opacity: 1;/,
   );
   assert.match(
     profilePage,
@@ -96,7 +96,7 @@ test("live modal and dashboard previews use the same stable photo treatment", ()
   );
   assert.match(
     dashboard,
-    /\.dancer-profile-preview-overlay \.profile-media-grid-item\.is-photo::before[\s\S]*?\.profile-media-grid-item img\[data-image-state="ready"\] \{ opacity:1;/,
+    /\.dancer-profile-preview-overlay \.profile-media-grid-item:is\(\.is-photo,\.is-video\)::before[\s\S]*?\.profile-media-grid-item img\[data-image-state="ready"\] \{ opacity:1;/,
   );
   assert.match(
     dashboard,

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { myDancrTvPosterStoragePath } from "@/src/lib/dancr/media-watermark";
 import {
   createMyDancrTvUpload,
   hideOwnMyDancrTvVideo,
@@ -267,7 +268,10 @@ function parseVideos(value: unknown): ImportVideoInput[] {
 
 async function cleanupPreparedUploads(admin: ReturnType<typeof createAdminSupabaseClient>, prepared: PreparedUpload[]) {
   if (!prepared.length) return;
-  const paths = prepared.map((upload) => upload.path);
+  const paths = prepared.flatMap((upload) => [
+    upload.path,
+    myDancrTvPosterStoragePath(upload.path),
+  ]);
   const ids = prepared.map((upload) => upload.videoId);
   await admin.storage.from(MYDANCR_TV_BUCKET).remove(paths).catch(() => null);
   await admin.from("mydancr_tv_videos").delete().in("id", ids);

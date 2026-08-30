@@ -11,6 +11,8 @@ export const DANCR_MEDIA_WATERMARK_OPACITY = 0.34;
 export const DANCR_MEDIA_WATERMARK_RENDERING = "vector-path-v1";
 
 const VIDEO_WATERMARK_TIMEOUT_MS = 120_000;
+const VIDEO_POSTER_TIMEOUT_MS = 30_000;
+const VIDEO_POSTER_MAX_WIDTH = 640;
 const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 const PRIVATE_VIDEO_ORIGINAL_PREFIX = "__originals";
 const MYDANCR_WORDMARK_VIEWBOX_WIDTH = 4132;
@@ -53,6 +55,21 @@ export function archivedOriginalStoragePath(
   return publicBucket === MYDANCR_TV_BUCKET
     ? `${PRIVATE_VIDEO_ORIGINAL_PREFIX}/${normalizedPath}`
     : `${normalizedBucket}/${normalizedPath}`;
+}
+
+export function myDancrTvPosterStoragePath(videoStoragePath: string) {
+  const normalizedPath = String(videoStoragePath || "")
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .trim();
+  if (
+    !normalizedPath ||
+    normalizedPath.includes("..") ||
+    !/\.[a-z0-9]+$/i.test(normalizedPath)
+  ) {
+    throw new Error("A valid MyDancr TV video path is required.");
+  }
+  return normalizedPath.replace(/\.[a-z0-9]+$/i, ".poster.webp");
 }
 
 export function chooseImageWatermarkPosition(
@@ -226,6 +243,8 @@ export async function watermarkStoredVideo(
     });
     const watermarked = await readFile(resultPath);
     if (!watermarked.length) throw new Error("The public video watermark could not be generated.");
+    const posterStoragePath = myDancrTvPosterStoragePath(input.storagePath);
+    const poster = await createDancrVideoPoster(watermarked, input.storageMime);
     const { error } = await client.storage
       .from(input.publicBucket)
       .upload(input.storagePath, watermarked, {
@@ -234,14 +253,120 @@ export async function watermarkStoredVideo(
         upsert: true,
       });
     if (error) throw error;
+    const { error: posterError } = await client.storage
+      .from(input.publicBucket)
+      .upload(posterStoragePath, poster, {
+        cacheControl: "31536000",
+        contentType: "image/webp",
+        upsert: true,
+      });
+    if (posterError) throw posterError;
     console.info(JSON.stringify({
       event: "public_media.video_watermarked",
       storagePath: input.storagePath,
       bytes: watermarked.length,
+      posterStoragePath,
+      posterBytes: poster.length,
     }));
+    return { posterStoragePath };
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
+}
+
+export async function generateStoredVideoPoster(
+  client: DancrClient,
+  input: {
+    publicBucket: string;
+    storagePath: string;
+    storageMime: "video/mp4" | "video/webm";
+  },
+) {
+  const source = await downloadRequiredObject(
+    client,
+    input.publicBucket,
+    input.storagePath,
+  );
+  const poster = await createDancrVideoPoster(source, input.storageMime);
+  const posterStoragePath = myDancrTvPosterStoragePath(input.storagePath);
+  const { error } = await client.storage
+    .from(input.publicBucket)
+    .upload(posterStoragePath, poster, {
+      cacheControl: "31536000",
+      contentType: "image/webp",
+      upsert: true,
+    });
+  if (error) throw error;
+  return { posterStoragePath, bytes: poster.length };
+}
+
+export async function createDancrVideoPoster(
+  source: Buffer,
+  storageMime: "video/mp4" | "video/webm",
+) {
+  if (!source.length) throw new Error("A video is required to create its preview image.");
+  const workspace = await mkdtemp(path.join(tmpdir(), "mydancr-poster-"));
+  const extension = storageMime === "video/webm" ? "webm" : "mp4";
+  const sourcePath = path.join(workspace, `source.${extension}`);
+  const framePath = path.join(workspace, "frame.png");
+  try {
+    await writeFile(sourcePath, source);
+    await runVideoPosterFfmpeg(sourcePath, framePath);
+    const frame = await readFile(framePath);
+    if (!frame.length) throw new Error("The video preview frame could not be generated.");
+    const sharp = await loadSharp();
+    return sharp(frame, { failOn: "error", limitInputPixels: false })
+      .webp({ effort: 4, quality: 78, smartSubsample: true })
+      .toBuffer();
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+}
+
+async function runVideoPosterFfmpeg(sourcePath: string, framePath: string) {
+  const executable = ffmpegPath;
+  if (!executable) throw new Error("The video preview encoder is unavailable.");
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(executable, [
+      "-y",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-ss",
+      "0.1",
+      "-i",
+      sourcePath,
+      "-frames:v",
+      "1",
+      "-vf",
+      `scale='min(${VIDEO_POSTER_MAX_WIDTH},iw)':-2`,
+      "-an",
+      framePath,
+    ], {
+      windowsHide: true,
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    let stderr = "";
+    let settled = false;
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      callback();
+    };
+    const timer = setTimeout(() => {
+      child.kill();
+      finish(() => reject(new Error("The video preview encoder timed out.")));
+    }, VIDEO_POSTER_TIMEOUT_MS);
+    child.stderr?.on("data", (chunk) => {
+      stderr = `${stderr}${String(chunk)}`.slice(-4000);
+    });
+    child.once("error", (error) => finish(() => reject(error)));
+    child.once("close", (code) => finish(() => {
+      if (code === 0) resolve();
+      else reject(new Error(`The video preview encoder failed: ${stderr.slice(-700) || `exit ${code}`}`));
+    }));
+  });
 }
 
 async function writeVideoWatermark(outputPath: string, width: number) {
