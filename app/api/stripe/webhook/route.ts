@@ -23,6 +23,7 @@ import type Stripe from "stripe";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const MAX_STRIPE_WEBHOOK_BODY_BYTES = 1024 * 1024;
+const STRIPE_WEBHOOK_SIGNATURE_TOLERANCE_SECONDS = 5 * 60;
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       Buffer.from(payload.buffer, payload.byteOffset, payload.byteLength),
       signature,
       getServerEnv("STRIPE_WEBHOOK_SECRET"),
+      STRIPE_WEBHOOK_SIGNATURE_TOLERANCE_SECONDS,
     );
   } catch (error) {
     console.warn("STRIPE_WEBHOOK_SIGNATURE_REJECTED", {
@@ -62,26 +64,34 @@ export async function POST(request: Request) {
 
   try {
     const admin = createAdminSupabaseClient();
-
-    if (event.type === "checkout.session.completed") {
-      await syncCheckoutSessionSubscription(admin, event.data.object as Stripe.Checkout.Session);
+    if (!isHandledStripeEvent(event.type)) {
+      return NextResponse.json({ ok: true, received: true });
     }
 
-    if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
-      await syncStripeSubscription(admin, event.data.object as Stripe.Subscription);
+    const object = event.data.object as { id?: string };
+    const claimed = await recordPaymentProviderWebhook(admin, "stripe", {
+      id: event.id,
+      type: event.type,
+      objectId: object.id || null,
+    });
+    if (!claimed) {
+      return NextResponse.json({ ok: true, received: true, duplicate: true });
     }
 
-    if (event.type === "customer.subscription.deleted") {
-      await markStripeSubscriptionDeleted(admin, event.data.object as Stripe.Subscription);
-    }
+    try {
+      if (event.type === "checkout.session.completed") {
+        await syncCheckoutSessionSubscription(admin, event.data.object as Stripe.Checkout.Session);
+      }
 
-    if (isFinanceEvent(event.type)) {
-      const object = event.data.object as { id?: string };
-      const claimed = await recordPaymentProviderWebhook(admin, "stripe", {
-        id: event.id, type: event.type, objectId: object.id || null,
-      });
-      if (!claimed) return NextResponse.json({ ok: true, received: true, duplicate: true });
-      try {
+      if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
+        await syncStripeSubscription(admin, event.data.object as Stripe.Subscription);
+      }
+
+      if (event.type === "customer.subscription.deleted") {
+        await markStripeSubscriptionDeleted(admin, event.data.object as Stripe.Subscription);
+      }
+
+      if (isFinanceEvent(event.type)) {
         if (event.type.startsWith("invoice.")) {
           const invoice = event.data.object as Stripe.Invoice;
           if (event.type === "invoice.payment_failed" || event.type === "invoice.payment_action_required") {
@@ -109,11 +119,12 @@ export async function POST(request: Request) {
           const transfer = event.data.object as Stripe.Transfer;
           await reverseDancerPayoutTransfer(admin, transfer.id, "Stripe reported that this payout transfer was reversed.");
         }
-        await finishPaymentProviderWebhook(admin, "stripe", event.id);
-      } catch (error) {
-        await finishPaymentProviderWebhook(admin, "stripe", event.id, internalWebhookError(error));
-        throw error;
       }
+
+      await finishPaymentProviderWebhook(admin, "stripe", event.id);
+    } catch (error) {
+      await finishPaymentProviderWebhook(admin, "stripe", event.id, internalWebhookError(error));
+      throw error;
     }
 
     return NextResponse.json({ ok: true, received: true });
@@ -128,6 +139,15 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+function isHandledStripeEvent(type: string) {
+  return [
+    "checkout.session.completed",
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+  ].includes(type) || isFinanceEvent(type);
 }
 
 function isFinanceEvent(type: string) {

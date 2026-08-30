@@ -5,6 +5,7 @@ import { publicAppUrl } from "./public-app-url";
 import type { Json, NotificationType } from "./types";
 
 type DancrClient = SupabaseClient;
+const DELIVERY_PROVIDER_TIMEOUT_MS = 10_000;
 
 export type NotificationDeliveryRow = {
   recipient_id: string;
@@ -40,7 +41,7 @@ export async function sendTransactionalEmail(input: {
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) return { delivered: false, reason: "email_not_configured" as const };
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await requestDeliveryProvider("resend", "https://api.resend.com/emails", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -56,8 +57,11 @@ export async function sendTransactionalEmail(input: {
     }),
   });
 
+  if (!response) {
+    return { delivered: false, reason: "provider_unavailable" as const };
+  }
   if (!response.ok) {
-    console.warn("Resend transactional delivery failed", await response.text().catch(() => response.statusText));
+    logProviderRejection("resend", response.status);
     return { delivered: false, reason: "provider_rejected" as const };
   }
 
@@ -85,7 +89,7 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
 
   let delivered = 0;
   for (const row of rows) {
-    const response = await fetch("https://onesignal.com/api/v1/notifications", {
+    const response = await requestDeliveryProvider("onesignal", "https://onesignal.com/api/v1/notifications", {
       method: "POST",
       headers: {
         "Authorization": `Basic ${apiKey}`,
@@ -101,8 +105,9 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
       }),
     });
 
+    if (!response) continue;
     if (!response.ok) {
-      console.warn("OneSignal delivery failed", await response.text().catch(() => response.statusText));
+      logProviderRejection("onesignal", response.status);
       continue;
     }
     delivered += 1;
@@ -127,7 +132,7 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
       ? `<p>${escapeHtml(row.body)}</p><p><a href="${escapeHtml(actionUrl)}">Open your Dancr dashboard</a></p>`
       : undefined;
 
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await requestDeliveryProvider("resend", "https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -142,14 +147,37 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
       }),
     });
 
+    if (!response) continue;
     if (!response.ok) {
-      console.warn("Resend delivery failed", await response.text().catch(() => response.statusText));
+      logProviderRejection("resend", response.status);
       continue;
     }
     delivered += 1;
   }
 
   return delivered;
+}
+
+async function requestDeliveryProvider(
+  provider: "resend" | "onesignal",
+  url: string,
+  init: RequestInit,
+) {
+  try {
+    return await fetch(url, {
+      ...init,
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.timeout(DELIVERY_PROVIDER_TIMEOUT_MS),
+    });
+  } catch {
+    console.warn("NOTIFICATION_PROVIDER_REQUEST_FAILED", { provider });
+    return null;
+  }
+}
+
+function logProviderRejection(provider: "resend" | "onesignal", status: number) {
+  console.warn("NOTIFICATION_PROVIDER_REJECTED", { provider, status });
 }
 
 function notificationActionUrl(row: NotificationDeliveryRow) {
