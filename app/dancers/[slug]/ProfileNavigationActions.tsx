@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 
 export function ProfileCloseButton({
   fallbackHref,
@@ -51,7 +52,7 @@ export function ProfileCloseButton({
     </button>
   );
 }
-export function ProfileShareButton({ stageName }: { stageName: string }) {
+export function ProfileShareButton({ dancerId, stageName }: { dancerId: string; stageName: string }) {
   const [status, setStatus] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -88,10 +89,12 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
           text: `View ${stageName}'s verified dancer profile on mydancr.`,
           url,
         });
+        void recordPublicEngagementShare("profile", dancerId);
         setStatus("Profile shared.");
         return;
       }
       await navigator.clipboard.writeText(url);
+      void recordPublicEngagementShare("profile", dancerId);
       setStatus("Profile link copied.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -103,6 +106,7 @@ export function ProfileShareButton({ stageName }: { stageName: string }) {
     setStatus("");
     try {
       await navigator.clipboard.writeText(profileUrl());
+      void recordPublicEngagementShare("profile", dancerId);
       setStatus("Profile link copied.");
     } catch {
       setStatus("Unable to copy this profile link.");

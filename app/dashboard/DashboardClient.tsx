@@ -2024,6 +2024,7 @@ function notificationCategory(notification: Record<string, unknown>) {
   if (type.includes("support")) return "Support";
   if (type.includes("venue") || type.includes("club")) return "Club";
   if (type.includes("deal")) return "Club Deal";
+  if (type.includes("engagement")) return "Engagement";
   return "MyDancr";
 }
 

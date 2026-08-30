@@ -12,6 +12,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
+import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
@@ -468,10 +469,12 @@ export function DancerPhotoCarousel({
           text: `${isVideo ? "Watch" : "View"} ${stageName} on ${isVideo ? "MyDancr TV" : "MyDancr"}.`,
           url,
         });
+        void recordPublicEngagementShare(activeViewerItem.kind, activeViewerItem.id);
         setShareStatus(isVideo ? "Video shared." : "Photo shared.");
         return;
       }
       await copyViewerShareUrl(url);
+      void recordPublicEngagementShare(activeViewerItem.kind, activeViewerItem.id);
       setShareStatus(isVideo ? "Video link copied." : "Photo link copied.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;

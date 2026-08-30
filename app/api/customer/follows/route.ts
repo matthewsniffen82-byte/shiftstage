@@ -3,6 +3,10 @@ import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { followDancer, setDancerNotifications, unfollowDancer } from "@/src/lib/dancr/customer";
 import {
+  createDancerEngagementNotification,
+  resolvePublicDancerEngagementTarget,
+} from "@/src/lib/dancr/engagement-notifications";
+import {
   enforcePublicRequestRateLimit,
   PublicRequestRateLimitError,
 } from "@/src/lib/dancr/public-request-rate-limit";
@@ -53,10 +57,28 @@ export async function POST(request: Request) {
     }
 
     await requirePublicDancer(admin, dancerId);
+    const [{ data: existingFollow, error: existingFollowError }, recipient] = await Promise.all([
+      admin
+        .from("follows")
+        .select("customer_id")
+        .eq("customer_id", user.id)
+        .eq("dancer_id", dancerId)
+        .maybeSingle(),
+      resolvePublicDancerEngagementTarget(admin, "profile", dancerId),
+    ]);
+    if (existingFollowError) throw existingFollowError;
     if (notificationsEnabled) {
       await followDancer(client, user.id, dancerId);
     } else {
       await setDancerNotifications(client, user.id, dancerId, false);
+    }
+    if (!existingFollow && recipient) {
+      await createDancerEngagementNotification(admin, recipient, {
+        engagementType: "follow",
+        targetType: "profile",
+        targetId: dancerId,
+        dedupeSubject: user.id,
+      });
     }
 
     const counts = await countDancerFollowPreferences(dancerId);

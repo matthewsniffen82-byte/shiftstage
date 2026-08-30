@@ -30,6 +30,7 @@ export type NotificationType =
   | "tv_video_status"
   | "dmca_status"
   | "support_message"
+  | "engagement"
   | "weekly_summary";
 
 export type Database = {

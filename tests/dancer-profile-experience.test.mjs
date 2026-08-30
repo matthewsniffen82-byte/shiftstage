@@ -111,7 +111,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.match(profilePage, /format\(profile\.profileViewsToday \|\| 0\)[\s\S]*?<dt>Views today<\/dt>/);
   assert.doesNotMatch(profilePage, /className="profile-overview"/);
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
-  assert.match(profilePage, /shareControl=\{<ProfileShareButton stageName=\{profile\.stageName\} \/>\}/);
+  assert.match(profilePage, /shareControl=\{<ProfileShareButton dancerId=\{profile\.id\} stageName=\{profile\.stageName\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
@@ -256,7 +256,7 @@ test("the primary shift is not repeated and empty profile sections stay hidden",
 });
 
 test("profiles can be shared and close back to the referring site page", () => {
-  assert.match(profilePage, /<ProfileShareButton stageName=\{profile\.stageName\} \/>/);
+  assert.match(profilePage, /<ProfileShareButton dancerId=\{profile\.id\} stageName=\{profile\.stageName\} \/>/);
   assert.match(profilePage, /<ProfileCloseButton/);
   assert.match(navigationActions, /navigator\.share/);
   assert.match(navigationActions, /navigator\.clipboard\.writeText\(url\)/);

@@ -175,7 +175,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         <DancerProfileActions
           dancerId={profile.id}
-          shareControl={<ProfileShareButton stageName={profile.stageName} />}
+          shareControl={<ProfileShareButton dancerId={profile.id} stageName={profile.stageName} />}
           shifts={profile.upcomingShifts.map((shift) => ({
             id: shift.id,
             label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
@@ -649,8 +649,8 @@ function PublicProfileStyles() {
       .profile-media-viewer-share { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; backdrop-filter: blur(10px); }
       .profile-media-viewer-like { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; backdrop-filter: blur(10px); }
       .profile-media-viewer-share svg, .profile-media-viewer-like svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
-      .profile-media-viewer-like.is-liked { border-color: rgba(244,114,182,.68); color: #f9a8d4; background: rgba(190,24,93,.3); }
-      .profile-media-viewer-like.is-liked svg { fill: currentColor; }
+      .profile-media-viewer-like.is-liked { color: #fff; }
+      .profile-media-viewer-like.is-liked svg { color: #ff304f; fill: currentColor; }
       .profile-media-viewer-like:disabled { opacity: .64; cursor: wait; }
       .profile-media-viewer-share-status { min-height: 14px; color: #a7f3d0; font-size: 10px; font-weight: 800; text-align: right; }
       .profile-media-viewer-hint { color: #aaa0b8; font-size: 11px; font-weight: 800; }

@@ -1110,8 +1110,8 @@ function TvStyles() {
       .tv-sound { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 5px 0 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); font-size: 9px; font-weight: 900; line-height: 1; cursor: pointer; }
       .tv-like { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 5px 0 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); font-size: 9px; font-weight: 900; line-height: 1; cursor: pointer; }
       .tv-sound svg, .tv-like svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-      .tv-like.is-liked { border-color: rgba(244,114,182,.68); color: #f9a8d4; background: rgba(190,24,93,.42); }
-      .tv-like.is-liked svg { fill: currentColor; }
+      .tv-like.is-liked { color: #fff; }
+      .tv-like.is-liked svg { color: #ff304f; fill: currentColor; }
       .tv-like:disabled { opacity: .64; cursor: wait; }
       .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: end; gap: 10px; padding: 76px 18px 18px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
       .tv-profile-photo { position: relative; width: 52px; height: 52px; display: grid; place-items: center; overflow: hidden; padding: 2px; border: 0; border-radius: 50%; color: #fff; background: #fff; box-shadow: none; font-size: 17px; font-weight: 950; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); }

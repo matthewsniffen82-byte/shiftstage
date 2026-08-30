@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
+import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
@@ -188,9 +189,11 @@ export function TvVideoStrip({
           text: `Watch ${video.dancer.stageName} on MyDancr TV.`,
           url,
         });
+        void recordPublicEngagementShare("video", video.id);
         setViewerStatus("Video shared.");
       } else {
         await navigator.clipboard.writeText(url);
+        void recordPublicEngagementShare("video", video.id);
         setViewerStatus("Video link copied.");
       }
     } catch (error) {
@@ -589,8 +592,8 @@ function TvVideoStripStyles() {
       .tv-video-viewer-actions .tv-video-viewer-state-control { justify-self: center; }
       .tv-video-viewer-like { gap: 0 !important; padding: 5px 0 3px !important; font-size: 9px; line-height: 1; }
       .tv-video-viewer-like svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-      .tv-video-viewer-like.is-liked { border-color: rgba(244,114,182,.68); color: #f9a8d4; background-color: rgba(190,24,93,.42); }
-      .tv-video-viewer-like.is-liked svg { fill: currentColor; }
+      .tv-video-viewer-like.is-liked { color: #fff; }
+      .tv-video-viewer-like.is-liked svg { color: #ff304f; fill: currentColor; }
       .tv-video-viewer-state-control svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .tv-video-viewer-state-control svg .is-fill { fill: currentColor; stroke: none; }
       .tv-video-viewer-share svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }

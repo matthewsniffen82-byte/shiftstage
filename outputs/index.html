@@ -29494,22 +29494,26 @@
     .profile-photo-viewer-like {
       width: 52px !important;
       min-width: 52px !important;
+      max-width: 52px !important;
       height: 52px !important;
       min-height: 52px !important;
-      display: inline-flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
-      gap: 2px !important;
+      max-height: 52px !important;
+      aspect-ratio: 1;
+      display: grid !important;
+      place-items: center !important;
+      gap: 0 !important;
       padding: 0 !important;
-      border: 1px solid rgba(255,255,255,.2) !important;
-      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,.24) !important;
+      border-radius: 50% !important;
       color: #fff !important;
-      background: rgba(10,10,14,.76) !important;
-      box-shadow: 0 10px 28px rgba(0,0,0,.3) !important;
-      backdrop-filter: blur(12px) !important;
+      background-color: rgba(5,5,10,.5) !important;
+      background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.12) !important;
+      backdrop-filter: blur(14px) saturate(1.12) !important;
       font-size: 9px !important;
       font-weight: 900 !important;
+      line-height: 1;
     }
 
     .profile-photo-viewer-actions {
@@ -29524,20 +29528,19 @@
 
     .profile-photo-viewer-share .icon,
     .profile-photo-viewer-like .icon {
-      width: 18px !important;
-      height: 18px !important;
+      width: 21px !important;
+      height: 21px !important;
     }
 
     .profile-photo-viewer-like.is-liked,
     .profile-tv-viewer-like.is-liked {
-      border-color: rgba(244,114,182,.68) !important;
-      color: #f9a8d4 !important;
-      background-color: rgba(190,24,93,.42) !important;
+      color: #fff !important;
     }
 
     .profile-photo-viewer-like.is-liked svg,
     .profile-tv-viewer-like.is-liked svg,
     .home-tv-feed-like-action[aria-pressed="true"] svg {
+      color: #ff304f !important;
       fill: currentColor !important;
     }
 
@@ -32910,17 +32913,26 @@
           display: none;
         }
         .home-tv-feed-like-action {
+          width: 52px !important;
+          min-width: 52px !important;
+          max-width: 52px !important;
+          height: 52px !important;
+          min-height: 52px !important;
+          max-height: 52px !important;
+          aspect-ratio: 1;
           gap: 0;
           padding: 4px 0 2px;
+          border-radius: 50% !important;
           color: #fff;
           font-size: 8px;
           font-weight: 950;
           line-height: 1;
         }
         .home-tv-feed-like-action[aria-pressed="true"] {
-          border-color: rgba(244,114,182,.68) !important;
-          color: #f9a8d4 !important;
-          background: rgba(190,24,93,.42) !important;
+          border-color: rgba(255,255,255,.2) !important;
+          color: #fff !important;
+          background: rgba(5,5,10,.58) !important;
+          box-shadow: 0 8px 22px rgba(0,0,0,.28) !important;
         }
         .home-tv-feed-fullscreen { position: relative; }
         .home-tv-feed-fullscreen .home-tv-feed-video-collapse-icon,
@@ -42093,7 +42105,6 @@
               </button>
               <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
-                <span>Share</span>
               </button>
             </div>
             <p class="profile-photo-viewer-status" id="profilePhotoViewerStatus" aria-live="polite"></p>
@@ -52338,6 +52349,7 @@
         ? Math.max(0, Number(profilePhotoViewer.dataset.profilePhotoIndex || 0))
         : Math.max(0, Number(activePhoto?.dataset.profilePhotoIndex || 0));
       const profileName = modalName.textContent.trim() || "Dancer";
+      const activeItem = modalGallery.profilePhotoItems?.[activePhotoIndex];
       const url = profilePhotoShareUrl(profileName, citySelect.value || selectedCity(), activePhotoIndex);
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
       try {
@@ -52347,10 +52359,13 @@
             text: `View ${profileName}'s photo on MyDancr.`,
             url
           });
+          void recordPublicEngagementShare("photo", String(activeItem?.id || ""));
           if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "Photo shared.";
           return;
         }
-        await copyText(url, "Photo link copied");
+        const copied = await copyText(url, "Photo link copied");
+        if (!copied) return;
+        void recordPublicEngagementShare("photo", String(activeItem?.id || ""));
         if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "Photo link copied.";
       } catch (error) {
         if (error?.name === "AbortError") return;
@@ -53615,9 +53630,12 @@
             text: `Watch ${profileName} on MyDancr TV.`,
             url
           });
+          void recordPublicEngagementShare("video", videoId);
           if (status) status.textContent = "Video shared.";
         } else {
-          await copyText(url, "Video link copied");
+          const copied = await copyText(url, "Video link copied");
+          if (!copied) return;
+          void recordPublicEngagementShare("video", videoId);
           if (status) status.textContent = "Video link copied.";
         }
       } catch (error) {
@@ -59835,6 +59853,24 @@
       return publicMediaLikeStates.get(key);
     }
 
+    function recordPublicEngagementShare(targetType, targetId) {
+      if (!targetId || !["profile", "photo", "video"].includes(targetType)) return Promise.resolve(false);
+      return fetch("/api/public/engagement-shares", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ targetType, targetId }),
+        credentials: "same-origin",
+        keepalive: true
+      }).then((response) => response.ok).catch(() => false);
+    }
+
+    function recordProfileEngagementShare(profileName, city) {
+      const profile = publicProfileForNavigation(profileName, city);
+      return profile?.id
+        ? recordPublicEngagementShare("profile", String(profile.id))
+        : Promise.resolve(false);
+    }
+
     function syncPublicMediaLikeButtons(mediaType, mediaId) {
       const state = publicMediaLikeState(mediaType, mediaId);
       document.querySelectorAll("[data-media-like-type][data-media-like-id]").forEach((button) => {
@@ -60123,9 +60159,11 @@
           });
           showHomeTvFeedFeedback(slide, "Shared");
         } else {
-          await copyText(url, "Video link copied");
+          const copied = await copyText(url, "Video link copied");
+          if (!copied) return;
           showHomeTvFeedFeedback(slide, "Link copied");
         }
+        void recordPublicEngagementShare("video", videoId);
         void trackHomeTvFeedEvent(videoId, "share");
       } catch (error) {
         if (error?.name !== "AbortError") showHomeTvFeedFeedback(slide, "Sharing unavailable");
@@ -61664,12 +61702,15 @@
         try {
           await navigator.share({ title: "Dancr profile", text, url });
           recordUniqueTrendEvent("socialClicks", city, profileName);
+          void recordProfileEngagementShare(profileName, city);
           return;
         } catch {
           return;
         }
       }
-      await copyText(url, "Profile link copied");
+      const copied = await copyText(url, "Profile link copied");
+      if (!copied) return;
+      void recordProfileEngagementShare(profileName, city);
     }
 
     function closeSharePopovers(exceptPanel = null) {
@@ -61752,7 +61793,9 @@
           return;
         }
         if (event.target.closest("[data-copy-profile-choice]")) {
-          copyText(profileShareUrl(profileName, city), "Profile link copied");
+          void copyText(profileShareUrl(profileName, city), "Profile link copied").then((copied) => {
+            if (copied) void recordProfileEngagementShare(profileName, city);
+          });
           return;
         }
         if (event.target.closest("[data-show-profile-qr-choice]")) {
@@ -61986,7 +62029,9 @@
       if (copyButton) {
         const city = copyButton.dataset.shareCity || selectedCity();
         const profileName = copyButton.dataset.copyShare;
-        copyText(profileShareUrl(profileName, city), "Profile link copied");
+        void copyText(profileShareUrl(profileName, city), "Profile link copied").then((copied) => {
+          if (copied) void recordProfileEngagementShare(profileName, city);
+        });
         return true;
       }
       const nativeButton = event.target.closest("[data-native-share]");
@@ -61999,6 +62044,10 @@
       if (socialShare) {
         recordUniqueTrendEvent("socialClicks", socialShare.dataset.shareCity || selectedCity(), socialShare.dataset.profile);
         recordLiveEvent("profile_action", { dancerName: socialShare.dataset.profile, source: `share_${socialShare.dataset.socialShare}` });
+        void recordProfileEngagementShare(
+          socialShare.dataset.profile,
+          socialShare.dataset.shareCity || selectedCity()
+        );
         showToast(`${socialShare.dataset.socialShare} share opened`);
         return false;
       }

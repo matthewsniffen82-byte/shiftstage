@@ -4,6 +4,10 @@ import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { isPublicDancerProfileEligible } from "@/src/lib/dancr/profile-approval";
 import {
+  createDancerEngagementNotification,
+  resolvePublicDancerEngagementTarget,
+} from "@/src/lib/dancr/engagement-notifications";
+import {
   enforcePublicRequestRateLimit,
   PublicRequestRateLimitError,
 } from "@/src/lib/dancr/public-request-rate-limit";
@@ -49,7 +53,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       ok: true,
       likes: media.map((item) => ({
-        ...item,
+        mediaType: item.mediaType,
+        mediaId: item.mediaId,
+        likeCount: item.likeCount,
         liked: likedKeys.has(mediaKey(item.mediaType, item.mediaId)),
       })),
     }, { headers: { "Cache-Control": "no-store" } });
@@ -97,6 +103,7 @@ export async function POST(request: Request) {
     });
 
     const targetColumn = mediaType === "photo" ? "photo_id" : "video_id";
+    let insertedLike = false;
     if (liked) {
       const { error } = await admin.from("media_likes").insert({
         visitor_token_hash: visitorHash,
@@ -104,6 +111,7 @@ export async function POST(request: Request) {
         video_id: mediaType === "video" ? mediaId : null,
       });
       if (error && error.code !== "23505") throw error;
+      insertedLike = !error;
     } else {
       const { error } = await admin
         .from("media_likes")
@@ -111,6 +119,18 @@ export async function POST(request: Request) {
         .eq("visitor_token_hash", visitorHash)
         .eq(targetColumn, mediaId);
       if (error) throw error;
+    }
+
+    if (insertedLike) {
+      const recipient = await resolvePublicDancerEngagementTarget(admin, mediaType, mediaId);
+      if (recipient) {
+        await createDancerEngagementNotification(admin, recipient, {
+          engagementType: "like",
+          targetType: mediaType,
+          targetId: mediaId,
+          dedupeSubject: visitorHash,
+        });
+      }
     }
 
     const likeCount = await readLikeCount(admin, mediaType, mediaId);
