@@ -1,6 +1,15 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type SyntheticEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { flushSync } from "react-dom";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
@@ -553,10 +562,14 @@ export function DancerPhotoCarousel({
               <img
                 alt=""
                 aria-hidden="true"
+                data-image-state="loading"
                 decoding="async"
                 draggable={false}
                 height={item.imageHeight || undefined}
                 loading="lazy"
+                onError={markImageUnavailable}
+                onLoad={markImageReady}
+                ref={settleImageElement}
                 sizes="(max-width: 760px) 33vw, 250px"
                 src={item.imageUrl}
                 srcSet={item.imageSrcSet || undefined}
@@ -631,6 +644,7 @@ export function DancerPhotoCarousel({
                 {item.kind === "photo" ? (
                   <img
                     alt={`${stageName} photo ${index + 1} of ${viewerItems.length}`}
+                    data-image-state="loading"
                     decoding={index === viewerIndex ? "sync" : "async"}
                     draggable={false}
                     height={item.imageHeight || undefined}
@@ -638,6 +652,9 @@ export function DancerPhotoCarousel({
                     onClick={() => {
                       if (!fullscreenElement()) void requestViewerFullscreen(viewerIndex);
                     }}
+                    onError={markImageUnavailable}
+                    onLoad={markImageReady}
+                    ref={settleImageElement}
                     sizes="100vw"
                     src={item.imageUrl}
                     srcSet={item.imageSrcSet || undefined}
@@ -771,6 +788,19 @@ function PlaybackFeedbackIcon({ paused }: { paused: boolean }) {
       <path d={paused ? "m9 7 8 5-8 5Z" : "M7 6h3v12H7zM14 6h3v12h-3z"} />
     </svg>
   );
+}
+
+function markImageReady(event: SyntheticEvent<HTMLImageElement>) {
+  event.currentTarget.dataset.imageState = "ready";
+}
+
+function markImageUnavailable(event: SyntheticEvent<HTMLImageElement>) {
+  event.currentTarget.dataset.imageState = "error";
+}
+
+function settleImageElement(image: HTMLImageElement | null) {
+  if (!image?.complete) return;
+  image.dataset.imageState = image.naturalWidth > 0 ? "ready" : "error";
 }
 
 function clearMediaDeepLink() {

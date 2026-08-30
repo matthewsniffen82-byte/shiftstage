@@ -412,7 +412,7 @@ function PublicProfileStyles() {
       .profile-titlebar-person { min-width: 0; display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 9px; }
       .profile-titlebar-avatar { width: 48px; height: 48px; position: relative; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36), 0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
       .profile-titlebar-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
-      .profile-titlebar-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(1.14) contrast(1.03); }
+      .profile-titlebar-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; background: radial-gradient(circle at 68% 20%, rgba(126,234,255,.16), transparent 34%), linear-gradient(145deg, rgba(109,40,217,.38), #08080d); filter: brightness(1.14) contrast(1.03); }
       .profile-titlebar-identity { min-width: 0; display: grid; align-content: center; gap: 2px; overflow: hidden; }
       .profile-titlebar-identity > div { min-width: 0; display: flex; align-items: center; gap: 7px; }
       .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(20px, 4vw, 26px); line-height: 1.05; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
@@ -611,8 +611,11 @@ function PublicProfileStyles() {
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .profile-media-grid { min-height: 108px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
       .profile-media-grid-item { position: relative; width: 100%; min-width: 0; aspect-ratio: 9 / 16; display: block; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 3px; color: #fff; background: #0b0b10; box-shadow: none; cursor: pointer; }
-      .profile-media-grid-item img, .profile-media-grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
-      .profile-media-grid-item img { filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
+      .profile-media-grid-item.is-photo::before { position: absolute; z-index: 0; inset: 0; content: ""; background: radial-gradient(circle at 68% 20%, rgba(126,234,255,.12), transparent 34%), radial-gradient(circle at 20% 82%, rgba(139,92,246,.2), transparent 42%), linear-gradient(145deg,#111118,#07070b); }
+      .profile-media-grid-item img, .profile-media-grid-item video { position: relative; z-index: 1; width: 100%; height: 100%; display: block; object-fit: cover; background: transparent; pointer-events: none; }
+      .profile-media-grid-item img { filter: brightness(1.14) contrast(1.03); opacity: 0; mix-blend-mode: normal; }
+      .profile-media-grid-item img[data-image-state="ready"] { opacity: 1; }
+      .profile-media-grid-item img[data-image-state="error"] { visibility: hidden; }
       .profile-media-poster-placeholder { width: 100%; height: 100%; display: block; background: radial-gradient(circle at 50% 32%, rgba(126,234,255,.18), transparent 28%), linear-gradient(145deg, rgba(109,40,217,.28), rgba(5,5,9,.96)); }
       .profile-media-grid-item:hover { border-color: rgba(126,234,255,.42); }
       .profile-media-grid-item:focus-visible { z-index: 1; outline: 2px solid #7eeaff; outline-offset: 2px; }
@@ -628,10 +631,14 @@ function PublicProfileStyles() {
       .profile-media-viewer-stage { position: relative; width: 100%; height: 100%; min-height: 0; display: block; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scroll-snap-type: y mandatory; scroll-behavior: smooth; scrollbar-width: none; touch-action: pan-y; }
       .profile-media-viewer-stage::-webkit-scrollbar { display: none; }
       .profile-media-viewer-slide { position: relative; width: 100%; height: 100%; min-height: 100%; max-height: 100%; display: grid; place-items: center; overflow: hidden; background: #000; scroll-snap-align: start; scroll-snap-stop: always; }
-      .profile-media-viewer-slide > img, .profile-media-viewer-slide > video { width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: #000; user-select: none; }
+      .profile-media-viewer-slide::before { position: absolute; z-index: 0; inset: 0; content: ""; background: radial-gradient(circle at 50% 32%, rgba(126,234,255,.1), transparent 26%), linear-gradient(145deg, rgba(109,40,217,.18), #020204 68%); }
+      .profile-media-viewer-slide > img, .profile-media-viewer-slide > video { position: relative; z-index: 1; width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: transparent; user-select: none; }
       .profile-media-playback-feedback { position: absolute; z-index: 3; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: profile-media-playback-feedback 850ms ease both; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
       .profile-media-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
-      .profile-media-viewer-slide > img { filter: brightness(1.14) contrast(1.03); opacity: 1; mix-blend-mode: normal; }
+      .profile-media-viewer-slide > img { filter: brightness(1.14) contrast(1.03); opacity: 0; mix-blend-mode: normal; }
+      .profile-media-viewer-slide > img[data-image-state="ready"] { opacity: 1; }
+      .profile-media-viewer-slide > img[data-image-state="error"] { visibility: hidden; }
+      @media (prefers-reduced-motion: no-preference) { .profile-media-grid-item img, .profile-media-viewer-slide > img { transition: opacity 160ms ease-out; } }
       .profile-media-viewer-previous, .profile-media-viewer-next { position: absolute; top: 50%; width: 46px; height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(5,5,8,.58); font-size: 34px; transform: translateY(-50%); cursor: pointer; backdrop-filter: blur(8px); }
       .profile-media-viewer-previous { left: 12px; }
       .profile-media-viewer-next { right: 12px; }

@@ -66,7 +66,8 @@ test("the exact supplied hero is preserved while an optimized WebP is preloaded"
   const heroCss = homeSource.match(
     /\/\* Final hero fit: match the supplied artwork ratio exactly\. \*\/[\s\S]*?(?=\n    @media \(max-width: 700px\))/,
   )?.[0] || "";
-  assert.match(heroCss, /background-image: none !important/);
+  assert.match(heroCss, /background-image:[\s\S]*?radial-gradient[\s\S]*?linear-gradient\(145deg,#101018,#050507\) !important/);
+  assert.doesNotMatch(heroCss, /url\(/);
   assert.doesNotMatch(homeSource, /background-image:[\s\S]{0,180}dancr-hero\.png/);
   assert.doesNotMatch(homeSource, /href="\.\/dancr-hero\.png"/);
 });

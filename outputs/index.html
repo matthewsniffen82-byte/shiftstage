@@ -24529,8 +24529,11 @@
       min-height: 0 !important;
       height: auto !important;
       padding: 0 !important;
-      background-image: none !important;
-      background-size: contain !important;
+      background-image:
+        radial-gradient(circle at 74% 22%, rgba(126,234,255,.1), transparent 28%),
+        radial-gradient(circle at 22% 78%, rgba(109,40,217,.18), transparent 42%),
+        linear-gradient(145deg,#101018,#050507) !important;
+      background-size: cover !important;
       background-position: center center !important;
       background-repeat: no-repeat !important;
       background-color: #050507 !important;
@@ -24572,6 +24575,21 @@
       object-fit: contain !important;
       object-position: center center !important;
       pointer-events: none !important;
+      opacity: 0;
+    }
+
+    .hero.reference-hero .hero-art[data-image-state="ready"] {
+      opacity: 1;
+    }
+
+    .hero.reference-hero .hero-art[data-image-state="error"] {
+      visibility: hidden;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .hero.reference-hero .hero-art {
+        transition: opacity 160ms ease-out;
+      }
     }
 
     .dancr-home-logo,
@@ -32037,7 +32055,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=230" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=231" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -32106,6 +32124,9 @@
           loading="eager"
           decoding="sync"
           fetchpriority="high"
+          data-image-state="loading"
+          onload="this.dataset.imageState='ready'"
+          onerror="this.dataset.imageState='error'"
         >
         <div class="hero-copy">
           <h2><span>Know who's</span><span>working.</span><strong>Plan your night.</strong></h2>
@@ -37699,6 +37720,92 @@
           background: none !important;
         }
 
+        /* Stable, final-size image surfaces prevent empty media boxes while
+           responsive files decode. Repeated mobile cards avoid shimmer work;
+           the ready transition is intentionally limited to hover devices. */
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-link:has(> img[data-image-state])::before {
+          position: absolute;
+          z-index: 0;
+          inset: 0;
+          content: "";
+          background:
+            radial-gradient(circle at 68% 20%, rgba(126,234,255,.1), transparent 34%),
+            radial-gradient(circle at 20% 82%, rgba(139,92,246,.18), transparent 42%),
+            linear-gradient(145deg,#111118,#07070b);
+          pointer-events: none;
+        }
+        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state] {
+          z-index: 1;
+        }
+        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="loading"],
+        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="error"] {
+          opacity: 0 !important;
+        }
+        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="ready"] {
+          opacity: 1 !important;
+        }
+        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="error"] {
+          visibility: hidden;
+        }
+        #profileBackdrop .gallery .thumb::before {
+          position: absolute;
+          z-index: 0;
+          inset: 0;
+          content: "";
+          background:
+            radial-gradient(circle at 68% 20%, rgba(126,234,255,.1), transparent 34%),
+            radial-gradient(circle at 20% 82%, rgba(139,92,246,.18), transparent 42%),
+            linear-gradient(145deg,#111118,#07070b);
+          pointer-events: none;
+        }
+        #profileBackdrop .gallery .thumb > img.portrait[data-image-state] {
+          position: relative;
+          z-index: 1;
+        }
+        #profileBackdrop .gallery .thumb > img.portrait[data-image-state="loading"],
+        #profileBackdrop .gallery .thumb > img.portrait[data-image-state="error"] {
+          opacity: 0 !important;
+        }
+        #profileBackdrop .gallery .thumb > img.portrait[data-image-state="ready"] {
+          opacity: 1 !important;
+        }
+        #profileBackdrop .gallery .thumb > img.portrait[data-image-state="error"] {
+          visibility: hidden;
+        }
+        .home-venue-discovery-logo-shell,
+        .venue-card-logo-shell,
+        .venue-detail-logo-shell {
+          background:
+            radial-gradient(circle at 50% 40%, rgba(139,92,246,.1), transparent 46%),
+            linear-gradient(145deg,rgba(17,17,24,.72),rgba(7,7,11,.5));
+        }
+        .home-venue-discovery-logo[data-image-state="loading"],
+        .home-venue-discovery-logo[data-image-state="error"],
+        .venue-card-logo[data-image-state="loading"],
+        .venue-card-logo[data-image-state="error"],
+        .venue-detail-logo[data-image-state="loading"],
+        .venue-detail-logo[data-image-state="error"],
+        .venue-lineup-avatar-photo[data-image-state="loading"],
+        .venue-lineup-avatar-photo[data-image-state="error"] {
+          opacity: 0 !important;
+        }
+        .home-venue-discovery-logo[data-image-state="ready"],
+        .venue-card-logo[data-image-state="ready"],
+        .venue-detail-logo[data-image-state="ready"],
+        .venue-lineup-avatar-photo[data-image-state="ready"] {
+          opacity: 1 !important;
+        }
+        @media (prefers-reduced-motion: no-preference) and (hover: hover) {
+          #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state],
+          #profileBackdrop .gallery .thumb > img.portrait[data-image-state],
+          .home-venue-discovery-logo[data-image-state],
+          .venue-card-logo[data-image-state],
+          .venue-detail-logo[data-image-state],
+          .venue-lineup-avatar-photo[data-image-state] {
+            transition: opacity 160ms ease-out;
+          }
+        }
+
         /* Venue profiles keep X dismissal while the shared destination dock stays available. */
         body.venue-full-view-open {
           overflow: hidden !important;
@@ -42024,6 +42131,22 @@
       document.body?.classList.add("is-samsung-browser", "samsung-rendering");
     }
     window.__dancrApplyDeviceClasses?.();
+
+    function settleStableImage(image, failed = false) {
+      if (!(image instanceof HTMLImageElement) || !image.hasAttribute("data-image-state")) return;
+      image.dataset.imageState = !failed && image.naturalWidth > 0 ? "ready" : "error";
+    }
+
+    function settleCompletedStableImages(root = document) {
+      root.querySelectorAll?.('img[data-image-state="loading"]').forEach((image) => {
+        if (image.complete) settleStableImage(image);
+      });
+    }
+
+    document.addEventListener("load", (event) => settleStableImage(event.target), true);
+    document.addEventListener("error", (event) => settleStableImage(event.target, true), true);
+    settleCompletedStableImages();
+    window.addEventListener("load", () => settleCompletedStableImages(), { once: true });
 
     const markets = {
       "Las Vegas": {
@@ -51396,7 +51519,7 @@
       const dimensions = imageWidth && imageHeight
         ? ` width="${imageWidth}" height="${imageHeight}"`
         : "";
-      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="lazy" decoding="async" onload="fitVenueLogoImage(this)"></span>`;
+      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="lazy" decoding="async" data-image-state="loading" onload="fitVenueLogoImage(this);this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'"></span>`;
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
@@ -51420,7 +51543,7 @@
           ? `<img class="venue-lineup-avatar-photo" ${nativePhotoAttrs} sizes="32px" width="64" height="64" style="object-position: ${avatarPhotoPosition(
               profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
               profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
-            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false">`
+            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false" data-image-state="loading" onload="this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'">`
           : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
         return `<span class="${classPrefix}-lineup-avatar" data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
       }).join("");
@@ -52056,7 +52179,9 @@
         image.setAttribute("role", "img");
         image.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
         const safeUrl = safeCssUrl(item.photoUrl);
-        if (safeUrl) image.style.backgroundImage = `url('${safeUrl}')`;
+        if (safeUrl) {
+          image.style.backgroundImage = `url('${safeUrl}'), radial-gradient(circle at 50% 32%, rgba(126,234,255,.1), transparent 26%), linear-gradient(145deg, rgba(109,40,217,.18), #020204 68%)`;
+        }
         slide.appendChild(image);
         profilePhotoViewerImage.appendChild(slide);
       });
@@ -52347,7 +52472,7 @@
     function profilePhotoThumbMarkup(item, total, galleryIndex = item.index) {
       const photoAttrs = nativeResponsivePhotoAttrs(item.photoUrl, item.photoSrcSet);
       const photoMarkup = photoAttrs
-        ? `<img class="portrait ${item.photoClass} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false">`
+        ? `<img class="portrait ${item.photoClass} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading" onload="this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'">`
         : `<span class="portrait ${item.photoClass}"></span>`;
       return `
         <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} full screen" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
@@ -52900,7 +53025,7 @@
       modalProfileAvatar.dataset.upcoming = String(modalHasUpcomingShift);
       modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (avatarPhotoUrl) {
-        modalProfileAvatar.style.backgroundImage = `url('${safeCssUrl(avatarPhotoUrl)}')`;
+        modalProfileAvatar.style.backgroundImage = `url('${safeCssUrl(avatarPhotoUrl)}'), radial-gradient(circle at 68% 20%, rgba(126,234,255,.16), transparent 34%), linear-gradient(145deg, rgba(109,40,217,.38), #08080d)`;
         modalProfileAvatar.style.setProperty(
           "--custom-photo-position",
           avatarPhotoPosition(
@@ -58744,7 +58869,7 @@
       const imageFetchPriority = imageIndex < 3 ? "high" : imageIndex >= 6 ? "low" : "auto";
       const photoMarkup = photoUrl
         ? compactDirectory && nativePhotoAttrs
-          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="${imageLoading}" fetchpriority="${imageFetchPriority}" decoding="async" draggable="false" alt="" aria-hidden="true">`
+          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="${imageLoading}" fetchpriority="${imageFetchPriority}" decoding="async" draggable="false" alt="" aria-hidden="true" data-image-state="loading" onload="this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'">`
           : `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();

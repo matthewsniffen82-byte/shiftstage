@@ -52,11 +52,11 @@ test("profile avatars, gallery thumbnails, and full-screen photos share the rest
   );
   assert.match(
     publicProfileSource,
-    /\.profile-media-grid-item img \{ filter: brightness\(1\.14\) contrast\(1\.03\); opacity: 1; mix-blend-mode: normal; \}/,
+    /\.profile-media-grid-item img \{ filter: brightness\(1\.14\) contrast\(1\.03\); opacity: 0; mix-blend-mode: normal; \}[\s\S]*?\.profile-media-grid-item img\[data-image-state="ready"\] \{ opacity: 1; \}/,
   );
   assert.match(
     publicProfileSource,
-    /\.profile-media-viewer-slide > img \{ filter: brightness\(1\.14\) contrast\(1\.03\); opacity: 1; mix-blend-mode: normal; \}/,
+    /\.profile-media-viewer-slide > img \{ filter: brightness\(1\.14\) contrast\(1\.03\); opacity: 0; mix-blend-mode: normal; \}[\s\S]*?\.profile-media-viewer-slide > img\[data-image-state="ready"\] \{ opacity: 1; \}/,
   );
   assert.match(
     tvSource,
@@ -76,7 +76,7 @@ test("profile grid photos use the native responsive image path used by dancer di
   );
   assert.match(
     profileThumbRenderer,
-    /<img class="portrait \$\{item\.photoClass\} has-custom-photo" \$\{photoAttrs\}[^>]*sizes="\(max-width: 720px\) calc\(\(100vw - 6px\) \/ 3\), 250px"[^>]*width="360" height="504"[^>]*loading="lazy"[^>]*decoding="async"[^>]*draggable="false">/,
+    /<img class="portrait \$\{item\.photoClass\} has-custom-photo" \$\{photoAttrs\}[^>]*sizes="\(max-width: 720px\) calc\(\(100vw - 6px\) \/ 3\), 250px"[^>]*width="360" height="504"[^>]*loading="lazy"[^>]*decoding="async"[^>]*draggable="false"[^>]*data-image-state="loading"[^>]*>/,
   );
   assert.doesNotMatch(profileThumbRenderer, /customPhotoAttrs\(/);
   assert.match(

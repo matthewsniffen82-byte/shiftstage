@@ -194,7 +194,7 @@ test("venue scroll cards use one fixed logo stage while detail pages retain cont
   assert.match(liveApp, /nativeResponsivePhotoAttrs\(logoImageUrl, venue\?\.logoImageSrcSet\)/);
   assert.match(liveApp, /sizes="\(max-width: 720px\) 82vw, 620px"/);
   assert.match(liveApp, /loading="lazy" decoding="async"/);
-  assert.match(liveApp, /onload="fitVenueLogoImage\(this\)"/);
+  assert.match(liveApp, /data-image-state="loading" onload="fitVenueLogoImage\(this\);this\.dataset\.imageState='ready'"/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "venue-card-logo"\)/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "home-venue-discovery-logo"\)/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "venue-detail-logo"\)/);
