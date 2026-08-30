@@ -2011,14 +2011,14 @@ body.dancr-button-system :is(
     inset 0 1px 0 var(--dancr-color-white-medium) !important;
 }
 
-/* Active applause and follow states keep one restrained violet cue. Opening
- * the report menu is not an endorsement state, so it deliberately stays in
- * the neutral rule above. */
+/* Active follow states keep one restrained violet cue. Likes reserve their
+ * state color for the heart itself, and report menus remain neutral. */
 body.dancr-button-system .home-tv-feed-action:not(
   .home-tv-feed-deal-action,
   .home-tv-feed-overflow-action,
   .home-tv-feed-fullscreen,
-  .home-tv-feed-sound
+  .home-tv-feed-sound,
+  .home-tv-feed-like-action
 ):is(.is-active, [aria-pressed="true"]) {
   border-color: var(--dancr-color-brand-primary-medium) !important;
   color: var(--dancr-color-text-primary) !important;
@@ -5677,7 +5677,8 @@ body.dancr-button-system .home-tv-feed-action:not(
     .home-tv-feed-deal-action,
     .home-tv-feed-overflow-action,
     .home-tv-feed-fullscreen,
-    .home-tv-feed-sound
+    .home-tv-feed-sound,
+    .home-tv-feed-like-action
   ):is(.is-active, [aria-pressed="true"]) {
   border-color: var(--dancr-color-brand-primary-strong) !important;
   color: var(--dancr-color-brand-core) !important;
@@ -5710,6 +5711,22 @@ body.dancr-button-system :is(
   border-color: var(--dancr-color-brand-primary-strong) !important;
   outline: 0 !important;
   box-shadow: var(--dancr-focus-ring) !important;
+}
+
+/* A liked TV video keeps the same neutral glass circle in every touch, hover,
+ * and focus state. Only its heart glyph carries the red liked signal. */
+body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"],
+body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"]:hover,
+body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"]:focus,
+body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"]:focus-visible {
+  border-color: var(--dancr-color-white-medium) !important;
+  outline: 0 !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-black-medium) !important;
+  background-image: none !important;
+  box-shadow:
+    0 5px 16px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
 /* Fullscreen is a viewing mode, not a selected reaction. Keep its control

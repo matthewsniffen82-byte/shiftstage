@@ -486,7 +486,7 @@ test("TV sound and fullscreen controls share the compact rail and remain icon-on
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-action:not\(\.home-tv-feed-sound\)\[aria-pressed="true"\]/,
+    /\.home-tv-feed-action:not\(\.home-tv-feed-sound\):not\(\.home-tv-feed-like-action\)\[aria-pressed="true"\]/,
   );
   assert.doesNotMatch(soundFactory, /showHomeTvFeedFeedback[\s\S]*?Sound off|showHomeTvFeedFeedback[\s\S]*?Sound on/);
   assert.match(
@@ -495,12 +495,12 @@ test("TV sound and fullscreen controls share the compact rail and remain icon-on
   );
 });
 
-test("idle TV utility controls use frosted-clear glass while selected reactions keep restrained violet", () => {
+test("idle TV utility controls use frosted-clear glass while selected follows keep restrained violet", () => {
   const neutralControls = aestheticSource.match(
-    /\/\* TV utility controls remain neutral[\s\S]*?(?=\/\* Active applause and follow states)/,
+    /\/\* TV utility controls remain neutral[\s\S]*?(?=\/\* Active follow states)/,
   )?.[0] || "";
   const activeControls = aestheticSource.match(
-    /\/\* Active applause and follow states[\s\S]*?(?=\/\* The hero beam is a state signal)/,
+    /\/\* Active follow states[\s\S]*?(?=\/\* The hero beam is a state signal)/,
   )?.[0] || "";
 
   assert.match(neutralControls, /\.home-tv-feed-sound/);
@@ -517,9 +517,10 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
   assert.match(activeControls, /\.home-tv-feed-overflow-action/);
   assert.match(activeControls, /\.home-tv-feed-fullscreen/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
+  assert.match(activeControls, /\.home-tv-feed-like-action/);
   assert.match(
     activeControls,
-    /\.home-tv-feed-fullscreen,\s*\.home-tv-feed-sound\s*\):is\(\.is-active, \[aria-pressed="true"\]\)/,
+    /\.home-tv-feed-fullscreen,\s*\.home-tv-feed-sound,\s*\.home-tv-feed-like-action\s*\):is\(\.is-active, \[aria-pressed="true"\]\)/,
   );
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
   assert.equal(
@@ -530,7 +531,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=232/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=233/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {

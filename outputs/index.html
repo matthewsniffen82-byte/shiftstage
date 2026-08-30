@@ -32076,7 +32076,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=232" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=233" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -32886,7 +32886,7 @@
           touch-action: manipulation;
         }
         .home-tv-feed-action:hover,
-        .home-tv-feed-action:not(.home-tv-feed-sound)[aria-pressed="true"],
+        .home-tv-feed-action:not(.home-tv-feed-sound):not(.home-tv-feed-like-action)[aria-pressed="true"],
         .home-tv-feed-action[aria-expanded="true"] {
           border-color: rgba(126,234,255,.58);
           color: #e9fbff;
@@ -32928,8 +32928,12 @@
           font-weight: 950;
           line-height: 1;
         }
-        .home-tv-feed-like-action[aria-pressed="true"] {
+        .home-tv-feed-like-action[aria-pressed="true"],
+        .home-tv-feed-like-action[aria-pressed="true"]:hover,
+        .home-tv-feed-like-action[aria-pressed="true"]:focus,
+        .home-tv-feed-like-action[aria-pressed="true"]:focus-visible {
           border-color: rgba(255,255,255,.2) !important;
+          outline: none !important;
           color: #fff !important;
           background: rgba(5,5,10,.58) !important;
           box-shadow: 0 8px 22px rgba(0,0,0,.28) !important;

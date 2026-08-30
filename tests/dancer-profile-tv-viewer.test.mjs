@@ -91,7 +91,7 @@ test("dancer profile viewers reuse translucent TV glass with anonymous media lik
     /<div class="profile-tv-viewer-actions">[\s\S]*?<\/div>/,
   )?.[0] || "";
   const sharedTvGlass = aestheticCss.match(
-    /\/\* TV utility controls remain neutral[\s\S]*?(?=\/\* Active applause)/,
+    /\/\* TV utility controls remain neutral[\s\S]*?(?=\/\* Active follow states)/,
   )?.[0] || "";
   const quietMediaPaging = buttonCss.match(
     /\/\* Media paging stays visually quiet[\s\S]*?(?=\.dancr-button-system :is\(\s*\.profile-modal-media-previous,[\s\S]*?:disabled)/,

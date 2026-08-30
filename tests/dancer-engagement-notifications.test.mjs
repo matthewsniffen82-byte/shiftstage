@@ -75,7 +75,8 @@ test("all liked states keep neutral glass and turn only the heart red", () => {
   assert.match(tvStrip, /\.tv-video-viewer-like\.is-liked svg \{ color: #ff304f; fill: currentColor; \}/);
   assert.match(liveApp, /\.home-tv-feed-like-action\[aria-pressed="true"\] svg \{[\s\S]*?color: #ff304f !important;/);
   assert.match(liveApp, /\.home-tv-feed-like-action \{[\s\S]*?width: 52px !important;[\s\S]*?height: 52px !important;[\s\S]*?border-radius: 50% !important;/);
-  assert.match(liveApp, /\.home-tv-feed-like-action\[aria-pressed="true"\] \{[\s\S]*?background: rgba\(5,5,10,\.58\) !important;/);
+  assert.match(liveApp, /\.home-tv-feed-action:not\(\.home-tv-feed-sound\):not\(\.home-tv-feed-like-action\)\[aria-pressed="true"\]/);
+  assert.match(liveApp, /\.home-tv-feed-like-action\[aria-pressed="true"\],[\s\S]*?outline: none !important;[\s\S]*?background: rgba\(5,5,10,\.58\) !important;/);
 });
 
 test("profile photo controls use the same icon-only circular glass treatment as profile videos", () => {
