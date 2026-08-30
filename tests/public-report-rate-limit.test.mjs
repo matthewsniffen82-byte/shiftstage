@@ -20,6 +20,30 @@ test("anonymous content reports have bounded payloads and durable throttling", (
   assert.doesNotMatch(route, /Sign in to submit a report/);
 });
 
+test("content reports resolve exact public targets and ignore browser labels", () => {
+  assert.match(route, /const target = await resolveReportTarget\(client, targetType, targetId, targetLabel\)/);
+  assert.match(route, /target_id: target\.id/);
+  assert.match(route, /target_label: target\.label/);
+  assert.doesNotMatch(route, /target_id: targetId/);
+  assert.doesNotMatch(route, /target_label: targetLabel/);
+  assert.match(route, /targetType === "dancer_profile"/);
+  assert.match(route, /targetType === "venue"/);
+  assert.match(route, /targetType === "shift"/);
+  assert.match(route, /targetType === "tv_video"/);
+  assert.match(route, /\.eq\("status", "approved"\)/);
+  assert.match(route, /\.eq\("verification_status", "approved"\)/);
+  assert.match(route, /\.eq\("is_public", true\)/);
+  assert.match(route, /\.eq\("is_active", true\)/);
+  assert.match(route, /\.gt\("ends_at", now\)/);
+  assert.match(route, /requireReportableVenue\(client, String\(data\.venue_id\)\)/);
+  assert.match(route, /new PublicApiError\("NOT_FOUND", "Reported content is unavailable\.", 404\)/);
+});
+
+test("contact reports cannot smuggle a resource identifier", () => {
+  assert.match(route, /if \(targetId\) throw invalid\("Contact messages do not accept a target id\."\)/);
+  assert.match(route, /if \(!targetId\) throw invalid\("Report target id is required\."\)/);
+});
+
 test("public throttling stores only keyed hashes and never a raw network address", () => {
   assert.match(limiter, /createHmac\("sha256", secret\)/);
   assert.match(limiter, /requestIpHash = securityHash/);

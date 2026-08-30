@@ -17,6 +17,8 @@ const MAX_TARGET_LABEL_LENGTH = 160;
 const MAX_REASON_LENGTH = 120;
 const MAX_DETAILS_LENGTH = 2000;
 const MAX_REPORT_BODY_BYTES = 4_096;
+type AdminClient = ReturnType<typeof createAdminSupabaseClient>;
+type ReportTarget = { id: string | null; label: string };
 
 async function reporterIdForRequest(client: ReturnType<typeof createAdminSupabaseClient>, request: Request) {
   const token = getBearerToken(request);
@@ -79,6 +81,7 @@ export async function POST(request: Request) {
       ipLimit: 8,
       subjectLimit: 2,
     });
+    const target = await resolveReportTarget(client, targetType, targetId, targetLabel);
     const reporterId = await reporterIdForRequest(client, request);
 
     const { data, error } = await (client as any)
@@ -86,8 +89,8 @@ export async function POST(request: Request) {
       .insert({
         reporter_id: reporterId,
         target_type: targetType,
-        target_id: targetId,
-        target_label: targetLabel,
+        target_id: target.id,
+        target_label: target.label,
         reason,
         details,
         status: "open",
@@ -131,4 +134,102 @@ export async function POST(request: Request) {
 
 function invalid(message: string) {
   return new PublicApiError("INVALID_REQUEST", message, 400);
+}
+
+async function resolveReportTarget(
+  client: AdminClient,
+  targetType: string,
+  targetId: string | null,
+  submittedLabel: string,
+): Promise<ReportTarget> {
+  if (targetType === "contact_message") {
+    if (targetId) throw invalid("Contact messages do not accept a target id.");
+    return { id: null, label: submittedLabel };
+  }
+  if (!targetId) throw invalid("Report target id is required.");
+
+  if (targetType === "dancer_profile") {
+    const dancer = await requireReportableDancer(client, targetId);
+    return { id: dancer.id, label: dancer.stageName };
+  }
+
+  if (targetType === "venue") {
+    const venue = await requireReportableVenue(client, targetId);
+    return { id: venue.id, label: venue.name };
+  }
+
+  if (targetType === "shift") {
+    const now = new Date().toISOString();
+    const { data, error } = await client
+      .from("shifts")
+      .select("id, dancer_id, venue_id")
+      .eq("id", targetId)
+      .eq("status", "posted")
+      .gt("ends_at", now)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data?.id || !data?.dancer_id || !data?.venue_id) throw unavailable();
+    const [dancer] = await Promise.all([
+      requireReportableDancer(client, String(data.dancer_id)),
+      requireReportableVenue(client, String(data.venue_id)),
+    ]);
+    return { id: String(data.id), label: reportLabel(`${dancer.stageName} schedule`, "Schedule") };
+  }
+
+  if (targetType === "tv_video") {
+    const now = new Date().toISOString();
+    const { data, error } = await client
+      .from("mydancr_tv_videos")
+      .select("id, dancer_id")
+      .eq("id", targetId)
+      .eq("status", "approved")
+      .lte("published_at", now)
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data?.id || !data?.dancer_id) throw unavailable();
+    const dancer = await requireReportableDancer(client, String(data.dancer_id));
+    return {
+      id: String(data.id),
+      label: reportLabel(`${dancer.stageName} MyDancr TV video`, "MyDancr TV video"),
+    };
+  }
+
+  throw invalid("Invalid report target.");
+}
+
+async function requireReportableDancer(client: AdminClient, dancerId: string) {
+  const { data, error } = await client
+    .from("dancer_profiles")
+    .select("id, stage_name")
+    .eq("id", dancerId)
+    .eq("status", "approved")
+    .eq("verification_status", "approved")
+    .eq("is_public", true)
+    .is("disabled_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.id) throw unavailable();
+  return { id: String(data.id), stageName: reportLabel(data.stage_name, "Dancer") };
+}
+
+async function requireReportableVenue(client: AdminClient, venueId: string) {
+  const { data, error } = await client
+    .from("venues")
+    .select("id, name")
+    .eq("id", venueId)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.id) throw unavailable();
+  return { id: String(data.id), name: reportLabel(data.name, "Venue") };
+}
+
+function reportLabel(value: unknown, fallback: string) {
+  const label = typeof value === "string" ? value.trim() : "";
+  return (label || fallback).slice(0, MAX_TARGET_LABEL_LENGTH);
+}
+
+function unavailable() {
+  return new PublicApiError("NOT_FOUND", "Reported content is unavailable.", 404);
 }
