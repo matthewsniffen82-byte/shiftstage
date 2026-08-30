@@ -9,6 +9,7 @@ import ffmpegPath from "ffmpeg-static";
 import sharp from "sharp";
 import {
   createDancrVideoPoster,
+  MYDANCR_TV_POSTER_BUCKET,
   myDancrTvPosterStoragePath,
 } from "../src/lib/dancr/media-watermark.ts";
 
@@ -70,21 +71,23 @@ test("approved video processing creates a small same-aspect WebP poster", async 
 test("poster paths are deterministic siblings of their approved videos", () => {
   assert.equal(
     myDancrTvPosterStoragePath("user/dancer/video.mp4"),
-    "user/dancer/video.poster.webp",
+    "tv-posters/user/dancer/video.poster.webp",
   );
   assert.equal(
     myDancrTvPosterStoragePath("user/dancer/video.webm"),
-    "user/dancer/video.poster.webp",
+    "tv-posters/user/dancer/video.poster.webp",
   );
   assert.throws(() => myDancrTvPosterStoragePath("../video.mp4"));
+  assert.equal(MYDANCR_TV_POSTER_BUCKET, "dancer-photos");
+  assert.match(mediaWatermark, /from\(MYDANCR_TV_POSTER_BUCKET\)[\s\S]*?contentType: "image\/webp"/);
   assert.match(mediaWatermark, /cacheControl: "31536000"[\s\S]*?contentType: "image\/webp"/);
 });
 
-test("public video payloads sign recorded posters without exposing storage paths", () => {
+test("public video payloads expose protected poster URLs without storage metadata", () => {
   assert.match(tvService, /distribution_scope, moderation_details, dancer_profiles/);
   assert.match(tvService, /normalizedVideoPosterStoragePath\(row\)/);
-  assert.match(tvService, /createSignedUrls\(\[[\s\S]*?row\.posterStoragePath/);
-  assert.match(tvService, /posterUrl: row\.posterStoragePath[\s\S]*?signedByPath\.get\(row\.posterStoragePath\)/);
+  assert.match(tvService, /createSignedUrls\(rows\.map\(\(row\) => row\.storagePath\)/);
+  assert.match(tvService, /posterUrl: row\.posterStoragePath[\s\S]*?from\(MYDANCR_TV_POSTER_BUCKET\)[\s\S]*?getPublicUrl\(row\.posterStoragePath\)/);
   assert.match(tvService, /posterStoragePath: _posterStoragePath/);
   assert.doesNotMatch(tvService, /\.\.\.publicVideo,[\s\S]{0,120}posterStoragePath:/);
 });

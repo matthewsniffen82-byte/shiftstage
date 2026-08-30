@@ -21,6 +21,7 @@ import {
   isDancerIdentityReferenceRequiredError,
 } from "./media-identity";
 import {
+  MYDANCR_TV_POSTER_BUCKET,
   myDancrTvPosterStoragePath,
   removeArchivedOriginalMedia,
   watermarkStoredVideo,
@@ -564,10 +565,7 @@ async function signPublicVideos(
   ] = await Promise.all([
     admin.storage
       .from(MYDANCR_TV_BUCKET)
-      .createSignedUrls([
-        ...rows.map((row) => row.storagePath),
-        ...rows.flatMap((row) => row.posterStoragePath ? [row.posterStoragePath] : []),
-      ], MYDANCR_TV_SIGNED_URL_SECONDS),
+      .createSignedUrls(rows.map((row) => row.storagePath), MYDANCR_TV_SIGNED_URL_SECONDS),
     admin
       .from("dancer_photos")
       .select("dancer_id, storage_path")
@@ -614,7 +612,9 @@ async function signPublicVideos(
       ...publicVideo,
       videoUrl,
       posterUrl: row.posterStoragePath
-        ? signedByPath.get(row.posterStoragePath) || null
+        ? admin.storage
+            .from(MYDANCR_TV_POSTER_BUCKET)
+            .getPublicUrl(row.posterStoragePath).data.publicUrl
         : null,
       dancer: {
         ...publicVideo.dancer,
@@ -1518,9 +1518,11 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
   if (error) throw error;
   if (!video) throw new Error("Video not found.");
   assertMyDancrTvStoragePath(video);
-  await admin.storage.from(MYDANCR_TV_BUCKET).remove([
-    video.storage_path,
-    myDancrTvPosterStoragePath(video.storage_path),
+  await Promise.all([
+    admin.storage.from(MYDANCR_TV_BUCKET).remove([video.storage_path]),
+    admin.storage
+      .from(MYDANCR_TV_POSTER_BUCKET)
+      .remove([myDancrTvPosterStoragePath(video.storage_path)]),
   ]);
   await removeArchivedOriginalMedia(
     admin,

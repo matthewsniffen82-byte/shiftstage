@@ -14,6 +14,7 @@ const VIDEO_WATERMARK_TIMEOUT_MS = 120_000;
 const VIDEO_POSTER_TIMEOUT_MS = 30_000;
 const VIDEO_POSTER_MAX_WIDTH = 640;
 const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
+export const MYDANCR_TV_POSTER_BUCKET = "dancer-photos";
 const PRIVATE_VIDEO_ORIGINAL_PREFIX = "__originals";
 const MYDANCR_WORDMARK_VIEWBOX_WIDTH = 4132;
 const MYDANCR_WORDMARK_VIEWBOX_HEIGHT = 1000;
@@ -69,7 +70,7 @@ export function myDancrTvPosterStoragePath(videoStoragePath: string) {
   ) {
     throw new Error("A valid MyDancr TV video path is required.");
   }
-  return normalizedPath.replace(/\.[a-z0-9]+$/i, ".poster.webp");
+  return `tv-posters/${normalizedPath.replace(/\.[a-z0-9]+$/i, ".poster.webp")}`;
 }
 
 export function chooseImageWatermarkPosition(
@@ -254,7 +255,7 @@ export async function watermarkStoredVideo(
       });
     if (error) throw error;
     const { error: posterError } = await client.storage
-      .from(input.publicBucket)
+      .from(MYDANCR_TV_POSTER_BUCKET)
       .upload(posterStoragePath, poster, {
         cacheControl: "31536000",
         contentType: "image/webp",
@@ -290,7 +291,7 @@ export async function generateStoredVideoPoster(
   const poster = await createDancrVideoPoster(source, input.storageMime);
   const posterStoragePath = myDancrTvPosterStoragePath(input.storagePath);
   const { error } = await client.storage
-    .from(input.publicBucket)
+    .from(MYDANCR_TV_POSTER_BUCKET)
     .upload(posterStoragePath, poster, {
       cacheControl: "31536000",
       contentType: "image/webp",
