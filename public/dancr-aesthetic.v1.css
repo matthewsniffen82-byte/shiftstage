@@ -11563,3 +11563,78 @@ body.dancr-button-system :is(
   outline: 2px solid var(--dancr-color-text-secondary) !important;
   outline-offset: 2px !important;
 }
+
+/* Profile photo and video overlays share one visibly translucent glass
+ * control material. This scoped final layer restores the highlight and blur
+ * after the neutral utility and dismiss-control rules, including Safari's
+ * separately composited profile-video sound button. */
+body.dancr-button-system :is(
+  .profile-photo-viewer-close,
+  .profile-photo-viewer-previous,
+  .profile-photo-viewer-next,
+  .profile-photo-viewer-like,
+  .profile-photo-viewer-share,
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions button,
+  #profileBackdrop .profile-modal-video-controls #modalVideoSound
+) {
+  box-sizing: border-box !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  border-radius: 50% !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: rgba(18, 18, 28, 0.38) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.17),
+    rgba(255, 255, 255, 0.035)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 26px rgba(0, 0, 0, 0.32) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+  backdrop-filter: blur(16px) saturate(1.18) !important;
+}
+
+body.dancr-button-system .profile-photo-viewer-close {
+  width: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+}
+
+body.dancr-button-system .profile-photo-viewer-close :is(.icon, svg) {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+body.dancr-button-system :is(
+  .profile-photo-viewer-close,
+  .profile-photo-viewer-previous,
+  .profile-photo-viewer-next,
+  .profile-photo-viewer-like,
+  .profile-photo-viewer-share,
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions button,
+  #profileBackdrop .profile-modal-video-controls #modalVideoSound
+):is(:hover, :focus-visible) {
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  background-color: rgba(28, 28, 40, 0.48) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.05)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 0 0 2px rgba(126, 234, 255, 0.12),
+    0 12px 28px rgba(0, 0, 0, 0.36) !important;
+}
