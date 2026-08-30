@@ -199,7 +199,12 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   );
   assert.match(
     discoveryPalette,
-    /\.dancer-directory-filter\[data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-info-strong\)[\s\S]*?var\(--dancr-color-info\) 18%[\s\S]*?var\(--dancr-color-info-medium\)/,
+    /\.dancer-directory-filter\[data-dancer-directory-filter="upcoming"\]\.is-active \{[\s\S]*?var\(--dancr-color-info-strong\)[\s\S]*?var\(--dancr-color-info\) 18%[\s\S]*?var\(--dancr-color-info-medium\)/,
+  );
+  assert.doesNotMatch(
+    discoveryPalette,
+    /data-dancer-directory-filter="upcoming"\]\.is-active:not\(\.is-empty\)/,
+    "Upcoming must remain cyan even when the result count is zero",
   );
   assert.match(
     discoveryPalette,

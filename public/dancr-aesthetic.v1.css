@@ -3125,7 +3125,7 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
   color: var(--dancr-color-live) !important;
 }
 
-body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty) {
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active {
   border-color: var(--dancr-color-info-strong) !important;
   color: var(--dancr-color-text-primary) !important;
   background: color-mix(
@@ -3138,7 +3138,7 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
     0 0 12px var(--dancr-color-info-soft) !important;
 }
 
-body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty) > span {
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active > span {
   color: var(--dancr-color-info) !important;
 }
 
@@ -8291,7 +8291,7 @@ body.dancer-directory-active > .app main.stack > section.stack
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty) {
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active {
   background: color-mix(
     in srgb,
     var(--dancr-color-info) 16%,
@@ -8301,13 +8301,13 @@ body.dancer-directory-active > .app main.stack > section.stack
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty)
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active
   > :is(.dancer-directory-filter-label, .dancer-directory-filter-count) {
   color: var(--dancr-color-info) !important;
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active:not(.is-empty)
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="upcoming"].is-active
   > .dancer-directory-filter-status {
   display: block;
   width: 6px;

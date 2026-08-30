@@ -9,7 +9,7 @@ const [manager, packageJson, postbuild] = await Promise.all([
 ]);
 
 test("the guarded production operation enforces six Now, three Upcoming, and one unscheduled dancer", () => {
-  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-six-now-three-upcoming-v1"/);
+  assert.match(manager, /const OPERATION_CONFIRMATION = "mydancr-six-now-three-upcoming-random-venues-v1"/);
   assert.match(manager, /const WORKING_NOW_COUNT = 6/);
   assert.match(manager, /const UPCOMING_COUNT = 3/);
   assert.match(manager, /const NO_SCHEDULE_COUNT = 1/);
@@ -20,13 +20,13 @@ test("the guarded production operation enforces six Now, three Upcoming, and one
 
 test("demo schedule maintenance is explicit and never runs during an ordinary production build", () => {
   assert.match(postbuild, /const upcomingSyncFlag = String\(process\.env\.DEMO_UPCOMING_SYNC \|\| ""\)\.trim\(\)/);
-  assert.match(postbuild, /const DEFAULT_UPCOMING_SYNC_FLAG = "mydancr-three-upcoming-v1"/);
+  assert.match(postbuild, /const DEFAULT_UPCOMING_SYNC_FLAG = "mydancr-three-upcoming-random-venues-v1"/);
   assert.match(postbuild, /const shouldSyncUpcoming = Boolean\(upcomingSyncFlag\)/);
   assert.doesNotMatch(postbuild, /shouldSyncDefaultUpcoming/);
   assert.match(postbuild, /upcomingSyncFlag && upcomingSyncFlag !== DEFAULT_UPCOMING_SYNC_FLAG/);
   assert.match(postbuild, /process\.env\.VERCEL_ENV !== "production"/);
   assert.match(postbuild, /new URL\("\.\/manage-demo-upcoming\.mjs", import\.meta\.url\)/);
-  assert.match(postbuild, /"--mode=apply"[\s\S]*?"--target=production"[\s\S]*?"--confirm=mydancr-six-now-three-upcoming-v1"/);
+  assert.match(postbuild, /"--mode=apply"[\s\S]*?"--target=production"[\s\S]*?"--confirm=mydancr-six-now-three-upcoming-random-venues-v1"/);
   assert.match(postbuild, /populationFlag \|\| dealSyncFlag \|\| scheduleSyncFlag/);
   assert.match(postbuild, /if \(!populationFlag && !dealSyncFlag && !scheduleSyncFlag\) \{[\s\S]*?LAYOUT_REVIEW_POPULATION_SKIPPED/);
 });
@@ -39,8 +39,10 @@ test("Upcoming assignments preserve exactly six Working Now dancers and leave on
   assert.match(manager, /clearUpcomingAssignments\(profileIds, now\)/);
   assert.match(manager, /loadUpcomingAssignments\(profileIds, now\)/);
   assert.match(manager, /noSchedule\.length !== NO_SCHEDULE_COUNT/);
-  assert.match(manager, /peppermint-hippo-las-vegas/);
-  assert.match(manager, /spearmint-rhino-las-vegas/);
+  assert.match(manager, /loadEligibleVenues\(\)/);
+  assert.match(manager, /const selectedVenues = shuffled\(venues\)\.slice\(0, UPCOMING_COUNT\)/);
+  assert.match(manager, /crypto\.randomInt\(index \+ 1\)/);
+  assert.doesNotMatch(manager, /FEATURED_VENUE_SLUGS/);
   assert.match(manager, /Expected exactly \$\{UPCOMING_COUNT\} Upcoming demo dancers after verification/);
   assert.doesNotMatch(
     manager.match(/async function clearUpcomingAssignments[\s\S]*?async function assertMarkedDemoAccount/)?.[0] || "",

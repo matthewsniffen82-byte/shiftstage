@@ -8,7 +8,7 @@ const scheduleSyncFlag = String(
   process.env.LAYOUT_REVIEW_SYNC_SCHEDULES || "",
 ).trim();
 const upcomingSyncFlag = String(process.env.DEMO_UPCOMING_SYNC || "").trim();
-const DEFAULT_UPCOMING_SYNC_FLAG = "mydancr-three-upcoming-v1";
+const DEFAULT_UPCOMING_SYNC_FLAG = "mydancr-three-upcoming-random-venues-v1";
 const shouldSyncUpcoming = Boolean(upcomingSyncFlag);
 
 if (shouldSyncUpcoming) {
@@ -35,7 +35,7 @@ if (shouldSyncUpcoming) {
       upcomingManagerPath,
       "--mode=apply",
       "--target=production",
-      "--confirm=mydancr-six-now-three-upcoming-v1",
+      "--confirm=mydancr-six-now-three-upcoming-random-venues-v1",
     ],
     {
       env: process.env,

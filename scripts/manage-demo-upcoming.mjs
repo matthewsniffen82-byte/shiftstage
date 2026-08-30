@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import process from "node:process";
 import nextEnv from "@next/env";
 import { createClient } from "@supabase/supabase-js";
@@ -5,7 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.env.DANCR_ENV_DIR?.trim() || process.cwd());
 
-const OPERATION_CONFIRMATION = "mydancr-six-now-three-upcoming-v1";
+const OPERATION_CONFIRMATION = "mydancr-six-now-three-upcoming-random-venues-v1";
 const DATASET_MARKER = "mydancr-layout-review-v1";
 const MANAGED_BY = "manage-demo-upcoming";
 const WORKING_NOW_COUNT = 6;
@@ -15,12 +16,6 @@ const EMAIL_DOMAIN = "synthetic.mydancr.invalid";
 const DEMO_PROFILE_SLUGS = Object.freeze(
   Array.from({ length: 10 }, (_, index) => `layout-review-${String(index + 1).padStart(2, "0")}`),
 );
-const FEATURED_VENUE_SLUGS = Object.freeze([
-  "peppermint-hippo-las-vegas",
-  "spearmint-rhino-las-vegas",
-  "sapphire-las-vegas",
-]);
-
 const cli = parseArguments(process.argv.slice(2));
 const mode = readMode(cli);
 const target = readRequiredValue(cli, "--target");
@@ -45,7 +40,10 @@ if (mode === "inspect") {
 }
 
 async function inspectState() {
-  const profiles = await loadEligibleProfiles();
+  const [profiles, venues] = await Promise.all([
+    loadEligibleProfiles(),
+    loadEligibleVenues(),
+  ]);
   const profileIds = profiles.map((profile) => profile.id);
   const now = new Date().toISOString();
   const [workingNowIds, upcoming] = await Promise.all([
@@ -62,6 +60,7 @@ async function inspectState() {
     event: "demo_upcoming.inspected",
     target,
     eligibleProfileCount: profiles.length,
+    eligibleVenueCount: venues.length,
     workingNowCount: workingNowIds.size,
     upcomingCount: upcoming.length,
     noScheduleCount: noSchedule.length,
@@ -76,7 +75,7 @@ async function inspectState() {
 async function applyAssignments() {
   const [profiles, venues] = await Promise.all([
     loadEligibleProfiles(),
-    loadFeaturedVenues(),
+    loadEligibleVenues(),
   ]);
   for (const profile of profiles) {
     await assertMarkedDemoAccount(profile);
@@ -93,6 +92,11 @@ async function applyAssignments() {
   if (profiles.length !== WORKING_NOW_COUNT + UPCOMING_COUNT + NO_SCHEDULE_COUNT) {
     throw new Error(
       `Expected ${WORKING_NOW_COUNT + UPCOMING_COUNT + NO_SCHEDULE_COUNT} eligible demo profiles; found ${profiles.length}.`,
+    );
+  }
+  if (venues.length < UPCOMING_COUNT) {
+    throw new Error(
+      `At least ${UPCOMING_COUNT} active Las Vegas venues are required; found ${venues.length}.`,
     );
   }
   const candidates = profiles.filter((profile) => !workingNowIds.has(String(profile.id)));
@@ -114,12 +118,13 @@ async function applyAssignments() {
       return existingDifference || String(left.slug).localeCompare(String(right.slug));
     })
     .slice(0, UPCOMING_COUNT);
+  const selectedVenues = shuffled(venues).slice(0, UPCOMING_COUNT);
 
   await clearUpcomingAssignments(profileIds, now);
 
   const assignedAt = new Date().toISOString();
   const rows = selectedProfiles.map((profile, index) => {
-    const venue = venues[index];
+    const venue = selectedVenues[index];
     const timezone = venue.timezone || "America/Los_Angeles";
     const shiftDate = localDateAfterDays(timezone, index + 1);
     const window = scheduleDateWindow(shiftDate, timezone);
@@ -237,20 +242,15 @@ async function loadEligibleProfiles() {
   );
 }
 
-async function loadFeaturedVenues() {
+async function loadEligibleVenues() {
   const { data, error } = await admin
     .from("venues")
     .select("id, slug, name, city, timezone, is_active")
-    .in("slug", FEATURED_VENUE_SLUGS)
     .eq("is_active", true)
-    .ilike("city", "Las Vegas");
-  assertSuccess(error, "load featured Las Vegas venues");
-  const bySlug = new Map((data || []).map((venue) => [String(venue.slug), venue]));
-  const missing = FEATURED_VENUE_SLUGS.filter((slug) => !bySlug.has(slug));
-  if (missing.length) {
-    throw new Error(`Missing active featured venues: ${missing.join(", ")}.`);
-  }
-  return FEATURED_VENUE_SLUGS.map((slug) => bySlug.get(slug));
+    .ilike("city", "Las Vegas")
+    .order("slug", { ascending: true });
+  assertSuccess(error, "load active Las Vegas venues");
+  return data || [];
 }
 
 async function loadWorkingNowDancerIds(profileIds, now) {
@@ -383,6 +383,15 @@ function zonedDateTimeToUtc(year, month, day, hour, minute, timeZone) {
     value("second"),
   );
   return new Date(utcGuess.getTime() - (localAsUtc - utcGuess.getTime()));
+}
+
+function shuffled(values) {
+  const result = [...values];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = crypto.randomInt(index + 1);
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+  }
+  return result;
 }
 
 function parseArguments(args) {
