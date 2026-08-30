@@ -15,7 +15,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/mydancr-icon.svg">
-  <link rel="preload" as="image" href="/outputs/dancr-hero.png?v=untitled-design-4-exact-20260731" type="image/png" fetchpriority="high">
+  <link rel="preload" as="image" href="/outputs/dancr-hero.webp?v=exact-20260830-q84" type="image/webp" fetchpriority="high">
   <meta property="og:title" content="mydancr">
   <meta property="og:site_name" content="mydancr">
   <meta property="og:description" content="Choose your city. See who's working now.">
@@ -20483,7 +20483,7 @@
       padding: 0 !important;
       overflow: hidden !important;
       background-color: #050507 !important;
-      background-image: url("/outputs/dancr-hero.png?v=untitled-design-4-exact-20260731") !important;
+      background-image: none !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
       background-size: cover !important;
@@ -20514,7 +20514,7 @@
       height: auto !important;
       display: block !important;
       padding: 0 !important;
-      background-image: url("/outputs/dancr-hero.png?v=untitled-design-4-exact-20260731") !important;
+      background-image: none !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
       background-size: cover !important;
@@ -22055,7 +22055,7 @@
       height: auto !important;
       padding: 0 !important;
       overflow: hidden !important;
-      background-image: url("/outputs/dancr-hero.png?v=untitled-design-4-exact-20260731") !important;
+      background-image: none !important;
       background-size: contain !important;
       background-position: center center !important;
       background-repeat: no-repeat !important;
@@ -24090,9 +24090,7 @@
         padding: 0 !important;
         border-radius: 16px !important;
         overflow: hidden !important;
-        background-image:
-          linear-gradient(90deg, rgba(3,3,5,.18), rgba(3,3,5,.02)),
-          url("/outputs/dancr-hero.png?v=untitled-design-4-exact-20260731") !important;
+        background-image: none !important;
         background-size: cover !important;
         background-position: center center !important;
         background-repeat: no-repeat !important;
@@ -24531,7 +24529,7 @@
       min-height: 0 !important;
       height: auto !important;
       padding: 0 !important;
-      background-image: url("/outputs/dancr-hero.png?v=untitled-design-4-exact-20260731") !important;
+      background-image: none !important;
       background-size: contain !important;
       background-position: center center !important;
       background-repeat: no-repeat !important;
@@ -32101,7 +32099,7 @@
       <section class="hero reference-hero uploaded-hero-ready">
         <img
           class="hero-art"
-          src="/outputs/dancr-hero.png?v=untitled-design-4-exact-20260731"
+          src="/outputs/dancr-hero.webp?v=exact-20260830-q84"
           alt="Know who's working. Plan your night."
           width="1590"
           height="889"
@@ -45695,6 +45693,9 @@
         coverImageWidth: item.coverImageWidth || null,
         coverImageHeight: item.coverImageHeight || null,
         logoImageUrl: item.logoImageUrl || "",
+        logoImageSrcSet: item.logoImageSrcSet || "",
+        logoImageWidth: item.logoImageWidth || null,
+        logoImageHeight: item.logoImageHeight || null,
         qrCodeUrl: item.qrCodeUrl || "",
         qrCodeLabel: item.qrCodeLabel || "",
         activeDeals: Array.isArray(item.activeDeals) ? item.activeDeals : item.activeDeal ? [item.activeDeal] : [],
@@ -45899,6 +45900,9 @@
         coverImageWidth: profile.coverImageWidth,
         coverImageHeight: profile.coverImageHeight,
         logoImageUrl: profile.logoImageUrl,
+        logoImageSrcSet: profile.logoImageSrcSet,
+        logoImageWidth: profile.logoImageWidth,
+        logoImageHeight: profile.logoImageHeight,
         qrCodeUrl: profile.qrCodeUrl,
         qrCodeLabel: profile.qrCodeLabel,
         activeDeals,
@@ -45957,6 +45961,9 @@
         coverImageWidth: preferred?.coverImageWidth ?? alternate?.coverImageWidth ?? null,
         coverImageHeight: preferred?.coverImageHeight ?? alternate?.coverImageHeight ?? null,
         logoImageUrl: preferred?.logoImageUrl || alternate?.logoImageUrl || "",
+        logoImageSrcSet: preferred?.logoImageSrcSet || alternate?.logoImageSrcSet || "",
+        logoImageWidth: preferred?.logoImageWidth ?? alternate?.logoImageWidth ?? null,
+        logoImageHeight: preferred?.logoImageHeight ?? alternate?.logoImageHeight ?? null,
         qrCodeUrl: preferred?.qrCodeUrl || alternate?.qrCodeUrl || "",
         qrCodeLabel: preferred?.qrCodeLabel || alternate?.qrCodeLabel || "",
         activeDeal: preferred?.activeDeal?.id ? preferred.activeDeal : alternate?.activeDeal || null,
@@ -51382,7 +51389,14 @@
     function venueLogoMarkup(venue, className) {
       const logoImageUrl = String(venue?.logoImageUrl || "").trim();
       if (!logoImageUrl) return "";
-      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" crossorigin="anonymous" src="${escapeHtml(logoImageUrl)}" alt="" decoding="async" onload="fitVenueLogoImage(this)"></span>`;
+      const nativeLogoAttrs = nativeResponsivePhotoAttrs(logoImageUrl, venue?.logoImageSrcSet);
+      const sourceAttrs = nativeLogoAttrs || `src="${escapeOptionValue(logoImageUrl)}"`;
+      const imageWidth = Math.max(0, Number(venue?.logoImageWidth) || 0);
+      const imageHeight = Math.max(0, Number(venue?.logoImageHeight) || 0);
+      const dimensions = imageWidth && imageHeight
+        ? ` width="${imageWidth}" height="${imageHeight}"`
+        : "";
+      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="lazy" decoding="async" onload="fitVenueLogoImage(this)"></span>`;
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
@@ -51406,7 +51420,7 @@
           ? `<img class="venue-lineup-avatar-photo" ${nativePhotoAttrs} sizes="32px" width="64" height="64" style="object-position: ${avatarPhotoPosition(
               profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
               profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
-            )}" alt="" aria-hidden="true" loading="eager" decoding="async" draggable="false">`
+            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false">`
           : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
         return `<span class="${classPrefix}-lineup-avatar" data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
       }).join("");
@@ -58622,7 +58636,7 @@
         : "";
       const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);
-      const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow });
+      const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow, eager: index < 2 });
       const directionsMarkup = venueDirectionsMarkup({
         venue,
         className: "home-discovery-feed-directions venue-directions-btn venue-card-primary-action venue-card-directions-action",
@@ -58717,7 +58731,7 @@
       `;
     }
 
-    function homeDancerGridCard(profile, city, compactDirectory = false) {
+    function homeDancerGridCard(profile, city, compactDirectory = false, imageIndex = 0) {
       const safeName = escapeHtml(profile.name);
       const profileValue = escapeOptionValue(profile.name);
       const profileReference = escapeOptionValue(profileReferenceValue(profile));
@@ -58726,9 +58740,11 @@
       const photoSrcSet = publicProfilePhotoSrcSet(profile);
       const photoAttrs = customPhotoAttrs(photoUrl, photoSrcSet);
       const nativePhotoAttrs = nativeResponsivePhotoAttrs(photoUrl, photoSrcSet);
+      const imageLoading = imageIndex < 6 ? "eager" : "lazy";
+      const imageFetchPriority = imageIndex < 3 ? "high" : imageIndex >= 6 ? "low" : "auto";
       const photoMarkup = photoUrl
         ? compactDirectory && nativePhotoAttrs
-          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="eager" decoding="async" draggable="false" alt="" aria-hidden="true">`
+          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="${imageLoading}" fetchpriority="${imageFetchPriority}" decoding="async" draggable="false" alt="" aria-hidden="true">`
           : `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();
@@ -58766,14 +58782,14 @@
       `;
     }
 
-    function homeDancerGridSectionMarkup(label, className, profiles, city, compactDirectory = false) {
+    function homeDancerGridSectionMarkup(label, className, profiles, city, compactDirectory = false, startIndex = 0) {
       if (!profiles.length) return "";
       return `
         <div class="home-dancer-grid-heading ${className}" role="heading" aria-level="3">
           <strong>${label}</strong>
           <span>${profiles.length}</span>
         </div>
-        ${profiles.map((profile) => homeDancerGridCard(profile, city, compactDirectory)).join("")}
+        ${profiles.map((profile, index) => homeDancerGridCard(profile, city, compactDirectory, startIndex + index)).join("")}
       `;
     }
 
@@ -58838,6 +58854,19 @@
     function renderHomeDancerGrid(city, profiles) {
       const sections = dancerDirectorySections(profiles, city);
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
+      let imageOffset = 0;
+      const sectionMarkup = sections.map((section) => {
+        const markup = homeDancerGridSectionMarkup(
+          section.label,
+          section.className,
+          section.profiles,
+          city,
+          true,
+          imageOffset
+        );
+        imageOffset += section.profiles.length;
+        return markup;
+      }).join("");
       const emptyLabels = {
         now: `No dancers are working now in ${city}.`,
         upcoming: `No dancers have an upcoming shift in ${city}.`
@@ -58849,7 +58878,7 @@
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
         ${visibleCount
-          ? sections.map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles, city, true)).join("")
+          ? sectionMarkup
           : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available in ${city} yet.`)}</div>`}
       `;
       const nextRenderKey = homeDancerGridContentKey(city, gridMarkup);

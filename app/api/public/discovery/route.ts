@@ -78,6 +78,9 @@ export async function GET(request: Request) {
         coverImageWidth: coverImage?.imageWidth || null,
         coverImageHeight: coverImage?.imageHeight || null,
         logoImageUrl: logoImage?.imageUrl || verifiedVenueLogoUrl(venue.slug),
+        logoImageSrcSet: logoImage?.imageSrcSet || null,
+        logoImageWidth: logoImage?.imageWidth || null,
+        logoImageHeight: logoImage?.imageHeight || null,
         qrCodeUrl: venue.qr_code_storage_path
           ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
           : null,

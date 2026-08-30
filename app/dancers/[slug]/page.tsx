@@ -126,6 +126,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                   <img
                     alt=""
                     decoding="async"
+                    fetchPriority="high"
                     height={avatarPhotoHeight || undefined}
                     sizes="72px"
                     src={avatarPhoto}

@@ -341,6 +341,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
   if (error) throw error;
   if (!data) return null;
 
+  const logoImage = responsivePublicImage(client, "venue-logo-images", data.logo_storage_path);
   return {
     id: data.id,
     slug: data.slug,
@@ -352,7 +353,10 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     longitude: data.longitude,
     hoursLabel: formatVenueHours(data.opens_at, data.closes_at),
     ...venueCoverImageFields(client, data.cover_image_storage_path),
-    logoImageUrl: responsivePublicImage(client, "venue-logo-images", data.logo_storage_path)?.imageUrl || verifiedVenueLogoUrl(data.slug),
+    logoImageUrl: logoImage?.imageUrl || verifiedVenueLogoUrl(data.slug),
+    logoImageSrcSet: logoImage?.imageSrcSet || null,
+    logoImageWidth: logoImage?.imageWidth || null,
+    logoImageHeight: logoImage?.imageHeight || null,
     qrCodeUrl: venueQrCodeUrl(client, data.qr_code_storage_path),
     qrCodeLabel: data.qr_code_label || null,
   };

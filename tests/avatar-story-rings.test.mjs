@@ -159,7 +159,7 @@ test("venue-card lineup avatars use one stable circular paint layer while scroll
   assert.ok(lineupBuilder);
   assert.match(lineupBuilder, /nativeResponsivePhotoAttrs\(/);
   assert.match(lineupBuilder, /class="venue-lineup-avatar-photo"/);
-  assert.match(lineupBuilder, /loading="eager" decoding="async"/);
+  assert.match(lineupBuilder, /loading="\$\{options\.eager \? "eager" : "lazy"\}" decoding="async"/);
   assert.doesNotMatch(lineupBuilder, /customAvatarPhotoAttrs\(/);
   assert.match(
     aesthetic,

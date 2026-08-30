@@ -72,9 +72,9 @@ test("HEIC conversion retains high visual quality without enlarging the source",
 test("responsive image processing preserves the master and creates production display sizes", () => {
   assert.match(
     responsiveImages,
-    /DANCR_RESPONSIVE_IMAGE_WIDTHS = \[640, 1280, 2048\]/,
+    /DANCR_RESPONSIVE_IMAGE_WIDTHS = \[320, 480, 640, 1280, 2048\]/,
   );
-  assert.match(responsiveImages, /DANCR_RESPONSIVE_IMAGE_QUALITY = 90/);
+  assert.match(responsiveImages, /DANCR_RESPONSIVE_IMAGE_QUALITY = 84/);
   assert.match(responsiveImages, /candidateWidth < width/);
   assert.match(responsiveImages, /withoutEnlargement: true/);
   assert.match(responsiveImages, /\.webp\(\{[\s\S]*?quality: DANCR_RESPONSIVE_IMAGE_QUALITY/);
@@ -114,7 +114,7 @@ test("responsive image processing preserves bytes, emits real WebP variants, and
   const prepared = await prepareResponsiveImage(master);
   assert.deepEqual(
     prepared.variants.map((variant) => variant.width),
-    [640, 1280, 2048],
+    [320, 480, 640, 1280, 2048],
   );
   assert.equal(prepared.master.buffer, masterBuffer);
   for (const variant of prepared.variants) {
@@ -158,11 +158,11 @@ test("responsive image processing preserves bytes, emits real WebP variants, and
   );
   assert.match(
     uploaded.storagePath,
-    /^user\/profile\/profile\.r640-1280-2048\.m2500x1600\.f\d{1,3}x\d{1,3}\.jpg$/,
+    /^user\/profile\/profile\.r320-480-640-1280-2048\.m2500x1600\.f\d{1,3}x\d{1,3}\.jpg$/,
   );
   assert.ok(uploaded.focalX >= 0 && uploaded.focalX <= 100);
   assert.ok(uploaded.focalY >= 0 && uploaded.focalY <= 100);
-  assert.equal(uploads.length, 4);
+  assert.equal(uploads.length, 6);
   assert.equal(uploads[0].buffer, masterBuffer);
   assert.deepEqual(
     responsiveImageStoragePaths(uploaded.storagePath),
@@ -173,7 +173,9 @@ test("responsive image processing preserves bytes, emits real WebP variants, and
     "dancer-photos",
     uploaded.storagePath,
   );
-  assert.match(publicImage.imageUrl, /\.w2048\.webp$/);
+  assert.match(publicImage.imageUrl, /\.w480\.webp$/);
+  assert.match(publicImage.imageSrcSet, /\.w320\.webp 320w/);
+  assert.match(publicImage.imageSrcSet, /\.w480\.webp 480w/);
   assert.match(publicImage.imageSrcSet, /\.w640\.webp 640w/);
   assert.match(publicImage.imageSrcSet, /\.w1280\.webp 1280w/);
   assert.match(publicImage.imageSrcSet, /\.w2048\.webp 2048w/);
@@ -183,13 +185,17 @@ test("responsive image processing preserves bytes, emits real WebP variants, and
   assert.deepEqual(removals, []);
 });
 
-test("legacy responsive photos retain a centered avatar fallback", () => {
+test("legacy responsive photos gain small transformed sources and retain a centered avatar fallback", () => {
   const storageClient = {
     storage: {
       from(bucket) {
         return {
-          getPublicUrl(path) {
-            return { data: { publicUrl: `https://images.example/${bucket}/${path}` } };
+          getPublicUrl(path, options) {
+            const transform = options?.transform;
+            const query = transform
+              ? `?width=${transform.width}&quality=${transform.quality}`
+              : "";
+            return { data: { publicUrl: `https://images.example/${bucket}/${path}${query}` } };
           },
         };
       },
@@ -202,6 +208,10 @@ test("legacy responsive photos retain a centered avatar fallback", () => {
   );
   assert.equal(publicImage.imageFocalX, 50);
   assert.equal(publicImage.imageFocalY, 50);
+  assert.match(publicImage.imageUrl, /legacy\.r640\.m1200x1800\.jpg\.w640\.webp\?width=480&quality=80$/);
+  assert.match(publicImage.imageSrcSet, /\.w640\.webp\?width=320&quality=80 320w/);
+  assert.match(publicImage.imageSrcSet, /\.w640\.webp\?width=480&quality=80 480w/);
+  assert.match(publicImage.imageSrcSet, /\.w640\.webp 640w/);
 });
 
 test("dancer and venue uploads publish and clean up complete responsive image sets", () => {
@@ -217,12 +227,16 @@ test("public image responses expose responsive sources with legacy fallbacks", (
   assert.match(publicService, /primaryPhotoSrcSet:/);
   assert.match(publicService, /galleryPhotoSrcSets:/);
   assert.match(publicService, /coverImageSrcSet:/);
+  assert.match(publicService, /logoImageSrcSet:/);
   assert.match(discoveryRoute, /coverImageSrcSet:/);
+  assert.match(discoveryRoute, /logoImageSrcSet:/);
   assert.match(venueRoute, /coverImageSrcSet:/);
+  assert.match(venueRoute, /logoImageSrcSet:/);
 });
 
 test("profile surfaces use responsive sources and concise plural upload guidance", () => {
   assert.match(dancerProfile, /srcSet=\{avatarPhotoSrcSet \|\| undefined\}/);
+  assert.match(dancerProfile, /fetchPriority="high"[\s\S]*?sizes="72px"/);
   assert.match(dancerCarousel, /srcSet=\{item\.imageSrcSet \|\| undefined\}/);
   assert.match(
     dancerCarousel,
@@ -234,6 +248,8 @@ test("profile surfaces use responsive sources and concise plural upload guidance
   assert.doesNotMatch(dashboard, /never enlarges a small/);
   assert.match(liveShell, /function responsiveCssImageSet/);
   assert.match(liveShell, /profilePhotoSrcSet/);
+  assert.match(liveShell, /nativeResponsivePhotoAttrs\(logoImageUrl, venue\?\.logoImageSrcSet\)/);
   assert.match(liveShell, /original camera images/);
   assert.match(liveShell, /image\/heic,image\/heif/);
+  assert.match(dashboard, /className="customer-saved-card-image"[\s\S]*?loading="lazy"[\s\S]*?sizes="\(max-width: 860px\)/);
 });

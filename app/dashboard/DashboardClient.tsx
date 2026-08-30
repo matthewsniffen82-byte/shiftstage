@@ -1801,6 +1801,8 @@ function SavedCardImage({ image, name }: { image: SavedImageSummary; name: strin
     return (
       <img
         className="customer-saved-card-image"
+        decoding="async"
+        loading="lazy"
         src={image.imageUrl}
         srcSet={image.imageSrcSet || undefined}
         sizes="(max-width: 860px) calc(100vw - 72px), (max-width: 1200px) 30vw, 340px"
@@ -2542,7 +2544,7 @@ function VenuePanel({
             {workingNow.map((dancer) => (
               <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
                 <span className="venue-working-identity">
-                  {dancer.avatarUrl ? <img src={String(dancer.avatarUrl)} srcSet={dancer.avatarSrcSet ? String(dancer.avatarSrcSet) : undefined} sizes="48px" alt="" /> : <i aria-hidden="true">{String(dancer.stageName || "D").slice(0, 1)}</i>}
+                  {dancer.avatarUrl ? <img src={String(dancer.avatarUrl)} srcSet={dancer.avatarSrcSet ? String(dancer.avatarSrcSet) : undefined} sizes="48px" alt="" loading="lazy" decoding="async" /> : <i aria-hidden="true">{String(dancer.stageName || "D").slice(0, 1)}</i>}
                   <span><strong>{String(dancer.stageName || "Dancer")}</strong><small>Checked in {dancer.checkedInAt ? formatRelativeDashboardTime(String(dancer.checkedInAt)) : "during this shift"}</small></span>
                 </span>
                 <span className="venue-working-verification"><strong>Check-in verified</strong><small>Active until {formatDashboardTime(String(dancer.endsAt || ""))}</small></span>

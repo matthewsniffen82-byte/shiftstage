@@ -6,8 +6,10 @@ import {
   removeArchivedOriginalMedia,
 } from "./media-watermark.ts";
 
-export const DANCR_RESPONSIVE_IMAGE_WIDTHS = [640, 1280, 2048] as const;
-export const DANCR_RESPONSIVE_IMAGE_QUALITY = 90;
+export const DANCR_RESPONSIVE_IMAGE_WIDTHS = [320, 480, 640, 1280, 2048] as const;
+export const DANCR_RESPONSIVE_IMAGE_QUALITY = 84;
+const DANCR_RESPONSIVE_IMAGE_FALLBACK_WIDTH = 480;
+const DANCR_TRANSFORMED_IMAGE_QUALITY = 80;
 const DEFAULT_IMAGE_FOCAL_PERCENT = 50;
 
 type DancrClient = SupabaseClient<any, any, any>;
@@ -269,7 +271,17 @@ export function responsivePublicImage(
     };
   }
 
-  const responsiveSources = manifest.responsiveWidths.map((width) => ({
+  const smallestStoredWidth = manifest.responsiveWidths[0] || manifest.width;
+  const transformSourcePath = manifest.responsiveWidths.length
+    ? responsiveVariantStoragePath(normalizedPath, smallestStoredWidth)
+    : normalizedPath;
+  const transformedSources = DANCR_RESPONSIVE_IMAGE_WIDTHS.filter(
+    (width) => width < smallestStoredWidth && width < manifest.width,
+  ).map((width) => ({
+    url: publicStorageUrl(client, bucket, transformSourcePath, width),
+    width,
+  }));
+  const storedSources = manifest.responsiveWidths.map((width) => ({
     url: publicStorageUrl(
       client,
       bucket,
@@ -277,8 +289,13 @@ export function responsivePublicImage(
     ),
     width,
   }));
+  const responsiveSources = [...transformedSources, ...storedSources].sort(
+    (left, right) => left.width - right.width,
+  );
   const fallbackSource =
-    responsiveSources[responsiveSources.length - 1]?.url || masterImageUrl;
+    responsiveSources.find(
+      (source) => source.width >= DANCR_RESPONSIVE_IMAGE_FALLBACK_WIDTH,
+    )?.url || responsiveSources[responsiveSources.length - 1]?.url || masterImageUrl;
   const sourceSet = [
     ...responsiveSources.map((source) => `${source.url} ${source.width}w`),
     `${masterImageUrl} ${manifest.width}w`,
@@ -398,8 +415,21 @@ function publicStorageUrl(
   client: DancrClient,
   bucket: string,
   storagePath: string,
+  transformedWidth?: number,
 ) {
-  return client.storage.from(bucket).getPublicUrl(storagePath).data.publicUrl;
+  return client.storage
+    .from(bucket)
+    .getPublicUrl(
+      storagePath,
+      transformedWidth
+        ? {
+            transform: {
+              quality: DANCR_TRANSFORMED_IMAGE_QUALITY,
+              width: transformedWidth,
+            },
+          }
+        : undefined,
+    ).data.publicUrl;
 }
 
 function positiveDimension(value: unknown) {

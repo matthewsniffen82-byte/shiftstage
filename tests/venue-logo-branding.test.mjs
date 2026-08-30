@@ -163,6 +163,7 @@ test("demo venues keep placeholders while managed venue pages can use verified a
 
 test("verified logo identity flows through every public venue response", () => {
   assert.match(types, /logoImageUrl\?: string \| null/);
+  assert.match(types, /logoImageSrcSet\?: string \| null/);
   for (const source of [discoveryRoute, venuesRoute, publicService]) {
     assert.match(source, /verifiedVenueLogoUrl/);
     assert.match(source, /venue-logo-images/);
@@ -170,6 +171,7 @@ test("verified logo identity flows through every public venue response", () => {
     assert.match(source, /verifiedVenueLogoUrl\(/);
   }
   assert.match(liveApp, /logoImageUrl: item\.logoImageUrl \|\| ""/);
+  assert.match(liveApp, /logoImageSrcSet: item\.logoImageSrcSet \|\| ""/);
 });
 
 test("venue scroll cards use one fixed logo stage while detail pages retain contain-fit identity", () => {
@@ -189,6 +191,9 @@ test("venue scroll cards use one fixed logo stage while detail pages retain cont
   assert.match(liveApp, /getImageData\(0, 0, sampleWidth, sampleHeight\)/);
   assert.match(liveApp, /contentCenterX[\s\S]*?contentCenterY[\s\S]*?applyVenueLogoFit\(image, fittedScale, contentCenterX, contentCenterY\)/);
   assert.match(liveApp, /crossorigin="anonymous"/);
+  assert.match(liveApp, /nativeResponsivePhotoAttrs\(logoImageUrl, venue\?\.logoImageSrcSet\)/);
+  assert.match(liveApp, /sizes="\(max-width: 720px\) 82vw, 620px"/);
+  assert.match(liveApp, /loading="lazy" decoding="async"/);
   assert.match(liveApp, /onload="fitVenueLogoImage\(this\)"/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "venue-card-logo"\)/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "home-venue-discovery-logo"\)/);

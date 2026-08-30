@@ -281,11 +281,11 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
   assert.match(
     homeSource,
-    /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?\$\{compactDirectory \? "" : homeDancerGridActionsMarkup\(profile, city\)\}/,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false, imageIndex = 0\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?\$\{compactDirectory \? "" : homeDancerGridActionsMarkup\(profile, city\)\}/,
   );
   assert.match(
     homeSource,
-    /function renderHomeDancerGrid\(city, profiles\)[\s\S]*?results\.classList\.add\("home-dancer-three-column"\)[\s\S]*?homeDancerGridSectionMarkup\(section\.label, section\.className, section\.profiles, city, true\)/,
+    /function renderHomeDancerGrid\(city, profiles\)[\s\S]*?homeDancerGridSectionMarkup\([\s\S]*?section\.label,[\s\S]*?section\.className,[\s\S]*?section\.profiles,[\s\S]*?city,[\s\S]*?true,[\s\S]*?imageOffset[\s\S]*?results\.classList\.add\("home-dancer-three-column"\)/,
   );
   assert.match(
     homeSource,
@@ -310,11 +310,11 @@ test("incomplete dancer rows start from the left edge of the three-card director
   assert.doesNotMatch(homeSource, /homeDancerGridPlacementClass/);
   assert.match(
     homeSource,
-    /profiles\.map\(\(profile\) => homeDancerGridCard\(profile, city, compactDirectory\)\)/,
+    /profiles\.map\(\(profile, index\) => homeDancerGridCard\(profile, city, compactDirectory, startIndex \+ index\)\)/,
   );
 });
 
-test("Dancers reuses unchanged grid cards and starts every displayed compact photo together", () => {
+test("Dancers reuses unchanged grid cards and prioritizes only the first visible rows", () => {
   const contentKey = homeSource.match(
     /function homeDancerGridContentKey\(city, markup\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/,
   )?.[0] || "";
@@ -348,9 +348,9 @@ test("Dancers reuses unchanged grid cards and starts every displayed compact pho
   );
   assert.match(
     homeSource,
-    /compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="eager" decoding="async" draggable="false"/,
+    /const imageLoading = imageIndex < 6 \? "eager" : "lazy";[\s\S]*?const imageFetchPriority = imageIndex < 3 \? "high" : imageIndex >= 6 \? "low" : "auto";[\s\S]*?compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="\$\{imageLoading\}" fetchpriority="\$\{imageFetchPriority\}" decoding="async" draggable="false"/,
   );
-  assert.doesNotMatch(homeSource, /HOME_DANCER_GRID_EAGER_PHOTO_LIMIT|prioritizeHomeDancerGridPhotos/);
+  assert.match(renderer, /let imageOffset = 0;[\s\S]*?startIndex|let imageOffset = 0;[\s\S]*?imageOffset \+= section\.profiles\.length/);
   assert.match(renderer, /results\.innerHTML = gridMarkup;/);
   assert.match(
     homeSource,
@@ -595,7 +595,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow \}\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?home-venue-discovery-slide\$\{workingNow\.length \? " has-live-lineup" : ""\}/,
+    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow, eager: index < 2 \}\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?home-venue-discovery-slide\$\{workingNow\.length \? " has-live-lineup" : ""\}/,
   );
   assert.match(
     homeSource,
@@ -691,7 +691,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
 test("Now grid cards keep production actions while Dancers directory cards link to profiles", () => {
   assert.match(
     homeSource,
-    /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?compactDirectory \? "" : homeDancerGridActionsMarkup\(profile, city\)/,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false, imageIndex = 0\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?compactDirectory \? "" : homeDancerGridActionsMarkup\(profile, city\)/,
   );
   assert.match(
     homeSource,
@@ -724,7 +724,7 @@ test("Now grid cards keep production actions while Dancers directory cards link 
   );
   assert.match(
     homeSource,
-    /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?data-profile-reference="\$\{profileReference\}"/,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false, imageIndex = 0\)[\s\S]*?data-profile-reference="\$\{profileReference\}"/,
   );
   assert.match(
     homeSource,
@@ -891,7 +891,7 @@ test("dancer grid hierarchy stays readable without changing the production card 
   );
   assert.match(
     homeSource,
-    /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?const scheduleLabel = homeDancerGridScheduleLabel\(profile, city\);[\s\S]*?home-dancer-grid-status \$\{status\.className\}">\$\{escapeHtml\(scheduleLabel\)\}/,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false, imageIndex = 0\)[\s\S]*?const scheduleLabel = homeDancerGridScheduleLabel\(profile, city\);[\s\S]*?home-dancer-grid-status \$\{status\.className\}">\$\{escapeHtml\(scheduleLabel\)\}/,
   );
   assert.match(
     homeSource,
@@ -1006,12 +1006,12 @@ test("legal and support actions stay out of the mobile discovery scroll", () => 
 
 test("the Dancers grid is profile-first while production action handlers remain wired", () => {
   assert.match(homeSource, /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important/);
-  assert.match(homeSource, /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"/);
+  assert.match(homeSource, /function homeDancerGridCard\(profile, city, compactDirectory = false, imageIndex = 0\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"/);
   assert.match(
     homeSource,
     /options\.feedActions[\s\S]*data-feed-action="follow"[\s\S]*data-feed-action="notify"[\s\S]*data-feed-action="going"/,
   );
-  assert.match(homeSource, /homeDancerGridSectionMarkup\(section\.label, section\.className, section\.profiles, city, true\)/);
+  assert.match(homeSource, /homeDancerGridSectionMarkup\([\s\S]*?section\.label,[\s\S]*?section\.className,[\s\S]*?section\.profiles,[\s\S]*?city,[\s\S]*?true,[\s\S]*?imageOffset/);
   assert.match(
     homeSource,
     /const feedActionButton = event\.target\.closest\("\[data-feed-action\]"\)[\s\S]*saveProfileFollow\(feedActionButton\)[\s\S]*saveProfileNotifications\(feedActionButton\)[\s\S]*saveProfileGoing\(feedActionButton\)/,

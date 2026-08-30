@@ -94,6 +94,9 @@ export type VenueSummary = {
   coverImageWidth?: number | null;
   coverImageHeight?: number | null;
   logoImageUrl?: string | null;
+  logoImageSrcSet?: string | null;
+  logoImageWidth?: number | null;
+  logoImageHeight?: number | null;
   qrCodeUrl?: string | null;
   qrCodeLabel?: string | null;
 };
