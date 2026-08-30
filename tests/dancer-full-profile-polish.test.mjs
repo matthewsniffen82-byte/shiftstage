@@ -248,7 +248,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   assert.doesNotMatch(publicProfilePage, /className="profile-overview"/);
 });
 
-test("profile actions use neutral circular glass with violet limited to selected glyphs", () => {
+test("profile actions use neutral glass while available Going is the sole filled CTA", () => {
   const guestActionsBlock = aesthetic.match(
     /\/\* Guest actions read as one unboxed row[\s\S]*?(?=\/\* Production TV-card branding)/,
   )?.[0] || "";
@@ -286,15 +286,19 @@ test("profile actions use neutral circular glass with violet limited to selected
   );
   assert.match(
     guestActionsBlock,
-    /#followBtn\.is-following,[\s\S]*?#notifyBtn\.is-following,[\s\S]*?#goingBtn\.is-going[\s\S]*?\.action-icon > svg,[\s\S]*?\.profile-action-icon-control\.is-selected,[\s\S]*?\.profile-action-icon-control\.is-going[\s\S]*?\.profile-action-preview-icon \{[\s\S]*?color: var\(--dancr-color-avatar-ring-violet\) !important;[\s\S]*?filter: none !important;/,
+    /#followBtn\.is-following,[\s\S]*?#notifyBtn\.is-following[\s\S]*?\.action-icon > svg,[\s\S]*?\.profile-action-icon-control\.is-selected[\s\S]*?\.profile-action-preview-icon \{[\s\S]*?color: var\(--dancr-color-avatar-ring-violet\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     guestActionsBlock,
     /profile-action-icon-control:is\(:hover, :focus-visible\):not\(:disabled\) \.action-icon,[\s\S]*?border-color: rgba\(255, 255, 255, 0\.42\) !important;[\s\S]*?0 0 0 2px rgba\(255, 255, 255, 0\.1\)/,
   );
-  assert.doesNotMatch(
+  assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action:not\(\.is-going\)[\s\S]{0,500}(?:#f5d0fe|drop-shadow|brand-primary-strong)/,
+    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?border-color: rgba\(255, 255, 255, 0\.28\) !important;[\s\S]*?color: var\(--dancr-color-brand-core\) !important;[\s\S]*?background-color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?0 8px 22px rgba\(0, 0, 0, 0\.3\) !important;/,
+  );
+  assert.match(
+    guestActionsBlock,
+    /going-btn\.is-available-action \.action-icon > svg,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-preview-icon \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;[\s\S]*?filter: none !important;/,
   );
 });
 
