@@ -403,7 +403,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   );
   assert.match(
     homeSource,
-    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"club profiles"[\s\S]*?`Scroll through \$\{discoveryLabel\} in \$\{city\}`/,
+    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"club profiles"[\s\S]*?const locationPhrase = discoveryLocationPhrase\(city\);[\s\S]*?`Scroll through \$\{discoveryLabel\} \$\{locationPhrase\}`/,
   );
   assert.match(
     homeSource,
@@ -1052,7 +1052,7 @@ test("homepage omits top search and city shortcut controls", () => {
 test("mobile dancer headings keep the selected city on one clean line", () => {
   assert.match(
     homeSource,
-    /const keepDancerCityOnOneLine =\s*!selectedVenue && activeTab === "dancers" && venueFilter === "all";/,
+    /const keepDancerCityOnOneLine =\s*!userLocationOutsideMarkets && !selectedVenue && activeTab === "dancers" && venueFilter === "all";/,
   );
   assert.match(
     homeSource,
@@ -1076,7 +1076,7 @@ test("the consolidated discovery titles use one typography system and consistent
   );
   assert.match(
     homeSource,
-    /dancers: venueFilter === "all" \? `Dancers in \$\{city\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Clubs in \$\{city\}`/,
+    /const locationPhrase = discoveryLocationPhrase\(city\);[\s\S]*?dancers: venueFilter === "all" \? `Dancers \$\{locationPhrase\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Clubs \$\{locationPhrase\}`/,
   );
   assert.match(
     homeSource,

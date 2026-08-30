@@ -18,7 +18,7 @@ test("city discovery keeps the native select as a fallback and enhances it with 
 
 test("city selection expands inline, applies immediately, and remains keyboard accessible", () => {
   assert.match(liveShell, /function openCityPicker\(\)[\s\S]*?citySelectPanel\.hidden = false[\s\S]*?querySelector\('\[aria-selected="true"\]'\)\?\.focus\(\)/);
-  assert.match(liveShell, /function applyCityPickerSelection\(nextCity\)[\s\S]*?citySelect\.value = nextCity[\s\S]*?closeCityPicker\(true\)[\s\S]*?citySelect\.dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/);
+  assert.match(liveShell, /function applyCityPickerSelection\(nextCity\)[\s\S]*?const changed = userLocationOutsideMarkets \|\| citySelect\.value !== nextCity;[\s\S]*?citySelect\.value = nextCity[\s\S]*?closeCityPicker\(true\)[\s\S]*?citySelect\.dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/);
   assert.match(liveShell, /citySelectOptions\?\.addEventListener\("keydown"[\s\S]*?ArrowDown[\s\S]*?ArrowUp[\s\S]*?Home[\s\S]*?End/);
   assert.match(liveShell, /event\.key === "Escape"[\s\S]*?closeCityPicker\(true\)/);
   assert.match(liveShell, /homeFilterToggle\?\.setAttribute\("aria-expanded", "false"\)[\s\S]*?homeAdvancedFilters\?\.classList\.remove\("is-open"\)/);
@@ -45,20 +45,26 @@ test("mobile discovery uses compact neutral controls and an inline city panel", 
   assert.match(aesthetic, /\.dancer-directory-filter\.is-active[\s\S]*?var\(--dancr-color-brand-primary\) 10%[\s\S]*?box-shadow: inset/);
 });
 
-test("location matching never relabels a remote visitor as the nearest supported city", () => {
+test("a remote visitor gets an honest near-me state instead of a distant supported city", () => {
   assert.match(liveShell, /const MAX_LOCATION_MARKET_DISTANCE_MILES = 50;/);
+  assert.match(liveShell, /let userLocationOutsideMarkets = false;/);
   assert.match(
     liveShell,
     /function nearestCityForCoordinates\(coords\)[\s\S]*?\.sort\(\(a, b\) => a\.miles - b\.miles\)\[0\] \|\| null;/,
   );
   assert.match(
     liveShell,
-    /const requestedLocation = await requestVenuePosition\(\);[\s\S]*?const nearestMarket = nearestCityForCoordinates\(requestedLocation\);[\s\S]*?nearestMarket\.miles > MAX_LOCATION_MARKET_DISTANCE_MILES[\s\S]*?userLocation = null;[\s\S]*?No MyDancr city within \$\{MAX_LOCATION_MARKET_DISTANCE_MILES\} mi\. \$\{selectedCity\(\)\} remains selected\.[\s\S]*?return;/,
+    /const requestedLocation = await requestVenuePosition\(\);[\s\S]*?const nearestMarket = nearestCityForCoordinates\(requestedLocation\);[\s\S]*?nearestMarket\.miles > MAX_LOCATION_MARKET_DISTANCE_MILES[\s\S]*?userLocation = requestedLocation;[\s\S]*?userLocationOutsideMarkets = true;[\s\S]*?render\(\);[\s\S]*?No MyDancr city within \$\{MAX_LOCATION_MARKET_DISTANCE_MILES\} mi of you\.[\s\S]*?return;/,
   );
   assert.match(
     liveShell,
-    /userLocation = requestedLocation;[\s\S]*?citySelect\.value = nearestMarket\.city;[\s\S]*?syncCityPickerSelection\(nearestMarket\.city\);[\s\S]*?\$\{nearestMarket\.city\} selected from your location\./,
+    /userLocationOutsideMarkets = false;[\s\S]*?citySelect\.value = nearestMarket\.city;[\s\S]*?syncCityPickerSelection\(nearestMarket\.city\);[\s\S]*?\$\{nearestMarket\.city\} selected from your location\./,
   );
+  assert.match(liveShell, /function discoveryLocationPhrase\(city = selectedCity\(\)\)[\s\S]*?userLocationOutsideMarkets \? "near you" : `in \$\{city\}`/);
+  assert.match(liveShell, /citySelectButtonText\.textContent = userLocationOutsideMarkets \? "Near me" : citySelect\.value/);
+  assert.match(liveShell, /if \(userLocationOutsideMarkets && \["tonight", "dancers", "venues"\]\.includes\(tab\)\) return \[\];/);
+  assert.match(liveShell, /No MyDancr clubs near you[\s\S]*?MyDancr is not in your area yet\.[\s\S]*?Choose another city/);
+  assert.match(liveShell, /citySelect\.addEventListener\("change"[\s\S]*?userLocationOutsideMarkets = false;[\s\S]*?userLocation = null;/);
   assert.doesNotMatch(liveShell, /showToast\("Location updated\."\)/);
 });
 

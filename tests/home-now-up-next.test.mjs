@@ -66,7 +66,7 @@ test("the consolidated Dancers destination exposes only All, Now, and Upcoming f
     /const empty = counts\[filter\.id\] === 0;[\s\S]*?\$\{empty \? " is-empty" : ""\}/,
   );
   assert.match(homeSource, /dancerDirectoryFilter = nextFilter;[\s\S]*?syncHomeDestinationLocation\("dancers"\)[\s\S]*?render\(\)/);
-  assert.match(homeSource, /No dancers are working now in \$\{city\}\./);
+  assert.match(homeSource, /No dancers are working now \$\{locationPhrase\}\./);
   assert.doesNotMatch(homeSource, /No dancers are trending in \$\{city\} yet\./);
   assert.match(homeSource, /data-dancer-directory-filter="\$\{filter\.id\}"/);
   assert.match(homeSource, /No approved dancer profiles \$\{scope\}\./);

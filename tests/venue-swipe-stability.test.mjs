@@ -35,7 +35,7 @@ test("venue discovery uses inline one-column cards with visible continuation", (
   assert.doesNotMatch(homeSource, /calc\(100dvh - 180px\)/);
   assert.match(
     homeSource,
-    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid", "venue-card-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);[\s\S]*?`Scroll through \$\{discoveryLabel\} in \$\{city\}`/,
+    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid", "venue-card-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);[\s\S]*?const locationPhrase = discoveryLocationPhrase\(city\);[\s\S]*?`Scroll through \$\{discoveryLabel\} \$\{locationPhrase\}`/,
   );
   assert.match(
     homeSource,
