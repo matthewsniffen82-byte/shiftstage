@@ -102,6 +102,12 @@ test("gallery photo processing remains separate from avatar face cropping", () =
 });
 
 test("existing approved avatars can be securely reprocessed from an original approved photo", () => {
+  assert.match(recenterRouteSource, /createRequestSupabaseContext\(request\)/);
+  assert.match(recenterRouteSource, /await requireAdmin\(client, user\.id\)/);
+  assert.ok(
+    recenterRouteSource.indexOf("await requireAdmin(client, user.id)")
+      < recenterRouteSource.indexOf("readBoundedJsonObject(request"),
+  );
   assert.match(recenterRouteSource, /timingSafeEqual\(expectedBuffer, providedBuffer\)/);
   assert.match(recenterRouteSource, /DANCR_MEDIA_IMPORT_KEY/);
   assert.match(recenterRouteSource, /\.eq\("slug", dancerSlug\)/);
@@ -111,6 +117,8 @@ test("existing approved avatars can be securely reprocessed from an original app
   assert.match(recenterRouteSource, /setApprovedDancerAvatar/);
   assert.match(recenterRouteSource, /restoreDancerAvatar/);
   assert.match(recenterRouteSource, /removeResponsiveImage/);
+  assert.match(recenterRouteSource, /from\("admin_actions"\)\.insert/);
+  assert.match(recenterRouteSource, /recenter_dancer_avatar/);
 });
 
 test("avatar maintenance bounds metadata and keeps infrastructure failures private", () => {

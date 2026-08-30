@@ -2,6 +2,7 @@ import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
+import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   createMyDancrTvUpload,
   hideOwnMyDancrTvVideo,
@@ -17,6 +18,7 @@ import {
   submitMyDancrTvUpload,
 } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
 
 export const runtime = "nodejs";
@@ -43,6 +45,8 @@ type PreparedUpload = {
 
 export async function POST(request: Request) {
   try {
+    const { client, user } = await createRequestSupabaseContext(request);
+    await requireAdmin(client, user.id);
     authorizeImportRequest(request);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_IMPORT_BODY_BYTES,
@@ -50,15 +54,15 @@ export async function POST(request: Request) {
       tooLargeMessage: "Import request is too large.",
     });
     const action = body?.action;
-    if (action === "prepare") return prepareImport(body);
-    if (action === "finalize") return finalizeImport(body);
+    if (action === "prepare") return prepareImport(body, user.id);
+    if (action === "finalize") return finalizeImport(body, user.id);
     return NextResponse.json({ ok: false, error: "Choose a supported import action." }, { status: 400 });
   } catch (error) {
     return apiError(error, "Unable to import MyDancr TV media.");
   }
 }
 
-async function prepareImport(body: any) {
+async function prepareImport(body: any, adminId: string) {
   const dancerSlug = cleanSlug(body?.dancerSlug);
   const batchId = cleanBatchId(body?.batchId);
   const videos = parseVideos(body?.videos);
@@ -134,8 +138,21 @@ async function prepareImport(body: any) {
     throw error;
   }
 
+  const { error: auditError } = await admin.from("admin_actions").insert({
+    admin_id: adminId,
+    target_type: "dancer_profile",
+    target_id: dancer.id,
+    action: "prepare_platform_tv_import",
+    notes: `Batch ${batchId}; ${prepared.length} video(s); replaced ${replaceExisting ? activeCount : 0}`,
+  });
+  if (auditError) {
+    await cleanupPreparedUploads(admin, prepared);
+    throw auditError;
+  }
+
   console.info(JSON.stringify({
     event: "mydancr_tv.platform_import_prepared",
+    adminId,
     batchId,
     dancerId: dancer.id,
     replacedCount: replaceExisting ? activeCount : 0,
@@ -153,7 +170,7 @@ async function prepareImport(body: any) {
   }, { headers: { "Cache-Control": "no-store" } });
 }
 
-async function finalizeImport(body: any) {
+async function finalizeImport(body: any, adminId: string) {
   const batchId = cleanBatchId(body?.batchId);
   const videoId = cleanUuid(body?.videoId);
   const recoverPreparedVideo = body?.recoverPreparedVideo === true;
@@ -171,14 +188,12 @@ async function finalizeImport(body: any) {
 
   let result: any = row;
   if (row.status === "uploading") {
-    const adminId = await activeAdminUserId(admin);
     result = await publishPlatformMyDancrTvUpload(admin, adminId, row.id);
   } else if (row.status === "moderating") {
     result = await retryMyDancrTvAutomatedModeration(admin, row.id);
   }
 
   if (result?.status === "submitted" || row.status === "submitted") {
-    const adminId = await activeAdminUserId(admin);
     result = await reviewMyDancrTvVideo(
       admin,
       adminId,
@@ -202,8 +217,18 @@ async function finalizeImport(body: any) {
     .eq("id", row.id);
   if (noteError) throw noteError;
 
+  const { error: auditError } = await admin.from("admin_actions").insert({
+    admin_id: adminId,
+    target_type: "mydancr_tv_video",
+    target_id: row.id,
+    action: "finalize_platform_tv_import",
+    notes: `Batch ${batchId}; status ${result?.status || row.status}`,
+  });
+  if (auditError) throw auditError;
+
   console.info(JSON.stringify({
     event: "mydancr_tv.platform_import_finalized",
+    adminId,
     batchId,
     videoId: row.id,
     status: result?.status || row.status,
@@ -246,19 +271,6 @@ async function cleanupPreparedUploads(admin: ReturnType<typeof createAdminSupaba
   const ids = prepared.map((upload) => upload.videoId);
   await admin.storage.from(MYDANCR_TV_BUCKET).remove(paths).catch(() => null);
   await admin.from("mydancr_tv_videos").delete().in("id", ids);
-}
-
-async function activeAdminUserId(admin: ReturnType<typeof createAdminSupabaseClient>) {
-  const { data, error } = await admin
-    .from("app_users")
-    .select("id")
-    .eq("role", "admin")
-    .eq("account_state", "active")
-    .limit(1)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data?.id) throw forbidden("An active administrator is required to approve this video.");
-  return data.id;
 }
 
 function authorizeImportRequest(request: Request) {

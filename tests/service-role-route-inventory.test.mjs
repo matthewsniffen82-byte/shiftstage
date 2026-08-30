@@ -23,16 +23,24 @@ const serviceRoleRoutes = walk(path.join(projectRoot, "app", "api"))
   .map(relative)
   .filter((routePath) => routePath.endsWith("/route.ts"))
   .filter((routePath) => read(routePath).includes("createAdminSupabaseClient"));
+const adminRoutes = walk(path.join(projectRoot, "app", "api", "admin"))
+  .map(relative)
+  .filter((routePath) => routePath.endsWith("/route.ts"));
+
+test("every admin API route validates an authenticated active administrator", () => {
+  const unprotected = adminRoutes.filter((routePath) => {
+    const source = read(routePath);
+    return !source.includes("createRequestSupabaseContext") || !source.includes("requireAdmin(");
+  });
+
+  assert.deepEqual(unprotected, []);
+});
 
 test("every service-role API route has an explicit reviewed trust boundary", () => {
   const unclassified = serviceRoleRoutes.filter((routePath) => {
     const source = read(routePath);
 
     if (routePath.startsWith("app/api/admin/")) {
-      if (routePath === "app/api/admin/avatars/recenter/route.ts"
-        || routePath === "app/api/admin/tv/import/route.ts") {
-        return !/timingSafeEqual/.test(source) || !/authorize\w*Request\(request\)/.test(source);
-      }
       return !/requireAdmin\(/.test(source);
     }
 

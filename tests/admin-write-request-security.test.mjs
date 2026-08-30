@@ -4,12 +4,14 @@ import test from "node:test";
 
 const routePaths = [
   "../app/api/admin/approvals/route.ts",
+  "../app/api/admin/avatars/recenter/route.ts",
   "../app/api/admin/dancers/[id]/route.ts",
   "../app/api/admin/image-moderation/route.ts",
   "../app/api/admin/rankings/recalculate/route.ts",
   "../app/api/admin/reports/route.ts",
   "../app/api/admin/support/route.ts",
   "../app/api/admin/tv/videos/route.ts",
+  "../app/api/admin/tv/import/route.ts",
   "../app/api/admin/nfc-tags/route.ts",
   "../app/api/admin/deals/route.ts",
   "../app/api/admin/dmca/route.ts",
@@ -38,13 +40,13 @@ test("admin content and operations writes authorize before consuming their bodie
 });
 
 test("video moderation preserves bounded-body status codes", () => {
-  const videoReview = sources[6];
+  const videoReview = sources[7];
   assert.match(videoReview, /error instanceof PublicApiError/);
   assert.match(videoReview, /return apiError\(error,/);
 });
 
 test("admin venue request wrappers preserve bounded-body status codes", () => {
-  for (const index of [14, 15]) {
+  for (const index of [16, 17]) {
     assert.match(sources[index], /error instanceof PublicApiError/, routePaths[index]);
     assert.match(sources[index], /return apiError\(error,/, routePaths[index]);
   }

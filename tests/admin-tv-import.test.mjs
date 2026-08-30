@@ -16,6 +16,18 @@ test("platform TV imports use a constant-time production secret", () => {
   assert.match(route, /throw forbidden\("Media import access denied\."\)/);
 });
 
+test("platform TV imports require an active admin and attribute work to the caller", () => {
+  assert.match(route, /createRequestSupabaseContext\(request\)/);
+  assert.match(route, /await requireAdmin\(client, user\.id\)/);
+  assert.ok(route.indexOf("await requireAdmin(client, user.id)") < route.indexOf("readBoundedJsonObject(request"));
+  assert.match(route, /prepareImport\(body, user\.id\)/);
+  assert.match(route, /finalizeImport\(body, user\.id\)/);
+  assert.doesNotMatch(route, /activeAdminUserId/);
+  assert.match(route, /from\("admin_actions"\)\.insert/);
+  assert.match(route, /prepare_platform_tv_import/);
+  assert.match(route, /finalize_platform_tv_import/);
+});
+
 test("platform TV imports use the production upload and watermark pipeline with owner-authorized publication", () => {
   assert.match(route, /createMyDancrTvUpload/);
   assert.match(route, /publishPlatformMyDancrTvUpload/);
@@ -61,4 +73,6 @@ test("platform import client validates media and preserves resumable upload stat
   assert.match(importScript, /distributionScope/);
   assert.match(importScript, /saveState/);
   assert.match(importScript, /finalized\.video\?\.status !== "approved"/);
+  assert.match(importScript, /MYDANCR_ADMIN_ACCESS_TOKEN/);
+  assert.match(importScript, /authorization: `Bearer \$\{adminAccessToken\}`/);
 });

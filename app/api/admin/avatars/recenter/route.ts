@@ -2,6 +2,7 @@ import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
+import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
   isAvatarFaceDetectionUnavailableError,
   isAvatarFaceRequiredError,
@@ -19,6 +20,7 @@ import {
   uploadResponsiveImage,
 } from "@/src/lib/dancr/responsive-image";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
 
 export const runtime = "nodejs";
@@ -29,6 +31,8 @@ const MAX_RECENTER_BODY_BYTES = 4_096;
 
 export async function POST(request: Request) {
   try {
+    const { client, user } = await createRequestSupabaseContext(request);
+    await requireAdmin(client, user.id);
     authorizeMaintenanceRequest(request);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_RECENTER_BODY_BYTES,
@@ -109,9 +113,18 @@ export async function POST(request: Request) {
       APPROVED_PHOTO_BUCKET,
       uploaded.storagePath,
     );
+    const { error: auditError } = await admin.from("admin_actions").insert({
+      admin_id: user.id,
+      target_type: "dancer_profile",
+      target_id: dancer.id,
+      action: "recenter_dancer_avatar",
+      notes: `Source: ${sourcePath === previousPath ? "avatar" : "approved photo"}`,
+    });
+    if (auditError) throw auditError;
     console.info(
       JSON.stringify({
         event: "dancer_avatar.platform_recentered",
+        adminId: user.id,
         dancerId: dancer.id,
         dancerSlug: dancer.slug,
         sourceKind: sourcePath === previousPath ? "avatar" : "approved_photo",

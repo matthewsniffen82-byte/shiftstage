@@ -12,6 +12,8 @@ const options = parseArguments(process.argv.slice(2));
 loadEnvironmentFile(options.envFile);
 const importKey = String(process.env.DANCR_MEDIA_IMPORT_KEY || "").trim();
 if (importKey.length < 32) fail("DANCR_MEDIA_IMPORT_KEY is missing or invalid.");
+const adminAccessToken = String(process.env.MYDANCR_ADMIN_ACCESS_TOKEN || "").trim();
+if (adminAccessToken.length < 20) fail("MYDANCR_ADMIN_ACCESS_TOKEN is missing or invalid.");
 
 const videos = [
   ...options.profileVideos.map((filePath) => inspectVideo(filePath, "profile_and_feed")),
@@ -21,7 +23,7 @@ if (!videos.length) fail("Provide at least one --profile-video or --feed-video."
 
 let state = readState(options.stateFile, options, videos);
 if (!state) {
-  const prepared = await importRequest(options.endpoint, importKey, {
+  const prepared = await importRequest(options.endpoint, importKey, adminAccessToken, {
     action: "prepare",
     dancerSlug: options.dancer,
     batchId: options.batch,
@@ -76,7 +78,7 @@ for (const video of state.videos) {
 
 for (const video of state.videos) {
   if (video.published) continue;
-  const finalized = await importRequest(options.endpoint, importKey, {
+  const finalized = await importRequest(options.endpoint, importKey, adminAccessToken, {
     action: "finalize",
     batchId: options.batch,
     videoId: video.upload.videoId,
@@ -122,7 +124,9 @@ function parseArguments(args) {
   }
   if (!/^[a-z0-9][a-z0-9-]{1,119}$/.test(values.dancer || "")) fail("Provide a valid --dancer slug.");
   if (!/^[a-z0-9][a-z0-9-]{7,79}$/.test(values.batch || "")) fail("Provide a valid --batch ID.");
-  if (!values.envFile) fail("Provide --env-file with DANCR_MEDIA_IMPORT_KEY.");
+  if (!values.envFile) {
+    fail("Provide --env-file with DANCR_MEDIA_IMPORT_KEY and MYDANCR_ADMIN_ACCESS_TOKEN.");
+  }
   values.stateFile ||= path.resolve(`.platform-tv-import-${values.batch}.json`);
   return values;
 }
@@ -164,10 +168,14 @@ function inspectVideo(filePath, distributionScope) {
   return { filePath, fileSize, durationSeconds, width, height, mimeType, distributionScope };
 }
 
-async function importRequest(endpoint, importKey, body) {
+async function importRequest(endpoint, importKey, adminAccessToken, body) {
   const response = await fetch(`${endpoint}/api/admin/tv/import`, {
     method: "POST",
-    headers: { "content-type": "application/json", "x-mydancr-media-import-key": importKey },
+    headers: {
+      authorization: `Bearer ${adminAccessToken}`,
+      "content-type": "application/json",
+      "x-mydancr-media-import-key": importKey,
+    },
     body: JSON.stringify(body),
   });
   const payload = await response.json().catch(() => ({}));
