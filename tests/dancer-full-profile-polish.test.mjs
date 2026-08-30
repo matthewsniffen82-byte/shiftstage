@@ -357,7 +357,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     liveApp,
-    /class="profile-modal-name-row" data-follower-label="Followers">\s*<div class="profile-modal-name-anchor">\s*<h2 id="modalName">Profile<\/h2>\s*<span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓<\/span>\s*<\/div>/,
+    /class="profile-modal-name-row" data-follower-label="Followers">\s*<div class="profile-modal-name-anchor">\s*<h2 id="modalName">Profile<\/h2>\s*<\/div>\s*<span class="badge" id="modalStatus">Verified<\/span>/,
   );
   assert.match(
     liveApp,
@@ -452,18 +452,9 @@ test("home full-profile identity scrolls naturally on desktop and mobile", () =>
   );
 });
 
-test("the full-profile verified badge stays circular like scroll-card checks", () => {
-  const verifiedBadgeRule = profilePolishBlock?.match(
-    /#profileBackdrop \.profile-modal-verified \{[\s\S]*?\n        \}/,
-  )?.[0] || "";
-
-  assert.match(verifiedBadgeRule, /width: 19px;/);
-  assert.match(verifiedBadgeRule, /height: 19px;/);
-  assert.match(verifiedBadgeRule, /min-width: 19px;/);
-  assert.match(verifiedBadgeRule, /min-height: 19px;/);
-  assert.match(verifiedBadgeRule, /flex: 0 0 19px;/);
-  assert.match(verifiedBadgeRule, /aspect-ratio: 1;/);
-  assert.match(verifiedBadgeRule, /border-radius: 50%;/);
+test("the full-profile identity omits dancer verification badges", () => {
+  assert.doesNotMatch(liveApp, /class="profile-modal-verified"|id="modalVerified"/);
+  assert.doesNotMatch(liveApp, /class="verified-mark" aria-label="Verified">✓<\/span>/);
 });
 
 test("home profile TV previews expose inline playback, sound, progress, and duration controls", () => {

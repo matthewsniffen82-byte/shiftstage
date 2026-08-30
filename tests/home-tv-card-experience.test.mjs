@@ -28,10 +28,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
     homeSource,
     /\.home-tv-feed-meta \{[\s\S]*?width: 100%;[\s\S]*?overflow-wrap: anywhere;[\s\S]*?white-space: normal;/,
   );
-  assert.match(
-    homeSource,
-    /\.home-tv-feed-verified \{[\s\S]*?width: 17px[\s\S]*?height: 17px/,
-  );
+  assert.doesNotMatch(homeSource, /\.home-tv-feed-verified/);
   assert.match(
     homeSource,
     /meta\.textContent = dancerCity[\s\S]*?dancerCopy\.append\(nameRow, meta\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)/,
@@ -580,13 +577,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(neutralFullscreenFeedback, /background-color: var\(--dancr-color-black-medium\) !important;/);
   assert.match(neutralFullscreenFeedback, /box-shadow: 0 12px 34px var\(--dancr-color-black-strong\) !important;/);
   assert.doesNotMatch(neutralFullscreenFeedback, /brand-|beam-|gradient|glow/);
-  assert.match(brandedCards, /\.home-tv-feed-verified/);
-  assert.match(brandedCards, /background: var\(--mydancr-verified-surface\) !important;/);
-  assert.match(brandedCards, /border-color: var\(--mydancr-verified-outline\) !important;/);
-  assert.doesNotMatch(
-    brandedCards.match(/\.home-tv-feed-verified[\s\S]*?\{[\s\S]*?\}/)?.[0] || "",
-    /glow|box-shadow:(?!\s*none)/,
-  );
+  assert.doesNotMatch(brandedCards, /\.home-tv-feed-verified/);
   const cityLabel = brandedCards.match(
     /body\.dancr-button-system \.home-tv-feed-meta \{[\s\S]*?\n\}/,
   )?.[0] || "";

@@ -42,7 +42,8 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /<header className="profile-titlebar">/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /<h1>\{profile\.stageName\}<\/h1>/);
-  assert.match(profilePage, /className="profile-verified" aria-label="Verified dancer"/);
+  assert.doesNotMatch(profilePage, /className="profile-verified"|aria-label="Verified dancer"/);
+  assert.doesNotMatch(dashboardClient, /className="profile-verified"|aria-label="Verified dancer"/);
   assert.match(profilePage, /className="profile-titlebar-context"/);
   assert.match(profilePage, /className="profile-titlebar-city">\{profile\.city\}<\/span>/);
   assert.doesNotMatch(profilePage, /const nextShift =/);

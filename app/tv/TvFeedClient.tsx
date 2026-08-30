@@ -798,7 +798,6 @@ export default function TvFeedClient({
                           <span className="tv-card-stage-identity">
                             <span className="tv-card-stage-row">
                               <span className="tv-card-stage-name">{video.dancer.stageName}</span>
-                              <span className="tv-verified-mark" aria-label="Verified">✓</span>
                             </span>
                             <span className="tv-profile-destination">
                               View Profile <span aria-hidden="true">→</span>
@@ -1096,7 +1095,6 @@ function TvStyles() {
       .tv-card-stage-row { min-width: 0; display: flex; align-items: center; gap: 6px; }
       .tv-card-stage-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .tv-profile-destination { width: fit-content; display: inline-flex; align-items: center; gap: 5px; color: #9fefff; font-size: 10px; font-weight: 950; letter-spacing: .07em; line-height: 1.1; text-transform: uppercase; text-shadow: 0 0 12px rgba(34,199,255,.3), 0 2px 8px rgba(0,0,0,.8); }
-      .tv-verified-mark { width: 17px; height: 17px; flex: 0 0 17px; display: inline-grid; place-items: center; border-radius: 999px; color: #041014; background: #67e8f9; box-shadow: 0 0 10px rgba(34,211,238,.36); font-size: 11px; font-weight: 950; line-height: 1; }
       .tv-card-venue-line { width: fit-content; min-width: 0; max-width: 100%; display: flex; align-items: center; gap: 5px; color: #bdb4cc; font-size: 13px; font-weight: 760; line-height: 1.15; text-decoration: none; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
       .tv-card-stage-link:focus-visible, .tv-card-venue-line:focus-visible { outline: 2px solid #67e8f9; outline-offset: 3px; border-radius: 4px; }
       .tv-card-venue-line svg, .tv-schedule-row svg, .tv-no-shifts-state svg { width: 15px; height: 15px; flex: 0 0 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

@@ -132,7 +132,6 @@ body.dancr-button-system {
 :root :is(
   .verified-mark.verified-mark.verified-mark,
   .verified-check.verified-check.verified-check,
-  .home-tv-feed-verified.home-tv-feed-verified.home-tv-feed-verified,
   .profile-modal-verified.profile-modal-verified.profile-modal-verified,
   .profile-verified.profile-verified.profile-verified,
   .tv-verified-mark.tv-verified-mark.tv-verified-mark
@@ -5622,7 +5621,6 @@ body.dancr-button-system #profileBackdrop .profile-modal .working-now-tile
   filter: none !important;
 }
 
-body.dancr-button-system .home-tv-feed-verified.home-tv-feed-verified.home-tv-feed-verified,
 .tv-shell .tv-verified-mark.tv-verified-mark.tv-verified-mark {
   border-color: var(--mydancr-verified-outline) !important;
   color: var(--mydancr-verified-foreground) !important;

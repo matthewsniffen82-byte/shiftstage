@@ -3356,7 +3356,6 @@ function DancerProfilePreview({
                       <span aria-hidden="true">{name?.trim() || persistedName ? "✎" : "+"}</span>
                     </button>
                   ) : <h1 id="dancer-profile-preview-heading">{previewName}</h1>}
-                  {isApproved ? <span className="profile-verified" aria-label="Verified dancer">✓</span> : null}
                 </div>
                 <div className="profile-titlebar-context">
                   {isEditor ? (
@@ -8694,7 +8693,6 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(20px,4vw,26px); line-height: 1.05; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
       .dancer-profile-preview-overlay .profile-titlebar-context { max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; overflow: hidden; }
       .dancer-profile-preview-overlay .profile-titlebar-city { min-height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; color: #c8bfd6; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 850; white-space: nowrap; }
-      .dancer-profile-preview-overlay .profile-verified { width:20px; height:20px; flex:0 0 20px; display:inline-grid; place-items:center; border-radius:50%; color:#051019; background:#7eeaff; box-shadow:0 0 15px rgba(126,234,255,.3); font-size:12px; font-weight:950; }
       .dancer-profile-preview-overlay .public-profile-close { position: absolute; top: max(8px,env(safe-area-inset-top)); right: 0; width: 40px; min-width: 40px; max-width: 40px; height: 40px; min-height: 40px; max-height: 40px; display: inline-grid; flex: 0 0 40px; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50% !important; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.28); font-size: 0; line-height: 0; cursor: pointer; }
       .dancer-profile-preview-overlay .public-profile-close svg { width:20px; height:20px; display:block; overflow:visible; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transform:none; }
       .dancer-profile-preview-overlay .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13),0 0 22px rgba(34,199,255,.18); }

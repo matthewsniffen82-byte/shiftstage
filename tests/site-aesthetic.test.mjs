@@ -240,7 +240,7 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
 
 test("venue pins stay neutral while Upcoming keeps the cyan schedule signal", () => {
   const venuePinRules = aesthetic.match(
-    /Venue pins always represent place, never schedule state[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-verified)/,
+    /Venue pins always represent place, never schedule state[\s\S]*?(?=\.tv-shell \.tv-verified-mark)/,
   )?.[0] || "";
 
   assert.ok(venuePinRules, "the shared neutral venue-pin rules must exist");
@@ -779,8 +779,9 @@ test("customer, dancer, and venue dashboards keep idle content neutral", () => {
 test("verified check marks use a flat sapphire and white treatment without decorative effects", () => {
   assert.match(
     aesthetic,
-    /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.home-tv-feed-verified\.home-tv-feed-verified\.home-tv-feed-verified,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
+    /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
   );
+  assert.doesNotMatch(aesthetic, /home-tv-feed-verified/);
   assert.match(
     aesthetic,
     /--mydancr-verified-foreground: var\(--dancr-color-verification-foreground\)/,

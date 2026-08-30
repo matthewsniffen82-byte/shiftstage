@@ -204,8 +204,9 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /initialDiscoveryRequest\.finally\(\(\) => openSharedProfileFromUrl\(\)\)/);
   assert.match(liveApp, /const approvedProfiles = markets\[city\]\.dancers\.filter\(isApprovedPublicProfile\);[\s\S]*?approvedProfiles\.find\(\(item\) => item\.slug === profileSlug\)[\s\S]*?\|\| approvedProfiles\.find\(\(item\) => slugify\(item\.name\) === profileSlug\)/);
   assert.match(liveApp, /const venueSlug = params\.get\("venue"\);[\s\S]*?activeTab = venueSlug \? "venues" : "dancers";[\s\S]*?resolveVenueByName\(venueSlug, city\)[\s\S]*?openVenueFromName\(venue\.slug \|\| venue\.name\)/);
-  assert.match(liveApp, /function homeDancerGridCard[\s\S]*?profile\.status === "Verified"[\s\S]*?'<span class="verified-mark" aria-label="Verified">✓<\/span>'/);
+  assert.doesNotMatch(liveApp, /class="verified-mark" aria-label="Verified">✓<\/span>/);
   assert.doesNotMatch(liveApp, /verifiedCheckMarkup/);
+  assert.doesNotMatch(liveApp, /home-tv-feed-verified/);
   assert.match(liveApp, /const initialProfileCity = initialProfileParams\.get\("city"\);[\s\S]*?if \(initialProfileCity && markets\[initialProfileCity\]\)[\s\S]*?citySelect\.value = initialProfileCity/);
   assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(globalNavigation, /label: "Dancers"[\s\S]*?label: "TV"[\s\S]*?label: "Clubs"/);
@@ -219,7 +220,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /className="tv-sound"[\s\S]*?title=\{muted/);
   assert.match(feedClient, /function SoundIcon\(\{ muted \}: \{ muted: boolean \}\)[\s\S]*?aria-hidden="true"/);
   assert.doesNotMatch(feedClient, /\{muted \? "Sound off" : "Sound on"\}/);
-  assert.match(feedClient, /className="tv-verified-mark" aria-label="Verified">✓/);
+  assert.doesNotMatch(feedClient, /className="tv-verified-mark"|aria-label="Verified"/);
   assert.match(tvSource, /\.from\("dancer_photos"\)[\s\S]*?\.eq\("is_primary", true\)[\s\S]*?\.eq\("review_status", "approved"\)/);
   assert.match(
     tvSource,

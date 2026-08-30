@@ -146,9 +146,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
             <div className="profile-titlebar-identity">
               <div>
                 <h1>{profile.stageName}</h1>
-                <span className="profile-verified" aria-label="Verified dancer">
-                  ✓
-                </span>
               </div>
               <div className="profile-titlebar-context">
                 <span className="profile-titlebar-city">{profile.city}</span>
@@ -424,7 +421,6 @@ function PublicProfileStyles() {
       .profile-titlebar-context a, .profile-titlebar-city { min-width: 0; overflow: hidden; color: #c8bfd6; font-size: 10px; font-weight: 850; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
       .profile-titlebar-city { min-height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; background: rgba(255,255,255,.035); }
       .profile-titlebar-context a:hover, .profile-titlebar-context a:focus-visible { color: #9fefff; outline: none; text-decoration: underline; text-underline-offset: 3px; }
-      .profile-verified { width: 20px; height: 20px; flex: 0 0 20px; display: inline-grid; place-items: center; border-radius: 50%; color: #051019; background: #7eeaff; box-shadow: 0 0 15px rgba(126,234,255,.3); font-size: 12px; font-weight: 950; }
       .profile-header-metrics { min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; }
       .profile-header-metrics > div { min-width: 0; min-height: 42px; display: grid; grid-template-rows: 22px 14px; align-content: center; gap: 1px; justify-items: center; padding: 2px 1px; }
       .profile-header-metrics dd { max-width: 100%; margin: 0; overflow: hidden; color: #eee9f5; font-size: clamp(16px, 3.4vw, 21px); font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
@@ -769,7 +765,6 @@ function PublicProfileStyles() {
         .profile-titlebar-person { grid-template-columns: 42px minmax(0, 1fr); gap: 6px; }
         .profile-titlebar-avatar { width: 42px; height: 42px; }
         .profile-titlebar-identity > div:first-child { display: grid !important; grid-template-columns: minmax(0, 1fr) 18px; gap: 3px !important; }
-        .profile-verified { width: 18px; height: 18px; flex-basis: 18px; font-size: 10px; }
         .public-profile-close { width: 44px; min-height: 44px; }
         .profile-header-metrics > div { padding-inline: 1px; }
         .profile-header-metrics dt { font-size: 8px; }

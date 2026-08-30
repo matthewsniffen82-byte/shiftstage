@@ -32685,19 +32685,6 @@
           outline: 2px solid #7eeaff;
           outline-offset: 3px;
         }
-        .home-tv-feed-verified {
-          width: 17px;
-          height: 17px;
-          flex: 0 0 17px;
-          display: inline-grid;
-          place-items: center;
-          border-radius: 999px;
-          color: #fff;
-          background: linear-gradient(135deg,#22c7ff,#4f46e5);
-          box-shadow: 0 0 10px rgba(34,199,255,.34);
-          font-size: 11px;
-          line-height: 1;
-        }
         .home-tv-feed-meta {
           width: 100%;
           max-width: 100%;
@@ -42000,10 +41987,9 @@
             <div class="modal-identity-stack">
               <div class="modal-identity">
                 <div class="profile-modal-name-row" data-follower-label="Followers">
-                  <div class="profile-modal-name-anchor">
-                    <h2 id="modalName">Profile</h2>
-                    <span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓</span>
-                  </div>
+                    <div class="profile-modal-name-anchor">
+                      <h2 id="modalName">Profile</h2>
+                    </div>
                   <span class="badge" id="modalStatus">Verified</span>
                 </div>
                 <div class="profile-modal-context">
@@ -42248,7 +42234,6 @@
     let profilePhotoViewerScrollFrame = 0;
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
-    const modalVerified = document.getElementById("modalVerified");
     const modalCity = document.getElementById("modalCity");
     const modalRank = document.getElementById("modalRank");
     const modalGallery = document.getElementById("modalGallery");
@@ -50527,7 +50512,7 @@
               <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${photoStatusClass} ${approvedPhotoEditMode ? "is-photo-editing" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-id="${displayText(mainPhoto.id || "")}" data-photo-target="${displayText(mainPhoto.target)}" data-photo-url="${displayText(mainPhoto.imageUrl || "")}" data-photo-storage-path="${displayText(mainPhoto.storagePath || mainPhoto.storage_path || "")}" data-photo-label="${displayText(mainPhoto.label || "Main Photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
                 <div class="modal-identity-stack">
                   <div class="modal-identity">
-                    <h2><span data-approved-stage-name-preview>${displayText(editableStageName)}</span><span class="verified-mark" aria-label="Verified">✓</span></h2>
+                    <h2><span data-approved-stage-name-preview>${displayText(editableStageName)}</span></h2>
                     <div class="pill-row">
                       <span class="pill" id="modalCity">${displayText(activeDancerCity())}</span>
                     </div>
@@ -51420,7 +51405,6 @@
       const isPending = profile.status === "Pending";
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
-      const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
       const trendBadge = "";
       const trendMarker = isTrending
         ? `<span class="card-trend-marker" aria-label="Trending rank ${profile.trendRank}"><span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${profile.trendRank}</span></span>`
@@ -51456,7 +51440,7 @@
         </div>
         <div class="profile-body">
           <div class="card-info-stack">
-            <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
+            <h3><span class="card-stage-name">${profile.name}</span></h3>
             ${locationBadge}
             ${clubMarkup}
           </div>
@@ -53048,7 +53032,6 @@
       savedScrollY = window.scrollY;
 
       modalName.textContent = profile.name;
-      modalVerified.hidden = isPending;
       modalStatus.textContent = isPending ? "Pending" : "";
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
@@ -59043,9 +59026,6 @@
       const distanceLabel = profileCardDistanceLabel(profile);
       const status = homeDiscoveryFeedStatus(profile);
       const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
-      const verifiedMark = profile.status === "Verified"
-        ? '<span class="verified-mark" aria-label="Verified">✓</span>'
-        : "";
       const venueMarkup = hasPublishedVenue
         ? `<span class="home-dancer-grid-venue">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
         : "";
@@ -59059,7 +59039,7 @@
           <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
-              <h3 class="home-dancer-grid-name">${safeName}${verifiedMark}</h3>
+              <h3 class="home-dancer-grid-name">${safeName}</h3>
               ${venueMarkup}
               <span class="home-dancer-grid-status ${status.className}">${escapeHtml(scheduleLabel)}</span>
             </span>
@@ -59202,9 +59182,6 @@
       const status = homeDiscoveryFeedStatus(profile);
       const locationBadge = profileLocationStatusBadge(profile);
       const distanceLabel = profileCardDistanceLabel(profile);
-      const verifiedMark = profile.status === "Verified"
-        ? '<span class="verified-mark" aria-label="Verified">✓</span>'
-        : "";
       const isLive = isWorkingTonight(profile);
       const isFollowed = isFollowingProfile(city, profile.name);
       const isNotified = isNotificationOn(city, profile.name);
@@ -59236,7 +59213,7 @@
           <a class="home-discovery-feed-open-profile" href="${profileHref}" aria-label="Open ${safeName}'s full profile"></a>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
           <div class="home-discovery-feed-copy">
-            <h3 class="home-discovery-feed-name">${safeName}${verifiedMark}</h3>
+            <h3 class="home-discovery-feed-name">${safeName}</h3>
             ${locationBadge}
             ${venueMarkup}
             <span class="home-discovery-feed-status ${status.className}">${escapeHtml(status.label)}</span>
@@ -60572,16 +60549,12 @@
       const dancerLabel = document.createElement("span");
       dancerLabel.className = "home-tv-feed-dancer-name";
       dancerLabel.textContent = dancerName;
-      const verified = document.createElement("span");
-      verified.className = "home-tv-feed-verified";
-      verified.textContent = "✓";
-      verified.setAttribute("aria-label", "Verified");
       const dancerCopy = document.createElement("span");
       dancerCopy.className = "home-tv-feed-dancer-copy";
       const meta = document.createElement("span");
       meta.className = "home-tv-feed-meta";
       meta.textContent = dancerCity;
-      nameRow.append(dancerLabel, verified);
+      nameRow.append(dancerLabel);
       dancerCopy.append(nameRow, meta);
       dancer.append(dancerPhoto, dancerCopy);
       copy.appendChild(dancer);
