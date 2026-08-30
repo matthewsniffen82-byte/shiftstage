@@ -6,6 +6,10 @@ import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
 import { isDancerIdentityReferenceRequiredError } from "@/src/lib/dancr/media-identity";
 import { MAX_DANCR_RAW_UPLOAD_BYTES } from "@/src/lib/dancr/image-validation";
+import {
+  DancerMediaRateLimitError,
+  enforceDancerMediaRequestRateLimit,
+} from "@/src/lib/dancr/media-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -18,6 +22,12 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 export async function POST(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
+    const admin = createAdminSupabaseClient();
+    await enforceDancerMediaRequestRateLimit(admin, {
+      media: "image",
+      request,
+      userId: user.id,
+    });
     const formData = await readBoundedFormData(request, {
       maxBytes: MAX_PHOTO_UPLOAD_BODY_BYTES,
       invalidMessage: "Invalid photo upload request.",
@@ -29,7 +39,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Photo file is required." }, { status: 400 });
     }
 
-    const result = await moderateAndStoreDancerPhoto(client, createAdminSupabaseClient(), {
+    const result = await moderateAndStoreDancerPhoto(client, admin, {
       file,
       userId: user.id,
       isPrimary: formData.get("isPrimary") === "true",
@@ -44,6 +54,12 @@ export async function POST(request: Request) {
     const status = result.decision === "rejected" ? 422 : 200;
     return NextResponse.json({ ok: result.decision !== "rejected", ...result, session }, { status });
   } catch (error) {
+    if (error instanceof DancerMediaRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many photo uploads. Wait before uploading again." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     const message = error instanceof Error ? error.message : "";
     if (isDancerIdentityReferenceRequiredError(error)) {
       return apiError(error, "Upload an approved avatar before adding profile photos.", 422);

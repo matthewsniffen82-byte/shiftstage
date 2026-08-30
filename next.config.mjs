@@ -2,7 +2,7 @@
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://raw.githubusercontent.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
   "font-src 'self' data:",
   "form-action 'self'",
   "frame-ancestors 'none'",

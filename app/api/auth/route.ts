@@ -111,6 +111,9 @@ export async function POST(request: Request) {
         email,
         password,
         email_confirm: true,
+        app_metadata: {
+          mydancr_provisioned_role: "admin",
+        },
         user_metadata: {
           role,
           display_name: displayName,
@@ -279,6 +282,9 @@ async function createVenueSignupAccount(input: {
       email: input.email,
       password: input.password,
       email_confirm: true,
+      app_metadata: {
+        mydancr_provisioned_role: "venue",
+      },
       user_metadata: {
         role: "venue",
         display_name: venue.name,

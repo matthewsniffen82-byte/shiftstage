@@ -102,7 +102,8 @@ test("email callbacks preserve existing dancer approval and account state", () =
   const existingProfileBranch =
     accountProvisioningSource.match(/if \(existingProfile\) \{[\s\S]*?\n  \}/)?.[0] || "";
 
-  assert.match(accountResolver, /const authoritativeRole = existingRole \|\| \(!account \? roleHint : null\)/);
+  assert.match(accountResolver, /const provisioningRole = publicCallbackProvisioningRole\(roleHint\)/);
+  assert.match(accountResolver, /const authoritativeRole = existingRole \|\| \(!account \? provisioningRole : null\)/);
   assert.match(callbackSource, /provisionAppAccount\(admin/);
   assert.doesNotMatch(callbackSource, /\.from\("app_users"\)|\.from\("dancer_profiles"\)/);
   assert.doesNotMatch(accountProvisioningSource, /account_state/);

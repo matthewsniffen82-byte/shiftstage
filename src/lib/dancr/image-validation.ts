@@ -4,6 +4,8 @@ import sharp from "sharp";
 export const MAX_DANCR_IMAGE_BYTES = 10 * 1024 * 1024;
 export const MAX_DANCR_RAW_UPLOAD_BYTES = 25 * 1024 * 1024;
 export const MAX_DANCR_IMAGE_DIMENSION = 6000;
+export const MAX_DANCR_INPUT_DIMENSION = 16_384;
+export const MAX_DANCR_INPUT_PIXELS = 64 * 1024 * 1024;
 export const DANCR_HEIC_JPEG_QUALITY = 94;
 export const DANCR_VENUE_LOGO_WIDTH = 1200;
 export const DANCR_VENUE_LOGO_HEIGHT = 720;
@@ -29,6 +31,7 @@ export async function validateAndPrepareDancrImage(file: Blob): Promise<Validate
   const isHeic = isHeicImage(original);
   const detected = detectImage(original);
   if (!isHeic && !detected) throw new Error("Photo must be a valid JPEG, PNG, WebP, HEIC, or HEIF image.");
+  if (detected) assertSafeInputDimensions(detected.width, detected.height);
 
   const preferredFormat = isHeic ? "jpeg" : detected?.extension || "jpeg";
   let prepared = await normalizeImage(original, preferredFormat, isHeic);
@@ -116,7 +119,10 @@ async function normalizeImage(
   quality = DANCR_HEIC_JPEG_QUALITY,
 ) {
   try {
-    const pipeline = sharp(buffer, { failOn: "error", limitInputPixels: false })
+    const pipeline = sharp(buffer, {
+      failOn: "error",
+      limitInputPixels: MAX_DANCR_INPUT_PIXELS,
+    })
       .rotate()
       .resize({
         width: MAX_DANCR_IMAGE_DIMENSION,
@@ -144,6 +150,20 @@ async function normalizeImage(
     }
     const message = error instanceof Error ? error.message : String(error || "");
     throw new Error(message ? `Unable to prepare this photo: ${message}` : "Unable to prepare this photo.");
+  }
+}
+
+function assertSafeInputDimensions(width: number, height: number) {
+  if (
+    !Number.isSafeInteger(width)
+    || !Number.isSafeInteger(height)
+    || width < 1
+    || height < 1
+    || width > MAX_DANCR_INPUT_DIMENSION
+    || height > MAX_DANCR_INPUT_DIMENSION
+    || width > Math.floor(MAX_DANCR_INPUT_PIXELS / height)
+  ) {
+    throw new Error("Photo dimensions are too large. Choose a photo up to 64 megapixels.");
   }
 }
 

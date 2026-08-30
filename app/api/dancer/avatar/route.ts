@@ -10,6 +10,10 @@ import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
 import { isDancerIdentityReferenceRequiredError } from "@/src/lib/dancr/media-identity";
 import { PROFILE_AVATAR_CONTEXT } from "@/src/lib/dancr/photo-slot";
 import { MAX_DANCR_RAW_UPLOAD_BYTES } from "@/src/lib/dancr/image-validation";
+import {
+  DancerMediaRateLimitError,
+  enforceDancerMediaRequestRateLimit,
+} from "@/src/lib/dancr/media-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -20,6 +24,12 @@ const MAX_AVATAR_UPLOAD_BODY_BYTES = MAX_DANCR_RAW_UPLOAD_BYTES + 64 * 1024;
 export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
+    const admin = createAdminSupabaseClient();
+    await enforceDancerMediaRequestRateLimit(admin, {
+      media: "image",
+      request,
+      userId: user.id,
+    });
     const formData = await readBoundedFormData(request, {
       maxBytes: MAX_AVATAR_UPLOAD_BODY_BYTES,
       invalidMessage: "Invalid avatar upload request.",
@@ -30,7 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Avatar image is required." }, { status: 400 });
     }
 
-    const result = await moderateAndStoreDancerPhoto(client, createAdminSupabaseClient(), {
+    const result = await moderateAndStoreDancerPhoto(client, admin, {
       file,
       userId: user.id,
       isPrimary: false,
@@ -45,6 +55,12 @@ export async function POST(request: Request) {
     const status = result.decision === "rejected" ? 422 : 200;
     return NextResponse.json({ ok: result.decision !== "rejected", ...result }, { status });
   } catch (error) {
+    if (error instanceof DancerMediaRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many photo uploads. Wait before uploading again." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     const message = error instanceof Error ? error.message : "";
     if (isAvatarFaceRequiredError(error)) {
       return apiError(error, "Choose a clear face photo for your avatar.", 422);

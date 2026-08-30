@@ -442,8 +442,8 @@ export async function reviewVenueOwnershipClaim(
 export function hashVenueClaimRequestIp(requestIp: string) {
   const secret =
     process.env.DANCR_IP_HASH_SECRET
-    || process.env.SUPABASE_SERVICE_ROLE_KEY
-    || "dancr-venue-claim-rate-limit";
+    || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error("Venue claim request security is not configured.");
   return createHmac("sha256", secret).update(requestIp || "unknown").digest("hex");
 }
 

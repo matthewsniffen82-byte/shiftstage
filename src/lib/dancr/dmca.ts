@@ -766,7 +766,10 @@ function optionalDate(value: unknown) {
 }
 
 function hashRequestIp(requestIp: string) {
-  const salt = process.env.DMCA_RATE_LIMIT_SALT || process.env.CRON_SECRET || "mydancr-dmca-rate-limit";
+  const salt = process.env.DMCA_RATE_LIMIT_SALT
+    || process.env.CRON_SECRET
+    || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!salt) throw new Error("DMCA request security is not configured.");
   return createHash("sha256").update(`${salt}:${requestIp || "unknown"}`).digest("hex");
 }
 

@@ -21,7 +21,7 @@ test("browser sessions cannot directly mutate TV moderation rows or storage", ()
 
 test("dancer TV uploads retain the authenticated one-time signed upload flow", () => {
   const authIndex = tvRoute.indexOf("createRequestSupabaseContext(request)");
-  const prepareIndex = tvRoute.indexOf("createMyDancrTvUpload(createAdminSupabaseClient(), user.id");
+  const prepareIndex = tvRoute.indexOf("createMyDancrTvUpload(admin, user.id");
   const validationIndex = tvLibrary.indexOf("export async function createMyDancrTvUpload");
   const signedUploadIndex = tvLibrary.indexOf("createSignedUploadUrl(storagePath)", validationIndex);
 

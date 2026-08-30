@@ -6,6 +6,10 @@ import {
   retryMyDancrTvAutomatedModeration,
   submitMyDancrTvUpload,
 } from "@/src/lib/dancr/tv";
+import {
+  DancerMediaRateLimitError,
+  enforceDancerMediaRequestRateLimit,
+} from "@/src/lib/dancr/media-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -25,6 +29,12 @@ export async function PATCH(request: Request, { params }: RouteProps) {
       return NextResponse.json({ ok: false, error: "Invalid MyDancr TV video." }, { status: 400 });
     }
     const { user } = await createRequestSupabaseContext(request);
+    const admin = createAdminSupabaseClient();
+    await enforceDancerMediaRequestRateLimit(admin, {
+      media: "video",
+      request,
+      userId: user.id,
+    });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_TV_ACTION_BODY_BYTES,
       invalidMessage: "Invalid video action request.",
@@ -34,7 +44,7 @@ export async function PATCH(request: Request, { params }: RouteProps) {
       return NextResponse.json({ ok: false, error: "Invalid video action." }, { status: 400 });
     }
     const video = await submitMyDancrTvUpload(
-      createAdminSupabaseClient(),
+      admin,
       user.id,
       id,
       { deferModeration: true },
@@ -58,6 +68,12 @@ export async function PATCH(request: Request, { params }: RouteProps) {
       message: moderationMessage(video),
     });
   } catch (error) {
+    if (error instanceof DancerMediaRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many video uploads. Wait before uploading again." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to submit your MyDancr TV video.", 400);
   }
 }

@@ -244,7 +244,8 @@ async function readCallbackSession(request: Request) {
     const admin = createAdminSupabaseClient();
     let account = await getAccountByUserId(admin, authData.user.id);
     const existingRole = readCallbackRole(account?.role);
-    const authoritativeRole = existingRole || (!account ? roleHint : null);
+    const provisioningRole = publicCallbackProvisioningRole(roleHint);
+    const authoritativeRole = existingRole || (!account ? provisioningRole : null);
     if (!account && authoritativeRole) {
       await ensureCallbackAccount(admin, authData.user, authoritativeRole);
       account = await getAccountByUserId(admin, authData.user.id);
@@ -289,6 +290,10 @@ async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSes
   if (error || !data.user) return null;
 
   return { session: data.session, user: data.user };
+}
+
+function publicCallbackProvisioningRole(role: CallbackRole | null) {
+  return role === "customer" || role === "dancer" ? role : null;
 }
 
 async function ensureCallbackAccount(admin: AdminClient, user: CallbackUser, role: CallbackRole) {

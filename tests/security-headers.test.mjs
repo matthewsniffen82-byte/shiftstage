@@ -7,7 +7,8 @@ const nextConfig = await readFile(new URL("../next.config.mjs", import.meta.url)
 test("every application route receives the production security header baseline", () => {
   assert.match(nextConfig, /source: "\/:path\*"/);
   assert.match(nextConfig, /default-src 'self'/);
-  assert.match(nextConfig, /connect-src 'self' https:\/\/\*\.supabase\.co wss:\/\/\*\.supabase\.co https:\/\/raw\.githubusercontent\.com/);
+  assert.match(nextConfig, /connect-src 'self' https:\/\/\*\.supabase\.co wss:\/\/\*\.supabase\.co/);
+  assert.doesNotMatch(nextConfig, /raw\.githubusercontent\.com/);
   assert.match(nextConfig, /form-action 'self'/);
   assert.match(nextConfig, /frame-ancestors 'none'/);
   assert.match(nextConfig, /frame-src 'self' https:\/\/www\.google\.com/);
