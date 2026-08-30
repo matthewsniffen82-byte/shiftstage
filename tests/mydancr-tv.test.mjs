@@ -391,7 +391,7 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(dancerPage, /videoUrl: video\.videoUrl/);
   assert.doesNotMatch(dancerPage, /<TvVideoStrip/);
   assert.doesNotMatch(dancerPage, /watchAllHref|href=\{`\/tv/);
-  assert.match(videoStrip, /<video aria-hidden="true" loop muted playsInline/);
+  assert.match(videoStrip, /<video[\s\S]*?aria-hidden="true"[\s\S]*?data-video-url=\{video\.videoUrl\}[\s\S]*?loop[\s\S]*?muted[\s\S]*?playsInline/);
   assert.doesNotMatch(videoStrip, /<video aria-hidden="true" autoPlay/);
   assert.match(videoStrip, /onMouseEnter=\{\(event\) => playPreviewCard\(event\.currentTarget\)\}/);
   assert.match(videoStrip, /onMouseLeave=\{\(event\) => pausePreviewCard\(event\.currentTarget\)\}/);

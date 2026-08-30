@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
+import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 
 export function TvVideoStrip({
@@ -18,6 +19,8 @@ export function TvVideoStrip({
   const [viewerPaused, setViewerPaused] = useState(false);
   const [playbackFeedback, setPlaybackFeedback] = useState<{ paused: boolean; key: number } | null>(null);
   const [viewerMuted, setViewerMuted] = useVideoSoundPreference();
+  const allowVideoWarmup = useAdaptiveVideoWarmup();
+  const [viewerReadyVideoId, setViewerReadyVideoId] = useState("");
   const viewerVideo = useRef<HTMLVideoElement | null>(null);
   const previewCards = useRef<Record<string, HTMLButtonElement | null>>({});
   const closeButton = useRef<HTMLButtonElement | null>(null);
@@ -227,7 +230,15 @@ export function TvVideoStrip({
               onMouseEnter={(event) => playPreviewCard(event.currentTarget)}
               onMouseLeave={(event) => pausePreviewCard(event.currentTarget)}
             >
-              <video aria-hidden="true" loop muted playsInline poster={video.posterUrl || undefined} preload="metadata" src={video.videoUrl} />
+              <video
+                aria-hidden="true"
+                data-video-url={video.videoUrl}
+                loop
+                muted
+                playsInline
+                poster={video.posterUrl || undefined}
+                preload="none"
+              />
               <div>
                 {showDancerName ? <strong>{video.dancer.stageName}</strong> : null}
                 <span className={`tv-strip-schedule ${schedule.className}`}>{schedule.label}</span>
@@ -295,6 +306,7 @@ export function TvVideoStrip({
                     void playViewerVideo(event.currentTarget);
                   }
                 }}
+                onLoadedData={() => setViewerReadyVideoId(activeVideo.id)}
                 onClick={() => {
                   if (swipeHandled.current) {
                     swipeHandled.current = false;
@@ -368,7 +380,14 @@ export function TvVideoStrip({
                       setActiveVideo(video);
                     }}
                   >
-                    <video aria-hidden="true" muted playsInline poster={video.posterUrl || undefined} preload="metadata" src={video.videoUrl} />
+                    <video
+                      aria-hidden="true"
+                      muted
+                      playsInline
+                      poster={Math.abs(index - activeIndex) <= 2 ? video.posterUrl || undefined : undefined}
+                      preload={allowVideoWarmup && viewerReadyVideoId === activeVideo.id && index === activeIndex + 1 ? "metadata" : "none"}
+                      src={allowVideoWarmup && viewerReadyVideoId === activeVideo.id && index === activeIndex + 1 ? video.videoUrl : undefined}
+                    />
                     <span>{index + 1}</span>
                   </button>
                 ))}
@@ -389,8 +408,11 @@ function playPreviewCard(card: HTMLButtonElement) {
     .forEach((video) => {
       const active = video === preview;
       video.autoplay = active;
-      if (!active) video.pause();
+      if (!active) releasePreviewVideo(video);
     });
+  const videoUrl = String(preview.dataset.videoUrl || "").trim();
+  if (!preview.hasAttribute("src") && videoUrl) preview.src = videoUrl;
+  preview.preload = "auto";
   preview.muted = true;
   void preview.play().catch(() => undefined);
 }
@@ -399,7 +421,15 @@ function pausePreviewCard(card: HTMLButtonElement) {
   const preview = card.querySelector("video");
   if (!preview) return;
   preview.autoplay = false;
-  preview.pause();
+  releasePreviewVideo(preview);
+}
+
+function releasePreviewVideo(video: HTMLVideoElement) {
+  video.pause();
+  video.preload = "none";
+  if (!video.hasAttribute("src")) return;
+  video.removeAttribute("src");
+  video.load();
 }
 
 function tvProfileShiftLabel(video: MyDancrTvVideo) {

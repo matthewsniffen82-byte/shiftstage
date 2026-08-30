@@ -12,6 +12,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
+import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 
 type DancerPhotoCarouselProps = {
@@ -89,6 +90,8 @@ export function DancerPhotoCarousel({
     video: DANCER_PROFILE_MEDIA_PAGE_SIZE,
   });
   const [inlineMuted, setInlineMuted] = useVideoSoundPreference();
+  const allowVideoWarmup = useAdaptiveVideoWarmup();
+  const [loadedViewerVideoIndex, setLoadedViewerVideoIndex] = useState(-1);
   const [shareStatus, setShareStatus] = useState("");
   const [playbackFeedback, setPlaybackFeedback] = useState<PlaybackFeedback | null>(null);
   const deepLinkHandled = useRef(false);
@@ -271,12 +274,19 @@ export function DancerPhotoCarousel({
     videos.forEach((video, index) => {
       video.muted = inlineMuted;
       if (index === viewerIndex && viewerKind === "video") {
+        if (
+          video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+          loadedViewerVideoIndex !== viewerIndex
+        ) {
+          setLoadedViewerVideoIndex(viewerIndex);
+        }
         void video.play().catch(() => undefined);
       } else {
         video.pause();
+        if (!video.hasAttribute("src")) video.load();
       }
     });
-  }, [inlineMuted, viewerIndex, viewerKind]);
+  }, [allowVideoWarmup, inlineMuted, loadedViewerVideoIndex, viewerIndex, viewerKind]);
 
   useEffect(() => {
     if (!viewerKind) return;
@@ -583,8 +593,7 @@ export function DancerPhotoCarousel({
                   muted
                   playsInline
                   poster={item.posterUrl || undefined}
-                  preload="metadata"
-                  src={`${item.videoUrl}#t=0.1`}
+                  preload="none"
                   tabIndex={-1}
                 />
                 <span aria-hidden="true" className="profile-media-play" />
@@ -670,6 +679,9 @@ export function DancerPhotoCarousel({
                     muted={inlineMuted}
                     onPause={() => handleViewerPlaybackChange(index, true)}
                     onPlay={() => handleViewerPlaybackChange(index, false)}
+                    onLoadedData={() => {
+                      if (index === viewerIndex) setLoadedViewerVideoIndex(index);
+                    }}
                     onPointerDown={() => {
                       playbackTapIndex.current = index;
                       window.clearTimeout(playbackTapTimer.current);
@@ -683,9 +695,17 @@ export function DancerPhotoCarousel({
                       }
                     }}
                     playsInline
-                    poster={item.posterUrl || undefined}
-                    preload={Math.abs(index - viewerIndex) <= 1 ? "auto" : "metadata"}
-                    src={item.videoUrl}
+                    poster={Math.abs(index - viewerIndex) <= 2 ? item.posterUrl || undefined : undefined}
+                    preload={index === viewerIndex
+                      ? "auto"
+                      : allowVideoWarmup && loadedViewerVideoIndex === viewerIndex && index === viewerIndex + 1
+                        ? "metadata"
+                        : "none"}
+                    src={index === viewerIndex || (
+                      allowVideoWarmup &&
+                      loadedViewerVideoIndex === viewerIndex &&
+                      index === viewerIndex + 1
+                    ) ? item.videoUrl : undefined}
                   />
                 )}
                 {item.kind === "video" && playbackFeedback?.index === index ? (

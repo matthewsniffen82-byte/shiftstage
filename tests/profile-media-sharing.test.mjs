@@ -69,7 +69,7 @@ test("shared profile-photo links open the exact photo in the full-screen collect
 test("profile media sharing keeps video downloads disabled", () => {
   assert.match(
     publicPhotoCarousel,
-    /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?src=\{item\.videoUrl\}/,
+    /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?src=\{index === viewerIndex[\s\S]*?\? item\.videoUrl : undefined\}/,
   );
   assert.match(
     liveApp,

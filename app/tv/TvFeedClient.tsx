@@ -18,6 +18,7 @@ import {
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
+import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 
 const VIEWER_SESSION_KEY = "mydancrTvViewerSessionV1";
@@ -61,6 +62,8 @@ export default function TvFeedClient({
     FILTERS.some((item) => item.value === initialFilter) ? initialFilter : "for-you",
   );
   const [activeVideoId, setActiveVideoId] = useState(initialSelectedVideoId || initialVideos[0]?.id || "");
+  const [warmAfterVideoId, setWarmAfterVideoId] = useState("");
+  const allowVideoWarmup = useAdaptiveVideoWarmup();
   const [muted, setMuted] = useVideoSoundPreference();
   const [autoplayBlockedVideoId, setAutoplayBlockedVideoId] = useState("");
   const [playbackFeedback, setPlaybackFeedback] = useState<{
@@ -95,6 +98,7 @@ export default function TvFeedClient({
   const viewerSessionId = useMemo(readViewerSessionId, []);
   activeVideoIdRef.current = activeVideoId;
   mutedRef.current = muted;
+  const activeVideoIndex = videos.findIndex((video) => video.id === activeVideoId);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -172,24 +176,10 @@ export default function TvFeedClient({
     setAutoplayBlockedVideoId(videoId);
   }, []);
 
-  const primeVideoNeighbors = useCallback((videoId: string) => {
-    const activeIndex = videos.findIndex((video) => video.id === videoId);
-    if (activeIndex < 0) return;
-    videos.forEach((video, videoIndex) => {
-      const element = videoElements.current[video.id];
-      if (!element) return;
-      const shouldWarm = Math.abs(videoIndex - activeIndex) <= 1;
-      element.preload = shouldWarm ? "auto" : "none";
-      if (
-        shouldWarm &&
-        video.id !== videoId &&
-        element.readyState === HTMLMediaElement.HAVE_NOTHING &&
-        element.networkState === HTMLMediaElement.NETWORK_EMPTY
-      ) {
-        element.load();
-      }
-    });
-  }, [videos]);
+  const primeNextVideo = useCallback((videoId: string) => {
+    if (!allowVideoWarmup || videoId !== activeVideoIdRef.current) return;
+    setWarmAfterVideoId(videoId);
+  }, [allowVideoWarmup]);
 
   const loadFeed = useCallback(async (nextFilter: string, nextCity: string, selectedVideoId = "") => {
     if (!mountedRef.current) return false;
@@ -345,14 +335,18 @@ export default function TvFeedClient({
   }, [videos]);
 
   useEffect(() => {
-    videos.forEach((video) => {
+    const activeIndex = videos.findIndex((video) => video.id === activeVideoId);
+    videos.forEach((video, videoIndex) => {
       const videoId = video.id;
       const element = videoElements.current[videoId];
       if (!element) return;
       const isActive = videoId === activeVideoId;
-      element.preload = isActive ? "auto" : "none";
+      const shouldWarm = allowVideoWarmup &&
+        warmAfterVideoId === activeVideoId &&
+        videoIndex === activeIndex + 1;
+      element.preload = isActive ? "auto" : shouldWarm ? "metadata" : "none";
       if (
-        isActive &&
+        (isActive || shouldWarm) &&
         element.readyState === HTMLMediaElement.HAVE_NOTHING &&
         element.networkState === HTMLMediaElement.NETWORK_EMPTY
       ) {
@@ -370,14 +364,15 @@ export default function TvFeedClient({
         element.autoplay = false;
         element.removeAttribute("autoplay");
         element.pause();
+        if (!shouldWarm && !element.hasAttribute("src")) element.load();
         window.clearTimeout(engagedTimers.current[videoId]);
       }
     });
     const activeElement = videoElements.current[activeVideoId];
     if (activeElement && activeElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      primeVideoNeighbors(activeVideoId);
+      primeNextVideo(activeVideoId);
     }
-  }, [activeVideoId, attemptVideoPlayback, muted, primeVideoNeighbors, trackEvent, videos]);
+  }, [activeVideoId, allowVideoWarmup, attemptVideoPlayback, muted, primeNextVideo, trackEvent, videos, warmAfterVideoId]);
 
   useEffect(() => {
     const resumeActiveVideo = () => {
@@ -665,7 +660,7 @@ export default function TvFeedClient({
       ) : null}
 
       <section ref={feedElement} className="tv-feed" aria-label="MyDancr TV videos">
-        {videos.map((video) => (
+        {videos.map((video, videoIndex) => (
           <article
             className="tv-slide"
             data-tv-slide
@@ -688,9 +683,19 @@ export default function TvFeedClient({
                   playsInline
                   poster={video.posterUrl || undefined}
                   preload={
-                    video.id === activeVideoId ? "auto" : "none"
+                    video.id === activeVideoId
+                      ? "auto"
+                      : allowVideoWarmup &&
+                          warmAfterVideoId === activeVideoId &&
+                          videoIndex === activeVideoIndex + 1
+                        ? "metadata"
+                        : "none"
                   }
-                  src={video.videoUrl}
+                  src={video.id === activeVideoId || (
+                    allowVideoWarmup &&
+                    warmAfterVideoId === activeVideoId &&
+                    videoIndex === activeVideoIndex + 1
+                  ) ? video.videoUrl : undefined}
                   onCanPlay={(event) => {
                     if (video.id === activeVideoIdRef.current && event.currentTarget.paused) {
                       void attemptVideoPlayback(video.id, event.currentTarget);
@@ -703,7 +708,7 @@ export default function TvFeedClient({
                   }}
                   onLoadedData={(event) => {
                     if (video.id !== activeVideoIdRef.current) return;
-                    primeVideoNeighbors(video.id);
+                    primeNextVideo(video.id);
                     if (event.currentTarget.paused) {
                       void attemptVideoPlayback(video.id, event.currentTarget);
                     }

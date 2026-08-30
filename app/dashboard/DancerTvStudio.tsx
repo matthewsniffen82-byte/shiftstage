@@ -31,6 +31,7 @@ type Workspace = {
 type ManagedVideo = {
   id: string;
   videoUrl: string;
+  posterUrl?: string | null;
   status: string;
   reviewNotes?: string | null;
   moderationDecision?: "approved" | "review" | "rejected" | null;
@@ -604,9 +605,9 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                 <video
                   controls
                   playsInline
-                  preload="metadata"
+                  poster={video.posterUrl || undefined}
+                  preload="none"
                   src={video.videoUrl}
-                  onLoadedMetadata={(event) => primeVideoPreviewFrame(event.currentTarget)}
                 />
               ) : <div className="tv-video-unavailable">Video unavailable</div>}
               <div>

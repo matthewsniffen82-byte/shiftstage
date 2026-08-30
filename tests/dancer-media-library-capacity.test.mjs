@@ -51,15 +51,17 @@ test("video grids show a passive frame from each actual video", () => {
     carousel.indexOf("{visibleItems.map"),
     carousel.indexOf("{viewer && activeViewerItem"),
   );
+  const gridVideoMarkup = gridMarkup.match(/<video[\s\S]*?\/>/)?.[0] || "";
   assert.match(gridMarkup, /<video/);
-  assert.match(gridMarkup, /muted[\s\S]*?playsInline[\s\S]*?preload="metadata"/);
-  assert.match(gridMarkup, /src=\{`\$\{item\.videoUrl\}#t=0\.1`\}/);
+  assert.match(gridVideoMarkup, /muted[\s\S]*?playsInline[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
+  assert.doesNotMatch(gridVideoMarkup, /src=\{/);
   assert.doesNotMatch(carousel, /posterUrl: video\.posterUrl \|\| photoMedia/);
   assert.doesNotMatch(profilePage, /posterUrl: video\.dancer\.primaryPhotoUrl/);
   assert.match(carousel, /\{viewerItems\.map\(\(item, index\) => \(/);
-  assert.match(carousel, /preload=\{Math\.abs\(index - viewerIndex\) <= 1 \? "auto" : "metadata"\}/);
+  assert.match(carousel, /preload=\{index === viewerIndex[\s\S]*?\? "auto"[\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? "metadata"[\s\S]*?: "none"\}/);
+  assert.match(carousel, /src=\{index === viewerIndex \|\| \([\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? item\.videoUrl : undefined\}/);
   assert.match(liveApp, /function profileVideoThumbMarkup/);
-  assert.match(liveApp, /function profileVideoPreviewUrl\(item\)/);
-  assert.match(liveApp, /<video src="\$\{escapeHtml\(previewUrl\)\}"[\s\S]*?muted playsinline preload="metadata"/);
-  assert.doesNotMatch(liveApp.match(/function profileVideoPosterUrl\(item\)[\s\S]*?function profileVideoPreviewUrl/)?.[0] || "", /primaryPhotoUrl|avatarPhotoUrl/);
+  assert.doesNotMatch(liveApp, /function profileVideoPreviewUrl\(item\)/);
+  assert.match(liveApp, /function profileVideoThumbMarkup\(item[\s\S]*?<video poster="\$\{escapeHtml\(posterUrl\)\}"[\s\S]*?muted playsinline preload="none"/);
+  assert.doesNotMatch(liveApp.match(/function profileVideoPosterUrl\(item\)[\s\S]*?function profileVideoThumbMarkup/)?.[0] || "", /primaryPhotoUrl|avatarPhotoUrl/);
 });

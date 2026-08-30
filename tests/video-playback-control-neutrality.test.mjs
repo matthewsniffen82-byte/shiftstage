@@ -20,10 +20,10 @@ const liveApp = await readFile(
 );
 
 test("profile video grids defer playback to native full-screen controls", () => {
-  assert.match(profileCarousel, /<video[\s\S]*?muted[\s\S]*?playsInline[\s\S]*?preload="metadata"[\s\S]*?className="profile-media-play"/);
-  assert.match(profileCarousel, /viewerItems\.map\(\(item, index\) =>[\s\S]*?controls[\s\S]*?src=\{item\.videoUrl\}/);
+  assert.match(profileCarousel, /<video[\s\S]*?muted[\s\S]*?playsInline[\s\S]*?preload="none"[\s\S]*?className="profile-media-play"/);
+  assert.match(profileCarousel, /viewerItems\.map\(\(item, index\) =>[\s\S]*?controls[\s\S]*?src=\{index === viewerIndex/);
   assert.match(profileCarousel, /index === viewerIndex[\s\S]*?video\.play\(\)[\s\S]*?video\.pause\(\)/);
-  assert.match(profileCarousel, /preload=\{Math\.abs\(index - viewerIndex\) <= 1 \? "auto" : "metadata"\}/);
+  assert.match(profileCarousel, /preload=\{index === viewerIndex[\s\S]*?\? "auto"[\s\S]*?\? "metadata"[\s\S]*?: "none"\}/);
   assert.doesNotMatch(profileCarousel, /profile-media-playback-control|inlinePlaying|toggleInlinePlayback/);
 
   const tvRetryRule = tvFeed.match(/\.tv-playback-retry \{[\s\S]*?\}/)?.[0] || "";

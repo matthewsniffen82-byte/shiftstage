@@ -272,9 +272,10 @@ test("profile videos stay passive and duration-free in the grid, then open the c
     profileCarousel.indexOf("{visibleItems.map"),
     profileCarousel.indexOf("{viewer && activeViewerItem"),
   );
+  const mediaGridVideo = mediaGrid.match(/<video[\s\S]*?\/>/)?.[0] || "";
   assert.match(profileCarousel, /className=\{`profile-media-grid-item is-\$\{item\.kind\}`\}/);
-  assert.match(mediaGrid, /<video[\s\S]*?muted[\s\S]*?playsInline[\s\S]*?preload="metadata"/);
-  assert.match(mediaGrid, /src=\{`\$\{item\.videoUrl\}#t=0\.1`\}/);
+  assert.match(mediaGridVideo, /<video[\s\S]*?muted[\s\S]*?playsInline[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
+  assert.doesNotMatch(mediaGridVideo, /src=\{/);
   assert.doesNotMatch(mediaGrid, /autoPlay/);
   assert.match(profileCarousel, /className="profile-media-play"/);
   assert.match(profilePage, /\.profile-media-play \{[^}]*?width: 34px;[^}]*?border: 1px solid rgba\(255,255,255,\.38\);[^}]*?background: rgba\(5,5,9,\.62\);/);

@@ -17,10 +17,7 @@ import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
 import DancerShiftManager from "./DancerShiftManager";
-import {
-  DANCER_PROFILE_VIDEOS_CHANGED_EVENT,
-  primeVideoPreviewFrame,
-} from "./dancer-profile-media-sync";
+import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -2939,6 +2936,7 @@ type DancerIdentityDraft = { stageName: string; city: string };
 type DancerPreviewVideo = {
   id: string;
   videoUrl: string;
+  posterUrl?: string | null;
   durationSeconds: number;
 };
 
@@ -3206,10 +3204,12 @@ function DancerProfilePreview({
         setVideos(savedVideos.flatMap((video: Record<string, unknown>) => {
           const id = String(video?.id || "").trim();
           const videoUrl = String(video?.videoUrl || "").trim();
+          const posterUrl = String(video?.posterUrl || "").trim();
           if (String(video?.status || "").toLowerCase() !== "approved" || !id || !videoUrl) return [];
           return [{
             id,
             videoUrl,
+            posterUrl: posterUrl || null,
             durationSeconds: Math.max(0, Number(video?.durationSeconds || 0)),
           }];
         }));
@@ -3424,9 +3424,8 @@ function DancerProfilePreview({
                               aria-hidden="true"
                               muted
                               playsInline
-                              preload="metadata"
-                              src={video.videoUrl}
-                              onLoadedMetadata={(event) => primeVideoPreviewFrame(event.currentTarget)}
+                              poster={video.posterUrl || undefined}
+                              preload="none"
                             />
                           ) : <span aria-hidden="true">+</span>}
                           {video ? <i aria-hidden="true">▶</i> : null}

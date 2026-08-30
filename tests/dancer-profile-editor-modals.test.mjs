@@ -133,7 +133,8 @@ test("approved videos refresh into the builder and video cards render a visible 
   assert.match(dashboard, /requestController\?\.abort\(\);[\s\S]*?requestController = null;[\s\S]*?removeEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
   assert.match(dashboard, /requestId === requestSequence\) setIsMediaLoading\(false\)/);
   assert.match(dancerStudio, /onLoadedMetadata=\{\(event\) => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
-  assert.match(dashboard, /onLoadedMetadata=\{\(event\) => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
+  assert.match(dashboard, /poster=\{video\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
+  assert.doesNotMatch(dashboard, /primeVideoPreviewFrame/);
   assert.match(mediaSync, /video\.currentTime = Math\.min\(0\.15, Math\.max\(0\.05, video\.duration \/ 100\)\)/);
 });
 

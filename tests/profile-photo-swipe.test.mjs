@@ -165,7 +165,7 @@ test("the profile presents approved photos and dancer-only videos as separate th
   assert.match(publicPhotoCarousel, /className="profile-media-viewer-slide"/);
   assert.match(
     publicPhotoCarousel,
-    /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?src=\{item\.videoUrl\}/,
+    /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?src=\{index === viewerIndex[\s\S]*?\? item\.videoUrl : undefined\}/,
   );
   assert.doesNotMatch(publicPhotoCarousel, /profile-media-feature|inlinePlaying/);
   assert.match(publicPhotoCarousel, /new IntersectionObserver/);

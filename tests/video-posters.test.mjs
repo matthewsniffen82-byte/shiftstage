@@ -96,7 +96,8 @@ test("profile, feed, strip, and live-shell players use the real video poster", (
   assert.match(profilePage, /posterUrl: video\.posterUrl \|\| null/);
   assert.match(profileCarousel, /poster=\{item\.posterUrl \|\| undefined\}/);
   assert.match(tvFeed, /poster=\{video\.posterUrl \|\| undefined\}/);
-  assert.ok((videoStrip.match(/poster=\{(?:activeVideo|video)\.posterUrl \|\| undefined\}/g) || []).length >= 3);
+  assert.ok((videoStrip.match(/poster=\{(?:activeVideo|video)\.posterUrl \|\| undefined\}/g) || []).length >= 2);
+  assert.match(videoStrip, /poster=\{Math\.abs\(index - activeIndex\) <= 2 \? video\.posterUrl \|\| undefined : undefined\}/);
   assert.match(liveShell, /const posterUrl = profileVideoPosterUrl\(item\);[\s\S]*?video\.poster = posterUrl/);
   assert.match(liveShell, /item\?\.posterUrl \|\| item\?\.poster_url/);
   assert.match(liveShell, /is-media-loading:not\(\.has-media-poster\)/);

@@ -85,7 +85,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.match(videoFactory, /video\.addEventListener\("error"[\s\S]*?"Video unavailable"/);
   assert.match(
     homeSource,
-    /function primeHomeTvFeedNeighbors\(videoId\)[\s\S]*?Math\.abs\(index - activeIndex\) <= 1[\s\S]*?video\.preload = shouldWarm \? "auto" : "none"[\s\S]*?video\.load\(\)/,
+    /function primeHomeTvFeedNeighbors\(videoId\)[\s\S]*?canWarmAdjacentVideo\(\)[\s\S]*?index === activeIndex \+ 1[\s\S]*?attachDeferredVideoSource\(video, "metadata"\)[\s\S]*?releaseDeferredVideoSource\(video\)/,
   );
   assert.match(
     homeSource,
@@ -643,7 +643,7 @@ test("production TV cards use the neutral-first brand palette without changing m
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {
   assert.match(
     homeSource,
-    /const video = document\.createElement\("video"\)[\s\S]*?video\.autoplay = index === 0[\s\S]*?video\.muted = homeTvFeedMuted[\s\S]*?video\.defaultMuted = homeTvFeedMuted[\s\S]*?video\.setAttribute\("playsinline", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.setAttribute\("muted", ""\)[\s\S]*?video\.src = item\.videoUrl/,
+    /const video = document\.createElement\("video"\)[\s\S]*?video\.dataset\.videoUrl = String\(item\.videoUrl \|\| ""\)\.trim\(\)[\s\S]*?video\.autoplay = index === 0[\s\S]*?video\.muted = homeTvFeedMuted[\s\S]*?video\.defaultMuted = homeTvFeedMuted[\s\S]*?video\.setAttribute\("playsinline", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.setAttribute\("muted", ""\)/,
   );
   assert.match(
     homeSource,
@@ -653,6 +653,7 @@ test("iPhone autoplay flags are applied before a TV card starts loading media", 
     homeSource,
     /video\.preload = index === 0 \? "auto" : "none"/,
   );
+  assert.match(homeSource, /if \(index === 0\) attachDeferredVideoSource\(video, "auto"\)/);
   assert.match(
     homeSource,
     /video\.play\(\)\.then\(\(\) => \{[\s\S]*?primeHomeTvFeedNeighbors\(videoId\)/,
