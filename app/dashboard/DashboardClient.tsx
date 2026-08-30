@@ -45,6 +45,7 @@ import {
   requestOptionalDashboardJson,
   requestVenueDashboardJson,
   requestVenueFinanceStatement,
+  revokeDashboardSession,
   storedSessionAccount,
   storedSessionIsFresh,
   type DashboardSessionAccount,
@@ -1163,7 +1164,7 @@ function AccountControlsPanel({
     actionAbortRef.current?.abort();
     actionAbortRef.current = null;
     actionInFlightRef.current = false;
-    clearDashboardSession();
+    void revokeDashboardSession();
     window.location.href = "/";
   }
 

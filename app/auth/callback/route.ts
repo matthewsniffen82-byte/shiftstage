@@ -30,7 +30,10 @@ export async function GET(request: Request) {
   return new Response(callbackHtml(callbackSession, redirectPath, showDancerConfirmation), {
     headers: {
       "content-type": "text/html; charset=utf-8",
-      "cache-control": "no-store",
+      "cache-control": "no-store, max-age=0",
+      expires: "0",
+      pragma: "no-cache",
+      "referrer-policy": "no-referrer",
     },
   });
 }
@@ -106,7 +109,7 @@ function callbackHtml(
   showDancerConfirmation: boolean,
 ) {
   const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
-  const redirectJson = JSON.stringify(redirectPath);
+  const redirectJson = JSON.stringify(redirectPath).replace(/</g, "\\u003c");
   const dancerConfirmationJson = JSON.stringify(showDancerConfirmation);
   const sessionKeyJson = JSON.stringify(BROWSER_AUTH_SESSION_KEY);
   return `<!doctype html>
@@ -156,69 +159,73 @@ function callbackHtml(
       const redirectTo = ${redirectJson};
       const showDancerConfirmation = ${dancerConfirmationJson};
       const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
-      const fragmentAccessToken = fragmentParams.get("access_token") || "";
-      const fragmentRefreshToken = fragmentParams.get("refresh_token") || undefined;
-      const fragmentExpiresAt = fragmentParams.get("expires_at");
-      const fragmentExpiresIn = fragmentParams.get("expires_in");
-      let tokenPayload = {};
-      if (fragmentAccessToken) {
-        try {
-          const encodedPayload = fragmentAccessToken.split(".")[1] || "";
-          const normalizedPayload = encodedPayload.replace(/-/g, "+").replace(/_/g, "/");
-          const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, "=");
-          tokenPayload = JSON.parse(window.atob(paddedPayload));
-        } catch (error) {}
-      }
-      const tokenMetadata = tokenPayload.user_metadata && typeof tokenPayload.user_metadata === "object"
-        ? tokenPayload.user_metadata
-        : {};
-      const tokenRole = ["customer", "dancer", "venue"].includes(tokenMetadata.role) ? tokenMetadata.role : "";
-      const tokenEmail = typeof tokenPayload.email === "string" ? tokenPayload.email : "";
       const redirectUrl = new URL(redirectTo, window.location.origin);
-      if (tokenRole && redirectUrl.pathname === "/account") {
-        redirectUrl.pathname = "/";
-        redirectUrl.searchParams.set("dancr_confirm", "1");
+
+      async function validateFragmentSession() {
+        const accessToken = fragmentParams.get("access_token") || "";
+        const refreshToken = fragmentParams.get("refresh_token") || "";
+        if (!accessToken || !refreshToken) return null;
+
+        const response = await fetch("/api/auth", {
+          method: "PUT",
+          headers: { "content-type": "application/json", accept: "application/json" },
+          cache: "no-store",
+          credentials: "same-origin",
+          body: JSON.stringify({ accessToken, refreshToken })
+        });
+        const data = await response.json().catch(() => null);
+        return response.ok && data?.ok && data.session?.accessToken ? data : null;
       }
-      const redirectRole = redirectUrl.searchParams.get("role") || redirectUrl.searchParams.get("dancr_role") || tokenRole;
-      if (tokenRole && !redirectUrl.searchParams.get("role")) redirectUrl.searchParams.set("role", tokenRole);
-      if (tokenRole && !redirectUrl.searchParams.get("dancr_role")) redirectUrl.searchParams.set("dancr_role", tokenRole);
-      const fragmentSession = fragmentAccessToken
-        ? {
-            accessToken: fragmentAccessToken,
-            refreshToken: fragmentRefreshToken,
-            expiresAt: fragmentExpiresAt
-              ? Number(fragmentExpiresAt)
-              : fragmentExpiresIn
-                ? Math.floor(Date.now() / 1000) + Number(fragmentExpiresIn)
-                : undefined,
-            account: {
-              role: tokenRole || redirectRole || null,
-              displayName: tokenMetadata.display_name || tokenMetadata.stage_name || (tokenRole === "dancer" ? "Dancer" : tokenEmail) || null,
-              email: tokenEmail || null,
-              accountState: "active"
-            }
-          }
-        : null;
-      const session = serverSession && serverSession.accessToken ? serverSession : fragmentSession;
-      if (session && session.accessToken) {
-        try {
-          localStorage.setItem(sessionStorageKey, JSON.stringify(session));
-        } catch (error) {}
-      }
-      const fragment = fragmentAccessToken ? window.location.hash : "";
-      const destination = redirectUrl.pathname + redirectUrl.search + fragment;
-      if (showDancerConfirmation) {
-        document.getElementById("openingDancr").hidden = true;
-        if (session && session.accessToken) {
-          const continueLink = document.getElementById("dancerConfirmationContinue");
-          continueLink.href = destination;
-          document.getElementById("dancerConfirmation").hidden = false;
-        } else {
-          document.getElementById("confirmationError").hidden = false;
+
+      async function completeCallback() {
+        if (window.location.hash || window.location.search) {
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
-      } else {
+
+        let session = serverSession && serverSession.accessToken ? serverSession : null;
+        if (!session && fragmentParams.get("access_token")) {
+          const confirmation = await validateFragmentSession().catch(() => null);
+          session = confirmation?.session
+            ? { ...confirmation.session, account: confirmation.account || null }
+            : null;
+        }
+
+        if (session?.accessToken) {
+          try {
+            localStorage.setItem(sessionStorageKey, JSON.stringify(session));
+          } catch (error) {}
+        }
+
+        const authoritativeRole = ["customer", "dancer", "venue"].includes(session?.account?.role)
+          ? session.account.role
+          : "";
+        if (authoritativeRole) {
+          if (redirectUrl.pathname === "/account") {
+            redirectUrl.pathname = "/";
+            redirectUrl.searchParams.set("dancr_confirm", "1");
+          }
+          redirectUrl.searchParams.set("role", authoritativeRole);
+          redirectUrl.searchParams.set("dancr_role", authoritativeRole);
+        }
+        const destination = redirectUrl.pathname + redirectUrl.search;
+        const shouldPauseForDancer = showDancerConfirmation && (!session || authoritativeRole === "dancer");
+
+        if (shouldPauseForDancer) {
+          document.getElementById("openingDancr").hidden = true;
+          if (session?.accessToken) {
+            const continueLink = document.getElementById("dancerConfirmationContinue");
+            continueLink.href = destination;
+            document.getElementById("dancerConfirmation").hidden = false;
+          } else {
+            document.getElementById("confirmationError").hidden = false;
+          }
+          return;
+        }
+
         window.location.replace(destination);
       }
+
+      void completeCallback();
     </script>
   </body>
 </html>`;
@@ -272,19 +279,19 @@ async function readCallbackSession(request: Request) {
 }
 
 async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSession; user: CallbackUser } | null> {
-  const client = createServerSupabaseClient();
   const code = url.searchParams.get("code");
+  const tokenHash = url.searchParams.get("token_hash");
+  if (!code && !tokenHash) return null;
+
+  const client = createServerSupabaseClient();
   if (code) {
     const { data, error } = await client.auth.exchangeCodeForSession(code);
     if (error || !data.session || !data.user) return null;
     return { session: data.session, user: data.user };
   }
 
-  const tokenHash = url.searchParams.get("token_hash");
-  if (!tokenHash) return null;
-
   const { data, error } = await client.auth.verifyOtp({
-    token_hash: tokenHash,
+    token_hash: tokenHash!,
     type: readOtpType(url.searchParams.get("type")),
   });
   if (error || !data.user) return null;

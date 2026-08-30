@@ -43,11 +43,11 @@ test("both admin dashboards provide a real session logout", () => {
   assert.match(liveShell, /id="adminLogoutBtn"[^>]*hidden>Log out<\/button>/);
   assert.match(liveShell, /function showAdminDashboardPage\(\) \{[\s\S]*?adminLogoutBtn"\)\.hidden = false/);
   assert.match(liveShell, /function showAdminAuthPage[\s\S]*?adminLogoutBtn"\)\.hidden = true/);
-  assert.match(liveShell, /function logoutAdminAccount\(\) \{[\s\S]*?saveAuthSession\(null\)[\s\S]*?lockAdminDashboard\(\)/);
+  assert.match(liveShell, /function logoutAdminAccount\(\) \{[\s\S]*?void endAuthSession\(\)[\s\S]*?lockAdminDashboard\(\)/);
   assert.match(liveShell, /adminLogoutBtn"\)\.addEventListener\("click", logoutAdminAccount\)/);
 
   assert.match(adminClient, /className="admin-logout"[^>]*onClick=\{signOut\}/);
-  assert.match(adminClient, /function signOut\(\) \{[\s\S]*?clearAdminSession\(\)/);
-  assert.match(adminSession, /clearBrowserAuthSession\(\)/);
+  assert.match(adminClient, /function signOut\(\) \{[\s\S]*?void revokeAdminSession\(\)/);
+  assert.match(adminSession, /revokeBrowserAuthSession\(\)/);
   assert.match(adminClient, /setState\(\{ authRequired: true, error: "Admin session ended\. Sign in to continue\." \}\)/);
 });

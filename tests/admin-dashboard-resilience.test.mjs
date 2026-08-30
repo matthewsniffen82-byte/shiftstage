@@ -82,7 +82,7 @@ test("the top-level admin shell cancels stale loads and serializes authenticatio
   assert.equal((shell.match(/signal: action\.controller\.signal/g) || []).length, 2);
   assert.match(shell, /workspaceLoadRef\.current === request/);
   assert.match(shell, /generation === dataGenerationRef\.current/);
-  assert.match(shell, /invalidateAdminDataRequests\(\);\s+cancelAuthAction\(\);\s+clearAdminSession\(\)/);
+  assert.match(shell, /invalidateAdminDataRequests\(\);\s+cancelAuthAction\(\);\s+void revokeAdminSession\(\)/);
   assert.match(shell, /disabled=\{authBusy\}/);
 });
 

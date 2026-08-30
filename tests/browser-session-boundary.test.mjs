@@ -8,6 +8,7 @@ import {
   persistRefreshedBrowserAuthSession,
   readBrowserAccessToken,
   readBrowserAuthSession,
+  revokeBrowserAuthSession,
 } from "../src/lib/dancr/browser-session.ts";
 
 const [
@@ -99,10 +100,54 @@ test("the browser auth boundary safely reads sessions and enforces optional acco
   }
 });
 
+test("browser logout clears local state before revoking the server session", async () => {
+  const previousWindow = globalThis.window;
+  const previousFetch = globalThis.fetch;
+  const stored = new Map();
+  const requests = [];
+  globalThis.window = {
+    localStorage: {
+      getItem(key) {
+        return stored.get(key) ?? null;
+      },
+      setItem(key, value) {
+        stored.set(key, String(value));
+      },
+      removeItem(key) {
+        stored.delete(key);
+      },
+    },
+  };
+  globalThis.fetch = async (path, options) => {
+    requests.push({ path, options });
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  };
+
+  try {
+    persistBrowserAuthSession({
+      accessToken: "customer-access",
+      refreshToken: "customer-refresh",
+      account: { role: "customer" },
+    });
+    const revocation = revokeBrowserAuthSession();
+    assert.equal(readBrowserAuthSession(), null);
+    assert.equal(await revocation, true);
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].path, "/api/auth");
+    assert.equal(requests[0].options.method, "DELETE");
+    assert.equal(requests[0].options.headers.authorization, "Bearer customer-access");
+    assert.equal(requests[0].options.headers["x-dancr-refresh-token"], "customer-refresh");
+    assert.equal(requests[0].options.keepalive, true);
+  } finally {
+    globalThis.window = previousWindow;
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test("the standalone account surface uses the canonical session lifecycle", () => {
   assert.match(accountSource, /readBrowserAuthSession\(\)/);
   assert.match(accountSource, /persistBrowserAuthSession\(session\)/);
-  assert.match(accountSource, /clearBrowserAuthSession\(\)/);
+  assert.match(accountSource, /revokeBrowserAuthSession\(\)/);
   assert.doesNotMatch(accountSource, /dancrAuthSessionV1/);
   assert.doesNotMatch(accountSource, /const SESSION_KEY/);
   assert.doesNotMatch(accountSource, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);

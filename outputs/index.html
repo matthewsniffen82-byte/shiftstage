@@ -42886,6 +42886,27 @@
       updateCurrentEmailDisplays();
     }
 
+    async function endAuthSession() {
+      const session = authSession;
+      saveAuthSession(null);
+      if (!session?.accessToken) return true;
+
+      const headers = { Authorization: `Bearer ${session.accessToken}` };
+      if (session.refreshToken) headers["X-Dancr-Refresh-Token"] = session.refreshToken;
+      try {
+        const response = await fetch("/api/auth", {
+          method: "DELETE",
+          headers,
+          cache: "no-store",
+          credentials: "same-origin",
+          keepalive: true
+        });
+        return response.ok;
+      } catch (error) {
+        return false;
+      }
+    }
+
     function savePendingAuthConfirmation(state) {
       try {
         localStorage.setItem("dancrPendingAuthConfirmationV1", JSON.stringify({
@@ -42916,36 +42937,6 @@
       } catch (error) {}
     }
 
-    function readAuthTokenPayload(accessToken) {
-      if (!accessToken) return {};
-      try {
-        const encodedPayload = String(accessToken).split(".")[1] || "";
-        const normalizedPayload = encodedPayload.replace(/-/g, "+").replace(/_/g, "/");
-        const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, "=");
-        return JSON.parse(window.atob(paddedPayload)) || {};
-      } catch (error) {
-        return {};
-      }
-    }
-
-    function confirmationAccountFromAccessToken(accessToken) {
-      const payload = readAuthTokenPayload(accessToken);
-      const metadata = payload.user_metadata && typeof payload.user_metadata === "object" ? payload.user_metadata : {};
-      const appMetadata = payload.app_metadata && typeof payload.app_metadata === "object" ? payload.app_metadata : {};
-      const roleCandidate = metadata.role || appMetadata.role || "";
-      const role = roleCandidate === "dancer" || roleCandidate === "venue" || roleCandidate === "customer"
-        ? roleCandidate
-        : null;
-      const email = normalizeAccountEmail(payload.email || metadata.email);
-      if (!role && !email) return null;
-      return {
-        role,
-        displayName: metadata.display_name || metadata.stage_name || metadata.venue_name || email || null,
-        email: email || null,
-        accountState: "active"
-      };
-    }
-
     function readConfirmationSessionFromUrl() {
       if (window.__DANCR_CONFIRMED_SESSION__?.accessToken) {
         return window.__DANCR_CONFIRMED_SESSION__;
@@ -42956,13 +42947,21 @@
       const queryParams = new URLSearchParams(query);
       const accessToken = hashParams.get("access_token") || queryParams.get("access_token");
       if (!accessToken) return null;
-      const expiresAt = hashParams.get("expires_at") || queryParams.get("expires_at");
-      return {
-        accessToken,
-        refreshToken: hashParams.get("refresh_token") || queryParams.get("refresh_token") || undefined,
-        expiresAt: expiresAt ? Number(expiresAt) : undefined,
-        account: confirmationAccountFromAccessToken(accessToken)
-      };
+
+      const sensitiveKeys = ["access_token", "refresh_token", "expires_at", "expires_in", "token_type"];
+      sensitiveKeys.forEach((key) => queryParams.delete(key));
+      if (!hashParams.get("access_token")) {
+        hashParams.set("access_token", accessToken);
+        for (const key of ["refresh_token", "expires_at", "expires_in", "token_type", "type"]) {
+          const value = new URLSearchParams(query).get(key);
+          if (value) hashParams.set(key, value);
+        }
+      }
+      const callbackUrl = new URL("/auth/callback", window.location.origin);
+      callbackUrl.search = queryParams.toString();
+      callbackUrl.hash = hashParams.toString();
+      window.location.replace(callbackUrl.pathname + callbackUrl.search + callbackUrl.hash);
+      return null;
     }
 
     async function hydrateConfirmedSessionAccount(role, state) {
@@ -43521,6 +43520,7 @@
         const account = data.account
           ? { ...data.account, email: normalizeAccountEmail(data.account.email) || email || null }
           : { role: resolvedRole, email: email || null, accountState: "active" };
+        await endAuthSession();
         saveAuthSession({ ...data.session, email: email || data.session.email || null, account });
       }
       return data;
@@ -53946,7 +53946,7 @@
     }
 
     function logoutAccount({ message = "Logged out" } = {}) {
-      saveAuthSession(null);
+      void endAuthSession();
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;
       isVenueLoggedIn = false;
@@ -57750,7 +57750,7 @@
       liveAdminReports = [];
       liveAdminSupportThreads = [];
       liveAdminSubscriptions = [];
-      saveAuthSession(null);
+      void endAuthSession();
       document.getElementById("adminEmail").value = "";
       document.getElementById("adminPassword").value = "";
       document.getElementById("adminCode").value = "";
@@ -62495,7 +62495,7 @@
         if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", "/");
         const result = await requestAuth(payload);
         if (authMode === "signup") {
-          saveAuthSession(null);
+          await endAuthSession();
           isCustomerLoggedIn = false;
           updateAccountHeader();
           confirmationSent = true;
@@ -62736,6 +62736,7 @@
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
+          await endAuthSession();
           confirmationSent = true;
           setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Open the newest MyDancr email and tap Confirm email. Then finish your profile and dressing-room tap step.`);
           showToast("Confirmation email sent. Open the newest email to continue.");

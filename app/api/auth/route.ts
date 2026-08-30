@@ -21,6 +21,10 @@ import {
   PublicRequestRateLimitError,
 } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import {
+  createRequestSupabaseContext,
+  getBearerToken,
+} from "@/src/lib/supabase/request";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
 
@@ -32,6 +36,49 @@ type AuthMode = "login" | "signup" | "reset_password";
 
 const MAX_AUTH_BODY_BYTES = 8_192;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function PUT(request: Request) {
+  try {
+    const body = await readBoundedJsonObject(request, {
+      maxBytes: MAX_AUTH_BODY_BYTES,
+      invalidMessage: "Invalid session confirmation request.",
+      tooLargeMessage: "Session confirmation request is too large.",
+    });
+    const accessToken = readRequired(body.accessToken, "Access token is required.", 8_192);
+    const refreshToken = readRequired(body.refreshToken, "Refresh token is required.", 4_096);
+    const sessionRequest = new Request(request.url, {
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        "x-dancr-refresh-token": refreshToken,
+      },
+    });
+    const { user, session } = await createRequestSupabaseContext(sessionRequest);
+    if (!session?.accessToken || !session.refreshToken) throw new Error("Sign in required.");
+
+    return authJson(await authResponse(user.id, null, {
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken,
+      expires_at: session.expiresAt,
+    }, false));
+  } catch (error) {
+    return secureAuthResponse(apiError(error, "Unable to confirm the session."));
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const context = await createRequestSupabaseContext(request);
+    const accessToken = context.session?.accessToken || getBearerToken(request);
+    if (!accessToken) throw new Error("Sign in required.");
+
+    const { error } = await context.client.auth.admin.signOut(accessToken, "local");
+    if (error && ![401, 403, 404].includes(Number(error.status))) throw error;
+
+    return authJson({ ok: true, message: "Session ended." });
+  } catch (error) {
+    return secureAuthResponse(apiError(error, "Unable to end the session."));
+  }
+}
 
 export async function POST(request: Request) {
   let requestedMode: AuthMode | null = null;
@@ -70,7 +117,7 @@ export async function POST(request: Request) {
         });
       }
 
-      return NextResponse.json({
+      return authJson({
         ok: true,
         message: "If that email has a MyDancr account, a secure reset link is on the way.",
       });
@@ -96,7 +143,7 @@ export async function POST(request: Request) {
       }
 
       const expectedRole = role === "admin" ? "admin" : null;
-      return NextResponse.json(await authResponse(data.user.id, expectedRole, data.session, false));
+      return authJson(await authResponse(data.user.id, expectedRole, data.session, false));
     }
 
     if (password.length < 8) {
@@ -136,11 +183,11 @@ export async function POST(request: Request) {
       const { data: sessionData, error: sessionError } = await client.auth.signInWithPassword({ email, password });
       if (sessionError) throw sessionError;
 
-      return NextResponse.json(await authResponse(data.user.id, role, sessionData.session, false));
+      return authJson(await authResponse(data.user.id, role, sessionData.session, false));
     }
 
     if (role === "venue") {
-      return NextResponse.json(await createVenueSignupAccount({
+      return authJson(await createVenueSignupAccount({
         client,
         email,
         password,
@@ -185,26 +232,26 @@ export async function POST(request: Request) {
     });
 
     if (role === "customer") {
-      return NextResponse.json(await authResponse(data.user.id, role, null, true));
+      return authJson(await authResponse(data.user.id, role, null, true));
     }
 
-    return NextResponse.json(await authResponse(data.user.id, role, data.session, !data.session));
+    return authJson(await authResponse(data.user.id, role, data.session, !data.session));
   } catch (error) {
     if (error instanceof AccountRecoveryRateLimitError) {
-      return NextResponse.json(
+      return authJson(
         { ok: false, error: error.message },
         { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
       );
     }
     if (error instanceof PublicRequestRateLimitError) {
-      return NextResponse.json(
+      return authJson(
         { ok: false, error: "Too many sign-in or signup attempts. Please wait and try again." },
         { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
       );
     }
     const rateLimitMessage = authRateLimitMessage(error);
     if (rateLimitMessage) {
-      return NextResponse.json({ ok: false, error: rateLimitMessage }, { status: 429 });
+      return authJson({ ok: false, error: rateLimitMessage }, { status: 429 });
     }
 
     if (isAuthError(error)) {
@@ -216,11 +263,22 @@ export async function POST(request: Request) {
       const message = requestedMode === "login"
         ? "Email or password is incorrect."
         : "Unable to create this account. Check the information or sign in if you already have an account.";
-      return NextResponse.json({ ok: false, error: message }, { status: 400 });
+      return authJson({ ok: false, error: message }, { status: 400 });
     }
 
-    return apiError(error, "Unable to authenticate.");
+    return secureAuthResponse(apiError(error, "Unable to authenticate."));
   }
+}
+
+function authJson(body: unknown, init?: ResponseInit) {
+  return secureAuthResponse(NextResponse.json(body, init));
+}
+
+function secureAuthResponse(response: NextResponse) {
+  response.headers.set("cache-control", "no-store, max-age=0");
+  response.headers.set("pragma", "no-cache");
+  response.headers.set("referrer-policy", "no-referrer");
+  return response;
 }
 
 async function authResponse(

@@ -34,7 +34,7 @@ test("the global deletion control requires confirmation and calls the authentica
   );
   assert.match(
     liveShell,
-    /function logoutAccount\([^)]*\) \{\s*saveAuthSession\(null\)[\s\S]*?closeDashboard\(\)[\s\S]*?closeDancerDashboard\(\)[\s\S]*?closeVenueDashboard\(\)[\s\S]*?updateAccountHeader\(\)/,
+    /function logoutAccount\([^)]*\) \{\s*void endAuthSession\(\)[\s\S]*?closeDashboard\(\)[\s\S]*?closeDancerDashboard\(\)[\s\S]*?closeVenueDashboard\(\)[\s\S]*?updateAccountHeader\(\)/,
   );
   assert.doesNotMatch(liveShell, /This demo will sign out of the account/);
 });

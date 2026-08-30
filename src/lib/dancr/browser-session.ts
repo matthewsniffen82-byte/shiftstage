@@ -87,3 +87,36 @@ export function clearBrowserAuthSession() {
     return false;
   }
 }
+
+export async function revokeBrowserAuthSession() {
+  const session = readBrowserAuthSession();
+  clearBrowserAuthSession();
+
+  const accessToken = typeof session?.accessToken === "string" ? session.accessToken : "";
+  if (!accessToken) return true;
+
+  const headers: Record<string, string> = {
+    authorization: `Bearer ${accessToken}`,
+  };
+  if (typeof session?.refreshToken === "string" && session.refreshToken) {
+    headers["x-dancr-refresh-token"] = session.refreshToken;
+  }
+
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), 4_000);
+  try {
+    const response = await fetch("/api/auth", {
+      method: "DELETE",
+      headers,
+      cache: "no-store",
+      credentials: "same-origin",
+      keepalive: true,
+      signal: controller.signal,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    globalThis.clearTimeout(timeout);
+  }
+}

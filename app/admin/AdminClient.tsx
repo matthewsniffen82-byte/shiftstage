@@ -19,6 +19,7 @@ import {
   clearAdminSession,
   isAdminAuthenticationError,
   persistAdminSession,
+  revokeAdminSession,
   requestAdminJson,
 } from "./admin-session";
 
@@ -350,7 +351,7 @@ export default function AdminClient() {
     setIsSigningOut(true);
     invalidateAdminDataRequests();
     cancelAuthAction();
-    clearAdminSession();
+    void revokeAdminSession();
     window.sessionStorage.removeItem(OPEN_APPROVALS_SESSION_KEY);
     openApprovalIdsRef.current = {};
     setOpenApprovalIds({});

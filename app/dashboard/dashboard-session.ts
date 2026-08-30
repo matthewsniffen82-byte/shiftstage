@@ -4,6 +4,7 @@ import {
   persistBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
   readBrowserAuthSession,
+  revokeBrowserAuthSession,
 } from "../../src/lib/dancr/browser-session.ts";
 
 export type DashboardSessionAccount = {
@@ -62,6 +63,10 @@ export function persistDashboardSession(session: StoredDashboardSession) {
 
 export function clearDashboardSession() {
   return clearBrowserAuthSession();
+}
+
+export function revokeDashboardSession() {
+  return revokeBrowserAuthSession();
 }
 
 export function dashboardAuthHeaders(session: StoredDashboardSession | null): Record<string, string> | null {

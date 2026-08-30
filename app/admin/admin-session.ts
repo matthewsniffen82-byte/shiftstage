@@ -4,6 +4,7 @@ import {
   persistBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
   readBrowserAuthSession,
+  revokeBrowserAuthSession,
 } from "../../src/lib/dancr/browser-session.ts";
 
 export type AdminSessionAccount = {
@@ -32,6 +33,10 @@ export function persistAdminSession(session: StoredAdminSession, account: AdminS
 
 export function clearAdminSession() {
   clearBrowserAuthSession();
+}
+
+export function revokeAdminSession() {
+  return revokeBrowserAuthSession();
 }
 
 export function readAdminSession(): StoredAdminSession | null {

@@ -240,7 +240,7 @@ test("venue follows stay empty until a real customer session and remain account-
   );
   assert.match(
     homeSource,
-    /function logoutAccount\(\{ message = "Logged out" \} = \{\}\) \{\s*saveAuthSession\(null\);[\s\S]*?clearCustomerSavedCollections\(\);/,
+    /function logoutAccount\(\{ message = "Logged out" \} = \{\}\) \{\s*void endAuthSession\(\);[\s\S]*?clearCustomerSavedCollections\(\);/,
   );
 
   assert.match(

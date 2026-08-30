@@ -1,5 +1,9 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
-import { getPublicEnv } from "../env";
+import { getPublicEnv } from "../env.ts";
+
+const MAX_ACCESS_TOKEN_LENGTH = 8_192;
+const MAX_REFRESH_TOKEN_LENGTH = 4_096;
+const AUTH_TOKEN_PATTERN = /^[A-Za-z0-9._~-]+$/;
 
 export type RequestSupabaseContext = {
   client: SupabaseClient;
@@ -15,13 +19,14 @@ export function getBearerToken(request: Request) {
   const header = request.headers.get("authorization") || "";
   if (!header.toLowerCase().startsWith("bearer ")) return null;
 
-  const token = header.slice(7).trim();
-  return token || null;
+  return readBoundedAuthToken(header.slice(7), MAX_ACCESS_TOKEN_LENGTH);
 }
 
 export function getRefreshToken(request: Request) {
-  const token = request.headers.get("x-dancr-refresh-token")?.trim();
-  return token || null;
+  return readBoundedAuthToken(
+    request.headers.get("x-dancr-refresh-token"),
+    MAX_REFRESH_TOKEN_LENGTH,
+  );
 }
 
 export async function createRequestSupabaseContext(request: Request): Promise<RequestSupabaseContext> {
@@ -75,4 +80,10 @@ export async function createRequestSupabaseContext(request: Request): Promise<Re
   if (error || !data.user) throw new Error("Sign in required.");
 
   return { client, user: data.user };
+}
+
+function readBoundedAuthToken(value: string | null, maxLength: number) {
+  const token = value?.trim() || "";
+  if (!token || token.length > maxLength || !AUTH_TOKEN_PATTERN.test(token)) return null;
+  return token;
 }

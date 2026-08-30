@@ -32,6 +32,6 @@ test("admin signup secrets use constant-time comparison and auth failures stay p
   assert.match(auth, /timingSafeEqual\(expectedDigest, providedDigest\)/);
   assert.match(auth, /isAuthError\(error\)/);
   assert.match(auth, /Email or password is incorrect\./);
-  assert.match(auth, /return apiError\(error, "Unable to authenticate\."\)/);
+  assert.match(auth, /secureAuthResponse\(apiError\(error, "Unable to authenticate\."\)\)/);
   assert.doesNotMatch(auth, /apiError\(error, "Unable to authenticate\.", 400\)/);
 });

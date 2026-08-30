@@ -4,9 +4,9 @@ import { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, MouseEve
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  clearBrowserAuthSession,
   persistBrowserAuthSession,
   readBrowserAuthSession,
+  revokeBrowserAuthSession,
   type BrowserAuthSession,
   type BrowserSessionRole,
 } from "@/src/lib/dancr/browser-session";
@@ -316,7 +316,7 @@ export default function AccountClient() {
             ? `Confirmation email sent to ${email}. After confirmation, Mydancr will open the homepage signed in.`
             : `Confirmation email sent to ${email}. Check your email or spam folder, then tap Confirm email to open your three-step dancer profile setup.`,
         );
-        clearBrowserAuthSession();
+        await revokeBrowserAuthSession();
         return;
       }
 
@@ -331,6 +331,7 @@ export default function AccountClient() {
         expiresAt: data.session.expiresAt,
         account: data.account,
       };
+      await revokeBrowserAuthSession();
       if (!persistBrowserAuthSession(session)) {
         throw new Error("Unable to save your sign-in in this browser.");
       }

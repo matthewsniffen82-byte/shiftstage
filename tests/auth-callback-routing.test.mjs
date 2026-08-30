@@ -29,8 +29,8 @@ test("confirmed dancer accounts pause on a dedicated confirmation page before pr
   assert.match(callbackSource, /const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback\(request\)/);
   assert.match(callbackPage, /<h1>Email confirmed<\/h1>/);
   assert.match(callbackPage, />Click here to complete dancer profile<\/a>/);
-  assert.match(callbackPage, /if \(showDancerConfirmation\)[\s\S]*?continueLink\.href = destination/);
-  assert.match(callbackPage, /else \{\s*window\.location\.replace\(destination\)/);
+  assert.match(callbackPage, /if \(shouldPauseForDancer\)[\s\S]*?continueLink\.href = destination/);
+  assert.match(callbackPage, /window\.location\.replace\(destination\)/);
 
   assert.match(dancerDashboardSource, /<DashboardClient role="dancer" \/>/);
   assert.doesNotMatch(dancerDashboardSource, /redirect\(/);
@@ -58,26 +58,29 @@ test("a confirmed session survives account synchronization errors", () => {
   assert.doesNotMatch(callbackSessionReader, /catch \(error\) \{\s*return null/);
 });
 
-test("implicit Supabase email-confirmation tokens are transferred into the live session", () => {
+test("implicit Supabase email-confirmation tokens are server-validated and scrubbed before navigation", () => {
   const callbackPage =
     callbackSource.match(/function callbackHtml[\s\S]*?function escapeHtml/)?.[0] || "";
   const confirmationSessionReader =
-    liveAppSource.match(/function readAuthTokenPayload[\s\S]*?async function hydrateConfirmedSessionAccount/)?.[0] || "";
+    liveAppSource.match(/function readConfirmationSessionFromUrl[\s\S]*?async function hydrateConfirmedSessionAccount/)?.[0] || "";
 
   assert.match(callbackPage, /fragmentParams\.get\("access_token"\)/);
-  assert.match(callbackPage, /const fragmentSession = fragmentAccessToken/);
+  assert.match(callbackPage, /fetch\("\/api\/auth", \{[\s\S]*?method: "PUT"/);
+  assert.match(callbackPage, /body: JSON\.stringify\(\{ accessToken, refreshToken \}\)/);
   assert.match(callbackSource, /import \{ BROWSER_AUTH_SESSION_KEY \} from "@\/src\/lib\/dancr\/browser-session"/);
   assert.match(callbackPage, /const sessionStorageKey = \$\{sessionKeyJson\}/);
   assert.match(callbackPage, /try \{\s*localStorage\.setItem\(sessionStorageKey, JSON\.stringify\(session\)\)/);
-  assert.match(callbackPage, /const destination = redirectUrl\.pathname \+ redirectUrl\.search \+ fragment/);
+  assert.match(callbackPage, /window\.history\.replaceState\(\{\}, document\.title, window\.location\.pathname\)/);
+  assert.match(callbackPage, /const destination = redirectUrl\.pathname \+ redirectUrl\.search/);
+  assert.match(callbackPage, /redirectUrl\.searchParams\.set\("role", authoritativeRole\)/);
+  assert.doesNotMatch(callbackPage, /destination[^\n]*fragment|\+ fragment/);
   assert.match(callbackPage, /continueLink\.href = destination/);
   assert.match(callbackPage, /window\.location\.replace\(destination\)/);
-  assert.match(callbackPage, /tokenRole && redirectUrl\.pathname === "\/account"/);
-  assert.match(callbackPage, /redirectUrl\.searchParams\.set\("dancr_confirm", "1"\)/);
 
-  assert.match(confirmationSessionReader, /function confirmationAccountFromAccessToken/);
-  assert.match(confirmationSessionReader, /metadata\.role \|\| appMetadata\.role/);
-  assert.match(confirmationSessionReader, /account: confirmationAccountFromAccessToken\(accessToken\)/);
+  assert.match(confirmationSessionReader, /new URL\("\/auth\/callback", window\.location\.origin\)/);
+  assert.match(confirmationSessionReader, /sensitiveKeys\.forEach\(\(key\) => queryParams\.delete\(key\)\)/);
+  assert.match(confirmationSessionReader, /window\.location\.replace\(callbackUrl\.pathname \+ callbackUrl\.search \+ callbackUrl\.hash\)/);
+  assert.doesNotMatch(liveAppSource, /function readAuthTokenPayload|confirmationAccountFromAccessToken/);
 });
 
 test("unfinished dancer accounts stay private until explicit submission and first venue verification", () => {
@@ -126,7 +129,7 @@ test("new dancer confirmation never invents a stage name or city", () => {
     /city:\s*role === "customer"\s*\? readMetadataText\(metadata\.city\) \|\| "Las Vegas"\s*:\s*readMetadataText\(metadata\.city\)/,
   );
   assert.doesNotMatch(callbackProvisioning, /displayName \|\| "New Dancer"/);
-  assert.match(callbackSource, /tokenRole === "dancer" \? "Dancer" : tokenEmail/);
+  assert.doesNotMatch(callbackSource, /tokenRole|tokenPayload/);
 });
 
 test("database auth bootstrap leaves dancer identity incomplete until an explicit profile save", () => {

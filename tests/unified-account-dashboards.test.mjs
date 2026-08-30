@@ -471,7 +471,7 @@ test("account security actions prevent duplicate and post-sign-out work", () => 
   assert.equal((controls.match(/signal: controller\.signal/g) || []).length, 2);
   assert.match(controls, /requestId === actionSequenceRef\.current/);
   assert.match(controls, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\)/);
-  assert.match(controls, /function signOut\(\)[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?clearDashboardSession\(\)/);
+  assert.match(controls, /function signOut\(\)[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?void revokeDashboardSession\(\)/);
   assert.match(controls, /onClick=\{signOut\} disabled=\{isWorking\}/);
 });
 
