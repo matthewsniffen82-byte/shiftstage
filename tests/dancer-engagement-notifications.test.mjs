@@ -79,6 +79,14 @@ test("all liked states keep neutral glass and turn only the heart red", () => {
   assert.match(liveApp, /\.home-tv-feed-like-action\[aria-pressed="true"\],[\s\S]*?outline: none !important;[\s\S]*?background: rgba\(5,5,10,\.58\) !important;/);
 });
 
+test("liking and unliking media uses the heart state without success wording", () => {
+  assert.match(liveApp, /if \(statusTarget\) statusTarget\.textContent = "";/);
+  assert.doesNotMatch(liveApp, /statusTarget\.textContent = state\.liked \? "Liked\." : "Like removed\."/);
+  assert.doesNotMatch(liveApp, /showHomeTvFeedFeedback\(slide, "Already liked"\)/);
+  assert.doesNotMatch(liveApp, /showHomeTvFeedFeedback\(slide, result\.liked \? "Liked" : "Like removed"\)/);
+  assert.match(liveApp, /if \(!result\.liked\) showHomeTvFeedFeedback\(slide, "Unable to like"\);/);
+});
+
 test("profile photo controls use the same icon-only circular glass treatment as profile videos", () => {
   assert.match(liveApp, /\.profile-photo-viewer-share,[\s\S]*?max-width: 52px !important;[\s\S]*?max-height: 52px !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?blur\(14px\) saturate\(1\.12\)/);
   const photoShare = liveApp.match(/<button class="profile-photo-viewer-share"[\s\S]*?<\/button>/)?.[0] || "";
