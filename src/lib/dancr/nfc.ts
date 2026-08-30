@@ -315,28 +315,6 @@ export async function getDancerNfcDashboardState(
   };
 }
 
-export async function confirmRedemptionFromNfc(
-  client: DancrClient,
-  input: { tagId: string; redemptionToken: string; sessionId: string; request: Request },
-) {
-  if (!UUID_PATTERN.test(input.tagId) || !UUID_PATTERN.test(input.sessionId)) {
-    throw new Error("Invalid phone-tap session.");
-  }
-  const audit = requestAudit(input.request);
-  const { data, error } = await (client as any).rpc("confirm_deal_redemption_from_nfc", {
-    p_token: input.redemptionToken,
-    p_tag_id: input.tagId,
-    p_session_id: input.sessionId,
-    p_audit: {
-      ip_address: audit.ipAddress,
-      user_agent: audit.userAgent,
-      device_fingerprint: audit.deviceFingerprint,
-    },
-  });
-  if (error) throw error;
-  return data;
-}
-
 function normalizeTagType(value: unknown): NfcTagType {
   if (value === "dressing_room" || value === "cashier") return value;
   throw new Error("Choose a dressing-room or cashier tap sticker.");

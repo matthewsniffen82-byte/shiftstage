@@ -94,7 +94,7 @@ test("dancer attribution is locked to a verified shift when the cashier NFC tap 
   assert.match(redemptionAttribution, /getVerifiedActiveCheckInAtVenue\([\s\S]*?client[\s\S]*?dancerId[\s\S]*?input\.venueId/);
   assert.match(redemptionAttribution, /shiftId: verifiedCheckIn\.shiftId/);
   assert.match(dealRedemptionActions, /shift_id: input\.sourceType === "dancer_profile" \? input\.shiftId/);
-  assert.match(dealRedemptionActions, /attribution_locked_at: input\.sourceType === "dancer_profile"/);
+  assert.match(dealRedemptionActions, /p_dancer_id: input\.sourceType === "dancer_profile"[\s\S]*?p_shift_id: input\.sourceType === "dancer_profile"/);
   assert.match(migration, /shift_id uuid references public\.shifts/);
   assert.match(migration, /v_redemption\.source_type = 'dancer_profile'[\s\S]*?v_redemption\.shift_id is null/);
   assert.doesNotMatch(passPage, /dancerHasVerifiedActiveCheckInAtVenue|hasLiveDancerAttribution/);
@@ -145,11 +145,11 @@ test("venue cashier-tap totals use finalized revenue events across both attribut
   assert.doesNotMatch(venueDashboard, /revenue\?\.postedVenueQrScansThisMonth/);
 });
 
-test("only the active owning venue account can atomically create revenue and commission", () => {
-  assert.match(redemptionRoute, /createRequestSupabaseContext\(request\)/);
-  assert.match(redemptionRoute, /account\.role !== "venue" \|\| account\.accountState !== "active"/);
-  assert.match(redemptionRoute, /redeemDealToken\(client, token, request\)/);
-  assert.match(scannerClient, /authorization: `Bearer \$\{venueAccessToken\}`/);
+test("only the active cashier NFC transaction can atomically create revenue and commission", () => {
+  assert.match(redemptionRoute, /export async function POST\(\)[\s\S]*?status: 410/);
+  assert.doesNotMatch(redemptionRoute, /createRequestSupabaseContext|redeemDealToken/);
+  assert.match(generationRoute, /completeCashierDealRedemption\(admin/);
+  assert.match(cashierRedemption, /issueAndConfirmDealRedemptionFromNfc\(client/);
   assert.match(scaleCommissionMigration, /create or replace function public\.confirm_deal_redemption_from_nfc/);
   assert.match(scaleCommissionMigration, /where id = p_tag_id for update/);
   assert.match(scaleCommissionMigration, /venue\.owner_user_id[\s\S]*?account\.role = 'venue'[\s\S]*?account\.account_state = 'active'/);

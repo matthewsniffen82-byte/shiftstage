@@ -146,6 +146,7 @@ export async function dancerHasVerifiedActiveCheckInAtVenue(
 }
 
 export async function getRedemptionForScanner(client: DancrClient, token: string) {
+  if (!/^[A-Za-z0-9_-]{40,120}$/.test(token)) return null;
   const { data, error } = await (client as any)
     .from("qr_redemptions")
     .select(

@@ -13,17 +13,17 @@ const [actions, queries, cashier, eventRoute, redemptionRoute] = await Promise.a
 test("deal lifecycle writes use one dedicated mutation boundary", () => {
   assert.match(cashier, /from "\.\/deal-redemption-actions"/);
   assert.match(eventRoute, /from "@\/src\/lib\/dancr\/deal-redemption-actions"/);
-  assert.match(redemptionRoute, /from "@\/src\/lib\/dancr\/deal-redemption-actions"/);
   for (const action of [
-    "createDealRedemption",
     "issueAndConfirmDealRedemptionFromNfc",
     "enforceDealGenerationRateLimit",
-    "redeemDealToken",
     "recordDealRedemptionEvent",
   ]) {
     assert.match(actions, new RegExp(`export async function ${action}`));
     assert.doesNotMatch(queries, new RegExp(`export async function ${action}`));
   }
+  assert.match(redemptionRoute, /export async function POST\(\)[\s\S]*?status: 410/);
+  assert.doesNotMatch(redemptionRoute, /deal-redemption-actions|redeemDealToken/);
+  assert.doesNotMatch(actions, /export async function (?:createDealRedemption|redeemDealToken)/);
 });
 
 test("cashier confirmation keeps its atomic NFC and attribution payload", () => {

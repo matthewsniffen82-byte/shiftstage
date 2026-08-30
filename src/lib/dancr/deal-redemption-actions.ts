@@ -1,6 +1,5 @@
 import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getRedemptionForScanner } from "./deals";
 import type { ClubDealOfferType, DealSourceType } from "./types";
 
 type DancrClient = SupabaseClient;
@@ -22,60 +21,7 @@ export type DealRedemptionInput = {
   request: Request;
 };
 
-export type DealRedemption = {
-  id: string;
-  redemptionToken: string;
-  redemptionUrl: string;
-  expiresAt: string;
-};
-
 export type DealLifecycleEventType = "saved" | "shared" | "scanner_opened";
-
-export async function createDealRedemption(
-  client: DancrClient,
-  input: DealRedemptionInput,
-): Promise<DealRedemption> {
-  const token = crypto.randomBytes(32).toString("base64url");
-  const expiresAt = new Date(Date.now() + 10 * 60 * 60 * 1000).toISOString();
-  const origin = new URL(input.request.url).origin;
-  const redemptionUrl = `${origin}/deals/redeem/${token}`;
-  const audit = readRequestAudit(input.request);
-
-  const { data, error } = await (client as any)
-    .from("qr_redemptions")
-    .insert({
-      redemption_token: token,
-      venue_id: input.venueId,
-      club_deal_id: input.clubDealId,
-      source_type: input.sourceType,
-      dancer_id: input.sourceType === "dancer_profile" ? input.dancerId || null : null,
-      shift_id: input.sourceType === "dancer_profile" ? input.shiftId || null : null,
-      attribution_locked_at: input.sourceType === "dancer_profile" ? new Date().toISOString() : null,
-      customer_id: input.customerId || null,
-      session_id: input.sessionId || null,
-      nfc_tag_id: input.nfcTagId || null,
-      expires_at: expiresAt,
-      ip_address: audit.ipAddress,
-      user_agent: audit.userAgent,
-      device_fingerprint: audit.deviceFingerprint,
-      audit: {
-        ...audit,
-        campaign_source: input.campaignSource || null,
-        deal_snapshot: issuedDealSnapshot(input),
-      },
-    })
-    .select("id, redemption_token, expires_at")
-    .single();
-
-  if (error) throw error;
-
-  return {
-    id: data.id,
-    redemptionToken: data.redemption_token,
-    redemptionUrl,
-    expiresAt: data.expires_at,
-  };
-}
 
 export async function issueAndConfirmDealRedemptionFromNfc(
   client: DancrClient,
@@ -128,44 +74,6 @@ export async function enforceDealGenerationRateLimit(
   if ((count || 0) >= 20) {
     throw new Error("Too many Club Deal requests. Try again in a few minutes.");
   }
-}
-
-export async function redeemDealToken(client: DancrClient, token: string, request: Request) {
-  const audit = readRequestAudit(request);
-  const { data, error } = await (client as any).rpc("confirm_deal_redemption", {
-    p_token: token,
-    p_audit: {
-      ip_address: audit.ipAddress,
-      user_agent: audit.userAgent,
-      device_fingerprint: audit.deviceFingerprint,
-    },
-  });
-
-  if (error) {
-    const message = String(error.message || "Unable to redeem this Club Deal.");
-    const status = message.includes("venue account") || message.includes("cannot redeem")
-      ? 403
-      : message.includes("not found")
-        ? 404
-        : message.includes("already")
-          ? 409
-          : 400;
-    return { ok: false, status, error: message };
-  }
-  if (data?.ok === false) {
-    return {
-      ok: false,
-      status: Number(data.status || 400),
-      error: String(data.error || "Unable to redeem this Club Deal."),
-    };
-  }
-
-  return {
-    ok: true,
-    status: 200,
-    confirmation: data,
-    redemption: await getRedemptionForScanner(client, token),
-  };
 }
 
 export async function recordDealRedemptionEvent(
