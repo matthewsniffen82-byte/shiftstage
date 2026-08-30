@@ -19,6 +19,12 @@ test("unsigned Stripe requests fail before body or secret access", () => {
   assert.ok(route.indexOf("if (!signature)") < route.indexOf('getServerEnv("STRIPE_WEBHOOK_SECRET")'));
 });
 
+test("Stripe signature verification does not require billing API credentials", () => {
+  assert.match(route, /Stripe\.webhooks\.constructEvent\(/);
+  assert.doesNotMatch(route, /getStripe\(\)/);
+  assert.doesNotMatch(route, /STRIPE_SECRET_KEY/);
+});
+
 test("oversized Stripe requests retain their typed 413 response", () => {
   assert.match(route, /Stripe webhook is too large\./);
   assert.match(route, /catch \(error\) \{\s*return apiError\(error, "Unable to read Stripe webhook\."\);/);

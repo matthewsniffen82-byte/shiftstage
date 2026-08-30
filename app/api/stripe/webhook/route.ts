@@ -17,8 +17,7 @@ import {
   syncStripeInvoice,
 } from "@/src/lib/dancr/finance-provider-events";
 import { getServerEnv } from "@/src/lib/server-env";
-import { getStripe } from "@/src/lib/stripe";
-import type Stripe from "stripe";
+import Stripe from "stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,10 +42,9 @@ export async function POST(request: Request) {
     return apiError(error, "Unable to read Stripe webhook.");
   }
 
-  const stripe = getStripe();
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = Stripe.webhooks.constructEvent(
       Buffer.from(payload.buffer, payload.byteOffset, payload.byteLength),
       signature,
       getServerEnv("STRIPE_WEBHOOK_SECRET"),

@@ -87,7 +87,7 @@ test("finance APIs enforce role authorization and expose authenticated statement
 test("Stripe webhook idempotently reconciles invoices, payout accounts, and reversed transfers", () => {
   const webhook = read("app/api/stripe/webhook/route.ts");
   assert.ok(
-    webhook.indexOf('if (!signature)') < webhook.indexOf("const stripe = getStripe()"),
+    webhook.indexOf('if (!signature)') < webhook.indexOf('getServerEnv("STRIPE_WEBHOOK_SECRET")'),
     "unsigned webhook requests must fail before Stripe configuration is loaded",
   );
   assert.match(webhook, /readBoundedRequestBytes\([\s\S]*?MAX_STRIPE_WEBHOOK_BODY_BYTES/);
