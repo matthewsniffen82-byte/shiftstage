@@ -7412,44 +7412,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-information-section {
-  min-width: 0;
-  display: grid;
-  gap: 9px;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-contact-details-content {
-  display: grid;
-  gap: 6px;
-  padding: 0 2px 2px;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-contact-details-content > span {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
-  gap: 8px;
-  color: var(--dancr-color-text-muted);
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-contact-details-content > span > strong {
-  color: var(--dancr-color-text-muted);
-  font-weight: 850;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-contact-details-content > span > :last-child {
-  min-width: 0;
-  color: var(--dancr-color-text-secondary);
-  font-weight: 750;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .action-btn.follow-venue-btn:not(.is-following) {
   width: 100% !important;
   border-color: var(--dancr-color-border-subtle) !important;
@@ -7492,7 +7454,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 /* The club page begins with a compact identity/deal summary, then becomes an
  * exploration surface. Dancer discovery owns the first content position;
- * venue information and utility actions follow without changing card/feed UI. */
+ * location and utility actions follow without changing card/feed UI. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-exploration {
   min-width: 0;
   display: grid;
@@ -7656,7 +7618,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  :is(.venue-information-section, .venue-location-section) {
+  .venue-location-section {
   min-width: 0;
   padding-top: 12px;
   border-top: 1px solid var(--dancr-color-border-subtle);
@@ -7672,11 +7634,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   letter-spacing: 0 !important;
   text-transform: none !important;
   text-shadow: none !important;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-information-section {
-  border-top-color: var(--dancr-color-border-subtle);
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail

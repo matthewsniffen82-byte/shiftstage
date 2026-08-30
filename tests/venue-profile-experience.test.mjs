@@ -53,15 +53,14 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /class="venue-status-grid" aria-label="Tonight at \$\{escapeHtml\(details\.name\)\}"[\s\S]*?venue-operating-summary[\s\S]*?venue-status-kicker">Hours[\s\S]*?\$\{quickStats\}/);
   assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?venue-address-directions[\s\S]*?\$\{rideMarkup\}/);
   assert.ok(venueDetail.indexOf("${venueOfferMarkup(venue)}") < venueDetail.indexOf("${activitySections}"));
-  assert.ok(venueDetail.indexOf("${activitySections}") < venueDetail.indexOf("${venueInformationMarkup}"));
-  assert.ok(venueDetail.indexOf("${venueInformationMarkup}") < venueDetail.indexOf("venue-location-section"));
+  assert.ok(venueDetail.indexOf("${activitySections}") < venueDetail.indexOf("venue-location-section"));
   assert.ok(venueDetail.indexOf("venue-location-section") < venueDetail.indexOf("venue-secondary-actions"));
   assert.doesNotMatch(liveApp, /function fictionalVenueContactDetails\(/);
-  assert.match(venueDetail, /const venueInformationRows = \[[\s\S]*?details\.hours \? `<span><strong>Hours<\/strong>[\s\S]*?\.filter\(Boolean\)\.join\(""\)/);
+  assert.doesNotMatch(venueDetail, /venueInformationRows|venueInformationMarkup|venue-information-section|venue-information-heading|venue-contact-details-content/);
+  assert.equal((venueDetail.match(/venue-status-kicker">Hours/g) || []).length, 1);
   assert.doesNotMatch(venueDetail, /details\.(?:phone|website)|venuePhoneHref|venueWebsiteHref|href="tel:|venue-contact-link|<strong>(?:Phone|Website)<\/strong>/);
-  assert.match(venueDetail, /<section class="venue-information-section" aria-labelledby="venue-information-heading">[\s\S]*?<h3 class="venue-detail-section-heading" id="venue-information-heading">Venue information<\/h3>[\s\S]*?<div class="venue-contact-details-content">/);
   assert.doesNotMatch(venueDetail, /<details|<summary/);
-  assert.match(venueDetail, /<\/article>[\s\S]*?<div class="venue-detail-exploration">[\s\S]*?\$\{activitySections\}[\s\S]*?\$\{venueInformationMarkup\}[\s\S]*?class="venue-info venue-location-section"/);
+  assert.match(venueDetail, /<\/article>[\s\S]*?<div class="venue-detail-exploration">[\s\S]*?\$\{activitySections\}[\s\S]*?class="venue-info venue-location-section"/);
   assert.match(venueDetail, /class="venue-action-stack"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?class="venue-secondary-actions"/);
   assert.equal((venueDetail.match(/\$\{rideMarkup\}/g) || []).length, 1);
   assert.match(venueDetail, /id="venue-no-shift-posted"[\s\S]*?<span>No Shift Posted<\/span>/);
@@ -73,7 +72,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   );
 });
 
-test("venue information stays visible without customer-facing phone or website fields", () => {
+test("venue hours appear once in the summary without a duplicate information section", () => {
   const venueDetails = liveApp.match(
     /function venueDetails\(venue, city\) \{[\s\S]*?(?=\n    function venueOperatingStatus)/,
   )?.[0] || "";
@@ -82,8 +81,9 @@ test("venue information stays visible without customer-facing phone or website f
   )?.[0] || "";
 
   assert.doesNotMatch(venueDetails, /phone:|website:|fictionalContact/);
-  assert.match(venueDetail, /id="venue-information-heading">Venue information<\/h3>/);
-  assert.match(venueDetail, /<strong>Hours<\/strong>/);
+  assert.equal((venueDetail.match(/venue-status-kicker">Hours/g) || []).length, 1);
+  assert.match(venueDetail, /venue-operating-status[\s\S]*?operatingStatus\.hoursLabel/);
+  assert.doesNotMatch(venueDetail, /Venue information|venue-information-heading|<strong>Hours<\/strong>/);
   assert.doesNotMatch(venueDetail, /<strong>Phone<\/strong>|<strong>Website<\/strong>|href="tel:|target="_blank"/);
 });
 
@@ -247,8 +247,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 16px;[\s\S]*?padding: 10px 12px 16px;/);
   assert.match(refinement, /\.venue-activity-empty\.is-compact \{[\s\S]*?grid-template-columns: 34px minmax\(0, 1fr\);[\s\S]*?padding: 10px 11px;/);
   assert.match(refinement, /\.venue-hero \+ \.venue-detail-exploration \{[\s\S]*?margin-top: 0;/);
-  assert.match(refinement, /\.venue-information-section \{[\s\S]*?min-width: 0;[\s\S]*?display: grid;[\s\S]*?gap: 9px;/);
-  assert.match(refinement, /\.venue-contact-details-content > span \{[\s\S]*?grid-template-columns: 62px minmax\(0, 1fr\);/);
+  assert.doesNotMatch(refinement, /\.venue-information-section|\.venue-contact-details-content/);
   assert.doesNotMatch(refinement, /\.venue-contact-link/);
   assert.doesNotMatch(refinement, /\.venue-contact-details summary|\.venue-contact-details\[open\]/);
   assert.match(refinement, /padding-bottom: max\(112px, calc\(94px \+ env\(safe-area-inset-bottom, 0px\)\)\) !important;/);

@@ -51708,17 +51708,6 @@
           </section>
         ` : ""
       ].filter(Boolean).join("");
-      const venueInformationRows = [
-        details.hours ? `<span><strong>Hours</strong><span>${escapeHtml(displayShiftTime(details.hours))}</span></span>` : ""
-      ].filter(Boolean).join("");
-      const venueInformationMarkup = venueInformationRows ? `
-        <section class="venue-information-section" aria-labelledby="venue-information-heading">
-          <h3 class="venue-detail-section-heading" id="venue-information-heading">Venue information</h3>
-          <div class="venue-contact-details-content">
-            ${venueInformationRows}
-          </div>
-        </section>
-      ` : "";
       if (venue.id && !venue.isDashboardPreview) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
       return `
@@ -51763,7 +51752,6 @@
 
           <div class="venue-detail-exploration">
             ${activitySections}
-            ${venueInformationMarkup}
             <section class="venue-info venue-location-section" aria-labelledby="venue-location-heading">
               <h3 class="venue-detail-section-heading" id="venue-location-heading">Location</h3>
               ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
