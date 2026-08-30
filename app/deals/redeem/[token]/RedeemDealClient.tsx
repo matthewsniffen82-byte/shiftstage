@@ -125,10 +125,6 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
           <dt>Source</dt>
           <dd>{redemption?.sourceType === "dancer_profile" ? "Dancer profile" : "Club page"}</dd>
         </div>
-        <div>
-          <dt>Referral commission</dt>
-          <dd>{formatMoney(Number(deal?.referralCommissionCents || 0))}</dd>
-        </div>
       </dl>
       <button
         type="button"
@@ -163,13 +159,6 @@ function readDealSessionId() {
   } catch {
     return crypto.randomUUID();
   }
-}
-
-function formatMoney(cents: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(Math.max(0, cents) / 100);
 }
 
 function formatDate(value: string) {

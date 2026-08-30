@@ -97,8 +97,6 @@ export type VenueSummary = {
   logoImageSrcSet?: string | null;
   logoImageWidth?: number | null;
   logoImageHeight?: number | null;
-  qrCodeUrl?: string | null;
-  qrCodeLabel?: string | null;
 };
 
 export type VenueOwnerProfile = {
@@ -212,8 +210,6 @@ export type DancerCard = {
   venueName: string | null;
   venueSlug: string | null;
   venueId?: string | null;
-  venueQrCodeUrl?: string | null;
-  venueQrCodeLabel?: string | null;
   shiftId: string | null;
   shiftSource?: "scheduled" | "nfc_presence" | "demo_locked" | null;
   shiftLabel: string | null;
@@ -223,7 +219,6 @@ export type DancerCard = {
   locationStatus?: LocationStatus;
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
-  checkinDistanceFeet?: number | null;
   locationVerificationExpiresAt?: string | null;
   followerCount?: number;
   notificationCount?: number;
@@ -325,8 +320,6 @@ export type ShiftSummary = {
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
   locationVerificationExpiresAt?: string | null;
-  venueQrCodeUrl?: string | null;
-  venueQrCodeLabel?: string | null;
 };
 
 export type ClubDeal = {

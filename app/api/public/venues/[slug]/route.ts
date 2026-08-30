@@ -5,6 +5,8 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const PUBLIC_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const MAX_PUBLIC_UPCOMING_SHIFTS = 200;
 
 type RouteContext = {
   params: Promise<{ slug: string }>;
@@ -13,6 +15,9 @@ type RouteContext = {
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { slug } = await context.params;
+    if (!PUBLIC_SLUG_PATTERN.test(slug) || slug.length > 100) {
+      return NextResponse.json({ ok: false, error: "Venue not found." }, { status: 404 });
+    }
     const client = createAdminSupabaseClient();
     const [venue, { data, error }] = await Promise.all([
       getVenueProfile(client, slug),
@@ -24,7 +29,8 @@ export async function GET(_request: Request, context: RouteContext) {
         .eq("status", "posted")
         .eq("shift_source", "scheduled")
         .gte("ends_at", new Date().toISOString())
-        .order("starts_at", { ascending: true }),
+        .order("starts_at", { ascending: true })
+        .limit(MAX_PUBLIC_UPCOMING_SHIFTS),
     ]);
 
     if (!venue) {

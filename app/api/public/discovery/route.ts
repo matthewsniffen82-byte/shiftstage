@@ -14,6 +14,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const DISCOVERY_CACHE_CONTROL = "public, max-age=0, s-maxage=15, stale-while-revalidate=60";
+const MAX_PUBLIC_VENUES = 200;
 
 export async function GET(request: Request) {
   const startedAt = Date.now();
@@ -35,11 +36,12 @@ export async function GET(request: Request) {
       const venueResult = await client
         .from("venues")
         .select(
-          "id, slug, name, city, state, address, phone, website, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, qr_code_storage_path, qr_code_label",
+          "id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path",
         )
         .eq("is_active", true)
         .eq("city", city)
-        .order("name", { ascending: true });
+        .order("name", { ascending: true })
+        .limit(MAX_PUBLIC_VENUES);
       if (venueResult.error) throw venueResult.error;
       const venueRows = venueResult.data || [];
       const venueIds = venueRows.map((venue) => venue.id);
@@ -68,8 +70,6 @@ export async function GET(request: Request) {
         city: venue.city,
         state: venue.state,
         address: venue.address,
-        phone: venue.phone,
-        website: venue.website,
         latitude: venue.latitude,
         longitude: venue.longitude,
         hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at),
@@ -81,10 +81,6 @@ export async function GET(request: Request) {
         logoImageSrcSet: logoImage?.imageSrcSet || null,
         logoImageWidth: logoImage?.imageWidth || null,
         logoImageHeight: logoImage?.imageHeight || null,
-        qrCodeUrl: venue.qr_code_storage_path
-          ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
-          : null,
-        qrCodeLabel: venue.qr_code_label || null,
         activeDeals: activeDeals.get(venue.id) || [],
         activeDeal: activeDeals.get(venue.id)?.[0] || null,
         popularity: venuePopularityById.get(venue.id) || {

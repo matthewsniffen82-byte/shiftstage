@@ -6,6 +6,7 @@ import type { DancerProfile, ShiftSummary } from "@/src/lib/dancr/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const PUBLIC_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 type RouteContext = {
   params: Promise<{ slug: string }>;
@@ -14,6 +15,9 @@ type RouteContext = {
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { slug } = await context.params;
+    if (!PUBLIC_SLUG_PATTERN.test(slug) || slug.length > 100) {
+      return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
+    }
     const profile = await getDancerProfile(createAdminSupabaseClient(), slug);
 
     if (!profile) {

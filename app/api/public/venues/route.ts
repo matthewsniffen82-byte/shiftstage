@@ -7,18 +7,23 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const MAX_PUBLIC_VENUES = 200;
 
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const city = url.searchParams.get("city") || "Las Vegas";
+    const city = (url.searchParams.get("city") || "Las Vegas").trim();
+    if (!city || city.length > 80) {
+      return NextResponse.json({ ok: false, error: "Choose a valid city." }, { status: 400 });
+    }
     const client = createAdminSupabaseClient();
     const { data, error } = await client
       .from("venues")
-      .select("id, slug, name, city, state, address, phone, website, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, qr_code_storage_path, qr_code_label")
+      .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path")
       .eq("is_active", true)
       .eq("city", city)
-      .order("name", { ascending: true });
+      .order("name", { ascending: true })
+      .limit(MAX_PUBLIC_VENUES);
 
     if (error) throw error;
 
@@ -36,8 +41,6 @@ export async function GET(request: Request) {
         city: venue.city,
         state: venue.state,
         address: venue.address,
-        phone: venue.phone,
-        website: venue.website,
         latitude: venue.latitude,
         longitude: venue.longitude,
         hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at),
@@ -49,10 +52,6 @@ export async function GET(request: Request) {
         logoImageSrcSet: logoImage?.imageSrcSet || null,
         logoImageWidth: logoImage?.imageWidth || null,
         logoImageHeight: logoImage?.imageHeight || null,
-        qrCodeUrl: venue.qr_code_storage_path
-          ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
-          : null,
-        qrCodeLabel: venue.qr_code_label || null,
       };
     });
 

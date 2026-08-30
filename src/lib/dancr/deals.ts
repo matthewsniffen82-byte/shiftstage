@@ -151,24 +151,12 @@ export async function getRedemptionForScanner(client: DancrClient, token: string
     .from("qr_redemptions")
     .select(
       `
-      id,
-      redemption_token,
       status,
       source_type,
-      dancer_id,
-      shift_id,
-      venue_id,
-      generated_at,
       expires_at,
-      redeemed_at,
-      saved_at,
-      shared_at,
-      first_scanned_at,
-      confirmed_at,
-      redeemed_by_club_user,
       audit,
       venues(name, city, state),
-      club_deals(id, deal_title, deal_description, deal_terms, is_active, payout_type, payout_amount_cents, currency, offer_type, booking_url)
+      club_deals(deal_title, deal_description, deal_terms, is_active, offer_type, booking_url)
     `,
     )
     .eq("redemption_token", token)
@@ -479,36 +467,20 @@ function normalizeScannerRedemption(row: any) {
   const dealSnapshot = readIssuedDealSnapshot(row.audit);
 
   return {
-    id: row.id,
-    redemptionToken: row.redemption_token,
     status: row.status,
     sourceType: row.source_type,
-    dancerId: row.dancer_id,
-    shiftId: row.shift_id,
-    venueId: row.venue_id,
-    generatedAt: row.generated_at,
     expiresAt: row.expires_at,
-    redeemedAt: row.redeemed_at,
-    savedAt: row.saved_at,
-    sharedAt: row.shared_at,
-    firstScannedAt: row.first_scanned_at,
-    confirmedAt: row.confirmed_at,
-    redeemedByClubUser: row.redeemed_by_club_user,
     venue: venue ? { name: venue.name, city: venue.city, state: venue.state } : null,
     deal: deal
       ? {
-          id: deal.id,
           dealTitle: dealSnapshot ? dealSnapshot.dealTitle : deal.deal_title,
           dealDescription: dealSnapshot ? dealSnapshot.dealDescription : deal.deal_description,
           dealTerms: dealSnapshot ? dealSnapshot.dealTerms : deal.deal_terms,
           offerType: dealSnapshot ? dealSnapshot.offerType : deal.offer_type || "admission",
           bookingUrl: dealSnapshot ? dealSnapshot.bookingUrl : deal.booking_url ?? null,
           isActive: deal.is_active,
-          referralCommissionCents: Number(deal.payout_amount_cents || 0),
-          currency: String(deal.currency || "usd"),
         }
       : null,
-    audit: row.audit || {},
   };
 }
 

@@ -10,8 +10,12 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const city = url.searchParams.get("city") || "Las Vegas";
-    const scope = url.searchParams.get("scope") || "all";
+    const city = (url.searchParams.get("city") || "Las Vegas").trim();
+    const requestedScope = url.searchParams.get("scope") || "all";
+    if (!city || city.length > 80) {
+      return NextResponse.json({ ok: false, error: "Choose a valid city." }, { status: 400 });
+    }
+    const scope = requestedScope === "tonight" ? "tonight" : "all";
     const client = createAdminSupabaseClient();
     const dancers =
       scope === "tonight" ? await getTonightShifts(client, city) : await getApprovedDancersByCity(client, city);

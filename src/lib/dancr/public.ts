@@ -8,6 +8,10 @@ import { isActiveNfcPresence } from "./shift-presence";
 
 type DancrClient = SupabaseClient;
 
+const PUBLIC_DANCER_DIRECTORY_LIMIT = 200;
+const PUBLIC_PROFILE_MEDIA_LIMIT = 50;
+const PUBLIC_PROFILE_SHIFT_LIMIT = 50;
+
 function applyPublicApprovalFilters(query: any) {
   return query
     .eq("status", "approved")
@@ -75,13 +79,14 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
       `,
     )
     .ilike("city", cityName))
     .eq("is_public", true)
     .order("stage_name", { ascending: true })
-    .order("starts_at", { referencedTable: "shifts", ascending: true });
+    .order("starts_at", { referencedTable: "shifts", ascending: true })
+    .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
 
   let data: any[] | null = current.data as any[] | null;
   let error: any = current.error;
@@ -105,12 +110,13 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           trending_scores(rank),
           dancer_photos(storage_path, is_primary, review_status, sort_order),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
         `,
       )
       .ilike("city", cityName))
       .order("stage_name", { ascending: true })
-      .order("starts_at", { referencedTable: "shifts", ascending: true });
+      .order("starts_at", { referencedTable: "shifts", ascending: true })
+      .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
     data = legacy.data as any[] | null;
     error = legacy.error;
   }
@@ -148,7 +154,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
         social_links(id, platform, handle, url, is_active),
-        shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
       `,
     )
     .ilike("city", cityName))
@@ -158,7 +164,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
     .is("shifts.checked_out_at", null)
     .eq("shifts.location_status", "club_confirmed")
     .gt("shifts.location_verification_expires_at", now.toISOString())
-    .order("starts_at", { referencedTable: "shifts", ascending: true });
+    .order("starts_at", { referencedTable: "shifts", ascending: true })
+    .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
 
   let data: any[] | null = current.data as any[] | null;
   let error: any = current.error;
@@ -182,7 +189,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
           trending_scores(rank),
           dancer_photos(storage_path, is_primary, review_status, sort_order),
           social_links(id, platform, handle, url, is_active),
-          shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
         `,
       )
       .ilike("city", cityName))
@@ -191,7 +198,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
       .is("shifts.checked_out_at", null)
       .eq("shifts.location_status", "club_confirmed")
       .gt("shifts.location_verification_expires_at", now.toISOString())
-      .order("starts_at", { referencedTable: "shifts", ascending: true });
+      .order("starts_at", { referencedTable: "shifts", ascending: true })
+      .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
     data = legacy.data as any[] | null;
     error = legacy.error;
   }
@@ -222,11 +230,12 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         is_public,
         trending_scores(rank),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name, slug, timezone, is_active))
       `,
     )
     .eq("slug", slug))
     .eq("is_public", true)
+    .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "shifts" })
     .maybeSingle();
 
   let data: any = current.data;
@@ -250,10 +259,11 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
           avatar_storage_path,
           trending_scores(rank),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name, slug, timezone, is_active))
         `,
       )
       .eq("slug", slug))
+      .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "shifts" })
       .maybeSingle();
     data = legacy.data;
     error = legacy.error;
@@ -324,7 +334,8 @@ async function getApprovedDancerPhotos(client: DancrClient, dancerId: string) {
     .eq("review_status", "approved")
     .order("is_primary", { ascending: false })
     .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(PUBLIC_PROFILE_MEDIA_LIMIT);
 
   if (error) throw error;
   return data || [];
@@ -333,7 +344,7 @@ async function getApprovedDancerPhotos(client: DancrClient, dancerId: string) {
 export async function getVenueProfile(client: DancrClient, slug: string): Promise<VenueSummary | null> {
   const { data, error } = await client
     .from("venues")
-    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, qr_code_storage_path, qr_code_label, owner_user_id")
+    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -357,20 +368,19 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     logoImageSrcSet: logoImage?.imageSrcSet || null,
     logoImageWidth: logoImage?.imageWidth || null,
     logoImageHeight: logoImage?.imageHeight || null,
-    qrCodeUrl: venueQrCodeUrl(client, data.qr_code_storage_path),
-    qrCodeLabel: data.qr_code_label || null,
   };
 }
 
 export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: string): Promise<ShiftSummary[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label)")
+    .select("id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active)")
     .eq("dancer_id", dancerId)
     .eq("status", "posted")
     .eq("shift_source", "scheduled")
     .gte("ends_at", new Date().toISOString())
-    .order("starts_at", { ascending: true });
+    .order("starts_at", { ascending: true })
+    .limit(PUBLIC_PROFILE_SHIFT_LIMIT);
 
   if (error) throw error;
 
@@ -485,8 +495,6 @@ function buildDancerCard(
       venueName: venue?.name || null,
       venueSlug: venue?.slug || null,
       venueId: shift?.venue_id || venue?.id || null,
-      venueQrCodeUrl: venue?.is_active === true ? venueQrCodeUrl(client, venue?.qr_code_storage_path) : null,
-      venueQrCodeLabel: venue?.is_active === true ? venue?.qr_code_label || null : null,
       shiftId: shift?.id || null,
       shiftSource: shift?.shift_source || null,
       shiftLabel: shift ? formatShiftLabel(shift) : null,
@@ -496,7 +504,6 @@ function buildDancerCard(
       locationStatus: publicLocationStatus(shift),
       checkedInAt: shift?.checked_in_at || null,
       checkedOutAt: shift?.checked_out_at || null,
-      checkinDistanceFeet: shift?.checkin_distance_feet ?? null,
       locationVerificationExpiresAt: shift?.location_verification_expires_at || null,
       followerCount: 0,
       notificationCount: 0,
@@ -707,15 +714,7 @@ function toShiftSummary(row: any): ShiftSummary {
     checkedInAt: row.checked_in_at || null,
     checkedOutAt: row.checked_out_at || null,
     locationVerificationExpiresAt: row.location_verification_expires_at || null,
-    venueQrCodeUrl: venue?.is_active === true ? venueQrCodeUrlFromRow(venue) : null,
-    venueQrCodeLabel: venue?.is_active === true ? venue?.qr_code_label || null : null,
   };
-}
-
-function venueQrCodeUrl(client: DancrClient, storagePath?: string | null) {
-  if (!storagePath) return null;
-  if (/^https?:\/\//i.test(storagePath)) return storagePath;
-  return client.storage.from("venue-qr-codes").getPublicUrl(storagePath).data.publicUrl;
 }
 
 function venueCoverImageFields(
@@ -733,14 +732,6 @@ function venueCoverImageFields(
     coverImageUrl: image?.imageUrl || null,
     coverImageWidth: image?.imageWidth || null,
   };
-}
-
-function venueQrCodeUrlFromRow(venue: any) {
-  const storagePath = venue?.qr_code_storage_path;
-  if (!storagePath) return null;
-  if (/^https?:\/\//i.test(storagePath)) return storagePath;
-  const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-  return publicUrl ? `${publicUrl}/storage/v1/object/public/venue-qr-codes/${storagePath}` : null;
 }
 
 function isShiftPubliclyVisible(shift: any, now = Date.now()) {
