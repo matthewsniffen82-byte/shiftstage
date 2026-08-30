@@ -31,10 +31,47 @@ export async function enforcePublicRequestRateLimit(client: SupabaseClient, inpu
 
   const requestIpHash = securityHash(`ip:${requestClientAddress(input.request)}`);
   const subjectHash = securityHash(`subject:${input.namespace}:${input.subject.trim().toLowerCase()}`);
-  const ipTargetType = `internal_rate_limit_${input.namespace}_ip`;
-  const subjectTargetType = `internal_rate_limit_${input.namespace}_subject`;
   const ipTargetId = hashUuid(requestIpHash);
   const subjectTargetId = hashUuid(subjectHash);
+
+  const { data, error } = await (client as any).rpc("consume_request_rate_limit", {
+    p_namespace: input.namespace,
+    p_ip_hash: ipTargetId,
+    p_subject_hash: subjectTargetId,
+    p_window_seconds: input.windowSeconds,
+    p_ip_limit: input.ipLimit,
+    p_subject_limit: input.subjectLimit,
+  });
+
+  if (!error) {
+    const decision = data && typeof data === "object" ? data as Record<string, unknown> : {};
+    if (decision.allowed !== true) {
+      throw new PublicRequestRateLimitError(readRetryAfter(decision.retry_after_seconds, input.windowSeconds));
+    }
+    return;
+  }
+
+  if (!isMissingAtomicRateLimit(error)) throw error;
+  await enforceCompatibilityRateLimit(client, input, ipTargetId, subjectTargetId);
+  console.warn(JSON.stringify({
+    event: "request_rate_limit.compatibility_fallback_used",
+    namespace: input.namespace,
+  }));
+}
+
+async function enforceCompatibilityRateLimit(
+  client: SupabaseClient,
+  input: {
+    namespace: string;
+    windowSeconds: number;
+    ipLimit: number;
+    subjectLimit: number;
+  },
+  ipTargetId: string,
+  subjectTargetId: string,
+) {
+  const ipTargetType = `internal_rate_limit_${input.namespace}_ip`;
+  const subjectTargetType = `internal_rate_limit_${input.namespace}_subject`;
   const since = new Date(Date.now() - input.windowSeconds * 1000).toISOString();
 
   const [ipResult, subjectResult] = await Promise.all([
@@ -67,6 +104,17 @@ export async function enforcePublicRequestRateLimit(client: SupabaseClient, inpu
   if (error) throw error;
 }
 
+function readRetryAfter(value: unknown, fallback: number) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(1, Math.min(86_400, Math.ceil(parsed)));
+}
+
+function isMissingAtomicRateLimit(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  return "code" in error && (error as { code?: unknown }).code === "PGRST202";
+}
+
 function throttleRecord(targetType: string, targetId: string, namespace: string) {
   return {
     reporter_id: null,
@@ -81,9 +129,9 @@ function throttleRecord(targetType: string, targetId: string, namespace: string)
 
 function requestClientAddress(request: Request) {
   return (
-    request.headers.get("cf-connecting-ip")
-    || request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
+    request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("cf-connecting-ip")?.trim()
     || request.headers.get("x-real-ip")?.trim()
     || `unknown:${request.headers.get("user-agent")?.slice(0, 160) || "client"}`
   );

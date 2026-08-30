@@ -37,9 +37,12 @@ const [
 ]);
 
 test("customer resource writes verify server-side public targets before mutating", () => {
-  assertGuardBefore(favoriteRoute, "requirePublicDancer(createAdminSupabaseClient(), dancerId)", "await favoriteDancer(client, user.id, dancerId)");
-  assertGuardBefore(followRoute, "requirePublicDancer(createAdminSupabaseClient(), dancerId)", "await followDancer(client, user.id, dancerId)");
-  assertGuardBefore(venueFollowRoute, "requirePublicVenue(createAdminSupabaseClient(), venueId)", '.from("venue_follows").upsert');
+  for (const source of [favoriteRoute, followRoute, venueFollowRoute]) {
+    assertGuardBefore(source, "const admin = createAdminSupabaseClient()", "await enforcePublicRequestRateLimit(admin");
+  }
+  assertGuardBefore(favoriteRoute, "requirePublicDancer(admin, dancerId)", "await favoriteDancer(client, user.id, dancerId)");
+  assertGuardBefore(followRoute, "requirePublicDancer(admin, dancerId)", "await followDancer(client, user.id, dancerId)");
+  assertGuardBefore(venueFollowRoute, "requirePublicVenue(admin, venueId)", '.from("venue_follows").upsert');
   assertGuardBefore(directionRoute, "requirePublicDancersAtVenue(adminClient, venueId, dancerIds)", "recordDirectionRequest(adminClient, user.id");
 });
 

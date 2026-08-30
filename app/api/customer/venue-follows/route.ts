@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { unfollowVenue } from "@/src/lib/dancr/customer";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
 import { requirePublicVenue } from "@/src/lib/dancr/resource-authorization";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -15,6 +19,15 @@ const MAX_CUSTOMER_ACTION_BODY_BYTES = 4_096;
 export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
+    const admin = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(admin, {
+      namespace: "customer_venue_follow",
+      request,
+      subject: user.id,
+      windowSeconds: 60,
+      ipLimit: 180,
+      subjectLimit: 90,
+    });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_CUSTOMER_ACTION_BODY_BYTES,
       invalidMessage: "Invalid venue follow request.",
@@ -33,7 +46,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, following: false, notificationsEnabled: false });
     }
 
-    await requirePublicVenue(createAdminSupabaseClient(), venueId);
+    await requirePublicVenue(admin, venueId);
     const { error } = await (client as any).from("venue_follows").upsert({
       customer_id: user.id,
       venue_id: venueId,
@@ -44,6 +57,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, following: true, notificationsEnabled });
   } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to update venue follow.");
   }
 }

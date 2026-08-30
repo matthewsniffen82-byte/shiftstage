@@ -43,7 +43,7 @@ export async function completeCashierDealRedemption(
     throw new CashierDealRedemptionError("Choose an active Club Deal.", 400);
   }
 
-  await enforceDealGenerationRateLimit(client, input.request, dealId);
+  await enforceDealGenerationRateLimit(client, input.request, dealId, input.sessionId);
   const deal = await getActiveClubDealByIdForVenue(client, input.venueId, dealId);
   if (!deal) {
     throw new CashierDealRedemptionError("This Club Deal is no longer active.", 404);

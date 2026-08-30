@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { favoriteDancer, unfavoriteDancer } from "@/src/lib/dancr/customer";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
 import { requirePublicDancer } from "@/src/lib/dancr/resource-authorization";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -15,6 +19,15 @@ const MAX_CUSTOMER_ACTION_BODY_BYTES = 4_096;
 export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
+    const admin = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(admin, {
+      namespace: "customer_favorite",
+      request,
+      subject: user.id,
+      windowSeconds: 60,
+      ipLimit: 180,
+      subjectLimit: 90,
+    });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_CUSTOMER_ACTION_BODY_BYTES,
       invalidMessage: "Invalid dancer favorite request.",
@@ -28,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     if (favorite) {
-      await requirePublicDancer(createAdminSupabaseClient(), dancerId);
+      await requirePublicDancer(admin, dancerId);
       await favoriteDancer(client, user.id, dancerId);
     } else {
       await unfavoriteDancer(client, user.id, dancerId);
@@ -36,6 +49,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, favorite });
   } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to update dancer favorite.");
   }
 }

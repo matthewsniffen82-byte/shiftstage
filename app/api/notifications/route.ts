@@ -7,6 +7,11 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/src/lib/dancr/notifications";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -29,6 +34,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
+    await enforceNotificationMutationRateLimit(request, user.id);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_NOTIFICATION_BODY_BYTES,
       invalidMessage: "Invalid notification request.",
@@ -48,6 +54,8 @@ export async function PATCH(request: Request) {
     const notification = await markNotificationRead(client, user.id, notificationId);
     return NextResponse.json({ ok: true, notification });
   } catch (error) {
+    const limited = notificationRateLimitResponse(error);
+    if (limited) return limited;
     return apiError(error, "Unable to update notification.");
   }
 }
@@ -55,9 +63,31 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
+    await enforceNotificationMutationRateLimit(request, user.id);
     const result = await clearUserNotifications(client, user.id);
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
+    const limited = notificationRateLimitResponse(error);
+    if (limited) return limited;
     return apiError(error, "Unable to clear notifications.");
   }
+}
+
+function enforceNotificationMutationRateLimit(request: Request, userId: string) {
+  return enforcePublicRequestRateLimit(createAdminSupabaseClient(), {
+    namespace: "notification_mutation",
+    request,
+    subject: userId,
+    windowSeconds: 60,
+    ipLimit: 240,
+    subjectLimit: 120,
+  });
+}
+
+function notificationRateLimitResponse(error: unknown) {
+  if (!(error instanceof PublicRequestRateLimitError)) return null;
+  return NextResponse.json(
+    { ok: false, error: error.message },
+    { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+  );
 }

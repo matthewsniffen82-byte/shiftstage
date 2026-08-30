@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { followDancer, setDancerNotifications, unfollowDancer } from "@/src/lib/dancr/customer";
+import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
 import { requirePublicDancer } from "@/src/lib/dancr/resource-authorization";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -15,6 +19,15 @@ const MAX_CUSTOMER_ACTION_BODY_BYTES = 4_096;
 export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
+    const admin = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(admin, {
+      namespace: "customer_follow",
+      request,
+      subject: user.id,
+      windowSeconds: 60,
+      ipLimit: 180,
+      subjectLimit: 90,
+    });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_CUSTOMER_ACTION_BODY_BYTES,
       invalidMessage: "Invalid dancer follow request.",
@@ -39,7 +52,7 @@ export async function POST(request: Request) {
       });
     }
 
-    await requirePublicDancer(createAdminSupabaseClient(), dancerId);
+    await requirePublicDancer(admin, dancerId);
     if (notificationsEnabled) {
       await followDancer(client, user.id, dancerId);
     } else {
@@ -49,6 +62,12 @@ export async function POST(request: Request) {
     const counts = await countDancerFollowPreferences(dancerId);
     return NextResponse.json({ ok: true, following: true, notificationsEnabled, ...counts });
   } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     return apiError(error, "Unable to update dancer follow.");
   }
 }

@@ -16,7 +16,7 @@ test("cashier NFC delegates financial redemption orchestration to one domain bou
 
 test("cashier redemption validates and venue-scopes the selected active deal before attribution", () => {
   assert.match(cashierRedemption, /UUID_PATTERN\.test\(dealId\)/);
-  assert.match(cashierRedemption, /enforceDealGenerationRateLimit\(client, input\.request, dealId\)/);
+  assert.match(cashierRedemption, /enforceDealGenerationRateLimit\(client, input\.request, dealId, input\.sessionId\)/);
   assert.match(cashierRedemption, /getActiveClubDealByIdForVenue\(client, input\.venueId, dealId\)/);
   assert.match(cashierRedemption, /CashierDealRedemptionError\("Choose an active Club Deal\."/);
   assert.match(cashierRedemption, /CashierDealRedemptionError\("This Club Deal is no longer active\."/);

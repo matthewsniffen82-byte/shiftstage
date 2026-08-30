@@ -48,16 +48,20 @@ test("public throttling stores only keyed hashes and never a raw network address
   assert.match(limiter, /createHmac\("sha256", secret\)/);
   assert.match(limiter, /requestIpHash = securityHash/);
   assert.match(limiter, /subjectHash = securityHash/);
+  assert.match(limiter, /p_ip_hash: ipTargetId/);
+  assert.match(limiter, /p_subject_hash: subjectTargetId/);
   assert.match(limiter, /target_label: "Internal request throttle record"/);
   assert.match(limiter, /status: "resolved"/);
   assert.doesNotMatch(limiter, /ip_address|request_ip:/);
 });
 
-test("public throttling checks both connection and subject windows before writing", () => {
-  assert.match(limiter, /Promise\.all\(\[/);
-  assert.match(limiter, /\.eq\("target_type", ipTargetType\)/);
-  assert.match(limiter, /\.eq\("target_type", subjectTargetType\)/);
-  assert.match(limiter, /\.gte\("created_at", since\)/);
-  assert.match(limiter, />= input\.ipLimit/);
-  assert.match(limiter, />= input\.subjectLimit/);
+test("public throttling consumes both connection and subject limits atomically", () => {
+  assert.match(limiter, /\.rpc\("consume_request_rate_limit", \{/);
+  assert.match(limiter, /p_window_seconds: input\.windowSeconds/);
+  assert.match(limiter, /p_ip_limit: input\.ipLimit/);
+  assert.match(limiter, /p_subject_limit: input\.subjectLimit/);
+  assert.match(limiter, /decision\.allowed !== true/);
+  assert.match(limiter, /error[\s\S]*?code[\s\S]*?=== "PGRST202"/);
+  assert.ok(limiter.indexOf("if (!isMissingAtomicRateLimit(error)) throw error")
+    < limiter.indexOf("await enforceCompatibilityRateLimit"));
 });

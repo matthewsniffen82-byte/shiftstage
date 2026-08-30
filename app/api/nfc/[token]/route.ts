@@ -9,6 +9,10 @@ import {
 import { DealRedemptionAttributionError } from "@/src/lib/dancr/deal-redemption-attribution";
 import { getActiveClubDealsForVenue } from "@/src/lib/dancr/deals";
 import {
+  enforcePublicRequestRateLimit,
+  PublicRequestRateLimitError,
+} from "@/src/lib/dancr/public-request-rate-limit";
+import {
   registerDancerFromNfc,
   recordNfcTagScan,
   resolveNfcTag,
@@ -25,10 +29,18 @@ const MAX_NFC_BODY_BYTES = 4_096;
 
 type RouteContext = { params: Promise<{ token: string }> };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   try {
     const { token } = await context.params;
     const admin = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(admin, {
+      namespace: "nfc_open",
+      request,
+      subject: token,
+      windowSeconds: 5 * 60,
+      ipLimit: 180,
+      subjectLimit: 1_500,
+    });
     const tag = await resolveNfcTag(admin, token);
     if (!tag) return inactiveTag();
     await recordNfcTagScan(admin, tag.id);
@@ -40,6 +52,8 @@ export async function GET(_request: Request, context: RouteContext) {
       deals,
     });
   } catch (error) {
+    const limited = nfcRateLimitResponse(error);
+    if (limited) return limited;
     return apiError(error, "Unable to open this venue tap.");
   }
 }
@@ -57,6 +71,14 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ ok: false, error: "A valid tap session is required." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(admin, {
+      namespace: "nfc_action",
+      request,
+      subject: `${token}:${sessionId}`,
+      windowSeconds: 5 * 60,
+      ipLimit: 120,
+      subjectLimit: 8,
+    });
     const tag = await resolveNfcTag(admin, token);
     if (!tag) return inactiveTag();
 
@@ -133,6 +155,8 @@ export async function POST(request: Request, context: RouteContext) {
       message: `${redemption.deal.dealTitle} redeemed at ${tag.venue.name}.`,
     });
   } catch (error) {
+    const limited = nfcRateLimitResponse(error);
+    if (limited) return limited;
     const message = safeErrorMessage(error);
     const status = error instanceof CashierDealRedemptionError || error instanceof DealRedemptionAttributionError
       ? error.status
@@ -152,6 +176,20 @@ export async function POST(request: Request, context: RouteContext) {
       headers: { "cache-control": "private, no-store, max-age=0" },
     });
   }
+}
+
+function nfcRateLimitResponse(error: unknown) {
+  if (!(error instanceof PublicRequestRateLimitError)) return null;
+  return NextResponse.json(
+    { ok: false, error: error.message },
+    {
+      status: 429,
+      headers: {
+        "cache-control": "private, no-store, max-age=0",
+        "retry-after": String(error.retryAfterSeconds),
+      },
+    },
+  );
 }
 
 function formatTapTime(value: unknown) {

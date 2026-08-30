@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { enforcePublicRequestRateLimit } from "./public-request-rate-limit";
 import type { ClubDealOfferType, DealSourceType } from "./types";
 
 type DancrClient = SupabaseClient;
@@ -57,23 +58,16 @@ export async function enforceDealGenerationRateLimit(
   client: DancrClient,
   request: Request,
   clubDealId: string,
+  sessionId: string,
 ) {
-  const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-real-ip");
-  if (!ipAddress) return;
-
-  const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const { count, error } = await (client as any)
-    .from("qr_redemptions")
-    .select("*", { count: "exact", head: true })
-    .eq("club_deal_id", clubDealId)
-    .eq("ip_address", ipAddress)
-    .gte("generated_at", since);
-
-  if (error) throw error;
-  if ((count || 0) >= 20) {
-    throw new Error("Too many Club Deal requests. Try again in a few minutes.");
-  }
+  await enforcePublicRequestRateLimit(client, {
+    namespace: "deal_redemption",
+    request,
+    subject: `${clubDealId}:${sessionId}`,
+    windowSeconds: 5 * 60,
+    ipLimit: 120,
+    subjectLimit: 5,
+  });
 }
 
 export async function recordDealRedemptionEvent(
