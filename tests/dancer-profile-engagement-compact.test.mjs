@@ -121,7 +121,7 @@ test("selected actions, dynamic stats, and all existing action handlers remain i
   assert.match(profileActions, /targetType: "dancer_profile"/);
 });
 
-test("iPhone profiles keep analytics and engagement hit areas visually unboxed", () => {
+test("iPhone profiles keep outer hit areas unboxed while icons retain neutral glass", () => {
   for (const source of [aesthetic, liveApp]) {
     assert.match(source, /iPhone WebKit can composite (?:the )?transparent profile/);
     assert.match(
@@ -136,7 +136,7 @@ test("iPhone profiles keep analytics and engagement hit areas visually unboxed",
 
   assert.match(
     aesthetic,
-    /going-btn\.is-available-action:not\(\.is-going\) \.action-icon[\s\S]*?box-shadow:[\s\S]*?rgba\(168, 85, 247, \.72\)/,
+    /modal-actions \.profile-action-icon-control \.action-icon,[\s\S]*?profile-action-icon-control \.profile-action-icon-frame \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background-color: rgba\(18, 18, 28, 0\.38\) !important;[\s\S]*?-webkit-backdrop-filter: blur\(16px\) saturate\(1\.18\) !important;/,
   );
 });
 

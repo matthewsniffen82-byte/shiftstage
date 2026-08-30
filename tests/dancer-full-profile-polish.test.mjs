@@ -248,9 +248,9 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   assert.doesNotMatch(publicProfilePage, /className="profile-overview"/);
 });
 
-test("profile action controls are unboxed, follow the header columns, and available Going highlights only its icon", () => {
+test("profile actions use neutral circular glass with violet limited to selected glyphs", () => {
   const guestActionsBlock = aesthetic.match(
-    /\/\* Guest actions read as a single icon row[\s\S]*?(?=\/\* Production TV-card branding)/,
+    /\/\* Guest actions read as one unboxed row[\s\S]*?(?=\/\* Production TV-card branding)/,
   )?.[0] || "";
   assert.match(
     guestActionsBlock,
@@ -282,19 +282,19 @@ test("profile action controls are unboxed, follow the header columns, and availa
   );
   assert.match(
     guestActionsBlock,
-    /profile-action-icon-frame\[data-profile-action-icon="personPlus"\] \.profile-action-preview-icon \{[\s\S]*?width: 28px !important;[\s\S]*?height: 28px !important;/,
+    /modal-actions \.profile-action-icon-control \.action-icon,[\s\S]*?profile-action-icon-control \.profile-action-icon-frame \{[\s\S]*?width: 46px !important;[\s\S]*?height: 46px !important;[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.28\) !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?background-color: rgba\(18, 18, 28, 0\.38\) !important;[\s\S]*?blur\(16px\) saturate\(1\.18\) !important;/,
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action:not\(\.is-going\) \.action-icon,[\s\S]*?profile-action-going\.profile-action-available:not\(\.is-going\) \.profile-action-icon-frame \{[\s\S]*?width: 26px !important;[\s\S]*?height: 26px !important;[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?box-sizing: border-box !important;[\s\S]*?padding: 0 !important;[\s\S]*?border: 1px solid rgba\(216, 180, 254, \.82\) !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?color: #f5d0fe !important;[\s\S]*?radial-gradient\(circle, rgba\(168, 85, 247, \.2\) 0%, rgba\(88, 28, 135, \.08\) 72%\)[\s\S]*?0 0 0 2px rgba\(168, 85, 247, \.14\)[\s\S]*?0 0 14px rgba\(168, 85, 247, \.72\)/,
+    /#followBtn\.is-following,[\s\S]*?#notifyBtn\.is-following,[\s\S]*?#goingBtn\.is-going[\s\S]*?\.action-icon > svg,[\s\S]*?\.profile-action-icon-control\.is-selected,[\s\S]*?\.profile-action-icon-control\.is-going[\s\S]*?\.profile-action-preview-icon \{[\s\S]*?color: var\(--dancr-color-avatar-ring-violet\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action:not\(\.is-going\) \.action-icon > svg,[\s\S]*?profile-action-going\.profile-action-available:not\(\.is-going\) \.profile-action-preview-icon \{[\s\S]*?--profile-icon-offset-x: 0px !important;[\s\S]*?--profile-icon-offset-y: 0px !important;[\s\S]*?display: block !important;[\s\S]*?margin: 0 !important;[\s\S]*?drop-shadow\(0 0 5px rgba\(245, 208, 254, \.95\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--dancr-color-brand-primary-strong\)\) !important;[\s\S]*?\.is-available-action:not\(\.is-going\) \.profile-action-main > span:last-child,[\s\S]*?color: #f3e8ff !important;[\s\S]*?text-shadow: 0 0 12px rgba\(168, 85, 247, \.72\) !important;/,
+    /profile-action-icon-control:is\(:hover, :focus-visible\):not\(:disabled\) \.action-icon,[\s\S]*?border-color: rgba\(255, 255, 255, 0\.42\) !important;[\s\S]*?0 0 0 2px rgba\(255, 255, 255, 0\.1\)/,
   );
-  assert.match(
+  assert.doesNotMatch(
     guestActionsBlock,
-    /going-btn\.is-available-action\.is-going \.action-icon,[\s\S]*?profile-action-going\.profile-action-available\.is-going \.profile-action-icon-frame \{[\s\S]*?color: #f0abfc !important;[\s\S]*?drop-shadow\(0 0 5px rgba\(240, 171, 252, \.95\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--dancr-color-brand-primary-strong\)\) !important;[\s\S]*?\.is-going \.profile-action-main > span:last-child \{[\s\S]*?color: #fae8ff !important;/,
+    /going-btn\.is-available-action:not\(\.is-going\)[\s\S]{0,500}(?:#f5d0fe|drop-shadow|brand-primary-strong)/,
   );
 });
 

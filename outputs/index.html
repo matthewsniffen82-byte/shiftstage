@@ -32076,7 +32076,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=234" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=235" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -52947,8 +52947,8 @@
         : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle)}</button>`;
       return `
         <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
-          <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
-          <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notified" : "Notify")}</button>
+          <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}" aria-pressed="${isFollowed}">${profileActionButtonMarkup("personPlus", isFollowed ? "Following" : "Follow")}</button>
+          <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}" aria-pressed="${isNotified}">${profileActionButtonMarkup("bell", isNotified ? "Alerts On" : "Notify")}</button>
           ${goingButton}
           <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
         </div>
@@ -62284,17 +62284,19 @@
 
       const followButton = document.getElementById("followBtn");
       if (followButton) {
-        followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "personPlus", following ? "Following" : "Follow");
+        followButton.innerHTML = profileActionButtonMarkup("personPlus", following ? "Following" : "Follow");
         followButton.classList.toggle("is-following", following);
+        followButton.setAttribute("aria-pressed", String(following));
       }
 
       const notifyButton = document.getElementById("notifyBtn");
       if (notifyButton) {
         notifyButton.innerHTML = profileActionButtonMarkup(
-          notificationsEnabled ? "check" : "bell",
-          notificationsEnabled ? "Notifications On" : "Notify Me"
+          "bell",
+          notificationsEnabled ? "Alerts On" : "Notify"
         );
         notifyButton.classList.toggle("is-following", notificationsEnabled);
+        notifyButton.setAttribute("aria-pressed", String(notificationsEnabled));
       }
 
       const followerCountEl = document.getElementById("modalFollowerCount");

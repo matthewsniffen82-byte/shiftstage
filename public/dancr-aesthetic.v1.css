@@ -4895,9 +4895,9 @@ body.dancr-button-system .public-profile-shell .profile-social-section::after {
   }
 }
 
-/* Guest actions read as a single icon row inside the shared tray, not four
- * boxed buttons. The Going affordance uses color and glow on the icon itself
- * so its full tap target stays accessible without coloring the whole tray. */
+/* Guest actions read as one unboxed row. Their recognizable icons receive the
+ * same neutral circular glass as profile media controls; only a selected
+ * Follow, Notify, or Going glyph turns violet. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-secondary.profile-action-icon-control:not([aria-pressed="true"]),
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-going.profile-action-icon-control:not([aria-pressed="true"]),
@@ -4910,60 +4910,6 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot .profi
   background-image: none !important;
   box-shadow: none !important;
   filter: none !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action:not(.is-going) .action-icon,
-body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available:not(.is-going) .profile-action-icon-frame {
-  width: 26px !important;
-  height: 26px !important;
-  flex-basis: 26px !important;
-  display: inline-grid !important;
-  place-items: center !important;
-  box-sizing: border-box !important;
-  padding: 0 !important;
-  border: 1px solid rgba(216, 180, 254, .82) !important;
-  border-radius: 50% !important;
-  color: #f5d0fe !important;
-  background: radial-gradient(circle, rgba(168, 85, 247, .2) 0%, rgba(88, 28, 135, .08) 72%) !important;
-  box-shadow:
-    0 0 0 2px rgba(168, 85, 247, .14),
-    0 0 14px rgba(168, 85, 247, .72),
-    inset 0 0 8px rgba(216, 180, 254, .1) !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action:not(.is-going) .action-icon > svg,
-body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available:not(.is-going) .profile-action-preview-icon {
-  --profile-icon-offset-x: 0px !important;
-  --profile-icon-offset-y: 0px !important;
-  display: block !important;
-  margin: 0 !important;
-  color: inherit !important;
-  filter:
-    drop-shadow(0 0 5px rgba(245, 208, 254, .95))
-    drop-shadow(0 0 12px var(--dancr-color-brand-primary-strong)) !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action:not(.is-going) .profile-action-main > span:last-child,
-body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available:not(.is-going) .profile-action-main > span:last-child {
-  color: #f3e8ff !important;
-  text-shadow: 0 0 12px rgba(168, 85, 247, .72) !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action.is-going .action-icon,
-body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available.is-going .profile-action-icon-frame {
-  color: #f0abfc !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action.is-going .action-icon > svg,
-body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available.is-going .profile-action-preview-icon {
-  filter:
-    drop-shadow(0 0 5px rgba(240, 171, 252, .95))
-    drop-shadow(0 0 12px var(--dancr-color-brand-primary-strong)) !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action.is-going .profile-action-main > span:last-child,
-body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available.is-going .profile-action-main > span:last-child {
-  color: #fae8ff !important;
 }
 
 /* Full-profile engagement uses one unboxed four-column action row. Social
@@ -4991,7 +4937,7 @@ body.dancr-button-system .public-profile-shell .live-actions {
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
-  min-height: 58px !important;
+  min-height: 72px !important;
   justify-content: center !important;
   gap: 0 !important;
   padding: 3px 2px !important;
@@ -5002,39 +4948,67 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot .profi
 }
 
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share {
-  min-height: 58px !important;
+  min-height: 72px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-icon-frame {
-  width: 27px !important;
-  height: 27px !important;
-  flex-basis: 27px !important;
+  width: 46px !important;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  flex-basis: 46px !important;
+  box-sizing: border-box !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 50% !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background-color: rgba(18, 18, 28, 0.38) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.17),
+    rgba(255, 255, 255, 0.035)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 22px rgba(0, 0, 0, 0.3) !important;
+  filter: none !important;
+  text-shadow: none !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+  backdrop-filter: blur(16px) saturate(1.18) !important;
+  transition: border-color .16s ease, background-color .16s ease, transform .16s ease !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-preview-icon {
-  width: 27px !important;
-  height: 27px !important;
+  width: 24px !important;
+  height: 24px !important;
+  color: var(--dancr-color-text-secondary) !important;
+  filter: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="personPlus"] > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon {
-  width: 28px !important;
-  height: 28px !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
-body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon {
   width: 26px !important;
   height: 26px !important;
 }
 
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
+body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon {
+  width: 24px !important;
+  height: 24px !important;
+}
+
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action .action-icon,
 body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available .profile-action-icon-frame {
-  width: 28px !important;
-  height: 28px !important;
-  flex-basis: 28px !important;
+  width: 46px !important;
+  height: 46px !important;
+  flex-basis: 46px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .profile-action-main > span:last-child,
@@ -5042,6 +5016,45 @@ body.dancr-button-system .public-profile-shell .profile-action-icon-control .pro
   font-size: clamp(12px, 3.35vw, 13px) !important;
   font-weight: 700 !important;
   line-height: 1.05 !important;
+  color: var(--dancr-color-text-primary) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control:focus-visible,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control:focus-visible,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control:is(:hover, :focus-visible):not(:disabled) .action-icon,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control:is(:hover, :focus-visible):not(:disabled) .profile-action-icon-frame,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control:is(:hover, :focus-visible):not(:disabled) .profile-action-icon-frame {
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  background-color: rgba(28, 28, 40, 0.48) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 0 0 2px rgba(255, 255, 255, 0.1),
+    0 10px 24px rgba(0, 0, 0, 0.34) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions :is(
+    #followBtn.is-following,
+    #notifyBtn.is-following,
+    #goingBtn.is-going
+  ) .action-icon > svg,
+body.dancr-button-system .public-profile-shell .live-actions :is(
+    .profile-action-icon-control.is-selected,
+    .profile-action-icon-control.is-going
+  ) .profile-action-preview-icon {
+  color: var(--dancr-color-avatar-ring-violet) !important;
+  filter: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control.is-unavailable .action-icon,
+body.dancr-button-system .public-profile-shell .profile-action-icon-control.profile-action-unavailable .profile-action-icon-frame {
+  color: var(--dancr-color-text-muted) !important;
+  opacity: .52 !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-report-action,

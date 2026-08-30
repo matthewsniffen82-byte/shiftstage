@@ -644,7 +644,7 @@ export function DancerProfileActions({
           disabled={!savedLoaded || followSaving}
         >
           <span className="profile-action-main">
-            <DancerProfileActionPreviewIcon type={saved.following ? "check" : "personPlus"} />
+            <DancerProfileActionPreviewIcon type="personPlus" />
             <span>{saved.following ? "Following" : "Follow"}</span>
           </span>
         </button>
@@ -658,8 +658,8 @@ export function DancerProfileActions({
           type="button"
         >
           <span className="profile-action-main">
-            <DancerProfileActionPreviewIcon type={saved.notificationsEnabled ? "check" : "bell"} />
-            <span>{saved.notificationsEnabled ? "Notified" : "Notify"}</span>
+            <DancerProfileActionPreviewIcon type="bell" />
+            <span>{saved.notificationsEnabled ? "Alerts On" : "Notify"}</span>
           </span>
         </button>
         <button

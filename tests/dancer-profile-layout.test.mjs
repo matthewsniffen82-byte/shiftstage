@@ -106,7 +106,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
 
 test("profile actions keep profile controls separate from Tonight travel actions", () => {
   assert.match(profileActions, /\{saved\.following \? "Following" : "Follow"\}/);
-  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Notified" : "Notify"\}/);
+  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Alerts On" : "Notify"\}/);
   assert.match(profileActions, /"I’m Going"/);
   assert.doesNotMatch(profileActions, /rideControl|directionsControl/);
   assert.match(profileActions, /profile-action-share-slot/);
@@ -138,7 +138,8 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "check" \| "clock" \| "personPlus" \| "share"/);
   assert.match(profileActions, /type === "personPlus"[\s\S]*?<circle cx="8\.5" cy="7\.5" r="3\.5" \/>[\s\S]*?M18 8\.5v6M15 11\.5h6/);
   assert.match(profileActions, /DancerProfileActionPreviewIcon type="personPlus" \/>[\s\S]*?<span>Follow<\/span>/);
-  assert.match(profileActions, /DancerProfileActionPreviewIcon type=\{saved\.following \? "check" : "personPlus"\} \/>/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon type="personPlus" \/>/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon type="bell" \/>[\s\S]*?saved\.notificationsEnabled \? "Alerts On" : "Notify"/);
   assert.doesNotMatch(profileActions, /DancerProfileActionPreviewIcon type="heart"/);
   assert.match(profileDirections, /dancerIds: \[dancerId\]/);
   assert.match(profileDirections, /source: "dancer_profile"/);
@@ -150,7 +151,8 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
   assert.match(liveApp, /personPlus: '<svg[\s\S]*?M18 8\.5v6M15 11\.5h6/);
-  assert.match(liveApp, /id="followBtn"[\s\S]*?profileActionButtonMarkup\(isFollowed \? "check" : "personPlus"/);
+  assert.match(liveApp, /id="followBtn"[\s\S]*?aria-pressed="\$\{isFollowed\}"[\s\S]*?profileActionButtonMarkup\("personPlus", isFollowed \? "Following" : "Follow"\)/);
+  assert.match(liveApp, /id="notifyBtn"[\s\S]*?aria-pressed="\$\{isNotified\}"[\s\S]*?profileActionButtonMarkup\("bell", isNotified \? "Alerts On" : "Notify"\)/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
   assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
   assert.match(liveApp, /Club Deals redeem only when you tap your phone at the club cashier/);
