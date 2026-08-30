@@ -32244,7 +32244,7 @@
           <strong id="homeTvLaunchTitle">MyDancr TV Las Vegas</strong>
           <small>Open full-screen vertical feed</small>
         </span>
-        <span class="home-tv-launch-count" id="homeTvLaunchCount" aria-live="polite">Loading</span>
+        <span class="home-tv-launch-count" id="homeTvLaunchCount" aria-live="polite">Videos</span>
         <span class="home-tv-launch-arrow" aria-hidden="true">›</span>
       </a>
 
@@ -32417,28 +32417,44 @@
           z-index: 3;
           width: 100%;
           min-height: clamp(520px, calc(100svh - 140px), 760px);
-          display: grid;
-          place-items: center;
+          display: block;
           overflow: hidden;
           border: 0;
           border-radius: 18px;
-          background: #000;
+          background:
+            radial-gradient(circle at 72% 22%, rgba(255,255,255,.09), transparent 34%),
+            linear-gradient(145deg,#111118,#030305 70%);
           pointer-events: none;
         }
-        .home-tv-feed-loading::after {
+        .home-tv-feed-loading::before {
           content: "";
-          width: 30px;
-          height: 30px;
-          border: 3px solid rgba(255,255,255,.24);
-          border-top-color: #fff;
-          border-radius: 999px;
-          animation: homeTvFeedLoadingSpin .8s linear infinite;
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg,transparent 35%,rgba(255,255,255,.075) 50%,transparent 65%);
+          transform: translateX(-100%);
+          animation: homeTvFeedLoadingSweep 1.6s ease-in-out infinite;
         }
-        @keyframes homeTvFeedLoadingSpin {
-          to { transform: rotate(360deg); }
+        .home-tv-feed-loading-copy {
+          position: absolute;
+          right: 76px;
+          bottom: 28px;
+          left: 18px;
+          display: grid;
+          gap: 9px;
+        }
+        .home-tv-feed-loading-copy span {
+          height: 13px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.13);
+        }
+        .home-tv-feed-loading-copy span:first-child { width: min(58%, 240px); height: 22px; }
+        .home-tv-feed-loading-copy span:nth-child(2) { width: min(42%, 180px); }
+        .home-tv-feed-loading-copy span:last-child { width: min(74%, 310px); }
+        @keyframes homeTvFeedLoadingSweep {
+          to { transform: translateX(100%); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .home-tv-feed-loading::after { animation-duration: 1.6s; }
+          .home-tv-feed-loading::before { animation: none; }
         }
         .home-tv-feed-slide {
           position: relative;
@@ -34474,58 +34490,61 @@
           width: 100%;
           min-height: 0;
           display: grid;
-          grid-template-columns: 44px minmax(0, 1fr);
-          align-items: center;
-          gap: 14px;
-          padding: 16px 18px;
-          border: 1px solid rgba(255,255,255,.11);
-          border-radius: 18px;
-          color: #f6f3fb;
-          background: linear-gradient(145deg,rgba(13,13,19,.98),rgba(6,7,10,.98));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.035),0 12px 28px rgba(0,0,0,.24);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 2px;
+          pointer-events: none;
         }
-        .home-discovery-loading-indicator {
+        .home-discovery-loading.is-venues { grid-template-columns: minmax(0, 1fr); gap: 0; }
+        .home-discovery-loading-card {
           position: relative;
-          width: 44px;
-          height: 44px;
-          display: grid;
-          place-items: center;
-          border: 1px solid rgba(139,92,246,.28);
-          border-radius: 14px;
-          color: #b69cff;
-          background: rgba(35,22,68,.34);
+          width: 100%;
+          aspect-ratio: 9 / 16;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.08);
+          border-radius: 3px;
+          background:
+            radial-gradient(circle at 68% 20%, rgba(126,234,255,.09), transparent 34%),
+            radial-gradient(circle at 20% 82%, rgba(139,92,246,.17), transparent 42%),
+            linear-gradient(145deg,#111118,#07070b);
         }
-        .home-discovery-loading-indicator::after {
+        .home-discovery-loading.is-venues .home-discovery-loading-card {
+          min-height: 390px;
+          aspect-ratio: auto;
+          border-radius: 20px;
+        }
+        .home-discovery-loading-card::after {
           content: "";
-          width: 20px;
-          height: 20px;
-          border: 2px solid rgba(182,156,255,.24);
-          border-top-color: #b69cff;
-          border-radius: 50%;
-          animation: homeDiscoveryLoadingSpin .8s linear infinite;
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg,transparent 34%,rgba(255,255,255,.07) 50%,transparent 66%);
+          transform: translateX(-100%);
+          animation: homeDiscoveryLoadingSweep 1.6s ease-in-out infinite;
         }
         .home-discovery-loading-copy {
-          min-width: 0;
+          position: absolute;
+          right: 10px;
+          bottom: 12px;
+          left: 10px;
           display: grid;
-          gap: 4px;
-        }
-        .home-discovery-loading-copy strong {
-          color: #f6f3fb;
-          font-size: 15px;
-          font-weight: 900;
-          line-height: 1.2;
+          gap: 6px;
         }
         .home-discovery-loading-copy span {
-          color: #aaa4b5;
-          font-size: 11px;
-          font-weight: 700;
-          line-height: 1.4;
+          width: 72%;
+          height: 10px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.14);
         }
-        @keyframes homeDiscoveryLoadingSpin {
-          to { transform: rotate(360deg); }
+        .home-discovery-loading-copy span:first-child { width: 58%; height: 16px; }
+        .home-discovery-loading-copy span:last-child { width: 42%; }
+        .home-discovery-loading.is-venues .home-discovery-loading-copy { right: 18px; bottom: 22px; left: 18px; gap: 9px; }
+        .home-discovery-loading.is-venues .home-discovery-loading-copy span:first-child { width: min(46%, 260px); height: 22px; }
+        .home-discovery-loading.is-venues .home-discovery-loading-copy span:nth-child(2) { width: min(62%, 340px); }
+        .home-discovery-loading.is-venues .home-discovery-loading-copy span:last-child { width: min(38%, 210px); }
+        @keyframes homeDiscoveryLoadingSweep {
+          to { transform: translateX(100%); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .home-discovery-loading-indicator::after { animation: none; }
+          .home-discovery-loading-card::after { animation: none; }
         }
         body.overlay-open .home-feed-card .card-profile-destination {
           display: none !important;
@@ -58573,8 +58592,9 @@
       const workingSummary = document.getElementById("homeLiveWorking");
       document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
       workingSummary.textContent = loading
-        ? "Loading live schedule…"
+        ? "Live schedule"
         : `${workingNowCount} working now`;
+      summary.toggleAttribute("aria-busy", loading);
       workingSummary.classList.toggle("is-empty", !loading && workingNowCount === 0);
       workingSummary.classList.toggle("is-active", !loading && workingNowCount > 0);
       syncHomeFilterToggleState();
@@ -59206,21 +59226,21 @@
 
     function homeDiscoveryLoadingStateMarkup(city, tabName = activeTab) {
       const safeCity = escapeHtml(city);
-      const title = tabName === "venues"
+      const loadingLabel = tabName === "venues"
         ? `Loading clubs in ${safeCity}`
         : tabName === "tonight"
           ? `Loading who is working in ${safeCity}`
           : `Loading dancers in ${safeCity}`;
-      const detail = tabName === "venues"
-        ? "Getting the latest live club profiles."
-        : "Getting the latest approved profiles.";
+      const presentation = tabName === "venues" ? "is-venues" : "is-dancers";
+      const cardCount = tabName === "venues" ? 1 : 3;
+      const cards = Array.from({ length: cardCount }, () => `
+        <span class="home-discovery-loading-card" aria-hidden="true">
+          <span class="home-discovery-loading-copy"><span></span><span></span><span></span></span>
+        </span>
+      `).join("");
       return `
-        <section class="home-discovery-loading" role="status" aria-live="polite" aria-busy="true">
-          <span class="home-discovery-loading-indicator" aria-hidden="true"></span>
-          <span class="home-discovery-loading-copy">
-            <strong>${title}</strong>
-            <span>${detail}</span>
-          </span>
+        <section class="home-discovery-loading ${presentation}" role="status" aria-label="${loadingLabel}" aria-live="polite" aria-busy="true">
+          ${cards}
         </section>
       `;
     }
@@ -59540,7 +59560,7 @@
         ? `${allItems.length} club${allItems.length === 1 ? "" : "s"}`
         : `${allItems.length} dancer${allItems.length === 1 ? "" : "s"}`;
       setHomeTvFeedCount(loadingDiscovery
-        ? activeTab === "venues" ? "Loading clubs..." : "Loading live profiles..."
+        ? activeTab === "venues" ? "Clubs" : "Dancers"
         : selectedVenue
         ? city
         : resultCountLabel);
@@ -59633,7 +59653,7 @@
       }
       launch.setAttribute("aria-busy", "true");
       title.textContent = venueName ? `MyDancr TV at ${venueName}` : `MyDancr TV ${tvCityLabel}`;
-      count.textContent = "Loading";
+      count.textContent = "Videos";
       count.removeAttribute("title");
 
       try {
@@ -60916,6 +60936,7 @@
       loading.className = "home-tv-feed-loading";
       loading.setAttribute("role", "status");
       loading.setAttribute("aria-label", "Loading MyDancr TV");
+      loading.innerHTML = '<span class="home-tv-feed-loading-copy" aria-hidden="true"><span></span><span></span><span></span></span>';
       results.replaceChildren(loading);
     }
 
@@ -60947,7 +60968,7 @@
         void loadHomeTvFeed(city, venueId, selectedVideoId);
       }
       if (homeTvFeedStatus === "loading") {
-        setHomeTvFeedCount("Loading videos…", venueFilter);
+        setHomeTvFeedCount("Videos", venueFilter);
         results.removeAttribute("aria-label");
         results.setAttribute("aria-busy", "true");
         renderHomeTvFeedLoading();

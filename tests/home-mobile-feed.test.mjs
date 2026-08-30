@@ -95,7 +95,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-loading \{[\s\S]*?place-items: center[\s\S]*?background: #000[\s\S]*?\.home-tv-feed-loading::after \{[\s\S]*?animation: homeTvFeedLoadingSpin \.8s linear infinite/,
+    /\.home-tv-feed-loading \{[\s\S]*?min-height: clamp\(520px[\s\S]*?radial-gradient[\s\S]*?\.home-tv-feed-loading::before \{[\s\S]*?animation: homeTvFeedLoadingSweep 1\.6s ease-in-out infinite[\s\S]*?\.home-tv-feed-loading-copy span:first-child/,
   );
   assert.doesNotMatch(homeSource, /Loading approved MyDancr TV videos/);
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
@@ -419,7 +419,7 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   );
   assert.match(
     homeSource,
-    /const loadingDiscovery = liveDiscoveryIsLoading\(city\);[\s\S]*?setHomeTvFeedCount\(loadingDiscovery[\s\S]*?activeTab === "venues" \? "Loading clubs\.\.\." : "Loading live profiles\.\.\."/,
+    /const loadingDiscovery = liveDiscoveryIsLoading\(city\);[\s\S]*?setHomeTvFeedCount\(loadingDiscovery[\s\S]*?activeTab === "venues" \? "Clubs" : "Dancers"/,
   );
   assert.match(
     homeSource,
@@ -435,11 +435,11 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   );
   assert.match(
     homeSource,
-    /function homeDiscoveryLoadingStateMarkup\(city, tabName = activeTab\)[\s\S]*?Loading clubs in \$\{safeCity\}[\s\S]*?class="home-discovery-loading" role="status" aria-live="polite" aria-busy="true"/,
+    /function homeDiscoveryLoadingStateMarkup\(city, tabName = activeTab\)[\s\S]*?Loading clubs in \$\{safeCity\}[\s\S]*?const cardCount = tabName === "venues" \? 1 : 3[\s\S]*?class="home-discovery-loading \$\{presentation\}" role="status" aria-label="\$\{loadingLabel\}" aria-live="polite" aria-busy="true"/,
   );
   assert.match(
     homeSource,
-    /\.home-discovery-loading \{[\s\S]*?min-height: 0;[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\)[\s\S]*?padding: 16px 18px/,
+    /\.home-discovery-loading \{[\s\S]*?min-height: 0;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)[\s\S]*?\.home-discovery-loading\.is-venues \{ grid-template-columns: minmax\(0, 1fr\)/,
   );
   assert.doesNotMatch(homeSource, /<div class="locked" role="status">\$\{escapeHtml\(loadingLabel\)\}<\/div>/);
   assert.match(

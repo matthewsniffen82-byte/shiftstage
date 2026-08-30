@@ -639,7 +639,7 @@ export default function TvFeedClient({
 
       <div className="tv-feedback" aria-live="polite">
         {status ? <div className="tv-status" role="status">{status}</div> : null}
-        {isLoading ? <div className="tv-loading" role="status">Loading real MyDancr TV videos…</div> : null}
+        {isLoading ? <span className="tv-sr-only" role="status">Loading MyDancr TV videos</span> : null}
       </div>
 
       {!isLoading && !videos.length ? (
@@ -662,6 +662,13 @@ export default function TvFeedClient({
       ) : null}
 
       <section ref={feedElement} className="tv-feed" aria-label="MyDancr TV videos">
+        {isLoading && !videos.length ? (
+          <article className="tv-slide tv-loading-slide" aria-busy="true" aria-label="Preparing MyDancr TV">
+            <div className="tv-loading-player" aria-hidden="true">
+              <span className="tv-loading-player-copy"><span /><span /><span /></span>
+            </div>
+          </article>
+        ) : null}
         {videos.map((video, videoIndex) => (
           <article
             className="tv-slide"
@@ -1052,9 +1059,19 @@ function TvStyles() {
       .tv-filters button.active { color: #fff; border-color: rgba(139,92,246,.44); background: linear-gradient(135deg, rgba(109,40,217,.34), rgba(34,199,255,.12)); }
       .tv-filters .tv-venue-clear { color: #f8fafc; border-color: rgba(148,163,184,.28); background: rgba(17,17,24,.72); }
       .tv-feedback { position: relative; z-index: 30; width: 100%; max-width: 1000px; height: 0; flex: 0 0 0; margin: 0 auto; pointer-events: none; }
-      .tv-status, .tv-loading { position: absolute; top: 6px; left: 0; right: 0; margin: 0; padding: 10px 14px; border: 1px solid rgba(34,199,255,.2); border-radius: 8px; background: rgba(5,17,22,.94); box-shadow: 0 10px 28px rgba(0,0,0,.48); color: #a9efff; font-size: 13px; font-weight: 800; }
+      .tv-status { position: absolute; top: 6px; left: 0; right: 0; margin: 0; padding: 10px 14px; border: 1px solid rgba(34,199,255,.2); border-radius: 8px; background: rgba(5,17,22,.94); box-shadow: 0 10px 28px rgba(0,0,0,.48); color: #a9efff; font-size: 13px; font-weight: 800; }
+      .tv-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
       .tv-feed { width: 100%; max-width: 1000px; height: auto; min-height: 0; flex: 1 1 0; margin: 0 auto; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; overflow-anchor: none; touch-action: pan-y; scroll-snap-type: y mandatory; scroll-padding-block: 0; scroll-behavior: smooth; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; }
       .tv-slide { height: 100%; min-height: 100%; max-height: 100%; padding: 8px 0; display: grid; place-items: center; overflow: hidden; contain: layout paint; scroll-snap-align: start; scroll-snap-stop: always; }
+      .tv-loading-slide { pointer-events: none; }
+      .tv-loading-player { position: relative; width: min(100%, 620px); height: 100%; min-height: 0; overflow: hidden; border-radius: 20px; background: radial-gradient(circle at 72% 22%, rgba(255,255,255,.09), transparent 34%), linear-gradient(145deg,#111118,#030305 70%); box-shadow: 0 26px 80px rgba(0,0,0,.56); }
+      .tv-loading-player::before { position: absolute; inset: 0; content: ""; background: linear-gradient(105deg,transparent 35%,rgba(255,255,255,.075) 50%,transparent 65%); transform: translateX(-100%); animation: tvLoadingSweep 1.6s ease-in-out infinite; }
+      .tv-loading-player-copy { position: absolute; right: 76px; bottom: 24px; left: 18px; display: grid; gap: 9px; }
+      .tv-loading-player-copy span { height: 13px; border-radius: 999px; background: rgba(255,255,255,.13); }
+      .tv-loading-player-copy span:first-child { width: min(58%, 240px); height: 22px; }
+      .tv-loading-player-copy span:nth-child(2) { width: min(42%, 180px); }
+      .tv-loading-player-copy span:last-child { width: min(74%, 310px); }
+      @keyframes tvLoadingSweep { to { transform: translateX(100%); } }
       .tv-player { position: relative; width: min(100%, 620px); height: 100%; min-height: 0; max-height: none; overflow: hidden; border: 0; outline: 0; border-radius: 20px; background: #000; box-shadow: 0 26px 80px rgba(0,0,0,.56); filter: none; }
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: transparent; cursor: pointer; }
@@ -1135,6 +1152,7 @@ function TvStyles() {
       }
       @media (prefers-reduced-motion: reduce) {
         .tv-feed { scroll-behavior: auto; }
+        .tv-loading-player::before { animation: none; }
       }
     `}</style>
   );
