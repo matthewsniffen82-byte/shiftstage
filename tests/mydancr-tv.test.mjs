@@ -180,12 +180,12 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /function selectedHomeTvVideoId\(\)[\s\S]*?get\("tv_video"\)[\s\S]*?UUID_PATTERN|function selectedHomeTvVideoId\(\)[\s\S]*?get\("tv_video"\)[\s\S]*?\[0-9a-f\]/i);
   assert.match(liveApp, /async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\)\)[\s\S]*?params\.set\("video", selectedVideoId\)/);
   assert.match(liveApp, /homeTvFeedSelectedVideoId !== selectedVideoId[\s\S]*?homeTvFeedSelectedVideoId = selectedVideoId/);
-  assert.match(liveApp, /const countParams = new URLSearchParams\(\{ city: tvCityLabel \}\)[\s\S]*?fetch\(`\/api\/public\/tv\/count\?\$\{countParams\.toString\(\)\}`[\s\S]*?cache: "no-store"/);
+  assert.match(liveApp, /const countParams = new URLSearchParams\(\{ city: tvCityLabel \}\)[\s\S]*?fetch\(`\/api\/public\/tv\/count\?\$\{countParams\.toString\(\)\}`[\s\S]*?cache: "default"/);
   assert.match(liveApp, /Number\(payload\.approvedVideoCount\)[\s\S]*?Number\.isSafeInteger\(approvedVideoCount\)[\s\S]*?`\$\{approvedVideoCount\} video\$\{approvedVideoCount === 1 \? "" : "s"\}`/);
   assert.match(liveApp, /\.home-tv-launch \{[^}]*width: 100%[^}]*grid-template-columns: auto minmax\(0, 1fr\) auto auto[^}]*background: #2d106f/);
   assert.doesNotMatch(liveApp, /home-tv-teaser|renderHomeTvTeaser|home-tv-teaser-card/);
   assert.match(publicCountRoute, /getPublicMyDancrTvVideoCount/);
-  assert.match(publicCountRoute, /approvedVideoCount[\s\S]*?"Cache-Control": "private, no-store"/);
+  assert.match(publicCountRoute, /approvedVideoCount[\s\S]*?"Cache-Control": PUBLIC_DYNAMIC_CACHE_CONTROL/);
   assert.match(tvSource, /export async function getPublicMyDancrTvVideoCount/);
   assert.match(tvSource, /\.select\("id, dancer_profiles!inner\(id\)", \{ count: "exact", head: true \}\)/);
   assert.match(tvSource, /\.eq\("dancer_profiles\.status", "approved"\)[\s\S]*?\.eq\("dancer_profiles\.verification_status", "approved"\)[\s\S]*?\.is\("dancer_profiles\.disabled_at", null\)[\s\S]*?\.eq\("dancer_profiles\.is_public", true\)/);

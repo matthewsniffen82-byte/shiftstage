@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getPublicMyDancrTvFeed, MYDANCR_TV_FILTERS } from "@/src/lib/dancr/tv";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
+import { publicTvCacheControl } from "@/src/lib/dancr/public-cache-policy";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext, getBearerToken } from "@/src/lib/supabase/request";
 
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
         videos,
         requiresAccount: filter === "following" && !getBearerToken(request),
       },
-      { headers: { "Cache-Control": "private, no-store" } },
+      { headers: { "Cache-Control": publicTvCacheControl(filter) } },
     );
   } catch (error) {
     return apiError(error, "Unable to load MyDancr TV.");

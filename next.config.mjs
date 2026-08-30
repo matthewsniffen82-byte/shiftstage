@@ -49,6 +49,28 @@ const apiContentSecurityPolicy = [
   "frame-ancestors 'none'",
 ].join("; ");
 
+const immutableStaticAssetCacheControl = "public, max-age=31536000, immutable";
+const immutableStaticAssetSources = [
+  "/dancr-aesthetic.v1.css",
+  "/dancr-brand-tokens.v1.css",
+  "/dancr-button-system.v1.css",
+  "/mobile-social-strip.css",
+  "/mydancr-icon.svg",
+  "/outputs/dancr-hero.png",
+  "/outputs/dancr-hero.webp",
+  "/outputs/mydancr-logo-current.png",
+  "/outputs/mydancr-logo.png",
+  "/profile-video-progress-line.js",
+  "/profile-video-scroll-controls.css",
+  "/third-party-social-link-warning.css",
+  "/third-party-social-link-warning.js",
+  "/trending-flame-clean.png",
+  "/trending-flame.png",
+  "/venue-logos/:path*",
+  "/video-autoplay-recovery.js",
+  "/video-sound-preference.js",
+];
+
 const liveShellHtml = readFileSync(new URL("./outputs/index.html", import.meta.url), "utf8");
 const liveShellSha256 = createHash("sha256")
   .update(liveShellHtml.replace(/\r\n?/g, "\n"))
@@ -77,6 +99,10 @@ const nextConfig = {
         source: "/",
         headers: [{ key: "Content-Security-Policy", value: rootContentSecurityPolicy }],
       },
+      ...immutableStaticAssetSources.map((source) => ({
+        source,
+        headers: [{ key: "Cache-Control", value: immutableStaticAssetCacheControl }],
+      })),
     ];
   },
   outputFileTracingRoot: process.cwd(),

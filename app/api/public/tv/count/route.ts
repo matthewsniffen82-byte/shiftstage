@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getPublicMyDancrTvVideoCount } from "@/src/lib/dancr/tv";
+import { PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       { ok: true, city, approvedVideoCount },
-      { headers: { "Cache-Control": "private, no-store" } },
+      { headers: { "Cache-Control": PUBLIC_DYNAMIC_CACHE_CONTROL } },
     );
   } catch (error) {
     return apiError(error, "Unable to load the MyDancr TV video count.");

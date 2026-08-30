@@ -1,4 +1,4 @@
-/* dancr-sw-release: working-now-pill-v2 */
+/* dancr-sw-release: safe-public-cache-v1 */
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
@@ -24,7 +24,19 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const requestUrl = new URL(event.request.url);
+  const isPublicNavigation = event.request.mode === "navigate" &&
+    requestUrl.origin === self.location.origin &&
+    (
+      requestUrl.pathname === "/" ||
+      requestUrl.pathname === "/dancers" ||
+      requestUrl.pathname.startsWith("/dancers/") ||
+      requestUrl.pathname === "/venues" ||
+      requestUrl.pathname.startsWith("/venues/") ||
+      requestUrl.pathname === "/tv" ||
+      requestUrl.pathname.startsWith("/tv/")
+    );
   event.respondWith(fetch(event.request, {
-    cache: event.request.mode === "navigate" ? "no-store" : "default",
+    cache: event.request.mode === "navigate" && !isPublicNavigation ? "no-store" : "default",
   }));
 });

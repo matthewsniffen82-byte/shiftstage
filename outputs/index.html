@@ -42795,7 +42795,7 @@
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("/sw.js?v=working-now-pill-v2", { updateViaCache: "none" })
+          .register("/sw.js?v=safe-public-cache-v1", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -53534,7 +53534,7 @@
         dancer: profile.id,
         limit: String(MAX_DANCER_PROFILE_VIDEOS)
       });
-      const promise = fetch(`/api/public/tv?${params.toString()}`, { cache: "no-store" })
+      const promise = fetch(`/api/public/tv?${params.toString()}`, { cache: "default" })
         .then(async (response) => {
           const payload = await response.json();
           return response.ok && payload?.ok ? payload : null;
@@ -59639,7 +59639,7 @@
       try {
         const countParams = new URLSearchParams({ city: tvCityLabel });
         if (venueId) countParams.set("venue", venueId);
-        const response = await fetch(`/api/public/tv/count?${countParams.toString()}`, { cache: "no-store" });
+        const response = await fetch(`/api/public/tv/count?${countParams.toString()}`, { cache: "default" });
         const payload = await response.json();
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load the MyDancr TV video count.");
         if (requestId !== homeTvLaunchRequest || homeTvLaunchScope !== `${city}:${venueId}`) return;
@@ -61002,7 +61002,7 @@
         const params = new URLSearchParams({ city, limit: "24" });
         if (venueId) params.set("venue", venueId);
         if (selectedVideoId) params.set("video", selectedVideoId);
-        const response = await fetch(`/api/public/tv?${params.toString()}`, { cache: "no-store" });
+        const response = await fetch(`/api/public/tv?${params.toString()}`, { cache: "default" });
         const payload = await response.json();
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (

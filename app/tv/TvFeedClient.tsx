@@ -191,7 +191,9 @@ export default function TvFeedClient({
     setIsLoading(true);
     setStatus("");
     try {
-      const token = readBrowserAccessToken("customer");
+      const token = nextFilter === "following"
+        ? readBrowserAccessToken("customer")
+        : "";
       const params = new URLSearchParams({
         city: nextCity,
         filter: nextFilter,
@@ -202,7 +204,7 @@ export default function TvFeedClient({
       if (initialVenueId) params.set("venue", initialVenueId);
       const response = await fetch(`/api/public/tv?${params.toString()}`, {
         headers: token ? { authorization: `Bearer ${token}` } : undefined,
-        cache: "no-store",
+        cache: nextFilter === "following" ? "no-store" : "default",
         signal: controller.signal,
       });
       const data = await response.json();

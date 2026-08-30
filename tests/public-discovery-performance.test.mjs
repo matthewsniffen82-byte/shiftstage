@@ -3,20 +3,21 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [homeSource, rootRouteSource, discoveryRouteSource, publicServiceSource, heroAsset, publicHeroAsset, publicHeroWebp] = await Promise.all([
+const [homeSource, rootRouteSource, discoveryRouteSource, publicCacheSource, publicServiceSource, heroAsset, publicHeroAsset, publicHeroWebp] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/public-cache-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/dancr-hero.png", import.meta.url)),
   readFile(new URL("../public/outputs/dancr-hero.png", import.meta.url)),
   readFile(new URL("../public/outputs/dancr-hero.webp", import.meta.url)),
 ]);
 
-test("the production home shell cannot reuse a stale build artifact and keeps a short edge lifetime", () => {
+test("the production home shell keeps bounded browser and edge cache lifetimes", () => {
   assert.match(rootRouteSource, /export const dynamic = "force-dynamic"/);
   assert.match(rootRouteSource, /export const revalidate = 0/);
-  assert.match(rootRouteSource, /s-maxage=60, stale-while-revalidate=60/);
+  assert.match(rootRouteSource, /max-age=30, s-maxage=60, stale-while-revalidate=300/);
   assert.doesNotMatch(rootRouteSource, /s-maxage=31536000/);
   assert.doesNotMatch(rootRouteSource, /no-store, no-cache/);
 });
@@ -25,8 +26,8 @@ test("home discovery uses one short-lived cached production endpoint", () => {
   assert.match(homeSource, /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{/);
   assert.doesNotMatch(homeSource, /fetchJson\(`\/api\/public\/dancers\?\$\{query\}`\)/);
   assert.match(discoveryRouteSource, /getLiveDancerDiscovery\(client, city\)/);
-  assert.match(discoveryRouteSource, /s-maxage=15/);
-  assert.match(discoveryRouteSource, /stale-while-revalidate=60/);
+  assert.match(discoveryRouteSource, /PUBLIC_DYNAMIC_CACHE_CONTROL/);
+  assert.match(publicCacheSource, /max-age=10, s-maxage=10, stale-while-revalidate=20/);
 });
 
 test("live-card metrics are fetched in batches instead of once per dancer", () => {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { formatVenueHours } from "@/src/lib/dancr/public";
+import { PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -55,7 +56,10 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ ok: true, city, venues });
+    return NextResponse.json(
+      { ok: true, city, venues },
+      { headers: { "Cache-Control": PUBLIC_DYNAMIC_CACHE_CONTROL } },
+    );
   } catch (error) {
     return apiError(error, "Unable to load venues.", 500);
   }

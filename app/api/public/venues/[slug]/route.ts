@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getVenueProfile, isApprovedPublicDancerRow } from "@/src/lib/dancr/public";
+import { PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -58,7 +59,10 @@ export async function GET(_request: Request, context: RouteContext) {
         status: shift.status,
       }));
 
-    return NextResponse.json({ ok: true, venue, upcomingShifts });
+    return NextResponse.json(
+      { ok: true, venue, upcomingShifts },
+      { headers: { "Cache-Control": PUBLIC_DYNAMIC_CACHE_CONTROL } },
+    );
   } catch (error) {
     return apiError(error, "Unable to load venue profile.", 500);
   }

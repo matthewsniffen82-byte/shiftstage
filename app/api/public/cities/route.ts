@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { PUBLIC_DIRECTORY_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { getDancerDiscoveryCities } from "@/src/lib/dancr/signup-cities";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
@@ -11,7 +12,7 @@ export async function GET() {
     const cities = await getDancerDiscoveryCities(createAdminSupabaseClient());
     return NextResponse.json(
       { ok: true, cities },
-      { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } },
+      { headers: { "cache-control": PUBLIC_DIRECTORY_CACHE_CONTROL } },
     );
   } catch (error) {
     console.error("DANCER_SIGNUP_CITIES_LOAD_FAILED", {

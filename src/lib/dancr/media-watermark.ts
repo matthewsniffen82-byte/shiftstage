@@ -15,6 +15,7 @@ const VIDEO_POSTER_TIMEOUT_MS = 30_000;
 const VIDEO_POSTER_MAX_WIDTH = 640;
 const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_POSTER_BUCKET = "dancer-photos";
+export const MYDANCR_TV_PUBLIC_CACHE_CONTROL = "3600";
 const PRIVATE_VIDEO_ORIGINAL_PREFIX = "__originals";
 const MYDANCR_WORDMARK_VIEWBOX_WIDTH = 4132;
 const MYDANCR_WORDMARK_VIEWBOX_HEIGHT = 1000;
@@ -249,7 +250,7 @@ export async function watermarkStoredVideo(
     const { error } = await client.storage
       .from(input.publicBucket)
       .upload(input.storagePath, watermarked, {
-        cacheControl: "0",
+        cacheControl: MYDANCR_TV_PUBLIC_CACHE_CONTROL,
         contentType: input.storageMime,
         upsert: true,
       });
