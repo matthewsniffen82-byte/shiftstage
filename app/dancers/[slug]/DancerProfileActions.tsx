@@ -133,6 +133,15 @@ function DancerProfileActionPreviewIcon({
   );
 }
 
+function ReportFlagIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M5 21V4" />
+      <path d="M5 5h11l-1.8 3L16 11H5" />
+    </svg>
+  );
+}
+
 export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
   return (
     <div className="live-actions is-no-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
@@ -152,7 +161,7 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
           </button>
         </span>
       </div>
-      <button className="profile-report-action profile-action-preview-static" disabled type="button">Report profile</button>
+      <button aria-label="Report profile" className="profile-report-action profile-action-preview-static" disabled type="button"><ReportFlagIcon /></button>
     </div>
   );
 }
@@ -263,13 +272,14 @@ export function DancerReportControl({
   return (
     <div className="profile-header-report">
       <button
-        aria-label="Report profile"
+        aria-label={reportSubmitted ? "Profile reported" : "Report profile"}
+        aria-pressed={reportSubmitted}
         className="profile-header-report-toggle"
         disabled={reportSaving || reportSubmitted}
         onClick={openReport}
         type="button"
       >
-        {reportSubmitted ? "Reported" : "Report"}
+        <ReportFlagIcon />
       </button>
       {reportSubmitted ? (
         <span className="profile-report-confirmation" role="status">Report submitted for review.</span>

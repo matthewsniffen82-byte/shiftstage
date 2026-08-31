@@ -430,7 +430,8 @@ function PublicProfileStyles() {
       .profile-header-metrics dt { max-width: 100%; overflow: hidden; color: #8f849c; font-size: clamp(8px, 1.9vw, 10px); font-weight: 850; line-height: 1.15; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
       .profile-titlebar-controls { width: 44px; display: grid; grid-template-columns: 44px; align-self: start; justify-self: end; }
       .profile-header-report { min-width: 0; display: inline-flex; align-items: center; }
-      .profile-header-report-toggle { min-height: 28px; display: inline-flex; align-items: center; padding: 0 9px; border: 1px solid rgba(180,169,196,.2); border-radius: 999px; color: #bdb4c8; background: rgba(255,255,255,.035); box-shadow: none; font-size: 10px; font-weight: 850; line-height: 1; cursor: pointer; }
+      .profile-header-report-toggle { width: 28px; min-width: 28px; height: 28px; min-height: 28px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #bdb4c8; background: rgba(255,255,255,.035); box-shadow: none; line-height: 1; cursor: pointer; }
+      .profile-header-report-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .profile-header-report-toggle:hover, .profile-header-report-toggle:focus-visible { border-color: rgba(196,167,255,.42); color: #fff; background: rgba(124,58,237,.1); outline: none; }
       .profile-header-report-toggle:disabled { cursor: default; opacity: .7; }
       .public-profile-close { position: static; width: 44px; min-height: 44px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
@@ -514,8 +515,9 @@ function PublicProfileStyles() {
       .profile-directions-button[aria-disabled="true"] { cursor: default; opacity: 1; }
       .profile-directions-button svg { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: rgba(226,232,240,.82); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .profile-directions-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-report-action { grid-column: 1 / -1; width: auto !important; min-height: 24px !important; justify-self: end; margin: 0; padding: 0 4px !important; border: 0 !important; color: #8d8497 !important; background: transparent !important; box-shadow: none !important; font-size: 10px !important; font-weight: 750 !important; line-height: 1; opacity: .82; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
-      .profile-report-action:hover, .profile-report-action:focus-visible { color: #d4ccd9 !important; outline: none; text-decoration-color: currentColor; }
+      .profile-report-action { grid-column: 1 / -1; width: 28px !important; min-width: 28px !important; height: 28px !important; min-height: 28px !important; display: grid !important; place-items: center !important; justify-self: end; margin: 0; padding: 0 !important; border: 1px solid rgba(180,169,196,.2) !important; border-radius: 50% !important; color: #8d8497 !important; background: rgba(255,255,255,.035) !important; box-shadow: none !important; line-height: 1; opacity: .82; }
+      .profile-report-action svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-report-action:hover, .profile-report-action:focus-visible { border-color: rgba(196,167,255,.42) !important; color: #d4ccd9 !important; outline: none; }
       .profile-share-dialog-backdrop { position: fixed; z-index: 1750; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.84); backdrop-filter: blur(12px); }
       .profile-share-dialog { position: relative; width: min(430px, 100%); max-height: calc(100dvh - 28px); display: grid; gap: 14px; overflow-y: auto; padding: 24px; border: 1px solid rgba(126,234,255,.42); border-radius: 18px; color: #f7f2ff; background: radial-gradient(circle at 82% 4%, rgba(34,199,255,.14), transparent 15rem), linear-gradient(145deg, #0d0a18, #050507); box-shadow: 0 28px 90px rgba(0,0,0,.74), 0 0 38px rgba(109,40,217,.22); }
       .profile-share-dialog > span:first-of-type { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .15em; text-transform: uppercase; }
@@ -743,6 +745,13 @@ function PublicProfileStyles() {
       .profile-report-dialog select, .profile-report-dialog textarea { width: 100%; padding: 11px; border: 1px solid rgba(139,92,246,.35); border-radius: 11px; color: #fff; background: rgba(255,255,255,.055); }
       .profile-report-dialog option { color: #111; }
       .profile-report-error { color: #ffb4c8; }
+      .profile-media-report-gate { background: transparent; backdrop-filter: none; }
+      .profile-media-report-dialog { width: min(242px, calc(100vw - 90px)); gap: 5px; padding: 10px; border-color: rgba(255,255,255,.14); border-radius: 15px; background: rgba(8,8,12,.94); box-shadow: 0 16px 38px rgba(0,0,0,.5); backdrop-filter: blur(18px) saturate(1.08); }
+      .profile-media-report-dialog h2 { margin: 0; padding: 3px 5px 6px; color: rgba(255,255,255,.72); font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+      .profile-media-report-options { display: grid; gap: 5px; }
+      .profile-media-report-options button { min-height: 38px; padding: 0 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; color: #ded7e8; background: rgba(255,255,255,.035); font: inherit; font-size: 11px; font-weight: 800; text-align: left; cursor: pointer; }
+      .profile-media-report-options button:hover, .profile-media-report-options button:focus-visible { border-color: rgba(255,92,128,.48); color: #fff; background: rgba(255,92,128,.12); outline: none; }
+      .profile-media-report-options button:disabled { cursor: wait; opacity: .68; }
       @media (max-width: 600px) {
         .public-profile-shell { padding: 0 12px max(132px, calc(108px + env(safe-area-inset-bottom))); }
         body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: minmax(108px, .92fr) minmax(0, 1.08fr) 44px !important; gap: 5px !important; min-height: 64px !important; padding: max(6px, env(safe-area-inset-top)) 0 6px !important; }

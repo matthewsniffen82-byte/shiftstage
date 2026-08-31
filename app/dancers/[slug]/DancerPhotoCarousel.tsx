@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  type FormEvent,
   type ReactNode,
   type SyntheticEvent,
   useCallback,
@@ -74,11 +73,9 @@ type MediaReportTarget = {
 };
 
 const MEDIA_REPORT_REASONS = [
-  "Misleading or inaccurate content",
-  "Impersonation",
-  "Harassment or unsafe content",
-  "Underage concern",
-  "Spam or prohibited promotion",
+  "Sexual or unsafe content",
+  "Harassment or abuse",
+  "Spam or misleading content",
   "Other safety concern",
 ] as const;
 
@@ -128,8 +125,6 @@ export function DancerPhotoCarousel({
   const [loadedViewerVideoIndex, setLoadedViewerVideoIndex] = useState(-1);
   const [shareStatus, setShareStatus] = useState("");
   const [reportTarget, setReportTarget] = useState<MediaReportTarget | null>(null);
-  const [reportReason, setReportReason] = useState("");
-  const [reportDetails, setReportDetails] = useState("");
   const [reportError, setReportError] = useState("");
   const [reportSaving, setReportSaving] = useState(false);
   const [reportedTargets, setReportedTargets] = useState<string[]>([]);
@@ -528,7 +523,7 @@ export function DancerPhotoCarousel({
         targetId: activeViewerItem.id,
         targetLabel: `${stageName} profile video ${viewerIndex + 1}`,
         targetType: "tv_video",
-        title: `Report ${stageName} video`,
+        title: "Report video",
       };
     }
     if (UUID_PATTERN.test(activeViewerItem.id)) {
@@ -537,7 +532,7 @@ export function DancerPhotoCarousel({
         targetId: activeViewerItem.id,
         targetLabel: `${stageName} profile photo ${viewerIndex + 1}`,
         targetType: "profile_photo",
-        title: `Report ${stageName} photo`,
+        title: "Report photo",
       };
     }
     return {
@@ -545,26 +540,19 @@ export function DancerPhotoCarousel({
       targetId: dancerId,
       targetLabel: `${stageName} profile ${activeViewerItem.kind}`,
       targetType: "dancer_profile",
-      title: `Report ${stageName} ${activeViewerItem.kind}`,
+      title: `Report ${activeViewerItem.kind}`,
     };
   }
 
   function openMediaReport() {
     const target = activeMediaReportTarget();
     if (!target || reportSaving || reportedTargets.includes(target.key)) return;
-    setReportReason("");
-    setReportDetails("");
     setReportError("");
     setReportTarget(target);
   }
 
-  async function submitMediaReport(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submitMediaReport(reason: (typeof MEDIA_REPORT_REASONS)[number]) {
     if (!reportTarget || reportSaving) return;
-    if (!reportReason) {
-      setReportError("Choose a reason for the report.");
-      return;
-    }
     const controller = new AbortController();
     reportAbortRef.current?.abort();
     reportAbortRef.current = controller;
@@ -582,8 +570,8 @@ export function DancerPhotoCarousel({
           targetType: reportTarget.targetType,
           targetId: reportTarget.targetId,
           targetLabel: reportTarget.targetLabel,
-          reason: reportReason,
-          details: reportDetails.trim() || null,
+          reason,
+          details: null,
         }),
         signal: controller.signal,
       });
@@ -944,56 +932,27 @@ export function DancerPhotoCarousel({
               }}
             >
               <section
-                aria-describedby="profile-media-report-message"
                 aria-labelledby="profile-media-report-title"
                 aria-modal="true"
-                className="profile-report-dialog"
+                className="profile-report-dialog profile-media-report-dialog"
                 role="dialog"
               >
-                <button
-                  aria-label="Close report form"
-                  className="profile-report-close"
-                  disabled={reportSaving}
-                  onClick={() => setReportTarget(null)}
-                  type="button"
-                >
-                  ×
-                </button>
-                <span>Safety report</span>
                 <h2 id="profile-media-report-title">{reportTarget.title}</h2>
-                <p id="profile-media-report-message">
-                  Tell the moderation team what is wrong. Reports can be submitted without signing in.
-                </p>
-                <form onSubmit={submitMediaReport}>
-                  <label>
-                    Reason
-                    <select
-                      autoFocus
-                      onChange={(event) => setReportReason(event.target.value)}
-                      required
-                      value={reportReason}
+                <div className="profile-media-report-options" role="menu">
+                  {MEDIA_REPORT_REASONS.map((reason, index) => (
+                    <button
+                      autoFocus={index === 0}
+                      disabled={reportSaving}
+                      key={reason}
+                      onClick={() => void submitMediaReport(reason)}
+                      role="menuitem"
+                      type="button"
                     >
-                      <option value="">Choose a reason</option>
-                      {MEDIA_REPORT_REASONS.map((reason) => (
-                        <option key={reason} value={reason}>{reason}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Details <small>Optional</small>
-                    <textarea
-                      maxLength={1200}
-                      onChange={(event) => setReportDetails(event.target.value)}
-                      placeholder="Add information that will help the moderation team review this media."
-                      rows={4}
-                      value={reportDetails}
-                    />
-                  </label>
-                  {reportError ? <p className="profile-report-error" role="alert">{reportError}</p> : null}
-                  <button disabled={reportSaving} type="submit">
-                    {reportSaving ? "Submitting report…" : "Submit report"}
-                  </button>
-                </form>
+                      {reason}
+                    </button>
+                  ))}
+                </div>
+                {reportError ? <p className="profile-report-error" role="alert">{reportError}</p> : null}
               </section>
             </div>
           ) : null}

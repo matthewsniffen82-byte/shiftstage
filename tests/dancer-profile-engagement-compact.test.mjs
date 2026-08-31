@@ -95,7 +95,7 @@ test("all schedule states share the same compact header, four actions, status, a
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
   assert.match(liveActions, /Follow[\s\S]*?Notify[\s\S]*?\$\{goingButton\}[\s\S]*?Share/);
   assert.doesNotMatch(liveActions, /Report profile|profile-report-action/);
-  assert.match(liveApp, /class="profile-header-report-toggle" id="reportBtn"[^>]*>Report profile<\/button>/);
+  assert.match(liveApp, /class="profile-header-report-toggle" id="reportBtn"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<\/button>/);
   assert.doesNotMatch(liveApp, /class="profile-modal-report-link"/);
   assert.doesNotMatch(liveApp, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.match(liveActions, /isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"/);

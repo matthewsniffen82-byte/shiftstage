@@ -107,8 +107,7 @@ test("TV cards expose one compact priority rail and a standalone seek bar", () =
   assert.match(actionsFactory, /const sound = createHomeTvFeedSoundButton\(slide\)[\s\S]*?"home-tv-feed-profile-action"[\s\S]*?actionIconMarkup\("profile"\)[\s\S]*?slide\.querySelector\("\.home-tv-feed-dancer"\)\?\.click\(\)[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"/);
   assert.match(actionsFactory, /const fullscreen = createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?actions\.append\(sound, profile, follow, like\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, fullscreen\)[\s\S]*?actions\.append\(overflow, reportMenu\)/);
   assert.doesNotMatch(actionsFactory, /actionIconMarkup\("star"\)|"Applaud"/);
-  assert.match(actionsFactory, /"home-tv-feed-overflow-action"[\s\S]*?"More video options"[\s\S]*?actionIconMarkup\("more"\)/);
-  assert.doesNotMatch(actionsFactory, /actionIconMarkup\("report"\)/);
+  assert.match(actionsFactory, /"home-tv-feed-overflow-action"[\s\S]*?"Report video"[\s\S]*?actionIconMarkup\("report"\)/);
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
   assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedActions\(item, slide, video\),[\s\S]*?createHomeTvFeedCopy[\s\S]*?createHomeTvFeedProgress\(slide, video\)/);

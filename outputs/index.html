@@ -29056,6 +29056,18 @@
     .content-report-sheet h3,
     .content-report-sheet p { margin: 0; }
     .content-report-sheet p { color: #cfc5de; line-height: 1.4; }
+    .content-report-popover.is-quick-reason { background: transparent; backdrop-filter: none; }
+    .content-report-popover.is-quick-reason .content-report-sheet { width: min(242px, calc(100vw - 90px)); gap: 5px; padding: 10px; border-color: rgba(255,255,255,.14); border-radius: 15px; background: rgba(8,8,12,.94); box-shadow: 0 16px 38px rgba(0,0,0,.5); backdrop-filter: blur(18px) saturate(1.08); -webkit-backdrop-filter: blur(18px) saturate(1.08); }
+    .content-report-popover.is-quick-reason .content-report-close { display: none; }
+    .content-report-popover.is-quick-reason .content-report-sheet > span { display: none; }
+    .content-report-popover.is-quick-reason .content-report-sheet h3 { padding: 3px 5px 6px; color: rgba(255,255,255,.72); font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .content-report-popover.is-quick-reason .content-report-form label,
+    .content-report-popover.is-quick-reason .content-report-form-actions { display: none; }
+    .content-report-quick-options { display: grid; gap: 5px; }
+    .content-report-quick-options[hidden] { display: none; }
+    .content-report-quick-option { min-height: 38px; padding: 0 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; color: #ded7e8; background: rgba(255,255,255,.035); font: inherit; font-size: 11px; font-weight: 800; text-align: left; cursor: pointer; }
+    .content-report-quick-option:is(:hover, :focus-visible) { border-color: rgba(255,92,128,.48); color: #fff; background: rgba(255,92,128,.12); outline: none; }
+    .content-report-quick-option:disabled { cursor: wait; opacity: .68; }
     .content-report-form { display: grid; gap: 13px; }
     .content-report-form label { display: grid; gap: 7px; color: #e9e2f4; font-size: 13px; font-weight: 900; }
     .content-report-form select,
@@ -36817,19 +36829,21 @@
           white-space: nowrap;
         }
         #profileBackdrop .profile-header-report-toggle {
+          width: 28px;
+          min-width: 28px;
+          height: 28px;
           min-height: 28px;
-          display: inline-flex;
-          align-items: center;
-          padding: 0 9px;
+          display: inline-grid;
+          place-items: center;
+          padding: 0;
           border: 1px solid rgba(180,169,196,.22);
-          border-radius: 999px;
+          border-radius: 50%;
           color: #bdb4c8;
           background: rgba(255,255,255,.035);
           font: inherit;
-          font-size: 10px;
-          font-weight: 850;
           cursor: pointer;
         }
+        #profileBackdrop .profile-header-report-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
         #profileBackdrop .profile-header-report-toggle:hover,
         #profileBackdrop .profile-header-report-toggle:focus-visible {
           border-color: rgba(196,167,255,.42);
@@ -42266,7 +42280,7 @@
                 <div class="profile-modal-context">
                   <svg class="profile-modal-city-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.4"></circle></svg>
                   <span class="pill" id="modalCity">Las Vegas</span>
-                  <button class="profile-header-report-toggle" id="reportBtn" type="button" aria-label="Report profile">Report profile</button>
+                  <button class="profile-header-report-toggle" id="reportBtn" type="button" aria-label="Report profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></button>
                 </div>
               </div>
               <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
@@ -42369,6 +42383,12 @@
         <span>Safety report</span>
         <h3 id="contentReportTitle">Report content</h3>
         <p id="contentReportMessage">Tell the moderation team what is wrong. Reports can be submitted without signing in.</p>
+        <div class="content-report-quick-options" id="contentReportQuickOptions" role="menu" hidden>
+          <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Sexual or unsafe content">Sexual or unsafe content</button>
+          <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Harassment or abuse">Harassment or abuse</button>
+          <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Spam or misleading content">Spam or misleading content</button>
+          <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Other safety concern">Other safety concern</button>
+        </div>
         <form class="content-report-form" id="contentReportForm">
           <label for="contentReportReason">Reason
             <select id="contentReportReason" required>
@@ -42617,7 +42637,9 @@
     const contentReportClose = document.getElementById("contentReportClose");
     const contentReportCancel = document.getElementById("contentReportCancel");
     const contentReportForm = document.getElementById("contentReportForm");
+    const contentReportQuickOptions = document.getElementById("contentReportQuickOptions");
     const contentReportTitle = document.getElementById("contentReportTitle");
+    const contentReportMessage = document.getElementById("contentReportMessage");
     const contentReportReason = document.getElementById("contentReportReason");
     const contentReportDetails = document.getElementById("contentReportDetails");
     const contentReportStatus = document.getElementById("contentReportStatus");
@@ -43146,7 +43168,7 @@
       button.setAttribute("aria-pressed", String(reported));
     }
 
-    function openContentReportDialog({ button, status, targetType, targetId, targetLabel, title }) {
+    function openContentReportDialog({ button, status, targetType, targetId, targetLabel, title, quickReasons = false }) {
       if (!contentReportPopover || !targetType || !targetId) {
         if (status) status.textContent = "This content cannot be reported right now.";
         else showToast("This content cannot be reported right now");
@@ -43164,19 +43186,29 @@
         targetType: String(targetType),
         targetId: String(targetId),
         targetLabel: String(targetLabel || "Reported content"),
-        reportKey
+        reportKey,
+        quickReasons: Boolean(quickReasons)
       };
       contentReportTitle.textContent = String(title || "Report content");
+      contentReportPopover.classList.toggle("is-quick-reason", Boolean(quickReasons));
+      contentReportQuickOptions.hidden = !quickReasons;
+      contentReportMessage.hidden = Boolean(quickReasons);
       contentReportReason.value = "";
       contentReportDetails.value = "";
       contentReportStatus.textContent = "";
       contentReportSubmit.disabled = false;
       contentReportSubmit.textContent = "Submit report";
+      contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = false; });
       const fullscreenHost = document.fullscreenElement || document.webkitFullscreenElement;
       (fullscreenHost || document.body).appendChild(contentReportPopover);
       contentReportPopover.hidden = false;
       syncOverlayScrollLock();
-      setTimeout(() => contentReportReason?.focus({ preventScroll: true }), 40);
+      setTimeout(() => {
+        const focusTarget = quickReasons
+          ? contentReportQuickOptions?.querySelector("button")
+          : contentReportReason;
+        focusTarget?.focus({ preventScroll: true });
+      }, 40);
     }
 
     function closeContentReportDialog({ restoreFocus = true } = {}) {
@@ -43204,6 +43236,9 @@
       }
       contentReportSubmit.disabled = true;
       contentReportSubmit.textContent = "Submitting…";
+      if (report.quickReasons) {
+        contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+      }
       contentReportStatus.textContent = "";
       try {
         const data = await postOptionalAuthJson("/api/reports", {
@@ -43221,7 +43256,7 @@
           report.targetId,
           report.button?.dataset.reportDefaultLabel || "Report content"
         );
-        if (report.button?.id === "reportBtn") report.button.textContent = "Reported";
+        if (report.button?.id === "reportBtn") report.button.classList.add("is-reported");
         if (report.status) report.status.textContent = "Report submitted for review.";
         if (report.targetType === "dancer_profile") {
           recordLiveEvent("profile_action", { dancerName: report.targetLabel, source: "report_submitted" });
@@ -43232,6 +43267,7 @@
         contentReportStatus.textContent = error.message || "Could not submit report.";
         contentReportSubmit.disabled = false;
         contentReportSubmit.textContent = "Submit report";
+        contentReportQuickOptions.querySelectorAll("button").forEach((button) => { button.disabled = false; });
       }
     }
 
@@ -48440,7 +48476,7 @@
         check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
         close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
-        report: '<svg viewBox="0 0 24 24"><path d="M12 4.2 3.8 18.5a1.4 1.4 0 0 0 1.2 2.1h14a1.4 1.4 0 0 0 1.2-2.1L12 4.2Z"></path><path d="M12 9v4.4"></path><path d="M12 17h.01"></path></svg>',
+        report: '<svg viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg>',
         more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"></circle></svg>',
         profileQr: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx=".8"></rect><rect x="13.5" y="3.5" width="7" height="7" rx=".8"></rect><rect x="3.5" y="13.5" width="7" height="7" rx=".8"></rect><path d="M14 14h2.5v2.5H14zM18.5 13.5h2v2M18 18h2.5v2.5H18M13.5 18.5H16V21"></path></svg>',
         qr: '<svg viewBox="0 0 24 24"><rect x="3.5" y="2.5" width="10" height="19" rx="2"></rect><path d="M7.4 18.5h2.2"></path><path d="M15.5 8.2a4.4 4.4 0 0 1 0 7.6"></path><path d="M18 5.5a7.5 7.5 0 0 1 0 13"></path></svg>',
@@ -53606,9 +53642,9 @@
           String(profile.id || ""),
           `Report ${profile.name} profile`
         );
-        profileReportButton.textContent = profileReportButton.disabled && reportedContentTargets.has(
+        profileReportButton.classList.toggle("is-reported", profileReportButton.disabled && reportedContentTargets.has(
           contentReportKey("dancer_profile", String(profile.id || ""))
-        ) ? "Reported" : "Report profile";
+        ));
       }
       modalStatus.textContent = isPending ? "Pending" : "";
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
@@ -53793,7 +53829,8 @@
             targetType: reportButton.dataset.reportTargetType,
             targetId: reportButton.dataset.reportTargetId,
             targetLabel: reportButton.dataset.reportTargetLabel,
-            title: `Report ${overlay.dataset.profileName || "dancer"} video`
+            title: "Report video",
+            quickReasons: true
           });
           return;
         }
@@ -61559,8 +61596,8 @@
 
       const overflow = createHomeTvFeedActionButton(
         "home-tv-feed-overflow-action",
-        "More video options",
-        actionIconMarkup("more")
+        "Report video",
+        actionIconMarkup("report")
       );
       overflow.dataset.homeTvReport = "true";
       overflow.setAttribute("aria-expanded", "false");
@@ -63128,7 +63165,8 @@
         targetType: profilePhotoViewerReport.dataset.reportTargetType,
         targetId: profilePhotoViewerReport.dataset.reportTargetId,
         targetLabel: profilePhotoViewerReport.dataset.reportTargetLabel,
-        title: `Report ${modalName.textContent.trim() || "dancer"} photo`
+        title: "Report photo",
+        quickReasons: true
       });
     });
     profilePhotoViewerReport?.addEventListener("pointerdown", (event) => {
@@ -63223,6 +63261,13 @@
     contentReportCancel?.addEventListener("click", () => closeContentReportDialog());
     contentReportPopover?.addEventListener("click", (event) => {
       if (event.target === contentReportPopover) closeContentReportDialog();
+    });
+    contentReportQuickOptions?.addEventListener("click", (event) => {
+      const option = event.target.closest("[data-content-report-reason]");
+      if (!option || option.disabled) return;
+      contentReportReason.value = option.dataset.contentReportReason || "";
+      contentReportDetails.value = "";
+      contentReportForm?.requestSubmit();
     });
     contentReportForm?.addEventListener("submit", submitContentReportDialog);
 
