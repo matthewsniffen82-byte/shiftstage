@@ -11598,12 +11598,12 @@ body.dancr-button-system :is(
 }
 
 /* MyDancr TV uses one stable action hierarchy in card and full view. Every
- * utility keeps the same circular translucent-glass geometry; Club Deal is
- * the sole rounded-square exception so its conversion role stays distinct.
- * This final layer also prevents the shared feed-card action styles from
- * stretching Follow into a rectangle. */
+ * rail utility keeps the same circular translucent-glass geometry; Club Deal
+ * is the sole rounded-square exception so its conversion role stays distinct.
+ * The full-view close control is intentionally excluded so it remains hidden
+ * on scroll cards and appears only while the feed is expanded. */
 body.dancr-button-system #results.home-tv-feed
-  .home-tv-feed-action:not(.home-tv-feed-deal-action) {
+  .home-tv-feed-action:not(.home-tv-feed-deal-action):not(.home-tv-feed-full-view-close) {
   box-sizing: border-box !important;
   width: var(--home-tv-action-control-size, 46px) !important;
   min-width: var(--home-tv-action-control-size, 46px) !important;
@@ -11641,7 +11641,7 @@ body.dancr-button-system #results.home-tv-feed .home-tv-feed-like-action {
 }
 
 body.dancr-button-system #results.home-tv-feed
-  .home-tv-feed-action:not(.home-tv-feed-deal-action):is(:hover, :focus-visible) {
+  .home-tv-feed-action:not(.home-tv-feed-deal-action):not(.home-tv-feed-full-view-close):is(:hover, :focus-visible) {
   border-color: rgba(255, 255, 255, 0.42) !important;
   background-color: rgba(28, 28, 40, 0.48) !important;
   background-image: linear-gradient(

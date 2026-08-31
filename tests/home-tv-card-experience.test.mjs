@@ -536,10 +536,10 @@ test("idle TV utility controls use frosted-clear glass while selected follows ke
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=241/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=242/);
 });
 
-test("TV action rail keeps every control visible with one consistent shape hierarchy", () => {
+test("TV action rail keeps every rail control visible without exposing the full-view close button", () => {
   const railConsistency = aestheticSource.match(
     /\/\* MyDancr TV uses one stable action hierarchy[\s\S]*$/,
   )?.[0] || "";
@@ -549,7 +549,11 @@ test("TV action rail keeps every control visible with one consistent shape hiera
 
   assert.match(
     railConsistency,
-    /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\)[\s\S]*?width: var\(--home-tv-action-control-size, 46px\) !important;[\s\S]*?height: var\(--home-tv-action-control-size, 46px\) !important;[\s\S]*?border-radius: 50% !important;/,
+    /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\):not\(\.home-tv-feed-full-view-close\)[\s\S]*?width: var\(--home-tv-action-control-size, 46px\) !important;[\s\S]*?height: var\(--home-tv-action-control-size, 46px\) !important;[\s\S]*?border-radius: 50% !important;/,
+  );
+  assert.match(
+    railConsistency,
+    /full-view close control is intentionally excluded[\s\S]*?\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\):not\(\.home-tv-feed-full-view-close\)/,
   );
   assert.match(railConsistency, /background-color: rgba\(18, 18, 28, 0\.38\) !important;/);
   assert.match(railConsistency, /backdrop-filter: blur\(16px\) saturate\(1\.18\) !important;/);
