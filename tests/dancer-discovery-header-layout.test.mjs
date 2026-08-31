@@ -15,7 +15,7 @@ test("dancer discovery reuses canonical state and shared discovery-control dimen
 });
 
 test("directory heading, dynamic total, and segmented filters are compact and accessible", () => {
-  assert.match(liveShell, /href="\/dancr-aesthetic\.v1\.css\?v=237"/);
+  assert.match(liveShell, /href="\/dancr-aesthetic\.v1\.css\?v=238"/);
   assert.match(liveShell, /: `\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/);
   assert.match(liveShell, /class="dancer-directory-filters" role="tablist" aria-label="Filter dancers"/);
   assert.match(liveShell, /role="tab"[\s\S]*?aria-controls="results"[\s\S]*?aria-selected="\$\{active\}"/);

@@ -10463,35 +10463,27 @@ body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-discovery-feed-copy {
     grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
     align-content: center !important;
-    gap: 2px !important;
-    padding: 3px 14px !important;
-  }
-
-  body.dancr-button-system > .app main.stack > section.stack
-    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-    .home-venue-discovery-name-row {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-    min-width: 0 !important;
-    transform: translateY(8px) !important;
+    gap: 4px 8px !important;
+    padding: 8px 14px !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-location {
-    grid-column: 1 / -1 !important;
-    grid-row: 2 !important;
-    transform: translateY(8px) !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    transform: none !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-meta {
-    grid-column: 1 / -1 !important;
-    grid-row: 3 !important;
+    grid-column: 1 !important;
+    grid-row: 2 !important;
     min-width: 0 !important;
-    transform: translateY(8px) !important;
+    transform: none !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -10499,14 +10491,14 @@ body.dancr-button-system > .app main.stack > section.stack
     .home-venue-discovery-lineup-slot {
     position: static !important;
     grid-column: 2 !important;
-    grid-row: 1 !important;
+    grid-row: 1 / span 2 !important;
     justify-self: end !important;
     align-self: center !important;
     top: auto !important;
     right: auto !important;
     min-height: 28px !important;
     margin: 0 0 0 10px !important;
-    transform: translateY(8px) !important;
+    transform: none !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -10550,12 +10542,6 @@ body.dancr-button-system > .app main.stack > section.stack
     color: #f8fafc !important;
     font-size: 10px !important;
     font-weight: 900 !important;
-  }
-
-  body.dancr-button-system > .app main.stack > section.stack
-    > #results.home-venue-discovery-feed > .home-venue-discovery-slide.has-live-lineup
-    .home-venue-discovery-name-row {
-    padding-right: 0 !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack

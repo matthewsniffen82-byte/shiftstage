@@ -74,6 +74,8 @@ test("venue cards and venue detail render the same semantic operating state", ()
   assert.match(venueSlide, /<span>Hours · \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
   assert.match(venueSlide, /home-venue-discovery-operating-status is-\$\{operatingStatus\.state\}/);
   assert.match(venueSlide, /home-venue-discovery-meta">\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/);
+  assert.match(venueSlide, /aria-label="\$\{accessibilityLabel\}"/);
+  assert.doesNotMatch(venueSlide, /home-venue-discovery-name-row|home-venue-discovery-name/);
   assert.doesNotMatch(venueSlide, /workingNowMarkup|home-discovery-feed-status is-now/);
 });
 

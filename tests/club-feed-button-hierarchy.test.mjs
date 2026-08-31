@@ -64,15 +64,15 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
   assert.match(hierarchy, /@media \(max-width: 360px\)[\s\S]*?minmax\(54px, 0\.68fr\)/);
 });
 
-test("mobile venue identity keeps the lineup in the upper-right of the club-information box", () => {
+test("mobile venue identity keeps the lineup beside the location and hours", () => {
   const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
 
   assert.match(hierarchy, /grid-template-rows: 96px minmax\(100px, 1fr\) 48px 56px !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-logo \{[\s\S]*?height: 90px !important;/);
   assert.match(hierarchy, /\.home-discovery-feed-copy \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;/);
-  assert.match(hierarchy, /\.home-venue-discovery-name-row \{[\s\S]*?grid-column: 1 !important;[\s\S]*?grid-row: 1 !important;/);
-  assert.match(hierarchy, /\.home-venue-discovery-meta \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?grid-row: 3 !important;/);
-  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?position: static !important;[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 1 !important;[\s\S]*?justify-self: end !important;/);
+  assert.match(hierarchy, /\.home-venue-discovery-location \{[\s\S]*?grid-column: 1 !important;[\s\S]*?grid-row: 1 !important;/);
+  assert.match(hierarchy, /\.home-venue-discovery-meta \{[\s\S]*?grid-column: 1 !important;[\s\S]*?grid-row: 2 !important;/);
+  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?position: static !important;[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 1 \/ span 2 !important;[\s\S]*?justify-self: end !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-lineup-label \{[\s\S]*?min-width: 46px !important;[\s\S]*?rgba\(46, 229, 138, 0\.34\)/);
   assert.match(hierarchy, /span:not\(\.action-icon\) \{[\s\S]*?white-space: nowrap !important;[\s\S]*?overflow-wrap: normal !important;[\s\S]*?word-break: normal !important;/);
   assert.match(hierarchy, /\.venue-card-primary-action:is\(\.is-inactive-demo, \.is-travel-unavailable\) \{[\s\S]*?rgba\(226, 232, 240, 0\.76\)/);
@@ -121,15 +121,15 @@ test("the mobile lineup explains working-now avatars without changing venue acti
   assert.match(lineup, /aria-label="\$\{liveLabel\}"/);
 });
 
-test("mobile Clubs cards place at most three avatars beside the club name", () => {
+test("mobile Clubs cards place at most three avatars beside the club details", () => {
   const slide = liveApp.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
   )?.[0] || "";
   const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
 
   assert.doesNotMatch(slide, /mobileLineupReserve|--home-venue-lineup-reserve/);
-  assert.match(slide, /home-venue-discovery-name-row[\s\S]*?home-venue-discovery-location[\s\S]*?home-venue-discovery-meta[\s\S]*?home-venue-discovery-lineup-slot/);
-  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 1 !important;[\s\S]*?top: auto !important;[\s\S]*?right: auto !important;/);
-  assert.match(hierarchy, /\.home-venue-discovery-slide\.has-live-lineup[\s\S]*?\.home-venue-discovery-name-row \{[\s\S]*?padding-right: 0 !important;/);
+  assert.match(slide, /home-venue-discovery-location[\s\S]*?home-venue-discovery-meta[\s\S]*?home-venue-discovery-lineup-slot/);
+  assert.doesNotMatch(slide, /home-venue-discovery-name-row|home-venue-discovery-name/);
+  assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 1 \/ span 2 !important;[\s\S]*?top: auto !important;[\s\S]*?right: auto !important;/);
   assert.match(hierarchy, /margin-left: -8px !important;/);
 });
