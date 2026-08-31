@@ -21,7 +21,7 @@ test("customer discovery consistently presents venues as clubs", () => {
   assert.match(liveShell, /venue-card-kicker">MyDancr club</);
   assert.match(liveShell, /Follow this club for updates/);
   assert.match(liveShell, /Your saved dancers and clubs are ready/);
-  assert.match(liveShell, /Choose which dancer and club alerts/);
+  assert.match(liveShell, /One switch controls the useful updates from dancers and clubs you follow/);
   assert.match(navigation, /id: "venues",[\s\S]*?label: "Clubs"/);
 
   assert.doesNotMatch(liveShell, /data-tab-label="Venues"/);

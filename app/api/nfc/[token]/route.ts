@@ -6,6 +6,10 @@ import {
   CashierDealRedemptionError,
   completeCashierDealRedemption,
 } from "@/src/lib/dancr/cashier-deal-redemption";
+import {
+  broadcastFollowedClubRosterAddition,
+  broadcastFollowedDancerWorkingNow,
+} from "@/src/lib/dancr/customer-follow-notifications";
 import { DealRedemptionAttributionError } from "@/src/lib/dancr/deal-redemption-attribution";
 import { getActiveClubDealsForVenue } from "@/src/lib/dancr/deals";
 import {
@@ -101,6 +105,30 @@ export async function POST(request: Request, context: RouteContext) {
         sessionId,
         request,
       });
+      const followNotificationTasks: Promise<unknown>[] = [];
+      if (affiliation?.affiliationActivated === true && affiliation?.id && affiliation?.dancerId) {
+        followNotificationTasks.push(broadcastFollowedClubRosterAddition(admin, {
+          dancerId: String(affiliation.dancerId),
+          eventId: String(affiliation.id),
+          stageName: String(affiliation.stageName || "A new dancer"),
+          venueId: tag.venueId,
+          venueName: tag.venue.name,
+          venueSlug: tag.venue.slug,
+        }));
+      }
+      if (affiliation?.shiftCheckedIn === true && affiliation?.tapApplied === true && affiliation?.shiftId && affiliation?.dancerId) {
+        followNotificationTasks.push(broadcastFollowedDancerWorkingNow(admin, {
+          dancerId: String(affiliation.dancerId),
+          eventId: String(affiliation.shiftId),
+          stageName: String(affiliation.stageName || "A dancer you follow"),
+          venueId: tag.venueId,
+          venueName: tag.venue.name,
+          venueSlug: tag.venue.slug,
+        }));
+      }
+      await Promise.all(followNotificationTasks.map((task) => task.catch((notificationError) => {
+        console.warn("CUSTOMER_FOLLOW_NOTIFICATION_FAILED", safeErrorMetadata(notificationError));
+      })));
       console.info("DANCER_NFC_AUTHORIZATION_COMPLETED", {
         venueId: tag.venueId,
         tagId: tag.id,

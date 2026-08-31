@@ -49,7 +49,11 @@ export async function PATCH(request: Request) {
       if (!isPlainObject(body.notificationSettings)) {
         return NextResponse.json({ ok: false, error: "Notification settings must be an object." }, { status: 400 });
       }
-      update.notificationSettings = body.notificationSettings as Record<string, Json>;
+      const followAlertsEnabled = (body.notificationSettings as Record<string, unknown>).followAlertsEnabled;
+      if (typeof followAlertsEnabled !== "boolean") {
+        return NextResponse.json({ ok: false, error: "Choose whether follow alerts are on or off." }, { status: 400 });
+      }
+      update.notificationSettings = { followAlertsEnabled };
     }
 
     if (!Object.keys(update).length) {

@@ -1489,18 +1489,18 @@ function CustomerPanel({
     }
   }
 
-  function updateVenueFollow(venueId: string, following: boolean, notificationsEnabled: boolean) {
+  function updateVenueFollow(venueId: string, following: boolean) {
     return runCustomerAction(
       `venue-${venueId}`,
       "/api/customer/venue-follows",
-      { venueId, following, notificationsEnabled },
+      { venueId, following, notificationsEnabled: following },
       (current) => ({
         ...current,
         venueFollows: following
-          ? (current.venueFollows || []).map((item) => item.venueId === venueId ? { ...item, notificationsEnabled } : item)
+          ? (current.venueFollows || []).map((item) => item.venueId === venueId ? { ...item, notificationsEnabled: true } : item)
           : (current.venueFollows || []).filter((item) => item.venueId !== venueId),
       }),
-      following ? (notificationsEnabled ? "Club alerts turned on." : "Club alerts turned off.") : "Club unfollowed.",
+      following ? "Club followed." : "Club unfollowed.",
     );
   }
 
@@ -1728,7 +1728,7 @@ function CustomerFollowedClubsPanel({
 }: {
   isLoading: boolean;
   onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
-  onVenueFollowChange: (venueId: string, following: boolean, notificationsEnabled: boolean) => void;
+  onVenueFollowChange: (venueId: string, following: boolean) => void;
   pendingAction: string;
   saved?: LoadState["saved"];
 }) {
@@ -1752,9 +1752,8 @@ function CustomerFollowedClubsPanel({
                 return (
                   <SavedVenueCard
                     key={`${venue.slug}-${index}`}
-                    notificationsEnabled={Boolean(item.notificationsEnabled)}
                     onDirections={onDirections}
-                    onFollowChange={(following, notificationsEnabled) => void onVenueFollowChange(venueId, following, notificationsEnabled)}
+                    onUnfollow={() => void onVenueFollowChange(venueId, false)}
                     pending={Boolean(pendingAction)}
                     venue={venue}
                   />
@@ -1800,15 +1799,13 @@ function FollowedDancerGridCard({ dancer }: { dancer: SavedDancerSummary }) {
 }
 
 function SavedVenueCard({
-  notificationsEnabled,
   onDirections,
-  onFollowChange,
+  onUnfollow,
   pending,
   venue,
 }: {
-  notificationsEnabled: boolean;
   onDirections: (venue: SavedVenueSummary) => void;
-  onFollowChange: (following: boolean, notificationsEnabled: boolean) => void;
+  onUnfollow: () => void;
   pending: boolean;
   venue: SavedVenueSummary;
 }) {
@@ -1822,10 +1819,7 @@ function SavedVenueCard({
         <div className="customer-card-actions">
           <Link href={customerVenueHref(venue)}>Profile</Link>
           <CustomerDirectionsButton onDirections={onDirections} pending={pending} venue={venue} />
-          <button type="button" disabled={pending} onClick={() => onFollowChange(true, !notificationsEnabled)}>
-            {notificationsEnabled ? "Alerts on" : "Alerts off"}
-          </button>
-          <button className="customer-text-action" type="button" disabled={pending} onClick={() => onFollowChange(false, false)}>Unfollow</button>
+          <button className="customer-text-action" type="button" disabled={pending} onClick={onUnfollow}>Unfollow</button>
         </div>
       </div>
     </article>
@@ -2144,6 +2138,11 @@ function customerNotificationHref(notification: Record<string, unknown>, saved?:
 
 function notificationCategory(notification: Record<string, unknown>) {
   const type = String(notification.type || "");
+  const payload = notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
+    ? notification.payload as Record<string, unknown>
+    : {};
+  if (payload.kind === "followed_club_deal_published") return "Club Deal";
+  if (payload.kind === "followed_club_roster_addition") return "Club";
   if (type.includes("shift")) return "Schedule";
   if (type.includes("support")) return "Support";
   if (type.includes("venue") || type.includes("club")) return "Club";
@@ -2907,8 +2906,7 @@ function CustomerPreferencesPanel({
   onProfileChange?: (profile: Record<string, unknown> | null | undefined) => void;
   profile?: LoadState["profile"];
 }) {
-  const [city, setCity] = useState("Las Vegas");
-  const [settings, setSettings] = useState<Record<string, boolean>>({});
+  const [followAlertsEnabled, setFollowAlertsEnabled] = useState(true);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const mountedRef = useRef(false);
@@ -2928,17 +2926,7 @@ function CustomerPreferencesPanel({
   }, []);
 
   useEffect(() => {
-    setCity(String(profile?.city || "Las Vegas"));
-    setSettings({
-      followedDancersOnly: readSetting(profile, "followedDancersOnly", true),
-      followedVenuesOnly: readSetting(profile, "followedVenuesOnly", true),
-      anyDancerInCity: readSetting(profile, "anyDancerInCity", false),
-      workingTonight: readSetting(profile, "workingTonight", true),
-      newShifts: readSetting(profile, "newShifts", true),
-      venueSchedules: readSetting(profile, "venueSchedules", true),
-      clubChanges: readSetting(profile, "clubChanges", true),
-      cancelledShifts: readSetting(profile, "cancelledShifts", true),
-    });
+    setFollowAlertsEnabled(readSetting(profile, "followAlertsEnabled", true));
   }, [profile]);
 
   function beginPreferencesAction() {
@@ -2962,8 +2950,7 @@ function CustomerPreferencesPanel({
     return mountedRef.current;
   }
 
-  async function savePreferences(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function saveFollowAlerts(nextEnabled: boolean) {
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
@@ -2973,36 +2960,33 @@ function CustomerPreferencesPanel({
     const action = beginPreferencesAction();
     if (!action) return;
     const { requestId, controller } = action;
-    const submittedCity = city.trim();
-    const submittedSettings = Object.fromEntries(
-      CUSTOMER_NOTIFICATION_OPTIONS.map((option) => [option.key, Boolean(settings[option.key])]),
-    );
+    const previousEnabled = followAlertsEnabled;
+    setFollowAlertsEnabled(nextEnabled);
     setIsSaving(true);
     setStatus("");
     try {
       const data = await requestCustomerProfileJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ city: submittedCity, notificationSettings: submittedSettings }),
-        fallbackMessage: "Unable to save preferences.",
+        body: JSON.stringify({ notificationSettings: { followAlertsEnabled: nextEnabled } }),
+        fallbackMessage: "Unable to update notifications.",
         signal: controller.signal,
       });
       if (!isCurrentPreferencesAction(requestId, controller)) return;
       const confirmedSettings = data.profile?.notificationSettings;
-      const settingsWereSaved = confirmedSettings
+      const settingWasSaved = confirmedSettings
         && typeof confirmedSettings === "object"
         && !Array.isArray(confirmedSettings)
-        && CUSTOMER_NOTIFICATION_OPTIONS.every((option) => (
-          (confirmedSettings as Record<string, unknown>)[option.key] === Boolean(submittedSettings[option.key])
-        ));
-      if (String(data.profile?.city || "").trim() !== submittedCity || !settingsWereSaved) {
-        throw new Error("Preferences were not confirmed. Please try again.");
+        && (confirmedSettings as Record<string, unknown>).followAlertsEnabled === nextEnabled;
+      if (!settingWasSaved) {
+        throw new Error("Your notification setting was not confirmed. Please try again.");
       }
       onProfileChange?.(data.profile);
-      setStatus("Preferences saved.");
+      setStatus(nextEnabled ? "Notifications are on." : "Notifications are off.");
     } catch (error) {
       if (isCurrentPreferencesAction(requestId, controller)) {
-        setStatus(error instanceof Error ? error.message : "Unable to save preferences.");
+        setFollowAlertsEnabled(previousEnabled);
+        setStatus(error instanceof Error ? error.message : "Unable to update notifications.");
       }
     } finally {
       if (finishPreferencesAction(requestId)) setIsSaving(false);
@@ -3011,41 +2995,45 @@ function CustomerPreferencesPanel({
 
   return (
     <article className="info-panel customer-settings-panel">
-      <h2>Notification Settings</h2>
-      <form onSubmit={savePreferences}>
-        <label className="city-field">
-          City
-          <input value={city} disabled={isSaving} onChange={(event) => setCity(event.target.value)} required />
-        </label>
-        {CUSTOMER_NOTIFICATION_OPTIONS.map((option) => (
-          <label className="check-row" key={option.key}>
-            <input
-              checked={Boolean(settings[option.key])}
-              disabled={isSaving}
-              type="checkbox"
-              onChange={(event) => setSettings((current) => ({ ...current, [option.key]: event.target.checked }))}
-            />
-            {option.label}
-          </label>
-        ))}
-        <button type="submit" disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save preferences"}
+      <div className="customer-alert-preferences-heading">
+        <div>
+          <span>Follow alerts</span>
+          <h2>Notifications</h2>
+        </div>
+        <button
+          aria-checked={followAlertsEnabled}
+          aria-label="Follow notifications"
+          className={`customer-alert-master${followAlertsEnabled ? " is-on" : ""}`}
+          disabled={isSaving}
+          role="switch"
+          type="button"
+          onClick={() => void saveFollowAlerts(!followAlertsEnabled)}
+        >
+          <span>{isSaving ? "Saving" : followAlertsEnabled ? "On" : "Off"}</span>
+          <i aria-hidden="true" />
         </button>
-        {status ? <p>{status}</p> : null}
-      </form>
+      </div>
+      <p className="customer-alert-preferences-copy">
+        One switch controls the useful updates from dancers and clubs you follow.
+      </p>
+      <div className="customer-alert-summary" aria-label="Notifications you will receive">
+        {CUSTOMER_FOLLOW_ALERTS.map((alert) => (
+          <div key={alert.title}>
+            <i aria-hidden="true">✓</i>
+            <span><strong>{alert.title}</strong><small>{alert.description}</small></span>
+          </div>
+        ))}
+      </div>
+      {status ? <p className="customer-alert-status" role="status">{status}</p> : null}
     </article>
   );
 }
 
-const CUSTOMER_NOTIFICATION_OPTIONS = [
-  { key: "followedDancersOnly", label: "Followed dancers only" },
-  { key: "followedVenuesOnly", label: "Followed clubs only" },
-  { key: "anyDancerInCity", label: "Any dancer in city" },
-  { key: "workingTonight", label: "Working now" },
-  { key: "newShifts", label: "New shifts" },
-  { key: "venueSchedules", label: "Venue schedules" },
-  { key: "clubChanges", label: "Club changes" },
-  { key: "cancelledShifts", label: "Cancelled shifts" },
+const CUSTOMER_FOLLOW_ALERTS = [
+  { title: "Working Now", description: "A dancer you follow starts working at any club." },
+  { title: "Upcoming shifts", description: "A dancer you follow posts an upcoming shift." },
+  { title: "New Club Deals", description: "A club you follow publishes a new deal." },
+  { title: "New dancers", description: "A dancer joins a club you follow." },
 ];
 
 function readSetting(profile: LoadState["profile"], key: string, fallback: boolean) {
@@ -8435,6 +8423,22 @@ function DashboardStyles() {
       .customer-settings-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
       .customer-settings-grid > .customer-settings-panel, .customer-settings-grid > .support-panel, .customer-settings-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-settings-panel .city-field { grid-column: span 2; }
+      .customer-alert-preferences-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+      .customer-alert-preferences-heading > div { display: grid; gap: 4px; }
+      .customer-alert-preferences-heading > div > span { color: #c084fc; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .customer-alert-preferences-heading h2 { margin: 0; }
+      .customer-settings-panel button.customer-alert-master { width: 92px; min-height: 44px; display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 7px 5px 13px; border: 1px solid rgba(226,232,240,.18); border-radius: 999px; color: #cbc5d6; background: linear-gradient(145deg,rgba(49,47,59,.82),rgba(19,19,25,.92)); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); font-size: 11px; font-weight: 950; }
+      .customer-settings-panel button.customer-alert-master i { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%; background: #8f899c; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+      .customer-settings-panel button.customer-alert-master.is-on { border-color: rgba(192,132,252,.52); color: #fff; background: linear-gradient(145deg,rgba(88,28,135,.76),rgba(76,29,149,.9)); box-shadow: 0 0 18px rgba(168,85,247,.18), inset 0 1px 0 rgba(255,255,255,.1); }
+      .customer-settings-panel button.customer-alert-master.is-on i { background: #f4e8ff; box-shadow: 0 0 12px rgba(216,180,254,.6); }
+      .customer-settings-panel .customer-alert-preferences-copy { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.45; }
+      .customer-alert-summary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+      .customer-alert-summary > div { min-width: 0; display: grid; grid-template-columns: 24px minmax(0,1fr); align-items: start; gap: 9px; padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.035); }
+      .customer-alert-summary > div > i { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; color: #d8b4fe; background: rgba(168,85,247,.14); font-size: 12px; font-style: normal; font-weight: 950; }
+      .customer-alert-summary span { min-width: 0; display: grid; gap: 3px; }
+      .customer-alert-summary strong { color: #fff; font-size: 13px; line-height: 1.2; }
+      .customer-alert-summary small { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.35; }
+      .customer-settings-panel .customer-alert-status { margin: 0; color: #d8b4fe; }
       .venue-working-list { display: grid; gap: 9px; }
       .venue-working-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); color: #fff; background: rgba(255,255,255,.04); text-decoration: none; }
       .venue-working-list a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
@@ -9245,6 +9249,7 @@ function DashboardStyles() {
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-followed-dancer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .customer-followed-dancer-tile { border-radius: 10px; } .customer-followed-dancer-copy { gap: 3px; padding: 32px 7px 8px; } .customer-followed-dancer-copy > strong { font-size: 14px; } .customer-followed-dancer-copy > small { font-size: 9px; } .customer-followed-dancer-copy > .customer-followed-dancer-time { font-size: 8px; } .customer-followed-dancer-status { font-size: 8px; letter-spacing: .07em; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-saved-head { align-items: center; flex-direction: row; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) {
+        .customer-alert-summary { grid-template-columns: 1fr; }
         .dashboard-shell-customer .venue-dashboard-section > summary { min-height: 78px; grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; padding: 12px 13px; }
         .dashboard-shell-customer .venue-dashboard-section-badge { grid-column: 2; grid-row: 1; align-self: center; }
         .dashboard-shell-customer .venue-dashboard-section-toggle { grid-column: 3; grid-row: 1; }

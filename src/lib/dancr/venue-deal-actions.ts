@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { clubDealOfferPresetForTitle } from "./club-deal-presets";
 import { QR_COMMISSION_POLICY_VERSION } from "./commission-policy";
+import { broadcastFollowedClubDealPublished } from "./customer-follow-notifications";
 import { assertLiquorFreeClubDeal } from "./deal-policy";
 import {
   CLUB_DEAL_COLUMNS,
@@ -11,6 +12,7 @@ import {
 import { getVenueReferralFeeState } from "./referral-fees";
 import type { ClubDeal, ClubDealOfferType } from "./types";
 import { requireVenueAccess } from "./venue-access";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -52,7 +54,7 @@ export async function upsertAdminVenueDeal(
   const dealId = input.dealId ? requiredUuid(input.dealId, "The Club Deal is invalid.") : null;
   const { data: venue, error: venueError } = await db
     .from("venues")
-    .select("id, name")
+    .select("id, name, slug")
     .eq("id", venueId)
     .maybeSingle();
   if (venueError) throw venueError;
@@ -67,6 +69,7 @@ export async function upsertAdminVenueDeal(
   const existingDeal = dealId ? await getAdminVenueDeal(client, venueId, dealId) : null;
   if (dealId && !existingDeal) throw new Error("Club Deal not found for this venue.");
   if (existingDeal) await snapshotIssuedDealPassesBeforeUpdate(db, existingDeal);
+  const publishingDeal = input.isActive && existingDeal?.isActive !== true;
 
   const row = {
     venue_id: venueId,
@@ -96,9 +99,17 @@ export async function upsertAdminVenueDeal(
     : db.from("club_deals").insert(row);
   const { data, error } = await query.select(CLUB_DEAL_COLUMNS).single();
   if (error) throw error;
+  const deal = toClubDeal(data);
+  if (publishingDeal) {
+    await notifyClubFollowers(client, deal, {
+      id: venueId,
+      name: String(venue.name || "Club"),
+      slug: venue.slug ? String(venue.slug) : null,
+    });
+  }
 
   return {
-    deal: toClubDeal(data),
+    deal,
     deals: await getAdminVenueDealCatalog(client),
     venueName: String(venue.name || "Venue"),
   };
@@ -178,6 +189,7 @@ export async function updateVenueDealForAccount(
     : null;
   if (input.dealId && !existingDeal) throw new Error("Club Deal not found for this venue.");
   if (existingDeal) await snapshotIssuedDealPassesBeforeUpdate(db, existingDeal);
+  const publishingDeal = input.isActive && existingDeal?.isActive !== true;
   const query = existingDeal
     ? db.from("club_deals").update(row).eq("id", existingDeal.id).eq("venue_id", owned.venueId)
     : db.from("club_deals").insert(row);
@@ -187,6 +199,21 @@ export async function updateVenueDealForAccount(
   if (error) throw error;
 
   const deal = toClubDeal(data);
+  if (publishingDeal) {
+    const { data: venue, error: venueError } = await db
+      .from("venues")
+      .select("id, name, slug")
+      .eq("id", owned.venueId)
+      .maybeSingle();
+    if (venueError) throw venueError;
+    if (venue) {
+      await notifyClubFollowers(client, deal, {
+        id: owned.venueId,
+        name: String(venue.name || "Club"),
+        slug: venue.slug ? String(venue.slug) : null,
+      });
+    }
+  }
   const deals = [deal, ...owned.deals.filter((candidate) => candidate.id !== deal.id)]
     .sort((left, right) => left.sortOrder - right.sortOrder);
 
@@ -291,4 +318,25 @@ async function snapshotIssuedDealPassesBeforeUpdate(db: any, deal: ClubDeal) {
     if (rows.length < pageSize) break;
     offset += rows.length;
   }
+}
+
+async function notifyClubFollowers(
+  client: DancrClient,
+  deal: ClubDeal,
+  venue: { id: string; name: string; slug: string | null },
+) {
+  await broadcastFollowedClubDealPublished(client, {
+    dealId: deal.id,
+    dealTitle: deal.dealTitle,
+    eventId: deal.id,
+    venueId: venue.id,
+    venueName: venue.name,
+    venueSlug: venue.slug,
+  }).catch((notificationError) => {
+    console.warn("CUSTOMER_CLUB_DEAL_NOTIFICATION_FAILED", {
+      dealId: deal.id,
+      venueId: venue.id,
+      ...safeErrorMetadata(notificationError),
+    });
+  });
 }

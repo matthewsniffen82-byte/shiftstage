@@ -14874,6 +14874,68 @@
       letter-spacing: 0;
     }
 
+    #customerDashboard .follow-alert-master-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    #customerDashboard .follow-alert-master-copy small {
+      color: #aaa1b8;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    #customerDashboard .customer-follow-alert-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    #customerDashboard .customer-follow-alert-summary > div {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      align-items: start;
+      gap: 9px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      background: rgba(255,255,255,.035);
+    }
+
+    #customerDashboard .customer-follow-alert-summary i {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #d8b4fe;
+      background: rgba(168,85,247,.14);
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 900;
+    }
+
+    #customerDashboard .customer-follow-alert-summary span {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    #customerDashboard .customer-follow-alert-summary strong {
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    #customerDashboard .customer-follow-alert-summary small {
+      color: #aaa1b8;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
     #customerDashboard .switch {
       width: 50px;
       height: 30px;
@@ -14908,6 +14970,10 @@
 
       #customerDashboard .dashboard-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #customerDashboard .customer-follow-alert-summary {
+        grid-template-columns: 1fr;
       }
 
       #customerDashboard .stat {
@@ -42155,8 +42221,8 @@
         </div>
         <div class="saved-deal-list" id="dashSavedDealsList"></div>
         <div class="auth-card customer-notification-card" data-dashboard-section="notifications">
-          <h3 class="section-title">Notification settings</h3>
-          <p class="customer-card-copy">Choose which dancer and club alerts Dancr sends you. Your guest activity stays private.</p>
+          <h3 class="section-title">Notifications</h3>
+          <p class="customer-card-copy">One switch controls the useful updates from dancers and clubs you follow.</p>
           <div class="toggle-list" id="notificationSettings"></div>
           <div class="section-title-row">
             <h3 class="section-title">Notification center</h3>
@@ -42907,15 +42973,11 @@
       clearCustomerSavedCollections();
     }
 
-    const notificationOptions = [
-      "Followed dancers only",
-      "Followed clubs only",
-      "Any dancer in city",
-      "Working now alerts",
-      "New shift alerts",
-      "Club schedule alerts",
-      "Club change alerts",
-      "Canceled shift alerts"
+    const followNotificationSummaries = [
+      ["Working Now", "A dancer you follow starts working at any club."],
+      ["Upcoming shifts", "A dancer you follow posts an upcoming shift."],
+      ["New Club Deals", "A club you follow publishes a new deal."],
+      ["New dancers", "A dancer joins a club you follow."]
     ];
 
     const adminUsers = [];
@@ -45328,11 +45390,8 @@
     }
 
     function customerNotificationSettingsPayload() {
-      const settings = {};
-      notificationSettings.querySelectorAll(".switch").forEach((toggle) => {
-        if (toggle.dataset.notificationKey) settings[toggle.dataset.notificationKey] = toggle.classList.contains("on");
-      });
-      return settings;
+      const toggle = notificationSettings.querySelector('[data-notification-key="followAlertsEnabled"]');
+      return { followAlertsEnabled: Boolean(toggle?.classList.contains("on")) };
     }
 
     function saveLiveCustomerProfile(update) {
@@ -57880,12 +57939,18 @@
     }
 
     function renderNotificationSettings() {
-      notificationSettings.innerHTML = notificationOptions.map((label, index) => `
+      const enabled = liveCustomerProfile?.notificationSettings?.followAlertsEnabled !== false;
+      notificationSettings.innerHTML = `
         <div class="toggle-row">
-          <strong>${label}</strong>
-          <button class="switch ${(liveCustomerProfile?.notificationSettings?.[label] ?? label !== "Any dancer in city") ? "on" : ""}" aria-label="${label}" data-notification-key="${label}"></button>
+          <span class="follow-alert-master-copy"><strong>Follow alerts</strong><small>Dancers and clubs you choose only</small></span>
+          <button class="switch ${enabled ? "on" : ""}" aria-checked="${enabled}" aria-label="Follow notifications" data-notification-key="followAlertsEnabled" role="switch"></button>
         </div>
-      `).join("");
+        <div class="customer-follow-alert-summary">
+          ${followNotificationSummaries.map(([title, description]) => `
+            <div><i aria-hidden="true">✓</i><span><strong>${title}</strong><small>${description}</small></span></div>
+          `).join("")}
+        </div>
+      `;
     }
 
     function allProfiles() {
@@ -64006,6 +64071,7 @@
       const toggle = event.target.closest(".switch");
       if (!toggle) return;
       toggle.classList.toggle("on");
+      toggle.setAttribute("aria-checked", String(toggle.classList.contains("on")));
       saveLiveCustomerProfile({ notificationSettings: customerNotificationSettingsPayload() });
       renderCustomerQuickActions();
     });
