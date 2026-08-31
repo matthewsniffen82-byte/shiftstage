@@ -15,7 +15,7 @@ export async function loadCustomerDealSavedState(dealId: string, signal?: AbortS
     `/api/customer/deal-saves?dealId=${encodeURIComponent(dealId)}`,
     { cache: "no-store", signal },
   );
-  return data.saved === true;
+  return data.persisted !== false && data.saved === true;
 }
 
 export async function setCustomerDealSavedInAccount(input: {
@@ -30,7 +30,7 @@ export async function setCustomerDealSavedInAccount(input: {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(input),
   });
-  return data.saved === true;
+  return data.persisted !== false;
 }
 
 async function requestCustomerDealSaveJson(path: string, options: RequestInit) {

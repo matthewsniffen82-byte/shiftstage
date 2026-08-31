@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
-import { removeCustomerClubDeal, saveCustomerClubDeal } from "@/src/lib/dancr/customer";
+import {
+  isMissingCustomerDealSavesTableError,
+  removeCustomerClubDeal,
+  saveCustomerClubDeal,
+} from "@/src/lib/dancr/customer";
 import {
   enforcePublicRequestRateLimit,
   PublicRequestRateLimitError,
@@ -31,9 +35,14 @@ export async function GET(request: Request) {
       .eq("customer_id", user.id)
       .eq("club_deal_id", dealId)
       .maybeSingle();
-    if (error) throw error;
+    if (error) {
+      if (isMissingCustomerDealSavesTableError(error)) {
+        return NextResponse.json({ ok: true, saved: false, persisted: false, session });
+      }
+      throw error;
+    }
 
-    return NextResponse.json({ ok: true, saved: Boolean(data), session });
+    return NextResponse.json({ ok: true, saved: Boolean(data), persisted: true, session });
   } catch (error) {
     return apiError(error, "Unable to load saved Club Deal state.");
   }
@@ -69,15 +78,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid dancerId." }, { status: 400 });
     }
 
+    let persisted: boolean;
     if (saved) {
       await requirePublicClubDeal(admin, dealId);
       if (dancerId) await requirePublicDancer(admin, dancerId);
-      await saveCustomerClubDeal(client, user.id, { dealId, sourceType, dancerId: dancerId || null });
+      persisted = await saveCustomerClubDeal(client, user.id, { dealId, sourceType, dancerId: dancerId || null });
     } else {
-      await removeCustomerClubDeal(client, user.id, dealId);
+      persisted = await removeCustomerClubDeal(client, user.id, dealId);
     }
 
-    return NextResponse.json({ ok: true, saved, session });
+    return NextResponse.json({ ok: true, saved, persisted, session });
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) {
       return NextResponse.json(

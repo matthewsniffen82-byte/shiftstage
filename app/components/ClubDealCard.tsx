@@ -181,13 +181,18 @@ export function ClubDealCard({
     setSavePending(true);
     const hasCustomerAccount = hasSignedInCustomerDealAccount();
     try {
+      let savedToAccount = false;
       if (hasCustomerAccount) {
-        await setCustomerDealSavedInAccount({
-          dealId: activeDeal.id,
-          saved: true,
-          sourceType,
-          dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
-        });
+        try {
+          savedToAccount = await setCustomerDealSavedInAccount({
+            dealId: activeDeal.id,
+            saved: true,
+            sourceType,
+            dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
+          }) === true;
+        } catch {
+          // Keep saving available on this device when private account storage is temporarily unavailable.
+        }
       }
       let savedOnThisDevice = false;
       try {
@@ -208,7 +213,7 @@ export function ClubDealCard({
           nfcIntent: true,
           url: window.location.href,
         };
-        const next = hasCustomerAccount
+        const next = savedToAccount
           ? saved.filter((item) => item.id !== id)
           : [deviceDeal, ...saved.filter((item) => item.id !== id)].slice(0, 20);
         window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
@@ -216,13 +221,13 @@ export function ClubDealCard({
       } catch {
         // The private account remains the source of truth when device storage is blocked.
       }
-      if (!hasCustomerAccount && !savedOnThisDevice) {
+      if (!savedToAccount && !savedOnThisDevice) {
         setSavedOnDevice(false);
         setStatus("Browser storage blocked saving this deal. Allow site storage and try again.");
         return;
       }
       setSavedOnDevice(true);
-      setStatus(hasCustomerAccount
+      setStatus(savedToAccount
         ? "Saved privately to your account. This does not reserve or redeem the deal."
         : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal.");
     } catch (error) {
@@ -237,13 +242,18 @@ export function ClubDealCard({
     setSavePending(true);
     const hasCustomerAccount = hasSignedInCustomerDealAccount();
     try {
+      let removedFromAccount = false;
       if (hasCustomerAccount) {
-        await setCustomerDealSavedInAccount({
-          dealId: activeDeal.id,
-          saved: false,
-          sourceType,
-          dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
-        });
+        try {
+          removedFromAccount = await setCustomerDealSavedInAccount({
+            dealId: activeDeal.id,
+            saved: false,
+            sourceType,
+            dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
+          }) === true;
+        } catch {
+          // Keep removal available on this device when private account storage is temporarily unavailable.
+        }
       }
       let removedFromDevice = false;
       try {
@@ -254,13 +264,13 @@ export function ClubDealCard({
       } catch {
         // The private account remains the source of truth when device storage is blocked.
       }
-      if (!hasCustomerAccount && !removedFromDevice) {
+      if (!removedFromAccount && !removedFromDevice) {
         setSavedOnDevice(true);
         setStatus("Browser storage blocked removing this deal. Allow site storage and try again.");
         return;
       }
       setSavedOnDevice(false);
-      setStatus(hasCustomerAccount
+      setStatus(removedFromAccount
         ? "Removed from your private saved deals. You can still use it at the cashier."
         : "Removed from saved deals. You can still use it at the cashier.");
     } catch (error) {

@@ -121,14 +121,17 @@ test("Club Deals can be privately bookmarked without reserving or redeeming them
   assert.match(dealSavesRoute, /requirePublicClubDeal/);
   assert.match(dealSavesRoute, /saveCustomerClubDeal/);
   assert.match(dealSavesRoute, /removeCustomerClubDeal/);
+  assert.match(dealSavesRoute, /persisted: false/);
+  assert.match(dealSavesRoute, /ok: true, saved, persisted, session/);
   assert.match(savedRoute, /getCustomerSavedClubDeals/);
   assert.match(savedRoute, /dealSaves/);
   assert.match(customerService, /\.from\("customer_deal_saves"\)/);
 
   assert.match(dealSaveClient, /readBrowserAuthSession/);
   assert.match(dealSaveClient, /persistRefreshedBrowserAuthSession/);
+  assert.match(dealSaveClient, /data\.persisted !== false/);
   assert.match(clubDealCard, /setCustomerDealSavedInAccount/);
-  assert.match(clubDealCard, /hasCustomerAccount[\s\S]*?saved\.filter\(\(item\) => item\.id !== id\)/);
+  assert.match(clubDealCard, /savedToAccount[\s\S]*?saved\.filter\(\(item\) => item\.id !== id\)/);
   assert.match(clubDealCard, /Saved privately to your account\. This does not reserve or redeem the deal\./);
   assert.match(clubDealCard, /Saved on this device\. Sign in to keep it across devices\. This does not redeem the deal\./);
 });

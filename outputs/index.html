@@ -45333,7 +45333,7 @@
         if (customerDashboard.classList.contains("show")) renderDashboard();
         return true;
       } catch (error) {
-        if (isCustomerSession()) showToast(error.message || "Could not load saved items");
+        console.warn("Customer saved state unavailable; keeping the current page state", error);
         return false;
       }
     }
@@ -48927,13 +48927,18 @@
 
     async function persistCustomerDealSave(pass, saved) {
       if (!isCustomerSession() || !pass?.dealId) return false;
-      await postAuthenticatedJson("/api/customer/deal-saves", {
-        dealId: pass.dealId,
-        saved,
-        sourceType: pass.sourceType === "dancer_profile" ? "dancer_profile" : "club_page",
-        dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || null : null
-      });
-      return true;
+      try {
+        const data = await postAuthenticatedJson("/api/customer/deal-saves", {
+          dealId: pass.dealId,
+          saved,
+          sourceType: pass.sourceType === "dancer_profile" ? "dancer_profile" : "club_page",
+          dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || null : null
+        });
+        return data?.persisted !== false;
+      } catch (error) {
+        console.warn("Private Club Deal save unavailable; using device storage", error);
+        return false;
+      }
     }
 
     async function saveCustomerDealPass(pass) {

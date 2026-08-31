@@ -83,8 +83,8 @@ test("blocked browser storage returns a visible fallback instead of breaking the
   );
 });
 
-test("signed-in private deal bookmarks are not left in shared device storage after logout", () => {
+test("account-persisted private deal bookmarks are not left in shared device storage after logout", () => {
   assert.match(liveSource, /const deviceOnlyPasses = savedDealPasses\.filter\(\(pass\) => !pass\.serverSaved\)/);
   assert.match(liveSource, /function logoutAccount[\s\S]*?savedDealPasses = loadSavedDealPasses\(\)/);
-  assert.match(dealCardSource, /const next = hasCustomerAccount[\s\S]*?saved\.filter\(\(item\) => item\.id !== id\)/);
+  assert.match(dealCardSource, /const next = savedToAccount[\s\S]*?saved\.filter\(\(item\) => item\.id !== id\)/);
 });

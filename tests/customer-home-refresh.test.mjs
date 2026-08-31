@@ -14,7 +14,8 @@ test("home refresh only requests saved customer data for a customer session", ()
     homeSource.match(/async function loadLiveCustomerSaved[\s\S]*?\r?\n    }\r?\n\r?\n    async function loadLiveCustomerDashboardData/)?.[0] || "";
 
   assert.match(savedLoader, /if \(!isCustomerSession\(\)\) return/);
-  assert.match(savedLoader, /if \(isCustomerSession\(\)\) showToast/);
+  assert.match(savedLoader, /Customer saved state unavailable; keeping the current page state/);
+  assert.doesNotMatch(savedLoader, /showToast/);
   assert.match(homeSource, /if \(isCustomerSession\(\)\) await loadLiveCustomerSaved\(\)/);
   assert.doesNotMatch(homeSource, /if \(authSession\?\.accessToken\) await loadLiveCustomerSaved\(\)/);
   assert.match(
@@ -48,4 +49,11 @@ test("saved customer queries support the deployed schema until is_public migrati
     customerServiceSource,
     /dancer_profiles\(id, slug, stage_name, city, status, dancer_photos\(storage_path, is_primary, review_status, sort_order\)\)/,
   );
+});
+
+test("missing private Club Deal storage cannot fail existing saved customer items", () => {
+  assert.match(customerServiceSource, /function isMissingCustomerDealSavesTableError/);
+  assert.match(customerServiceSource, /code === "42P01" \|\| code === "PGRST205"/);
+  assert.match(customerServiceSource, /message\.includes\("customer_deal_saves"\)/);
+  assert.match(customerServiceSource, /warnCustomerDealSavesUnavailable\("load", error\);\s+return \[\];/);
 });

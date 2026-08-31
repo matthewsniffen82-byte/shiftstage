@@ -11,6 +11,19 @@ function isMissingIsPublicColumnError(error: any) {
   return (code === "42703" || code === "PGRST204") && message.includes("is_public");
 }
 
+export function isMissingCustomerDealSavesTableError(error: any) {
+  const code = String(error?.code || "");
+  const message = String(error?.message || "").toLowerCase();
+  return (code === "42P01" || code === "PGRST205") && message.includes("customer_deal_saves");
+}
+
+function warnCustomerDealSavesUnavailable(operation: "load" | "save" | "remove", error: any) {
+  console.warn("CUSTOMER_DEAL_SAVES_TABLE_UNAVAILABLE", {
+    operation,
+    code: String(error?.code || "unknown"),
+  });
+}
+
 export async function getCustomerSavedItems(client: DancrClient, customerId: string) {
   const [follows, favorites, venueFollows, goingSignals] = await Promise.all([
     getFollowedDancers(client, customerId),
@@ -49,7 +62,13 @@ export async function getCustomerSavedClubDeals(client: DancrClient, customerId:
     .order("created_at", { ascending: false })
     .limit(20);
 
-  if (error) throw error;
+  if (error) {
+    if (isMissingCustomerDealSavesTableError(error)) {
+      warnCustomerDealSavesUnavailable("load", error);
+      return [];
+    }
+    throw error;
+  }
 
   return (data || []).map((row: any) => {
     const deal = single(row.club_deals);
@@ -89,7 +108,15 @@ export async function saveCustomerClubDeal(
     dancer_id: input.sourceType === "dancer_profile" ? input.dancerId || null : null,
   });
 
-  if (error && error.code !== "23505") throw error;
+  if (error?.code === "23505") return true;
+  if (error) {
+    if (isMissingCustomerDealSavesTableError(error)) {
+      warnCustomerDealSavesUnavailable("save", error);
+      return false;
+    }
+    throw error;
+  }
+  return true;
 }
 
 export async function removeCustomerClubDeal(client: DancrClient, customerId: string, dealId: string) {
@@ -98,7 +125,14 @@ export async function removeCustomerClubDeal(client: DancrClient, customerId: st
     club_deal_id: dealId,
   });
 
-  if (error) throw error;
+  if (error) {
+    if (isMissingCustomerDealSavesTableError(error)) {
+      warnCustomerDealSavesUnavailable("remove", error);
+      return false;
+    }
+    throw error;
+  }
+  return true;
 }
 
 export async function followDancer(client: DancrClient, customerId: string, dancerId: string) {
